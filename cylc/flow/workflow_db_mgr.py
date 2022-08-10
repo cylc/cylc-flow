@@ -431,9 +431,9 @@ class WorkflowDatabaseManager:
     def put_update_task_state(self, itask):
         """Update task_states table for current state of itask.
 
-        For final event-driven update before removing finished tasks.
-        No need to update task_pool table as finished tasks are immediately
-        removed from the pool.
+        NOTE the task_states table is normally updated along with the task pool
+        table. This method is only needed as a final update for finished tasks,
+        when they get removed from the task_pool.
         """
         set_args = {
             "time_updated": itask.state.time_updated,
@@ -452,10 +452,15 @@ class WorkflowDatabaseManager:
             (set_args, where_args))
 
     def put_task_pool(self, pool: 'TaskPool') -> None:
-        """Update various task tables for current pool, in runtime database.
+        """Delete task pool table content and recreate from current task pool.
 
-        Queue delete (everything) statements to wipe the tables, and queue the
-        relevant insert statements for the current tasks in the pool.
+        Also recreate:
+        - prerequisites table
+        - timeout timers table
+        - action timers table
+
+        And update:
+        - task states table
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
         # Comment this out to retain the trigger-time prereq status of past

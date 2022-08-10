@@ -177,13 +177,32 @@ class TaskPool:
             point = tdef.first_point(self.config.start_point)
             self.spawn_to_rh_limit(tdef, point, {flow_num})
 
-    def add_to_pool(self, itask, is_new: bool = True) -> None:
+    def db_add_new_flow_rows(self, itask: TaskProxy) -> None:
+        """Add new rows to DB task tables that record flow_nums.
+
+        Call when a new task is spawned or a flow merge occurs.
+        """
+        # Add row to task_states table.
+        now = get_current_time_string()
+        self.workflow_db_mgr.put_insert_task_states(
+            itask,
+            {
+                "time_created": now,
+                "time_updated": now,
+                "status": itask.state.status,
+                "flow_nums": serialise(itask.flow_nums),
+                "flow_wait": itask.flow_wait,
+                "is_manual_submit": itask.is_manual_submit
+            }
+        )
+        # Add row to task_outputs table:
+        self.workflow_db_mgr.put_insert_task_outputs(itask)
+
+    def add_to_pool(self, itask) -> None:
         """Add a task to the hidden (if not satisfied) or main task pool.
 
         If the task already exists in the hidden pool and is satisfied, move it
         to the main pool.
-
-        (is_new is False inidcates load from DB at restart).
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
             # Add to hidden pool if not satisfied.
@@ -208,23 +227,6 @@ class TaskPool:
             LOG.debug(f"[{itask}] added to main task pool")
 
             self.create_data_store_elements(itask)
-
-        if is_new:
-            # Add row to "task_states" table.
-            now = get_current_time_string()
-            self.workflow_db_mgr.put_insert_task_states(
-                itask,
-                {
-                    "time_created": now,
-                    "time_updated": now,
-                    "status": itask.state.status,
-                    "flow_nums": serialise(itask.flow_nums),
-                    "flow_wait": itask.flow_wait,
-                    "is_manual_submit": itask.is_manual_submit
-                }
-            )
-            # Add row to "task_outputs" table:
-            self.workflow_db_mgr.put_insert_task_outputs(itask)
 
         if itask.tdef.max_future_prereq_offset is not None:
             # (Must do this once added to the pool).
@@ -497,7 +499,7 @@ class TaskPool:
 
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
-            self.add_to_pool(itask, is_new=False)
+            self.add_to_pool(itask)
 
             # All tasks load as runahead-limited, but finished and manually
             # triggered tasks (incl. --start-task's) can be released now.
@@ -634,8 +636,9 @@ class TaskPool:
 
     def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
         """Spawn parentless task instances from point to runahead limit."""
-        if not flow_nums:
-            # force-triggered no-flow task.
+        if not flow_nums or point is None:
+            # Force-triggered no-flow task.
+            # Or called with an invalid next_point.
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
@@ -1211,7 +1214,6 @@ class TaskPool:
             if c_task is not None and c_task != itask:
                 # (Avoid self-suicide: A => !A)
                 self.merge_flows(c_task, itask.flow_nums)
-                self.workflow_db_mgr.put_update_task_state(c_task)
             elif (
                 c_task is None
                 and (itask.flow_nums or forced)
@@ -1481,6 +1483,7 @@ class TaskPool:
             return None
 
         LOG.info(f"[{itask}] spawned")
+        self.db_add_new_flow_rows(itask)
         return itask
 
     def force_spawn_children(
@@ -1587,7 +1590,6 @@ class TaskPool:
             )
             if itask is None:
                 continue
-            self.add_to_pool(itask, is_new=True)
             itasks.append(itask)
 
         # Trigger matched tasks if not already active.
@@ -1615,7 +1617,6 @@ class TaskPool:
                 # De-queue it to run now.
                 self.task_queue_mgr.force_release_task(itask)
 
-            self.workflow_db_mgr.put_update_task_state(itask)
         return len(unmatched)
 
     def sim_time_check(self, message_queue):
@@ -1916,24 +1917,26 @@ class TaskPool:
             # and via suicide triggers ("A =>!A": A tries to spawn itself).
             return
 
+        merge_with_no_flow = not itask.flow_nums
+
+        itask.merge_flows(flow_nums)
+        # Merged tasks get a new row in the db task_states table.
+        self.db_add_new_flow_rows(itask)
+
         if (
             itask.state(*TASK_STATUSES_FINAL)
             and itask.state.outputs.get_incomplete()
         ):
             # Re-queue incomplete task to run again in the merged flow.
             LOG.info(f"[{itask}] incomplete task absorbed by new flow.")
-            itask.merge_flows(flow_nums)
             itask.state_reset(TASK_STATUS_WAITING)
             self.queue_task(itask)
             self.data_store_mgr.delta_task_state(itask)
 
-        elif not itask.flow_nums or itask.flow_wait:
+        elif merge_with_no_flow or itask.flow_wait:
             # 2. Retro-spawn on completed outputs and continue as merged flow.
             LOG.info(f"[{itask}] spawning on pre-merge outputs")
-            itask.merge_flows(flow_nums)
             itask.flow_wait = False
             self.spawn_on_all_outputs(itask, completed_only=True)
             self.spawn_to_rh_limit(
                 itask.tdef, itask.next_point(), itask.flow_nums)
-        else:
-            itask.merge_flows(flow_nums)
