@@ -34,9 +34,10 @@ ones in. -->
 
 Maintenance release.
 
+### Fixes
+
 [#5023](https://github.com/cylc/cylc-flow/pull/5023) - tasks force-triggered
 after a shutdown was ordered should submit to run immediately on restart.
-
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__

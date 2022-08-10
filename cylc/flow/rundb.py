@@ -803,8 +803,7 @@ class CylcWorkflowDAO:
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, flow_nums, is_late, status, is_held, submit_num,
-             try_num, platform_name, time_submit, time_run, timeout, outputs]
+        the fields in the SELECT statement below.
         """
         form_stmt = r"""
             SELECT
