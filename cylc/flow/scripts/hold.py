@@ -87,7 +87,7 @@ mutation (
     workflows: $wFlows,
     tasks: $tasks
   ) {
-    result
+    results
   }
 }
 '''
@@ -101,7 +101,7 @@ mutation (
     workflows: $wFlows,
     point: $point
   ) {
-    result
+    results
   }
 }
 '''

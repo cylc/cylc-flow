@@ -57,7 +57,7 @@ mutation (
     workflows: $wFlows,
     tasks: $tasks,
   ) {
-    result
+    results
   }
 }
 '''

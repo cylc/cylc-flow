@@ -71,7 +71,7 @@ mutation (
     message: $eventMsg,
     id: $eventId
   ) {
-    result
+    results
   }
 }
 '''

@@ -75,7 +75,7 @@ mutation (
     flowWait: $flowWait,
     flowDescr: $flowDescr
   ) {
-    result
+    results
   }
 }
 '''

@@ -56,7 +56,7 @@ mutation (
   pause (
     workflows: $wFlows
   ) {
-    result
+    results
   }
 }
 '''

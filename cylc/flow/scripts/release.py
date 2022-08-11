@@ -64,7 +64,7 @@ mutation (
     workflows: $wFlows,
     tasks: $tasks,
   ) {
-    result
+    results
   }
 }
 '''
@@ -76,7 +76,7 @@ mutation (
   releaseHoldPoint (
     workflows: $wFlows
   ) {
-    result
+    results
   }
 }
 '''

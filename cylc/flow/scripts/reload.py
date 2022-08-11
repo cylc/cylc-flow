@@ -74,7 +74,7 @@ mutation (
   reload (
     workflows: $wFlows
   ) {
-    result
+    results
   }
 }
 '''

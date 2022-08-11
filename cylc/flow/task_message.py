@@ -63,7 +63,7 @@ mutation (
     eventTime: $eventTime,
     messages: $messages
   ) {
-    result
+    results
   }
 }
 '''

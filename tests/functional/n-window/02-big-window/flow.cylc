@@ -20,7 +20,7 @@ mutation {
   setGraphWindowExtent (
     workflows: [\"${CYLC_WORKFLOW_ID}\"],
     nEdgeDistance: 5) {
-    result
+    results
   }
 }",
 "variables": null}

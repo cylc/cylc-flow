@@ -71,7 +71,7 @@ async def run(options, workflow_id, *_):
 
     result = await pclient.async_request('graphql', query_kwargs)
 
-    for workflow in result['workflows']:
+    for workflow in result['data']['workflows']:
         return workflow['cylcVersion']
 
 

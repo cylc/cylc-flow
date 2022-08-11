@@ -119,7 +119,7 @@ mutation (
   resume (
     workflows: $wFlows
   ) {
-    result
+    results
   }
 }
 '''

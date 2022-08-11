@@ -103,7 +103,7 @@ mutation (
     task: $task,
     flowNum: $flowNum
   ) {
-    result
+    results
   }
 }
 '''

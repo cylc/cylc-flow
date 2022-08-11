@@ -98,7 +98,7 @@ async def run(
     # ping called on the workflow
     result = await pclient.async_request('graphql', flow_kwargs)
     msg = ""
-    for flow in result['workflows']:
+    for flow in result['data']['workflows']:
         w_name = flow['name']
         w_port = flow['port']
         w_pub_port = flow['pubPort']

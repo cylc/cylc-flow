@@ -30,7 +30,7 @@ read -r -d '' resume <<_args_
 {"request_string": "
 mutation {
   resume(workflows: [\"${WORKFLOW_NAME}\"]){
-    result
+    results
   }
 }
 ",

@@ -130,11 +130,7 @@ mutation (
     settings: $bSettings,
     cutoff: $bCutoff
   ) {
-    results {
-      workflowId
-      success
-      message
-    }
+    results
   }
 }
 '''
@@ -366,7 +362,7 @@ async def run(options: 'Values', workflow_id):
                     'TASK_ID_GLOB must be in the format: cycle/task'
                 )
         result = await pclient.async_request('graphql', query_kwargs)
-        for wflow in result['workflows']:
+        for wflow in result['data']['workflows']:
             settings = wflow['broadcasts']
             padding = get_padding(settings) * ' '
             if options.raw:
