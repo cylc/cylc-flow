@@ -73,8 +73,8 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST1}
 "
 
-FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
-log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
+LOG_FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
+log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
     'Waiting for jobs running on localhost to complete' \
     'Waiting for jobs running on localhost to complete' \
@@ -82,10 +82,11 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
     "Attempting to restart on \"${CYLC_TEST_HOST2}\""
 # we shouldn't have any orphaned tasks because we should
 # have waited for them to complete
-grep_fail 'orphaned task' "${FILE}"
+grep_fail 'orphaned task' "$LOG_FILE"
 
 poll_workflow_restart
-grep_workflow_log_ok "restart-log-grep" "Workflow now running on \"${CYLC_TEST_HOST2}\""
+log_scan "${TEST_NAME}-restart-log-scan" "$LOG_FILE" 20 1 \
+    "Workflow now running on \"${CYLC_TEST_HOST2}\""
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
 #     ensure the workflow DOESN'T WAIT for local jobs to complete before stopping
@@ -103,8 +104,8 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST2}!
 "
 
-FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
-log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
+LOG_FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
+log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
     'This workflow will be shutdown as the workflow host is unable to continue' \
     'Workflow shutting down - REQUEST(NOW)' \
