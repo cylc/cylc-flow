@@ -284,7 +284,8 @@ class ContactFileFields:
     """The process ID of the running workflow on ``CYLC_WORKFLOW_HOST``."""
 
     COMMAND = 'CYLC_WORKFLOW_COMMAND'
-    """The command that was used to run the workflow on ``CYLC_WORKFLOW_HOST```.
+    """The command that was used to run the workflow on
+    ``CYLC_WORKFLOW_HOST```.
 
     Note that this command may be affected by:
 

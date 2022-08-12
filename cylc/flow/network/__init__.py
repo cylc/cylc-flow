@@ -179,13 +179,13 @@ class ZMQSocketBase:
         try:
             server_public_key, server_private_key = zmq.auth.load_certificate(
                 srv_prv_key_info.full_key_path)
-        except (ValueError):
+        except ValueError:
             raise ServiceFileError(
                 f"Failed to find server's public "
                 f"key in "
                 f"{srv_prv_key_info.full_key_path}."
             )
-        except(OSError):
+        except OSError:
             raise ServiceFileError(
                 f"IO error opening server's private "
                 f"key from "
