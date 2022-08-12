@@ -292,7 +292,7 @@ def process_plugins(fpath, opts):
                 f"{extra_vars['templating_detected']} and "
                 f"{plugin_result['templating_detected']}"
             )
-        elif(
+        elif (
             'templating_detected' in plugin_result and
             plugin_result['templating_detected'] is not None
         ):
