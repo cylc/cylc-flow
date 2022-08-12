@@ -536,7 +536,7 @@ def pycoverage(cmd_args):  # pragma: no cover
 
     """
     cylc_coverage = os.environ.get('CYLC_COVERAGE')
-    if cylc_coverage not in ('1', '2'):
+    if cylc_coverage.split(':')[0] not in ('1', '2'):
         yield
         return
 
@@ -546,7 +546,13 @@ def pycoverage(cmd_args):  # pragma: no cover
     from pathlib import Path
 
     # the cylc working directory
-    cylc_wc = Path(cylc.flow.__file__).parents[2]
+    cylc_cov_list = cylc_coverage.split(':')
+    if len(cylc_cov_list) == 2:
+        cylc_coverage, cylc_module = cylc_cov_list
+        cylc_wc = Path(
+            __import__(cylc_module, fromlist=['cylc']).__file__).parents[2]
+    else:
+        cylc_wc = Path(cylc.flow.__file__).parents[2]
 
     # initiate coverage
     try:
