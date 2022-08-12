@@ -32,6 +32,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED
 )
 
+from cylc.flow.workflow_status import AutoRestartMode
+
 from .utils.flow_tools import _make_flow
 
 
@@ -137,7 +139,7 @@ async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     assert last_record.message == "Error on shutdown"
     assert last_record.levelno == logging.ERROR
     assert last_record.exc_text is not None
-    assert last_record.exc_text.startswith("Traceback (most recent call last)")
+    assert last_record.exc_text.startswith(TRACEBACK_MSG)
     assert ("During handling of the above exception, "
             "another exception occurred") not in last_record.exc_text
 
@@ -342,4 +344,30 @@ async def test_unexpected_ParsecError(
         log, level=logging.CRITICAL,
         exact_match="Workflow shutting down - Mock error"
     )
+    assert TRACEBACK_MSG in log.text
+
+
+async def test_error_during_auto_restart(
+    one: Scheduler,
+    run: Callable,
+    log_filter: Callable,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Test that an error during auto-restart does not get swallowed"""
+    log: pytest.LogCaptureFixture
+    err_msg = "Mock error: sugar in water"
+
+    def mock_auto_restart(*a, **k):
+        raise RuntimeError(err_msg)
+
+    monkeypatch.setattr(one, 'workflow_auto_restart', mock_auto_restart)
+    monkeypatch.setattr(
+        one, 'auto_restart_mode', AutoRestartMode.RESTART_NORMAL
+    )
+
+    with pytest.raises(RuntimeError, match=err_msg):
+        async with run(one) as log:
+            pass
+
+    assert log_filter(log, level=logging.ERROR, contains=err_msg)
     assert TRACEBACK_MSG in log.text

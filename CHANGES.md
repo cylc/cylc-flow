@@ -49,6 +49,9 @@ cycle point validation in the UI.
 [#5037](https://github.com/cylc/cylc-flow/pull/5037) - Fix bug where the
 workflow restart number would get wiped on reload.
 
+[#5049](https://github.com/cylc/cylc-flow/pull/5049) - Fix several small
+bugs related to auto restart.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 

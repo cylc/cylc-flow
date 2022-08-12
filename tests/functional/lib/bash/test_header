@@ -65,7 +65,7 @@
 #     grep_ok PATTERN FILE [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN FILE".
 #     grep_workflow_log_ok TEST_NAME PATTERN [$OPTS]
-#         Run "grep [$OPTS] -q -e PATTERN <workflow-log>".
+#         Run "grep [$OPTS] -s -e PATTERN <workflow-log>".
 #     named_grep_ok NAME PATTERN FILE [$OPTS]
 #         Run grep_ok with a custom test name.
 #         OPTS: put grep options like '-E' (extended regex) at end of line.
@@ -429,12 +429,26 @@ grep_ok() {
 
 grep_workflow_log_ok() {
     local TEST_NAME="$1"
-    shift
-    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"; then
-      ok "${TEST_NAME}"
-    else
-      fail "${TEST_NAME}"
+    local PATTERN="$2"
+    shift 2
+    local LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+    if grep "$@" -s -e "$PATTERN" "$LOG_FILE"; then
+        ok "${TEST_NAME}"
+        return
     fi
+    mkdir -p "${TEST_LOG_DIR}"
+    {
+        cat <<__ERR__
+Can't find:
+===========
+${PATTERN}
+===========
+in:
+===========
+__ERR__
+        cat "$LOG_FILE"
+    } >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
 }
 
 named_grep_ok() {

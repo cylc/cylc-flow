@@ -18,7 +18,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 10
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # run through the shutdown - restart procedure
@@ -65,7 +65,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 # test shutdown procedure - scan the first log file
 FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
-log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
+log_scan "${TEST_NAME}-shutdown-log-scan" "${FILE}" 20 1 \
     'The Cylc workflow host will soon become un-available' \
     'Workflow shutting down - REQUEST(NOW-NOW)' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
@@ -76,7 +76,7 @@ LATEST_TASK=$(cylc workflow-state "${WORKFLOW_NAME}" -S succeeded \
 # test restart procedure  - scan the second log file created on restart
 poll_workflow_restart
 FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
-log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
+log_scan "${TEST_NAME}-restart-log-scan" "${FILE}" 20 1 \
     "Scheduler: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
 run_ok "${TEST_NAME}-restart-success" cylc workflow-state "${WORKFLOW_NAME}" \
     --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
@@ -84,11 +84,18 @@ run_ok "${TEST_NAME}-restart-success" cylc workflow-state "${WORKFLOW_NAME}" \
 
 # check the command the workflow has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${WORKFLOW_NAME}"
-grep_ok "cylc play ${WORKFLOW_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
+grep_ok "cylc play ${WORKFLOW_NAME} -v --host=${CYLC_TEST_HOST} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop workflow
 cylc stop "${WORKFLOW_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
-purge
 
-exit
+# Check correct number of logs
+ls "${WORKFLOW_RUN_DIR}/log/scheduler/" > ls_logs.out
+cmp_ok ls_logs.out << __EOF__
+01-start-01.log
+02-restart-02.log
+log
+__EOF__
+
+purge
