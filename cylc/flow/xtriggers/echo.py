@@ -20,7 +20,8 @@ from contextlib import suppress
 
 
 def echo(*args, **kwargs):
-    """Prints args to stdout and return success only if kwargs['succeed'] is True.
+    """Prints args to stdout and return success only if kwargs['succeed']
+    is True.
 
     This may be a useful aid to understanding how xtriggers work.
 
