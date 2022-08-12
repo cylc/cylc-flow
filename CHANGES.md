@@ -26,6 +26,9 @@ management and does not bundle Jinja2.
 
 ### Fixes
 
+[#5016](https://github.com/cylc/cylc-flow/pull/5016) - fix bug where
+polling failure on restart would cause Cylc to assume task is running.
+
 [#4838](https://github.com/cylc/cylc-flow/pull/4838) - fix bug where Cylc 7
 would still be able to run a `suite.rc` workflow previously run with Cylc 8.
 
