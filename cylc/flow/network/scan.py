@@ -67,7 +67,10 @@ from cylc.flow.network.client import (
     ClientTimeout,
     WorkflowRuntimeClient,
 )
-from cylc.flow.pathutil import get_cylc_run_dir
+from cylc.flow.pathutil import (
+    get_cylc_run_dir,
+    get_workflow_run_dir,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
@@ -528,11 +531,16 @@ async def workflow_params(flow):
         key, value = entry
         params[key] = value
 
-    db_file = flow['path'] / SERVICE / 'db'
+    # NOTE: use the public DB for reading
+    # (only the scheduler process/thread should access the private database)
+    db_file = Path(get_workflow_run_dir(flow['name'], 'log', 'db'))
     if db_file.exists():
         dao = CylcWorkflowDAO(db_file, is_public=False)
-        dao.connect()
-        dao.select_workflow_params(_callback)
-        flow['workflow_params'] = params
+        try:
+            dao.connect()
+            dao.select_workflow_params(_callback)
+            flow['workflow_params'] = params
+        finally:
+            dao.close()
 
     return flow
