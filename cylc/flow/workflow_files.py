@@ -1477,8 +1477,9 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         if (Path(src).joinpath(exclude).exists() or
                 Path(dst).joinpath(exclude).exists()):
             rsync_cmd.append(f"--exclude={exclude}")
-    if Path(src).joinpath('.cylcignore').exists():
-        rsync_cmd.append("--exclude-from=.cylcignore")
+    cylcignore_file = Path(src).joinpath('.cylcignore')
+    if cylcignore_file.exists():
+        rsync_cmd.append(f"--exclude-from={cylcignore_file}")
     rsync_cmd.append(f"{src}/")
     rsync_cmd.append(f"{dst}/")
 
