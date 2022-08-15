@@ -338,8 +338,8 @@ def validate(run_dir):
         reg - The flow to validate
         kwargs - Arguments to pass to ValidateOptions
     """
-    def _validate(reg: str, **kwargs) -> None:
-        WorkflowConfig(
+    def _validate(reg: str, **kwargs) -> WorkflowConfig:
+        return WorkflowConfig(
             reg,
             str(Path(run_dir, reg, 'flow.cylc')),
             ValidateOptions(**kwargs)
