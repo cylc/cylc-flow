@@ -75,7 +75,7 @@ def example_namespace_graph():
 
 @pytest.fixture
 def null_config(monkeypatch):
-    """Path the config loader to return a workflow with no nodes or edges."""
+    """Patch the config loader to return a workflow with no nodes or edges."""
     def _get_graph_raw(*args, **kwargs):
         return None
 
