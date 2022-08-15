@@ -38,6 +38,9 @@ Maintenance release.
 [#5045](https://github.com/cylc/cylc-flow/pull/5045) -
 Fix issue where unsatisfied xtriggers could be wiped on reload.
 
+[#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
+.cylcignore only found if `cylc install` is run in source directory.
+
 [#5031](https://github.com/cylc/cylc-flow/pull/5031) - Fix bug where
 specifying multiple datetime offsets (e.g. `final cycle point = +P1M-P1D`)
 would not obey the given order.
