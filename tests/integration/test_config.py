@@ -99,3 +99,186 @@ def test_validate_implicit_task_name(
     assert str(exc_ctx.value).splitlines()[0] == (
         f'invalid task name "{task_name}"'
     )
+
+
+@pytest.mark.parametrize(
+    'env_var,valid', [
+        ('foo', True),
+        ('FOO', True),
+        ('+foo', False),
+    ]
+)
+def test_validate_env_vars(flow, one_conf, validate, env_var, valid):
+    """It should validate environment variable names."""
+    reg = flow({
+        **one_conf,
+        'runtime': {
+            'foo': {
+                'environment': {
+                    env_var: 'value'
+                }
+            }
+        }
+    })
+    if valid:
+        validate(reg)
+    else:
+        with pytest.raises(WorkflowConfigError) as exc_ctx:
+            validate(reg)
+        assert env_var in str(exc_ctx.value)
+
+
+@pytest.mark.parametrize(
+    'env_val', [
+        '%(x)s',  # valid template but no such parameter x
+        '%(a)123',  # invalid template
+    ]
+)
+def test_validate_param_env_templ(
+    flow,
+    one_conf,
+    validate,
+    env_val,
+    caplog,
+    log_filter,
+):
+    """It should validate parameter environment templates."""
+    reg = flow({
+        **one_conf,
+        'runtime': {
+            'foo': {
+                'environment': {
+                    'foo': env_val
+                }
+            }
+        }
+    })
+    validate(reg)
+    assert log_filter(caplog, contains='bad parameter environment template')
+    assert log_filter(caplog, contains=env_val)
+
+
+def test_no_graph(flow, validate):
+    """It should fail for missing graph sections."""
+    reg = flow({
+        'scheduling': {},
+    })
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(reg)
+    assert 'missing [scheduling][[graph]] section.' in str(exc_ctx.value)
+
+
+def test_parameter_templates_setting(flow, one_conf, validate):
+    """It should fail if [task parameter]templates is a setting.
+
+    It should be a section.
+    """
+    reg = flow({
+        **one_conf,
+        'task parameters': {
+            'templates': 'foo'
+        }
+    })
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(reg)
+    assert '[templates] is a section' in str(exc_ctx.value)
+
+
+@pytest.mark.parametrize(
+    'section', [
+        'external-trigger',
+        'clock-trigger',
+        'clock-expire',
+    ]
+)
+def test_parse_special_tasks_invalid(flow, validate, section):
+    """It should fail for invalid "special tasks"."""
+    reg = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+        },
+        'scheduling': {
+            'initial cycle point': 'now',
+            'special tasks': {
+                section: 'foo (',  # missing closing bracket
+            },
+            'graph': {
+                'R1': 'foo',
+            },
+        }
+    })
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(reg)
+    assert f'Illegal {section} spec' in str(exc_ctx.value)
+    assert 'foo' in str(exc_ctx.value)
+
+
+def test_parse_special_tasks_interval(flow, validate):
+    """It should fail for invalid durations in clock-triggers."""
+    reg = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+        },
+        'scheduling': {
+            'initial cycle point': 'now',
+            'special tasks': {
+                'clock-trigger': 'foo(PT1Y)',  # invalid ISO8601 duration
+            },
+            'graph': {
+                'R1': 'foo'
+            }
+        }
+    })
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(reg)
+    assert 'Illegal clock-trigger spec' in str(exc_ctx.value)
+    assert 'PT1Y' in str(exc_ctx.value)
+
+
+@pytest.mark.parametrize(
+    'section', [
+        'external-trigger',
+        'clock-trigger',
+        'clock-expire',
+    ]
+)
+def test_parse_special_tasks_families(flow, scheduler, validate, section):
+    """It should expand families in special tasks."""
+    reg = flow({
+        'scheduling': {
+            'initial cycle point': 'now',
+            'special tasks': {
+                section: 'FOO(P1D)',
+            },
+            'graph': {
+                'R1': 'foo & foot',
+            }
+        },
+        'runtime': {
+            # family
+            'FOO': {},
+            # nested family
+            'FOOT': {
+                'inherit': 'FOO',
+            },
+            'foo': {
+                'inherit': 'FOO',
+            },
+            'foot': {
+                'inherit': 'FOOT',
+            },
+        }
+    })
+    if section == 'external-trigger':
+        # external triggers cannot be used for multiple tasks so if family
+        # expansion is completed correctly, validation should fail
+        with pytest.raises(WorkflowConfigError) as exc_ctx:
+            config = validate(reg)
+        assert 'external triggers must be used only once' in str(exc_ctx.value)
+    else:
+        config = validate(reg)
+        assert config.cfg['scheduling']['special tasks'][section] == [
+            # the family FOO has been expanded to the tasks foo, foot
+            'foo(P1D)',
+            'foot(P1D)'
+        ]

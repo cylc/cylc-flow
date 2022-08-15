@@ -124,7 +124,7 @@ MODES = {
 BUFSIZE = 1024 * 1024
 
 
-def colorise_cat_log(cat_proc, color=False):
+def colorise_cat_log(cat_proc, color=False, stdout=None):
     """Print a Cylc log file in color at it would appear in the terminal.
 
     Args:
@@ -133,6 +133,8 @@ def colorise_cat_log(cat_proc, color=False):
         color (bool):
             If `True` log will appear in color, if `False` no control
             characters will be added.
+        stdout:
+            Set the stdout argument of "Popen" if "color=True".
 
     """
     if color:
@@ -146,9 +148,10 @@ def colorise_cat_log(cat_proc, color=False):
                 ]),
                 # * there is no untrusted input, everything is hardcoded
             ],
-            stdin=PIPE
+            stdin=PIPE,
+            stdout=stdout,
         )
-        color_proc.communicate(cat_proc.communicate()[0])
+        return color_proc.communicate(cat_proc.communicate()[0])
     else:
         cat_proc.wait()
 

@@ -309,6 +309,10 @@ class IntervalParsingError(CyclingError):
             self, 'Incompatible value for {0}: {1}'.format(*args))
 
 
+class SequenceParsingError(CyclingError):
+    """Error on parsing an invalid sequence."""
+
+
 class SequenceDegenerateError(CyclingError):
     """An error raised when adjacent points on a sequence are equal."""
 
