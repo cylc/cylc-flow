@@ -95,7 +95,6 @@ def get_option_parser() -> COP:
         __doc__,
         comms=True,
         argdoc=[
-            # TODO
             COP.optional(WORKFLOW_ID_ARG_DOC),
             COP.optional(
                 ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM')
@@ -129,10 +128,15 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         # (As of Dec 2020 some functional tests still use the classic
         # two arg interface)
         workflow_id = os.getenv('CYLC_WORKFLOW_ID')
-        task_job = os.getenv('CYLC_TASK_JOB')
+        job_id = os.getenv('CYLC_TASK_JOB')
+        if not workflow_id or not job_id:
+            raise InputError(
+                "Must set $CYLC_WORKFLOW_ID and $CYLC_TASK_JOB if not "
+                "specified as arguments"
+            )
         message_strs = list(args)
     else:
-        workflow_id, task_job, *message_strs = args
+        workflow_id, job_id, *message_strs = args
         workflow_id, *_ = parse_id(
             workflow_id,
             constraint='workflows',
@@ -171,4 +175,4 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(workflow_id, task_job, messages)
+    record_messages(workflow_id, job_id, messages)

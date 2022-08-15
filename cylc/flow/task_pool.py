@@ -20,7 +20,10 @@ from contextlib import suppress
 from collections import Counter
 import json
 from time import time
-from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
+from typing import (
+    Dict, Iterable, List, Optional,
+    Set, TYPE_CHECKING, Tuple
+)
 import logging
 
 import cylc.flow.flags
@@ -30,6 +33,7 @@ from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -62,6 +66,7 @@ from cylc.flow.task_queues.independent import IndepQueueManager
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
 
 if TYPE_CHECKING:
+    from queue import Queue
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
@@ -1622,7 +1627,7 @@ class TaskPool:
 
         return len(unmatched)
 
-    def sim_time_check(self, message_queue):
+    def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
         """Simulation mode: simulate task run times and set states."""
         if not self.config.run_mode('simulation'):
             return False
@@ -1644,13 +1649,17 @@ class TaskPool:
                         (itask.get_try_num() == 1 or
                          not conf['fail try 1 only'])):
                     message_queue.put(
-                        (job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED))
+                        TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
+                    )
                 else:
                     # Simulate message outputs.
                     for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put((job_d, now_str, 'INFO', msg))
+                        message_queue.put(
+                            TaskMsg(job_d, now_str, 'INFO', msg)
+                        )
                     message_queue.put(
-                        (job_d, now_str, 'INFO', TASK_STATUS_SUCCEEDED))
+                        TaskMsg(job_d, now_str, 'INFO', TASK_STATUS_SUCCEEDED)
+                    )
                 sim_task_state_changed = True
         return sim_task_state_changed
 
