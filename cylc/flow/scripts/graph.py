@@ -184,11 +184,9 @@ def _get_inheritance_nodes_and_edges(
 ) -> Tuple[List[Node], List[Edge]]:
     """Return nodes and edges for an inheritance graph."""
     nodes = set()
-    for namespace in config.get_parent_lists():
-        nodes.add(namespace)
-
     edges = set()
     for namespace, tasks in config.get_parent_lists().items():
+        nodes.add(namespace)
         for task in tasks:
             edges.add((task, namespace))
             nodes.add(task)

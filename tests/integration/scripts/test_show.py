@@ -123,7 +123,6 @@ async def test_task_meta_query(mod_my_schd, capsys):
     # plain output
     ret = await show(
         mod_my_schd.workflow,
-        # [Tokens(cycle='1', task='foo')],
         None,
         opts,
     )
