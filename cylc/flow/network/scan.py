@@ -253,7 +253,12 @@ async def scan(
             return_when=asyncio.FIRST_COMPLETED
         )
         for task in done:
-            path, depth, contents = task.result()
+            try:
+                path, depth, contents = task.result()
+            except FileNotFoundError:
+                # directory has been removed since the scan was scheduled
+                running.remove(task)
+                continue
             running.remove(task)
             is_flow = dir_is_flow(contents)
             if is_flow:
