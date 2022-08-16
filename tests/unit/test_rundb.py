@@ -122,7 +122,8 @@ def test_remove_columns():
         dao = CylcWorkflowDAO(temp_db)
         dao.remove_columns('foo', ['bar', 'baz'])
 
-        conn = dao.connect()
+        dao.connect()
+        conn = dao.con
         data = list(conn.execute(r'SELECT * from foo'))
         assert data == [('PUB',)]
 

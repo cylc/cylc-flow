@@ -324,7 +324,8 @@ class CylcWorkflowDAO:
         """
         self.db_file_name = expandvars(db_file_name)
         self.is_public = is_public
-        self.conn = None
+        self.con = None  # connection
+        self.cur = None  # cursor
         self.n_tries = 0
 
         self.tables = {}
@@ -368,18 +369,20 @@ class CylcWorkflowDAO:
 
     def close(self) -> None:
         """Explicitly close the connection."""
-        if self.conn is not None:
+        if self.con is not None:
             try:
-                self.conn.close()
+                self.con.close()
             except sqlite3.Error as exc:
                 LOG.debug(f"Error closing connection to DB: {exc}")
-            self.conn = None
+            self.con = None
+            self.cur = None
 
     def connect(self) -> sqlite3.Connection:
         """Connect to the database."""
-        if self.conn is None:
-            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
-        return self.conn
+        if self.con is None:
+            self.con = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+            self.cur = self.con.cursor()
+        return self.cur
 
     def create_tables(self):
         """Create tables."""
@@ -391,9 +394,9 @@ class CylcWorkflowDAO:
         cur = None
         for name, table in self.tables.items():
             if name not in names:
-                cur = self.conn.execute(table.get_create_stmt())
+                cur = self.cur.execute(table.get_create_stmt())
         if cur is not None:
-            self.conn.commit()
+            self.con.commit()
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
@@ -424,9 +427,9 @@ class CylcWorkflowDAO:
             for stmt, stmt_args in sql_queue:
                 self._execute_stmt(stmt, stmt_args)
             # Connection should only be opened if we have executed something.
-            if self.conn is None:
+            if self.con is None:
                 return
-            self.conn.commit()
+            self.con.commit()
 
         # something went wrong
         # (includes DB file not found, transaction processing issue, db locked)
@@ -444,9 +447,9 @@ class CylcWorkflowDAO:
             LOG.warning(
                 "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
                     "file": self.db_file_name, "attempt": self.n_tries})
-            if self.conn is not None:
+            if self.con is not None:
                 with suppress(sqlite3.Error):
-                    self.conn.rollback()
+                    self.con.rollback()
             return
 
         else:
@@ -485,7 +488,7 @@ class CylcWorkflowDAO:
 
         try:
             self.connect()
-            self.conn.executemany(stmt, stmt_args_list)
+            self.cur.executemany(stmt, stmt_args_list)
         except sqlite3.Error:
             if not self.is_public:
                 raise
@@ -1022,10 +1025,10 @@ class CylcWorkflowDAO:
         return self.connect().execute("VACUUM")
 
     def remove_columns(self, table, to_drop):
-        conn = self.connect()
+        cur = self.connect()
 
         # get list of columns to keep
-        schema = conn.execute(
+        schema = cur.execute(
             rf'''
                 PRAGMA table_info({table})
             '''
@@ -1037,7 +1040,7 @@ class CylcWorkflowDAO:
         ]
 
         # copy table
-        conn.execute(
+        cur.execute(
             rf'''
                 CREATE TABLE {table}_new AS
                 SELECT {', '.join(new_cols)}
@@ -1046,14 +1049,14 @@ class CylcWorkflowDAO:
         )
 
         # remove original
-        conn.execute(
+        cur.execute(
             rf'''
                 DROP TABLE {table}
             '''
         )
 
         # copy table
-        conn.execute(
+        cur.execute(
             rf'''
                 CREATE TABLE {table} AS
                 SELECT {', '.join(new_cols)}
@@ -1062,4 +1065,4 @@ class CylcWorkflowDAO:
         )
 
         # done
-        conn.commit()
+        self.con.commit()
