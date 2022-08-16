@@ -16,6 +16,7 @@
 """Client for workflow runtime API."""
 
 from functools import partial
+import json
 import os
 from shutil import which
 import socket
@@ -34,9 +35,8 @@ from cylc.flow.exceptions import (
     WorkflowStopped,
 )
 from cylc.flow.network import (
-    encode_,
-    decode_,
     get_location,
+    ResponseTuple,
     ZMQSocketBase
 )
 from cylc.flow.network.client_factory import CommsMeth
@@ -165,7 +165,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         args: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
         req_meta: Optional[Dict[str, Any]] = None
-    ) -> object:
+    ) -> Union[bytes, object]:
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -187,12 +187,12 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         if req_meta:
             msg['meta'].update(req_meta)
         LOG.debug('zmq:send %s', msg)
-        message = encode_(msg)
+        message = json.dumps(msg)
         self.socket.send_string(message)
 
         # receive response
         if self.poller.poll(timeout):
-            res = await self.socket.recv()
+            res: bytes = await self.socket.recv()
         else:
             if callable(self.timeout_handler):
                 self.timeout_handler()
@@ -204,24 +204,20 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                 ' This could be due to network or server issues.'
                 ' Check the workflow log.'
             )
+        LOG.debug('zmq:recv %s', res)
 
-        if msg['command'] in PB_METHOD_MAP:
-            response = {'data': res}
-        else:
-            response = decode_(res.decode())
-        LOG.debug('zmq:recv %s', response)
+        if command in PB_METHOD_MAP:
+            return res
 
-        try:
-            return response['data']
-        except KeyError:
-            error = response.get(
-                'error',
-                {'message': f'Received invalid response: {response}'},
-            )
-            raise ClientError(
-                error.get('message'),
-                error.get('traceback'),
-            )
+        response = ResponseTuple(  # type: ignore[misc]
+            *json.loads(res.decode())
+        )
+
+        if response.content is not None:
+            return response.content
+        if response.err:
+            raise ClientError(*response.err)
+        raise ClientError("No response from server. Check the workflow log.")
 
     def serial_request(
         self,
@@ -229,7 +225,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         args: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
         req_meta: Optional[Dict[str, Any]] = None
-    ) -> object:
+    ) -> Union[bytes, object]:
         """Send a request.
 
         For convenience use ``__call__`` to call this method.

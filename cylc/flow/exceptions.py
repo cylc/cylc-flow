@@ -254,9 +254,15 @@ class XtriggerConfigError(WorkflowConfigError):
 
 class ClientError(CylcError):
 
-    def __init__(self, message: str, traceback: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        traceback: Optional[str] = None,
+        workflow: Optional[str] = None
+    ):
         self.message = message
         self.traceback = traceback
+        self.workflow = workflow
 
     def __str__(self) -> str:
         ret = self.message
@@ -277,7 +283,13 @@ class WorkflowStopped(ClientError):
 
 
 class ClientTimeout(CylcError):
-    pass
+
+    def __init__(self, message: str, workflow: Optional[str] = None):
+        self.message = message
+        self.workflow = workflow
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class CyclingError(CylcError):

@@ -21,7 +21,7 @@ GraphQL Middleware defined here also.
 
 from functools import partial
 import logging
-from typing import TYPE_CHECKING, Any, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Union
 
 from inspect import isclass, iscoroutinefunction
 
@@ -29,6 +29,7 @@ from graphene.utils.str_converters import to_snake_case
 from graphql.execution.utils import (
     get_operation_root_type, get_field_def
 )
+from graphql.execution import ExecutionResult
 from graphql.execution.values import get_argument_values, get_variable_values
 from graphql.language.base import parse, print_ast
 from graphql.language import ast
@@ -42,7 +43,6 @@ from rx import Observable
 from cylc.flow.network.schema import NODE_MAP, get_type_str
 
 if TYPE_CHECKING:
-    from graphql.execution import ExecutionResult
     from graphql.language.ast import Document
     from graphql.type import GraphQLSchema
 
@@ -144,6 +144,14 @@ def null_stripper(exe_result):
     if not exe_result.errors:
         return attr_strip_null(exe_result)
     return exe_result
+
+
+def format_execution_result(
+    result: Union[ExecutionResult, Dict[str, Any]]
+) -> Dict[str, Any]:
+    if isinstance(result, ExecutionResult):
+        result = result.to_dict()
+    return strip_null(result)
 
 
 class AstDocArguments:
@@ -254,7 +262,7 @@ def execute_and_validate_and_strip(
     document_ast: 'Document',
     *args: Any,
     **kwargs: Any
-) -> Union['ExecutionResult', Observable]:
+) -> Union[ExecutionResult, Observable]:
     """Wrapper around graphql ``execute_and_validate()`` that adds
     null stripping."""
     result = execute_and_validate(schema, document_ast, *args, **kwargs)

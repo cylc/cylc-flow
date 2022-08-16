@@ -50,6 +50,7 @@ from pathlib import Path
 import re
 from typing import AsyncGenerator, Dict, Iterable, List, Optional, Tuple, Union
 
+from graphql.execution import ExecutionResult
 from pkg_resources import (
     parse_requirements,
     parse_version
@@ -425,7 +426,9 @@ def format_query(fields, filters=None):
 
 
 @pipe(preproc=format_query)
-async def graphql_query(flow, fields, filters=None):
+async def graphql_query(
+    flow: dict, fields: Iterable[str], filters: Optional[list] = None
+) -> Union[bool, dict]:
     """Obtain information from a GraphQL request to the flow.
 
     Requires:
@@ -433,9 +436,9 @@ async def graphql_query(flow, fields, filters=None):
         * contact_info
 
     Args:
-        flow (dict):
+        flow:
             Flow information dictionary, provided by scan through the pipe.
-        fields (iterable):
+        fields:
             Iterable containing the fields to request e.g::
 
                ['id', 'name']
@@ -443,7 +446,7 @@ async def graphql_query(flow, fields, filters=None):
             One level of nesting is supported e.g::
 
                {'name': None, 'meta': ['title']}
-        filters (list):
+        filters:
             Filter by the data returned from the query.
             List in the form ``[(key, ...), value]``, e.g::
 
@@ -466,7 +469,8 @@ async def graphql_query(flow, fields, filters=None):
         LOG.warning(f'Workflow not running: {flow["name"]}')
         return False
     try:
-        ret = await client.async_request(
+        ret: dict = await client.async_request(  # type: ignore[assignment]
+            # (graphql request gives dict)
             'graphql',
             {
                 'request_string': query,
@@ -484,13 +488,20 @@ async def graphql_query(flow, fields, filters=None):
         LOG.exception(exc)
         return False
     else:
+        response = ExecutionResult(**ret)
         # stick the result into the flow object
-        for item in ret:
-            if 'error' in item:
-                LOG.exception(item['error']['message'])
-                return False
-            for workflow in ret.get('workflows', []):
-                flow.update(workflow)
+        if not response.data:
+            if response.errors:
+                LOG.error("Scan error(s)")
+                for err in response.errors:
+                    LOG.error(err)
+            else:
+                LOG.exception("Scan error: empty response")
+            return False
+        for workflow in response.data.get('workflows', []):
+            flow.update(workflow)
+            # TODO: what if no items in workflows list, will this cause
+            # KeyError below when trying to access flow[field_]?
 
         # process filters
         for field, value in filters or []:

@@ -45,6 +45,7 @@ from cylc.flow.data_store_mgr import (
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
+    GenericResponse,
     NodesEdges,
     PROXY_NODES,
     SUB_RESOLVERS,
@@ -334,9 +335,17 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_workflows(self, args):
         """Return workflow elements."""
         return sort_elements(
-            [flow[WORKFLOW]
-             for flow in await self.get_workflows_data(args)],
-            args)
+            [workflow[WORKFLOW]
+             for workflow in await self.get_workflows_data(args)],
+            args
+        )
+
+    async def get_workflow_ids(self, w_args: Dict[str, Any]) -> List[str]:
+        """Return workflow ids for matching workflows in the data store."""
+        return [
+            workflow[WORKFLOW].id
+            for workflow in await self.get_workflows_data(w_args)
+        ]
 
     # nodes
     def get_node_state(self, node, node_type):
@@ -621,6 +630,13 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 sub_id, w_id = context['ops_queue'][op_id].get(False)
                 self.delta_processing_flows[sub_id].remove(w_id)
 
+    @property
+    def _no_matching_workflows_response(self) -> GenericResponse:
+        workflows = list(self.data_store_mgr.data.keys())
+        return GenericResponse(
+            success=False, message=f'No matching workflow in {workflows}'
+        )
+
     @abstractmethod
     async def mutator(
         self,
@@ -629,7 +645,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
         meta: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GenericResponse]:
+        """Method for mutating workflow."""
         ...
 
 
@@ -650,42 +667,39 @@ class Resolvers(BaseResolvers):
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
         meta: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GenericResponse]:
         """Mutate workflow."""
-        w_ids = [flow[WORKFLOW].id
-                 for flow in await self.get_workflows_data(w_args)]
+        w_ids = await self.get_workflow_ids(w_args)
         if not w_ids:
-            workflows = list(self.data_store_mgr.data.keys())
-            return [{
-                'response': (False, f'No matching workflow in {workflows}')}]
+            return [self._no_matching_workflows_response]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, kwargs, meta)
-        if result is None:
-            result = (True, 'Command queued')
-        return [{'id': w_id, 'response': result}]
+        return [GenericResponse(w_id, *result)]
 
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
-    ) -> Optional[Tuple[bool, str]]:
+    ) -> Tuple[bool, str]:
         """Map between GraphQL resolvers and internal command interface."""
+        result: Optional[Tuple[bool, str]] = None
         method = getattr(self, command, None)
         if method is not None:
-            return method(**kwargs)
-        try:
-            self.schd.get_command_method(command)
-        except AttributeError:
-            raise ValueError(f"Command '{command}' not found")
-        if command != "put_messages":
-            log_msg = f"[command] {command}"
-            user = meta.get('auth_user', self.schd.owner)
-            if user != self.schd.owner:
-                log_msg += (f" (issued by {user})")
-            LOG.info(log_msg)
-        self.schd.queue_command(
-            command,
-            kwargs
-        )
-        return None
+            result = method(**kwargs)
+        else:
+            try:
+                self.schd.get_command_method(command)
+            except AttributeError:
+                raise ValueError(f"Command '{command}' not found")
+            if command != "put_messages":
+                log_msg = f"[command] {command}"
+                user = meta.get('auth_user', self.schd.owner)
+                if user != self.schd.owner:
+                    log_msg += (f" (issued by {user})")
+                LOG.info(log_msg)
+            self.schd.queue_command(
+                command,
+                kwargs
+            )
+        return result or (True, "Command queued")
 
     def broadcast(
             self,
