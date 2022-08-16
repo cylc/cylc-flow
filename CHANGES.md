@@ -52,6 +52,9 @@ workflow restart number would get wiped on reload.
 [#5049](https://github.com/cylc/cylc-flow/pull/5049) - Fix several small
 bugs related to auto restart.
 
+[#5062](https://github.com/cylc/cylc-flow/pull/5062) - Fix bug where preparing
+tasks could sometimes get orphaned when an auto restart occurred.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 
