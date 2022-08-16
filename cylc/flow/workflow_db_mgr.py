@@ -680,16 +680,10 @@ class WorkflowDatabaseManager:
         """Check & vacuum the runtime DB for a restart.
 
         Increments the restart number in the DB. Sets self.n_restart.
-
-        Raises ServiceFileError if DB is incompatible.
         """
         if self.n_restart != 0:
             # This will not raise unless the method is mistakenly called twice
             raise RuntimeError("restart check must only happen once")
-        try:
-            self.check_workflow_db_compatibility()
-        except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot restart - {exc}")
         with self.get_pri_dao() as pri_dao:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
@@ -759,3 +753,4 @@ class WorkflowDatabaseManager:
                 )
             if last_run_ver < parse_version("8.0.3.dev"):
                 self.upgrade_pre_803(pri_dao)
+        return last_run_ver
