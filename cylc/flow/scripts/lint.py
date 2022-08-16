@@ -458,6 +458,7 @@ def get_option_parser() -> COP:
         action='append',
         default=[],
         dest='ignores',
+        metavar="CODE",
         choices=tuple([f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()])
     )
 
