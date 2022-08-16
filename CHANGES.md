@@ -37,6 +37,10 @@ ones in. -->
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
 
+[#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
+numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
+using `--ignore <Issue Code>`.
+
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
