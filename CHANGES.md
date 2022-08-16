@@ -43,11 +43,14 @@ using `--ignore <Issue Code>`.
 
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.1 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
 
 Maintenance release.
 
 ### Fixes
+
+[#5045](https://github.com/cylc/cylc-flow/pull/5045) -
+Fix issue where unsatisfied xtriggers could be wiped on reload.
 
 [#5031](https://github.com/cylc/cylc-flow/pull/5031) - Fix bug where
 specifying multiple datetime offsets (e.g. `final cycle point = +P1M-P1D`)
@@ -65,6 +68,9 @@ workflow restart number would get wiped on reload.
 
 [#5049](https://github.com/cylc/cylc-flow/pull/5049) - Fix several small
 bugs related to auto restart.
+
+[#5062](https://github.com/cylc/cylc-flow/pull/5062) - Fix bug where preparing
+tasks could sometimes get orphaned when an auto restart occurred.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
