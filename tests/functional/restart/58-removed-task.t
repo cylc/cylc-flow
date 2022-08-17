@@ -22,36 +22,27 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 9
+set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="INCL_B_C=True" "${WORKFLOW_NAME}"
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="INCL_B_C=False" "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate --set="INCL_B_C=True" "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate --set="INCL_B_C=False" "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_fail "${TEST_NAME}" \
-    cylc play --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play -n "${WORKFLOW_NAME}"
 
-# Start: should shut down on stall.
-grep_workflow_log_ok "grep-1" "CRITICAL - Workflow stalled"
-
+# Restart with removed tasks should not cause an error.
+# It should shut down cleanly after orphaned task a and incomplete failed task
+# b are polled (even though b has been removed from the graph) and a finishes
+# (after checking the poll results).
 TEST_NAME="${TEST_NAME_BASE}-restart"
-workflow_run_fail "${TEST_NAME}" \
-    cylc play --set="INCL_B_C=False" --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --set="INCL_B_C=False" -n "${WORKFLOW_NAME}"
 
-# Retart: should shut down on stall.
-grep_workflow_log_ok "grep-2" "CRITICAL - Workflow stalled"
-
-# Incomplete failed tasks a and b should be polled.
-# (Even though b has been removed from the graph).
-grep_workflow_log_ok "grep-3" "\[1/a failed job:01 flows:1\] (polled)failed"
+grep_workflow_log_ok "grep-3" "\[1/a running job:01 flows:1\] (polled)started"
 grep_workflow_log_ok "grep-4" "\[1/b failed job:01 flows:1\] (polled)failed"
 
-# Failed task c should not be polled (not incomplete).
-grep_fail "\[1/c failed job:01 flows:1\] (polled)failed" \
-    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
+# Failed (but not incomplete) task c should not have been polled.
+grep_fail "\[1/c failed job:01 flows:1\] (polled)failed" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
