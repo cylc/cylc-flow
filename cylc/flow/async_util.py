@@ -398,10 +398,13 @@ async_listdir = wrap(os.listdir)
 
 async def scandir(path: Union[Path, str]) -> List[Path]:
     """Asynchronous directory listing (performs os.listdir in an executor)."""
-    return [
-        Path(path, sub_path)
-        for sub_path in await async_listdir(path)
-    ]
+    try:
+        return [
+            Path(path, sub_path)
+            for sub_path in await async_listdir(path)
+        ]
+    except FileNotFoundError:
+        return []
 
 
 async def asyncqgen(queue):
