@@ -46,7 +46,7 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.0.2.dev'
+__version__ = '8.1.0.dev'
 
 
 def iter_entry_points(entry_point_name):
