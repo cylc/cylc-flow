@@ -16,9 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-GitHub #5067: if a task is removed from the graph after shutdown, it should not
-cause an error at restart. If it was a failed incomplete task, however, it
-should still be polled and logged at restart.
+# GitHub 5067: if a task is removed from the graph after shutdown, it should not
+# cause an error at restart. If it was a failed incomplete task, however, it
+# should still be polled and logged at restart.
 
 . "$(dirname "$0")/test_header"
 
