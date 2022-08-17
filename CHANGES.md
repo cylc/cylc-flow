@@ -23,6 +23,9 @@ ones in. -->
 numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
 using `--ignore <Issue Code>`.
 
+[#5081](https://github.com/cylc/cylc-flow/pull/5081) - Reduced amount that
+gets logged at "INFO" level in scheduler logs.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Upcoming</span>)__
 
