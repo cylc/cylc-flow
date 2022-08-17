@@ -1562,10 +1562,18 @@ class TaskPool:
                     LOG.info(f"[{itask}] Forced spawning on {out}")
                     self.spawn_on_output(itask, out, forced=True)
 
-    def _get_active_flow_nums(self):
+    def _get_active_flow_nums(self) -> Set[int]:
+        """Return all active, or all previous, flow numbers.
+
+        If there are any active flows, return all active flow numbers. If there
+        are no active flows (e.g. on restarting a completed workflow) return
+        all previous flow numbers.
+        """
         fnums = set()
         for itask in self.get_all_tasks():
             fnums.update(itask.flow_nums)
+        if not fnums:
+            fnums = self.workflow_db_mgr.pri_dao.select_all_flow_nums()
         return fnums
 
     def remove_tasks(self, items):
