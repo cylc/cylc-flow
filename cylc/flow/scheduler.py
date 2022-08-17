@@ -842,7 +842,7 @@ class Scheduler:
         qsize = self.command_queue.qsize()
         if qsize <= 0:
             return
-        LOG.info(f"Processing {qsize} queued command(s)")
+        LOG.debug(f"Processing {qsize} queued command(s)")
         while True:
             try:
                 command = self.command_queue.get(False)
@@ -858,9 +858,6 @@ class Scheduler:
             try:
                 n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)
-            except SchedulerStop:
-                LOG.info(f"Command succeeded: {cmdstr}")
-                raise
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (

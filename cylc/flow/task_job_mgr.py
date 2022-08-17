@@ -438,7 +438,7 @@ class TaskJobManager:
             done_tasks.extend(itasks)
             for itask in itasks:
                 # Log and persist
-                LOG.info(f"[{itask}] host={host}")
+                LOG.debug(f"[{itask}] host={host}")
                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
@@ -851,16 +851,20 @@ class TaskJobManager:
             log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
         flag = self.task_events_mgr.FLAG_POLLED
+        # Only log at INFO level if manually polling
+        log_lvl = DEBUG if (
+            itask.platform.get('communication method') == 'poll'
+        ) else INFO
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
+                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
+                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
             self.task_events_mgr.process_message(
-                itask, INFO, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
+                itask, log_lvl, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
@@ -868,30 +872,30 @@ class TaskJobManager:
             # Some job runners may restart a job in this state, so don't
             # mark as failed yet.
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
+                itask, log_lvl, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
         elif jp_ctx.run_status == 0:
             # The job succeeded
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUCCEEDED, jp_ctx.time_run_exit,
+                itask, log_lvl, TASK_OUTPUT_SUCCEEDED, jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.time_run and jp_ctx.job_runner_exit_polled == 1:
             # The job has terminated without executing the error trap
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, get_current_time_string(),
+                itask, log_lvl, TASK_OUTPUT_FAILED, get_current_time_string(),
                 flag)
         elif jp_ctx.time_run:
             # The job has started, and is still managed by job runner
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
+                itask, log_lvl, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
         elif jp_ctx.job_runner_exit_polled == 1:
             # The job never ran, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
+                itask, log_lvl, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 jp_ctx.time_submit_exit, flag)
         else:
             # The job never ran, and is in job runner
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
+                itask, log_lvl, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
                 flag)
 
     def _poll_task_job_message_callback(self, workflow, itask, cmd_ctx, line):
@@ -1079,7 +1083,7 @@ class TaskJobManager:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] and ctx.ret_code == 0:
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
+                itask, DEBUG, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
         else:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,

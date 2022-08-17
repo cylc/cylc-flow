@@ -28,7 +28,7 @@ This module provides logic to:
 from contextlib import suppress
 from collections import namedtuple
 from enum import Enum
-from logging import getLevelName, INFO, DEBUG
+from logging import DEBUG, INFO, getLevelName
 import os
 from shlex import quote
 import shlex
@@ -807,10 +807,15 @@ class TaskEventsManager():
                 )
             return False
 
-        LOG.log(
-            LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{timestamp}"
-        )
+        severity = cast(int, LOG_LEVELS.get(severity, INFO))
+        # Demote log level to DEBUG if this is a message that duplicates what
+        # gets logged by itask state change anyway (and not manual poll)
+        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
+            self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
+            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+        }:
+            severity = DEBUG
+        LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(self, itask, event, message):

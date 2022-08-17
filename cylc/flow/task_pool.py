@@ -400,7 +400,7 @@ class TaskPool:
         if self.stop_point and limit_point > self.stop_point:
             limit_point = self.stop_point
             LOG.debug(f"{pre_adj_limit} -> {limit_point} (stop point)")
-        LOG.info(f"Runahead limit: {limit_point}")
+        LOG.debug(f"Runahead limit: {limit_point}")
 
         self.runahead_limit_point = limit_point
         return True
@@ -1655,10 +1655,10 @@ class TaskPool:
                     # Simulate message outputs.
                     for msg in itask.tdef.rtconfig['outputs'].values():
                         message_queue.put(
-                            TaskMsg(job_d, now_str, 'INFO', msg)
+                            TaskMsg(job_d, now_str, 'DEBUG', msg)
                         )
                     message_queue.put(
-                        TaskMsg(job_d, now_str, 'INFO', TASK_STATUS_SUCCEEDED)
+                        TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
                     )
                 sim_task_state_changed = True
         return sim_task_state_changed
