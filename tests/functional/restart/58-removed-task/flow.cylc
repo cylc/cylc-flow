@@ -1,0 +1,18 @@
+#!Jinja2
+
+{% set INCL_B_C = INCL_B_C | default(True) %}
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    [[graph]]
+        R1 = """
+            a
+    {% if INCL_B_C %}
+	    b & c?
+    {% endif %}
+        """
+[runtime]
+    [[a, b, c]]
+       script = "false"
