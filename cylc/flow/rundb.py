@@ -18,6 +18,7 @@
 from contextlib import suppress
 from dataclasses import dataclass
 from os.path import expandvars
+from pprint import pformat
 import sqlite3
 import traceback
 from typing import List, Tuple
@@ -396,28 +397,48 @@ class CylcWorkflowDAO:
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
+        # determine the sql statements to execute
+        sql_queue = []  # (sql_statement, values)
+        for table in self.tables.values():
+            # DELETE statements may have varying number of WHERE args so we
+            # can only executemany for each identical template statement.
+            for stmt, stmt_args_list in table.delete_queues.items():
+                sql_queue.append((stmt, stmt_args_list))
+
+            # INSERT statements are uniform for each table, so all INSERT
+            # statements can be executed using a single "executemany" call.
+            if table.insert_queue:
+                sql_queue.append((
+                    table.get_insert_stmt(),
+                    table.insert_queue,
+                ))
+
+            # UPDATE statements can have varying number of SET and WHERE
+            # args so we can only executemany for each identical template
+            # statement.
+            for stmt, stmt_args_list in table.update_queues.items():
+                sql_queue.append((stmt, stmt_args_list))
+
+        # execute the statements and commit the transaction
         try:
-            for table in self.tables.values():
-                # DELETE statements may have varying number of WHERE args so we
-                # can only executemany for each identical template statement.
-                for stmt, stmt_args_list in table.delete_queues.items():
-                    self._execute_stmt(stmt, stmt_args_list)
-                # INSERT statements are uniform for each table, so all INSERT
-                # statements can be executed using a single "executemany" call.
-                if table.insert_queue:
-                    self._execute_stmt(
-                        table.get_insert_stmt(), table.insert_queue)
-                # UPDATE statements can have varying number of SET and WHERE
-                # args so we can only executemany for each identical template
-                # statement.
-                for stmt, stmt_args_list in table.update_queues.items():
-                    self._execute_stmt(stmt, stmt_args_list)
+            for stmt, stmt_args in sql_queue:
+                self._execute_stmt(stmt, stmt_args)
             # Connection should only be opened if we have executed something.
             if self.conn is None:
                 return
             self.conn.commit()
+
+        # something went wrong
+        # (includes DB file not found, transaction processing issue, db locked)
         except sqlite3.Error:
             if not self.is_public:
+                # incase this isn't a filesystem issue, log the statements
+                # which make up the transaction to assist debug
+                LOG.error(
+                    'An error occurred when writing to the database,'
+                    ' this is probably a filesystem issue.'
+                    f' The attempted transaction was:\n{pformat(sql_queue)}'
+                )
                 raise
             self.n_tries += 1
             LOG.warning(
@@ -427,6 +448,7 @@ class CylcWorkflowDAO:
                 with suppress(sqlite3.Error):
                     self.conn.rollback()
             return
+
         else:
             # Clear the queues
             for table in self.tables.values():
@@ -439,6 +461,7 @@ class CylcWorkflowDAO:
                     "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
+
         finally:
             # Note: This is not strictly necessary. But if the workflow run
             # directory is removed, a forced reconnection to the private
@@ -820,7 +843,8 @@ class CylcWorkflowDAO:
             LEFT OUTER JOIN
                 %(task_outputs)s
             ON  %(task_pool)s.cycle == %(task_outputs)s.cycle AND
-                %(task_pool)s.name == %(task_outputs)s.name
+                %(task_pool)s.name == %(task_outputs)s.name AND
+                %(task_pool)s.flow_nums == %(task_outputs)s.flow_nums
         """
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,

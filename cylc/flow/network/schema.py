@@ -1275,16 +1275,22 @@ class BroadcastMode(graphene.Enum):
         if self == BroadcastMode.Set:
             return 'Create a new broadcast.'
         if self == BroadcastMode.Clear:
-            return 'Revoke an existing broadcast.'
+            return (
+                'Clear existing broadcasts globally or for specified'
+                ' cycle points and namespaces if provided.'
+            )
         if self == BroadcastMode.Expire:
-            return 'Expire an existing broadcast.'
+            return (
+                'Clear all broadcasts for cycle points earlier than the'
+                ' provided cutoff.'
+            )
         return ''
 
 
 class BroadcastSetting(GenericScalar):
-    """A [runtime] key=value configuration for a namespace.
+    """A `[runtime]` configuration for a namespace.
 
-    Should be a key=value pair where sections are wrapped with square
+    Should be a `key=value` pair where sections are wrapped with square
     brackets.
 
     Examples:
@@ -1296,6 +1302,11 @@ class BroadcastSetting(GenericScalar):
         [section][subsection][subsubsection]=value
 
     """
+
+
+class BroadcastCyclePoint(graphene.String):
+    """A cycle point or `*`."""
+    # (broadcast supports either of those two but not cycle point globs)
 
 
 class TaskStatus(graphene.Enum):
@@ -1398,45 +1409,38 @@ class Flow(String):
 
 # Mutations:
 
-# TODO: re-instate:
-# - get-broadcast (can just use GraphQL query BUT needs CLI access too)
-# - expire-broadcast
-
 class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
-            Override or add new `[runtime]` configurations in a running
-            workflow.
+            Override `[runtime]` configurations in a running workflow.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
             environment variables.
 
-            A broadcast can target any [runtime] namespace for all cycles or
-            for a specific cycle. If a task is affected by specific-cycle and
-            all-cycle broadcasts at once, the specific takes precedence. If
-            a task is affected by broadcasts to multiple ancestor
-            namespaces, the result is determined by normal [runtime]
-            inheritance. In other words, it follows this order:
+            A broadcast can set/override any `[runtime]` configuration for all
+            cycles or for a specific cycle. If a task is affected by
+            specific-cycle and all-cycle broadcasts at the same time, the
+            specific takes precedence.
 
-            `all:root -> all:FAM -> all:task -> tag:root -> tag:FAM ->
-            tag:task`
+            Broadcasts can also target all tasks, specific tasks or families of
+            tasks. If a task is affected by broadcasts to multiple ancestor
+            namespaces (tasks it inherits from), the result is determined by
+            normal `[runtime]` inheritance.
 
-            Broadcasts persist, even across restarts, until they expire
-            when their target cycle point is older than the oldest current in
-            the workflow, or until they are explicitly cancelled with this
-            command.  All-cycle broadcasts do not expire.
+            Broadcasts are applied at the time of job submission.
 
-            For each task the final effect of all broadcasts to all namespaces
-            is computed on the fly just prior to job submission.  The
-            `--cancel` and `--clear` options simply cancel (remove) active
-            broadcasts, they do not act directly on the final task-level
-            result. Consequently, for example, you cannot broadcast to "all
-            cycles except Tn" with an all-cycle broadcast followed by a cancel
-            to Tn (there is no direct broadcast to Tn to cancel); and you
-            cannot broadcast to "all members of FAMILY except member_n" with a
-            general broadcast to FAMILY followed by a cancel to member_n (there
-            is no direct broadcast to member_n to cancel).
+            Broadcasts persist, even across restarts. Broadcasts made to
+            specific cycle points will expire when the cycle point is older
+            than the oldest active cycle point in the workflow.
+
+            Active broadcasts can be revoked using the "clear" mode.
+            Any broadcasts matching the specified cycle points and
+            namespaces will be revoked.
+
+            Note: a "clear" broadcast for a specific cycle or namespace does
+            *not* clear all-cycle or all-namespace broadcasts.
+
         ''')
         resolver = partial(mutator, command='broadcast')
 
@@ -1451,26 +1455,30 @@ class Broadcast(Mutation):
             required=True
         )
         cycle_points = graphene.List(
-            CyclePoint,
+            BroadcastCyclePoint,
             description=sstrip('''
-                List of cycle points to target or `*` to cancel all all-cycle
-                broadcasts without canceling all specific-cycle broadcasts.
+                List of cycle points to target (or `*` to cancel all all-cycle
+                broadcasts without canceling all specific-cycle broadcasts).
             '''),
             default_value=['*'])
         namespaces = graphene.List(
             NamespaceName,
-            description='Target namespaces.',
+            description='List of namespaces (tasks or families) to target.',
             default_value=['root']
         )
         settings = graphene.List(
             BroadcastSetting,
             description=sstrip('''
-                The cylc namespace for the setting to modify.
+                The `[runtime]` configuration to override with this broadcast
+                (e.g. `script = true` or `[environment]ANSWER=42`).
             '''),
             # e.g. `{environment: {variable_name: "value",. . .}. . .}`.
         )
         cutoff = CyclePoint(
-            description='Clear broadcasts earlier than cutoff cycle point.'
+            description=(
+                'Clear broadcasts earlier than cutoff cycle point.'
+                ' (for use with "Expire" mode).'
+            )
         )
 
         # TODO: work out how to implement this feature, it needs to be

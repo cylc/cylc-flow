@@ -20,7 +20,7 @@ import asyncio
 from functools import lru_cache
 from shlex import quote
 import sys
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
@@ -270,7 +270,7 @@ def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
     )
 
 
-def scheduler_cli(options: 'Values', workflow_id: str) -> None:
+def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     """Run the workflow.
 
     This function should contain all of the command line facing
@@ -281,11 +281,11 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     functionality.
 
     """
-    # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
+    # Parse workflow name but delay Cylc 7 suite.rc deprecation warning
     # until after the start-up splash is printed.
     # TODO: singleton
     (workflow_id,), _ = parse_ids(
-        workflow_id,
+        workflow_id_raw,
         constraint='workflows',
         max_workflows=1,
         # warn_depr=False,  # TODO
@@ -308,7 +308,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         sys.exit(0)
 
     # re-execute on another host if required
-    _distribute(options.host)
+    _distribute(options.host, workflow_id_raw, workflow_id)
 
     # print the start message
     if (
@@ -360,24 +360,39 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     sys.exit(ret)
 
 
-def _protect_remote_cmd_args(cmd: List[str]) -> List[str]:
-    """Protect command args from second shell interpretation.
+def _distribute(host, workflow_id_raw, workflow_id):
+    """Re-invoke this command on a different host if requested.
 
-    Escape quoting for --set="FOO='foo'" args.
-    (Separate function for unit testing.)
+    Args:
+        host:
+            The remote host to re-invoke on.
+        workflow_id_raw:
+            The workflow ID as it appears in the CLI arguments.
+        workflow_id:
+            The workflow ID after it has gone through the CLI.
+            This may be different (i.e. the run name may have been inferred).
+
     """
-    return [quote(c) for c in cmd]
-
-
-def _distribute(host):
-    """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
     if not host:
         host = select_workflow_host()[0]
     if is_remote_host(host):
-        cmd = _protect_remote_cmd_args(sys.argv[1:])
+        # Protect command args from second shell interpretation
+        cmd = list(map(quote, sys.argv[1:]))
+
+        # Ensure the whole workflow ID is used
+        if workflow_id_raw != workflow_id:
+            # The CLI can infer run names but when we re-invoke the command
+            # we would prefer it to use the full workflow ID to better
+            # support monitoring systems.
+            for ind, item in enumerate(cmd):
+                if item == workflow_id_raw:
+                    cmd[ind] = workflow_id
+
         # Prevent recursive host selection
         cmd.append("--host=localhost")
+
+        # Re-invoke the command
         _remote_cylc_cmd(cmd, host=host)
         sys.exit(0)
 

@@ -26,6 +26,8 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import (
     DIRECTIVES_DESCR,
     DIRECTIVES_ITEM_DESCR,
+    LOG_RETR_SETTINGS,
+    EVENTS_DESCR,
     EVENTS_SETTINGS,
     EXECUTION_POLL_DESCR,
     MAIL_DESCR,
@@ -59,15 +61,14 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
-# Cylc8 Deprecation note.
 REPLACED_BY_PLATFORMS = '''
-.. warning::
+.. deprecated:: 8.0.0
 
-   Deprecated section kept for compatibility with Cylc 7 workflow definitions.
-
-   This will be removed in a future version of Cylc 8.
-
-   Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
+   This is used to select a matching platform.
+   It will be removed in a future version of Cylc 8.
+   Please set a suitable platform in
+   :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
+   :ref:`See the migration guide <MajorChangesPlatforms>`.
 '''
 
 
@@ -214,11 +215,12 @@ with Conf(
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
-            Configure directories and files to be installed on remote hosts.
+            Configure custom directories and files to be installed on remote
+            hosts.
 
             .. note::
 
-               The following directories are installed by default:
+               The following directories already get installed by default:
 
                * ``app/``
                * ``bin/``
@@ -381,7 +383,8 @@ with Conf(
                     )
                 ))
 
-        with Conf('events'):
+        with Conf('events',
+                  desc=global_default(EVENTS_DESCR, '[scheduler][events]')):
             for item, desc in EVENTS_SETTINGS.items():
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
@@ -615,41 +618,32 @@ with Conf(
             datetime calendars: 360 day (12 months of 30 days in a year),
             365 day (never a leap year) and 366 day (always a leap year).
         ''')
-        Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
-            How many cycles ahead of the slowest tasks the fastest may run.
+        Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
+            The scheduler runahead limit determines how many consecutive cycle
+            points can be active at once. The base point of the runahead
+            calculation is the lowest-valued point with :term:`active` or
+            :term:`incomplete` tasks present.
 
-            Runahead limiting prevents the fastest tasks in a workflow from
-            getting too far ahead of the slowest ones, as documented in
-            :ref:`RunaheadLimit`.
+            An integer interval value of ``Pn`` allows up to ``n+1`` cycle
+            points (including the base point) to be active at once.
 
-            This limit on the number of consecutive spawned cycle points is
-            specified by an interval between the least and most recent: either
-            an integer (e.g. ``P3`` -  works for both :term:`integer cycling`
-            and :term:`datetime cycling`), or a time interval (e.g. ``PT12H`` -
-            only works for datetime cycling). Alternatively, if a raw number is
-            given, e.g. ``7``, it will be taken to mean ``PT7H``, though this
-            usage is deprecated.
+            The default runahead limit is ``P4``, i.e. 5 active points
+            including the base point.
 
-            .. note::
+            Datetime cycling workflows can optionally use a datetime interval
+            value instead, in which case the number of active cycle points
+            within the interval depends on the cycling intervals present.
 
-               The integer limit format is irrespective of the labelling of
-               cycle points. For example, if the runahead limit is ``P3`` and
-               you have a workflow *solely* consisting of a task that repeats
-               "every four cycles", it would still spawn three consecutive
-               cycle points at a time (starting with 1, 5 and 9). This is
-               because the workflow is functionally equivalent to one where the
-               task repeats every cycle.
+            .. seealso::
 
-            .. note::
-
-               The runahead limit may be automatically raised if this is
-               necessary to allow a future task to be triggered, preventing
-               the workflow from stalling.
+               :ref:`RunaheadLimit`
 
             .. versionchanged:: 8.0.0
 
-               The integer (``Pn``) type limit was introduced to replace the
-               deprecated ``[scheduling]max active cycle points = n`` setting.
+               The integer format ``Pn`` was introduced to replace the
+               deprecated ``[scheduling]max active cycle points = m``
+               (with ``n = m-1``) and unify it with the existing datetime
+               interval ``runahead limit`` setting.
         ''')
 
         with Conf('queues', desc='''
@@ -676,7 +670,7 @@ with Conf(
 
             .. seealso::
 
-               See also :ref:`InternalQueues`.
+               :ref:`InternalQueues`.
         '''):
             with Conf('<queue name>', desc='''
                 Section heading for configuration of a single queue.
@@ -694,8 +688,19 @@ with Conf(
                     Assigned tasks will automatically be removed
                     from the default queue.
                 ''')
-            with Conf('default', meta=Queue):
-                Conf('limit', VDR.V_INTEGER, 0)
+            with Conf('default', meta=Queue, desc='''
+                The default queue for all tasks not assigned to other queues.
+            '''):
+                Conf('limit', VDR.V_INTEGER, 100, desc='''
+                    Controls the total number of active tasks in the default
+                    queue.
+
+                    .. seealso::
+
+                       - :cylc:conf:`flow.cylc[scheduling]
+                         [queues][<queue name>]limit`
+                       - :ref:`InternalQueues`
+                ''')
 
         with Conf('special tasks', desc='''
             This section is used to identify tasks with special behaviour.
@@ -965,7 +970,7 @@ with Conf(
                 If no parents are listed default is ``root``.
             ''')
             Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script.
+                The main custom script run from the task job script.
 
                 It can be an external command or script, or inlined scripting.
 
@@ -975,7 +980,7 @@ with Conf(
                 this='script', example='my_script.sh'
             ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script before the task
+                Custom script run by the task job script before the task
                 execution environment is configured.
 
                 By running before the task execution environment is configured,
@@ -987,7 +992,7 @@ with Conf(
                 this should no longer be necessary.
             ''') + get_script_common_text(this='init-script'))
             Conf('env-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script between the
+                Custom script run by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment.
 
@@ -998,7 +1003,7 @@ with Conf(
             Conf('err-script', VDR.V_STRING, desc=('''
                 Script run when a task job error is detected.
 
-                Custom script to be invoked at the end of the error trap,
+                Custom script to be run at the end of the error trap,
                 which is triggered due to failure of a command in the task job
                 script or trappable job kill.
 
@@ -1013,7 +1018,7 @@ with Conf(
                 this='err-script', example='echo "Uh oh, received ${1}"'
             ))
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked at the very end of *successful* job
+                Custom script run at the very end of *successful* job
                 execution, just before the job script exits.
 
                 The exit-script should execute very quickly.
@@ -1024,7 +1029,7 @@ with Conf(
                 this='exit-script', example='rm -f "$TMP_FILES"'
             ))
             Conf('pre-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 before :cylc:conf:`[..]script`.
 
                 The pre-script can be an external command or script, or
@@ -1034,7 +1039,7 @@ with Conf(
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 after :cylc:conf:`[..]script`.
 
                 The post-script can be an external
@@ -1098,7 +1103,7 @@ with Conf(
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
-                For ``background`` and ``at`` job runners Cylc invokes the
+                For ``background`` and ``at`` job runners Cylc runs the
                 job's script using the timeout command. For other job runners
                 Cylc will convert execution time limit to a :term:`directive`.
 
@@ -1292,37 +1297,66 @@ with Conf(
                     excluded by omission from an ``include`` list.
                 ''')
 
-            with Conf('job', desc=dedent('''
-                .. deprecated:: 8.0.0
-
+            with Conf('job', desc=REPLACED_BY_PLATFORMS + dedent('''
                 This section configures the means by which cylc submits task
                 job scripts to run.
+            ''')):
+                Conf('batch system', VDR.V_STRING, desc='''
+                    .. deprecated:: 8.0.0
 
-            ''') + REPLACED_BY_PLATFORMS):
-                Conf('batch system', VDR.V_STRING)
-                Conf('batch submit command template', VDR.V_STRING)
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner`.
 
-            with Conf('remote', desc=dedent('''
-                .. deprecated:: 8.0.0
+                    Batch/queuing system (aka job runner) to submit task
+                    jobs to.
+                ''')
+                Conf('batch submit command template', VDR.V_STRING, desc='''
+                    .. deprecated:: 8.0.0
 
-            ''') + REPLACED_BY_PLATFORMS):
-                Conf('host', VDR.V_STRING)
-                # TODO: Convert URL to a stable or latest release doc after 8.0
-                # https://github.com/cylc/cylc-flow/issues/4663
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner command template`.
+
+                    Override the default job submission command for the chosen
+                    batch system.
+                ''')
+
+            with Conf('remote', desc=f'''
+                      Job host settings.
+                      {REPLACED_BY_PLATFORMS}
+             '''):
+                Conf('host', VDR.V_STRING, desc=f'''
+                     Hostname or IP address of the job host.
+                     {REPLACED_BY_PLATFORMS}
+                ''')
                 Conf('owner', VDR.V_STRING, desc="""
-                    This setting is obsolete at Cylc 8.
+                    Your username on the job host, if different from that on
+                    the scheduler host.
 
-                    .. seealso::
+                    .. warning::
 
-                       `Documentation on changes to remote owner
-                       <https://cylc.github.io/cylc-doc/latest/html/
-                       7-to-8/major-changes/remote-owner.html>`_
+                       This setting is obsolete at Cylc 8.
+
+                       See :ref:`documentation on changes to remote owner
+                       <728.remote_owner>`
                 """)
-                Conf('retrieve job logs', VDR.V_BOOLEAN)
-                Conf('retrieve job logs max size', VDR.V_STRING)
+                Conf('retrieve job logs', VDR.V_BOOLEAN,
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
+                Conf('retrieve job logs max size', VDR.V_STRING,
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs max size']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
                 Conf('retrieve job logs retry delays',
-                     VDR.V_INTERVAL_LIST, None)
-
+                     VDR.V_INTERVAL_LIST, None,
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
             )):
@@ -1362,24 +1396,99 @@ with Conf(
                         "[task events]submission timeout"
                     )
                 ))
-                # TODO: add descriptions for the handlers below. Some of them
-                # didn't have any mention in the Cylc 7 suiterc ref docs, but
-                # a look at git blame indicates none of them are new in Cylc 8.
-                Conf('expired handlers', VDR.V_STRING_LIST, None)
-                Conf('late offset', VDR.V_INTERVAL, None)
-                Conf('late handlers', VDR.V_STRING_LIST, None)
-                Conf('submitted handlers', VDR.V_STRING_LIST, None)
-                Conf('started handlers', VDR.V_STRING_LIST, None)
-                Conf('succeeded handlers', VDR.V_STRING_LIST, None)
-                Conf('failed handlers', VDR.V_STRING_LIST, None)
-                Conf('submission failed handlers', VDR.V_STRING_LIST, None)
-                Conf('warning handlers', VDR.V_STRING_LIST, None)
-                Conf('critical handlers', VDR.V_STRING_LIST, None)
-                Conf('retry handlers', VDR.V_STRING_LIST, None)
-                Conf('submission retry handlers', VDR.V_STRING_LIST, None)
-                Conf('execution timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('submission timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('custom handlers', VDR.V_STRING_LIST, None)
+                Conf('expired handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task has expired.
+
+                    .. seealso::
+
+                       :ref:`task-job-states`
+
+                    .. caution::
+
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the expired task
+                       is ready to run.  Earlier expired-task detection will be
+                       implemented in a future Cylc release.
+                ''')
+                Conf('late offset', VDR.V_INTERVAL, None, desc='''
+                    Offset from cycle point, in real time, at which this task
+                    is considered to be "running late" (i.e. the time by which
+                    it would normally have started running).
+
+                    .. caution::
+
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the late task
+                       is ready to run.  Earlier late-task detection will be
+                       implemented in a future Cylc release.
+
+                    .. seealso::
+
+                       :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                       late handlers`.
+                ''')
+                Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task is late.
+
+                    .. caution::
+
+                       Due to changes to the Cylc 8 scheduling algorithm
+                       this event is unlikely to occur until the task is about
+                       to submit anyway.
+                ''')
+                Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run when this task is submitted.
+                ''')
+                Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run when this task starts executing.
+                ''')
+                Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task succeeds.
+                ''')
+                Conf('failed handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task fails.
+                ''')
+                Conf('submission failed handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if submission of this task fails.
+                ''')
+                Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "WARNING".
+                ''')
+                Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "CRITICAL".
+                ''')
+                Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task failed but is retrying.
+                ''')
+                Conf('submission retry handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if a job failed to submit but is
+                        retrying.
+
+                        .. seealso::
+
+                           :ref:`task-job-states`
+
+                ''')
+                Conf('execution timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if this task execution exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>]
+                        execution time limit`.
+                ''')
+                Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if this task exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                        submission timeout` in the submitted state.
+                ''')
+                Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "CUSTOM".
+                ''')
 
             with Conf('mail', desc='''
                 Email notification settings for task events.
@@ -1425,13 +1534,13 @@ with Conf(
 
                     The polling
                     ``cylc workflow-state`` command will be
-                    invoked on the remote account.
+                    run on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
                     The hostname of the target workflow.
 
                     The polling
-                    ``cylc workflow-state`` command will be invoked there.
+                    ``cylc workflow-state`` command will be run there.
                 ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -1467,8 +1576,11 @@ with Conf(
                 identity variables, which are exported earlier in the task job
                 script. Variable assignment expressions can use cylc
                 utility commands because access to cylc is also configured
-                earlier in the script. See also
-                :ref:`TaskExecutionEnvironment`.
+                earlier in the script.
+
+                .. seealso::
+
+                   :ref:`TaskExecutionEnvironment`.
 
                 You can also specify job environment templates here for
                 :ref:`parameterized tasks <User Guide Param>`.
@@ -1566,7 +1678,13 @@ with Conf(
                 prepended to the ``[environment]`` section when running
                 a workflow.
             '''):
-                Conf('<parameter>', VDR.V_STRING)
+                Conf('<parameter>', VDR.V_STRING, desc='''
+                    .. deprecated:: 7.8.7/7.9.2
+
+                       Parameter environment templates have moved to
+                       :cylc:conf:`flow.cylc[runtime]
+                       [<namespace>][environment]`.
+                ''')
 
 
 def upg(cfg, descr):
@@ -1586,7 +1704,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['cylc', 'authentication'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'include at start-up'])
     u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
@@ -1603,13 +1721,13 @@ def upg(cfg, descr):
     )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.obsolete('8.0.0', ['cylc', 'environment'])
+    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])
-    u.obsolete('8.0.0', ['cylc', 'simulation'])
-    u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True)
+    u.obsolete('8.0.0', ['visualization'], is_section=True)
     u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
@@ -1622,12 +1740,14 @@ def upg(cfg, descr):
         ['cylc', 'parameters'],
         ['task parameters'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
@@ -1684,6 +1804,7 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True
     )
 
     for job_setting in [
@@ -1757,6 +1878,7 @@ def upg(cfg, descr):
         ['cylc'],
         ['scheduler'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.upgrade()
 
@@ -1765,6 +1887,8 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    return u
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:

@@ -34,7 +34,7 @@ def directory(tmp_path):
 
 async def test_scandir(directory):
     """It should list directory contents (including symlinks)."""
-    assert await scandir(directory) == [
+    assert sorted(await scandir(directory)) == [
         Path(directory, 'a'),
         Path(directory, 'b'),
         Path(directory, 'c')

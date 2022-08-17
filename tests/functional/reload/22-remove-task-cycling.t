@@ -34,7 +34,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
    initial cycle point = 1
    final cycle point = 3
    cycling mode = integer
-   runahead limit = P2
+   runahead limit = P1
    [[dependencies]]
       [[[R/^/P1]]]
          graph = """foo[-P1] => foo

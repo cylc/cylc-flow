@@ -179,7 +179,7 @@ fi
 
 # Run the executable from the selected installation.
 # n.b. If CYLC_HOME points to a binary inside a
-# ``conda/envs/bin directory`` this is sufficent without using
+# ``conda/envs/bin directory`` this is sufficient without using
 # ``conda activate``. We avoid ``conda activate`` because:
 # - It's slow.
 # - Subsequent environment changes (conda activate or deactivate)

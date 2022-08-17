@@ -27,7 +27,8 @@ The first-parent inheritance graph determines the primary task family
 groupings that are collapsible in cylc visualisation tools.
 
 To visualize the full multiple inheritance hierarchy use:
-  $ cylc graph -n"""
+  $ cylc graph -n
+"""
 
 import os
 import sys

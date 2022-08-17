@@ -15,16 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for Cylc scheduler server."""
 
-import pytest
+from time import time
 from types import SimpleNamespace
-from typing import Any, List
-from unittest.mock import Mock
+from typing import List
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
-
-Fixture = Any
+from cylc.flow.task_pool import TaskPool
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.workflow_status import AutoRestartMode
 
 
 @pytest.mark.parametrize(
@@ -62,3 +65,47 @@ def test_check_startup_opts(
         with pytest.raises(InputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
         assert(err_msg.format(opt) in str(excinfo))
+
+
+@pytest.mark.parametrize(
+    'auto_restart_time, expected',
+    [
+        (-1, True),
+        (0, True),
+        (1, False),
+        (None, False),
+    ]
+)
+def test_should_auto_restart_now(
+    auto_restart_time, expected, monkeypatch: pytest.MonkeyPatch
+):
+    """Test Scheduler.should_auto_restart_now()."""
+    time_now = time()
+    monkeypatch.setattr('cylc.flow.scheduler.time', lambda: time_now)
+    if auto_restart_time is not None:
+        auto_restart_time += time_now
+    mock_schd = Mock(spec=Scheduler, auto_restart_time=auto_restart_time)
+    assert Scheduler.should_auto_restart_now(mock_schd) == expected
+
+
+def test_release_queued_tasks__auto_restart():
+    """Test that Scheduler.release_queued_tasks() works as expected
+    during auto restart."""
+    mock_schd = Mock(
+        auto_restart_time=(time() - 100),
+        auto_restart_mode=AutoRestartMode.RESTART_NORMAL,
+        is_paused=False,
+        stop_mode=None,
+        pool=Mock(
+            spec=TaskPool,
+            get_tasks=lambda: [Mock(spec=TaskProxy)]
+        ),
+        workflow='parachutes',
+        options=RunOptions(),
+        task_job_mgr=MagicMock()
+    )
+    Scheduler.release_queued_tasks(mock_schd)
+    # Should not actually release any more tasks, just submit the
+    # preparing ones
+    mock_schd.pool.release_queued_tasks.assert_not_called()
+    mock_schd.task_job_mgr.submit_task_jobs.assert_called()

@@ -9,7 +9,7 @@
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 4
-    runahead limit = P1
+    runahead limit = P0
     [[graph]]
         P1 = "foo:start => bar"
 [runtime]
@@ -18,9 +18,9 @@
             if ((CYLC_TASK_CYCLE_POINT == 1)); then
                 # Force trigger 3/foo while 2/foo is runahead limited.
                 expected="foo, 2, waiting, not-held, not-queued, runahead"
-                diff <(cylc dump -t "${CYLC_WORKFLOW_NAME}" | grep 'foo, 2') \
+                diff <(cylc dump -t "${CYLC_WORKFLOW_ID}" | grep 'foo, 2') \
                      <(echo "$expected")
-                cylc trigger --flow=none $CYLC_WORKFLOW_NAME//3/foo
+                cylc trigger --flow=none $CYLC_WORKFLOW_ID//3/foo
             elif ((CYLC_TASK_CYCLE_POINT == 3)); then
                 # Run until I get merged.
                 cylc__job__poll_grep_workflow_log -E "3/foo .* merged in flow\(s\) 1"

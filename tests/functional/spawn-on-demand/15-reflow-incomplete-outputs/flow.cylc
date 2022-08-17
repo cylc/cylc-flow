@@ -13,7 +13,7 @@
         script = """
             # test $CYLC_TASK_SUBMIT_NUMBER -gt 1
             if [[ $CYLC_TASK_SUBMIT_NUMBER -eq 1 ]]; then
-                cylc trigger --flow=new "$CYLC_WORKFLOW_NAME//1/a"
+                cylc trigger --flow=new "$CYLC_WORKFLOW_ID//1/a"
                 false
             fi
         """

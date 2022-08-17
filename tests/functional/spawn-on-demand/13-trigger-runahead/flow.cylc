@@ -4,7 +4,7 @@
    cycling mode = integer
    initial cycle point = 1
    final cycle point = 3
-   runahead limit = P1
+   runahead limit = P0
    [[graph]]
       P1 = foo
 [runtime]
@@ -14,8 +14,8 @@
          if ((CYLC_TASK_CYCLE_POINT == 1)); then
             expected="foo, 1, running, not-held, not-queued, not-runahead
 foo, 2, waiting, not-held, not-queued, runahead"
-            diff <(cylc dump -t "${CYLC_WORKFLOW_NAME}") <(echo "$expected")
+            diff <(cylc dump -t "${CYLC_WORKFLOW_ID}") <(echo "$expected")
             # Force trigger next instance while it is runahead limited.
-            cylc trigger $CYLC_WORKFLOW_NAME//2/foo
+            cylc trigger $CYLC_WORKFLOW_ID//2/foo
          fi
       """

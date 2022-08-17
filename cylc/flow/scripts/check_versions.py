@@ -20,18 +20,18 @@
 
 Check that Cylc versions match on different platforms.
 
-Check the version of cylc invoked on each of WORKFLOW's task host platforms
-when CYLC_VERSION is set to *the version running this command line tool*.
+Check that the remote versions of Cylc invoked on each of the platforms used by
+a workflow matches the version this script is run with.
 
-It is recommended that cylc versions be installed in parallel and access
-configured via the cylc version wrapper as described in the cylc INSTALL
-file and User Guide. This must be done on workflow and task hosts. Users then
-get the latest installed version by default, or (like tasks) a particular
-version if $CYLC_VERSION is defined.
+Note:
+  Cylc supports multiple parallel installations at different versions via the
+  Cylc wrapper script. For more information see the installation section of the
+  documentation.
 
 Use -v/--verbose to see the command invoked to determine the remote version
-(all remote cylc command invocations will be of the same form, which may be
-site dependent -- see cylc global config documentation."""
+(all remote Cylc command invocations will be of the same form, which may be
+site dependent -- see cylc global config documentation.
+"""
 
 import sys
 from typing import TYPE_CHECKING

@@ -38,7 +38,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_ok "Job submit method: at" "${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job"
+grep_ok "Job runner: at" "${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job"
 
 purge
 exit

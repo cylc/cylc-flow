@@ -3,9 +3,9 @@
     cycle point time zone = Z
     [[events]]
         abort on inactivity timeout = True
-        inactivity timeout = PT10S
+        inactivity timeout = PT20S
 [scheduling]
-    runahead limit = P4
+    runahead limit = P3
     initial cycle point = 20100101T00
     [[xtriggers]]
         never = wall_clock(P100Y)

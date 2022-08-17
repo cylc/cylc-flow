@@ -385,7 +385,8 @@ def test_clean_check__fail(
     stopped: bool,
     err: Type[Exception],
     err_msg: str,
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Test that _clean_check() fails appropriately.
 
@@ -395,8 +396,6 @@ def test_clean_check__fail(
         err: Expected error class.
         err_msg: Message that is expected to be in the exception.
     """
-    run_dir = mock.Mock()
-
     def mocked_detect_old_contact_file(*a, **k):
         if not stopped:
             raise ServiceFileError('Mocked error')
@@ -407,7 +406,7 @@ def test_clean_check__fail(
     )
 
     with pytest.raises(err) as exc:
-        workflow_files._clean_check(CleanOptions(), reg, run_dir)
+        workflow_files._clean_check(CleanOptions(), reg, tmp_path)
     assert err_msg in str(exc.value)
 
 
@@ -1413,6 +1412,28 @@ def test_remote_clean_cmd(
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
 
 
+def test_clean_top_level(tmp_run_dir: Callable):
+    """Test that cleaning last remaining run dir inside a workflow dir removes
+    the top level dir if it's empty (excluding _cylc-install)."""
+    # Setup
+    reg = 'blue/planet/run1'
+    run_dir: Path = tmp_run_dir(reg, installed=True, named=True)
+    cylc_install_dir = run_dir.parent / WorkflowFiles.Install.DIRNAME
+    assert cylc_install_dir.is_dir()
+    runN_symlink = run_dir.parent / WorkflowFiles.RUN_N
+    assert runN_symlink.exists()
+    # Test
+    clean(reg, run_dir)
+    assert not run_dir.parent.parent.exists()
+    # Now check that if the top level dir is not empty, it doesn't get removed
+    run_dir: Path = tmp_run_dir(reg, installed=True, named=True)
+    jellyfish_file = (run_dir.parent / 'jellyfish.txt')
+    jellyfish_file.touch()
+    clean(reg, run_dir)
+    assert cylc_install_dir.is_dir()
+    assert jellyfish_file.exists()
+
+
 def test_get_workflow_source_dir_numbered_run(tmp_path):
     """Test get_workflow_source_dir returns correct source for numbered run"""
     cylc_install_dir = (
@@ -1575,7 +1596,7 @@ def test_check_flow_file(
             "Both flow.cylc and suite.rc files are present in "
             f"{tmp_path}. Please remove one and try again. "
             "For more information visit: "
-            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "https://cylc.github.io/cylc-doc/stable/html/7-to-8/summary.html"
             "#backward-compatibility"
         )
 
@@ -1595,7 +1616,7 @@ def test_detect_both_flow_and_suite(tmp_path):
     assert str(exc.value) == (
         f"Both flow.cylc and suite.rc files are present in {tmp_path}. Please "
         "remove one and try again. For more information visit: "
-        "https://cylc.github.io/cylc-doc/latest/html/7-to-8/"
+        "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
         "summary.html#backward-compatibility"
     )
 
@@ -1771,9 +1792,13 @@ def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
     assert actual == expected
 
 
-def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
+def test_get_rsync_rund_cmd(
+    tmp_src_dir: Callable,
+    tmp_run_dir: Callable
+):
     """Test rsync command for cylc install/reinstall excludes cylc dirs.
     """
+    src_dir = tmp_src_dir('foo')
     cylc_run_dir: Path = tmp_run_dir('rsync_flow', installed=True, named=False)
     for wdir in [
         WorkflowFiles.WORK_DIR,
@@ -1781,12 +1806,12 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
         WorkflowFiles.LOG_DIR,
     ]:
         cylc_run_dir.joinpath(wdir).mkdir(exist_ok=True)
-    actual_cmd = get_rsync_rund_cmd('blah', cylc_run_dir)
+    actual_cmd = get_rsync_rund_cmd(src_dir, cylc_run_dir)
     assert actual_cmd == [
         'rsync', '-a', '--checksum', '--out-format=%o %n%L', '--no-t',
         '--exclude=log', '--exclude=work', '--exclude=share',
         '--exclude=_cylc-install', '--exclude=.service',
-        'blah/', f'{cylc_run_dir}/']
+        f'{src_dir}/', f'{cylc_run_dir}/']
 
 
 @pytest.mark.parametrize(

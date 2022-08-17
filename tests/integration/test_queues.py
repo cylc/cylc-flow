@@ -65,14 +65,12 @@ async def test_queue_release(
         # (otherwise a number of tasks up to the limit should be released)
         schd.pool.release_runahead_tasks()
         schd.release_queued_tasks()
-        assert len(schd.pre_prep_tasks) == expected_submissions
         assert len(submitted_tasks) == expected_submissions
 
         for _ in range(3):
             # release runahead/queued tasks
             # (no further tasks should be released)
             schd.release_queued_tasks()
-            assert len(schd.pre_prep_tasks) == expected_submissions
             assert len(submitted_tasks) == expected_submissions
 
 
@@ -105,7 +103,6 @@ async def test_queue_held_tasks(
         # release queued tasks
         # (no tasks should be released from the queues because they are held)
         schd.release_queued_tasks()
-        assert len(schd.pre_prep_tasks) == 0
         assert len(submitted_tasks) == 0
 
         # un-hold tasks
@@ -114,5 +111,4 @@ async def test_queue_held_tasks(
         # release queued tasks
         # (tasks should now be released from the queues)
         schd.release_queued_tasks()
-        assert len(schd.pre_prep_tasks) == 1
         assert len(submitted_tasks) == 1

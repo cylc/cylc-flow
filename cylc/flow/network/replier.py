@@ -33,7 +33,7 @@ class WorkflowReplier(ZMQSocketBase):
 
     Usage:
         * Start the replier.
-        * Call the listener to process incomming REQ and send the REP.
+        * Call the listener to process incoming REQ and send the REP.
 
     Message Processing:
         * Calls the server's receiver to process the command and

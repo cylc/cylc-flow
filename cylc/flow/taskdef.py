@@ -17,6 +17,7 @@
 """Task definition."""
 
 from collections import deque
+from typing import TYPE_CHECKING
 
 import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
@@ -27,8 +28,10 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
 )
-from cylc.flow import LOG
 from cylc.flow.task_outputs import SORT_ORDERS
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 def generate_graph_children(tdef, point):
@@ -119,7 +122,6 @@ class TaskDef:
 
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
-    ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: "
 
     def __init__(self, name, rtcfg, run_mode, start_point, initial_point):
         if not TaskID.is_valid_name(name):
@@ -205,7 +207,6 @@ class TaskDef:
             sequence, {}).setdefault(
                 trigger.output, []).append((taskname, trigger))
 
-    # graph_parents not currently used, but might be soon:
     def add_graph_parent(self, trigger, parent, sequence):
         """Record task instances that I depend on.
           {
@@ -291,20 +292,79 @@ class TaskDef:
                 for trig in dep.task_triggers:
                     if (
                         trig.offset_is_absolute or
-                        trig.offset_is_from_icp
+                        trig.offset_is_from_icp or
+                        # Don't count self-suicide as a normal trigger.
+                        dep.suicide and trig.task_name == self.name
                     ):
                         has_abs = True
                     else:
                         return False
         return has_abs
 
-    def is_valid_point(self, point):
+    def is_valid_point(self, point: 'PointBase') -> bool:
         """Return True if point is on-sequence and within bounds."""
-        is_valid_point = any(
-            sequence.is_valid(point)
-            for sequence in self.sequences
+        return any(
+            sequence.is_valid(point) for sequence in self.sequences
         )
-        if not is_valid_point:
-            LOG.warning("%s%s, %s" % (
-                self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, self.name, point))
-        return is_valid_point
+
+    def first_point(self, icp):
+        """Return the first point for this task."""
+        point = None
+        adjusted = []
+        for seq in self.sequences:
+            pt = seq.get_first_point(icp)
+            if pt:
+                # may be None if beyond the sequence bounds
+                adjusted.append(pt)
+        if adjusted:
+            point = min(adjusted)
+        return point
+
+    def next_point(self, point):
+        """Return the next cycle point after point."""
+        p_next = None
+        adjusted = []
+        for seq in self.sequences:
+            nxt = seq.get_next_point(point)
+            if nxt:
+                # may be None if beyond the sequence bounds
+                adjusted.append(nxt)
+        if adjusted:
+            p_next = min(adjusted)
+        return p_next
+
+    def is_parentless(self, point):
+        """Return True if task has no parents at point.
+
+        Tasks are considered parentless if they have:
+          - no parents at all
+          - all parents < initial cycle point
+          - only absolute triggers
+
+        Absolute-triggered tasks are auto-spawned like true parentless tasks,
+        (once the trigger is satisfied they are effectively parentless) but
+        with a prerequisite that gets satisfied when the absolute output is
+        completed at runtime.
+        """
+        if not self.graph_parents:
+            # No parents at any point
+            return True
+        if self.sequential:
+            # Implicit parents
+            return False
+        parent_points = self.get_parent_points(point)
+        return (
+            not parent_points
+            or all(x < self.start_point for x in parent_points)
+            or self.has_only_abs_triggers(point)
+        )
+
+    def __repr__(self) -> str:
+        """
+        >>> TaskDef(
+        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     initial_point='1'
+        ... )
+        <TaskDef 'oliver'>
+        """
+        return f"<TaskDef '{self.name}'>"

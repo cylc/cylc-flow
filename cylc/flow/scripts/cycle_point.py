@@ -51,7 +51,8 @@ Other examples:
   $ export CYLC_TASK_CYCLE_POINT=2010-08
   $ export MYTEMPLATE=foo-CCYY-MM.nc
   $ cylc cycle-point --offset-years=2 --template=MYTEMPLATE
-  foo-2012-08.nc"""
+  foo-2012-08.nc
+"""
 
 import os
 import sys

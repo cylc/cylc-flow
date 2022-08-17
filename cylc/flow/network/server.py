@@ -78,7 +78,7 @@ class WorkflowRuntimeServer:
 
     This class starts and coordinates the publisher and replier, and
     contains the Cylc endpoints invoked by the receiver to provide a response
-    to incomming messages.
+    to incoming messages.
 
     Args:
         schd (object): The parent object instantiating the server. In
@@ -253,7 +253,7 @@ class WorkflowRuntimeServer:
             sleep(self.OPERATE_SLEEP_INTERVAL)
 
     def receiver(self, message):
-        """Process incomming messages and coordinate response.
+        """Process incoming messages and coordinate response.
 
         Wrap incoming messages, dispatch them to exposed methods and/or
         coordinate a publishing stream.

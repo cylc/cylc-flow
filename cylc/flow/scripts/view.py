@@ -18,29 +18,15 @@
 
 """cylc view [OPTIONS] ARGS
 
-View a processed workflow configuration.
+Print a processed workflow configuration.
 
 Note:
   This is different to `cylc config` which displays the parsed
   configuration (as Cylc would see it).
-
-View a read-only temporary copy of workflow NAME's flow.cylc file, in your
-editor, after optional include-file inlining and Jinja2 preprocessing.
-
-The edit process is spawned in the foreground as follows:
-  $ <editor> flow.cylc
-Where <editor> can be set in cylc global config.
 """
 
-import os
-import shlex
-from subprocess import call
-import sys
-from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
@@ -107,14 +93,6 @@ def get_option_parser():
              "not correspond to those reported by the parser).",
              action="store_true", default=False, dest="cat")
 
-    parser.add_option(
-        "--gui", "-g", help="Force use of the configured GUI editor.",
-        action="store_true", default=False, dest="geditor")
-
-    parser.add_option(
-        "--stdout", help="Print the workflow definition to stdout.",
-        action="store_true", default=False, dest="stdout")
-
     return parser
 
 
@@ -125,11 +103,6 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
-
-    if options.geditor:
-        editor = glbl_cfg().get(['editors', 'gui'])
-    else:
-        editor = glbl_cfg().get(['editors', 'terminal'])
 
     # read in the flow.cylc file
     viewcfg = {
@@ -142,51 +115,11 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         'inline': (options.inline or options.jinja2 or options.empy
                    or options.process),
     }
-    lines = read_and_proc(
+    for line in read_and_proc(
         flow_file,
-        load_template_vars(options.templatevars, options.templatevars_file),
-        viewcfg=viewcfg)
-
-    if options.stdout:
-        for line in lines:
-            print(line)
-        sys.exit(0)
-
-    # write to a temporary file
-    viewfile = NamedTemporaryFile(
-        suffix=".flow.cylc", prefix=workflow_id.replace('/', '_') + '.',
-    )
-    for line in lines:
-        viewfile.write((line + '\n').encode())
-    viewfile.seek(0, 0)
-
-    # set the file to be read only
-    os.chmod(viewfile.name, 0o400)
-
-    # capture the temp file's mod time in case the user edits it
-    # and overrides the readonly mode.
-    modtime1 = os.stat(viewfile.name).st_mtime
-
-    # in case editor has options, e.g. 'emacs -nw':
-    command_list = shlex.split(editor)
-    command_list.append(viewfile.name)
-    command = ' '.join(command_list)
-    # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = call(command_list)  # nosec (editor command is user configurable)
-    if retcode != 0:
-        # the command returned non-zero exist status
-        raise CylcError(f'{command} failed: {retcode}')
-
-    # !!!VIEWING FINISHED!!!
-
-    # Did the user edit the file
-    modtime2 = os.stat(viewfile.name).st_mtime
-
-    if modtime2 > modtime1:
-        print(
-            "\nWARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY COPY "
-            f"OF THE WORKFLOW:\n   {viewfile.name}\n",
-            file=sys.stderr
-        )
-    # DONE
-    viewfile.close()
+        load_template_vars(
+            options.templatevars, options.templatevars_file
+        ),
+        viewcfg=viewcfg
+    ):
+        print(line)

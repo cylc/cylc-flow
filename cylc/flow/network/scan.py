@@ -67,7 +67,10 @@ from cylc.flow.network.client import (
     ClientTimeout,
     WorkflowRuntimeClient,
 )
-from cylc.flow.pathutil import get_cylc_run_dir
+from cylc.flow.pathutil import (
+    get_cylc_run_dir,
+    get_workflow_run_dir,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
@@ -138,7 +141,7 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
             if path.name == WorkflowFiles.LOG_DIR:
                 if (
                         (path / 'suite' / 'log').exists()
-                        and not (path / 'workflow').exists()
+                        and not (path / 'scheduler').exists()
                 ):
                     # ... already run by Cylc 7 (and not re-run by Cylc 8 after
                     # removing the DB)
@@ -250,7 +253,12 @@ async def scan(
             return_when=asyncio.FIRST_COMPLETED
         )
         for task in done:
-            path, depth, contents = task.result()
+            try:
+                path, depth, contents = task.result()
+            except FileNotFoundError:
+                # directory has been removed since the scan was scheduled
+                running.remove(task)
+                continue
             running.remove(task)
             is_flow = dir_is_flow(contents)
             if is_flow:
@@ -528,11 +536,16 @@ async def workflow_params(flow):
         key, value = entry
         params[key] = value
 
-    db_file = flow['path'] / SERVICE / 'db'
+    # NOTE: use the public DB for reading
+    # (only the scheduler process/thread should access the private database)
+    db_file = Path(get_workflow_run_dir(flow['name'], 'log', 'db'))
     if db_file.exists():
         dao = CylcWorkflowDAO(db_file, is_public=False)
-        dao.connect()
-        dao.select_workflow_params(_callback)
-        flow['workflow_params'] = params
+        try:
+            dao.connect()
+            dao.select_workflow_params(_callback)
+            flow['workflow_params'] = params
+        finally:
+            dao.close()
 
     return flow

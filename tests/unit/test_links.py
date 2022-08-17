@@ -70,7 +70,7 @@ def test_embedded_url(link, files):
         try:
             urllib.request.urlopen(link).getcode()
         except urllib.error.HTTPError as exc:
-            # Allowing 403 - just because a site forbids us doens't mean the
+            # Allowing 403 - just because a site forbids us doesn't mean the
             # link is wrong.
             if exc.code != 403:
                 raise Exception(f'{exc} | {link} | {", ".join(files)}')

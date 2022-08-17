@@ -24,6 +24,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import cylc_config_validate
 
 
 @pytest.fixture
@@ -62,7 +63,7 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         nonlocal tmp_path, monkeypatch
         global_config_path = tmp_path / 'global.cylc'
         global_config_path.write_text(global_config)
-        glbl_cfg = ParsecConfig(SPEC)
+        glbl_cfg = ParsecConfig(SPEC, validator=cylc_config_validate)
         glbl_cfg.loadcfg(global_config_path)
 
         def _inner(cached=False):
@@ -116,22 +117,37 @@ def port_range():
 @pytest.fixture
 def capcall(monkeypatch):
     """Capture function calls without running the function.
-    Returns a list of captured calls.
-    For each function call a tuple (args: Tuple, kwargs: Dict) is added
-    to the list.
+
+    Returns a list which is populated with function calls.
+
+    Args:
+        function_string:
+            The function to replace as it would be specified to
+            monkeypatch.setattr.
+        substitute_function:
+            An optional function to replace it with, otherwise the captured
+            function will return None.
+
+    Returns:
+        [(args: Tuple, kwargs: Dict), ...]
+
     Example:
         def test_something(capcall):
             capsys = capcall('sys.exit')
             sys.exit(1)
             assert capsys == [(1,), {}]
+
     """
 
-    def _capcall(function_string):
+    def _capcall(function_string, substitute_function=None):
         calls = []
 
         def _call(*args, **kwargs):
             nonlocal calls
+            nonlocal substitute_function
             calls.append((args, kwargs))
+            if substitute_function:
+                return substitute_function(*args, **kwargs)
 
         monkeypatch.setattr(function_string, _call)
         return calls

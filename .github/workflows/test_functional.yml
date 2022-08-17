@@ -24,6 +24,10 @@ on:
       - '**.md'
       - '**/README*/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -60,11 +64,17 @@ jobs:
             chunk: '1/1'
             platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
           # macos
-          - name: 'macos'
+          - name: 'macos 1/5'
             os: 'macos-latest'
             python-version: '3.7'
             test-base: 'tests/f'
-            chunk: '1/4'
+            chunk: '1/5'
+            platform: '_local_background*'
+          - name: 'macos 2/5'
+            os: 'macos-latest'
+            python-version: '3.7'
+            test-base: 'tests/f'
+            chunk: '2/5'
             platform: '_local_background*'
 
     env:
@@ -78,8 +88,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2  # required by codecov
 
       - name: Configure Python
         uses: actions/setup-python@v4
@@ -282,4 +290,4 @@ jobs:
         with:
           name: '${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}'
           flags: functional-tests
-          fail_ci_if_error: true
+          fail_ci_if_error: false

@@ -62,7 +62,7 @@ from cylc.flow.workflow_files import (
     KeyOwner,
     KeyType,
     WorkflowFiles,
-    get_contact_file,
+    get_contact_file_path,
     get_workflow_srv_dir,
 )
 
@@ -568,10 +568,7 @@ class TaskRemoteMgr:
         install_log_dir
     ):
         log_files = get_sorted_logs_by_time(install_log_dir, '*.log')
-        if log_files:
-            log_num = get_next_log_number(log_files[-1])
-        else:
-            log_num = '01'
+        log_num = get_next_log_number(log_files[-1]) if log_files else 1
         load_type = "start"
         if self.is_reload:
             load_type = "reload"
@@ -579,7 +576,7 @@ class TaskRemoteMgr:
         elif self.is_restart:
             load_type = "restart"
             self.is_restart = False  # reset marker
-        file_name = f"{log_num}-{load_type}-{install_target}.log"
+        file_name = f"{log_num:02d}-{load_type}-{install_target}.log"
         return file_name
 
     def _remote_init_items(self, comms_meth: CommsMeth):
@@ -596,7 +593,7 @@ class TaskRemoteMgr:
         if comms_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
             # Contact file
             items.append((
-                get_contact_file(self.workflow),
+                get_contact_file_path(self.workflow),
                 os.path.join(
                     WorkflowFiles.Service.DIRNAME,
                     WorkflowFiles.Service.CONTACT)))

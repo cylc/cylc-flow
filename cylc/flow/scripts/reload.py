@@ -32,25 +32,24 @@ Example:
 
   # reload the workflow to pick up changes
   $ cylc reload my_flow
-
   # the workflow is now running with the new config
 
-All settings including task definitions, with the exception of
-workflow log config, can be changed on reload. Changes to task
-definitions take effect immediately, unless a task is already
-running at reload time.
+All settings including task definitions, with the exception of workflow log
+config, can be changed on reload. Changes to task definitions take effect
+immediately, unless a task is already running at reload time.
 
 Upon reload, remote file installation will be triggered for all relevant
-platforms on the next job submit.
-Any changed files that are configured to be included in the file
-installation will be transferred to the appropriate remote platform(s).
+platforms on the next job submit. Any changed files that are configured to be
+included in the file installation will be transferred to the appropriate remote
+platform(s).
 
 If the workflow was started with Jinja2 template variables set on the command
 line (cylc play --set 'FOO="bar"' WORKFLOW_ID) the same template settings apply
 to the reload (only changes to the flow.cylc file itself are reloaded).
 
 If the modified workflow definition does not parse, failure to reload will
-be reported but no harm will be done to the running workflow."""
+be reported but no harm will be done to the running workflow.
+"""
 
 from functools import partial
 from typing import TYPE_CHECKING

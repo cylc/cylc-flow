@@ -26,8 +26,9 @@ import os
 from pathlib import Path
 from random import shuffle
 import re
-import shutil
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
+import shlex
+import shutil
 from time import sleep
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
@@ -283,7 +284,8 @@ class ContactFileFields:
     """The process ID of the running workflow on ``CYLC_WORKFLOW_HOST``."""
 
     COMMAND = 'CYLC_WORKFLOW_COMMAND'
-    """The command that was used to run the workflow on ``CYLC_WORKFLOW_HOST```.
+    """The command that was used to run the workflow on
+    ``CYLC_WORKFLOW_HOST```.
 
     Note that this command may be affected by:
 
@@ -499,7 +501,7 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
     # NOTE: can raise CylcError
     process_is_running = _is_process_running(old_host, old_pid, old_cmd)
 
-    fname = get_contact_file(reg)
+    fname = get_contact_file_path(reg)
     if process_is_running:
         # ... the process is running, raise an exception
         raise ServiceFileError(
@@ -541,7 +543,7 @@ def dump_contact_file(reg, data):
     # The double fsync logic ensures that if the contact file is written to
     # a shared file system e.g. via NFS, it will be immediately visible
     # from by a process on other hosts after the current process returns.
-    with open(get_contact_file(reg), "wb") as handle:
+    with open(get_contact_file_path(reg), "wb") as handle:
         for key, value in sorted(data.items()):
             handle.write(("%s=%s\n" % (key, value)).encode())
         os.fsync(handle.fileno())
@@ -550,7 +552,7 @@ def dump_contact_file(reg, data):
     os.close(dir_fileno)
 
 
-def get_contact_file(reg):
+def get_contact_file_path(reg: str) -> str:
     """Return name of contact file."""
     return os.path.join(
         get_workflow_srv_dir(reg), WorkflowFiles.Service.CONTACT)
@@ -607,10 +609,10 @@ def get_workflow_srv_dir(reg):
 
 def load_contact_file(reg: str) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
-    file_base = WorkflowFiles.Service.CONTACT
-    path = get_workflow_srv_dir(reg)
-    file_content = _load_local_item(file_base, path)
-    if not file_content:
+    try:
+        with open(get_contact_file_path(reg)) as f:
+            file_content = f.read()
+    except IOError:
         raise ServiceFileError("Couldn't load contact file")
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
@@ -626,10 +628,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
 
 async def load_contact_file_async(reg, run_dir=None):
     if not run_dir:
-        path = Path(
-            get_workflow_srv_dir(reg),
-            WorkflowFiles.Service.CONTACT
-        )
+        path = Path(get_contact_file_path(reg))
     else:
         path = Path(
             run_dir,
@@ -745,6 +744,14 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     # Thing to clean must be a dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         raise FileNotFoundError(f"No directory to clean at {run_dir}")
+    db_path = (
+        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
+    )
+    if opts.local_only and not db_path.is_file():
+        # Will reach here if this is cylc clean re-invoked on remote host
+        # (workflow DB only exists on scheduler host); don't need to worry
+        # about contact file.
+        return
     try:
         detect_old_contact_file(reg)
     except ServiceFileError as exc:
@@ -829,13 +836,8 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         if '' not in symlink_dirs:
             # if run dir isn't a symlink dir and hasn't been deleted yet
             remove_dir_and_target(run_dir)
-    # Tidy up if necessary
-    # Remove any empty parents of run dir up to ~/cylc-run/
-    remove_empty_parents(run_dir, reg)
-    for symlink, target in symlink_dirs.items():
-        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        remove_empty_parents(target, Path(reg, symlink))
 
+    # Tidy up if necessary
     # Remove `runN` symlink if it's now broken
     runN = run_dir.parent / WorkflowFiles.RUN_N
     if (
@@ -844,6 +846,20 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         os.readlink(str(runN)) == run_dir.name
     ):
         runN.unlink()
+    # Remove _cylc-install if it's the only thing left
+    cylc_install_dir = run_dir.parent / WorkflowFiles.Install.DIRNAME
+    for entry in run_dir.parent.iterdir():
+        if entry == cylc_install_dir:
+            continue
+        break
+    else:  # no break
+        if cylc_install_dir.is_dir():
+            remove_dir_or_file(cylc_install_dir)
+    # Remove any empty parents of run dir up to ~/cylc-run/
+    remove_empty_parents(run_dir, reg)
+    for symlink, target in symlink_dirs.items():
+        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
+        remove_empty_parents(target, Path(reg, symlink))
 
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
@@ -1147,15 +1163,6 @@ def get_workflow_title(reg):
     return title
 
 
-def _load_local_item(item, path):
-    """Load and return content of a file (item) in path."""
-    try:
-        with open(os.path.join(path, item)) as file_:
-            return file_.read()
-    except IOError:
-        return None
-
-
 def get_platforms_from_db(run_dir):
     """Load the set of names of platforms (that jobs ran on) from the
     workflow database.
@@ -1389,12 +1396,24 @@ def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
     return get_workflow_run_dir(path)
 
 
-def _get_logger(rund, log_name):
-    """Get log and create and open if necessary."""
+def _get_logger(rund, log_name, open_file=True):
+    """Get log and create and open if necessary.
+
+    Args:
+        rund:
+            The workflow run directory of the associated workflow.
+        log_name:
+            The name of the log to open.
+        open_file:
+            Open the appropriate log file and add it as a file handler to
+            the logger. I.E. Start writing the log to a file if not already
+            doing so.
+
+    """
     logger = logging.getLogger(log_name)
     if logger.getEffectiveLevel != logging.INFO:
         logger.setLevel(logging.INFO)
-    if not logger.hasHandlers():
+    if open_file and not logger.hasHandlers():
         _open_install_log(rund, logger)
     return logger
 
@@ -1408,11 +1427,8 @@ def _open_install_log(rund, logger):
         WorkflowFiles.LOG_DIR,
         'install')
     log_files = get_sorted_logs_by_time(log_dir, '*.log')
-    if log_files:
-        log_num = get_next_log_number(log_files[-1])
-    else:
-        log_num = '01'
-    log_path = Path(log_dir, f"{log_num}-{log_type}.log")
+    log_num = get_next_log_number(log_files[-1]) if log_files else 1
+    log_path = Path(log_dir, f"{log_num:02d}-{log_type}.log")
     log_parent_dir = log_path.parent
     log_parent_dir.mkdir(exist_ok=True, parents=True)
     handler = logging.FileHandler(log_path)
@@ -1438,7 +1454,10 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         list: command to use for rsync.
 
     """
-    rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
+    rsync_cmd = shlex.split(
+        glbl_cfg().get(['platforms', 'localhost', 'rsync command'])
+    )
+    rsync_cmd += DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
     if reinstall:
@@ -1471,7 +1490,7 @@ def reinstall_workflow(
     named_run: str,
     rundir: Path,
     dry_run: bool = False
-) -> None:
+) -> str:
     """Reinstall workflow.
 
     Args:
@@ -1480,29 +1499,52 @@ def reinstall_workflow(
         rundir: run directory
         dry_run: if True, will not execute the file transfer but report what
             would be changed.
+
+    Raises:
+        WorkflowFilesError:
+            If rsync returns non-zero.
+
+    Returns:
+        Stdout from the rsync command.
+
     """
     validate_source_dir(source, named_run)
     check_nested_dirs(rundir)
-    reinstall_log = _get_logger(rundir, 'cylc-reinstall')
-    reinstall_log.info(f"Reinstalling \"{named_run}\", from "
-                       f"\"{source}\" to \"{rundir}\"")
+    reinstall_log = _get_logger(
+        rundir,
+        'cylc-reinstall',
+        open_file=not dry_run,  # don't open the log file for --dry-run
+    )
+    reinstall_log.info(
+        f'Reinstalling "{named_run}", from "{source}" to "{rundir}"'
+    )
     rsync_cmd = get_rsync_rund_cmd(
-        source, rundir, reinstall=True, dry_run=dry_run)
+        source,
+        rundir,
+        reinstall=True,
+        dry_run=dry_run,
+    )
+    reinstall_log.info(cli_format(rsync_cmd))
+    LOG.debug(cli_format(rsync_cmd))
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
-    reinstall_log.info(
-        f"Copying files from {source} to {rundir}"
-        f'\n{stdout}'
-    )
+    stdout = stdout.strip()
+    stderr = stderr.strip()
+
     if proc.returncode != 0:
-        reinstall_log.warning(
-            f"An error occurred when copying files from {source} to {rundir}")
-        reinstall_log.warning(f" Error: {stderr}")
+        raise WorkflowFilesError(
+            f'An error occurred reinstalling from {source} to {rundir}'
+            f'\n{stderr}'
+        )
+
     check_flow_file(rundir)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
-    print(f'REINSTALLED {named_run} from {source}')
+    print(
+        f'REINSTALL{"ED" if not dry_run else ""} {named_run} from {source}'
+    )
     close_log(reinstall_log)
+    return stdout
 
 
 def abort_if_flow_file_in_path(source: Path) -> None:
@@ -1701,7 +1743,7 @@ def detect_both_flow_and_suite(path: Path) -> None:
     msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
            f"files are present in {path}. Please remove one and"
            " try again. For more information visit: https://cylc.github.io/"
-           "cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility")
+           "cylc-doc/stable/html/7-to-8/summary.html#backward-compatibility")
     if path.resolve().name == WorkflowFiles.SUITE_RC:
         flow_cylc = path.parent / WorkflowFiles.FLOW_FILE
     elif (path / WorkflowFiles.SUITE_RC).is_file():

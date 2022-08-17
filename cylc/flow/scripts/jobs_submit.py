@@ -20,8 +20,8 @@
 
 Submit task jobs to relevant job runners.
 On a remote job host, this command reads the job files from STDIN.
-
 """
+
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.job_runner_mgr import JobRunnerManager

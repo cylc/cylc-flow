@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 
 DELTA_SLEEP_INTERVAL = 0.5
 # Delay before carrying on with the next delta,
-# rougly DELTA_PROC_WAIT*DELTA_SLEEP_INTERVAL seconds (if queue is empty).
+# roughly DELTA_PROC_WAIT*DELTA_SLEEP_INTERVAL seconds (if queue is empty).
 DELTA_PROC_WAIT = 10
 
 

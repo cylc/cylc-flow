@@ -138,7 +138,8 @@ class TaskProxy:
          flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
-            task waiting on job prep
+            True whilst task is awaiting job prep, reset to False once the
+            preparation has completed.
 
     Args:
         tdef: The definition object of this task.
@@ -246,7 +247,7 @@ class TaskProxy:
         self.expire_time: Optional[float] = None
         self.late_time: Optional[float] = None
         self.is_late = is_late
-        self.waiting_on_job_prep = True
+        self.waiting_on_job_prep = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
@@ -283,6 +284,13 @@ class TaskProxy:
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
+        reload_successor.state.xtriggers.update({
+            # copy across any special "_cylc" xtriggers which were added
+            # dynamically at runtime (i.e. execution retry xtriggers)
+            key: value
+            for key, value in self.state.xtriggers.items()
+            if key.startswith('_cylc')
+        })
         reload_successor.jobs = self.jobs
 
     @staticmethod
@@ -345,16 +353,7 @@ class TaskProxy:
 
     def next_point(self):
         """Return the next cycle point."""
-        p_next = None
-        adjusted = []
-        for seq in self.tdef.sequences:
-            nxt = seq.get_next_point(self.point)
-            if nxt:
-                # may be None if beyond the sequence bounds
-                adjusted.append(nxt)
-        if adjusted:
-            p_next = min(adjusted)
-        return p_next
+        return self.tdef.next_point(self.point)
 
     def is_ready_to_run(self) -> Tuple[bool, ...]:
         """Is this task ready to run?
@@ -439,15 +438,11 @@ class TaskProxy:
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
-        if flow_nums == self.flow_nums:
-            # Not a merge if in the same flow. E.g. for "A & B => C" if A
-            # spawns C first, B will find C is already in the task pool.
-            return
+        self.flow_nums.update(flow_nums)
         LOG.info(
             f"[{self}] merged in flow(s) "
             f"{','.join(str(f) for f in flow_nums)}"
         )
-        self.flow_nums.update(flow_nums)
 
     def state_reset(
         self, status=None, is_held=None, is_queued=None, is_runahead=None,

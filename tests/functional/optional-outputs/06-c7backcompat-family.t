@@ -35,7 +35,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play -n --debug "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok grep-1 "Workflow stalled"
-grep_workflow_log_ok grep-2 "WARNING - Unsatisfied prerequisites"
+grep_workflow_log_ok grep-2 "WARNING - Partially satisfied prerequisites"
 grep_workflow_log_ok grep-3 "1/stall01 is waiting on"
 grep_workflow_log_ok grep-4 "1/stall02 is waiting on"
 grep_workflow_log_ok grep-5 "1/stall03 is waiting on"

@@ -15,9 +15,9 @@
 [runtime]
     [[T]]
         script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
-        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        [[[job]]]
-            execution retry delays = PT0S, 2*PT1S
+        execution retry delays = PT0S, 2*PT1S
+        [[[remote]]]
+            host = {{ environ['CYLC_TEST_HOST'] }}
     [[t1]]
         inherit = T
         [[[remote]]]

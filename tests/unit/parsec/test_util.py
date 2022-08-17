@@ -495,7 +495,7 @@ def test_expand_many_section_merge():
         'c': {'x': 3},
         'd': {'x': 2},
     }
-    # bonus marks: ensure all values coppied rather than referenced
+    # bonus marks: ensure all values copied rather than referenced
     config['a']['x'] = 4
     assert config['b']['x'] == 2
 
@@ -514,6 +514,6 @@ def test_expand_many_section_merge_deep():
         'd': {'x': {'y': 2}},
     }
     # bonus marks: ensure all values are unique objects
-    # (i.e. they have been coppied rather than referenced)
+    # (i.e. they have been copied rather than referenced)
     config['a']['x']['y'] = 4
     assert config['b']['x']['y'] == 2

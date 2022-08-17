@@ -46,7 +46,6 @@ Timings are shown only for succeeded tasks.
 
 For long-running or large workflows (i.e. workflows with many task events),
 the database query to obtain the timing information may take some time.
-
 """
 
 import collections

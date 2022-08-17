@@ -18,34 +18,32 @@
 
 """cylc broadcast [OPTIONS] ARGS
 
-Override or add new [runtime] configuration items in a running workflow.
+Override "[runtime]" configurations in a running workflow.
 
-Uses for broadcast include making temporary changes to task behaviour,
-and task-to-downstream-task communication via environment variables.
+Uses for broadcast include making temporary changes to task behaviour, and
+task-to-downstream-task communication via environment variables.
 
-A broadcast can target any [runtime] namespace (task or task family) for all
-cycles or for a specific cycle. If a task is affected by specific-cycle and
-all-cycle broadcasts at the same time, the specific takes precedence. If a task
-is affected by broadcasts to multiple ancestor namespaces, the result is
-determined by normal [runtime] inheritance. In other words, it follows this
-order:
+See also "cylc reload" which reads in the flow.cylc (or suite.rc) file.
 
-all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
+A broadcast can set/override any "[runtime]" configuration for all cycles or
+for a specific cycle. If a task is affected by specific-cycle and all-cycle
+broadcasts at the same time, the specific takes precedence.
 
-Broadcasts persist, even across workflow restarts, until they expire when
-their target cycle point is older than the oldest current in the workflow,
-or until they are explicitly cancelled with this command.  All-cycle
-broadcasts do not expire.
+Broadcasts can also target all tasks, specific tasks or families of tasks. If a
+task is affected by broadcasts to multiple ancestor namespaces (tasks it
+inherits from), the result is determined by normal "[runtime]" inheritance.
 
-For each task the final effect of all broadcasts to all namespaces is
-computed on the fly just prior to job submission.  The --cancel and
---clear options simply cancel (remove) active broadcasts, they do not
-act directly on the final task-level result. Consequently, for example,
-you cannot broadcast to "all cycles except Tn" with an all-cycle
-broadcast followed by a cancel to Tn (there is no direct broadcast to Tn
-to cancel); and you cannot broadcast to "all members of FAMILY except
-member_n" with a general broadcast to FAMILY followed by a cancel to
-member_n (there is no direct broadcast to member_n to cancel).
+Broadcasts are applied at the time of job submission.
+
+Broadcasts persist, even across restarts. Broadcasts made to specific cycle
+points will expire when the cycle point is older than the oldest active cycle
+point in the workflow.
+
+Active broadcasts can be revoked using the "clear" mode. Any broadcasts
+matching the specified cycle points and namespaces will be revoked.
+
+Note: a "clear" broadcast for a specific cycle or namespace does *not* clear
+all-cycle or all-namespace broadcasts.
 
 Examples:
   # To broadcast a variable to all tasks (quote items with internal spaces):
@@ -57,6 +55,9 @@ Examples:
   >     VERSE = the quick brown fox
   > __FLOW__
   $ cylc broadcast -F 'broadcast.cylc' WORKFLOW_ID
+
+  # view active broadcasts
+  $ cylc broadcast --display WORKFLOW_ID
 
   # To cancel the same broadcast:
   $ cylc broadcast --cancel "[environment]VERSE" WORKFLOW_ID
@@ -76,8 +77,7 @@ when the value contains newline or other metacharacters. If FILE is "-", read
 from standard input.
 
 Broadcast cannot change [runtime] inheritance.
-
-See also 'cylc reload' - reload a modified workflow definition at run time."""
+"""
 
 from ansimarkup import parse as cparse
 from functools import partial
@@ -113,7 +113,7 @@ MUTATION = '''
 mutation (
     $wFlows: [WorkflowID]!,
     $bMode: BroadcastMode!,
-    $cPoints: [CyclePoint],
+    $cPoints: [BroadcastCyclePoint],
     $nSpaces: [NamespaceName],
     $bSettings: [BroadcastSetting],
     $bCutoff: CyclePoint

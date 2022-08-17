@@ -1,0 +1,12 @@
+Initial point: 1
+Final point: 4
+1/failer -triggered off [] in flow 1
+1/foo -triggered off [] in flow 1
+3/foo -triggered off [] in flow 1
+1/bar -triggered off ['1/foo'] in flow 1
+3/bar -triggered off ['3/foo'] in flow 1
+2/baz -triggered off [] in flow 1
+2/foo -triggered off ['2/baz'] in flow 1
+4/foo -triggered off [] in flow 1
+4/bar -triggered off ['4/foo'] in flow 1
+2/bar -triggered off ['2/foo'] in flow 1

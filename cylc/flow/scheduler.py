@@ -74,7 +74,7 @@ from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.option_parsers import verbosity_to_env, verbosity_to_opts
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
@@ -105,7 +105,6 @@ from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
-from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
     REMOTE_INIT_IN_PROGRESS)
@@ -233,9 +232,6 @@ class Scheduler:
     auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
 
-    # queue-released tasks awaiting job preparation
-    pre_prep_tasks: Optional[List[TaskProxy]] = None
-
     # profiling
     _profile_amounts: Optional[dict] = None
     _profile_update_times: Optional[dict] = None
@@ -264,7 +260,6 @@ class Scheduler:
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-        self.pre_prep_tasks = []
         self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
@@ -414,28 +409,29 @@ class Scheduler:
                 self.config.cfg['scheduler']['cycle point time zone'])
 
         # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs:
+        # the workflow log file for use in reference test runs.
+        # (These are also headers that get logged on each rollover)
         LOG.info(
             f'Run mode: {self.config.run_mode()}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         LOG.info(
             f'Initial point: {self.config.initial_point}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         if self.config.start_point != self.config.initial_point:
             LOG.info(
                 f'Start point: {self.config.start_point}',
-                extra=RotatingLogFileHandler.extra
+                extra=RotatingLogFileHandler.header_extra
             )
         LOG.info(
             f'Final point: {self.config.final_point}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         if self.config.stop_point:
             LOG.info(
                 f'Stop point: {self.config.stop_point}',
-                extra=RotatingLogFileHandler.extra
+                extra=RotatingLogFileHandler.header_extra
             )
 
         self.broadcast_mgr.linearized_ancestors.update(
@@ -548,32 +544,38 @@ class Scheduler:
             LOG.setLevel(logging.INFO)
 
         # Print workflow name to disambiguate in case of inferred run number
+        # while in no-detach mode
         LOG.info(f"Workflow: {self.workflow}")
+        # Headers that also get logged on each rollover:
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.server.port,
                 'pid': os.getpid()},
-            extra=RotatingLogFileHandler.extra,
+            extra=RotatingLogFileHandler.header_extra,
         )
         LOG.info(
             self.START_PUB_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.server.pub_port},
-            extra=RotatingLogFileHandler.extra,
+            extra=RotatingLogFileHandler.header_extra,
         )
         restart_num = self.get_restart_num() + 1
         LOG.info(
-            'Run: (re)start number=%d, log rollover=%d',
-            restart_num,
-            1,  # hard code 1 which is updated later if required
-            extra=RotatingLogFileHandler.extra_num
+            f'Run: (re)start number={restart_num}, log rollover=%d',
+            # Hard code 1 in args, gets updated on log rollover (NOTE: this
+            # must be the only positional arg):
+            1,
+            extra={
+                **RotatingLogFileHandler.header_extra,
+                RotatingLogFileHandler.ROLLOVER_NUM: 1
+            }
         )
         LOG.info(
             f'Cylc version: {CYLC_VERSION}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
 
         if is_quiet:
@@ -604,16 +606,22 @@ class Scheduler:
         except SchedulerStop as exc:
             # deliberate stop
             await self.shutdown(exc)
-            if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-                self.workflow_auto_restart()
-            # run shutdown coros
-            await asyncio.gather(
-                *main_loop.get_runners(
-                    self.main_loop_plugins,
-                    main_loop.CoroTypes.ShutDown,
-                    self
+            try:
+                if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
+                    self.workflow_auto_restart()
+                # run shutdown coros
+                await asyncio.gather(
+                    *main_loop.get_runners(
+                        self.main_loop_plugins,
+                        main_loop.CoroTypes.ShutDown,
+                        self
+                    )
                 )
-            )
+            except Exception as exc:
+                # Need to log traceback manually because otherwise this
+                # exception gets swallowed
+                LOG.exception(exc)
+                raise
 
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             # Includes SchedulerError
@@ -689,27 +697,7 @@ class Scheduler:
             else "Cold"
         )
         LOG.info(f"{start_type} start from {self.config.start_point}")
-
-        flow_num = self.flow_mgr.get_new_flow(
-            f"original flow from {self.config.start_point}"
-        )
-        for name in self.config.get_task_name_list():
-            tdef = self.config.get_taskdef(name)
-            try:
-                point = sorted([
-                    point for point in
-                    (seq.get_first_point(self.config.start_point)
-                     for seq in tdef.sequences) if point
-                ])[0]
-            except IndexError:
-                # No points
-                continue
-            parent_points = tdef.get_parent_points(point)
-            if not parent_points or all(
-                    x < self.config.start_point for x in parent_points):
-                self.pool.add_to_pool(
-                    TaskProxy(tdef, point, {flow_num})
-                )
+        self.pool.load_from_point()
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
@@ -898,23 +886,20 @@ class Scheduler:
             self.pool.stop_flow(flow_num)
             return
 
-        if cycle_point:
+        if cycle_point is not None:
             # schedule shutdown after tasks pass provided cycle point
             point = TaskID.get_standardised_point(cycle_point)
-            if self.pool.set_stop_point(point):
+            if point is not None and self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
                 self.workflow_db_mgr.put_workflow_stop_cycle_point(
                     self.options.stopcp)
-            else:
-                # TODO: yield warning
-                pass
-        elif clock_time:
+        elif clock_time is not None:
             # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             self.set_stop_clock(
                 int(parser.parse(clock_time).seconds_since_unix_epoch)
             )
-        elif task:
+        elif task is not None:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
             self.pool.set_stop_task(task_id)
@@ -1136,10 +1121,7 @@ class Scheduler:
         config_dir = get_workflow_run_config_log_dir(
             self.workflow)
         config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
-        if config_logs:
-            log_num = get_next_log_number(config_logs[-1])
-        else:
-            log_num = '01'
+        log_num = get_next_log_number(config_logs[-1]) if config_logs else 1
         if is_reload:
             load_type = "reload"
             load_type_num = get_reload_start_number(config_logs)
@@ -1151,7 +1133,7 @@ class Scheduler:
             load_type = "start"
             load_type_num = '01'
         file_name = get_workflow_run_config_log_dir(
-            self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
+            self.workflow, f"{log_num:02d}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
             handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)
@@ -1162,6 +1144,7 @@ class Scheduler:
             'CYLC_UTC': str(get_utc_mode()),
             'CYLC_WORKFLOW_ID': self.workflow,
             'CYLC_WORKFLOW_NAME': self.workflow_name,
+            'CYLC_WORKFLOW_NAME_BASE': str(Path(self.workflow_name).name),
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
             ),
@@ -1259,63 +1242,73 @@ class Scheduler:
                 return
         self.workflow_event_handler.handle(self, event, str(reason))
 
-    def release_queued_tasks(self):
-        """Release queued tasks, and submit task jobs.
+    def release_queued_tasks(self) -> None:
+        """Release queued tasks, and submit jobs.
 
         The task queue manages references to task proxies in the task pool.
 
-        Newly released tasks are passed to job submission multiple times until
-        associated asynchronous host select, remote init, and remote install
-        processes are done.
+        Tasks which have entered the submission pipeline but not yet finished
+        (pre_prep_tasks) are passed to job submission multiple times until they
+        have passed through a series of asynchronous operations (host select,
+        remote init, remote file install, etc).
+
+        Note:
+            We do not maintain a list of "pre_prep_tasks" between iterations
+            of this method as this creates an intermediate task staging pool
+            which has nasty consequences:
+
+            * https://github.com/cylc/cylc-flow/pull/4620
+            * https://github.com/cylc/cylc-flow/issues/4974
 
         """
-        # Forget tasks that are no longer preparing for job submission.
-        self.pre_prep_tasks = [
-            itask for itask in self.pre_prep_tasks if
-            itask.waiting_on_job_prep
-        ]
-
         if (
             not self.is_paused
             and self.stop_mode is None
             and self.auto_restart_time is None
         ):
-            # Add newly released tasks to those still preparing.
-            self.pre_prep_tasks += self.pool.release_queued_tasks(
-                # the number of tasks waiting to go through the task
-                # submission pipeline
-                self.pre_prep_tasks
+            pre_prep_tasks = self.pool.release_queued_tasks()
+
+        elif (
+            self.should_auto_restart_now()
+            and self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL
+        ):
+            # Need to get preparing tasks to submit before auto restart
+            pre_prep_tasks = [
+                itask for itask in self.pool.get_tasks()
+                if itask.state(TASK_STATUS_PREPARING)
+            ]
+
+        # Return, if no tasks to submit.
+        else:
+            return
+        if not pre_prep_tasks:
+            return
+
+        # Start the job submission process.
+        self.is_updated = True
+        self.reset_inactivity_timer()
+
+        self.task_job_mgr.task_remote_mgr.rsync_includes = (
+            self.config.get_validated_rsync_includes())
+
+        log = LOG.debug
+        if self.options.reftest or self.options.genref:
+            log = LOG.info
+        for itask in self.task_job_mgr.submit_task_jobs(
+            self.workflow,
+            pre_prep_tasks,
+            self.server.curve_auth,
+            self.server.client_pub_key_dir,
+            is_simulation=self.config.run_mode('simulation')
+        ):
+            if itask.flow_nums:
+                flow = ','.join(str(i) for i in itask.flow_nums)
+            else:
+                flow = FLOW_NONE
+            log(
+                f"{itask.identity} -triggered off "
+                f"{itask.state.get_resolved_dependencies()} in flow {flow}"
             )
-
-            if not self.pre_prep_tasks:
-                # No tasks to submit.
-                return
-
-            # Start the job submission process.
-            self.is_updated = True
-
-            self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_validated_rsync_includes())
-
-            meth = LOG.debug
-            if self.options.reftest or self.options.genref:
-                meth = LOG.info
-            for itask in self.task_job_mgr.submit_task_jobs(
-                self.workflow,
-                self.pre_prep_tasks,
-                self.server.curve_auth,
-                self.server.client_pub_key_dir,
-                self.config.run_mode('simulation')
-            ):
-                if itask.flow_nums:
-                    flow = ','.join(str(i) for i in itask.flow_nums)
-                else:
-                    flow = FLOW_NONE
-                meth(
-                    f"{itask.identity} -triggered off "
-                    f"{itask.state.get_resolved_dependencies()}"
-                    f" in flow {flow}"
-                )
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1402,27 +1395,33 @@ class Scheduler:
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
-        if self.auto_restart_time is None or time() < self.auto_restart_time:
+        if not self.should_auto_restart_now():
             # ... no
             pass
         elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-            # ... yes - wait for local jobs to complete before restarting
-            #           * Avoid polling issues see #2843
-            #           * Ensure the host can be safely taken down once the
-            #             workflow has stopped running.
+            # ... yes - wait for preparing jobs to see if they're local and
+            # wait for local jobs to complete before restarting
+            #    * Avoid polling issues - see #2843
+            #    * Ensure the host can be safely taken down once the
+            #      workflow has stopped running.
             for itask in self.pool.get_tasks():
+                if itask.state(TASK_STATUS_PREPARING):
+                    LOG.info(
+                        "Waiting for preparing jobs to submit before "
+                        "attempting restart"
+                    )
+                    break
                 if (
-                        itask.state(*TASK_STATUSES_ACTIVE)
-                        and itask.summary['job_runner_name']
-                        and not is_remote_platform(itask.platform)
-                        and self.task_job_mgr.job_runner_mgr
-                        .is_job_local_to_host(
-                            itask.summary['job_runner_name'])
+                    itask.state(*TASK_STATUSES_ACTIVE)
+                    and itask.summary['job_runner_name']
+                    and not is_remote_platform(itask.platform)
+                    and self.task_job_mgr.job_runner_mgr.is_job_local_to_host(
+                        itask.summary['job_runner_name'])
                 ):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')
                     break
-            else:
+            else:  # no break
                 self._set_stop(StopMode.REQUEST_NOW_NOW)
         elif (  # noqa: SIM106
             self.auto_restart_mode == AutoRestartMode.FORCE_STOP
@@ -1434,9 +1433,19 @@ class Scheduler:
             raise SchedulerError(
                 'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
 
-    def workflow_auto_restart(self, max_retries=3):
+    def should_auto_restart_now(self) -> bool:
+        """Is it time for the scheduler to auto stop + restart?"""
+        return (
+            self.auto_restart_time is not None and
+            time() >= self.auto_restart_time
+        )
+
+    def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
-        cmd = ['cylc', 'play', quote(self.workflow)]
+        cmd = [
+            'cylc', 'play', quote(self.workflow),
+            *verbosity_to_opts(cylc.flow.flags.verbosity)
+        ]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
         for attempt_no in range(max_retries):
@@ -1448,6 +1457,7 @@ class Scheduler:
                 stdin=DEVNULL,
                 stdout=PIPE,
                 stderr=PIPE,
+                text=True
             )
             # * new_host comes from internal interface which can only return
             #   host names
@@ -1458,7 +1468,8 @@ class Scheduler:
                         f' will retry in {self.INTERVAL_AUTO_RESTART_ERROR}s')
                 LOG.critical(
                     f"{msg}. Restart error:\n",
-                    f"{proc.communicate()[1].decode()}")
+                    f"{proc.communicate()[1]}"
+                )
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
                 LOG.info(f'Workflow now running on "{new_host}".')
@@ -1500,15 +1511,12 @@ class Scheduler:
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
                     self.data_store_mgr.insert_db_job)
                 LOG.info("Reload completed.")
+                if self.pool.compute_runahead(force=True):
+                    self.pool.release_runahead_tasks()
                 self.is_reloaded = True
                 self.is_updated = True
 
             self.process_command_queue()
-
-            if self.pool.release_runahead_tasks():
-                self.is_updated = True
-                self.reset_inactivity_timer()
-
             self.proc_pool.process()
 
             # Tasks in the main pool that are waiting but not queued must be
@@ -1563,7 +1571,6 @@ class Scheduler:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
             self.pool.set_expired_tasks()
-
             self.release_queued_tasks()
 
             if self.pool.sim_time_check(self.message_queue):
@@ -1714,28 +1721,26 @@ class Scheduler:
 
     async def _shutdown(self, reason: Exception) -> None:
         """Shutdown the workflow."""
+        shutdown_msg = "Workflow shutting down"
         if isinstance(reason, SchedulerStop):
-            LOG.info(f'Workflow shutting down - {reason.args[0]}')
+            LOG.info(f'{shutdown_msg} - {reason.args[0]}')
             # Unset the "paused" status of the workflow if not auto-restarting
             if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
-            LOG.error(f"Workflow shutting down - {reason}")
+            LOG.error(f"{shutdown_msg} - {reason}")
         elif isinstance(reason, CylcError) or (
             isinstance(reason, ParsecError) and reason.schd_expected
         ):
-            LOG.error(
-                f"Workflow shutting down - {type(reason).__name__}: {reason}"
-            )
+            LOG.error(f"{shutdown_msg} - {type(reason).__name__}: {reason}")
             if cylc.flow.flags.verbosity > 1:
                 # Print traceback
                 LOG.exception(reason)
         else:
             LOG.exception(reason)
             if str(reason):
-                LOG.critical(f'Workflow shutting down - {reason}')
-            else:
-                LOG.critical('Workflow shutting down')
+                shutdown_msg += f" - {reason}"
+            LOG.critical(shutdown_msg)
 
         if hasattr(self, 'proc_pool'):
             self.proc_pool.close()
@@ -1782,7 +1787,7 @@ class Scheduler:
         # from running event handlers), because the existence of the file is
         # used to determine if the workflow is running
         if self.contact_data:
-            fname = workflow_files.get_contact_file(self.workflow)
+            fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
             except OSError as exc:
@@ -1835,8 +1840,6 @@ class Scheduler:
             # Don't if paused.
             return False
 
-        self.pool.release_runahead_tasks()
-
         if self.check_workflow_stalled():
             return False
 
@@ -1847,8 +1850,10 @@ class Scheduler:
                 TASK_STATUS_SUBMITTED,
                 TASK_STATUS_RUNNING
             )
-            or (itask.state(TASK_STATUS_WAITING)
-                and not itask.state.is_runahead)
+            or (
+                itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead
+            )
         ):
             # Don't if there are more tasks to run (if waiting and not
             # runahead, then held, queued, or xtriggered).
@@ -1856,10 +1861,8 @@ class Scheduler:
 
         # Can shut down.
         if self.pool.stop_point:
-            self.options.stopcp = None
-            self.pool.stop_point = None
+            # Forget early stop point in case of a restart.
             self.workflow_db_mgr.delete_workflow_stop_cycle_point()
-            self.update_data_store()
 
         return True
 

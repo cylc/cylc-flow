@@ -15,13 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test "cylc cat-log" open local logs in editor.
-export REQUIRE_PLATFORM='loc:remote'
+# Ensure that UnicodeDecodeError's are caught and handled elegantly
+# See: https://github.com/cylc/cylc-flow/pull/4947
+
 . "$(dirname "$0")/test_header"
+if [[ -n ${CI:-} ]]; then
+    # test requires a real terminal to write to
+    skip_all
+fi
+set_test_number 4
 
-. "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
-export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
+# this command should work where UTF-8 is supported
+run_ok "${TEST_NAME_BASE}-good" env LANG=en_GB.UTF-8 cylc scan --help
 
-install_workflow "${TEST_NAME_BASE}" "editor"
-run_tests "${CYLC_TEST_PLATFORM}"
-purge
+# but fail where it is not
+run_fail "${TEST_NAME_BASE}-bad" env LANG=en_GB cylc scan --help
+
+# we should raise a sensible error message
+grep_ok \
+    'A UTF-8 compatible terminal is required for this command' \
+    "${TEST_NAME_BASE}-bad.stderr"
+
+# and provide some helpful advice
+grep_ok \
+    'LANG=C.UTF-8 cylc scan --help' \
+    "${TEST_NAME_BASE}-bad.stderr"
+
+exit

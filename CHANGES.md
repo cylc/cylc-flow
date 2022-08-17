@@ -19,21 +19,69 @@ release.
   * `rose suite-run` -> `cylc install; cylc play <id>`
 * The core package containing Cylc scheduler program has been renamed cylc-flow.
 * Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
-* [New documentation](https://cylc.github.io/cylc-doc/latest).
+* [New documentation](https://cylc.github.io/cylc-doc/stable).
 
-See the [migration guide](https://cylc.github.io/cylc-doc/latest/html/7-to-8/index.html) for a full list of changes.
+See the [migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html) for a full list of changes.
 
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
--------------------------------------------------------------------------------
-## __cylc-8.0rc4 (<span actions:bind='release-date'>Upcoming</span>)__
 
-Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
+-------------------------------------------------------------------------------
+## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Enhancements
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
+100 for the "default" queue.
+
+[#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
+numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
+using `--ignore <Issue Code>`.
+
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5045](https://github.com/cylc/cylc-flow/pull/5045) -
+Fix issue where unsatisfied xtriggers could be wiped on reload.
+
+[#5031](https://github.com/cylc/cylc-flow/pull/5031) - Fix bug where
+specifying multiple datetime offsets (e.g. `final cycle point = +P1M-P1D`)
+would not obey the given order.
+
+[#5033](https://github.com/cylc/cylc-flow/pull/5033) - Running `cylc clean`
+on a top level dir containing run dir(s) will now remove that top level dir
+in addition to the run(s) (if there is nothing else inside it).
+
+[#5007](https://github.com/cylc/cylc-flow/pull/5007) - Fix for `cylc broadcast`
+cycle point validation in the UI.
+
+[#5037](https://github.com/cylc/cylc-flow/pull/5037) - Fix bug where the
+workflow restart number would get wiped on reload.
+
+[#5049](https://github.com/cylc/cylc-flow/pull/5049) - Fix several small
+bugs related to auto restart.
+
+[#5062](https://github.com/cylc/cylc-flow/pull/5062) - Fix bug where preparing
+tasks could sometimes get orphaned when an auto restart occurred.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
+
+Cylc 8 production-ready release.
+
+### Enhancements
+
+[#4964](https://github.com/cylc/cylc-flow/pull/4964) -
+`cylc reinstall` now displays the changes it would make when run
+interactively and has improved help / documentaiton.
 
 [#4836](https://github.com/cylc/cylc-flow/pull/4836) - The log directory has
 been tidied. Workflow logs are now found in `log/scheduler` rather than
@@ -49,10 +97,53 @@ Jinja2 used by Cylc from 2.11 to 3.0.
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
+[#4900](https://github.com/cylc/cylc-flow/pull/4900) - Added a command to assist
+with upgrading Cylc 7 workflows to Cylc 8: Try `cylc lint <workflow-dir>`.
+
+[#5009](https://github.com/cylc/cylc-flow/pull/5009) - Added new job
+environment variable `$CYLC_WORKFLOW_NAME_BASE` as the basename of
+`$CYLC_WORKFLOW_NAME`.
+
+[#4993](https://github.com/cylc/cylc-flow/pull/4993) - Remove the few remaining
+uses of a configured text editor (via `cylc view` and `cylc cat-log` options).
+The primary uses of it (`cylc trigger --edit` and `cylc edit` in Cylc 7) have
+already been removed from Cylc 8.
+
+
 ### Fixes
+
+[#5011](https://github.com/cylc/cylc-flow/pull/5011) - Removes preparing jobs
+appearing in UI, and reuse submit number on restart for preparing tasks.
+
+[#5008](https://github.com/cylc/cylc-flow/pull/5008) -
+Autospawn absolute-triggered tasks exactly the same way as parentless tasks.
+
+[#4984](https://github.com/cylc/cylc-flow/pull/4984) -
+Fixes an issue with `cylc reload` which could cause preparing tasks to become
+stuck.
+
+[#4976](https://github.com/cylc/cylc-flow/pull/4976) - Fix bug causing tasks
+to be stuck in UI due to discontinued graph of optional outputs.
+
+[#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
+platforms from `[job]` and `[remote]` configs.
+
+[#4948](https://github.com/cylc/cylc-flow/pull/4948) - Fix lack of
+errors/warnings for deprecated `[runtime][<task>][remote]retrieve job logs *`
+settings.
+
+[#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
+triggers in back-compat mode.
 
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
+
+[#4906](https://github.com/cylc/cylc-flow/pull/4906)
+- Fix delayed spawning of parentless tasks that do have parents in a previous
+  cycle point.
+- Make integer-interval runahead limits consistent with time-interval limits:
+  `P0` means just the runahead base point; `P1` the base point and the point
+  (i.e. one cycle interval), and so on.
 
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
@@ -71,8 +162,11 @@ past jobs to be omitted in the UI.
 
 [#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow validation
 now fails if
-[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+[owner setting](https://cylc.github.io/cylc-doc/stable/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
 is used, as that setting no longer has any effect.
+
+[#4978](https://github.com/cylc/cylc-flow/pull/4978) - `cylc clean`: fix
+occasional failure to clean on remote hosts due to leftover contact file.
 
 [#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
 prompt if no matching workflows.
@@ -197,7 +291,7 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 remote file installation is now configurable.
 
 [#4655](https://github.com/cylc/cylc-flow/pull/4655) - Enhancements to the
-provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
+provided [wrapper script](https://cylc.github.io/cylc-doc/stable/html/installation.html#managing-environments).
 
 ### Fixes
 
@@ -256,7 +350,7 @@ renamed `cylc get-resources` and small changes made:
 - Cylc wrapper script made available.
 - Source argument now before target.
 - Metadata as well as names from ``--list`` option.
-- Files extracted to to ``target/source_name`` rather than ``target/full/source/path``.
+- Files extracted to ``target/source_name`` rather than ``target/full/source/path``.
 
 [#4548](https://github.com/cylc/cylc-flow/pull/4548) - Changed the
 workflow version control info log file format from modified-INI to JSON.
@@ -575,7 +669,7 @@ during workflow run and post pause.
 [#4168](https://github.com/cylc/cylc-flow/pull/4168) - Fix bug where any
 errors during workflow shutdown were not logged.
 
-[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in in `cylc install`
+[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in `cylc install`
 where a workflow would be installed with the wrong name.
 
 [#4188](https://github.com/cylc/cylc-flow/pull/4188) - Fix incorrect usage

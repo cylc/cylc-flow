@@ -177,6 +177,7 @@ class TaskState:
             True if the task is queued else False.
         .is_runahead (bool):
             True if the task is runahead limited else False.
+            Automatically true until released by the scheduler.
         .is_updated (boolean):
             Has the status been updated since previous update?
         .kill_failed (boolean):
@@ -221,7 +222,7 @@ class TaskState:
         self.status = status
         self.is_held = is_held
         self.is_queued = False
-        self.is_runahead = True  # limit on spawning, until released
+        self.is_runahead = True
         self.is_updated = False
         self.time_updated = None
 

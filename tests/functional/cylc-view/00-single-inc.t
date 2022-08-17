@@ -27,7 +27,7 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Just inline
 TEST_NAME=${TEST_NAME_BASE}-inline
-cylc view -i --stdout "${WORKFLOW_NAME}" > tmp.stdout
+cylc view -i "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -56,7 +56,7 @@ EOF
 #-------------------------------------------------------------------------------
 # "cylc view -j/--jinja2" should imply "-i/inline" too:
 TEST_NAME=${TEST_NAME_BASE}-jinja2
-cylc view -j --stdout "${WORKFLOW_NAME}" > tmp.stdout
+cylc view -j "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
@@ -80,7 +80,7 @@ EOF
 #-------------------------------------------------------------------------------
 # line continuation joining
 TEST_NAME=${TEST_NAME_BASE}-continuation
-cylc view -c --stdout "${WORKFLOW_NAME}" > tmp.stdout
+cylc view -c "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -108,7 +108,7 @@ EOF
 #-------------------------------------------------------------------------------
 # all processing
 TEST_NAME=${TEST_NAME_BASE}-process
-cylc view -p --stdout "${WORKFLOW_NAME}" > tmp.stdout
+cylc view -p "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"

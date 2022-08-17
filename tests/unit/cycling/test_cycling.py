@@ -14,60 +14,62 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
+import pytest
 
 from cylc.flow.cycling import (
-    SequenceBase, IntervalBase, PointBase, parse_exclusion)
+    SequenceBase,
+    IntervalBase,
+    PointBase,
+    parse_exclusion,
+)
 
 
-class TestBaseClasses(unittest.TestCase):
-    """Test the abstract base classes cannot be instantiated on their own
-    """
-
-    def test_simple_abstract_class_test(self):
-        """Cannot instantiate abstract classes, they must be defined in
-        the subclasses"""
-        self.assertRaises(TypeError, SequenceBase, "sequence-string",
-                          "context_string")
-        self.assertRaises(TypeError, IntervalBase, "value")
-        self.assertRaises(TypeError, PointBase, "value")
+def test_simple_abstract_class_test():
+    """Cannot instantiate abstract classes, they must be defined in
+    the subclasses"""
+    with pytest.raises(TypeError):
+        SequenceBase('sequence-string', 'context_string')
+    with pytest.raises(TypeError):
+        IntervalBase('value')
+    with pytest.raises(TypeError):
+        PointBase('value')
 
 
-class TestParseExclusion(unittest.TestCase):
-    """Test cases for the parser function"""
+def test_parse_exclusion_simple():
+    """Tests the simple case of exclusion parsing"""
+    expression = "PT1H!20000101T02Z"
+    sequence, exclusion = parse_exclusion(expression)
+    assert sequence == "PT1H"
+    assert exclusion == ['20000101T02Z']
 
-    def test_parse_exclusion_simple(self):
-        """Tests the simple case of exclusion parsing"""
-        expression = "PT1H!20000101T02Z"
-        sequence, exclusion = parse_exclusion(expression)
 
-        self.assertEqual(sequence, "PT1H")
-        self.assertEqual(exclusion, ['20000101T02Z'])
+def test_parse_exclusions_list():
+    """Tests the simple case of exclusion parsing"""
+    expression = "PT1H!(T03, T06, T09)"
+    sequence, exclusion = parse_exclusion(expression)
+    assert sequence == "PT1H"
+    assert exclusion == ['T03', 'T06', 'T09']
 
-    def test_parse_exclusions_list(self):
-        """Tests the simple case of exclusion parsing"""
-        expression = "PT1H!(T03, T06, T09)"
-        sequence, exclusion = parse_exclusion(expression)
 
-        self.assertEqual(sequence, "PT1H")
-        self.assertEqual(exclusion, ['T03', 'T06', 'T09'])
+def test_parse_exclusions_list_spaces():
+    """Tests the simple case of exclusion parsing"""
+    expression = "PT1H!    (T03, T06,   T09)   "
+    sequence, exclusion = parse_exclusion(expression)
+    assert sequence == "PT1H"
+    assert exclusion == ['T03', 'T06', 'T09']
 
-    def test_parse_exclusions_list_spaces(self):
-        """Tests the simple case of exclusion parsing"""
-        expression = "PT1H!    (T03, T06,   T09)   "
-        sequence, exclusion = parse_exclusion(expression)
 
-        self.assertEqual(sequence, "PT1H")
-        self.assertEqual(exclusion, ['T03', 'T06', 'T09'])
-
-    def test_parse_bad_exclusion(self):
-        """Tests incorrectly formatted exclusions"""
-        expression1 = "T01/PT1H!(T06, T09), PT5M"
-        expression2 = "T01/PT1H!T03, PT17H, (T06, T09), PT5M"
-        expression3 = "T01/PT1H! PT8H, (T06, T09)"
-        expression4 = "T01/PT1H! T03, T06, T09"
-
-        self.assertRaises(Exception, parse_exclusion, expression1)
-        self.assertRaises(Exception, parse_exclusion, expression2)
-        self.assertRaises(Exception, parse_exclusion, expression3)
-        self.assertRaises(Exception, parse_exclusion, expression4)
+@pytest.mark.parametrize(
+    'expression',
+    [
+        'T01/PT1H!(T06, T09), PT5M',
+        'T01/PT1H!T03, PT17H, (T06, T09), PT5M',
+        'T01/PT1H! PT8H, (T06, T09)',
+        'T01/PT1H! T03, T06, T09',
+        'T01/PT1H !T03 !T06',
+    ],
+)
+def test_parse_bad_exclusion(expression):
+    """Tests incorrectly formatted exclusions"""
+    with pytest.raises(Exception):
+        parse_exclusion(expression)

@@ -127,7 +127,7 @@ class HostUtil:
                 )
             ):
                 # Python's socket bindings don't play nicely with mac os
-                # so by default we get the above ip6.arpa adresss from
+                # so by default we get the above ip6.arpa address from
                 # socket.getfqdn, note this does *not* match `hostname -f`.
                 # https://github.com/cylc/cylc-flow/issues/2689
                 # https://github.com/cylc/cylc-flow/issues/3595

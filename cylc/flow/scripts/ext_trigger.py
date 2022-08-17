@@ -20,23 +20,21 @@
 
 Report an external event message to a scheduler.
 
-External triggers allow any program to send
-a message to the Cylc scheduler. Cylc can use this
-message as a signal that an external prerequisite has
-been satisfied and trigger the task accordingly.
+External triggers allow any program to send a message to the Cylc scheduler.
+Cylc can use this message as a signal that an external prerequisite has been
+satisfied and trigger the task accordingly.
 
-The WORKFLOW_ID argument should be unique to each external
-trigger event. When an incoming message satisfies
-a task's external trigger the message TRIGGER_ID is broadcast
-to all downstream tasks in the cycle point as
-``$CYLC_EXT_TRIGGER_ID``.  Tasks can use
-``$CYLC_EXT_TRIGGER_ID``, for example,  to
-identify a new data file that the external
-triggering system is responding to.
+The WORKFLOW argument should be unique to each external trigger event. When
+an incoming message satisfies a task's external trigger the message TRIGGER_ID
+is broadcast to all downstream tasks in the cycle point as
+``$CYLC_EXT_TRIGGER_ID``.  Tasks can use ``$CYLC_EXT_TRIGGER_ID``, for example,
+to identify a new data file that the external triggering system is responding
+to.
 
 Use the retry options in case the target workflow is down or out of contact.
 
-Note: to manually trigger a task use 'cylc trigger', not this command."""
+Note: to manually trigger a task use 'cylc trigger', not this command.
+"""
 
 from time import sleep
 from typing import TYPE_CHECKING

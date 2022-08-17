@@ -32,7 +32,7 @@
     cycling mode = integer
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
-    runahead limit = P5
+    runahead limit = P4
     [[special tasks]]
         external-trigger = get_data("new dataset ready for processing")
     [[graph]]

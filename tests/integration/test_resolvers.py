@@ -14,14 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
-import pytest
+import logging
+from typing import AsyncGenerator, Callable
 from unittest.mock import Mock
+
+import pytest
 
 from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
 from cylc.flow.id import Tokens
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.workflow_status import StopMode
 
 
 @pytest.fixture
@@ -51,7 +54,7 @@ async def mock_flow(
     mod_flow: Callable[..., str],
     mod_scheduler: Callable[..., Scheduler],
     mod_start,
-) -> Scheduler:
+) -> AsyncGenerator[Scheduler, None]:
     ret = Mock()
     ret.reg = mod_flow({
         'scheduler': {
@@ -216,3 +219,21 @@ async def test_mutation_mapper(mock_flow):
     assert response is None
     with pytest.raises(ValueError):
         await mock_flow.resolvers._mutation_mapper('non_exist', {}, meta)
+
+
+@pytest.mark.asyncio
+async def test_stop(
+    one: Scheduler, run: Callable, log_filter: Callable,
+):
+    """Test the stop resolver."""
+    async with run(one) as log:
+        resolvers = Resolvers(
+            one.data_store_mgr,
+            schd=one
+        )
+        resolvers.stop(StopMode.REQUEST_CLEAN)
+        one.process_command_queue()
+        assert log_filter(
+            log, level=logging.INFO, contains="Command succeeded: stop"
+        )
+        assert one.stop_mode == StopMode.REQUEST_CLEAN

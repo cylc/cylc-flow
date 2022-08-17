@@ -19,7 +19,7 @@ from copy import deepcopy
 import logging
 import pytest
 from pytest import param
-from typing import Callable, Iterable, List, Tuple, Union
+from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
 
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
@@ -34,8 +34,10 @@ from cylc.flow.task_state import (
 )
 
 
-# NOTE: foo & bar have no parents so at start-up (even with the workflow
-# paused) they are spawned out to the runahead limit.
+# NOTE: foo and bar have no parents so at start-up (even with the workflow
+# paused) they get spawned out to the runahead limit. 2/pub spawns
+# immediately too, because we spawn autospawn absolute-triggered tasks as
+# well as parentless tasks. 3/asd does not spawn at start, however.
 EXAMPLE_FLOW_CFG = {
     'scheduler': {
         'allow implicit tasks': True
@@ -44,10 +46,11 @@ EXAMPLE_FLOW_CFG = {
         'cycling mode': 'integer',
         'initial cycle point': 1,
         'final cycle point': 10,
-        'runahead limit': 'P4',
+        'runahead limit': 'P3',
         'graph': {
             'P1': 'foo & bar',
-            'R1/2': 'foo[1] => pub'  # 2/pub doesn't spawn at start
+            'R1/2': 'foo[1] => pub',
+            'R1/3': 'foo[-P1] => asd'
         }
     },
     'runtime': {
@@ -60,7 +63,7 @@ EXAMPLE_FLOW_CFG = {
 def get_task_ids(
     name_point_list: Iterable[Tuple[str, Union[PointBase, str, int]]]
 ) -> List[str]:
-    """Helper function to return sorted task identities ("{name}.{point}")
+    """Helper function to return sorted task identities
     from a list of  (name, point) tuples."""
     return sorted(f'{point}/{name}' for name, point in name_point_list)
 
@@ -109,7 +112,7 @@ async def example_flow(
     scheduler: Callable,
     start,
     caplog: pytest.LogCaptureFixture,
-) -> Scheduler:
+) -> AsyncGenerator[Scheduler, None]:
     """Return a scheduler for interrogating its task pool.
 
     This is function-scoped so slower than mod_example_flow; only use this
@@ -129,7 +132,7 @@ async def example_flow(
     [
         param(
             ['*/foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
-            id="Basic"
+            id="Point glob"
         ),
         param(
             ['1/*'],
@@ -141,17 +144,14 @@ async def example_flow(
             id="Family name"
         ),
         param(
-            ['*/foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
-            id="Point glob"
-        ),
-        param(
             ['*:waiting'],
-            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
             id="Task state"
         ),
         param(
-            ['8/foo'], [], ['8/foo'], ["No active tasks matching: 8/foo"],
+            ['8/foo', '3/asd'], [], ['8/foo', '3/asd'],
+            [f"No active tasks matching: {x}" for x in ['8/foo', '3/asd']],
             id="Task not yet spawned"
         ),
         param(
@@ -161,15 +161,14 @@ async def example_flow(
         ),
         param(
             ['1/grogu', '*/grogu'], [], ['1/grogu', '*/grogu'],
-            ["No active tasks matching: 1/grogu",
-             "No active tasks matching: */grogu"],
+            [f"No active tasks matching: {x}" for x in ['1/grogu', '*/grogu']],
             id="No such task"
         ),
         param(
             ['*'],
-            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
-            id="No items given - get all tasks"
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
+            id="Glob everything"
         )
     ]
 )
@@ -189,7 +188,7 @@ async def test_filter_task_proxies(
     Params:
         items: Arg passed to filter_task_proxies().
         expected_task_ids: IDs of the TaskProxys that are expected to be
-            returned, of the form "{point}/{name}"/
+            returned.
         expected_bad_items: Expected to be returned.
         expected_warnings: Expected to be logged.
     """
@@ -207,8 +206,8 @@ async def test_filter_task_proxies(
     [
         param(
             ['*:waiting'],
-            ['1/waz', '1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
+            ['1/waz', '1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo',
+             '3/bar', '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
             id="Task state"
         ),
     ]
@@ -264,8 +263,12 @@ async def test_filter_task_proxies_hidden(
             id="Basic"
         ),
         param(
-            ['2/*'], ['2/foo', '2/bar', '2/pub'], [],
+            ['3/*', '1/f*'], ['3/foo', '3/bar', '3/asd', '1/foo'], [],
             id="Name glob"
+        ),
+        param(
+            ['3'], ['3/foo', '3/bar', '3/asd'], [],
+            id="No name"
         ),
         param(
             ['2/FAM'], ['2/bar'], [],
@@ -276,7 +279,8 @@ async def test_filter_task_proxies_hidden(
             id="Point glob not allowed"
         ),
         param(
-            ['1/grogu'], [], ["No matching tasks found: 1/grogu"],
+            ['1/grogu', '1/gro*'], [],
+            [f"No matching tasks found: {x}" for x in ['1/grogu', '1/gro*']],
             id="No such task"
         ),
         param(
@@ -329,17 +333,18 @@ async def test_match_taskdefs(
     'items, expected_tasks_to_hold_ids, expected_warnings',
     [
         param(
-            ['1/foo', '2/foo'], ['1/foo', '2/foo'], [],
+            ['1/foo', '3/asd'], ['1/foo', '3/asd'], [],
             id="Active & future tasks"
         ),
         param(
-            ['1/*', '2/*'], ['1/foo', '1/bar'],
-            ["No active tasks matching: 2/*"],
-            id="Name globs hold active tasks only"
+            ['1/*', '2/*', '3/*', '6/*'],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar'],
+            ["No active tasks matching: 6/*"],
+            id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
-            ['1/FAM', '2/FAM'], ['1/bar'],
-            ["No active tasks in the family FAM matching: 2/FAM"],
+            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
+            ["No active tasks in the family FAM matching: 6/FAM"],
             id="Family names hold active tasks only"
         ),
         param(
@@ -351,9 +356,9 @@ async def test_match_taskdefs(
             id="Non-existent task name or invalid cycle point"
         ),
         param(
-            ['1/foo:waiting', '1/foo:failed', '2/bar:waiting'], ['1/foo'],
+            ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
-             "No active tasks matching: 2/bar:waiting"],
+             "No active tasks matching: 6/bar:waiting"],
             id="Specifying task state works for active tasks, not future tasks"
         )
     ]
@@ -400,7 +405,7 @@ async def test_release_held_tasks(
     """Test TaskPool.release_held_tasks().
 
     For a workflow with held active tasks 1/foo & 1/bar, and held future task
-    2/pub.
+    3/asd.
 
     We skip testing the matching logic here because it would be slow using the
     function-scoped example_flow fixture, and it would repeat what is covered
@@ -408,19 +413,19 @@ async def test_release_held_tasks(
     """
     # Setup
     task_pool = example_flow.pool
-    task_pool.hold_tasks(['1/foo', '1/bar', '2/pub'])
+    expected_tasks_to_hold_ids = sorted(['1/foo', '1/bar', '3/asd'])
+    task_pool.hold_tasks(expected_tasks_to_hold_ids)
     for itask in task_pool.get_all_tasks():
-        assert itask.state.is_held is True
-    expected_tasks_to_hold_ids = sorted(['1/foo', '1/bar', '2/pub'])
+        hold_expected = itask.identity in expected_tasks_to_hold_ids
+        assert itask.state.is_held is hold_expected
     assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
     # Test
-    task_pool.release_held_tasks(['1/foo', '2/pub'])
+    task_pool.release_held_tasks(['1/foo', '3/asd'])
     for itask in task_pool.get_all_tasks():
-        hold_expected = itask.identity == '1/bar'
-        assert itask.state.is_held is hold_expected
+        assert itask.state.is_held is (itask.identity == '1/bar')
 
     expected_tasks_to_hold_ids = sorted(['1/bar'])
     assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
@@ -432,8 +437,10 @@ async def test_release_held_tasks(
 @pytest.mark.parametrize(
     'hold_after_point, expected_held_task_ids',
     [
-        (0, ['1/foo', '1/bar']),
-        (1, [])
+        (0, ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar']),
+        (1, ['2/foo', '2/bar', '2/pub', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar'])
     ]
 )
 async def test_hold_point(

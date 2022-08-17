@@ -18,8 +18,10 @@
 
 """cylc set-outputs [OPTIONS] ARGS
 
-Artificially mark task outputs as completed and spawn downstream tasks that
-depend on those outputs. By default it marks tasks as succeeded.
+Artificially satisfy task outputs.
+
+Mark task outputs as completed and spawn downstream tasks that depend on those
+outputs. By default it marks tasks as succeeded.
 
 This allows you to manually intervene with Cylc's scheduling algorithm by
 artificially satisfying outputs of tasks.
@@ -43,7 +45,6 @@ Examples:
   $ cylc set-outputs --flow=3 --output=x my_flow//1/foo
 
 Use --output multiple times to spawn off of several outputs at once.
-
 """
 
 from functools import partial

@@ -1,0 +1,19 @@
+# suite.rc: Cylc 8 back-compat mode.
+
+# GitHub cylc-flow #4968: self-induced suicide should not retrigger foo below.
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+        expected task failures = 1/foo
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo => bar
+            foo:fail => !foo & !bar
+            foo:fail | bar => baz
+        """
+[runtime]
+    [[foo]]
+        script = false
+    [[bar, baz]]

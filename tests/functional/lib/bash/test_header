@@ -41,7 +41,7 @@
 #         Run COMMAND with any following options/arguments and store stdout
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
 #         This is expected to have a non-zero return code, which ok's the test.
-#     run_graphql_ok WORKFLOW TEST_NAME JSON
+#     run_graphql_ok TEST_NAME WORKFLOW JSON
 #         Send a graphql query to the workflow, extract the result from
 #         ${TEST_NAME}.stdout
 #     cmp_ok FILE_TEST FILE_CONTROL
@@ -54,7 +54,7 @@
 #         Match a file against a regex file line by line.
 #         Reads in the test and control files line by line and checks the test
 #         line re.match'es the control line.
-#     cmp_json FILE_TEST [FILE_CONTROL]
+#     cmp_json TEST_NAME FILE_TEST [FILE_CONTROL]
 #         Alternative implementation to cmp_json_ok, compare two JSON files
 #         and display any differences as a unified(ish) diff:
 #         * Works with nested dictionaries.
@@ -65,7 +65,7 @@
 #     grep_ok PATTERN FILE [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN FILE".
 #     grep_workflow_log_ok TEST_NAME PATTERN [$OPTS]
-#         Run "grep [$OPTS] -q -e PATTERN <workflow-log>".
+#         Run "grep [$OPTS] -s -e PATTERN <workflow-log>".
 #     named_grep_ok NAME PATTERN FILE [$OPTS]
 #         Run grep_ok with a custom test name.
 #         OPTS: put grep options like '-E' (extended regex) at end of line.
@@ -429,12 +429,26 @@ grep_ok() {
 
 grep_workflow_log_ok() {
     local TEST_NAME="$1"
-    shift
-    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"; then
-      ok "${TEST_NAME}"
-    else
-      fail "${TEST_NAME}"
+    local PATTERN="$2"
+    shift 2
+    local LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+    if grep "$@" -s -e "$PATTERN" "$LOG_FILE"; then
+        ok "${TEST_NAME}"
+        return
     fi
+    mkdir -p "${TEST_LOG_DIR}"
+    {
+        cat <<__ERR__
+Can't find:
+===========
+${PATTERN}
+===========
+in:
+===========
+__ERR__
+        cat "$LOG_FILE"
+    } >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
 }
 
 named_grep_ok() {
@@ -955,7 +969,7 @@ _get_test_platform () {
     required_platform="$(_parse_platform_spec "${requirement}")"
 
     for platform in "${PLATFORMS[@]}"; do
-        # we are purposfully allowing pattern matching here
+        # we are purposefully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
             CYLC_TEST_PLATFORM="$platform"
@@ -1048,7 +1062,7 @@ _expand_test_platforms () {
     for pattern in "${PLATFORMS[@]}"; do
         for platform in "${all_platforms[@]}"; do
             # shellcheck disable=SC2053
-            # we are purposfully performing glob matching here
+            # we are purposefully performing glob matching here
             if [[ ${platform} == ${pattern} ]]; then
                 ret+=("${platform}")
             fi

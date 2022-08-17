@@ -28,7 +28,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
 
 LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
-grep_ok "Unsatisfied prerequisites" "${LOG}"
+grep_ok "Partially satisfied prerequisites" "${LOG}"
 grep_ok "1/bar is waiting on \['1/foo:y'\]" "${LOG}"
 grep_ok "Workflow stalled" "${LOG}"
 

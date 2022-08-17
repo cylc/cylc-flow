@@ -3,7 +3,7 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        inactivity timeout = PT10S
+        inactivity timeout = PT20S
         abort on inactivity timeout = True
 [scheduling]
     initial cycle point = 20100101T00

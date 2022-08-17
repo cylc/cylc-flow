@@ -1,11 +1,9 @@
 [meta]
     title = "test workflow for broadcast functionality"
     description = """
-        The initial prep task in this workflow broadcasts an environment variable
-        "BCAST" to various cycles and namespaces, then each task writes its cycle
-        time, name, and its value of BCAST to a special log file. Finally, the
-        shutdown event handler compares the broadcast log file with a previously
-        generated reference version.
+        The first task broadcasts an environment variable "BCAST" to various
+        cycles and namespaces. Then each task writes its point, name, and value
+        of BCAST to a log for comparison with the expected result.
     """
 
 [scheduler]
@@ -15,15 +13,14 @@
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point   = 20100809T00
+    # Ensure the first cycle finishes before the second (last) one, so that the
+    # broadcast to foo in the first cycle expires before shutdown:
+    runahead limit = P0
     [[graph]]
-        R1 = prep => check & foo
+        R1 = "prep => check & foo"
         T00 = """
             foo => bar & baz & qux & wibble => ENS?
             ENS:finish-all => wobble
-            # Ensure that the first cycle completely finishes before
-            # the second (last) one, so that the broadcast to foo in the first
-            # cycle automatically EXPIRES before the workflow shuts down:
-            wobble[-P1D] => wobble
         """
 
 [runtime]

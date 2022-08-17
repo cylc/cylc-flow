@@ -14,52 +14,50 @@
 
 </div>
 
-Cylc (pronounced silk) is a general purpose workflow engine
-that specialises in cycling workflows and has strong scaling characteristics.
+Cylc (pronounced silk) is a general purpose workflow engine that also
+manages cycling systems very efficiently. It is used in production weather,
+climate, and environmental forecasting on HPC, but is not specialized to those
+domains.
 
-Cylc was originally developed to meet the challenges of production weather
-forecasting - which is notorious for the size and complexity of its workflows.
+### Quick Start
+
+
+[Installation](https://cylc.github.io/cylc-doc/stable/html/installation.html) |
+[Documentation](https://cylc.github.io/cylc-doc/stable/html/index.html)
+
+```bash
+# install cylc
+conda install cylc-flow
+
+# write your first workflow
+mkdir -p ~/cylc-src/example
+cat > ~/cylc-src/example/flow.cylc <<__CONFIG__
+[scheduling]
+    initial cycle point = 1
+    cycling mode = integer
+    [[graph]]
+        P1 = """
+            a => b => c & d
+            b[-P1] => b
+        """
+[runtime]
+    [[a, b, c, d]]
+        script = echo "Hello $CYLC_TASK_NAME"
+__CONFIG__
+
+# install and run it
+cylc install example
+cylc play example
+
+# watch it run
+cylc tui example
+```
 
 ### Citations & Publications
 
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
 [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737)
 [![CISE](https://img.shields.io/website/https/ieeexplore.ieee.org/document/8675433.svg?color=orange&label=CISE&up_message=10.1109%2FMCSE.2019.2906593)](https://ieeexplore.ieee.org/document/8675433)
-
-### Cylc 7 (production)
-
-![python](https://img.shields.io/badge/python-2.6%20%7C%202.7-orange)
-[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
-
-* Production ready.
-* HTTPS network layer.
-* PyGTK GUI.
-* On the `7.8.x` branch in the source code.
-* 7.8 - Python 2.6
-* 7.9 - Python 2.7
-
-[Quick Installation](INSTALL.md) |
-[Website](https://cylc.github.io/) |
-[Documentation](https://cylc.github.io/documentation)
-
-### Cylc 8 (release candidate)
-
-![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
-[![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
-[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Flatest%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
-
-* Pre-release for user acceptance testing.
-* ZMQ (TCP) network layer.
-* Text-based terminal user interface (TUI).
-* Optional web-based graphical user interface (GUI) provided by ([cylc-uiserver](https://github.com/cylc/cylc-uiserver)).
-* On the `master` branch in the source code.
-
-The first official Cylc 8 release will follow the stabilisation of the release candidates. Until then we recommend the latest
-Cylc 7 versions for production use.
-
-[Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
-[Documentation](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
 ### Copyright and Terms of Use
 

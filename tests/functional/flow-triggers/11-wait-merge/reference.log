@@ -4,6 +4,6 @@ Final point: 1
 1/b -triggered off ['1/a'] in flow 1
 1/a -triggered off [] in flow 2
 1/c -triggered off [] in flow 2
-1/x -triggered off ['1/c'] in flow 2
+1/x -triggered off ['1/c'] in flow 1,2
 1/d -triggered off ['1/c'] in flow 1,2
 1/b -triggered off ['1/a'] in flow 2

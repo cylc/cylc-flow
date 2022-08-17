@@ -6,7 +6,7 @@
 [scheduling]
    cycling mode = integer
    initial cycle point = 1
-   runahead limit = P1
+   runahead limit = P0
    [[graph]]
       P1 = "foo:x & foo:y? => bar"
 [runtime]

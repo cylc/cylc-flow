@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import Values
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from pathlib import Path
 import pytest
 import logging
@@ -42,12 +42,13 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED
 )
 
+from cylc.flow.cycling.iso8601 import ISO8601Point
+
 
 Fixture = Any
 
 
-@pytest.fixture
-def tmp_flow_config(tmp_run_dir: Callable):
+def _tmp_flow_config(tmp_run_dir: Callable):
     """Create a temporary flow config file for use in init'ing WorkflowConfig.
 
     Args:
@@ -56,12 +57,22 @@ def tmp_flow_config(tmp_run_dir: Callable):
 
     Returns the path to the flow file.
     """
-    def _tmp_flow_config(reg: str, config: str) -> Path:
+    def __tmp_flow_config(reg: str, config: str) -> Path:
         run_dir: Path = tmp_run_dir(reg)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
-    return _tmp_flow_config
+    return __tmp_flow_config
+
+
+@pytest.fixture
+def tmp_flow_config(tmp_run_dir: Callable):
+    return _tmp_flow_config(tmp_run_dir)
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
+    return _tmp_flow_config(mod_tmp_run_dir)
 
 
 class TestWorkflowConfig:
@@ -1396,6 +1407,46 @@ def test_zero_interval(
 
 
 @pytest.mark.parametrize(
+    'icp, fcp_expr, expected_fcp',
+    [
+        ('2021-02-28', '+P1M+P1D', '2021-03-29'),
+        ('2019-02-28', '+P1D+P1M', '2019-04-01'),
+        ('2008-07-01', '+P1M-P1D', '2008-07-31'),
+        ('2004-07-01', '-P1D+P1M', '2004-07-30'),
+        ('1992-02-29', '+P1Y+P1M', '1993-03-28'),
+        ('1988-02-29', '+P1M+P1Y', '1989-03-29'),
+        ('1910-08-14', '+P2D-PT6H', '1910-08-15T18:00'),
+        ('1850-04-10', '+P1M-P1D+PT1H', '1850-05-09T01:00'),
+        pytest.param(
+            '1066-10-14', '+PT1H+PT1M', '1066-10-14T01:01',
+            marks=pytest.mark.xfail
+            # https://github.com/cylc/cylc-flow/issues/5047
+        ),
+    ]
+)
+def test_chain_expr(
+    icp: str, fcp_expr: str, expected_fcp: str, tmp_flow_config: Callable,
+):
+    """Test a "chain expression" final cycle point offset.
+
+    Note the order matters when "nominal" units (years, months) are used.
+    """
+    reg = 'osgiliath'
+    flow_file: Path = tmp_flow_config(reg, f"""
+        [scheduler]
+            UTC mode = True
+            allow implicit tasks = True
+        [scheduling]
+            initial cycle point = {icp}
+            final cycle point = {fcp_expr}
+            [[graph]]
+                P1D = faramir
+    """)
+    cfg = WorkflowConfig(reg, flow_file, options=ValidateOptions())
+    assert cfg.final_point == ISO8601Point(expected_fcp).standardise()
+
+
+@pytest.mark.parametrize(
     'runtime_cfg',
     (
         pytest.param(
@@ -1439,3 +1490,56 @@ def test_check_for_owner(runtime_cfg):
     else:
         # Assert function doesn't raise if no owner set:
         assert WorkflowConfig.check_for_owner(runtime_cfg) is None
+
+
+@pytest.fixture(scope='module')
+def awe_config(mod_tmp_flow_config: Callable) -> WorkflowConfig:
+    """Return a workflow config object."""
+    reg = 'awe'
+    flow_file = mod_tmp_flow_config(reg, '''
+        [scheduling]
+            cycling mode = integer
+            [[graph]]
+                P1 = ordinary & sterling
+                R1/2 = fra_mauro
+        [runtime]
+            [[USA, MOON]]
+            [[ordinary, sterling]]
+                inherit = USA
+            [[fra_mauro]]
+                inherit = MOON
+    ''')
+    return WorkflowConfig(
+        workflow=reg, fpath=flow_file, options=ValidateOptions()
+    )
+
+
+@pytest.mark.parametrize(
+    'name, expected',
+    [
+        pytest.param(
+            'ordinary', ['ordinary'], id="task name"
+        ),
+        pytest.param(
+            'USA', ['ordinary', 'sterling'], id="family name"
+        ),
+        pytest.param(
+            'fra*', ['fra_mauro'], id="glob task name"
+        ),
+        pytest.param(
+            'U*', ['ordinary', 'sterling'], id="glob family name"
+        ),
+        pytest.param(
+            '*', ['ordinary', 'sterling', 'fra_mauro'], id="glob everything"
+        ),
+        pytest.param(
+            'butte', [], id="no match"
+        ),
+    ]
+)
+def test_find_taskdefs(
+    name: str, expected: List[str], awe_config: WorkflowConfig
+):
+    assert sorted(
+        t.name for t in awe_config.find_taskdefs(name)
+    ) == sorted(expected)

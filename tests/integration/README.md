@@ -62,5 +62,5 @@ with run(schd):
 
 These methods both shut down the workflow / clean up after themselves.
 
-It it necessary to shut down workflows correctly to clean up resorces and
+It is necessary to shut down workflows correctly to clean up resorces and
 running tasks.

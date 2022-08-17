@@ -18,7 +18,10 @@
 
 """cylc clean [OPTIONS] ARGS
 
-Remove a stopped workflow from the local scheduler filesystem and remote hosts.
+Delete a stopped workflow.
+
+Remove workflow files from the local scheduler filesystem and any remote hosts
+the workflow was installed on.
 
 NOTE: this command is intended for workflows installed with `cylc install`. If
 this is run for a workflow that was instead written directly in ~/cylc-run and
@@ -44,7 +47,7 @@ Examples:
   $ cylc clean foo/bar --rm log --rm work
 
   # Remove all job log files from the 2020 cycle points
-  cylc clean foo/bar --rm 'log/job/2020*'
+  $ cylc clean foo/bar --rm 'log/job/2020*'
 
   # Remove all .csv files
   $ cylc clean foo/bar --rm '**/*.csv'
@@ -54,7 +57,6 @@ Examples:
 
   # Only remove the workflow on remote install targets
   $ cylc clean foo/bar --remote-only
-
 """
 
 import asyncio
@@ -62,7 +64,7 @@ import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import InputError
+from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import disable_timestamps
@@ -191,8 +193,15 @@ async def run(*ids: str, opts: 'Values') -> None:
     if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit
 
+    failed = []
     for workflow in sorted(workflows):
-        init_clean(workflow, opts)
+        try:
+            init_clean(workflow, opts)
+        except Exception as exc:
+            failed.append(workflow)
+            LOG.warning(exc)
+    if failed:
+        raise CylcError(f"Clean failed: {', '.join(failed)}")
 
 
 @cli_function(get_option_parser)

@@ -36,7 +36,8 @@ Examples:
     $ cylc get-resources tutorial/runtime-tutorial
 
     # copy all of the tutorials to your "source" directory:
-    $ cylc get-resources tutorial"""
+    $ cylc get-resources tutorial
+"""
 
 import sys
 

@@ -10,13 +10,10 @@
 
 [scheduling]
     [[graph]]
-        R1=t1
+        R1 = t1
 
 [runtime]
     [[t1]]
-        script=false
-        err-script=rm -f "${CYLC_TASK_LOG_ROOT}.err"
-        platform = {{ PLATFORM }}
-        [[[remote]]]
-            retrieve job logs = True
-            retrieve job logs retry delays = 2*PT5S
+        script = false
+        err-script = rm -f "${CYLC_TASK_LOG_ROOT}.err"
+        platform = blackbriar

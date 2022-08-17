@@ -61,10 +61,10 @@ def _make_flow(
 @contextmanager
 def _make_scheduler():
     """Return a scheduler object for a flow registration."""
-    schd: Scheduler = None  # type: ignore
+    schd: Scheduler = None  # type: ignore[assignment]
 
     def __make_scheduler(reg: str, **opts: Any) -> Scheduler:
-        # This allows paused_start to be overriden:
+        # This allows paused_start to be overridden:
         opts = {'paused_start': True, **opts}
         options = RunOptions(**opts)
         # create workflow

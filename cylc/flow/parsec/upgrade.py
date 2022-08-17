@@ -50,7 +50,10 @@ class upgrader:
         # upgrades must be ordered in case several act on the same item
         self.upgrades = OrderedDict()
 
-    def deprecate(self, vn, oldkeys, newkeys=None, cvtr=None, silent=False):
+    def deprecate(
+        self, vn, oldkeys, newkeys=None,
+        cvtr=None, silent=False, is_section=False,
+    ):
         """Replace a deprecated key from a config
         Args:
             vn (str):
@@ -62,17 +65,22 @@ class upgrader:
             cvtr (cylc.flow.parsec.upgrade.Converter):
                 Converter object containing a conversion function and a
                 description of that function.
-            silent:
+            silent (bool):
                 Set silent mode for this upgrade.
+            is_section (bool):
+                Is a section heading.
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         if cvtr is None:
             cvtr = converter(lambda x: x, "value unchanged")  # identity
         self.upgrades[vn].append(
-            {'old': oldkeys, 'new': newkeys, 'cvt': cvtr, 'silent': silent})
+            {
+                'old': oldkeys, 'new': newkeys, 'cvt': cvtr,
+                'silent': silent, 'is_section': is_section
+            })
 
-    def obsolete(self, vn, oldkeys, silent=False):
+    def obsolete(self, vn, oldkeys, silent=False, is_section=False):
         """Remove an obsolete key from a config
         Args:
             vn (str):
@@ -81,12 +89,17 @@ class upgrader:
                 Path within config to be removed.
             silent:
                 Set silent mode for this upgrade.
+            is_section (bool):
+                Is a section heading.
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         cvtr = converter(lambda x: x, "DELETED (OBSOLETE)")  # identity
         self.upgrades[vn].append(
-            {'old': oldkeys, 'new': None, 'cvt': cvtr, 'silent': silent})
+            {
+                'old': oldkeys, 'new': None, 'cvt': cvtr, 'silent': silent,
+                'is_section': is_section
+            })
 
     def get_item(self, keys):
         item = self.cfg

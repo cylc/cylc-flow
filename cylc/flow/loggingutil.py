@@ -126,21 +126,19 @@ class RotatingLogFileHandler(logging.FileHandler):
     for names.
 
     Argument:
-        log_file_path: path to the log file
+        log_file_path: path to the log file (symlink to latest log file)
         no_detach: non-detach mode?
         restart_num: restart number for the run
         timestamp: Add timestamp to log formatting?
     """
 
     FILE_HEADER_FLAG = 'cylc_log_file_header'
-    FILE_NUM = 'cylc_log_num'
+    ROLLOVER_NUM = 'cylc_log_num'
     MIN_BYTES = 1024
 
-    extra = {FILE_HEADER_FLAG: True}
-    extra_num = {
-        FILE_HEADER_FLAG: True,
-        FILE_NUM: 1
-    }
+    header_extra = {FILE_HEADER_FLAG: True}
+    """Use to indicate the log msg is a header that should be logged on
+    every rollover"""
 
     def __init__(
         self,
@@ -152,9 +150,11 @@ class RotatingLogFileHandler(logging.FileHandler):
         logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
         self.formatter = CylcLogFormatter(timestamp=timestamp)
+        # Header records get appended to when calling
+        # LOG.info(extra=RotatingLogFileHandler.[rollover_]header_extra)
         self.header_records: List[logging.LogRecord] = []
         self.restart_num = restart_num
-        self.log_num: Optional[int] = None
+        self.log_num: Optional[int] = None  # null value until log file created
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -169,16 +169,14 @@ class RotatingLogFileHandler(logging.FileHandler):
         except Exception:
             self.handleError(record)
 
-    def load_type_change(self):
+    def load_type_change(self) -> bool:
         """Has there been a load-type change, e.g. restart?"""
-        current_load_type = self.get_load_type()
         existing_load_type = self.existing_log_load_type()
-        # Rollover if the load type has changed.
-        if existing_load_type and current_load_type != existing_load_type:
+        if existing_load_type and self.load_type != existing_load_type:
             return True
         return False
 
-    def existing_log_load_type(self):
+    def existing_log_load_type(self) -> Optional[str]:
         """Return a log load type, if one currently exists"""
         try:
             existing_log_name = os.readlink(self.baseFilename)
@@ -188,12 +186,11 @@ class RotatingLogFileHandler(logging.FileHandler):
         for load_type in [RESTART_LOAD_TYPE, START_LOAD_TYPE]:
             if existing_log_name.find(load_type) > 0:
                 return load_type
+        return None
 
-    def should_rollover(self, record):
+    def should_rollover(self, record: logging.LogRecord) -> bool:
         """Should rollover?"""
-        if (self.stream is None or
-                self.load_type_change() or
-                self.log_num is None):
+        if self.log_num is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(
             ['scheduler', 'logging', 'maximum size in bytes'])
@@ -208,26 +205,18 @@ class RotatingLogFileHandler(logging.FileHandler):
             raise SystemExit(exc)
         return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
 
-    def get_load_type(self):
+    @property
+    def load_type(self) -> str:
         """Establish current load type, as perceived by scheduler."""
         if self.restart_num > 0:
             return RESTART_LOAD_TYPE
         return START_LOAD_TYPE
 
-    def do_rollover(self):
+    def do_rollover(self) -> None:
         """Create and rollover log file if necessary."""
-        # Generate new file name
-        filename = self.get_new_log_filename()
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        # Touch file
-        with open(filename, 'w+'):
-            os.utime(filename, None)
-        # Update symlink
-        if (os.path.exists(self.baseFilename) or
-                os.path.lexists(self.baseFilename)):
-            os.unlink(self.baseFilename)
-        os.symlink(os.path.basename(filename), self.baseFilename)
-        # Housekeep log files
+        # Create new log file
+        self.new_log_file()
+        # Housekeep old log files
         arch_len = glbl_cfg().get(
             ['scheduler', 'logging', 'rolling archive length'])
         if arch_len:
@@ -235,7 +224,6 @@ class RotatingLogFileHandler(logging.FileHandler):
         # Reopen stream, redirect STDOUT and STDERR to log
         if self.stream:
             self.stream.close()
-            self.stream = None
         self.stream = self._open()
         # Dup STDOUT and STDERR in detach mode
         if not self.no_detach:
@@ -243,15 +231,15 @@ class RotatingLogFileHandler(logging.FileHandler):
             os.dup2(self.stream.fileno(), sys.stderr.fileno())
         # Emit header records (should only do this for subsequent log files)
         for header_record in self.header_records:
-            if self.FILE_NUM in header_record.__dict__:
-                # Increment log file number
-                header_record.__dict__[self.FILE_NUM] += 1
-                # strip the hard coded log number (1) from the log message
-                # replace with the log number for that start.
-                # Note this is different from the log number in the file name
-                # which is cumulative over the workflow.
-                header_record.args = header_record.args[0:-1] + (
-                    header_record.__dict__[self.FILE_NUM],)
+            if self.ROLLOVER_NUM in header_record.__dict__:
+                # A hack to increment the rollover number that gets logged in
+                # the log file. (Rollover number only applies to a particular
+                # workflow run; note this is different from the log count
+                # number in the log filename.)
+                header_record.__dict__[self.ROLLOVER_NUM] += 1
+                header_record.args = (
+                    header_record.__dict__[self.ROLLOVER_NUM],
+                )
             logging.FileHandler.emit(self, header_record)
 
     def update_log_archive(self, arch_len):
@@ -265,29 +253,31 @@ class RotatingLogFileHandler(logging.FileHandler):
         while len(log_files) > arch_len:
             os.unlink(log_files.pop(0))
 
-    def get_new_log_filename(self):
-        """Build filename for log"""
-        base_dir = Path(self.baseFilename).parent
-        load_type = self.get_load_type()
-        if load_type == START_LOAD_TYPE:
-            run_num = 1
-        elif load_type == RESTART_LOAD_TYPE:
-            run_num = self.restart_num + 1
-        self.set_log_num()
-        filename = base_dir.joinpath(
-            f'{self.log_num:02d}-{load_type}-{run_num:02d}{LOG_FILE_EXTENSION}'
-        )
-        return filename
-
-    def set_log_num(self):
-        if not self.log_num:
-            try:
-                current_log = os.readlink(self.baseFilename)
-                self.log_num = int(get_next_log_number(current_log))
-            except OSError:
-                self.log_num = 1
+    def new_log_file(self) -> Path:
+        """Set self.log_num and create new log file."""
+        try:
+            log_file = os.readlink(self.baseFilename)
+        except OSError:
+            # "log" symlink not yet created, this is the first log
+            self.log_num = 1
         else:
-            self.log_num = int(self.log_num) + 1
+            self.log_num = get_next_log_number(log_file)
+        log_dir = Path(self.baseFilename).parent
+        # User-facing restart num is 1 higher than backend value
+        restart_num = self.restart_num + 1
+        filename = log_dir.joinpath(
+            f'{self.log_num:02d}-{self.load_type}-{restart_num:02d}'
+            f'{LOG_FILE_EXTENSION}'
+        )
+        os.makedirs(filename.parent, exist_ok=True)
+        # Touch file
+        with open(filename, 'w+'):
+            os.utime(filename, None)
+        # Update symlink
+        if os.path.lexists(self.baseFilename):
+            os.unlink(self.baseFilename)
+        os.symlink(os.path.basename(filename), self.baseFilename)
+        return filename
 
 
 class ReferenceLogFileHandler(logging.FileHandler):
@@ -378,29 +368,28 @@ def close_log(logger: logging.Logger) -> None:
             handler.close()
 
 
-def get_next_log_number(log: str) -> str:
-    """Returns the next log number for the log specified.
+def get_next_log_number(log_filepath: Union[str, Path]) -> int:
+    """Returns the next log number for the given log file path/name.
 
     Log name formats are of the form :
         <log number>-<load type>-<start number>
-    When given the latest log it returns the next log number, with padded 0s.
+    When given the latest log it returns the next log number.
 
     Examples:
-        >>> get_next_log_number('01-restart-02.log')
-            '02'
-        >>> get_next_log_number('/some/path/to/19-start-20.cylc')
-            '20'
+        >>> get_next_log_number('03-restart-02.log')
+        4
+        >>> get_next_log_number('/some/path/to/19-start-01.cylc')
+        20
         >>> get_next_log_number('199-start-08.log')
-            '200'
+        200
         >>> get_next_log_number('blah')
-            '01'
+        1
     """
     try:
-        stripped_log = os.path.basename(log)
-        next_log_num = int(stripped_log.partition("-")[0]) + 1
+        stripped_log = os.path.basename(log_filepath)
+        return int(stripped_log.partition("-")[0]) + 1
     except ValueError:
-        next_log_num = 1
-    return f'{next_log_num:02d}'
+        return 1
 
 
 def get_sorted_logs_by_time(

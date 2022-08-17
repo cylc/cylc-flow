@@ -34,7 +34,7 @@ cmp_ok "${TEST_NAME}.stdout" <<\__END__
 1|b|[1]|["submitted", "started", "succeeded"]
 1|a|[2]|["submitted", "started", "succeeded"]
 1|c|[2]|["submitted", "started", "x"]
-1|x|[2]|["submitted", "started", "succeeded"]
+1|x|[1, 2]|["submitted", "started", "succeeded"]
 1|c|[1, 2]|["submitted", "started", "succeeded", "x"]
 1|d|[1, 2]|["submitted", "started", "succeeded"]
 1|b|[2]|["submitted", "started", "succeeded"]
