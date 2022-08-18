@@ -818,12 +818,15 @@ class DataStoreMgr:
         if is_orphan:
             self.generate_orphan_task(itask)
 
-        # Most the time the definition node will be in the store,
-        # so use try/except.
+        # Most of the time the definition node will be in the store.
         try:
             task_def = self.data[self.workflow_id][TASKS][t_id]
         except KeyError:
-            task_def = self.added[TASKS][t_id]
+            try:
+                task_def = self.added[TASKS][t_id]
+            except KeyError:
+                # Task removed from workflow definition.
+                return False
 
         update_time = time()
         tp_stamp = f'{tp_id}@{update_time}'
