@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to the rudimentary Unix ``at`` scheduler.
+"""Submits job scripts to the rudimentary Unix ``at`` scheduler.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 

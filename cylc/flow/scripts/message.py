@@ -17,15 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 r"""cylc message [OPTIONS] -- ARGS
 
-Record task job messages.
+Record task messages.
 
-Send task job messages to:
+Send messages to:
 - The job stdout/stderr.
 - The job status file, if there is one.
 - The scheduler, if communication is possible.
 
-Task jobs use this command to record and report status such as success and
-failure. Applications run by task jobs can use this command to report messages
+Jobs use this command to record and report status such as success and
+failure. Applications run by jobs can use this command to report messages
 and to report registered task outputs.
 
 Messages can be specified as arguments. A '-' indicates that the command should
@@ -50,7 +50,7 @@ Examples:
   > WARNING:Hey!
   >__STDIN__
 
-Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in task job
+Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in job
 environments - you do not need to write their actual values in task scripting.
 
 Each message can be prefixed with a severity level using the syntax
@@ -66,7 +66,7 @@ Note:
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.
-Otherwise, the first 2 arguments are assumed to be workflow name and task job
+Otherwise, the first 2 arguments are assumed to be workflow name and job
 identifier.
 """
 
@@ -98,7 +98,7 @@ def get_option_parser() -> COP:
             # TODO
             COP.optional(WORKFLOW_ID_ARG_DOC),
             COP.optional(
-                ('TASK-JOB', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM')
+                ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM')
             ),
             COP.optional(
                 ('[SEVERITY:]MESSAGE ...', 'Messages')

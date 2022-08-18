@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to Sun/Oracle Grid Engine with ``qsub``.
+"""Submits job scripts to Sun/Oracle Grid Engine with ``qsub``.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
@@ -39,7 +39,7 @@ SGE directives can be provided in the flow.cylc file:
                -l h_data = 1024M
                -l h_rt = 24:00:00
 
-These are written to the top of the task job script like this:
+These are written to the top of the job script like this:
 
 .. code-block:: bash
 

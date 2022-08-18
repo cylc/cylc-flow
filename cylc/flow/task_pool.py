@@ -982,7 +982,7 @@ class TaskPool:
                     orphans.append(itask)
         if orphans_kill_failed:
             LOG.warning(
-                "Orphaned task jobs (kill failed):\n"
+                "Orphaned tasks (kill failed):\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans_kill_failed
@@ -990,7 +990,7 @@ class TaskPool:
             )
         if orphans:
             LOG.warning(
-                "Orphaned task jobs:\n"
+                "Orphaned tasks:\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans

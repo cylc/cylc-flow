@@ -116,7 +116,7 @@ def test_write(fixture_get_platform):
 
     """Test the header is correctly written"""
 
-    expected = ('#!/bin/bash -l\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT '
+    expected = ('#!/bin/bash -l\n#\n# ++++ THIS IS A CYLC JOB SCRIPT '
                 '++++\n# Workflow: farm_noises\n# Task: 1/baa\n# Job '
                 'log directory: 1/baa/01\n# Job runner: '
                 'background\n# Job runner command template: woof\n#'

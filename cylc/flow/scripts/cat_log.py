@@ -20,7 +20,7 @@
 
 View Cylc workflow and job log files.
 
-Print, tail-follow, print path, or list directory, of local or remote task job
+Print, tail-follow, print path, or list directory, of local or remote job
 and scheduler logs. Job runner view commands (e.g. 'qcat') are used if defined
 in global config and the job is running.
 
@@ -35,7 +35,7 @@ config '[JOB-HOST]retrieve job logs = True') and the job is not currently
 running, the local (retrieved) log will be accessed unless '-o/--force-remote'
 is used.
 
-The correct cycle point format of the workflow must be used for task job logs,
+The correct cycle point format of the workflow must be used for job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:

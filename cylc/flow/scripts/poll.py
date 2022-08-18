@@ -18,7 +18,7 @@
 
 """cylc poll [OPTIONS] ARGS
 
-Poll (query) task jobs to verify and update their statuses.
+Poll (query) jobs to verify and update their statuses.
 
 This checks the job status file and queries the job runner on the job platform.
 

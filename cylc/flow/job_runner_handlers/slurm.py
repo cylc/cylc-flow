@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to Simple Linux Utility for Resource Management.
+"""Submits job scripts to Simple Linux Utility for Resource Management.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
@@ -43,7 +43,7 @@ file:
    Since not all SLURM commands have a short form, cylc requires
    the long form directives.
 
-These are written to the top of the task job script like this:
+These are written to the top of the job script like this:
 
 .. code-block:: bash
 
