@@ -238,7 +238,10 @@ async def scan(
                 )
 
     # perform the first directory listing
-    scan_dir_listing = await scandir(scan_dir)
+    try:
+        scan_dir_listing = await scandir(scan_dir)
+    except FileNotFoundError:
+        return
     if scan_dir != cylc_run_dir and dir_is_flow(scan_dir_listing):
         # If the scan_dir itself is a workflow run dir, yield nothing
         return
