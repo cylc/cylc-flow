@@ -30,6 +30,11 @@
 #
 #   To adjust the timeout see the --timeout option of "cylc completion-server".
 #
+#   If the completion-server fails to launch (e.g. your environment is
+#   configured to run Cylc 7 which doesn't have this completion command)
+#   you'll see a similar message:
+#     [1]+  Exit 1                  coproc COPROC cylc completion-server
+#
 #   Administrators may want to place this file in the
 #   /etc/bash_completion.d/ (or equivalent) directory.
 #------------------------------------------------------------------------------
@@ -45,15 +50,22 @@ _cylc_completion () {
         } >/dev/null 2>/dev/null  # suppress cproc output (includes PID)
     fi
 
+    sleep 0  # needed for COPROC variable updates in error cases
+
     # send a completion request
-    echo "$(
-        IFS='|' 
-        echo "${COMP_WORDS[*]}"
-    )" >&"${COPROC[1]}" # shellcheck disable=SC2005
-    # (shellcheck disable because subshell needed to set IFS)
+    {
+        echo "$(
+            IFS='|'
+            echo "${COMP_WORDS[*]}"
+        )" >&"${COPROC[1]}"  # shellcheck disable=SC2005
+        # (shellcheck disable because subshell needed to set IFS)
+    } 2>/dev/null \
+        || return  # write failed e.g. server failed to start
+
 
     # read a completion response
-    read -a COMPREPLY <&"${COPROC[0]}"
+    read -a COMPREPLY <&"${COPROC[0]}" 2>/dev/null \
+        || return  # read failed
 
     # tell Bash whether or not to follow the completion with a space
     if [[ ${COMPREPLY[0]} = */ ]]; then
