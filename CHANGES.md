@@ -40,6 +40,16 @@ Maintenance release.
 taskdefs removed before restart.
 
 -------------------------------------------------------------------------------
+## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
+.cylcignore only found if `cylc install` is run in source directory.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
 
 Maintenance release.

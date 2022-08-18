@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 6
+set_test_number 9
 
 # Need to override any symlink dirs set in global.cylc:
 create_test_global_config "" "
@@ -69,24 +69,36 @@ __OUT__
 popd || exit 1
 purge_rnd_workflow
 
-
-# Test cylc install copies files to run dir successfully, exluding files from .cylcignore file.
-TEST_NAME="${TEST_NAME_BASE}-cylcignore-file"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-mkdir .git .svn dir1 dir2 extradir1 extradir2
-touch .git/file1 .svn/file1 dir1/file1 dir2/file1 extradir1/file1 extradir2/file1 file1 file2 .cylcignore
-cat > .cylcignore <<__END__
+# Test cylc install copies files to run dir successfully, exluding files from
+# .cylcignore file.
+# Should work if we run "cylc install" from source dir or not (see GH #5066)
+for RUN_IN_SRC_DIR in true false; do
+    TEST_NAME="${TEST_NAME_BASE}-cylcignore-${RUN_IN_SRC_DIR}"
+    make_rnd_workflow
+    pushd "${RND_WORKFLOW_SOURCE}" || exit 1
+    mkdir .git .svn dir1 dir2 extradir1 extradir2
+    touch .git/file1 .svn/file1 dir1/file1 dir2/file1 extradir1/file1 extradir2/file1 file1 file2 .cylcignore
+    cat > .cylcignore <<__END__
 dir*
 extradir*
 file2
 __END__
 
-run_ok "${TEST_NAME}" cylc install --no-run-name
+    if ${RUN_IN_SRC_DIR}; then
+        run_ok "${TEST_NAME}" cylc install --no-run-name
+        CWD="${PWD}"
+    else
+        DTMP=$(mktemp -d)
+        pushd "${DTMP}" || exit 1
+        run_ok "${TEST_NAME}" cylc install --no-run-name "${RND_WORKFLOW_SOURCE}"
+        CWD="${PWD}"
+        popd || exit 1
+    fi
 
-tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/" > 'cylc-ignore-tree.out'
+    OUT="cylc-ignore-tree-${RUN_IN_SRC_DIR}.out"
+    tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/" > "$OUT"
 
-cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
+    cmp_ok "$OUT"  <<__OUT__
 ${RND_WORKFLOW_RUNDIR}/
 |-- _cylc-install
 |   \`-- source -> ${RND_WORKFLOW_SOURCE}
@@ -96,8 +108,10 @@ ${RND_WORKFLOW_RUNDIR}/
     \`-- install
 __OUT__
 
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
+    contains_ok "${CWD}/${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE}
 __OUT__
-popd || exit 1
-purge_rnd_workflow
+
+    popd || exit 1
+    purge_rnd_workflow
+done
