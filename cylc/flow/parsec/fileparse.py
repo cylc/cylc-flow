@@ -455,7 +455,7 @@ def read_and_proc(
     if do_contin:
         flines = _concatenate(flines)
 
-    # return rstripped lines
+    # return rstripped lines (does not affect quoted values)
     return [fl.rstrip() for fl in flines]
 
 

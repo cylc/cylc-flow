@@ -527,7 +527,10 @@ class ParsecValidator:
 
         # Note strip() removes leading and trailing whitespace, including
         # initial newlines on a multiline string:
-        return dedent(value).strip()
+        if '\n' in value:
+            return dedent(value).strip()
+        else:
+            return value
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
