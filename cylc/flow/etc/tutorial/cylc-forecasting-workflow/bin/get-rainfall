@@ -38,7 +38,7 @@ import math
 import os
 import shutil
 
-import urllib3
+import requests
 
 try:
     from PIL import Image
@@ -126,22 +126,11 @@ def get_datapoint_radar_image(filename, time, api_key):
     time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime(
         '%Y-%m-%dT%H:%M:%SZ')
     url = URL.format(time=time, api_key=api_key)
-    # HTTP header to prevent 403 error:
-    hdr = {'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 '
-                          '(KHTML, like Gecko) Chrome/23.0.1271.64 '
-                          'Safari/537.11'),
-           'Accept': ('text/html,application/xhtml+xml,application/xml;'
-                      'q=0.9,*/*;q=0.8'),
-           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-           'Accept-Encoding': 'none',
-           'Accept-Language': 'en-US,en;q=0.8',
-           'Connection': 'keep-alive'}
-    http = urllib3.PoolManager()
-    req = http.request('GET', url, headers=hdr)
-    if req.status != 200:
-        raise Exception(f'{url} returned exit code {req.status}')
-    with open(filename, 'bw+') as png_file:
-        png_file.write(req.data)
+    req = requests.get(url)
+    if req.status_code != 200:
+        raise Exception(f'{url} returned exit code {req.status_code}')
+    with open(filename, 'bw') as png_file:
+        png_file.write(req.content)
 
 
 def get_archived_radar_image(filename, time):
