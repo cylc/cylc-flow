@@ -28,9 +28,8 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Released YYYY-MM-DD</span>)__
+## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
 
 Maintenance release.
 
@@ -39,15 +38,11 @@ Maintenance release.
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
--------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
-
-Maintenance release.
-
-### Fixes
-
 [#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
 .cylcignore only found if `cylc install` is run in source directory.
+
+[#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
+tutorial workflows.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
