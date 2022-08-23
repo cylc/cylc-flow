@@ -26,7 +26,11 @@ import logging
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
-from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.exceptions import (
+    PlatformLookupError,
+    PointParsingError,
+    WorkflowConfigError,
+)
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -448,8 +452,11 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
-                itask.platform = get_platform(platform_name)
-
+                try:
+                    platform = get_platform(platform_name)
+                except PlatformLookupError:
+                    platform = None
+                itask.platform = platform
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
                 if time_run:
