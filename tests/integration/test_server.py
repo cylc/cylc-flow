@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Callable
 from async_timeout import timeout
 import asyncio
 from getpass import getuser
@@ -21,6 +22,7 @@ from getpass import getuser
 import pytest
 
 from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.scheduler import Scheduler
 
 
 @pytest.fixture(scope='module')
@@ -135,3 +137,13 @@ async def test_receiver(one, start):
                 raise Exception('foo')
             one.server.api = _api
             assert 'error' in one.server.receiver(msg)
+
+
+async def test_publish_before_shutdown(
+    one: Scheduler, start: Callable
+):
+    """Test that the server publishes final deltas before shutting down."""
+    async with start(one):
+        one.server.publish_queue.put([(b'fake', b'blah')])
+        await one.server.stop('i said stop!')
+        assert not one.server.publish_queue.qsize()
