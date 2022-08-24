@@ -30,7 +30,20 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Released YYYY-MM-DD</span>)__
+## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
+100 for the "default" queue.
+
+[#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
+numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
+using `--ignore <Issue Code>`.
+
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.2 (<span actions:bind='release-date'>Upcoming</span>)__
 
 Maintenance release.
 
@@ -39,15 +52,9 @@ Maintenance release.
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
--------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
-
-Maintenance release.
-
-### Fixes
-
 [#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
 .cylcignore only found if `cylc install` is run in source directory.
+
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__

@@ -16,13 +16,15 @@
 
 import asyncio
 import logging
+from pathlib import Path
 from random import random
 
 import pytest
 
 from cylc.flow.async_util import (
     pipe,
-    asyncqgen
+    asyncqgen,
+    scandir,
 )
 
 LOG = logging.getLogger('test')
@@ -238,3 +240,23 @@ async def test_asyncqgen():
         ret.append(item)
 
     assert ret == [1, 2, 3]
+
+
+async def test_scandir(tmp_path: Path):
+    """It should list directory contents (including symlinks)."""
+    (tmp_path / 'a').touch()
+    (tmp_path / 'b').touch()
+    (tmp_path / 'c').symlink_to(tmp_path / 'b')
+
+    assert sorted(await scandir(tmp_path)) == [
+        Path(tmp_path, 'a'),
+        Path(tmp_path, 'b'),
+        Path(tmp_path, 'c')
+    ]
+
+
+async def test_scandir_non_exist(tmp_path: Path):
+    """scandir() should raise FileNotFoundError if called on a path that
+    doesn't exist."""
+    with pytest.raises(FileNotFoundError):
+        await scandir(tmp_path / 'HORSE')

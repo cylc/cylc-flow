@@ -250,6 +250,13 @@ async def test_scan_nasty_symlinks(run_dir_with_nasty_symlinks):
     ]
 
 
+async def test_scan_non_exist(tmp_path: Path):
+    """Calling scan() on a scan_dir that doesn't exist should not raise."""
+    assert await listify(
+        scan(scan_dir=(tmp_path / 'HORSE'))
+    ) == []
+
+
 async def test_is_active(sample_run_dir):
     """It should filter flows by presence of a contact file."""
     # running flows

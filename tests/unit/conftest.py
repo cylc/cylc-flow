@@ -123,7 +123,7 @@ def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
     """Module-scoped version of tmp_run_dir()"""
     tmp_path = tmp_path_factory.getbasetemp()
     with pytest.MonkeyPatch.context() as mp:
-        return _tmp_run_dir(tmp_path, mp)
+        yield _tmp_run_dir(tmp_path, mp)
 
 
 def _tmp_src_dir(tmp_path: Path):

@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 8
+set_test_number 10
 
 # Generate random name for symlink dirs to avoid any clashes with other tests
 SYM_NAME="$(mktemp -u)"
@@ -94,7 +94,7 @@ ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${CYLC_TEST_REG_BASE}
             \`-- work
 __TREE__
 # -----------------------------------------------------------------------------
-TEST_NAME="cylc-clean"
+TEST_NAME="clean"
 run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
 dump_std "$TEST_NAME"
 # -----------------------------------------------------------------------------
@@ -109,5 +109,11 @@ ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- leave-me-alone
 __TREE__
 # -----------------------------------------------------------------------------
+TEST_NAME="clean-non-exist"
+run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
+dump_std "$TEST_NAME"
+cmp_ok "${TEST_NAME}.stdout" << __EOF__
+INFO - No directory to clean at ${WORKFLOW_RUN_DIR}
+__EOF__
+# -----------------------------------------------------------------------------
 purge
-exit

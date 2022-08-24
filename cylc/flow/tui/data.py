@@ -92,13 +92,15 @@ MUTATIONS = {
         'hold',
         'release',
         'kill',
-        'trigger'
+        'trigger',
+        'poll',
     ],
     'task': [
         'hold',
         'release',
         'kill',
-        'trigger'
+        'trigger',
+        'poll',
     ],
     'job': [
         'kill',

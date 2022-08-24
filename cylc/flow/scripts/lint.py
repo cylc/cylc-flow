@@ -83,17 +83,20 @@ CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
 STYLE_CHECKS = {
     re.compile(r'^\t'): {
         'short': 'Use multiple spaces, not tabs',
-        'url': STYLE_GUIDE + 'tab-characters'
+        'url': STYLE_GUIDE + 'tab-characters',
+        'index': 1
     },
     # Not a full test, but if a non section is not indented...
     re.compile(r'^[^\{\[|\s]'): {
         'short': 'Item not indented.',
-        'url': STYLE_GUIDE + 'indentation'
+        'url': STYLE_GUIDE + 'indentation',
+        'index': 2
     },
     #            [section]
     re.compile(r'^\s+\[[^\[.]*\]'): {
         'short': 'Top level sections should not be indented.',
-        'url': STYLE_GUIDE + 'indentation'
+        'url': STYLE_GUIDE + 'indentation',
+        'index': 3
     },
     # 2 or 4 space indentation both seem reasonable:
     re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]'): {
@@ -101,28 +104,32 @@ STYLE_CHECKS = {
             'Second level sections should be indented exactly '
             '4 spaces.'
         ),
-        'url': STYLE_GUIDE + 'indentation'
+        'url': STYLE_GUIDE + 'indentation',
+        'index': 4
     },
     re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]'): {
         'short': (
             'Third level sections should be indented exactly '
             '8 spaces.'
         ),
-        'url': STYLE_GUIDE + 'indentation'
+        'url': STYLE_GUIDE + 'indentation',
+        'index': 5
     },
     re.compile(r'\s$'): {
         'short': 'trailing whitespace.',
-        'url': STYLE_GUIDE + 'trailing-whitespace'
+        'url': STYLE_GUIDE + 'trailing-whitespace',
+        'index': 6
+    },
+    re.compile(r'inherit\s*=\s*[a-z].*$'): {
+        'short': 'Family name contains lowercase characters.',
+        'url': STYLE_GUIDE + 'task-naming-conventions',
+        'index': 7
     },
     # Consider re-adding this as an option later:
     # re.compile(r'^.{80,}'): {
     #     'short': 'line > 79 characters.',
-    #     'url': STYLE_GUIDE + 'line-length-and-continuation'
+    #     'url': STYLE_GUIDE + 'line-length-and-continuation',
     # },
-    re.compile(r'inherit\s*=\s*[a-z].*$'): {
-        'short': 'Family name contains lowercase characters.',
-        'url': STYLE_GUIDE + 'task-naming-conventions'
-    },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
@@ -257,9 +264,15 @@ def get_checkset_from_name(name):
     return purpose_filters
 
 
-def parse_checks(check_arg):
+def parse_checks(check_arg, ignores=None):
     """Collapse metadata in checks dicts.
+
+    Args:
+        check_arg: type of checks to run, currently expecting '728', 'style'
+            or 'all'.
+        ignores: list of codes to ignore.
     """
+    ignores = ignores or []
     parsedchecks = {}
     purpose_filters = get_checkset_from_name(check_arg)
 
@@ -269,8 +282,10 @@ def parse_checks(check_arg):
         if purpose in purpose_filters:
             for index, (pattern, meta) in enumerate(ruleset.items(), start=1):
                 meta.update({'purpose': purpose})
-                meta.update({'index': index})
-                parsedchecks.update({pattern: meta})
+                if 'index' not in meta:
+                    meta.update({'index': index})
+                if f'{purpose}{index:03d}' not in ignores:
+                    parsedchecks.update({pattern: meta})
     return parsedchecks
 
 
@@ -435,6 +450,17 @@ def get_option_parser() -> COP:
         default=False,
         dest='ref_mode'
     )
+    parser.add_option(
+        '--ignore', '-n',
+        help=(
+            'Ignore this check number.'
+        ),
+        action='append',
+        default=[],
+        dest='ignores',
+        metavar="CODE",
+        choices=tuple([f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()])
+    )
 
     return parser
 
@@ -481,7 +507,7 @@ def main(parser: COP, options: 'Values', *targets) -> None:
                 check_names = options.linter
 
             # Check each file:
-            checks = parse_checks(check_names)
+            checks = parse_checks(check_names, options.ignores)
             for file_ in get_cylc_files(target):
                 LOG.debug(f'Checking {file_}')
                 count += check_cylc_file(
