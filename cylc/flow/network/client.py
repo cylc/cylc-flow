@@ -20,7 +20,7 @@ import os
 from shutil import which
 import socket
 import sys
-from typing import Any, Optional, Union, Dict
+from typing import TYPE_CHECKING, Any, Optional, Union, Dict
 
 import zmq
 import zmq.asyncio
@@ -46,6 +46,9 @@ from cylc.flow.workflow_files import (
     detect_old_contact_file,
     load_contact_file
 )
+
+if TYPE_CHECKING:
+    import asyncio
 
 
 class WorkflowRuntimeClient(ZMQSocketBase):
@@ -113,6 +116,9 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                 cylc.flow.network.client.WorkflowRuntimeClient.async_request
 
     """
+    # socket & event loop not None - get assigned on init by self.start():
+    socket: zmq.asyncio.Socket
+    loop: 'asyncio.AbstractEventLoop'
 
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
@@ -125,8 +131,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         timeout: Union[float, str, None] = None,
         srv_public_key_loc: Optional[str] = None
     ):
-        super().__init__(zmq.REQ, context=context)
-        self.workflow = workflow
+        super().__init__(zmq.REQ, workflow, context=context)
         if not host or not port:
             host, port, _ = get_location(workflow)
         else:

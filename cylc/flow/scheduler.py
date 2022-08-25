@@ -595,7 +595,7 @@ class Scheduler:
                     extra=RotatingLogFileHandler.header_extra
                 )
 
-    async def run_scheduler(self):
+    async def run_scheduler(self) -> None:
         """Start the scheduler main loop."""
         try:
             if self.is_restart:
