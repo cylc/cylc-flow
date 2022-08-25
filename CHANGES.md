@@ -43,11 +43,28 @@ using `--ignore <Issue Code>`.
 
 
 -------------------------------------------------------------------------------
+## __cylc-8.0.2 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
+taskdefs removed before restart.
+
+[#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
+.cylcignore only found if `cylc install` is run in source directory.
+
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
 
 Maintenance release.
 
 ### Fixes
+
+[#5025](https://github.com/cylc/cylc-flow/pull/5025) - Fix a bug where polling
+causes a failed task to be shown as submitted when the workflow is reloaded.
 
 [#5045](https://github.com/cylc/cylc-flow/pull/5045) -
 Fix issue where unsatisfied xtriggers could be wiped on reload.

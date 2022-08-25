@@ -423,6 +423,7 @@ class TaskPool:
         # Create a task proxy corresponding to this DB entry.
         (cycle, name, flow_nums, is_late, status, is_held, submit_num, _,
          platform_name, time_submit, time_run, timeout, outputs_str) = row
+
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -442,7 +443,9 @@ class TaskPool:
         else:
             if status in (
                     TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING
+                    TASK_STATUS_RUNNING,
+                    TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
                 itask.platform = get_platform(platform_name)
