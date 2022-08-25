@@ -39,7 +39,6 @@ import os
 import re
 
 import requests
-import urllib3
 
 
 BASE_URL = ('http://datapoint.metoffice.gov.uk/public/data/'
@@ -76,31 +75,20 @@ def get_datapoint_data(site_id, time, api_key):
     """Get weather data from the DataPoint service."""
     # The URL required to get the data.
     time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime('%Y-%m-%dT%H:%MZ')
-    url = BASE_URL.format(time=time, site_id=site_id,
-                          api_key=api_key)
-
-    # HTTP header to prevent 403 error:
-    hdr = {'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 '
-                          '(KHTML, like Gecko) Chrome/23.0.1271.64 '
-                          'Safari/537.11'),
-           'Accept': ('text/html,application/xhtml+xml,application/xml;'
-                      'q=0.9,*/*;q=0.8'),
-           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-           'Accept-Encoding': 'none',
-           'Accept-Language': 'en-US,en;q=0.8',
-           'Connection': 'keep-alive'}
-    http = urllib3.PoolManager()
-    req = http.request('GET', url, headers=hdr)
-    if req.status != 200:
-        raise Exception(f'{url} returned exit code {req.status}')
+    url = BASE_URL.format(time=time, site_id=site_id, api_key=api_key)
+    req = requests.get(url)
+    if req.status_code != 200:
+        raise Exception(f'{url} returned exit code {req.status_code}')
     # Get the data and parse it as JSON.
     print('Opening URL: %s' % url)
-    return json.loads(req.data)['SiteRep']['DV']['Location']
+    return req.json()['SiteRep']['DV']['Location']
 
 
 def get_archived_data(site_id, time):
     """Return archived weather data from the workflow directory."""
-    print([os.environ['CYLC_WORKFLOW_RUN_DIR'], 'data', time, site_id + '.json'])
+    print(
+        [os.environ['CYLC_WORKFLOW_RUN_DIR'], 'data', time, site_id + '.json']
+    )
     path = os.path.join(
         os.environ['CYLC_WORKFLOW_RUN_DIR'], 'data', time, site_id + '.json')
     print('Opening File: %s' % path)
@@ -117,7 +105,7 @@ def extract_observations(data):
 
 def reference_lat_long(site_id):
     """Extract lat-long from a reference file."""
-    src = Path(os.environ['CYLC_WORKFLOW_RUN_DIR']) / 'etc/met-office-sites.dat'
+    src = Path(os.environ['CYLC_WORKFLOW_RUN_DIR'], 'etc/met-office-sites.dat')
     info = Path(src).read_text()
     siteinfo = re.findall(f'^{int(site_id):05d}.*', info, re.MULTILINE)
     if not siteinfo:
@@ -177,7 +165,7 @@ def synop_grab(site_id, time):
 def get_nearby_site(site_id, badsites):
     """Use Pythagoras to find the next nearest site."""
     lat, lon = reference_lat_long(site_id)
-    src = Path(os.environ['CYLC_WORKFLOW_RUN_DIR']) / 'etc/met-office-sites.dat'
+    src = Path(os.environ['CYLC_WORKFLOW_RUN_DIR'], 'etc/met-office-sites.dat')
     info = Path(src).read_text()
     dist = 100
     result = 0
@@ -193,7 +181,6 @@ def get_nearby_site(site_id, badsites):
             result = site
     print('using {} (dist {})'.format(" ".join(result[1:][:-5]), dist))
     return int(result[0]), dist
-
 
 
 def main(site_id, api_key=None):
@@ -221,7 +208,6 @@ def main(site_id, api_key=None):
             data = get_archived_data(site_id, cycle_point)
 
         obs = extract_observations(data)
-
 
     # Write observations.
     with open('wind.csv', 'w+') as data_file:
