@@ -15,18 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Plugins for running Python code before and after installation of a workflow.
-
-Built In Plugins
-----------------
-
-Cylc Flow provides the following pre-configure and post-install plugins:
-
-.. autosummary::
-   :toctree: built-in
-   :template: docstring_only.rst
-
-   cylc.flow.install_plugins.log_vc_info
-
-.. Note: Autosummary generates files in this directory, these are cleaned
-         up by `make clean`.
 """

@@ -29,7 +29,20 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+
+## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
+100 for the "default" queue.
+
+[#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
+numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
+using `--ignore <Issue Code>`.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.2 (<span actions:bind='release-date'>Upcoming</span>)__
 
 Maintenance release.
 
@@ -1334,3 +1347,4 @@ None.
 -------------------------------------------------------------------------------
 
 **For changes prior to Cylc 8, see https://github.com/cylc/cylc-flow/blob/7.8.x/CHANGES.md**
+
