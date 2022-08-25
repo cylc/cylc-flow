@@ -148,9 +148,8 @@ class WorkflowRuntimeServer:
             IgnoreFieldMiddleware,
         ]
 
-        self.queue: 'Queue[str]' = Queue()
         self.publish_queue: 'Queue[Iterable[tuple]]' = Queue()
-        self.stopping = False
+        self.waiting_to_stop = False
         self.stopped = True
 
         self.register_endpoints()
@@ -215,9 +214,10 @@ class WorkflowRuntimeServer:
         server's self.thread in order to interrupt the self.operate() loop
         and wait for self.thread to terminate.
         """
-        self.queue.put('STOP')
+        self.waiting_to_stop = True
         if self.thread and self.thread.is_alive():
-            while not self.stopping:
+            # Wait for self.operate() loop to finish:
+            while self.waiting_to_stop:
                 # Non-async sleep - yield to other threads rather than
                 # event loop (allows self.operate() running in different
                 # thread to return)
@@ -247,13 +247,11 @@ class WorkflowRuntimeServer:
         # of the listener runs the event loop synchronously
         # (in graphql AsyncioExecutor)
         while True:
-            # process messages from the scheduler.
-            if self.queue.qsize():
-                message = self.queue.get()
-                if message == 'STOP':
-                    self.stopping = True
-                    break
-                raise ValueError('Unknown message "%s"' % message)
+            if self.waiting_to_stop:
+                # The self.stop() method is waiting for us to signal that we
+                # have finished here
+                self.waiting_to_stop = False
+                return
 
             # Gather and respond to any requests.
             self.replier.listener()
