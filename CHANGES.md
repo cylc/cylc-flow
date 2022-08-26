@@ -49,6 +49,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5105](https://github.com/cylc/cylc-flow/pull/5105) - Restore `--define-suite`
+to the options available if Cylc Rose is installed.
+
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
