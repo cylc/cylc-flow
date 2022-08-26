@@ -445,7 +445,7 @@ class CylcOptionParser(OptionParser):
             dest="defines"
         )
         self.add_option(
-            "--rose-template-variable", '-S',
+            "--rose-template-variable", '-S', '--define-suite',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
