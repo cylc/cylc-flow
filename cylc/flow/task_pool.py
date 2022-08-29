@@ -153,10 +153,12 @@ class TaskPool:
 
     def _swap_out(self, itask):
         """Swap old task for new, during reload."""
-        if itask.point in self.hidden_pool:
-            if itask.identity in self.hidden_pool[itask.point]:
-                self.hidden_pool[itask.point][itask.identity] = itask
-                self.hidden_pool_changed = True
+        if (
+            itask.point in self.hidden_pool
+            and itask.identity in self.hidden_pool[itask.point]
+        ):
+            self.hidden_pool[itask.point][itask.identity] = itask
+            self.hidden_pool_changed = True
         elif (
             itask.point in self.main_pool
             and itask.identity in self.main_pool[itask.point]
