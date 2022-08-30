@@ -28,8 +28,8 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-
 -------------------------------------------------------------------------------
+
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Enhancements
@@ -40,7 +40,6 @@ ones in. -->
 [#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
 numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
 using `--ignore <Issue Code>`.
-
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.2 (<span actions:bind='release-date'>Upcoming</span>)__
@@ -55,6 +54,8 @@ taskdefs removed before restart.
 [#5066](https://github.com/cylc/cylc-flow/pull/5066) - Fix bug where
 .cylcignore only found if `cylc install` is run in source directory.
 
+[#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
+tutorial workflows.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
@@ -1346,3 +1347,4 @@ None.
 -------------------------------------------------------------------------------
 
 **For changes prior to Cylc 8, see https://github.com/cylc/cylc-flow/blob/7.8.x/CHANGES.md**
+
