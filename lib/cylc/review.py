@@ -36,7 +36,7 @@ import os
 import pwd
 import re
 import shlex
-from sqlite3 import ProgrammingError
+from sqlite3 import ProgrammingError, OperationalError
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
@@ -151,8 +151,13 @@ class CylcReviewService(object):
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
-        data["broadcast_states"] = (
-            self.suite_dao.get_suite_broadcast_states(user, suite))
+
+        try:
+            data["broadcast_states"] = (
+                self.suite_dao.get_suite_broadcast_states(user, suite))
+        except OperationalError:
+            data["broadcast_states"] = ()
+
         if form == "json":
             return json.dumps(data)
         try:
@@ -180,8 +185,13 @@ class CylcReviewService(object):
         data["states"].update(
             self.suite_dao.get_suite_state_summary(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
-        data["broadcast_events"] = (
-            self.suite_dao.get_suite_broadcast_events(user, suite))
+
+        try:
+            data["broadcast_events"] = (
+                self.suite_dao.get_suite_broadcast_events(user, suite))
+        except OperationalError:
+            data["broadcast_events"] = ()
+
         if form == "json":
             return json.dumps(data)
         try:
