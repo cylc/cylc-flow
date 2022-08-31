@@ -886,9 +886,14 @@ class TaskPool:
                 itask.copy_to_reload_successor(new_task)
                 self._swap_out(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
-                if itask.state(*TASK_STATUSES_ACTIVE, TASK_STATUS_PREPARING):
+                if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
                         f"[{itask}] active with pre-reload settings"
+                    )
+                elif itask.state(TASK_STATUS_PREPARING):
+                    # Job file might have been written at this point?
+                    LOG.warning(
+                        f"[{itask}] may be active with pre-reload settings"
                     )
 
         # Reassign live tasks to the internal queue
