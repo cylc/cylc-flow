@@ -647,7 +647,7 @@ class Workflow(ObjectType):
         resolver=get_nodes_by_ids)
     jobs = graphene.List(
         lambda: Job,
-        description="""Task jobs.""",
+        description="""Jobs.""",
         args=JOB_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -899,7 +899,7 @@ class TaskProxy(ObjectType):
     prerequisites = graphene.List(Prerequisite)
     jobs = graphene.List(
         Job,
-        description="""Task jobs.""",
+        description="""Jobs.""",
         args=JOB_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -1518,7 +1518,7 @@ class Pause(Mutation):
         description = sstrip('''
             Pause a workflow.
 
-            This prevents submission of any task jobs.
+            This suspends submission of tasks.
         ''')
         resolver = partial(mutator, command='pause')
 
@@ -1531,15 +1531,15 @@ class Pause(Mutation):
 class Message(Mutation):
     class Meta:
         description = sstrip('''
-            Record task job messages.
+            Record task messages.
 
-            Send task job messages to:
+            Send messages to:
             - The job stdout/stderr.
             - The job status file, if there is one.
             - The scheduler, if communication is possible.
 
-            Task jobs use this to record and report status such
-            as success and failure. Applications run by task jobs can use
+            Jobs use this to record and report status such
+            as success and failure. Applications run by jobs can use
             this command to report messages and to report registered task
             outputs.
         ''')
@@ -1795,7 +1795,7 @@ class Kill(Mutation, TaskMutation):
 class Poll(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Poll (query) task jobs to verify and update their statuses.
+            Poll (query) jobs to verify and update their statuses.
 
             This checks the job status file and queries the
             job runner on the job platform.
@@ -1992,7 +1992,7 @@ class Delta(Interface):
     )
     jobs = graphene.List(
         Job,
-        description="""Task jobs.""",
+        description="""Jobs.""",
         args=JOB_ARGS,
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),
@@ -2067,7 +2067,7 @@ class Updated(ObjectType):
     )
     jobs = graphene.List(
         Job,
-        description="""Task jobs.""",
+        description="""Jobs.""",
         args=JOB_ARGS,
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),

@@ -242,7 +242,7 @@ async def test_no_poll_waiting_tasks(
         task.state.status = TASK_STATUS_RUNNING
 
     # For good measure, check the faked running task is reported at shutdown.
-    assert "Orphaned task jobs:\n* 1/one (running)" in log.messages
+    assert "Orphaned tasks:\n* 1/one (running)" in log.messages
 
 
 @pytest.mark.parametrize('reload', [False, True])

@@ -5,7 +5,7 @@
 **See the [Cylc installation guide](https://cylc.github.io/cylc-doc/stable/html/installation.html)
 for more detailed information.**
 
-Cylc must be installed on workflow and task job hosts. Third-party dependencies
+Cylc must be installed on workflow and job hosts. Third-party dependencies
 are not required on job hosts.
 
 ## Cylc 7

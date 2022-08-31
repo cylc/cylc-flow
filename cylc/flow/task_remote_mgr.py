@@ -89,7 +89,7 @@ class RemoteTidyQueueTuple(NamedTuple):
 
 
 class TaskRemoteMgr:
-    """Manage task job remote initialisation, tidy, selection."""
+    """Manage task remote initialisation, tidy, selection."""
 
     def __init__(self, workflow, proc_pool, bad_hosts):
         self.workflow = workflow

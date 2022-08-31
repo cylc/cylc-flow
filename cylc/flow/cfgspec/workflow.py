@@ -970,7 +970,7 @@ with Conf(
                 If no parents are listed default is ``root``.
             ''')
             Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script run from the task job script.
+                The main custom script run from the job script.
 
                 It can be an external command or script, or inlined scripting.
 
@@ -980,7 +980,7 @@ with Conf(
                 this='script', example='my_script.sh'
             ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
-                Custom script run by the task job script before the task
+                Custom script run by the job script before the task
                 execution environment is configured.
 
                 By running before the task execution environment is configured,
@@ -992,7 +992,7 @@ with Conf(
                 this should no longer be necessary.
             ''') + get_script_common_text(this='init-script'))
             Conf('env-script', VDR.V_STRING, desc=dedent('''
-                Custom script run by the task job script between the
+                Custom script run by the job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment.
 
@@ -1001,10 +1001,10 @@ with Conf(
                 It can be an external command or script, or inlined scripting.
             ''') + get_script_common_text(this='env-script'))
             Conf('err-script', VDR.V_STRING, desc=('''
-                Script run when a task job error is detected.
+                Script run when a job error is detected.
 
                 Custom script to be run at the end of the error trap,
-                which is triggered due to failure of a command in the task job
+                which is triggered due to failure of a command in the job
                 script or trappable job kill.
 
                 The output of this script will always
@@ -1029,7 +1029,7 @@ with Conf(
                 this='exit-script', example='rm -f "$TMP_FILES"'
             ))
             Conf('pre-script', VDR.V_STRING, desc=dedent('''
-                Custom script run by the task job script immediately
+                Custom script run by the job script immediately
                 before :cylc:conf:`[..]script`.
 
                 The pre-script can be an external command or script, or
@@ -1039,7 +1039,7 @@ with Conf(
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
-                Custom script run by the task job script immediately
+                Custom script run by the job script immediately
                 after :cylc:conf:`[..]script`.
 
                 The post-script can be an external
@@ -1049,7 +1049,7 @@ with Conf(
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 The directory from which tasks are executed.
 
-                Task job scripts are executed from within *work directories*
+                Job scripts are executed from within *work directories*
                 created automatically under the workflow run directory. A task
                 can get its own work directory from ``$CYLC_TASK_WORK_DIR``
                 (or ``$PWD`` if it does not ``cd`` elsewhere at
@@ -1083,13 +1083,13 @@ with Conf(
                 )
             )
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
-                Cylc can automate resubmission of a failed task job.
+                Cylc can automate resubmission of a failed job.
 
                 Execution retry delays are a list of ISO 8601
                 durations/intervals which tell Cylc how long to wait before
                 resubmitting a failed job.
 
-                Each time Cylc resubmits a task job it will increment the
+                Each time Cylc resubmits a job it will increment the
                 variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
                 environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
                 behavior between submission attempts.
@@ -1101,13 +1101,13 @@ with Conf(
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc=f'''
                 Set the execution (:term:`wallclock <wallclock time>`) time
-                limit of a task job.
+                limit of a job.
 
                 For ``background`` and ``at`` job runners Cylc runs the
                 job's script using the timeout command. For other job runners
                 Cylc will convert execution time limit to a :term:`directive`.
 
-                If a task job exceeds its execution time limit Cylc can
+                If a job exceeds its execution time limit Cylc can
                 poll the job multiple times. You can set polling
                 intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
@@ -1573,7 +1573,7 @@ with Conf(
                 The user defined task execution environment.
 
                 Variables defined here can refer to cylc workflow and task
-                identity variables, which are exported earlier in the task job
+                identity variables, which are exported earlier in the job
                 script. Variable assignment expressions can use cylc
                 utility commands because access to cylc is also configured
                 earlier in the script.
@@ -1591,7 +1591,7 @@ with Conf(
 
                     The order of definition is preserved that each variable can
                     refer to previously defined
-                    variables. Values are passed through to the task job
+                    variables. Values are passed through to the job
                     script without evaluation or manipulation by Cylc
                     (with the exception of valid Python string templates
                     that match parameterized task names - see below), so any
