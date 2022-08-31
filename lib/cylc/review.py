@@ -744,24 +744,29 @@ class CylcReviewService(object):
         data = {"files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
 
+        rose_logs_dest = "rose"
+        if self.suite_dao.is_cylc8(user, suite):
+            rose_logs_dest = "cylc"
+
         # Rose files: to recognise & group, but not process, standard formats
-        data["files"]["rose"] = {}
+        data["files"][rose_logs_dest] = {}
 
         # Rosie suite info
-        info_name = os.path.join(user_suite_dir, "rose-suite.info")
-        if os.path.isfile(info_name):
-            stat = os.stat(info_name)
-            data["files"]["rose"]["rose-suite.info"] = {
-                "path": "rose-suite.info",
-                "mtime": stat.st_mtime,
-                "size": stat.st_size}
+        for fname in ['rose-suite.info', 'rose-suite.conf']:
+            info_name = os.path.join(user_suite_dir, fname)
+            if os.path.isfile(info_name):
+                stat = os.stat(info_name)
+                data["files"][rose_logs_dest][fname] = {
+                    "path": fname,
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size}
 
         # Get Rose log files
         for key in ["conf", "log", "version"]:
             f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
             if os.path.isfile(f_name):
                 stat = os.stat(f_name)
-                data["files"]["rose"]["log/rose-suite-run." + key] = {
+                data["files"][rose_logs_dest]["log/rose-suite-run." + key] = {
                     "path": "log/rose-suite-run." + key,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -771,7 +776,7 @@ class CylcReviewService(object):
                     continue
                 name = os.path.join("log", os.path.basename(f_name))
                 stat = os.stat(f_name)
-                data["files"]["rose"]["other:" + name] = {
+                data["files"][rose_logs_dest]["other:" + name] = {
                     "path": name,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -819,7 +824,11 @@ class CylcReviewService(object):
                     "size": f_stat.st_size
                 }
 
-        data["files"]["cylc"] = logs_info
+        if rose_logs_dest == 'cylc':
+            data["files"]["cylc"].update(logs_info)
+        else:
+            data["files"]["cylc"] = logs_info
+
         return data
 
     @classmethod
