@@ -1698,7 +1698,7 @@ class Scheduler:
                 self.timers[self.EVENT_STALL_TIMEOUT].reset()
         return self.is_stalled
 
-    async def shutdown(self, reason: Exception) -> None:
+    async def shutdown(self, reason: BaseException) -> None:
         """Gracefully shut down the scheduler."""
         # At the moment this method must be called from the main_loop.
         # In the future it should shutdown the main_loop itself but
@@ -1719,7 +1719,7 @@ class Scheduler:
             # Re-raise exception to be caught higher up (sets the exit code)
             raise exc from None
 
-    async def _shutdown(self, reason: Exception) -> None:
+    async def _shutdown(self, reason: BaseException) -> None:
         """Shutdown the workflow."""
         shutdown_msg = "Workflow shutting down"
         if isinstance(reason, SchedulerStop):
@@ -1977,7 +1977,7 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    async def handle_exception(self, exc: Exception) -> NoReturn:
+    async def handle_exception(self, exc: BaseException) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
 
         Re-raises the exception to be caught higher up (sets the exit code).

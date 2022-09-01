@@ -205,7 +205,7 @@ class WorkflowRuntimeServer:
 
         self.operate()
 
-    async def stop(self, reason: Union[Exception, str]) -> None:
+    async def stop(self, reason: Union[BaseException, str]) -> None:
         """Stop the TCP servers, and clean up authentication.
 
         This method must be called/awaited from a different thread to the
@@ -385,12 +385,19 @@ class WorkflowRuntimeServer:
         if executed.errors:
             errors: List[Any] = []
             for error in executed.errors:
+                LOG.error(error)
                 if hasattr(error, '__traceback__'):
                     import traceback
-                    errors.append({'error': {
-                        'message': str(error),
-                        'traceback': traceback.format_exception(
-                            error.__class__, error, error.__traceback__)}})
+                    formatted_tb = traceback.format_exception(
+                        type(error), error, error.__traceback__
+                    )
+                    LOG.error("".join(formatted_tb))
+                    errors.append({
+                        'error': {
+                            'message': str(error),
+                            'traceback': formatted_tb
+                        }
+                    })
                     continue
                 errors.append(getattr(error, 'message', None))
             return errors
