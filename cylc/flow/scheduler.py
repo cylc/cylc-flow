@@ -1036,6 +1036,7 @@ class Scheduler:
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
+        self.is_reloaded = True
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1598,8 +1599,8 @@ class Scheduler:
             # Update state summary, database, and uifeed
             self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
-            if has_updated:
-                # Workflow can't be stalled, so stop the stalled timer.
+            if has_updated and not self.is_stalled:
+                # Stop the stalled timer.
                 with suppress(KeyError):
                     self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
@@ -1655,11 +1656,11 @@ class Scheduler:
         updated_tasks = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
+        reloaded = self.is_reloaded
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
             # Collect/apply data store updates/deltas
-            self.data_store_mgr.update_data_structure(
-                reloaded=self.is_reloaded)
+            self.data_store_mgr.update_data_structure(reloaded=reloaded)
             self.is_reloaded = False
             # Publish updates:
             if self.data_store_mgr.publish_pending:
@@ -1674,7 +1675,8 @@ class Scheduler:
             self.workflow_db_mgr.put_task_pool(self.pool)
             # Reset workflow and task updated flags.
             self.is_updated = False
-            self.is_stalled = False
+            if not reloaded:  # (A reload cannot unstall workflow by itself)
+                self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
             self.update_data_store()
