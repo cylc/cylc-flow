@@ -67,7 +67,8 @@ from cylc.flow.loggingutil import (
     ReferenceLogFileHandler,
     get_next_log_number,
     get_reload_start_number,
-    get_sorted_logs_by_time
+    get_sorted_logs_by_time,
+    patch_log_level
 )
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
@@ -386,7 +387,8 @@ class Scheduler:
         """
         # Print workflow name to disambiguate in case of inferred run number
         # while in no-detach mode
-        LOG.info(f"Workflow: {self.workflow}")
+        with patch_log_level(LOG):
+            LOG.info(f"Workflow: {self.workflow}")
 
         self.profiler.log_memory("scheduler.py: start configure")
 
@@ -522,73 +524,65 @@ class Scheduler:
 
         Note: daemonize polls for 2 of these headers before detaching.
         """
-        is_quiet = (cylc.flow.flags.verbosity < 0)
-        log_level = LOG.getEffectiveLevel()
-        if is_quiet:
-            # Temporarily change logging level to log important info
-            LOG.setLevel(logging.INFO)
-
-        # `daemonize` polls for these next 2 before detaching:
-        LOG.info(
-            self.START_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.server.port,
-                'pid': os.getpid()},
-            extra=RotatingLogFileHandler.header_extra,
-        )
-        LOG.info(
-            self.START_PUB_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.server.pub_port},
-            extra=RotatingLogFileHandler.header_extra,
-        )
-
-        restart_num = self.get_restart_num() + 1
-        LOG.info(
-            f'Run: (re)start number={restart_num}, log rollover=%d',
-            # Hard code 1 in args, gets updated on log rollover (NOTE: this
-            # must be the only positional arg):
-            1,
-            extra={
-                **RotatingLogFileHandler.header_extra,
-                RotatingLogFileHandler.ROLLOVER_NUM: 1
-            }
-        )
-        LOG.info(
-            f'Cylc version: {CYLC_VERSION}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-
-        # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs.
-        LOG.info(
-            f'Run mode: {self.config.run_mode()}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        LOG.info(
-            f'Initial point: {self.config.initial_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.start_point != self.config.initial_point:
+        # Temporarily lower logging level if necessary to log important info
+        with patch_log_level(LOG):
+            # `daemonize` polls for these next 2 before detaching:
             LOG.info(
-                f'Start point: {self.config.start_point}',
-                extra=RotatingLogFileHandler.header_extra
+                self.START_MESSAGE_TMPL % {
+                    'comms_method': 'tcp',
+                    'host': self.host,
+                    'port': self.server.port,
+                    'pid': os.getpid()},
+                extra=RotatingLogFileHandler.header_extra,
             )
-        LOG.info(
-            f'Final point: {self.config.final_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.stop_point:
             LOG.info(
-                f'Stop point: {self.config.stop_point}',
+                self.START_PUB_MESSAGE_TMPL % {
+                    'comms_method': 'tcp',
+                    'host': self.host,
+                    'port': self.server.pub_port},
+                extra=RotatingLogFileHandler.header_extra,
+            )
+
+            restart_num = self.get_restart_num() + 1
+            LOG.info(
+                f'Run: (re)start number={restart_num}, log rollover=%d',
+                # Hard code 1 in args, gets updated on log rollover (NOTE: this
+                # must be the only positional arg):
+                1,
+                extra={
+                    **RotatingLogFileHandler.header_extra,
+                    RotatingLogFileHandler.ROLLOVER_NUM: 1
+                }
+            )
+            LOG.info(
+                f'Cylc version: {CYLC_VERSION}',
                 extra=RotatingLogFileHandler.header_extra
             )
 
-        if is_quiet:
-            LOG.info("Quiet mode on")
-            LOG.setLevel(log_level)
+            # Note that the following lines must be present at the top of
+            # the workflow log file for use in reference test runs.
+            LOG.info(
+                f'Run mode: {self.config.run_mode()}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            LOG.info(
+                f'Initial point: {self.config.initial_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            if self.config.start_point != self.config.initial_point:
+                LOG.info(
+                    f'Start point: {self.config.start_point}',
+                    extra=RotatingLogFileHandler.header_extra
+                )
+            LOG.info(
+                f'Final point: {self.config.final_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            if self.config.stop_point:
+                LOG.info(
+                    f'Stop point: {self.config.stop_point}',
+                    extra=RotatingLogFileHandler.header_extra
+                )
 
     async def run_scheduler(self):
         """Start the scheduler main loop."""
@@ -1728,25 +1722,29 @@ class Scheduler:
     async def _shutdown(self, reason: Exception) -> None:
         """Shutdown the workflow."""
         shutdown_msg = "Workflow shutting down"
-        if isinstance(reason, SchedulerStop):
-            LOG.info(f'{shutdown_msg} - {reason.args[0]}')
-            # Unset the "paused" status of the workflow if not auto-restarting
-            if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
-                self.resume_workflow(quiet=True)
-        elif isinstance(reason, SchedulerError):
-            LOG.error(f"{shutdown_msg} - {reason}")
-        elif isinstance(reason, CylcError) or (
-            isinstance(reason, ParsecError) and reason.schd_expected
-        ):
-            LOG.error(f"{shutdown_msg} - {type(reason).__name__}: {reason}")
-            if cylc.flow.flags.verbosity > 1:
-                # Print traceback
+        with patch_log_level(LOG):
+            if isinstance(reason, SchedulerStop):
+                LOG.info(f'{shutdown_msg} - {reason.args[0]}')
+                # Unset the "paused" status of the workflow if not
+                # auto-restarting
+                if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
+                    self.resume_workflow(quiet=True)
+            elif isinstance(reason, SchedulerError):
+                LOG.error(f"{shutdown_msg} - {reason}")
+            elif isinstance(reason, CylcError) or (
+                isinstance(reason, ParsecError) and reason.schd_expected
+            ):
+                LOG.error(
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                )
+                if cylc.flow.flags.verbosity > 1:
+                    # Print traceback
+                    LOG.exception(reason)
+            else:
                 LOG.exception(reason)
-        else:
-            LOG.exception(reason)
-            if str(reason):
-                shutdown_msg += f" - {reason}"
-            LOG.critical(shutdown_msg)
+                if str(reason):
+                    shutdown_msg += f" - {reason}"
+                LOG.critical(shutdown_msg)
 
         if hasattr(self, 'proc_pool'):
             self.proc_pool.close()

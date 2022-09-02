@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Logging utilities.
 
 This module provides:
@@ -21,7 +22,8 @@ This module provides:
   Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
 """
-from contextlib import suppress
+
+from contextlib import contextmanager, suppress
 from glob import glob
 import logging
 import os
@@ -414,3 +416,19 @@ def get_reload_start_number(config_logs: List[str]) -> str:
         except Exception:
             return '01'
         return f'{start_num:02d}'
+
+
+@contextmanager
+def patch_log_level(logger: logging.Logger, level: int = logging.INFO):
+    """Temporarily patch the logging level of a logger if the specified level
+    is less severe than the current level.
+
+    Defaults to INFO.
+    """
+    orig_level = logger.getEffectiveLevel()
+    if level < orig_level:
+        logger.setLevel(level)
+        yield
+        logger.setLevel(orig_level)
+    else:  # No need to patch
+        yield
