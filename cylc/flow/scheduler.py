@@ -384,6 +384,10 @@ class Scheduler:
         * Get the data store rolling.
 
         """
+        # Print workflow name to disambiguate in case of inferred run number
+        # while in no-detach mode
+        LOG.info(f"Workflow: {self.workflow}")
+
         self.profiler.log_memory("scheduler.py: start configure")
 
         self._check_startup_opts()
@@ -408,31 +412,8 @@ class Scheduler:
             self.options.cycle_point_tz = (
                 self.config.cfg['scheduler']['cycle point time zone'])
 
-        # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs.
-        # (These are also headers that get logged on each rollover)
-        LOG.info(
-            f'Run mode: {self.config.run_mode()}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        LOG.info(
-            f'Initial point: {self.config.initial_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.start_point != self.config.initial_point:
-            LOG.info(
-                f'Start point: {self.config.start_point}',
-                extra=RotatingLogFileHandler.header_extra
-            )
-        LOG.info(
-            f'Final point: {self.config.final_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.stop_point:
-            LOG.info(
-                f'Stop point: {self.config.stop_point}',
-                extra=RotatingLogFileHandler.header_extra
-            )
+        # Note that daemonization happens after this:
+        self.log_start()
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -536,17 +517,18 @@ class Scheduler:
         finally:
             pri_dao.close()
 
-    async def log_start(self) -> None:
+    def log_start(self) -> None:
+        """Log headers, that also get logged on each rollover.
+
+        Note: daemonize polls for 2 of these headers before detaching.
+        """
         is_quiet = (cylc.flow.flags.verbosity < 0)
         log_level = LOG.getEffectiveLevel()
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
 
-        # Print workflow name to disambiguate in case of inferred run number
-        # while in no-detach mode
-        LOG.info(f"Workflow: {self.workflow}")
-        # Headers that also get logged on each rollover:
+        # `daemonize` polls for these next 2 before detaching:
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
@@ -562,6 +544,7 @@ class Scheduler:
                 'port': self.server.pub_port},
             extra=RotatingLogFileHandler.header_extra,
         )
+
         restart_num = self.get_restart_num() + 1
         LOG.info(
             f'Run: (re)start number={restart_num}, log rollover=%d',
@@ -577,6 +560,31 @@ class Scheduler:
             f'Cylc version: {CYLC_VERSION}',
             extra=RotatingLogFileHandler.header_extra
         )
+
+        # Note that the following lines must be present at the top of
+        # the workflow log file for use in reference test runs.
+        LOG.info(
+            f'Run mode: {self.config.run_mode()}',
+            extra=RotatingLogFileHandler.header_extra
+        )
+        LOG.info(
+            f'Initial point: {self.config.initial_point}',
+            extra=RotatingLogFileHandler.header_extra
+        )
+        if self.config.start_point != self.config.initial_point:
+            LOG.info(
+                f'Start point: {self.config.start_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+        LOG.info(
+            f'Final point: {self.config.final_point}',
+            extra=RotatingLogFileHandler.header_extra
+        )
+        if self.config.stop_point:
+            LOG.info(
+                f'Stop point: {self.config.stop_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
 
         if is_quiet:
             LOG.info("Quiet mode on")
@@ -654,9 +662,7 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            await self.log_start()
             await self.configure()
-
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
