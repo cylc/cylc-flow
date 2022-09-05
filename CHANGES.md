@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5115](https://github.com/cylc/cylc-flow/pull/5115) - Updates rsync commands
+to make them compatible with latest rsync releases.
+
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
