@@ -86,7 +86,8 @@ class CylcReviewService(object):
         'suite.rc.processed',
         'flow.cylc',
         'rose-suite.info',
-        'opt/rose-suite-cylc-install.conf'
+        'opt/rose-suite-cylc-install.conf',
+        'rose-suite.conf'
     ]
 
     def __init__(self, *args, **kwargs):
