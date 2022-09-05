@@ -122,8 +122,14 @@ class upgrader:
         del item[keys[-1]]
 
     @staticmethod
-    def show_keys(keys):
-        return '[' + ']['.join(keys) + ']'
+    def show_keys(keys, is_section):
+        res = ""
+        for key in keys:
+            if key != keys[-1] or is_section:
+                res += f"[{key}]"
+            else:
+                res += key
+        return res
 
     def expand(self, upg):
         """Expands __MANY__ items."""
@@ -158,6 +164,7 @@ class upgrader:
                         'new': None,
                         'cvt': upg['cvt'],
                         'silent': upg['silent'],
+                        'is_section': upg['is_section'],
                     })
                 return exp_upgs
             npre = []
@@ -175,6 +182,7 @@ class upgrader:
                     'new': npre + [m] + npost,
                     'cvt': upg['cvt'],
                     'silent': upg['silent'],
+                    'is_section': upg['is_section'],
                 })
         return exp_upgs
 
@@ -194,9 +202,10 @@ class upgrader:
                         # OK: deprecated item not found
                         pass
                     else:
-                        msg = self.show_keys(upg['old'])
+                        msg = self.show_keys(upg['old'], upg['is_section'])
                         if upg['new']:
-                            msg += ' -> ' + self.show_keys(upg['new'])
+                            msg += ' -> ' + self.show_keys(upg['new'],
+                                                           upg['is_section'])
                         msg += " - " + upg['cvt'].describe()
                         if not upg['silent']:
                             warnings.setdefault(vn, [])
