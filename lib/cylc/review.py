@@ -619,12 +619,14 @@ class CylcReviewService(object):
                     if entry["submit_num"] == int(submit_num):
                         job_entry = entry
                         break
+
+        # Set the file_content type for syntax highlighting.
         if (
             fnmatch(os.path.basename(path), "suite*.rc*")
             or fnmatch(os.path.basename(path), "*.cylc")
         ):
             file_content = "cylc-suite-rc"
-        elif fnmatch(os.path.basename(path), "rose*.conf"):
+        elif fnmatch(os.path.basename(path), "*rose*.conf"):
             file_content = "rose-conf"
         else:
             file_content = None
@@ -704,6 +706,7 @@ class CylcReviewService(object):
         # Log files with +TZ in name end up with space instead of plus sign, so
         # put plus sign back in (https://github.com/cylc/cylc-flow/issues/4260)
         path = re.sub(r"(log\.\S+\d{2})\s(\d{2,4})$", r"\1+\2", path)
+        path = re.sub(r"(log\/config\/\d*T?\d*)\s(\d*-rose-suite.conf)", r"\1+\2", path)
         suite = suite.replace('%2F', '/')
 
         # get file or serve raw data
