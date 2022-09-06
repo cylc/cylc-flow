@@ -31,7 +31,16 @@ from threading import Barrier, Thread
 from time import sleep, time
 import traceback
 from typing import (
-    Callable, Iterable, NoReturn, Optional, List, Set, Dict, Tuple, Union
+    TYPE_CHECKING,
+    Callable,
+    Iterable,
+    NoReturn,
+    Optional,
+    List,
+    Set,
+    Dict,
+    Tuple,
+    Union,
 )
 from uuid import uuid4
 
@@ -124,6 +133,9 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class SchedulerStop(CylcError):
@@ -222,10 +234,10 @@ class Scheduler:
     stop_clock_time: Optional[int] = None
 
     # task event loop
-    is_paused: Optional[bool] = None
-    is_updated: Optional[bool] = None
-    is_stalled: Optional[bool] = None
-    is_reloaded: Optional[bool] = None
+    is_paused = False
+    is_updated = False
+    is_stalled = False
+    is_reloaded = False
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
@@ -440,7 +452,6 @@ class Scheduler:
             self.flow_mgr
         )
 
-        self.is_reloaded = False
         self.data_store_mgr.initiate_data_model()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
@@ -996,7 +1007,7 @@ class Scheduler:
         """Remove tasks."""
         return self.pool.remove_tasks(items)
 
-    def command_reload_workflow(self):
+    def command_reload_workflow(self) -> None:
         """Reload workflow configuration."""
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
@@ -1020,11 +1031,12 @@ class Scheduler:
         # logged by the TaskPool.
         add = set(self.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning("Added task: '%s'" % (task,))
+            LOG.warning(f"Added task: '{task}'")
         self.workflow_db_mgr.put_workflow_template_vars(self.template_vars)
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
+        self.is_reloaded = True
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1492,7 +1504,7 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    async def main_loop(self):
+    async def main_loop(self) -> None:
         """The scheduler main loop."""
         while True:  # MAIN LOOP
             tinit = time()
@@ -1587,8 +1599,8 @@ class Scheduler:
             # Update state summary, database, and uifeed
             self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
-            if has_updated:
-                # Workflow can't be stalled, so stop the stalled timer.
+            if has_updated and not self.is_stalled:
+                # Stop the stalled timer.
                 with suppress(KeyError):
                     self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
@@ -1629,7 +1641,7 @@ class Scheduler:
                     quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
                 # Main loop has taken quite a bit to get through
                 # Still yield control to other threads by sleep(0.0)
-                duration = 0
+                duration: float = 0
             elif quick_mode:
                 duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
             else:
@@ -1639,16 +1651,16 @@ class Scheduler:
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
-    async def update_data_structure(self):
+    async def update_data_structure(self) -> Union[bool, List['TaskProxy']]:
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
+        reloaded = self.is_reloaded
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
             # Collect/apply data store updates/deltas
-            self.data_store_mgr.update_data_structure(
-                reloaded=self.is_reloaded)
+            self.data_store_mgr.update_data_structure(reloaded=reloaded)
             self.is_reloaded = False
             # Publish updates:
             if self.data_store_mgr.publish_pending:
@@ -1663,7 +1675,8 @@ class Scheduler:
             self.workflow_db_mgr.put_task_pool(self.pool)
             # Reset workflow and task updated flags.
             self.is_updated = False
-            self.is_stalled = False
+            if not reloaded:  # (A reload cannot unstall workflow by itself)
+                self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
             self.update_data_store()
@@ -1681,7 +1694,7 @@ class Scheduler:
             if self._get_events_conf(f"{event} handlers") is not None:
                 self.run_event_handlers(event)
 
-    def check_workflow_stalled(self):
+    def check_workflow_stalled(self) -> bool:
         """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
             return True
@@ -1692,6 +1705,7 @@ class Scheduler:
             self.update_data_store()
             self.is_stalled = is_stalled
         if self.is_stalled:
+            LOG.critical("Workflow stalled")
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
             with suppress(KeyError):
                 # Start stall timeout timer
