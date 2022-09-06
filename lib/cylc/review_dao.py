@@ -125,7 +125,21 @@ class CylcReviewDAO(object):
         daos = self._db_init(user_name, suite_name)
         if stmt_args is None:
             stmt_args = []
-        return daos.connect().execute(stmt, stmt_args)
+        try:
+            return daos.connect().execute(stmt, stmt_args)
+        except sqlite3.OperationalError as exc:
+            # At Cylc 8.0.1+ Workflows installed but not run will not yet have
+            # a database.
+            if (
+                os.path.exists(os.path.dirname(
+                    self.daos.values()[0].db_file_name) + '/flow.cylc')
+                or
+                os.path.exists(os.path.dirname(
+                    self.daos.values()[0].db_file_name) + '/suite.rc')
+            ):
+                return []
+            else:
+                raise exc
 
     def get_suite_broadcast_states(self, user_name, suite_name):
         """Return broadcast states of a suite.

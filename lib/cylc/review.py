@@ -36,7 +36,7 @@ import os
 import pwd
 import re
 import shlex
-from sqlite3 import ProgrammingError
+from sqlite3 import ProgrammingError, OperationalError
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
@@ -86,7 +86,8 @@ class CylcReviewService(object):
         'suite.rc.processed',
         'flow.cylc',
         'rose-suite.info',
-        'opt/rose-suite-cylc-install.conf'
+        'opt/rose-suite-cylc-install.conf',
+        'rose-suite.conf'
     ]
 
     def __init__(self, *args, **kwargs):
@@ -151,8 +152,13 @@ class CylcReviewService(object):
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
-        data["broadcast_states"] = (
-            self.suite_dao.get_suite_broadcast_states(user, suite))
+
+        try:
+            data["broadcast_states"] = (
+                self.suite_dao.get_suite_broadcast_states(user, suite))
+        except OperationalError:
+            data["broadcast_states"] = ()
+
         if form == "json":
             return json.dumps(data)
         try:
@@ -180,8 +186,13 @@ class CylcReviewService(object):
         data["states"].update(
             self.suite_dao.get_suite_state_summary(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
-        data["broadcast_events"] = (
-            self.suite_dao.get_suite_broadcast_events(user, suite))
+
+        try:
+            data["broadcast_events"] = (
+                self.suite_dao.get_suite_broadcast_events(user, suite))
+        except OperationalError:
+            data["broadcast_events"] = ()
+
         if form == "json":
             return json.dumps(data)
         try:
@@ -318,7 +329,8 @@ class CylcReviewService(object):
         # Set list of task states depending on Cylc version 7 or 8
         task_statuses_ordered = TASK_STATUSES_ORDERED
         try:
-            if self.suite_dao.is_cylc8(user, suite):
+            is_c8 = self.suite_dao.is_cylc8(user, suite)
+            if is_c8:
                 task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
         except ProgrammingError:
             pass
@@ -608,12 +620,14 @@ class CylcReviewService(object):
                     if entry["submit_num"] == int(submit_num):
                         job_entry = entry
                         break
+
+        # Set the file_content type for syntax highlighting.
         if (
             fnmatch(os.path.basename(path), "suite*.rc*")
             or fnmatch(os.path.basename(path), "*.cylc")
         ):
             file_content = "cylc-suite-rc"
-        elif fnmatch(os.path.basename(path), "rose*.conf"):
+        elif fnmatch(os.path.basename(path), "*rose*.conf"):
             file_content = "rose-conf"
         else:
             file_content = None
@@ -693,6 +707,7 @@ class CylcReviewService(object):
         # Log files with +TZ in name end up with space instead of plus sign, so
         # put plus sign back in (https://github.com/cylc/cylc-flow/issues/4260)
         path = re.sub(r"(log\.\S+\d{2})\s(\d{2,4})$", r"\1+\2", path)
+        path = re.sub(r"(log\/config\/\d*T?\d*)\s(\d*-rose-suite.conf)", r"\1+\2", path)
         suite = suite.replace('%2F', '/')
 
         # get file or serve raw data
@@ -734,24 +749,29 @@ class CylcReviewService(object):
         data = {"files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
 
+        rose_logs_dest = "rose"
+        if self.suite_dao.is_cylc8(user, suite):
+            rose_logs_dest = "cylc"
+
         # Rose files: to recognise & group, but not process, standard formats
-        data["files"]["rose"] = {}
+        data["files"][rose_logs_dest] = {}
 
         # Rosie suite info
-        info_name = os.path.join(user_suite_dir, "rose-suite.info")
-        if os.path.isfile(info_name):
-            stat = os.stat(info_name)
-            data["files"]["rose"]["rose-suite.info"] = {
-                "path": "rose-suite.info",
-                "mtime": stat.st_mtime,
-                "size": stat.st_size}
+        for fname in ['rose-suite.info', 'rose-suite.conf']:
+            info_name = os.path.join(user_suite_dir, fname)
+            if os.path.isfile(info_name):
+                stat = os.stat(info_name)
+                data["files"][rose_logs_dest][fname] = {
+                    "path": fname,
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size}
 
         # Get Rose log files
         for key in ["conf", "log", "version"]:
             f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
             if os.path.isfile(f_name):
                 stat = os.stat(f_name)
-                data["files"]["rose"]["log/rose-suite-run." + key] = {
+                data["files"][rose_logs_dest]["log/rose-suite-run." + key] = {
                     "path": "log/rose-suite-run." + key,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -761,7 +781,7 @@ class CylcReviewService(object):
                     continue
                 name = os.path.join("log", os.path.basename(f_name))
                 stat = os.stat(f_name)
-                data["files"]["rose"]["other:" + name] = {
+                data["files"][rose_logs_dest]["other:" + name] = {
                     "path": name,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -809,7 +829,11 @@ class CylcReviewService(object):
                     "size": f_stat.st_size
                 }
 
-        data["files"]["cylc"] = logs_info
+        if rose_logs_dest == 'cylc':
+            data["files"]["cylc"].update(logs_info)
+        else:
+            data["files"]["cylc"] = logs_info
+
         return data
 
     @classmethod
