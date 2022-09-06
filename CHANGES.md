@@ -47,6 +47,10 @@ taskdefs removed before restart.
 [#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
 tutorial workflows.
 
+[#5114](https://github.com/cylc/cylc-flow/pull/5114) - Fix bug where
+validation errors during workflow startup were not printed to stderr before
+daemonisation.
+
 [#5110](https://github.com/cylc/cylc-flow/pull/5110) - Fix bug where reloading
 a stalled workflow would cause it stall again.
 
