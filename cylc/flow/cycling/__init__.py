@@ -76,7 +76,7 @@ class PointBase(metaclass=ABCMeta):
         """Used for comparison operations between different PointBase-derived
         class instances."""
 
-    def __init__(self, value):
+    def __init__(self, value: str):
         if not isinstance(value, str):
             raise TypeError(type(value))
         self.value = value

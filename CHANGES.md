@@ -44,6 +44,9 @@ taskdefs removed before restart.
 [#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
 tutorial workflows.
 
+[#5110](https://github.com/cylc/cylc-flow/pull/5110) - Fix bug where reloading
+a stalled workflow would cause it stall again.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
 
