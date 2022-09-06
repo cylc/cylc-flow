@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5119](https://github.com/cylc/cylc-flow/pull/5119) - Fix formatting of
+deprecation warnings at validation.
+
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
