@@ -1,51 +1,51 @@
 WARNING - deprecated items were automatically upgraded in "workflow definition"
-WARNING -  * (8.0.0) [cylc][force run mode] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]force run mode - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][log resolved dependencies] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][required run mode] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail retry delays] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][extra log files] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][abort if any task fails] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][disable automatic shutdown] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]log resolved dependencies - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]required run mode - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail retry delays - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [runtime][foo, cat, dog]extra log files - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]shell - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]abort if any task fails - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]disable automatic shutdown - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][environment] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][simulation][disable suite event handlers] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][simulation]disable suite event handlers - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][task event mail interval] -> [cylc][mail][task event batch interval] - value unchanged
+WARNING -  * (8.0.0) [cylc]task event mail interval -> [cylc][mail]task event batch interval - value unchanged
 WARNING -  * (8.0.0) [cylc][parameters] -> [task parameters] - value unchanged
 WARNING -  * (8.0.0) [cylc][parameter templates] -> [task parameters][templates] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][mail to] -> [cylc][mail][to] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][mail from] -> [cylc][mail][from] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][mail footer] -> [cylc][mail][footer] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail to] -> [runtime][foo, cat, dog][mail][to] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail from] -> [runtime][foo, cat, dog][mail][from] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][mail smtp] - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail smtp] - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
-WARNING -  * (8.0.0) [scheduling][max active cycle points] -> [scheduling][runahead limit] - "n" -> "Pn"
-WARNING -  * (8.0.0) [scheduling][hold after point] -> [scheduling][hold after cycle point] - value unchanged
+WARNING -  * (8.0.0) [cylc][events]mail to -> [cylc][mail]to - value unchanged
+WARNING -  * (8.0.0) [cylc][events]mail from -> [cylc][mail]from - value unchanged
+WARNING -  * (8.0.0) [cylc][events]mail footer -> [cylc][mail]footer - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail to -> [runtime][foo, cat, dog][mail]to - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail from -> [runtime][foo, cat, dog][mail]from - value unchanged
+WARNING -  * (8.0.0) [cylc][events]mail smtp - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail smtp - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
+WARNING -  * (8.0.0) [scheduling]max active cycle points -> [scheduling]runahead limit - "n" -> "Pn"
+WARNING -  * (8.0.0) [scheduling]hold after point -> [scheduling]hold after cycle point - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][suite state polling] -> [runtime][foo, cat, dog][workflow state polling] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution polling intervals] -> [runtime][foo, cat, dog][execution polling intervals] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution retry delays] -> [runtime][foo, cat, dog][execution retry delays] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [runtime][foo, cat, dog][execution time limit] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][timeout] -> [cylc][events][stall timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][abort on timeout] -> [cylc][events][abort on stall timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][inactivity] -> [cylc][events][inactivity timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][abort on inactivity] -> [cylc][events][abort on inactivity timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][startup handler] -> [cylc][events][startup handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][shutdown handler] -> [cylc][events][shutdown handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][stalled handler] -> [cylc][events][stall handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handlers] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][abort on stalled] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][events][abort if startup handler fails] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][events][abort if shutdown handler fails] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][events][abort if timeout handler fails] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][events][abort if inactivity handler fails] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][events][abort if stalled handler fails] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]execution polling intervals -> [runtime][foo, cat, dog]execution polling intervals - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]execution retry delays -> [runtime][foo, cat, dog]execution retry delays - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]execution time limit -> [runtime][foo, cat, dog]execution time limit - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]submission polling intervals -> [runtime][foo, cat, dog]submission polling intervals - value unchanged
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]submission retry delays -> [runtime][foo, cat, dog]submission retry delays - value unchanged
+WARNING -  * (8.0.0) [cylc][events]timeout -> [cylc][events]stall timeout - value unchanged
+WARNING -  * (8.0.0) [cylc][events]abort on timeout -> [cylc][events]abort on stall timeout - value unchanged
+WARNING -  * (8.0.0) [cylc][events]inactivity -> [cylc][events]inactivity timeout - value unchanged
+WARNING -  * (8.0.0) [cylc][events]abort on inactivity -> [cylc][events]abort on inactivity timeout - value unchanged
+WARNING -  * (8.0.0) [cylc][events]startup handler -> [cylc][events]startup handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]shutdown handler -> [cylc][events]shutdown handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]timeout handler -> [cylc][events]stall timeout handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]stalled handler -> [cylc][events]stall handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]aborted handler -> [cylc][events]abort handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]inactivity handler -> [cylc][events]inactivity timeout handlers - value unchanged
+WARNING -  * (8.0.0) [cylc][events]abort on stalled - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events]abort if startup handler fails - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events]abort if shutdown handler fails - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events]abort if timeout handler fails - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events]abort if inactivity handler fails - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events]abort if stalled handler fails - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
      * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:

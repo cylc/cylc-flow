@@ -1722,7 +1722,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
     u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
-    u.obsolete('8.0.0', ['cylc', 'reference test'])
+    u.obsolete('8.0.0', ['cylc', 'reference test'], is_section=True)
     u.obsolete(
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])

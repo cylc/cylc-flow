@@ -46,8 +46,9 @@ TEST_FILE = """
     abort if any task fails = true
     suite definition directory = '/woo'
     disable automatic shutdown = false
-    reference test = true
     spawn to max active cycle points = false
+    [[reference test]]
+        allow task failures = true
     [[simulation]]
         disable suite event handlers = true
     [[authentication]]
