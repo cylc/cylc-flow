@@ -52,7 +52,7 @@ __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 # check validation
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc val "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # check that config retrieves only the filtered environment
 TEST_NAME=${TEST_NAME_BASE}-config

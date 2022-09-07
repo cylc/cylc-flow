@@ -17,6 +17,7 @@
 
 from ansimarkup import parse as cparse
 import asyncio
+from copy import deepcopy
 from functools import lru_cache
 from itertools import zip_longest
 from pathlib import Path
@@ -41,8 +42,10 @@ from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
+    OptionSettings,
     Options,
-    icp_option,
+    ICP_OPTION,
+    APPEND, ARGS, KWARGS, STORE, STORE_TRUE
 )
 from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
@@ -117,6 +120,179 @@ mutation (
 }
 '''
 
+PLAY_ICP_OPTION = deepcopy(ICP_OPTION)
+PLAY_ICP_OPTION.sources = {'play'}
+
+RUN_MODE = OptionSettings(
+    ["-m", "--mode"],
+    help="Run mode: live, dummy, simulation (default live).",
+    metavar="STRING", action=STORE, dest="run_mode",
+    choices=['live', 'dummy', 'simulation'],
+)
+
+PLAY_RUN_MODE = deepcopy(RUN_MODE)
+PLAY_RUN_MODE.sources = {'play'}
+
+PLAY_OPTIONS = [
+    OptionSettings(
+        ["-n", "--no-detach", "--non-daemon"],
+        help="Do not daemonize the scheduler (infers --format=plain)",
+        action=STORE_TRUE, dest="no_detach", sources={'play'}),
+    OptionSettings(
+        ["--profile"],
+        help="Output profiling (performance) information",
+        action=STORE_TRUE,
+        default=False,
+        dest="profile_mode",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--start-cycle-point", "--startcp"],
+        help=(
+            "Set the start cycle point, which may be after"
+            " the initial cycle point. If the specified start point is"
+            " not in the sequence, the next on-sequence point will"
+            " be used. (Not to be confused with the initial cycle point)"),
+        metavar="CYCLE_POINT",
+        action=STORE,
+        dest="startcp",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--final-cycle-point", "--fcp"],
+        help=(
+            "Set the final cycle point. This command line option overrides"
+            " the workflow config option"
+            " '[scheduling]final cycle point'. "),
+        metavar="CYCLE_POINT",
+        action=STORE,
+        dest="fcp",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--stop-cycle-point", "--stopcp"],
+        help=(
+            "Set the stop cycle point. Shut down after all"
+            " have PASSED this cycle point. (Not to be confused"
+            " the final cycle point.) This command line option overrides"
+            " the workflow config option"
+            " '[scheduling]stop after cycle point'."),
+        metavar="CYCLE_POINT",
+        action=STORE,
+        dest="stopcp",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--start-task", "--starttask", "-t"],
+        help=(
+            "Start from this task instance, given by '<cycle>/<name>'."
+            " This can be used multiple times to start from multiple"
+            " tasks at once. Dependence on tasks with cycle points earlier"
+            " than the earliest start-task will be ignored. A"
+            " sub-graph of the workflow will run if selected tasks do"
+            " not lead on to the full graph."),
+        metavar="TASK_ID",
+        action=APPEND,
+        dest="starttask",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--pause"],
+        help="Pause the workflow immediately on start up.",
+        action=STORE_TRUE,
+        dest="paused_start",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--hold-after", "--hold-cycle-point", "--holdcp"],
+        help="Hold all tasks after this cycle point.",
+        metavar="CYCLE_POINT",
+        action=STORE,
+        dest="holdcp",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--reference-log"],
+        help="Generate a reference log for use in reference ",
+        action=STORE_TRUE,
+        default=False,
+        dest="genref",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--reference-test"],
+        help="Do a test run against a previously generated reference.",
+        action=STORE_TRUE,
+        default=False,
+        dest="reftest",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--host"],
+        help=(
+            "Specify the host on which to start-up the workflow."
+            " If not specified, a host will be selected using"
+            " the '[scheduler]run hosts' global config."),
+        metavar="HOST",
+        action=STORE,
+        dest="host",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--format"],
+        help="The format of the output: 'plain'=human readable, 'json",
+        choices=('plain', 'json'),
+        default="plain",
+        dest='format',
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--main-loop"],
+        help=(
+            "Specify an additional plugin to run in the main"
+            " These are used in combination with those specified"
+            " [scheduler][main loop]plugins. Can be used multiple times."),
+        metavar="PLUGIN_NAME",
+        action=APPEND,
+        dest="main_loop",
+        sources={'play'},
+    ),
+    OptionSettings(
+        ["--abort-if-any-task-fails"],
+        help="If set workflow will abort with status 1 if any task fails.",
+        action=STORE_TRUE,
+        default=False,
+        dest="abort_if_any_task_fails",
+        sources={'play'},
+    ),
+    PLAY_ICP_OPTION,
+    PLAY_RUN_MODE,
+    OptionSettings(
+        ['--downgrade'],
+        help=(
+            'Allow the workflow to be restarted with an'
+            ' older version of Cylc, NOT RECOMMENDED.'
+            ' By default Cylc prevents you from restarting'
+            ' a workflow with an older version of Cylc than'
+            ' it was previously run with. Use this flag'
+            ' to disable this check.'
+        ),
+        action=STORE_TRUE,
+        default=False,
+        sources={'play'}
+    ),
+    OptionSettings(
+        ['--upgrade'],
+        help=(
+            'Allow the workflow to be restarted with'
+            ' a newer version of Cylc.'
+        ),
+        action=STORE_TRUE,
+        default=False,
+        sources={'play'}
+    ),
+]
+
 
 @lru_cache()
 def get_option_parser(add_std_opts: bool = False) -> COP:
@@ -128,140 +304,12 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
-    parser.add_option(
-        "-n", "--no-detach", "--non-daemon",
-        help="Do not daemonize the scheduler (infers --format=plain)",
-        action="store_true", dest="no_detach")
-
-    parser.add_option(
-        "--profile", help="Output profiling (performance) information",
-        action="store_true", dest="profile_mode")
-
-    parser.add_option(icp_option)
-
-    parser.add_option(
-        "--start-cycle-point", "--startcp",
-        help=(
-            "Set the start cycle point, which may be after the initial cycle "
-            "point. If the specified start point is not in the sequence, the "
-            "next on-sequence point will be used. "
-            "(Not to be confused with the initial cycle point.) "
-            "This replaces the Cylc 7 --warm option."
-        ),
-        metavar="CYCLE_POINT", action="store", dest="startcp")
-
-    parser.add_option(
-        "--final-cycle-point", "--fcp",
-        help=(
-            "Set the final cycle point. "
-            "This command line option overrides the workflow "
-            "config option '[scheduling]final cycle point'. "
-        ),
-        metavar="CYCLE_POINT", action="store", dest="fcp")
-
-    parser.add_option(
-        "--stop-cycle-point", "--stopcp",
-        help=(
-            "Set the stop cycle point. "
-            "Shut down after all tasks have PASSED this cycle point. "
-            "(Not to be confused with the final cycle point.) "
-            "This command line option overrides the workflow "
-            "config option '[scheduling]stop after cycle point'. "
-        ),
-        metavar="CYCLE_POINT", action="store", dest="stopcp")
-
-    parser.add_option(
-        "--start-task", "--starttask", "-t",
-        help=(
-            "Start from this task instance, given by '<cycle>/<name>'. "
-            "Can be used multiple times "
-            "to start from multiple tasks at once. Dependence on tasks with "
-            "with cycle points earlier than the earliest start-task will be "
-            "ignored. A sub-graph of the workflow will run if selected tasks "
-            "do not lead on to the full graph."
-        ),
-        metavar="TASK_ID", action="append", dest="starttask")
-
-    parser.add_option(
-        "--pause",
-        help="Pause the workflow immediately on start up.",
-        action="store_true", dest="paused_start")
-
-    parser.add_option(
-        "--hold-after", "--hold-cycle-point", "--holdcp",
-        help="Hold all tasks after this cycle point.",
-        metavar="CYCLE_POINT", action="store", dest="holdcp")
-
-    parser.add_option(
-        "-m", "--mode",
-        help="Run mode: live, dummy, simulation (default live).",
-        metavar="STRING", action="store", dest="run_mode",
-        choices=["live", "dummy", "simulation"])
-
-    parser.add_option(
-        "--reference-log",
-        help="Generate a reference log for use in reference tests.",
-        action="store_true", default=False, dest="genref")
-
-    parser.add_option(
-        "--reference-test",
-        help="Do a test run against a previously generated reference log.",
-        action="store_true", default=False, dest="reftest")
-
-    # Override standard parser option for specific help description.
-    parser.add_option(
-        "--host",
-        help=(
-            "Specify the host on which to start-up the workflow. "
-            "If not specified, a host will be selected using "
-            "the '[scheduler]run hosts' global config."
-        ),
-        metavar="HOST", action="store", dest="host")
-
-    parser.add_option(
-        "--format",
-        help="The format of the output: 'plain'=human readable, 'json'",
-        choices=("plain", "json"),
-        default="plain"
-    )
-
-    parser.add_option(
-        "--main-loop",
-        help=(
-            "Specify an additional plugin to run in the main loop."
-            " These are used in combination with those specified in"
-            " [scheduler][main loop]plugins. Can be used multiple times"
-        ),
-        metavar="PLUGIN_NAME", action="append", dest="main_loop"
-    )
-
-    parser.add_option(
-        "--abort-if-any-task-fails",
-        help="If set workflow will abort with status 1 if any task fails.",
-        action="store_true", default=False, dest="abort_if_any_task_fails"
-    )
-
-    parser.add_option(
-        '--downgrade',
-        help=(
-            'Allow the workflow to be restarted with an older version of Cylc,'
-            ' NOT RECOMMENDED.'
-            ' By default Cylc prevents you from restarting a workflow with an'
-            ' older version of Cylc than it was previously run with.'
-            ' Use this flag to disable this check.'
-        ),
-        action='store_true',
-        default=False
-    )
-
-    parser.add_option(
-        '--upgrade',
-        help=(
-            'Allow the workflow to be restarted with an newer version of Cylc.'
-        ),
-        action='store_true',
-        default=False
-    )
+    options = parser.get_cylc_rose_options() + PLAY_OPTIONS
+    for option in options:
+        if isinstance(option, OptionSettings):
+            parser.add_option(*option.args, **option.kwargs)
+        else:
+            parser.add_option(*option[ARGS], **option[KWARGS])
 
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
@@ -555,6 +603,11 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser: COP, options: 'Values', id_: str):
     """Implement cylc play."""
+    return _play(parser, options, id_)
+
+
+def _play(parser: COP, options: 'Values', id_: str):
+    """Allows compound scripts to import play, but supply their own COP."""
     if options.starttask:
         options.starttask = upgrade_legacy_ids(
             *options.starttask,

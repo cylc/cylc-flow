@@ -32,11 +32,11 @@ cylc install "${TEST_DIR}/upstream" --workflow-name="${UPSTREAM}" --no-run-name
 #-------------------------------------------------------------------------------
 # validate both workflows as tests
 TEST_NAME="${TEST_NAME_BASE}-validate-upstream"
-run_ok "${TEST_NAME}" cylc val --debug "${UPSTREAM}"
+run_ok "${TEST_NAME}" cylc validate --debug "${UPSTREAM}"
 
 TEST_NAME="${TEST_NAME_BASE}-validate-polling"
 run_ok "${TEST_NAME}" \
-    cylc val --debug --set="UPSTREAM='${UPSTREAM}'" "${WORKFLOW_NAME}"
+    cylc validate --debug --set="UPSTREAM='${UPSTREAM}'" "${WORKFLOW_NAME}"
 
 #-------------------------------------------------------------------------------
 # check auto-generated task script for lbad
