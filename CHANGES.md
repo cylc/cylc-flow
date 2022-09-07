@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5104](https://github.com/cylc/cylc-flow/pull/5104) - Fix retriggering of
+failed tasks after a reload.
+
 [#5119](https://github.com/cylc/cylc-flow/pull/5119) - Fix formatting of
 deprecation warnings at validation.
 
