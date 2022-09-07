@@ -81,12 +81,11 @@ class WorkflowPublisher(ZMQSocketBase):
 
         """
         if self.socket:
-            # don't attempt to send anything if we are in the process of
-            # shutting down
             self.topics.add(topic)
             self.socket.send_multipart(
                 [topic, serialize_data(data, serializer)]
             )
+        # else we are in the process of shutting down - don't send anything
 
     async def publish(self, items):
         """Publish topics.
@@ -98,4 +97,4 @@ class WorkflowPublisher(ZMQSocketBase):
         try:
             await gather_coros(self.send_multi, items)
         except Exception as exc:
-            LOG.error('publish: %s', exc)
+            LOG.exception(f"publish: {exc}")
