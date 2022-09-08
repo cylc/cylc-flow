@@ -32,27 +32,27 @@
 #-------------------------------------------------------------------------------
 
 _cylc() {
-
     local cur sec opts base
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
-    opts="$(cylc print -x -y 2>/dev/null)"
     suite_cmds="broadcast|bcast|cat-log|log|cat-state|check-versions|checkpoint|diff|compare|documentation|browse|dump|edit|ext-trigger|external-trigger|get-directory|get-suite-config|get-config|get-suite-version|get-cylc-version|graph|graph-diff|gui|hold|insert|kill|list|ls|ls-checkpoints|monitor|nudge|ping|poll|register|release|unhold|reload|remove|report-timings|reset|restart|run|start|search|grep|set-verbosity|show|spawn|stop|shutdown|submit|single|suite-state|trigger|upgrade-run-dir|validate|view"
 
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-        CYLC_DIR=$(__cylc_get_cylc_dir)
+        local _CYLC_VERSION
+        _CYLC_VERSION="$(cylc version --long)"
+        if [[ $_CYLC_VERSION = 8* ]]; then
+            return 0
+        fi
+        CYLC_DIR=$(sed "s/.*(\(.*\))/\1/" <<< "$_CYLC_VERSION")
         cylc_cmds=$(cd $CYLC_DIR/bin && ls cylc-* | sed "s/^cylc-//g")
         COMPREPLY=($(compgen -W "${cylc_cmds}" -- ${cur}))
     elif [[ ${sec} =~ ^($suite_cmds)$ ]]; then
+        opts="$(cylc print -x -y 2>/dev/null)"
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     fi
     return 0
-}
-
-__cylc_get_cylc_dir() {
-    cylc version --long | sed "s/.*(\(.*\))/\1/"
 }
 
 complete -o bashdefault -o default -o nospace -F _cylc cylc
