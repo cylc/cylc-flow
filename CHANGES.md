@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5115](https://github.com/cylc/cylc-flow/pull/5115) - Updates rsync commands
+to make them compatible with latest rsync releases.
+
 [#5119](https://github.com/cylc/cylc-flow/pull/5119) - Fix formatting of
 deprecation warnings at validation.
 

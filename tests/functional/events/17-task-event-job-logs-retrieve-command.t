@@ -52,7 +52,7 @@ sed 's/^.* -v //' "${WORKFLOW_LOG_D}/scheduler/my-rsync.log" >'my-rsync.log.edit
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'
-ARGS="${CYLC_TEST_HOST}:\$HOME/cylc-run/${WORKFLOW_NAME}/log/job/ ${WORKFLOW_LOG_D}/job/"
+ARGS="${CYLC_TEST_HOST}:cylc-run/${WORKFLOW_NAME}/log/job/ ${WORKFLOW_LOG_D}/job/"
 cmp_ok 'my-rsync.log.edited' <<__LOG__
 ${OPT_HEAD} --include=/1/t1/01 --include=/1/t1/01/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
