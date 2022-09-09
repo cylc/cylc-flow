@@ -421,20 +421,24 @@ async def run(options: 'Values', workflow_id):
         report_set = True
 
     results = await pclient.async_request('graphql', mutation_kwargs)
-    for result in results['broadcast']['result']:
-        modified_settings = result['response'][0]
-        bad_options = result['response'][1]
-        if modified_settings:
-            ret['stdout'].append(
-                get_broadcast_change_report(
-                    modified_settings,
-                    is_cancel=report_cancel,
+    try:
+        for result in results['broadcast']['result']:
+            modified_settings = result['response'][0]
+            bad_options = result['response'][1]
+            if modified_settings:
+                ret['stdout'].append(
+                    get_broadcast_change_report(
+                        modified_settings,
+                        is_cancel=report_cancel,
+                    )
                 )
-            )
+        bad_result = report_bad_options(bad_options, is_set=report_set)
+    except TypeError:
+        # Catch internal API server errors
+        bad_result = cparse(f'<red>{results}</red>')
 
-    bad_opts = report_bad_options(bad_options, is_set=report_set)
-    if bad_opts:
-        ret['stderr'].append(f'ERROR: {bad_opts}')
+    if bad_result:
+        ret['stderr'].append(f'ERROR: {bad_result}')
         ret['exit'] = 1
     return ret
 

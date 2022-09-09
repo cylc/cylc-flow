@@ -67,11 +67,15 @@ import zlib
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
-    PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
-    JDeltas, TDeltas, TPDeltas, WDeltas)
+    PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
+    FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
+from cylc.flow.parsec.util import (
+    pdeepcopy,
+    poverride
+)
 from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
@@ -186,6 +190,30 @@ def task_mean_elapsed_time(tdef):
     if tdef.elapsed_times:
         return sum(tdef.elapsed_times) / len(tdef.elapsed_times)
     return tdef.rtconfig.get('execution time limit', None)
+
+
+def runtime_from_config(rtconfig):
+    """Populate runtime object from config."""
+    try:
+        platform = rtconfig['platform']['name']
+    except (KeyError, TypeError):
+        platform = rtconfig['platform']
+    directives = rtconfig.get('directives', {})
+    environment = rtconfig.get('environment', {})
+    return PbRuntime(
+        platform=platform,
+        script=rtconfig.get('script'),
+        init_script=rtconfig.get('init-script'),
+        env_script=rtconfig.get('env-script'),
+        err_script=rtconfig.get('err-script'),
+        exit_script=rtconfig.get('exit-script'),
+        pre_script=rtconfig.get('pre-script'),
+        post_script=rtconfig.get('post-script'),
+        work_sub_dir=rtconfig.get('work sub-directory'),
+        execution_time_limit=rtconfig.get('execution time limit'),
+        directives=json.dumps(directives),
+        environment=json.dumps(environment),
+    )
 
 
 def apply_delta(key, delta, data):
@@ -499,6 +527,7 @@ class DataStoreMgr:
                 self.definition_id(p_name)
                 for p_name in parents[name]
             ])
+            task.runtime.CopyFrom(runtime_from_config(tdef.rtconfig))
             tasks[t_id] = task
 
         # Created family definition elements for first parent
@@ -534,6 +563,7 @@ class DataStoreMgr:
                     family.first_parent = (
                         self.definition_id(ancestors[name][1])
                     )
+                family.runtime.CopyFrom(runtime_from_config(famcfg))
                 families[f_id] = family
 
         for name, parent_list in parents.items():
@@ -883,18 +913,18 @@ class DataStoreMgr:
 
         # Active, but not in the data-store yet (new).
         if tp_id in self.n_window_nodes:
-            self.process_internal_task_proxy(itask, tproxy)
+            self._process_internal_task_proxy(itask, tproxy)
             # Has run before, so get history.
             # Cannot batch as task is active (all jobs retrieved at once).
             if itask.submit_num > 0:
                 flow_db = self.schd.workflow_db_mgr.pri_dao
                 for row in flow_db.select_jobs_for_datastore(
-                        {itask.tokens.relative_id}
+                        {itask.identity}
                 ):
                     self.insert_db_job(1, row)
         else:
             # Batch non-active node for load of DB history.
-            self.db_load_task_proxies[itask.tokens.relative_id] = (
+            self.db_load_task_proxies[itask.identity] = (
                 itask,
                 is_parent,
             )
@@ -929,6 +959,9 @@ class DataStoreMgr:
         if elapsed_time:
             task.mean_elapsed_time = elapsed_time
         task.parents[:] = [task.first_parent]
+
+        task.runtime.CopyFrom(runtime_from_config(tdef.rtconfig))
+
         self.added[TASKS][t_id] = task
 
     def generate_ghost_family(self, fp_id, child_fam=None, child_task=None):
@@ -987,6 +1020,16 @@ class DataStoreMgr:
             ]
             if fp_delta.ancestors:
                 fp_delta.first_parent = fp_delta.ancestors[0]
+
+            fp_delta.runtime.CopyFrom(
+                runtime_from_config(
+                    self._apply_broadcasts_to_runtime(
+                        tokens.relative_id,
+                        self.schd.config.cfg['runtime'][fam.name]
+                    )
+                )
+            )
+
             self.added[FAMILY_PROXIES][fp_id] = fp_delta
             fp_parent = fp_delta
             # Add ref ID to family element
@@ -1004,57 +1047,6 @@ class DataStoreMgr:
             fp_parent.child_tasks.append(child_task)
         elif child_fam not in fp_parent.child_families:
             fp_parent.child_families.append(child_fam)
-
-    def process_internal_task_proxy(self, itask, tproxy):
-        """Extract information from internal task proxy object."""
-
-        update_time = time()
-
-        tproxy.state = itask.state.status
-        tproxy.flow_nums = serialise(itask.flow_nums)
-
-        prereq_list = []
-        for prereq in itask.state.prerequisites:
-            # Protobuf messages populated within
-            prereq_obj = prereq.api_dump()
-            if prereq_obj:
-                prereq_list.append(prereq_obj)
-        del tproxy.prerequisites[:]
-        tproxy.prerequisites.extend(prereq_list)
-
-        for label, message, satisfied in itask.state.outputs.get_all():
-            output = tproxy.outputs[label]
-            output.label = label
-            output.message = message
-            output.satisfied = satisfied
-            output.time = update_time
-
-        if itask.tdef.clocktrigger_offset is not None:
-            tproxy.clock_trigger.satisfied = itask.is_waiting_clock_done()
-            tproxy.clock_trigger.time = itask.clock_trigger_time
-            tproxy.clock_trigger.time_string = time2str(
-                itask.clock_trigger_time)
-
-        for trig, satisfied in itask.state.external_triggers.items():
-            ext_trig = tproxy.external_triggers[trig]
-            ext_trig.id = trig
-            ext_trig.satisfied = satisfied
-
-        for label, satisfied in itask.state.xtriggers.items():
-            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
-                itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
-            xtrig.id = sig
-            xtrig.label = label
-            xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add(tproxy.id)
-
-        if tproxy.state in self.latest_state_tasks:
-            tp_ref = Tokens(tproxy.id).relative_id
-            tp_queue = self.latest_state_tasks[tproxy.state]
-            if tp_ref in tp_queue:
-                tp_queue.remove(tp_ref)
-            self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
 
     def apply_task_proxy_db_history(self):
         """Extract and apply DB history on given task proxies."""
@@ -1124,7 +1116,7 @@ class DataStoreMgr:
 
         # Extract info from itasks to data-store.
         for task_info in self.db_load_task_proxies.values():
-            self.process_internal_task_proxy(
+            self._process_internal_task_proxy(
                 task_info[0],
                 self.added[TASK_PROXIES][
                     self.id_.duplicate(task_info[0].tokens).id
@@ -1136,6 +1128,74 @@ class DataStoreMgr:
             self.insert_db_job(1, row)
 
         self.db_load_task_proxies.clear()
+
+    def _process_internal_task_proxy(self, itask, tproxy):
+        """Extract information from internal task proxy object."""
+
+        update_time = time()
+
+        tproxy.state = itask.state.status
+        tproxy.flow_nums = serialise(itask.flow_nums)
+
+        prereq_list = []
+        for prereq in itask.state.prerequisites:
+            # Protobuf messages populated within
+            prereq_obj = prereq.api_dump()
+            if prereq_obj:
+                prereq_list.append(prereq_obj)
+        del tproxy.prerequisites[:]
+        tproxy.prerequisites.extend(prereq_list)
+
+        for label, message, satisfied in itask.state.outputs.get_all():
+            output = tproxy.outputs[label]
+            output.label = label
+            output.message = message
+            output.satisfied = satisfied
+            output.time = update_time
+
+        if itask.tdef.clocktrigger_offset is not None:
+            tproxy.clock_trigger.satisfied = itask.is_waiting_clock_done()
+            tproxy.clock_trigger.time = itask.clock_trigger_time
+            tproxy.clock_trigger.time_string = time2str(
+                itask.clock_trigger_time)
+
+        for trig, satisfied in itask.state.external_triggers.items():
+            ext_trig = tproxy.external_triggers[trig]
+            ext_trig.id = trig
+            ext_trig.satisfied = satisfied
+
+        for label, satisfied in itask.state.xtriggers.items():
+            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
+                itask, label).get_signature()
+            xtrig = tproxy.xtriggers[sig]
+            xtrig.id = sig
+            xtrig.label = label
+            xtrig.satisfied = satisfied
+            self.xtrigger_tasks.setdefault(sig, set()).add(tproxy.id)
+
+        if tproxy.state in self.latest_state_tasks:
+            tp_ref = Tokens(tproxy.id).relative_id
+            tp_queue = self.latest_state_tasks[tproxy.state]
+            if tp_ref in tp_queue:
+                tp_queue.remove(tp_ref)
+            self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
+
+        tproxy.runtime.CopyFrom(
+            runtime_from_config(
+                self._apply_broadcasts_to_runtime(
+                    itask.identity,
+                    itask.tdef.rtconfig
+                )
+            )
+        )
+
+    def _apply_broadcasts_to_runtime(self, relative_id, rtconfig):
+        # Handle broadcasts
+        overrides = self.schd.broadcast_mgr.get_broadcast(relative_id)
+        if overrides:
+            rtconfig = pdeepcopy(rtconfig)
+            poverride(rtconfig, overrides, prepend=True)
+        return rtconfig
 
     def insert_job(self, name, point_string, status, job_conf):
         """Insert job into data-store.
@@ -1180,21 +1240,14 @@ class DataStoreMgr:
             task_proxy=tp_id,
             name=tproxy.name,
             cycle_point=tproxy.cycle_point,
-            job_runner_name=job_conf.get('job_runner_name'),
-            env_script=job_conf.get('env-script'),
-            err_script=job_conf.get('err-script'),
-            exit_script=job_conf.get('exit-script'),
             execution_time_limit=job_conf.get('execution_time_limit'),
             platform=job_conf.get('platform')['name'],
-            init_script=job_conf.get('init-script'),
-            post_script=job_conf.get('post-script'),
-            pre_script=job_conf.get('pre-script'),
-            script=job_conf.get('script'),
-            work_sub_dir=job_conf.get('work_d'),
-            directives=json.dumps(job_conf.get('directives')),
-            environment=json.dumps(job_conf.get('environment')),
-            param_var=json.dumps(job_conf.get('param_var'))
+            job_runner_name=job_conf.get('job_runner_name'),
         )
+        j_cfg = deepcopy(job_conf)
+        j_cfg['work sub-directory'] = job_conf.get('work_d')
+        j_cfg['execution time limit'] = job_conf.get('execution_time_limit')
+        j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
@@ -1674,7 +1727,45 @@ class DataStoreMgr:
         w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
 
         w_delta.broadcasts = json.dumps(self.schd.broadcast_mgr.broadcasts)
+        self._generate_broadcast_node_deltas(
+            self.data[self.workflow_id][TASK_PROXIES],
+            TASK_PROXIES
+        )
+        self._generate_broadcast_node_deltas(
+            self.added[TASK_PROXIES],
+            TASK_PROXIES
+        )
+        self._generate_broadcast_node_deltas(
+            self.data[self.workflow_id][FAMILY_PROXIES],
+            FAMILY_PROXIES
+        )
+        self._generate_broadcast_node_deltas(
+            self.added[FAMILY_PROXIES],
+            FAMILY_PROXIES
+        )
+
         self.updates_pending = True
+
+    def _generate_broadcast_node_deltas(self, node_data, node_type):
+        cfg = self.schd.config.cfg
+        for node_id, node in node_data.items():
+            tokens = Tokens(node_id)
+            new_runtime = runtime_from_config(
+                self._apply_broadcasts_to_runtime(
+                    tokens.relative_id,
+                    cfg['runtime'][tokens['task']]
+                )
+            )
+            new_sruntime = new_runtime.SerializeToString(
+                deterministic=True
+            )
+            old_sruntime = node.runtime.SerializeToString(
+                deterministic=True
+            )
+            if new_sruntime != old_sruntime:
+                node_delta = self.updated[node_type].setdefault(
+                    node_id, MESSAGE_MAP[node_type](id=node_id))
+                node_delta.runtime.CopyFrom(new_runtime)
 
     # -----------
     # Task Deltas

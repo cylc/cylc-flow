@@ -106,6 +106,29 @@ message PbWorkflow {
     optional int32 is_runahead_total = 38;
 }
 
+// Selected runtime fields
+message PbRuntime {
+    optional string platform = 1;
+    optional string script = 2;
+    optional string init_script = 3;
+    optional string env_script = 4;
+    optional string err_script = 5;
+    optional string exit_script = 6;
+    optional string pre_script = 7;
+    optional string post_script = 8;
+    optional string work_sub_dir = 9;
+    repeated string execution_polling_intervals = 10;
+    repeated string execution_retry_delays = 11;
+    optional float execution_time_limit = 12;
+    repeated string submission_polling_intervals = 13;
+    repeated string submission_retry_delays = 14;
+    optional string directives = 15;
+    optional string environment = 16;
+    optional string outputs = 17;
+}
+
+
+// Nodes
 message PbJob {
     optional string stamp = 1;
     optional string id = 2;
@@ -117,25 +140,14 @@ message PbJob {
     optional string finished_time = 8;
     optional string job_id = 9;
     optional string job_runner_name = 10;
-    optional string env_script = 11;
-    optional string err_script = 12;
-    optional string exit_script = 13;
     optional float execution_time_limit = 14;
     optional string platform = 15;
-    optional string init_script = 16;
     optional string job_log_dir = 17;
-    optional string post_script = 19;
-    optional string pre_script = 20;
-    optional string script = 21;
-    optional string shell = 22;
-    optional string work_sub_dir = 23;
-    optional string environment = 25;
-    optional string directives = 26;
-    optional string param_var = 28;
     repeated string extra_logs = 29;
     optional string name = 30; /* filter item */
     optional string cycle_point = 31; /* filter item */
     repeated string messages = 32;
+    optional PbRuntime runtime = 33;
 }
 
 message PbTask {
@@ -149,6 +161,7 @@ message PbTask {
     repeated string namespace = 8;
     repeated string parents = 9;
     optional string first_parent = 10;
+    optional PbRuntime runtime = 11;
 }
 
 message PbPollTask {
@@ -219,6 +232,7 @@ message PbTaskProxy {
     optional bool is_queued = 25;
     optional bool is_runahead = 26;
     optional bool flow_wait = 27;
+    optional PbRuntime runtime = 28;
 }
 
 message PbFamily {
@@ -232,6 +246,7 @@ message PbFamily {
     repeated string child_tasks = 8;
     repeated string child_families = 9;
     optional string first_parent = 10;
+    optional PbRuntime runtime = 11;
 }
 
 message PbFamilyProxy {
@@ -254,6 +269,7 @@ message PbFamilyProxy {
     optional int32 is_queued_total = 18;
     optional bool is_runahead = 19;
     optional int32 is_runahead_total = 20;
+    optional PbRuntime runtime = 21;
 }
 
 message PbEdge {
