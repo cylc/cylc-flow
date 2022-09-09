@@ -37,9 +37,11 @@ ones in. -->
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
 
-[#5055](https://github.com/cylc/cylc-flow/pull/5055) - Hard-code the serial
-numbers of Cylc Lint's style issues and allow users to ignore Cylc Lint issues
-using `--ignore <Issue Code>`.
+[#5055](https://github.com/cylc/cylc-flow/pull/5055) and
+[#5086](https://github.com/cylc/cylc-flow/pull/5086) - Upgrades to `cylc lint`
+- Allow users to ignore Cylc Lint issues using `--ignore <Issue Code>`.
+- Allow settings for `cylc lint` to be recorded in a pyproject.toml file.
+- Allow files to be excluded from `cylc lint` checks.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.2 (<span actions:bind='release-date'>Upcoming</span>)__

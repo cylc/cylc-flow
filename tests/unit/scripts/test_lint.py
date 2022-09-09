@@ -20,6 +20,7 @@ import difflib
 from itertools import combinations
 from pathlib import Path
 import pytest
+from pytest import param
 import re
 
 from cylc.flow.scripts.lint import (
@@ -28,12 +29,16 @@ from cylc.flow.scripts.lint import (
     get_cylc_files,
     get_reference_rst,
     get_reference_text,
+    get_pyproject_toml,
     get_upgrader_info,
-    parse_checks
+    merge_cli_with_tomldata,
+    parse_checks,
+    validate_toml_items
 )
+from cylc.flow.exceptions import CylcError
 
 
-UPG_CHECKS = parse_checks('728')
+UPG_CHECKS = parse_checks(['728'])
 TEST_FILE = """
 [visualization]
 
@@ -149,7 +154,9 @@ LINT_TEST_FILE += (
 
 @pytest.fixture()
 def create_testable_file(monkeypatch, capsys):
-    def _inner(test_file, checks, ignores=[]):
+    def _inner(test_file, checks, ignores=None):
+        if ignores is None:
+            ignores = []
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
         checks = parse_checks(checks, ignores)
         check_cylc_file(Path('x'), Path('x'), checks)
@@ -162,7 +169,7 @@ def create_testable_file(monkeypatch, capsys):
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
     try:
-        result, checks = create_testable_file(TEST_FILE, '728')
+        result, checks = create_testable_file(TEST_FILE, ['728'])
         assert f'[U{number:03d}]' in result.out
     except AssertionError:
         raise AssertionError(
@@ -173,14 +180,14 @@ def test_check_cylc_file_7to8(create_testable_file, number, capsys):
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
     """Jinja2 code comments will not be added if shebang present"""
-    result, _ = create_testable_file('#!jinja2\n{{FOO}}', '[scheduler]')
+    result, _ = create_testable_file('#!jinja2\n{{FOO}}', '', '[scheduler]')
     result = result.out
     assert result == ''
 
 
 def test_check_cylc_file_line_no(create_testable_file, capsys):
     """It prints the correct line numbers"""
-    result, _ = create_testable_file(TEST_FILE, '728')
+    result, _ = create_testable_file(TEST_FILE, ['728'])
     result = result.out
     assert result.split()[1] == '.:2:'
 
@@ -191,7 +198,7 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
         result, _ = create_testable_file(
-            LINT_TEST_FILE, 'style')
+            LINT_TEST_FILE, ['style'])
         assert f'S{(number + 1):03d}' in result.out
     except AssertionError:
         raise AssertionError(
@@ -212,7 +219,7 @@ def test_check_cylc_file_lint(create_testable_file, number):
 def test_check_exclusions(create_testable_file, exclusion):
     """It does not report any items excluded."""
     result, _ = create_testable_file(
-        LINT_TEST_FILE, 'style', list(exclusion))
+        LINT_TEST_FILE, ['style'], list(exclusion))
     for item in exclusion:
         assert item not in result.out
 
@@ -224,7 +231,7 @@ def create_testable_dir(tmp_path):
     check_cylc_file(
         test_file.parent,
         test_file,
-        parse_checks('all'),
+        parse_checks(['728', 'style']),
         modify=True,
     )
     return '\n'.join([*difflib.Differ().compare(
@@ -341,3 +348,150 @@ def test_get_upg_info(fixture_get_deprecations, findme):
     else:
         pattern = f'^\\s*{findme}\\s*=\\s*.*'
         assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+
+
+@pytest.mark.parametrize(
+    'expect',
+    [
+        param({
+            'rulesets': ['style'],
+            'ignore': ['S004'],
+            'exclude': ['sites/*.cylc']},
+            id="it returns what we want"
+        ),
+        param({
+            'northgate': ['sites/*.cylc'],
+            'mons-meg': 42},
+            id="it only returns requested sections"
+        ),
+        param({
+            'max-line-length': 22},
+            id='it sets max line length'
+        )
+    ]
+)
+def test_get_pyproject_toml(tmp_path, expect):
+    """It returns only the lists we want from the toml file."""
+    tomlcontent = "[cylc-lint]"
+    permitted_keys = ['rulesets', 'ignore', 'exclude', 'max-line-length']
+
+    for section, value in expect.items():
+        tomlcontent += f'\n{section} = {value}'
+    (tmp_path / 'pyproject.toml').write_text(tomlcontent)
+    tomldata = get_pyproject_toml(tmp_path)
+
+    control = {}
+    for key in permitted_keys:
+        control[key] = expect.get(key, [])
+    assert tomldata == control
+
+
+@pytest.mark.parametrize('tomlfile', [None, '', '[cylc-lint]'])
+def test_get_pyproject_toml_returns_blank(tomlfile, tmp_path):
+    if tomlfile is not None:
+        tfile = (tmp_path / 'pyproject.toml')
+        tfile.write_text(tomlfile)
+    expect = {k: [] for k in {
+        'exclude', 'ignore', 'max-line-length', 'rulesets'
+    }}
+    assert get_pyproject_toml(tmp_path) == expect
+
+
+@pytest.mark.parametrize(
+    'input_, error',
+    [
+        param(
+            {'exclude': ['hey', 'there', 'Delilah']},
+            None,
+            id='it works'
+        ),
+        param(
+            {'foo': ['hey', 'there', 'Delilah', 42]},
+            'allowed',
+            id='it fails with illegal section name'
+        ),
+        param(
+            {'exclude': 'woo!'},
+            'should be a list, but',
+            id='it fails with illegal section type'
+        ),
+        param(
+            {'exclude': ['hey', 'there', 'Delilah', 42]},
+            'should be a string',
+            id='it fails with illegal value name'
+        ),
+        param(
+            {'rulesets': ['hey']},
+            'hey not valid: Rulesets can be',
+            id='it fails with illegal ruleset'
+        ),
+        param(
+            {'ignore': ['hey']},
+            'hey not valid: Ignore codes',
+            id='it fails with illegal ignores'
+        ),
+        param(
+            {'ignore': ['R999']},
+            'R999 is a not a known linter code.',
+            id='it fails with non-existant checks ignored'
+        )
+    ]
+)
+def test_validate_toml_items(input_, error):
+    """It chucks out the wrong sort of items."""
+    if error is not None:
+        with pytest.raises(CylcError, match=error):
+            validate_toml_items(input_)
+    else:
+        assert validate_toml_items(input_) is True
+
+
+@pytest.mark.parametrize(
+    'clidata, tomldata, expect',
+    [
+        param(
+            {
+                'rulesets': ['foo', 'bar'],
+                'ignore': ['R101'],
+            },
+            {
+                'rulesets': ['baz'],
+                'ignore': ['R100'],
+                'exclude': ['not_me-*.cylc']
+            },
+            {
+                'rulesets': ['foo', 'bar'],
+                'ignore': ['R100', 'R101'],
+                'exclude': ['not_me-*.cylc'],
+                'max-line-length': None
+            },
+            id='It works with good path'
+        ),
+    ]
+)
+def test_merge_cli_with_tomldata(clidata, tomldata, expect):
+    """It merges each of the three sections correctly: see function.__doc__"""
+    assert merge_cli_with_tomldata(clidata, tomldata) == expect
+
+
+def test_invalid_tomlfile(tmp_path):
+    """It fails nicely if pyproject.toml is malformed"""
+    tomlfile = (tmp_path / 'pyproject.toml')
+    tomlfile.write_text('foo :{}')
+    expected_msg = 'pyproject.toml did not load:'
+    with pytest.raises(CylcError, match=expected_msg):
+        get_pyproject_toml(tmp_path)
+
+
+@pytest.mark.parametrize(
+    'ref, expect',
+    [
+        [True, 'line > {max_line_len} characters'],
+        [False, 'line > 130 characters']
+    ]
+)
+def test_parse_checks_reference_mode(ref, expect):
+    result = parse_checks(['style'], reference=ref)
+    key = [i for i in result.keys()][-1]
+    value = result[key]
+    assert expect in value['short']

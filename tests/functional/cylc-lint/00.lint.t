@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 11
+set_test_number 18
 
 cat > flow.cylc <<__HERE__
 # This is definitely not an OK flow.cylc file.
@@ -29,7 +29,7 @@ __HERE__
 rm etc/global.cylc
 
 TEST_NAME="${TEST_NAME_BASE}.vanilla"
-run_ok "${TEST_NAME}" cylc lint
+run_ok "${TEST_NAME}" cylc lint .
 named_grep_ok "check-for-error-code" "S004" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
@@ -62,7 +62,22 @@ cat > flow.cylc <<__HERE__
 __HERE__
 
 TEST_NAME="${TEST_NAME_BASE}.zero-issues"
-run_ok "${TEST_NAME}" cylc lint
+run_ok "${TEST_NAME}" cylc lint .
 named_grep_ok "message on no errors" "found no issues" "${TEST_NAME}.stdout"
+
+# It returns an error message if you attempt to lint a non-existant location
+TEST_NAME="it-fails-if-not-target"
+run_fail ${TEST_NAME} cylc lint "a-$(uuidgen)"
+grep_ok "Workflow ID not found" "${TEST_NAME}.stderr"
+
+# It returns a reference in reference mode
+TEST_NAME="it-returns-a-reference"
+run_ok "${TEST_NAME}" cylc lint --list-codes
+named_grep_ok "${TEST_NAME}-contains-style-codes" "^S001:" "${TEST_NAME}.stdout"
+TEST_NAME="it-returns-a-reference-style"
+run_ok "${TEST_NAME}" cylc lint --list-codes -r 'style'
+named_grep_ok "${TEST_NAME}-contains-style-codes" "^S001:" "${TEST_NAME}.stdout"
+grep_fail "^U" "${TEST_NAME}.stdout"
+
 
 rm flow.cylc
