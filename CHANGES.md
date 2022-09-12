@@ -29,7 +29,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+## __cylc-8.0.2 (<span actions:bind='release-date'>Released 2022-09-12</span>)__
 
 Maintenance release.
 
