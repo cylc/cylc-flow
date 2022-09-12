@@ -1008,7 +1008,7 @@ class TaskPool:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
-    def log_incomplete_tasks(self):
+    def log_incomplete_tasks(self) -> bool:
         """Log finished but incomplete tasks; return True if there any."""
         incomplete = []
         for itask in self.get_tasks():
@@ -1029,7 +1029,7 @@ class TaskPool:
             return True
         return False
 
-    def log_unsatisfied_prereqs(self):
+    def log_unsatisfied_prereqs(self) -> bool:
         """Log unsatisfied prerequisites in the hidden pool.
 
         Return True if any, ignoring:
@@ -1037,10 +1037,10 @@ class TaskPool:
             - dependence on tasks beyond the stop point
             (can be caused by future triggers)
         """
-        unsat = {}
+        unsat: Dict[str, List[str]] = {}
         for itask in self.get_hidden_tasks():
-            task_point = point = itask.point
-            if task_point > self.stop_point:
+            task_point = itask.point
+            if self.stop_point and task_point > self.stop_point:
                 continue
             for pre in itask.state.get_unsatisfied_prerequisites():
                 point, name, output = pre
@@ -1058,8 +1058,7 @@ class TaskPool:
                 )
             )
             return True
-        else:
-            return False
+        return False
 
     def is_stalled(self) -> bool:
         """Return whether the workflow is stalled.
@@ -1082,11 +1081,7 @@ class TaskPool:
 
         incomplete = self.log_incomplete_tasks()
         unsatisfied = self.log_unsatisfied_prereqs()
-        if incomplete or unsatisfied:
-            LOG.critical("Workflow stalled")
-            return True
-        else:
-            return False
+        return (incomplete or unsatisfied)
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=True):

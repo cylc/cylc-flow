@@ -48,6 +48,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5119](https://github.com/cylc/cylc-flow/pull/5119) - Fix formatting of
+deprecation warnings at validation.
+
 [#5067](https://github.com/cylc/cylc-flow/pull/5067) - Datastore fix for
 taskdefs removed before restart.
 
@@ -56,6 +59,16 @@ taskdefs removed before restart.
 
 [#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
 tutorial workflows.
+
+[#5098](https://github.com/cylc/cylc-flow/pull/5098) - Fix bug where final task
+status updates were not being sent to UI before shutdown.
+
+[#5114](https://github.com/cylc/cylc-flow/pull/5114) - Fix bug where
+validation errors during workflow startup were not printed to stderr before
+daemonisation.
+
+[#5110](https://github.com/cylc/cylc-flow/pull/5110) - Fix bug where reloading
+a stalled workflow would cause it stall again.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__

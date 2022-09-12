@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
-import getpass  # noqa: F401
 from queue import Queue
 
 import zmq

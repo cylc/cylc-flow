@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,12 +14,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------------
+# Test that validation errors on play are logged before daemonisation
 
-from cylc.flow.network.publisher import serialize_data
+. "$(dirname "$0")/test_header"
+set_test_number 3
 
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
+[scheduler]
+    horse = dorothy
+__FLOW__
 
-def test_serialize_data():
-    str1 = 'hello'
-    assert serialize_data(str1, None) == str1
-    assert serialize_data(str1, 'encode', 'utf-8') == str1.encode('utf-8')
-    assert serialize_data(str1, bytes, 'utf-8') == bytes(str1, 'utf-8')
+run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+
+TEST_NAME="${TEST_NAME_BASE}-run"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}"
+
+grep_ok "IllegalItemError: [scheduler]horse" "${TEST_NAME}.stderr" -F
+
+purge
