@@ -18,6 +18,7 @@
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
+from itertools import zip_longest
 from pathlib import Path
 from shlex import quote
 import sys
@@ -55,6 +56,7 @@ from cylc.flow.workflow_files import (
 )
 from cylc.flow.terminal import (
     cli_function,
+    is_terminal,
     prompt,
 )
 
@@ -240,12 +242,22 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
     )
 
     parser.add_option(
-        '--force',
+        '--downgrade',
         help=(
-            'By default Cylc prevents you from restarting a workflow with an'
+            'Allow the workflow to be restarted with an older version of Cylc,'
+            ' NOT RECOMMENDED.'
+            ' By default Cylc prevents you from restarting a workflow with an'
             ' older version of Cylc than it was previously run with.'
-            ' Use this flag to disable this check, note, this is not'
-            ' recommended!'
+            ' Use this flag to disable this check.'
+        ),
+        action='store_true',
+        default=False
+    )
+
+    parser.add_option(
+        '--upgrade',
+        help=(
+            'Allow the workflow to be restarted with an newer version of Cylc.'
         ),
         action='store_true',
         default=False
@@ -316,7 +328,11 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
 
     # check the workflow can be safely restarted with this version of Cylc
     db_file = Path(get_workflow_srv_dir(workflow_id), 'db')
-    if not _version_check(db_file, options.force):
+    if not _version_check(
+        db_file,
+        options.upgrade,
+        options.downgrade,
+    ):
         sys.exit(1)
 
     # re-execute on another host if required
@@ -381,7 +397,11 @@ def _resume(workflow_id, options):
         sys.exit(0)
 
 
-def _version_check(db_file: Path, force: bool) -> bool:
+def _version_check(
+    db_file: Path,
+    can_upgrade: bool,
+    can_downgrade: bool
+) -> bool:
     """Check the workflow can be safely restarted with this version of Cylc."""
     if not db_file.is_file():
         # not a restart
@@ -390,17 +410,15 @@ def _version_check(db_file: Path, force: bool) -> bool:
     this_version = parse_version(__version__)
     last_run_version = wdbm.check_workflow_db_compatibility()
 
-    for itt, (this, that) in enumerate(zip(
+    for itt, (this, that) in enumerate(zip_longest(
         this_version.release,
         last_run_version.release,
+        fillvalue=-1,
     )):
-        if this is None:
-            this = -1
-        if that is None:
-            that = -1
         if this < that:
             # restart would REDUCE the Cylc version
-            if force:
+            if can_downgrade:
+                # permission to downgrade given in CLI flags
                 LOG.warning(
                     'Restarting with an older version of Cylc'
                     f' ({last_run_version} -> {__version__})'
@@ -416,7 +434,7 @@ def _version_check(db_file: Path, force: bool) -> bool:
                 f' <green>{last_run_version}</green>.'
                 f'\n* This version of Cylc is <red>{__version__}</red>.'
 
-                '\nUse --force to disable this check (not recommended!) or'
+                '\nUse --downgrade to disable this check (NOT RECOMMENDED!) or'
                 ' use a more recent version e.g:'
                 '<blue>'
                 f'\n$ CYLC_VERSION={last_run_version} {" ".join(sys.argv[1:])}'
@@ -425,19 +443,30 @@ def _version_check(db_file: Path, force: bool) -> bool:
             return False
         elif itt < 2 and this > that:
             # restart would INCREASE the Cylc version in a big way
+            if can_upgrade:
+                # permission to upgrade given in CLI flags
+                LOG.warning(
+                    'Restarting with a newer version of Cylc'
+                    f' ({last_run_version} -> {__version__})'
+                )
+                return True
             print(cparse(
                 'This workflow was previously run with'
                 f' <yellow>{last_run_version}</yellow>.'
                 f'\nThis version of Cylc is <green>{__version__}</green>.'
             ))
-            return prompt(
-                'Are you sure you want to upgrade from'
-                f' <yellow>{last_run_version}</yellow>'
-                ' to <green>{__version__}</green>?',
-                {'y': True, 'n': False},
-                process=str.lower,
-            )
-        elif itt > 2 and this < that:
+            if is_terminal():
+                # we are in interactive mode, ask the user if this is ok
+                return prompt(
+                    'Are you sure you want to upgrade from'
+                    f' <yellow>{last_run_version}</yellow>'
+                    ' to <green>{__version__}</green>?',
+                    {'y': True, 'n': False},
+                    process=str.lower,
+                )
+            # we are in non-interactive mode, abort abort abort
+            return False
+        elif itt > 2 and this > that:
             # restart would INCREASE the Cylc version in a little way
             return True
     return True

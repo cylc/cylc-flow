@@ -26,13 +26,19 @@ from cylc.flow.scheduler_cli import (
 
 
 @pytest.fixture
-def stopped_workflow_db(tmp_path):
+def stopped_workflow_db(tmp_path, monkeypatch):
     """Returns a workflow DB with the `cylc_version` set to the provided string.
 
     def test_x(stopped_workflow_db):
         db_file = stopped_workflow_db(version)
 
     """
+    # disable workflow DB upgraders
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.WorkflowDatabaseManager.upgrade',
+        lambda x, y, z: None,
+    )
+
     def _stopped_workflow_db(version):
         nonlocal tmp_path
         db_file = tmp_path / 'db'
@@ -52,6 +58,7 @@ def stopped_workflow_db(tmp_path):
         conn.commit()
         conn.close()
         return db_file
+
     return _stopped_workflow_db
 
 
@@ -108,8 +115,24 @@ def answer(monkeypatch):
     return _answer
 
 
+@pytest.fixture
+def interactive(monkeypatch):
+    monkeypatch.setattr(
+        'cylc.flow.scheduler_cli.is_terminal',
+        lambda: True,
+    )
+
+
+@pytest.fixture
+def non_interactive(monkeypatch):
+    monkeypatch.setattr(
+        'cylc.flow.scripts.reinstall.is_terminal',
+        lambda: False,
+    )
+
+
 @pytest.mark.parametrize(
-    'before, after, force, response, outcome', [
+    'before, after, downgrade, response, outcome', [
         # no change
         ('8.0.0', '8.0.0', False, None, True),
         # upgrading
@@ -127,16 +150,20 @@ def answer(monkeypatch):
         ('8.1.0', '8.0rc4.dev', True, None, True),
         ('9.1.0', '8.0.0', False, None, False),
         ('9.1.0', '8.0.0', True, None, True),
+        # truncated versions
+        ('8.1.1', '8', False, None, False),
+        ('9.1.1', '8', True, None, True),
     ],
 )
-def test_version_check(
+def test_version_check_interactive(
     stopped_workflow_db,
     set_cylc_version,
+    interactive,
     answer,
     before,
     after,
     response,
-    force,
+    downgrade,
     outcome,
 ):
     """It should check compatibility with the Cylc version of the prior run.
@@ -149,8 +176,8 @@ def test_version_check(
             The Cylc version the workflow ran with previously.
         after:
             The version of Cylc being used to restart the workflow.
-        force:
-            The --force option of `cylc play`.
+        downgrade:
+            The --downgrade option of `cylc play`.
         response:
             The user's response the any CLI prompts.
             If `None` it will assert that no prompts were raised.
@@ -161,7 +188,31 @@ def test_version_check(
     db_file = stopped_workflow_db(before)
     set_cylc_version(after)
     with answer(response):
-        assert _version_check(db_file, force) is outcome
+        assert _version_check(db_file, False, downgrade) is outcome
+
+
+def test_version_check_non_interactive(
+    stopped_workflow_db,
+    set_cylc_version,
+    non_interactive,
+):
+    """It should not prompt in non-interactive mode.
+
+    * The --upgrade argument should permit upgrade.
+    * The --downgrade argument should permit downgrade.
+    """
+    # upgrade
+    db_file = stopped_workflow_db('8.0.0')
+    set_cylc_version('8.1.0')
+    assert _version_check(db_file, False, False) is False
+    assert _version_check(db_file, True, False) is True  # CLI --upgrade
+
+    # downgrade
+    db_file.unlink()
+    db_file = stopped_workflow_db('8.1.0')
+    set_cylc_version('8.0.0')
+    assert _version_check(db_file, False, False) is False
+    assert _version_check(db_file, False, True) is True  # CLI --downgrade
 
 
 def test_version_check_incompat(tmp_path):
@@ -169,4 +220,10 @@ def test_version_check_incompat(tmp_path):
     db_file = tmp_path / 'db'  # invalid DB file
     db_file.touch()
     with pytest.raises(ServiceFileError):
-        _version_check(db_file, False)
+        _version_check(db_file, False, False)
+
+
+def test_version_check_no_db(tmp_path):
+    """It should pass if there is no DB file (e.g. on workflow first start)."""
+    db_file = tmp_path / 'db'  # non-existent file
+    assert _version_check(db_file, False, False)

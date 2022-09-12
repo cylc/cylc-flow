@@ -291,7 +291,7 @@ def cli_function(
 
 
 def prompt(message, options, default=None, process=None):
-    """Dead simple CLI textural prompting.
+    """Dead simple CLI textual prompting.
 
     Args:
         message:
@@ -317,7 +317,7 @@ def prompt(message, options, default=None, process=None):
     default_ = ''
     if default:
         default_ = f'[{default}] '
-    message += f': {default_}{",".join(options)}'
+    message += f': {default_}{",".join(options)}?'
     usr = None
     while usr not in options:
         usr = input(f'{message}')
