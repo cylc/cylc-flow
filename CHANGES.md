@@ -30,7 +30,7 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+## __cylc-8.0.3 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
 
 Maintenance release.
 
