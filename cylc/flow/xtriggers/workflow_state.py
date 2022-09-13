@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
+from typing import Dict, Optional, Tuple
 
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
@@ -22,33 +23,40 @@ from cylc.flow.pathutil import expand_path, get_cylc_run_dir
 from metomi.isodatetime.parsers import TimePointParser
 
 
-def workflow_state(workflow, task, point, offset=None, status='succeeded',
-                   message=None, cylc_run_dir=None):
+def workflow_state(
+    workflow: str,
+    task: str,
+    point: str,
+    offset: Optional[str] = None,
+    status: str = 'succeeded',
+    message: Optional[str] = None,
+    cylc_run_dir: Optional[str] = None
+) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
     """Connect to a workflow DB and query the requested task state.
 
     * Reports satisfied only if the remote workflow state has been achieved.
     * Returns all workflow state args to pass on to triggering tasks.
 
     Arguments:
-        workflow (str):
+        workflow:
             The workflow to interrogate.
-        task (str):
+        task:
             The name of the task to query.
-        point (str):
+        point:
             The cycle point.
-        offset (str):
+        offset:
             The offset between the cycle this xtrigger is used in and the one
             it is querying for as an ISO8601 time duration.
             e.g. PT1H (one hour).
-        status (str):
+        status:
             The task status required for this xtrigger to be satisfied.
-        message (str):
+        message:
             The custom task output required for this xtrigger to be satisfied.
             .. note::
 
                This cannot be specified in conjunction with ``status``.
 
-        cylc_run_dir (str):
+        cylc_run_dir:
             The directory in which the workflow to interrogate.
 
             .. note::
@@ -60,9 +68,9 @@ def workflow_state(workflow, task, point, offset=None, status='succeeded',
     Returns:
         tuple: (satisfied, results)
 
-        satisfied (bool):
+        satisfied:
             True if ``satisfied`` else ``False``.
-        results (dict):
+        results:
             Dictionary containing the args / kwargs which were provided
             to this xtrigger.
 
