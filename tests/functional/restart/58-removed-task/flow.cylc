@@ -1,0 +1,32 @@
+#!Jinja2
+
+# Task a shuts the scheduler down cleanly with --now after b and c have failed.
+# On restart, a waits for a and b to be polled before finishing (otherwise we
+# could shut down before poll results come in).
+
+{% set INCL_B_C = INCL_B_C | default(True) %}
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
+[scheduling]
+    [[graph]]
+        R1 = """
+            a
+    {% if INCL_B_C %}
+	    b & c?
+    {% endif %}
+        """
+[runtime]
+    [[a]]
+        script = """
+            cylc__job__poll_grep_workflow_log "1/b .*failed"
+            cylc__job__poll_grep_workflow_log "1/c .*failed"
+            cylc stop --now $CYLC_WORKFLOW_ID
+            cylc__job__poll_grep_workflow_log "1/a .*(polled)started"
+            cylc__job__poll_grep_workflow_log "1/b .*(polled)failed"
+        """
+    [[b, c]]
+       script = "false"

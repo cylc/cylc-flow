@@ -199,6 +199,7 @@ class TestUpgrade(unittest.TestCase):
             'new': None,
             'cvt': None,
             'silent': True,
+            'is_section': False,
             'old': [
             ]
         }
@@ -209,6 +210,7 @@ class TestUpgrade(unittest.TestCase):
             'new': None,
             'cvt': None,
             'silent': True,
+            'is_section': True,
             'old': [
                 'section', '__MANY__', '__MANY__'
             ]
@@ -225,6 +227,7 @@ class TestUpgrade(unittest.TestCase):
             ],
             'cvt': None,
             'silent': True,
+            'is_section': False,
             'old': [
                 'section', '__MANY__', 'b'
             ]
@@ -245,6 +248,7 @@ class TestUpgrade(unittest.TestCase):
             ],
             'cvt': c,
             'silent': True,
+            'is_section': False,
             'old': [
                 'section', '__MANY__', 'c'
             ]
@@ -259,6 +263,7 @@ class TestUpgrade(unittest.TestCase):
             'new': None,
             'cvt': None,
             'silent': True,
+            'is_section': False,
             'old': [
                 'section', '__MANY__', 'a'
             ]

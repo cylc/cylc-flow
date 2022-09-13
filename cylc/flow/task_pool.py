@@ -448,7 +448,9 @@ class TaskPool:
         else:
             if status in (
                     TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING
+                    TASK_STATUS_RUNNING,
+                    TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
                 itask.platform = get_platform(platform_name)
@@ -891,9 +893,14 @@ class TaskPool:
                 itask.copy_to_reload_successor(new_task)
                 self._swap_out(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
-                if itask.state(*TASK_STATUSES_ACTIVE, TASK_STATUS_PREPARING):
+                if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
                         f"[{itask}] active with pre-reload settings"
+                    )
+                elif itask.state(TASK_STATUS_PREPARING):
+                    # Job file might have been written at this point?
+                    LOG.warning(
+                        f"[{itask}] may be active with pre-reload settings"
                     )
 
         # Reassign live tasks to the internal queue
@@ -1007,7 +1014,7 @@ class TaskPool:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
-    def log_incomplete_tasks(self):
+    def log_incomplete_tasks(self) -> bool:
         """Log finished but incomplete tasks; return True if there any."""
         incomplete = []
         for itask in self.get_tasks():
@@ -1028,7 +1035,7 @@ class TaskPool:
             return True
         return False
 
-    def log_unsatisfied_prereqs(self):
+    def log_unsatisfied_prereqs(self) -> bool:
         """Log unsatisfied prerequisites in the hidden pool.
 
         Return True if any, ignoring:
@@ -1036,10 +1043,10 @@ class TaskPool:
             - dependence on tasks beyond the stop point
             (can be caused by future triggers)
         """
-        unsat = {}
+        unsat: Dict[str, List[str]] = {}
         for itask in self.get_hidden_tasks():
-            task_point = point = itask.point
-            if task_point > self.stop_point:
+            task_point = itask.point
+            if self.stop_point and task_point > self.stop_point:
                 continue
             for pre in itask.state.get_unsatisfied_prerequisites():
                 point, name, output = pre
@@ -1057,8 +1064,7 @@ class TaskPool:
                 )
             )
             return True
-        else:
-            return False
+        return False
 
     def is_stalled(self) -> bool:
         """Return whether the workflow is stalled.
@@ -1081,11 +1087,7 @@ class TaskPool:
 
         incomplete = self.log_incomplete_tasks()
         unsatisfied = self.log_unsatisfied_prereqs()
-        if incomplete or unsatisfied:
-            LOG.critical("Workflow stalled")
-            return True
-        else:
-            return False
+        return (incomplete or unsatisfied)
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=True):
