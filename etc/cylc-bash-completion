@@ -1,5 +1,5 @@
 #!/bin/bash
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # USAGE
 #     Sets up bash auto-completion for cylc commands.
 #
@@ -29,30 +29,68 @@
 #
 #     Administrators may want to place this file in the
 #     /etc/bash_completion.d/ (or equivalent) directory.
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+# hash (detects Cylc version changes when the wrapper script used)
+_CYLC_ENV_HASH='recompute me'
+
+# cached values (recomputed for version changes)
+_CYLC7_COMPLETION_COMPAT=
+_CYLC_VERSION=
+_CYLC_CMDS=
+
+_cylc_env_hash() {
+    # generate a version hash (to efficiently detect changes in Cylc version)
+    # shellcheck disable=SC2153
+    echo "${CYLC_VERSION}${CYLC_ENV_NAME}${CYLC_HOME}"
+}
+
+_cylc_version_compat () {
+    # determine the version of Cylc currently activated
+    local _new_cylc_env_hash
+    _new_cylc_env_hash="$(_cylc_env_hash)"
+    if [[ "${_CYLC_ENV_HASH}" != "${_new_cylc_env_hash}" ]]; then
+        _CYLC_VERSION="$(cylc version --long)"
+        if [[ "${_CYLC_VERSION}" = 8* ]]; then
+            # Cylc 8 - not compatible with this script
+            _CYLC7_COMPLETION_COMPAT=false
+        else
+            # Otherwise assume Cylc 7 (harder to detect)
+            _CYLC7_COMPLETION_COMPAT=true
+            local cylc_dir
+            cylc_dir=$(sed "s/.*(\(.*\))/\1/" <<< "$_CYLC_VERSION")
+            _CYLC_CMDS=$(
+                cd "${cylc_dir}/bin" \
+                    && echo cylc-* \
+                    | sed 's/cylc-//g'
+            )
+        fi
+        _CYLC_ENV_HASH="${_new_cylc_env_hash}"
+    fi
+}
 
 _cylc() {
+    # check Cylc version compatibility with this completion script
+    _cylc_version_compat
+    if ! ${_CYLC7_COMPLETION_COMPAT}; then
+        return 0
+    fi
 
-    local cur sec opts base
+    local cur sec opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
-    opts="$(cylc print -x -y 2>/dev/null)"
     suite_cmds="broadcast|bcast|cat-log|log|cat-state|check-versions|checkpoint|diff|compare|documentation|browse|dump|edit|ext-trigger|external-trigger|get-directory|get-suite-config|get-config|get-suite-version|get-cylc-version|graph|graph-diff|gui|hold|insert|kill|list|ls|ls-checkpoints|monitor|nudge|ping|poll|register|release|unhold|reload|remove|report-timings|reset|restart|run|start|search|grep|set-verbosity|show|spawn|stop|shutdown|submit|single|suite-state|trigger|upgrade-run-dir|validate|view"
 
-
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-        CYLC_DIR=$(__cylc_get_cylc_dir)
-        cylc_cmds=$(cd $CYLC_DIR/bin && ls cylc-* | sed "s/^cylc-//g")
-        COMPREPLY=($(compgen -W "${cylc_cmds}" -- ${cur}))
+        # complete Cylc command names
+        COMPREPLY=($(compgen -W "${_CYLC_CMDS}" -- "${cur}"))
     elif [[ ${sec} =~ ^($suite_cmds)$ ]]; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        # complete Cylc suite IDs
+        opts="$(cylc print -x -y 2>/dev/null)"
+        COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
     fi
     return 0
-}
-
-__cylc_get_cylc_dir() {
-    cylc version --long | sed "s/.*(\(.*\))/\1/"
 }
 
 complete -o bashdefault -o default -o nospace -F _cylc cylc
