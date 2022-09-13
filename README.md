@@ -53,6 +53,32 @@ cylc play example
 cylc tui example
 ```
 
+### Migrating From Cylc 7
+
+[Migration Guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
+| [Migration Support](https://cylc.discourse.group/c/cylc/7-to-8/13)
+
+Cylc 8 can run most Cylc 7 workflows in compatibility mode with little to no
+changes, go through the
+[migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
+for more details.
+
+Quick summary of major changes:
+
+* Python 2 -> 3.
+* Internal communications converted from HTTPS to ZMQ (TCP).
+* PyGTK GUIs replaced by:
+  * Terminal user interface (TUI) included in cylc-flow.
+  * Web user interface provided by the cylc-uiserver package.
+* A new scheduling algorithm with support for branched workflows.
+* Command line changes:
+  * `cylc run <id>` -> `cylc play <id>`
+  * `cylc restart <id>` -> `cylc play <id>`
+  * `rose suite-run` -> `cylc install; cylc play <id>`
+* The core package containing Cylc scheduler program has been renamed cylc-flow.
+* Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
+
+
 ### Citations & Publications
 
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
