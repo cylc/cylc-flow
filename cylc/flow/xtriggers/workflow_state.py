@@ -14,13 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 import sqlite3
 from typing import Dict, Optional, Tuple
+
+from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
-from metomi.isodatetime.parsers import TimePointParser
+from cylc.flow.workflow_files import infer_latest_run
 
 
 def workflow_state(
@@ -81,6 +84,7 @@ def workflow_state(
         cylc_run_dir = get_cylc_run_dir()
     if offset is not None:
         point = str(add_offset(point, offset))
+    _, workflow = infer_latest_run(Path(cylc_run_dir, workflow))
     try:
         checker = CylcWorkflowDBChecker(cylc_run_dir, workflow)
     except (OSError, sqlite3.Error):
