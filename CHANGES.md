@@ -29,7 +29,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0.2 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+## __cylc-8.0.3 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
 
 Maintenance release.
 
@@ -37,6 +37,19 @@ Maintenance release.
 
 [#5104](https://github.com/cylc/cylc-flow/pull/5104) - Fix retriggering of
 failed tasks after a reload.
+
+[#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
+for `workflow_state` xtrigger.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.2 (<span actions:bind='release-date'>Released 2022-09-12</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5115](https://github.com/cylc/cylc-flow/pull/5115) - Updates rsync commands
+to make them compatible with latest rsync releases.
 
 [#5119](https://github.com/cylc/cylc-flow/pull/5119) - Fix formatting of
 deprecation warnings at validation.
@@ -49,6 +62,9 @@ taskdefs removed before restart.
 
 [#5091](https://github.com/cylc/cylc-flow/pull/5091) - Fix problems with
 tutorial workflows.
+
+[#5098](https://github.com/cylc/cylc-flow/pull/5098) - Fix bug where final task
+status updates were not being sent to UI before shutdown.
 
 [#5114](https://github.com/cylc/cylc-flow/pull/5114) - Fix bug where
 validation errors during workflow startup were not printed to stderr before
