@@ -26,6 +26,9 @@ management and does not bundle Jinja2.
 
 ### Fixes
 
+[#5132](https://github.com/cylc/cylc-flow/pull/5132) - Updates rsync command
+to make it compatible with latest (and patched older) rsync releases.
+
 [#5016](https://github.com/cylc/cylc-flow/pull/5016) - fix bug where
 polling failure on restart would cause Cylc to assume task is running.
 

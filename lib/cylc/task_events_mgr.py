@@ -580,9 +580,14 @@ class TaskEventsManager(object):
             includes.add("/%s/%s/%02d/**" % (point, name, submit_num))
         cmd += ["--include=%s" % (include) for include in sorted(includes)]
         cmd.append("--exclude=/**")  # exclude everything else
-        # Remote source
-        cmd.append(ctx.user_at_host + ":" + glbl_cfg().get_derived_host_item(
-            schd_ctx.suite, "suite job log directory", s_host, s_user) + "/")
+        remote_source = (ctx.user_at_host +
+                         ":" +
+                         glbl_cfg().get_derived_host_item(
+                             schd_ctx.suite, "suite job log directory",
+                             s_host, s_user
+                         ) +
+                         "/").replace("$HOME/", "")
+        cmd.append(remote_source)
         # Local target
         cmd.append(glbl_cfg().get_derived_host_item(
             schd_ctx.suite, "suite job log directory") + "/")
