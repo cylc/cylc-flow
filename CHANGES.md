@@ -29,6 +29,16 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0.3 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
+for `workflow_state` xtrigger.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.2 (<span actions:bind='release-date'>Released 2022-09-12</span>)__
 
 Maintenance release.
