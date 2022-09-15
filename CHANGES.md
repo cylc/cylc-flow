@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5137](https://github.com/cylc/cylc-flow/pull/5137) -
+Install the `ana/` directory to remote platforms by default.
+
 [#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
 for `workflow_state` xtrigger.
 
