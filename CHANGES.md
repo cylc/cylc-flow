@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5104](https://github.com/cylc/cylc-flow/pull/5104) - Fix retriggering of
+failed tasks after a reload.
+
 [#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
 for `workflow_state` xtrigger.
 
