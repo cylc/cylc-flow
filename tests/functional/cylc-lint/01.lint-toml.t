@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test linting with a toml file present.
 . "$(dirname "$0")/test_header"
-set_test_number 10
+set_test_number 12
 
 # Set Up:
 rm etc/global.cylc
@@ -97,3 +97,22 @@ run_ok "${TEST_NAME}" cylc lint
 named_grep_ok "${TEST_NAME}-line-too-long-message" \
     "\[S008\] flow.cylc:2: line > 4 characters." \
     "${TEST_NAME}.stdout"
+
+TEST_NAME="it_does_not_fail_if_max-line-length_set_but_ignored"
+cat > pyproject.toml <<__HERE__
+[cylc-lint]
+    # Check against these rules
+    rulesets = [
+        "style"
+    ]
+    #  do not check for these errors
+    ignore = [
+        "S008"
+    ]
+    exclude = [
+        "sites/*.cylc",
+    ]
+    max-line-length = 1
+__HERE__
+run_ok "${TEST_NAME}" cylc lint
+grep_ok "rules and found no issues" "${TEST_NAME}.stdout"

@@ -420,7 +420,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                     meta.update({'index': index})
                 if f'{purpose}{index:03d}' not in ignores:
                     parsedchecks.update({pattern: meta})
-            if 'S' in purpose:
+            if 'S' in purpose and "S008" not in ignores:
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
