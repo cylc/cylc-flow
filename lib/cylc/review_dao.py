@@ -127,19 +127,10 @@ class CylcReviewDAO(object):
             stmt_args = []
         try:
             return daos.connect().execute(stmt, stmt_args)
-        except sqlite3.OperationalError as exc:
+        except sqlite3.OperationalError:
             # At Cylc 8.0.1+ Workflows installed but not run will not yet have
             # a database.
-            if (
-                os.path.exists(os.path.dirname(
-                    self.daos.values()[0].db_file_name) + '/flow.cylc')
-                or
-                os.path.exists(os.path.dirname(
-                    self.daos.values()[0].db_file_name) + '/suite.rc')
-            ):
-                return []
-            else:
-                raise exc
+            return []
 
     def get_suite_broadcast_states(self, user_name, suite_name):
         """Return broadcast states of a suite.
@@ -294,13 +285,14 @@ class CylcReviewDAO(object):
 
     def is_cylc8(self, user_name, suite_name):
         """Determine Cylc version for a given suite: Database changes require
-        A different database query for Cylc8.
+        a different database query for Cylc8.
         """
         suite_info = self._db_exec(
             user_name, suite_name,
             'SELECT name FROM sqlite_master WHERE type=\'table\';', []
         )
         suite_info = [i[0] for i in suite_info]
+        self._db_close(user_name, suite_name)
         if 'workflow_params' in suite_info:
             return True
         else:
