@@ -36,7 +36,7 @@ from textwrap import wrap
 import traceback
 from typing import (
     Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple,
-    Union
+    Union, Iterable
 )
 
 from metomi.isodatetime.data import Calendar
@@ -114,18 +114,44 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import IntervalBase, PointBase, SequenceBase
 
 
-RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
-RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
+RE_CLOCK_OFFSET = re.compile(
+    rf'''
+        ^
+        \s*
+        ({TaskID.NAME_RE})   # task name
+        (?:\(\s*(.+)\s*\))?  # optional (arguments, ...)
+        \s*
+        $
+    ''',
+    re.X,
+)
+RE_EXT_TRIGGER = re.compile(
+    r'''
+        ^
+        \s*
+        (.*)            # task name
+        \s*
+        \(\s*(.+)\s*\)  # required (arguments, ...)
+        \s*
+        $
+    ''',
+    re.X,
+)
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_WORKFLOW_ID_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?ID}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
 
-def check_varnames(env):
+def check_varnames(env: Iterable[str]) -> List[str]:
     """Check a list of env var names for legality.
 
     Return a list of bad names (empty implies success).
+
+    Examples:
+        >>> check_varnames(['foo', 'BAR', '+baz'])
+        ['+baz']
+
     """
     bad = []
     for varname in env:
@@ -142,6 +168,23 @@ def interpolate_template(tmpl, params_dict):
 
     If it fails, raises ParamExpandError, but if the string does not contain
     `%(`, it just returns the string.
+
+    Examples:
+        >>> interpolate_template('_%(a)s_', {'a': 'A'})
+        '_A_'
+
+        >>> interpolate_template('%(a)s', {'b': 'B'})
+        Traceback (most recent call last):
+        cylc.flow.exceptions.ParamExpandError: bad parameter
+
+        >>> interpolate_template('%(a)d', {'a': 'A'})
+        Traceback (most recent call last):
+        cylc.flow.exceptions.ParamExpandError: wrong data type for parameter
+
+        >>> interpolate_template('%(as', {})
+        Traceback (most recent call last):
+        cylc.flow.exceptions.ParamExpandError: bad template syntax
+
     """
     if '%(' not in tmpl:
         return tmpl  # User probably not trying to use param template
@@ -155,7 +198,25 @@ def interpolate_template(tmpl, params_dict):
         raise ParamExpandError('bad template syntax')
 
 
-# TODO: separate config for run and non-run purposes?
+def dequote(string):
+    """Strip quotes off a string.
+
+    Examples:
+        >>> dequote('"foo"')
+        'foo'
+        >>> dequote("'foo'")
+        'foo'
+        >>> dequote('foo')
+        'foo'
+        >>> dequote('"f')
+        '"f'
+
+    """
+    if len(string) < 2:
+        return string
+    if (string[0] == string[-1]) and string.startswith(("'", '"')):
+        return string[1:-1]
+    return string
 
 
 class WorkflowConfig:
@@ -450,7 +511,7 @@ class WorkflowConfig:
                 elif s_type == 'clock-expire':
                     self.expiration_offsets[name] = offset_interval
                 elif s_type == 'external-trigger':
-                    self.ext_triggers[name] = self.dequote(ext_trigger_msg)
+                    self.ext_triggers[name] = dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
@@ -988,13 +1049,6 @@ class WorkflowConfig:
                     f'task/family name {message}\n[runtime][[{name}]]'
                 )
 
-    @staticmethod
-    def dequote(s):
-        """Strip quotes off a string."""
-        if (s[0] == s[-1]) and s.startswith(("'", '"')):
-            return s[1:-1]
-        return s
-
     def check_env_names(self):
         """Check for illegal environment variable names"""
         bad = {}
@@ -1005,14 +1059,15 @@ class WorkflowConfig:
                     if res:
                         bad[(label, key)] = res
         if bad:
-            err_msg = "bad env variable names:"
-            for (label, key), names in bad.items():
-                err_msg += '\nNamespace:\t%s [%s]' % (label, key)
-                for name in names:
-                    err_msg += "\n\t\t%s" % name
-            LOG.error(err_msg)
             raise WorkflowConfigError(
-                "Illegal environment variable name(s) detected")
+                "Illegal environment variable name(s) detected:\n* "
+                # f"\n{err_msg}"
+                + '\n* '.join(
+                    f'[runtime][{label}][{key}]{name}'
+                    for (label, key), names in bad.items()
+                    for name in names
+                )
+            )
 
     def check_param_env_tmpls(self):
         """Check for illegal parameter environment templates"""
@@ -2096,36 +2151,38 @@ class WorkflowConfig:
                     continue
                 taskdef.set_required_output(output, not optional)
 
-    def find_taskdefs(self, name: str) -> List[TaskDef]:
+    def find_taskdefs(self, name: str) -> Set[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".
 
         Return a list of TaskDef objects which:
         * have names that glob matches "name".
         * are in a family that glob matches "name".
         """
-        ret: List[TaskDef] = []
         if name in self.taskdefs:
             # Match a task name
-            ret.append(self.taskdefs[name])
-        else:
-            fams = self.runtime['first-parent descendants']
+            return {self.taskdefs[name]}
+
+        fams = self.runtime['first-parent descendants']
+        if name in fams:
             # Match a family name
-            if name in fams:
-                for member in fams[name]:
-                    if member in self.taskdefs:
-                        ret.append(self.taskdefs[member])
-            else:
-                # Glob match task names
-                for key, taskdef in self.taskdefs.items():
-                    if fnmatchcase(key, name):
-                        ret.append(taskdef)
-                # Glob match family names
-                for key, members in fams.items():
-                    if fnmatchcase(key, name):
-                        for member in members:
-                            if member in self.taskdefs:
-                                ret.append(self.taskdefs[member])
-        return ret
+            return {
+                self.taskdefs[member] for member in fams[name]
+                if member in self.taskdefs
+            }
+
+        # Glob match
+        from_task_names = {
+            taskdef for key, taskdef in self.taskdefs.items()
+            if fnmatchcase(key, name)
+        }
+        from_family_names = {
+            self.taskdefs[member]
+            for key, members in fams.items()
+            if fnmatchcase(key, name)
+            for member in members
+            if member in self.taskdefs
+        }
+        return from_task_names.union(from_family_names)
 
     def get_taskdef(
         self, name: str, orig_expr: Optional[str] = None

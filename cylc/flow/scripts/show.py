@@ -36,6 +36,7 @@ Prerequisite satisfaction is not shown for past tasks reloaded from the
 workflow database.
 """
 
+import asyncio
 import json
 from optparse import Values
 import sys
@@ -52,8 +53,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
 )
 from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
     ID_MULTI_ARG_DOC,
-    CylcOptionParser as COP
 )
 from cylc.flow.terminal import cli_function
 
@@ -144,6 +145,31 @@ def print_msg_state(msg, state):
 
 
 def flatten_data(data, flat_data=None):
+    """Reduce a nested data structure to a flat one.
+
+    Examples:
+        It flattens out nested dictionaries:
+        >>> flatten_data({})
+        {}
+        >>> flatten_data({'a': 1})
+        {'a': 1}
+        >>> flatten_data({'a': {'b': 2, 'c': {'d': 4}}})
+        {'b': 2, 'd': 4}
+
+        It iterates through any lists that it finds:
+        >>> flatten_data({'a': [{'b': 2}, {'c': 3}]})
+        {'b': 2, 'c': 3}
+
+        Overriding is determined by iteration order (don't rely on it):
+        >>> flatten_data({'a': 1, 'b': {'a': 2}})
+        {'a': 2}
+
+        It can't flatten things which aren't dicts:
+        >>> flatten_data({'a': ['x', 'y']})
+        Traceback (most recent call last):
+        AttributeError: 'str' object has no attribute 'items'
+
+    """
     if flat_data is None:
         flat_data = {}
     for key, value in data.items():
@@ -191,14 +217,14 @@ def get_option_parser():
     return parser
 
 
-def workflow_meta_query(workflow_id, pclient, options, json_filter):
+async def workflow_meta_query(workflow_id, pclient, options, json_filter):
     query = WORKFLOW_META_QUERY
     query_kwargs = {
         'request_string': query,
         'variables': {'wFlows': [workflow_id]}
     }
     # Print workflow info.
-    results = pclient('graphql', query_kwargs)
+    results = await pclient.async_request('graphql', query_kwargs)
     for workflow_id in results['workflows']:
         flat_data = flatten_data(workflow_id)
         if options.json:
@@ -211,7 +237,7 @@ def workflow_meta_query(workflow_id, pclient, options, json_filter):
     return 0
 
 
-def prereqs_and_outputs_query(
+async def prereqs_and_outputs_query(
     workflow_id,
     tokens_list,
     pclient,
@@ -232,7 +258,7 @@ def prereqs_and_outputs_query(
             'taskIds': ids_list,
         }
     }
-    results = pclient('graphql', tp_kwargs)
+    results = await pclient.async_request('graphql', tp_kwargs)
     multi = len(results['taskProxies']) > 1
     for t_proxy in results['taskProxies']:
         task_id = Tokens(t_proxy['id']).relative_id
@@ -332,7 +358,13 @@ def prereqs_and_outputs_query(
     return 0
 
 
-def task_meta_query(workflow_id, task_names, pclient, options, json_filter):
+async def task_meta_query(
+    workflow_id,
+    task_names,
+    pclient,
+    options,
+    json_filter,
+):
     tasks_query = TASK_META_QUERY
     tasks_kwargs = {
         'request_string': tasks_query,
@@ -342,7 +374,7 @@ def task_meta_query(workflow_id, task_names, pclient, options, json_filter):
         },
     }
     # Print workflow info.
-    results = pclient('graphql', tasks_kwargs)
+    results = await pclient.async_request('graphql', tasks_kwargs)
     multi = len(results['tasks']) > 1
     for task in results['tasks']:
         flat_data = flatten_data(task['meta'])
@@ -355,6 +387,44 @@ def task_meta_query(workflow_id, task_names, pclient, options, json_filter):
                 ansiprint(
                     f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
     return 0
+
+
+async def show(workflow_id, tokens_list, opts):
+    pclient = get_client(
+        workflow_id,
+        timeout=opts.comms_timeout,
+    )
+    json_filter: 'Dict' = {}
+
+    ret = 0
+    if opts.task_defs:
+        ret = await task_meta_query(
+            workflow_id,
+            opts.task_defs,
+            pclient,
+            opts,
+            json_filter,
+        )
+    elif not tokens_list:
+        ret = await workflow_meta_query(
+            workflow_id,
+            pclient,
+            opts,
+            json_filter,
+        )
+    else:
+        ret = await prereqs_and_outputs_query(
+            workflow_id,
+            tokens_list,
+            pclient,
+            opts,
+            json_filter,
+        )
+
+    if opts.json:
+        print(json.dumps(json_filter, indent=4))
+
+    return ret
 
 
 @cli_function(get_option_parser)
@@ -373,30 +443,5 @@ def main(_, options: 'Values', *ids) -> None:
             'Cannot query both live tasks and task definitions.'
         )
 
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
-    json_filter: 'Dict' = {}
-
-    ret = 0
-    if options.task_defs:
-        ret = task_meta_query(
-            workflow_id,
-            options.task_defs,
-            pclient,
-            options,
-            json_filter,
-        )
-    elif not tokens_list:
-        ret = workflow_meta_query(workflow_id, pclient, options, json_filter)
-    else:
-        ret = prereqs_and_outputs_query(
-            workflow_id,
-            tokens_list,
-            pclient,
-            options,
-            json_filter,
-        )
-
-    if options.json:
-        print(json.dumps(json_filter, indent=4))
-
+    ret = asyncio.run(show(workflow_id, tokens_list, options))
     sys.exit(ret)

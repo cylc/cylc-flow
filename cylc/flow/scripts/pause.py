@@ -20,7 +20,7 @@
 
 Pause a workflow.
 
-This prevents submission of any task jobs.
+This suspends submission of tasks.
 
 Examples:
   # pause my_flow

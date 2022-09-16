@@ -13,15 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage task jobs.
+"""Manage jobs.
 
 This module provides logic to:
 * Set up the directory structure on remote job hosts.
   * Copy workflow service files to remote job hosts for communication clients.
   * Clean up of service files on workflow shutdown.
-* Prepare task job files.
-* Prepare task jobs submission, and manage the callbacks.
-* Prepare task jobs poll/kill, and manage the callbacks.
+* Prepare job files.
+* Prepare jobs submission, and manage the callbacks.
+* Prepare jobs poll/kill, and manage the callbacks.
 """
 
 from contextlib import suppress
@@ -121,9 +121,9 @@ class TaskJobManager:
     """Manage task job submit, poll and kill.
 
     This class provides logic to:
-    * Submit task jobs.
-    * Poll task jobs.
-    * Kill task jobs.
+    * Submit jobs.
+    * Poll jobs.
+    * Kill jobs.
     * Set up the directory structure on job hosts.
     * Install workflow communicate client files on job hosts.
     * Remove workflow contact files on job hosts.

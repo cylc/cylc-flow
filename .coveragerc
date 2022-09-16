@@ -35,6 +35,9 @@ exclude_lines =
     # Don't complain about ellipsis (exception classes, typing overloads etc):
     \.\.\.
 
+    # Ignore abstract methods
+    @(abc\.)?abstractmethod
+
 fail_under=0
 ignore_errors = False
 omit =

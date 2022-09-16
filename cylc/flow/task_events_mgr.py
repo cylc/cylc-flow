@@ -17,7 +17,7 @@
 
 This module provides logic to:
 * Manage task messages (internal, polled or received).
-* Set up retries on task job failures (submission or execution).
+* Set up retries on job failures (submission or execution).
 * Generate task event handlers.
   * Retrieval of log files for completed remote jobs.
   * Email notification.

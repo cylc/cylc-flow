@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Write task job files."""
+"""Write job files."""
 
 from contextlib import suppress
 import os
@@ -31,7 +31,7 @@ from cylc.flow.config import interpolate_template, ParamExpandError
 
 class JobFileWriter:
 
-    """Write task job files."""
+    """Write job files."""
 
     def __init__(self):
         self.workflow_env = {}
@@ -120,7 +120,7 @@ class JobFileWriter:
     def _write_header(handle, job_conf):
         """Write job script header."""
         handle.write("#!/bin/bash -l\n")
-        handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
+        handle.write("#\n# ++++ THIS IS A CYLC JOB SCRIPT ++++")
         for prefix, value in [
                 ("# Workflow: ", job_conf['workflow_name']),
                 ("# Task: ", job_conf['task_id']),

@@ -77,6 +77,7 @@ class TaskPool:
     """Task pool of a workflow."""
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
+    ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
     SUICIDE_MSG = "suicide"
 
     def __init__(
@@ -982,7 +983,7 @@ class TaskPool:
                     orphans.append(itask)
         if orphans_kill_failed:
             LOG.warning(
-                "Orphaned task jobs (kill failed):\n"
+                "Orphaned tasks (kill failed):\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans_kill_failed
@@ -990,7 +991,7 @@ class TaskPool:
             )
         if orphans:
             LOG.warning(
-                "Orphaned task jobs:\n"
+                "Orphaned tasks:\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans
@@ -1428,6 +1429,11 @@ class TaskPool:
         # Spawn if on-sequence and within recurrence bounds.
         taskdef = self.config.get_taskdef(name)
         if not taskdef.is_valid_point(point):
+            LOG.warning(
+                self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                    taskdef.name, point
+                )
+            )
             return None
 
         itask = TaskProxy(
@@ -1497,8 +1503,7 @@ class TaskPool:
 
         Args:
             items: Identifiers for matching task definitions, each with the
-                form "name[.point][:state]" or "[point/]name[:state]".
-                Glob-like patterns will give a warning and be skipped.
+                form "point/name".
             outputs: List of outputs to spawn on
             flow_num: Flow number to attribute the outputs
 
@@ -1765,7 +1770,6 @@ class TaskPool:
             [self.main_pool, self.hidden_pool],
             ids,
             warn=warn,
-
         )
         future_matched: 'Set[Tuple[str, PointBase]]' = set()
         if future and unmatched:
@@ -1843,7 +1847,11 @@ class TaskPool:
             if taskdef.is_valid_point(point):
                 matched_tasks.add((taskdef.name, point))
             else:
-                # is_valid_point() already logged warning
+                LOG.warning(
+                    self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                        taskdef.name, point
+                    )
+                )
                 unmatched_tasks.append(id_)
                 continue
         return matched_tasks, unmatched_tasks
@@ -1856,8 +1864,10 @@ class TaskPool:
         Args:
             items:
                 Identifiers for matching task definitions, each with the
-                form "name[.point][:state]" or "[point/]name[:state]".
-                Glob-like patterns will give a warning and be skipped.
+                form "point/name".
+                Cycle point globs will give a warning and be skipped,
+                but task name globs will be matched.
+                Task states are ignored.
 
         """
         n_warnings = 0
@@ -1883,7 +1893,7 @@ class TaskPool:
                 )
                 n_warnings += 1
                 continue
-            taskdefs: List['TaskDef'] = self.config.find_taskdefs(name_str)
+            taskdefs = self.config.find_taskdefs(name_str)
             if not taskdefs:
                 LOG.warning(
                     self.ERR_TMPL_NO_TASKID_MATCH.format(
@@ -1897,8 +1907,13 @@ class TaskPool:
                 if taskdef.is_valid_point(point):
                     task_items[(taskdef.name, point)] = taskdef
                 else:
-                    # is_valid_point() already logged warning
-                    n_warnings += 1
+                    if not contains_fnmatch(name_str):
+                        LOG.warning(
+                            self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                                taskdef.name, point
+                            )
+                        )
+                        n_warnings += 1
                     continue
         return n_warnings, task_items
 

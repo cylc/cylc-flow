@@ -17,6 +17,7 @@
 """Tests `cylc lint` CLI Utility.
 """
 import difflib
+from itertools import combinations
 from pathlib import Path
 import pytest
 import re
@@ -149,9 +150,9 @@ LINT_TEST_FILE += (
 
 @pytest.fixture()
 def create_testable_file(monkeypatch, capsys):
-    def _inner(test_file, checks):
+    def _inner(test_file, checks, ignores=[]):
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
-        checks = parse_checks(checks)
+        checks = parse_checks(checks, ignores)
         check_cylc_file(Path('x'), Path('x'), checks)
         return capsys.readouterr(), checks
     return _inner
@@ -191,13 +192,30 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
         result, _ = create_testable_file(
-            LINT_TEST_FILE, 'lint')
-        assert f'[S{number + 1:03d}]' in result.out
+            LINT_TEST_FILE, 'style')
+        assert f'S{(number + 1):03d}' in result.out
     except AssertionError:
         raise AssertionError(
-            f'missing error number S:{number:03d}'
-            f'{[*STYLE_CHECKS.keys()][number]}'
+            f'missing error number S{number:03d}:'
+            f'{[*STYLE_CHECKS.keys()][number].pattern}'
         )
+
+
+@pytest.mark.parametrize(
+    'exclusion',
+    [
+        comb for i in range(len(STYLE_CHECKS.values()))
+        for comb in combinations(
+            [f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()], i + 1
+        )
+    ]
+)
+def test_check_exclusions(create_testable_file, exclusion):
+    """It does not report any items excluded."""
+    result, _ = create_testable_file(
+        LINT_TEST_FILE, 'style', list(exclusion))
+    for item in exclusion:
+        assert item not in result.out
 
 
 @pytest.fixture

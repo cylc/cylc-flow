@@ -16,11 +16,11 @@
 """Utilities for use with asynchronous code."""
 
 import asyncio
-from functools import partial
+import os
 from pathlib import Path
 from typing import List, Union
 
-import pyuv
+from aiofiles.os import wrap  # type: ignore[attr-defined]
 
 from cylc.flow import LOG
 
@@ -393,24 +393,15 @@ def pipe(func=None, preproc=None):
         return _pipe
 
 
-def _scandir(future, path, request):
-    """Callback helper for scandir()."""
-    future.set_result([
-        Path(path, directory.name)
-        # request.result is None for empty dirs
-        for directory in request.result or []
-    ])
+async_listdir = wrap(os.listdir)
 
 
 async def scandir(path: Union[Path, str]) -> List[Path]:
-    """Asynchronous directory listing using pyuv."""
-    ret: asyncio.Future[List[Path]] = asyncio.Future()
-
-    loop = pyuv.Loop.default_loop()
-    pyuv.fs.scandir(loop, str(path), callback=partial(_scandir, ret, path))
-    loop.run()
-
-    return await ret
+    """Asynchronous directory listing (performs os.listdir in an executor)."""
+    return [
+        Path(path, sub_path)
+        for sub_path in await async_listdir(path)
+    ]
 
 
 async def asyncqgen(queue):

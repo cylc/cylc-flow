@@ -13,9 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Allow a task job to record its messages.
+"""Allow a task to record its messages.
 
-Send task job messages to:
+Send messages to:
 - The stdout/stderr.
 - The job status file, if there is one.
 - The scheduler, if communication is possible.

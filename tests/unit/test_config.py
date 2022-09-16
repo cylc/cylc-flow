@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import Values
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from pathlib import Path
 import pytest
 import logging
@@ -48,8 +48,7 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 Fixture = Any
 
 
-@pytest.fixture
-def tmp_flow_config(tmp_run_dir: Callable):
+def _tmp_flow_config(tmp_run_dir: Callable):
     """Create a temporary flow config file for use in init'ing WorkflowConfig.
 
     Args:
@@ -58,12 +57,22 @@ def tmp_flow_config(tmp_run_dir: Callable):
 
     Returns the path to the flow file.
     """
-    def _tmp_flow_config(reg: str, config: str) -> Path:
+    def __tmp_flow_config(reg: str, config: str) -> Path:
         run_dir: Path = tmp_run_dir(reg)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
-    return _tmp_flow_config
+    return __tmp_flow_config
+
+
+@pytest.fixture
+def tmp_flow_config(tmp_run_dir: Callable):
+    return _tmp_flow_config(tmp_run_dir)
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
+    return _tmp_flow_config(mod_tmp_run_dir)
 
 
 class TestWorkflowConfig:
@@ -1481,3 +1490,56 @@ def test_check_for_owner(runtime_cfg):
     else:
         # Assert function doesn't raise if no owner set:
         assert WorkflowConfig.check_for_owner(runtime_cfg) is None
+
+
+@pytest.fixture(scope='module')
+def awe_config(mod_tmp_flow_config: Callable) -> WorkflowConfig:
+    """Return a workflow config object."""
+    reg = 'awe'
+    flow_file = mod_tmp_flow_config(reg, '''
+        [scheduling]
+            cycling mode = integer
+            [[graph]]
+                P1 = ordinary & sterling
+                R1/2 = fra_mauro
+        [runtime]
+            [[USA, MOON]]
+            [[ordinary, sterling]]
+                inherit = USA
+            [[fra_mauro]]
+                inherit = MOON
+    ''')
+    return WorkflowConfig(
+        workflow=reg, fpath=flow_file, options=ValidateOptions()
+    )
+
+
+@pytest.mark.parametrize(
+    'name, expected',
+    [
+        pytest.param(
+            'ordinary', ['ordinary'], id="task name"
+        ),
+        pytest.param(
+            'USA', ['ordinary', 'sterling'], id="family name"
+        ),
+        pytest.param(
+            'fra*', ['fra_mauro'], id="glob task name"
+        ),
+        pytest.param(
+            'U*', ['ordinary', 'sterling'], id="glob family name"
+        ),
+        pytest.param(
+            '*', ['ordinary', 'sterling', 'fra_mauro'], id="glob everything"
+        ),
+        pytest.param(
+            'butte', [], id="no match"
+        ),
+    ]
+)
+def test_find_taskdefs(
+    name: str, expected: List[str], awe_config: WorkflowConfig
+):
+    assert sorted(
+        t.name for t in awe_config.find_taskdefs(name)
+    ) == sorted(expected)

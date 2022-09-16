@@ -17,6 +17,7 @@
 """Task definition."""
 
 from collections import deque
+from typing import TYPE_CHECKING
 
 import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
@@ -27,8 +28,10 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
 )
-from cylc.flow import LOG
 from cylc.flow.task_outputs import SORT_ORDERS
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 def generate_graph_children(tdef, point):
@@ -119,7 +122,6 @@ class TaskDef:
 
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
-    ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: "
 
     def __init__(self, name, rtcfg, run_mode, start_point, initial_point):
         if not TaskID.is_valid_name(name):
@@ -299,16 +301,11 @@ class TaskDef:
                         return False
         return has_abs
 
-    def is_valid_point(self, point):
+    def is_valid_point(self, point: 'PointBase') -> bool:
         """Return True if point is on-sequence and within bounds."""
-        is_valid_point = any(
-            sequence.is_valid(point)
-            for sequence in self.sequences
+        return any(
+            sequence.is_valid(point) for sequence in self.sequences
         )
-        if not is_valid_point:
-            LOG.warning("%s%s, %s" % (
-                self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, self.name, point))
-        return is_valid_point
 
     def first_point(self, icp):
         """Return the first point for this task."""
@@ -361,3 +358,13 @@ class TaskDef:
             or all(x < self.start_point for x in parent_points)
             or self.has_only_abs_triggers(point)
         )
+
+    def __repr__(self) -> str:
+        """
+        >>> TaskDef(
+        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     initial_point='1'
+        ... )
+        <TaskDef 'oliver'>
+        """
+        return f"<TaskDef '{self.name}'>"

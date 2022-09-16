@@ -18,7 +18,7 @@
 
 (This command is for internal use.)
 
-Submit task jobs to relevant job runners.
+Submit jobs to relevant job runners.
 On a remote job host, this command reads the job files from STDIN.
 """
 
