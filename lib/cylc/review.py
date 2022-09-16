@@ -263,6 +263,7 @@ class CylcReviewService(object):
             return self.template_env.get_template("cycles.html").render(**data)
         except jinja2.TemplateError:
             traceback.print_exc()
+        self._db_close(user, suite)
         return json.dumps(data)
 
     @cherrypy.expose
@@ -328,12 +329,13 @@ class CylcReviewService(object):
 
         # Set list of task states depending on Cylc version 7 or 8
         task_statuses_ordered = TASK_STATUSES_ORDERED
-        try:
-            is_c8 = self.suite_dao.is_cylc8(user, suite)
-            if is_c8:
-                task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
-        except ProgrammingError:
-            pass
+        suite_dir = os.path.join(
+            self._get_user_home(user),
+            "cylc-run",
+            suite)
+        is_c8 = self.is_cylc8(suite_dir)
+        if is_c8:
+            task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
         # get selected task states
         if not task_status:
             # default task statuses - if updating please also change the
@@ -748,9 +750,9 @@ class CylcReviewService(object):
         """Return a dict of suite-related files including suite logs."""
         data = {"files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
-
         rose_logs_dest = "rose"
-        if self.suite_dao.is_cylc8(user, suite):
+        cylc_8 = self.is_cylc8(user_suite_dir)
+        if cylc_8:
             rose_logs_dest = "cylc"
 
         # Rose files: to recognise & group, but not process, standard formats
@@ -836,6 +838,19 @@ class CylcReviewService(object):
             data["files"]["cylc"] = logs_info
 
         return data
+
+    @staticmethod
+    def is_cylc8(user_suite_dir):
+        """Determine is suite is a Cylc 8 one.
+        If the workflow file is suite.rc, it then checks for existence of
+        "log/scheduler" dir which is cylc 8 specific.
+        """
+        flow_file = os.path.join(user_suite_dir, "flow.cylc")
+        log_dir = os.path.join(user_suite_dir, "log", "scheduler")
+        suite_file = os.path.join(user_suite_dir, "suite.rc")
+        return os.path.exists(flow_file) or (
+            # following check for back compat workflows which have run
+            os.path.exists(suite_file) and os.path.exists(log_dir))
 
     @classmethod
     def _check_dir_access(cls, path):

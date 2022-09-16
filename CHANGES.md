@@ -26,6 +26,9 @@ management and does not bundle Jinja2.
 
 ### Fixes
 
+[#5140](https://github.com/cylc/cylc-flow/pull/5140) - Update Cylc Review with
+version log files. Fix database error by switching call to a file check.
+
 [#5132](https://github.com/cylc/cylc-flow/pull/5132) - Updates rsync command
 to make it compatible with latest (and patched older) rsync releases.
 
