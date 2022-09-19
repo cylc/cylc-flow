@@ -124,9 +124,12 @@ class WorkflowPoller(Poller):
 
     async def check(self):
         """Return True if desired workflow state achieved, else False"""
-        return self.checker.task_state_met(
-            self.args['task'], self.args['cycle'],
-            self.args['status'], self.args['message'])
+        if self.args['status']:
+            return self.checker.task_state_met(
+                self.args['task'], self.args['cycle'], self.args['status'])
+        elif self.args['message']:
+            return self.checker.task_output_met(
+                self.args['task'], self.args['cycle'], self.args['message'])
 
 
 def get_option_parser() -> COP:

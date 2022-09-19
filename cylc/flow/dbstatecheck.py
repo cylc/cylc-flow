@@ -19,6 +19,7 @@ import json
 import os
 import sqlite3
 import sys
+from textwrap import dedent
 
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -31,7 +32,7 @@ from cylc.flow.task_state import (
 
 
 class CylcWorkflowDBChecker:
-    """Object for querying a workflow database"""
+    """Object for querying a workflow database."""
     STATE_ALIASES = {
         'finish': [
             TASK_STATUS_FAILED,
@@ -70,11 +71,11 @@ class CylcWorkflowDBChecker:
             sys.stderr.write("INFO: No results to display.\n")
         else:
             for row in res:
-                sys.stdout.write((", ").join(row) + "\n")
+                sys.stdout.write((", ").join([str(s) for s in row]) + "\n")
 
     def get_remote_point_format(self):
-        """Query a remote workflow database for a 'cycle point format' entry"""
-        for row in self.conn.execute(
+        """Query a remote workflow database for a 'cycle point format' entry."""
+        for row in self.conn.execute(dedent(
             rf'''
                 SELECT
                     value
@@ -82,13 +83,13 @@ class CylcWorkflowDBChecker:
                     {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
                 WHERE
                     key==?
-            ''',  # nosec (table name is code constant)
+            '''),  # nosec (table name is code constant)
             ['cycle_point_format']
         ):
             return row[0]
 
     def state_lookup(self, state):
-        """allows for multiple states to be searched via a status alias"""
+        """Allows for multiple states to be searched via a status alias."""
         if state in self.STATE_ALIASES:
             return self.STATE_ALIASES[state]
         else:
@@ -96,7 +97,7 @@ class CylcWorkflowDBChecker:
 
     def workflow_state_query(
             self, task, cycle, status=None, message=None, mask=None):
-        """run a query on the workflow database"""
+        """Run a query on the workflow database."""
         stmt_args = []
         stmt_wheres = []
 
@@ -109,12 +110,12 @@ class CylcWorkflowDBChecker:
         else:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
 
-        stmt = rf'''
+        stmt = dedent(rf'''
             SELECT
                 {mask}
             FROM
                 {target_table}
-        '''  # nosec
+        ''')  # nosec
         # * mask is hardcoded
         # * target_table is a code constant
         if task is not None:
@@ -131,30 +132,37 @@ class CylcWorkflowDBChecker:
                 stmt_frags.append("status==?")
             stmt_wheres.append("(" + (" OR ").join(stmt_frags) + ")")
         if stmt_wheres:
-            stmt += " where " + (" AND ").join(stmt_wheres)
-
+            stmt += "WHERE\n    " + (" AND ").join(stmt_wheres)
+        if status:
+            stmt += dedent("""
+                ORDER BY
+                    submit_num
+            """)
         res = []
         for row in self.conn.execute(stmt, stmt_args):
             if not all(v is None for v in row):
                 res.append(list(row))
-
         return res
 
-    def task_state_getter(self, task, cycle):
-        """used to get the state of a particular task at a particular cycle"""
-        return self.workflow_state_query(task, cycle, mask="status")[0]
+    def task_state_met(self, task, cycle, status):
+        """Check if the latest flow instance of a task is in a given state."""
+        # retrieve all flow-instances of cycle/task
+        res = self.workflow_state_query(task, cycle)
+        if res:
+            # only consider the latest isntance
+            return (res[-1])[2] == status
+        return False
 
-    def task_state_met(self, task, cycle, status=None, message=None):
-        """used to check if a task is in a particular state"""
-        res = self.workflow_state_query(task, cycle, status, message)
-        if status:
-            return bool(res)
-        elif message:
-            return any(
-                message == value
-                for outputs_str, in res
-                for value in json.loads(outputs_str)
-            )
+    def task_output_met(self, task, cycle, message):
+        """Check if latest flow instance of a task has emitted a message."""
+        # TODO - NEED TO ADD submit_num TO THE task_outputs TABLE SO WE CAN
+        # TELL WHICH IS THE LATEST FLOW-INSTANCE (like state_met above).
+        res = self.workflow_state_query(task, cycle, message=message)
+        return any(
+            message == value
+            for outputs_str, in res
+            for value in json.loads(outputs_str)
+        )
 
     @staticmethod
     def validate_mask(mask):
