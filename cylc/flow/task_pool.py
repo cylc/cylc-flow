@@ -1910,9 +1910,11 @@ class TaskPool:
 
         This also performs required spawning / state changing for edge cases.
         """
-        if flow_nums == itask.flow_nums:
-            # Don't do anything if trying to spawn the same task in the same
-            # flow. This arises downstream of an AND trigger (if "A & B => C"
+        if not flow_nums or (flow_nums == itask.flow_nums):
+            # Don't do anything if:
+            # 1. merging from a no-flow task, or
+            # 2. trying to spawn the same task in the same flow. This arises
+            # downstream of an AND trigger (if "A & B => C"
             # and A spawns C first, B will find C is already in the pool),
             # and via suicide triggers ("A =>!A": A tries to spawn itself).
             return
