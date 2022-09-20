@@ -35,6 +35,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5146](https://github.com/cylc/cylc-flow/pull/5146) - no-flow tasks should not
+retrigger incomplete children.
+
 [#5104](https://github.com/cylc/cylc-flow/pull/5104) - Fix retriggering of
 failed tasks after a reload.
 
