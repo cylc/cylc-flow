@@ -1614,17 +1614,25 @@ with Conf('global.cylc', desc='''
         with Conf('localhost', meta=Platform, desc='''
             A default platform for running jobs on the the scheduler host.
 
-            .. attention::
+            This platform configures the host on which
+            :term:`schedulers <scheduler>` run. By default this is the
+            host where ``cylc play`` is run, however, we often configure
+            Cylc to start schedulers on dedicated hosts by configuring
+            :cylc:conf:`global.cylc[scheduler][run hosts]available`.
 
-               It is common practice to start Cylc schedulers on dedicated
-               hosts, in which case **"localhost" is the scheduler host and
-               not necessarily where you ran "cylc play"**.
+            This platform affects connections made to the scheduler host and
+            any jobs run on it.
 
             .. versionadded:: 8.0.0
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'], desc='''
                 List of hosts for the localhost platform. You are unlikely to
                 need to change this.
+
+                The scheduler hosts are configured by
+                :cylc:conf:`global.cylc[scheduler][run hosts]available`.
+                See :ref:`Submitting Workflows To a Pool Of Hosts` for
+                more information.
 
                 .. seealso::
 

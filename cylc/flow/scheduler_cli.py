@@ -41,7 +41,7 @@ from cylc.flow.option_parsers import (
     icp_option,
 )
 from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
-from cylc.flow.remote import _remote_cylc_cmd
+from cylc.flow.remote import cylc_server_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
 from cylc.flow.workflow_files import (
@@ -393,7 +393,7 @@ def _distribute(host, workflow_id_raw, workflow_id):
         cmd.append("--host=localhost")
 
         # Re-invoke the command
-        _remote_cylc_cmd(cmd, host=host)
+        cylc_server_cmd(cmd, host=host)
         sys.exit(0)
 
 
