@@ -143,8 +143,9 @@
 #         Expect 1 OK test.
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
-#         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
+#         with PRE and POST pre- and ap-pended.
 #         PRE and POST are strings.
+#         The global config starts with #!Jinja2 in case Jinja2 is used.
 #     localhost_fqdn
 #         Get the FQDN of the current host using the same mechanism Cylc uses.
 #     get_fqdn [TARGET]
@@ -902,8 +903,9 @@ create_test_global_config() {
     # Tidy in case of previous use of this function.
     rm -fr 'etc'
     mkdir 'etc'
-    # Scheduler host self-identification method.
-    echo "$PRE" >'etc/global.cylc'
+    # Start with Jinja2 hashbang. Harmless if not needed.
+    echo "#!Jinja2" >'etc/global.cylc'
+    echo "$PRE" >>'etc/global.cylc'
     # add defaults
     cat >>'etc/global.cylc' <<__HERE__
     # set a default timeout for all flow runs to avoid hanging tests
