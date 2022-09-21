@@ -767,7 +767,10 @@ class TaskJobManager:
         tasks = {}
         for itask in itasks:
             while itask.reload_successor is not None:
+                # Note submit number could be incremented since reload.
+                subnum = itask.submit_num
                 itask = itask.reload_successor
+                itask.submit_num = subnum
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
