@@ -169,10 +169,12 @@ def jinja2environment(dir_=None):
     # |     return str(value).rjust( int(length), str(fillchar) )
     for namespace in ['filters', 'tests', 'globals']:
         nspdir = 'Jinja2' + namespace.capitalize()
-        fdirs = [
-            os.path.join(dir_, nspdir),
-            os.path.join(os.environ['HOME'], '.cylc', nspdir)
-        ]
+        fdirs = [os.path.join(dir_, nspdir)]
+        try:
+            fdirs.append(os.path.join(os.environ['HOME'], '.cylc', nspdir))
+        except KeyError:
+            # (Needed for tests/f/cylc-get-site-config/04-homeless.t!)
+            LOG.warning(f"$HOME undefined: can't load ~/.cylc/{nspdir}")
         for fdir in fdirs:
             if os.path.isdir(fdir):
                 sys.path.insert(1, os.path.abspath(fdir))

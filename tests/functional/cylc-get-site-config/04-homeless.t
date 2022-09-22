@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test absence of HOME env var (https://github.com/cylc/cylc-flow/pull/2895)
+# Check undefined $HOME does not break:
+# a) use of $HOME in global config (GitHub #2895)
+# b) global config Jinja2 support (GitHub #5155)
 
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 5
 
 # shellcheck disable=SC2016
 create_test_global_config '' '
@@ -27,10 +29,15 @@ create_test_global_config '' '
         [[[localhost]]]
             run = $HOME/dr-malcolm
 '
-
 run_ok "${TEST_NAME_BASE}" \
     env -u HOME \
     cylc config --item='[install][symlink dirs][localhost]run'
+
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<"\$HOME/dr-malcolm"
-cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
-exit
+
+# The test global config is created with #!Jinja2 at the top, in case of any
+# Jinja2 code in global-tests.cylc. Parsec Jinja2 support uses $HOME to find
+# custom filters etc. GitHub #5155.
+for DIR in Filters Tests Globals; do
+    grep_ok "\$HOME undefined: can't load ~/.cylc/Jinja2$DIR" "${TEST_NAME_BASE}.stderr"
+done
