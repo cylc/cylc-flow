@@ -655,59 +655,56 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     # Allow us to check any number of folders at once
     count = 0
     target = target.parent
-    if not target.exists():
-        LOG.warn(f'Path {target} does not exist.')
+    ruleset_default = False
+    if options.linter == 'all':
+        options.linter = ['728', 'style']
+    elif options.linter == '':
+        options.linter = ['728', 'style']
+        ruleset_default = True
     else:
-        ruleset_default = False
-        if options.linter == 'all':
-            options.linter = ['728', 'style']
-        elif options.linter == '':
-            options.linter = ['728', 'style']
-            ruleset_default = True
-        else:
-            options.linter = [options.linter]
-        tomlopts = get_pyproject_toml(target)
-        mergedopts = merge_cli_with_tomldata(
-            {
-                'exclude': [],
-                'ignore': options.ignores,
-                'rulesets': options.linter
-            },
-            tomlopts,
-            ruleset_default
-        )
+        options.linter = [options.linter]
+    tomlopts = get_pyproject_toml(target)
+    mergedopts = merge_cli_with_tomldata(
+        {
+            'exclude': [],
+            'ignore': options.ignores,
+            'rulesets': options.linter
+        },
+        tomlopts,
+        ruleset_default
+    )
 
-        # Check whether target is an upgraded Cylc 8 workflow.
-        # If it isn't then we shouldn't run the 7-to-8 checks upon
-        # it:
-        cylc8 = (target / 'flow.cylc').exists()
-        if not cylc8 and mergedopts['rulesets'] == ['728']:
-            LOG.error(
-                f'{target} not a Cylc 8 workflow: '
-                'Lint after renaming '
-                '"suite.rc" to "flow.cylc"'
-            )
-            exit(0)
-        elif not cylc8 and '728' in mergedopts['rulesets']:
-            check_names = mergedopts['rulesets']
-            check_names.remove('728')
-        else:
-            check_names = mergedopts['rulesets']
-
-        # Check each file:
-        checks = parse_checks(
-            check_names,
-            ignores=mergedopts['ignore'],
-            max_line_len=mergedopts['max-line-length']
+    # Check whether target is an upgraded Cylc 8 workflow.
+    # If it isn't then we shouldn't run the 7-to-8 checks upon
+    # it:
+    cylc8 = (target / 'flow.cylc').exists()
+    if not cylc8 and mergedopts['rulesets'] == ['728']:
+        LOG.error(
+            f'{target} not a Cylc 8 workflow: '
+            'Lint after renaming '
+            '"suite.rc" to "flow.cylc"'
         )
-        for file_ in get_cylc_files(target, mergedopts['exclude']):
-            LOG.debug(f'Checking {file_}')
-            count += check_cylc_file(
-                target,
-                file_,
-                checks,
-                options.inplace,
-            )
+        exit(0)
+    elif not cylc8 and '728' in mergedopts['rulesets']:
+        check_names = mergedopts['rulesets']
+        check_names.remove('728')
+    else:
+        check_names = mergedopts['rulesets']
+
+    # Check each file:
+    checks = parse_checks(
+        check_names,
+        ignores=mergedopts['ignore'],
+        max_line_len=mergedopts['max-line-length']
+    )
+    for file_ in get_cylc_files(target, mergedopts['exclude']):
+        LOG.debug(f'Checking {file_}')
+        count += check_cylc_file(
+            target,
+            file_,
+            checks,
+            options.inplace,
+        )
 
     if count > 0:
         msg = (
