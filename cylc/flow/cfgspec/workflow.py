@@ -227,12 +227,12 @@ with Conf(
                ``app/``
                   Rose applications
                ``bin/``
-                  Cylc bin directory (added to PATH)
+                  Cylc bin directory (added to ``PATH``)
                ``etc/``
                   Miscellaneous resources
                ``lib/``
-                  Cylc lib directory (lib/python added to PYTHONPATH for
-                  workflow config)
+                  Cylc lib directory (``lib/python`` added to ``PYTHONPATH``
+                  for workflow config)
 
                These should be located in the top level of your Cylc workflow,
                i.e. the directory that contains your ``flow.cylc`` file.
