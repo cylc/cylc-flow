@@ -733,11 +733,18 @@ class DataStoreMgr:
                 and e_id not in self.added[EDGES]
                 and edge_distance <= self.n_edge_distance
             ):
-                self.added[EDGES][e_id] = PbEdge(
-                    id=e_id,
-                    source=s_tokens.id,
-                    target=t_tokens.id
-                )
+                if is_parent:
+                    self.added[EDGES][e_id] = PbEdge(
+                        id=e_id,
+                        source=t_tokens.id,
+                        target=s_tokens.id
+                    )
+                else:
+                    self.added[EDGES][e_id] = PbEdge(
+                        id=e_id,
+                        source=s_tokens.id,
+                        target=t_tokens.id
+                    )
                 # Add edge id to node field for resolver reference
                 self.updated[TASK_PROXIES].setdefault(
                     t_tokens.id,
