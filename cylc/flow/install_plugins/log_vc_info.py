@@ -62,7 +62,9 @@ Any uncommitted changes will also be saved as a diff in
 import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
-from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING, Union
+from typing import (
+    Any, Dict, Iterable, List, Optional, TYPE_CHECKING, TextIO, Union, overload
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -79,8 +81,6 @@ INFO_COMMANDS: Dict[str, List[str]] = {
     SVN: ['info', '--non-interactive'],
     GIT: ['describe', '--always', '--dirty']
 }
-
-# git ['show', '--quiet', '--format=short'],
 
 STATUS_COMMANDS: Dict[str, List[str]] = {
     SVN: ['status', '--non-interactive'],
@@ -189,13 +189,40 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
-    """Run a VCS command, return stdout.
+@overload
+def _run_cmd(
+    vcs: str, args: Iterable[str], cwd: Union[Path, str], stdout: int = PIPE
+) -> str:
+    ...
+
+
+@overload
+def _run_cmd(
+    vcs: str, args: Iterable[str], cwd: Union[Path, str], stdout: TextIO
+) -> None:
+    ...
+
+
+def _run_cmd(
+    vcs: str,
+    args: Iterable[str],
+    cwd: Union[Path, str],
+    stdout: Union[TextIO, int] = PIPE
+) -> Optional[str]:
+    """Run a VCS command.
 
     Args:
         vcs: The version control system.
         args: The args to pass to the version control command.
         cwd: Directory to run the command in.
+        stdout: Where to redirect output (either PIPE or a
+            text stream/file object). Note: only use PIPE for
+            commands that will not generate a large output, otherwise
+            the pipe might get blocked.
+
+    Returns:
+        Stdout output if stdout=PIPE, else None as the output has been
+        written directly to the specified file.
 
     Raises:
         VCSNotInstalledError: The VCS is not found.
@@ -208,7 +235,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
             cmd,
             cwd=cwd,
             stdin=DEVNULL,
-            stdout=PIPE,
+            stdout=stdout,
             stderr=PIPE,
             text=True,
         )
@@ -275,41 +302,40 @@ def _parse_svn_info(info_text: str) -> Dict[str, Any]:
     return ret
 
 
-def get_diff(vcs: str, path: Union[Path, str]) -> Optional[str]:
-    """Return the diff of uncommitted changes for a repository.
+def write_diff(
+    vcs: str, repo_path: Union[Path, str], run_dir: Union[Path, str]
+) -> Path:
+    """Get and write the diff of uncommitted changes for a repository to the
+    workflow's vcs log dir.
 
     Args:
         vcs: The version control system.
-        path: The path to the repo.
-    """
-    args_ = DIFF_COMMANDS[vcs]
-    if Path(path).is_absolute():
-        args_.append(str(path))
-    else:
-        args_.append(str(Path().cwd() / path))
-
-    try:
-        diff = _run_cmd(vcs, args_, cwd=path)
-    except (VCSNotInstalledError, VCSMissingBaseError):
-        return None
-    header = (
-        "# Auto-generated diff of uncommitted changes in the Cylc "
-        "workflow repository:\n"
-        f"#   {path}")
-    return f"{header}\n{diff}"
-
-
-def write_diff(diff: str, run_dir: Union[Path, str]) -> None:
-    """Write a diff to the workflow's vcs log dir.
-
-    Args:
-        diff: The diff.
+        repo_path: The path to the repo.
         run_dir: The workflow run directory.
+
+    Returns the path to diff file.
     """
+    args = DIFF_COMMANDS[vcs]
+    args.append(
+        str(repo_path) if Path(repo_path).is_absolute() else
+        str(Path().cwd() / repo_path)
+    )
+
     diff_file = Path(run_dir, LOG_VERSION_DIR, DIFF_FILENAME)
     diff_file.parent.mkdir(exist_ok=True)
-    with open(diff_file, 'w') as f:
-        f.write(diff)
+
+    with open(diff_file, 'a') as f:
+        f.write(
+            "# Auto-generated diff of uncommitted changes in the Cylc "
+            "workflow repository:\n"
+            f"#   {repo_path}\n"
+        )
+        f.flush()
+        try:
+            _run_cmd(vcs, args, repo_path, stdout=f)
+        except VCSMissingBaseError as exc:
+            f.write(f"# No diff - {exc}")
+    return diff_file
 
 
 # Entry point:
@@ -331,8 +357,6 @@ def main(
     if vc_info is None:
         return False
     vcs = vc_info['version control system']
-    diff = get_diff(vcs, srcdir)
     write_vc_info(vc_info, rundir)
-    if diff is not None:
-        write_diff(diff, rundir)
+    write_diff(vcs, srcdir, rundir)
     return True
