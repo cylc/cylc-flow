@@ -193,6 +193,12 @@ class WorkflowFiles:
     LOG_DIR = 'log'
     """Workflow log directory."""
 
+    LOG_INSTALL_DIR = os.path.join(LOG_DIR, 'install')
+    """Install log dir"""
+
+    LOG_VERSION_DIR = Path(WorkflowFiles.LOG_DIR, 'version')
+    """Version control log dir"""
+
     SHARE_DIR = 'share'
     """Workflow share directory."""
 
@@ -1422,10 +1428,7 @@ def _open_install_log(rund, logger):
     """Open Cylc log handlers for install/reinstall."""
     rund = Path(rund).expanduser()
     log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
-    log_dir = Path(
-        rund,
-        WorkflowFiles.LOG_DIR,
-        'install')
+    log_dir = Path(rund, WorkflowFiles.LOG_INSTALL_DIR)
     log_files = get_sorted_logs_by_time(log_dir, '*.log')
     log_num = get_next_log_number(log_files[-1]) if log_files else 1
     log_path = Path(log_dir, f"{log_num:02d}-{log_type}.log")

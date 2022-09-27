@@ -112,8 +112,6 @@ SVN_INFO_KEYS: List[str] = [
     'revision', 'url', 'working copy root path', 'repository uuid'
 ]
 
-
-LOG_VERSION_DIR = Path(WorkflowFiles.LOG_DIR, 'version')
 DIFF_FILENAME = 'uncommitted.diff'
 INFO_FILENAME = 'vcs.json'
 JSON_INDENT = 4
@@ -238,7 +236,8 @@ def write_vc_info(
     """
     if not info:
         raise ValueError("Nothing to write")
-    info_file = Path(run_dir, LOG_VERSION_DIR, INFO_FILENAME)
+    info_file = Path(
+        run_dir, WorkflowFiles.LOG_VERSION_DIR, INFO_FILENAME)
     info_file.parent.mkdir(exist_ok=True, parents=True)
     with open(info_file, 'w') as f:
         f.write(
@@ -306,7 +305,8 @@ def write_diff(diff: str, run_dir: Union[Path, str]) -> None:
         diff: The diff.
         run_dir: The workflow run directory.
     """
-    diff_file = Path(run_dir, LOG_VERSION_DIR, DIFF_FILENAME)
+    diff_file = Path(
+        run_dir, WorkflowFiles.LOG_VERSION_DIR, DIFF_FILENAME)
     diff_file.parent.mkdir(exist_ok=True)
     with open(diff_file, 'w') as f:
         f.write(diff)
