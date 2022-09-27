@@ -1,0 +1,7 @@
+[scheduling]
+   [[graph]]
+       R1 = "a => b"
+[runtime]
+   [[a]]
+   [[b]]
+       script = false  # die as incomplete

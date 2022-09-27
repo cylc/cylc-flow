@@ -153,14 +153,10 @@ class TaskPool:
 
     def _swap_out(self, itask):
         """Swap old task for new, during reload."""
-        if itask.point in self.hidden_pool:
-            if itask.identity in self.hidden_pool[itask.point]:
-                self.hidden_pool[itask.point][itask.identity] = itask
-                self.hidden_pool_changed = True
-        elif (
-            itask.point in self.main_pool
-            and itask.identity in self.main_pool[itask.point]
-        ):
+        if itask.identity in self.hidden_pool.get(itask.point, set()):
+            self.hidden_pool[itask.point][itask.identity] = itask
+            self.hidden_pool_changed = True
+        elif itask.identity in self.main_pool.get(itask.point, set()):
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
@@ -1912,9 +1908,11 @@ class TaskPool:
 
         This also performs required spawning / state changing for edge cases.
         """
-        if flow_nums == itask.flow_nums:
-            # Don't do anything if trying to spawn the same task in the same
-            # flow. This arises downstream of an AND trigger (if "A & B => C"
+        if not flow_nums or (flow_nums == itask.flow_nums):
+            # Don't do anything if:
+            # 1. merging from a no-flow task, or
+            # 2. trying to spawn the same task in the same flow. This arises
+            # downstream of an AND trigger (if "A & B => C"
             # and A spawns C first, B will find C is already in the pool),
             # and via suicide triggers ("A =>!A": A tries to spawn itself).
             return

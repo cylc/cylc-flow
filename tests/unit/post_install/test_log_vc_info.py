@@ -26,12 +26,14 @@ from unittest.mock import Mock
 from cylc.flow.install_plugins.log_vc_info import (
     INFO_FILENAME,
     LOG_VERSION_DIR,
-    get_diff,
     _get_git_commit,
     get_status,
     get_vc_info,
     main,
+    write_diff,
 )
+
+from cylc.flow.workflow_files import WorkflowFiles
 
 Fixture = Any
 
@@ -161,12 +163,14 @@ def test_get_vc_info_git(git_source_repo: Tuple[str, str]):
 
 
 @require_git
-def test_get_diff_git(git_source_repo: Tuple[str, str]):
-    """Test get_diff() for a git repo"""
-    source_dir, commit_sha = git_source_repo
-    diff = get_diff('git', source_dir)
-    assert diff is not None
-    diff_lines = diff.splitlines()
+def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
+    """Test write_diff() for a git repo"""
+    source_dir, _ = git_source_repo
+    run_dir = tmp_path / 'run_dir'
+    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
+    diff_file = write_diff('git', source_dir, run_dir)
+    diff_lines = diff_file.read_text().splitlines()
+    assert diff_lines[0].startswith("# Auto-generated diff")
     for line in ("diff --git a/flow.cylc b/flow.cylc",
                  "-        R1 = foo",
                  "+        R1 = bar"):
@@ -205,12 +209,14 @@ def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
 
 
 @require_svn
-def test_get_diff_svn(svn_source_repo: Tuple[str, str, str]):
-    """Test get_diff() for an svn working copy"""
-    source_dir, uuid, repo_path = svn_source_repo
-    diff = get_diff('svn', source_dir)
-    assert diff is not None
-    diff_lines = diff.splitlines()
+def test_write_diff_svn(svn_source_repo: Tuple[str, str, str], tmp_path: Path):
+    """Test write_diff() for an svn working copy"""
+    source_dir, _, _ = svn_source_repo
+    run_dir = tmp_path / 'run_dir'
+    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
+    diff_file = write_diff('svn', source_dir, run_dir)
+    diff_lines = diff_file.read_text().splitlines()
+    assert diff_lines[0].startswith("# Auto-generated diff")
     for line in (f"--- {source_dir}/flow.cylc	(revision 1)",
                  f"+++ {source_dir}/flow.cylc	(working copy)",
                  "-        R1 = foo",
@@ -239,20 +245,26 @@ def test_not_repo(tmp_path: Path, monkeypatch: MonkeyPatch):
 
 @require_git
 def test_no_base_commit_git(tmp_path: Path):
-    """Test get_vc_info() and get_diff() for a recently init'd git source dir
+    """Test get_vc_info() and write_diff() for a recently init'd git source dir
     that does not have a base commit yet."""
     source_dir = Path(tmp_path, 'new_git_repo')
     source_dir.mkdir()
     subprocess.run(['git', 'init'], cwd=source_dir, check=True)
     flow_file = source_dir.joinpath('flow.cylc')
     flow_file.write_text(BASIC_FLOW_1)
+    run_dir = tmp_path / 'run_dir'
+    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
 
     vc_info = get_vc_info(source_dir)
     assert vc_info is not None
-    expected = [
+    assert list(vc_info.items()) == [
         ('version control system', "git"),
         ('working copy root path', str(source_dir)),
         ('status', ["?? flow.cylc"])
     ]
-    assert list(vc_info.items()) == expected
-    assert get_diff('git', source_dir) is None
+
+    # Diff file expected to be empty (only containing comment lines),
+    # but should work without raising
+    diff_file = write_diff('git', source_dir, run_dir)
+    for line in diff_file.read_text().splitlines():
+        assert line.startswith('#')

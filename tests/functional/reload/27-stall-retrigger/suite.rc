@@ -1,0 +1,13 @@
+# Use a stall handler to fix and reload the workflow config, then retrigger the
+# failed task, which should run successfully with the new settings.
+[scheduler]
+   [[events]]
+       stall handlers = stall-handler.sh
+       expected task failures = 1/foo
+[scheduling]
+    [[graph]]
+        R1 = "foo => bar"
+[runtime]
+    [[foo]]
+        script = false
+    [[bar]]

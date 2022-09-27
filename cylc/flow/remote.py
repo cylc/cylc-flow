@@ -172,6 +172,15 @@ DEFAULT_RSYNC_OPTS = [
     '--no-t'
 ]
 
+DEFAULT_INCLUDES = [
+    '/ana/***',  # Rose ana analysis modules
+    '/app/***',  # Rose applications
+    '/bin/***',  # Cylc bin directory (added to PATH)
+    '/etc/***',  # Miscellaneous resources
+    '/lib/***',  # Cylc lib directory (lib/python added to PYTHONPATH for
+                 # workflow config)
+]
+
 
 def construct_rsync_over_ssh_cmd(
     src_path: str, dst_path: str, platform: Dict[str, Any],
@@ -209,12 +218,7 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.extend(rsync_options)
     for exclude in ['log', 'share', 'work']:
         rsync_cmd.append(f"--exclude={exclude}")
-    default_includes = [
-        '/app/***',
-        '/bin/***',
-        '/etc/***',
-        '/lib/***']
-    for include in default_includes:
+    for include in DEFAULT_INCLUDES:
         rsync_cmd.append(f"--include={include}")
     for include in get_includes_to_rsync(rsync_includes):
         rsync_cmd.append(f"--include={include}")
