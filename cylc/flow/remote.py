@@ -264,7 +264,6 @@ def construct_ssh_cmd(
         via ssh.
 
     """
-    # If ssh cmd isn't given use the default from localhost settings.
     command = shlex.split(platform['ssh command'])
 
     if forward_x11:
