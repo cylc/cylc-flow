@@ -751,8 +751,7 @@ class CylcReviewService(object):
         data = {"files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
         rose_logs_dest = "rose"
-        cylc_8 = self.is_cylc8(user_suite_dir)
-        if cylc_8:
+        if self.is_cylc8(user_suite_dir):
             rose_logs_dest = "cylc"
 
         # Rose files: to recognise & group, but not process, standard formats
@@ -841,7 +840,7 @@ class CylcReviewService(object):
 
     @staticmethod
     def is_cylc8(user_suite_dir):
-        """Determine is suite is a Cylc 8 one.
+        """Does user_suite_dir contain a Cylc 8 workflow.
         If the workflow file is suite.rc, it then checks for existence of
         "log/scheduler" dir which is cylc 8 specific.
         """
