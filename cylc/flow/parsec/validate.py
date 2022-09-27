@@ -70,6 +70,8 @@ class ParsecValidator:
         r'\A([+\-]?\d+)\s*\.\.\s*([+\-]?\d+)(?:\s*\.\.\s*(\d+))?\Z')
     # Parameterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
+    # Quoted at start and end
+    _REC_QUOTED = re.compile(r'^["\'].*[\'"]$')
 
     SELF_REFERENCE_PATTERNS = ['localhost', '127.0.0.1', '0.0.0.0']  # nosec
     # * these strings are used for validation purposes
@@ -582,27 +584,42 @@ class ParsecValidator:
         Examples:
             >>> list(ParsecValidator._unquoted_list_parse(None, '"1", 2'))
             ['1', '2']
-
+            >>> list(ParsecValidator._unquoted_list_parse(
+            ...     None, 'I, "A<x,y>", J, "<a, b>B"'))
+            ['I', 'A<x,y>', 'J', '<a, b>B']
         """
-        # http://stackoverflow.com/questions/4982531/
-        # how-do-i-split-a-comma-delimited-string-in-python-except-
-        # for-the-commas-that-are
 
-        # First detect multi-parameter lists like <m,n>.
-        if cls._REC_MULTI_PARAM.search(value):
-            raise ListValueError(
-                keys, value,
-                msg="names containing commas must be quoted"
-                "(e.g. 'foo<m,n>')")
-        pos = 0
-        while True:
-            match = cls._REC_UQLP.search(value, pos)
+        counter = 0
+
+        # Use `split` as a completely naive parser:
+        items = value.split(',')
+        while counter < len(items):
+            # Check for neighbouring items which are a quoted list ("<a,b>")
+            if (
+                '<' in items[counter]
+                and counter + 1 < len(items)
+                and '>' in items[counter + 1]
+            ):
+                result = f'{items[counter]},{items[counter + 1]}'.strip(' ')
+                counter += 2
+            else:
+                result = items[counter]
+                counter += 1
+
+            # If item has parameter but isn't quoted:
+            if (
+                cls._REC_MULTI_PARAM.search(result)
+                and not cls._REC_QUOTED.search(result)
+            ):
+                raise ListValueError(
+                    keys, value,
+                    msg="names containing commas must be quoted"
+                    "(e.g. 'foo<m,n>')")
+
+            match = cls._REC_UQLP.search(result)
             result = match.group(2).strip()
-            separator = match.group(3)
+
             yield result
-            if not separator:
-                break
-            pos = match.end(0)
 
 
 def parsec_validate(cfg_root, spec_root):

@@ -503,9 +503,9 @@ def test_strip_and_unquote():
         ParsecValidator.strip_and_unquote(['a'], '"""')
 
 
-def test_strip_and_unquote_list_parsec():
-    """Test strip_and_unquote_list using ParsecValidator."""
-    for value, results in [
+@pytest.mark.parametrize(
+    "value, results",
+    [
         ('"a"\n"b"', ['a', 'b']),
         ('"a", "b"', ['a', 'b']),
         ('"a", "b"', ['a', 'b']),
@@ -519,10 +519,14 @@ def test_strip_and_unquote_list_parsec():
         ('a, b, c,', ['a', 'b', 'c']),
         ('a, b, c # d', ['a', 'b', 'c']),
         ('a, b, c\n"d"', ['a', 'b', 'd']),
-        ('a, b, c\n"d" # e', ['a', 'b', '"d"'])
-    ]:
-        assert results == ParsecValidator.strip_and_unquote_list(
-            ['a'], value)
+        ('a, b, c\n"d" # e', ['a', 'b', '"d"']),
+        ('a, "B<foo, bar>C"', ['a', 'B<foo, bar>C'])
+    ]
+)
+def test_strip_and_unquote_list_parsec(value, results):
+    """Test strip_and_unquote_list using ParsecValidator."""
+    assert results == ParsecValidator.strip_and_unquote_list(
+        ['a'], value)
 
 
 def test_strip_and_unquote_list_cylc(strip_and_unquote_list):
@@ -692,3 +696,33 @@ def test_type_help_examples():
                 except Exception:
                     raise Exception(
                         f'Example "{example}" failed for type "{vdr}"')
+
+
+@pytest.mark.parametrize(
+    'arguments, expect',
+    [
+        [(None, '"1", 2'), ['1', '2']],
+        [(None, "'1', 2"), ['1', '2']],
+        [('some', 'foo<m,n>'), None],
+        [('some', 'I, A<x,y>C, J'), None],
+        [('some', 'A<x,y>C, J, K'), None],
+        [('some', 'H, I, A<x,y>C'), None],
+        [(None, 'I, "A<x,y>C", J'), ['I', 'A<x,y>C', 'J']],
+        [(None, '"A<x, y>C", J, K'), ['A<x, y>C', 'J', 'K']],
+        [(None, "H, I, 'A<x,y>C'"), ['H', 'I', 'A<x,y>C']],
+        [(None, '"<foo=A, bar=B>"'), ['<foo=A, bar=B>']],
+        [(None, 'a, b, c\n"d"'), ['a', 'b', 'd']]
+    ]
+)
+def test_unquoted_list_parse(arguments, expect):
+    """It splits and unquotes a list
+
+    - It does not split quoted items.
+    - It identifies unquoted multi-parameter sections (<a, b>)
+    """
+    if expect:
+        result = list(ParsecValidator._unquoted_list_parse(*arguments))
+        assert result == expect
+    else:
+        with pytest.raises(ListValueError, match='must be quoted'):
+            list(ParsecValidator._unquoted_list_parse(*arguments))
