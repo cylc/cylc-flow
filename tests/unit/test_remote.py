@@ -63,11 +63,26 @@ def test_construct_rsync_over_ssh_cmd():
         }
     )
     assert host == 'miklegard'
-    assert ' '.join(cmd) == (
-        'rsync command --delete --rsh=strange_ssh --include=/.service/ '
-        '--include=/.service/server.key -a --checksum '
-        '--out-format=%o %n%L --no-t --exclude=log --exclude=share '
-        '--exclude=work --include=/app/*** --include=/bin/*** '
-        '--include=/etc/*** --include=/lib/*** --exclude=* '
-        '/foo/ miklegard:/bar/'
-    )
+    assert cmd == [
+        'rsync',
+        'command',
+        '--delete',
+        '--rsh=strange_ssh',
+        '--include=/.service/',
+        '--include=/.service/server.key',
+        '-a',
+        '--checksum',
+        '--out-format=%o %n%L',
+        '--no-t',
+        '--exclude=log',
+        '--exclude=share',
+        '--exclude=work',
+        '--include=/ana/***',
+        '--include=/app/***',
+        '--include=/bin/***',
+        '--include=/etc/***',
+        '--include=/lib/***',
+        '--exclude=*',
+        '/foo/',
+        'miklegard:/bar/',
+    ]

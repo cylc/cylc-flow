@@ -9,6 +9,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+
 -------------------------------------------------------------------------------
 
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
@@ -29,8 +30,21 @@ Maintenance release.
 
 ### Fixes
 
+[#5023](https://github.com/cylc/cylc-flow/pull/5023) - tasks force-triggered
+after a shutdown was ordered should submit to run immediately on restart.
+
+[#5137](https://github.com/cylc/cylc-flow/pull/5137) -
+Install the `ana/` directory to remote platforms by default.
+
+[#5146](https://github.com/cylc/cylc-flow/pull/5146) - no-flow tasks should not
+retrigger incomplete children.
+
 [#5104](https://github.com/cylc/cylc-flow/pull/5104) - Fix retriggering of
 failed tasks after a reload.
+
+[#5139](https://github.com/cylc/cylc-flow/pull/5139) - Fix bug where
+`cylc install` could hang if there was a large uncommitted diff in the
+source dir (for git/svn repos).
 
 [#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
 for `workflow_state` xtrigger.

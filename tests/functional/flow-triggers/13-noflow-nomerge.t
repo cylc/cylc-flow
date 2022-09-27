@@ -17,27 +17,31 @@
 #-------------------------------------------------------------------------------
 
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 7
 
-install_and_validate "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
-DB="${WORKFLOW_RUN_DIR}/runN/log/db"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+DB="${WORKFLOW_RUN_DIR}/log/db"
 
-reftest_run
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+poll_grep_workflow_log "Workflow stalled"
 
-TEST_NAME="${TEST_NAME_BASE}-order-no-wait"
-QUERY="SELECT cycle, name,flow_nums,outputs FROM task_outputs;"
+run_ok "${TEST_NAME_BASE}-trigger" cylc trigger --flow=none "${WORKFLOW_NAME}//1/a"
+poll_grep_workflow_log -E "1/a running job:02 flows:none.*=> succeeded"
 
+cylc stop --now --now --max-polls=5 --interval=2 "$WORKFLOW_NAME"
+
+TEST_NAME="${TEST_NAME_BASE}-count"
+QUERY="SELECT COUNT(*) FROM task_states WHERE name=='a'"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
+cmp_ok "${TEST_NAME}.stdout" <<__END__
+2
+__END__
 
-cmp_ok "${TEST_NAME}.stdout" <<\__END__
-1|a|[1]|["submitted", "started", "succeeded"]
-1|b|[1]|["submitted", "started", "succeeded"]
-1|a|[2]|["submitted", "started", "succeeded"]
-1|c|[2]|["submitted", "started", "x"]
-1|c|[1, 2]|["submitted", "started", "succeeded", "x"]
-1|x|[1, 2]|["submitted", "started", "succeeded"]
-1|d|[1, 2]|["submitted", "started", "succeeded"]
-1|b|[2]|["submitted", "started", "succeeded"]
+QUERY="SELECT COUNT(*) FROM task_states WHERE name=='b'"
+run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
+cmp_ok "${TEST_NAME}.stdout" <<__END__
+1
 __END__
 
 purge

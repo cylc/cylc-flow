@@ -222,10 +222,17 @@ with Conf(
 
                The following directories already get installed by default:
 
-               * ``app/``
-               * ``bin/``
-               * ``etc/``
-               * ``lib/``
+               ``ana/``
+                  Rose ana analysis modules
+               ``app/``
+                  Rose applications
+               ``bin/``
+                  Cylc bin directory (added to ``PATH``)
+               ``etc/``
+                  Miscellaneous resources
+               ``lib/``
+                  Cylc lib directory (``lib/python`` added to ``PYTHONPATH``
+                  for workflow config)
 
                These should be located in the top level of your Cylc workflow,
                i.e. the directory that contains your ``flow.cylc`` file.
