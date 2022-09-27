@@ -25,7 +25,6 @@ from unittest.mock import Mock
 
 from cylc.flow.install_plugins.log_vc_info import (
     INFO_FILENAME,
-    LOG_VERSION_DIR,
     _get_git_commit,
     get_status,
     get_vc_info,
@@ -167,7 +166,7 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
     """Test write_diff() for a git repo"""
     source_dir, _ = git_source_repo
     run_dir = tmp_path / 'run_dir'
-    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
+    (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
     diff_file = write_diff('git', source_dir, run_dir)
     diff_lines = diff_file.read_text().splitlines()
     assert diff_lines[0].startswith("# Auto-generated diff")
@@ -183,7 +182,9 @@ def test_main_git(git_source_repo: Tuple[str, str], tmp_run_dir: Callable):
     source_dir, _ = git_source_repo
     run_dir: Path = tmp_run_dir('frodo')
     main(source_dir, None, run_dir)
-    with open(run_dir / LOG_VERSION_DIR / INFO_FILENAME, 'r') as f:
+    with open(
+        run_dir / WorkflowFiles.LogDir.VERSION / INFO_FILENAME, 'r'
+    ) as f:
         loaded = json.loads(f.read())
     assert isinstance(loaded, dict)
     assert loaded['version control system'] == 'git'
@@ -213,7 +214,7 @@ def test_write_diff_svn(svn_source_repo: Tuple[str, str, str], tmp_path: Path):
     """Test write_diff() for an svn working copy"""
     source_dir, _, _ = svn_source_repo
     run_dir = tmp_path / 'run_dir'
-    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
+    (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
     diff_file = write_diff('svn', source_dir, run_dir)
     diff_lines = diff_file.read_text().splitlines()
     assert diff_lines[0].startswith("# Auto-generated diff")
@@ -253,7 +254,7 @@ def test_no_base_commit_git(tmp_path: Path):
     flow_file = source_dir.joinpath('flow.cylc')
     flow_file.write_text(BASIC_FLOW_1)
     run_dir = tmp_path / 'run_dir'
-    (run_dir / WorkflowFiles.LOG_DIR).mkdir(parents=True)
+    (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
 
     vc_info = get_vc_info(source_dir)
     assert vc_info is not None
