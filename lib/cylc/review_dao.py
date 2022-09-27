@@ -237,7 +237,8 @@ class CylcReviewDAO(object):
                 " time_submit, submit_status," +
                 " time_run, time_run_exit, run_signal, run_status," +
                 " platform_name, job_runner_name, job_id" +
-                " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
+                " FROM task_states LEFT JOIN task_jobs USING " +
+                "(cycle, name, submit_num)" +
                 where_expr +
                 " ORDER BY " +
                 self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"])
