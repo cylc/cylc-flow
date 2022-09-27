@@ -14,7 +14,9 @@ on:
       - '**.md'
       - '**/README*/**'
   push:
-    branches: [master]
+    branches:
+      - master
+      - '8.*.x'
     paths-ignore:
       - '.github/workflows/*.ya?ml'
       - '!.github/workflows/bash.yml'
