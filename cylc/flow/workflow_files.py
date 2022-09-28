@@ -78,7 +78,7 @@ from cylc.flow.hostuserutil import (
 )
 from cylc.flow.remote import (
     DEFAULT_RSYNC_OPTS,
-    _construct_ssh_cmd,
+    construct_cylc_server_ssh_cmd,
     construct_ssh_cmd,
 )
 from cylc.flow.terminal import parse_dirty_json
@@ -406,7 +406,7 @@ def _is_process_running(
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):
         cmd = ['psutil']
-        cmd = _construct_ssh_cmd(cmd, host)
+        cmd = construct_cylc_server_ssh_cmd(cmd, host)
     else:
         cmd = ['cylc', 'psutil']
     proc = Popen(  # nosec
@@ -1087,9 +1087,11 @@ def _remote_clean_cmd(
         for item in rm_dirs:
             cmd.extend(['--rm', item])
     cmd = construct_ssh_cmd(
-        cmd, platform,
+        cmd,
+        platform,
         get_host_from_platform(platform),
-        timeout=timeout, set_verbosity=True
+        timeout=timeout,
+        set_verbosity=True,
     )
     LOG.debug(" ".join(cmd))
     return Popen(  # nosec

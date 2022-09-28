@@ -23,7 +23,7 @@ from typing import Union, Dict
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network import get_location
-from cylc.flow.remote import _remote_cylc_cmd
+from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.workflow_files import load_contact_file, ContactFileFields
 
 
@@ -60,15 +60,20 @@ class WorkflowRuntimeClient():
         try:
             async with ascyncto(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
-                    command, args, timeout)
-                proc = _remote_cylc_cmd(
+                    command, args, timeout
+                )
+                platform = {
+                    'ssh command': ssh_cmd,
+                    'cylc path': cylc_path,
+                    'use login shell': login_sh,
+                }
+                proc = remote_cylc_cmd(
                     cmd,
+                    platform,
                     host=self.host,
                     stdin_str=msg,
-                    ssh_cmd=ssh_cmd,
-                    remote_cylc_path=cylc_path,
-                    ssh_login_shell=login_sh,
-                    capture_process=True)
+                    capture_process=True
+                )
                 while True:
                     if proc.poll() is not None:
                         break
