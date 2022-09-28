@@ -726,7 +726,7 @@ Existing on 3 different node types:
     execution_retry_delays = graphene.List(String)
     execution_time_limit = Float(default_value=None)
     submission_polling_intervals = graphene.List(String)
-    submissino_retry_delays = graphene.List(String)
+    submission_retry_delays = graphene.List(String)
     directives = GenericScalar(resolver=resolve_json_dump)
     environment = GenericScalar(resolver=resolve_json_dump)
     outputs = GenericScalar(resolver=resolve_json_dump)
