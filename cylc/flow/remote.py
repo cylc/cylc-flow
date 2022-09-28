@@ -324,7 +324,7 @@ def construct_cylc_server_ssh_cmd(
     host,
     **kwargs,
 ):
-    """Concenience function to building SSH commands for remote Cylc servers.
+    """Convenience function to building SSH commands for remote Cylc servers.
 
     Build an SSH command that connects to the specified host using the
     localhost platform config.
@@ -394,7 +394,7 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
     * To run commands on job platforms use remote_cylc_cmd.
     * Use this interface to run commands on:
       * Cylc servers (i.e. `[scheduler][run hosts]available`).
-      * The host `cylc play` was run on, use this interface.
+      * The host `cylc play` was run on.
 
     Runs a command via SSH using the configuration for the localhost platform.
     This assumes the host you are connecting to shares the $HOME filesystem
