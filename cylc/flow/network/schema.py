@@ -709,13 +709,9 @@ class Runtime(ObjectType):
 Subset of runtime fields.
 
 Existing on 3 different node types:
-- Task/family Definition
-- Task/family cycle instance
-- Job
-
-Definition is the task/family hierarchy processed base.
-Task/famlily cycle instance is the broadcast modified (if any) of the base.
-Job is a record of what was run for a particular submit.
+- Task/family definition (from the flow.cylc file)
+- Task/family cycle instance (includes any broadcasts on top of the definition)
+- Job (a record of what was run for a particular submit)
 """
     platform = String(default_value=None)
     script = String(default_value=None)
