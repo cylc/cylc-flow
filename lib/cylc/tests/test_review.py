@@ -19,8 +19,6 @@
 import os
 import pytest
 
-from tempfile import mkdtemp
-
 from cylc.review import CylcReviewService
 
 @pytest.mark.parametrize(
@@ -42,18 +40,24 @@ from cylc.review import CylcReviewService
             False, False, False,
             id="False when suite.rc and no log dir"
         ),
+        pytest.param(
+            None, False, False,
+            id="False when no suite.rc and no flow.cylc"
+        ),
     ],
 )
-def test_is_cylc8(cylc_8, log_dir, expected):
+def test_is_cylc8(cylc_8, log_dir, expected, tmp_path):
     """Check is_cylc8 returns"""
-    temp_workflow_dir = mkdtemp()
+    temp_workflow_dir = str(tmp_path)
+    workflow_file = ''
     if cylc_8:
         workflow_file = os.path.join(temp_workflow_dir, 'flow.cylc')
-    else:
+    elif cylc_8 == False:
         workflow_file = os.path.join(temp_workflow_dir, 'suite.rc')
     if log_dir:
         workflow_log_dir = os.path.join(temp_workflow_dir, "log", "scheduler")
         os.makedirs(workflow_log_dir)
-    with open(workflow_file, 'w'):
-        pass
+    if workflow_file:
+        with open(workflow_file, 'w'):
+            pass
     assert CylcReviewService.is_cylc8(temp_workflow_dir) == expected
