@@ -16,11 +16,10 @@
 """Server for workflow runtime API."""
 
 import asyncio
-import getpass  # noqa: F401
 from queue import Queue
 from textwrap import dedent
 from time import sleep
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
 from graphql.execution import ExecutionResult
 from graphql.execution.executors.asyncio import AsyncioExecutor
@@ -39,6 +38,9 @@ from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.data_messages_pb2 import PbEntireWorkflow  # type: ignore
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
 
 # maps server methods to the protobuf message (for client/UIS import)
@@ -120,6 +122,7 @@ class WorkflowRuntimeServer:
                Matches all failed tasks.
 
     """
+    endpoints: Dict[str, object]
 
     OPERATE_SLEEP_INTERVAL = 0.2
     STOP_SLEEP_INTERVAL = 0.2
@@ -136,9 +139,7 @@ class WorkflowRuntimeServer:
         self.curve_auth = None
         self.client_pub_key_dir = None
 
-        self.schd = schd
-        self.public_priv = None  # update in get_public_priv()
-        self.endpoints = None
+        self.schd: 'Scheduler' = schd
         self.resolvers = Resolvers(
             self.schd.data_store_mgr,
             schd=self.schd
@@ -147,9 +148,8 @@ class WorkflowRuntimeServer:
             IgnoreFieldMiddleware,
         ]
 
-        self.queue = Queue()
-        self.publish_queue = Queue()
-        self.stopping = False
+        self.publish_queue: 'Queue[Iterable[tuple]]' = Queue()
+        self.waiting_to_stop = False
         self.stopped = True
 
         self.register_endpoints()
@@ -192,7 +192,9 @@ class WorkflowRuntimeServer:
         min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
         self.replier = WorkflowReplier(self, context=self.zmq_context)
         self.replier.start(min_, max_)
-        self.publisher = WorkflowPublisher(self, context=self.zmq_context)
+        self.publisher = WorkflowPublisher(
+            self.schd.workflow, context=self.zmq_context
+        )
         self.publisher.start(min_, max_)
         self.port = self.replier.port
         self.pub_port = self.publisher.port
@@ -212,9 +214,10 @@ class WorkflowRuntimeServer:
         server's self.thread in order to interrupt the self.operate() loop
         and wait for self.thread to terminate.
         """
-        self.queue.put('STOP')
+        self.waiting_to_stop = True
         if self.thread and self.thread.is_alive():
-            while not self.stopping:
+            # Wait for self.operate() loop to finish:
+            while self.waiting_to_stop:
                 # Non-async sleep - yield to other threads rather than
                 # event loop (allows self.operate() running in different
                 # thread to return)
@@ -225,7 +228,7 @@ class WorkflowRuntimeServer:
         if self.publisher:
             await self.publish_queued_items()
             await self.publisher.publish(
-                [(b'shutdown', str(reason).encode('utf-8'))]
+                (b'shutdown', str(reason).encode('utf-8'))
             )
             self.publisher.stop(stop_loop=False)
             self.publisher = None
@@ -244,13 +247,11 @@ class WorkflowRuntimeServer:
         # of the listener runs the event loop synchronously
         # (in graphql AsyncioExecutor)
         while True:
-            # process messages from the scheduler.
-            if self.queue.qsize():
-                message = self.queue.get()
-                if message == 'STOP':
-                    self.stopping = True
-                    break
-                raise ValueError('Unknown message "%s"' % message)
+            if self.waiting_to_stop:
+                # The self.stop() method is waiting for us to signal that we
+                # have finished here
+                self.waiting_to_stop = False
+                return
 
             # Gather and respond to any requests.
             self.replier.listener()
@@ -260,11 +261,11 @@ class WorkflowRuntimeServer:
             # Yield control to other threads
             sleep(self.OPERATE_SLEEP_INTERVAL)
 
-    async def publish_queued_items(self):
+    async def publish_queued_items(self) -> None:
         """Publish all queued items."""
         while self.publish_queue.qsize():
             articles = self.publish_queue.get()
-            await self.publisher.publish(articles)
+            await self.publisher.publish(*articles)
 
     def receiver(self, message):
         """Process incoming messages and coordinate response.
