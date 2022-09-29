@@ -125,21 +125,22 @@ class CylcReviewDAO(object):
         daos = self._db_init(user_name, suite_name)
         if stmt_args is None:
             stmt_args = []
-        try:
-            return daos.connect().execute(stmt, stmt_args)
-        except sqlite3.OperationalError as exc:
-            # At Cylc 8.0.1+ Workflows installed but not run will not yet have
-            # a database.
-            if (
-                os.path.exists(os.path.dirname(
-                    self.daos.values()[0].db_file_name) + '/flow.cylc')
-                or
-                os.path.exists(os.path.dirname(
-                    self.daos.values()[0].db_file_name) + '/suite.rc')
-            ):
-                return []
-            else:
-                raise exc
+        # only connect if db exists to avoid creating db if none there
+        if not os.path.exists(daos.db_file_name):
+            return []
+        else:
+            try:
+                return daos.connect().execute(stmt, stmt_args)
+            except sqlite3.OperationalError as exc:
+                # At Cylc 8.0.1+ Workflows installed but not run will not yet
+                # have a database.
+                if (os.path.exists(os.path.dirname(
+                    self.daos.values()[0].db_file_name) + '/flow.cylc') or
+                    os.path.exists(os.path.dirname(
+                        self.daos.values()[0].db_file_name) + '/suite.rc')):
+                    return []
+                else:
+                    raise exc
 
     def get_suite_broadcast_states(self, user_name, suite_name):
         """Return broadcast states of a suite.
@@ -218,8 +219,12 @@ class CylcReviewDAO(object):
                 return ([], 0)
         except sqlite3.Error:
             return ([], 0)
-
-        if self.is_cylc8(user_name, suite_name):
+        from cylc.review import CylcReviewService
+        suite_dir = os.path.join(
+            CylcReviewService._get_user_home(user_name),
+            "cylc-run",
+            suite_name)
+        if CylcReviewService.is_cylc8(suite_dir):
             stmt = (
                 "SELECT" +
                 " task_states.time_updated AS time," +
@@ -230,7 +235,8 @@ class CylcReviewDAO(object):
                 " time_submit, submit_status," +
                 " time_run, time_run_exit, run_signal, run_status," +
                 " platform_name, job_runner_name, job_id" +
-                " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
+                " FROM task_states LEFT JOIN task_jobs USING " +
+                "(cycle, name, submit_num)" +
                 where_expr +
                 " ORDER BY " +
                 self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"])
@@ -291,20 +297,6 @@ class CylcReviewDAO(object):
         if entries:
             self._get_job_logs(user_name, suite_name, entries, entry_of)
         return (entries, of_n_entries)
-
-    def is_cylc8(self, user_name, suite_name):
-        """Determine Cylc version for a given suite: Database changes require
-        A different database query for Cylc8.
-        """
-        suite_info = self._db_exec(
-            user_name, suite_name,
-            'SELECT name FROM sqlite_master WHERE type=\'table\';', []
-        )
-        suite_info = [i[0] for i in suite_info]
-        if 'workflow_params' in suite_info:
-            return True
-        else:
-            return False
 
     def _get_suite_job_entries_where(
             self, cycles, tasks, task_status, job_status):
