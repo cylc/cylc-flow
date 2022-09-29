@@ -24,6 +24,7 @@ Send messages to:
 from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
+from typing import List
 
 from cylc.flow.exceptions import WorkflowStopped
 import cylc.flow.flags
@@ -68,7 +69,7 @@ mutation (
 '''
 
 
-def record_messages(workflow, task_job, messages):
+def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
     """Record task job messages.
 
     Print the messages according to their severity.
@@ -76,19 +77,19 @@ def record_messages(workflow, task_job, messages):
     Send the messages to the workflow, if possible.
 
     Arguments:
-        workflow (str): Workflow name.
-        task_job (str): Task job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
-        messages (list): List of messages "[[severity, message], ...]".
+        workflow: Workflow name.
+        job_id: Job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
+        messages: List of messages "[[severity, message], ...]".
     """
     # Record the event time, in case the message is delayed in some way.
     event_time = get_current_time_string(
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
-    write_messages(workflow, task_job, messages, event_time)
+    write_messages(workflow, job_id, messages, event_time)
     if get_comms_method() != CommsMeth.POLL:
-        send_messages(workflow, task_job, messages, event_time)
+        send_messages(workflow, job_id, messages, event_time)
 
 
-def write_messages(workflow, task_job, messages, event_time):
+def write_messages(workflow, job_id, messages, event_time):
     # Print to stdout/stderr
     for severity, message in messages:
         if severity in STDERR_LEVELS:
@@ -98,10 +99,10 @@ def write_messages(workflow, task_job, messages, event_time):
         handle.write('%s %s - %s\n' % (event_time, severity, message))
         handle.flush()
     # Write to job.status
-    _append_job_status_file(workflow, task_job, event_time, messages)
+    _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(workflow, task_job, messages, event_time):
+def send_messages(workflow, job_id, messages, event_time):
     workflow = os.path.normpath(workflow)
     try:
         pclient = get_client(workflow)
@@ -121,7 +122,7 @@ def send_messages(workflow, task_job, messages, event_time):
             'request_string': MUTATION,
             'variables': {
                 'wFlows': [workflow],
-                'taskJob': task_job,
+                'taskJob': job_id,
                 'eventTime': event_time,
                 'messages': messages,
             }
@@ -129,11 +130,11 @@ def send_messages(workflow, task_job, messages, event_time):
         pclient('graphql', mutation_kwargs)
 
 
-def _append_job_status_file(workflow, task_job, event_time, messages):
+def _append_job_status_file(workflow, job_id, event_time, messages):
     """Write messages to job status file."""
     job_log_name = os.getenv('CYLC_TASK_LOG_ROOT')
     if not job_log_name:
-        job_log_name = get_workflow_run_job_dir(workflow, task_job, 'job')
+        job_log_name = get_workflow_run_job_dir(workflow, job_id, 'job')
     try:
         job_status_file = open(job_log_name + '.status', 'a')  # noqa: SIM115
         # TODO: niceify read/write/appending messages to this file

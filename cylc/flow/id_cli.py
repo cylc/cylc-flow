@@ -311,7 +311,7 @@ async def parse_ids_async(
     return workflows, multi_mode
 
 
-def parse_id(*args, **kwargs):
+def parse_id(*args, **kwargs) -> Tuple[str, Optional[Tokens], Any]:
     return asyncio.run(parse_id_async(*args, **kwargs))
 
 

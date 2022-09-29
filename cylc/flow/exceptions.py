@@ -115,6 +115,13 @@ class WorkflowEventError(CylcError):
 
 class CommandFailedError(CylcError):
     """Exception for when scheduler commands fail."""
+    def __init__(self, value: Union[str, Exception]):
+        self.value = value
+
+    def __str__(self) -> str:
+        if isinstance(self.value, Exception):
+            return f"{type(self.value).__name__}: {self.value}"
+        return self.value
 
 
 class ServiceFileError(CylcError):
