@@ -263,7 +263,6 @@ class CylcReviewService(object):
             return self.template_env.get_template("cycles.html").render(**data)
         except jinja2.TemplateError:
             traceback.print_exc()
-        self._db_close(user, suite)
         return json.dumps(data)
 
     @cherrypy.expose

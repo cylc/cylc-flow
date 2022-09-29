@@ -152,7 +152,6 @@ class CylcReviewDAO(object):
         for row in self._db_exec(user_name, suite_name, stmt):
             point, namespace, key, value = row
             broadcast_states.append([point, namespace, key, value])
-        self._db_close(user_name, suite_name)
         return broadcast_states
 
     def get_suite_broadcast_events(self, user_name, suite_name):
@@ -166,7 +165,6 @@ class CylcReviewDAO(object):
             time_, change, point, namespace, key, value = row
             broadcast_events.append(
                 (time_, change, point, namespace, key, value))
-        self._db_close(user_name, suite_name)
         return broadcast_events
 
     def get_suite_job_entries(
