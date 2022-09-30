@@ -1092,7 +1092,6 @@ class TaskEventsManager():
             if itask.state_reset(TASK_STATUS_FAILED):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
                 self.data_store_mgr.delta_task_state(itask)
-            LOG.critical(f"[{itask}] failed")
             no_retries = True
         else:
             # There is an execution retry lined up.

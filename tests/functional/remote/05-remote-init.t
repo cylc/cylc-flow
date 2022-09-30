@@ -52,7 +52,7 @@ f|0|0|${CYLC_TEST_PLATFORM}
 g|0|0|localhost
 __SELECT__
 
-grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "ERROR - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 grep_ok "1/a did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
 grep_ok "1/b did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
 

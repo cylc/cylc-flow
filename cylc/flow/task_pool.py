@@ -1027,7 +1027,7 @@ class TaskPool:
                 incomplete.append((itask.identity, outputs))
 
         if incomplete:
-            LOG.warning(
+            LOG.error(
                 "Incomplete tasks:\n"
                 + "\n".join(
                     f"  * {id_} did not complete required outputs: {outputs}"
@@ -1491,7 +1491,7 @@ class TaskPool:
             self.spawn_on_all_outputs(itask, completed_only=True)
             return None
 
-        LOG.info(f"[{itask}] spawned")
+        LOG.debug(f"[{itask}] spawned")
         self.db_add_new_flow_rows(itask)
         return itask
 
