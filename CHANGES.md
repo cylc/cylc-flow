@@ -22,7 +22,10 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
-## __cylc-7.8.12 (Upcoming)__
+## __cylc-7.8.13 (Upcoming)__
+
+
+## __cylc-7.8.12 (2022-09-30)__
 
 ### Fixes
 
