@@ -1464,7 +1464,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         rsync_cmd.append("--dry-run")
     if reinstall:
         rsync_cmd.append('--delete')
-    for exclude in [
+
+    exclusions = [
         '.git',
         '.svn',
         '.cylcignore',
@@ -1475,7 +1476,15 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         WorkflowFiles.SHARE_DIR,
         WorkflowFiles.Install.DIRNAME,
         WorkflowFiles.Service.DIRNAME
-    ]:
+    ]
+
+    # This is a hack to make sure that changes to rose-suite.conf
+    # are considered when re-installing.
+    # It should be removed after https://github.com/cylc/cylc-rose/issues/149
+    if not dry_run:
+        exclusions.append('rose-suite.conf')
+
+    for exclude in exclusions:
         if (Path(src).joinpath(exclude).exists() or
                 Path(dst).joinpath(exclude).exists()):
             rsync_cmd.append(f"--exclude={exclude}")
@@ -1527,12 +1536,19 @@ def reinstall_workflow(
         reinstall=True,
         dry_run=dry_run,
     )
+
+    # Add '+++' to -out-format to mark lines passed through formatter.
+    rsync_cmd.append('--out-format=+++%o %n%L+++')
+
+    # Run rsync command:
     reinstall_log.info(cli_format(rsync_cmd))
     LOG.debug(cli_format(rsync_cmd))
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
-    stdout = stdout.strip()
+
+    # Strip unwanted output.
+    stdout = ('\n'.join(re.findall(r'\+\+\+(.*)\+\+\+', stdout))).strip()
     stderr = stderr.strip()
 
     if proc.returncode != 0:
