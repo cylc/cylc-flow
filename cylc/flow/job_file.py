@@ -83,13 +83,14 @@ class JobFileWriter:
                     ['/usr/bin/env', 'bash', '-n', tmp_name],
                     stderr=PIPE,
                     stdin=DEVNULL,
+                    text=True
                     # * the purpose of this is to evaluate user defined code
                     #   prior to it being executed
                 ) as proc:
                     if proc.wait():
                         # This will leave behind the temporary file,
                         # which is useful for debugging syntax errors, etc.
-                        raise RuntimeError(proc.communicate()[1].decode())
+                        raise RuntimeError(proc.communicate()[1])
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.

@@ -412,7 +412,8 @@ def main(
                     cmd,
                     platform,
                     capture_process=False,
-                    manage=(mode == 'tail')
+                    manage=(mode == 'tail'),
+                    text=False
                 )
         else:
             # Local task job or local job log.
