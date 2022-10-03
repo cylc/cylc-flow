@@ -170,7 +170,7 @@ class CylcWorkflowDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    RESTART_INCOMPAT_VERSION = "8.0b3"  # Can't restart if <= this version
+    RESTART_MIN_COMPAT_VERSION = "8.1.0.dev"  # Can't restart if < this version
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"

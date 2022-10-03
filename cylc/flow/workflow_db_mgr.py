@@ -715,9 +715,9 @@ class WorkflowDatabaseManager:
             pri_dao.close()
         last_run_ver = parse_version(last_run_ver)
         restart_incompat_ver = parse_version(
-            CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
+            CylcWorkflowDAO.RESTART_MIN_COMPAT_VERSION
         )
-        if last_run_ver <= restart_incompat_ver:
+        if last_run_ver < restart_incompat_ver:
             raise ServiceFileError(
                 f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
                 f"\n{manual_rm_msg}"

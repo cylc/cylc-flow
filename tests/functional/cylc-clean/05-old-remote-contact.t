@@ -41,7 +41,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "$WORKFLOW_NAME" --no-detach
 # Create a fake old contact file on the remote host
 echo | $SSH_CMD "cat > \$HOME/cylc-run/${WORKFLOW_NAME}/.service/contact" << EOF
 CYLC_API=5
-CYLC_VERSION=8.0.0
+CYLC_VERSION=8.1.0
 CYLC_WORKFLOW_COMMAND=echo Hello John
 CYLC_WORKFLOW_HOST=unreachable.isla_nublar.ingen
 CYLC_WORKFLOW_ID=${WORKFLOW_NAME}
