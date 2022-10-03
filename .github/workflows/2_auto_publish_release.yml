@@ -70,3 +70,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         release-url: ${{ steps.create-release.outputs.html_url }}
+
+    - name: Bump dev version
+      uses: cylc/release-actions/stage-2/bump-dev-version@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        init-file: 'cylc/flow/__init__.py'

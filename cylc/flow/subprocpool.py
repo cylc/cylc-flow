@@ -549,7 +549,7 @@ class SubProcPool:
         """Tests context for rsync failing to communicate with a host.
 
         If there has been a failure caused by rsync being unable to connect
-        try a test of ssh connectivity. Necessary becuase loss of connectivity
+        try a test of ssh connectivity. Necessary because loss of connectivity
         may cause different rsync failures depending on version, and some of
         the failures may be caused by other problems.
         """

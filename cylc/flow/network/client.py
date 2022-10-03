@@ -155,7 +155,11 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             raise WorkflowStopped(self.workflow)
 
 
-class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
+class WorkflowRuntimeClient(  # type: ignore[misc]
+    ZMQSocketBase, WorkflowRuntimeClientBase
+):
+    # (Ignoring mypy 'definition of "host" in base class "ZMQSocketBase" is
+    # incompatible with definition in base class "WorkflowRuntimeClientBase"')
     """Initiate a client to the scheduler API.
 
     Initiates the REQ part of a ZMQ REQ-REP pair.
@@ -220,6 +224,10 @@ class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
                 cylc.flow.network.client.WorkflowRuntimeClient.async_request
 
     """
+    # socket & event loop not None - get assigned on init by self.start():
+    socket: zmq.asyncio.Socket
+    loop: asyncio.AbstractEventLoop
+
     def __init__(
         self,
         workflow: str,
@@ -229,7 +237,7 @@ class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
         context: Optional[zmq.asyncio.Context] = None,
         srv_public_key_loc: Optional[str] = None
     ):
-        ZMQSocketBase.__init__(self, zmq.REQ, context=context)
+        ZMQSocketBase.__init__(self, zmq.REQ, workflow, context=context)
         WorkflowRuntimeClientBase.__init__(self, workflow, host, port, timeout)
         # convert to milliseconds:
         self.timeout *= 1000

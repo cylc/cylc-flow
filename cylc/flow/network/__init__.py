@@ -18,7 +18,7 @@
 import asyncio
 import getpass
 import json
-from typing import Tuple
+from typing import Optional, Tuple
 
 import zmq
 import zmq.asyncio
@@ -112,31 +112,24 @@ class ZMQSocketBase:
     def __init__(
         self,
         pattern,
-        workflow=None,
-        bind=False,
-        context=None,
+        workflow: str,
+        bind: bool = False,
+        context: Optional[zmq.Context] = None,
     ):
         self.bind = bind
         if context is None:
-            self.context = zmq.asyncio.Context()
+            self.context: zmq.Context = zmq.asyncio.Context()
         else:
             self.context = context
         self.pattern = pattern
         self.workflow = workflow
-        self.host = None
-        self.port = None
-        self.socket = None
-        self.loop = None
+        self.host: Optional[str] = None
+        self.port: Optional[int] = None
+        self.socket: Optional[zmq.Socket] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.stopping = False
 
     def start(self, *args, **kwargs):
-        """Start the server/network-component.
-
-        Pass arguments to _start_
-        """
-        self._start_sequence(*args, **kwargs)
-
-    def _start_sequence(self, *args, **kwargs):
         """Create the async loop, and bind socket."""
         # set asyncio loop
         try:

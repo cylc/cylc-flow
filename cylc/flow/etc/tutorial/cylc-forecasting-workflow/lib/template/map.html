@@ -31,11 +31,7 @@
         }
 
         // Forecast data as dict {'lead_time': [2d data matrix]}.
-        var data = {
-            {
-                data
-            }
-        };
+        var data = {{ data }};
 
         // Annotate map with data.
         var lng;
@@ -47,36 +43,12 @@
             rects = L.layerGroup();
             for (let pos_y in data[time]) {
                 for (let pos_x in data[time][0]) {
-                    lng = (pos_x * {
-                        {
-                            resolution
-                        }
-                    }) + {
-                        {
-                            lng1
-                        }
-                    };
-                    lat = {
-                        {
-                            lat2
-                        }
-                    } - (pos_y * {
-                        {
-                            resolution
-                        }
-                    });
+                    lng = (pos_x * {{ resolution }}) + {{ lng1 }};
+                    lat = {{ lat2 }} - (pos_y * {{ resolution }});
                     L.rectangle(
                         [
                             [lat, lng],
-                            [lat + {
-                                {
-                                    resolution
-                                }
-                            }, lng + {
-                                {
-                                    resolution
-                                }
-                            }]
+                            [lat + {{ resolution }}, lng + {{ resolution }}]
                         ], {
                             color: get_colour(data[time][pos_y][pos_x]),
                             weight: 0,
@@ -105,24 +77,8 @@
 
         // Zoom / center map to fit domain.
         map.fitBounds([
-            [{
-                {
-                    lat1
-                }
-            }, {
-                {
-                    lng1
-                }
-            }],
-            [{
-                {
-                    lat2
-                }
-            }, {
-                {
-                    lng2
-                }
-            }]
+            [{{ lat1 }}, {{ lng1 }}],
+            [{{ lat2 }}, {{ lng2 }}]
         ]);
 
         // Add map tiles.

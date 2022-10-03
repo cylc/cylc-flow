@@ -31,9 +31,10 @@ from time import sleep
 from typing import Any, Dict, List, Tuple
 
 import cylc.flow.flags
-from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.option_parsers import verbosity_to_opts
 from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.util import format_cmd
 
 
 def get_proc_ancestors():
@@ -75,7 +76,7 @@ def run_cmd(
     capture_process=False,
     capture_status=False,
     manage=False,
-    text=True
+    text=True,
 ):
     """Run a given cylc command on another account and/or host.
 
@@ -127,6 +128,7 @@ def run_cmd(
         stdin = read
 
     try:
+        LOG.debug(f'running command:\n$ {format_cmd(command)}')
         proc = Popen(  # nosec
             command,
             stdin=stdin,
@@ -179,6 +181,15 @@ DEFAULT_RSYNC_OPTS = [
     '--no-t'
 ]
 
+DEFAULT_INCLUDES = [
+    '/ana/***',  # Rose ana analysis modules
+    '/app/***',  # Rose applications
+    '/bin/***',  # Cylc bin directory (added to PATH)
+    '/etc/***',  # Miscellaneous resources
+    '/lib/***',  # Cylc lib directory (lib/python added to PYTHONPATH for
+                 # workflow config)
+]
+
 
 def construct_rsync_over_ssh_cmd(
     src_path: str, dst_path: str, platform: Dict[str, Any],
@@ -200,6 +211,7 @@ def construct_rsync_over_ssh_cmd(
         ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
         do not break ``rsync_255_fail``.
     """
+    dst_path = dst_path.replace('$HOME/', '')
     dst_host = get_host_from_platform(platform, bad_hosts=bad_hosts)
     ssh_cmd = platform['ssh command']
     command = platform['rsync command']
@@ -215,12 +227,7 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.extend(rsync_options)
     for exclude in ['log', 'share', 'work']:
         rsync_cmd.append(f"--exclude={exclude}")
-    default_includes = [
-        '/app/***',
-        '/bin/***',
-        '/etc/***',
-        '/lib/***']
-    for include in default_includes:
+    for include in DEFAULT_INCLUDES:
         rsync_cmd.append(f"--include={include}")
     for include in get_includes_to_rsync(rsync_includes):
         rsync_cmd.append(f"--include={include}")
@@ -232,54 +239,29 @@ def construct_rsync_over_ssh_cmd(
 
 
 def construct_ssh_cmd(
-    raw_cmd, platform, host, **kwargs
-):
-    """Build an SSH command for execution on a remote platform.
-
-    Constructs the SSH command according to the platform configuration.
-
-    See _construct_ssh_cmd for argument documentation.
-    """
-    return _construct_ssh_cmd(
-        raw_cmd,
-        host=host,
-        ssh_cmd=platform['ssh command'],
-        remote_cylc_path=platform['cylc path'],
-        ssh_login_shell=platform['use login shell'],
-        **kwargs
-    )
-
-
-def _construct_ssh_cmd(
     raw_cmd,
-    host=None,
+    platform,
+    host,
     forward_x11=False,
     stdin=False,
-    ssh_cmd=None,
-    ssh_login_shell=None,
-    remote_cylc_path=None,
     set_UTC=False,
     set_verbosity=False,
-    timeout=None
+    timeout=None,
 ):
     """Build an SSH command for execution on a remote platform hosts.
 
     Arguments:
         raw_cmd (list):
             primitive command to run remotely.
+        platform (dict):
+            The Cylc job "platform" to run the command on. This is used
+            to determine the settings used e.g. "ssh command".
         host (string):
             remote host name. Use 'localhost' if not specified.
         forward_x11 (boolean):
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
         stdin:
             If None, the `-n` option will be added to the SSH command line.
-        ssh_cmd (string):
-            ssh command to use: If unset defaults to localhost ssh cmd.
-        ssh_login_shell (boolean):
-            If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
-        remote_cylc_path (string):
-            Path containing the `cylc` executable.
-            This is required if the remote executable is not in $PATH.
         set_UTC (boolean):
             If True, check UTC mode and specify if set to True (non-default).
         set_verbosity (boolean):
@@ -287,28 +269,20 @@ def _construct_ssh_cmd(
         timeout (str):
             String for bash timeout command.
 
-    Return:
+    Returns:
         list - A list containing a chosen command including all arguments and
         options necessary to directly execute the bare command on a given host
         via ssh.
+
     """
-    # If ssh cmd isn't given use the default from localhost settings.
-    if ssh_cmd is None:
-        command = shlex.split(get_platform()['ssh command'])
-    else:
-        command = shlex.split(ssh_cmd)
+    command = shlex.split(platform['ssh command'])
 
     if forward_x11:
         command.append('-Y')
     if stdin is None:
         command.append('-n')
 
-    user_at_host = ''
-    if host:
-        user_at_host += host
-    else:
-        user_at_host += 'localhost'
-    command.append(user_at_host)
+    command.append(host)
 
     # Pass CYLC_VERSION and optionally, CYLC_CONF_PATH & CYLC_UTC through.
     command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
@@ -329,8 +303,7 @@ def _construct_ssh_cmd(
         command.append(quote(r'TZ=UTC'))
 
     # Use bash -l?
-    if ssh_login_shell is None:
-        ssh_login_shell = get_platform()['use login shell']
+    ssh_login_shell = platform['use login shell']
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -341,14 +314,11 @@ def _construct_ssh_cmd(
         command += ['timeout', timeout]
 
     # 'cylc' on the remote host
-    if not remote_cylc_path:
-        remote_cylc_path = get_platform()['cylc path']
-
+    remote_cylc_path = platform['cylc path']
     if remote_cylc_path:
         cylc_cmd = str(Path(remote_cylc_path) / 'cylc')
     else:
         cylc_cmd = 'cylc'
-
     command.append(cylc_cmd)
 
     # Insert core raw command after ssh, but before its own, command options.
@@ -360,25 +330,38 @@ def _construct_ssh_cmd(
     return command
 
 
-def remote_cylc_cmd(cmd, platform, bad_hosts=None, **kwargs):
-    """Execute a Cylc command on a remote platform.
+def construct_cylc_server_ssh_cmd(
+    cmd,
+    host,
+    **kwargs,
+):
+    """Convenience function to building SSH commands for remote Cylc servers.
 
-    Uses the platform configuration to construct the command.
+    Build an SSH command that connects to the specified host using the
+    localhost platform config.
 
-    See _construct_ssh_cmd for argument documentation.
+    * To run commands on job platforms use construct_ssh_cmd.
+    * Use this interface to connect to:
+      * Cylc servers (i.e. `[scheduler][run hosts]available`).
+      * The host `cylc play` was run on, use this interface.
+
+    This assumes the host you are connecting to shares the $HOME filesystem
+    with the localhost platform.
+
+    For arguments and returns see construct_ssh_cmd.
     """
-    return _remote_cylc_cmd(
+    return construct_ssh_cmd(
         cmd,
-        host=get_host_from_platform(platform, bad_hosts=bad_hosts),
-        ssh_cmd=platform['ssh command'],
-        remote_cylc_path=platform['cylc path'],
-        ssh_login_shell=platform['use login shell'],
-        **kwargs
+        get_platform(),  # use localhost settings
+        host,
+        **kwargs,
     )
 
 
-def _remote_cylc_cmd(
+def remote_cylc_cmd(
     cmd,
+    platform,
+    bad_hosts=None,
     host=None,
     stdin=None,
     stdin_str=None,
@@ -387,26 +370,24 @@ def _remote_cylc_cmd(
     remote_cylc_path=None,
     capture_process=False,
     manage=False,
-    text=True
+    text=True,
 ):
     """Execute a Cylc command on a remote platform.
 
-    See run_cmd and _construct_ssh_cmd for argument documentation.
+    Uses the provided platform configuration to construct the command.
 
-    Returns:
-        subprocess.Popen or int - If capture_process=True, return the Popen
-        object if created successfully. Otherwise, return the exit code of the
-        remote command.
-
+    For arguments and returns see construct_ssh_cmd and run_cmd.
     """
+    if not host:
+        # no host selected => perform host selection from platform config
+        host = get_host_from_platform(platform, bad_hosts=bad_hosts)
+
     return run_cmd(
-        _construct_ssh_cmd(
+        construct_ssh_cmd(
             cmd,
+            platform,
             host=host,
             stdin=True if stdin_str else stdin,
-            ssh_login_shell=ssh_login_shell,
-            ssh_cmd=ssh_cmd,
-            remote_cylc_path=remote_cylc_path
         ),
         stdin=stdin,
         stdin_str=stdin_str,
@@ -414,4 +395,29 @@ def _remote_cylc_cmd(
         capture_status=True,
         manage=manage,
         text=text
+    )
+
+
+def cylc_server_cmd(cmd, host=None, **kwargs):
+    """Convenience function for running commands on remote Cylc servers.
+
+    Executes a Cylc command on the specified host using localhost platform
+    config.
+
+    * To run commands on job platforms use remote_cylc_cmd.
+    * Use this interface to run commands on:
+      * Cylc servers (i.e. `[scheduler][run hosts]available`).
+      * The host `cylc play` was run on.
+
+    Runs a command via SSH using the configuration for the localhost platform.
+    This assumes the host you are connecting to shares the $HOME filesystem
+    with the localhost platform.
+
+    For arguments and returns see construct_ssh_cmd and run_cmd.
+    """
+    return remote_cylc_cmd(
+        cmd,
+        get_platform(),  # use localhost settings
+        host=host,
+        **kwargs,
     )

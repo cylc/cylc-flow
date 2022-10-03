@@ -17,15 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 r"""cylc message [OPTIONS] -- ARGS
 
-Record task job messages.
+Record task messages.
 
-Send task job messages to:
+Send messages to:
 - The job stdout/stderr.
 - The job status file, if there is one.
 - The scheduler, if communication is possible.
 
-Task jobs use this command to record and report status such as success and
-failure. Applications run by task jobs can use this command to report messages
+Jobs use this command to record and report status such as success and
+failure. Applications run by jobs can use this command to report messages
 and to report registered task outputs.
 
 Messages can be specified as arguments. A '-' indicates that the command should
@@ -50,7 +50,7 @@ Examples:
   > WARNING:Hey!
   >__STDIN__
 
-Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in task job
+Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in job
 environments - you do not need to write their actual values in task scripting.
 
 Each message can be prefixed with a severity level using the syntax
@@ -66,7 +66,7 @@ Note:
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.
-Otherwise, the first 2 arguments are assumed to be workflow name and task job
+Otherwise, the first 2 arguments are assumed to be workflow name and job
 identifier.
 """
 
@@ -95,10 +95,9 @@ def get_option_parser() -> COP:
         __doc__,
         comms=True,
         argdoc=[
-            # TODO
             COP.optional(WORKFLOW_ID_ARG_DOC),
             COP.optional(
-                ('TASK-JOB', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM')
+                ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM')
             ),
             COP.optional(
                 ('[SEVERITY:]MESSAGE ...', 'Messages')
@@ -129,10 +128,15 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         # (As of Dec 2020 some functional tests still use the classic
         # two arg interface)
         workflow_id = os.getenv('CYLC_WORKFLOW_ID')
-        task_job = os.getenv('CYLC_TASK_JOB')
+        job_id = os.getenv('CYLC_TASK_JOB')
+        if not workflow_id or not job_id:
+            raise InputError(
+                "Must set $CYLC_WORKFLOW_ID and $CYLC_TASK_JOB if not "
+                "specified as arguments"
+            )
         message_strs = list(args)
     else:
-        workflow_id, task_job, *message_strs = args
+        workflow_id, job_id, *message_strs = args
         workflow_id, *_ = parse_id(
             workflow_id,
             constraint='workflows',
@@ -171,4 +175,4 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(workflow_id, task_job, messages)
+    record_messages(workflow_id, job_id, messages)

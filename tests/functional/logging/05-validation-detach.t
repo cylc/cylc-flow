@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,29 +14,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------------
+# Test that validation errors on play are logged before daemonisation
 
-from pathlib import Path
-from shutil import rmtree
+. "$(dirname "$0")/test_header"
+set_test_number 3
 
-import pytest
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
+[scheduler]
+    horse = dorothy
+__FLOW__
 
-from cylc.flow.async_util import scandir
+run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
+TEST_NAME="${TEST_NAME_BASE}-run"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}"
 
-@pytest.fixture()
-def directory(tmp_path):
-    """A directory with two files and a symlink."""
-    (tmp_path / 'a').touch()
-    (tmp_path / 'b').touch()
-    (tmp_path / 'c').symlink_to(tmp_path / 'b')
-    yield tmp_path
-    rmtree(tmp_path)
+grep_ok "IllegalItemError: [scheduler]horse" "${TEST_NAME}.stderr" -F
 
-
-async def test_scandir(directory):
-    """It should list directory contents (including symlinks)."""
-    assert sorted(await scandir(directory)) == [
-        Path(directory, 'a'),
-        Path(directory, 'b'),
-        Path(directory, 'c')
-    ]
+purge

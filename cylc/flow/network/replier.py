@@ -15,13 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
-import getpass  # noqa: F401
 from queue import Queue
+from typing import TYPE_CHECKING, Optional
 
 import zmq
 
 from cylc.flow import LOG
 from cylc.flow.network import encode_, decode_, ZMQSocketBase
+
+if TYPE_CHECKING:
+    from cylc.flow.network.server import WorkflowRuntimeServer
 
 
 class WorkflowReplier(ZMQSocketBase):
@@ -46,21 +49,25 @@ class WorkflowReplier(ZMQSocketBase):
 
     """
 
-    def __init__(self, server, context=None):
-        super().__init__(zmq.REP, bind=True, context=context)
+    def __init__(
+        self,
+        server: 'WorkflowRuntimeServer',
+        context: Optional[zmq.Context] = None
+    ):
+        super().__init__(
+            zmq.REP, server.schd.workflow, bind=True, context=context
+        )
         self.server = server
-        self.workflow = server.schd.workflow
-        self.queue = Queue()
+        self.queue: 'Queue[str]' = Queue()
 
-    def _bespoke_stop(self):
+    def _bespoke_stop(self) -> None:
         """Stop the listener and Authenticator.
 
         Overwrites Base method.
 
         """
         LOG.debug('stopping zmq replier...')
-        if self.queue is not None:
-            self.queue.put('STOP')
+        self.queue.put('STOP')
 
     def listener(self):
         """The server main loop, listen for and serve requests.

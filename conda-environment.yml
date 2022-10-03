@@ -12,12 +12,14 @@ dependencies:
   - jinja2 >=3.0,<3.1
   - metomi-isodatetime >=1!3.0.0, <1!3.1.0
   # Constrain protobuf version for compatible Scheduler-UIS comms across hosts
-  - protobuf >=3.19.0,<3.20.0
+  - protobuf >=4.21.2,<4.22.0
   - psutil >=5.6.0
   - python
   - pyzmq >=22,<23
   - setuptools >=49
   - urwid >=2,<3
+  # Add # [py<3.11] for tomli once Python 3.11 Released
+  - tomli >=2.0.0
 
 # optional dependencies
   #- empy >=3.3,<3.4

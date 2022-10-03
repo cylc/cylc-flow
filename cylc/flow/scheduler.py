@@ -19,7 +19,6 @@ import asyncio
 from contextlib import suppress
 from collections import deque
 from dataclasses import dataclass
-import logging
 from optparse import Values
 import os
 from pathlib import Path
@@ -31,7 +30,16 @@ from threading import Barrier, Thread
 from time import sleep, time
 import traceback
 from typing import (
-    Callable, Iterable, NoReturn, Optional, List, Set, Dict, Tuple, Union
+    TYPE_CHECKING,
+    Callable,
+    Iterable,
+    NoReturn,
+    Optional,
+    List,
+    Set,
+    Dict,
+    Tuple,
+    Union,
 )
 from uuid import uuid4
 
@@ -67,14 +75,20 @@ from cylc.flow.loggingutil import (
     ReferenceLogFileHandler,
     get_next_log_number,
     get_reload_start_number,
-    get_sorted_logs_by_time
+    get_sorted_logs_by_time,
+    patch_log_level
 )
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.option_parsers import verbosity_to_env, verbosity_to_opts
+from cylc.flow.option_parsers import (
+    log_level_to_verbosity,
+    verbosity_to_env,
+    verbosity_to_opts,
+)
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
@@ -123,6 +137,9 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class SchedulerStop(CylcError):
@@ -191,7 +208,7 @@ class Scheduler:
 
     # queues
     command_queue: 'Queue[Tuple[str, tuple, dict]]'
-    message_queue: Queue
+    message_queue: 'Queue[TaskMsg]'
     ext_trigger_queue: Queue
 
     # configuration
@@ -221,10 +238,10 @@ class Scheduler:
     stop_clock_time: Optional[int] = None
 
     # task event loop
-    is_paused: Optional[bool] = None
-    is_updated: Optional[bool] = None
-    is_stalled: Optional[bool] = None
-    is_reloaded: Optional[bool] = None
+    is_paused = False
+    is_updated = False
+    is_stalled = False
+    is_reloaded = False
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
@@ -384,6 +401,11 @@ class Scheduler:
         * Get the data store rolling.
 
         """
+        # Print workflow name to disambiguate in case of inferred run number
+        # while in no-detach mode
+        with patch_log_level(LOG):
+            LOG.info(f"Workflow: {self.workflow}")
+
         self.profiler.log_memory("scheduler.py: start configure")
 
         self._check_startup_opts()
@@ -408,31 +430,8 @@ class Scheduler:
             self.options.cycle_point_tz = (
                 self.config.cfg['scheduler']['cycle point time zone'])
 
-        # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs.
-        # (These are also headers that get logged on each rollover)
-        LOG.info(
-            f'Run mode: {self.config.run_mode()}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        LOG.info(
-            f'Initial point: {self.config.initial_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.start_point != self.config.initial_point:
-            LOG.info(
-                f'Start point: {self.config.start_point}',
-                extra=RotatingLogFileHandler.header_extra
-            )
-        LOG.info(
-            f'Final point: {self.config.final_point}',
-            extra=RotatingLogFileHandler.header_extra
-        )
-        if self.config.stop_point:
-            LOG.info(
-                f'Stop point: {self.config.stop_point}',
-                extra=RotatingLogFileHandler.header_extra
-            )
+        # Note that daemonization happens after this:
+        self.log_start()
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -457,7 +456,6 @@ class Scheduler:
             self.flow_mgr
         )
 
-        self.is_reloaded = False
         self.data_store_mgr.initiate_data_model()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
@@ -536,53 +534,72 @@ class Scheduler:
         finally:
             pri_dao.close()
 
-    async def log_start(self) -> None:
-        is_quiet = (cylc.flow.flags.verbosity < 0)
-        log_level = LOG.getEffectiveLevel()
-        if is_quiet:
-            # Temporarily change logging level to log important info
-            LOG.setLevel(logging.INFO)
+    def log_start(self) -> None:
+        """Log headers, that also get logged on each rollover.
 
-        # Print workflow name to disambiguate in case of inferred run number
-        # while in no-detach mode
-        LOG.info(f"Workflow: {self.workflow}")
-        # Headers that also get logged on each rollover:
-        LOG.info(
-            self.START_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.server.port,
-                'pid': os.getpid()},
-            extra=RotatingLogFileHandler.header_extra,
-        )
-        LOG.info(
-            self.START_PUB_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.server.pub_port},
-            extra=RotatingLogFileHandler.header_extra,
-        )
-        restart_num = self.get_restart_num() + 1
-        LOG.info(
-            f'Run: (re)start number={restart_num}, log rollover=%d',
-            # Hard code 1 in args, gets updated on log rollover (NOTE: this
-            # must be the only positional arg):
-            1,
-            extra={
-                **RotatingLogFileHandler.header_extra,
-                RotatingLogFileHandler.ROLLOVER_NUM: 1
-            }
-        )
-        LOG.info(
-            f'Cylc version: {CYLC_VERSION}',
-            extra=RotatingLogFileHandler.header_extra
-        )
+        Note: daemonize polls for 2 of these headers before detaching.
+        """
+        # Temporarily lower logging level if necessary to log important info
+        with patch_log_level(LOG):
+            # `daemonize` polls for these next 2 before detaching:
+            LOG.info(
+                self.START_MESSAGE_TMPL % {
+                    'comms_method': 'tcp',
+                    'host': self.host,
+                    'port': self.server.port,
+                    'pid': os.getpid()},
+                extra=RotatingLogFileHandler.header_extra,
+            )
+            LOG.info(
+                self.START_PUB_MESSAGE_TMPL % {
+                    'comms_method': 'tcp',
+                    'host': self.host,
+                    'port': self.server.pub_port},
+                extra=RotatingLogFileHandler.header_extra,
+            )
 
-        if is_quiet:
-            LOG.info("Quiet mode on")
-            LOG.setLevel(log_level)
+            restart_num = self.get_restart_num() + 1
+            LOG.info(
+                f'Run: (re)start number={restart_num}, log rollover=%d',
+                # Hard code 1 in args, gets updated on log rollover (NOTE: this
+                # must be the only positional arg):
+                1,
+                extra={
+                    **RotatingLogFileHandler.header_extra,
+                    RotatingLogFileHandler.ROLLOVER_NUM: 1
+                }
+            )
+            LOG.info(
+                f'Cylc version: {CYLC_VERSION}',
+                extra=RotatingLogFileHandler.header_extra
+            )
 
-    async def run_scheduler(self):
+            # Note that the following lines must be present at the top of
+            # the workflow log file for use in reference test runs.
+            LOG.info(
+                f'Run mode: {self.config.run_mode()}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            LOG.info(
+                f'Initial point: {self.config.initial_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            if self.config.start_point != self.config.initial_point:
+                LOG.info(
+                    f'Start point: {self.config.start_point}',
+                    extra=RotatingLogFileHandler.header_extra
+                )
+            LOG.info(
+                f'Final point: {self.config.final_point}',
+                extra=RotatingLogFileHandler.header_extra
+            )
+            if self.config.stop_point:
+                LOG.info(
+                    f'Stop point: {self.config.stop_point}',
+                    extra=RotatingLogFileHandler.header_extra
+                )
+
+    async def run_scheduler(self) -> None:
         """Start the scheduler main loop."""
         try:
             if self.is_restart:
@@ -654,9 +671,7 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            await self.log_start()
             await self.configure()
-
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
@@ -774,24 +789,23 @@ class Scheduler:
         except (KeyError, ValueError, AttributeError):
             return
 
-    def process_queued_task_messages(self):
+    def process_queued_task_messages(self) -> None:
         """Handle incoming task messages for each task proxy."""
-        messages = {}
+        messages: Dict[str, List[Tuple[Optional[int], TaskMsg]]] = {}
         while self.message_queue.qsize():
             try:
-                task_job, event_time, severity, message = (
-                    self.message_queue.get(block=False))
+                task_msg = self.message_queue.get(block=False)
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = Tokens(task_job, relative=True)
+            tokens = Tokens(task_msg.job_id, relative=True)
             # task ID (job stripped)
             task_id = tokens.duplicate(job=None).relative_id
             messages.setdefault(task_id, [])
             # job may be None (e.g. simulation mode)
             job = int(tokens['job']) if tokens['job'] else None
             messages[task_id].append(
-                (job, event_time, severity, message)
+                (job, task_msg)
             )
         # Note on to_poll_tasks: If an incoming message is going to cause a
         # reverse change to task state, it is desirable to confirm this by
@@ -802,10 +816,11 @@ class Scheduler:
             if message_items is None:
                 continue
             should_poll = False
-            for submit_num, event_time, severity, message in message_items:
+            for submit_num, tm in message_items:
                 if self.task_events_mgr.process_message(
-                        itask, severity, message, event_time,
-                        self.task_events_mgr.FLAG_RECEIVED, submit_num):
+                    itask, tm.severity, tm.message, tm.event_time,
+                    self.task_events_mgr.FLAG_RECEIVED, submit_num
+                ):
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)
@@ -827,10 +842,10 @@ class Scheduler:
         qsize = self.command_queue.qsize()
         if qsize <= 0:
             return
-        LOG.info(f"Processing {qsize} queued command(s)")
+        LOG.debug(f"Processing {qsize} queued command(s)")
         while True:
             try:
-                command = (self.command_queue.get(False))
+                command = self.command_queue.get(False)
                 name, args, kwargs = command
             except Empty:
                 break
@@ -843,9 +858,6 @@ class Scheduler:
             try:
                 n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)
-            except SchedulerStop:
-                LOG.info(f"Command succeeded: {cmdstr}")
-                raise
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (
@@ -937,15 +949,15 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items: List[str]):
+    def command_poll_tasks(self, items: List[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
-            return
+            return 0
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         return len(bad_items)
 
-    def command_kill_tasks(self, items: List[str]):
+    def command_kill_tasks(self, items: List[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
@@ -976,27 +988,20 @@ class Scheduler:
         self.pause_workflow()
 
     @staticmethod
-    def command_set_verbosity(lvl):
+    def command_set_verbosity(lvl: Union[int, str]) -> None:
         """Set workflow verbosity."""
         try:
-            LOG.setLevel(int(lvl))
-        except (TypeError, ValueError):
-            return
-        if lvl <= logging.DEBUG:
-            cylc.flow.flags.verbosity = 2
-        elif lvl < logging.INFO:
-            cylc.flow.flags.verbosity = 1
-        elif lvl == logging.INFO:
-            cylc.flow.flags.verbosity = 0
-        else:
-            cylc.flow.flags.verbosity = -1
-        return True, 'OK'
+            lvl = int(lvl)
+            LOG.setLevel(lvl)
+        except (TypeError, ValueError) as exc:
+            raise CommandFailedError(exc)
+        cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
 
-    def command_remove_tasks(self, items):
+    def command_remove_tasks(self, items) -> int:
         """Remove tasks."""
         return self.pool.remove_tasks(items)
 
-    def command_reload_workflow(self):
+    def command_reload_workflow(self) -> None:
         """Reload workflow configuration."""
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
@@ -1007,7 +1012,7 @@ class Scheduler:
         try:
             self.load_flow_file(is_reload=True)
         except (ParsecError, CylcConfigError) as exc:
-            raise CommandFailedError(f"{type(exc).__name__}: {exc}")
+            raise CommandFailedError(exc)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
@@ -1020,11 +1025,12 @@ class Scheduler:
         # logged by the TaskPool.
         add = set(self.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning("Added task: '%s'" % (task,))
+            LOG.warning(f"Added task: '{task}'")
         self.workflow_db_mgr.put_workflow_template_vars(self.template_vars)
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
+        self.is_reloaded = True
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1492,7 +1498,7 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    async def main_loop(self):
+    async def main_loop(self) -> None:
         """The scheduler main loop."""
         while True:  # MAIN LOOP
             tinit = time()
@@ -1587,8 +1593,8 @@ class Scheduler:
             # Update state summary, database, and uifeed
             self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
-            if has_updated:
-                # Workflow can't be stalled, so stop the stalled timer.
+            if has_updated and not self.is_stalled:
+                # Stop the stalled timer.
                 with suppress(KeyError):
                     self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
@@ -1629,7 +1635,7 @@ class Scheduler:
                     quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
                 # Main loop has taken quite a bit to get through
                 # Still yield control to other threads by sleep(0.0)
-                duration = 0
+                duration: float = 0
             elif quick_mode:
                 duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
             else:
@@ -1639,16 +1645,16 @@ class Scheduler:
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
-    async def update_data_structure(self):
+    async def update_data_structure(self) -> Union[bool, List['TaskProxy']]:
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
+        reloaded = self.is_reloaded
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
             # Collect/apply data store updates/deltas
-            self.data_store_mgr.update_data_structure(
-                reloaded=self.is_reloaded)
+            self.data_store_mgr.update_data_structure(reloaded=reloaded)
             self.is_reloaded = False
             # Publish updates:
             if self.data_store_mgr.publish_pending:
@@ -1663,7 +1669,8 @@ class Scheduler:
             self.workflow_db_mgr.put_task_pool(self.pool)
             # Reset workflow and task updated flags.
             self.is_updated = False
-            self.is_stalled = False
+            if not reloaded:  # (A reload cannot unstall workflow by itself)
+                self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
             self.update_data_store()
@@ -1681,7 +1688,7 @@ class Scheduler:
             if self._get_events_conf(f"{event} handlers") is not None:
                 self.run_event_handlers(event)
 
-    def check_workflow_stalled(self):
+    def check_workflow_stalled(self) -> bool:
         """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
             return True
@@ -1692,13 +1699,14 @@ class Scheduler:
             self.update_data_store()
             self.is_stalled = is_stalled
         if self.is_stalled:
+            LOG.critical("Workflow stalled")
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
             with suppress(KeyError):
                 # Start stall timeout timer
                 self.timers[self.EVENT_STALL_TIMEOUT].reset()
         return self.is_stalled
 
-    async def shutdown(self, reason: Exception) -> None:
+    async def shutdown(self, reason: BaseException) -> None:
         """Gracefully shut down the scheduler."""
         # At the moment this method must be called from the main_loop.
         # In the future it should shutdown the main_loop itself but
@@ -1719,28 +1727,32 @@ class Scheduler:
             # Re-raise exception to be caught higher up (sets the exit code)
             raise exc from None
 
-    async def _shutdown(self, reason: Exception) -> None:
+    async def _shutdown(self, reason: BaseException) -> None:
         """Shutdown the workflow."""
         shutdown_msg = "Workflow shutting down"
-        if isinstance(reason, SchedulerStop):
-            LOG.info(f'{shutdown_msg} - {reason.args[0]}')
-            # Unset the "paused" status of the workflow if not auto-restarting
-            if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
-                self.resume_workflow(quiet=True)
-        elif isinstance(reason, SchedulerError):
-            LOG.error(f"{shutdown_msg} - {reason}")
-        elif isinstance(reason, CylcError) or (
-            isinstance(reason, ParsecError) and reason.schd_expected
-        ):
-            LOG.error(f"{shutdown_msg} - {type(reason).__name__}: {reason}")
-            if cylc.flow.flags.verbosity > 1:
-                # Print traceback
+        with patch_log_level(LOG):
+            if isinstance(reason, SchedulerStop):
+                LOG.info(f'{shutdown_msg} - {reason.args[0]}')
+                # Unset the "paused" status of the workflow if not
+                # auto-restarting
+                if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
+                    self.resume_workflow(quiet=True)
+            elif isinstance(reason, SchedulerError):
+                LOG.error(f"{shutdown_msg} - {reason}")
+            elif isinstance(reason, CylcError) or (
+                isinstance(reason, ParsecError) and reason.schd_expected
+            ):
+                LOG.error(
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                )
+                if cylc.flow.flags.verbosity > 1:
+                    # Print traceback
+                    LOG.exception(reason)
+            else:
                 LOG.exception(reason)
-        else:
-            LOG.exception(reason)
-            if str(reason):
-                shutdown_msg += f" - {reason}"
-            LOG.critical(shutdown_msg)
+                if str(reason):
+                    shutdown_msg += f" - {reason}"
+                LOG.critical(shutdown_msg)
 
         if hasattr(self, 'proc_pool'):
             self.proc_pool.close()
@@ -1977,7 +1989,7 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    async def handle_exception(self, exc: Exception) -> NoReturn:
+    async def handle_exception(self, exc: BaseException) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
 
         Re-raises the exception to be caught higher up (sets the exit code).

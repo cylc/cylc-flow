@@ -2,7 +2,9 @@ name: test-tutorial-workflow
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - '8.*.x'
   pull_request:
     paths-ignore:
       - '.github/workflows/*.ya?ml'

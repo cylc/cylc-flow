@@ -733,11 +733,18 @@ class DataStoreMgr:
                 and e_id not in self.added[EDGES]
                 and edge_distance <= self.n_edge_distance
             ):
-                self.added[EDGES][e_id] = PbEdge(
-                    id=e_id,
-                    source=s_tokens.id,
-                    target=t_tokens.id
-                )
+                if is_parent:
+                    self.added[EDGES][e_id] = PbEdge(
+                        id=e_id,
+                        source=t_tokens.id,
+                        target=s_tokens.id
+                    )
+                else:
+                    self.added[EDGES][e_id] = PbEdge(
+                        id=e_id,
+                        source=s_tokens.id,
+                        target=t_tokens.id
+                    )
                 # Add edge id to node field for resolver reference
                 self.updated[TASK_PROXIES].setdefault(
                     t_tokens.id,
@@ -818,12 +825,15 @@ class DataStoreMgr:
         if is_orphan:
             self.generate_orphan_task(itask)
 
-        # Most the time the definition node will be in the store,
-        # so use try/except.
+        # Most of the time the definition node will be in the store.
         try:
             task_def = self.data[self.workflow_id][TASKS][t_id]
         except KeyError:
-            task_def = self.added[TASKS][t_id]
+            try:
+                task_def = self.added[TASKS][t_id]
+            except KeyError:
+                # Task removed from workflow definition.
+                return False
 
         update_time = time()
         tp_stamp = f'{tp_id}@{update_time}'

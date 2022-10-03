@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from time import sleep
-
-from cylc.flow.network.publisher import WorkflowPublisher, serialize_data
+from cylc.flow.network.publisher import serialize_data
 
 
 def test_serialize_data():

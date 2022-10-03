@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Callable
 from async_timeout import timeout
-import asyncio
 from getpass import getuser
 
 import pytest
 
 from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.scheduler import Scheduler
 
 
 @pytest.fixture(scope='module')
@@ -78,35 +79,17 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
-async def test_stop(one, start):
-    """Test listener."""
+async def test_stop(one: Scheduler, start):
+    """Test stop."""
     async with start(one):
-        await one.server.stop('TESTING')
         async with timeout(2):
-            # wait for the server to consume the STOP item from the queue
-            while True:
-                if one.server.queue.empty():
-                    break
-                await asyncio.sleep(0.01)
+            # Wait for the server to consume the STOP signal.
+            # If it doesn't, the test will fail with a timeout error.
+            await one.server.stop('TESTING')
+            assert one.server.stopped
 
 
-async def test_operate(one, start):
-    """Test operate."""
-    async with start(one):
-        one.server.queue.put('STOP')
-        async with timeout(2):
-            # wait for the server to consume the STOP item from the queue
-            while True:
-                if one.server.queue.empty():
-                    break
-                await asyncio.sleep(0.01)
-        # ensure the server is "closed"
-        with pytest.raises(ValueError):
-            one.server.queue.put('foobar')
-            one.server.operate()
-
-
-async def test_receiver(one, start):
+async def test_receiver(one: Scheduler, start):
     """Test the receiver with different message objects."""
     async with timeout(5):
         async with start(one):
@@ -135,3 +118,13 @@ async def test_receiver(one, start):
                 raise Exception('foo')
             one.server.api = _api
             assert 'error' in one.server.receiver(msg)
+
+
+async def test_publish_before_shutdown(
+    one: Scheduler, start: Callable
+):
+    """Test that the server publishes final deltas before shutting down."""
+    async with start(one):
+        one.server.publish_queue.put([(b'fake', b'blah')])
+        await one.server.stop('i said stop!')
+        assert not one.server.publish_queue.qsize()

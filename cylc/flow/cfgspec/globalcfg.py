@@ -355,7 +355,7 @@ Supported for use with job runners:
 - slurm_packjob
 - moab
 
-Directives are written to the top of the task job script in the correct format
+Directives are written to the top of the job script in the correct format
 for the job runner.
 
 Specifying directives individually like this allows use of default directives
@@ -1082,7 +1082,7 @@ with Conf('global.cylc', desc='''
         A platform consists of a group of one or more hosts which share a
         file system and a job runner (batch system).
 
-        A platform must allow interaction with the same task job from *any*
+        A platform must allow interaction with the same job from *any*
         of its hosts.
 
         .. versionadded:: 8.0.0
@@ -1535,7 +1535,7 @@ with Conf('global.cylc', desc='''
                 We recommend using a clean job submission environment for
                 consistent handling of local and remote jobs. However,
                 this is not the default behavior because it prevents
-                local task jobs from running, unless ``$PATH`` contains the
+                local jobs from running, unless ``$PATH`` contains the
                 ``cylc`` wrapper script.
 
                 Specific environment variables can be singled out to pass
@@ -1614,17 +1614,25 @@ with Conf('global.cylc', desc='''
         with Conf('localhost', meta=Platform, desc='''
             A default platform for running jobs on the the scheduler host.
 
-            .. attention::
+            This platform configures the host on which
+            :term:`schedulers <scheduler>` run. By default this is the
+            host where ``cylc play`` is run, however, we often configure
+            Cylc to start schedulers on dedicated hosts by configuring
+            :cylc:conf:`global.cylc[scheduler][run hosts]available`.
 
-               It is common practice to start Cylc schedulers on dedicated
-               hosts, in which case **"localhost" is the scheduler host and
-               not necessarily where you ran "cylc play"**.
+            This platform affects connections made to the scheduler host and
+            any jobs run on it.
 
             .. versionadded:: 8.0.0
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'], desc='''
                 List of hosts for the localhost platform. You are unlikely to
                 need to change this.
+
+                The scheduler hosts are configured by
+                :cylc:conf:`global.cylc[scheduler][run hosts]available`.
+                See :ref:`Submitting Workflows To a Pool Of Hosts` for
+                more information.
 
                 .. seealso::
 
@@ -1655,7 +1663,7 @@ with Conf('global.cylc', desc='''
         all be suitable for a given job.
 
 
-        When Cylc sets up a task job it will pick a platform from a group.
+        When Cylc submits a job it will pick a platform from a group.
         Cylc will then use the selected platform for all interactions with
         that job.
 

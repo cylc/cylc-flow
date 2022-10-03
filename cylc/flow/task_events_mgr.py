@@ -17,7 +17,7 @@
 
 This module provides logic to:
 * Manage task messages (internal, polled or received).
-* Set up retries on task job failures (submission or execution).
+* Set up retries on job failures (submission or execution).
 * Generate task event handlers.
   * Retrieval of log files for completed remote jobs.
   * Email notification.
@@ -28,18 +28,17 @@ This module provides logic to:
 from contextlib import suppress
 from collections import namedtuple
 from enum import Enum
-from logging import getLevelName, INFO, DEBUG
+from logging import DEBUG, INFO, getLevelName
 import os
 from shlex import quote
 import shlex
 from time import time
-from typing import TYPE_CHECKING
-
-from cylc.flow.parsec.config import ItemNotFoundError
+from typing import TYPE_CHECKING, Optional, Union, cast
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
+from cylc.flow.parsec.config import ItemNotFoundError
 from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir)
@@ -523,13 +522,13 @@ class TaskEventsManager():
 
     def process_message(
         self,
-        itask,
-        severity,
-        message,
-        event_time=None,
-        flag=FLAG_INTERNAL,
-        submit_num=None,
-    ):
+        itask: 'TaskProxy',
+        severity: Union[str, int],
+        message: str,
+        event_time: Optional[str] = None,
+        flag: str = FLAG_INTERNAL,
+        submit_num: Optional[int] = None,
+    ) -> Optional[bool]:
         """Parse a task message and update task state.
 
         Incoming, e.g. "succeeded at <TIME>", may be from task job or polling.
@@ -545,16 +544,16 @@ class TaskEventsManager():
         somehow uniquely associating each poll with its result message.
 
         Arguments:
-            itask (cylc.flow.task_proxy.TaskProxy):
+            itask:
                 The task proxy object relevant for the message.
-            severity (str or int):
+            severity:
                 Message severity, should be a recognised logging level.
-            message (str):
+            message:
                 Message content.
-            event_time (str):
+            event_time:
                 Event time stamp. Expect ISO8601 date time string.
                 If not specified, use current time.
-            flag (str):
+            flag:
                 If specified, can be:
                     FLAG_INTERNAL (default):
                         To indicate an internal message.
@@ -563,7 +562,7 @@ class TaskEventsManager():
                         external source.
                     FLAG_POLLED:
                         To indicate a message resulted from a poll.
-            submit_num (int):
+            submit_num:
                 The submit number of the task relevant for the message.
                 If not specified, use latest submit number.
 
@@ -577,6 +576,9 @@ class TaskEventsManager():
             event_time = get_current_time_string()
         if submit_num is None:
             submit_num = itask.submit_num
+        if isinstance(severity, int):
+            severity = cast(str, getLevelName(severity))
+        lseverity = str(severity).lower()
 
         # Any message represents activity.
         self.reset_inactivity_timer_func()
@@ -623,8 +625,7 @@ class TaskEventsManager():
                 # one, so assume that a successful submission occurred and act
                 # accordingly. Note the submitted message is internal, whereas
                 # the started message comes in on the network.
-                self._process_message_submitted(
-                    itask, event_time, itask.submit_num)
+                self._process_message_submitted(itask, event_time)
                 self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
 
             self._process_message_started(itask, event_time)
@@ -667,7 +668,7 @@ class TaskEventsManager():
                 # If not in the preparing state we already assumed and handled
                 # job submission under the started event above...
                 # (sim mode does not have the job prep state)
-                self._process_message_submitted(itask, event_time, submit_num)
+                self._process_message_submitted(itask, event_time)
                 self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
 
             # ... but either way update the job ID in the job proxy (it only
@@ -736,24 +737,22 @@ class TaskEventsManager():
             # Note that all messages are logged already at the top.
             # No state change.
             LOG.debug(f"[{itask}] unhandled: {message}")
-            if severity in LOG_LEVELS.values():
-                severity = getLevelName(severity)
             self._db_events_insert(
-                itask, ("message %s" % str(severity).lower()), message)
-        lseverity = str(severity).lower()
+                itask, (f"message {lseverity}"), message)
         if lseverity in self.NON_UNIQUE_EVENTS:
             itask.non_unique_events.update({lseverity: 1})
             self.setup_event_handlers(itask, lseverity, message)
+        return None
 
     def _process_message_check(
         self,
-        itask,
-        severity,
-        message,
-        event_time,
-        flag,
-        submit_num,
-    ):
+        itask: 'TaskProxy',
+        severity: str,
+        message: str,
+        event_time: str,
+        flag: str,
+        submit_num: int,
+    ) -> bool:
         """Helper for `.process_message`.
 
         See `.process_message` for argument list
@@ -808,10 +807,15 @@ class TaskEventsManager():
                 )
             return False
 
-        LOG.log(
-            LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{timestamp}"
-        )
+        severity = cast(int, LOG_LEVELS.get(severity, INFO))
+        # Demote log level to DEBUG if this is a message that duplicates what
+        # gets logged by itask state change anyway (and not manual poll)
+        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
+            self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
+            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+        }:
+            severity = DEBUG
+        LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(self, itask, event, message):
@@ -957,7 +961,9 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             host,
-            get_remote_workflow_run_job_dir(schd.workflow)))
+            get_remote_workflow_run_job_dir(
+                schd.workflow).replace('$HOME/', ''))
+        )
         # Local target
         cmd.append(get_workflow_run_job_dir(schd.workflow) + "/")
         self.proc_pool.put_command(
@@ -1086,7 +1092,6 @@ class TaskEventsManager():
             if itask.state_reset(TASK_STATUS_FAILED):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
                 self.data_store_mgr.delta_task_state(itask)
-            LOG.critical(f"[{itask}] failed")
             no_retries = True
         else:
             # There is an execution retry lined up.
@@ -1185,7 +1190,9 @@ class TaskEventsManager():
 
         return no_retries
 
-    def _process_message_submitted(self, itask, event_time, submit_num):
+    def _process_message_submitted(
+        self, itask: 'TaskProxy', event_time: str
+    ) -> None:
         """Helper for process_message, handle a submit-succeeded message."""
         with suppress(KeyError):
             summary = itask.summary
@@ -1533,7 +1540,7 @@ class TaskEventsManager():
             timeout_str = None
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
         # Log timeout and polling schedule
-        message = 'health: %s=%s' % (timeout_key, timeout_str)
+        message = f"health: {timeout_key}={timeout_str}"
         # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
             items = []  # [(number of item - 1, item), ...]

@@ -4,7 +4,9 @@ on:
   pull_request:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches:
+      - master
+      - '8.*.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +20,7 @@ jobs:
       fail-fast: false # Don't let a failed MacOS run stop the Ubuntu runs
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.7', '3.8', '3.9']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         include:
           - os: 'macos-latest'
             python-version: '3.7'
