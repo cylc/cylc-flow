@@ -297,7 +297,6 @@ class CylcWorkflowDAO:
             ["submit_num", {"datatype": "INTEGER"}],
             ["status"],
             ["flow_wait", {"datatype": "INTEGER"}],
-            ["is_manual_submit", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_TIMEOUT_TIMERS: [
             ["cycle", {"is_primary_key": True}],
@@ -803,15 +802,14 @@ class CylcWorkflowDAO:
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-        the fields in the SELECT statement below.
+            [cycle, name, is_late, status, is_held, submit_num,
+             try_num, platform_name, time_submit, time_run, timeout, outputs]
         """
         form_stmt = r"""
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
                 %(task_pool)s.flow_nums,
-                %(task_states)s.flow_wait,
-                %(task_states)s.is_manual_submit,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,

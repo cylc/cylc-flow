@@ -238,6 +238,7 @@ class TaskJobManager:
                 itask.submit_num += 1
                 itask.state_reset(TASK_STATUS_PREPARING)
                 self.data_store_mgr.delta_task_state(itask)
+                self.workflow_db_mgr.put_update_task_state(itask)
             prep_task = self._prep_submit_task_job(
                 workflow, itask, check_syntax=check_syntax)
             if prep_task:
