@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout as ascyncto
+from async_timeout import timeout as asyncto
 import asyncio
 import json
 import os
@@ -59,7 +59,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
         if timeout is None:
             timeout = self.timeout
         try:
-            async with ascyncto(timeout):
+            async with asyncto(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
                     command, args, timeout
                 )
