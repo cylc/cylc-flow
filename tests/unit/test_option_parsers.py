@@ -21,7 +21,12 @@ import sys
 import io
 from contextlib import redirect_stdout
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP, Options
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options,
+    has_rose_cli_opts
+)
+from types import SimpleNamespace
 
 
 USAGE_WITH_COMMENT = "usage \n # comment"
@@ -93,3 +98,24 @@ def test_Options_std_opts():
     MyOptions = Options(parser)
     MyValues = MyOptions(verbosity=1)
     assert MyValues.verbosity == 1
+
+
+@pytest.mark.parametrize(
+    'opts, expect',
+    [
+        ({'opt_conf_keys': 'A,B,C'}, True),
+        ({'defines': ['[env]BAR="HI"']}, True),
+        ({'rose_template_vars': ['FOO = 43']}, True),
+        (
+            {
+                'opt_conf_keys': 'A,B,C', 'defines': ['[env]BAR="HI"'],
+                'rose_template_vars': ['FOO = 43'], 'hello': 42
+            },
+            True
+        ),
+        ({'hello': 42}, False)
+    ]
+)
+def test_has_rose_cli_opts(opts, expect):
+    opts = SimpleNamespace(**opts)
+    assert has_rose_cli_opts(opts) == expect

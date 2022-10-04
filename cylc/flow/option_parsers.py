@@ -583,3 +583,11 @@ class Options:
             setattr(opts, key, value)
 
         return opts
+
+
+def has_rose_cli_opts(opts):
+    """Rose options have been set on an options namespace."""
+    for rose_opt in ['opt_conf_keys', 'defines', 'rose_template_vars']:
+        if hasattr(opts, rose_opt) and getattr(opts, rose_opt):
+            return True
+    return False

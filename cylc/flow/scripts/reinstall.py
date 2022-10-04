@@ -85,6 +85,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options,
     WORKFLOW_ID_ARG_DOC,
+    has_rose_cli_opts
 )
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import (
@@ -170,12 +171,16 @@ def reinstall_cli(
     try:
         if is_terminal():  # interactive mode - perform dry-run and prompt
             # dry-mode reinstall
-            if not reinstall(
-                opts,
-                workflow_id,
-                source,
-                run_dir,
-                dry_run=True,
+            if (
+                not reinstall(
+                    opts,
+                    workflow_id,
+                    source,
+                    run_dir,
+                    dry_run=True,
+                )
+                and not has_rose_cli_opts(opts)
+                and not opts.clear_rose_install_opts
             ):
                 # no rsync output == no changes => exit
                 print(cparse(
