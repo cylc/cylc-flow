@@ -16,6 +16,8 @@
 
 from textwrap import dedent
 
+import pytest
+
 from cylc.flow.exceptions import (
     CylcError,
     HostSelectException,
@@ -53,28 +55,26 @@ def test_host_select_exception():
                 returncode: 1
     ''').strip()
 
-    # it should give a useful hint for exit code "2"
-    # (error in the selection ranking expression)
-    assert 'This is likely an error in the ranking expression' in (
-        str(HostSelectException({
-            'ranking': 'virtual_memory().available > 1',
-            'host-1': {
-                'returncode': 2
-            },
-            'host-2': {
-                'returncode': 2
-            },
-        })))
 
-    # it should give a useful hint for the exit code "255"
-    # (ssh error)
-    assert 'Cylc could not establish SSH connection to the run hosts.' in (
+@pytest.mark.parametrize(
+    'ret_code, expect',
+    [
+        # it should give a useful hint for exit code "2"
+        # (error in the selection ranking expression)
+        (2, 'This is likely an error in the ranking expression'),
+        # it should give a useful hint for the exit code "255"
+        # (ssh error)
+        (255, 'Cylc could not establish SSH connection to the run hosts.')
+    ]
+)
+def test_host_select_exception_returncodes(ret_code, expect):
+    assert expect in (
         str(HostSelectException({
             'ranking': 'virtual_memory().available > 1',
             'host-1': {
-                'returncode': 255
+                'returncode': ret_code
             },
             'host-2': {
-                'returncode': 255
+                'returncode': ret_code
             },
         })))
