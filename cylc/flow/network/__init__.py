@@ -18,6 +18,7 @@
 import asyncio
 import getpass
 import json
+from typing import Tuple
 
 import zmq
 import zmq.asyncio
@@ -59,17 +60,17 @@ def decode_(message):
     return msg
 
 
-def get_location(workflow: str):
+def get_location(workflow: str) -> Tuple[str, int, int]:
     """Extract host and port from a workflow's contact file.
 
     NB: if it fails to load the workflow contact file, it will exit.
 
     Args:
-        workflow (str): workflow name
+        workflow: workflow name
     Returns:
-        Tuple[str, int, int]: tuple with the host name and port numbers.
+        tuple with the host name and port numbers.
     Raises:
-        ClientError: if the workflow is not running.
+        WorkflowStopped: if the workflow is not running.
         CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
     """
     try:
