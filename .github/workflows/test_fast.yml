@@ -25,8 +25,7 @@ jobs:
           - os: 'macos-latest'
             python-version: '3.7'
     env:
-      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes -m "linktest or not linktest"
-
+      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -113,3 +112,7 @@ jobs:
           flags: fast-tests
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
+
+      - name: Linkcheck
+        if: startsWith(matrix.os, 'ubuntu')
+        run: pytest -m linkcheck tests/unit
