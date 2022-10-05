@@ -62,7 +62,7 @@ def non_interactive(monkeypatch):
 def one_src(tmp_path):
     src_dir = tmp_path
     (src_dir / 'flow.cylc').touch()
-    # (src_dir / 'rose-suite.conf').touch()
+    (src_dir / 'rose-suite.conf').touch()
     return SimpleNamespace(path=src_dir)
 
 
@@ -242,14 +242,14 @@ def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
     )
     (one_src.path / 'a').touch()  # give it something to install
 
-    # reinstall (no rose-suite.conf file)
-    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
-    assert rose_message not in capsys.readouterr().err
-
     # reinstall (with rose-suite.conf file)
-    (one_src.path / 'rose-suite.conf').touch()
     reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
     assert rose_message in capsys.readouterr().err
+
+    # reinstall (no rose-suite.conf file)
+    (one_src.path / 'rose-suite.conf').unlink()
+    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert rose_message not in capsys.readouterr().err
 
 
 def test_keyboard_interrupt(
