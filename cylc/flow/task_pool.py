@@ -20,7 +20,10 @@ from contextlib import suppress
 from collections import Counter
 import json
 from time import time
-from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
+from typing import (
+    Dict, Iterable, List, Optional,
+    Set, TYPE_CHECKING, Tuple
+)
 import logging
 
 import cylc.flow.flags
@@ -30,6 +33,7 @@ from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -62,6 +66,7 @@ from cylc.flow.task_queues.independent import IndepQueueManager
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
 
 if TYPE_CHECKING:
+    from queue import Queue
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
@@ -77,6 +82,7 @@ class TaskPool:
     """Task pool of a workflow."""
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
+    ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
     SUICIDE_MSG = "suicide"
 
     def __init__(
@@ -394,7 +400,7 @@ class TaskPool:
         if self.stop_point and limit_point > self.stop_point:
             limit_point = self.stop_point
             LOG.debug(f"{pre_adj_limit} -> {limit_point} (stop point)")
-        LOG.info(f"Runahead limit: {limit_point}")
+        LOG.debug(f"Runahead limit: {limit_point}")
 
         self.runahead_limit_point = limit_point
         return True
@@ -989,7 +995,7 @@ class TaskPool:
                     orphans.append(itask)
         if orphans_kill_failed:
             LOG.warning(
-                "Orphaned task jobs (kill failed):\n"
+                "Orphaned tasks (kill failed):\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans_kill_failed
@@ -997,7 +1003,7 @@ class TaskPool:
             )
         if orphans:
             LOG.warning(
-                "Orphaned task jobs:\n"
+                "Orphaned tasks:\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans
@@ -1021,7 +1027,7 @@ class TaskPool:
                 incomplete.append((itask.identity, outputs))
 
         if incomplete:
-            LOG.warning(
+            LOG.error(
                 "Incomplete tasks:\n"
                 + "\n".join(
                     f"  * {id_} did not complete required outputs: {outputs}"
@@ -1427,6 +1433,11 @@ class TaskPool:
         # Spawn if on-sequence and within recurrence bounds.
         taskdef = self.config.get_taskdef(name)
         if not taskdef.is_valid_point(point):
+            LOG.warning(
+                self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                    taskdef.name, point
+                )
+            )
             return None
 
         itask = TaskProxy(
@@ -1480,7 +1491,7 @@ class TaskPool:
             self.spawn_on_all_outputs(itask, completed_only=True)
             return None
 
-        LOG.info(f"[{itask}] spawned")
+        LOG.debug(f"[{itask}] spawned")
         self.db_add_new_flow_rows(itask)
         return itask
 
@@ -1497,8 +1508,7 @@ class TaskPool:
 
         Args:
             items: Identifiers for matching task definitions, each with the
-                form "name[.point][:state]" or "[point/]name[:state]".
-                Glob-like patterns will give a warning and be skipped.
+                form "point/name".
             outputs: List of outputs to spawn on
             flow_num: Flow number to attribute the outputs
 
@@ -1617,7 +1627,7 @@ class TaskPool:
 
         return len(unmatched)
 
-    def sim_time_check(self, message_queue):
+    def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
         """Simulation mode: simulate task run times and set states."""
         if not self.config.run_mode('simulation'):
             return False
@@ -1639,13 +1649,17 @@ class TaskPool:
                         (itask.get_try_num() == 1 or
                          not conf['fail try 1 only'])):
                     message_queue.put(
-                        (job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED))
+                        TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
+                    )
                 else:
                     # Simulate message outputs.
                     for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put((job_d, now_str, 'INFO', msg))
+                        message_queue.put(
+                            TaskMsg(job_d, now_str, 'DEBUG', msg)
+                        )
                     message_queue.put(
-                        (job_d, now_str, 'INFO', TASK_STATUS_SUCCEEDED))
+                        TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
+                    )
                 sim_task_state_changed = True
         return sim_task_state_changed
 
@@ -1763,7 +1777,6 @@ class TaskPool:
             [self.main_pool, self.hidden_pool],
             ids,
             warn=warn,
-
         )
         future_matched: 'Set[Tuple[str, PointBase]]' = set()
         if future and unmatched:
@@ -1841,7 +1854,11 @@ class TaskPool:
             if taskdef.is_valid_point(point):
                 matched_tasks.add((taskdef.name, point))
             else:
-                # is_valid_point() already logged warning
+                LOG.warning(
+                    self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                        taskdef.name, point
+                    )
+                )
                 unmatched_tasks.append(id_)
                 continue
         return matched_tasks, unmatched_tasks
@@ -1854,8 +1871,10 @@ class TaskPool:
         Args:
             items:
                 Identifiers for matching task definitions, each with the
-                form "name[.point][:state]" or "[point/]name[:state]".
-                Glob-like patterns will give a warning and be skipped.
+                form "point/name".
+                Cycle point globs will give a warning and be skipped,
+                but task name globs will be matched.
+                Task states are ignored.
 
         """
         n_warnings = 0
@@ -1881,7 +1900,7 @@ class TaskPool:
                 )
                 n_warnings += 1
                 continue
-            taskdefs: List['TaskDef'] = self.config.find_taskdefs(name_str)
+            taskdefs = self.config.find_taskdefs(name_str)
             if not taskdefs:
                 LOG.warning(
                     self.ERR_TMPL_NO_TASKID_MATCH.format(
@@ -1895,8 +1914,13 @@ class TaskPool:
                 if taskdef.is_valid_point(point):
                     task_items[(taskdef.name, point)] = taskdef
                 else:
-                    # is_valid_point() already logged warning
-                    n_warnings += 1
+                    if not contains_fnmatch(name_str):
+                        LOG.warning(
+                            self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
+                                taskdef.name, point
+                            )
+                        )
+                        n_warnings += 1
                     continue
         return n_warnings, task_items
 

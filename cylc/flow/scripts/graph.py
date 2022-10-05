@@ -30,18 +30,20 @@ Examples:
 
     # display the difference between the flows one and two
     $ cylc graph one --diff two
+
+    # render the graph to a svg file
+    $ cylc graph one -o 'one.svg'
 """
 
 from difflib import unified_diff
-import re
 from shutil import which
 from subprocess import Popen, PIPE
 import sys
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, TYPE_CHECKING, Tuple
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.exceptions import InputError
+from cylc.flow.exceptions import InputError, CylcError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
@@ -96,24 +98,52 @@ def sort_datetime_edge(item):
     return (item[0], item[1] or '')
 
 
-def graph_workflow(
+# node/edge types
+Node = str  # node ID
+Edge = Tuple[str, str]   # left, right
+
+
+def get_nodes_and_edges(
+    opts,
+    workflow_id,
+    start,
+    stop,
+) -> Tuple[List[Node], List[Edge]]:
+    """Return graph sorted nodes and edges."""
+    config = get_config(workflow_id, opts)
+    if opts.namespaces:
+        nodes, edges = _get_inheritance_nodes_and_edges(config)
+    else:
+        nodes, edges = _get_graph_nodes_edges(
+            config,
+            start,
+            stop,
+            grouping=opts.grouping,
+            show_suicide=opts.show_suicide,
+        )
+    return nodes, edges
+
+
+def _get_graph_nodes_edges(
     config,
     start_point_str=None,
     stop_point_str=None,
     grouping=None,
     show_suicide=False,
-    write=print
-):
-    """Implement ``cylc-graph --reference``."""
+) -> Tuple[List[Node], List[Edge]]:
+    """Return nodes and edges for a workflow graph."""
     graph = config.get_graph_raw(
         start_point_str,
         stop_point_str,
         grouping
     )
     if not graph:
-        return
+        return [], []
 
     # set sort keys based on cycling mode
+    # (note sorting is very important for the reference format)
+    node_sort: Optional[Callable]
+    edge_sort: Optional[Callable]
     if config.cfg['scheduling']['cycling mode'] == 'integer':
         # integer sorting
         node_sort = sort_integer_node
@@ -123,55 +153,45 @@ def graph_workflow(
         node_sort = None  # lexicographically sortable
         edge_sort = sort_datetime_edge
 
-    edges = (
-        (left, right)
-        for left, right, _, suicide, _ in graph
-        if right
-        if show_suicide or not suicide
+    # get nodes
+    nodes = sorted(
+        {
+            node
+            for left, right, _, suicide, _ in graph
+            for node in (left, right)
+            if node
+            if show_suicide or not suicide
+        },
+        key=node_sort,
     )
-    for left, right in sorted(set(edges), key=edge_sort):
-        write('edge "%s" "%s"' % (left, right))
 
-    write('graph')
-
-    # print nodes
-    nodes = (
-        node
-        for left, right, _, suicide, _ in graph
-        for node in (left, right)
-        if node
-        if show_suicide or not suicide
+    # get edges
+    edges = sorted(
+        {
+            (left, right)
+            for left, right, _, suicide, _ in graph
+            if right
+            if show_suicide or not suicide
+        },
+        key=edge_sort,
     )
-    for node in sorted(set(nodes), key=node_sort):
-        tokens = Tokens(node, relative=True)
-        write(
-            f'node "{node}" "{tokens["task"]}\\n{tokens["cycle"]}"'
-        )
 
-    write('stop')
+    return nodes, edges
 
 
-def graph_inheritance(config, write=print):
-    """Implement ``cylc-graph --reference --namespaces``."""
-    edges = set()
+def _get_inheritance_nodes_and_edges(
+    config
+) -> Tuple[List[Node], List[Edge]]:
+    """Return nodes and edges for an inheritance graph."""
     nodes = set()
+    edges = set()
     for namespace, tasks in config.get_parent_lists().items():
+        nodes.add(namespace)
         for task in tasks:
             edges.add((task, namespace))
             nodes.add(task)
 
-    for namespace in config.get_parent_lists():
-        nodes.add(namespace)
-
-    for edge in sorted(edges):
-        write('edge "%s" "%s"' % edge)
-
-    write('graph')
-
-    for node in sorted(nodes):
-        write('node "%s" "%s"' % (node, node))
-
-    write('stop')
+    return sorted(nodes), sorted(edges)
 
 
 def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
@@ -185,6 +205,221 @@ def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
     return WorkflowConfig(
         workflow_id, flow_file, opts, template_vars=template_vars
     )
+
+
+def format_graphviz(
+    opts,
+    nodes: List[Node],
+    edges: List[Edge],
+) -> List[str]:
+    """Write graph in graphviz format."""
+    # write graph header
+    dot_lines = [
+        'digraph {',
+        '  graph [fontname="sans" fontsize="25"]',
+        '  node [fontname="sans"]',
+    ]
+    if opts.transpose:
+        dot_lines.append('  rankdir="LR"')
+    if opts.namespaces:
+        dot_lines.append('  node [shape="rect"]')
+    dot_lines.append('')
+
+    # write nodes
+    if opts.namespaces:
+        dot_lines.extend([
+            rf'  "{node}"'
+            for node in nodes
+        ])
+        dot_lines.append('')
+    else:
+        # group by cycle
+        cycles: Dict[str, List[str]] = {}
+        for node in nodes:
+            tokens = Tokens(node, relative=True)
+            cycle: str = tokens['cycle']
+            task: str = tokens['task']
+            cycles.setdefault(cycle, []).append(task)
+        # write nodes by cycle
+        if opts.cycles:
+            indent = '    '
+        else:
+            indent = '  '
+        for cycle, tasks in cycles.items():
+            if opts.cycles:
+                dot_lines.extend(
+                    [
+                        f'  subgraph "cluster_{cycle}" {{ ',
+                        f'    label="{cycle}"',
+                        '    style="dashed"',
+                    ]
+                )
+            dot_lines.extend(
+                rf'{indent}"{cycle}/{task}" [label="{task}\n{cycle}"]'
+                for task in tasks
+            )
+            if opts.cycles:
+                dot_lines.append('  }')
+            dot_lines.append('')
+
+    # write edges
+    for left, right in edges:
+        dot_lines.append(f'  "{left}" -> "{right}"')
+
+    # close graph
+    dot_lines.append('}')
+
+    return dot_lines
+
+
+def format_cylc_reference(
+    opts,
+    nodes: List[Node],
+    edges: List[Edge],
+) -> List[str]:
+    """Write graph in cylc reference format."""
+    lines = []
+    # write edges
+    for left, right in edges:
+        lines.append(f'edge "{left}" "{right}"')
+
+    # write separator
+    lines.append('graph')
+
+    # write nodes
+    if opts.namespaces:
+        for node in nodes:
+            lines.append(f'node "{node}" "{node}"')
+    else:
+        for node in nodes:
+            tokens = Tokens(node, relative=True)
+            lines.append(
+                f'node "{node}" "{tokens["task"]}\\n{tokens["cycle"]}"'
+            )
+
+    # write terminator
+    lines.append('stop')
+
+    return lines
+
+
+def render_dot(dot_lines, filename, fmt):
+    """Render graph using `dot`."""
+    # check graphviz-dot is installed
+    if not which('dot'):
+        sys.exit('Graphviz must be installed to render graphs.')
+
+    # render graph with graphviz
+    proc = Popen(  # nosec
+        ['dot', f'-T{fmt}', '-o', filename],
+        stdin=PIPE,
+        text=True
+    )
+    proc.communicate('\n'.join(dot_lines))
+    proc.wait()
+    if proc.returncode:
+        raise CylcError('Graphing Failed')
+
+
+def open_image(filename):
+    """Open an image file."""
+    print(f'Graph rendered to {filename}')
+    try:
+        from PIL import Image
+    except ModuleNotFoundError:
+        # dependencies required to display images not present
+        pass
+    else:
+        img = Image.open(filename)
+        img.show()
+
+
+def graph_render(opts, workflow_id, start, stop) -> int:
+    """Render the workflow graph to the specified format.
+
+    Graph is rendered to the specified format. The Graphviz "dot" format
+    does not require Graphviz to be installed.
+
+    All other formats require Graphviz. Supported formats depend on your
+    Graphviz installation.
+    """
+    # get nodes and edges
+    nodes, edges = get_nodes_and_edges(
+        opts,
+        workflow_id,
+        start,
+        stop,
+    )
+
+    # format the graph in graphviz-dot format
+    dot_lines = format_graphviz(opts, nodes, edges)
+
+    # set filename and output format
+    if opts.output:
+        filename = opts.output
+        try:
+            fmt = filename.rsplit('.', 1)[1]
+        except IndexError:
+            sys.exit('Output filename requires a format.')
+    else:
+        filename = NamedTemporaryFile().name
+        fmt = 'png'
+
+    if fmt == 'dot':
+        # output in dot format (graphviz not needed for this)
+        with open(filename, 'w+') as dot_file:
+            dot_file.write('\n'.join(dot_lines) + '\n')
+        return 0
+
+    # render with graphviz
+    render_dot(dot_lines, filename, fmt)
+
+    # notify the user / open the graph
+    if opts.output:
+        print(f'Graph rendered to {opts.output}')
+    else:
+        open_image(filename)
+    return 0
+
+
+def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
+    """Format the workflow graph using the cylc reference format."""
+    # get nodes and edges
+    nodes, edges = get_nodes_and_edges(
+        opts,
+        workflow_id,
+        start,
+        stop,
+    )
+    for line in format_cylc_reference(opts, nodes, edges):
+        write(line)
+
+    return 0
+
+
+def graph_diff(opts, workflow_a, workflow_b, start, stop) -> int:
+    """Difference the workflow graphs using the cylc reference format."""
+    # load graphs
+    graph_a: List[str] = []
+    graph_b: List[str] = []
+    graph_reference(opts, workflow_a, start, stop, write=graph_a.append),
+    graph_reference(opts, workflow_b, start, stop, write=graph_b.append),
+
+    # compare graphs
+    diff_lines = list(
+        unified_diff(
+            [f'{line}\n' for line in graph_a],
+            [f'{line}\n' for line in graph_b],
+            fromfile=workflow_a,
+            tofile=workflow_b,
+        )
+    )
+
+    # return results
+    if diff_lines:
+        sys.stdout.writelines(diff_lines)
+        return 1
+    return 0
 
 
 def get_option_parser() -> COP:
@@ -228,7 +463,7 @@ def get_option_parser() -> COP:
         '-o',
         help=(
             'Output the graph to a file. The file extension determines the'
-            ' format.'
+            ' format. E.G. "graph.png", "graph.svg", "graph.dot".'
         ),
         action='store',
         dest='output'
@@ -264,110 +499,6 @@ def get_option_parser() -> COP:
     return parser
 
 
-def dot(opts, lines):
-    """Render a graph using graphviz 'dot'.
-
-    This crudely re-parses the output of the reference output for simplicity.
-
-    This functionality will be replaced by the GUI.
-
-    """
-    if not which('dot'):
-        sys.exit('Graphviz must be installed to render graphs.')
-
-    # set filename and output format
-    if opts.output:
-        filename = opts.output
-        try:
-            fmt = filename.rsplit('.', 1)[1]
-        except IndexError:
-            sys.exit('Output filename requires a format.')
-    else:
-        filename = NamedTemporaryFile().name
-        fmt = 'png'
-
-    # scrape nodes and edges from the reference output
-    node = re.compile(r'node "(.*)" "(.*)"')
-    edge = re.compile(r'edge "(.*)" "(.*)"')
-    nodes = {}
-    edges = []
-    for line in lines:
-        match = node.match(line)
-        if match:
-            if opts.namespaces:
-                task = match.group(1)
-                cycle = ''
-            else:
-                cycle, task = match.group(1).split('/')
-                nodes.setdefault(cycle, []).append(task)
-            continue
-        match = edge.match(line)
-        if match:
-            edges.append(match.groups())
-
-    # write graph header
-    dot = [
-        'digraph {',
-        '  graph [fontname="sans" fontsize="25"]',
-        '  node [fontname="sans"]',
-    ]
-    if opts.transpose:
-        dot.append('  rankdir="LR"')
-    if opts.namespaces:
-        dot.append('  node [shape="rect"]')
-
-    # write nodes
-    for cycle, tasks in nodes.items():
-        if opts.cycles:
-            dot.extend(
-                [
-                    f'  subgraph "cluster_{cycle}" {{ ',
-                    f'    label="{cycle}"',
-                    '    style="dashed"',
-                ]
-            )
-        dot.extend(
-            rf'    "{cycle}/{task}" [label="{task}\n{cycle}"]'
-            for task in tasks
-        )
-        dot.append('  }' if opts.cycles else '')
-
-    # write edges
-    for left, right in edges:
-        dot.append(f'  "{left}" -> "{right}"')
-
-    # close graph
-    dot.append('}')
-
-    # render graph
-    proc = Popen(  # nosec
-        ['dot', f'-T{fmt}', '-o', filename],
-        stdin=PIPE,
-        text=True
-    )
-    # * filename is generated in code above
-    # * fmt is user specified and quoted (by subprocess)
-    proc.communicate('\n'.join(dot))
-    proc.wait()
-    if proc.returncode:
-        sys.exit('Graphing Failed')
-
-    return filename
-
-
-def gui(filename):
-    """Open the rendered image file."""
-    print(f'Graph rendered to {filename}')
-    try:
-        from PIL import Image
-    except ModuleNotFoundError:
-        # dependencies required to display images not present
-        pass
-    else:
-        img = Image.open(filename)
-        img.show()
-
-
 @cli_function(get_option_parser)
 def main(
     parser: COP,
@@ -379,50 +510,17 @@ def main(
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
         raise InputError('Cannot combine --group and --namespaces.')
-
-    lines: List[str] = []
-    if not (opts.reference or opts.diff):
-        write = lines.append
-    else:
-        write = print
-
-    flows: List[Tuple[str, List[str]]] = [(workflow_id, [])]
-    if opts.diff:
-        flows.append((opts.diff, []))
-
-    for flow, graph in flows:
-        if opts.diff:
-            write = graph.append
-        config = get_config(flow, opts)
-        if opts.namespaces:
-            graph_inheritance(config, write=write)
-        else:
-            graph_workflow(
-                config,
-                start,
-                stop,
-                grouping=opts.grouping,
-                show_suicide=opts.show_suicide,
-                write=write
-            )
+    if opts.cycles and opts.namespaces:
+        raise InputError('Cannot combine --cycles and --namespaces.')
 
     if opts.diff:
-        diff_lines = list(
-            unified_diff(
-                [f'{line}\n' for line in flows[0][1]],
-                [f'{line}\n' for line in flows[1][1]],
-                fromfile=flows[0][0],
-                tofile=flows[1][0]
-            )
+        sys.exit(
+            graph_diff(opts, workflow_id, opts.diff, start, stop)
         )
-
-        if diff_lines:
-            sys.stdout.writelines(diff_lines)
-            sys.exit(1)
-
-    if not (opts.reference or opts.diff):
-        filename = dot(opts, lines)
-        if opts.output:
-            print(f'Graph rendered to {opts.output}')
-        else:
-            gui(filename)
+    if opts.reference:
+        sys.exit(
+            graph_reference(opts, workflow_id, start, stop)
+        )
+    sys.exit(
+        graph_render(opts, workflow_id, start, stop)
+    )

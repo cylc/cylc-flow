@@ -238,7 +238,10 @@ async def scan(
                 )
 
     # perform the first directory listing
-    scan_dir_listing = await scandir(scan_dir)
+    try:
+        scan_dir_listing = await scandir(scan_dir)
+    except FileNotFoundError:
+        return
     if scan_dir != cylc_run_dir and dir_is_flow(scan_dir_listing):
         # If the scan_dir itself is a workflow run dir, yield nothing
         return
@@ -253,7 +256,12 @@ async def scan(
             return_when=asyncio.FIRST_COMPLETED
         )
         for task in done:
-            path, depth, contents = task.result()
+            try:
+                path, depth, contents = task.result()
+            except FileNotFoundError:
+                # directory has been removed since the scan was scheduled
+                running.remove(task)
+                continue
             running.remove(task)
             is_flow = dir_is_flow(contents)
             if is_flow:

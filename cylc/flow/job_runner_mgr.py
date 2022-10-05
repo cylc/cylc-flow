@@ -282,7 +282,7 @@ class JobRunnerManager():
         """Kill multiple jobs.
 
         job_log_root -- The log/job/ sub-directory of the workflow.
-        job_log_dirs -- A list containing point/name/submit_num for task jobs.
+        job_log_dirs -- A list containing point/name/submit_num for jobs.
 
         """
         # Note: The more efficient way to do this is to group the jobs by their
@@ -311,7 +311,7 @@ class JobRunnerManager():
         """Poll multiple jobs.
 
         job_log_root -- The log/job/ sub-directory of the workflow.
-        job_log_dirs -- A list containing point/name/submit_num for task jobs.
+        job_log_dirs -- A list containing point/name/submit_num for jobs.
 
         """
         if "$" in job_log_root:
@@ -368,7 +368,7 @@ class JobRunnerManager():
         """Submit multiple jobs.
 
         job_log_root -- The log/job/ sub-directory of the workflow.
-        job_log_dirs -- A list containing point/name/submit_num for task jobs.
+        job_log_dirs -- A list containing point/name/submit_num for jobs.
         remote_mode -- am I running on the remote job host?
         utc_mode -- is the workflow running in UTC mode?
 

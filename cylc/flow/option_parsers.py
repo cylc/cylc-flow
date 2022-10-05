@@ -106,6 +106,30 @@ def verbosity_to_log_level(verb: int) -> int:
     return logging.INFO
 
 
+def log_level_to_verbosity(lvl: int) -> int:
+    """Convert log severity level to Cylc verbosity.
+
+    Examples:
+        >>> log_level_to_verbosity(logging.NOTSET)
+        2
+        >>> log_level_to_verbosity(logging.DEBUG)
+        1
+        >>> log_level_to_verbosity(logging.INFO)
+        0
+        >>> log_level_to_verbosity(logging.WARNING)
+        -1
+        >>> log_level_to_verbosity(logging.ERROR)
+        -1
+    """
+    if lvl < logging.DEBUG:
+        return 2
+    if lvl < logging.INFO:
+        return 1
+    if lvl == logging.INFO:
+        return 0
+    return -1
+
+
 def verbosity_to_opts(verb: int) -> List[str]:
     """Convert Cylc verbosity to the CLI opts required to replicate it.
 

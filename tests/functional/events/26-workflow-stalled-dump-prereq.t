@@ -28,7 +28,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 grep_ok '"abort on stall timeout" is set' "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "ERROR - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "20100101T0000Z/bar did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"

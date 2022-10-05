@@ -52,7 +52,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach -v
 
 # ensure the following order of events
 # 1. "1/broken" fails
@@ -66,7 +66,6 @@ log_scan "${TEST_NAME_BASE}-scan" \
     '1/broken .* (received)failed/ERR' \
     'Command succeeded: reload_workflow()' \
     'xtrigger satisfied: _cylc_retry_1/broken' \
-    '1/broken .* (received)succeeded'
+    '\[1/broken .* => succeeded'
 
 purge
-exit

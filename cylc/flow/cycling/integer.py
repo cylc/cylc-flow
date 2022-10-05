@@ -24,7 +24,10 @@ from cylc.flow.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, parse_exclusion, cmp
 )
 from cylc.flow.exceptions import (
-    CylcMissingContextPointError, PointParsingError, IntervalParsingError
+    CylcMissingContextPointError,
+    IntervalParsingError,
+    PointParsingError,
+    SequenceParsingError,
 )
 
 CYCLER_TYPE_INTEGER = "integer"
@@ -201,7 +204,9 @@ class IntegerInterval(IntervalBase):
 
     def sub(self, other):
         """Subtract other from self as integers."""
-        return IntegerInterval.from_integer(int(self) - int(other))
+        if isinstance(other, IntegerInterval):
+            return IntegerInterval.from_integer(int(self) - int(other))
+        return IntegerPoint(int(self) - int(other))
 
     def __abs__(self):
         # Return an interval with absolute values for all properties.
@@ -240,7 +245,8 @@ class IntegerExclusions(ExclusionBase):
                 integer_point = get_point_from_expression(
                     point,
                     None,
-                    is_required=False).standardise()
+                    is_required=False,
+                ).standardise()
                 if integer_point not in self.exclusion_points:
                     self.exclusion_points.append(integer_point)
             except PointParsingError:
@@ -294,14 +300,12 @@ class IntegerSequence(SequenceBase):
 
         self.exclusions = None
 
-        matched_recurrence = False
         expression, excl_points = parse_exclusion(dep_section)
 
         for rec, format_num in RECURRENCE_FORMAT_RECS:
             results = rec.match(expression)
             if not results:
                 continue
-            matched_recurrence = True
             reps = results.groupdict().get("reps")
             if reps is not None:
                 reps = int(reps)
@@ -317,10 +321,10 @@ class IntegerSequence(SequenceBase):
             start_required = (format_num in [1, 3])
             end_required = (format_num in [1, 4])
             break
-
-        if not matched_recurrence:
-            raise ValueError(  # TODO - raise appropriate exception
-                "ERROR, bad integer cycling format: %s" % expression)
+        else:
+            raise SequenceParsingError(
+                f'Invalid integer recurrence: {expression}'
+            )
 
         self.p_start = get_point_from_expression(
             start, self.p_context_start, is_required=start_required)

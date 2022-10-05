@@ -563,7 +563,7 @@ def _get_metrics(hosts, metrics, data=None):
             if proc.poll() is None:
                 continue
             del proc_map[host]
-            out, err = (f.decode().strip() for f in proc.communicate())
+            out, err = (stream.strip() for stream in proc.communicate())
             if proc.wait():
                 # Command failed
                 LOG.warning(

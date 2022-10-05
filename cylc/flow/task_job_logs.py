@@ -13,14 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Define task job log filenames and option names."""
+"""Define job log filenames and option names."""
 
 import os
 
 from cylc.flow.id import Tokens
 from cylc.flow.pathutil import get_workflow_run_job_dir
 
-# Task job log filenames.
+# job log filenames.
 JOB_LOG_JOB = "job"
 JOB_LOG_OUT = "job.out"
 JOB_LOG_ERR = "job.err"

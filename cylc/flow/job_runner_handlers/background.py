@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Runs task job scripts as Unix background processes.
+"""Runs job scripts as Unix background processes.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 

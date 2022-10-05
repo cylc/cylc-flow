@@ -31,7 +31,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --no-detach "${WORKFLOW_NAME}"
+    cylc play --reference-test -v --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
@@ -65,7 +65,7 @@ PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
     "PT10S") # PT5S time limit + PT5S polling interval
 ACTUAL_POLL_TIME=$(sed -n \
-    's|\(.*\) INFO - \[1/foo running .* (polled)failed .*|\1|p' "${LOG}")
+    's|\(.*\) DEBUG - \[1/foo running .* (polled)failed .*|\1|p' "${LOG}")
 
 # Test execution timeout polling.
 # Main loop is roughly 1 second, but integer rounding may give an apparent 2

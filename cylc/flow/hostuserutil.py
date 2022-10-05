@@ -150,7 +150,7 @@ class HostUtil:
 
         As specified by the "[scheduler][host self-identification]" settings in
         the site/user global.cylc files. This is mainly used for workflow host
-        identification by task jobs.
+        identification by tasks.
 
         """
         if self._host is None:

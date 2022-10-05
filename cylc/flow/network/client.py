@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Client for workflow runtime API."""
 
-from functools import partial
+from abc import ABCMeta, abstractmethod
+import asyncio
 import os
 from shutil import which
 import socket
@@ -33,6 +34,7 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowStopped,
 )
+from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
     encode_,
     decode_,
@@ -42,13 +44,122 @@ from cylc.flow.network import (
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.workflow_files import (
-    ContactFileFields,
     detect_old_contact_file,
-    load_contact_file
 )
 
 
-class WorkflowRuntimeClient(ZMQSocketBase):
+class WorkflowRuntimeClientBase(metaclass=ABCMeta):
+    """Base class for WorkflowRuntimeClients.
+
+    WorkflowRuntimeClients that inherit from this must implement an async
+    method ``async_request()``. This base class provides a ``serial_request()``
+    method based on the ``async_request()`` method, callable by ``__call__``.
+    It also provides a comms timeout handler method.
+    """
+
+    DEFAULT_TIMEOUT = 5  # seconds
+
+    def __init__(
+        self,
+        workflow: str,
+        host: Optional[str] = None,
+        port: Union[int, str, None] = None,
+        timeout: Union[float, str, None] = None
+    ):
+        self.workflow = workflow
+        if not host or not port:
+            host, port, _ = get_location(workflow)
+        else:
+            port = int(port)
+        self.host = self._orig_host = host
+        self.port = self._orig_port = port
+        self.timeout = (
+            float(timeout) if timeout is not None else self.DEFAULT_TIMEOUT
+        )
+
+    @abstractmethod
+    async def async_request(
+        self,
+        command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
+    ) -> object:
+        """Send an asynchronous request."""
+        ...
+
+    def serial_request(
+        self,
+        command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
+    ) -> object:
+        """Send a request.
+
+        For convenience use ``__call__`` to call this method.
+
+        Args:
+            command: The name of the endpoint to call.
+            args: Arguments to pass to the endpoint function.
+            timeout: Override the default timeout (seconds).
+
+        Raises:
+            ClientTimeout: If a response takes longer than timeout to arrive.
+            ClientError: Coverall for all other issues including failed auth.
+
+        Returns:
+            object: The data exactly as returned from the endpoint function,
+                nothing more, nothing less.
+
+        """
+        loop = getattr(self, 'loop', asyncio.new_event_loop())
+        task = loop.create_task(
+            self.async_request(command, args, timeout, req_meta)
+        )
+        loop.run_until_complete(task)
+        if not hasattr(self, 'loop'):
+            # (If inheriting class does have an event loop, don't mess with it)
+            loop.close()
+        return task.result()
+
+    __call__ = serial_request
+
+    def timeout_handler(self) -> None:
+        """Handle the eventuality of a communication timeout with the workflow.
+
+        Raises:
+            WorkflowStopped: if the workflow has already stopped.
+            CyclError: if the workflow has moved to different host/port.
+        """
+        contact_host, contact_port, _ = get_location(self.workflow)
+        if (
+            contact_host != get_fqdn_by_host(self._orig_host)
+            or contact_port != self._orig_port
+        ):
+            raise CylcError(
+                'The workflow is no longer running at '
+                f'{self._orig_host}:{self._orig_port}\n'
+                f'It has moved to {contact_host}:{contact_port}'
+            )
+
+        # Cannot connect, perhaps workflow is no longer running and is leaving
+        # behind a contact file?
+        try:
+            detect_old_contact_file(self.workflow)
+        except (AssertionError, ServiceFileError):
+            # old contact file exists and the workflow process still alive
+            return
+        else:
+            # the workflow has stopped
+            raise WorkflowStopped(self.workflow)
+
+
+class WorkflowRuntimeClient(  # type: ignore[misc]
+    ZMQSocketBase, WorkflowRuntimeClientBase
+):
+    # (Ignoring mypy 'definition of "host" in base class "ZMQSocketBase" is
+    # incompatible with definition in base class "WorkflowRuntimeClientBase"')
     """Initiate a client to the scheduler API.
 
     Initiates the REQ part of a ZMQ REQ-REP pair.
@@ -101,7 +212,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
           "args": {...}}
 
     Raises:
-        ClientError: if the workflow is not running.
+        WorkflowStopped: if the workflow is not running.
 
     Call server "endpoints" using:
         ``__call__``, ``serial_request``
@@ -113,33 +224,23 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                 cylc.flow.network.client.WorkflowRuntimeClient.async_request
 
     """
-
-    DEFAULT_TIMEOUT = 5.  # 5 seconds
+    # socket & event loop not None - get assigned on init by self.start():
+    socket: zmq.asyncio.Socket
+    loop: asyncio.AbstractEventLoop
 
     def __init__(
         self,
         workflow: str,
         host: Optional[str] = None,
-        port: Optional[int] = None,
-        context: Optional[zmq.asyncio.Context] = None,
+        port: Union[int, str, None] = None,
         timeout: Union[float, str, None] = None,
+        context: Optional[zmq.asyncio.Context] = None,
         srv_public_key_loc: Optional[str] = None
     ):
-        super().__init__(zmq.REQ, context=context)
-        self.workflow = workflow
-        if not host or not port:
-            host, port, _ = get_location(workflow)
-        else:
-            port = int(port)
-        self.host = host
-        self.port = port
-        if timeout is None:
-            timeout = self.DEFAULT_TIMEOUT
-        else:
-            timeout = float(timeout)
-        self.timeout = timeout * 1000
-        self.timeout_handler = partial(
-            self._timeout_handler, workflow, host, port)
+        ZMQSocketBase.__init__(self, zmq.REQ, workflow, context=context)
+        WorkflowRuntimeClientBase.__init__(self, workflow, host, port, timeout)
+        # convert to milliseconds:
+        self.timeout *= 1000
         self.poller: Any = None
         # Connect the ZMQ socket on instantiation
         self.start(self.host, self.port, srv_public_key_loc)
@@ -194,11 +295,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         if self.poller.poll(timeout):
             res = await self.socket.recv()
         else:
-            if callable(self.timeout_handler):
-                self.timeout_handler()
-            host, port, _ = get_location(self.workflow)
-            if host != self.host or port != self.port:
-                raise WorkflowStopped(self.workflow)
+            self.timeout_handler()
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
@@ -222,36 +319,6 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                 error.get('message'),
                 error.get('traceback'),
             )
-
-    def serial_request(
-        self,
-        command: str,
-        args: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-        req_meta: Optional[Dict[str, Any]] = None
-    ) -> object:
-        """Send a request.
-
-        For convenience use ``__call__`` to call this method.
-
-        Args:
-            command: The name of the endpoint to call.
-            args: Arguments to pass to the endpoint function.
-            timeout: Override the default timeout (seconds).
-
-        Raises:
-            ClientTimeout: If a response takes longer than timeout to arrive.
-            ClientError: Coverall for all other issues including failed auth.
-
-        Returns:
-            object: The data exactly as returned from the endpoint function,
-                nothing more, nothing less.
-
-        """
-        task = self.loop.create_task(
-            self.async_request(command, args, timeout, req_meta))
-        self.loop.run_until_complete(task)
-        return task.result()
 
     def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.
@@ -287,47 +354,3 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                     )
             }
         }
-
-    @staticmethod
-    def _timeout_handler(workflow: str, host: str, port: Union[int, str]):
-        """Handle the eventuality of a communication timeout with the workflow.
-
-        Args:
-            workflow (str): workflow name
-            host (str): host name
-            port (Union[int, str]): port number
-        Raises:
-            ClientError: if the workflow has already stopped.
-        """
-        if workflow is None:
-            return
-
-        try:
-            contact_data: Dict[str, str] = load_contact_file(workflow)
-        except (IOError, ValueError, ServiceFileError):
-            # Contact file does not exist or corrupted, workflow should be dead
-            return
-
-        contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
-        contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
-        if (
-            contact_host != host
-            or contact_port != str(port)
-        ):
-            raise CylcError(
-                f'The workflow is no longer running at {host}:{port}\n'
-                f'It has moved to {contact_host}:{contact_port}'
-            )
-
-        # Cannot connect, perhaps workflow is no longer running and is leaving
-        # behind a contact file?
-        try:
-            detect_old_contact_file(workflow, contact_data)
-        except (AssertionError, ServiceFileError):
-            # old contact file exists and the workflow process still alive
-            return
-        else:
-            # the workflow has stopped
-            raise WorkflowStopped(workflow)
-
-    __call__ = serial_request

@@ -16,7 +16,6 @@
 
 from typing import Callable
 from async_timeout import timeout
-import asyncio
 from getpass import getuser
 
 import pytest
@@ -80,35 +79,17 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
-async def test_stop(one, start):
-    """Test listener."""
+async def test_stop(one: Scheduler, start):
+    """Test stop."""
     async with start(one):
-        await one.server.stop('TESTING')
         async with timeout(2):
-            # wait for the server to consume the STOP item from the queue
-            while True:
-                if one.server.queue.empty():
-                    break
-                await asyncio.sleep(0.01)
+            # Wait for the server to consume the STOP signal.
+            # If it doesn't, the test will fail with a timeout error.
+            await one.server.stop('TESTING')
+            assert one.server.stopped
 
 
-async def test_operate(one, start):
-    """Test operate."""
-    async with start(one):
-        one.server.queue.put('STOP')
-        async with timeout(2):
-            # wait for the server to consume the STOP item from the queue
-            while True:
-                if one.server.queue.empty():
-                    break
-                await asyncio.sleep(0.01)
-        # ensure the server is "closed"
-        with pytest.raises(ValueError):
-            one.server.queue.put('foobar')
-            one.server.operate()
-
-
-async def test_receiver(one, start):
+async def test_receiver(one: Scheduler, start):
     """Test the receiver with different message objects."""
     async with timeout(5):
         async with start(one):

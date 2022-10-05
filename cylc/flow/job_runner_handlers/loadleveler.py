@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to loadleveler by the ``llsubmit`` command.
+"""Submits job scripts to loadleveler by the ``llsubmit`` command.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
@@ -37,7 +37,7 @@ Loadleveler directives can be provided in the flow.cylc file:
                foo = bar
                baz = qux
 
-These are written to the top of the task job script like this:
+These are written to the top of the job script like this:
 
 .. code-block:: bash
 

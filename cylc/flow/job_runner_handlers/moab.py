@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to the Moab workload manager with ``msub``.
+"""Submits job scripts to the Moab workload manager with ``msub``.
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
@@ -39,7 +39,7 @@ very similar to PBS:
                -q = foo
                -l nodes = 1
 
-These are written to the top of the task job script like this:
+These are written to the top of the job script like this:
 
 .. code-block:: bash
 
