@@ -177,7 +177,7 @@ def test_remote_workflow_host_rankings(mock_glbl_cfg):
     with pytest.raises(HostSelectException) as excinfo:
         select_workflow_host()
     # ensure that host selection actually evaluated rankings
-    assert set(excinfo.value.data[remote_platform_fqdn]) == {
+    assert set(excinfo.value.data[remote_platform_fqdn]) - {'returncode'} == {
         'virtual_memory().available > 123456789123456789',
         'cpu_count() > 512',
         "disk_usage('/').free > 123456789123456789"

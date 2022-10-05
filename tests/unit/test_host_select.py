@@ -128,9 +128,10 @@ def test_metric_command_failure():
                 elephant
             '''
         )
-    assert excinfo.value.data[localhost_fqdn]['get_metrics'] == (
-        'Command failed (exit: 1)'
-    )
+    # we should expect the special (2) returncode
+    # (i.e. the command ran fine but there was something wrong with the
+    # provided expression)
+    assert excinfo.value.data[localhost_fqdn]['returncode'] == 2
 
 
 def test_workflow_host_select(mock_glbl_cfg):

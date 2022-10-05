@@ -48,10 +48,17 @@ def get_option_parser():
 
 def _psutil(metrics_json):
     metrics = parse_dirty_json(metrics_json)
-    methods = [
-        getattr(psutil, key[0])
-        for key in metrics
-    ]
+
+    try:
+        methods = [
+            getattr(psutil, key[0])
+            for key in metrics
+        ]
+    except AttributeError as exc:
+        # error obtaining interfaces from psutil e.g:
+        # * requesting a method which does not exist
+        print(exc, file=sys.stderr)
+        sys.exit(2)
 
     try:
         ret = [
@@ -60,7 +67,6 @@ def _psutil(metrics_json):
         ]
     except Exception as exc:
         # error extracting metrics from psutil e.g:
-        # * requesting a method which does not exist
         # * requesting information on a resource which does not exist
         print(exc, file=sys.stderr)
         sys.exit(2)

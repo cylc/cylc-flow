@@ -27,10 +27,13 @@ from tokenize import tokenize
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import CylcError, HostSelectException
+from cylc.flow.exceptions import GlobalConfigError, HostSelectException
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import run_cmd, cylc_server_cmd
 from cylc.flow.terminal import parse_dirty_json
+
+
+GLBL_CFG_STR = 'global.cylc[scheduler][run hosts]ranking'
 
 
 def select_workflow_host(cached=True):
@@ -77,10 +80,10 @@ def select_workflow_host(cached=True):
 
 
 def select_host(
-        hosts,
-        ranking_string=None,
-        blacklist=None,
-        blacklist_name=None
+    hosts,
+    ranking_string=None,
+    blacklist=None,
+    blacklist_name=None
 ):
     """Select a host from the provided list.
 
@@ -165,6 +168,7 @@ def select_host(
     if ranking_string:
         # parse rankings
         rankings = list(_get_rankings(ranking_string))
+        data['ranking'] = ranking_string
 
     if not rankings:
         # no metrics or ranking required, pick host at random
@@ -202,10 +206,10 @@ def select_host(
 
 
 def _filter_by_hostname(
-        hosts,
-        blacklist,
-        blacklist_name=None,
-        data=None
+    hosts,
+    blacklist,
+    blacklist_name=None,
+    data=None
 ):
     """Filter out any hosts present in `blacklist`.
 
@@ -292,7 +296,15 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
         host_rank = []
         for key, expression in rankings:
             item = _reformat_expr(key, expression)
-            result = _simple_eval(expression, RESULT=results[host][key])
+            try:
+                result = _simple_eval(expression, RESULT=results[host][key])
+            except Exception as exc:
+                raise GlobalConfigError(
+                    'Invalid host ranking expression'
+                    f'\n    Expression: {item}'
+                    f'\n    Configuration: {GLBL_CFG_STR}'
+                    f'\n    Error: {exc}'
+                )
             if isinstance(result, bool):
                 host_rankings[item] = result
                 data[host][item] = result
@@ -332,11 +344,11 @@ class SimpleVisitor(ast.NodeVisitor):
         # variables
         ast.Name, ast.Load, ast.Attribute, ast.Subscript, ast.Index,
         # opers
-        ast.BinOp, ast.operator,
+        ast.BinOp, ast.operator, ast.UnaryOp, ast.unaryop,
         # types
         ast.Num, ast.Str,
         # comparisons
-        ast.Compare, ast.cmpop, ast.List, ast.Tuple
+        ast.Compare, ast.cmpop, ast.List, ast.Tuple,
     )
 
 
@@ -356,6 +368,8 @@ def _simple_eval(expr, **variables):
     Examples:
         >>> _simple_eval('1 + 1')
         2
+        >>> _simple_eval('1 * -1')
+        -1
         >>> _simple_eval('1 < a', a=2)
         True
         >>> _simple_eval('1 in (1, 2, 3)')
@@ -367,25 +381,31 @@ def _simple_eval(expr, **variables):
         If you try to get it to do something you're not allowed to:
         >>> _simple_eval('open("foo")')
         Traceback (most recent call last):
-        CylcError: Invalid expression: open("foo")
+        ValueError: <class '_ast.Call'>
+        >>> _simple_eval('import sys')
+        Traceback (most recent call last):
+        SyntaxError: ...
+
+        If you try to get hold of something you aren't supposed to:
+        >>> answer = 42  # only variables explicitly passed in should work
+        >>> _simple_eval('answer')
+        Traceback (most recent call last):
+        NameError: name 'a' is not defined
 
         If you try to do something which doesn't make sense:
         >>> _simple_eval('a.b.c')  # no value "a.b.c"
         Traceback (most recent call last):
-        CylcError: Invalid expression: a.b.c
+        NameError: name 'answer' is not defined
 
     """
-    try:
-        node = ast.parse(expr.strip(), mode='eval')
-        SimpleVisitor().visit(node)
-        # acceptable use of eval due to restricted language features
-        return eval(  # nosec
-            compile(node, '<string>', 'eval'),
-            {'__builtins__': None},
-            variables
-        )
-    except Exception as exc:
-        raise CylcError(f'Invalid expression: {expr}\n{exc}')
+    node = ast.parse(expr.strip(), mode='eval')
+    SimpleVisitor().visit(node)
+    # acceptable use of eval due to restricted language features
+    return eval(  # nosec
+        compile(node, '<string>', 'eval'),
+        {'__builtins__': {}},
+        variables
+    )
 
 
 def _get_rankings(string):
@@ -512,9 +532,9 @@ def _get_metrics(hosts, metrics, data=None):
             Used for logging success/fail outcomes of the form {host: {}}
 
     Examples:
-        Command failure:
+        Command failure (no such attribute of psutil):
         >>> _get_metrics(['localhost'], [['elephant']])
-        ({}, {'localhost': {'get_metrics': 'Command failed (exit: 1)'}})
+        ({}, {'localhost': {'returncode': 2}})
 
     Returns:
         dict - {host: {(function, arg1, arg2, ...): result}}
@@ -543,21 +563,20 @@ def _get_metrics(hosts, metrics, data=None):
             if proc.poll() is None:
                 continue
             del proc_map[host]
-            out, err = (f.decode() for f in proc.communicate())
+            out, err = (f.decode().strip() for f in proc.communicate())
             if proc.wait():
-                # Command failed in verbose/debug mode
+                # Command failed
                 LOG.warning(
-                    'Could not evaluate "%s" (return code %d)\n%s',
-                    host, proc.returncode, err
+                    'Error evaluating ranking expression on'
+                    f' {host}: \n{err}'
                 )
-                data[host]['get_metrics'] = (
-                    f'Command failed (exit: {proc.returncode})')
             else:
                 host_stats[host] = dict(zip(
                     metrics,
                     # convert JSON dicts -> namedtuples
                     _deserialise(metrics, parse_dirty_json(out))
                 ))
+            data[host]['returncode'] = proc.returncode
         sleep(0.01)
     return host_stats, data
 
