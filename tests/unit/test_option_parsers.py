@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from pytest import param
 from typing import List
 
 import sys
@@ -103,19 +104,27 @@ def test_Options_std_opts():
 @pytest.mark.parametrize(
     'opts, expect',
     [
-        ({'opt_conf_keys': 'A,B,C'}, True),
-        ({'defines': ['[env]BAR="HI"']}, True),
-        ({'rose_template_vars': ['FOO = 43']}, True),
-        (
+        param({'opt_conf_keys': 'A,B,C'}, True, id='opt_conf_keys'),
+        param({'defines': ['[env]BAR="HI"']}, True, id='defines'),
+        param(
+            {'rose_template_vars': ['FOO = 43']}, True,
+            id='rose_template_vars'
+        ),
+        param(
             {
                 'opt_conf_keys': 'A,B,C', 'defines': ['[env]BAR="HI"'],
                 'rose_template_vars': ['FOO = 43'], 'hello': 42
             },
-            True
+            True,
+            id='all-vars-set'
         ),
-        ({'hello': 42}, False)
+        param({'hello': 42}, False, id='irrelevant-var-set'),
+        param({'clear_rose_install_opts': True}, True, id='clear_opts_set'),
     ]
 )
 def test_has_rose_cli_opts(opts, expect):
+    """It returns true if any rose opts set"""
+    if 'clear_rose_install_opts' not in opts:
+        opts['clear_rose_install_opts'] = False
     opts = SimpleNamespace(**opts)
     assert has_rose_cli_opts(opts) == expect

@@ -587,7 +587,16 @@ class Options:
 
 def has_rose_cli_opts(opts):
     """Rose options have been set on an options namespace."""
-    for rose_opt in ['opt_conf_keys', 'defines', 'rose_template_vars']:
-        if hasattr(opts, rose_opt) and getattr(opts, rose_opt):
-            return True
+    if opts.clear_rose_install_opts:
+        return True
+    if any(
+        hasattr(opts, rose_opt) and getattr(opts, rose_opt)
+        for rose_opt in [
+            'opt_conf_keys',
+            'defines',
+            'rose_template_vars',
+            'clear_rose_install_opts'
+        ]
+    ):
+        return True
     return False

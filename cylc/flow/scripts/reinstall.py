@@ -180,7 +180,6 @@ def reinstall_cli(
                     dry_run=True,
                 )
                 and not has_rose_cli_opts(opts)
-                and not opts.clear_rose_install_opts
             ):
                 # no rsync output == no changes => exit
                 print(cparse(
