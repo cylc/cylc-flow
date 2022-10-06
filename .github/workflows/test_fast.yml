@@ -111,6 +111,7 @@ jobs:
           name: '${{ github.workflow }} ${{ matrix.os }} py-${{ matrix.python-version }}'
           flags: fast-tests
           fail_ci_if_error: true
+          verbose: true
           token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
 
       - name: Linkcheck
