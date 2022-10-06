@@ -487,7 +487,7 @@ def test_invalid_tomlfile(tmp_path):
 @pytest.mark.parametrize(
     'ref, expect',
     [
-        [True, 'line > {max_line_len} characters'],
+        [True, 'line > ``{max_line_len}`` characters'],
         [False, 'line > 130 characters']
     ]
 )
