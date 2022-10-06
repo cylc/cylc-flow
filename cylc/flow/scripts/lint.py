@@ -426,7 +426,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 regex = r"^.{" + str(max_line_len) + r"}"
                 if reference:
                     msg = (
-                        'line > ``{max_line_len}`` characters. Max line '
+                        'line > ``<max_line_len>`` characters. Max line '
                         ' length set in pyproject.toml (default 130)'
                     )
                 else:
