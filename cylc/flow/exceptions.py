@@ -16,6 +16,7 @@
 """Exceptions for "expected" errors."""
 
 import errno
+from textwrap import wrap
 from typing import (
     Callable,
     Iterable,
@@ -372,10 +373,57 @@ class HostSelectException(CylcError):
     def __str__(self):
         ret = 'Could not select host from:'
         for host, data in sorted(self.data.items()):
-            ret += f'\n    {host}:'
-            for key, value in data.items():
-                ret += f'\n        {key}: {value}'
+            if host != 'ranking':
+                ret += f'\n    {host}:'
+                for key, value in data.items():
+                    ret += f'\n        {key}: {value}'
+        hint = self.get_hint()
+        if hint:
+            ret += f'\n\n{hint}'
         return ret
+
+    def get_hint(self):
+        """Return a hint to explain this error for certain cases."""
+        if all(
+            # all procs came back with special SSH error code 255
+            datum.get('returncode') == 255
+            for key, datum in self.data.items()
+            if key != 'ranking'
+        ):
+            # likely SSH issues
+            return (
+                'Cylc could not establish SSH connection to the run hosts.'
+                '\nEnsure you can SSH to these hosts without having to'
+                ' answer any prompts.'
+            )
+
+        if (
+            # a ranking expression was used
+            self.data.get('ranking')
+            # and all procs came back with special 'cylc psutil' error code 2
+            # (which is used for errors relating to the extraction of metrics)
+            and all(
+                datum.get('returncode') == 2
+                for key, datum in self.data.items()
+                if key != 'ranking'
+            )
+        ):
+            # likely an issue with the ranking expression
+            ranking = "\n".join(
+                wrap(
+                    self.data.get("ranking"),
+                    initial_indent='    ',
+                    subsequent_indent='    ',
+                )
+            )
+            return (
+                'This is likely an error in the ranking expression:'
+                f'\n{ranking}'
+                '\n\nConfigured by:'
+                '\n    global.cylc[scheduler][run hosts]ranking'
+            )
+
+        return None
 
 
 class NoHostsError(CylcError):
