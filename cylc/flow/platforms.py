@@ -16,6 +16,7 @@
 #
 """Functions relating to (job) platforms."""
 
+from functools import lru_cache
 import random
 import re
 from copy import deepcopy
@@ -162,6 +163,7 @@ def get_platform(
             )
 
 
+@lru_cache(100)
 def platform_from_name(
     platform_name: Optional[str] = None,
     platforms: Optional[Dict[str, Dict[str, Any]]] = None,
