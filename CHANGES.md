@@ -40,6 +40,9 @@ Maintenance release.
 no file has changed, but Rose CLI options (`-O, -S, -D`, or
 `--clear-rose-install-options`) set.
 
+[#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
+changes to be considered by ``cylc reinstall``.
+
 [#5023](https://github.com/cylc/cylc-flow/pull/5023) - tasks force-triggered
 after a shutdown was ordered should submit to run immediately on restart.
 
