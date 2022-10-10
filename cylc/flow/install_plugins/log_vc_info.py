@@ -325,7 +325,11 @@ def write_diff(
     )
 
     diff_file = Path(
-        run_dir, WorkflowFiles.LogDir.VERSION, DIFF_FILENAME)
+        run_dir,
+        WorkflowFiles.LogDir.DIRNAME,
+        WorkflowFiles.LogDir.VERSION,
+        DIFF_FILENAME
+    )
     diff_file.parent.mkdir(exist_ok=True)
 
     with open(diff_file, 'a') as f:

@@ -183,7 +183,10 @@ def test_main_git(git_source_repo: Tuple[str, str], tmp_run_dir: Callable):
     run_dir: Path = tmp_run_dir('frodo')
     main(source_dir, None, run_dir)
     with open(
-        run_dir / WorkflowFiles.LogDir.VERSION / INFO_FILENAME, 'r'
+        run_dir
+        / WorkflowFiles.LogDir.DIRNAME
+        / WorkflowFiles.LogDir.VERSION
+        / INFO_FILENAME, 'r'
     ) as f:
         loaded = json.loads(f.read())
     assert isinstance(loaded, dict)
