@@ -80,20 +80,25 @@ The same workflow can be installed with multiple names; this results in
 multiple workflow run directories that link to the same workflow definition.
 """
 
+from ansimarkup import ansiprint as cprint
+import asyncio
+from optparse import Values
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING, Dict, Any
+from typing import Optional, Dict, Any
 
+from cylc.flow.scripts.scan import (
+    get_pipe,
+    _format_plain,
+)
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, InputError
+from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
 )
 from cylc.flow.terminal import cli_function
-
-if TYPE_CHECKING:
-    from optparse import Values
 
 
 def get_option_parser() -> COP:
@@ -171,14 +176,40 @@ def get_source_location(path: Optional[str]) -> Path:
     return search_install_source_dirs(expanded_path)
 
 
+async def scan(wf_name: str) -> None:
+    """Print any instances of wf_name that are already active."""
+    opts = Values({
+        'name': [f'{wf_name}/*'],
+        'states': {'running', 'paused', 'stopping'},
+        'source': False,
+        'ping': False,
+    })
+    active = [
+        item async for item in get_pipe(opts, None, scan_dir=None)
+    ]
+    if active:
+        print(
+            CylcLogFormatter.COLORS['WARNING'].format(
+                f'Instance(s) of "{wf_name}" are already active:'
+            )
+        )
+        for item in active:
+            cprint(
+                _format_plain(item, opts)
+            )
+
+
 @cli_function(get_option_parser)
 def main(parser, opts, reg=None):
-    install(parser, opts, reg)
+    wf_name = install(parser, opts, reg)
+    asyncio.run(
+        scan(wf_name)
+    )
 
 
 def install(
     parser: COP, opts: 'Values', reg: Optional[str] = None
-) -> None:
+) -> str:
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
@@ -204,7 +235,7 @@ def install(
     elif opts.symlink_dirs:
         cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
 
-    source_dir, rundir, _workflow_name = install_workflow(
+    source_dir, rundir, workflow_name = install_workflow(
         source=source,
         workflow_name=opts.workflow_name,
         run_name=opts.run_name,
@@ -229,3 +260,5 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+
+    return workflow_name
