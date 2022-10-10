@@ -682,6 +682,26 @@ class WorkflowDatabaseManager:
         finally:
             pri_dao.close()
 
+    def upgrade_pre_803(self):
+        """Upgrade on restart from a pre-8.0.3 database.
+
+        Add "is_manual_submit" column to the task states table.
+        See GitHub cylc/cylc-flow#5023 and #5187.
+        """
+        conn = self.get_pri_dao().connect()
+        t_name = self.TABLE_TASK_STATES
+        c_name = "is_manual_submit"
+        LOG.info(
+            f"DB upgrade (pre-8.0.3): "
+            f"add {c_name} column to {self.TABLE_TASK_STATES}"
+        )
+        conn.execute(
+            rf"ALTER TABLE {self.TABLE_TASK_STATES} "
+            rf"ADD COLUMN {c_name} INTEGER "
+            r"DEFAULT 0 NOT NULL"
+        )
+        conn.commit()
+
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is
         incompatible with the current version of Cylc."""
@@ -722,3 +742,5 @@ class WorkflowDatabaseManager:
                 f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
                 f"\n{manual_rm_msg}"
             )
+        if last_run_ver < parse_version("8.0.3"):
+            self.upgrade_pre_803()
