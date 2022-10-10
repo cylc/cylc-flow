@@ -49,19 +49,20 @@ Examples:
   $ cylc config --initial-cycle-point=now myflow
 """
 
+import asyncio
 import os.path
 from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
-from cylc.flow.exceptions import InputError
+from cylc.flow.id_cli import parse_id_async
+from cylc.flow.exceptions import InputError, WorkflowConfigError
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     icp_option,
 )
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.pathutil import get_workflow_run_dir, is_in_a_rundir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import WorkflowFiles
@@ -75,6 +76,7 @@ def get_option_parser() -> COP:
         __doc__,
         argdoc=[COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)],
         jset=True,
+        revalidate=True,
     )
 
     parser.add_option(
@@ -149,6 +151,14 @@ def main(
     options: 'Values',
     *ids,
 ) -> None:
+    asyncio.run(_main(parser, options, *ids))
+
+
+async def _main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+) -> None:
 
     if options.print_platform_names and options.print_platforms:
         options.print_platform_names = False
@@ -178,11 +188,16 @@ def main(
         )
         return
 
-    workflow_id, _, flow_file = parse_id(
+    workflow_id, _, flow_file = await parse_id_async(
         *ids,
         src=True,
         constraint='workflows',
     )
+
+    if not is_in_a_rundir(flow_file) and options.revalidate:
+        raise WorkflowConfigError(
+            'Revalidation only works with installed workflows.'
+        )
 
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(workflow_id)))

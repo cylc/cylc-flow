@@ -15,13 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from pytest import param
 from typing import List
 
 import sys
 import io
 from contextlib import redirect_stdout
+from cylc.flow.exceptions import WorkflowConfigError
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP, Options
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options,
+    can_revalidate,
+)
+from types import SimpleNamespace
 
 
 USAGE_WITH_COMMENT = "usage \n # comment"
@@ -93,3 +100,39 @@ def test_Options_std_opts():
     MyOptions = Options(parser)
     MyValues = MyOptions(verbosity=1)
     assert MyValues.verbosity == 1
+
+
+@pytest.mark.parametrize(
+    'rundir, revalidate, expect',
+    (
+        (True, True, ''),
+        (True, False, ''),
+        (False, True, False),
+        (False, False, ''),
+    )
+)
+def test_can_revalidate(monkeypatch, tmp_path, rundir, revalidate, expect):
+    """It raises an error if revalidation isn't allowed and the user
+    has asked for revalidation.
+    """
+    is_ = tmp_path / 'is'
+    not_ = tmp_path / 'not'
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.get_cylc_run_dir', lambda: is_)
+
+    flow_file = is_ if rundir else not_
+    flow_file = flow_file / 'foo/bar/baz/flow.cylc'
+    if expect is False:
+        with pytest.raises(WorkflowConfigError):
+            can_revalidate(
+                flow_file,
+                SimpleNamespace(**{'revalidate': revalidate})
+            )
+    else:
+        assert (
+            can_revalidate(
+                flow_file,
+                SimpleNamespace(**{'revalidate': revalidate})
+            )
+            is True
+        )

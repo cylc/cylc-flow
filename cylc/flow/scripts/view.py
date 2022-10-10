@@ -25,14 +25,16 @@ Note:
   configuration (as Cylc would see it).
 """
 
+import asyncio
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
 )
 from cylc.flow.parsec.fileparse import read_and_proc
+from cylc.flow.option_parsers import can_revalidate
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -44,6 +46,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
+        revalidate=True,
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
@@ -98,11 +101,17 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, _, flow_file = parse_id(
+    asyncio.run(_main(parser, options, workflow_id))
+
+
+async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
         constraint='workflows',
     )
+
+    can_revalidate(flow_file, options)
 
     # read in the flow.cylc file
     viewcfg = {

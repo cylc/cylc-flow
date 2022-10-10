@@ -35,6 +35,7 @@ Examples:
     $ cylc graph one -o 'one.svg'
 """
 
+import asyncio
 from difflib import unified_diff
 from shutil import which
 from subprocess import Popen, PIPE
@@ -45,11 +46,12 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import InputError, CylcError
 from cylc.flow.id import Tokens
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     icp_option,
+    can_revalidate,
 )
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -108,9 +110,10 @@ def get_nodes_and_edges(
     workflow_id,
     start,
     stop,
+    flow_file,
 ) -> Tuple[List[Node], List[Edge]]:
     """Return graph sorted nodes and edges."""
-    config = get_config(workflow_id, opts)
+    config = get_config(workflow_id, opts, flow_file)
     if opts.namespaces:
         nodes, edges = _get_inheritance_nodes_and_edges(config)
     else:
@@ -194,13 +197,8 @@ def _get_inheritance_nodes_and_edges(
     return sorted(nodes), sorted(edges)
 
 
-def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
+def get_config(workflow_id: str, opts: 'Values', flow_file) -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    workflow_id, _, flow_file = parse_id(
-        workflow_id,
-        src=True,
-        constraint='workflows',
-    )
     template_vars = get_template_vars(opts)
     return WorkflowConfig(
         workflow_id, flow_file, opts, template_vars=template_vars
@@ -334,7 +332,7 @@ def open_image(filename):
         img.show()
 
 
-def graph_render(opts, workflow_id, start, stop) -> int:
+def graph_render(opts, workflow_id, start, stop, flow_file) -> int:
     """Render the workflow graph to the specified format.
 
     Graph is rendered to the specified format. The Graphviz "dot" format
@@ -349,6 +347,7 @@ def graph_render(opts, workflow_id, start, stop) -> int:
         workflow_id,
         start,
         stop,
+        flow_file
     )
 
     # format the graph in graphviz-dot format
@@ -382,7 +381,9 @@ def graph_render(opts, workflow_id, start, stop) -> int:
     return 0
 
 
-def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
+def graph_reference(
+    opts, workflow_id, start, stop, flow_file, write=print,
+) -> int:
     """Format the workflow graph using the cylc reference format."""
     # get nodes and edges
     nodes, edges = get_nodes_and_edges(
@@ -390,6 +391,7 @@ def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
         workflow_id,
         start,
         stop,
+        flow_file
     )
     for line in format_cylc_reference(opts, nodes, edges):
         write(line)
@@ -397,13 +399,24 @@ def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
     return 0
 
 
-def graph_diff(opts, workflow_a, workflow_b, start, stop) -> int:
+async def graph_diff(
+    opts, workflow_a, workflow_b, start, stop, flow_file
+) -> int:
     """Difference the workflow graphs using the cylc reference format."""
+
+    workflow_b, _, flow_file_b = await parse_id_async(
+        workflow_b,
+        src=True,
+        constraint='workflows',
+    )
+
     # load graphs
     graph_a: List[str] = []
     graph_b: List[str] = []
-    graph_reference(opts, workflow_a, start, stop, write=graph_a.append),
-    graph_reference(opts, workflow_b, start, stop, write=graph_b.append),
+    graph_reference(
+        opts, workflow_a, start, stop, flow_file, write=graph_a.append),
+    graph_reference(
+        opts, workflow_b, start, stop, flow_file_b, write=graph_b.append),
 
     # compare graphs
     diff_lines = list(
@@ -427,6 +440,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         jset=True,
+        revalidate=True,
         argdoc=[
             WORKFLOW_ID_OR_PATH_ARG_DOC,
             COP.optional(
@@ -507,20 +521,36 @@ def main(
     start: Optional[str] = None,
     stop: Optional[str] = None
 ) -> None:
+    result = asyncio.run(_main(parser, opts, workflow_id, start, stop))
+    sys.exit(result)
+
+
+async def _main(
+    parser: COP,
+    opts: 'Values',
+    workflow_id: str,
+    start: Optional[str] = None,
+    stop: Optional[str] = None
+) -> int:
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
         raise InputError('Cannot combine --group and --namespaces.')
     if opts.cycles and opts.namespaces:
         raise InputError('Cannot combine --cycles and --namespaces.')
 
-    if opts.diff:
-        sys.exit(
-            graph_diff(opts, workflow_id, opts.diff, start, stop)
-        )
-    if opts.reference:
-        sys.exit(
-            graph_reference(opts, workflow_id, start, stop)
-        )
-    sys.exit(
-        graph_render(opts, workflow_id, start, stop)
+    workflow_id, _, flow_file = await parse_id_async(
+        workflow_id,
+        src=True,
+        constraint='workflows',
     )
+
+    can_revalidate(flow_file, opts)
+
+    if opts.diff:
+        return await graph_diff(
+            opts, workflow_id, opts.diff, start, stop, flow_file)
+    if opts.reference:
+        return graph_reference(
+            opts, workflow_id, start, stop, flow_file)
+
+    return graph_render(opts, workflow_id, start, stop, flow_file)

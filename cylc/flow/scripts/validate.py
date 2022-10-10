@@ -25,6 +25,7 @@ correspond to the inlined version seen by the parser;
 use 'cylc view -i,--inline WORKFLOW' for comparison.
 """
 
+import asyncio
 from ansimarkup import parse as cparse
 from optparse import Values
 import sys
@@ -32,18 +33,19 @@ import sys
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import (
-    WorkflowConfigError,
     TaskProxySequenceBoundsError,
-    TriggerExpressionError
+    TriggerExpressionError,
+    WorkflowConfigError
 )
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     Options,
     icp_option,
+    can_revalidate,
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
@@ -55,6 +57,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
+        revalidate=True,
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
@@ -80,6 +83,11 @@ def get_option_parser():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'simulation'])
 
+    parser.add_option(
+        '--revalidate', help="Validate as if for re-install",
+        default=False, dest="revalidate", action="store_true"
+    )
+
     parser.add_option(icp_option)
 
     parser.add_cylc_rose_options()
@@ -103,17 +111,24 @@ ValidateOptions = Options(
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     """cylc validate CLI."""
+    asyncio.run(_main(parser, options, workflow_id))
+
+
+async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
 
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)
 
-    workflow_id, _, flow_file = parse_id(
+    workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
         constraint='workflows',
     )
+    can_revalidate(flow_file, options)
+
     cfg = WorkflowConfig(
         workflow_id,
         flow_file,

@@ -36,6 +36,8 @@ from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.pathutil import is_in_a_rundir
 from cylc.flow.terminal import supports_color, DIM
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
@@ -289,6 +291,7 @@ class CylcOptionParser(OptionParser):
         argdoc: Optional[List[Tuple[str, str]]] = None,
         comms: bool = False,
         jset: bool = False,
+        revalidate: bool = False,
         multitask: bool = False,
         multiworkflow: bool = False,
         auto_add: bool = True,
@@ -303,6 +306,7 @@ class CylcOptionParser(OptionParser):
                 instructions. Optional list of tuples of (name, description).
             comms: If True, allow the --comms-timeout option.
             jset: If True, allow the Jinja2 --set option.
+            revalidate: If True, allow the --revalidate option.
             multitask: If True, insert the multitask text into the
                 usage instructions.
             multiworkflow: If True, insert the multiworkflow text into the
@@ -327,6 +331,7 @@ class CylcOptionParser(OptionParser):
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
+        self.revalidate = revalidate
         self.color = color
         # Whether to log messages that are below warning level to stdout
         # instead of stderr:
@@ -439,6 +444,13 @@ class CylcOptionParser(OptionParser):
                     "command line if they need to be overridden."
                 ),
                 action="store", default=None, dest="templatevars_file")
+
+        if self.revalidate:
+            self.add_std_option(
+                '--revalidate',
+                help="Get template variables from prevous workflow run.",
+                action='store_true', default=False
+            )
 
     def add_cylc_rose_options(self) -> None:
         """Add extra options for cylc-rose plugin if it is installed."""
@@ -607,3 +619,11 @@ class Options:
             setattr(opts, key, value)
 
         return opts
+
+
+def can_revalidate(flow_file, opts):
+    if not is_in_a_rundir(flow_file) and opts.revalidate:
+        raise WorkflowConfigError(
+            'Revalidation only works with installed workflows.'
+        )
+    return True

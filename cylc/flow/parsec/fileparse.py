@@ -251,7 +251,7 @@ def process_plugins(fpath, opts):
             # If you want it to work on sourcedirs you need to get the options
             # to here.
             plugin_result = entry_point.resolve()(
-                srcdir=fpath, opts=opts
+                fpath, opts=opts
             )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)

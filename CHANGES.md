@@ -16,6 +16,11 @@ ones in. -->
 
 ### Enhancements
 
+[#5187](https://github.com/cylc/cylc-flow/pull/5189) - Allow
+`cylc validate --revalidate` to use template variables collected from
+the workflow database. Also applied to `cylc graph`, `cylc view` and
+`cylc config`.
+
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
 

@@ -456,3 +456,8 @@ def get_workflow_name_from_id(workflow_id: str) -> str:
         name_path = id_path
 
     return str(name_path.relative_to(cylc_run_dir))
+
+
+def is_in_a_rundir(path_):
+    """Is this path in a run directory"""
+    return is_relative_to(path_, Path(get_cylc_run_dir()))

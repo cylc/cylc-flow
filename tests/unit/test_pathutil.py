@@ -40,6 +40,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_test_log_path,
+    is_in_a_rundir,
     make_localhost_symlinks,
     make_workflow_run_tree,
     parse_rm_dirs,
@@ -574,3 +575,12 @@ def test_get_workflow_name_from_id(
 
     result = get_workflow_name_from_id(id_)
     assert result == name
+
+
+def test_is_in_a_rundir(monkeypatch, tmp_path):
+    is_ = tmp_path / 'is'
+    not_ = tmp_path / 'not'
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.get_cylc_run_dir', lambda: is_)
+    assert is_in_a_rundir(is_ / 'foo/bar/baz')
+    assert not is_in_a_rundir(not_ / 'foo/bar/baz')
