@@ -347,3 +347,27 @@ def test_no_look_behind():
     """
     assert '?<=' not in UNIVERSAL_ID.pattern
     assert '?<!' not in UNIVERSAL_ID.pattern
+
+
+def test_workflow_property():
+    """The workflow property should provide the workflow part of the ID.
+
+    The relevant selectors should be preserved
+    """
+    assert (
+        Tokens('~u/w:ws//c:cs/t:ts/j:js').workflow
+    ) == (
+        Tokens('~u/w:ws')
+    )
+
+
+def test_task_property():
+    """The task property should provide the task part of the ID.
+
+    The relevant selectors should be preserved
+    """
+    assert (
+        Tokens('~u/w:ws//c:cs/t:ts/j:js').task
+    ) == (
+        Tokens('//c:cs/t:ts/j:js', relative=True)
+    )

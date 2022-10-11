@@ -284,12 +284,12 @@ class Tokens(dict):
             **{
                 key: value
                 for key, value in self.items()
-                if key in (
-                    enum.value
-                    for enum in (
-                        {*IDTokens} - {IDTokens.User, IDTokens.Workflow}
-                    )
-                )
+                if key in {
+                    key
+                    for key in self._KEYS
+                    if not key.startswith(IDTokens.User.value)
+                    and not key.startswith(IDTokens.Workflow.value)
+                }
             }
         )
 
@@ -306,12 +306,12 @@ class Tokens(dict):
             **{
                 key: value
                 for key, value in self.items()
-                if key not in (
-                    enum.value
-                    for enum in (
-                        {*IDTokens} - {IDTokens.User, IDTokens.Workflow}
-                    )
-                )
+                if key in {
+                    key
+                    for key in self._KEYS
+                    if key.startswith(IDTokens.User.value)
+                    or key.startswith(IDTokens.Workflow.value)
+                }
             }
         )
 
