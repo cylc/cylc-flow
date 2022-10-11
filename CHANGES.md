@@ -40,8 +40,8 @@ Maintenance release.
 changes to be considered by ``cylc reinstall``.
 
 [#5023](https://github.com/cylc/cylc-flow/pull/5023),
-[#5187](https://github.com/cylc/cylc-flow/pull/5187),
- - tasks force-triggered
+[#5187](https://github.com/cylc/cylc-flow/pull/5187) -
+tasks force-triggered
 after a shutdown was ordered should submit to run immediately on restart.
 
 [#5137](https://github.com/cylc/cylc-flow/pull/5137) -
