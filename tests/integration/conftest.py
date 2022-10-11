@@ -302,11 +302,8 @@ def db_select():
             stmt += f' WHERE {where_stmt}'
             stmt_args = list(where.values())
 
-        pri_dao = schd.workflow_db_mgr.get_pri_dao()
-        try:
+        with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
             return list(pri_dao.connect().execute(stmt, stmt_args))
-        finally:
-            pri_dao.close()
 
     return _inner
 
