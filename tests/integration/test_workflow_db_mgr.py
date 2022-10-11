@@ -104,9 +104,10 @@ async def test_db_upgrade_pre_803(
     schd: Scheduler = scheduler(reg, paused_start=True)
     with pytest.raises(sqlite3.OperationalError):
         async with start(schd):
-            assert (
-                ('n_restart', '1') in db_select(schd, False, 'workflow_params')
-            )
+            pass
+    assert (
+        ('n_restart', '1') in db_select(schd, False, 'workflow_params')
+    )
 
     # Set cylc_version to pre-8.0.3 to cause an upgrade on restart.
     db_set_workflow_param(schd, "cylc_version", "8.0.2")
