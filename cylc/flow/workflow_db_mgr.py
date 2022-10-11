@@ -689,7 +689,6 @@ class WorkflowDatabaseManager:
         See GitHub cylc/cylc-flow#5023 and #5187.
         """
         conn = self.get_pri_dao().connect()
-        t_name = self.TABLE_TASK_STATES
         c_name = "is_manual_submit"
         LOG.info(
             f"DB upgrade (pre-8.0.3): "
@@ -742,5 +741,5 @@ class WorkflowDatabaseManager:
                 f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
                 f"\n{manual_rm_msg}"
             )
-        if last_run_ver < parse_version("8.0.3"):
+        if last_run_ver < parse_version("8.0.3.dev"):
             self.upgrade_pre_803()
