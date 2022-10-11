@@ -37,7 +37,7 @@ See `cylc get-resources` for available completion scripts using this server.
 # * Completion functions:
 #   Which "complete" words e.g. 'a' might match 'a1', 'a2' but not 'b1'.
 # * Listing functions:
-#   Which provide possible values to the compltion functions.
+#   Which provide possible values to the completion functions.
 
 import asyncio
 import os
@@ -71,7 +71,7 @@ if t.TYPE_CHECKING:
 INTERNAL = True
 
 # set the compatibility range for completion scripts with this server
-# I.E. if we change the server interface, change this compatiblity range.
+# I.E. if we change the server interface, change this compatibility range.
 # User's will be presented with an upgrade notice if this happens.
 REQUIRED_SCRIPT_VERSION = 'completion-script >=1.0.0, <2.0.0'
 
@@ -182,7 +182,7 @@ async def complete_cylc(_root: str, *items: str) -> t.List[str]:
         return await complete_command(partial)
     command: str = items[0]
 
-    # special logic for the psudo "help" and "version" commands
+    # special logic for the pseudo "help" and "version" commands
     if command == 'help':
         return complete(partial, ['id', 'all'])
     if command == 'version':
