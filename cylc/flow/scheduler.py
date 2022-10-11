@@ -519,16 +519,12 @@ class Scheduler:
 
     def load_workflow_params_and_tmpl_vars(self) -> None:
         """Load workflow params and template variables"""
-        pri_dao = self.workflow_db_mgr.get_pri_dao()
-        try:
+        with self.workflow_db_mgr.get_pri_dao() as pri_dao:
             # This logic handles lack of initial cycle point in flow.cylc and
             # things that can't change on workflow restart/reload.
             pri_dao.select_workflow_params(self._load_workflow_params)
             pri_dao.select_workflow_template_vars(self._load_template_vars)
             pri_dao.execute_queued_items()
-
-        finally:
-            pri_dao.close()
 
     def log_start(self) -> None:
         """Log headers, that also get logged on each rollover.
@@ -1012,7 +1008,7 @@ class Scheduler:
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
         # Things that can't change on workflow reload:
-        pri_dao = self.workflow_db_mgr.get_pri_dao()
+        pri_dao = self.workflow_db_mgr._get_pri_dao()
         pri_dao.select_workflow_params(self._load_workflow_params)
 
         try:

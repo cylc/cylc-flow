@@ -58,34 +58,32 @@ def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
     ALTER TABLE DROP COLUMN is not supported by sqlite yet, so we have to copy
     the table (without the column) and rename it back to the original.
     """
-    pri_dao = schd.workflow_db_mgr.get_pri_dao()
-    conn = pri_dao.connect()
-    # Get current column names, minus column
-    cursor = conn.execute(f'PRAGMA table_info({table})')
-    desc = cursor.fetchall()
-    c_names = ','.join(
-        [fields[1] for fields in desc if fields[1] != column]
-    )
-    # Copy table data to a temporary table, and rename it back.
-    conn.execute(rf'CREATE TABLE "tmp"({c_names})')
-    conn.execute(
-        rf'INSERT INTO "tmp"({c_names}) SELECT {c_names} FROM {table}')
-    conn.execute(rf'DROP TABLE "{table}"')
-    conn.execute(rf'ALTER TABLE "tmp" RENAME TO "{table}"')
-    conn.commit()
-    pri_dao.close()
+    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+        conn = pri_dao.connect()
+        # Get current column names, minus column
+        cursor = conn.execute(f'PRAGMA table_info({table})')
+        desc = cursor.fetchall()
+        c_names = ','.join(
+            [fields[1] for fields in desc if fields[1] != column]
+        )
+        # Copy table data to a temporary table, and rename it back.
+        conn.execute(rf'CREATE TABLE "tmp"({c_names})')
+        conn.execute(
+            rf'INSERT INTO "tmp"({c_names}) SELECT {c_names} FROM {table}')
+        conn.execute(rf'DROP TABLE "{table}"')
+        conn.execute(rf'ALTER TABLE "tmp" RENAME TO "{table}"')
+        conn.commit()
 
 
 def db_set_workflow_param(schd: Scheduler, param: str, value: str) -> None:
     """Update a value in the scheduler's DB workflow_parameters table."""
-    pri_dao = schd.workflow_db_mgr.get_pri_dao()
-    conn = pri_dao.connect()
-    conn.execute(
-        rf'UPDATE "workflow_params" '
-        rf'SET "value" = "{value}" WHERE "key" = "{param}"'
-    )
-    conn.commit()
-    pri_dao.close()
+    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+        conn = pri_dao.connect()
+        conn.execute(
+            rf'UPDATE "workflow_params" '
+            rf'SET "value" = "{value}" WHERE "key" = "{param}"'
+        )
+        conn.commit()
 
 
 async def test_db_upgrade_pre_803(

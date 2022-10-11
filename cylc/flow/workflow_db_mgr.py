@@ -23,12 +23,15 @@ This module provides the logic to:
 * Manage existing run database files on restart.
 """
 
+from contextlib import contextmanager
 import json
 import os
 from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
-from typing import Any, AnyStr, Dict, List, Set, TYPE_CHECKING, Tuple, Union
+from typing import (
+    Any, AnyStr, Dict, Generator, List, Set, TYPE_CHECKING, Tuple, Union
+)
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -188,9 +191,23 @@ class WorkflowDatabaseManager:
         """Delete workflow stop task from workflow_params table."""
         self.delete_workflow_params(self.KEY_STOP_TASK)
 
-    def get_pri_dao(self):
-        """Return the primary DAO."""
+    def _get_pri_dao(self) -> CylcWorkflowDAO:
+        """Return the primary DAO.
+
+        Note: the DAO should be closed after use. It is better to use the
+        context manager method below, which handles this for you.
+        """
         return CylcWorkflowDAO(self.pri_path)
+
+    @contextmanager
+    def get_pri_dao(self) -> Generator[CylcWorkflowDAO, None, None]:
+        """Return the primary DAO and close it after the context manager
+        exits."""
+        pri_dao = self._get_pri_dao()
+        try:
+            yield pri_dao
+        finally:
+            pri_dao.close()
 
     @staticmethod
     def _namedtuple2json(obj):
@@ -223,7 +240,7 @@ class WorkflowDatabaseManager:
                 # ... however, in case there is a directory at the path for
                 # some bizarre reason:
                 rmtree(self.pri_path, ignore_errors=True)
-        self.pri_dao = self.get_pri_dao()
+        self.pri_dao = self._get_pri_dao()
         os.chmod(self.pri_path, PERM_PRIVATE)
         self.pub_dao = CylcWorkflowDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
@@ -673,22 +690,32 @@ class WorkflowDatabaseManager:
             self.check_workflow_db_compatibility()
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot restart - {exc}")
-        pri_dao = self.get_pri_dao()
-        try:
+        with self.get_pri_dao() as pri_dao:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
             self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
             self.process_queued_ops()
-        finally:
-            pri_dao.close()
 
-    def upgrade_pre_803(self):
+    def _get_last_run_version(self, pri_dao: CylcWorkflowDAO) -> str:
+        return pri_dao.connect().execute(
+            rf'''
+                SELECT
+                    value
+                FROM
+                    {self.TABLE_WORKFLOW_PARAMS}
+                WHERE
+                    key == ?
+            ''',  # nosec (table name is a code constant)
+            [self.KEY_CYLC_VERSION]
+        ).fetchone()[0]
+
+    def upgrade_pre_803(self, pri_dao: CylcWorkflowDAO) -> None:
         """Upgrade on restart from a pre-8.0.3 database.
 
         Add "is_manual_submit" column to the task states table.
         See GitHub cylc/cylc-flow#5023 and #5187.
         """
-        conn = self.get_pri_dao().connect()
+        conn = pri_dao.connect()
         c_name = "is_manual_submit"
         LOG.info(
             f"DB upgrade (pre-8.0.3): "
@@ -713,33 +740,22 @@ class WorkflowDatabaseManager:
             "If you are sure you want to operate on this workflow, please "
             f"delete the database file at {self.pri_path}"
         )
-        pri_dao = self.get_pri_dao()
-        try:
-            last_run_ver = pri_dao.connect().execute(
-                rf'''
-                    SELECT
-                        value
-                    FROM
-                        {self.TABLE_WORKFLOW_PARAMS}
-                    WHERE
-                        key == ?
-                ''',  # nosec (table name is a code constant)
-                [self.KEY_CYLC_VERSION]
-            ).fetchone()[0]
-        except TypeError:
-            raise ServiceFileError(
-                f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
+        with self.get_pri_dao() as pri_dao:
+            try:
+                last_run_ver = self._get_last_run_version(pri_dao)
+            except TypeError:
+                raise ServiceFileError(
+                    f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
+                )
+            last_run_ver = parse_version(last_run_ver)
+            restart_incompat_ver = parse_version(
+                CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
             )
-        finally:
-            pri_dao.close()
-        last_run_ver = parse_version(last_run_ver)
-        restart_incompat_ver = parse_version(
-            CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
-        )
-        if last_run_ver <= restart_incompat_ver:
-            raise ServiceFileError(
-                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
-                f"\n{manual_rm_msg}"
-            )
-        if last_run_ver < parse_version("8.0.3.dev"):
-            self.upgrade_pre_803()
+            if last_run_ver <= restart_incompat_ver:
+                raise ServiceFileError(
+                    f"{incompat_msg} (workflow last run with "
+                    f"Cylc {last_run_ver})."
+                    f"\n{manual_rm_msg}"
+                )
+            if last_run_ver < parse_version("8.0.3.dev"):
+                self.upgrade_pre_803(pri_dao)
