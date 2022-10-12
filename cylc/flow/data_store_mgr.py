@@ -198,19 +198,19 @@ def runtime_from_config(rtconfig):
         platform = rtconfig['platform']['name']
     except (KeyError, TypeError):
         platform = rtconfig['platform']
-    directives = rtconfig.get('directives', {})
-    environment = rtconfig.get('environment', {})
+    directives = rtconfig['directives']
+    environment = rtconfig['environment']
     return PbRuntime(
         platform=platform,
-        script=rtconfig.get('script'),
-        init_script=rtconfig.get('init-script'),
-        env_script=rtconfig.get('env-script'),
-        err_script=rtconfig.get('err-script'),
-        exit_script=rtconfig.get('exit-script'),
-        pre_script=rtconfig.get('pre-script'),
-        post_script=rtconfig.get('post-script'),
-        work_sub_dir=rtconfig.get('work sub-directory'),
-        execution_time_limit=rtconfig.get('execution time limit'),
+        script=rtconfig['script'],
+        init_script=rtconfig['init-script'],
+        env_script=rtconfig['env-script'],
+        err_script=rtconfig['err-script'],
+        exit_script=rtconfig['exit-script'],
+        pre_script=rtconfig['pre-script'],
+        post_script=rtconfig['post-script'],
+        work_sub_dir=rtconfig['work sub-directory'],
+        execution_time_limit=rtconfig['execution time limit'],
         directives=json.dumps(directives),
         environment=json.dumps(environment),
     )
@@ -1244,9 +1244,14 @@ class DataStoreMgr:
             platform=job_conf.get('platform')['name'],
             job_runner_name=job_conf.get('job_runner_name'),
         )
-        j_cfg = deepcopy(job_conf)
-        j_cfg['work sub-directory'] = job_conf.get('work_d')
-        j_cfg['execution time limit'] = job_conf.get('execution_time_limit')
+        # Not all fields are populated with some submit-failures,
+        # so use task cfg as base.
+        j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
+            tp_tokens.relative_id,
+            self.schd.config.cfg['runtime'][tproxy.name]
+        ))
+        for key, val in job_conf.items():
+            j_cfg[key] = val
         j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
 
         # Add in log files.
@@ -1753,7 +1758,7 @@ class DataStoreMgr:
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
                     tokens.relative_id,
-                    cfg['runtime'][tokens['task']]
+                    cfg['runtime'][node.name]
                 )
             )
             new_sruntime = new_runtime.SerializeToString(
