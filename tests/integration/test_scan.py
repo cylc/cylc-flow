@@ -42,17 +42,20 @@ RUN_N = Path(WorkflowFiles.RUN_N)
 INSTALL = Path(WorkflowFiles.Install.DIRNAME)
 
 
-def init_flows(tmp_path, running=None, registered=None, un_registered=None):
+def init_flows(tmp_run_path=None, running=None, registered=None,
+               un_registered=None, tmp_src_path=None, src=None):
     """Create some dummy workflows for scan to discover.
 
     Assume "run1, run2, ..., runN" structure if flow name constains "run".
+    Optionally create workflow source dirs in a give location too.
+
     """
     def make_registered(name, running=False):
-        run_d = Path(tmp_path, name)
+        run_d = Path(tmp_run_path, name)
         run_d.mkdir(parents=True, exist_ok=True)
         (run_d / "flow.cylc").touch()
         if "run" in name:
-            root = Path(tmp_path, name).parent
+            root = Path(tmp_run_path, name).parent
             with suppress(FileExistsError):
                 (root / "runN").symlink_to(run_d, target_is_directory=True)
         else:
@@ -63,12 +66,19 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
         if running:
             (srv_d / CONTACT).touch()
 
+    def make_src(name):
+        src_d = Path(tmp_src_path, name)
+        src_d.mkdir(parents=True, exist_ok=True)
+        (src_d / "flow.cylc").touch()
+
     for name in (running or []):
         make_registered(name, running=True)
     for name in (registered or []):
         make_registered(name)
     for name in (un_registered or []):
-        Path(tmp_path, name).mkdir(parents=True, exist_ok=True)
+        Path(tmp_run_path, name).mkdir(parents=True, exist_ok=True)
+    for name in (src or []):
+        make_src(name)
 
 
 @pytest.fixture(scope='session')
@@ -157,14 +167,14 @@ def source_dirs(mock_glbl_cfg):
     src1 = src / '1'
     src1.mkdir()
     init_flows(
-        src1,
-        registered=('a', 'b/c')
+        tmp_src_path=src1,
+        src=('a', 'b/c')
     )
     src2 = src / '2'
     src2.mkdir()
     init_flows(
-        src2,
-        registered=('d', 'e/f')
+        tmp_src_path=src2,
+        src=('d', 'e/f')
     )
     mock_glbl_cfg(
         'cylc.flow.scripts.scan.glbl_cfg',

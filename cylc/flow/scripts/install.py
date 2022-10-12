@@ -89,11 +89,16 @@ from typing import Optional, Dict, Any
 from cylc.flow.scripts.scan import (
     get_pipe,
     _format_plain,
+    FLOW_STATE_SYMBOLS,
+    FLOW_STATE_CMAP
 )
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, InputError
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
@@ -155,6 +160,16 @@ def get_option_parser() -> COP:
         default=False,
         dest="no_run_name")
 
+    parser.add_option(
+        "--no-ping",
+        help=(
+            "When scanning for active instances of the workflow, "
+            "do not attempt to contact the schedulers to get status."
+        ),
+        action="store_true",
+        default=False,
+        dest="no_ping")
+
     parser.add_cylc_rose_options()
 
     return parser
@@ -167,7 +182,7 @@ def get_source_location(path: Optional[str]) -> Path:
     """
     if path is None:
         return Path.cwd()
-    path = path.strip()
+    path = str(path).strip()
     expanded_path = Path(expand_path(path))
     if expanded_path.is_absolute():
         return expanded_path
@@ -176,39 +191,75 @@ def get_source_location(path: Optional[str]) -> Path:
     return search_install_source_dirs(expanded_path)
 
 
-async def scan(wf_name: str) -> None:
+async def scan(wf_name: str, ping: bool = True) -> None:
     """Print any instances of wf_name that are already active."""
     opts = Values({
         'name': [f'{wf_name}/*'],
         'states': {'running', 'paused', 'stopping'},
         'source': False,
-        'ping': False,
+        'ping': ping,  # get status of scanned workflows
     })
     active = [
         item async for item in get_pipe(opts, None, scan_dir=None)
     ]
     if active:
+        n = len(active)
+        grammar = (
+            ["s", "are", "them"]
+            if n > 1 else
+            ["", "is", "it"]
+        )
         print(
             CylcLogFormatter.COLORS['WARNING'].format(
-                f'Instance(s) of "{wf_name}" are already active:'
+                f'WARNING: {n} run%s of "{wf_name}"'
+                ' %s already active:' % tuple(grammar[:2])
             )
         )
         for item in active:
-            cprint(
-                _format_plain(item, opts)
-            )
+            if opts.ping:
+                status = item['status']
+                tag = FLOW_STATE_CMAP[status]
+                symbol = f"  <{tag}>{FLOW_STATE_SYMBOLS[status]}</{tag}>"
+            else:
+                symbol = " "
+            cprint(symbol, _format_plain(item, opts))
+        pattern = (
+            f"'{wf_name}/*'"
+            if n > 1 else
+            f"{item['name']}"
+        )
+        print(
+            f'You can stop %s with "cylc stop [options] {pattern}".\n'
+            'See "cylc stop --help" for options.' % grammar[-1]
+        )
+
+
+InstallOptions = Options(get_option_parser())
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, reg=None):
-    wf_name = install(parser, opts, reg)
+def main(
+    _parser: COP,
+    opts: 'Values',
+    reg: Optional[str] = None
+) -> None:
+    """CLI wrapper."""
+    install_cli(opts, reg)
+
+
+def install_cli(
+    opts: 'Values',
+    reg: Optional[str] = None
+) -> None:
+    """Install workflow and scan for already-running instances."""
+    wf_name = install(opts, reg)
     asyncio.run(
-        scan(wf_name)
+        scan(wf_name, not opts.no_ping)
     )
 
 
 def install(
-    parser: COP, opts: 'Values', reg: Optional[str] = None
+    opts: 'Values', reg: Optional[str] = None
 ) -> str:
     if opts.no_run_name and opts.run_name:
         raise InputError(
