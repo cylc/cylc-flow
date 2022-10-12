@@ -186,7 +186,7 @@ jobs:
         timeout-minutes: 35
         continue-on-error: true
         run: |
-          echo "::set-output name=finished::false"
+          echo "finished=false" >> $GITHUB_OUTPUT
           if [[ '${{ matrix.test-base }}' == 'tests/k' ]]; then
               NPROC=4
           else
@@ -197,7 +197,7 @@ jobs:
               -j "${NPROC}" \
               --state=save \
               $(cat test-file) \
-              || (echo "::set-output name=finished::true" && false)
+              || (echo "finished=true" >> $GITHUB_OUTPUT && false)
 
       - name: Time Out
         if: steps.test.outcome == 'failure' && steps.test.outputs.finished != 'true'
@@ -246,7 +246,7 @@ jobs:
         run: |
           # artifact name cannot contain '/' characters
           CID="$(sed 's|/|-|g' <<< "${{ matrix.name || matrix.chunk }}")"
-          echo "::set-output name=uploadname::$CID"
+          echo "uploadname=$CID" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         if: failure() && steps.test.outcome == 'failure'
