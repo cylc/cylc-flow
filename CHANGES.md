@@ -132,13 +132,17 @@ workflows with many-to-many dependencies (e.g. `<a> => <b>`).
 - Allows Cylc commands (including validate, list, view, config, and graph) to load template variables
   configured by `cylc install` and `cylc play`.
 
-[#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
-runs of the same workflow at install time.
-
 [#5121](https://github.com/cylc/cylc-flow/pull/5121) - Added a single
 command to validate, install and play a workflow.
 
-[#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
+[#5184](https://github.com/cylc/cylc-flow/pull/5184) - Scan for active
+runs of the same workflow at install time.
+
+[#5084](https://github.com/cylc/cylc-flow/pull/5084) - Assign the most recent
+previous flow numbers to tasks triggered when no flows are present (e.g. on
+restarting a finished workflow).
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - Set a default limit of
 100 for the "default" queue.
 
 [#5055](https://github.com/cylc/cylc-flow/pull/5055) and
