@@ -558,3 +558,21 @@ async def test_reload_stopcp(
         assert str(schd.pool.stop_point) == '2020'
         schd.command_reload_workflow()
         assert str(schd.pool.stop_point) == '2020'
+
+
+async def test_runahead_after_remove(
+    example_flow: Scheduler
+) -> None:
+    """The runahead limit should be recomputed after tasks are removed.
+
+    """
+    task_pool = example_flow.pool
+    assert int(task_pool.runahead_limit_point) == 4
+
+    # No change after removing an intermediate cycle.
+    task_pool.remove_tasks(['3/*'])
+    assert int(task_pool.runahead_limit_point) == 4
+
+    # Should update after removing the first point.
+    task_pool.remove_tasks(['1/*'])
+    assert int(task_pool.runahead_limit_point) == 5
