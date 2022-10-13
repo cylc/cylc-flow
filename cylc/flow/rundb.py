@@ -783,18 +783,16 @@ class CylcWorkflowDAO:
             ret[submit_num] = (flow_wait == 1, deserialise(flow_nums_str))
         return ret
 
-    def select_all_flow_nums(self):
-        """Return a set of all previous flow numbers."""
+    def select_latest_flow_nums(self):
+        """Return a list of the most recent previous flow numbers."""
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT flow_num FROM %(name)s"
-        ) % {"name": self.TABLE_WORKFLOW_FLOWS}
-        ret = set()
-        for flow_num_str in self.connect().execute(stmt):
-            ret.add(int(flow_num_str[0]))
-        return ret
+            r"SELECT flow_nums, MAX(time_created) FROM %(name)s"
+        ) % {"name": self.TABLE_TASK_STATES}
+        flow_nums_str = list(self.connect().execute(stmt))[0][0]
+        return deserialise(flow_nums_str)
 
     def select_task_outputs(self, name, point):
         """Select task outputs for each flow.
