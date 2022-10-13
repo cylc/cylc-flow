@@ -138,7 +138,7 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     elif WorkflowFiles.SUITE_RC in names:
         # An installed Cylc 7 workflow ...
         for path in listing:
-            if path.name == WorkflowFiles.LOG_DIR:
+            if path.name == WorkflowFiles.LogDir.DIRNAME:
                 if (
                         (path / 'suite' / 'log').exists()
                         and not (path / 'scheduler').exists()

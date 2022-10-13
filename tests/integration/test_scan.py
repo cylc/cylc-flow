@@ -430,23 +430,23 @@ def cylc7_run_dir(tmp_path):
     cylc7 = tmp_path / 'cylc7'
     cylc7.mkdir()
     (cylc7 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
-    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
+    Path(cylc7, WorkflowFiles.LogDir.DIRNAME, 'suite').mkdir(parents=True)
+    Path(cylc7, WorkflowFiles.LogDir.DIRNAME, 'suite', 'log').touch()
 
     # a Cylc 7 workflow running under Cylc 8 in compatibility mode
     # (should appear in scan results)
     cylc8 = tmp_path / 'cylc8'
     cylc8.mkdir()
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler', 'log').touch()
 
     # a Cylc 7 workflow installed by Cylc 8 but not run yet.
     # (should appear in scan results)
     cylc8a = tmp_path / 'cylc8a'
     cylc8a.mkdir()
     (cylc8a / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8a, WorkflowFiles.LOG_DIR, 'install').mkdir(parents=True)
+    Path(cylc8a, WorkflowFiles.LogDir.DIRNAME, 'install').mkdir(parents=True)
 
     # crazy niche case of a Cylc 7 workflow that has had its DB removed
     # and re-run under Cylc 8
@@ -454,10 +454,10 @@ def cylc7_run_dir(tmp_path):
     cylc8 = tmp_path / 'cylc78'
     cylc8.mkdir()
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'suite').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'suite', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler', 'log').touch()
 
     return tmp_path
 
