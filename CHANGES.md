@@ -40,7 +40,7 @@ Maintenance release.
 after use of `cylc remove`.
 
 [#5188](https://github.com/cylc/cylc-flow/pull/5188) -
-Fix task state selectors in the `cylc trigger` command.
+Fix task state selectors in `cylc trigger` and other commands.
 
 [#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
 changes to be considered by ``cylc reinstall``.
