@@ -6,7 +6,7 @@ CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace
 INSERT INTO inheritance VALUES('root','["root"]');
 INSERT INTO inheritance VALUES('foo','["foo", "root"]');
 CREATE TABLE workflow_params(key TEXT, value TEXT, PRIMARY KEY(key));
-INSERT INTO workflow_params VALUES('cylc_version', '8.0rc1.dev0');
+INSERT INTO workflow_params VALUES('cylc_version', '8.0.0');
 CREATE TABLE workflow_template_vars(key TEXT, value TEXT, PRIMARY KEY(key));
 CREATE TABLE task_action_timers(cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT, num INTEGER, delay TEXT, timeout TEXT, PRIMARY KEY(cycle, name, ctx_key));
 INSERT INTO task_action_timers VALUES('1','foo','"poll_timer"','["tuple", [[99, "running"]]]','[]',0,NULL,NULL);

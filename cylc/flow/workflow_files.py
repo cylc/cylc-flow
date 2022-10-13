@@ -1185,12 +1185,9 @@ def get_platforms_from_db(run_dir):
     workflow_db_mgr = WorkflowDatabaseManager(
         os.path.join(run_dir, WorkflowFiles.Service.DIRNAME))
     workflow_db_mgr.check_workflow_db_compatibility()
-    try:
-        pri_dao = workflow_db_mgr.get_pri_dao()
+    with workflow_db_mgr.get_pri_dao() as pri_dao:
         platform_names = pri_dao.select_task_job_platforms()
-        return platform_names
-    finally:
-        pri_dao.close()
+    return platform_names
 
 
 def check_deprecation(path, warn=True):

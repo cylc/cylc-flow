@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
+import sqlite3
+
 from cylc.flow.scheduler import Scheduler
 
 
@@ -47,3 +50,69 @@ async def test_restart_number(
     await test(expected_restart_num=2, do_reload=True)
     # Final restart
     await test(expected_restart_num=3)
+
+
+def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
+    """Remove a column from a scheduler DB table.
+
+    ALTER TABLE DROP COLUMN is not supported by sqlite yet, so we have to copy
+    the table (without the column) and rename it back to the original.
+    """
+    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+        conn = pri_dao.connect()
+        # Get current column names, minus column
+        cursor = conn.execute(f'PRAGMA table_info({table})')
+        desc = cursor.fetchall()
+        c_names = ','.join(
+            [fields[1] for fields in desc if fields[1] != column]
+        )
+        # Copy table data to a temporary table, and rename it back.
+        conn.execute(rf'CREATE TABLE "tmp"({c_names})')
+        conn.execute(
+            rf'INSERT INTO "tmp"({c_names}) SELECT {c_names} FROM {table}')
+        conn.execute(rf'DROP TABLE "{table}"')
+        conn.execute(rf'ALTER TABLE "tmp" RENAME TO "{table}"')
+        conn.commit()
+
+
+def db_set_workflow_param(schd: Scheduler, param: str, value: str) -> None:
+    """Update a value in the scheduler's DB workflow_parameters table."""
+    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+        conn = pri_dao.connect()
+        conn.execute(
+            rf'UPDATE "workflow_params" '
+            rf'SET "value" = "{value}" WHERE "key" = "{param}"'
+        )
+        conn.commit()
+
+
+async def test_db_upgrade_pre_803(
+    flow, one_conf, start, scheduler, log_filter, db_select
+):
+    """Test scheduler restart with upgrade of pre-8.0.3 DB."""
+    reg = flow(one_conf)
+
+    # Run a scheduler to create a DB.
+    schd: Scheduler = scheduler(reg, paused_start=True)
+    async with start(schd):
+        assert ('n_restart', '0') in db_select(schd, False, 'workflow_params')
+
+    # Remove task_states:is_manual_submit to fake a pre-8.0.3 DB.
+    db_remove_column(schd, "task_states", "is_manual_submit")
+
+    # Restart should fail due to the missing column.
+    schd: Scheduler = scheduler(reg, paused_start=True)
+    with pytest.raises(sqlite3.OperationalError):
+        async with start(schd):
+            pass
+    assert (
+        ('n_restart', '1') in db_select(schd, False, 'workflow_params')
+    )
+
+    # Set cylc_version to pre-8.0.3 to cause an upgrade on restart.
+    db_set_workflow_param(schd, "cylc_version", "8.0.2")
+
+    # Restart should now upgrade the DB automatically and succeed.
+    schd: Scheduler = scheduler(reg, paused_start=True)
+    async with start(schd):
+        assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')

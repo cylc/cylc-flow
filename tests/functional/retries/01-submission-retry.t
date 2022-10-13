@@ -31,6 +31,8 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 if ! command -v 'sqlite3' >'/dev/null'; then
+    skip 1 'sqlite3 not installed?'
+else
     sqlite3 \
         "$RUN_DIR/${WORKFLOW_NAME}/log/db" \
         'SELECT try_num, submit_num FROM task_jobs' >'select.out'
@@ -40,8 +42,7 @@ if ! command -v 'sqlite3' >'/dev/null'; then
 1|3
 1|4
 __OUT__
-else
-    skip 1 'sqlite3 not installed?'
+
 fi
 #-------------------------------------------------------------------------------
 purge
