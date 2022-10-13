@@ -81,7 +81,10 @@ async def run(options: 'Values', workflow_id: str, *tokens_list: Tokens):
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow_id],
-            'tasks': [tokens.relative_id for tokens in tokens_list],
+            'tasks': [
+                tokens.relative_id_with_selectors
+                for tokens in tokens_list
+            ]
         }
     }
 
