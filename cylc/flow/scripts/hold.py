@@ -142,7 +142,7 @@ async def run(options, workflow_id, *tokens_list):
         mutation = HOLD_MUTATION
         args = {
             'tasks': [
-                id_.relative_id
+                id_.relative_id_with_selectors
                 for id_ in tokens_list
             ]
         }

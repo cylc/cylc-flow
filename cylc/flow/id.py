@@ -183,6 +183,19 @@ class Tokens(dict):
         return detokenise(self.task, relative=True)
 
     @property
+    def relative_id_with_selectors(self) -> str:
+        """The relative ID (without the workflow part), with selectors.
+
+        Examples:
+            >>> Tokens('~u/w//c/t:failed/01').relative_id
+            'c/t/01'
+            >>> Tokens('~u/w//c/t:failed/01').relative_id_with_selectors
+            'c/t:failed/01'
+
+        """
+        return detokenise(self.task, relative=True, selectors=True)
+
+    @property
     def workflow_id(self) -> str:
         """The workflow id (without the relative part).
 
@@ -192,7 +205,6 @@ class Tokens(dict):
             >>> Tokens('c/t/01', relative=True).workflow_id
             Traceback (most recent call last):
             ValueError: No tokens provided
-
 
         """
         return detokenise(self.workflow)

@@ -220,7 +220,7 @@ def prereqs_and_outputs_query(
 ):
     ids_list = [
         # convert the tokens into standardised IDs
-        tokens.relative_id
+        tokens.relative_id_with_selectors
         for tokens in tokens_list
     ]
 
