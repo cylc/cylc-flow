@@ -35,10 +35,15 @@ Maintenance release.
 
 ### Fixes
 
-[#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
-changes to be considered by ``cylc reinstall``.
+[#5192](https://github.com/cylc/cylc-flow/pull/5192) -
+Recompute runahead limit after use of `cylc remove`.
 
-[#5023](https://github.com/cylc/cylc-flow/pull/5023) - tasks force-triggered
+[#5125](https://github.com/cylc/cylc-flow/pull/5125) -
+Allow rose-suite.conf changes to be considered by ``cylc reinstall``.
+
+[#5023](https://github.com/cylc/cylc-flow/pull/5023),
+[#5187](https://github.com/cylc/cylc-flow/pull/5187) -
+tasks force-triggered
 after a shutdown was ordered should submit to run immediately on restart.
 
 [#5137](https://github.com/cylc/cylc-flow/pull/5137) -
