@@ -36,6 +36,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5192](https://github.com/cylc/cylc-flow/pull/5192) - Recompute runahead limit
+after use of `cylc remove`.
+
 [#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
 changes to be considered by ``cylc reinstall``.
 
