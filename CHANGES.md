@@ -30,6 +30,15 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
+## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
+with warning for scan error messages where Workflow is stopped.
+
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
 
 Maintenance release.

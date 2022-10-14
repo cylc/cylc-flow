@@ -183,7 +183,6 @@ class Scheduler:
     is_restart: bool
 
     # directories
-    workflow_dir: str
     workflow_log_dir: str
     workflow_run_dir: str
     workflow_share_dir: str

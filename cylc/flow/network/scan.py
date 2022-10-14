@@ -451,6 +451,7 @@ async def graphql_query(flow, fields, filters=None):
     """
     query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
     try:
+
         client = WorkflowRuntimeClient(
             flow['name'],
             # use contact_info data if present for efficiency
@@ -468,6 +469,9 @@ async def graphql_query(flow, fields, filters=None):
                 'variables': {}
             }
         )
+    except WorkflowStopped:
+        LOG.warning(f'Workflow not running: {flow["name"]}')
+        return False
     except ClientTimeout:
         LOG.exception(
             f'Timeout: name: {flow["name"]}, '

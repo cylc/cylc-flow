@@ -297,7 +297,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
             host (str): host name
             port (Union[int, str]): port number
         Raises:
-            ClientError: if the workflow has already stopped.
+            WorkflowStopped: if the workflow has already stopped.
         """
         if workflow is None:
             return
