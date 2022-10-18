@@ -17,8 +17,6 @@
 """Test cylc install."""
 
 from pathlib import Path
-from shutil import rmtree
-from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -38,7 +36,7 @@ INSTALL = Path(WorkflowFiles.Install.DIRNAME)
 
 
 @pytest.fixture()
-def src_run_dirs(mock_glbl_cfg, monkeypatch):
+def src_run_dirs(mock_glbl_cfg, monkeypatch, tmp_path: Path):
     """Create some workflow source and run dirs for testing.
 
     Source dirs:
@@ -49,8 +47,8 @@ def src_run_dirs(mock_glbl_cfg, monkeypatch):
       <tmp-run>/w1/run1
 
     """
-    tmp_src_path = Path(TemporaryDirectory().name)
-    tmp_run_path = Path(TemporaryDirectory().name)
+    tmp_src_path = tmp_path / 'cylc-src'
+    tmp_run_path = tmp_path / 'cylc-run'
     tmp_src_path.mkdir()
     tmp_run_path.mkdir()
 
@@ -69,9 +67,7 @@ def src_run_dirs(mock_glbl_cfg, monkeypatch):
     )
     monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', tmp_run_path)
 
-    yield tmp_src_path, tmp_run_path
-    rmtree(tmp_src_path)
-    rmtree(tmp_run_path)
+    return tmp_src_path, tmp_run_path
 
 
 def test_install_scan(src_run_dirs, capsys):

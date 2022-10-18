@@ -211,7 +211,7 @@ async def scan(wf_name: str, ping: bool = True) -> None:
         )
         print(
             CylcLogFormatter.COLORS['WARNING'].format(
-                f'WARNING: {n} run%s of "{wf_name}"'
+                f'NOTE: {n} run%s of "{wf_name}"'
                 ' %s already active:' % tuple(grammar[:2])
             )
         )
