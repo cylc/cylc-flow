@@ -99,9 +99,15 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
+from cylc.flow.pathutil import (
+    EXPLICIT_RELATIVE_PATH_REGEX,
+    expand_path,
+    get_workflow_run_dir
+)
 from cylc.flow.workflow_files import (
-    install_workflow, search_install_source_dirs, parse_cli_sym_dirs
+    install_workflow,
+    parse_cli_sym_dirs,
+    search_install_source_dirs
 )
 from cylc.flow.terminal import cli_function
 
@@ -200,12 +206,15 @@ async def scan(wf_name: str, ping: bool = True) -> None:
         'ping': ping,  # get status of scanned workflows
     })
     active = [
-        item async for item in get_pipe(opts, None, scan_dir=None)
+        item async for item in get_pipe(
+            opts, None,
+            scan_dir=get_workflow_run_dir(wf_name)  # restricted scan
+        )
     ]
     if active:
         n = len(active)
         grammar = (
-            ["s", "are", "them"]
+            ["s", "are", "them all"]
             if n > 1 else
             ["", "is", "it"]
         )
@@ -229,8 +238,8 @@ async def scan(wf_name: str, ping: bool = True) -> None:
             f"{item['name']}"
         )
         print(
-            f'You can stop %s with "cylc stop [options] {pattern}".\n'
-            'See "cylc stop --help" for options.' % grammar[-1]
+            f'You can stop %s with:\n  cylc stop {pattern}'
+            '\nSee "cylc stop --help" for options.' % grammar[-1]
         )
 
 
