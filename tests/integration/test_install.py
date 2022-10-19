@@ -16,12 +16,13 @@
 
 """Test cylc install."""
 
-from pathlib import Path
-
 import pytest
+from pathlib import Path
 
 from .test_scan import init_flows
 
+from cylc.flow.async_util import pipe
+from cylc.flow.scripts import scan
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.scripts.install import (
     InstallOptions,
@@ -70,15 +71,57 @@ def src_run_dirs(mock_glbl_cfg, monkeypatch, tmp_path: Path):
     return tmp_src_path, tmp_run_path
 
 
-def test_install_scan(src_run_dirs, capsys):
-    """At install, any running intances should be reported."""
+INSTALLED_MSG = "INSTALLED {wfrun} from"
+WF_ACTIVE_MSG = '1 run of "{wf}" is already active:'
+BAD_CONTACT_MSG = "Bad contact file:"
+
+
+def test_install_scan_no_ping(src_run_dirs, capsys, caplog):
+    """At install, running intances should be reported.
+
+    Ping = False case: don't query schedulers.
+    """
 
     opts = InstallOptions()
-    # Don't ping the scheduler: it's not really running here.
     opts.no_ping = True
 
     install_cli(opts, reg='w1')
-    assert '1 run of "w1" is already active:' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert INSTALLED_MSG.format(wfrun='w1/run2') in out
+    assert WF_ACTIVE_MSG.format(wf='w1') in out
+    assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
     install_cli(opts, reg='w2')
-    assert '1 run of "w2" is already active:' not in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert WF_ACTIVE_MSG.format(wf='w2') not in out
+    assert INSTALLED_MSG.format(wfrun='w2/run1') in out
+
+
+def test_install_scan_ping(src_run_dirs, capsys, caplog):
+    """At install, running intances should be reported.
+
+    Ping = True case: but mock scan's scheduler query method.
+    """
+
+    @pipe
+    async def mock_graphql_query(flow, fields, filters=None):
+        """Mock cylc.flow.network.scan.graphql_query."""
+        flow.update({"status": "running"})
+        return flow
+
+    scan.graphql_query = mock_graphql_query
+
+    opts = InstallOptions()
+    opts.no_ping = False
+
+    install_cli(opts, reg='w1')
+    out = capsys.readouterr().out
+    assert INSTALLED_MSG.format(wfrun='w1/run2') in out
+    assert WF_ACTIVE_MSG.format(wf='w1') in out
+    assert scan.FLOW_STATE_SYMBOLS["running"] in out
+    assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
+
+    install_cli(opts, reg='w2')
+    out = capsys.readouterr().out
+    assert INSTALLED_MSG.format(wfrun='w2/run1') in out
+    assert WF_ACTIVE_MSG.format(wf='w2') not in out
