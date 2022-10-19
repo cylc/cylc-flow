@@ -36,6 +36,9 @@ Maintenance release.
 
 ### Fixes
 
+[##5205](https://github.com/cylc/cylc-flow/pull/#5205) - Fix bug which caused
+orphaned running tasks to silently skip remote file installation at scheduler restart.
+
 [#5224](https://github.com/cylc/cylc-flow/pull/5225) - workflow installation:
 disallow reserved names only in the top level source directory.
 

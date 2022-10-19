@@ -501,7 +501,7 @@ class TaskRemoteMgr:
             self.bad_hosts -= set(platform['hosts'])
             self.ready = True
         else:
-            log_platform_event('file install', platform, host)
+            log_platform_event('remote file install', platform, host)
             self.proc_pool.put_command(
                 ctx,
                 bad_hosts=self.bad_hosts,
@@ -547,7 +547,7 @@ class TaskRemoteMgr:
                     )
         if ctx.ret_code == 0:
             # Both file installation and remote init success
-            LOG.debug(f"File installation complete for {install_target}")
+            log_platform_event('remote file install complete', platform)
             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
             self.ready = True
             return

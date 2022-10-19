@@ -74,7 +74,7 @@ cmp_ok platform-log <<__HERE__
 platform: fake-platform - remote init (on localhost)
 platform: fake-platform - initialisation did not complete
 platform: fake-platform - remote init (on localhost)
-platform: fake-platform - file install (on localhost)
+platform: fake-platform - remote file install (on localhost)
 platform: fake-platform - initialisation did not complete
 __HERE__
 

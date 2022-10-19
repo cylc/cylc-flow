@@ -82,7 +82,7 @@ log_scan \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
     "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \
-    "platform: ${CYLC_TEST_PLATFORM} - file install (on ${CYLC_TEST_HOST})" \
+    "platform: ${CYLC_TEST_PLATFORM} - remote file install (on ${CYLC_TEST_HOST})" \
     "\[1/ugly preparing job:01 flows:1\] => submitted"
 
 purge

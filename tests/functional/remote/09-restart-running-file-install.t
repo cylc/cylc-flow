@@ -16,6 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart remote init, file install and task messaging works for running tasks
+# The test works as follows:
+# - Starts workflow off with a remote starter task which will not complete
+#   until restarted. It greps for updated file which will be remote installed on
+#   restart.
+# - On start of this starter task, update the file that is included in
+#   remote file install for starter task.
+# - Stop the workflow - this will leave starter task orphaned
+# - Restart, starter task should remote install, authentication keys will be
+#   updated which is verified by checking task messaging works (checks for
+#   "(received)succeeded" in the logs).
 
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
@@ -30,8 +40,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = """
-        starter:start => file-changer
-        file-changer: succeeded => stopper
+            starter:start => file-changer => stopper
         """
 [runtime]
     [[starter]]
@@ -55,13 +64,10 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-start" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-# wait for shut down
-poll_grep_workflow_log "INFO - DONE"
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
-poll_grep_workflow_log "INFO - DONE"
 LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
-grep_ok "File installation complete" "${LOG}"
+grep_ok "remote file install complete" "${LOG}"
 grep_ok "INFO - \[1/starter running job:01 flows:1\] (received)succeeded" "${LOG}"
 ls "${WORKFLOW_RUN_DIR}/log/remote-install" > 'ls.out'
 cmp_ok ls.out <<__RLOGS__
