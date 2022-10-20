@@ -272,6 +272,9 @@ async def complete_argument(
 ) -> t.List[str]:
     """Complete arguments for commands."""
     coro = COMMAND_MAP.get(command, list_cylc_id)
+    if coro is None:
+        # argument completion disabled for this command
+        return []
     return complete(
         partial,
         await coro(partial),
@@ -464,6 +467,10 @@ COMMAND_MAP: t.Dict[str, t.Callable] = {
     # register commands which have special positional arguments
     'install': list_src_workflows,
     'get-resources': list_resources,
+    # commands for which we should not attempt to complete arguments
+    'scan': None,
+    'cycle-point': None,
+    'message': None,
 }
 
 # non-exhaustive list of Cylc CLI options

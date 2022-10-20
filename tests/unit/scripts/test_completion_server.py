@@ -316,7 +316,8 @@ async def test_complete_argument(monkeypatch):
         'cylc.flow.scripts.completion_server.COMMAND_MAP',
         {
             'foo': _complete_arg(['aaa', 'bbb']),
-            'bar': _complete_arg(['ccc', 'ddd'])
+            'bar': _complete_arg(['ccc', 'ddd']),
+            'baz': None,
         }
     )
 
@@ -340,8 +341,12 @@ async def test_complete_argument(monkeypatch):
     ret = await complete_argument('bar')
     assert ret == ['ccc', 'ddd']
 
-    # all other commands should fallback to the default completions
+    # the bax command should not provide argument completions
     ret = await complete_argument('baz')
+    assert ret == []
+
+    # all other commands should fallback to the default completions
+    ret = await complete_argument('pub')
     assert ret == ['eee', 'fff']
 
 
