@@ -109,6 +109,7 @@ def test_install_scan_no_ping(src_run_dirs, capsys, caplog):
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w1/run2') in out
     assert WF_ACTIVE_MSG.format(wf='w1') in out
+    # Empty contact file faked with "touch":
     assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
     install_cli(opts, reg='w2')
@@ -132,6 +133,7 @@ def test_install_scan_ping(src_run_dirs, capsys, caplog):
         assert INSTALLED_MSG.format(wfrun='w1/run2') in out
         assert WF_ACTIVE_MSG.format(wf='w1') in out
         assert scan.FLOW_STATE_SYMBOLS["running"] in out
+        # Empty contact file faked with "touch":
         assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
         install_cli(opts, reg='w2')
