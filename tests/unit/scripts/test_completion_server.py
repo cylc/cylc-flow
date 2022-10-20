@@ -68,8 +68,12 @@ def dummy_workflow(tmp_path, monkeypatch, mock_glbl_cfg):
     This patches the relevant interfaces so that this workflow will show up
     e.g. in the scan interface.
     """
-    run_dir = tmp_path / 'foo'
+    install_dir = tmp_path / 'foo'
+    install_dir.mkdir()
+    (install_dir / 'run1').mkdir()
+    run_dir = install_dir / 'run2'
     run_dir.mkdir()
+    (install_dir / 'runN').symlink_to('run2', target_is_directory=True)
     (run_dir / 'flow.cylc').touch()
     job_log_dir = (run_dir / 'log') / 'job'
     job_log_dir.mkdir(parents=True)
@@ -164,47 +168,47 @@ async def test_complete_cylc(dummy_workflow):
 
     # $ cylc trigger <tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '') == {
-        'foo//',
+        'foo/run2//',
     }
 
     # $ cylc triger f<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'f') == {
-        'foo//',
+        'foo/run2//',
     }
 
-    # $ cylc triger foo//<tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', 'foo//') == {
-        'foo//1/',
-        'foo//2/',
-        'foo//3/',
+    # $ cylc triger foo/run2//<tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', 'foo/run2//') == {
+        'foo/run2//1/',
+        'foo/run2//2/',
+        'foo/run2//3/',
     }
 
-    # $ cylc triger foo//1<tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', 'foo//1') == {
-        'foo//1/',
+    # $ cylc triger foo/run2//1<tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1') == {
+        'foo/run2//1/',
     }
 
-    # $ cylc triger foo//1/<tab><tab>
-    assert set(await _complete_cylc('cylc', 'trigger', 'foo//1/')) == {
-        'foo//1/foo/',
-        'foo//1/bar/',
-        'foo//1/baz/',
+    # $ cylc triger foo/run2//1/<tab><tab>
+    assert set(await _complete_cylc('cylc', 'trigger', 'foo/run2//1/')) == {
+        'foo/run2//1/foo/',
+        'foo/run2//1/bar/',
+        'foo/run2//1/baz/',
     }
 
-    # $ cylc triger foo//1/f<tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', 'foo//1/f') == {
-        'foo//1/foo/',
+    # $ cylc triger foo/run2//1/f<tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/f') == {
+        'foo/run2//1/foo/',
     }
 
-    # $ cylc triger foo//1/foo/<tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', 'foo//1/foo/') == {
-        'foo//1/foo/01/',
-        'foo//1/foo/NN/',
+    # $ cylc triger foo/run2//1/foo/<tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/foo/') == {
+        'foo/run2//1/foo/01/',
+        'foo/run2//1/foo/NN/',
     }
 
-    # $ cylc triger foo//1/foo/N<tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', 'foo//1/foo/N') == {
-        'foo//1/foo/NN/',
+    # $ cylc triger foo/run2//1/foo/N<tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/foo/N') == {
+        'foo/run2//1/foo/NN/',
     }
 
     # $ cylc triger -<tab><tab>
@@ -219,7 +223,7 @@ async def test_complete_cylc(dummy_workflow):
 
     # $ cylc triger --flow <tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--flow', 'all', '') == {
-        'foo//'
+        'foo/run2//'
     }
 
     # $ cylc triger --flow=<tab><tab>
@@ -231,7 +235,7 @@ async def test_complete_cylc(dummy_workflow):
 
     # $ cylc triger --flow=all <tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--flow=all', '') == {
-        'foo//'
+        'foo/run2//'
     }
 
     # $ cylc triger --62656566<tab><tab>
@@ -437,11 +441,11 @@ async def test_list_option_values(monkeypatch):
 async def test_list_workflows(dummy_workflow):
     """Test listing workflows (via "scan")."""
     # test list_workflows
-    assert await list_workflows() == ['foo//']
+    assert await list_workflows() == ['foo/run2//']
     assert await list_workflows(states={'running'}) == []
 
     # test list_src_workflows
-    assert await list_src_workflows(None) == ['foo']
+    assert await list_src_workflows(None) == ['foo/run2']
 
 
 async def test_list_in_workflow(dummy_workflow):
@@ -452,35 +456,60 @@ async def test_list_in_workflow(dummy_workflow):
     _list_in_workflow = setify(list_in_workflow)
 
     # workflow => list cycles
-    assert await _list_in_workflow(Tokens('foo')) == {
+    assert await _list_in_workflow(Tokens('foo/run2//')) == {
+        'foo/run2//1/',
+        'foo/run2//2/',
+        'foo/run2//3/',
+    }
+    # cycle => list tasks
+    assert await _list_in_workflow(Tokens('foo/run2//1')) == {
+        'foo/run2//1/foo/',
+        'foo/run2//1/bar/',
+        'foo/run2//1/baz/',
+    }
+    # task => list jobs
+    assert await _list_in_workflow(Tokens('foo/run2//1/foo/')) == {
+        'foo/run2//1/foo/01/',
+        'foo/run2//1/foo/NN/',
+    }
+    # jobs => nothing to do
+    assert await _list_in_workflow(
+        Tokens('foo/run2//1/foo/01'),
+    ) == set()
+
+    # no tokens => nothing to list
+    assert await _list_in_workflow(Tokens()) == set()
+    # non-existant workflow => nothing to list
+    assert await _list_in_workflow(
+        Tokens('forty-two'),
+        # set infer_run to false as this workflow does not exist so will raise
+        # an exception
+        # (note exceptions are fine, they get caught and ignored at the top
+        # level)
+        infer_run=False
+    ) == set()
+    # non-existant cycle => nothing to list
+    assert await _list_in_workflow(Tokens('foo/run2//4')) == set()
+    # non-existant task => nothing to list
+    assert await _list_in_workflow(Tokens('foo/run2//4/foo')) == set()
+    # non-existant job => nothing to list
+    assert await _list_in_workflow(Tokens('foo/run2//4/foo/02')) == set()
+
+
+async def test_list_in_workflow_inference(dummy_workflow):
+    """It should infer the latest run when appropriate."""
+    _list_in_workflow = setify(list_in_workflow)
+
+    assert await _list_in_workflow(Tokens('foo/run2//')) == {
+        'foo/run2//1/',
+        'foo/run2//2/',
+        'foo/run2//3/',
+    }
+    assert await _list_in_workflow(Tokens('foo//')) == {
         'foo//1/',
         'foo//2/',
         'foo//3/',
     }
-    # cycle => list tasks
-    assert await _list_in_workflow(Tokens('foo//1')) == {
-        'foo//1/foo/',
-        'foo//1/bar/',
-        'foo//1/baz/',
-    }
-    # task => list jobs
-    assert await _list_in_workflow(Tokens('foo//1/foo/')) == {
-        'foo//1/foo/01/',
-        'foo//1/foo/NN/',
-    }
-    # jobs => nothing to do
-    assert await _list_in_workflow(Tokens('foo//1/foo/01')) == set()
-
-    # no tokens => nothing to list
-    assert await _list_in_workflow(Tokens()) == set()
-    # non-existant worlflow => nothing to list
-    assert await _list_in_workflow(Tokens('forty-two')) == set()
-    # non-existant cycle => nothing to list
-    assert await _list_in_workflow(Tokens('foo//4')) == set()
-    # non-existant task => nothing to list
-    assert await _list_in_workflow(Tokens('foo//4/foo')) == set()
-    # non-existant job => nothing to list
-    assert await _list_in_workflow(Tokens('foo//4/foo/02')) == set()
 
 
 async def test_list_resources():

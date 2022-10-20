@@ -63,6 +63,7 @@ from cylc.flow.resources import (
 from cylc.flow.scripts.cylc import COMMANDS
 from cylc.flow.scripts.scan import FLOW_STATES, get_pipe, ScanOptions
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import infer_latest_run_from_id
 
 if t.TYPE_CHECKING:
     from optparse import Values
@@ -362,7 +363,7 @@ async def list_src_workflows(_partial: str) -> t.List[str]:
     return ret
 
 
-async def list_in_workflow(tokens: Tokens) -> t.List[str]:
+async def list_in_workflow(tokens: Tokens, infer_run=True) -> t.List[str]:
     """List cycles/tasks/jobs from within a workflow."""
     if not tokens.get('workflow'):
         return []
@@ -373,7 +374,13 @@ async def list_in_workflow(tokens: Tokens) -> t.List[str]:
         parts.append(tokens['task'])
     if tokens.get('job'):
         parts.append(tokens['job'])
-    job_dir = Path(get_workflow_run_job_dir(tokens['workflow'], *parts))
+    input_workflow = tokens['workflow']  # workflow ID as provided on the CLI
+    if infer_run:
+        # workflow ID after run name inference
+        inferred_workflow = infer_latest_run_from_id(input_workflow)
+    else:
+        inferred_workflow = input_workflow
+    job_dir = Path(get_workflow_run_job_dir(inferred_workflow, *parts))
     if not job_dir.exists():
         # no job dir (e.g. workflow has not been run yet)
         return []
@@ -382,7 +389,13 @@ async def list_in_workflow(tokens: Tokens) -> t.List[str]:
         return [
             # list possible IDs
             cli_detokenise(
-                tokens.duplicate(tokens=None, **{token: path.name})
+                tokens.duplicate(
+                    tokens=None,
+                    # use the workflow ID provided on the CLI to allow
+                    # run name inference
+                    workflow=input_workflow,
+                    **{token: path.name},
+                )
             )
             for path in job_dir.iterdir()
         ]
@@ -463,7 +476,7 @@ async def list_colours(
 
 
 # non-exhaustive list of Cylc commands which take non-workflow arguments
-COMMAND_MAP: t.Dict[str, t.Callable] = {
+COMMAND_MAP: t.Dict[str, t.Optional[t.Callable]] = {
     # register commands which have special positional arguments
     'install': list_src_workflows,
     'get-resources': list_resources,
