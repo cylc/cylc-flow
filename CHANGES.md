@@ -16,6 +16,9 @@ ones in. -->
 
 ### Enhancements
 
+[#5284](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
+workflows at install time.
+
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
 
