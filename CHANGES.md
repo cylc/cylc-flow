@@ -37,7 +37,7 @@ Maintenance release.
 ### Fixes
 
 [#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
-with warning for scan error messages where Workflow is stopped.
+with warning, for scan errors where workflow is stopped.
 
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
 
