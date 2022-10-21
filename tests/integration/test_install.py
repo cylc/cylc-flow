@@ -29,6 +29,7 @@ from cylc.flow.scripts.install import (
     install_cli
 )
 
+from typing import Callable, Tuple
 
 SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
@@ -42,7 +43,7 @@ BAD_CONTACT_MSG = "Bad contact file:"
 
 @pytest.fixture()
 def patch_graphql_query(
-    monkeypatch
+    monkeypatch: pytest.MonkeyPatch
 ):
     # Define a mocked graphql_query pipe function.
     @pipe
@@ -59,10 +60,10 @@ def patch_graphql_query(
 
 @pytest.fixture()
 def src_run_dirs(
-    mock_glbl_cfg,
-    monkeypatch,
+    mock_glbl_cfg: Callable,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path
-):
+) -> Tuple[Path, Path]:
     """Create some workflow source and run dirs for testing.
 
     Source dirs:
@@ -97,10 +98,10 @@ def src_run_dirs(
 
 
 def test_install_scan_no_ping(
-    src_run_dirs,
-    capsys,
-    caplog
-):
+    src_run_dirs: Callable,
+    capsys: pytest.CaptureFixture,
+    caplog: pytest.LogCaptureFixture
+) -> None:
     """At install, running intances should be reported.
 
     Ping = False case: don't query schedulers.
@@ -123,11 +124,11 @@ def test_install_scan_no_ping(
 
 
 def test_install_scan_ping(
-    src_run_dirs,
-    capsys,
-    caplog,
-    patch_graphql_query
-):
+    src_run_dirs: Callable,
+    capsys: pytest.CaptureFixture,
+    caplog: pytest.LogCaptureFixture,
+    patch_graphql_query: Callable
+) -> None:
     """At install, running intances should be reported.
 
     Ping = True case: but mock scan's scheduler query method.
