@@ -263,7 +263,7 @@ async def test_scan_cleans_stuck_contact_files(
     rmtree(tmp_dir)
 
     # the old contact file check uses the CLI command that the flow was run
-    # with to check that whether the flow is running. Because this is an
+    # with to check whether the flow is running. Because this is an
     # integration test the process is the pytest process and it is still
     # running so we need to change the command so that Cylc sees the flow as
     # having crashed
@@ -289,3 +289,48 @@ async def test_scan_cleans_stuck_contact_files(
 
     # the contact file should have been removed by the scan
     assert not cont.exists()
+
+
+async def test_scan_fail_well_when_client_unreachable(
+    start,
+    scheduler,
+    flow,
+    one_conf,
+    run_dir,
+    test_dir,
+    caplog,
+):
+    """It handles WorkflowRuntimeClient.async_request raising a WorkflowStopped
+    elegently.
+    """
+    # create a flow
+    reg = flow(one_conf, name='-crashed-')
+    schd = scheduler(reg)
+    srv_dir = Path(run_dir, reg, WorkflowFiles.Service.DIRNAME)
+    tmp_dir = test_dir / 'srv'
+
+    # run the flow, copy the contact, stop the flow, copy back the contact
+    async with start(schd):
+        copytree(srv_dir, tmp_dir)
+    rmtree(srv_dir)
+    copytree(tmp_dir, srv_dir)
+    rmtree(tmp_dir)
+
+    # the old contact file check uses the CLI command that the flow was run
+    # with to check whether the flow is running. Because this is an
+    # integration test the process is the pytest process and it is still
+    # running so we need to change the command so that Cylc sees the flow as
+    # having crashed
+    contact_info = load_contact_file(reg)
+    contact_info[ContactFileFields.COMMAND] += 'xyz'
+    dump_contact_file(reg, contact_info)
+
+    # Run Cylc Scan
+    opts = ScanOptions(states='all', format='rich', ping=True)
+    flows = []
+    await main(opts, write=flows.append, scan_dir=test_dir)
+
+    # Check that the records contain a message but not an error
+    rec = caplog.records[-1]
+    assert not rec.exc_text
+    assert 'Workflow not running' in rec.msg
