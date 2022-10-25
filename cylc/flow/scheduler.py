@@ -19,7 +19,6 @@ import asyncio
 from contextlib import suppress
 from collections import deque
 from dataclasses import dataclass
-import logging
 from optparse import Values
 import os
 from pathlib import Path
@@ -82,9 +81,14 @@ from cylc.flow.loggingutil import (
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.option_parsers import verbosity_to_env, verbosity_to_opts
+from cylc.flow.option_parsers import (
+    log_level_to_verbosity,
+    verbosity_to_env,
+    verbosity_to_opts,
+)
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
@@ -203,7 +207,7 @@ class Scheduler:
 
     # queues
     command_queue: 'Queue[Tuple[str, tuple, dict]]'
-    message_queue: Queue
+    message_queue: 'Queue[TaskMsg]'
     ext_trigger_queue: Queue
 
     # configuration
@@ -590,7 +594,7 @@ class Scheduler:
                     extra=RotatingLogFileHandler.header_extra
                 )
 
-    async def run_scheduler(self):
+    async def run_scheduler(self) -> None:
         """Start the scheduler main loop."""
         try:
             if self.is_restart:
@@ -780,24 +784,23 @@ class Scheduler:
         except (KeyError, ValueError, AttributeError):
             return
 
-    def process_queued_task_messages(self):
+    def process_queued_task_messages(self) -> None:
         """Handle incoming task messages for each task proxy."""
-        messages = {}
+        messages: Dict[str, List[Tuple[Optional[int], TaskMsg]]] = {}
         while self.message_queue.qsize():
             try:
-                task_job, event_time, severity, message = (
-                    self.message_queue.get(block=False))
+                task_msg = self.message_queue.get(block=False)
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = Tokens(task_job, relative=True)
+            tokens = Tokens(task_msg.job_id, relative=True)
             # task ID (job stripped)
             task_id = tokens.duplicate(job=None).relative_id
             messages.setdefault(task_id, [])
             # job may be None (e.g. simulation mode)
             job = int(tokens['job']) if tokens['job'] else None
             messages[task_id].append(
-                (job, event_time, severity, message)
+                (job, task_msg)
             )
         # Note on to_poll_tasks: If an incoming message is going to cause a
         # reverse change to task state, it is desirable to confirm this by
@@ -808,10 +811,11 @@ class Scheduler:
             if message_items is None:
                 continue
             should_poll = False
-            for submit_num, event_time, severity, message in message_items:
+            for submit_num, tm in message_items:
                 if self.task_events_mgr.process_message(
-                        itask, severity, message, event_time,
-                        self.task_events_mgr.FLAG_RECEIVED, submit_num):
+                    itask, tm.severity, tm.message, tm.event_time,
+                    self.task_events_mgr.FLAG_RECEIVED, submit_num
+                ):
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)
@@ -833,10 +837,10 @@ class Scheduler:
         qsize = self.command_queue.qsize()
         if qsize <= 0:
             return
-        LOG.info(f"Processing {qsize} queued command(s)")
+        LOG.debug(f"Processing {qsize} queued command(s)")
         while True:
             try:
-                command = (self.command_queue.get(False))
+                command = self.command_queue.get(False)
                 name, args, kwargs = command
             except Empty:
                 break
@@ -849,9 +853,6 @@ class Scheduler:
             try:
                 n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)
-            except SchedulerStop:
-                LOG.info(f"Command succeeded: {cmdstr}")
-                raise
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (
@@ -943,15 +944,15 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items: List[str]):
+    def command_poll_tasks(self, items: List[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
-            return
+            return 0
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         return len(bad_items)
 
-    def command_kill_tasks(self, items: List[str]):
+    def command_kill_tasks(self, items: List[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
@@ -982,23 +983,16 @@ class Scheduler:
         self.pause_workflow()
 
     @staticmethod
-    def command_set_verbosity(lvl):
+    def command_set_verbosity(lvl: Union[int, str]) -> None:
         """Set workflow verbosity."""
         try:
-            LOG.setLevel(int(lvl))
-        except (TypeError, ValueError):
-            return
-        if lvl <= logging.DEBUG:
-            cylc.flow.flags.verbosity = 2
-        elif lvl < logging.INFO:
-            cylc.flow.flags.verbosity = 1
-        elif lvl == logging.INFO:
-            cylc.flow.flags.verbosity = 0
-        else:
-            cylc.flow.flags.verbosity = -1
-        return True, 'OK'
+            lvl = int(lvl)
+            LOG.setLevel(lvl)
+        except (TypeError, ValueError) as exc:
+            raise CommandFailedError(exc)
+        cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
 
-    def command_remove_tasks(self, items):
+    def command_remove_tasks(self, items) -> int:
         """Remove tasks."""
         return self.pool.remove_tasks(items)
 
@@ -1013,7 +1007,7 @@ class Scheduler:
         try:
             self.load_flow_file(is_reload=True)
         except (ParsecError, CylcConfigError) as exc:
-            raise CommandFailedError(f"{type(exc).__name__}: {exc}")
+            raise CommandFailedError(exc)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)

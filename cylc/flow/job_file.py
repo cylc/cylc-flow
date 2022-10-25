@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Write task job files."""
+"""Write job files."""
 
 from contextlib import suppress
 import os
@@ -31,7 +31,7 @@ from cylc.flow.config import interpolate_template, ParamExpandError
 
 class JobFileWriter:
 
-    """Write task job files."""
+    """Write job files."""
 
     def __init__(self):
         self.workflow_env = {}
@@ -83,13 +83,14 @@ class JobFileWriter:
                     ['/usr/bin/env', 'bash', '-n', tmp_name],
                     stderr=PIPE,
                     stdin=DEVNULL,
+                    text=True
                     # * the purpose of this is to evaluate user defined code
                     #   prior to it being executed
                 ) as proc:
                     if proc.wait():
                         # This will leave behind the temporary file,
                         # which is useful for debugging syntax errors, etc.
-                        raise RuntimeError(proc.communicate()[1].decode())
+                        raise RuntimeError(proc.communicate()[1])
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
@@ -120,7 +121,7 @@ class JobFileWriter:
     def _write_header(handle, job_conf):
         """Write job script header."""
         handle.write("#!/bin/bash -l\n")
-        handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
+        handle.write("#\n# ++++ THIS IS A CYLC JOB SCRIPT ++++")
         for prefix, value in [
                 ("# Workflow: ", job_conf['workflow_name']),
                 ("# Task: ", job_conf['task_id']),

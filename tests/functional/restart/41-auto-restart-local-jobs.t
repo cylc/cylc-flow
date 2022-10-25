@@ -109,7 +109,7 @@ log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
     'This workflow will be shutdown as the workflow host is unable to continue' \
     'Workflow shutting down - REQUEST(NOW)' \
-    'Orphaned task jobs:' \
+    'Orphaned tasks:' \
     '* 1/bar (running)'
 
 cylc stop "${WORKFLOW_NAME}" --now --now 2>/dev/null || true

@@ -46,9 +46,10 @@ def get_proc_ancestors():
             ["ps", "-p", str(pid), "-oppid="],
             stdout=PIPE,
             stderr=PIPE,
+            text=True
         )
         # * there is no untrusted output
-        ppid = p.communicate()[0].decode().strip()
+        ppid = p.communicate()[0].strip()
         if not ppid:
             return ancestors
         ancestors.append(ppid)
@@ -69,12 +70,13 @@ def watch_and_kill(proc):
 
 
 def run_cmd(
-        command,
-        stdin=None,
-        stdin_str=None,
-        capture_process=False,
-        capture_status=False,
-        manage=False
+    command,
+    stdin=None,
+    stdin_str=None,
+    capture_process=False,
+    capture_status=False,
+    manage=False,
+    text=True,
 ):
     """Run a given cylc command on another account and/or host.
 
@@ -95,9 +97,13 @@ def run_cmd(
         manage (boolean):
             If True, watch ancestor processes and kill command if they change
             (e.g. kill tail-follow commands when parent ssh connection dies).
+        text (boolean):
+            If True, use string mode instead of bytes for communicating
+            with subprocess.
 
     Return:
-        * If capture_process=True, the Popen object if created successfully.
+        * If capture_process=True, the Popen[str] object if created
+          successfully.
         * Else True if the remote command is executed successfully, or
           if unsuccessful and capture_status=True the remote command exit code.
         * Otherwise exit with an error message.
@@ -128,6 +134,7 @@ def run_cmd(
             stdin=stdin,
             stdout=stdout,
             stderr=stderr,
+            text=text
         )
         # * this see CODACY ISSUE comment above
     except OSError as exc:
@@ -362,7 +369,8 @@ def remote_cylc_cmd(
     ssh_cmd=None,
     remote_cylc_path=None,
     capture_process=False,
-    manage=False
+    manage=False,
+    text=True,
 ):
     """Execute a Cylc command on a remote platform.
 
@@ -385,7 +393,8 @@ def remote_cylc_cmd(
         stdin_str=stdin_str,
         capture_process=capture_process,
         capture_status=True,
-        manage=manage
+        manage=manage,
+        text=text
     )
 
 

@@ -355,7 +355,7 @@ Supported for use with job runners:
 - slurm_packjob
 - moab
 
-Directives are written to the top of the task job script in the correct format
+Directives are written to the top of the job script in the correct format
 for the job runner.
 
 Specifying directives individually like this allows use of default directives
@@ -1082,7 +1082,7 @@ with Conf('global.cylc', desc='''
         A platform consists of a group of one or more hosts which share a
         file system and a job runner (batch system).
 
-        A platform must allow interaction with the same task job from *any*
+        A platform must allow interaction with the same job from *any*
         of its hosts.
 
         .. versionadded:: 8.0.0
@@ -1535,7 +1535,7 @@ with Conf('global.cylc', desc='''
                 We recommend using a clean job submission environment for
                 consistent handling of local and remote jobs. However,
                 this is not the default behavior because it prevents
-                local task jobs from running, unless ``$PATH`` contains the
+                local jobs from running, unless ``$PATH`` contains the
                 ``cylc`` wrapper script.
 
                 Specific environment variables can be singled out to pass
@@ -1663,7 +1663,7 @@ with Conf('global.cylc', desc='''
         all be suitable for a given job.
 
 
-        When Cylc sets up a task job it will pick a platform from a group.
+        When Cylc submits a job it will pick a platform from a group.
         Cylc will then use the selected platform for all interactions with
         that job.
 

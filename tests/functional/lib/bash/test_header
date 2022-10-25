@@ -854,9 +854,10 @@ reftest_run() {
     # Expect 1 OK test.
     local TEST_NAME="${1:-${TEST_NAME_BASE}}-run"
     if [[ -n "${REFTEST_OPTS:-}" ]]; then
+        # shellcheck disable=SC2086
         workflow_run_ok "${TEST_NAME}" \
             cylc play --reference-test --debug --no-detach \
-            "${REFTEST_OPTS}" "${WORKFLOW_NAME}"
+            ${REFTEST_OPTS} "${WORKFLOW_NAME}"
     else
         workflow_run_ok "${TEST_NAME}" \
             cylc play --reference-test --debug --no-detach \
