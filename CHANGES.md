@@ -11,7 +11,6 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Enhancements
@@ -32,7 +31,17 @@ runs of the same workflow at install time.
 gets logged at "INFO" level in scheduler logs.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.3 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
+with warning, for scan errors where workflow is stopped.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
 
 Maintenance release.
 
@@ -41,8 +50,11 @@ Maintenance release.
 [#5192](https://github.com/cylc/cylc-flow/pull/5192) -
 Recompute runahead limit after use of `cylc remove`.
 
-[#5125](https://github.com/cylc/cylc-flow/pull/5125) -
-Allow rose-suite.conf changes to be considered by ``cylc reinstall``.
+[#5188](https://github.com/cylc/cylc-flow/pull/5188) -
+Fix task state selectors in `cylc trigger` and other commands.
+
+[#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
+changes to be considered by ``cylc reinstall``.
 
 [#5023](https://github.com/cylc/cylc-flow/pull/5023),
 [#5187](https://github.com/cylc/cylc-flow/pull/5187) -

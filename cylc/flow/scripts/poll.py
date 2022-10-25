@@ -82,7 +82,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
         'variables': {
             'wFlows': [workflow_id],
             'tasks': [
-                tokens.relative_id
+                tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ],
         }
