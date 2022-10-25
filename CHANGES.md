@@ -39,6 +39,10 @@ Maintenance release.
 [#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
 with warning, for scan errors where workflow is stopped.
 
+[#5199](https://github.com/cylc/cylc-flow/pull/5199) - Fix a problem with
+the consolidation tutorial.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
 
 Maintenance release.
