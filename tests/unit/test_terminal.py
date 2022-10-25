@@ -20,7 +20,10 @@ import pytest
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import (
+    cli_function,
+    prompt,
+)
 
 
 # this puts Exception in globals() where we can easily find it later
@@ -152,3 +155,50 @@ def test_cli(
 
     if stderr is not None:
         assert capsys.readouterr()[1] == stderr
+
+
+@pytest.fixture
+def stdinput(monkeypatch):
+    def _input(*lines):
+        lines = list(lines)
+
+        def __input(_message):
+            nonlocal lines
+            try:
+                return lines.pop(0)
+            except IndexError:
+                raise Exception('stdinput ran out of lines')
+
+        monkeypatch.setattr(
+            'cylc.flow.terminal.input',
+            __input,
+        )
+
+    return _input
+
+
+def test_prompt(stdinput):
+    """Test the prompt function with some simulated input."""
+    # test a multiple choice prompt
+    stdinput('y')
+    assert prompt('yes or no', ['y', 'n']) == 'y'
+    stdinput('n')
+    assert prompt('yes or no', ['y', 'n']) == 'n'
+
+    # test a prompt with mapped return values
+    stdinput('42')
+    assert prompt('what is the answer', {'41': False, '42': True}) is True
+    stdinput('41')
+    assert prompt('what is the answer', {'41': False, '42': True}) is False
+
+    # test incorrect input (should re-prompt until it gets a valid response)
+    stdinput('40', '41', '42')
+    assert prompt('what is the answer', ['42']) == '42'
+
+    # test a prompt with a default
+    stdinput('')
+    assert prompt('whatever', ['x'], default='x') == 'x'
+
+    # test a prompt with an input pre-process method thinggy
+    stdinput('YES')
+    assert prompt('yes yes yes no', ['yes', 'no'], process=str.lower) == 'yes'

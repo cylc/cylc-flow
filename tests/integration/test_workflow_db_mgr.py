@@ -17,6 +17,8 @@
 import pytest
 import sqlite3
 
+from pkg_resources import parse_version
+
 from cylc.flow.scheduler import Scheduler
 
 
@@ -75,15 +77,20 @@ def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
         conn.commit()
 
 
-def db_set_workflow_param(schd: Scheduler, param: str, value: str) -> None:
-    """Update a value in the scheduler's DB workflow_parameters table."""
+def upgrade_db_from_version(schd, version):
+    """Runs the DB upgrader from the specified version.
+
+    Args:
+        schd:
+            The Scheduler who's DB you want to upgrade.
+        version:
+            The version you want to upgrade from.
+            (i.e. what version do you want to tell Cylc the workflow ran
+            with last time).
+
+    """
     with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
-        conn = pri_dao.connect()
-        conn.execute(
-            rf'UPDATE "workflow_params" '
-            rf'SET "value" = "{value}" WHERE "key" = "{param}"'
-        )
-        conn.commit()
+        schd.workflow_db_mgr.upgrade(parse_version(version), pri_dao)
 
 
 async def test_db_upgrade_pre_803(
@@ -100,19 +107,23 @@ async def test_db_upgrade_pre_803(
     # Remove task_states:is_manual_submit to fake a pre-8.0.3 DB.
     db_remove_column(schd, "task_states", "is_manual_submit")
 
-    # Restart should fail due to the missing column.
     schd: Scheduler = scheduler(reg, paused_start=True)
+
+    # Run the DB upgrader for version 8.0.3
+    # (8.0.3 does not require upgrade so should be skipped)
+    upgrade_db_from_version(schd, '8.0.3')
+
+    # Restart should fail due to the missing column.
     with pytest.raises(sqlite3.OperationalError):
         async with start(schd):
             pass
-    assert (
-        ('n_restart', '1') in db_select(schd, False, 'workflow_params')
-    )
+    assert ('n_restart', '1') in db_select(schd, False, 'workflow_params')
 
-    # Set cylc_version to pre-8.0.3 to cause an upgrade on restart.
-    db_set_workflow_param(schd, "cylc_version", "8.0.2")
-
-    # Restart should now upgrade the DB automatically and succeed.
     schd: Scheduler = scheduler(reg, paused_start=True)
+
+    # Run the DB upgrader for version 8.0.2
+    # (8.0.2 requires upgrade)
+    upgrade_db_from_version(schd, '8.0.2')
+    # Restart should now succeed.
     async with start(schd):
         assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')
