@@ -44,17 +44,18 @@ async def test_trigger_invalid(mod_one, start, log_filter, flow_strs):
 async def test_trigger_no_flows(mod_one, start, log_filter):
     """Test triggering a task with no flows present.
 
-    It should get the most recent flow number.
+    It should get the flow numbers of the most recent active tasks.
     """
     async with start(mod_one):
+
         # Remove the task (flow 1) --> pool empty
         task = mod_one.pool.get_tasks()[0]
         mod_one.pool.remove(task)
         assert len(mod_one.pool.get_tasks()) == 0
 
-        # Trigger the task (with flow 5).
+        # Trigger the task, with new flow nums.
         time.sleep(2)  # The flows need different timestamps!
-        mod_one.pool.force_trigger_tasks([task.identity], [5])
+        mod_one.pool.force_trigger_tasks([task.identity], [5, 9])
         assert len(mod_one.pool.get_tasks()) == 1
 
         # Ensure the new flow is in the db.
@@ -65,8 +66,8 @@ async def test_trigger_no_flows(mod_one, start, log_filter):
         mod_one.pool.remove(task)
         assert len(mod_one.pool.get_tasks()) == 0
 
-        # Trigger the task; it should get the most recent flow (5).
+        # Trigger the task; it should get flow nums 5, 9
         mod_one.pool.force_trigger_tasks([task.identity], [FLOW_ALL])
         assert len(mod_one.pool.get_tasks()) == 1
         task = mod_one.pool.get_tasks()[0]
-        assert task.flow_nums == {5}
+        assert task.flow_nums == {5, 9}
