@@ -36,7 +36,7 @@
     [[get_observations_aldergrove]]
         script = get-observations
         [[[environment]]]
-            SITE_ID = 3976
+            SITE_ID = 3917
             API_KEY = DATAPOINT_API_KEY
     [[get_observations_camborne]]
         script = get-observations
