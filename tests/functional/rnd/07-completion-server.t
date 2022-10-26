@@ -40,8 +40,15 @@ __HERE__
 
 # Make sure the server exits timeout when trying to read from stdin
 # (Note the completion server exits 0 on timeout)
-
 TEST_NAME="${TEST_NAME_BASE}-timeout"
-run_ok "${TEST_NAME}" timeout 5 cylc completion-server --timeout=1
+# shellcheck disable=SC2162
+if ! read -t 0 -N 0; then
+    # If stdin is not a terminal or contains readable data this test will
+    # fail.
+    run_ok "${TEST_NAME}" timeout 5 cylc completion-server --timeout=1
+else
+    # This should happen in non-interactive environments e.g. CI
+    skip 1 'Test requires an stdin stream (cannot be faked)'
+fi
 
 exit
