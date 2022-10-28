@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 import unittest
 from datetime import datetime
 
 from cylc.flow.cycling.iso8601 import init, ISO8601Sequence, ISO8601Point,\
     ISO8601Interval, ingest_time
+from cylc.flow.exceptions import CylcConfigError
 
 
 class TestISO8601Sequence(unittest.TestCase):
@@ -777,3 +779,9 @@ class TestRelativeCyclePoint(unittest.TestCase):
         timepoint_truncated = "19951231T0630"  # 19951231T0630
         output = ingest_time(timepoint_truncated, my_now)
         self.assertEqual("19951231T0630", output)
+
+    def test_validate_fails_comma_sep_offset_list(self):
+        """It raises an exception if validating a list separated by commas
+        """
+        with pytest.raises(CylcConfigError, match="T-00;T-30"):
+            ingest_time('next (T-00, T-30)')

@@ -36,6 +36,10 @@ Maintenance release.
 
 ### Fixes
 
+[#5211](https://github.com/cylc/cylc-flow/pull/5211) - Provide better
+explanation of failure if `icp = next (T-02, T-32)` when list shoudl be
+semicolon separated.
+
 [#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
 with warning, for scan errors where workflow is stopped.
 

@@ -737,7 +737,15 @@ def prev_next(
     }
 
     for my_time in str_points:
-        parsed_point = parser.parse(my_time.strip())
+        try:
+            parsed_point = parser.parse(my_time.strip())
+        except ValueError:
+            suggest = my_time.replace(',', ';')
+            raise CylcConfigError(
+                f'Invalid offset: {my_time}:'
+                f' Offset lists are semicolon separated, try {suggest}'
+            )
+
         timepoints.append(parsed_point + now)
 
         if direction == 'previous':
