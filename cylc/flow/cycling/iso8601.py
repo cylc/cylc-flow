@@ -26,6 +26,7 @@ from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
 from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.parsers import ISO8601SyntaxError
 from cylc.flow.time_parser import CylcTimeParser
 from cylc.flow.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp
@@ -34,7 +35,8 @@ from cylc.flow.exceptions import (
     CylcConfigError,
     IntervalParsingError,
     PointParsingError,
-    SequenceDegenerateError
+    SequenceDegenerateError,
+    WorkflowConfigError
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.validate import IllegalValueError
@@ -739,7 +741,10 @@ def prev_next(
     for my_time in str_points:
         try:
             parsed_point = parser.parse(my_time.strip())
+        except ISO8601SyntaxError as exc:
+            raise exc
         except ValueError:
+            # If list is accidentally comma
             suggest = my_time.replace(',', ';')
             raise WorkflowConfigError(
                 f'Invalid offset: {my_time}:'

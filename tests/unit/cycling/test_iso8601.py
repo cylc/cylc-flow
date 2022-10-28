@@ -780,8 +780,15 @@ class TestRelativeCyclePoint(unittest.TestCase):
         output = ingest_time(timepoint_truncated, my_now)
         self.assertEqual("19951231T0630", output)
 
-    def test_validate_fails_comma_sep_offset_list(self):
-        """It raises an exception if validating a list separated by commas
-        """
-        with pytest.raises(CylcConfigError, match="T-00;T-30"):
-            ingest_time('next (T-00, T-30)')
+@pytest.mark.parametrize(
+    '_input, errortext',
+    (
+        ('next (T-00, T-30)', 'T-00;T-30'),
+        ('next (wildebeest)', 'Invalid ISO 8601 date')
+    )
+)
+def test_validate_fails_comma_sep_offset_list(_input, errortext):
+    """It raises an exception if validating a list separated by commas
+    """
+    with pytest.raises(Exception, match=errortext):
+        ingest_time(_input)
