@@ -741,7 +741,7 @@ def prev_next(
             parsed_point = parser.parse(my_time.strip())
         except ValueError:
             suggest = my_time.replace(',', ';')
-            raise CylcConfigError(
+            raise WorkflowConfigError(
                 f'Invalid offset: {my_time}:'
                 f' Offset lists are semicolon separated, try {suggest}'
             )
