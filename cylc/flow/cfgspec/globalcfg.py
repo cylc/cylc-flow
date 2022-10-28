@@ -448,16 +448,18 @@ Python template substitution syntax is used:
 
 TASK_EVENTS_SETTINGS = {
     'handlers': '''
-        Specify a list of command lines or command line templates as task
-        event handlers.
+        Specify a list of command lines or command line templates as generic
+        task event handlers for each event set in
+        :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler events`.
     ''',
     'execution timeout': '''
         If a task has not finished after the specified interval, the execution
         timeout event handler(s) will be called.
     ''',
     'handler events': '''
-        Specify the events for which the general task event handlers should
-        be invoked.
+        Specify the events for which the general task event handlers
+        :cylc:conf:`flow.cylc[runtime][<namespace>][events]handlers`
+        should be invoked.
 
         Example::
 
