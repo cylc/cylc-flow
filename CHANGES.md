@@ -37,7 +37,7 @@ Maintenance release.
 ### Fixes
 
 [#5211](https://github.com/cylc/cylc-flow/pull/5211) - Provide better
-explanation of failure if `icp = next (T-02, T-32)` when list shoudl be
+explanation of failure if `icp = next (T-02, T-32)` when list should be
 semicolon separated.
 
 [#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
