@@ -1534,7 +1534,7 @@ with Conf('global.cylc', desc='''
 
                 We recommend using a clean job submission environment for
                 consistent handling of local and remote jobs. However,
-                this is not the default behavior because it prevents
+                this is not the default behaviour because it prevents
                 local task jobs from running, unless ``$PATH`` contains the
                 ``cylc`` wrapper script.
 

@@ -1099,7 +1099,7 @@ with Conf(
                 Each time Cylc resubmits a task job it will increment the
                 variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
                 environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
-                behavior between submission attempts.
+                behaviour between submission attempts.
 
                 .. versionchanged:: 8.0.0
 
