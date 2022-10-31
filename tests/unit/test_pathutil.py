@@ -529,7 +529,8 @@ def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
             1000, ['run20', 'run400', 'run999'], False,
             id='1000th run (from filenames)'
         ),
-        param(6, ['run1', 'run5'], False,
+        param(
+            6, ['run1', 'run5'], False,
             id='Non-sequential (from filenames)'),
         param(2, ['run1'], True, id='2nd run (from symlink)'),
         param(100, ['run1', 'run99'], True, id='100th run (from symlink)'),
@@ -549,7 +550,8 @@ def test_get_next_rundir_number(tmp_path, expect, files, runN):
     (
         param('my_workflow1', 'my_workflow1', False, id='--no-run-name'),
         param('my_workflow2', 'my_workflow2/run22', False, id='installed'),
-        param('my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
+        param(
+            'my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
         param('my_workflow4', 'my_workflow4', True, id='not installed'),
     )
 )

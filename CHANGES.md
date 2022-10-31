@@ -15,6 +15,10 @@ ones in. -->
 
 ### Enhancements
 
+[#5214](https://github.com/cylc/cylc-flow/pull/5214) - Allows validation
+(cylc validate, list, view, config, and graph) of workflows runs where
+template variables are stored in the database.
+
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
 runs of the same workflow at install time.
 

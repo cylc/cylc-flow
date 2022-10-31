@@ -25,10 +25,13 @@ Note:
   configuration (as Cylc would see it).
 """
 
+import asyncio
+
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
+    AGAINST_SOURCE_OPTION,
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
 )
@@ -93,12 +96,19 @@ def get_option_parser():
              "not correspond to those reported by the parser).",
              action="store_true", default=False, dest="cat")
 
+    parser.add_option(
+        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
+
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, _, flow_file = parse_id(
+    asyncio.run(_main(parser, options, workflow_id))
+
+
+async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
         constraint='workflows',
@@ -117,9 +127,8 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     }
     for line in read_and_proc(
         flow_file,
-        load_template_vars(
-            options.templatevars, options.templatevars_file
-        ),
-        viewcfg=viewcfg
+        load_template_vars(options.templatevars, options.templatevars_file),
+        viewcfg=viewcfg,
+        opts=options,
     ):
         print(line)

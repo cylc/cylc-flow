@@ -117,6 +117,17 @@ ICP_OPTION = OptionSettings(
     dest="icp"
 )
 
+AGAINST_SOURCE_OPTION = OptionSettings(
+    ['--against-source'],
+    help=(
+        "Validate as if for reinstallation. If this option is selected"
+        " the argument can only be a workflow id."
+    ),
+    dest='against_source',
+    action='store_true',
+    default=False
+)
+
 
 icp_option = Option(
     *ICP_OPTION.args, **ICP_OPTION.kwargs)  # type: ignore[arg-type]

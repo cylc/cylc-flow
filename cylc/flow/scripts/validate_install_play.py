@@ -30,7 +30,7 @@ This script is equivalent to:
 
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
-    wrapped_main as validate_main
+    _main as validate_main
 )
 from cylc.flow.scripts.install import (
     INSTALL_OPTIONS, install_cli as cylc_install, get_source_location

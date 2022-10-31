@@ -49,14 +49,17 @@ Examples:
   $ cylc config --initial-cycle-point=now myflow
 """
 
+import asyncio
+
 import os.path
 from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import (
+    AGAINST_SOURCE_OPTION,
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     icp_option,
@@ -128,6 +131,9 @@ def get_option_parser() -> COP:
         action='store_true', default=False, dest='print_platforms'
     )
 
+    parser.add_option(
+        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
+
     parser.add_cylc_rose_options()
 
     return parser
@@ -145,6 +151,14 @@ def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
 
 @cli_function(get_option_parser)
 def main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+) -> None:
+    asyncio.run(_main(parser, options, *ids))
+
+
+async def _main(
     parser: COP,
     options: 'Values',
     *ids,
@@ -178,7 +192,7 @@ def main(
         )
         return
 
-    workflow_id, _, flow_file = parse_id(
+    workflow_id, _, flow_file = await parse_id_async(
         *ids,
         src=True,
         constraint='workflows',

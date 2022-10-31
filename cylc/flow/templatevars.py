@@ -17,9 +17,37 @@
 
 from ast import literal_eval
 from optparse import Values
+from pathlib import Path
 from typing import Any, Dict
 
 from cylc.flow.exceptions import InputError
+
+
+from cylc.flow.rundb import CylcWorkflowDAO
+
+
+class OldTemplateVars:
+    """Gets template variables stored in workflow database.
+
+    Mirrors the interface used in scheduler.py to get db info on restart.
+    """
+    DB = 'log/db'
+
+    def __init__(self, run_dir):
+        self.template_vars = {}
+        self.run_dir = Path(run_dir)
+        self._get_db_template_vars()
+
+    def _callback(self, _, row):
+        """Extract key and value and run eval_var on them assigning
+        them to self.template_vars.
+        """
+        self.template_vars[row[0]] = eval_var(row[1])
+
+    def _get_db_template_vars(self):
+        if (self.run_dir / self.DB).exists():
+            dao = CylcWorkflowDAO(str(self.run_dir / self.DB))
+            dao.select_workflow_template_vars(self._callback)
 
 
 def eval_var(var):
@@ -65,6 +93,7 @@ def load_template_vars(template_vars=None, template_vars_file=None):
                     continue
                 key, val = line.split("=", 1)
                 res[key.strip()] = eval_var(val.strip())
+
     if template_vars:
         for pair in template_vars:
             key, val = pair.split("=", 1)
@@ -78,10 +107,9 @@ def get_template_vars(options: Values) -> Dict[str, Any]:
     Args:
         options: Options passed to the Cylc script which is using this
             function.
+        flow_file: Path to flow_file.
 
     Returns:
         template_vars: Template variables to give to a Cylc config.
     """
-    return load_template_vars(
-        options.templatevars, options.templatevars_file
-    )
+    return load_template_vars(options.templatevars, options.templatevars_file)

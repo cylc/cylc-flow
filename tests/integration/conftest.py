@@ -20,18 +20,28 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
+from types import SimpleNamespace
 from typing import List, TYPE_CHECKING, Set, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow.scripts.validate import ValidateOptions
+from cylc.flow.scripts.validate import (
+    ValidateOptions,
+    _main as validate,
+    get_option_parser as validate_gop,
+)
+from cylc.flow.scripts.install import (
+    install,
+    get_option_parser as install_gop
+)
 from cylc.flow.wallclock import get_current_time_string
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
+    _make_src_flow,
     _make_scheduler,
     _run_flow,
     _start_flow,
@@ -137,6 +147,12 @@ def mod_flow(run_dir, mod_test_dir):
 def flow(run_dir, test_dir):
     """A function for creating function-level flows."""
     yield partial(_make_flow, run_dir, test_dir)
+
+
+@pytest.fixture
+def flow_src(tmp_path):
+    """A function for creating function-level flows."""
+    yield partial(_make_src_flow, tmp_path)
 
 
 @pytest.fixture(scope='module')
@@ -404,3 +420,67 @@ def capture_polling():
         return polled_tasks
 
     return _disable_polling
+
+
+@pytest.fixture
+def _setup_validate_cli():
+    """Provides CLI arguments for cylc validate."""
+    def _inner(opts=None):
+        setup = SimpleNamespace()
+        setup.parser = validate_gop()
+        setup.opts = setup.parser.get_default_values()
+        setup.opts.templatevars = []
+        setup.opts.templatevars_file = []
+        if setup.opts is not None:
+            for key, val in opts.items():
+                setattr(setup.opts, key, val)
+        return setup
+    yield _inner
+
+
+@pytest.fixture
+def _source_workflow(run_dir, flow_src):
+    """Create a workflow in source directory and install it.
+
+    Useful for testing interaction between installed and source directories.
+
+    Args:
+        cfg: Can be passed a config dictionary.
+
+    Yields:
+        A namespace object with properties:
+            src: source location.
+            opts: options set for cylc install.
+
+    """
+    def _inner(cfg=None):
+        # Object to store info about the setup.
+        setup = SimpleNamespace()
+
+        # Create a workflow source:
+        if cfg is None:
+            setup.src = flow_src({
+                'scheduler': {
+                    'allow implicit tasks': True
+                },
+                'scheduling': {
+                    'initial cycle point': '1854',
+                    'graph': {
+                        'R1': 'foo'
+                    }
+                }
+            })
+        else:
+            setup.src = flow_src(cfg)
+
+        # Setup Opts:
+        setup.opts = install_gop().get_default_values()
+        setup.opts.no_run_name = True
+        setup.opts.workflow_name = 'cit-' + str(setup.src.name)
+
+        # Carry out the installation:
+        install(setup.opts, setup.src)
+        setup.flow_file = setup.src / 'flow.cylc'
+        return setup
+
+    yield _inner

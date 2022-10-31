@@ -25,6 +25,7 @@ correspond to the inlined version seen by the parser;
 use 'cylc view -i,--inline WORKFLOW' for comparison.
 """
 
+import asyncio
 from ansimarkup import parse as cparse
 from copy import deepcopy
 from optparse import Values
@@ -38,9 +39,10 @@ from cylc.flow.exceptions import (
     TriggerExpressionError
 )
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
+    AGAINST_SOURCE_OPTION,
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     OptionSettings,
@@ -58,6 +60,8 @@ VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
 VALIDATE_RUN_MODE.sources = {'validate'}
 VALIDATE_ICP_OPTION = deepcopy(ICP_OPTION)
 VALIDATE_ICP_OPTION.sources = {'validate'}
+VALIDATE_AGAINST_SOURCE_OPTION = deepcopy(AGAINST_SOURCE_OPTION)
+VALIDATE_AGAINST_SOURCE_OPTION.sources = {'validate'}
 
 
 VALIDATE_OPTIONS = [
@@ -89,8 +93,14 @@ VALIDATE_OPTIONS = [
         dest="profile_mode",
         sources={'validate'}
     ),
+    OptionSettings(
+        ["-u", "--run-mode"], help="Validate for run mode.", action="store",
+        default="live", dest="run_mode",
+        choices=['live', 'dummy', 'simulation']
+    ),
     VALIDATE_RUN_MODE,
-    VALIDATE_ICP_OPTION
+    VALIDATE_ICP_OPTION,
+    VALIDATE_AGAINST_SOURCE_OPTION,
 ]
 
 
@@ -104,10 +114,7 @@ def get_option_parser():
     validate_options = parser.get_cylc_rose_options() + VALIDATE_OPTIONS
 
     for option in validate_options:
-        if isinstance(option, OptionSettings):
-            parser.add_option(*option.args, **option.kwargs)
-        else:
-            parser.add_option(*option['args'], **option['kwargs'])
+        parser.add_option(*option.args, **option.kwargs)
 
     parser.set_defaults(is_validate=True)
 
@@ -127,10 +134,16 @@ ValidateOptions = Options(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    wrapped_main(parser, options, workflow_id)
+    _main(parser, options, workflow_id)
 
 
-def wrapped_main(parser: COP, options: 'Values', workflow_id: str) -> None:
+def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    asyncio.run(wrapped_main(parser, options, workflow_id))
+
+
+async def wrapped_main(
+    parser: COP, options: 'Values', workflow_id: str
+) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
@@ -138,7 +151,7 @@ def wrapped_main(parser: COP, options: 'Values', workflow_id: str) -> None:
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)
 
-    workflow_id, _, flow_file = parse_id(
+    workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
         constraint='workflows',
