@@ -31,13 +31,14 @@ from ansimarkup import (
     strip as cstrip
 )
 
+from pathlib import Path
 import sys
 from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowConfigError
-from cylc.flow.pathutil import is_in_a_rundir
+from cylc.flow.pathutil import is_in_a_rundir, get_cylc_run_dir
 from cylc.flow.terminal import supports_color, DIM
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
@@ -291,7 +292,6 @@ class CylcOptionParser(OptionParser):
         argdoc: Optional[List[Tuple[str, str]]] = None,
         comms: bool = False,
         jset: bool = False,
-        revalidate: bool = False,
         multitask: bool = False,
         multiworkflow: bool = False,
         auto_add: bool = True,
@@ -331,7 +331,6 @@ class CylcOptionParser(OptionParser):
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
-        self.revalidate = revalidate
         self.color = color
         # Whether to log messages that are below warning level to stdout
         # instead of stderr:
@@ -444,13 +443,6 @@ class CylcOptionParser(OptionParser):
                     "command line if they need to be overridden."
                 ),
                 action="store", default=None, dest="templatevars_file")
-
-        if self.revalidate:
-            self.add_std_option(
-                '--revalidate',
-                help="Get template variables from prevous workflow run.",
-                action='store_true', default=False
-            )
 
     def add_cylc_rose_options(self) -> None:
         """Add extra options for cylc-rose plugin if it is installed."""
@@ -622,8 +614,16 @@ class Options:
 
 
 def can_revalidate(flow_file, opts):
-    if not is_in_a_rundir(flow_file) and opts.revalidate:
+    if is_in_a_rundir(flow_file):
+        run_dir = Path(get_cylc_run_dir())
+        flow_file = (
+            run_dir
+            / flow_file.relative_to(run_dir).parts[0]
+            / '_cylc-install/source'
+            / flow_file.name
+        )
+        return (True, flow_file)
+    else:
         raise WorkflowConfigError(
             'Revalidation only works with installed workflows.'
         )
-    return True

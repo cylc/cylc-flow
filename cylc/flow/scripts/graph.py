@@ -440,7 +440,6 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         jset=True,
-        revalidate=True,
         argdoc=[
             WORKFLOW_ID_OR_PATH_ARG_DOC,
             COP.optional(
@@ -544,7 +543,7 @@ async def _main(
         constraint='workflows',
     )
 
-    can_revalidate(flow_file, opts)
+    opts.revalidate, flow_file = can_revalidate(flow_file, opts)
 
     if opts.diff:
         return await graph_diff(
