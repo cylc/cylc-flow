@@ -71,13 +71,6 @@ REPLACED_BY_PLATFORMS = '''
    :ref:`See the migration guide <MajorChangesPlatforms>`.
 '''
 
-HANDLERS_DESCRIPTION = '''
-Handlers are scripts to be run by the scheduler if or when specific events
-occur.
-
-:ref:`See the task and workflow event hander guide <EventHandling>`
-'''
-
 
 def global_default(text: str, config_path: str) -> str:
     """Insert a link to this config item's global counterpart after the first
