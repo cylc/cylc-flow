@@ -111,8 +111,8 @@ class TaskPool:
 
         self.main_pool: Pool = {}
         self.hidden_pool: Pool = {}
-        self.main_pool_list: List[TaskProxy] = []
-        self.hidden_pool_list: List[TaskProxy] = []
+        self._main_pool_list: List[TaskProxy] = []
+        self._hidden_pool_list: List[TaskProxy] = []
         self.main_pool_changed = False
         self.hidden_pool_changed = False
 
@@ -709,22 +709,24 @@ class TaskPool:
 
     def get_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the main pool."""
+        # Cached list only for use internally in this method.
         if self.main_pool_changed:
             self.main_pool_changed = False
-            self.main_pool_list = []
+            self._main_pool_list = []
             for _, itask_id_map in self.main_pool.items():
                 for __, itask in itask_id_map.items():
-                    self.main_pool_list.append(itask)
-        return self.main_pool_list
+                    self._main_pool_list.append(itask)
+        return self._main_pool_list
 
     def get_hidden_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the hidden pool."""
+        # Cached list only for use internally in this method.
         if self.hidden_pool_changed:
             self.hidden_pool_changed = False
-            self.hidden_pool_list = []
+            self._hidden_pool_list = []
             for itask_id_maps in self.hidden_pool.values():
-                self.hidden_pool_list.extend(list(itask_id_maps.values()))
-        return self.hidden_pool_list
+                self._hidden_pool_list.extend(list(itask_id_maps.values()))
+        return self._hidden_pool_list
 
     def get_tasks_by_point(self):
         """Return a map of task proxies by cycle point."""
@@ -1540,6 +1542,8 @@ class TaskPool:
         itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             self.remove(itask, 'request')
+        if self.compute_runahead():
+            self.release_runahead_tasks()
         return len(bad_items)
 
     def force_trigger_tasks(
@@ -1732,8 +1736,8 @@ class TaskPool:
     def log_task_pool(self, log_lvl=logging.DEBUG):
         """Log content of task and prerequisite pools in debug mode."""
         for pool, name in [
-            (self.main_pool_list, "Main"),
-            (self.hidden_pool_list, "Hidden")
+            (self.get_tasks(), "Main"),
+            (self.get_hidden_tasks(), "Hidden")
         ]:
             if pool:
                 LOG.log(

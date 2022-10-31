@@ -1803,7 +1803,7 @@ def test_get_rsync_rund_cmd(
     for wdir in [
         WorkflowFiles.WORK_DIR,
         WorkflowFiles.SHARE_DIR,
-        WorkflowFiles.LOG_DIR,
+        WorkflowFiles.LogDir.DIRNAME,
     ]:
         cylc_run_dir.joinpath(wdir).mkdir(exist_ok=True)
     actual_cmd = get_rsync_rund_cmd(src_dir, cylc_run_dir)
@@ -1932,7 +1932,7 @@ def test_install_workflow__symlink_target_exists(
 
     shutil.rmtree(sym_run)
     (
-        sym_log / 'cylc-run' / reg / 'run1' / WorkflowFiles.LOG_DIR
+        sym_log / 'cylc-run' / reg / 'run1' / WorkflowFiles.LogDir.DIRNAME
     ).mkdir(parents=True)
     with pytest.raises(WorkflowFilesError, match=msg.format(sym_log)):
         install_workflow(src_dir)

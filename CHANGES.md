@@ -11,7 +11,6 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Enhancements
@@ -20,6 +19,9 @@ ones in. -->
 `cylc validate --revalidate` to use template variables collected from
 the workflow database. Also applied to `cylc graph`, `cylc view` and
 `cylc config`.
+
+[#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
+runs of the same workflow at install time.
 
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
@@ -34,16 +36,37 @@ the workflow database. Also applied to `cylc graph`, `cylc view` and
 gets logged at "INFO" level in scheduler logs.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.3 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
 
 Maintenance release.
 
 ### Fixes
 
+[#5196](https://github.com/cylc/cylc-flow/pull/5196) - Replace traceback
+with warning, for scan errors where workflow is stopped.
+
+[#5199](https://github.com/cylc/cylc-flow/pull/5199) - Fix a problem with
+the consolidation tutorial.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5192](https://github.com/cylc/cylc-flow/pull/5192) -
+Recompute runahead limit after use of `cylc remove`.
+
+[#5188](https://github.com/cylc/cylc-flow/pull/5188) -
+Fix task state selectors in `cylc trigger` and other commands.
+
 [#5125](https://github.com/cylc/cylc-flow/pull/5125) - Allow rose-suite.conf
 changes to be considered by ``cylc reinstall``.
 
-[#5023](https://github.com/cylc/cylc-flow/pull/5023) - tasks force-triggered
+[#5023](https://github.com/cylc/cylc-flow/pull/5023),
+[#5187](https://github.com/cylc/cylc-flow/pull/5187) -
+tasks force-triggered
 after a shutdown was ordered should submit to run immediately on restart.
 
 [#5137](https://github.com/cylc/cylc-flow/pull/5137) -

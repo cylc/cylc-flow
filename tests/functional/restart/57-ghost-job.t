@@ -54,7 +54,7 @@ _args_
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play -vv "${WORKFLOW_NAME}" --pause
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --upgrade -vv "${WORKFLOW_NAME}" --pause
 
 # There will be 1 ghost job in DB:
 TEST_NAME="${TEST_NAME_BASE}-db-query-1"
@@ -79,7 +79,7 @@ cmp_json "${TEST_NAME}-cmp" "${TEST_NAME}.stdout" << EOF
 }
 EOF
 
-workflow_run_ok "${TEST_NAME_BASE}-resume" cylc play "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-resume" cylc play --upgrade "${WORKFLOW_NAME}"
 poll_workflow_stopped
 
 # Job should have been replaced in DB with same submit num:
