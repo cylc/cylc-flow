@@ -200,6 +200,7 @@ def runtime_from_config(rtconfig):
         platform = rtconfig['platform']
     directives = rtconfig['directives']
     environment = rtconfig['environment']
+    outputs = rtconfig['outputs']
     return PbRuntime(
         platform=platform,
         script=rtconfig['script'],
@@ -211,8 +212,28 @@ def runtime_from_config(rtconfig):
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
         execution_time_limit=rtconfig['execution time limit'],
-        directives=json.dumps(directives),
-        environment=json.dumps(environment),
+        execution_polling_intervals=rtconfig['execution polling intervals'],
+        execution_retry_delays=rtconfig['execution retry delays'],
+        submission_polling_intervals=rtconfig['submission polling intervals'],
+        submission_retry_delays=rtconfig['submission retry delays'],
+        directives=json.dumps(
+            [
+                {'key': key, 'value': value}
+                for key, value in directives.items()
+            ]
+        ),
+        environment=json.dumps(
+            [
+                {'key': key, 'value': value}
+                for key, value in environment.items()
+            ]
+        ),
+        outputs=json.dumps(
+            [
+                {'key': key, 'value': value}
+                for key, value in outputs.items()
+            ]
+        )
     )
 
 
