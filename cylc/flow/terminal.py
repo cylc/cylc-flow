@@ -43,6 +43,9 @@ EXC_EXIT = cparse('<red><bold>{name}: </bold>{exc}</red>')
 # default grey colour (do not use "dim", it is not sufficiently portable)
 DIM = 'fg 248'
 
+# turn input into a global() for testing purposes
+input = input  # noqa
+
 
 def is_terminal():
     """Determine if running in (and printing to) a terminal."""
@@ -285,3 +288,43 @@ def cli_function(
                 raise exc from None
         return wrapper
     return inner
+
+
+def prompt(message, options, default=None, process=None):
+    """Dead simple CLI textual prompting.
+
+    Args:
+        message:
+            The message to put before the user, don't end this with
+            punctuation.
+        options:
+            The choices the user can pick:
+            * If this is a list the option selected will be returned.
+            * If this is a dict the keys are options, the corresponding value
+              will be returned.
+        default:
+            A value to be chosen if the user presses <return> without first
+            typing anything.
+        process:
+            A function to run the user's input through before comparision.
+            E.G. string.lower.
+
+    Returns:
+        The selected option (if options is a list) else the corresponding
+        value (if options is a dict).
+
+    """
+    default_ = ''
+    if default:
+        default_ = f'[{default}] '
+    message += f': {default_}{",".join(options)}?'
+    usr = None
+    while usr not in options:
+        usr = input(f'{message}')
+        if default is not None and usr == '':
+            usr = default
+        if process:
+            usr = process(usr)
+    if isinstance(options, dict):
+        return options[usr]
+    return usr

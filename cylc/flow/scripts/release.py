@@ -124,7 +124,7 @@ async def run(options: 'Values', workflow_id, *tokens_list):
         mutation = RELEASE_MUTATION
         args = {
             'tasks': [
-                tokens.relative_id
+                tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ]
         }

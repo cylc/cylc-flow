@@ -187,7 +187,6 @@ class Scheduler:
     is_restart: bool
 
     # directories
-    workflow_dir: str
     workflow_log_dir: str
     workflow_run_dir: str
     workflow_share_dir: str
@@ -523,16 +522,12 @@ class Scheduler:
 
     def load_workflow_params_and_tmpl_vars(self) -> None:
         """Load workflow params and template variables"""
-        pri_dao = self.workflow_db_mgr.get_pri_dao()
-        try:
+        with self.workflow_db_mgr.get_pri_dao() as pri_dao:
             # This logic handles lack of initial cycle point in flow.cylc and
             # things that can't change on workflow restart/reload.
             pri_dao.select_workflow_params(self._load_workflow_params)
             pri_dao.select_workflow_template_vars(self._load_template_vars)
             pri_dao.execute_queued_items()
-
-        finally:
-            pri_dao.close()
 
     def log_start(self) -> None:
         """Log headers, that also get logged on each rollover.
@@ -1006,7 +1001,7 @@ class Scheduler:
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
         # Things that can't change on workflow reload:
-        pri_dao = self.workflow_db_mgr.get_pri_dao()
+        pri_dao = self.workflow_db_mgr._get_pri_dao()
         pri_dao.select_workflow_params(self._load_workflow_params)
 
         try:
@@ -1729,45 +1724,25 @@ class Scheduler:
 
     async def _shutdown(self, reason: BaseException) -> None:
         """Shutdown the workflow."""
-        shutdown_msg = "Workflow shutting down"
-        with patch_log_level(LOG):
-            if isinstance(reason, SchedulerStop):
-                LOG.info(f'{shutdown_msg} - {reason.args[0]}')
-                # Unset the "paused" status of the workflow if not
-                # auto-restarting
-                if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
-                    self.resume_workflow(quiet=True)
-            elif isinstance(reason, SchedulerError):
-                LOG.error(f"{shutdown_msg} - {reason}")
-            elif isinstance(reason, CylcError) or (
-                isinstance(reason, ParsecError) and reason.schd_expected
-            ):
-                LOG.error(
-                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
-                )
-                if cylc.flow.flags.verbosity > 1:
-                    # Print traceback
-                    LOG.exception(reason)
-            else:
-                LOG.exception(reason)
-                if str(reason):
-                    shutdown_msg += f" - {reason}"
-                LOG.critical(shutdown_msg)
+        self._log_shutdown_reason(reason)
 
         if hasattr(self, 'proc_pool'):
-            self.proc_pool.close()
-            if self.proc_pool.is_not_done():
-                # e.g. KeyboardInterrupt
-                self.proc_pool.terminate()
-            self.proc_pool.process()
+            try:
+                self.proc_pool.close()
+                if self.proc_pool.is_not_done():
+                    # e.g. KeyboardInterrupt
+                    self.proc_pool.terminate()
+                self.proc_pool.process()
+            except Exception as exc:
+                LOG.exception(exc)
 
         if hasattr(self, 'pool'):
-            if not self.is_stalled:
-                # (else already logged)
-                # Log partially satisfied dependencies and incomplete tasks.
-                self.pool.is_stalled()
-            self.pool.warn_stop_orphans()
             try:
+                if not self.is_stalled:
+                    # (else already logged)
+                    # Log partially satisfied dependencies and incomplete tasks
+                    self.pool.is_stalled()
+                self.pool.warn_stop_orphans()
                 self.workflow_db_mgr.put_task_event_timers(
                     self.task_events_mgr
                 )
@@ -1820,6 +1795,33 @@ class Scheduler:
                 self.run_event_handlers(self.EVENT_SHUTDOWN, reason.args[0])
             else:
                 self.run_event_handlers(self.EVENT_ABORTED, str(reason))
+
+    def _log_shutdown_reason(self, reason: BaseException) -> None:
+        """Appropriately log the reason for scheduler shutdown."""
+        shutdown_msg = "Workflow shutting down"
+        with patch_log_level(LOG):
+            if isinstance(reason, SchedulerStop):
+                LOG.info(f'{shutdown_msg} - {reason.args[0]}')
+                # Unset the "paused" status of the workflow if not
+                # auto-restarting
+                if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
+                    self.resume_workflow(quiet=True)
+            elif isinstance(reason, SchedulerError):
+                LOG.error(f"{shutdown_msg} - {reason}")
+            elif isinstance(reason, CylcError) or (
+                isinstance(reason, ParsecError) and reason.schd_expected
+            ):
+                LOG.error(
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                )
+                if cylc.flow.flags.verbosity > 1:
+                    # Print traceback
+                    LOG.exception(reason)
+            else:
+                LOG.exception(reason)
+                if str(reason):
+                    shutdown_msg += f" - {reason}"
+                LOG.critical(shutdown_msg)
 
     def set_stop_clock(self, unix_time):
         """Set stop clock time."""

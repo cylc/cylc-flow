@@ -27,7 +27,7 @@ CREATE TABLE workflow_flows(flow_num INTEGER, start_time TEXT, description TEXT,
 INSERT INTO workflow_flows VALUES(1,'2022-07-25 16:18:23','original flow from 1');
 CREATE TABLE workflow_params(key TEXT, value TEXT, PRIMARY KEY(key));
 INSERT INTO workflow_params VALUES('uuid_str','4972bc10-a016-46b0-b313-b10f3cb63bf5');
-INSERT INTO workflow_params VALUES('cylc_version','8.0rc4.dev');
+INSERT INTO workflow_params VALUES('cylc_version','8.0.3.dev');
 INSERT INTO workflow_params VALUES('UTC_mode','0');
 INSERT INTO workflow_params VALUES('n_restart','0');
 INSERT INTO workflow_params VALUES('cycle_point_tz','Z');

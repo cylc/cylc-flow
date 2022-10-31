@@ -190,8 +190,17 @@ class WorkflowFiles:
     RUN_N = 'runN'
     """Symbolic link for latest run"""
 
-    LOG_DIR = 'log'
-    """Workflow log directory."""
+    class LogDir:
+        """The directory containing workflow log files"""
+
+        DIRNAME = 'log'
+        """Workflow log directory."""
+
+        INSTALL = 'install'
+        """Install log dir"""
+
+        VERSION = 'version'
+        """Version control log dir"""
 
     SHARE_DIR = 'share'
     """Workflow share directory."""
@@ -240,7 +249,8 @@ class WorkflowFiles:
         """Symlink to the workflow definition (For run dir)."""
 
     RESERVED_DIRNAMES = frozenset([
-        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME
+        LogDir.DIRNAME, SHARE_DIR, WORK_DIR, RUN_N,
+        Service.DIRNAME, Install.DIRNAME
     ])
     """Reserved directory names that cannot be present in a source dir."""
 
@@ -248,7 +258,7 @@ class WorkflowFiles:
     """Reserved filenames that cannot be used as run names."""
 
     SYMLINK_DIRS = frozenset([
-        SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''
+        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, WORK_DIR, ''
     ])
     """The paths of the symlink dirs that may be set in
     global.cylc[install][symlink dirs], relative to the run dir
@@ -1175,12 +1185,9 @@ def get_platforms_from_db(run_dir):
     workflow_db_mgr = WorkflowDatabaseManager(
         os.path.join(run_dir, WorkflowFiles.Service.DIRNAME))
     workflow_db_mgr.check_workflow_db_compatibility()
-    try:
-        pri_dao = workflow_db_mgr.get_pri_dao()
+    with workflow_db_mgr.get_pri_dao() as pri_dao:
         platform_names = pri_dao.select_task_job_platforms()
-        return platform_names
-    finally:
-        pri_dao.close()
+    return platform_names
 
 
 def check_deprecation(path, warn=True):
@@ -1425,9 +1432,7 @@ def _open_install_log(rund, logger):
     rund = Path(rund).expanduser()
     log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
     log_dir = Path(
-        rund,
-        WorkflowFiles.LOG_DIR,
-        'install')
+        rund, WorkflowFiles.LogDir.DIRNAME, WorkflowFiles.LogDir.INSTALL)
     log_files = get_sorted_logs_by_time(log_dir, '*.log')
     log_num = get_next_log_number(log_files[-1]) if log_files else 1
     log_path = Path(log_dir, f"{log_num:02d}-{log_type}.log")
@@ -1470,7 +1475,7 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         '.svn',
         '.cylcignore',
         'opt/rose-suite-cylc-install.conf',
-        WorkflowFiles.LOG_DIR,
+        WorkflowFiles.LogDir.DIRNAME,
         WorkflowFiles.WORK_DIR,
         WorkflowFiles.SHARE_DIR,
         WorkflowFiles.Install.DIRNAME,
