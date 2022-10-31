@@ -1371,7 +1371,6 @@ with Conf(
                     global_default(
                         TASK_EVENTS_SETTINGS['execution timeout'],
                         "[task events]execution timeout"
-
                     )
                 ))
                 Conf('handlers', VDR.V_STRING_LIST, None, desc=(
