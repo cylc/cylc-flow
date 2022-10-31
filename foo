@@ -1,0 +1,2905 @@
+diff --git a/.github/workflows/2_auto_publish_release.yml b/.github/workflows/2_auto_publish_release.yml
+index 9ffa4015e..389624351 100644
+--- a/.github/workflows/2_auto_publish_release.yml
++++ b/.github/workflows/2_auto_publish_release.yml
+@@ -39,7 +39,7 @@ jobs:
+       uses: cylc/release-actions/build-python-package@v1
+ 
+     - name: Publish distribution to PyPI
+-      uses: pypa/gh-action-pypi-publish@v1.6.4
++      uses: pypa/gh-action-pypi-publish@v1.5.1
+       with:
+         user: __token__ # uses the API token feature of PyPI - least permissions possible
+         password: ${{ secrets.PYPI_TOKEN }}
+diff --git a/.github/workflows/test_fast.yml b/.github/workflows/test_fast.yml
+index 1be7bd78d..4cd3203f8 100644
+--- a/.github/workflows/test_fast.yml
++++ b/.github/workflows/test_fast.yml
+@@ -115,5 +115,5 @@ jobs:
+           token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
+ 
+       - name: Linkcheck
+-        if: startsWith(matrix.python-version, 3.9)
++        if: startsWith(matrix.os, 'ubuntu')
+         run: pytest -m linkcheck tests/unit
+diff --git a/CHANGES.md b/CHANGES.md
+index b85c74e07..6ba8a677c 100644
+--- a/CHANGES.md
++++ b/CHANGES.md
+@@ -13,13 +13,12 @@ ones in. -->
+ -------------------------------------------------------------------------------
+ ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
+ 
+-### Breaking Changes
+-
+-* Workflows started with Cylc 8.0 which contain multiple "flows" cannot be
+-  restarted with Cylc 8.1 due to database changes.
+-
+ ### Enhancements
+ 
++[#5214](https://github.com/cylc/cylc-flow/pull/5214) - Allows Cylc commands
++(including validate, list, view, config, and graph) to load template variables
++configured by `cylc install` and `cylc play`.
++
+ [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
+ runs of the same workflow at install time.
+ 
+@@ -38,19 +37,13 @@ command to validate, install and play a workflow.
+ [#5081](https://github.com/cylc/cylc-flow/pull/5081) - Reduced amount that
+ gets logged at "INFO" level in scheduler logs.
+ 
+-[#5259](https://github.com/cylc/cylc-flow/pull/5259) - Add flow_nums
+-to task_jobs table in the workflow database.
+-
+ -------------------------------------------------------------------------------
+-## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
++## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+ 
+ Maintenance release.
+ 
+ ### Fixes
+ 
+-[##5205](https://github.com/cylc/cylc-flow/pull/#5205) - Fix bug which caused
+-orphaned running tasks to silently skip remote file installation at scheduler restart.
+-
+ [#5224](https://github.com/cylc/cylc-flow/pull/5225) - workflow installation:
+ disallow reserved names only in the top level source directory.
+ 
+@@ -64,10 +57,6 @@ with warning, for scan errors where workflow is stopped.
+ [#5199](https://github.com/cylc/cylc-flow/pull/5199) - Fix a problem with
+ the consolidation tutorial.
+ 
+-[#5195](https://github.com/cylc/cylc-flow/pull/5195) -
+-Fix issue where workflows can fail to shutdown due to unavailable remote
+-platforms and make job log retrieval more robust.
+-
+ -------------------------------------------------------------------------------
+ ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
+ 
+diff --git a/README.md b/README.md
+index dd88c391c..ce989c282 100644
+--- a/README.md
++++ b/README.md
+@@ -89,7 +89,7 @@ Quick summary of major changes:
+ 
+ [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
+ 
+-Copyright (C) 2008-<span actions:bind='current-year'>2023</span> NIWA & British Crown (Met Office) & Contributors.
++Copyright (C) 2008-<span actions:bind='current-year'>2022</span> NIWA & British Crown (Met Office) & Contributors.
+ 
+ Cylc is free software: you can redistribute it and/or modify it under the terms
+ of the GNU General Public License as published by the Free Software Foundation,
+diff --git a/cylc/flow/cfgspec/globalcfg.py b/cylc/flow/cfgspec/globalcfg.py
+index 17ca5d98d..0d3260c75 100644
+--- a/cylc/flow/cfgspec/globalcfg.py
++++ b/cylc/flow/cfgspec/globalcfg.py
+@@ -395,14 +395,8 @@ so you may want to configure more frequent polling.
+ SUBMISSION_RETY_DESCR = f'''
+ Cylc can automatically resubmit jobs after submission failures.
+ 
+-Submission retry delays is a list of ISO 8601 durations which tell Cylc
+-how long to wait before the next try.
+-
+-The job environment variable ``$CYLC_TASK_SUBMIT_NUMBER`` increments with each
+-job submission attempt.
+-
+-Tasks only go to the ``submit-failed`` state if job submission fails with no
+-retries left.
++A list of intervals which define when the scheduler will resubmit jobs if
++submission fails.
+ 
+ .. versionchanged:: 8.0.0
+ 
+diff --git a/cylc/flow/cfgspec/workflow.py b/cylc/flow/cfgspec/workflow.py
+index b982c9718..6ed90f2fb 100644
+--- a/cylc/flow/cfgspec/workflow.py
++++ b/cylc/flow/cfgspec/workflow.py
+@@ -1090,17 +1090,16 @@ with Conf(
+                 )
+             )
+             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
+-                Cylc can automate resubmission of failed jobs.
++                Cylc can automate resubmission of a failed job.
+ 
+-                Execution retry delays is a list of ISO 8601 durations which
+-                tell Cylc how long to wait before the next try.
++                Execution retry delays are a list of ISO 8601
++                durations/intervals which tell Cylc how long to wait before
++                resubmitting a failed job.
+ 
+-                The job environment variable ``$CYLC_TASK_TRY_NUMBER``
+-                increments with each automatic retry, allowing you to vary task
+-                behaviour between retries.
+-
+-                Tasks only go to the ``failed`` state if job execution fails
+-                with no retries left.
++                Each time Cylc resubmits a job it will increment the
++                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
++                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
++                behaviour between submission attempts.
+ 
+                 .. versionchanged:: 8.0.0
+ 
+diff --git a/cylc/flow/config.py b/cylc/flow/config.py
+index 91f6941e5..b52c8fcdb 100644
+--- a/cylc/flow/config.py
++++ b/cylc/flow/config.py
+@@ -284,10 +284,10 @@ class WorkflowConfig:
+             'linearized ancestors': {},
+             # lists of first-parent ancestor namespaces
+             'first-parent ancestors': {},
+-            # sets of all descendant namespaces
++            # lists of all descendant namespaces
+             # (not including the final tasks)
+             'descendants': {},
+-            # sets of all descendant namespaces from the first-parent
++            # lists of all descendant namespaces from the first-parent
+             # hierarchy (first parents are collapsible in visualization)
+             'first-parent descendants': {},
+         }
+@@ -1179,12 +1179,16 @@ class WorkflowConfig:
+         for name in self.cfg['runtime']:
+             ancestors = self.runtime['linearized ancestors'][name]
+             for p in ancestors[1:]:
+-                self.runtime['descendants'].setdefault(p, set()).add(name)
++                if p not in self.runtime['descendants']:
++                    self.runtime['descendants'][p] = []
++                if name not in self.runtime['descendants'][p]:
++                    self.runtime['descendants'][p].append(name)
+             first_ancestors = self.runtime['first-parent ancestors'][name]
+             for p in first_ancestors[1:]:
+-                self.runtime['first-parent descendants'].setdefault(
+-                    p, set()
+-                ).add(name)
++                if p not in self.runtime['first-parent descendants']:
++                    self.runtime['first-parent descendants'][p] = []
++                if name not in self.runtime['first-parent descendants'][p]:
++                    self.runtime['first-parent descendants'][p].append(name)
+ 
+     def compute_inheritance(self):
+         LOG.debug("Parsing the runtime namespace hierarchy")
+@@ -2197,15 +2201,15 @@ class WorkflowConfig:
+                           self.cfg['runtime']['root'])
+                 if 'root' not in self.runtime['descendants']:
+                     # (happens when no runtimes are defined in flow.cylc)
+-                    self.runtime['descendants']['root'] = set()
++                    self.runtime['descendants']['root'] = []
+                 if 'root' not in self.runtime['first-parent descendants']:
+                     # (happens when no runtimes are defined in flow.cylc)
+-                    self.runtime['first-parent descendants']['root'] = set()
++                    self.runtime['first-parent descendants']['root'] = []
+                 self.runtime['parents'][name] = ['root']
+                 self.runtime['linearized ancestors'][name] = [name, 'root']
+                 self.runtime['first-parent ancestors'][name] = [name, 'root']
+-                self.runtime['descendants']['root'].add(name)
+-                self.runtime['first-parent descendants']['root'].add(name)
++                self.runtime['descendants']['root'].append(name)
++                self.runtime['first-parent descendants']['root'].append(name)
+                 self.ns_defn_order.append(name)
+ 
+             try:
+diff --git a/cylc/flow/host_select.py b/cylc/flow/host_select.py
+index 83861d043..3658cc7fa 100644
+--- a/cylc/flow/host_select.py
++++ b/cylc/flow/host_select.py
+@@ -27,11 +27,7 @@ from tokenize import tokenize
+ 
+ from cylc.flow import LOG
+ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+-from cylc.flow.exceptions import (
+-    GlobalConfigError,
+-    HostSelectException,
+-    NoHostsError,
+-)
++from cylc.flow.exceptions import GlobalConfigError, HostSelectException
+ from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
+ from cylc.flow.remote import run_cmd, cylc_server_cmd
+ from cylc.flow.terminal import parse_dirty_json
+@@ -557,11 +553,7 @@ def _get_metrics(hosts, metrics, data=None):
+     }
+     for host in hosts:
+         if is_remote_host(host):
+-            try:
+-                proc_map[host] = cylc_server_cmd(cmd, host=host, **kwargs)
+-            except NoHostsError:
+-                LOG.warning(f'Could not contact {host}')
+-                continue
++            proc_map[host] = cylc_server_cmd(cmd, host=host, **kwargs)
+         else:
+             proc_map[host] = run_cmd(['cylc'] + cmd, **kwargs)
+ 
+diff --git a/cylc/flow/network/ssh_client.py b/cylc/flow/network/ssh_client.py
+index f5065fc43..c26be9f57 100644
+--- a/cylc/flow/network/ssh_client.py
++++ b/cylc/flow/network/ssh_client.py
+@@ -68,8 +68,6 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
+                     'cylc path': cylc_path,
+                     'use login shell': login_sh,
+                 }
+-                # NOTE: this can not raise NoHostsError
+-                # because we have provided the host
+                 proc = remote_cylc_cmd(
+                     cmd,
+                     platform,
+diff --git a/cylc/flow/option_parsers.py b/cylc/flow/option_parsers.py
+index d64365cf2..3bb6b2e56 100644
+--- a/cylc/flow/option_parsers.py
++++ b/cylc/flow/option_parsers.py
+@@ -117,6 +117,22 @@ ICP_OPTION = OptionSettings(
+     dest="icp"
+ )
+ 
++AGAINST_SOURCE_OPTION = OptionSettings(
++    ['--against-source'],
++    help=(
++        "Load the workflow configuration from the source directory it was"
++        " installed from using any options (e.g. template variables) which"
++        " have been set in the installation."
++        " This is useful if you want to see how changes made to the workflow"
++        " source would affect the installation if reinstalled."
++        " Note if this option is used the provided workflow must have been"
++        " installed by `cylc install`."
++    ),
++    dest='against_source',
++    action='store_true',
++    default=False
++)
++
+ 
+ icp_option = Option(
+     *ICP_OPTION.args, **ICP_OPTION.kwargs)  # type: ignore[arg-type]
+diff --git a/cylc/flow/parsec/fileparse.py b/cylc/flow/parsec/fileparse.py
+index 510a46d63..5c4ecc86b 100644
+--- a/cylc/flow/parsec/fileparse.py
++++ b/cylc/flow/parsec/fileparse.py
+@@ -31,6 +31,7 @@ parsec config file parsing:
+ """
+ 
+ import os
++from optparse import Values
+ from pathlib import Path
+ import re
+ import sys
+@@ -45,6 +46,9 @@ from cylc.flow.parsec.exceptions import (
+ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+ from cylc.flow.parsec.include import inline
+ from cylc.flow.parsec.util import itemstr
++from cylc.flow.templatevars import OldTemplateVars
++from cylc.flow.workflow_files import (
++    get_workflow_source_dir, check_flow_file)
+ 
+ 
+ # heading/sections can contain commas (namespace name lists) and any
+@@ -343,6 +347,43 @@ def merge_template_vars(
+         return native_tvars
+ 
+ 
++def _prepend_old_templatevars(fpath: str, template_vars: t.Dict) -> t.Dict:
++    """If the fpath is in a rundir, extract template variables from database.
++
++    Args:
++        fpath: filepath of workflow config file.
++        template_vars: Template vars to prepend old tvars to.
++    """
++    rundir = Path(fpath).parent
++    old_tvars = OldTemplateVars(rundir).template_vars
++    old_tvars.update(template_vars)
++    template_vars = old_tvars
++    return template_vars
++
++
++def _get_fpath_for_source(fpath: str, opts: "Values") -> str:
++    """If `--against-source` is set and a sourcedir can be found, return
++    sourcedir.
++    Else return fpath unchanged.
++
++    Raises:
++        ParsecError: If validate against source is set and this is not
++        an installed workflow then we don't want to continue.
++    """
++    if getattr(opts, 'against_source', False):
++        thispath = Path(fpath)
++        source_dir = get_workflow_source_dir(thispath.parent)[0]
++        if source_dir:
++            retpath = check_flow_file(source_dir)
++            return str(retpath)
++        else:
++            raise ParsecError(
++                f'Cannot validate {thispath.parent} against source: '
++                'it is not an installed workflow.')
++    else:
++        return fpath
++
++
+ def read_and_proc(
+     fpath: str,
+     template_vars: t.Optional[t.Dict[str, t.Any]] = None,
+@@ -355,7 +396,9 @@ def read_and_proc(
+     Jinja2 processing must be done before concatenation - it could be
+     used to generate continuation lines.
+     """
+-
++    template_vars = template_vars if template_vars is not None else {}
++    template_vars = _prepend_old_templatevars(fpath, template_vars)
++    fpath = _get_fpath_for_source(fpath, opts)
+     fdir = os.path.dirname(fpath)
+ 
+     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
+diff --git a/cylc/flow/remote.py b/cylc/flow/remote.py
+index 226af937b..3d76665a8 100644
+--- a/cylc/flow/remote.py
++++ b/cylc/flow/remote.py
+@@ -206,13 +206,9 @@ def construct_rsync_over_ssh_cmd(
+         platform: contains info relating to platform
+         rsync_includes: files and directories to be included in the rsync
+ 
+-    Raises:
+-        NoHostsError:
+-            If there are no hosts available for the requested platform.
+-
+     Developer Warning:
+         The Cylc Subprocess Pool method ``rsync_255_fail`` relies on
+-        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this function
++        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
+         do not break ``rsync_255_fail``.
+     """
+     dst_path = dst_path.replace('$HOME/', '')
+@@ -381,10 +377,6 @@ def remote_cylc_cmd(
+     Uses the provided platform configuration to construct the command.
+ 
+     For arguments and returns see construct_ssh_cmd and run_cmd.
+-
+-    Raises:
+-        NoHostsError: If the platform is not contactable.
+-
+     """
+     if not host:
+         # no host selected => perform host selection from platform config
+@@ -422,10 +414,6 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
+     with the localhost platform.
+ 
+     For arguments and returns see construct_ssh_cmd and run_cmd.
+-
+-    Raises:
+-        NoHostsError: If the platform is not contactable.
+-
+     """
+     return remote_cylc_cmd(
+         cmd,
+diff --git a/cylc/flow/rundb.py b/cylc/flow/rundb.py
+index 7c4f9ea7e..57408aa6a 100644
+--- a/cylc/flow/rundb.py
++++ b/cylc/flow/rundb.py
+@@ -236,7 +236,6 @@ class CylcWorkflowDAO:
+             ["cycle", {"is_primary_key": True}],
+             ["name", {"is_primary_key": True}],
+             ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
+-            ["flow_nums"],
+             ["is_manual_submit", {"datatype": "INTEGER"}],
+             ["try_num", {"datatype": "INTEGER"}],
+             ["time_submit"],
+diff --git a/cylc/flow/scheduler.py b/cylc/flow/scheduler.py
+index 4c6902eb1..298558e01 100644
+--- a/cylc/flow/scheduler.py
++++ b/cylc/flow/scheduler.py
+@@ -104,10 +104,8 @@ from cylc.flow.pathutil import (
+ )
+ from cylc.flow.platforms import (
+     get_install_target_from_platform,
+-    get_localhost_install_target,
+     get_platform,
+-    is_platform_with_target_in_list
+-)
++    is_platform_with_target_in_list)
+ from cylc.flow.profiler import Profiler
+ from cylc.flow.resources import get_resources
+ from cylc.flow.subprocpool import SubProcPool
+@@ -122,13 +120,8 @@ from cylc.flow.task_id import TaskID
+ from cylc.flow.task_job_mgr import TaskJobManager
+ from cylc.flow.task_pool import TaskPool
+ from cylc.flow.task_remote_mgr import (
+-    REMOTE_FILE_INSTALL_255,
+-    REMOTE_FILE_INSTALL_DONE,
+-    REMOTE_INIT_255,
+-    REMOTE_INIT_DONE,
+-    REMOTE_FILE_INSTALL_FAILED,
+-    REMOTE_INIT_FAILED
+-)
++    REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
++    REMOTE_INIT_IN_PROGRESS)
+ from cylc.flow.task_state import (
+     TASK_STATUSES_ACTIVE,
+     TASK_STATUSES_NEVER_ACTIVE,
+@@ -301,9 +294,6 @@ class Scheduler:
+             pub_d=os.path.join(self.workflow_run_dir, 'log')
+         )
+         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+-        # Map used to track incomplete remote inits for restart
+-        # {install_target: platform}
+-        self.incomplete_ri_map: Dict[str, Dict] = {}
+ 
+     async def install(self):
+         """Get the filesystem in the right state to run the flow.
+@@ -608,12 +598,8 @@ class Scheduler:
+         """Start the scheduler main loop."""
+         try:
+             if self.is_restart:
+-                self.task_job_mgr.task_remote_mgr.is_restart = True
+-                self.task_job_mgr.task_remote_mgr.rsync_includes = (
+-                    self.config.get_validated_rsync_includes())
+                 self.restart_remote_init()
+-                self.command_poll_tasks(['*/*'])
+-
++                self.task_job_mgr.task_remote_mgr.is_restart = True
+             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
+             await asyncio.gather(
+                 *main_loop.get_runners(
+@@ -763,40 +749,25 @@ class Scheduler:
+             ):
+                 distinct_install_target_platforms.append(itask.platform)
+ 
++        incomplete_init = False
+         for platform in distinct_install_target_platforms:
+-            # skip remote init for localhost
+-            install_target = platform['install target']
+-            if install_target == get_localhost_install_target():
+-                continue
+-            # set off remote init
+             self.task_job_mgr.task_remote_mgr.remote_init(
+                 platform, self.server.curve_auth,
+                 self.server.client_pub_key_dir)
+-            # Remote init/file-install is done via process pool
+-            self.proc_pool.process()
+-            # add platform to map (to be picked up on main loop)
+-            self.incomplete_ri_map[install_target] = platform
+-
+-    def manage_remote_init(self):
+-        """Manage the remote init/file install process for restarts.
+-
+-        * Called within the main loop.
+-        * Starts file installation when Remote init is complete.
+-        * Removes complete installations or installations encountering SSH
+-          error (remote init will take place on next job submission).
+-        """
+-        for install_target, platform in list(self.incomplete_ri_map.items()):
+             status = self.task_job_mgr.task_remote_mgr.remote_init_map[
+-                install_target]
++                platform['install target']]
++            if status in (REMOTE_INIT_IN_PROGRESS,
++                          REMOTE_FILE_INSTALL_IN_PROGRESS):
++                incomplete_init = True
++                break
+             if status == REMOTE_INIT_DONE:
+                 self.task_job_mgr.task_remote_mgr.file_install(platform)
+-            if status in [REMOTE_FILE_INSTALL_DONE,
+-                          REMOTE_INIT_255,
+-                          REMOTE_FILE_INSTALL_255,
+-                          REMOTE_INIT_FAILED,
+-                          REMOTE_FILE_INSTALL_FAILED]:
+-                # Remove install target
+-                self.incomplete_ri_map.pop(install_target)
++        if incomplete_init:
++            # TODO: Review whether this sleep is needed.
++            sleep(1.0)
++            # Remote init/file-install is done via process pool
++            self.proc_pool.process()
++        self.command_poll_tasks(['*/*'])
+ 
+     def _load_task_run_times(self, row_idx, row):
+         """Load run times of previously succeeded task jobs."""
+@@ -1530,8 +1501,7 @@ class Scheduler:
+ 
+             # Useful for debugging core scheduler issues:
+             # self.pool.log_task_pool(logging.CRITICAL)
+-            if self.incomplete_ri_map:
+-                self.manage_remote_init()
++
+             if self.pool.do_reload:
+                 # Re-initialise data model on reload
+                 self.data_store_mgr.initiate_data_model(reloaded=True)
+diff --git a/cylc/flow/scheduler_cli.py b/cylc/flow/scheduler_cli.py
+index 724528b47..7979bba7c 100644
+--- a/cylc/flow/scheduler_cli.py
++++ b/cylc/flow/scheduler_cli.py
+@@ -570,8 +570,6 @@ def _distribute(host, workflow_id_raw, workflow_id):
+         cmd.append("--host=localhost")
+ 
+         # Re-invoke the command
+-        # NOTE: has the potential to raise NoHostsError, however, this will
+-        # most likely have been raised during host-selection
+         cylc_server_cmd(cmd, host=host)
+         sys.exit(0)
+ 
+diff --git a/cylc/flow/scripts/__init__.py b/cylc/flow/scripts/__init__.py
+index 7c31081d2..01c550b2d 100644
+--- a/cylc/flow/scripts/__init__.py
++++ b/cylc/flow/scripts/__init__.py
+@@ -14,4 +14,4 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-_copyright_year = 2023  # This is set by GH Actions update_copyright workflow
++_copyright_year = 2022  # This is set by GH Actions update_copyright workflow
+diff --git a/cylc/flow/scripts/cat_log.py b/cylc/flow/scripts/cat_log.py
+index 09ca8d915..76100be61 100755
+--- a/cylc/flow/scripts/cat_log.py
++++ b/cylc/flow/scripts/cat_log.py
+@@ -408,8 +408,6 @@ def main(
+             # TODO: Add Intelligent Host selection to this
+             with suppress(KeyboardInterrupt):
+                 # (Ctrl-C while tailing)
+-                # NOTE: This will raise NoHostsError if the platform is not
+-                # contactable
+                 remote_cylc_cmd(
+                     cmd,
+                     platform,
+diff --git a/cylc/flow/scripts/check_versions.py b/cylc/flow/scripts/check_versions.py
+index 2aefca4be..7312b5303 100755
+--- a/cylc/flow/scripts/check_versions.py
++++ b/cylc/flow/scripts/check_versions.py
+@@ -44,7 +44,6 @@ from cylc.flow.option_parsers import (
+ from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
+ from cylc.flow import __version__ as CYLC_VERSION
+ from cylc.flow.config import WorkflowConfig
+-from cylc.flow.exceptions import NoHostsError
+ from cylc.flow.id_cli import parse_id
+ from cylc.flow.platforms import get_platform, get_host_from_platform
+ from cylc.flow.remote import construct_ssh_cmd
+@@ -102,26 +101,15 @@ def main(_, options: 'Values', *ids) -> None:
+         sys.exit(0)
+ 
+     verbose = cylc.flow.flags.verbosity > 0
+-    versions = check_versions(platforms, verbose)
+-    report_results(platforms, versions, options.error)
+ 
+-
+-def check_versions(platforms, verbose):
+     # get the cylc version on each platform
+     versions = {}
+     for platform_name in sorted(platforms):
+         platform = get_platform(platform_name)
+-        try:
+-            host = get_host_from_platform(
+-                platform,
+-                bad_hosts=None
+-            )
+-        except NoHostsError:
+-            print(
+-                f'Could not connect to {platform["name"]}',
+-                file=sys.stderr
+-            )
+-            continue
++        host = get_host_from_platform(
++            platform,
++            bad_hosts=None
++        )
+         cmd = construct_ssh_cmd(
+             ['version'],
+             platform,
+@@ -139,10 +127,7 @@ def check_versions(platforms, verbose):
+             versions[platform_name] = out.strip()
+         else:
+             versions[platform_name] = f'ERROR: {err.strip()}'
+-    return versions
+-
+ 
+-def report_results(platforms, versions, exit_error):
+     # report results
+     max_len = max((len(platform_name) for platform_name in platforms))
+     print(f'{"platform".rjust(max_len)}: cylc version')
+@@ -151,7 +136,7 @@ def report_results(platforms, versions, exit_error):
+         print(f'{platform_name.rjust(max_len)}: {result}')
+     if all((version == CYLC_VERSION for version in versions.values())):
+         ret_code = 0
+-    elif exit_error:
++    elif options.error:
+         ret_code = 1
+     else:
+         ret_code = 0
+diff --git a/cylc/flow/scripts/completion_server.py b/cylc/flow/scripts/completion_server.py
+index bbc9ea0a8..fb5538418 100644
+--- a/cylc/flow/scripts/completion_server.py
++++ b/cylc/flow/scripts/completion_server.py
+@@ -647,7 +647,7 @@ def get_option_parser() -> COP:
+     parser.add_option(
+         '--timeout',
+         type='int',
+-        default=900,  # PT15M
++        default='300',
+         help=(
+             'The maximum idle time before the server shuts down in seconds.'
+         )
+diff --git a/cylc/flow/scripts/config.py b/cylc/flow/scripts/config.py
+index 4907ae771..aa7144a93 100755
+--- a/cylc/flow/scripts/config.py
++++ b/cylc/flow/scripts/config.py
+@@ -49,14 +49,17 @@ Examples:
+   $ cylc config --initial-cycle-point=now myflow
+ """
+ 
++import asyncio
++
+ import os.path
+ from typing import List, Optional, TYPE_CHECKING
+ 
+ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+ from cylc.flow.config import WorkflowConfig
+-from cylc.flow.id_cli import parse_id
++from cylc.flow.id_cli import parse_id_async
+ from cylc.flow.exceptions import InputError
+ from cylc.flow.option_parsers import (
++    AGAINST_SOURCE_OPTION,
+     WORKFLOW_ID_OR_PATH_ARG_DOC,
+     CylcOptionParser as COP,
+     icp_option,
+@@ -128,6 +131,9 @@ def get_option_parser() -> COP:
+         action='store_true', default=False, dest='print_platforms'
+     )
+ 
++    parser.add_option(
++        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
++
+     parser.add_cylc_rose_options()
+ 
+     return parser
+@@ -149,6 +155,14 @@ def main(
+     options: 'Values',
+     *ids,
+ ) -> None:
++    asyncio.run(_main(parser, options, *ids))
++
++
++async def _main(
++    parser: COP,
++    options: 'Values',
++    *ids,
++) -> None:
+ 
+     if options.print_platform_names and options.print_platforms:
+         options.print_platform_names = False
+@@ -178,7 +192,7 @@ def main(
+         )
+         return
+ 
+-    workflow_id, _, flow_file = parse_id(
++    workflow_id, _, flow_file = await parse_id_async(
+         *ids,
+         src=True,
+         constraint='workflows',
+diff --git a/cylc/flow/scripts/graph.py b/cylc/flow/scripts/graph.py
+index 3488177ac..ce22cfdc2 100644
+--- a/cylc/flow/scripts/graph.py
++++ b/cylc/flow/scripts/graph.py
+@@ -35,6 +35,7 @@ Examples:
+     $ cylc graph one -o 'one.svg'
+ """
+ 
++import asyncio
+ from difflib import unified_diff
+ from shutil import which
+ from subprocess import Popen, PIPE
+@@ -45,8 +46,9 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
+ from cylc.flow.config import WorkflowConfig
+ from cylc.flow.exceptions import InputError, CylcError
+ from cylc.flow.id import Tokens
+-from cylc.flow.id_cli import parse_id
++from cylc.flow.id_cli import parse_id_async
+ from cylc.flow.option_parsers import (
++    AGAINST_SOURCE_OPTION,
+     WORKFLOW_ID_OR_PATH_ARG_DOC,
+     CylcOptionParser as COP,
+     icp_option,
+@@ -108,9 +110,10 @@ def get_nodes_and_edges(
+     workflow_id,
+     start,
+     stop,
++    flow_file,
+ ) -> Tuple[List[Node], List[Edge]]:
+     """Return graph sorted nodes and edges."""
+-    config = get_config(workflow_id, opts)
++    config = get_config(workflow_id, opts, flow_file)
+     if opts.namespaces:
+         nodes, edges = _get_inheritance_nodes_and_edges(config)
+     else:
+@@ -194,13 +197,8 @@ def _get_inheritance_nodes_and_edges(
+     return sorted(nodes), sorted(edges)
+ 
+ 
+-def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
++def get_config(workflow_id: str, opts: 'Values', flow_file) -> WorkflowConfig:
+     """Return a WorkflowConfig object for the provided reg / path."""
+-    workflow_id, _, flow_file = parse_id(
+-        workflow_id,
+-        src=True,
+-        constraint='workflows',
+-    )
+     template_vars = get_template_vars(opts)
+     return WorkflowConfig(
+         workflow_id, flow_file, opts, template_vars=template_vars
+@@ -334,7 +332,7 @@ def open_image(filename):
+         img.show()
+ 
+ 
+-def graph_render(opts, workflow_id, start, stop) -> int:
++def graph_render(opts, workflow_id, start, stop, flow_file) -> int:
+     """Render the workflow graph to the specified format.
+ 
+     Graph is rendered to the specified format. The Graphviz "dot" format
+@@ -349,6 +347,7 @@ def graph_render(opts, workflow_id, start, stop) -> int:
+         workflow_id,
+         start,
+         stop,
++        flow_file
+     )
+ 
+     # format the graph in graphviz-dot format
+@@ -382,7 +381,9 @@ def graph_render(opts, workflow_id, start, stop) -> int:
+     return 0
+ 
+ 
+-def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
++def graph_reference(
++    opts, workflow_id, start, stop, flow_file, write=print,
++) -> int:
+     """Format the workflow graph using the cylc reference format."""
+     # get nodes and edges
+     nodes, edges = get_nodes_and_edges(
+@@ -390,6 +391,7 @@ def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
+         workflow_id,
+         start,
+         stop,
++        flow_file
+     )
+     for line in format_cylc_reference(opts, nodes, edges):
+         write(line)
+@@ -397,13 +399,24 @@ def graph_reference(opts, workflow_id, start, stop, write=print) -> int:
+     return 0
+ 
+ 
+-def graph_diff(opts, workflow_a, workflow_b, start, stop) -> int:
++async def graph_diff(
++    opts, workflow_a, workflow_b, start, stop, flow_file
++) -> int:
+     """Difference the workflow graphs using the cylc reference format."""
++
++    workflow_b, _, flow_file_b = await parse_id_async(
++        workflow_b,
++        src=True,
++        constraint='workflows',
++    )
++
+     # load graphs
+     graph_a: List[str] = []
+     graph_b: List[str] = []
+-    graph_reference(opts, workflow_a, start, stop, write=graph_a.append),
+-    graph_reference(opts, workflow_b, start, stop, write=graph_b.append),
++    graph_reference(
++        opts, workflow_a, start, stop, flow_file, write=graph_a.append),
++    graph_reference(
++        opts, workflow_b, start, stop, flow_file_b, write=graph_b.append),
+ 
+     # compare graphs
+     diff_lines = list(
+@@ -494,6 +507,9 @@ def get_option_parser() -> COP:
+         action='store',
+     )
+ 
++    parser.add_option(
++        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
++
+     parser.add_cylc_rose_options()
+ 
+     return parser
+@@ -507,20 +523,34 @@ def main(
+     start: Optional[str] = None,
+     stop: Optional[str] = None
+ ) -> None:
++    result = asyncio.run(_main(parser, opts, workflow_id, start, stop))
++    sys.exit(result)
++
++
++async def _main(
++    parser: COP,
++    opts: 'Values',
++    workflow_id: str,
++    start: Optional[str] = None,
++    stop: Optional[str] = None
++) -> int:
+     """Implement ``cylc graph``."""
+     if opts.grouping and opts.namespaces:
+         raise InputError('Cannot combine --group and --namespaces.')
+     if opts.cycles and opts.namespaces:
+         raise InputError('Cannot combine --cycles and --namespaces.')
+ 
++    workflow_id, _, flow_file = await parse_id_async(
++        workflow_id,
++        src=True,
++        constraint='workflows',
++    )
++
+     if opts.diff:
+-        sys.exit(
+-            graph_diff(opts, workflow_id, opts.diff, start, stop)
+-        )
++        return await graph_diff(
++            opts, workflow_id, opts.diff, start, stop, flow_file)
+     if opts.reference:
+-        sys.exit(
+-            graph_reference(opts, workflow_id, start, stop)
+-        )
+-    sys.exit(
+-        graph_render(opts, workflow_id, start, stop)
+-    )
++        return graph_reference(
++            opts, workflow_id, start, stop, flow_file)
++
++    return graph_render(opts, workflow_id, start, stop, flow_file)
+diff --git a/cylc/flow/scripts/list.py b/cylc/flow/scripts/list.py
+index ed24377e3..c0f1ed18a 100755
+--- a/cylc/flow/scripts/list.py
++++ b/cylc/flow/scripts/list.py
+@@ -30,13 +30,15 @@ To visualize the full multiple inheritance hierarchy use:
+   $ cylc graph -n
+ """
+ 
++import asyncio
+ import os
+ import sys
+ from typing import TYPE_CHECKING
+ 
+ from cylc.flow.config import WorkflowConfig
+-from cylc.flow.id_cli import parse_id
++from cylc.flow.id_cli import parse_id_async
+ from cylc.flow.option_parsers import (
++    AGAINST_SOURCE_OPTION,
+     WORKFLOW_ID_OR_PATH_ARG_DOC,
+     CylcOptionParser as COP,
+     icp_option,
+@@ -94,6 +96,9 @@ def get_option_parser():
+         "initial cycle point, by default). Use '-p , ' for the default range.",
+         metavar="[START],[STOP]", action="store", default=None, dest="prange")
+ 
++    parser.add_option(
++        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
++
+     parser.add_option(icp_option)
+ 
+     parser.add_cylc_rose_options()
+@@ -102,7 +107,11 @@ def get_option_parser():
+ 
+ @cli_function(get_option_parser)
+ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+-    workflow_id, _, flow_file = parse_id(
++    asyncio.run(_main(parser, options, workflow_id))
++
++
++async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
++    workflow_id, _, flow_file = await parse_id_async(
+         workflow_id,
+         src=True,
+         constraint='workflows',
+diff --git a/cylc/flow/scripts/validate.py b/cylc/flow/scripts/validate.py
+index 531dd2d76..988a0bcf7 100755
+--- a/cylc/flow/scripts/validate.py
++++ b/cylc/flow/scripts/validate.py
+@@ -25,6 +25,7 @@ correspond to the inlined version seen by the parser;
+ use 'cylc view -i,--inline WORKFLOW' for comparison.
+ """
+ 
++import asyncio
+ from ansimarkup import parse as cparse
+ from copy import deepcopy
+ from optparse import Values
+@@ -38,9 +39,10 @@ from cylc.flow.exceptions import (
+     TriggerExpressionError
+ )
+ import cylc.flow.flags
+-from cylc.flow.id_cli import parse_id
++from cylc.flow.id_cli import parse_id_async
+ from cylc.flow.loggingutil import disable_timestamps
+ from cylc.flow.option_parsers import (
++    AGAINST_SOURCE_OPTION,
+     WORKFLOW_ID_OR_PATH_ARG_DOC,
+     CylcOptionParser as COP,
+     OptionSettings,
+@@ -58,6 +60,8 @@ VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
+ VALIDATE_RUN_MODE.sources = {'validate'}
+ VALIDATE_ICP_OPTION = deepcopy(ICP_OPTION)
+ VALIDATE_ICP_OPTION.sources = {'validate'}
++VALIDATE_AGAINST_SOURCE_OPTION = deepcopy(AGAINST_SOURCE_OPTION)
++VALIDATE_AGAINST_SOURCE_OPTION.sources = {'validate'}
+ 
+ 
+ VALIDATE_OPTIONS = [
+@@ -89,8 +93,14 @@ VALIDATE_OPTIONS = [
+         dest="profile_mode",
+         sources={'validate'}
+     ),
++    OptionSettings(
++        ["-u", "--run-mode"], help="Validate for run mode.", action="store",
++        default="live", dest="run_mode",
++        choices=['live', 'dummy', 'simulation']
++    ),
+     VALIDATE_RUN_MODE,
+-    VALIDATE_ICP_OPTION
++    VALIDATE_ICP_OPTION,
++    VALIDATE_AGAINST_SOURCE_OPTION,
+ ]
+ 
+ 
+@@ -104,10 +114,7 @@ def get_option_parser():
+     validate_options = parser.get_cylc_rose_options() + VALIDATE_OPTIONS
+ 
+     for option in validate_options:
+-        if isinstance(option, OptionSettings):
+-            parser.add_option(*option.args, **option.kwargs)
+-        else:
+-            parser.add_option(*option['args'], **option['kwargs'])
++        parser.add_option(*option.args, **option.kwargs)
+ 
+     parser.set_defaults(is_validate=True)
+ 
+@@ -127,10 +134,16 @@ ValidateOptions = Options(
+ 
+ @cli_function(get_option_parser)
+ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+-    wrapped_main(parser, options, workflow_id)
++    _main(parser, options, workflow_id)
++
++
++def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
++    asyncio.run(wrapped_main(parser, options, workflow_id))
+ 
+ 
+-def wrapped_main(parser: COP, options: 'Values', workflow_id: str) -> None:
++async def wrapped_main(
++    parser: COP, options: 'Values', workflow_id: str
++) -> None:
+     """cylc validate CLI."""
+     profiler = Profiler(None, options.profile_mode)
+     profiler.start()
+@@ -138,7 +151,7 @@ def wrapped_main(parser: COP, options: 'Values', workflow_id: str) -> None:
+     if cylc.flow.flags.verbosity < 2:
+         disable_timestamps(LOG)
+ 
+-    workflow_id, _, flow_file = parse_id(
++    workflow_id, _, flow_file = await parse_id_async(
+         workflow_id,
+         src=True,
+         constraint='workflows',
+diff --git a/cylc/flow/scripts/validate_install_play.py b/cylc/flow/scripts/validate_install_play.py
+index 3ed3102df..25f6e805b 100644
+--- a/cylc/flow/scripts/validate_install_play.py
++++ b/cylc/flow/scripts/validate_install_play.py
+@@ -30,7 +30,7 @@ This script is equivalent to:
+ 
+ from cylc.flow.scripts.validate import (
+     VALIDATE_OPTIONS,
+-    wrapped_main as validate_main
++    _main as validate_main
+ )
+ from cylc.flow.scripts.install import (
+     INSTALL_OPTIONS, install_cli as cylc_install, get_source_location
+@@ -75,7 +75,10 @@ def get_option_parser() -> COP:
+         ]
+     )
+     for option in VIP_OPTIONS:
+-        parser.add_option(*option.args, **option.kwargs)
++        # Make a special exception for option against_source which makes
++        # no sense in a VIP context.
++        if option.kwargs.get('dest') != 'against_source':
++            parser.add_option(*option.args, **option.kwargs)
+     return parser
+ 
+ 
+diff --git a/cylc/flow/scripts/view.py b/cylc/flow/scripts/view.py
+old mode 100755
+new mode 100644
+index 727bdafe2..dc5abf6da
+--- a/cylc/flow/scripts/view.py
++++ b/cylc/flow/scripts/view.py
+@@ -25,10 +25,13 @@ Note:
+   configuration (as Cylc would see it).
+ """
+ 
++import asyncio
++
+ from typing import TYPE_CHECKING
+ 
+-from cylc.flow.id_cli import parse_id
++from cylc.flow.id_cli import parse_id_async
+ from cylc.flow.option_parsers import (
++    AGAINST_SOURCE_OPTION,
+     WORKFLOW_ID_OR_PATH_ARG_DOC,
+     CylcOptionParser as COP,
+ )
+@@ -93,16 +96,20 @@ def get_option_parser():
+              "not correspond to those reported by the parser).",
+              action="store_true", default=False, dest="cat")
+ 
++    parser.add_option(
++        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
++
+     return parser
+ 
+ 
+ @cli_function(get_option_parser)
+ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+-    _main(options, workflow_id)
++    asyncio.run(_main(parser, options, workflow_id))
++
+ 
++async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
++    workflow_id, _, flow_file = await parse_id_async(
+ 
+-def _main(options: 'Values', workflow_id: str) -> None:
+-    workflow_id, _, flow_file = parse_id(
+         workflow_id,
+         src=True,
+         constraint='workflows',
+@@ -121,9 +128,8 @@ def _main(options: 'Values', workflow_id: str) -> None:
+     }
+     for line in read_and_proc(
+         flow_file,
+-        load_template_vars(
+-            options.templatevars, options.templatevars_file
+-        ),
+-        viewcfg=viewcfg
++        load_template_vars(options.templatevars, options.templatevars_file),
++        viewcfg=viewcfg,
++        opts=options,
+     ):
+         print(line)
+diff --git a/cylc/flow/task_events_mgr.py b/cylc/flow/task_events_mgr.py
+index ea2c7c1be..c44e83cc5 100644
+--- a/cylc/flow/task_events_mgr.py
++++ b/cylc/flow/task_events_mgr.py
+@@ -37,7 +37,6 @@ from typing import TYPE_CHECKING, Optional, Union, cast
+ 
+ from cylc.flow import LOG, LOG_LEVELS
+ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+-from cylc.flow.exceptions import NoHostsError
+ from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
+ from cylc.flow.parsec.config import ItemNotFoundError
+ from cylc.flow.pathutil import (
+@@ -940,29 +939,8 @@ class TaskEventsManager():
+ 
+     def _process_job_logs_retrieval(self, schd, ctx, id_keys):
+         """Process retrieval of task job logs from remote user@host."""
+-        # get a host to run retrieval on
+         platform = get_platform(ctx.platform_name)
+-        try:
+-            host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
+-        except NoHostsError:
+-            # All of the platforms hosts have been found to be uncontactable.
+-            # Reset the bad hosts to allow retrieval retry to take place.
+-            self.bad_hosts -= set(platform['hosts'])
+-            try:
+-                # Get a new host and try again.
+-                host = get_host_from_platform(
+-                    platform,
+-                    bad_hosts=self.bad_hosts
+-                )
+-            except NoHostsError:
+-                # We really can't get a host to try on e.g. no hosts
+-                # configured (shouldn't happen). Nothing more we can do here,
+-                # move onto the next submission retry.
+-                for id_key in id_keys:
+-                    self.unset_waiting_event_timer(id_key)
+-                return
+-
+-        # construct the retrieval command
++        host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
+         ssh_str = str(platform["ssh command"])
+         rsync_str = str(platform["retrieve job logs command"])
+         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
+@@ -988,8 +966,6 @@ class TaskEventsManager():
+         )
+         # Local target
+         cmd.append(get_workflow_run_job_dir(schd.workflow) + "/")
+-
+-        # schedule command
+         self.proc_pool.put_command(
+             SubProcContext(
+                 ctx, cmd, env=dict(os.environ), id_keys=id_keys, host=host
+diff --git a/cylc/flow/task_job_mgr.py b/cylc/flow/task_job_mgr.py
+index f8e1db52f..e4efd7a21 100644
+--- a/cylc/flow/task_job_mgr.py
++++ b/cylc/flow/task_job_mgr.py
+@@ -112,7 +112,6 @@ from cylc.flow.wallclock import (
+     get_utc_mode
+ )
+ from cylc.flow.cfgspec.globalcfg import SYSPATH
+-from cylc.flow.util import serialise
+ 
+ if TYPE_CHECKING:
+     from cylc.flow.task_proxy import TaskProxy
+@@ -441,7 +440,6 @@ class TaskJobManager:
+                 # Log and persist
+                 LOG.debug(f"[{itask}] host={host}")
+                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
+-                    'flow_nums': serialise(itask.flow_nums),
+                     'is_manual_submit': itask.is_manual_submit,
+                     'try_num': itask.get_try_num(),
+                     'time_submit': get_current_time_string(),
+@@ -524,6 +522,9 @@ class TaskJobManager:
+                 cmd, [len(b) for b in itasks_batches])
+ 
+             if remote_mode:
++                host = get_host_from_platform(
++                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
++                )
+                 cmd = construct_ssh_cmd(
+                     cmd, platform, host
+                 )
+@@ -913,23 +914,13 @@ class TaskJobManager:
+             cmd.append(get_remote_workflow_run_job_dir(workflow))
+             job_log_dirs = []
+             host = 'localhost'
+-
+-            ctx = SubProcContext(cmd_key, cmd, host=host)
+             if remote_mode:
+-                try:
+-                    host = get_host_from_platform(
+-                        platform, bad_hosts=self.task_remote_mgr.bad_hosts
+-                    )
+-                    cmd = construct_ssh_cmd(
+-                        cmd, platform, host
+-                    )
+-                except NoHostsError:
+-                    ctx.err = f'No available hosts for {platform["name"]}'
+-                    callback_255(ctx, workflow, itasks)
+-                    continue
+-                else:
+-                    ctx = SubProcContext(cmd_key, cmd, host=host)
+-
++                host = get_host_from_platform(
++                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
++                )
++                cmd = construct_ssh_cmd(
++                    cmd, platform, host
++                )
+             for itask in sorted(itasks, key=lambda task: task.identity):
+                 job_log_dirs.append(
+                     itask.tokens.duplicate(
+@@ -939,7 +930,9 @@ class TaskJobManager:
+             cmd += job_log_dirs
+             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
+             self.proc_pool.put_command(
+-                ctx,
++                SubProcContext(
++                    cmd_key, cmd, host=host
++                ),
+                 bad_hosts=self.task_remote_mgr.bad_hosts,
+                 callback=callback,
+                 callback_args=[workflow, itasks],
+@@ -1231,7 +1224,6 @@ class TaskJobManager:
+         self.workflow_db_mgr.put_insert_task_jobs(
+             itask,
+             {
+-                'flow_nums': serialise(itask.flow_nums),
+                 'job_id': itask.summary.get('submit_method_id'),
+                 'is_manual_submit': itask.is_manual_submit,
+                 'try_num': itask.get_try_num(),
+diff --git a/cylc/flow/task_remote_mgr.py b/cylc/flow/task_remote_mgr.py
+index 5a5f39ece..8d16ace64 100644
+--- a/cylc/flow/task_remote_mgr.py
++++ b/cylc/flow/task_remote_mgr.py
+@@ -245,7 +245,6 @@ class TaskRemoteMgr:
+             )
+             self.remote_init_map[
+                 platform['install target']] = REMOTE_INIT_FAILED
+-            # reset the bad hosts to allow remote-init to retry
+             self.bad_hosts -= set(platform['hosts'])
+             self.ready = True
+         else:
+@@ -267,24 +266,6 @@ class TaskRemoteMgr:
+                 callback_255_args=[platform]
+             )
+ 
+-    def construct_remote_tidy_ssh_cmd(
+-        self, platform: Dict[str, Any]
+-    ) -> Tuple[List[str], str]:
+-        """Return a remote-tidy SSH command.
+-
+-        Rasies:
+-            NoHostsError: If the platform is not contactable.
+-        """
+-        cmd = ['remote-tidy']
+-        cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
+-        cmd.append(get_install_target_from_platform(platform))
+-        cmd.append(get_remote_workflow_run_dir(self.workflow))
+-        host = get_host_from_platform(
+-            platform, bad_hosts=self.bad_hosts
+-        )
+-        cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
+-        return cmd, host
+-
+     def remote_tidy(self) -> None:
+         """Remove workflow contact files and keys from initialised remotes.
+ 
+@@ -293,6 +274,20 @@ class TaskRemoteMgr:
+         Timeout any incomplete commands after 10 seconds.
+         """
+         # Issue all SSH commands in parallel
++
++        def construct_remote_tidy_ssh_cmd(
++            platform: Dict[str, Any]
++        ) -> Tuple[List[str], str]:
++            cmd = ['remote-tidy']
++            cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
++            cmd.append(get_install_target_from_platform(platform))
++            cmd.append(get_remote_workflow_run_dir(self.workflow))
++            host = get_host_from_platform(
++                platform, bad_hosts=self.bad_hosts
++            )
++            cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
++            return cmd, host
++
+         queue: Deque[RemoteTidyQueueTuple] = deque()
+         for install_target, message in self.remote_init_map.items():
+             if message != REMOTE_FILE_INSTALL_DONE:
+@@ -303,7 +298,7 @@ class TaskRemoteMgr:
+                 platform = get_random_platform_for_install_target(
+                     install_target
+                 )
+-                cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
++                cmd, host = construct_remote_tidy_ssh_cmd(platform)
+             except (NoHostsError, PlatformLookupError) as exc:
+                 LOG.warning(
+                     PlatformError(
+@@ -337,7 +332,7 @@ class TaskRemoteMgr:
+                 timeout = time() + 10.0
+                 self.bad_hosts.add(item.host)
+                 try:
+-                    retry_cmd, retry_host = self.construct_remote_tidy_ssh_cmd(
++                    retry_cmd, retry_host = construct_remote_tidy_ssh_cmd(
+                         item.platform
+                     )
+                 except (NoHostsError, PlatformLookupError) as exc:
+@@ -506,7 +501,7 @@ class TaskRemoteMgr:
+             self.bad_hosts -= set(platform['hosts'])
+             self.ready = True
+         else:
+-            log_platform_event('remote file install', platform, host)
++            log_platform_event('file install', platform, host)
+             self.proc_pool.put_command(
+                 ctx,
+                 bad_hosts=self.bad_hosts,
+@@ -552,7 +547,7 @@ class TaskRemoteMgr:
+                     )
+         if ctx.ret_code == 0:
+             # Both file installation and remote init success
+-            log_platform_event('remote file install complete', platform)
++            LOG.debug(f"File installation complete for {install_target}")
+             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
+             self.ready = True
+             return
+diff --git a/cylc/flow/templatevars.py b/cylc/flow/templatevars.py
+index c62e4da57..f09e367d2 100644
+--- a/cylc/flow/templatevars.py
++++ b/cylc/flow/templatevars.py
+@@ -17,11 +17,39 @@
+ 
+ from ast import literal_eval
+ from optparse import Values
++from pathlib import Path
+ from typing import Any, Dict
+ 
+ from cylc.flow.exceptions import InputError
+ 
+ 
++from cylc.flow.rundb import CylcWorkflowDAO
++
++
++class OldTemplateVars:
++    """Gets template variables stored in workflow database.
++
++    Mirrors the interface used in scheduler.py to get db info on restart.
++    """
++    DB = 'log/db'
++
++    def __init__(self, run_dir):
++        self.template_vars = {}
++        self.run_dir = Path(run_dir)
++        self._get_db_template_vars()
++
++    def _callback(self, _, row):
++        """Extract key and value and run eval_var on them assigning
++        them to self.template_vars.
++        """
++        self.template_vars[row[0]] = eval_var(row[1])
++
++    def _get_db_template_vars(self):
++        if (self.run_dir / self.DB).exists():
++            dao = CylcWorkflowDAO(str(self.run_dir / self.DB))
++            dao.select_workflow_template_vars(self._callback)
++
++
+ def eval_var(var):
+     """Wrap ast.literal_eval to provide more helpful error.
+ 
+@@ -65,6 +93,7 @@ def load_template_vars(template_vars=None, template_vars_file=None):
+                     continue
+                 key, val = line.split("=", 1)
+                 res[key.strip()] = eval_var(val.strip())
++
+     if template_vars:
+         for pair in template_vars:
+             key, val = pair.split("=", 1)
+@@ -78,10 +107,9 @@ def get_template_vars(options: Values) -> Dict[str, Any]:
+     Args:
+         options: Options passed to the Cylc script which is using this
+             function.
++        flow_file: Path to flow_file.
+ 
+     Returns:
+         template_vars: Template variables to give to a Cylc config.
+     """
+-    return load_template_vars(
+-        options.templatevars, options.templatevars_file
+-    )
++    return load_template_vars(options.templatevars, options.templatevars_file)
+diff --git a/cylc/flow/workflow_db_mgr.py b/cylc/flow/workflow_db_mgr.py
+index e3da6451b..46dc5b3c8 100644
+--- a/cylc/flow/workflow_db_mgr.py
++++ b/cylc/flow/workflow_db_mgr.py
+@@ -38,7 +38,7 @@ from cylc.flow.broadcast_report import get_broadcast_change_iter
+ from cylc.flow.rundb import CylcWorkflowDAO
+ from cylc.flow import __version__ as CYLC_VERSION
+ from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+-from cylc.flow.exceptions import CylcError, ServiceFileError
++from cylc.flow.exceptions import ServiceFileError
+ from cylc.flow.util import serialise
+ 
+ if TYPE_CHECKING:
+@@ -722,46 +722,9 @@ class WorkflowDatabaseManager:
+         )
+         conn.commit()
+ 
+-    @staticmethod
+-    def upgrade_pre_810(pri_dao: CylcWorkflowDAO) -> None:
+-        """Upgrade on restart from a pre-8.1.0 database.
+-
+-        Add "flow_nums" column to the "task_jobs".
+-        See GitHub cylc/cylc-flow#5252.
+-
+-        This is only possible if we have single item in the list
+-        represented by flow_nums, else we have to raise an error
+-        """
+-        conn = pri_dao.connect()
+-        c_name = "flow_nums"
+-        LOG.info(
+-            f"DB upgrade (pre-8.1.0): "
+-            f"add {c_name} column to {CylcWorkflowDAO.TABLE_TASK_JOBS}"
+-        )
+-
+-        # We can't upgrade if the flow_nums in task_states are not
+-        # distinct.
+-        from cylc.flow.util import deserialise
+-        flow_nums = deserialise(conn.execute(
+-            'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
+-        if len(flow_nums) != 1:
+-            raise CylcError(
+-                'Cannot upgrade-restart from 8.0.x to 8.1.0 IF'
+-                ' multiple flows have been used.'
+-            )
+-
+-        conn.execute(
+-            rf"ALTER TABLE {CylcWorkflowDAO.TABLE_TASK_JOBS} "
+-            rf"ADD COLUMN {c_name} "
+-            r"DEFAULT '[1]'"
+-        )
+-        conn.commit()
+-
+     def upgrade(self, last_run_ver, pri_dao):
+         if last_run_ver < parse_version("8.0.3.dev"):
+             self.upgrade_pre_803(pri_dao)
+-        if last_run_ver < parse_version("8.1.0.dev"):
+-            self.upgrade_pre_810(pri_dao)
+ 
+     def check_workflow_db_compatibility(self):
+         """Raises ServiceFileError if the existing workflow database is
+@@ -792,7 +755,6 @@ class WorkflowDatabaseManager:
+                     f"Cylc {last_run_ver})."
+                     f"\n{manual_rm_msg}"
+                 )
+-
+             self.upgrade(last_run_ver, pri_dao)
+ 
+         return last_run_ver
+diff --git a/cylc/flow/workflow_files.py b/cylc/flow/workflow_files.py
+index c5dc775de..e96cf6625 100644
+--- a/cylc/flow/workflow_files.py
++++ b/cylc/flow/workflow_files.py
+@@ -1087,10 +1087,6 @@ def _remote_clean_cmd(
+         platform: Config for the platform on which to remove the workflow.
+         rm_dirs: Sub dirs to remove instead of the whole run dir.
+         timeout: Number of seconds to wait before cancelling the command.
+-
+-    Raises:
+-        NoHostsError: If the platform is not contactable.
+-
+     """
+     LOG.debug(
+         f"Cleaning {reg} on install target: {platform['install target']} "
+diff --git a/cylc/flow/workflow_status.py b/cylc/flow/workflow_status.py
+index b0cdf4a97..d677d4ad3 100644
+--- a/cylc/flow/workflow_status.py
++++ b/cylc/flow/workflow_status.py
+@@ -162,14 +162,12 @@ def get_workflow_status(schd: 'Scheduler') -> Tuple[str, str]:
+     status = WorkflowStatus.RUNNING
+     status_msg = ''
+ 
+-    if schd.stop_mode is not None:
+-        status = WorkflowStatus.STOPPING
+-        status_msg = f'stopping: {schd.stop_mode.explain()}'
+-    elif schd.is_stalled:
+-        status_msg = 'stalled'
+-    elif schd.is_paused:
++    if schd.is_paused:
+         status = WorkflowStatus.PAUSED
+         status_msg = 'paused'
++    elif schd.stop_mode is not None:
++        status = WorkflowStatus.STOPPING
++        status_msg = f'stopping: {schd.stop_mode.explain()}'
+     elif schd.pool.hold_point:
+         status_msg = (
+             WORKFLOW_STATUS_RUNNING_TO_HOLD %
+diff --git a/tests/flakyfunctional/database/00-simple/schema.out b/tests/flakyfunctional/database/00-simple/schema.out
+index 8ed66a1f2..814faac2a 100644
+--- a/tests/flakyfunctional/database/00-simple/schema.out
++++ b/tests/flakyfunctional/database/00-simple/schema.out
+@@ -5,7 +5,7 @@ CREATE TABLE workflow_params(key TEXT, value TEXT, PRIMARY KEY(key));
+ CREATE TABLE workflow_template_vars(key TEXT, value TEXT, PRIMARY KEY(key));
+ CREATE TABLE task_action_timers(cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT, num INTEGER, delay TEXT, timeout TEXT, PRIMARY KEY(cycle, name, ctx_key));
+ CREATE TABLE task_events(name TEXT, cycle TEXT, time TEXT, submit_num INTEGER, event TEXT, message TEXT);
+-CREATE TABLE task_jobs(cycle TEXT, name TEXT, submit_num INTEGER, flow_nums TEXT, is_manual_submit INTEGER, try_num INTEGER, time_submit TEXT, time_submit_exit TEXT, submit_status INTEGER, time_run TEXT, time_run_exit TEXT, run_signal TEXT, run_status INTEGER, platform_name TEXT, job_runner_name TEXT, job_id TEXT, PRIMARY KEY(cycle, name, submit_num));
++CREATE TABLE task_jobs(cycle TEXT, name TEXT, submit_num INTEGER, is_manual_submit INTEGER, try_num INTEGER, time_submit TEXT, time_submit_exit TEXT, submit_status INTEGER, time_run TEXT, time_run_exit TEXT, run_signal TEXT, run_status INTEGER, platform_name TEXT, job_runner_name TEXT, job_id TEXT, PRIMARY KEY(cycle, name, submit_num));
+ CREATE TABLE task_late_flags(cycle TEXT, name TEXT, value INTEGER, PRIMARY KEY(cycle, name));
+ CREATE TABLE task_outputs(cycle TEXT, name TEXT, flow_nums TEXT, outputs TEXT, PRIMARY KEY(cycle, name, flow_nums));
+ CREATE TABLE task_pool(cycle TEXT, name TEXT, flow_nums TEXT, status TEXT, is_held INTEGER, PRIMARY KEY(cycle, name, flow_nums));
+diff --git a/tests/flakyfunctional/job-submission/19-chatty.t b/tests/flakyfunctional/job-submission/19-chatty.t
+index f7480b446..d4bc5b98f 100755
+--- a/tests/flakyfunctional/job-submission/19-chatty.t
++++ b/tests/flakyfunctional/job-submission/19-chatty.t
+@@ -72,8 +72,7 @@ TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
+ DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
+ QUERY='SELECT cycle, name, status, is_held FROM task_pool'
+ run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
+-sort "${TEST_NAME}.stdout" > "${TEST_NAME}.stdout.sorted"
+-cmp_ok "${TEST_NAME}.stdout.sorted" << '__OUT__'
++cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
+ 1|nh0|submit-failed|0
+ 1|nh1|submit-failed|0
+ 1|nh2|submit-failed|0
+diff --git a/tests/functional/events/51-task-event-job-logs-retrieve-4.t b/tests/functional/events/51-task-event-job-logs-retrieve-4.t
+deleted file mode 100644
+index 1e09a9221..000000000
+--- a/tests/functional/events/51-task-event-job-logs-retrieve-4.t
++++ /dev/null
+@@ -1,77 +0,0 @@
+-#!/usr/bin/env bash
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-#-------------------------------------------------------------------------------
+-export REQUIRE_PLATFORM="loc:remote comms:tcp"
+-. "$(dirname "$0")/test_header"
+-set_test_number 3
+-#-------------------------------------------------------------------------------
+-# It should retry job log retrieval even if all hosts are not contactable.
+-#-------------------------------------------------------------------------------
+-
+-init_workflow "${TEST_NAME_BASE}-1" <<__FLOW_CONFIG__
+-[scheduling]
+-    [[graph]]
+-        R1 = """
+-            remote
+-        """
+-
+-[runtime]
+-    [[remote]]
+-        # script = sleep 1
+-        platform = ${CYLC_TEST_PLATFORM}
+-__FLOW_CONFIG__
+-
+-# configure job retries on the test platform
+-create_test_global_config '' "
+-[platforms]
+-    [[${CYLC_TEST_PLATFORM}]]
+-        retrieve job logs = True
+-        retrieve job logs retry delays = 3*PT1S
+-        retrieve job logs command = fido
+-"
+-
+-# * redirect retrieval attempts to a file where we can inspect them later
+-# * make it look like retrieval failed due to network issues (255 ret code)
+-JOB_LOG_RETR_CMD="${WORKFLOW_RUN_DIR}/bin/fido"
+-RETRIEVAL_ATTEMPT_LOG="${WORKFLOW_RUN_DIR}/retrieval-attempt-log"
+-mkdir "${WORKFLOW_RUN_DIR}/bin"
+-cat > "${WORKFLOW_RUN_DIR}/bin/fido" <<__HERE__
+-#!/usr/bin/env bash
+-echo "$@" >> "${RETRIEVAL_ATTEMPT_LOG}"
+-exit 255
+-__HERE__
+-chmod +x "${JOB_LOG_RETR_CMD}"
+-
+-workflow_run_ok "${TEST_NAME_BASE}-play" \
+-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+-
+-# it should try retrieval three times
+-# Note: it should reset bad_hosts to allow retries to happen
+-TEST_NAME="${TEST_NAME_BASE}-retrieve-attempts"
+-# shellcheck disable=SC2002
+-# (cat'ting into pipe to avoid having to sed out the filename)
+-if [[ $(cat "${RETRIEVAL_ATTEMPT_LOG}" | wc -l) -eq 3 ]]; then
+-    ok "${TEST_NAME}"
+-else
+-    fail "${TEST_NAME}"
+-fi
+-
+-# then fail once the retries have been exhausted
+-grep_workflow_log_ok "${TEST_NAME_BASE}-retrieve-fail" \
+-    'job-logs-retrieve for task event:succeeded failed'
+-
+-purge
+diff --git a/tests/functional/hold-release/08-hold.t b/tests/functional/hold-release/08-hold.t
+index 206abc1ef..db453a38b 100755
+--- a/tests/functional/hold-release/08-hold.t
++++ b/tests/functional/hold-release/08-hold.t
+@@ -77,15 +77,15 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
+ # finished and gone from the task pool.
+ 
+ sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+-    'SELECT cycle, name, status, is_held FROM task_pool' | sort > task-pool.out
++    'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out
+ cmp_ok task-pool.out <<__OUT__
++1|foo|waiting|1
+ 1|bar|waiting|1
++1|cheese|waiting|1
++1|jam|waiting|1
+ 1|cat1|waiting|1
+ 1|cat2|waiting|1
+-1|cheese|waiting|1
+ 1|dog1|waiting|1
+-1|foo|waiting|1
+-1|jam|waiting|1
+ __OUT__
+ 
+ purge
+diff --git a/tests/functional/intelligent-host-selection/01-periodic-clear-badhosts.t b/tests/functional/intelligent-host-selection/01-periodic-clear-badhosts.t
+index 07dc1c4b4..2a4f40638 100644
+--- a/tests/functional/intelligent-host-selection/01-periodic-clear-badhosts.t
++++ b/tests/functional/intelligent-host-selection/01-periodic-clear-badhosts.t
+@@ -74,7 +74,7 @@ cmp_ok platform-log <<__HERE__
+ platform: fake-platform - remote init (on localhost)
+ platform: fake-platform - initialisation did not complete
+ platform: fake-platform - remote init (on localhost)
+-platform: fake-platform - remote file install (on localhost)
++platform: fake-platform - file install (on localhost)
+ platform: fake-platform - initialisation did not complete
+ __HERE__
+ 
+diff --git a/tests/functional/intelligent-host-selection/05-from-platform-group.t b/tests/functional/intelligent-host-selection/05-from-platform-group.t
+index 527cfaeba..bcc8dd619 100644
+--- a/tests/functional/intelligent-host-selection/05-from-platform-group.t
++++ b/tests/functional/intelligent-host-selection/05-from-platform-group.t
+@@ -82,7 +82,7 @@ log_scan \
+     "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
+     "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
+     "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \
+-    "platform: ${CYLC_TEST_PLATFORM} - remote file install (on ${CYLC_TEST_HOST})" \
++    "platform: ${CYLC_TEST_PLATFORM} - file install (on ${CYLC_TEST_HOST})" \
+     "\[1/ugly preparing job:01 flows:1\] => submitted"
+ 
+ purge
+diff --git a/tests/functional/job-submission/01-job-nn-localhost/db.sqlite3 b/tests/functional/job-submission/01-job-nn-localhost/db.sqlite3
+index d1138aafb..d3d43bdad 100644
+--- a/tests/functional/job-submission/01-job-nn-localhost/db.sqlite3
++++ b/tests/functional/job-submission/01-job-nn-localhost/db.sqlite3
+@@ -17,9 +17,9 @@ CREATE TABLE task_jobs(cycle TEXT, name TEXT, submit_num INTEGER, is_manual_subm
+ CREATE TABLE task_late_flags(cycle TEXT, name TEXT, value INTEGER, PRIMARY KEY(cycle, name));
+ CREATE TABLE task_outputs(cycle TEXT, name TEXT, flow_nums TEXT, outputs TEXT, PRIMARY KEY(cycle, name, flow_nums));
+ CREATE TABLE task_pool(cycle TEXT, name TEXT, flow_nums TEXT, status TEXT, is_held INTEGER, PRIMARY KEY(cycle, name, flow_nums));
+-INSERT INTO task_pool VALUES('1','foo','["1"]','waiting', 0);
++INSERT INTO task_pool VALUES('1','foo','["1", "2"]','waiting', 0);
+ CREATE TABLE task_states(name TEXT, cycle TEXT, flow_nums TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, status TEXT, flow_wait INTEGER, PRIMARY KEY(name, cycle, flow_nums));
+-INSERT INTO task_states VALUES('foo','1','["1"]', '2019-06-14T11:30:16+01:00','2019-06-14T11:40:24+01:00',99,'waiting','0');
++INSERT INTO task_states VALUES('foo','1','["1", "2"]', '2019-06-14T11:30:16+01:00','2019-06-14T11:40:24+01:00',99,'waiting','0');
+ CREATE TABLE task_prerequisites(cycle TEXT, name TEXT, flow_nums TEXT, prereq_name TEXT, prereq_cycle TEXT, prereq_output TEXT, satisfied TEXT, PRIMARY KEY(cycle, name, flow_nums, prereq_name, prereq_cycle, prereq_output));
+ CREATE TABLE task_timeout_timers(cycle TEXT, name TEXT, timeout REAL, PRIMARY KEY(cycle, name));
+ CREATE TABLE xtriggers(signature TEXT, results TEXT, PRIMARY KEY(signature));
+diff --git a/tests/functional/remote/04-symlink-dirs.t b/tests/functional/remote/04-symlink-dirs.t
+index 28ab60496..9005f5419 100644
+--- a/tests/functional/remote/04-symlink-dirs.t
++++ b/tests/functional/remote/04-symlink-dirs.t
+@@ -49,7 +49,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
+     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+ workflow_run_ok "${TEST_NAME_BASE}-run-ok" cylc play "${WORKFLOW_NAME}" \
+     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" --debug
+-poll_grep_workflow_log 'remote file install complete'
++poll_grep_workflow_log 'File installation complete'
+ TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
+ if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}") == \
+     "$TMPDIR/$USER/cylctb_tmp_run_dir/cylc-run/${WORKFLOW_NAME}" ]]; then
+diff --git a/tests/functional/remote/09-restart-running-file-install.t b/tests/functional/remote/09-restart-running-file-install.t
+deleted file mode 100644
+index deb9cf72b..000000000
+--- a/tests/functional/remote/09-restart-running-file-install.t
++++ /dev/null
+@@ -1,78 +0,0 @@
+-#!/usr/bin/env bash
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-#-------------------------------------------------------------------------------
+-# Test restart remote init, file install and task messaging works for running tasks
+-# The test works as follows:
+-# - Starts workflow off with a remote starter task which will not complete
+-#   until restarted. It greps for updated file which will be remote installed on
+-#   restart.
+-# - On start of this starter task, update the file that is included in
+-#   remote file install for starter task.
+-# - Stop the workflow - this will leave starter task orphaned
+-# - Restart, starter task should remote install, authentication keys will be
+-#   updated which is verified by checking task messaging works (checks for
+-#   "(received)succeeded" in the logs).
+-
+-export REQUIRE_PLATFORM='loc:remote comms:tcp'
+-. "$(dirname "$0")/test_header"
+-set_test_number 6
+-
+-init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+-[scheduler]
+-    install = changing-file
+-    [[events]]
+-        abort on inactivity timeout = True
+-        inactivity timeout = PT1M
+-[scheduling]
+-    [[graph]]
+-        R1 = """
+-            starter:start => file-changer => stopper
+-        """
+-[runtime]
+-    [[starter]]
+-        platform = ${CYLC_TEST_PLATFORM}
+-        script = """
+-            while ! grep 'Restart Play' "${CYLC_WORKFLOW_RUN_DIR}/changing-file"; do
+-                sleep 1
+-            done
+-        """
+-    [[stopper]]
+-        script = cylc stop --now "${CYLC_WORKFLOW_ID}"
+-    [[file-changer]]
+-        script = echo Restart Play > ${CYLC_WORKFLOW_RUN_DIR}/changing-file
+-__FLOW_CONFIG__
+-
+-
+-echo "First Play" > "${WORKFLOW_RUN_DIR}/changing-file"
+-
+-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+-
+-workflow_run_ok "${TEST_NAME_BASE}-start" \
+-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+-
+-workflow_run_ok "${TEST_NAME_BASE}-restart" \
+-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+-LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+-grep_ok "remote file install complete" "${LOG}"
+-grep_ok "\[1/starter running job:01 flows:1\] (received)succeeded" "${LOG}"
+-ls "${WORKFLOW_RUN_DIR}/log/remote-install" > 'ls.out'
+-cmp_ok ls.out <<__RLOGS__
+-01-start-${CYLC_TEST_INSTALL_TARGET}.log
+-02-restart-${CYLC_TEST_INSTALL_TARGET}.log
+-__RLOGS__
+-purge
+-exit
+diff --git a/tests/functional/restart/57-ghost-job.t b/tests/functional/restart/57-ghost-job.t
+index 1d7350c6c..704d07553 100644
+--- a/tests/functional/restart/57-ghost-job.t
++++ b/tests/functional/restart/57-ghost-job.t
+@@ -85,7 +85,6 @@ poll_workflow_stopped
+ # Job should have been replaced in DB with same submit num:
+ TEST_NAME="${TEST_NAME_BASE}-db-query-2"
+ query_db_task_jobs "$TEST_NAME"
+-
+ cmp_ok "${TEST_NAME}.stdout" << EOF
+ 1|foo|1
+ EOF
+diff --git a/tests/functional/triggering/16-fam-expansion.t b/tests/functional/triggering/16-fam-expansion.t
+index 84f201360..4b4816158 100644
+--- a/tests/functional/triggering/16-fam-expansion.t
++++ b/tests/functional/triggering/16-fam-expansion.t
+@@ -31,7 +31,7 @@ workflow_run_ok "${TEST_NAME}" \
+     cylc play --debug --no-detach --set="SHOW_OUT='$SHOW_OUT'" "${WORKFLOW_NAME}"
+ #-------------------------------------------------------------------------------
+ contains_ok "$SHOW_OUT" <<'__SHOW_DUMP__'
+-  + (((3 | 2) & (5 | 4) & (1 | 0)) & (2 | 4 | 0))
++  + (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
+   + 	0 = 1/foo1 failed
+   - 	1 = 1/foo1 succeeded
+   + 	2 = 1/foo2 failed
+diff --git a/tests/integration/conftest.py b/tests/integration/conftest.py
+index 02ef139ae..65fdab971 100644
+--- a/tests/integration/conftest.py
++++ b/tests/integration/conftest.py
+@@ -20,18 +20,25 @@ from functools import partial
+ from pathlib import Path
+ import pytest
+ from shutil import rmtree
+-from typing import List, TYPE_CHECKING, Set, Tuple
++from typing import List, TYPE_CHECKING, Set, Tuple, Union
+ 
+ from cylc.flow.config import WorkflowConfig
++from cylc.flow.option_parsers import Options
+ from cylc.flow.network.client import WorkflowRuntimeClient
+ from cylc.flow.pathutil import get_cylc_run_dir
+ from cylc.flow.rundb import CylcWorkflowDAO
+ from cylc.flow.scripts.validate import ValidateOptions
++from cylc.flow.scripts.install import (
++    install as cylc_install,
++    get_option_parser as install_gop
++)
+ from cylc.flow.wallclock import get_current_time_string
++from cylc.flow.workflow_files import infer_latest_run_from_id
+ 
+ from .utils import _rm_if_empty
+ from .utils.flow_tools import (
+     _make_flow,
++    _make_src_flow,
+     _make_scheduler,
+     _run_flow,
+     _start_flow,
+@@ -42,6 +49,9 @@ if TYPE_CHECKING:
+     from cylc.flow.task_proxy import TaskProxy
+ 
+ 
++InstallOpts = Options(install_gop())
++
++
+ @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+ def pytest_runtest_makereport(item, call):
+     """Expose the result of tests to their fixtures.
+@@ -335,7 +345,8 @@ def validate(run_dir):
+         reg - The flow to validate
+         kwargs - Arguments to pass to ValidateOptions
+     """
+-    def _validate(reg: str, **kwargs) -> WorkflowConfig:
++    def _validate(reg: Union[str, Path], **kwargs) -> WorkflowConfig:
++        reg = str(reg)
+         return WorkflowConfig(
+             reg,
+             str(Path(run_dir, reg, 'flow.cylc')),
+@@ -404,3 +415,61 @@ def capture_polling():
+         return polled_tasks
+ 
+     return _disable_polling
++
++
++@pytest.fixture(scope='module')
++def mod_workflow_source(mod_flow, tmp_path_factory):
++    """Create a workflow source directory.
++
++    Args:
++        cfg: Can be passed a config dictionary.
++
++    Yields:
++        Path to source directory.
++    """
++    def _inner(cfg):
++        src_dir = _make_src_flow(tmp_path_factory.getbasetemp(), cfg)
++        return src_dir
++    yield _inner
++
++
++@pytest.fixture
++def workflow_source(mod_flow, tmp_path):
++    """Create a workflow source directory.
++
++    Args:
++        cfg: Can be passed a config dictionary.
++
++    Yields:
++        Path to source directory.
++    """
++    def _inner(cfg):
++        src_dir = _make_src_flow(tmp_path, cfg)
++        return src_dir
++    yield _inner
++
++
++@pytest.fixture
++def install(test_dir, run_dir):
++    """Install a workflow from source
++
++    Args:
++        (Actually args for _inner, but what the fixture appears to take to
++        the user)
++        source: Directory containing the source.
++        **kwargs: Options for cylc install.
++
++    Returns:
++        Workflow id, including run directory.
++    """
++    def _inner(source, **kwargs):
++        opts = InstallOpts(**kwargs)
++        # Note we append the source.name to the string rather than creating
++        # a subfolder because the extra layer of directories would exceed
++        # Cylc install's default limit.
++        opts.workflow_name = (
++            f'{str(test_dir.relative_to(run_dir))}.{source.name}')
++        workflow_id = cylc_install(opts, str(source))
++        workflow_id = infer_latest_run_from_id(workflow_id)
++        return workflow_id
++    yield _inner
+diff --git a/tests/integration/scripts/test_validate_integration.py b/tests/integration/scripts/test_validate_integration.py
+new file mode 100644
+index 000000000..57d1a3a91
+--- /dev/null
++++ b/tests/integration/scripts/test_validate_integration.py
+@@ -0,0 +1,97 @@
++#!/usr/bin/env python3
++
++# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
++# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++"""Integration tests for Cylc Validate CLI script."""
++
++from cylc.flow.scripts.validate import wrapped_main as validate
++from cylc.flow.parsec.exceptions import IllegalItemError
++import pytest
++from cylc.flow.parsec.exceptions import Jinja2Error
++
++
++async def test_revalidate_checks_source(
++    capsys, validate, workflow_source, install, one_conf
++):
++    """Validation fails if revalidating with broken config.
++    """
++    src_dir = workflow_source(one_conf)
++    workflow_id = install(src_dir)
++
++    # Check that the original installation validates OK:
++    validate(workflow_id, against_source=True)
++
++    # Break the source config:
++    with open(src_dir / 'flow.cylc', 'a') as handle:
++        handle.write('\n[runtime]\n[[foo]]\nAgrajag = bowl of petunias')
++
++    # # Check that Validate now fails:
++    with pytest.raises(IllegalItemError, match='Agrajag'):
++        validate(workflow_id, against_source=True)
++
++
++async def test_revalidate_gets_old_tvars(
++    workflow_source, capsys, validate, scheduler, run, install, run_dir
++):
++    """Validation will retrieve template variables from a previously played
++    workflow.
++    """
++    src_dir = workflow_source({
++        '#!jinja2': None,
++        'scheduler': {
++            'allow implicit tasks': True
++        },
++        'scheduling': {
++            'initial cycle point': '1854',
++            'graph': {
++                'P1Y': 'foo'
++            },
++        },
++        'runtime': {
++            'foo': {
++                'script': 'cylc pause ${CYLC_WORKFLOW_ID}'
++            }
++        }
++    })
++
++    wf_id = install(src_dir)
++    installed_dir = run_dir / wf_id
++
++    # Check that the original installation validates OK:
++    validate(installed_dir)
++
++    # # Start a scheduler with tvars option:
++    schd = scheduler(
++        wf_id,
++        templatevars=['FOO="foo"']
++    )
++    async with run(schd):
++        pass
++
++    # Replace foo in graph with {{FOO}} and check that this still
++    # Validates (using db value for FOO):
++    flow_file = (installed_dir / 'flow.cylc')
++    flow_file.write_text(
++        flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
++    validate(wf_id, against_source=True)
++
++    # Check that the source will not validate alone:
++    flow_file = (src_dir / 'flow.cylc')
++    flow_file.write_text(
++        flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
++    with pytest.raises(Jinja2Error):
++        validate(src_dir)
+diff --git a/tests/integration/test_config.py b/tests/integration/test_config.py
+index a73449025..453075cc5 100644
+--- a/tests/integration/test_config.py
++++ b/tests/integration/test_config.py
+@@ -277,8 +277,8 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
+         assert 'external triggers must be used only once' in str(exc_ctx.value)
+     else:
+         config = validate(reg)
+-        assert set(config.cfg['scheduling']['special tasks'][section]) == {
++        assert config.cfg['scheduling']['special tasks'][section] == [
+             # the family FOO has been expanded to the tasks foo, foot
+             'foo(P1D)',
+             'foot(P1D)'
+-        }
++        ]
+diff --git a/tests/integration/test_get_old_tvars.py b/tests/integration/test_get_old_tvars.py
+new file mode 100644
+index 000000000..ca0724e8b
+--- /dev/null
++++ b/tests/integration/test_get_old_tvars.py
+@@ -0,0 +1,86 @@
++# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
++# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++import pytest
++from pytest import param
++from types import SimpleNamespace
++
++from cylc.flow.scripts.validate import (
++    wrapped_main as validate,
++    get_option_parser as validate_gop
++)
++from cylc.flow.scripts.view import (
++    _main as view,
++    get_option_parser as view_gop
++)
++from cylc.flow.scripts.graph import (
++    _main as graph,
++    get_option_parser as graph_gop
++)
++from cylc.flow.scripts.config import (
++    _main as config,
++    get_option_parser as config_gop
++)
++from cylc.flow.scripts.list import (
++    _main as cylclist,
++    get_option_parser as list_gop
++)
++
++
++@pytest.fixture(scope='module')
++def _setup(mod_scheduler, mod_flow):
++    """Provide an installed flow with a database to try assorted
++    simple Cylc scripts against.
++    """
++    conf = {
++        '#!jinja2': '',
++        'scheduler': {
++            'allow implicit tasks': True
++        },
++        'scheduling': {
++            'graph': {
++                'R1': r'{{FOO}}'
++            }
++        }
++    }
++    schd = mod_scheduler(mod_flow(conf), templatevars=['FOO="bar"'])
++    yield schd
++
++
++@pytest.mark.parametrize(
++    'function, parser, expect',
++    (
++        param(validate, validate_gop, 'Valid for', id="validate"),
++        param(view, view_gop, 'FOO', id="view"),
++        param(graph, graph_gop, '1/bar', id='graph'),
++        param(config, config_gop, 'R1 = bar', id='config'),
++        param(cylclist, list_gop, 'bar', id='list')
++    )
++)
++async def test_revalidate_validate(
++    _setup, mod_start, capsys, function, parser, expect,
++):
++    """It validates with Cylc Validate."""
++    parser = parser()
++    opts = SimpleNamespace(**parser.get_default_values().__dict__)
++    opts.templatevars = []
++    opts.templatevars_file = []
++    if function == graph:
++        opts.reference = True
++
++    async with mod_start(_setup):
++        await function(parser, opts, _setup.workflow_name)
++        assert expect in capsys.readouterr().out
+diff --git a/tests/integration/test_task_job_mgr.py b/tests/integration/test_task_job_mgr.py
+deleted file mode 100644
+index a8413caca..000000000
+--- a/tests/integration/test_task_job_mgr.py
++++ /dev/null
+@@ -1,106 +0,0 @@
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-
+-import logging
+-
+-from cylc.flow import CYLC_LOG
+-from cylc.flow.task_state import TASK_STATUS_RUNNING
+-
+-
+-async def test_run_job_cmd_no_hosts_error(
+-    flow,
+-    scheduler,
+-    start,
+-    mock_glbl_cfg,
+-    log_filter,
+-):
+-    """It should catch NoHostsError.
+-
+-    NoHostsError's should be caught and handled rather than raised because
+-    they will cause problems (i.e. trigger shutdown) if they make it to the
+-    Scheduler.
+-
+-    NoHostError's can occur in the poll & kill logic, this test ensures that
+-    these methods catch the NoHostsError and handle the event as a regular
+-    SSH failure by pushing the issue down the 255 callback.
+-
+-    See https://github.com/cylc/cylc-flow/pull/5195
+-    """
+-    # define a platform
+-    mock_glbl_cfg(
+-        'cylc.flow.platforms.glbl_cfg',
+-        '''
+-            [platforms]
+-                [[no-host-platform]]
+-        ''',
+-    )
+-
+-    # define a workflow with a task which runs on that platform
+-    id_ = flow({
+-        'scheduling': {
+-            'graph': {
+-                'R1': 'foo'
+-            }
+-        },
+-        'runtime': {
+-            'foo': {
+-                'platform': 'no-host-platform'
+-            }
+-        }
+-    })
+-
+-    # start the workflow
+-    schd = scheduler(id_)
+-    async with start(schd) as log:
+-        # set logging to debug level
+-        log.set_level(logging.DEBUG, CYLC_LOG)
+-
+-        # tell Cylc the task is running on that platform
+-        schd.pool.get_tasks()[0].state_reset(TASK_STATUS_RUNNING)
+-        schd.pool.get_tasks()[0].platform = {
+-            'name': 'no-host-platform',
+-            'hosts': ['no-host-platform'],
+-        }
+-
+-        # tell Cylc that that platform is not contactable
+-        # (i.e. all hosts are in bad_hosts)
+-        # (this casuses the NoHostsError to be raised)
+-        schd.task_job_mgr.bad_hosts.add('no-host-platform')
+-
+-        # polling the task should not result in an error...
+-        schd.task_job_mgr.poll_task_jobs(
+-            schd.workflow,
+-            schd.pool.get_tasks()
+-        )
+-
+-        # ...but the failure should be logged
+-        assert log_filter(
+-            log,
+-            contains='No available hosts for no-host-platform',
+-        )
+-        log.clear()
+-
+-        # killing the task should not result in an error...
+-        schd.task_job_mgr.kill_task_jobs(
+-            schd.workflow,
+-            schd.pool.get_tasks()
+-        )
+-
+-        # ...but the failure should be logged
+-        assert log_filter(
+-            log,
+-            contains='No available hosts for no-host-platform',
+-        )
+diff --git a/tests/integration/test_workflow_db_mgr.py b/tests/integration/test_workflow_db_mgr.py
+index 8fb292301..a9b13248f 100644
+--- a/tests/integration/test_workflow_db_mgr.py
++++ b/tests/integration/test_workflow_db_mgr.py
+@@ -77,6 +77,22 @@ def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
+         conn.commit()
+ 
+ 
++def upgrade_db_from_version(schd, version):
++    """Runs the DB upgrader from the specified version.
++
++    Args:
++        schd:
++            The Scheduler who's DB you want to upgrade.
++        version:
++            The version you want to upgrade from.
++            (i.e. what version do you want to tell Cylc the workflow ran
++            with last time).
++
++    """
++    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
++        schd.workflow_db_mgr.upgrade(parse_version(version), pri_dao)
++
++
+ async def test_db_upgrade_pre_803(
+     flow, one_conf, start, scheduler, log_filter, db_select
+ ):
+@@ -90,10 +106,13 @@ async def test_db_upgrade_pre_803(
+ 
+     # Remove task_states:is_manual_submit to fake a pre-8.0.3 DB.
+     db_remove_column(schd, "task_states", "is_manual_submit")
+-    db_remove_column(schd, "task_jobs", "flow_nums")
+ 
+     schd: Scheduler = scheduler(reg, paused_start=True)
+ 
++    # Run the DB upgrader for version 8.0.3
++    # (8.0.3 does not require upgrade so should be skipped)
++    upgrade_db_from_version(schd, '8.0.3')
++
+     # Restart should fail due to the missing column.
+     with pytest.raises(sqlite3.OperationalError):
+         async with start(schd):
+@@ -104,8 +123,7 @@ async def test_db_upgrade_pre_803(
+ 
+     # Run the DB upgrader for version 8.0.2
+     # (8.0.2 requires upgrade)
+-    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+-        schd.workflow_db_mgr.upgrade_pre_803(pri_dao)
++    upgrade_db_from_version(schd, '8.0.2')
+     # Restart should now succeed.
+     async with start(schd):
+         assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')
+diff --git a/tests/integration/utils/flow_tools.py b/tests/integration/utils/flow_tools.py
+index dcd683023..6911661c4 100644
+--- a/tests/integration/utils/flow_tools.py
++++ b/tests/integration/utils/flow_tools.py
+@@ -39,11 +39,23 @@ from cylc.flow.workflow_status import StopMode
+ from .flow_writer import flow_config_str
+ 
+ 
++def _make_src_flow(src_path, conf):
++    """Construct a workflow on the filesystem"""
++    flow_src_dir = (src_path / str(uuid1()))
++    flow_src_dir.mkdir(parents=True, exist_ok=True)
++    if isinstance(conf, dict):
++        conf = flow_config_str(conf)
++    with open((flow_src_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
++        flow_file.write(conf)
++    return flow_src_dir
++
++
+ def _make_flow(
+     cylc_run_dir: Union[Path, str],
+     test_dir: Path,
+     conf: Union[dict, str],
+-    name: Optional[str] = None
++    name: Optional[str] = None,
++    is_run: Optional[bool] = True
+ ) -> str:
+     """Construct a workflow on the filesystem."""
+     if name is None:
+diff --git a/tests/integration/utils/flow_writer.py b/tests/integration/utils/flow_writer.py
+index 68bc3acdc..c1e214495 100644
+--- a/tests/integration/utils/flow_writer.py
++++ b/tests/integration/utils/flow_writer.py
+@@ -63,7 +63,9 @@ def _write_conf(conf: dict, level: int) -> List[str]:
+     ret = []
+     for key, value in conf.items():
+         # write out settings first
+-        if not isinstance(value, dict):
++        if key.lower() == '#!jinja2':
++            ret.append('#!jinja2')
++        elif not isinstance(value, dict):
+             ret.extend(
+                 _write_setting(key, value, level + 1)
+             )
+diff --git a/tests/integration/utils/test_flow_writer.py b/tests/integration/utils/test_flow_writer.py
+index a4cf55d36..0913a22bf 100644
+--- a/tests/integration/utils/test_flow_writer.py
++++ b/tests/integration/utils/test_flow_writer.py
+@@ -97,6 +97,7 @@ def test_flow_config_str():
+     """It should write out entire cylc configuration files."""
+     assert flow_config_str(
+         {
++            '#!JiNjA2': None,
+             'foo': {
+                 'bar': {
+                     'pub': 'beer'
+@@ -106,6 +107,7 @@ def test_flow_config_str():
+             'qux': 'asdf'
+         }
+     ) == dedent('''
++        #!jinja2
+         qux = asdf
+         [foo]
+             baz = 42
+diff --git a/tests/unit/parsec/test_fileparse.py b/tests/unit/parsec/test_fileparse.py
+index 34fad5ff3..8a972ae9b 100644
+--- a/tests/unit/parsec/test_fileparse.py
++++ b/tests/unit/parsec/test_fileparse.py
+@@ -16,15 +16,22 @@
+ 
+ import tempfile
+ 
++import os
+ import pytest
++from pytest import param
++import sqlite3
++from types import SimpleNamespace
+ 
+ from cylc.flow.parsec.exceptions import (
+     FileParseError,
+     IncludeFileNotFoundError,
+     Jinja2Error,
++    ParsecError,
+ )
+ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+ from cylc.flow.parsec.fileparse import (
++    _prepend_old_templatevars,
++    _get_fpath_for_source,
+     addict,
+     addsect,
+     multiline,
+@@ -599,3 +606,95 @@ def test_unclosed_multiline():
+ def test_merge_template_vars(caplog, expect, native_tvars, plugin_result, log):
+     assert merge_template_vars(native_tvars, plugin_result) == expect
+     assert [r.msg for r in caplog.records] == log
++
++
++@pytest.fixture
++def _mock_old_template_vars_db(tmp_path):
++    def _inner(create_srclink=True):
++        # Create a fake workflow dir:
++        (tmp_path / 'flow.cylc').touch()
++        (tmp_path / 'log').mkdir()
++        db_path = tmp_path / 'log/db'
++        db_path.touch()
++
++        # Set up a fake workflow database:
++        conn = sqlite3.connect(str(db_path))
++        conn.execute(
++            "CREATE TABLE workflow_template_vars"
++            "(key TEXT, value TEXT, PRIMARY KEY(key)) ;"
++        )
++        conn.execute(
++            "INSERT INTO workflow_template_vars VALUES"
++            "    ('Marius', '\"Consul\"')"
++        )
++        conn.commit()
++        conn.close()
++
++        # Simulate being an installed rundir by creating a sourcelink:
++        if create_srclink:
++            src = (tmp_path / 'src')
++            src.mkdir(exist_ok=True)
++            link = tmp_path.parent / '_cylc-install/source'
++            link.parent.mkdir(exist_ok=True)
++            try:
++                os.symlink(src, link)
++            except FileExistsError:
++                # We don't mind the link persisting.
++                pass
++        return tmp_path / 'flow.cylc'
++    yield _inner
++
++
++@pytest.mark.parametrize(
++    'expect, tvars',
++    [
++        param(
++            {'Marius': 'Consul', 'Julius': 'Pontifex'}, {'Julius': 'Pontifex'},
++            id='It adds a new key at the end'
++        ),
++        param(
++            {'Marius': 'Tribune'}, {'Marius': 'Tribune'},
++            id='It overrides an existing key'
++        ),
++    ]
++)
++def test__prepend_old_templatevars2(_mock_old_template_vars_db, expect, tvars):
++    # Create a target for a source symlink
++    result = _prepend_old_templatevars(
++        _mock_old_template_vars_db(), tvars)
++    assert result == expect
++
++
++def test_get_fpath_for_source(tmp_path):
++    # Create rundir and srcdir:
++    srcdir = tmp_path / 'source'
++    rundir = tmp_path / 'run'
++    srcdir.mkdir()
++    rundir.mkdir()
++    (rundir / 'flow.cylc').touch()
++    (srcdir / 'flow.cylc').touch()
++
++    # Mock Options object:
++    opts = SimpleNamespace()
++
++    # It raises an error if source is not linked:
++    with pytest.raises(
++        ParsecError, match=f'Cannot validate {rundir} against source:'
++    ):
++        opts.against_source = True
++        _get_fpath_for_source(rundir / 'flow.cylc', opts)
++
++    # Create symlinks:
++    link = rundir / '_cylc-install/source'
++    link.parent.mkdir(exist_ok=True)
++    os.symlink(srcdir, link)
++
++    # It does nothing if opts.against_source is False:
++    opts.against_source = False
++    assert _get_fpath_for_source(
++        rundir / 'flow.cylc', opts) == rundir / 'flow.cylc'
++
++    # It gets source dir if opts.against_source is True:
++    opts.against_source = True
++    assert _get_fpath_for_source(
++        rundir / 'flow.cylc', opts) == str(srcdir / 'flow.cylc')
+diff --git a/tests/unit/scripts/test_check_versions.py b/tests/unit/scripts/test_check_versions.py
+deleted file mode 100644
+index 3c52c2d33..000000000
+--- a/tests/unit/scripts/test_check_versions.py
++++ /dev/null
+@@ -1,50 +0,0 @@
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-
+-import pytest
+-
+-from cylc.flow.exceptions import NoHostsError
+-from cylc.flow.scripts.check_versions import check_versions
+-
+-
+-@pytest.fixture
+-def break_host_selection(monkeypatch):
+-    """Make host selection for any platform fail with NoHostsError."""
+-    def _get_host_from_platform(platform, *args, **kwargs):
+-        raise NoHostsError(platform)
+-
+-    monkeypatch.setattr(
+-        'cylc.flow.scripts.check_versions.get_host_from_platform',
+-        _get_host_from_platform,
+-    )
+-
+-    def _get_platform(platform_name, *args, **kwargs):
+-        return {'name': platform_name}
+-
+-    monkeypatch.setattr(
+-        'cylc.flow.scripts.check_versions.get_platform',
+-        _get_platform,
+-    )
+-
+-
+-def test_no_hosts_error(break_host_selection, capsys):
+-    """It should handle NoHostsError events."""
+-    versions = check_versions(['buggered'], True)
+-    # the broken platform should be skipped (so no returned versions)
+-    assert not versions
+-    # a warning should have been logged to stderr
+-    out, err = capsys.readouterr()
+-    assert 'Could not connect to buggered' in err
+diff --git a/tests/unit/scripts/test_graph.py b/tests/unit/scripts/test_graph.py
+index aa64002fc..3131771d7 100644
+--- a/tests/unit/scripts/test_graph.py
++++ b/tests/unit/scripts/test_graph.py
+@@ -89,7 +89,7 @@ def null_config(monkeypatch):
+ 
+     monkeypatch.setattr(
+         'cylc.flow.scripts.graph.get_config',
+-        lambda x, y: config
++        lambda x, y, z: config
+     )
+ 
+ 
+@@ -295,11 +295,11 @@ def test_null(null_config):
+         grouping=False,
+         show_suicide=False
+     )
+-    assert get_nodes_and_edges(opts, None, 1, 2) == ([], [])
++    assert get_nodes_and_edges(opts, '', None, 1, 2) == ([], [])
+ 
+     opts = SimpleNamespace(
+         namespaces=True,
+         grouping=False,
+         show_suicide=False
+     )
+-    assert get_nodes_and_edges(opts, None, 1, 2) == ([], [])
++    assert get_nodes_and_edges(opts, '', None, 1, 2)  == ([], [])
+diff --git a/tests/unit/scripts/test_trigger.py b/tests/unit/scripts/test_trigger.py
+index 6e4476eea..d464bda0a 100644
+--- a/tests/unit/scripts/test_trigger.py
++++ b/tests/unit/scripts/test_trigger.py
+@@ -108,7 +108,6 @@ Opts = Options(get_option_parser())
+                 "Multiple flow options must all be integer valued"
+             )
+         ),
+- 
+     ]
+ )
+ def test_validate(
+diff --git a/tests/unit/test_host_select.py b/tests/unit/test_host_select.py
+index 02e31b5d5..858792798 100644
+--- a/tests/unit/test_host_select.py
++++ b/tests/unit/test_host_select.py
+@@ -20,17 +20,14 @@ NOTE: these are functional tests, for unit tests see the docstrings in
+       the host_select module.
+ 
+ """
+-import logging
+ import socket
+ 
+ import pytest
+ 
+-from cylc.flow import CYLC_LOG
+ from cylc.flow.exceptions import HostSelectException
+ from cylc.flow.host_select import (
+-    _get_metrics,
+     select_host,
+-    select_workflow_host,
++    select_workflow_host
+ )
+ from cylc.flow.hostuserutil import get_fqdn_by_host
+ from cylc.flow.parsec.exceptions import ListValueError
+@@ -203,18 +200,3 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
+             '''
+         )
+     assert 'ambiguous host' in excinfo.value.msg
+-
+-
+-def test_get_metrics_no_hosts_error(caplog):
+-    """It should handle SSH errors.
+-
+-    If a host is not contactable then it should be shipped.
+-    """
+-    caplog.set_level(logging.WARN, CYLC_LOG)
+-    host_stats, data = _get_metrics(['not-a-host'], None)
+-    # a warning should be logged
+-    assert len(caplog.records) == 1
+-    # no data for the host should be returned
+-    assert not host_stats
+-    # the return code should be recorded
+-    assert data == {'not-a-host': {'returncode': 255}}
+diff --git a/tests/unit/test_pathutil.py b/tests/unit/test_pathutil.py
+index 67a779e6b..d42b26a2d 100644
+--- a/tests/unit/test_pathutil.py
++++ b/tests/unit/test_pathutil.py
+@@ -529,7 +529,8 @@ def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
+             1000, ['run20', 'run400', 'run999'], False,
+             id='1000th run (from filenames)'
+         ),
+-        param(6, ['run1', 'run5'], False,
++        param(
++            6, ['run1', 'run5'], False,
+             id='Non-sequential (from filenames)'),
+         param(2, ['run1'], True, id='2nd run (from symlink)'),
+         param(100, ['run1', 'run99'], True, id='100th run (from symlink)'),
+@@ -549,7 +550,8 @@ def test_get_next_rundir_number(tmp_path, expect, files, runN):
+     (
+         param('my_workflow1', 'my_workflow1', False, id='--no-run-name'),
+         param('my_workflow2', 'my_workflow2/run22', False, id='installed'),
+-        param('my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
++        param(
++            'my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
+         param('my_workflow4', 'my_workflow4', True, id='not installed'),
+     )
+ )
+diff --git a/tests/unit/test_templatevars.py b/tests/unit/test_templatevars.py
+index f2f2182e5..e77ec5b9e 100644
+--- a/tests/unit/test_templatevars.py
++++ b/tests/unit/test_templatevars.py
+@@ -15,13 +15,19 @@
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ import pytest
++import sqlite3
+ import tempfile
+ import unittest
+ 
+ from types import SimpleNamespace
+ 
++
+ from cylc.flow.exceptions import PluginError
+-from cylc.flow.templatevars import get_template_vars, load_template_vars
++from cylc.flow.templatevars import (
++    OldTemplateVars,
++    get_template_vars,
++    load_template_vars
++)
+ 
+ 
+ class TestTemplatevars(unittest.TestCase):
+@@ -102,3 +108,48 @@ class TestTemplatevars(unittest.TestCase):
+             'none': None
+         }
+         self.assertEqual(expected, load_template_vars(template_vars=pairs))
++
++
++@pytest.fixture(scope='module')
++def _setup_db(tmp_path_factory):
++    tmp_path = tmp_path_factory.mktemp('test_get_old_tvars')
++    logfolder = tmp_path / "log/"
++    logfolder.mkdir()
++    db_path = logfolder / 'db'
++    conn = sqlite3.connect(db_path)
++    conn.execute(
++        r'''
++            CREATE TABLE workflow_template_vars (
++                key,
++                value
++            )
++        '''
++    )
++    conn.execute(
++        r'''
++            INSERT INTO workflow_template_vars
++            VALUES
++                ("FOO", "42"),
++                ("BAR", "'hello world'"),
++                ("BAZ", "'foo', 'bar', 48"),
++                ("QUX", "['foo', 'bar', 21]")
++        '''
++    )
++    conn.commit()
++    conn.close()
++    yield OldTemplateVars(tmp_path)
++
++
++@pytest.mark.parametrize(
++    'key, expect',
++    (
++        ('FOO', 42),
++        ('BAR', 'hello world'),
++        ('BAZ', ('foo', 'bar', 48)),
++        ('QUX', ['foo', 'bar', 21])
++    )
++)
++def test_OldTemplateVars(key, expect, _setup_db):
++    """It can extract a variety of items from a workflow database.
++    """
++    assert _setup_db.template_vars[key] == expect
+diff --git a/tests/unit/test_workflow_db_mgr.py b/tests/unit/test_workflow_db_mgr.py
+deleted file mode 100644
+index ffd2d978e..000000000
+--- a/tests/unit/test_workflow_db_mgr.py
++++ /dev/null
+@@ -1,93 +0,0 @@
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-
+-"""
+-Tests for worklfow_db_manager
+-"""
+-
+-import pytest
+-import sqlite3
+-
+-from cylc.flow.exceptions import CylcError
+-from cylc.flow.workflow_db_mgr import (
+-    CylcWorkflowDAO,
+-    WorkflowDatabaseManager,
+-)
+-
+-
+-@pytest.fixture
+-def _setup_db(tmp_path):
+-    def _inner(values):
+-        db_file = tmp_path / 'sql.db'
+-        conn = sqlite3.connect(str(db_file))
+-        conn.execute((
+-            r'CREATE TABLE task_states(name TEXT, cycle TEXT, flow_nums TEXT,'
+-            r' time_created TEXT, time_updated TEXT, submit_num INTEGER,'
+-            r' status TEXT, flow_wait INTEGER, is_manual_submit INTEGER,'
+-            r' PRIMARY KEY(name, cycle, flow_nums));')
+-        )
+-        conn.execute((
+-            r'CREATE TABLE task_jobs(cycle TEXT, name TEXT,'
+-            r' submit_num INTEGER, is_manual_submit INTEGER,'
+-            r' try_num INTEGER, time_submit TEXT, time_submit_exit TEXT,'
+-            r' submit_status INTEGER, time_run TEXT, time_run_exit TEXT,'
+-            r' run_signal TEXT, run_status INTEGER, platform_name TEXT,'
+-            r' job_runner_name TEXT, job_id TEXT,'
+-            r' PRIMARY KEY(cycle, name, submit_num));'
+-        ))
+-        conn.execute(values)
+-        conn.execute((
+-            r"INSERT INTO task_jobs VALUES"
+-            r"    ('10090101T0000Z', 'foo', 1, 0, 1, '2022-12-05T14:46:06Z',"
+-            r" '2022-12-05T14:46:07Z', 0, '2022-12-05T14:46:10Z',"
+-            r" '2022-12-05T14:46:39Z', '', 0, 'localhost', 'background',"
+-            r" 4377)"
+-        ))
+-        conn.commit()
+-        return db_file
+-    return _inner
+-
+-
+-def test_upgrade_pre_810_fails_on_multiple_flows(_setup_db):
+-    values = (
+-        r'INSERT INTO task_states VALUES'
+-        r"    ('foo', '10050101T0000Z', '[1, 3]',"
+-        r" '2022-12-05T14:46:33Z',"
+-        r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
+-    )
+-    db_file_name = _setup_db(values)
+-    pri_dao = CylcWorkflowDAO(db_file_name)
+-    with pytest.raises(
+-        CylcError,
+-        match='^Cannot .* 8.0.x to 8.1.0 .* used.$'
+-    ):
+-        WorkflowDatabaseManager.upgrade_pre_810(pri_dao)
+-
+-
+-def test_upgrade_pre_810_pass_on_single_flow(_setup_db):
+-    values = (
+-        r'INSERT INTO task_states VALUES'
+-        r"    ('foo', '10050101T0000Z', '[1]',"
+-        r" '2022-12-05T14:46:33Z',"
+-        r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
+-    )
+-    db_file_name = _setup_db(values)
+-    pri_dao = CylcWorkflowDAO(db_file_name)
+-    WorkflowDatabaseManager.upgrade_pre_810(pri_dao)
+-    conn = sqlite3.connect(db_file_name)
+-    result = conn.execute(
+-        'SELECT DISTINCT flow_nums FROM task_jobs;').fetchall()[0][0]
+-    assert result == '[1]'
+diff --git a/tests/unit/test_workflow_status.py b/tests/unit/test_workflow_status.py
+deleted file mode 100644
+index 046783d4f..000000000
+--- a/tests/unit/test_workflow_status.py
++++ /dev/null
+@@ -1,125 +0,0 @@
+-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+-#
+-# This program is free software: you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation, either version 3 of the License, or
+-# (at your option) any later version.
+-#
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-# GNU General Public License for more details.
+-#
+-# You should have received a copy of the GNU General Public License
+-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-
+-from types import SimpleNamespace
+-
+-import pytest
+-
+-from cylc.flow.workflow_status import (
+-    StopMode,
+-    WorkflowStatus,
+-    WORKFLOW_STATUS_RUNNING_TO_HOLD,
+-    WORKFLOW_STATUS_RUNNING_TO_STOP,
+-    get_workflow_status,
+-)
+-
+-
+-def schd(
+-    final_point=None,
+-    hold_point=None,
+-    is_paused=False,
+-    is_stalled=None,
+-    stop_clock_time=None,
+-    stop_mode=None,
+-    stop_point=None,
+-    stop_task_id=None,
+-):
+-    return SimpleNamespace(
+-        is_paused=is_paused,
+-        is_stalled=is_stalled,
+-        stop_clock_time=stop_clock_time,
+-        stop_mode=stop_mode,
+-        pool=SimpleNamespace(
+-            hold_point=hold_point,
+-            stop_point=stop_point,
+-            stop_task_id=stop_task_id,
+-        ),
+-        config=SimpleNamespace(final_point=final_point),
+-    )
+-
+-
+-@pytest.mark.parametrize(
+-    'kwargs, state, message',
+-    [
+-        # test each of the states
+-        (
+-            {'is_paused': True},
+-            WorkflowStatus.PAUSED,
+-            'paused'),
+-        (
+-            {'stop_mode': StopMode.AUTO},
+-            WorkflowStatus.STOPPING,
+-            'stopping: waiting for active jobs to complete'
+-        ),
+-        (
+-            {'hold_point': 'point'},
+-            WorkflowStatus.RUNNING,
+-            WORKFLOW_STATUS_RUNNING_TO_HOLD % 'point'
+-        ),
+-        (
+-            {'stop_point': 'point'},
+-            WorkflowStatus.RUNNING,
+-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'point'
+-        ),
+-        (
+-            {'stop_clock_time': 1234},
+-            WorkflowStatus.RUNNING,
+-            WORKFLOW_STATUS_RUNNING_TO_STOP % ''
+-        ),
+-        (
+-            {'stop_task_id': 'foo'},
+-            WorkflowStatus.RUNNING,
+-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'foo'
+-        ),
+-        (
+-            {'final_point': 'point'},
+-            WorkflowStatus.RUNNING,
+-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'point'
+-        ),
+-        (
+-            {'is_stalled': True},
+-            WorkflowStatus.RUNNING,
+-            'stalled'
+-        ),
+-        (
+-            {},
+-            WorkflowStatus.RUNNING,
+-            'running'
+-        ),
+-
+-        # test combinations
+-        (
+-            # stopping should trump stalled, paused & running
+-            {
+-                'stop_mode': StopMode.AUTO,
+-                'is_stalled': True,
+-                'is_paused': True
+-            },
+-            WorkflowStatus.STOPPING,
+-            'stopping'
+-        ),
+-        (
+-            # stalled should trump paused & running
+-            {'is_stalled': True, 'is_paused': True},
+-            WorkflowStatus.RUNNING,
+-            'stalled'
+-        ),
+-    ]
+-)
+-def test_get_workflow_status(kwargs, state, message):
+-    state_, message_ = get_workflow_status(schd(**kwargs))
+-    assert state_ == state.value
+-    assert message in message_

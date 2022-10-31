@@ -31,6 +31,7 @@ parsec config file parsing:
 """
 
 import os
+from optparse import Values
 from pathlib import Path
 import re
 import sys
@@ -45,6 +46,9 @@ from cylc.flow.parsec.exceptions import (
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
+from cylc.flow.templatevars import get_template_vars_from_db
+from cylc.flow.workflow_files import (
+    get_workflow_source_dir, check_flow_file)
 
 
 # heading/sections can contain commas (namespace name lists) and any
@@ -343,6 +347,43 @@ def merge_template_vars(
         return native_tvars
 
 
+def _prepend_old_templatevars(fpath: str, template_vars: t.Dict) -> t.Dict:
+    """If the fpath is in a rundir, extract template variables from database.
+
+    Args:
+        fpath: filepath of workflow config file.
+        template_vars: Template vars to prepend old tvars to.
+    """
+    rundir = Path(fpath).parent
+    old_tvars = get_template_vars_from_db(rundir)
+    old_tvars.update(template_vars)
+    template_vars = old_tvars
+    return template_vars
+
+
+def _get_fpath_for_source(fpath: str, opts: "Values") -> str:
+    """If `--against-source` is set and a sourcedir can be found, return
+    sourcedir.
+    Else return fpath unchanged.
+
+    Raises:
+        ParsecError: If validate against source is set and this is not
+        an installed workflow then we don't want to continue.
+    """
+    if getattr(opts, 'against_source', False):
+        thispath = Path(fpath)
+        source_dir = get_workflow_source_dir(thispath.parent)[0]
+        if source_dir:
+            retpath = check_flow_file(source_dir)
+            return str(retpath)
+        else:
+            raise ParsecError(
+                f'Cannot validate {thispath.parent} against source: '
+                'it is not an installed workflow.')
+    else:
+        return fpath
+
+
 def read_and_proc(
     fpath: str,
     template_vars: t.Optional[t.Dict[str, t.Any]] = None,
@@ -355,7 +396,9 @@ def read_and_proc(
     Jinja2 processing must be done before concatenation - it could be
     used to generate continuation lines.
     """
-
+    template_vars = template_vars if template_vars is not None else {}
+    template_vars = _prepend_old_templatevars(fpath, template_vars)
+    fpath = _get_fpath_for_source(fpath, opts)
     fdir = os.path.dirname(fpath)
 
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).

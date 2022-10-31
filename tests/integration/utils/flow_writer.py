@@ -63,7 +63,9 @@ def _write_conf(conf: dict, level: int) -> List[str]:
     ret = []
     for key, value in conf.items():
         # write out settings first
-        if not isinstance(value, dict):
+        if key.lower() == '#!jinja2':
+            ret.append('#!jinja2')
+        elif not isinstance(value, dict):
             ret.extend(
                 _write_setting(key, value, level + 1)
             )

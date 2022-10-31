@@ -59,6 +59,7 @@ ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
             |-- log
+            |   |-- db
             |   \`-- install
             |-- share
             \`-- work
