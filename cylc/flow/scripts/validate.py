@@ -57,7 +57,6 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
-        revalidate=True,
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
@@ -82,11 +81,6 @@ def get_option_parser():
         "-u", "--run-mode", help="Validate for run mode.", action="store",
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'simulation'])
-
-    parser.add_option(
-        '--revalidate', help="Validate as if for re-install",
-        default=False, dest="revalidate", action="store_true"
-    )
 
     parser.add_option(icp_option)
 
@@ -127,7 +121,7 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
-    can_revalidate(flow_file, options)
+    options.revalidate, flow_file = can_revalidate(flow_file, options)
 
     cfg = WorkflowConfig(
         workflow_id,

@@ -17,6 +17,7 @@
 from cylc.flow.scheduler_cli import get_option_parser
 from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.pre_configure.get_old_tvars import main as get_old_tvars
+from pathlib import Path
 import pytest
 from pytest import param
 from types import SimpleNamespace
@@ -40,7 +41,7 @@ from cylc.flow.scripts.config import (
 
 
 @pytest.fixture(scope='module')
-def create_workflow(mod_one_conf, mod_flow, mod_scheduler):
+def workflow(mod_one_conf, mod_flow, mod_scheduler):
     # Set up opts and parser
     parser = get_option_parser()
     opts = SimpleNamespace(**parser.get_default_values().__dict__)
@@ -50,28 +51,16 @@ def create_workflow(mod_one_conf, mod_flow, mod_scheduler):
     conf = mod_one_conf
     # Set up scheduler
     schd = mod_scheduler(mod_flow(conf), templatevars=['FOO="bar"'])
-
     yield SimpleNamespace(schd=schd, opts=opts)
 
 
-@pytest.mark.parametrize(
-    'revalidate, expect',
-    [
-        (False, {}),
-        (True, 'bar')
-    ]
-)
-async def test_basic(create_workflow, mod_start, revalidate, expect):
-    """It returns a pre-existing configuration if opts.revalidate is True"""
-    opts = create_workflow.opts
-    opts.revalidate = revalidate
+async def test_basic(workflow, mod_start):
+    """It returns a pre-existing configuration"""
+    opts = workflow.opts
+    opts.revalidate = True
 
-    async with mod_start(create_workflow.schd):
-        result = get_old_tvars(create_workflow.schd.workflow_run_dir, opts)
-        if expect:
-            assert result['template_variables']['FOO'] == expect
-        else:
-            assert result == expect
+    async with mod_start(workflow.schd):
+        assert workflow.schd.template_vars['FOO'] == 'bar'
 
 
 @pytest.fixture(scope='module')
@@ -92,6 +81,20 @@ def _setup(mod_scheduler, mod_flow):
     }
     schd = mod_scheduler(mod_flow(conf), templatevars=['FOO="bar"'])
 
+    # Fake a source link with a different config to check that revalidation
+    # works:
+    fakesourcelink = (
+        Path(schd.workflow_run_dir).parent.parent / '_cylc-install/source')
+    fakesourcelink.mkdir(parents=True)
+    (fakesourcelink / 'flow.cylc').write_text("""
+        #!jinja2
+        [scheduler]
+            allow implicit tasks = True
+        [scheduling]
+            [[graph]]
+                R1 = bar
+    """)
+
     yield schd
 
 
@@ -99,34 +102,22 @@ def _setup(mod_scheduler, mod_flow):
     'function, parser, expect',
     (
         param(validate, validate_gop, 'Valid for', id="validate"),
-        param(view, view_gop, 'FOO', id="view"),
+        param(view, view_gop, 'bar', id="view"),
         param(graph, graph_gop, '1/bar', id='graph'),
         param(config, config_gop, 'R1 = bar', id='config')
     )
 )
-@pytest.mark.parametrize(
-    'revalidate',
-    [
-        (False),
-        (True)
-    ]
-)
 async def test_revalidate_validate(
-    _setup, mod_start, capsys, function, parser, revalidate, expect,
+    _setup, mod_start, capsys, function, parser, expect,
 ):
     """It validates with Cylc Validate."""
     parser = parser()
     opts = SimpleNamespace(**parser.get_default_values().__dict__)
     opts.templatevars = []
     opts.templatevars_file = []
-    opts.revalidate = revalidate
     if function == graph:
         opts.reference = True
 
     async with mod_start(_setup):
-        if revalidate or expect == 'FOO':
-            await function(parser, opts, _setup.workflow_name)
-            assert expect in capsys.readouterr().out
-        else:
-            with pytest.raises(Jinja2Error, match="'FOO' is undefined"):
-                await function(parser, opts, _setup.workflow_name)
+        await function(parser, opts, _setup.workflow_name)
+        assert expect in capsys.readouterr().out

@@ -46,7 +46,6 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
-        revalidate=True,
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
@@ -111,7 +110,7 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
         constraint='workflows',
     )
 
-    can_revalidate(flow_file, options)
+    options.revalidate, flow_file = can_revalidate(flow_file, options)
 
     # read in the flow.cylc file
     viewcfg = {

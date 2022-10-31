@@ -61,6 +61,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     icp_option,
+    can_revalidate,
 )
 from cylc.flow.pathutil import get_workflow_run_dir, is_in_a_rundir
 from cylc.flow.templatevars import get_template_vars
@@ -76,7 +77,6 @@ def get_option_parser() -> COP:
         __doc__,
         argdoc=[COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)],
         jset=True,
-        revalidate=True,
     )
 
     parser.add_option(
@@ -194,10 +194,7 @@ async def _main(
         constraint='workflows',
     )
 
-    if not is_in_a_rundir(flow_file) and options.revalidate:
-        raise WorkflowConfigError(
-            'Revalidation only works with installed workflows.'
-        )
+    options.revalidate, flow_file = can_revalidate(flow_file, options)
 
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(workflow_id)))
