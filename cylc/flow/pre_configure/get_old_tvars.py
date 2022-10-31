@@ -26,7 +26,7 @@ from typing import Union
 class OldTemplateVars:
     """Gets template variables stored in workflow database.
 
-    Mirrors the interface used in scheduler.py to get db nfo on restart.
+    Mirrors the interface used in scheduler.py to get db info on restart.
     """
     DB = 'log/db'
 
@@ -47,17 +47,16 @@ class OldTemplateVars:
 
 # Entry point:
 def main(srcdir: Union[Path, str], opts: 'Values') -> dict:
-    # We can calculate the source directory here!
     """Get options from a previously installed run.
 
     These options are stored in the database.
-    Calculate the templating language used from the shebang line.
+    Get the templating language used from the shebang line.
 
     N.B. The srcdir for this plugin to operate on is a workflow run dir.
 
     Args:
         srcdir: The directory of a previously run workflow.
-        opts: Options Object
+        opts: Command line options
     """
     if not hasattr(opts, 'revalidate') or not opts.revalidate:
         return {}
