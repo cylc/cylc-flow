@@ -39,24 +39,26 @@ RESOURCE_NAMES = {
     'syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
     'syntax/cylc.vim': 'Vim syntax highlighting.',
     'syntax/cylc.xml': 'Kate syntax highlighting.',
-    'cylc-bash-completion': 'Bash auto-completion for Cylc commands',
+    'cylc-completion.bash': 'Bash auto-completion for Cylc commands.',
     'cylc': 'Cylc wrapper script.',
 }
 API_KEY = 'api-key'
 
 
-def list_resources(write=print):
+def list_resources(write=print, headers=True):
     """Print resource names to stdout."""
     tutorials = [
         path.relative_to(RESOURCE_DIR)
         for path in TUTORIAL_DIR.iterdir()
         if path.is_dir()
     ]
-    write('Resources:')
+    if headers:
+        write('Resources:')
     max_len = max(len(res) for res in RESOURCE_NAMES)
     for resource, desc in RESOURCE_NAMES.items():
         write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
-    write('\nTutorials:')
+    if headers:
+        write('\nTutorials:')
     for tutorial in tutorials:
         write(f'  {tutorial}')
     write(f'  {API_KEY}')
