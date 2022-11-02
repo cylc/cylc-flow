@@ -117,11 +117,11 @@ message PbRuntime {
     optional string pre_script = 7;
     optional string post_script = 8;
     optional string work_sub_dir = 9;
-    repeated float execution_polling_intervals = 10;
-    repeated float execution_retry_delays = 11;
-    optional float execution_time_limit = 12;
-    repeated float submission_polling_intervals = 13;
-    repeated float submission_retry_delays = 14;
+    optional string execution_polling_intervals = 10;
+    optional string execution_retry_delays = 11;
+    optional string execution_time_limit = 12;
+    optional string submission_polling_intervals = 13;
+    optional string submission_retry_delays = 14;
     optional string directives = 15;
     optional string environment = 16;
     optional string outputs = 17;

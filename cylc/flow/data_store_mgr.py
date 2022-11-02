@@ -73,6 +73,7 @@ from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
 from cylc.flow.parsec.util import (
+    listjoin,
     pdeepcopy,
     poverride
 )
@@ -211,11 +212,19 @@ def runtime_from_config(rtconfig):
         pre_script=rtconfig['pre-script'],
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
-        execution_time_limit=rtconfig['execution time limit'],
-        execution_polling_intervals=rtconfig['execution polling intervals'],
-        execution_retry_delays=rtconfig['execution retry delays'],
-        submission_polling_intervals=rtconfig['submission polling intervals'],
-        submission_retry_delays=rtconfig['submission retry delays'],
+        execution_time_limit=str(rtconfig['execution time limit']),
+        execution_polling_intervals=listjoin(
+            rtconfig['execution polling intervals']
+        ),
+        execution_retry_delays=listjoin(
+            rtconfig['execution retry delays']
+        ),
+        submission_polling_intervals=listjoin(
+            rtconfig['submission polling intervals']
+        ),
+        submission_retry_delays=listjoin(
+            rtconfig['submission retry delays']
+        ),
         directives=json.dumps(
             [
                 {'key': key, 'value': value}
