@@ -16,6 +16,7 @@
 """Manage broadcast (and external trigger broadcast)."""
 
 import re
+from copy import deepcopy
 from threading import RLock
 
 from cylc.flow import LOG
@@ -25,9 +26,11 @@ from cylc.flow.broadcast_report import (
     get_broadcast_change_report,
     get_broadcast_bad_options_report,
 )
+from cylc.flow.cfgspec.workflow import SPEC
 from cylc.flow.id import Tokens
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
+from cylc.flow.parsec.validate import cylc_config_validate
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
@@ -199,6 +202,12 @@ class BroadcastMgr:
             "key": key,
             "value": value})
 
+    def post_load_db_coerce(self):
+        """Coerce DB loaded values to config objects, i.e. DurationFloat."""
+        for namespaces in self.broadcasts.values():
+            for settings in namespaces.values():
+                cylc_config_validate(settings, SPEC['runtime']['__MANY__'])
+
     def _match_ext_trigger(self, itask):
         """Match external triggers for a waiting task proxy."""
         if not self.ext_triggers or not itask.state.external_triggers:
@@ -261,11 +270,21 @@ class BroadcastMgr:
                         elif not bad_point:
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
+                            # Keep saved/reported setting as workflow
+                            # config format.
+                            modified_settings.append(
+                                (point_string, namespace, deepcopy(setting))
+                            )
+                            # Coerce setting to cylc runtime object,
+                            # i.e. str to  DurationFloat.
+                            cylc_config_validate(
+                                setting,
+                                SPEC['runtime']['__MANY__']
+                            )
                             addict(
                                 self.broadcasts[point_string][namespace],
-                                setting)
-                            modified_settings.append(
-                                (point_string, namespace, setting))
+                                setting
+                            )
 
         # Log the broadcast
         self.workflow_db_mgr.put_broadcast(modified_settings)

@@ -58,6 +58,6 @@ sqlite3 "${WORKFLOW_RUN_DIR}/log/db" '
     ORDER BY
         point,namespace,key' >'select-broadcast-states.out'
 cmp_ok 'select-broadcast-states.out' \
-    <<<'20130923T0000Z|broadcast_task|[environment]MY_VALUE|something'
+    <<<"20130923T0000Z|broadcast_task|[environment]MY_VALUE|'something'"
 #-------------------------------------------------------------------------------
 purge

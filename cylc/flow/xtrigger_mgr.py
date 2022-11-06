@@ -436,7 +436,7 @@ class XtriggerManager:
                     for key, val in self.sat_xtrig[sig].items():
                         res["%s_%s" % (label, key)] = val
                     if res:
-                        xtrigger_env = [{'environment': {key: val}} for
+                        xtrigger_env = [{'environment': {key: str(val)}} for
                                         key, val in res.items()]
                         self.broadcast_mgr.put_broadcast(
                             [str(itask.point)],

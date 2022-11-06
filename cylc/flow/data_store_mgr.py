@@ -212,7 +212,7 @@ def runtime_from_config(rtconfig):
         pre_script=rtconfig['pre-script'],
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
-        execution_time_limit=str(rtconfig['execution time limit']),
+        execution_time_limit=str(rtconfig['execution time limit'] or ''),
         execution_polling_intervals=listjoin(
             rtconfig['execution polling intervals']
         ),

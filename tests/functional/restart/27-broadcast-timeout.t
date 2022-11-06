@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
   'SELECT * FROM broadcast_states' >'sqlite3.out'
-cmp_ok 'sqlite3.out' <<<'*|root|[events]submission timeout|60.0'
+cmp_ok 'sqlite3.out' <<<'*|root|[events]submission timeout|PT1M'
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play "${WORKFLOW_NAME}" --debug --no-detach --reference-test
 purge
