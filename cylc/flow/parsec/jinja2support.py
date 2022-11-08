@@ -238,7 +238,7 @@ def jinja2process(
     fpath: str,
     flines: t.List[str],
     dir_: str,
-    template_vars: t.Dict[str, t.Any] = None,
+    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
 ) -> t.List[str]:
     """Pass configure file through Jinja2 processor.
 

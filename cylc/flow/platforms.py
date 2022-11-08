@@ -66,7 +66,7 @@ HOST_SELECTION_METHODS = {
 def log_platform_event(
     event: str,
     platform: dict,
-    host: str = None,
+    host: Optional[str] = None,
     level: str = 'info'
 ):
     """Log a simple platform event."""

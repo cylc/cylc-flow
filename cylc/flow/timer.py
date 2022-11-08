@@ -81,7 +81,8 @@ class Timer:
     """
 
     def __init__(
-        self, name: str, interval: float, log_reset_func: Callable = None
+        self, name: str, interval: float,
+        log_reset_func: Optional[Callable] = None
     ) -> None:
         """Initialize a timer."""
         if log_reset_func is not None:

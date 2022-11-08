@@ -18,7 +18,7 @@
 import asyncio
 import json
 import sys
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import zmq
 
@@ -62,11 +62,11 @@ class WorkflowSubscriber(ZMQSocketBase):
     def __init__(
             self,
             workflow: str,
-            host: str = None,
-            port: Union[int, str] = None,
-            context: object = None,
-            srv_public_key_loc: str = None,
-            topics: Iterable[bytes] = None
+            host: Optional[str] = None,
+            port: Optional[Union[int, str]] = None,
+            context: Optional[object] = None,
+            srv_public_key_loc: Optional[str] = None,
+            topics: Optional[Iterable[bytes]] = None
     ):
         super().__init__(zmq.SUB, context=context)
         self.workflow = workflow
