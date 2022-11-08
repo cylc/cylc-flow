@@ -17,7 +17,7 @@
 """Task state related logic."""
 
 
-from typing import List
+from typing import List, Optional
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import (
     TaskOutputs,
@@ -231,8 +231,8 @@ class TaskState:
         self._suicide_is_satisfied = None
 
         # Prerequisites.
-        self.prerequisites: List[Prerequisite] = []
-        self.suicide_prerequisites: List[Prerequisite] = []
+        self.prerequisites: [List[Prerequisite]] = []
+        self.suicide_prerequisites: Optional[List[Prerequisite]] = []
         self._add_prerequisites(point, tdef)
 
         # External Triggers.

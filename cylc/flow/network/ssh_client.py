@@ -18,7 +18,7 @@ from async_timeout import timeout as ascyncto
 import asyncio
 import json
 import os
-from typing import Union, Dict
+from typing import Dict, Optional, Union
 
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client_factory import CommsMeth
@@ -43,8 +43,8 @@ class WorkflowRuntimeClient():
     def __init__(
             self,
             workflow: str,
-            host: str = None,
-            timeout: Union[float, str] = None
+            host: Optional[str] = None,
+            timeout: Optional[Union[float, str]] = None
     ):
         self.workflow = workflow
         self.SLEEP_INTERVAL = 0.1

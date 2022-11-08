@@ -402,7 +402,7 @@ async def _setup(scheduler: Scheduler) -> None:
     try:
         await scheduler.install()
     except ServiceFileError as exc:
-        sys.exit(exc)
+        sys.exit(str(exc))
 
 
 async def _run(scheduler: Scheduler) -> int:
