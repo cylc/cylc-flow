@@ -17,7 +17,7 @@
 """Task state related logic."""
 
 
-from typing import List, Optional
+from typing import List
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import (
     TaskOutputs,
