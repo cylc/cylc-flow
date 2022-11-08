@@ -28,7 +28,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = cylc__job__wait_cylc_message_started; true
 __FLOW_CONFIG__
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --hold-after=0 --debug "${WORKFLOW_NAME}"
 
 cylc release "${WORKFLOW_NAME}//1/foo"
 # 1/foo should run and spawn 1/bar as waiting and held

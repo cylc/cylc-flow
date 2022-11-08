@@ -18,12 +18,15 @@
 import asyncio
 import json
 import sys
-from typing import Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
 
 import zmq
 
 from cylc.flow.network import ZMQSocketBase, get_location
 from cylc.flow.data_store_mgr import DELTAS_MAP
+
+if TYPE_CHECKING:
+    import zmq.asyncio
 
 NO_RECEIVE_INTERVAL = 0.5
 
@@ -49,45 +52,45 @@ class WorkflowSubscriber(ZMQSocketBase):
     NOTE: Security to be provided by zmq.auth
 
     Args:
-        host (str):
-            The host to connect to.
-        port (int):
-            The port on the aforementioned host to connect to.
+        host: The host to connect to.
+        port: The port on the aforementioned host to connect to.
 
     Usage:
         * Subscribe to Publisher socket using ``WorkflowSubscriber.__call__``.
 
     """
+    # socket & event loop not None - get assigned on init by self.start():
+    socket: 'zmq.asyncio.Socket'
+    loop: asyncio.AbstractEventLoop
 
     def __init__(
-            self,
-            workflow: str,
-            host: Optional[str] = None,
-            port: Optional[Union[int, str]] = None,
-            context: Optional[object] = None,
-            srv_public_key_loc: Optional[str] = None,
-            topics: Optional[Iterable[bytes]] = None
+        self,
+        workflow: str,
+        host: Optional[str] = None,
+        port: Union[int, str, None] = None,
+        context: Optional['zmq.asyncio.Context'] = None,
+        srv_public_key_loc: Optional[str] = None,
+        topics: Optional[Iterable[bytes]] = None
     ):
-        super().__init__(zmq.SUB, context=context)
-        self.workflow = workflow
+        super().__init__(zmq.SUB, workflow, context=context)
         if port:
             port = int(port)
         if not (host and port):
             host, _, port = get_location(workflow)
         if topics is None:
-            topics = [b'']
-        self.topics: Iterable[bytes] = topics
+            topics = {b''}
+        self.topics: Set[bytes] = set(topics)
         # Connect the ZMQ socket on instantiation
         self.start(host, port, srv_public_key_loc)
 
-    def _socket_options(self):
+    def _socket_options(self) -> None:
         """Set options after socket instantiation and before connect.
 
         Overwrites Base method.
 
         """
         # setup topics to receive.
-        for topic in set(self.topics):
+        for topic in self.topics:
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
     async def subscribe(self, msg_handler, *args, **kwargs):

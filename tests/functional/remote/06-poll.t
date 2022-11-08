@@ -53,7 +53,7 @@ log_scan \
     10 \
     1 \
     '\[1/foo submitted .* (polled)foo' \
-    '\[1/foo submitted .* (polled)succeeded'
+    '\[1/foo .* (polled)succeeded'
 
 purge
 exit

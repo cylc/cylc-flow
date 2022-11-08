@@ -42,17 +42,20 @@ RUN_N = Path(WorkflowFiles.RUN_N)
 INSTALL = Path(WorkflowFiles.Install.DIRNAME)
 
 
-def init_flows(tmp_path, running=None, registered=None, un_registered=None):
+def init_flows(tmp_run_path=None, running=None, registered=None,
+               un_registered=None, tmp_src_path=None, src=None):
     """Create some dummy workflows for scan to discover.
 
     Assume "run1, run2, ..., runN" structure if flow name constains "run".
+    Optionally create workflow source dirs in a give location too.
+
     """
     def make_registered(name, running=False):
-        run_d = Path(tmp_path, name)
+        run_d = Path(tmp_run_path, name)
         run_d.mkdir(parents=True, exist_ok=True)
         (run_d / "flow.cylc").touch()
         if "run" in name:
-            root = Path(tmp_path, name).parent
+            root = Path(tmp_run_path, name).parent
             with suppress(FileExistsError):
                 (root / "runN").symlink_to(run_d, target_is_directory=True)
         else:
@@ -63,12 +66,19 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
         if running:
             (srv_d / CONTACT).touch()
 
+    def make_src(name):
+        src_d = Path(tmp_src_path, name)
+        src_d.mkdir(parents=True, exist_ok=True)
+        (src_d / "flow.cylc").touch()
+
     for name in (running or []):
         make_registered(name, running=True)
     for name in (registered or []):
         make_registered(name)
     for name in (un_registered or []):
-        Path(tmp_path, name).mkdir(parents=True, exist_ok=True)
+        Path(tmp_run_path, name).mkdir(parents=True, exist_ok=True)
+    for name in (src or []):
+        make_src(name)
 
 
 @pytest.fixture(scope='session')
@@ -157,14 +167,14 @@ def source_dirs(mock_glbl_cfg):
     src1 = src / '1'
     src1.mkdir()
     init_flows(
-        src1,
-        registered=('a', 'b/c')
+        tmp_src_path=src1,
+        src=('a', 'b/c')
     )
     src2 = src / '2'
     src2.mkdir()
     init_flows(
-        src2,
-        registered=('d', 'e/f')
+        tmp_src_path=src2,
+        src=('d', 'e/f')
     )
     mock_glbl_cfg(
         'cylc.flow.scripts.scan.glbl_cfg',
@@ -248,6 +258,13 @@ async def test_scan_nasty_symlinks(run_dir_with_nasty_symlinks):
         'bar',  # well you got what you asked for
         'foo'
     ]
+
+
+async def test_scan_non_exist(tmp_path: Path):
+    """Calling scan() on a scan_dir that doesn't exist should not raise."""
+    assert await listify(
+        scan(scan_dir=(tmp_path / 'HORSE'))
+    ) == []
 
 
 async def test_is_active(sample_run_dir):
@@ -423,23 +440,23 @@ def cylc7_run_dir(tmp_path):
     cylc7 = tmp_path / 'cylc7'
     cylc7.mkdir()
     (cylc7 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
-    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
+    Path(cylc7, WorkflowFiles.LogDir.DIRNAME, 'suite').mkdir(parents=True)
+    Path(cylc7, WorkflowFiles.LogDir.DIRNAME, 'suite', 'log').touch()
 
     # a Cylc 7 workflow running under Cylc 8 in compatibility mode
     # (should appear in scan results)
     cylc8 = tmp_path / 'cylc8'
     cylc8.mkdir()
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler', 'log').touch()
 
     # a Cylc 7 workflow installed by Cylc 8 but not run yet.
     # (should appear in scan results)
     cylc8a = tmp_path / 'cylc8a'
     cylc8a.mkdir()
     (cylc8a / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8a, WorkflowFiles.LOG_DIR, 'install').mkdir(parents=True)
+    Path(cylc8a, WorkflowFiles.LogDir.DIRNAME, 'install').mkdir(parents=True)
 
     # crazy niche case of a Cylc 7 workflow that has had its DB removed
     # and re-run under Cylc 8
@@ -447,10 +464,10 @@ def cylc7_run_dir(tmp_path):
     cylc8 = tmp_path / 'cylc78'
     cylc8.mkdir()
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'suite').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'suite', 'log').touch()
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LogDir.DIRNAME, 'scheduler', 'log').touch()
 
     return tmp_path
 

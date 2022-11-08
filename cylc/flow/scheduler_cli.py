@@ -18,11 +18,15 @@
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
+from itertools import zip_longest
+from pathlib import Path
 from shlex import quote
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow import LOG
+from pkg_resources import parse_version
+
+from cylc.flow import LOG, __version__
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -44,11 +48,17 @@ from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import (
+    SUITERC_DEPR_MSG,
     detect_old_contact_file,
-    SUITERC_DEPR_MSG
+    get_workflow_srv_dir,
 )
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import (
+    cli_function,
+    is_terminal,
+    prompt,
+)
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -231,6 +241,28 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         action="store_true", default=False, dest="abort_if_any_task_fails"
     )
 
+    parser.add_option(
+        '--downgrade',
+        help=(
+            'Allow the workflow to be restarted with an older version of Cylc,'
+            ' NOT RECOMMENDED.'
+            ' By default Cylc prevents you from restarting a workflow with an'
+            ' older version of Cylc than it was previously run with.'
+            ' Use this flag to disable this check.'
+        ),
+        action='store_true',
+        default=False
+    )
+
+    parser.add_option(
+        '--upgrade',
+        help=(
+            'Allow the workflow to be restarted with an newer version of Cylc.'
+        ),
+        action='store_true',
+        default=False
+    )
+
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
         # use) "standard options" are added later in options.parse_args().
@@ -290,39 +322,24 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
         max_workflows=1,
         # warn_depr=False,  # TODO
     )
-    try:
-        detect_old_contact_file(workflow_id)
-    except ServiceFileError as exc:
-        print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(
-            workflow_id,
-            timeout=options.comms_timeout,
-        )
-        mutation_kwargs = {
-            'request_string': RESUME_MUTATION,
-            'variables': {
-                'wFlows': [workflow_id]
-            }
-        }
-        pclient('graphql', mutation_kwargs)
-        sys.exit(0)
+
+    # resume the workflow if it is already running
+    _resume(workflow_id, options)
+
+    # check the workflow can be safely restarted with this version of Cylc
+    db_file = Path(get_workflow_srv_dir(workflow_id), 'db')
+    if not _version_check(
+        db_file,
+        options.upgrade,
+        options.downgrade,
+    ):
+        sys.exit(1)
 
     # re-execute on another host if required
     _distribute(options.host, workflow_id_raw, workflow_id)
 
     # print the start message
-    if (
-        cylc.flow.flags.verbosity > -1
-        and (options.no_detach or options.format == 'plain')
-    ):
-        print(
-            cparse(
-                cylc_header()
-            )
-        )
-
-    if cylc.flow.flags.cylc7_back_compat:
-        LOG.warning(SUITERC_DEPR_MSG)
+    _print_startup_message(options)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -358,6 +375,117 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     LOG.info("DONE")
     close_log(LOG)
     sys.exit(ret)
+
+
+def _resume(workflow_id, options):
+    """Resume the workflow if it is already running."""
+    try:
+        detect_old_contact_file(workflow_id)
+    except ServiceFileError as exc:
+        print(f"Resuming already-running workflow\n\n{exc}")
+        pclient = WorkflowRuntimeClient(
+            workflow_id,
+            timeout=options.comms_timeout,
+        )
+        mutation_kwargs = {
+            'request_string': RESUME_MUTATION,
+            'variables': {
+                'wFlows': [workflow_id]
+            }
+        }
+        pclient('graphql', mutation_kwargs)
+        sys.exit(0)
+
+
+def _version_check(
+    db_file: Path,
+    can_upgrade: bool,
+    can_downgrade: bool
+) -> bool:
+    """Check the workflow can be safely restarted with this version of Cylc."""
+    if not db_file.is_file():
+        # not a restart
+        return True
+    wdbm = WorkflowDatabaseManager(db_file.parent)
+    this_version = parse_version(__version__)
+    last_run_version = wdbm.check_workflow_db_compatibility()
+
+    for itt, (this, that) in enumerate(zip_longest(
+        this_version.release,
+        last_run_version.release,
+        fillvalue=-1,
+    )):
+        if this < that:
+            # restart would REDUCE the Cylc version
+            if can_downgrade:
+                # permission to downgrade given in CLI flags
+                LOG.warning(
+                    'Restarting with an older version of Cylc'
+                    f' ({last_run_version} -> {__version__})'
+                )
+                return True
+            print(cparse(
+                '<red>'
+                'It is not advisible to restart a workflow with an older'
+                ' version of Cylc than it was previously run with.'
+                '</red>'
+
+                '\n* This workflow was previously run with'
+                f' <green>{last_run_version}</green>.'
+                f'\n* This version of Cylc is <red>{__version__}</red>.'
+
+                '\nUse --downgrade to disable this check (NOT RECOMMENDED!) or'
+                ' use a more recent version e.g:'
+                '<blue>'
+                f'\n$ CYLC_VERSION={last_run_version} {" ".join(sys.argv[1:])}'
+                '</blue>'
+            ))
+            return False
+        elif itt < 2 and this > that:
+            # restart would INCREASE the Cylc version in a big way
+            if can_upgrade:
+                # permission to upgrade given in CLI flags
+                LOG.warning(
+                    'Restarting with a newer version of Cylc'
+                    f' ({last_run_version} -> {__version__})'
+                )
+                return True
+            print(cparse(
+                'This workflow was previously run with'
+                f' <yellow>{last_run_version}</yellow>.'
+                f'\nThis version of Cylc is <green>{__version__}</green>.'
+            ))
+            if is_terminal():
+                # we are in interactive mode, ask the user if this is ok
+                return prompt(
+                    'Are you sure you want to upgrade from'
+                    f' <yellow>{last_run_version}</yellow>'
+                    ' to <green>{__version__}</green>?',
+                    {'y': True, 'n': False},
+                    process=str.lower,
+                )
+            # we are in non-interactive mode, abort abort abort
+            return False
+        elif itt > 2 and this > that:
+            # restart would INCREASE the Cylc version in a little way
+            return True
+    return True
+
+
+def _print_startup_message(options):
+    """Print the Cylc header including the CLI logo."""
+    if (
+        cylc.flow.flags.verbosity > -1
+        and (options.no_detach or options.format == 'plain')
+    ):
+        print(
+            cparse(
+                cylc_header()
+            )
+        )
+
+    if cylc.flow.flags.cylc7_back_compat:
+        LOG.warning(SUITERC_DEPR_MSG)
 
 
 def _distribute(host, workflow_id_raw, workflow_id):

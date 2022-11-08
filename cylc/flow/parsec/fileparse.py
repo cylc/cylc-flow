@@ -127,15 +127,11 @@ def _concatenate(lines):
 
 
 def addsect(cfig, sname, parents):
-    """Add a new section to a nested dict."""
+    """Add a new section to a nested dict, if it doesn't exist."""
     for p in parents:
         # drop down the parent list
         cfig = cfig[p]
-    if sname in cfig:
-        # this doesn't warrant a warning unless contained items are repeated
-        LOG.debug(
-            'Section already encountered: %s', itemstr(parents + [sname]))
-    else:
+    if sname not in cfig:
         cfig[sname] = OrderedDictWithDefaults()
 
 

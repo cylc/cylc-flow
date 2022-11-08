@@ -21,5 +21,6 @@
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
+export REFTEST_OPTS='--debug'
 reftest
 exit

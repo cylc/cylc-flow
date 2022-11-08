@@ -18,6 +18,7 @@
 import asyncio
 import getpass
 import json
+from typing import Optional, Tuple
 
 import zmq
 import zmq.asyncio
@@ -59,22 +60,23 @@ def decode_(message):
     return msg
 
 
-def get_location(workflow: str):
+def get_location(workflow: str) -> Tuple[str, int, int]:
     """Extract host and port from a workflow's contact file.
 
     NB: if it fails to load the workflow contact file, it will exit.
 
     Args:
-        workflow (str): workflow name
+        workflow: workflow name
     Returns:
-        Tuple[str, int, int]: tuple with the host name and port numbers.
+        Tuple (host name, port number, publish port number)
     Raises:
-        ClientError: if the workflow is not running.
+        WorkflowStopped: if the workflow is not running.
         CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
     """
     try:
         contact = load_contact_file(workflow)
-    except ServiceFileError:
+    except (IOError, ValueError, ServiceFileError):
+        # Contact file does not exist or corrupted, workflow should be dead
         raise WorkflowStopped(workflow)
 
     host = contact[ContactFileFields.HOST]
@@ -83,8 +85,7 @@ def get_location(workflow: str):
     if ContactFileFields.PUBLISH_PORT in contact:
         pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     else:
-        version = (
-            contact['CYLC_VERSION'] if 'CYLC_VERSION' in contact else None)
+        version = contact.get('CYLC_VERSION', None)
         raise CylcVersionError(version=version)
     return host, port, pub_port
 
@@ -111,31 +112,24 @@ class ZMQSocketBase:
     def __init__(
         self,
         pattern,
-        workflow=None,
-        bind=False,
-        context=None,
+        workflow: str,
+        bind: bool = False,
+        context: Optional[zmq.Context] = None,
     ):
         self.bind = bind
         if context is None:
-            self.context = zmq.asyncio.Context()
+            self.context: zmq.Context = zmq.asyncio.Context()
         else:
             self.context = context
         self.pattern = pattern
         self.workflow = workflow
-        self.host = None
-        self.port = None
-        self.socket = None
-        self.loop = None
+        self.host: Optional[str] = None
+        self.port: Optional[int] = None
+        self.socket: Optional[zmq.Socket] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.stopping = False
 
     def start(self, *args, **kwargs):
-        """Start the server/network-component.
-
-        Pass arguments to _start_
-        """
-        self._start_sequence(*args, **kwargs)
-
-    def _start_sequence(self, *args, **kwargs):
         """Create the async loop, and bind socket."""
         # set asyncio loop
         try:

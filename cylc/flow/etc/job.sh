@@ -19,11 +19,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ###############################################################################
-# Bash functions for a cylc task job.
+# Bash functions for a cylc job.
 ###############################################################################
 
 ###############################################################################
-# The main function for a cylc task job.
+# The main function for a cylc job.
 cylc__job__main() {
     # Export CYLC_ workflow and task environment variables
     cylc__job__inst__cylc_env
@@ -50,7 +50,7 @@ cylc__job__main() {
         trap "cylc__job_vacation ${signal_name}" "${signal_name}"
     done
     set -euo pipefail
-    # Write task job self-identify
+    # Write job self-identify
     USER="${USER:-$(whoami)}"
     typeset host="${HOSTNAME:-}"
     if [[ -z "${host}" ]]; then
@@ -65,7 +65,7 @@ cylc__job__main() {
     # We were using a HERE document for writing info here until we notice that
     # Bash uses temporary files for HERE documents, which can be inefficient.
     echo "Workflow : ${CYLC_WORKFLOW_ID}"
-    echo "Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
+    echo "Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
     echo "User@Host: ${USER}@${host}"
     echo
     # Derived environment variables
@@ -229,7 +229,7 @@ cylc__job__poll_grep_workflow_log() {
 }
 
 ###############################################################################
-# Run a function in the task job instance file, if possible.
+# Run a function in the job instance file, if possible.
 # Arguments:
 #   func_name: name of function without the "cylc__job__inst__" prefix
 # Returns:

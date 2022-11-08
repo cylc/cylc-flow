@@ -20,7 +20,7 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
-from typing import List, TYPE_CHECKING, Tuple, Set
+from typing import List, TYPE_CHECKING, Set, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.network.client import WorkflowRuntimeClient
@@ -215,6 +215,7 @@ def mod_one_conf():
 
 @pytest.fixture
 def one(one_conf, flow, scheduler):
+    """Return a Scheduler for the simple "R1 = one" graph."""
     reg = flow(one_conf)
     schd = scheduler(reg)
     return schd
@@ -334,8 +335,8 @@ def validate(run_dir):
         reg - The flow to validate
         kwargs - Arguments to pass to ValidateOptions
     """
-    def _validate(reg: str, **kwargs) -> None:
-        WorkflowConfig(
+    def _validate(reg: str, **kwargs) -> WorkflowConfig:
+        return WorkflowConfig(
             reg,
             str(Path(run_dir, reg, 'flow.cylc')),
             ValidateOptions(**kwargs)

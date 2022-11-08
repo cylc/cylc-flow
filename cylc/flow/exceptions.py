@@ -116,6 +116,13 @@ class WorkflowEventError(CylcError):
 
 class CommandFailedError(CylcError):
     """Exception for when scheduler commands fail."""
+    def __init__(self, value: Union[str, Exception]):
+        self.value = value
+
+    def __str__(self) -> str:
+        if isinstance(self.value, Exception):
+            return f"{type(self.value).__name__}: {self.value}"
+        return self.value
 
 
 class ServiceFileError(CylcError):
@@ -255,9 +262,17 @@ class XtriggerConfigError(WorkflowConfigError):
 
 class ClientError(CylcError):
 
-    def __init__(self, message: str, traceback: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        traceback: Optional[str] = None,
+        workflow: Optional[str] = None
+    ):
         self.message = message
         self.traceback = traceback
+        # Workflow not included in string representation but useful bit of
+        # info to attach to the exception object
+        self.workflow = workflow
 
     def __str__(self) -> str:
         ret = self.message
@@ -278,7 +293,13 @@ class WorkflowStopped(ClientError):
 
 
 class ClientTimeout(CylcError):
-    pass
+
+    def __init__(self, message: str, workflow: Optional[str] = None):
+        self.message = message
+        self.workflow = workflow
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class CyclingError(CylcError):
@@ -308,6 +329,10 @@ class IntervalParsingError(CyclingError):
     def __init__(self, *args):
         CyclingError.__init__(
             self, 'Incompatible value for {0}: {1}'.format(*args))
+
+
+class SequenceParsingError(CyclingError):
+    """Error on parsing an invalid sequence."""
 
 
 class SequenceDegenerateError(CyclingError):

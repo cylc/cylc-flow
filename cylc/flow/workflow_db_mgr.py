@@ -680,16 +680,10 @@ class WorkflowDatabaseManager:
         """Check & vacuum the runtime DB for a restart.
 
         Increments the restart number in the DB. Sets self.n_restart.
-
-        Raises ServiceFileError if DB is incompatible.
         """
         if self.n_restart != 0:
             # This will not raise unless the method is mistakenly called twice
             raise RuntimeError("restart check must only happen once")
-        try:
-            self.check_workflow_db_compatibility()
-        except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot restart - {exc}")
         with self.get_pri_dao() as pri_dao:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
@@ -728,6 +722,10 @@ class WorkflowDatabaseManager:
         )
         conn.commit()
 
+    def upgrade(self, last_run_ver, pri_dao):
+        if last_run_ver < parse_version("8.0.3.dev"):
+            self.upgrade_pre_803(pri_dao)
+
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is
         incompatible with the current version of Cylc."""
@@ -757,5 +755,6 @@ class WorkflowDatabaseManager:
                     f"Cylc {last_run_ver})."
                     f"\n{manual_rm_msg}"
                 )
-            if last_run_ver < parse_version("8.0.3.dev"):
-                self.upgrade_pre_803(pri_dao)
+            self.upgrade(last_run_ver, pri_dao)
+
+        return last_run_ver

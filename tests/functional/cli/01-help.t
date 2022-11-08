@@ -19,11 +19,14 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number 23
+set_test_number 26
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
 run_ok "${TEST_NAME_BASE}-help" cylc help
+run_ok "${TEST_NAME_BASE}-help-id" cylc help id
+run_ok "${TEST_NAME_BASE}-help-all" cylc help all
+grep_ok 'trigger ...' "${TEST_NAME_BASE}-help-all.stdout"
 run_ok "${TEST_NAME_BASE}---help" cylc --help
 for FILE in \
     "${TEST_NAME_BASE}-help.stdout" \

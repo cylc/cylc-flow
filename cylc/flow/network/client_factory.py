@@ -16,6 +16,10 @@
 
 from enum import Enum
 import os
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from cylc.flow.network.client import WorkflowRuntimeClientBase
 
 
 class CommsMeth(Enum):
@@ -33,7 +37,11 @@ def get_comms_method() -> CommsMeth:
     )
 
 
-def get_runtime_client(comms_method: CommsMeth, workflow, timeout=None):
+def get_runtime_client(
+    comms_method: CommsMeth,
+    workflow: str,
+    timeout: Union[float, str, None] = None
+) -> 'WorkflowRuntimeClientBase':
     """Return client for the provided communication method.
 
         Args:
@@ -43,7 +51,7 @@ def get_runtime_client(comms_method: CommsMeth, workflow, timeout=None):
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import WorkflowRuntimeClient
     else:
-        from cylc.flow.network.client import (   # type: ignore
+        from cylc.flow.network.client import (  # type: ignore[no-redef]
             WorkflowRuntimeClient
         )
     return WorkflowRuntimeClient(workflow, timeout=timeout)

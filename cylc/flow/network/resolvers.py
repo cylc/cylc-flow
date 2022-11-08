@@ -28,6 +28,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    NamedTuple,
     Optional,
     Tuple,
     TYPE_CHECKING,
@@ -36,8 +37,8 @@ from typing import (
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
-from cylc.flow import LOG
 
+from cylc.flow import LOG
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
@@ -57,6 +58,14 @@ if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.workflow_status import StopMode
+
+
+class TaskMsg(NamedTuple):
+    """Tuple for Scheduler.message_queue"""
+    job_id: Union[Tokens, str]
+    event_time: str
+    severity: Union[str, int]
+    message: str
 
 
 logger = logging.getLogger(__name__)
@@ -732,35 +741,32 @@ class Resolvers(BaseResolvers):
 
     def put_messages(
         self,
-        task_job=None,
-        event_time=None,
-        messages=None
-    ):
+        task_job: str,
+        event_time: str,
+        messages: List[list]
+    ) -> Tuple[bool, str]:
         """Put task messages in queue for processing later by the main loop.
 
         Arguments:
-            task_job (str, optional):
-                Task job in the format ``CYCLE/TASK_NAME/SUBMIT_NUM``.
-            event_time (str, optional):
+            task_job:
+                Job ID in the format ``CYCLE/TASK_NAME/SUBMIT_NUM``.
+            event_time:
                 Event time as an ISO8601 string.
-            messages (list, optional):
+            messages:
                 List in the format ``[[severity, message], ...]``.
 
         Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
+            outcome:
                 True if command successfully queued.
-            message (str)
+            message:
                 Information about outcome.
 
         """
-        #  TODO: standardise the task_job interface to one of the other
-        #        systems
         for severity, message in messages:
             self.schd.message_queue.put(
-                (task_job, event_time, severity, message))
-        return (True, 'Messages queued: %d' % len(messages))
+                TaskMsg(task_job, event_time, severity, message)
+            )
+        return (True, f'Messages queued: {len(messages)}')
 
     def set_graph_window_extent(self, n_edge_distance):
         """Set data-store graph window to new max edge distance.

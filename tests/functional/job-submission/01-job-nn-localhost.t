@@ -26,7 +26,7 @@ mkdir -p "${WORKFLOW_RUN_DIR}/.service/"
 sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" <'db.sqlite3'
 
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+    cylc play --reference-test --upgrade --debug --no-detach "${WORKFLOW_NAME}"
 
 purge
 exit

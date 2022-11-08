@@ -26,8 +26,8 @@ def test_run_cmd_stdin_str():
         capture_process=True
     )
     assert [s.strip() for s in proc.communicate()] == [
-        b'1bar2',
-        b''
+        '1bar2',
+        ''
     ]
 
 
@@ -43,8 +43,8 @@ def test_run_cmd_stdin_file(tmp_path):
         capture_process=True
     )
     assert [s.strip() for s in proc.communicate()] == [
-        b'1bar2',
-        b''
+        '1bar2',
+        ''
     ]
 
 

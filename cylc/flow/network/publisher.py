@@ -16,6 +16,7 @@
 """Publisher for workflow runtime API."""
 
 import asyncio
+from typing import Callable, Optional, Set, Union
 
 import zmq
 
@@ -23,15 +24,9 @@ from cylc.flow import LOG
 from cylc.flow.network import ZMQSocketBase
 
 
-async def gather_coros(coro_func, items):
-    """Gather multi-part send coroutines"""
-    gathers = ()
-    for item in items:
-        gathers += (coro_func(*item),)
-    await asyncio.gather(*gathers)
-
-
-def serialize_data(data, serializer, *args, **kwargs):
+def serialize_data(
+    data: object, serializer: Union[Callable, str, None], *args, **kwargs
+):
     """Serialize by specified method."""
     if callable(serializer):
         return serializer(data, *args, **kwargs)
@@ -50,11 +45,9 @@ class WorkflowPublisher(ZMQSocketBase):
 
     """
 
-    def __init__(self, server, context=None):
-        super().__init__(zmq.PUB, bind=True, context=context)
-        self.server = server
-        self.workflow = server.schd.workflow
-        self.topics = set()
+    def __init__(self, workflow: str, context: Optional[zmq.Context] = None):
+        super().__init__(zmq.PUB, workflow, bind=True, context=context)
+        self.topics: Set[bytes] = set()
 
     def _socket_options(self):
         """Set socket options after socket instantiation and before bind.
@@ -71,13 +64,18 @@ class WorkflowPublisher(ZMQSocketBase):
         LOG.debug('stopping zmq publisher...')
         self.stopping = True
 
-    async def send_multi(self, topic, data, serializer=None):
+    async def send_multi(
+        self,
+        topic: bytes,
+        data: object,
+        serializer: Union[Callable, str, None] = None
+    ) -> None:
         """Send multi part message.
 
         Args:
-            topic (bytes): The topic of the message.
-            data (object): Data element/message to serialise and send.
-            serializer (object, optional): string/func for encoding.
+            topic: The topic of the message.
+            data: Data element/message to serialise and send.
+            serializer: string/func for encoding.
 
         """
         if self.socket:
@@ -87,7 +85,7 @@ class WorkflowPublisher(ZMQSocketBase):
             )
         # else we are in the process of shutting down - don't send anything
 
-    async def publish(self, items):
+    async def publish(self, *items: tuple) -> None:
         """Publish topics.
 
         Args:
@@ -95,6 +93,8 @@ class WorkflowPublisher(ZMQSocketBase):
 
         """
         try:
-            await gather_coros(self.send_multi, items)
+            await asyncio.gather(
+                *(self.send_multi(*item) for item in items)
+            )
         except Exception as exc:
             LOG.exception(f"publish: {exc}")
