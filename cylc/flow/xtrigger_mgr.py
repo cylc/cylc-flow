@@ -93,7 +93,7 @@ class TemplateVariables(Enum):
 
     .. deprecated:: 8.0.0
 
-       Deprecated, use ``workflow``.
+       Use ``workflow`` instead.
     """
 
     # BACK COMPAT: suite_name deprecated
@@ -108,7 +108,7 @@ class TemplateVariables(Enum):
 
     .. deprecated:: 8.0.0
 
-       Deprecated, use ``workflow``.
+       Use ``workflow`` instead.
     """
 
     # BACK COMPAT: suite_run_dir deprecated
@@ -123,7 +123,7 @@ class TemplateVariables(Enum):
 
     .. deprecated:: 8.0.0
 
-       Deprecated, use ``run_dir``.
+       Use ``workflow_run_dir`` instead.
     """
 
     # BACK COMPAT: suite_share_dir deprecated
@@ -138,7 +138,7 @@ class TemplateVariables(Enum):
 
     .. deprecated:: 8.0.0
 
-       Deprecated, use ``share_dir``.
+       Use ``workflow_share_dir`` instead.
     """
 
 

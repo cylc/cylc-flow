@@ -193,7 +193,7 @@ class PlatformError(CylcError):
         message: str,
         platform_name: str,
         *,
-        ctx: SubFuncContext = None,
+        ctx: Optional[SubFuncContext] = None,
         cmd: Optional[Union[str, Iterable]] = None,
         ret_code: Optional[int] = None,
         out: Optional[str] = None,

@@ -232,14 +232,14 @@ def complete(
     ]
 
 
-async def complete_command(partial: str = None) -> t.List[str]:
+async def complete_command(partial: t.Optional[str] = None) -> t.List[str]:
     """Complete Cylc commands."""
     return complete(partial, COMMAND_LIST)
 
 
 async def complete_option(
     command: str,
-    partial: str = None
+    partial: t.Optional[str] = None
 ) -> t.Optional[t.List[str]]:
     """Complete --options."""
     if partial and '=' in partial:
@@ -345,7 +345,7 @@ async def list_option_values(
     return None
 
 
-async def list_workflows(states: t.Set[str] = None) -> t.List[str]:
+async def list_workflows(states: t.Optional[t.Set[str]] = None) -> t.List[str]:
     """List workflows from run directories."""
     pipe = get_pipe(ScanOptions(states=states or FLOW_STATES), 'None')
     ids = []

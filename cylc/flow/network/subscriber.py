@@ -66,11 +66,11 @@ class WorkflowSubscriber(ZMQSocketBase):
     def __init__(
         self,
         workflow: str,
-        host: str = None,
-        port: Union[int, str] = None,
+        host: Optional[str] = None,
+        port: Union[int, str, None] = None,
         context: Optional['zmq.asyncio.Context'] = None,
-        srv_public_key_loc: str = None,
-        topics: Iterable[bytes] = None
+        srv_public_key_loc: Optional[str] = None,
+        topics: Optional[Iterable[bytes]] = None
     ):
         super().__init__(zmq.SUB, workflow, context=context)
         if port:
