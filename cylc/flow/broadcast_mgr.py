@@ -30,7 +30,7 @@ from cylc.flow.cfgspec.workflow import SPEC
 from cylc.flow.id import Tokens
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow.parsec.validate import BroadcastConfigValidator
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
@@ -206,7 +206,9 @@ class BroadcastMgr:
         """Coerce DB loaded values to config objects, i.e. DurationFloat."""
         for namespaces in self.broadcasts.values():
             for settings in namespaces.values():
-                cylc_config_validate(settings, SPEC['runtime']['__MANY__'])
+                BroadcastConfigValidator().validate(
+                    settings, SPEC['runtime']['__MANY__']
+                )
 
     def _match_ext_trigger(self, itask):
         """Match external triggers for a waiting task proxy."""
@@ -277,7 +279,7 @@ class BroadcastMgr:
                             )
                             # Coerce setting to cylc runtime object,
                             # i.e. str to  DurationFloat.
-                            cylc_config_validate(
+                            BroadcastConfigValidator().validate(
                                 setting,
                                 SPEC['runtime']['__MANY__']
                             )

@@ -1047,6 +1047,90 @@ class CylcConfigValidator(ParsecValidator):
         return val
 
 
+# TODO:- Remove at some suitable time post 8.1.0,
+# as DB broadcast loading on restart from 8.0.x may break.
+# The DB at 8.0.x stores Interval values as neither ISO8601 duration string
+# or DurationFloat. This has been fixed at 8.1.0, and the following class
+# acts as a bridge between fixed and broken.
+class BroadcastConfigValidator(CylcConfigValidator):
+    """Validate and Coerce DB loaded broadcast config to internal objects."""
+    def __init__(self):
+        CylcConfigValidator.__init__(self)
+
+    @classmethod
+    def strip_and_unquote_list(cls, keys, value):
+        """Remove leading and trailing spaces and unquote list value.
+
+        Args:
+            keys (list):
+                Keys in nested dict that represents the raw configuration.
+            value (str):
+                String value in raw configuration that is supposed to be a
+                comma separated list.
+
+        Return (list):
+            Processed value as a list.
+
+        Examples:
+            >>> ParsecValidator.strip_and_unquote_list(None, ' 1 , "2", 3')
+            ['1', '"2"', '3']
+
+            >>> ParsecValidator.strip_and_unquote_list(None, '" 1 , 2", 3')
+            ['1 , 2', '3']
+
+        """
+        if value.startswith('[') and value.endswith(']'):
+            value = value.lstrip('[').rstrip(']')
+        if value.startswith('"') or value.startswith("'"):
+            lexer = shlex.shlex(value, posix=True, punctuation_chars=",")
+            lexer.commenters = '#'
+            lexer.whitespace_split = False
+            lexer.whitespace = "\t\n\r"
+            lexer.wordchars += " "
+            values = [t.strip() for t in lexer if t != "," and t.strip()]
+        else:
+            # unquoted values (may contain internal quoted strings with list
+            # delimiters inside 'em!)
+            for quotation, rec in (('"', cls._REC_DQV), ("'", cls._REC_SQV)):
+                if quotation in value:
+                    match = rec.match(value)
+                    if match:
+                        value = match.groups()[0]
+                        break
+            else:
+                value = value.split(r'#', 1)[0].strip()
+            values = list(cls._unquoted_list_parse(keys, value))
+            # allow trailing commas
+            if values[-1] == '':
+                values = values[0:-1]
+        return values
+
+    @classmethod
+    def coerce_interval(cls, value, keys):
+        """Coerce an ISO 8601 interval into seconds.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_interval('PT1H', None)
+            3600.0
+
+        """
+        value = cls.strip_and_unquote(keys, value)
+        if not value:
+            # Allow explicit empty values.
+            return None
+        try:
+            interval = DurationParser().parse(value)
+        except IsodatetimeError:
+            try:
+                interval = DurationParser().parse(str(DurationFloat(value)))
+            except IsodatetimeError as exc:
+                raise IllegalValueError(
+                    "ISO 8601 interval", keys, value, exc=exc)
+        days, seconds = interval.get_days_and_seconds()
+        return DurationFloat(
+            days * Calendar.default().SECONDS_IN_DAY + seconds)
+
+
 def cylc_config_validate(cfg_root, spec_root):
     """Short for "CylcConfigValidator().validate(...)"."""
     return CylcConfigValidator().validate(cfg_root, spec_root)
