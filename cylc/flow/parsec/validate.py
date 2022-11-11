@@ -27,7 +27,7 @@ import shlex
 from collections import deque
 from textwrap import dedent
 
-from metomi.isodatetime.data import Duration, TimePoint, Calendar
+from metomi.isodatetime.data import Duration, TimePoint
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError, ISO8601SyntaxError
@@ -904,9 +904,7 @@ class CylcConfigValidator(ParsecValidator):
             interval = DurationParser().parse(value)
         except IsodatetimeError as exc:
             raise IllegalValueError("ISO 8601 interval", keys, value, exc=exc)
-        days, seconds = interval.get_days_and_seconds()
-        return DurationFloat(
-            days * Calendar.default().SECONDS_IN_DAY + seconds)
+        return DurationFloat(interval.get_seconds())
 
     @classmethod
     def coerce_interval_list(cls, value, keys):
@@ -1072,38 +1070,14 @@ class BroadcastConfigValidator(CylcConfigValidator):
             Processed value as a list.
 
         Examples:
-            >>> ParsecValidator.strip_and_unquote_list(None, ' 1 , "2", 3')
-            ['1', '"2"', '3']
-
-            >>> ParsecValidator.strip_and_unquote_list(None, '" 1 , 2", 3')
-            ['1 , 2', '3']
-
+            >>> BroadcastConfigValidator.strip_and_unquote_list(
+            ...    None, '["1, 2", 3]'
+            ... )
+            ['1, 2', '3']
         """
         if value.startswith('[') and value.endswith(']'):
             value = value.lstrip('[').rstrip(']')
-        if value.startswith('"') or value.startswith("'"):
-            lexer = shlex.shlex(value, posix=True, punctuation_chars=",")
-            lexer.commenters = '#'
-            lexer.whitespace_split = False
-            lexer.whitespace = "\t\n\r"
-            lexer.wordchars += " "
-            values = [t.strip() for t in lexer if t != "," and t.strip()]
-        else:
-            # unquoted values (may contain internal quoted strings with list
-            # delimiters inside 'em!)
-            for quotation, rec in (('"', cls._REC_DQV), ("'", cls._REC_SQV)):
-                if quotation in value:
-                    match = rec.match(value)
-                    if match:
-                        value = match.groups()[0]
-                        break
-            else:
-                value = value.split(r'#', 1)[0].strip()
-            values = list(cls._unquoted_list_parse(keys, value))
-            # allow trailing commas
-            if values[-1] == '':
-                values = values[0:-1]
-        return values
+        return ParsecValidator.strip_and_unquote_list(keys, value)
 
     @classmethod
     def coerce_interval(cls, value, keys):
@@ -1126,9 +1100,7 @@ class BroadcastConfigValidator(CylcConfigValidator):
             except IsodatetimeError as exc:
                 raise IllegalValueError(
                     "ISO 8601 interval", keys, value, exc=exc)
-        days, seconds = interval.get_days_and_seconds()
-        return DurationFloat(
-            days * Calendar.default().SECONDS_IN_DAY + seconds)
+        return DurationFloat(interval.get_seconds())
 
 
 def cylc_config_validate(cfg_root, spec_root):
