@@ -458,9 +458,11 @@ def _version_check(
             if is_terminal():
                 # we are in interactive mode, ask the user if this is ok
                 return prompt(
-                    'Are you sure you want to upgrade from'
-                    f' <yellow>{last_run_version}</yellow>'
-                    ' to <green>{__version__}</green>?',
+                    cparse(
+                        'Are you sure you want to upgrade from'
+                        f' <yellow>{last_run_version}</yellow>'
+                        f' to <green>{__version__}</green>?'
+                    ),
                     {'y': True, 'n': False},
                     process=str.lower,
                 )
