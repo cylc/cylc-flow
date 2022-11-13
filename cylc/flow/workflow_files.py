@@ -1481,9 +1481,12 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         exclusions.append('rose-suite.conf')
 
     for exclude in exclusions:
-        if (Path(src).joinpath(exclude).exists() or
-                Path(dst).joinpath(exclude).exists()):
-            rsync_cmd.append(f"--exclude={exclude}")
+        if (
+            Path(src).joinpath(exclude).exists() or
+            Path(dst).joinpath(exclude).exists()
+        ):
+            # Note '/' is the rsync "anchor" to the top level:
+            rsync_cmd.append(f"--exclude=/{exclude}")
     cylcignore_file = Path(src).joinpath('.cylcignore')
     if cylcignore_file.exists():
         rsync_cmd.append(f"--exclude-from={cylcignore_file}")
@@ -1855,11 +1858,11 @@ def validate_source_dir(
             If log, share, work or _cylc-install directories exist in the
             source directory.
     """
-    # Ensure source dir does not contain log, share, work, _cylc-install
+    # Source dir must not contain reserved run dir names (as file or dir).
     for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
-        if Path(source, dir_).is_dir():
+        if Path(source, dir_).exists():
             raise WorkflowFilesError(
-                f"{workflow_name} installation failed. "
+                f"{workflow_name} installation failed "
                 f"- {dir_} exists in source directory."
             )
     check_flow_file(source)
