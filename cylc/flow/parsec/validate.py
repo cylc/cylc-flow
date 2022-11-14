@@ -1045,11 +1045,18 @@ class CylcConfigValidator(ParsecValidator):
         return val
 
 
-# TODO:- Remove at some suitable time post 8.1.0,
-# as DB broadcast loading on restart from 8.0.x may break.
-# The DB at 8.0.x stores Interval values as neither ISO8601 duration string
-# or DurationFloat. This has been fixed at 8.1.0, and the following class
-# acts as a bridge between fixed and broken.
+# BACK COMPAT: post_load_db_coerce
+# The DB at 8.0.x stores Interval values as neither ISO8601 duration
+# string or DurationFloat. This has been fixed at 8.1.0, and
+# the following class acts as a bridge between fixed and broken.
+# url:
+#     https://github.com/cylc/cylc-flow/pull/5138
+# from:
+#    8.0.x
+# to:
+#    8.1.x
+# remove at:
+#    8.x
 class BroadcastConfigValidator(CylcConfigValidator):
     """Validate and Coerce DB loaded broadcast config to internal objects."""
     def __init__(self):
