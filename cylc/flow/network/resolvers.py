@@ -541,7 +541,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             w_ids = workflow_ids
             sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
             interval = args['ignore_interval']
-            old_time = time()
+            old_time = 0.0
             while True:
                 if not workflow_ids:
                     old_ids = w_ids
