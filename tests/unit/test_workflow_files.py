@@ -1809,8 +1809,8 @@ def test_get_rsync_rund_cmd(
     actual_cmd = get_rsync_rund_cmd(src_dir, cylc_run_dir)
     assert actual_cmd == [
         'rsync', '-a', '--checksum', '--out-format=%o %n%L', '--no-t',
-        '--exclude=log', '--exclude=work', '--exclude=share',
-        '--exclude=_cylc-install', '--exclude=.service',
+        '--exclude=/log', '--exclude=/work', '--exclude=/share',
+        '--exclude=/_cylc-install', '--exclude=/.service',
         f'{src_dir}/', f'{cylc_run_dir}/']
 
 
