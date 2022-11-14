@@ -1,5 +1,11 @@
-[scheduler]
-    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo
+[runtime]
+    [[foo]]
+        # NOTE: "execution retry delays" set by broadcast
+        script = """
+            if (( $CYLC_TASK_TRY_NUMBER < 2 )); then
+                false
+            fi
+        """

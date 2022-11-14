@@ -4,7 +4,7 @@ CREATE TABLE absolute_outputs(cycle TEXT, name TEXT, output TEXT);
 CREATE TABLE broadcast_events(time TEXT, change TEXT, point TEXT, namespace TEXT, key TEXT, value TEXT);
 INSERT INTO broadcast_events VALUES('2022-11-11T11:18:20.229805Z','+','1','foo','execution retry delays','[60.0, 120.0, 86400.0]');
 CREATE TABLE broadcast_states(point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(point, namespace, key));
-INSERT INTO broadcast_states VALUES('1','foo','execution retry delays','[60.0, 120.0, 86400.0]');
+INSERT INTO broadcast_states VALUES('1','foo','execution retry delays','[1.0, 120.0, 86400.0]');
 CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace));
 INSERT INTO inheritance VALUES('root','["root"]');
 INSERT INTO inheritance VALUES('foo','["foo", "root"]');

@@ -1091,8 +1091,13 @@ class BroadcastConfigValidator(CylcConfigValidator):
         """Coerce an ISO 8601 interval into seconds.
 
         Examples:
-            >>> CylcConfigValidator.coerce_interval('PT1H', None)
+            >>> BroadcastConfigValidator.coerce_interval('PT1H', None)
             3600.0
+            >>> x = BroadcastConfigValidator.coerce_interval('62', None)
+            >>> x
+            62.0
+            >>> str(x)
+            'PT1M2S'
 
         """
         value = cls.strip_and_unquote(keys, value)
