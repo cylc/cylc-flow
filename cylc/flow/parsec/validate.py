@@ -1045,7 +1045,7 @@ class CylcConfigValidator(ParsecValidator):
         return val
 
 
-# BACK COMPAT: post_load_db_coerce
+# BACK COMPAT: BroadcastConfigValidator
 # The DB at 8.0.x stores Interval values as neither ISO8601 duration
 # string or DurationFloat. This has been fixed at 8.1.0, and
 # the following class acts as a bridge between fixed and broken.

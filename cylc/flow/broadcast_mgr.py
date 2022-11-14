@@ -202,6 +202,17 @@ class BroadcastMgr:
             "key": key,
             "value": value})
 
+    # BACK COMPAT: post_load_db_coerce
+    # The DB at 8.0.x stores Interval values as neither ISO8601 duration
+    # string or DurationFloat. This has been fixed at 8.1.0.
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/5138
+    # from:
+    #    8.0.x
+    # to:
+    #    8.1.x
+    # remove at:
+    #    8.x
     def post_load_db_coerce(self):
         """Coerce DB loaded values to config objects, i.e. DurationFloat."""
         for namespaces in self.broadcasts.values():
