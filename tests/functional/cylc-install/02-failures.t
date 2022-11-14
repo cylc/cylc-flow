@@ -135,7 +135,7 @@ for DIR in 'work' 'share' 'log' '_cylc-install'; do
     mkdir ${DIR}
     run_fail "${TEST_NAME}" cylc install
     contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed. - ${DIR} exists in source directory.
+WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed - ${DIR} exists in source directory.
 __ERR__
     purge_rnd_workflow
     popd || exit 1
