@@ -107,7 +107,7 @@ def get_option_parser():
         if isinstance(option, OptionSettings):
             parser.add_option(*option.args, **option.kwargs)
         else:
-            parser.add_option(*option[ARGS], **option[KWARGS])
+            parser.add_option(*option['args'], **option['kwargs'])
 
     parser.set_defaults(is_validate=True)
 
