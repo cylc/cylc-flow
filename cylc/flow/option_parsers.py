@@ -51,23 +51,6 @@ ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
 SHORTLINK_TO_ICP_DOCS = "https://bit.ly/3MYHqVh"
-
-APPEND = 'append'
-ARGS = 'args'
-KWARGS = 'kwargs'
-HELP = 'help'
-ACTION = 'action'
-STORE = 'store'
-STORE_CONST = 'store_const'
-STORE_TRUE = 'store_true'
-SOURCES = 'sources'
-DEFAULT = 'default'
-DEST = 'dest'
-METAVAR = 'metavar'
-CHOICES = 'choices'
-OPTS = 'opts'
-ALL = 'all'
-USEIF = 'useif'
 DOUBLEDASH = '--'
 
 
@@ -131,7 +114,7 @@ ICP_OPTION = OptionSettings(
         f" {SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
     ),
     metavar="CYCLE_POINT or OFFSET",
-    action=STORE,
+    action='store',
     dest="icp"
 )
 
@@ -361,20 +344,20 @@ class CylcOptionParser(OptionParser):
     STD_OPTIONS = [
         OptionSettings(
             ['-q', '--quiet'], help='Decrease verbosity.',
-            action='decrement', dest='verbosity', useif=ALL),
+            action='decrement', dest='verbosity', useif='all'),
         OptionSettings(
             ['-v', '--verbose'], help='Increase Verbosity',
             dest='verbosity', action='count',
-            default=env_to_verbosity(os.environ), useif=ALL),
+            default=env_to_verbosity(os.environ), useif='all'),
         OptionSettings(
             ['--debug'], help='Equivalent to -v -v',
-            dest='verbosity', action=STORE_CONST, const=2, useif=ALL),
+            dest='verbosity', action='store_const', const=2, useif='all'),
         OptionSettings(
             ['--no-timestamp'], help='Don\'t timestamp logged messages.',
             action='store_false', dest='log_timestamp',
-            default=True, useif=ALL),
+            default=True, useif='all'),
         OptionSettings(
-            ['--color', '--color'], metavar='WHEN', action=STORE,
+            ['--color', '--color'], metavar='WHEN', action='store',
             default='auto', choices=['never', 'auto', 'always'],
             help=(
                 "When to use color/bold text in terminal output."
@@ -389,7 +372,7 @@ class CylcOptionParser(OptionParser):
                 " For task messaging connections see"
                 " site/user config file documentation."
             ),
-            action=STORE, default=None, dest='comms_timeout', useif='comms'),
+            action='store', default=None, dest='comms_timeout', useif='comms'),
         OptionSettings(
             ['-s', '--set'], metavar='NAME=VALUE',
             help=(
@@ -417,7 +400,9 @@ class CylcOptionParser(OptionParser):
                 " but can be set again on the \"cylc play\""
                 " command line if they need to be overridden."
             ),
-            action=STORE, default=None, dest='templatevars_file', useif='jset')
+            action='store', default=None, dest='templatevars_file',
+            useif='jset'
+        )
     ]
 
     def __init__(
@@ -498,7 +483,7 @@ class CylcOptionParser(OptionParser):
         opts = []
         for opt in self.STD_OPTIONS:
             if (
-                opt.useif == ALL
+                opt.useif == 'all'
                 or hasattr(self, opt.useif) and getattr(self, opt.useif)
             ):
                 opts.append(opt)
@@ -767,16 +752,16 @@ def add_sources_to_helps(options, modify=None):
     """
     modify = {} if modify is None else modify
     for option in options:
-        if hasattr(option, SOURCES):
+        if hasattr(option, 'sources'):
             sources = list(option.sources)
             for match, sub in modify.items():
                 if match in option.sources:
                     sources.append(sub)
                     sources.remove(match)
 
-            option.kwargs[HELP] = cparse(
+            option.kwargs['help'] = cparse(
                 f'<cyan>[{", ".join(sources)}]</cyan>'
-                f' {option.kwargs[HELP]}')
+                f' {option.kwargs["help"]}')
     return options
 
 
@@ -823,7 +808,7 @@ def cleanup_sysargv(
                 index = sys.argv.index(arg)
                 sys.argv.pop(index)
                 if (
-                    compound_opts_by_dest[unwanted_opt].kwargs[ACTION]
+                    compound_opts_by_dest[unwanted_opt].kwargs['action']
                     not in ['store_true', 'store_false']
                 ):
                     sys.argv.pop(index)

@@ -26,12 +26,15 @@ from pytest import param
 import cylc.flow.flags
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP, Options, combine_options, combine_options_pair,
-    OptionSettings,
-    ARGS, HELP, KWARGS, SOURCES, cleanup_sysargv, USEIF
+    OptionSettings, cleanup_sysargv
 )
 
 
 USAGE_WITH_COMMENT = "usage \n # comment"
+ARGS = 'args'
+KWARGS = 'kwargs'
+SOURCES = 'sources'
+USEIF = 'useif'
 
 
 @pytest.fixture(scope='module')

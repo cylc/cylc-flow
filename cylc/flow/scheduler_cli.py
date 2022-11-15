@@ -45,7 +45,6 @@ from cylc.flow.option_parsers import (
     OptionSettings,
     Options,
     ICP_OPTION,
-    APPEND, ARGS, KWARGS, STORE, STORE_TRUE
 )
 from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
@@ -126,7 +125,7 @@ PLAY_ICP_OPTION.sources = {'play'}
 RUN_MODE = OptionSettings(
     ["-m", "--mode"],
     help="Run mode: live, dummy, simulation (default live).",
-    metavar="STRING", action=STORE, dest="run_mode",
+    metavar="STRING", action='store', dest="run_mode",
     choices=['live', 'dummy', 'simulation'],
 )
 
@@ -137,11 +136,11 @@ PLAY_OPTIONS = [
     OptionSettings(
         ["-n", "--no-detach", "--non-daemon"],
         help="Do not daemonize the scheduler (infers --format=plain)",
-        action=STORE_TRUE, dest="no_detach", sources={'play'}),
+        action='store_true', dest="no_detach", sources={'play'}),
     OptionSettings(
         ["--profile"],
         help="Output profiling (performance) information",
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         dest="profile_mode",
         sources={'play'},
@@ -154,7 +153,7 @@ PLAY_OPTIONS = [
             " not in the sequence, the next on-sequence point will"
             " be used. (Not to be confused with the initial cycle point)"),
         metavar="CYCLE_POINT",
-        action=STORE,
+        action='store',
         dest="startcp",
         sources={'play'},
     ),
@@ -165,7 +164,7 @@ PLAY_OPTIONS = [
             " the workflow config option"
             " '[scheduling]final cycle point'. "),
         metavar="CYCLE_POINT",
-        action=STORE,
+        action='store',
         dest="fcp",
         sources={'play'},
     ),
@@ -178,7 +177,7 @@ PLAY_OPTIONS = [
             " the workflow config option"
             " '[scheduling]stop after cycle point'."),
         metavar="CYCLE_POINT",
-        action=STORE,
+        action='store',
         dest="stopcp",
         sources={'play'},
     ),
@@ -192,14 +191,14 @@ PLAY_OPTIONS = [
             " sub-graph of the workflow will run if selected tasks do"
             " not lead on to the full graph."),
         metavar="TASK_ID",
-        action=APPEND,
+        action='append',
         dest="starttask",
         sources={'play'},
     ),
     OptionSettings(
         ["--pause"],
         help="Pause the workflow immediately on start up.",
-        action=STORE_TRUE,
+        action='store_true',
         dest="paused_start",
         sources={'play'},
     ),
@@ -207,14 +206,14 @@ PLAY_OPTIONS = [
         ["--hold-after", "--hold-cycle-point", "--holdcp"],
         help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT",
-        action=STORE,
+        action='store',
         dest="holdcp",
         sources={'play'},
     ),
     OptionSettings(
         ["--reference-log"],
         help="Generate a reference log for use in reference ",
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         dest="genref",
         sources={'play'},
@@ -222,7 +221,7 @@ PLAY_OPTIONS = [
     OptionSettings(
         ["--reference-test"],
         help="Do a test run against a previously generated reference.",
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         dest="reftest",
         sources={'play'},
@@ -234,7 +233,7 @@ PLAY_OPTIONS = [
             " If not specified, a host will be selected using"
             " the '[scheduler]run hosts' global config."),
         metavar="HOST",
-        action=STORE,
+        action='store',
         dest="host",
         sources={'play'},
     ),
@@ -253,14 +252,14 @@ PLAY_OPTIONS = [
             " These are used in combination with those specified"
             " [scheduler][main loop]plugins. Can be used multiple times."),
         metavar="PLUGIN_NAME",
-        action=APPEND,
+        action='append',
         dest="main_loop",
         sources={'play'},
     ),
     OptionSettings(
         ["--abort-if-any-task-fails"],
         help="If set workflow will abort with status 1 if any task fails.",
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         dest="abort_if_any_task_fails",
         sources={'play'},
@@ -277,7 +276,7 @@ PLAY_OPTIONS = [
             ' it was previously run with. Use this flag'
             ' to disable this check.'
         ),
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         sources={'play'}
     ),
@@ -287,7 +286,7 @@ PLAY_OPTIONS = [
             'Allow the workflow to be restarted with'
             ' a newer version of Cylc.'
         ),
-        action=STORE_TRUE,
+        action='store_true',
         default=False,
         sources={'play'}
     ),
@@ -309,7 +308,7 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         if isinstance(option, OptionSettings):
             parser.add_option(*option.args, **option.kwargs)
         else:
-            parser.add_option(*option[ARGS], **option[KWARGS])
+            parser.add_option(*option['args'], **option['kwargs'])
 
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI

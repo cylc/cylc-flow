@@ -46,7 +46,6 @@ from cylc.flow.option_parsers import (
     OptionSettings,
     Options,
     ICP_OPTION,
-    ARGS, KWARGS
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
