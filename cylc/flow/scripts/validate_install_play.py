@@ -33,7 +33,7 @@ from cylc.flow.scripts.validate import (
     wrapped_main as validate_main
 )
 from cylc.flow.scripts.install import (
-    INSTALL_OPTIONS, install, get_source_location
+    INSTALL_OPTIONS, install_cli as cylc_install, get_source_location
 )
 from cylc.flow.scheduler_cli import PLAY_OPTIONS
 from cylc.flow.option_parsers import (
@@ -91,8 +91,8 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     log_subcommand('validate', source)
     validate_main(parser, options, str(source))
 
-    log_subcommand('install', '.')
-    workflow_id = install(options, workflow_id)
+    log_subcommand('install', source)
+    workflow_id = cylc_install(options, workflow_id)
 
     cleanup_sysargv(
         'play',

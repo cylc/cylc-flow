@@ -269,12 +269,13 @@ def main(
 def install_cli(
     opts: 'Values',
     reg: Optional[str] = None
-) -> None:
+) -> str:
     """Install workflow and scan for already-running instances."""
     wf_name = install(opts, reg)
     asyncio.run(
         scan(wf_name, not opts.no_ping)
     )
+    return wf_name
 
 
 def install(
