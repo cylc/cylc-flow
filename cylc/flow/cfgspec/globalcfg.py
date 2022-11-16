@@ -263,6 +263,13 @@ EVENTS_SETTINGS = {  # workflow events
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on inactivity``.
+    ''',
+    'restart timeout': '''
+        How long to wait for intervention on restarting a completed workflow.
+        The timer stops if any task is triggered.
+
+        .. versionadded:: 8.1.0
+
     '''
 }
 
@@ -839,6 +846,8 @@ with Conf('global.cylc', desc='''
                     vdr_type = VDR.V_INTERVAL
                     if item == "stall timeout":
                         default = DurationFloat(3600)
+                    elif item == "restart timeout":
+                        default = DurationFloat(120)
                     else:
                         default = None
                 Conf(item, vdr_type, default, desc=desc)
