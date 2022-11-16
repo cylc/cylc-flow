@@ -39,6 +39,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "$WORKFLOW_NAME" --no-detach
 
 # Create a fake old contact file on the remote host
+# shellcheck disable=SC2259
 echo | $SSH_CMD "cat > \$HOME/cylc-run/${WORKFLOW_NAME}/.service/contact" << EOF
 CYLC_API=5
 CYLC_VERSION=8.0.0
