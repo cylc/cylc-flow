@@ -30,6 +30,7 @@ from cylc.flow.cfgspec.workflow import SPEC
 from cylc.flow.id import Tokens
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
+from cylc.flow.parsec.util import listjoin
 from cylc.flow.parsec.validate import BroadcastConfigValidator
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
@@ -115,6 +116,10 @@ class BroadcastMgr:
                             elif (not cancel_keys_list or
                                     keys + [key] in cancel_keys_list):
                                 stuff[key] = None
+                                if isinstance(value, list):
+                                    value = listjoin(value)
+                                else:
+                                    value = str(value)
                                 setting = {key: value}
                                 for rkey in reversed(keys):
                                     setting = {rkey: setting}
