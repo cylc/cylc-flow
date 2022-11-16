@@ -29,12 +29,14 @@ Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
+[#5231](https://github.com/cylc/cylc-flow/pull/5231) - stay up for a timeout
+period on restarting a completed workflow, to allow for manual triggering.
+
 ### Fixes
 
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Fixes
