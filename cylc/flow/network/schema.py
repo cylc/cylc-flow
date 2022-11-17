@@ -703,6 +703,12 @@ class Workflow(ObjectType):
     pruned = Boolean()
 
 
+class RuntimeSetting(ObjectType):
+    """Key = val setting, e.g. for [runtime][X][environment]"""
+    key = String(default_value=None)
+    value = String(default_value=None)
+
+
 class Runtime(ObjectType):
     class Meta:
         description = sstrip("""
@@ -728,9 +734,25 @@ class Runtime(ObjectType):
     execution_time_limit = String(default_value=None)
     submission_polling_intervals = String(default_value=None)
     submission_retry_delays = String(default_value=None)
-    directives = GenericScalar(resolver=resolve_json_dump)
-    environment = GenericScalar(resolver=resolve_json_dump)
-    outputs = GenericScalar(resolver=resolve_json_dump)
+    directives = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+    environment = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+    outputs = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+
+
+RUNTIME_FIELD_TO_CFG_MAP = {
+    **{
+        k: k.replace('_', ' ') for k in Runtime.__dict__
+        if not k.startswith('_')
+    },
+    'init_script': 'init-script',
+    'env_script': 'env-script',
+    'err_script': 'err-script',
+    'exit_script': 'exit-script',
+    'pre_script': 'pre-script',
+    'post_script': 'post-script',
+    'work_sub_dir': 'work sub-directory',
+}
+"""Map GQL Runtime fields' names to workflow config setting names."""
 
 
 class Job(ObjectType):
