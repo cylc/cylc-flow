@@ -23,13 +23,15 @@ set_test_number 5
 
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 
+cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc" .
+cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/reference.log" .
+
 run_ok "${TEST_NAME_BASE}-from-path" \
     cylc vip --no-detach --debug \
     --workflow-name "${WORKFLOW_NAME}" \
     --initial-cycle-point=1300 \
     --no-run-name \
     --reference-test \
-    "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}"
 
 grep_ok "13000101T0000Z" "${TEST_NAME_BASE}-from-path.stdout"
 

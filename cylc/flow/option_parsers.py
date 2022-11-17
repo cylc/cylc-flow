@@ -489,11 +489,6 @@ class CylcOptionParser(OptionParser):
                 opts.append(opt)
         return opts
 
-    def add_std_option(self, *args, **kwargs):
-        """Add a standard option, ignoring override."""
-        with suppress(OptionConflictError):
-            self.add_option(*args, **kwargs)
-
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
         for option in self.get_std_options():
