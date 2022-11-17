@@ -36,7 +36,7 @@ mkdir -p 'lib/python'
 cp "${WORKFLOW_RUN_DIR}/faker_succ.py" 'lib/python/faker.py'
 
 # Validate the test workflow.
-run_ok "${TEST_NAME_BASE}-val" cylc val --debug "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-val" cylc validate --debug "${WORKFLOW_NAME}"
 
 # Run the first cycle, till auto shutdown by task.
 TEST_NAME="${TEST_NAME_BASE}-run"
@@ -50,7 +50,7 @@ grep_ok 'NAME is bob' '2010.foo.out'
 cp "${WORKFLOW_RUN_DIR}/faker_fail.py" 'lib/python/faker.py'
 
 # Validate again (with the new xtrigger function).
-run_ok "${TEST_NAME_BASE}-val2" cylc val --debug "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-val2" cylc validate --debug "${WORKFLOW_NAME}"
 
 # Restart the workflow, to run the final cycle point.
 TEST_NAME="${TEST_NAME_BASE}-restart"

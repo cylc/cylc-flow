@@ -97,6 +97,7 @@ from cylc.flow.exceptions import PluginError, InputError
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
+    OptionSettings,
     Options
 )
 from cylc.flow.pathutil import (
@@ -112,6 +113,64 @@ from cylc.flow.workflow_files import (
 from cylc.flow.terminal import cli_function
 
 
+INSTALL_OPTIONS = [
+    OptionSettings(
+        ["--workflow-name", "-n"],
+        help="Install into ~/cylc-run/<WORKFLOW_NAME>/runN ",
+        action="store",
+        metavar="WORKFLOW_NAME",
+        default=None,
+        dest="workflow_name",
+        sources={'install'},
+    ),
+    OptionSettings(
+        ["--symlink-dirs"],
+        help=(
+            "Enter a comma-delimited list, in the form"
+            " 'log=path/to/store, share = $HOME/some/path, ...'."
+            " Use this option to override the global.cylc configuration"
+            " for local symlinks for the run, log, work, share and"
+            " share/cycle directories. Enter"
+            " an empty list '' to skip making localhost symlink dirs."),
+        action="store",
+        dest="symlink_dirs",
+        sources={'install'},
+    ),
+    OptionSettings(
+        ["--run-name"],
+        help=(
+            "Give the run a custom name instead of automatically"
+            " numbering it."),
+        action="store",
+        metavar="RUN_NAME",
+        default=None,
+        dest="run_name",
+        sources={'install'},
+    ),
+    OptionSettings(
+        ["--no-run-name"],
+        help=(
+            "Install the workflow directly into"
+            " ~/cylc-run/<workflow_name>,"
+            " without an automatic run number or custom run name."),
+        action="store_true",
+        default=False,
+        dest="no_run_name",
+        sources={'install'},
+    ),
+    OptionSettings(
+        ['--no-ping'],
+        help=(
+            "When scanning for active instances of the workflow, "
+            "do not attempt to contact the schedulers to get status."),
+        action='store_true',
+        default=False,
+        dest='no_ping',
+        sources={'install'},
+    )
+]
+
+
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
@@ -124,59 +183,10 @@ def get_option_parser() -> COP:
         ]
     )
 
-    parser.add_option(
-        "--workflow-name", "-n",
-        help="Install into ~/cylc-run/<WORKFLOW_NAME>/runN ",
-        action="store",
-        metavar="WORKFLOW_NAME",
-        default=None,
-        dest="workflow_name")
+    options = parser.get_cylc_rose_options() + INSTALL_OPTIONS
 
-    parser.add_option(
-        "--symlink-dirs",
-        help=(
-            "Enter a comma-delimited list, in the form "
-            "'log=path/to/store, share = $HOME/some/path, ...'. "
-            "Use this option to override the global.cylc configuration for "
-            "local symlinks for the run, log, work, share and "
-            "share/cycle directories. "
-            "Enter an empty list '' to skip making localhost symlink dirs."
-        ),
-        action="store",
-        dest="symlink_dirs"
-    )
-
-    parser.add_option(
-        "--run-name",
-        help=(
-            "Give the run a custom name instead of automatically numbering it."
-        ),
-        action="store",
-        metavar="RUN_NAME",
-        default=None,
-        dest="run_name")
-
-    parser.add_option(
-        "--no-run-name",
-        help=(
-            "Install the workflow directly into ~/cylc-run/<workflow_name>, "
-            "without an automatic run number or custom run name."
-        ),
-        action="store_true",
-        default=False,
-        dest="no_run_name")
-
-    parser.add_option(
-        "--no-ping",
-        help=(
-            "When scanning for active instances of the workflow, "
-            "do not attempt to contact the schedulers to get status."
-        ),
-        action="store_true",
-        default=False,
-        dest="no_ping")
-
-    parser.add_cylc_rose_options()
+    for option in options:
+        parser.add_option(*option.args, **option.kwargs)
 
     return parser
 
@@ -259,12 +269,13 @@ def main(
 def install_cli(
     opts: 'Values',
     reg: Optional[str] = None
-) -> None:
+) -> str:
     """Install workflow and scan for already-running instances."""
     wf_name = install(opts, reg)
     asyncio.run(
         scan(wf_name, not opts.no_ping)
     )
+    return wf_name
 
 
 def install(
@@ -320,5 +331,4 @@ def install(
                 entry_point.name,
                 exc
             ) from None
-
     return workflow_name

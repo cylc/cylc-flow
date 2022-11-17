@@ -26,6 +26,7 @@ use 'cylc view -i,--inline WORKFLOW' for comparison.
 """
 
 from ansimarkup import parse as cparse
+from copy import deepcopy
 from optparse import Values
 import sys
 
@@ -42,13 +43,55 @@ from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
+    OptionSettings,
     Options,
-    icp_option,
+    ICP_OPTION,
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
+from cylc.flow.scheduler_cli import RUN_MODE
+
+
+VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
+VALIDATE_RUN_MODE.sources = {'validate'}
+VALIDATE_ICP_OPTION = deepcopy(ICP_OPTION)
+VALIDATE_ICP_OPTION.sources = {'validate'}
+
+
+VALIDATE_OPTIONS = [
+    OptionSettings(
+        ["--check-circular"],
+        help=(
+            "Check for circular dependencies in graphs when the number of"
+            " tasks is greater than 100 (smaller graphs are always"
+            " checked). This can be slow when the number of"
+            " tasks is high."),
+        action="store_true",
+        default=False,
+        dest="check_circular",
+        sources={'validate'}
+    ),
+    OptionSettings(
+        ["--output", "-o"],
+        help="Specify a file name to dump the processed flow.cylc.",
+        metavar="FILENAME",
+        action="store",
+        dest="output",
+        sources={'validate'}
+    ),
+    OptionSettings(
+        ["--profile"],
+        help="Output profiling (performance) information",
+        action="store_true",
+        default=False,
+        dest="profile_mode",
+        sources={'validate'}
+    ),
+    VALIDATE_RUN_MODE,
+    VALIDATE_ICP_OPTION
+]
 
 
 def get_option_parser():
@@ -58,31 +101,13 @@ def get_option_parser():
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
-    parser.add_option(
-        "--check-circular",
-        help="Check for circular dependencies in graphs when the number of "
-             "tasks is greater than 100 (smaller graphs are always checked). "
-             "This can be slow when the number of "
-             "tasks is high.",
-        action="store_true", default=False, dest="check_circular")
+    validate_options = parser.get_cylc_rose_options() + VALIDATE_OPTIONS
 
-    parser.add_option(
-        "--output", "-o",
-        help="Specify a file name to dump the processed flow.cylc.",
-        metavar="FILENAME", action="store", dest="output")
-
-    parser.add_option(
-        "--profile", help="Output profiling (performance) information",
-        action="store_true", default=False, dest="profile_mode")
-
-    parser.add_option(
-        "-u", "--run-mode", help="Validate for run mode.", action="store",
-        default="live", dest="run_mode",
-        choices=['live', 'dummy', 'simulation'])
-
-    parser.add_option(icp_option)
-
-    parser.add_cylc_rose_options()
+    for option in validate_options:
+        if isinstance(option, OptionSettings):
+            parser.add_option(*option.args, **option.kwargs)
+        else:
+            parser.add_option(*option['args'], **option['kwargs'])
 
     parser.set_defaults(is_validate=True)
 
@@ -102,6 +127,10 @@ ValidateOptions = Options(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    wrapped_main(parser, options, workflow_id)
+
+
+def wrapped_main(parser: COP, options: 'Values', workflow_id: str) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()

@@ -201,7 +201,8 @@ ALIASES = {
     'ls': 'list',
     'shutdown': 'stop',
     'task-message': 'message',
-    'unhold': 'release'
+    'unhold': 'release',
+    'validate-install-play': 'vip'
 }
 
 
@@ -311,12 +312,6 @@ def match_command(command):
             for cmd in COMMANDS
             if cmd.startswith(command)
         },
-        *{
-            # search aliases
-            cmd
-            for alias, cmd in ALIASES.items()
-            if alias.startswith(command)
-        }
     }
     if len(possible_cmds) == 0:
         print(
