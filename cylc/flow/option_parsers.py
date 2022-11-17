@@ -20,7 +20,6 @@ import logging
 from itertools import product
 from optparse import (
     OptionParser,
-    OptionConflictError,
     Values,
     Option,
     IndentedHelpFormatter
@@ -689,7 +688,8 @@ def combine_options_pair(first_list, second_list):
           `command-B has an option `-f` or `--fortran`` then
           `command-A+B` will have options `--fortran` and `--file` but _not_
           `-f`, which would be confusing.
-        - Arguments only apply to a single component of the compound CLI script.
+        - Arguments only apply to a single component of the compound CLI
+          script.
 
     """
     output = []
@@ -814,6 +814,7 @@ def cleanup_sysargv(
     # replace source path with workflow ID.
     if str(source) in sys.argv:
         sys.argv.remove(str(source))
+    if workflow_id not in sys.argv:
         sys.argv.append(workflow_id)
 
 

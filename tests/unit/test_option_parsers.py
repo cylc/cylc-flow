@@ -382,6 +382,21 @@ def test_combine_options(inputs, expect):
             'play --foo something myworkflow'.split(),
             id='replace path'
         ),
+        param(
+            'vip --foo something'.split(),
+            {
+                'script_name': 'play',
+                'workflow_id': 'myworkflow',
+                'compound_script_opts': [
+                    OptionSettings(['--foo', '-f'])],
+                'script_opts': [
+                    OptionSettings(['--foo', '-f']),
+                ],
+                'source': './myworkflow',
+            },
+            'play --foo something myworkflow'.split(),
+            id='no path given'
+        ),
     ]
 )
 def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
@@ -510,4 +525,4 @@ class TestOptionSettings():
         first = OptionSettings(['--foo'])
         second = OptionSettings(['--foo'])
         third = OptionSettings(['--bar'])
-        assert first._in_list([second, third]) == True
+        assert first._in_list([second, third]) is True
