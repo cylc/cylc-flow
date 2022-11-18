@@ -122,7 +122,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install -y sqlite3 tree
+          sudo apt-get install -y sqlite3 tree at
 
       - name: Add .github/bin/ to PATH
         # Sets up mocked mail command & any other custom executables
