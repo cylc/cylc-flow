@@ -713,6 +713,7 @@ class Scheduler:
         """Load task pool from DB, for a restart."""
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
+        self.broadcast_mgr.post_load_db_coerce()
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
         self.workflow_db_mgr.pri_dao.select_task_pool_for_restart(

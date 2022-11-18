@@ -1,4 +1,11 @@
-script=printenv CYLC_FOOBAR
+script="""
+printenv CYLC_FOOBAR
+
+if (($CYLC_TASK_TRY_NUMBER < 2 )); then
+    false
+fi
+"""
+execution retry delays = PT1S, PT2S
 [environment]
     CYLC_FOOBAR="""
 foo

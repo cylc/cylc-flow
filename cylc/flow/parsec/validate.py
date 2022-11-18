@@ -27,7 +27,7 @@ import shlex
 from collections import deque
 from textwrap import dedent
 
-from metomi.isodatetime.data import Duration, TimePoint, Calendar
+from metomi.isodatetime.data import Duration, TimePoint
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError, ISO8601SyntaxError
@@ -904,9 +904,7 @@ class CylcConfigValidator(ParsecValidator):
             interval = DurationParser().parse(value)
         except IsodatetimeError as exc:
             raise IllegalValueError("ISO 8601 interval", keys, value, exc=exc)
-        days, seconds = interval.get_days_and_seconds()
-        return DurationFloat(
-            days * Calendar.default().SECONDS_IN_DAY + seconds)
+        return DurationFloat(interval.get_seconds())
 
     @classmethod
     def coerce_interval_list(cls, value, keys):
@@ -1045,6 +1043,76 @@ class CylcConfigValidator(ParsecValidator):
                     # Leave as string.
                     val = cls.strip_and_unquote([], value)
         return val
+
+
+# BACK COMPAT: BroadcastConfigValidator
+# The DB at 8.0.x stores Interval values as neither ISO8601 duration
+# string or DurationFloat. This has been fixed at 8.1.0, and
+# the following class acts as a bridge between fixed and broken.
+# url:
+#     https://github.com/cylc/cylc-flow/pull/5138
+# from:
+#    8.0.x
+# to:
+#    8.1.x
+# remove at:
+#    8.x
+class BroadcastConfigValidator(CylcConfigValidator):
+    """Validate and Coerce DB loaded broadcast config to internal objects."""
+    def __init__(self):
+        CylcConfigValidator.__init__(self)
+
+    @classmethod
+    def strip_and_unquote_list(cls, keys, value):
+        """Remove leading and trailing spaces and unquote list value.
+
+        Args:
+            keys (list):
+                Keys in nested dict that represents the raw configuration.
+            value (str):
+                String value in raw configuration that is supposed to be a
+                comma separated list.
+
+        Return (list):
+            Processed value as a list.
+
+        Examples:
+            >>> BroadcastConfigValidator.strip_and_unquote_list(
+            ...    None, '["1, 2", 3]'
+            ... )
+            ['1, 2', '3']
+        """
+        if value.startswith('[') and value.endswith(']'):
+            value = value.lstrip('[').rstrip(']')
+        return ParsecValidator.strip_and_unquote_list(keys, value)
+
+    @classmethod
+    def coerce_interval(cls, value, keys):
+        """Coerce an ISO 8601 interval into seconds.
+
+        Examples:
+            >>> BroadcastConfigValidator.coerce_interval('PT1H', None)
+            3600.0
+            >>> x = BroadcastConfigValidator.coerce_interval('62', None)
+            >>> x
+            62.0
+            >>> str(x)
+            'PT1M2S'
+
+        """
+        value = cls.strip_and_unquote(keys, value)
+        if not value:
+            # Allow explicit empty values.
+            return None
+        try:
+            interval = DurationParser().parse(value)
+        except IsodatetimeError:
+            try:
+                interval = DurationParser().parse(str(DurationFloat(value)))
+            except IsodatetimeError as exc:
+                raise IllegalValueError(
+                    "ISO 8601 interval", keys, value, exc=exc)
+        return DurationFloat(interval.get_seconds())
 
 
 def cylc_config_validate(cfg_root, spec_root):

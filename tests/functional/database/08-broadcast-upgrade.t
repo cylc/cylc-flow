@@ -15,17 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restart with broadcast to "[events]submission timeout".
-. "$(dirname "$0")/test_header"
-set_test_number 4
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+# Test restarting when there are broadcasts saved in the DB that need upgrading
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
-sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-  'SELECT * FROM broadcast_states' >'sqlite3.out'
-cmp_ok 'sqlite3.out' <<<'*|root|[events]submission timeout|PT1M'
+. "$(dirname "$0")/test_header"
+set_test_number 2
+
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+mkdir "${WORKFLOW_RUN_DIR}/.service"
+DB_PATH="${WORKFLOW_RUN_DIR}/.service/db"
+sqlite3 "$DB_PATH" < db.sqlite3
+
+run_ok "${TEST_NAME_BASE}-val" cylc validate "$WORKFLOW_NAME"
+
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play "${WORKFLOW_NAME}" --debug --no-detach --reference-test
+    cylc play -vv --no-detach --upgrade "$WORKFLOW_NAME"
+
 purge
 exit

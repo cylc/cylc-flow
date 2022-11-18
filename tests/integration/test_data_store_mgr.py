@@ -237,9 +237,9 @@ def test_delta_job_attr(harness):
     """Test method modifying job fields to job element."""
     schd, data = harness
     schd.data_store_mgr.delta_job_attr(
-        int_id(schd), 'exit_script', 'rm -v *')
+        int_id(schd), 'job_runner_name', 'at')
     assert schd.data_store_mgr.updated[JOBS][ext_id(schd)].messages != (
-        schd.data_store_mgr.added[JOBS][ext_id(schd)].exit_script
+        schd.data_store_mgr.added[JOBS][ext_id(schd)].job_runner_name
     )
 
 

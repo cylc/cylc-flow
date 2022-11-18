@@ -703,6 +703,35 @@ class Workflow(ObjectType):
     pruned = Boolean()
 
 
+class Runtime(ObjectType):
+    class Meta:
+        description = """
+Subset of runtime fields.
+
+Existing on 3 different node types:
+- Task/family definition (from the flow.cylc file)
+- Task/family cycle instance (includes any broadcasts on top of the definition)
+- Job (a record of what was run for a particular submit)
+"""
+    platform = String(default_value=None)
+    script = String(default_value=None)
+    init_script = String(default_value=None)
+    env_script = String(default_value=None)
+    err_script = String(default_value=None)
+    exit_script = String(default_value=None)
+    pre_script = String(default_value=None)
+    post_script = String(default_value=None)
+    work_sub_dir = String(default_value=None)
+    execution_polling_intervals = String(default_value=None)
+    execution_retry_delays = String(default_value=None)
+    execution_time_limit = String(default_value=None)
+    submission_polling_intervals = String(default_value=None)
+    submission_retry_delays = String(default_value=None)
+    directives = GenericScalar(resolver=resolve_json_dump)
+    environment = GenericScalar(resolver=resolve_json_dump)
+    outputs = GenericScalar(resolver=resolve_json_dump)
+
+
 class Job(ObjectType):
     class Meta:
         description = """Jobs."""
@@ -724,22 +753,12 @@ class Job(ObjectType):
     finished_time = String()
     job_id = ID()
     job_runner_name = String()
-    env_script = String()
-    err_script = String()
-    exit_script = String()
     execution_time_limit = Float()
     platform = String()
-    init_script = String()
     job_log_dir = String()
-    post_script = String()
-    pre_script = String()
-    script = String()
-    work_sub_dir = String()
-    environment = GenericScalar(resolver=resolve_json_dump)
-    directives = GenericScalar(resolver=resolve_json_dump)
-    param_var = GenericScalar(resolver=resolve_json_dump)
     extra_logs = graphene.List(String)
     messages = graphene.List(String)
+    runtime = Field(Runtime)
 
 
 class Task(ObjectType):
@@ -748,6 +767,7 @@ class Task(ObjectType):
     id = ID()  # noqa: A003 (required for definition)
     name = String()
     meta = Field(NodeMeta)
+    runtime = Field(Runtime)
     mean_elapsed_time = Float()
     depth = Int()
     proxies = graphene.List(
@@ -855,6 +875,7 @@ class TaskProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
+    runtime = Field(Runtime)
     state = String()
     cycle_point = String()
     is_held = Boolean()
@@ -937,6 +958,7 @@ class Family(ObjectType):
     id = ID()  # noqa: A003 (required for schema definition)
     name = String()
     meta = Field(NodeMeta)
+    runtime = Field(Runtime)
     depth = Int()
     proxies = graphene.List(
         lambda: FamilyProxy,
@@ -993,6 +1015,7 @@ class FamilyProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
+    runtime = Field(Runtime)
     state = String()
     states = graphene.List(String)
     state_totals = GenericScalar(resolver=resolve_state_totals)

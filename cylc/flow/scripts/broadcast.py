@@ -80,6 +80,7 @@ Broadcast cannot change [runtime] inheritance.
 """
 
 from ansimarkup import parse as cparse
+from copy import deepcopy
 from functools import partial
 import re
 import sys
@@ -99,6 +100,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.util import listjoin
 from cylc.flow.parsec.validate import cylc_config_validate
 from cylc.flow.print_tree import get_tree
 from cylc.flow.terminal import cli_function
@@ -185,7 +187,8 @@ def get_rdict(left, right=None):
             cur_dict[tail.strip()] = right
             tail = None
     upg({'runtime': {'__MANY__': rdict}}, 'test')
-    cylc_config_validate(rdict, SPEC['runtime']['__MANY__'])
+    # Perform validation, but don't coerce the original (deepcopy).
+    cylc_config_validate(deepcopy(rdict), SPEC['runtime']['__MANY__'])
     return rdict
 
 
@@ -218,6 +221,10 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
                 elif cancel_mode:
                     cur_setting[key] = None
                 else:
+                    if isinstance(item, list):
+                        item = listjoin(item)
+                    else:
+                        item = str(item)
                     cur_setting[key] = item
 
 
@@ -421,20 +428,24 @@ async def run(options: 'Values', workflow_id):
         report_set = True
 
     results = await pclient.async_request('graphql', mutation_kwargs)
-    for result in results['broadcast']['result']:
-        modified_settings = result['response'][0]
-        bad_options = result['response'][1]
-        if modified_settings:
-            ret['stdout'].append(
-                get_broadcast_change_report(
-                    modified_settings,
-                    is_cancel=report_cancel,
+    try:
+        for result in results['broadcast']['result']:
+            modified_settings = result['response'][0]
+            bad_options = result['response'][1]
+            if modified_settings:
+                ret['stdout'].append(
+                    get_broadcast_change_report(
+                        modified_settings,
+                        is_cancel=report_cancel,
+                    )
                 )
-            )
+        bad_result = report_bad_options(bad_options, is_set=report_set)
+    except TypeError:
+        # Catch internal API server errors
+        bad_result = cparse(f'<red>{results}</red>')
 
-    bad_opts = report_bad_options(bad_options, is_set=report_set)
-    if bad_opts:
-        ret['stderr'].append(f'ERROR: {bad_opts}')
+    if bad_result:
+        ret['stderr'].append(f'ERROR: {bad_result}')
         ret['exit'] = 1
     return ret
 

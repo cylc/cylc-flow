@@ -617,40 +617,6 @@ class TaskJobManager:
             raise exc
 
     @staticmethod
-    def _get_job_scripts(itask, rtconfig):
-        """Return pre-script, script, post-script for a job."""
-        script = rtconfig['script']
-        pre_script = rtconfig['pre-script']
-        post_script = rtconfig['post-script']
-        if itask.tdef.workflow_polling_cfg:
-            # Automatic workflow state polling script
-            comstr = (
-                "cylc workflow-state "
-                + " --task=" + itask.tdef.workflow_polling_cfg['task']
-                + " --point=" + str(itask.point)
-            )
-            if LOG.isEnabledFor(DEBUG):
-                comstr += ' --debug'
-            for key, fmt in [
-                    ('user', ' --%s=%s'),
-                    ('host', ' --%s=%s'),
-                    ('interval', ' --%s=%d'),
-                    ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s')]:
-                if rtconfig['workflow state polling'][key]:
-                    comstr += fmt % (key,
-                                     rtconfig['workflow state polling'][key])
-            if rtconfig['workflow state polling']['message']:
-                comstr += " --message='%s'" % (
-                    rtconfig['workflow state polling']['message'])
-            else:
-                comstr += (" --status=" +
-                           itask.tdef.workflow_polling_cfg['status'])
-            comstr += " " + itask.tdef.workflow_polling_cfg['workflow']
-            script = "echo " + comstr + "\n" + comstr
-        return pre_script, script, post_script
-
-    @staticmethod
     def _job_cmd_out_callback(workflow, itask, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
         if cmd_ctx.cmd_kwargs.get("host"):
@@ -1307,7 +1273,6 @@ class TaskJobManager:
 
         Note that rtconfig should have any broadcasts applied.
         """
-        scripts = self._get_job_scripts(itask, rtconfig)
         return {
             # NOTE: these fields should match get_simulation_job_conf
             # TODO: turn this into a namedtuple or similar
@@ -1330,9 +1295,9 @@ class TaskJobManager:
             'job_d': job_d,
             'namespace_hierarchy': itask.tdef.namespace_hierarchy,
             'param_var': itask.tdef.param_var,
-            'post-script': scripts[2],
-            'pre-script': scripts[0],
-            'script': scripts[1],
+            'post-script': rtconfig['post-script'],
+            'pre-script': rtconfig['pre-script'],
+            'script': rtconfig['script'],
             'submit_num': itask.submit_num,
             'flow_nums': itask.flow_nums,
             'workflow_name': workflow,
