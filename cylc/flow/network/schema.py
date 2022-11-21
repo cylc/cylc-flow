@@ -703,16 +703,23 @@ class Workflow(ObjectType):
     pruned = Boolean()
 
 
+class RuntimeSetting(ObjectType):
+    """Key = value setting for a `[runtime][<namespace>]` configuration."""
+    key = String(default_value=None)
+    value = String(default_value=None)
+
+
 class Runtime(ObjectType):
     class Meta:
-        description = """
-Subset of runtime fields.
+        description = sstrip("""
+            Subset of runtime fields.
 
-Existing on 3 different node types:
-- Task/family definition (from the flow.cylc file)
-- Task/family cycle instance (includes any broadcasts on top of the definition)
-- Job (a record of what was run for a particular submit)
-"""
+            Existing on 3 different node types:
+            - Task/family definition (from the flow.cylc file)
+            - Task/family cycle instance (includes any broadcasts on top
+              of the definition)
+            - Job (a record of what was run for a particular submit)
+        """)
     platform = String(default_value=None)
     script = String(default_value=None)
     init_script = String(default_value=None)
@@ -727,9 +734,25 @@ Existing on 3 different node types:
     execution_time_limit = String(default_value=None)
     submission_polling_intervals = String(default_value=None)
     submission_retry_delays = String(default_value=None)
-    directives = GenericScalar(resolver=resolve_json_dump)
-    environment = GenericScalar(resolver=resolve_json_dump)
-    outputs = GenericScalar(resolver=resolve_json_dump)
+    directives = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+    environment = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+    outputs = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+
+
+RUNTIME_FIELD_TO_CFG_MAP = {
+    **{
+        k: k.replace('_', ' ') for k in Runtime.__dict__
+        if not k.startswith('_')
+    },
+    'init_script': 'init-script',
+    'env_script': 'env-script',
+    'err_script': 'err-script',
+    'exit_script': 'exit-script',
+    'pre_script': 'pre-script',
+    'post_script': 'post-script',
+    'work_sub_dir': 'work sub-directory',
+}
+"""Map GQL Runtime fields' names to workflow config setting names."""
 
 
 class Job(ObjectType):
@@ -1226,7 +1249,7 @@ async def mutator(
     root: Optional[Any],
     info: 'ResolveInfo',
     *,
-    command: str,
+    command: Optional[str] = None,
     workflows: Optional[List[str]] = None,
     exworkflows: Optional[List[str]] = None,
     **kwargs: Any
@@ -1241,11 +1264,13 @@ async def mutator(
         root: Parent field (if any) value object.
         info: GraphQL execution info.
         command: Mutation command name (name of method of
-            cylc.flow.network.resolvers.Resolvers or
-            Scheduler command_<name> method).
+            cylc.flow.network.resolvers.Resolvers or Scheduler command_<name>
+            method). If None, uses mutation class name converted to snake_case.
         workflows: List of workflow IDs.
         exworkflows: List of workflow IDs.
     """
+    if command is None:
+        command = to_snake_case(info.field_name)
     if workflows is None:
         workflows = []
     if exworkflows is None:
@@ -1465,7 +1490,7 @@ class Broadcast(Mutation):
             *not* clear all-cycle or all-namespace broadcasts.
 
         ''')
-        resolver = partial(mutator, command='broadcast')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1524,7 +1549,7 @@ class SetHoldPoint(Mutation):
             Set workflow hold after cycle point. All tasks after this point
             will be held.
         ''')
-        resolver = partial(mutator, command='set_hold_point')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1543,7 +1568,7 @@ class Pause(Mutation):
 
             This suspends submission of tasks.
         ''')
-        resolver = partial(mutator, command='pause')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1588,7 +1613,7 @@ class ReleaseHoldPoint(Mutation):
 
             Held tasks do not submit their jobs even if ready to run.
         ''')
-        resolver = partial(mutator, command='release_hold_point')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1603,7 +1628,7 @@ class Resume(Mutation):
 
             See also the opposite command `pause`.
         ''')
-        resolver = partial(mutator, command='resume')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1646,7 +1671,7 @@ class SetVerbosity(Mutation):
             for example, if you choose `WARNING`, only warnings and critical
             messages will be logged.
         ''')
-        resolver = partial(mutator, command='set_verbosity')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1662,7 +1687,7 @@ class SetGraphWindowExtent(Mutation):
             of the data-store graph window.
 
         ''')
-        resolver = partial(mutator, command='set_graph_window_extent')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1687,7 +1712,7 @@ class Stop(Mutation):
             be executed prior to shutdown, unless
             the stop mode is `{WorkflowStopMode.Now.name}`.
         ''')
-        resolver = partial(mutator, command='stop')
+        resolver = mutator
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
@@ -1775,13 +1800,33 @@ class FlowMutationArguments:
             This should be a list of flow numbers OR a single-item list
             containing one of the following three strings:
 
-            Alternatively this may be a single-item list containing one of
-            the following values:
-
             * {FLOW_ALL} - Triggered tasks belong to all active flows
               (default).
             * {FLOW_NEW} - Triggered tasks are assigned to a new flow.
             * {FLOW_NONE} - Triggered tasks do not belong to any flow.
+        ''')
+    )
+    flow_wait = Boolean(
+        default_value=False,
+        description=sstrip('''
+            Should the workflow "wait" or "continue on" from this task?
+
+            If `false` the scheduler will spawn and run downstream tasks
+            as normal (default).
+
+            If `true` the scheduler will not spawn the downstream tasks
+            unless it has been caught by the same flow at a later time.
+
+            For example you might set this to True to trigger a task
+            ahead of a flow, where you don't want the scheduler to
+            "continue on" from this task until the flow has caught up
+            with it.
+        ''')
+    )
+    flow_descr = String(
+        description=sstrip('''
+            If starting a new flow, this field can be used to provide the
+            new flow with a description for later reference.
         ''')
     )
 
@@ -1793,7 +1838,7 @@ class Hold(Mutation, TaskMutation):
 
             Held tasks do not submit their jobs even if ready to run.
         ''')
-        resolver = partial(mutator, command='hold')
+        resolver = mutator
 
 
 class Release(Mutation, TaskMutation):
@@ -1803,7 +1848,7 @@ class Release(Mutation, TaskMutation):
 
             See also the opposite command `hold`.
         ''')
-        resolver = partial(mutator, command='release')
+        resolver = mutator
 
 
 class Kill(Mutation, TaskMutation):
@@ -1877,29 +1922,7 @@ class Trigger(Mutation, TaskMutation):
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        flow_wait = Boolean(
-            default_value=False,
-            description=sstrip('''
-                Should the workflow "wait" or "continue on" from this task?
-
-                If `false` the scheduler will spawn and run downstream tasks
-                as normal (default).
-
-                If `true` the scheduler will not spawn the downstream tasks
-                unless it has been caught by the same flow at a later time.
-
-                For example you might set this to True to trigger a task
-                ahead of a flow, where you don't want the scheduled to
-                "continue on" from this task until the flow has caught up
-                with it.
-            ''')
-        )
-        flow_descr = String(
-            description=sstrip('''
-                If starting a new flow, this field can be used to provide the
-                new flow with a description for later reference.
-            ''')
-        )
+        ...
 
 
 def _mut_field(cls):

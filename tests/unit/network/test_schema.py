@@ -19,7 +19,13 @@ from inspect import isclass
 
 import pytest
 
-from cylc.flow.network.schema import sort_elements, SortArgs
+from cylc.flow.cfgspec.workflow import SPEC as WORKFLOW_SPEC
+from cylc.flow.network.schema import (
+    RUNTIME_FIELD_TO_CFG_MAP,
+    Runtime,
+    sort_elements,
+    SortArgs,
+)
 
 
 @dataclass
@@ -82,3 +88,14 @@ def test_sort_args(elements, sort_args, expected_result):
     else:
         sort_elements(elements, args)
         assert elements == expected_result
+
+
+@pytest.mark.parametrize(
+    'field_name', RUNTIME_FIELD_TO_CFG_MAP.keys()
+)
+def test_runtime_field_to_cfg_map(field_name: str):
+    """Ensure the Runtime type's fields can be mapped back to the workflow
+    config."""
+    cfg_name = RUNTIME_FIELD_TO_CFG_MAP[field_name]
+    assert field_name in Runtime.__dict__
+    assert WORKFLOW_SPEC.get('runtime', '__MANY__', cfg_name)
