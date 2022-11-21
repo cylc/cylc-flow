@@ -704,7 +704,7 @@ class Workflow(ObjectType):
 
 
 class RuntimeSetting(ObjectType):
-    """Key = val setting, e.g. for [runtime][X][environment]"""
+    """Key = value setting for a `[runtime][<namespace>]` configuration."""
     key = String(default_value=None)
     value = String(default_value=None)
 
@@ -1818,7 +1818,7 @@ class FlowMutationArguments:
             unless it has been caught by the same flow at a later time.
 
             For example you might set this to True to trigger a task
-            ahead of a flow, where you don't want the scheduled to
+            ahead of a flow, where you don't want the scheduler to
             "continue on" from this task until the flow has caught up
             with it.
         ''')
