@@ -67,6 +67,14 @@ class CylcSuiteDBChecker(object):
                 ['cycle_point_format']):
             return row[0]
 
+    def get_remote_point_format_forward_compat(self):
+        """Query a remote suite database for a 'cycle point format' entry"""
+        for row in self.conn.execute(
+                r"SELECT value FROM " + CylcSuiteDAO.TABLE_WORKFLOW_PARAMS +
+                r" WHERE key==?",
+                ['cycle_point_format']):
+            return row[0]
+
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:
@@ -118,16 +126,34 @@ class CylcSuiteDBChecker(object):
         return self.suite_state_query(task, cycle, mask="status")[0]
 
     def task_state_met(self, task, cycle, status=None, message=None):
-        """used to check if a task is in a particular state"""
+        """Return True if:
+           task's state is "status"
+            or it has yielded output "message"
+        """
         res = self.suite_state_query(task, cycle, status, message)
+
         if status:
             return bool(res)
+
         elif message:
-            for outputs_str, in res:
-                for value in json.loads(outputs_str).values():
-                    if message == value:
-                        return True
-            return False
+            outputs = []
+            try:
+                # Cylc 7 task_outputs table: list of {label: message}
+                outputs = [
+                    val
+                    for item in res
+                    for val in json.loads(item[0]).values()
+                ]
+            except AttributeError:
+                # (no .values attribute)
+                # Cylc 8 task_outputs table: list of [message]
+                outputs = [
+                    out
+                    for item in res
+                    for out in json.loads(item[0])
+                ]
+
+            return message in outputs
 
     @staticmethod
     def validate_mask(mask):

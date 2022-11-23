@@ -181,6 +181,11 @@ class CylcSuiteDAO(object):
     TABLE_BROADCAST_STATES_CHECKPOINTS = "broadcast_states_checkpoints"
     TABLE_INHERITANCE = "inheritance"
     TABLE_SUITE_PARAMS = "suite_params"
+    # This Cylc 8 DB table is needed to allow suite-state
+    # xtriggers (and the `cylc suite-state` command) to
+    # work with Cylc 8 workflows.
+    # url: https://github.com/cylc/cylc-flow/issues/5237
+    TABLE_WORKFLOW_PARAMS = "workflow_params"
     TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
