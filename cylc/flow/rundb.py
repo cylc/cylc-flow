@@ -179,6 +179,7 @@ class CylcWorkflowDAO:
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_WORKFLOW_PARAMS = "workflow_params"
+    TABLE_SUITE_PARAMS = "suite_params"  # back compat
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"

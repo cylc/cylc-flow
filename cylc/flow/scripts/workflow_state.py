@@ -115,7 +115,10 @@ class WorkflowPoller(Poller):
             sys.stderr.write('\n')
 
         if connected and self.args['cycle']:
-            fmt = self.checker.get_remote_point_format()
+            try:
+                fmt = self.checker.get_remote_point_format()
+            except sqlite3.OperationalError:
+                fmt = self.checker.get_remote_point_format_back_compat()
             if fmt:
                 my_parser = TimePointParser()
                 my_point = my_parser.parse(self.args['cycle'], dump_format=fmt)

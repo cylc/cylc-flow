@@ -87,6 +87,22 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
+    def get_remote_point_format_back_compat(self):
+        """Query a remote workflow database for a 'cycle point format' entry"""
+        for row in self.conn.execute(
+            rf'''
+                SELECT
+                    value
+                FROM
+                    {CylcWorkflowDAO.TABLE_SUITE_PARAMS}
+                WHERE
+                    key==?
+            ''',  # nosec (table name is code constant)
+            ['cycle_point_format']
+        ):
+            return row[0]
+
+
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:
