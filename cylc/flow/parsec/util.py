@@ -20,6 +20,7 @@ The copy and override functions below assume values are either dicts
 """
 
 from copy import copy
+from collections import deque
 import re
 import sys
 
@@ -259,10 +260,10 @@ def m_override(target, sparse):
     """
     if not sparse:
         return
-    stack = [(sparse, target, [], OrderedDictWithDefaults())]
+    stack = deque([(sparse, target, [], OrderedDictWithDefaults())])
     defaults_list = []
     while stack:
-        source, dest, keylist, many_defaults = stack.pop(0)
+        source, dest, keylist, many_defaults = stack.popleft()
         if many_defaults:
             defaults_list.append((dest, many_defaults))
         for key, val in source.items():
