@@ -168,7 +168,7 @@ CLEAR_FIELD_MAP = {
     EDGES: set(),
     FAMILIES: set(),
     FAMILY_PROXIES: {'state_totals', 'states'},
-    JOBS: set(),
+    JOBS: {'messages'},
     TASKS: set(),
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
@@ -1955,12 +1955,17 @@ class DataStoreMgr:
         )
         if not job:
             return
-        j_delta = PbJob(stamp=f'{j_id}@{time()}')
-        j_delta.messages.append(msg)
-        self.updated[JOBS].setdefault(
+        j_delta = self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
-        ).MergeFrom(j_delta)
+        )
+        j_delta.stamp = f'{j_id}@{time()}'
+        # in case existing delta has not been processed
+        if j_delta.messages:
+            j_delta.messages.append(msg)
+        else:
+            j_delta.messages[:] = job.messages
+            j_delta.messages.append(msg)
         self.updates_pending = True
 
     def delta_job_attr(self, job_d, attr_key, attr_val):
