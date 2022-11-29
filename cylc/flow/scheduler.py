@@ -100,8 +100,10 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
+    get_localhost_install_target,
     get_platform,
-    is_platform_with_target_in_list)
+    is_platform_with_target_in_list
+)
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
@@ -116,8 +118,13 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_remote_mgr import (
-    REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
-    REMOTE_INIT_IN_PROGRESS)
+    REMOTE_FILE_INSTALL_255,
+    REMOTE_FILE_INSTALL_DONE,
+    REMOTE_INIT_255,
+    REMOTE_INIT_DONE,
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_INIT_FAILED
+)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
@@ -290,6 +297,9 @@ class Scheduler:
             pub_d=os.path.join(self.workflow_run_dir, 'log')
         )
         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+        # Map used to track incomplete remote inits for restart
+        # {install_target: platform}
+        self.incomplete_ri_map: Dict[str, Dict] = {}
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -594,8 +604,12 @@ class Scheduler:
         """Start the scheduler main loop."""
         try:
             if self.is_restart:
-                self.restart_remote_init()
                 self.task_job_mgr.task_remote_mgr.is_restart = True
+                self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                    self.config.get_validated_rsync_includes())
+                self.restart_remote_init()
+                self.command_poll_tasks(['*/*'])
+
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -744,25 +758,40 @@ class Scheduler:
             ):
                 distinct_install_target_platforms.append(itask.platform)
 
-        incomplete_init = False
         for platform in distinct_install_target_platforms:
+            # skip remote init for localhost
+            install_target = platform['install target']
+            if install_target == get_localhost_install_target():
+                continue
+            # set off remote init
             self.task_job_mgr.task_remote_mgr.remote_init(
                 platform, self.server.curve_auth,
                 self.server.client_pub_key_dir)
-            status = self.task_job_mgr.task_remote_mgr.remote_init_map[
-                platform['install target']]
-            if status in (REMOTE_INIT_IN_PROGRESS,
-                          REMOTE_FILE_INSTALL_IN_PROGRESS):
-                incomplete_init = True
-                break
-            if status == REMOTE_INIT_DONE:
-                self.task_job_mgr.task_remote_mgr.file_install(platform)
-        if incomplete_init:
-            # TODO: Review whether this sleep is needed.
-            sleep(1.0)
             # Remote init/file-install is done via process pool
             self.proc_pool.process()
-        self.command_poll_tasks(['*/*'])
+            # add platform to map (to be picked up on main loop)
+            self.incomplete_ri_map[install_target] = platform
+
+    def manage_remote_init(self):
+        """Manage the remote init/file install process for restarts.
+
+        * Called within the main loop.
+        * Starts file installation when Remote init is complete.
+        * Removes complete installations or installations encountering SSH
+          error (remote init will take place on next job submission).
+        """
+        for install_target, platform in list(self.incomplete_ri_map.items()):
+            status = self.task_job_mgr.task_remote_mgr.remote_init_map[
+                install_target]
+            if status == REMOTE_INIT_DONE:
+                self.task_job_mgr.task_remote_mgr.file_install(platform)
+            if status in [REMOTE_FILE_INSTALL_DONE,
+                          REMOTE_INIT_255,
+                          REMOTE_FILE_INSTALL_255,
+                          REMOTE_INIT_FAILED,
+                          REMOTE_FILE_INSTALL_FAILED]:
+                # Remove install target
+                self.incomplete_ri_map.pop(install_target)
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
@@ -1506,7 +1535,8 @@ class Scheduler:
 
             # Useful for debugging core scheduler issues:
             # self.pool.log_task_pool(logging.CRITICAL)
-
+            if self.incomplete_ri_map:
+                self.manage_remote_init()
             if self.pool.do_reload:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
