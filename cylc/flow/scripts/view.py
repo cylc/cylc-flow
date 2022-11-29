@@ -98,6 +98,10 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    _main(options, workflow_id)
+
+
+def _main(options: 'Values', workflow_id: str) -> None:
     workflow_id, _, flow_file = parse_id(
         workflow_id,
         src=True,
