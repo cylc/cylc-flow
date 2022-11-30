@@ -108,7 +108,6 @@ Opts = Options(get_option_parser())
                 "Multiple flow options must all be integer valued"
             )
         ),
- 
     ]
 )
 def test_validate(

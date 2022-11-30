@@ -39,15 +39,15 @@ from cylc.flow.workflow_status import StopMode
 from .flow_writer import flow_config_str
 
 
-def _make_src_flow(tmp_path, conf):
+def _make_src_flow(src_path, conf):
     """Construct a workflow on the filesystem"""
-    flow_run_dir = (tmp_path / str(uuid1()))
-    flow_run_dir.mkdir(parents=True, exist_ok=True)
+    flow_src_dir = (src_path / str(uuid1()))
+    flow_src_dir.mkdir(parents=True, exist_ok=True)
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
-    with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
+    with open((flow_src_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
         flow_file.write(conf)
-    return flow_run_dir
+    return flow_src_dir
 
 
 def _make_flow(

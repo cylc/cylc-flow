@@ -125,8 +125,8 @@ AGAINST_SOURCE_OPTION = OptionSettings(
         " have been set in the installation."
         " This is useful if you want to see how changes made to the workflow"
         " source would affect the installation if reinstalled."
-        " Note if this option is used the provided workflow must have been installed"
-        " by `cylc install`."
+        " Note if this option is used the provided workflow must have been"
+        " installed by `cylc install`."
     ),
     dest='against_source',
     action='store_true',
