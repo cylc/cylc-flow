@@ -29,7 +29,6 @@ from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.validate import (
     ValidateOptions,
-    _main as validate,
     get_option_parser as validate_gop,
 )
 from cylc.flow.scripts.install import (
@@ -453,30 +452,34 @@ def _source_workflow(run_dir, flow_src):
             opts: options set for cylc install.
 
     """
+    source = flow_src({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'initial cycle point': '1854',
+            'graph': {
+                'R1': 'foo'
+            }
+        }
+    })
+
+    workflow_name = 'cit-' + str(source.name)
+
     def _inner(cfg=None):
         # Object to store info about the setup.
         setup = SimpleNamespace()
 
         # Create a workflow source:
         if cfg is None:
-            setup.src = flow_src({
-                'scheduler': {
-                    'allow implicit tasks': True
-                },
-                'scheduling': {
-                    'initial cycle point': '1854',
-                    'graph': {
-                        'R1': 'foo'
-                    }
-                }
-            })
+            setup.src = source
         else:
             setup.src = flow_src(cfg)
 
         # Setup Opts:
         setup.opts = install_gop().get_default_values()
         setup.opts.no_run_name = True
-        setup.opts.workflow_name = 'cit-' + str(setup.src.name)
+        setup.opts.workflow_name = workflow_name
 
         # Carry out the installation:
         install(setup.opts, setup.src)
@@ -484,3 +487,4 @@ def _source_workflow(run_dir, flow_src):
         return setup
 
     yield _inner
+    rmtree(run_dir / workflow_name)
