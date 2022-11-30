@@ -109,6 +109,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
 
 async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
     workflow_id, _, flow_file = await parse_id_async(
+
         workflow_id,
         src=True,
         constraint='workflows',
