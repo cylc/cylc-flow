@@ -120,8 +120,13 @@ ICP_OPTION = OptionSettings(
 AGAINST_SOURCE_OPTION = OptionSettings(
     ['--against-source'],
     help=(
-        "Validate as if for reinstallation. If this option is selected"
-        " the argument can only be a workflow id."
+        "Load the workflow configuration from the source directory it was"
+        " installed from using any options (e.g. template variables) which"
+        " have been set in the installation."
+        " This is useful if you want to see how changes made to the workflow"
+        " source would affect the installation if reinstalled."
+        " Note if this option is used the provided workflow must have been installed"
+        " by `cylc install`."
     ),
     dest='against_source',
     action='store_true',
