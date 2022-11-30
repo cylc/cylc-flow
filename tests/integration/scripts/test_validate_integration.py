@@ -25,34 +25,32 @@ from cylc.flow.parsec.exceptions import Jinja2Error
 
 
 async def test_revalidate_checks_source(
-    _source_workflow, capsys, _setup_validate_cli
+    capsys, validate, workflow_source, install, one_conf
 ):
     """Validation fails if revalidating with broken config.
     """
-    wf = _source_workflow()
-
-    setup = _setup_validate_cli({'against_source': True})
+    src_dir = workflow_source(one_conf)
+    workflow_id = install(src_dir)
 
     # Check that the original installation validates OK:
-    await validate(setup.parser, setup.opts, wf.opts.workflow_name)
-    assert 'Valid for cylc-' in capsys.readouterr().out
+    validate(workflow_id, against_source=True)
 
     # Break the source config:
-    with open(wf.src / 'flow.cylc', 'a') as handle:
+    with open(src_dir / 'flow.cylc', 'a') as handle:
         handle.write('\n[runtime]\n[[foo]]\nAgrajag = bowl of petunias')
 
-    # Check that Validate now fails:
+    # # Check that Validate now fails:
     with pytest.raises(IllegalItemError, match='Agrajag'):
-        await validate(setup.parser, setup.opts, wf.opts.workflow_name)
+        validate(workflow_id, against_source=True)
 
 
 async def test_revalidate_gets_old_tvars(
-    _source_workflow, capsys, _setup_validate_cli, scheduler, run
+    workflow_source, capsys, validate, scheduler, run, install, run_dir
 ):
     """Validation will retrieve template variables from a previously played
     workflow.
     """
-    wf = _source_workflow({
+    src_dir = workflow_source({
         '#!jinja2': None,
         'scheduler': {
             'allow implicit tasks': True
@@ -70,28 +68,30 @@ async def test_revalidate_gets_old_tvars(
         }
     })
 
-    setup = _setup_validate_cli({
-        'revalidate': True,
-    })
+    wf_id = install(src_dir)
+    installed_dir = run_dir / wf_id
 
     # Check that the original installation validates OK:
-    await validate(setup.parser, setup.opts, wf.opts.workflow_name)
-    assert 'Valid for cylc-' in capsys.readouterr().out
+    validate(installed_dir)
 
-    # Start a scheduler with tvars option:
-    schd = scheduler(wf.opts.workflow_name, templatevars=['FOO="foo"'])
+    # # Start a scheduler with tvars option:
+    schd = scheduler(
+        wf_id,
+        templatevars=['FOO="foo"']
+    )
     async with run(schd):
         pass
 
     # Replace foo in graph with {{FOO}} and check that this still
-    # Validates:
-    wf.flow_file.write_text(
-        wf.flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}')
-    )
-    await validate(setup.parser, setup.opts, wf.opts.workflow_name)
-    assert 'Valid for cylc-' in capsys.readouterr().out
+    # Validates (using db value for FOO):
+    flow_file = (installed_dir / 'flow.cylc')
+    flow_file.write_text(
+        flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
+    validate(wf_id, against_source=True)
 
     # Check that the source will not validate alone:
-    setup.opts.revalidate = False
+    flow_file = (src_dir / 'flow.cylc')
+    flow_file.write_text(
+        flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
     with pytest.raises(Jinja2Error):
-        await validate(setup.parser, setup.opts, str(wf.src))
+        validate(src_dir)
