@@ -101,7 +101,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
           "args": {...}}
 
     Raises:
-        ClientError: if the workflow is not running.
+        WorkflowStopped: if the workflow is not running.
 
     Call server "endpoints" using:
         ``__call__``, ``serial_request``
