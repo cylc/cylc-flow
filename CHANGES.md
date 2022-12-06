@@ -13,6 +13,11 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Breaking Changes
+
+* Workflows started with Cylc 8.0 which contain multiple "flows" cannot be
+  restarted with Cylc 8.1 due to database changes.
+
 ### Enhancements
 
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
@@ -32,6 +37,9 @@ command to validate, install and play a workflow.
 
 [#5081](https://github.com/cylc/cylc-flow/pull/5081) - Reduced amount that
 gets logged at "INFO" level in scheduler logs.
+
+[#5259](https://github.com/cylc/cylc-flow/pull/5259) - Add flow_nums
+to task_jobs table in the workflow database.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__

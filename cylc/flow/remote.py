@@ -208,7 +208,7 @@ def construct_rsync_over_ssh_cmd(
 
     Developer Warning:
         The Cylc Subprocess Pool method ``rsync_255_fail`` relies on
-        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
+        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this function
         do not break ``rsync_255_fail``.
     """
     dst_path = dst_path.replace('$HOME/', '')
