@@ -25,6 +25,7 @@ import socket
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.host_select import (
     _get_metrics,
@@ -209,7 +210,7 @@ def test_get_metrics_no_hosts_error(caplog):
 
     If a host is not contactable then it should be shipped.
     """
-    caplog.set_level(logging.WARN, 'cylc')
+    caplog.set_level(logging.WARN, CYLC_LOG)
     host_stats, data = _get_metrics(['not-a-host'], None)
     # a warning should be logged
     assert len(caplog.records) == 1
