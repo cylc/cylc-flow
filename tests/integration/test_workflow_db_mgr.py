@@ -77,22 +77,6 @@ def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
         conn.commit()
 
 
-def upgrade_db_from_version(schd, version):
-    """Runs the DB upgrader from the specified version.
-
-    Args:
-        schd:
-            The Scheduler who's DB you want to upgrade.
-        version:
-            The version you want to upgrade from.
-            (i.e. what version do you want to tell Cylc the workflow ran
-            with last time).
-
-    """
-    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
-        schd.workflow_db_mgr.upgrade(parse_version(version), pri_dao)
-
-
 async def test_db_upgrade_pre_803(
     flow, one_conf, start, scheduler, log_filter, db_select
 ):
@@ -106,12 +90,9 @@ async def test_db_upgrade_pre_803(
 
     # Remove task_states:is_manual_submit to fake a pre-8.0.3 DB.
     db_remove_column(schd, "task_states", "is_manual_submit")
+    db_remove_column(schd, "task_jobs", "flow_nums")
 
     schd: Scheduler = scheduler(reg, paused_start=True)
-
-    # Run the DB upgrader for version 8.0.3
-    # (8.0.3 does not require upgrade so should be skipped)
-    upgrade_db_from_version(schd, '8.0.3')
 
     # Restart should fail due to the missing column.
     with pytest.raises(sqlite3.OperationalError):
@@ -123,7 +104,8 @@ async def test_db_upgrade_pre_803(
 
     # Run the DB upgrader for version 8.0.2
     # (8.0.2 requires upgrade)
-    upgrade_db_from_version(schd, '8.0.2')
+    with schd.workflow_db_mgr.get_pri_dao() as pri_dao:
+        schd.workflow_db_mgr.upgrade_pre_803(pri_dao)
     # Restart should now succeed.
     async with start(schd):
         assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')
