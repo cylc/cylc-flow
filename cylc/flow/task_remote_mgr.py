@@ -245,6 +245,7 @@ class TaskRemoteMgr:
             )
             self.remote_init_map[
                 platform['install target']] = REMOTE_INIT_FAILED
+            # reset the bad hosts to allow remote-init to retry
             self.bad_hosts -= set(platform['hosts'])
             self.ready = True
         else:
@@ -266,6 +267,24 @@ class TaskRemoteMgr:
                 callback_255_args=[platform]
             )
 
+    def construct_remote_tidy_ssh_cmd(
+        self, platform: Dict[str, Any]
+    ) -> Tuple[List[str], str]:
+        """Return a remote-tidy SSH command.
+
+        Rasies:
+            NoHostsError: If the platform is not contactable.
+        """
+        cmd = ['remote-tidy']
+        cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
+        cmd.append(get_install_target_from_platform(platform))
+        cmd.append(get_remote_workflow_run_dir(self.workflow))
+        host = get_host_from_platform(
+            platform, bad_hosts=self.bad_hosts
+        )
+        cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
+        return cmd, host
+
     def remote_tidy(self) -> None:
         """Remove workflow contact files and keys from initialised remotes.
 
@@ -274,20 +293,6 @@ class TaskRemoteMgr:
         Timeout any incomplete commands after 10 seconds.
         """
         # Issue all SSH commands in parallel
-
-        def construct_remote_tidy_ssh_cmd(
-            platform: Dict[str, Any]
-        ) -> Tuple[List[str], str]:
-            cmd = ['remote-tidy']
-            cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
-            cmd.append(get_install_target_from_platform(platform))
-            cmd.append(get_remote_workflow_run_dir(self.workflow))
-            host = get_host_from_platform(
-                platform, bad_hosts=self.bad_hosts
-            )
-            cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
-            return cmd, host
-
         queue: Deque[RemoteTidyQueueTuple] = deque()
         for install_target, message in self.remote_init_map.items():
             if message != REMOTE_FILE_INSTALL_DONE:
@@ -298,7 +303,7 @@ class TaskRemoteMgr:
                 platform = get_random_platform_for_install_target(
                     install_target
                 )
-                cmd, host = construct_remote_tidy_ssh_cmd(platform)
+                cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
             except (NoHostsError, PlatformLookupError) as exc:
                 LOG.warning(
                     PlatformError(
@@ -332,7 +337,7 @@ class TaskRemoteMgr:
                 timeout = time() + 10.0
                 self.bad_hosts.add(item.host)
                 try:
-                    retry_cmd, retry_host = construct_remote_tidy_ssh_cmd(
+                    retry_cmd, retry_host = self.construct_remote_tidy_ssh_cmd(
                         item.platform
                     )
                 except (NoHostsError, PlatformLookupError) as exc:

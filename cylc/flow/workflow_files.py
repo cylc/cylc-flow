@@ -1077,6 +1077,10 @@ def _remote_clean_cmd(
         platform: Config for the platform on which to remove the workflow.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
+
+    Raises:
+        NoHostsError: If the platform is not contactable.
+
     """
     LOG.debug(
         f"Cleaning {reg} on install target: {platform['install target']} "
