@@ -206,9 +206,13 @@ def construct_rsync_over_ssh_cmd(
         platform: contains info relating to platform
         rsync_includes: files and directories to be included in the rsync
 
+    Raises:
+        NoHostsError:
+            If there are no hosts available for the requested platform.
+
     Developer Warning:
         The Cylc Subprocess Pool method ``rsync_255_fail`` relies on
-        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
+        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this function
         do not break ``rsync_255_fail``.
     """
     dst_path = dst_path.replace('$HOME/', '')
@@ -377,6 +381,10 @@ def remote_cylc_cmd(
     Uses the provided platform configuration to construct the command.
 
     For arguments and returns see construct_ssh_cmd and run_cmd.
+
+    Raises:
+        NoHostsError: If the platform is not contactable.
+
     """
     if not host:
         # no host selected => perform host selection from platform config
@@ -414,6 +422,10 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
     with the localhost platform.
 
     For arguments and returns see construct_ssh_cmd and run_cmd.
+
+    Raises:
+        NoHostsError: If the platform is not contactable.
+
     """
     return remote_cylc_cmd(
         cmd,
