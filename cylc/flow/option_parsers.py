@@ -396,6 +396,18 @@ class CylcOptionParser(OptionParser):
             ),
             action='store', default=None, dest='comms_timeout', useif='comms'),
         OptionSettings(
+            ['--comms-method'], metavar='SEC',
+            help=(
+                "Set the communications method for network connections"
+                " to the running workflow. The default is 'zmq'."
+                " Communications using 'http' via the Hub and/or"
+                " UI Server require UI Server installation and"
+                " associated API info file of the running server."
+            ),
+            action='store', default=None, dest='comms_method',
+            useif='commsmethod'
+        ),
+        OptionSettings(
             ['-s', '--set'], metavar='NAME=VALUE',
             help=(
                 "Set the value of a Jinja2 template variable in the"
@@ -432,6 +444,7 @@ class CylcOptionParser(OptionParser):
         usage: str,
         argdoc: Optional[List[Tuple[str, str]]] = None,
         comms: bool = False,
+        commsmethod: bool = False,
         jset: bool = False,
         multitask: bool = False,
         multiworkflow: bool = False,
@@ -446,6 +459,7 @@ class CylcOptionParser(OptionParser):
             argdoc: The args for the command, to be inserted into the usage
                 instructions. Optional list of tuples of (name, description).
             comms: If True, allow the --comms-timeout option.
+            commsmethod: If True, allow the --comms-method option.
             jset: If True, allow the Jinja2 --set option.
             multitask: If True, insert the multitask text into the
                 usage instructions.
@@ -470,6 +484,7 @@ class CylcOptionParser(OptionParser):
         self.n_optional_args = 0
         self.unlimited_args = False
         self.comms = comms
+        self.commsmethod = commsmethod
         self.jset = jset
         self.color = color
         # Whether to log messages that are below warning level to stdout

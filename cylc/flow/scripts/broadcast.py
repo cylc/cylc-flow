@@ -240,6 +240,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
@@ -321,7 +322,11 @@ def get_option_parser() -> COP:
 
 async def run(options: 'Values', workflow_id):
     """Implement cylc broadcast."""
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     ret: Dict[str, Any] = {
         'stdout': [],

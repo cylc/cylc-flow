@@ -38,7 +38,7 @@ from cylc.flow.loggingutil import (
     close_log,
     RotatingLogFileHandler,
 )
-from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.client_factory import get_client, CommsMeth
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -106,6 +106,45 @@ At restart, tasks recorded as submitted or running are polled to determine what
 happened to them while the workflow was down.
 """
 
+PLAY_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $iCP: CyclePoint,
+  $startCP: CyclePoint,
+  $fCP: CyclePoint,
+  $stopCP: CyclePoint,
+  $pauseOnStart: Boolean,
+  $holdCP: CyclePoint,
+  $runMode: RunMode,
+  $runHost: String,
+  $mainLoopPlugins: [String],
+  $abortIfTaskFail: Boolean,
+  $debug: Boolean,
+  $noTimestamp: Boolean,
+  $setJinja2: [String],
+  $setJinja2File: String,
+) {
+  play (
+    workflows: $wFlows,
+    initialCyclePoint: $iCP,
+    startCyclePoint: $startCP,
+    finalCyclePoint: $fCP,
+    stopCyclePoint: $stopCP,
+    pause: $pauseOnStart,
+    holdCyclePoint: $holdCP,
+    mode: $runMode,
+    host: $runHost,
+    mainLoop: $mainLoopPlugins,
+    abortIfAnyTaskFails: $abortIfTaskFail,
+    debug: $debug,
+    noTimestamp: $noTimestamp,
+    set: $setJinja2,
+    setFile: $setJinja2File
+  ) {
+    result
+  }
+}
+'''
 
 RESUME_MUTATION = '''
 mutation (
@@ -300,6 +339,7 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         PLAY_DOC,
         jset=True,
         comms=True,
+        commsmethod=True,
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
@@ -370,6 +410,9 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
         # warn_depr=False,  # TODO
     )
 
+    # start workflow with UI Server if comms method http
+    _http_play(workflow_id, options)
+
     # resume the workflow if it is already running
     _resume(workflow_id, options)
 
@@ -433,14 +476,65 @@ def _resume(workflow_id, options):
         detect_old_contact_file(workflow_id)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(
+        pclient = get_client(
             workflow_id,
             timeout=options.comms_timeout,
+            method=options.comms_method
         )
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
                 'wFlows': [workflow_id]
+            }
+        }
+        pclient('graphql', mutation_kwargs)
+        sys.exit(0)
+
+
+def _http_play(workflow_id, options):
+    """Resume the workflow if it is already running."""
+    if options.comms_method == CommsMeth.HTTP.value:
+        print(
+            cparse(
+                "Requesting UI Server started workflow.\n"
+                "<orange>"
+                "Note: "
+                "</orange>"
+                " The workflow will be started at the same cylc version as"
+                " the UI Server. Any set files need to be accessible to the"
+                " UI Server."
+                " Options currently unavailable with UIS started runs:"
+                "  - start-task"
+                "  - no-detach"
+                "  - profile"
+                "  - reference-*"
+                "  - format"
+                "  - downgrade/upgrade"
+            )
+        )
+        pclient = get_client(
+            workflow_id,
+            timeout=options.comms_timeout,
+            method=options.comms_method
+        )
+        mutation_kwargs = {
+            'request_string': PLAY_MUTATION,
+            'variables': {
+                'wFlows': [workflow_id],
+                'iCP': options.icp,
+                'startCP': options.startcp,
+                'fCP': options.fcp,
+                'stopCP': options.stopcp,
+                'pauseOnStart': options.paused_start,
+                'holdCP': options.holdcp,
+                'runMode': options.run_mode or 'Live',
+                'runHost': options.host,
+                'mainLoopPlugins': options.main_loop,
+                'abortIfTaskFail': options.abort_if_any_task_fails,
+                'debug': options.verbosity,
+                'noTimestamp': options.log_timestamp,
+                'setJinja2': options.templatevars,
+                'setJinja2File': options.templatevars_file,
             }
         }
         pclient('graphql', mutation_kwargs)

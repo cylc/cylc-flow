@@ -24,7 +24,7 @@ Send messages to:
 from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from cylc.flow.exceptions import WorkflowStopped
 import cylc.flow.flags
@@ -36,6 +36,10 @@ from cylc.flow.network.client_factory import (
 )
 from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
+
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 CYLC_JOB_PID = "CYLC_JOB_PID"
@@ -69,7 +73,12 @@ mutation (
 '''
 
 
-def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
+def record_messages(
+        workflow: str,
+        job_id: str,
+        messages: List[list],
+        options: 'Values'
+) -> None:
     """Record task job messages.
 
     Print the messages according to their severity.
@@ -86,7 +95,7 @@ def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
     write_messages(workflow, job_id, messages, event_time)
     if get_comms_method() != CommsMeth.POLL:
-        send_messages(workflow, job_id, messages, event_time)
+        send_messages(workflow, job_id, messages, event_time, options)
 
 
 def write_messages(workflow, job_id, messages, event_time):
@@ -102,10 +111,14 @@ def write_messages(workflow, job_id, messages, event_time):
     _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(workflow, job_id, messages, event_time):
+def send_messages(workflow, job_id, messages, event_time, options):
     workflow = os.path.normpath(workflow)
     try:
-        pclient = get_client(workflow)
+        pclient = get_client(
+            workflow,
+            timeout=options.comms_timeout,
+            method=options.comms_method
+        )
     except WorkflowStopped:
         # on a remote host this means the contact file is not present
         # either the workflow is stopped or the contact file is not present
