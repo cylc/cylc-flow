@@ -522,9 +522,6 @@ class TaskJobManager:
                 cmd, [len(b) for b in itasks_batches])
 
             if remote_mode:
-                host = get_host_from_platform(
-                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
-                )
                 cmd = construct_ssh_cmd(
                     cmd, platform, host
                 )
@@ -914,13 +911,23 @@ class TaskJobManager:
             cmd.append(get_remote_workflow_run_job_dir(workflow))
             job_log_dirs = []
             host = 'localhost'
+
+            ctx = SubProcContext(cmd_key, cmd, host=host)
             if remote_mode:
-                host = get_host_from_platform(
-                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
-                )
-                cmd = construct_ssh_cmd(
-                    cmd, platform, host
-                )
+                try:
+                    host = get_host_from_platform(
+                        platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                    )
+                    cmd = construct_ssh_cmd(
+                        cmd, platform, host
+                    )
+                except NoHostsError:
+                    ctx.err = f'No available hosts for {platform["name"]}'
+                    callback_255(ctx, workflow, itasks)
+                    continue
+                else:
+                    ctx = SubProcContext(cmd_key, cmd, host=host)
+
             for itask in sorted(itasks, key=lambda task: task.identity):
                 job_log_dirs.append(
                     itask.tokens.duplicate(
@@ -930,9 +937,7 @@ class TaskJobManager:
             cmd += job_log_dirs
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
-                SubProcContext(
-                    cmd_key, cmd, host=host
-                ),
+                ctx,
                 bad_hosts=self.task_remote_mgr.bad_hosts,
                 callback=callback,
                 callback_args=[workflow, itasks],

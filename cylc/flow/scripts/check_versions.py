@@ -44,6 +44,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.exceptions import NoHostsError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
@@ -101,15 +102,26 @@ def main(_, options: 'Values', *ids) -> None:
         sys.exit(0)
 
     verbose = cylc.flow.flags.verbosity > 0
+    versions = check_versions(platforms, verbose)
+    report_results(platforms, versions, options.error)
 
+
+def check_versions(platforms, verbose):
     # get the cylc version on each platform
     versions = {}
     for platform_name in sorted(platforms):
         platform = get_platform(platform_name)
-        host = get_host_from_platform(
-            platform,
-            bad_hosts=None
-        )
+        try:
+            host = get_host_from_platform(
+                platform,
+                bad_hosts=None
+            )
+        except NoHostsError:
+            print(
+                f'Could not connect to {platform["name"]}',
+                file=sys.stderr
+            )
+            continue
         cmd = construct_ssh_cmd(
             ['version'],
             platform,
@@ -127,7 +139,10 @@ def main(_, options: 'Values', *ids) -> None:
             versions[platform_name] = out.strip()
         else:
             versions[platform_name] = f'ERROR: {err.strip()}'
+    return versions
 
+
+def report_results(platforms, versions, exit_error):
     # report results
     max_len = max((len(platform_name) for platform_name in platforms))
     print(f'{"platform".rjust(max_len)}: cylc version')
@@ -136,7 +151,7 @@ def main(_, options: 'Values', *ids) -> None:
         print(f'{platform_name.rjust(max_len)}: {result}')
     if all((version == CYLC_VERSION for version in versions.values())):
         ret_code = 0
-    elif options.error:
+    elif exit_error:
         ret_code = 1
     else:
         ret_code = 0

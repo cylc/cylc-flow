@@ -68,6 +68,8 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                     'cylc path': cylc_path,
                     'use login shell': login_sh,
                 }
+                # NOTE: this can not raise NoHostsError
+                # because we have provided the host
                 proc = remote_cylc_cmd(
                     cmd,
                     platform,

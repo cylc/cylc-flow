@@ -40,6 +40,9 @@ Maintenance release.
 
 ### Fixes
 
+[##5205](https://github.com/cylc/cylc-flow/pull/#5205) - Fix bug which caused
+orphaned running tasks to silently skip remote file installation at scheduler restart.
+
 [#5224](https://github.com/cylc/cylc-flow/pull/5225) - workflow installation:
 disallow reserved names only in the top level source directory.
 
@@ -52,6 +55,10 @@ with warning, for scan errors where workflow is stopped.
 
 [#5199](https://github.com/cylc/cylc-flow/pull/5199) - Fix a problem with
 the consolidation tutorial.
+
+[#5195](https://github.com/cylc/cylc-flow/pull/5195) -
+Fix issue where workflows can fail to shutdown due to unavailable remote
+platforms and make job log retrieval more robust.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
