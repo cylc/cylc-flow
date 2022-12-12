@@ -75,13 +75,13 @@ ${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
 __TREE__
 
 mkdir "${WORKFLOW_RUN_DIR}/run1/.service"
-touch "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
+echo 'x' > "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
 
 TEST_NAME="${TEST_NAME_BASE}-yes-no"
 run_fail "${TEST_NAME}" \
     cylc clean -y "$WORKFLOW_NAME/run1" "$WORKFLOW_NAME/run2"
 
-grep_ok "Cannot clean .*/run1" "${TEST_NAME}.stderr" -e
+grep_ok "file is not a database" "${TEST_NAME}.stderr" -e
 
 TEST_NAME="tree-post-clean-2"
 run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
