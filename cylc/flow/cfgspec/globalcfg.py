@@ -395,8 +395,14 @@ so you may want to configure more frequent polling.
 SUBMISSION_RETY_DESCR = f'''
 Cylc can automatically resubmit jobs after submission failures.
 
-A list of intervals which define when the scheduler will resubmit jobs if
-submission fails.
+Submission retry delays is a list of ISO 8601 durations which tell Cylc
+how long to wait before the next try.
+
+The job environment variable ``$CYLC_TASK_SUBMIT_NUMBER`` increments with each
+job submission attempt.
+
+Tasks only go to the ``submit-failed`` state if job submission fails with no
+retries left.
 
 .. versionchanged:: 8.0.0
 
