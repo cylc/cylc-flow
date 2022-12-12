@@ -93,11 +93,6 @@ VALIDATE_OPTIONS = [
         dest="profile_mode",
         sources={'validate'}
     ),
-    OptionSettings(
-        ["-u", "--run-mode"], help="Validate for run mode.", action="store",
-        default="live", dest="run_mode",
-        choices=['live', 'dummy', 'simulation']
-    ),
     VALIDATE_RUN_MODE,
     VALIDATE_ICP_OPTION,
     VALIDATE_AGAINST_SOURCE_OPTION,
