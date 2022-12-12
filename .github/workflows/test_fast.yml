@@ -115,5 +115,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
 
       - name: Linkcheck
-        if: startsWith(matrix.os, 'ubuntu')
+        if: startsWith(matrix.python-version, 3.9)
         run: pytest -m linkcheck tests/unit
