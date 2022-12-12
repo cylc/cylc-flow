@@ -5,6 +5,7 @@
     [[_local_background_indep_tcp]]
         hosts = localhost
         install target = localhost
+
     [[_remote_background_indep_tcp]]
         hosts = _remote_background_indep_tcp
     #[[_remote_background_indep_ssh]]
@@ -16,6 +17,7 @@
         # NOTE: at submission uses the same container as background
         job runner = at
         hosts = _remote_background_indep_tcp
+
     [[_remote_background_indep_poll]]
         hosts = _remote_background_indep_poll
         communication method = poll
@@ -28,6 +30,16 @@
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT3S
+
+    [[_remote_background_indep_https]]
+        hosts = _remote_background_indep_https
+        communication method = https
+    [[_remote_at_indep_https]]
+        # NOTE: at submission uses the same container as background
+        job runner = at
+        hosts = _remote_background_indep_https
+        communication method = https
+
     #[[_remote_background_shared_tcp]]
     #    hosts = _remote_background_shared_tcp
     #[[_remote_background_shared_ssh]]
