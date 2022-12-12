@@ -235,8 +235,8 @@ class CylcWorkflowDAO:
         TABLE_TASK_JOBS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["flow_nums"],
             ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["flow_nums"],
             ["is_manual_submit", {"datatype": "INTEGER"}],
             ["try_num", {"datatype": "INTEGER"}],
             ["time_submit"],

@@ -741,11 +741,10 @@ class WorkflowDatabaseManager:
 
         # We can't upgrade if the flow_nums in task_states are not
         # distinct.
-        if (
-            conn.execute(
-                'SELECT DISTINCT flow_nums FROM task_states;').fetchall()
-            != [('[1]',)]
-        ):
+        from cylc.flow.util import deserialise
+        flow_nums = deserialise(conn.execute(
+            'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
+        if len(flow_nums) != 1:
             raise CylcError(
                 'Cannot upgrade-restart from 8.0.x to 8.1.0 IF'
                 ' multiple flows have been used.'
