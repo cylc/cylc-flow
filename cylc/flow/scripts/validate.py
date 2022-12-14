@@ -155,7 +155,7 @@ async def wrapped_main(
         workflow_id,
         flow_file,
         options,
-        get_template_vars(options),
+        get_template_vars(options, flow_file),
         output_fname=options.output,
         mem_log_func=profiler.log_memory
     )

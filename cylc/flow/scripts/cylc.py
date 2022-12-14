@@ -202,7 +202,8 @@ ALIASES = {
     'shutdown': 'stop',
     'task-message': 'message',
     'unhold': 'release',
-    'validate-install-play': 'vip'
+    'validate-install-play': 'vip',
+    'validate-reinstall-reload': 'vro',
 }
 
 

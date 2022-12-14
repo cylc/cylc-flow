@@ -31,6 +31,7 @@ from cylc.flow.pathutil import (
     get_next_rundir_number,
     get_remote_workflow_run_dir,
     get_remote_workflow_run_job_dir,
+    get_source_conf_from_id,
     get_workflow_run_dir,
     get_workflow_run_job_dir,
     get_workflow_run_scheduler_log_dir,
@@ -576,3 +577,43 @@ def test_get_workflow_name_from_id(
 
     result = get_workflow_name_from_id(id_)
     assert result == name
+
+
+@pytest.fixture
+def _setup_get_source_conf_from_id(tmp_path, monkeypatch):
+    run = tmp_path / 'cylc-run/run'
+    src = tmp_path / 'cylc-src/src'
+    src.mkdir(parents=True)
+    (run / '_cylc-install').mkdir(parents=True)
+    (run / '_cylc-install/source').symlink_to(src)
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.get_workflow_run_dir',
+        lambda workflow_id: tmp_path / 'cylc-run/run'
+    )
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.get_cylc_run_dir',
+        lambda: tmp_path / 'cylc-run'
+    )
+    yield tmp_path
+
+
+@pytest.mark.parametrize(
+    'conf_file',
+    (
+        param('flow.cylc', id='flow.cylc'),
+        param('suite.rc', id='flow.cylc'),
+        param(None, id='no file'),
+    )
+)
+def test_get_source_conf_from_id(
+    _setup_get_source_conf_from_id, conf_file
+):
+    """It locates a flow.cylc, suite.rc from a run dir, or fails nicely.
+    """
+    if conf_file:
+        expect = _setup_get_source_conf_from_id / f'cylc-src/src/{conf_file}'
+        expect.touch()
+        assert get_source_conf_from_id('run') == expect
+    else:
+        with pytest.raises(WorkflowFilesError):
+            get_source_conf_from_id('run')

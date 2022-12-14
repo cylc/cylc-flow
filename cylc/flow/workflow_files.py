@@ -463,7 +463,9 @@ def _is_process_running(
     return cli_format(process['cmdline']) == command
 
 
-def detect_old_contact_file(reg: str, contact_data=None) -> None:
+def detect_old_contact_file(
+    reg: str, contact_data=None, quiet=False
+) -> None:
     """Check if the workflow process is still running.
 
     As a side-effect this should detect and rectify the situation
@@ -479,6 +481,10 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
 
     Args:
         reg: workflow name
+        contact_date:
+        quiet: Controls whether to return already running message -
+            this is not required if Cylc VRO is using this function to
+            decide whether to resume or reload.
 
     Raises:
         CylcError:
@@ -514,6 +520,8 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
     fname = get_contact_file_path(reg)
     if process_is_running:
         # ... the process is running, raise an exception
+        if quiet:
+            raise ServiceFileError()
         raise ServiceFileError(
             CONTACT_FILE_EXISTS_MSG % {
                 "host": old_host,

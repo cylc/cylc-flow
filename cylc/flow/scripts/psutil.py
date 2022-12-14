@@ -22,7 +22,7 @@ This is for use in situations where Cylc needs to extract information from
 the `psutil` on remote platforms.
 
 Exits:
-    0 - If successfull.
+    0 - If successful.
     2 - For errors in extracting results from psutil
     1 - For all other errors.
 """

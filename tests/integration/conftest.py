@@ -149,6 +149,12 @@ def flow(run_dir, test_dir):
     yield partial(_make_flow, run_dir, test_dir)
 
 
+@pytest.fixture
+def flow_src(tmp_path):
+    """A function for creating function-level flows."""
+    yield partial(_make_src_flow, tmp_path)
+
+
 @pytest.fixture(scope='module')
 def mod_scheduler():
     """Return a Scheduler object for a flow.

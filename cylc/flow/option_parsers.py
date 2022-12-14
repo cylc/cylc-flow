@@ -80,9 +80,16 @@ class OptionSettings():
             self.kwargs.update({kwarg: value})
 
     def __eq__(self, other):
-        """Args and Kwargs, but not other props equal."""
+        """Args and Kwargs, but not other props equal.
+
+        (Also make an exception for kwargs['help'] to allow lists of sources
+        prepended to 'help' to be passed through.)
+        """
         return (
-            self.kwargs == other.kwargs
+            (
+                {k: v for k, v in self.kwargs.items() if k != 'help'}
+                == {k: v for k, v in other.kwargs.items() if k != 'help'}
+            )
             and self.args == other.args
         )
 
@@ -729,9 +736,17 @@ def combine_options_pair(first_list, second_list):
                 and first & second
             ):
                 # if any of the args are different:
-                if first.args == second.args:
-                    # if none of the arg names are different.
-                    raise Exception(f'Clashing Options \n{first}\n{second}')
+
+                if (
+                    first.args == second.args
+                    # and (
+                    #     first.kwargs['help'].split('\x1b[0m ')[-1] !=
+                    #     second.kwargs['help'].split('\x1b[0m')[-1]
+                    # )
+                ):
+                    # if none of the arg names are different
+                    raise Exception(
+                        f'Clashing Options \n{first.args}\n{second.args}')
                 else:
                     first_args = first - second
                     second.args = second - first

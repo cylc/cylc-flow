@@ -116,7 +116,7 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
-    template_vars = get_template_vars(options)
+    template_vars = get_template_vars(options, flow_file)
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")

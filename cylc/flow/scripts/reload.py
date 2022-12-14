@@ -104,6 +104,10 @@ async def run(options: 'Values', workflow_id: str) -> None:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids) -> None:
+    reload_cli(options, *ids)
+
+
+def reload_cli(options: 'Values', *ids) -> None:
     call_multi(
         partial(run, options),
         *ids,

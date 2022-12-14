@@ -82,9 +82,18 @@ def eval_var(var):
         ) from None
 
 
-def load_template_vars(template_vars=None, template_vars_file=None):
+def load_template_vars(
+    template_vars=None, template_vars_file=None, flow_file=None
+):
     """Load template variables from key=value strings."""
     res = {}
+    if flow_file is not None:
+        srcdir = str(Path(flow_file).parent)
+        db_tvars = OldTemplateVars(srcdir).template_vars
+        if db_tvars:
+            for key, val in db_tvars.items():
+                res[key] = val
+
     if template_vars_file:
         with open(template_vars_file, 'r') as handle:
             for line in handle:
@@ -101,7 +110,7 @@ def load_template_vars(template_vars=None, template_vars_file=None):
     return res
 
 
-def get_template_vars(options: Values) -> Dict[str, Any]:
+def get_template_vars(options: Values, flow_file) -> Dict[str, Any]:
     """Convienence wrapper for ``load_template_vars``.
 
     Args:

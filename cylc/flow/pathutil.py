@@ -456,3 +456,32 @@ def get_workflow_name_from_id(workflow_id: str) -> str:
         name_path = id_path
 
     return str(name_path.relative_to(cylc_run_dir))
+
+
+def get_source_conf_from_id(workflow_id):
+    """Give a workflow id, get the flow.cylc file of the source.
+
+    Additionally Check
+        1. Flow.cylc or suite.rc exists at source.
+    """
+    # Avoid circular import:
+    from cylc.flow.workflow_files import WorkflowFiles
+    # Get path of source:
+    run_dir = Path(get_workflow_run_dir(workflow_id))
+    relative_path = run_dir.relative_to(get_cylc_run_dir())
+    src = (
+        Path(get_cylc_run_dir())
+        / relative_path.parts[0]
+        / WorkflowFiles.Install.DIRNAME
+        / WorkflowFiles.Install.SOURCE
+    )
+
+    # Test whether there is a config file at source:
+    if (src / WorkflowFiles.FLOW_FILE).exists():
+        return src.resolve() / WorkflowFiles.FLOW_FILE
+    elif (src / WorkflowFiles.SUITE_RC).exists():
+        return src.resolve() / WorkflowFiles.SUITE_RC
+    else:
+        raise WorkflowFilesError(
+            f'Source file not present at: {src.resolve()}'
+        )
