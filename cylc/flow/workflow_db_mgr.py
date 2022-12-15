@@ -38,7 +38,7 @@ from cylc.flow.broadcast_report import get_broadcast_change_iter
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
@@ -722,9 +722,46 @@ class WorkflowDatabaseManager:
         )
         conn.commit()
 
+    @staticmethod
+    def upgrade_pre_810(pri_dao: CylcWorkflowDAO) -> None:
+        """Upgrade on restart from a pre-8.1.0 database.
+
+        Add "flow_nums" column to the "task_jobs".
+        See GitHub cylc/cylc-flow#5252.
+
+        This is only possible if we have single item in the list
+        represented by flow_nums, else we have to raise an error
+        """
+        conn = pri_dao.connect()
+        c_name = "flow_nums"
+        LOG.info(
+            f"DB upgrade (pre-8.1.0): "
+            f"add {c_name} column to {CylcWorkflowDAO.TABLE_TASK_JOBS}"
+        )
+
+        # We can't upgrade if the flow_nums in task_states are not
+        # distinct.
+        from cylc.flow.util import deserialise
+        flow_nums = deserialise(conn.execute(
+            'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
+        if len(flow_nums) != 1:
+            raise CylcError(
+                'Cannot upgrade-restart from 8.0.x to 8.1.0 IF'
+                ' multiple flows have been used.'
+            )
+
+        conn.execute(
+            rf"ALTER TABLE {CylcWorkflowDAO.TABLE_TASK_JOBS} "
+            rf"ADD COLUMN {c_name} "
+            r"DEFAULT '[1]'"
+        )
+        conn.commit()
+
     def upgrade(self, last_run_ver, pri_dao):
         if last_run_ver < parse_version("8.0.3.dev"):
             self.upgrade_pre_803(pri_dao)
+        if last_run_ver < parse_version("8.1.0.dev"):
+            self.upgrade_pre_810(pri_dao)
 
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is
@@ -755,6 +792,7 @@ class WorkflowDatabaseManager:
                     f"Cylc {last_run_ver})."
                     f"\n{manual_rm_msg}"
                 )
+
             self.upgrade(last_run_ver, pri_dao)
 
         return last_run_ver
