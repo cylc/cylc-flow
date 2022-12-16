@@ -952,8 +952,10 @@ class TaskJobManager:
                         cmd, platform, host
                     )
                 except NoHostsError:
-                    ctx.err = f'No available hosts for {platform["name"]}'
-                    callback_255(ctx, workflow, itasks)
+                    LOG.warn(
+                        f'{cmd_key} failed -'
+                        f' No available hosts for {platform["name"]}'
+                    )
                     continue
                 else:
                     ctx = SubProcContext(cmd_key, cmd, host=host)
