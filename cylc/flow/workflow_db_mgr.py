@@ -775,10 +775,6 @@ class WorkflowDatabaseManager:
 
     def upgrade(self):
         """Upgrade this database to this Cylc version.
-
-        Args:
-            pri_dao: Open private database connection object.
-
         """
         with self.get_pri_dao() as pri_dao:
             last_run_ver = self._get_last_run_ver(pri_dao)
