@@ -77,15 +77,15 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # finished and gone from the task pool.
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out
+    'SELECT cycle, name, status, is_held FROM task_pool' | sort > task-pool.out
 cmp_ok task-pool.out <<__OUT__
-1|foo|waiting|1
 1|bar|waiting|1
-1|cheese|waiting|1
-1|jam|waiting|1
 1|cat1|waiting|1
 1|cat2|waiting|1
+1|cheese|waiting|1
 1|dog1|waiting|1
+1|foo|waiting|1
+1|jam|waiting|1
 __OUT__
 
 purge
