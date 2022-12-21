@@ -42,7 +42,7 @@ gets logged at "INFO" level in scheduler logs.
 to task_jobs table in the workflow database.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
 
 Maintenance release.
 
