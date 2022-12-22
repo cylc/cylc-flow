@@ -13,9 +13,9 @@ disable_warnings =
     no-data-collected
     module-not-measured
 omit =
-    tests/*
-    */cylc/flow/*_pb2.py
-    cylc/flow/etc/*
+    tests/**
+    **_pb2.py
+    cylc/flow/etc/**
 parallel = True
 source = ./cylc
 timid = False
@@ -41,9 +41,9 @@ exclude_lines =
 fail_under=0
 ignore_errors = False
 omit =
-    tests/*
-    */cylc/flow/*_pb2.py
-    cylc/flow/etc/*
+    tests/**
+    **_pb2.py
+    cylc/flow/etc/**
 precision = 2
 show_missing = False
 skip_covered = False
