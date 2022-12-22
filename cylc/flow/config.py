@@ -2004,7 +2004,7 @@ class WorkflowConfig:
         # the graph (which would probably be quite reasonable).
         family_map = {
             family: [
-                task for task in tasks
+                task for task in sorted(tasks)
                 if (
                     task in self.runtime['parents'] and
                     task not in self.runtime['descendants']
