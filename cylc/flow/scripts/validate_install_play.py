@@ -75,6 +75,10 @@ def get_option_parser() -> COP:
         ]
     )
     for option in VIP_OPTIONS:
+        # Make a special exception for option against_source which makes
+        # no sense in a VIP context.
+        if option.kwargs.get('dest') != 'against_source':
+            parser.add_option(*option.args, **option.kwargs)
         parser.add_option(*option.args, **option.kwargs)
     return parser
 
