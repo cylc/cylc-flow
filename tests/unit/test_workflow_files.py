@@ -448,7 +448,8 @@ def test_init_clean(
         remote_clean_called: If a remote clean is expected to go ahead.
     """
     reg = 'foo/bar/'
-    tmp_run_dir(reg, installed=True)
+    rdir = tmp_run_dir(reg, installed=True)
+    Path(rdir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
@@ -547,6 +548,7 @@ def test_init_clean__rm_dirs(
     """
     reg = 'dagobah'
     run_dir: Path = tmp_run_dir(reg)
+    Path(run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
     platforms = {'platform_one'}

@@ -318,7 +318,7 @@ def prompt(message, options, default=None, process=None):
     default_ = ''
     if default:
         default_ = f'[{default}] '
-    message += f': {default_}{",".join(options)}?'
+    message += f': {default_}{",".join(options)}? '
     usr = None
     while usr not in options:
         usr = input(f'{message}')

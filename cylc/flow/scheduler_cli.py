@@ -382,6 +382,9 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     ):
         sys.exit(1)
 
+    # upgrade the workflow DB (after user has confirmed upgrade)
+    _upgrade_database(db_file)
+
     # re-execute on another host if required
     _distribute(options.host, workflow_id_raw, workflow_id)
 
@@ -519,6 +522,18 @@ def _version_check(
             # restart would INCREASE the Cylc version in a little way
             return True
     return True
+
+
+def _upgrade_database(db_file):
+    """Upgrade the workflow database if needed.
+
+    Note:
+        Do this after the user has confirmed that they want to upgrade!
+
+    """
+    if db_file.is_file():
+        wdbm = WorkflowDatabaseManager(db_file.parent)
+        wdbm.upgrade()
 
 
 def _print_startup_message(options):

@@ -23,26 +23,31 @@ if ! command -v 'tree' > /dev/null; then
 fi
 set_test_number 18
 
-FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
+RND_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
+WORKFLOW_NAME="${RND_NAME}/cylc-clean"
+WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
+
+create_workflow() {
+    mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}" # make source dir
+    touch "${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
+    cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --workflow-name="${WORKFLOW_NAME}"
+}
 
 # -----------------------------------------------------------------------------
 
 for _ in 1 2; do
-    install_workflow "$TEST_NAME_BASE" basic-workflow true
+    create_workflow
 done
 
 TEST_NAME="tree-pre-clean-1"
-run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 1 "${HOME}/cylc-run/${WORKFLOW_NAME}"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
-\`-- ${FUNCTIONAL_DIR}
-    \`-- cylc-clean
-        \`-- ${TEST_NAME_BASE}
-            |-- _cylc-install
-            |-- run1
-            |-- run2
-            \`-- runN -> run2
+${HOME}/cylc-run/${WORKFLOW_NAME}
+|-- _cylc-install
+|-- run1
+|-- run2
+\`-- runN -> run2
 __TREE__
 
 # Test trying to clean multiple run dirs without --yes fails:
@@ -52,81 +57,69 @@ exists_ok "${WORKFLOW_RUN_DIR}/run2"
 
 # Should work with --yes (removes top level dir too):
 run_ok "${TEST_NAME_BASE}-yes" cylc clean -y "$WORKFLOW_NAME"
-exists_fail "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+exists_fail "${RUN_DIR}/${RND_NAME}"
 
 # -----------------------------------------------------------------------------
 # Should continue cleaning a list of workflows even if one fails.
 
 for _ in 1 2; do
-    install_workflow "$TEST_NAME_BASE" basic-workflow true
+    create_workflow
 done
 
 TEST_NAME="tree-pre-clean-2"
-run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 1 "${HOME}/cylc-run/${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
-\`-- ${FUNCTIONAL_DIR}
-    \`-- cylc-clean
-        \`-- ${TEST_NAME_BASE}
-            |-- _cylc-install
-            |-- run1
-            |-- run2
-            \`-- runN -> run2
+${HOME}/cylc-run/${WORKFLOW_NAME}
+|-- _cylc-install
+|-- run1
+|-- run2
+\`-- runN -> run2
 __TREE__
 
 mkdir "${WORKFLOW_RUN_DIR}/run1/.service"
-touch "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
+echo 'x' > "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
 
 TEST_NAME="${TEST_NAME_BASE}-yes-no"
 run_fail "${TEST_NAME}" \
     cylc clean -y "$WORKFLOW_NAME/run1" "$WORKFLOW_NAME/run2"
 
-grep_ok "Cannot clean .*/run1" "${TEST_NAME}.stderr" -e
+grep_ok "file is not a database" "${TEST_NAME}.stderr" -e
 
 TEST_NAME="tree-post-clean-2"
-run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 1 "${HOME}/cylc-run/${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
-\`-- ${FUNCTIONAL_DIR}
-    \`-- cylc-clean
-        \`-- ${TEST_NAME_BASE}
-            |-- _cylc-install
-            \`-- run1
+${HOME}/cylc-run/${WORKFLOW_NAME}
+|-- _cylc-install
+\`-- run1
 __TREE__
 
-purge
+purge "$WORKFLOW_NAME"
 
 # -----------------------------------------------------------------------------
 # Should not clean top level dir if not empty.
 
-install_workflow "$TEST_NAME_BASE" basic-workflow true
+create_workflow
 
 touch "${WORKFLOW_RUN_DIR}/jellyfish.txt"
 
 TEST_NAME="tree-pre-clean-3"
-run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 1 "${HOME}/cylc-run/${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
-\`-- ${FUNCTIONAL_DIR}
-    \`-- cylc-clean
-        \`-- ${TEST_NAME_BASE}
-            |-- _cylc-install
-            |-- jellyfish.txt
-            |-- run1
-            \`-- runN -> run1
+${HOME}/cylc-run/${WORKFLOW_NAME}
+|-- _cylc-install
+|-- jellyfish.txt
+|-- run1
+\`-- runN -> run1
 __TREE__
 
 run_ok "${TEST_NAME}" cylc clean -y "$WORKFLOW_NAME"
 
 TEST_NAME="tree-post-clean-3"
-run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 4 "${HOME}/cylc-run/${CYLC_TEST_REG_BASE}"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii -L 1 "${HOME}/cylc-run/${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${CYLC_TEST_REG_BASE}
-\`-- ${FUNCTIONAL_DIR}
-    \`-- cylc-clean
-        \`-- ${TEST_NAME_BASE}
-            |-- _cylc-install
-            \`-- jellyfish.txt
+${HOME}/cylc-run/${WORKFLOW_NAME}
+|-- _cylc-install
+\`-- jellyfish.txt
 __TREE__
 
 purge
