@@ -206,7 +206,7 @@ async def _main(
         workflow_id,
         flow_file,
         options,
-        get_template_vars(options, flow_file)
+        get_template_vars(options)
     )
 
     config.pcfg.idump(

@@ -737,14 +737,7 @@ def combine_options_pair(first_list, second_list):
             ):
                 # if any of the args are different:
 
-                if (
-                    first.args == second.args
-                    # and (
-                    #     first.kwargs['help'].split('\x1b[0m ')[-1] !=
-                    #     second.kwargs['help'].split('\x1b[0m')[-1]
-                    # )
-                ):
-                    # if none of the arg names are different
+                if first.args == second.args:
                     raise Exception(
                         f'Clashing Options \n{first.args}\n{second.args}')
                 else:

@@ -73,11 +73,13 @@ def _setup(mod_scheduler, mod_flow):
 async def test_revalidate_validate(
     _setup, mod_start, capsys, function, parser, expect,
 ):
-    """It validates with Cylc Validate."""
+    """It (A Cylc CLI Command) can get template vars stored in db.
+
+    Else the jinja2 in the config would cause these tasks to fail.
+    """
+    from cylc.flow.option_parsers import Options
     parser = parser()
-    opts = SimpleNamespace(**parser.get_default_values().__dict__)
-    opts.templatevars = []
-    opts.templatevars_file = []
+    opts = Options(parser)()
     if function == graph:
         opts.reference = True
 

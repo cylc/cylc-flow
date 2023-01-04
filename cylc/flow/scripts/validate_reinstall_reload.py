@@ -110,11 +110,6 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     except ServiceFileError:
         # Workflow is definately still running:
         workflow_running = True
-    except CylcError as exc:
-        # We can't tell whether the workflow is running.
-        # TODO - consider a more helpful error
-        raise exc
-        exit(1)
     else:
         # Workflow is definately stopped:
         workflow_running = False

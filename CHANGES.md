@@ -20,15 +20,17 @@ ones in. -->
 
 ### Enhancements
 
+[#5229](https://github.com/cylc/cylc-flow/pull/5229) & [#5094](https://github.com/cylc/cylc-flow/pull/5094) -
+- Added a single command to validate, install and play a workflow.
+- Added a single command to validate a previously run workflow against changes
+  to its source and reinstall a workflow.
+
 [#5214](https://github.com/cylc/cylc-flow/pull/5214) - Allows Cylc commands
 (including validate, list, view, config, and graph) to load template variables
 configured by `cylc install` and `cylc play`.
 
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
 runs of the same workflow at install time.
-
-[#5094](https://github.com/cylc/cylc-flow/pull/5094) - Added a single
-command to validate, install and play a workflow.
 
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.

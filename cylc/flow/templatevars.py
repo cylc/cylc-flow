@@ -36,7 +36,7 @@ def get_template_vars_from_db(run_dir):
             lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
         )
     except OperationalError:
-        ...
+        pass
     return template_vars
 
 
@@ -79,7 +79,7 @@ def load_template_vars(
     res = {}
     if flow_file is not None:
         srcdir = str(Path(flow_file).parent)
-        db_tvars = OldTemplateVars(srcdir).template_vars
+        db_tvars = get_template_vars_from_db(srcdir)
         if db_tvars:
             for key, val in db_tvars.items():
                 res[key] = val
@@ -100,13 +100,12 @@ def load_template_vars(
     return res
 
 
-def get_template_vars(options: Values, flow_file) -> Dict[str, Any]:
+def get_template_vars(options: Values) -> Dict[str, Any]:
     """Convienence wrapper for ``load_template_vars``.
 
     Args:
         options: Options passed to the Cylc script which is using this
             function.
-        flow_file: Path to flow_file.
 
     Returns:
         template_vars: Template variables to give to a Cylc config.

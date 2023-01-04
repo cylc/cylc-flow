@@ -92,7 +92,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     source = get_source_location(workflow_id)
 
     log_subcommand('validate', source)
-    cylc_validate(parser, options, str(source))
+    validate_main(parser, options, str(source))
 
     log_subcommand('install', source)
     workflow_id = cylc_install(options, workflow_id)
