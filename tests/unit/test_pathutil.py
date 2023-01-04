@@ -31,7 +31,6 @@ from cylc.flow.pathutil import (
     get_next_rundir_number,
     get_remote_workflow_run_dir,
     get_remote_workflow_run_job_dir,
-    get_source_conf_from_id,
     get_workflow_run_dir,
     get_workflow_run_job_dir,
     get_workflow_run_scheduler_log_dir,

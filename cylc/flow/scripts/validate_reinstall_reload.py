@@ -50,7 +50,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from optparse import Values
 
-from cylc.flow.exceptions import ServiceFileError, CylcError
+from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,

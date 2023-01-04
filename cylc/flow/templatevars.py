@@ -17,7 +17,6 @@
 
 from ast import literal_eval
 from optparse import Values
-from sqlite3 import OperationalError
 from typing import Any, Dict
 
 from cylc.flow.exceptions import InputError
@@ -30,13 +29,11 @@ def get_template_vars_from_db(run_dir):
     """Get template vars stored in a workflow run database.
     """
     template_vars = {}
-    try:
+    if (run_dir / 'log/db').exists():
         dao = CylcWorkflowDAO(str(run_dir / 'log/db'))
         dao.select_workflow_template_vars(
             lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
         )
-    except OperationalError:
-        pass
     return template_vars
 
 
@@ -72,18 +69,9 @@ def eval_var(var):
         ) from None
 
 
-def load_template_vars(
-    template_vars=None, template_vars_file=None, flow_file=None
-):
+def load_template_vars(template_vars=None, template_vars_file=None):
     """Load template variables from key=value strings."""
     res = {}
-    if flow_file is not None:
-        srcdir = str(Path(flow_file).parent)
-        db_tvars = get_template_vars_from_db(srcdir)
-        if db_tvars:
-            for key, val in db_tvars.items():
-                res[key] = val
-
     if template_vars_file:
         with open(template_vars_file, 'r') as handle:
             for line in handle:
