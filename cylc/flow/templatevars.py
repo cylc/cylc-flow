@@ -47,7 +47,10 @@ class OldTemplateVars:
     def _get_db_template_vars(self):
         if (self.run_dir / self.DB).exists():
             dao = CylcWorkflowDAO(str(self.run_dir / self.DB))
-            dao.select_workflow_template_vars(self._callback)
+            try:
+                dao.select_workflow_template_vars(self._callback)
+            finally:
+                dao.close()
 
 
 def eval_var(var):

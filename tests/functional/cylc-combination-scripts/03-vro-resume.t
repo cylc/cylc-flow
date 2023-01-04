@@ -28,9 +28,7 @@ cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
-    --no-run-name \
-# Get the workflow into a paused state
-cylc pause "${WORKFLOW_NAME}"
+    --no-run-name --pause
 
 while [[ -z $(cylc scan --name "${WORKFLOW_NAME}" --states=paused) ]]; do
     sleep 1

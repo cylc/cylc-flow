@@ -18,24 +18,23 @@
 
 """cylc validate-reinstall-reload/play [OPTIONS] ARGS
 
-Validate and install a single workflow. Then if:
+Validate and reinstall a single workflow. Then if:
 - Workflow running => reload.
 - Workflow paused => resume.
 - Workflow stopped => play.
 
-This script is equivalent to:
+This command is equivalent to:
 
     $ cylc validate myworkflow --against-source     # See note 1
     $ cylc reinstall myworkflow
-
-    $ if [[ my workflow is running ]];
-          cylc reload myworkflow
-      else
-          cylc play myworkflow
+    # if myworkflow is running:
+    $ cylc reload myworkflow
+    # else:
+    $ cylc play myworkflow
 
 Note 1:
 
-Cylc validate myworkflow --against-source is eqivelent of (It doesn't write
+Cylc validate myworkflow --against-source is equivalent of (without writing
 any temporary files though):
 
     # Install from run directory
@@ -104,7 +103,7 @@ def main(parser: COP, options: 'Values', workflow_id: str):
 def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     """Run Cylc (re)validate - reinstall - reload in sequence."""
     # Attempt to work out whether the workflow is running.
-    # We are trying to avoid reinstalling a subsequently being
+    # We are trying to avoid reinstalling then subsequently being
     # unable to play or reload because we cannot identify workflow state.
     try:
         detect_old_contact_file(workflow_id, quiet=True)

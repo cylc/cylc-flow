@@ -29,7 +29,7 @@ cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
-    --no-run-name \
+    --no-run-name
 # Get the workflow into a stopped state
 cylc stop --now --now "${WORKFLOW_NAME}"
 export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"

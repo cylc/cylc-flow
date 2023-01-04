@@ -28,7 +28,7 @@ cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
-    --no-run-name \
+    --no-run-name
 
 
 # Change source workflow and run vro:

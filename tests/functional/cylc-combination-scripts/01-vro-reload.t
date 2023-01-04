@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test `cylc vro` (Validate Reinstall relOad)
+# Test `cylc vro` (Validate Reinstall reload)
 # In this case the target workflow is running so cylc reload is run.
 
 . "$(dirname "$0")/test_header"
@@ -36,7 +36,6 @@ poll_workflow_running
 
 # It validates and reloads:
 
-# Add allow implicit tasks our flow.cylc so that reload will validate:
 sed -i 's@P1Y@P5Y@' flow.cylc
 run_ok "${TEST_NAME_BASE}-runs" cylc vro "${WORKFLOW_NAME}"
 

@@ -75,9 +75,7 @@ async def test_revalidate_validate(
 ):
     """It validates with Cylc Validate."""
     parser = parser()
-    opts = SimpleNamespace(**parser.get_default_values().__dict__)
-    opts.templatevars = []
-    opts.templatevars_file = []
+    opts = Options(parser)()
     if function == graph:
         opts.reference = True
 

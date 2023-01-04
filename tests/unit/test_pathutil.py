@@ -601,7 +601,7 @@ def _setup_get_source_conf_from_id(tmp_path, monkeypatch):
     'conf_file',
     (
         param('flow.cylc', id='flow.cylc'),
-        param('suite.rc', id='flow.cylc'),
+        param('suite.rc', id='suite.rc'),
         param(None, id='no file'),
     )
 )
