@@ -189,7 +189,7 @@ def generate_checksum(in_strings):
 def task_mean_elapsed_time(tdef):
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
-        return int(sum(tdef.elapsed_times) / len(tdef.elapsed_times))
+        return round(sum(tdef.elapsed_times) / len(tdef.elapsed_times))
     return tdef.rtconfig.get('execution time limit', None)
 
 
