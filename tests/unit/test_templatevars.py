@@ -24,7 +24,7 @@ from types import SimpleNamespace
 
 from cylc.flow.exceptions import PluginError
 from cylc.flow.templatevars import (
-    OldTemplateVars,
+    get_template_vars_from_db,
     get_template_vars,
     load_template_vars
 )
@@ -137,7 +137,7 @@ def _setup_db(tmp_path_factory):
     )
     conn.commit()
     conn.close()
-    yield OldTemplateVars(tmp_path)
+    yield get_template_vars_from_db(tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -149,7 +149,7 @@ def _setup_db(tmp_path_factory):
         ('QUX', ['foo', 'bar', 21])
     )
 )
-def test_OldTemplateVars(key, expect, _setup_db):
+def test_get_old_tvars(key, expect, _setup_db):
     """It can extract a variety of items from a workflow database.
     """
-    assert _setup_db.template_vars[key] == expect
+    assert _setup_db[key] == expect

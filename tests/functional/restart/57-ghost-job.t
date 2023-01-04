@@ -85,6 +85,7 @@ poll_workflow_stopped
 # Job should have been replaced in DB with same submit num:
 TEST_NAME="${TEST_NAME_BASE}-db-query-2"
 query_db_task_jobs "$TEST_NAME"
+
 cmp_ok "${TEST_NAME}.stdout" << EOF
 1|foo|1
 EOF

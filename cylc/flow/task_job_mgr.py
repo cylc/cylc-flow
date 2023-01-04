@@ -112,6 +112,7 @@ from cylc.flow.wallclock import (
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
+from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
@@ -440,6 +441,7 @@ class TaskJobManager:
                 # Log and persist
                 LOG.debug(f"[{itask}] host={host}")
                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
+                    'flow_nums': serialise(itask.flow_nums),
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
                     'time_submit': get_current_time_string(),
@@ -522,9 +524,6 @@ class TaskJobManager:
                 cmd, [len(b) for b in itasks_batches])
 
             if remote_mode:
-                host = get_host_from_platform(
-                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
-                )
                 cmd = construct_ssh_cmd(
                     cmd, platform, host
                 )
@@ -914,13 +913,23 @@ class TaskJobManager:
             cmd.append(get_remote_workflow_run_job_dir(workflow))
             job_log_dirs = []
             host = 'localhost'
+
+            ctx = SubProcContext(cmd_key, cmd, host=host)
             if remote_mode:
-                host = get_host_from_platform(
-                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
-                )
-                cmd = construct_ssh_cmd(
-                    cmd, platform, host
-                )
+                try:
+                    host = get_host_from_platform(
+                        platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                    )
+                    cmd = construct_ssh_cmd(
+                        cmd, platform, host
+                    )
+                except NoHostsError:
+                    ctx.err = f'No available hosts for {platform["name"]}'
+                    callback_255(ctx, workflow, itasks)
+                    continue
+                else:
+                    ctx = SubProcContext(cmd_key, cmd, host=host)
+
             for itask in sorted(itasks, key=lambda task: task.identity):
                 job_log_dirs.append(
                     itask.tokens.duplicate(
@@ -930,9 +939,7 @@ class TaskJobManager:
             cmd += job_log_dirs
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
-                SubProcContext(
-                    cmd_key, cmd, host=host
-                ),
+                ctx,
                 bad_hosts=self.task_remote_mgr.bad_hosts,
                 callback=callback,
                 callback_args=[workflow, itasks],
@@ -1224,6 +1231,7 @@ class TaskJobManager:
         self.workflow_db_mgr.put_insert_task_jobs(
             itask,
             {
+                'flow_nums': serialise(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
                 'try_num': itask.get_try_num(),

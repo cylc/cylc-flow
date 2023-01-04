@@ -382,6 +382,9 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     ):
         sys.exit(1)
 
+    # upgrade the workflow DB (after user has confirmed upgrade)
+    _upgrade_database(db_file)
+
     # re-execute on another host if required
     _distribute(options.host, workflow_id_raw, workflow_id)
 
@@ -521,6 +524,18 @@ def _version_check(
     return True
 
 
+def _upgrade_database(db_file):
+    """Upgrade the workflow database if needed.
+
+    Note:
+        Do this after the user has confirmed that they want to upgrade!
+
+    """
+    if db_file.is_file():
+        wdbm = WorkflowDatabaseManager(db_file.parent)
+        wdbm.upgrade()
+
+
 def _print_startup_message(options):
     """Print the Cylc header including the CLI logo."""
     if (
@@ -570,6 +585,8 @@ def _distribute(host, workflow_id_raw, workflow_id):
         cmd.append("--host=localhost")
 
         # Re-invoke the command
+        # NOTE: has the potential to raise NoHostsError, however, this will
+        # most likely have been raised during host-selection
         cylc_server_cmd(cmd, host=host)
         sys.exit(0)
 

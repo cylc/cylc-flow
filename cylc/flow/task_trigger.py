@@ -149,6 +149,8 @@ class TaskTrigger:
         else:
             return '%s:%s' % (self.task_name, self.output)
 
+    __repr__ = __str__
+
     @staticmethod
     def standardise_name(name):
         """Replace trigger name aliases with standard names.

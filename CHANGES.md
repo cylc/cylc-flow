@@ -13,6 +13,11 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Breaking Changes
+
+* Workflows started with Cylc 8.0 which contain multiple "flows" cannot be
+  restarted with Cylc 8.1 due to database changes.
+
 ### Enhancements
 
 [#5214](https://github.com/cylc/cylc-flow/pull/5214) - Allows Cylc commands
@@ -37,12 +42,18 @@ command to validate, install and play a workflow.
 [#5081](https://github.com/cylc/cylc-flow/pull/5081) - Reduced amount that
 gets logged at "INFO" level in scheduler logs.
 
+[#5259](https://github.com/cylc/cylc-flow/pull/5259) - Add flow_nums
+to task_jobs table in the workflow database.
+
 -------------------------------------------------------------------------------
-## __cylc-8.0.4 (<span actions:bind='release-date'>Pending YYYY-MM-DD</span>)__
+## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
 
 Maintenance release.
 
 ### Fixes
+
+[##5205](https://github.com/cylc/cylc-flow/pull/#5205) - Fix bug which caused
+orphaned running tasks to silently skip remote file installation at scheduler restart.
 
 [#5224](https://github.com/cylc/cylc-flow/pull/5225) - workflow installation:
 disallow reserved names only in the top level source directory.
@@ -56,6 +67,10 @@ with warning, for scan errors where workflow is stopped.
 
 [#5199](https://github.com/cylc/cylc-flow/pull/5199) - Fix a problem with
 the consolidation tutorial.
+
+[#5195](https://github.com/cylc/cylc-flow/pull/5195) -
+Fix issue where workflows can fail to shutdown due to unavailable remote
+platforms and make job log retrieval more robust.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__

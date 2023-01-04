@@ -38,7 +38,7 @@ from cylc.flow.broadcast_report import get_broadcast_change_iter
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
@@ -53,6 +53,9 @@ DbUpdateTuple = Tuple[DbArgDict, DbArgDict]
 
 
 PERM_PRIVATE = 0o600  # -rw-------
+
+
+INCOMPAT_MSG = f"Workflow database is incompatible with Cylc {CYLC_VERSION}"
 
 
 class WorkflowDatabaseManager:
@@ -722,39 +725,86 @@ class WorkflowDatabaseManager:
         )
         conn.commit()
 
-    def upgrade(self, last_run_ver, pri_dao):
-        if last_run_ver < parse_version("8.0.3.dev"):
-            self.upgrade_pre_803(pri_dao)
+    @staticmethod
+    def upgrade_pre_810(pri_dao: CylcWorkflowDAO) -> None:
+        """Upgrade on restart from a pre-8.1.0 database.
+
+        Add "flow_nums" column to the "task_jobs".
+        See GitHub cylc/cylc-flow#5252.
+
+        This is only possible if we have single item in the list
+        represented by flow_nums, else we have to raise an error
+        """
+        conn = pri_dao.connect()
+        c_name = "flow_nums"
+        LOG.info(
+            f"DB upgrade (pre-8.1.0): "
+            f"add {c_name} column to {CylcWorkflowDAO.TABLE_TASK_JOBS}"
+        )
+
+        # We can't upgrade if the flow_nums in task_states are not
+        # distinct.
+        from cylc.flow.util import deserialise
+        flow_nums = deserialise(conn.execute(
+            'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
+        if len(flow_nums) != 1:
+            raise CylcError(
+                'Cannot upgrade-restart from 8.0.x to 8.1.0 IF'
+                ' multiple flows have been used.'
+            )
+
+        conn.execute(
+            rf"ALTER TABLE {CylcWorkflowDAO.TABLE_TASK_JOBS} "
+            rf"ADD COLUMN {c_name} "
+            r"DEFAULT '[1]'"
+        )
+        conn.commit()
+
+    def _get_last_run_ver(self, pri_dao):
+        """Return the version of Cylc this DB was last run with.
+
+        Args:
+            pri_dao: Open private database connection object.
+
+        """
+        try:
+            last_run_ver = self._get_last_run_version(pri_dao)
+        except TypeError:
+            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
+        return parse_version(last_run_ver)
+
+    def upgrade(self):
+        """Upgrade this database to this Cylc version.
+        """
+        with self.get_pri_dao() as pri_dao:
+            last_run_ver = self._get_last_run_ver(pri_dao)
+            if last_run_ver < parse_version("8.0.3.dev"):
+                self.upgrade_pre_803(pri_dao)
+            if last_run_ver < parse_version("8.1.0.dev"):
+                self.upgrade_pre_810(pri_dao)
 
     def check_workflow_db_compatibility(self):
-        """Raises ServiceFileError if the existing workflow database is
-        incompatible with the current version of Cylc."""
+        """Check this DB is compatible with this Cylc version.
+
+        Raises:
+            ServiceFileError:
+                If the existing workflow database is incompatible with the
+                current version of Cylc.
+
+        """
         if not os.path.isfile(self.pri_path):
             raise FileNotFoundError(self.pri_path)
-        incompat_msg = (
-            f"Workflow database is incompatible with Cylc {CYLC_VERSION}"
-        )
-        manual_rm_msg = (
-            "If you are sure you want to operate on this workflow, please "
-            f"delete the database file at {self.pri_path}"
-        )
-        with self.get_pri_dao() as pri_dao:
-            try:
-                last_run_ver = self._get_last_run_version(pri_dao)
-            except TypeError:
-                raise ServiceFileError(
-                    f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
-                )
-            last_run_ver = parse_version(last_run_ver)
-            restart_incompat_ver = parse_version(
-                CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
-            )
-            if last_run_ver <= restart_incompat_ver:
-                raise ServiceFileError(
-                    f"{incompat_msg} (workflow last run with "
-                    f"Cylc {last_run_ver})."
-                    f"\n{manual_rm_msg}"
-                )
-            self.upgrade(last_run_ver, pri_dao)
 
+        with self.get_pri_dao() as pri_dao:
+            last_run_ver = self._get_last_run_ver(pri_dao)
+            # WARNING: Do no upgrade the DB here
+
+        restart_incompat_ver = parse_version(
+            CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
+        )
+        if last_run_ver <= restart_incompat_ver:
+            raise ServiceFileError(
+                f"{INCOMPAT_MSG} (workflow last run with "
+                f"Cylc {last_run_ver})."
+            )
         return last_run_ver

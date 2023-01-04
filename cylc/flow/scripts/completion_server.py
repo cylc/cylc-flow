@@ -647,7 +647,7 @@ def get_option_parser() -> COP:
     parser.add_option(
         '--timeout',
         type='int',
-        default='300',
+        default=900,  # PT15M
         help=(
             'The maximum idle time before the server shuts down in seconds.'
         )

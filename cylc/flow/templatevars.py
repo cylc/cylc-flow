@@ -17,7 +17,7 @@
 
 from ast import literal_eval
 from optparse import Values
-from pathlib import Path
+from sqlite3 import OperationalError
 from typing import Any, Dict
 
 from cylc.flow.exceptions import InputError
@@ -26,31 +26,18 @@ from cylc.flow.exceptions import InputError
 from cylc.flow.rundb import CylcWorkflowDAO
 
 
-class OldTemplateVars:
-    """Gets template variables stored in workflow database.
-
-    Mirrors the interface used in scheduler.py to get db info on restart.
+def get_template_vars_from_db(run_dir):
+    """Get template vars stored in a workflow run database.
     """
-    DB = 'log/db'
-
-    def __init__(self, run_dir):
-        self.template_vars = {}
-        self.run_dir = Path(run_dir)
-        self._get_db_template_vars()
-
-    def _callback(self, _, row):
-        """Extract key and value and run eval_var on them assigning
-        them to self.template_vars.
-        """
-        self.template_vars[row[0]] = eval_var(row[1])
-
-    def _get_db_template_vars(self):
-        if (self.run_dir / self.DB).exists():
-            dao = CylcWorkflowDAO(str(self.run_dir / self.DB))
-            try:
-                dao.select_workflow_template_vars(self._callback)
-            finally:
-                dao.close()
+    template_vars = {}
+    try:
+        dao = CylcWorkflowDAO(str(run_dir / 'log/db'))
+        dao.select_workflow_template_vars(
+            lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
+        )
+    except OperationalError:
+        ...
+    return template_vars
 
 
 def eval_var(var):

@@ -104,10 +104,10 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    asyncio.run(_main(parser, options, workflow_id))
+    asyncio.run(_main(options, workflow_id))
 
 
-async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+async def _main(options: 'Values', workflow_id: str) -> None:
     workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,

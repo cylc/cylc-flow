@@ -68,6 +68,7 @@ ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
 |   \`-- cylc-clean
 |       \`-- ${TEST_NAME_BASE}
 |           \`-- log
+|               |-- db
 |               \`-- install
 |                   \`-- ${INSTALL_LOG_FILE}
 \`-- leave-me-alone

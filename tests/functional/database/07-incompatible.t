@@ -29,12 +29,17 @@ sqlite3 "${SRV_DIR}/db" < 'db.sqlite3'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
-for cmd in play clean; do
-    TEST_NAME="${TEST_NAME_BASE}-${cmd}-fail"
-    run_fail "$TEST_NAME" cylc "$cmd" "$WORKFLOW_NAME"
+TEST_NAME="${TEST_NAME_BASE}-play-fail"
+run_fail "$TEST_NAME" cylc play "$WORKFLOW_NAME"
+grep_ok \
+    'Workflow database is incompatible with Cylc .*, or is corrupted' \
+    "${TEST_NAME}.stderr"
 
-    grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
-done
+TEST_NAME="${TEST_NAME_BASE}-clean-fail"
+run_fail "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
+grep_ok \
+    'This database is either corrupted or not compatible with this' \
+    "${TEST_NAME}.stderr"
 
 purge
 

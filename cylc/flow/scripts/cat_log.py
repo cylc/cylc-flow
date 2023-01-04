@@ -408,6 +408,8 @@ def main(
             # TODO: Add Intelligent Host selection to this
             with suppress(KeyboardInterrupt):
                 # (Ctrl-C while tailing)
+                # NOTE: This will raise NoHostsError if the platform is not
+                # contactable
                 remote_cylc_cmd(
                     cmd,
                     platform,

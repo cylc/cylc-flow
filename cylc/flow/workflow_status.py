@@ -162,12 +162,14 @@ def get_workflow_status(schd: 'Scheduler') -> Tuple[str, str]:
     status = WorkflowStatus.RUNNING
     status_msg = ''
 
-    if schd.is_paused:
-        status = WorkflowStatus.PAUSED
-        status_msg = 'paused'
-    elif schd.stop_mode is not None:
+    if schd.stop_mode is not None:
         status = WorkflowStatus.STOPPING
         status_msg = f'stopping: {schd.stop_mode.explain()}'
+    elif schd.is_stalled:
+        status_msg = 'stalled'
+    elif schd.is_paused:
+        status = WorkflowStatus.PAUSED
+        status_msg = 'paused'
     elif schd.pool.hold_point:
         status_msg = (
             WORKFLOW_STATUS_RUNNING_TO_HOLD %

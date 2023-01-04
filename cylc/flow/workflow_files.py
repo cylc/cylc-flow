@@ -29,6 +29,7 @@ import re
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
 import shlex
 import shutil
+import sqlite3
 from time import sleep
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
@@ -778,21 +779,22 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
         )
 
 
-def init_clean(reg: str, opts: 'Values') -> None:
+def init_clean(id_: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
     Args:
-        reg: Workflow name/ID.
+        id_: Workflow ID.
         opts: CLI options object for cylc clean.
+
     """
-    local_run_dir = Path(get_workflow_run_dir(reg))
+    local_run_dir = Path(get_workflow_run_dir(id_))
     with suppress(InputError):
-        local_run_dir, reg = infer_latest_run(
+        local_run_dir, id_ = infer_latest_run(
             local_run_dir, implicit_runN=False, warn_runN=False
         )
     try:
-        _clean_check(opts, reg, local_run_dir)
+        _clean_check(opts, id_, local_run_dir)
     except FileNotFoundError as exc:
         LOG.info(exc)
         return
@@ -802,31 +804,46 @@ def init_clean(reg: str, opts: 'Values') -> None:
 
     if not opts.local_only:
         platform_names = None
-        try:
-            platform_names = get_platforms_from_db(local_run_dir)
-        except FileNotFoundError:
+        db_file = Path(get_workflow_srv_dir(id_), 'db')
+        if not db_file.is_file():
+            # no DB -> do nothing
             if opts.remote_only:
                 raise ServiceFileError(
-                    f"No workflow database for {reg} - cannot perform "
+                    f"No workflow database for {id_} - cannot perform "
                     "remote clean"
                 )
             LOG.info(
-                f"No workflow database for {reg} - will only clean locally"
+                f"No workflow database for {id_} - will only clean locally"
             )
-        except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot clean {reg} - {exc}")
+        else:
+            # DB present -> load platforms
+            try:
+                platform_names = get_platforms_from_db(local_run_dir)
+            except ServiceFileError as exc:
+                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
+            except sqlite3.OperationalError as exc:
+                # something went wrong with the query
+                # e.g. the table/field we need isn't there
+                LOG.warning(
+                    'This database is either corrupted or not compatible with'
+                    ' this version of "cylc clean".'
+                    '\nTry using the version of Cylc the workflow was last ran'
+                    ' with to remove it.'
+                    '\nOtherwise please delete the database file.'
+                )
+                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
-                reg, platform_names, opts.rm_dirs, opts.remote_timeout
+                id_, platform_names, opts.rm_dirs, opts.remote_timeout
             )
 
     if not opts.remote_only:
         # Must be after remote clean
-        clean(reg, local_run_dir, rm_dirs)
+        clean(id_, local_run_dir, rm_dirs)
 
 
-def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
+def clean(id_: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
     """Remove a stopped workflow from the local filesystem only.
 
     Deletes the workflow run directory and any symlink dirs, or just the
@@ -836,11 +853,12 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
     possible to clean any symlink dirs.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow ID.
         run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
+
     """
-    symlink_dirs = get_symlink_dirs(reg, run_dir)
+    symlink_dirs = get_symlink_dirs(id_, run_dir)
     if rm_dirs is not None:
         # Targeted clean
         for pattern in rm_dirs:
@@ -849,7 +867,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         # Wholesale clean
         LOG.debug(f"Cleaning {run_dir}")
         for symlink in symlink_dirs:
-            # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
+            # Remove <symlink_dir>/cylc-run/<id>/<symlink>
             remove_dir_and_target(run_dir / symlink)
         if '' not in symlink_dirs:
             # if run dir isn't a symlink dir and hasn't been deleted yet
@@ -874,10 +892,10 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         if cylc_install_dir.is_dir():
             remove_dir_or_file(cylc_install_dir)
     # Remove any empty parents of run dir up to ~/cylc-run/
-    remove_empty_parents(run_dir, reg)
+    remove_empty_parents(run_dir, id_)
     for symlink, target in symlink_dirs.items():
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        remove_empty_parents(target, Path(reg, symlink))
+        remove_empty_parents(target, Path(id_, symlink))
 
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
@@ -1095,6 +1113,10 @@ def _remote_clean_cmd(
         platform: Config for the platform on which to remove the workflow.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
+
+    Raises:
+        NoHostsError: If the platform is not contactable.
+
     """
     LOG.debug(
         f"Cleaning {reg} on install target: {platform['install target']} "
@@ -1184,17 +1206,30 @@ def get_workflow_title(reg):
 
 
 def get_platforms_from_db(run_dir):
-    """Load the set of names of platforms (that jobs ran on) from the
-    workflow database.
+    """Return the set of names of platforms (that jobs ran on) from the DB.
+
+    Warning:
+        This does NOT upgrade the workflow database!
+
+        We could upgrade the DB for backward compatiblity, but we haven't
+        got any upgraders for this table yet so there's no point.
+
+        Note that upgrading the DB here would not help with forward
+        compatibility. We can't apply upgraders which don't exist yet.
 
     Args:
         run_dir (str): The workflow run directory.
+
+    Raises:
+        sqlite3.OperationalError: in the event the table/field required for
+        cleaning is not present.
+
     """
     workflow_db_mgr = WorkflowDatabaseManager(
         os.path.join(run_dir, WorkflowFiles.Service.DIRNAME))
-    workflow_db_mgr.check_workflow_db_compatibility()
     with workflow_db_mgr.get_pri_dao() as pri_dao:
         platform_names = pri_dao.select_task_job_platforms()
+
     return platform_names
 
 

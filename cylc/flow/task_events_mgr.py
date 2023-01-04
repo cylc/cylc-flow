@@ -37,6 +37,7 @@ from typing import TYPE_CHECKING, Optional, Union, cast
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import NoHostsError
 from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
 from cylc.flow.parsec.config import ItemNotFoundError
 from cylc.flow.pathutil import (
@@ -939,8 +940,29 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
+        # get a host to run retrieval on
         platform = get_platform(ctx.platform_name)
-        host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
+        try:
+            host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
+        except NoHostsError:
+            # All of the platforms hosts have been found to be uncontactable.
+            # Reset the bad hosts to allow retrieval retry to take place.
+            self.bad_hosts -= set(platform['hosts'])
+            try:
+                # Get a new host and try again.
+                host = get_host_from_platform(
+                    platform,
+                    bad_hosts=self.bad_hosts
+                )
+            except NoHostsError:
+                # We really can't get a host to try on e.g. no hosts
+                # configured (shouldn't happen). Nothing more we can do here,
+                # move onto the next submission retry.
+                for id_key in id_keys:
+                    self.unset_waiting_event_timer(id_key)
+                return
+
+        # construct the retrieval command
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
@@ -966,6 +988,8 @@ class TaskEventsManager():
         )
         # Local target
         cmd.append(get_workflow_run_job_dir(schd.workflow) + "/")
+
+        # schedule command
         self.proc_pool.put_command(
             SubProcContext(
                 ctx, cmd, env=dict(os.environ), id_keys=id_keys, host=host

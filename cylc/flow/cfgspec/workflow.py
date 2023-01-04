@@ -1090,16 +1090,17 @@ with Conf(
                 )
             )
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
-                Cylc can automate resubmission of a failed job.
+                Cylc can automate resubmission of failed jobs.
 
-                Execution retry delays are a list of ISO 8601
-                durations/intervals which tell Cylc how long to wait before
-                resubmitting a failed job.
+                Execution retry delays is a list of ISO 8601 durations which
+                tell Cylc how long to wait before the next try.
 
-                Each time Cylc resubmits a job it will increment the
-                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
-                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
-                behaviour between submission attempts.
+                The job environment variable ``$CYLC_TASK_TRY_NUMBER``
+                increments with each automatic retry, allowing you to vary task
+                behaviour between retries.
+
+                Tasks only go to the ``failed`` state if job execution fails
+                with no retries left.
 
                 .. versionchanged:: 8.0.0
 

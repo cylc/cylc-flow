@@ -284,10 +284,10 @@ class WorkflowConfig:
             'linearized ancestors': {},
             # lists of first-parent ancestor namespaces
             'first-parent ancestors': {},
-            # lists of all descendant namespaces
+            # sets of all descendant namespaces
             # (not including the final tasks)
             'descendants': {},
-            # lists of all descendant namespaces from the first-parent
+            # sets of all descendant namespaces from the first-parent
             # hierarchy (first parents are collapsible in visualization)
             'first-parent descendants': {},
         }
@@ -1179,16 +1179,12 @@ class WorkflowConfig:
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
             for p in ancestors[1:]:
-                if p not in self.runtime['descendants']:
-                    self.runtime['descendants'][p] = []
-                if name not in self.runtime['descendants'][p]:
-                    self.runtime['descendants'][p].append(name)
+                self.runtime['descendants'].setdefault(p, set()).add(name)
             first_ancestors = self.runtime['first-parent ancestors'][name]
             for p in first_ancestors[1:]:
-                if p not in self.runtime['first-parent descendants']:
-                    self.runtime['first-parent descendants'][p] = []
-                if name not in self.runtime['first-parent descendants'][p]:
-                    self.runtime['first-parent descendants'][p].append(name)
+                self.runtime['first-parent descendants'].setdefault(
+                    p, set()
+                ).add(name)
 
     def compute_inheritance(self):
         LOG.debug("Parsing the runtime namespace hierarchy")
@@ -2008,7 +2004,7 @@ class WorkflowConfig:
         # the graph (which would probably be quite reasonable).
         family_map = {
             family: [
-                task for task in tasks
+                task for task in sorted(tasks)
                 if (
                     task in self.runtime['parents'] and
                     task not in self.runtime['descendants']
@@ -2201,15 +2197,15 @@ class WorkflowConfig:
                           self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in flow.cylc)
-                    self.runtime['descendants']['root'] = []
+                    self.runtime['descendants']['root'] = set()
                 if 'root' not in self.runtime['first-parent descendants']:
                     # (happens when no runtimes are defined in flow.cylc)
-                    self.runtime['first-parent descendants']['root'] = []
+                    self.runtime['first-parent descendants']['root'] = set()
                 self.runtime['parents'][name] = ['root']
                 self.runtime['linearized ancestors'][name] = [name, 'root']
                 self.runtime['first-parent ancestors'][name] = [name, 'root']
-                self.runtime['descendants']['root'].append(name)
-                self.runtime['first-parent descendants']['root'].append(name)
+                self.runtime['descendants']['root'].add(name)
+                self.runtime['first-parent descendants']['root'].add(name)
                 self.ns_defn_order.append(name)
 
             try:

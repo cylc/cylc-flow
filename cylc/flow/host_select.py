@@ -27,7 +27,11 @@ from tokenize import tokenize
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import GlobalConfigError, HostSelectException
+from cylc.flow.exceptions import (
+    GlobalConfigError,
+    HostSelectException,
+    NoHostsError,
+)
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import run_cmd, cylc_server_cmd
 from cylc.flow.terminal import parse_dirty_json
@@ -553,7 +557,11 @@ def _get_metrics(hosts, metrics, data=None):
     }
     for host in hosts:
         if is_remote_host(host):
-            proc_map[host] = cylc_server_cmd(cmd, host=host, **kwargs)
+            try:
+                proc_map[host] = cylc_server_cmd(cmd, host=host, **kwargs)
+            except NoHostsError:
+                LOG.warning(f'Could not contact {host}')
+                continue
         else:
             proc_map[host] = run_cmd(['cylc'] + cmd, **kwargs)
 

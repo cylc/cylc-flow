@@ -75,10 +75,15 @@ async def test_revalidate_validate(
 ):
     """It validates with Cylc Validate."""
     parser = parser()
-    opts = Options(parser)()
+    opts = SimpleNamespace(**parser.get_default_values().__dict__)
+    opts.templatevars = []
+    opts.templatevars_file = []
     if function == graph:
         opts.reference = True
 
     async with mod_start(_setup):
-        await function(parser, opts, _setup.workflow_name)
+        if function == view:
+            await function(opts, _setup.workflow_name)
+        else:
+            await function(parser, opts, _setup.workflow_name)
         assert expect in capsys.readouterr().out

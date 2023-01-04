@@ -49,7 +49,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 workflow_run_ok "${TEST_NAME_BASE}-run-ok" cylc play "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" --debug
-poll_grep_workflow_log 'File installation complete'
+poll_grep_workflow_log 'remote file install complete'
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
 if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}") == \
     "$TMPDIR/$USER/cylctb_tmp_run_dir/cylc-run/${WORKFLOW_NAME}" ]]; then

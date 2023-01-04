@@ -232,10 +232,12 @@ class CylcWorkflowDAO:
             ["delay"],
             ["timeout"],
         ],
+        # NOTE: this table is used by `cylc clean`, don't rename me!
         TABLE_TASK_JOBS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["flow_nums"],
             ["is_manual_submit", {"datatype": "INTEGER"}],
             ["try_num", {"datatype": "INTEGER"}],
             ["time_submit"],
@@ -245,6 +247,7 @@ class CylcWorkflowDAO:
             ["time_run_exit"],
             ["run_signal"],
             ["run_status", {"datatype": "INTEGER"}],
+            # NOTE: this field is used by `cylc clean` don't rename me!
             ["platform_name"],
             ["job_runner_name"],
             ["job_id"],
@@ -715,7 +718,16 @@ class CylcWorkflowDAO:
             callback(row_idx, list(row))
 
     def select_task_job_platforms(self):
-        """Return the set of platform names from task_jobs table."""
+        """Return the set of platform names from task_jobs table.
+
+        Warning:
+            This interface is used by `cylc clean` which does not upgrade the
+            DB first (it could, this would only extend backwards
+            compatibility but would not help with forwards compatibility).
+            Keep this query to the minimum of tables/fields to avoid
+            breaking compatibility with older/newer versions of Cylc.
+
+        """
         stmt = rf'''
             SELECT DISTINCT
                 platform_name

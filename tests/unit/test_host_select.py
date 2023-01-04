@@ -20,14 +20,17 @@ NOTE: these are functional tests, for unit tests see the docstrings in
       the host_select module.
 
 """
+import logging
 import socket
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.host_select import (
+    _get_metrics,
     select_host,
-    select_workflow_host
+    select_workflow_host,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.parsec.exceptions import ListValueError
@@ -200,3 +203,18 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
             '''
         )
     assert 'ambiguous host' in excinfo.value.msg
+
+
+def test_get_metrics_no_hosts_error(caplog):
+    """It should handle SSH errors.
+
+    If a host is not contactable then it should be shipped.
+    """
+    caplog.set_level(logging.WARN, CYLC_LOG)
+    host_stats, data = _get_metrics(['not-a-host'], None)
+    # a warning should be logged
+    assert len(caplog.records) == 1
+    # no data for the host should be returned
+    assert not host_stats
+    # the return code should be recorded
+    assert data == {'not-a-host': {'returncode': 255}}

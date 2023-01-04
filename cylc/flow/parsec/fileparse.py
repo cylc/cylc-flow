@@ -46,7 +46,7 @@ from cylc.flow.parsec.exceptions import (
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
-from cylc.flow.templatevars import OldTemplateVars
+from cylc.flow.templatevars import get_template_vars_from_db
 from cylc.flow.workflow_files import (
     get_workflow_source_dir, check_flow_file)
 
@@ -355,7 +355,7 @@ def _prepend_old_templatevars(fpath: str, template_vars: t.Dict) -> t.Dict:
         template_vars: Template vars to prepend old tvars to.
     """
     rundir = Path(fpath).parent
-    old_tvars = OldTemplateVars(rundir).template_vars
+    old_tvars = get_template_vars_from_db(rundir)
     old_tvars.update(template_vars)
     template_vars = old_tvars
     return template_vars

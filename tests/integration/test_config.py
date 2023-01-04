@@ -277,8 +277,8 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
         assert 'external triggers must be used only once' in str(exc_ctx.value)
     else:
         config = validate(reg)
-        assert config.cfg['scheduling']['special tasks'][section] == [
+        assert set(config.cfg['scheduling']['special tasks'][section]) == {
             # the family FOO has been expanded to the tasks foo, foot
             'foo(P1D)',
             'foot(P1D)'
-        ]
+        }
