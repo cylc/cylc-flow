@@ -16,39 +16,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test `cylc vro` (Validate Reinstall restart)
-# In this case the target workflow is stopped so cylc play is run.
-
+# Test `cylc vr` (Validate Reinstall restart)
+# In this case the target workflow is paused so cylc reload & cylc play are run.
 
 . "$(dirname "$0")/test_header"
 set_test_number 6
 
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
-cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
+cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
-    --no-run-name
-# Get the workflow into a stopped state
-cylc stop --now --now "${WORKFLOW_NAME}"
-export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
-poll_workflow_stopped
+    --no-run-name --pause
 
-# It validates and restarts:
+while [[ -z $(cylc scan --name "${WORKFLOW_NAME}" --states=paused) ]]; do
+    sleep 1
+done
 
-# Change source workflow and run vro:
+
+# It validates, reloads and resumes:
+
+# Change source workflow and run vr:
 sed -i 's@P1Y@P5Y@' flow.cylc
-run_ok "${TEST_NAME_BASE}-runs" cylc vro "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
-# Grep for VRO reporting revalidation, reinstallation and playing the workflow.
+# Grep for reporting of revalidation, reinstallation, reloading and playing:
 grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
 named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
 named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
-named_grep_ok "${TEST_NAME_BASE}-it-played" "$ cylc play" "VIPOUT.txt"
+named_grep_ok "${TEST_NAME_BASE}-it-reloaded" "$ cylc reload" "VIPOUT.txt"
 
 
-# Clean Up.
+# Clean Up:
 run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

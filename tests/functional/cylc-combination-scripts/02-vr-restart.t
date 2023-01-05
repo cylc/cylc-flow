@@ -16,38 +16,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test `cylc vro` (Validate Reinstall restart)
-# Changes to the source cause VRO to bail on validation.
+# Test `cylc vr` (Validate Reinstall restart)
+# In this case the target workflow is stopped so cylc play is run.
+
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 6
 
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
-cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
+cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
     --no-run-name
+# Get the workflow into a stopped state
+cylc stop --now --now "${WORKFLOW_NAME}"
+export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
+poll_workflow_stopped
+
+# It validates and restarts:
+
+# Change source workflow and run vr:
+sed -i 's@P1Y@P5Y@' flow.cylc
+run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
+
+# Grep for vr reporting revalidation, reinstallation and playing the workflow.
+grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
+named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
+named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
+named_grep_ok "${TEST_NAME_BASE}-it-played" "$ cylc play" "VIPOUT.txt"
 
 
-# Change source workflow and run vro:
-
-# Cut the runtime section out of the source flow.
-head -n 5 > tmp < flow.cylc
-cat tmp > flow.cylc
-
-TEST_NAME="${TEST_NAME_BASE}"
-run_fail "${TEST_NAME}" cylc vro "${WORKFLOW_NAME}"
-
-# Grep for reporting of revalidation, reinstallation, reloading and playing:
-named_grep_ok "${TEST_NAME_BASE}-it-tried" \
-    "$ cylc validate --against-source" "${TEST_NAME}.stdout"
-named_grep_ok "${TEST_NAME_BASE}-it-failed" \
-    "WorkflowConfigError" "${TEST_NAME}.stderr"
-
-
-# Clean Up:
+# Clean Up.
 run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

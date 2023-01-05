@@ -203,7 +203,7 @@ ALIASES = {
     'task-message': 'message',
     'unhold': 'release',
     'validate-install-play': 'vip',
-    'validate-reinstall-reload': 'vro',
+    'validate-reinstall': 'vr',
 }
 
 
