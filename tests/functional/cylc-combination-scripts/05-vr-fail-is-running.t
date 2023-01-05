@@ -16,9 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test `cylc vro` (Validate Reinstall restart)
+# Test `cylc vr` (Validate Reinstall)
 # In this case the target workflow is in an abiguous state: We cannot tell
-# Whether it's running, paused or stopped. Cylc VRO should validate before
+# Whether it's running, paused or stopped. Cylc VR should validate before
 # reinstall:
 
 . "$(dirname "$0")/test_header"
@@ -32,7 +32,7 @@ create_test_global_config "" """
 
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
-cp "${TEST_SOURCE_DIR}/vro_workflow/flow.cylc" .
+cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
 run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
@@ -46,8 +46,8 @@ sed -i 's@CYLC_WORKFLOW_HOST=.*@CYLC_WORKFLOW_HOST=elephantshrew@' "${CONTACTFIL
 
 # It can't figure out whether the workflow is running:
 
-# Change source workflow and run vro:
-run_fail "${TEST_NAME_BASE}-runs" cylc vro "${WORKFLOW_NAME}"
+# Change source workflow and run vr:
+run_fail "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
 grep_ok "on elephantshrew." "${TEST_NAME_BASE}-runs.stderr"
 
