@@ -38,7 +38,8 @@ class FakeTDef:
 def test_task_mean_elapsed_time():
     tdef = FakeTDef()
     result = task_mean_elapsed_time(tdef)
-    assert result == 5.0
+    assert result == 5
+    assert isinstance(result, int)
 
 
 def test_apply_delta():
