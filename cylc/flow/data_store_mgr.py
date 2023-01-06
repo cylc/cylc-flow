@@ -99,8 +99,7 @@ from cylc.flow.util import (
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
-    get_utc_mode,
-    get_time_string_from_unix_time as time2str
+    get_utc_mode
 )
 
 if TYPE_CHECKING:
@@ -1183,12 +1182,6 @@ class DataStoreMgr:
             output.satisfied = satisfied
             output.time = update_time
 
-        if itask.tdef.clocktrigger_offset is not None:
-            tproxy.clock_trigger.satisfied = itask.is_waiting_clock_done()
-            tproxy.clock_trigger.time = itask.clock_trigger_time
-            tproxy.clock_trigger.time_string = time2str(
-                itask.clock_trigger_time)
-
         for trig, satisfied in itask.state.external_triggers.items():
             ext_trig = tproxy.external_triggers[trig]
             ext_trig.id = trig
@@ -1990,36 +1983,6 @@ class DataStoreMgr:
         del tp_delta.prerequisites[:]
         tp_delta.prerequisites.extend(prereq_list)
         self.updates_pending = True
-
-    def delta_task_clock_trigger(self, itask, check_items):
-        """Create delta for change in task proxy prereqs.
-
-        Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-            check_items (tuple):
-                Collection of prerequisites checked to determine if
-                task is ready to run.
-
-        """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
-        if not tproxy:
-            return
-        if len(check_items) == 1:
-            return
-        _, clock, _ = check_items
-        # update task instance
-        if (
-                tproxy.HasField('clock_trigger')
-                and tproxy.clock_trigger.satisfied is not clock
-        ):
-            update_time = time()
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            tp_delta.clock_trigger.satisfied = clock
-            self.updates_pending = True
 
     def delta_task_ext_trigger(self, itask, trig, message, satisfied):
         """Create delta for change in task proxy external_trigger.

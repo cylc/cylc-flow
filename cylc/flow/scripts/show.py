@@ -117,10 +117,6 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
       message
       satisfied
     }
-    clockTrigger {
-      timeString
-      satisfied
-    }
     externalTriggers {
       id
       label
@@ -327,25 +323,18 @@ async def prereqs_and_outputs_query(
                     info = f'{task_id} {output["label"]}'
                     print_msg_state(info, output['satisfied'])
                 if (
-                        t_proxy['clockTrigger']['timeString']
-                        or t_proxy['externalTriggers']
+                        t_proxy['externalTriggers']
                         or t_proxy['xtriggers']
                 ):
                     ansiprint(
                         "<bold>other:</bold> ('<red>-</red>': not satisfied)")
-                    if t_proxy['clockTrigger']['timeString']:
-                        state = t_proxy['clockTrigger']['satisfied']
-                        time_str = t_proxy['clockTrigger']['timeString']
-                        print_msg_state(
-                            'Clock trigger time reached',
-                            state)
-                        print(f'  o Triggers at ... {time_str}')
                     for ext_trig in t_proxy['externalTriggers']:
                         state = ext_trig['satisfied']
                         print_msg_state(
                             f'{ext_trig["label"]} ... {state}',
                             state)
                     for xtrig in t_proxy['xtriggers']:
+                        print(xtrig)
                         state = xtrig['satisfied']
                         print_msg_state(
                             f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',

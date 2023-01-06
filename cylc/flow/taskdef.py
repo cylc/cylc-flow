@@ -115,7 +115,7 @@ class TaskDef:
         "run_mode", "rtconfig", "start_point", "initial_point", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "sequential", "is_coldstart",
-        "workflow_polling_cfg", "clocktrigger_offset", "expiration_offset",
+        "workflow_polling_cfg", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
         "graph_children", "graph_parents", "has_abs_triggers",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
@@ -140,7 +140,6 @@ class TaskDef:
         self.sequential = False
         self.workflow_polling_cfg = {}
 
-        self.clocktrigger_offset = None
         self.expiration_offset = None
         self.namespace_hierarchy = []
         self.dependencies = {}

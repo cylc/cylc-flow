@@ -1591,13 +1591,6 @@ class Scheduler:
                 ):
                     self.pool.queue_task(itask)
 
-                if (
-                    itask.tdef.clocktrigger_offset is not None
-                    and itask.is_waiting_clock_done()
-                ):
-                    # Old-style clock-trigger tasks.
-                    self.pool.queue_task(itask)
-
             if housekeep_xtriggers:
                 # (Could do this periodically?)
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
