@@ -102,7 +102,6 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
-
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:
