@@ -208,6 +208,7 @@ def reinstall_cli(
         # ensure the "reinstall canceled" message shows for ctrl+c
         usr = 'n'  # cancel the reinstall
         print()    # clear the traceback line
+        return False
 
     if usr == 'y':
         # reinstall for real
@@ -220,6 +221,7 @@ def reinstall_cli(
         print(
             cparse('<magenta>Reinstall canceled, no changes made.</magenta>')
         )
+        return False
 
     return True
 

@@ -69,6 +69,7 @@ from cylc.flow.option_parsers import (
     log_subcommand,
     cleanup_sysargv
 )
+from cylc.flow.id_cli import parse_id
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import detect_old_contact_file
 
@@ -105,13 +106,20 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # Attempt to work out whether the workflow is running.
     # We are trying to avoid reinstalling then subsequently being
     # unable to play or reload because we cannot identify workflow state.
+    workflow_id, *_ = parse_id(
+        workflow_id,
+        constraint='workflows',
+    )
+
+    # Use this interface instead of scan, because it can have an ambiguous
+    # outcome which we want to capture before we install.
     try:
         detect_old_contact_file(workflow_id, quiet=True)
     except ServiceFileError:
-        # Workflow is definately still running:
+        # Workflow is definately stopped:
         workflow_running = True
     else:
-        # Workflow is definately stopped:
+        # Workflow is definately running:
         workflow_running = False
 
     # Force on the against_source option:
@@ -120,7 +128,9 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     cylc_validate(parser, options, workflow_id)
 
     log_subcommand('reinstall', workflow_id)
-    cylc_reinstall(options, workflow_id)
+    reinstall_ok = cylc_reinstall(options, workflow_id)
+    if not reinstall_ok:
+        exit(0)
 
     # Run reload if workflow is running, else play:
     if workflow_running:
