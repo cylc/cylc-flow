@@ -663,7 +663,13 @@ class TaskJobManager:
 
     def _kill_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
-        self.kill_task_jobs(workflow, [itask])
+        with suppress(NoHostsError):
+            # if there is another host to kill on, try again, otherwise fail
+            get_host_from_platform(
+                itask.platform,
+                bad_hosts=self.task_remote_mgr.bad_hosts
+            )
+            self.kill_task_jobs(workflow, [itask])
 
     def _kill_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
@@ -791,7 +797,13 @@ class TaskJobManager:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
-        self.poll_task_jobs(workflow, [itask])
+        with suppress(NoHostsError):
+            # if there is another host to poll on, try again, otherwise fail
+            get_host_from_platform(
+                itask.platform,
+                bad_hosts=self.task_remote_mgr.bad_hosts
+            )
+            self.poll_task_jobs(workflow, [itask])
 
     def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""

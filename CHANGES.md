@@ -41,6 +41,12 @@ gets logged at "INFO" level in scheduler logs.
 [#5259](https://github.com/cylc/cylc-flow/pull/5259) - Add flow_nums
 to task_jobs table in the workflow database.
 
+### Fixes
+
+[#5292](https://github.com/cylc/cylc-flow/pull/5292) -
+Fix an issue where polling could be repeated if the job's platform
+was not available.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
 
