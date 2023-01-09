@@ -194,7 +194,6 @@ def reinstall_cli(
 
             display_rose_warning(source)
             display_cylcignore_tip()
-
             # prompt for permission to continue
             while usr not in ['y', 'n']:
                 usr = _input(
@@ -208,13 +207,13 @@ def reinstall_cli(
         # ensure the "reinstall canceled" message shows for ctrl+c
         usr = 'n'  # cancel the reinstall
         print()    # clear the traceback line
-        return False
 
     if usr == 'y':
         # reinstall for real
         reinstall(opts, workflow_id, source, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
         display_cylc_reload_tip(workflow_id)
+        return True
 
     else:
         # no reinstall
@@ -222,8 +221,6 @@ def reinstall_cli(
             cparse('<magenta>Reinstall canceled, no changes made.</magenta>')
         )
         return False
-
-    return True
 
 
 def reinstall(
