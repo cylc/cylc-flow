@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc validate-reinstall-reload/play [OPTIONS] ARGS
+"""cylc validate-reinstall [OPTIONS] ARGS
 
 Validate and reinstall a single workflow. Then if:
 - Workflow running => reload.
