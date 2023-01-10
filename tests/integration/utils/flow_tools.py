@@ -55,7 +55,6 @@ def _make_flow(
     test_dir: Path,
     conf: Union[dict, str],
     name: Optional[str] = None,
-    is_run: Optional[bool] = True
 ) -> str:
     """Construct a workflow on the filesystem."""
     if name is None:

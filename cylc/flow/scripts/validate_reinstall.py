@@ -109,12 +109,12 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # Use this interface instead of scan, because it can have an ambiguous
     # outcome which we want to capture before we install.
     try:
-        detect_old_contact_file(workflow_id, quiet=True)
+        detect_old_contact_file(workflow_id)
     except ServiceFileError:
-        # Workflow is definately stopped:
+        # Workflow is definately running:
         workflow_running = True
     else:
-        # Workflow is definately running:
+        # Workflow is definately stopped:
         workflow_running = False
 
     # Force on the against_source option:

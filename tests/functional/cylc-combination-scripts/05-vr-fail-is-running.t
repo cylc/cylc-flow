@@ -37,6 +37,8 @@ run_ok "setup (vip)" \
     cylc vip --debug \
     --workflow-name "${WORKFLOW_NAME}" \
     --no-run-name
+
+
 # Get the workflow into an unreachable state
 
 CONTACTFILE="${RUN_DIR}/${WORKFLOW_NAME}/.service/contact"

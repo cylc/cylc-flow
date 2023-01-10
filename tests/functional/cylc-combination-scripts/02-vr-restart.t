@@ -26,14 +26,12 @@ set_test_number 6
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
-run_ok "setup (vip)" \
-    cylc vip --debug \
+run_ok "setup (install)" \
+    cylc install \
     --workflow-name "${WORKFLOW_NAME}" \
     --no-run-name
-# Get the workflow into a stopped state
-cylc stop --now --now "${WORKFLOW_NAME}"
+
 export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
-poll_workflow_stopped
 
 # It validates and restarts:
 

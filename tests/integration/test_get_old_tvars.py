@@ -16,7 +16,8 @@
 
 import pytest
 from pytest import param
-from types import SimpleNamespace
+
+from cylc.flow.option_parsers import Options
 
 from cylc.flow.scripts.validate import (
     wrapped_main as validate,
@@ -70,14 +71,14 @@ def _setup(mod_scheduler, mod_flow):
         param(cylclist, list_gop, 'bar', id='list')
     )
 )
-async def test_revalidate_validate(
+async def test_validate_with_old_tvars(
     _setup, mod_start, capsys, function, parser, expect,
 ):
-    """It (A Cylc CLI Command) can get template vars stored in db.
+    """It (A Cylc CLI Command - see parameters) can
+    get template vars stored in db.
 
     Else the jinja2 in the config would cause these tasks to fail.
     """
-    from cylc.flow.option_parsers import Options
     parser = parser()
     opts = Options(parser)()
     if function == graph:

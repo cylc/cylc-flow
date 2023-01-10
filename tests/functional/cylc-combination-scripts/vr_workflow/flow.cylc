@@ -5,4 +5,4 @@
 
 [runtime]
     [[foo]]
-        script = sleep 500
+        script = cylc pause ${WORKFLOW_ID}

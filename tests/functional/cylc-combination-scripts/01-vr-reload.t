@@ -20,7 +20,7 @@
 # In this case the target workflow is running so cylc reload is run.
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 7
 
 
 # Setup (Must be a running workflow, note the unusual absence of --no-detach)
@@ -41,10 +41,15 @@ run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
 # Grep for VR reporting revalidation, reinstallation and reloading
 grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
-named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
+named_grep_ok "${TEST_NAME_BASE}-it-validated" "$ cylc validate --against-source" "VIPOUT.txt"
 named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
 named_grep_ok "${TEST_NAME_BASE}-it-reloaded" "$ cylc reload" "VIPOUT.txt"
 
+cylc play "${WORKFLOW_NAME}"
+
+named_grep_ok "${TEST_NAME_BASE}-it-logged-reload" \
+    "Reloading the workflow definition" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Clean Up.
 run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now

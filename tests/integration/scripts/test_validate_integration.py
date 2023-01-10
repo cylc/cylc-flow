@@ -18,16 +18,15 @@
 
 """Integration tests for Cylc Validate CLI script."""
 
-from cylc.flow.scripts.validate import wrapped_main as validate
 from cylc.flow.parsec.exceptions import IllegalItemError
 import pytest
 from cylc.flow.parsec.exceptions import Jinja2Error
 
 
-async def test_revalidate_checks_source(
+async def test_validate_against_source_checks_source(
     capsys, validate, workflow_source, install, one_conf
 ):
-    """Validation fails if revalidating with broken config.
+    """Validation fails if validating against source with broken config.
     """
     src_dir = workflow_source(one_conf)
     workflow_id = install(src_dir)
@@ -44,7 +43,7 @@ async def test_revalidate_checks_source(
         validate(workflow_id, against_source=True)
 
 
-async def test_revalidate_gets_old_tvars(
+async def test_validate_against_source_gets_old_tvars(
     workflow_source, capsys, validate, scheduler, run, install, run_dir
 ):
     """Validation will retrieve template variables from a previously played
