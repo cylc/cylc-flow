@@ -40,8 +40,8 @@ run_ok "setup (vip)" \
 
 
 # Get the workflow into an unreachable state
-
 CONTACTFILE="${RUN_DIR}/${WORKFLOW_NAME}/.service/contact"
+poll test -e "${CONTACTFILE}"
 
 sed -i 's@CYLC_WORKFLOW_HOST=.*@CYLC_WORKFLOW_HOST=elephantshrew@' "${CONTACTFILE}"
 
