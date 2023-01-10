@@ -18,33 +18,28 @@
 
 """cylc validate-reinstall [OPTIONS] ARGS
 
-Validate and reinstall a single workflow. Then if:
-- Workflow running => reload.
-- Workflow paused => resume.
-- Workflow stopped => play.
+Validate, reinstall and apply changes to a workflow.
+
+Validate and reinstall a workflow then either:
+
+* "Reload" the workflow (if it is running),
+* or "play" it (if it is stopped).
 
 This command is equivalent to:
+  $ cylc validate myworkflow --against-source
+  $ cylc reinstall myworkflow
+  # if myworkflow is running:
+  $ cylc reload myworkflow
+  # else:
+  $ cylc play myworkflow
 
-    $ cylc validate myworkflow --against-source     # See note 1
-    $ cylc reinstall myworkflow
-    # if myworkflow is running:
-    $ cylc reload myworkflow
-    # else:
-    $ cylc play myworkflow
-
-Note 1:
-
-Cylc validate myworkflow --against-source is equivalent of (without writing
-any temporary files though):
-
-    # Install from run directory
-    $ cylc install ~/cylc-run/myworkflow -n temporary
-    # Install from source directory over the top
-    $ cylc install /path/to/myworkflow -n temporary
-    # Validate combined config
-    $ cylc validate ~/cylc-run/temporary
+Note:
+  "cylc validate --against-source" checks the code in the workflow source
+  directory against any options (e.g. template variables) which have been set
+  in the installed workflow to ensure the change can be safely applied.
 """
 
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -75,7 +70,7 @@ from cylc.flow.workflow_files import detect_old_contact_file
 
 
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
-VRO_OPTIONS = combine_options(
+VR_OPTIONS = combine_options(
     VALIDATE_OPTIONS,
     REINSTALL_CYLC_ROSE_OPTIONS,
     PLAY_OPTIONS,
@@ -91,14 +86,14 @@ def get_option_parser() -> COP:
         jset=True,
         argdoc=[WORKFLOW_ID_ARG_DOC],
     )
-    for option in VRO_OPTIONS:
+    for option in VR_OPTIONS:
         parser.add_option(*option.args, **option.kwargs)
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str):
-    vro_cli(parser, options, workflow_id)
+    sys.exit(vro_cli(parser, options, workflow_id))
 
 
 def vro_cli(parser: COP, options: 'Values', workflow_id: str):
@@ -130,7 +125,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     log_subcommand('reinstall', workflow_id)
     reinstall_ok = cylc_reinstall(options, workflow_id)
     if not reinstall_ok:
-        exit(0)
+        return 1
 
     # Run reload if workflow is running, else play:
     if workflow_running:
@@ -143,7 +138,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             'play',
             workflow_id,
             options,
-            compound_script_opts=VRO_OPTIONS,
+            compound_script_opts=VR_OPTIONS,
             script_opts=(
                 PLAY_OPTIONS + CYLC_ROSE_OPTIONS
                 + parser.get_std_options()

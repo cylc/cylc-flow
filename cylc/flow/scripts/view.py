@@ -26,7 +26,6 @@ Note:
 """
 
 import asyncio
-
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id_async
