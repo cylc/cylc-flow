@@ -20,6 +20,9 @@ ones in. -->
 
 ### Enhancements
 
+[#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
+clock triggers as wall_clock xtriggers.
+
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
 runs of the same workflow at install time.
 
