@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle point = 1500
+    [[graph]]
+        P1Y = foo
+
+[runtime]
+    [[foo]]
+        script = cylc pause ${WORKFLOW_ID}

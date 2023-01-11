@@ -464,7 +464,9 @@ def _is_process_running(
     return cli_format(process['cmdline']) == command
 
 
-def detect_old_contact_file(reg: str, contact_data=None) -> None:
+def detect_old_contact_file(
+    reg: str, contact_data=None
+) -> None:
     """Check if the workflow process is still running.
 
     As a side-effect this should detect and rectify the situation
@@ -480,6 +482,7 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
 
     Args:
         reg: workflow name
+        contact_date:
 
     Raises:
         CylcError:

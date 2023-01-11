@@ -30,13 +30,15 @@ To visualize the full multiple inheritance hierarchy use:
   $ cylc graph -n
 """
 
+import asyncio
 import os
 import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
+    AGAINST_SOURCE_OPTION,
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     icp_option,
@@ -94,6 +96,9 @@ def get_option_parser():
         "initial cycle point, by default). Use '-p , ' for the default range.",
         metavar="[START],[STOP]", action="store", default=None, dest="prange")
 
+    parser.add_option(
+        *AGAINST_SOURCE_OPTION.args, **AGAINST_SOURCE_OPTION.kwargs)
+
     parser.add_option(icp_option)
 
     parser.add_cylc_rose_options()
@@ -102,7 +107,11 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, _, flow_file = parse_id(
+    asyncio.run(_main(parser, options, workflow_id))
+
+
+async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
         constraint='workflows',

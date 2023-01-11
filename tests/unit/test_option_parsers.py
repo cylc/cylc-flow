@@ -146,7 +146,7 @@ def test_Options_std_opts():
             [{ARGS: ['-f', '--foo'], KWARGS: {}, SOURCES: {'cook'}}],
             [{
                 ARGS: ['-f', '--foo'],
-                KWARGS: {'help': 'not identical'},
+                KWARGS: {'help': 'not identical', 'dest': 'foobius'},
                 SOURCES: {'bake'},
                 USEIF: ''
             }],

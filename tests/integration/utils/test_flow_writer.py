@@ -97,6 +97,7 @@ def test_flow_config_str():
     """It should write out entire cylc configuration files."""
     assert flow_config_str(
         {
+            '#!JiNjA2': None,
             'foo': {
                 'bar': {
                     'pub': 'beer'
@@ -106,6 +107,7 @@ def test_flow_config_str():
             'qux': 'asdf'
         }
     ) == dedent('''
+        #!jinja2
         qux = asdf
         [foo]
             baz = 42

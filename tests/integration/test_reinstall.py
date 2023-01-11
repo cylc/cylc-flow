@@ -155,7 +155,7 @@ def test_interactive(
         'cylc.flow.scripts.reinstall._input',
         lambda x: 'n'
     )
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id) is False
 
     # only one rsync call should have been made (i.e. the --dry-run)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [True]
@@ -257,7 +257,7 @@ def test_keyboard_interrupt(
     one_run,
     interactive,
     monkeypatch,
-    capsys,
+    capsys
 ):
     """It should handle a KeyboardInterrupt during dry-run elegantly.
 
@@ -274,7 +274,6 @@ def test_keyboard_interrupt(
     )
 
     reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
-
     assert 'Reinstall canceled, no changes made' in capsys.readouterr().out
 
 
