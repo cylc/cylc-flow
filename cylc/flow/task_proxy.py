@@ -409,7 +409,7 @@ class TaskProxy:
         """Are ALL prerequisites satisfied?"""
         return (
             all(pre.is_satisfied() for pre in self.state.prerequisites)
-            and all(tri for tri in self.state.external_triggers.values())
+            and self.state.external_triggers_all_satisfied()
             and self.state.xtriggers_all_satisfied()
         )
 

@@ -43,6 +43,9 @@ to task_jobs table in the workflow database.
 
 ### Fixes
 
+[#5286](https://github.com/cylc/cylc-flow/pull/5286) - Fix bug where
+`[scheduling][special tasks]clock-trigger` would skip execution retry delays.
+
 [#5292](https://github.com/cylc/cylc-flow/pull/5292) -
 Fix an issue where polling could be repeated if the job's platform
 was not available.

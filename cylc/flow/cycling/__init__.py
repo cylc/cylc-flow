@@ -250,9 +250,12 @@ class IntervalBase(metaclass=ABCMeta):
     def is_null(self):
         return (self == self.get_null())
 
-    def __str__(self):
+    def __str__(self) -> str:
         # Stringify.
         return self.value
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self}>"
 
     def __add__(self, other):
         # Add other (point or interval) to self.
