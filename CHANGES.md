@@ -46,6 +46,10 @@ to task_jobs table in the workflow database.
 [#5286](https://github.com/cylc/cylc-flow/pull/5286) - Fix bug where
 `[scheduling][special tasks]clock-trigger` would skip execution retry delays.
 
+[#5292](https://github.com/cylc/cylc-flow/pull/5292) -
+Fix an issue where polling could be repeated if the job's platform
+was not available.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
 
