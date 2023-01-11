@@ -29,7 +29,7 @@ ones in. -->
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
 runs of the same workflow at install time.
 
-[#5094](https://github.com/cylc/cylc-flow/pull/5094) - Added a single
+[#5121](https://github.com/cylc/cylc-flow/pull/5121) - Added a single
 command to validate, install and play a workflow.
 
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of

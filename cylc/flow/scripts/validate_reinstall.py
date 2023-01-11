@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from optparse import Values
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
 from cylc.flow.scripts.validate import (
@@ -125,6 +126,10 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     log_subcommand('reinstall', workflow_id)
     reinstall_ok = cylc_reinstall(options, workflow_id)
     if not reinstall_ok:
+        LOG.warning(
+            'No changes to source: No reinstall or'
+            f' {"reload" if workflow_running else "play"} required.'
+        )
         return 1
 
     # Run reload if workflow is running, else play:
