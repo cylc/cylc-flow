@@ -128,7 +128,7 @@ def test_auto_restart_DNS_error(monkeypatch, caplog, log_filter):
     )
     schd = Mock(
         workflow='myworkflow',
-        options=Mock(abort_if_any_task_fails=False),
+        options=RunOptions(abort_if_any_task_fails=False),
         INTERVAL_AUTO_RESTART_ERROR=0,
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
@@ -161,7 +161,7 @@ def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
 
     schd = Mock(
         workflow='myworkflow',
-        options=Mock(abort_if_any_task_fails=False),
+        options=RunOptions(abort_if_any_task_fails=False),
         INTERVAL_AUTO_RESTART_ERROR=0,
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
