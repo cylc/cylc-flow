@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for Cylc scheduler server."""
 
+import logging
+import socket
 from time import time
 from types import SimpleNamespace
 from typing import List
@@ -22,6 +24,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
@@ -109,3 +112,58 @@ def test_release_queued_tasks__auto_restart():
     # preparing ones
     mock_schd.pool.release_queued_tasks.assert_not_called()
     mock_schd.task_job_mgr.submit_task_jobs.assert_called()
+
+
+def test_auto_restart_DNS_error(monkeypatch, caplog, log_filter):
+    """Ensure that DNS errors in host selection are caught."""
+    def _select_workflow_host(cached=False):
+        # fake a "get address info" error
+        # this error can occur due to an unknown host resulting from broken
+        # DNS or an invalid host name in the global config
+        raise socket.gaierror('elephant')
+
+    monkeypatch.setattr(
+        'cylc.flow.scheduler.select_workflow_host',
+        _select_workflow_host,
+    )
+    schd = Mock(
+        workflow='myworkflow',
+        options=RunOptions(abort_if_any_task_fails=False),
+        INTERVAL_AUTO_RESTART_ERROR=0,
+    )
+    caplog.set_level(logging.ERROR, CYLC_LOG)
+    assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
+    assert log_filter(caplog, contains='elephant')
+
+
+def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
+    """Ensure that subprocess errors are handled."""
+    def _select_workflow_host(cached=False):
+        # mock a host-select return value
+        return ('foo', 'foo')
+
+    monkeypatch.setattr(
+        'cylc.flow.scheduler.select_workflow_host',
+        _select_workflow_host,
+    )
+
+    def _popen(*args, **kwargs):
+        # mock an auto-restart command failure
+        return Mock(
+            wait=lambda: 1,
+            communicate=lambda: ('mystdout', 'mystderr'),
+        )
+
+    monkeypatch.setattr(
+        'cylc.flow.scheduler.Popen',
+        _popen,
+    )
+
+    schd = Mock(
+        workflow='myworkflow',
+        options=RunOptions(abort_if_any_task_fails=False),
+        INTERVAL_AUTO_RESTART_ERROR=0,
+    )
+    caplog.set_level(logging.ERROR, CYLC_LOG)
+    assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
+    assert log_filter(caplog, contains='mystderr')
