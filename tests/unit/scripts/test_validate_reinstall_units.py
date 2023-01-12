@@ -26,14 +26,13 @@ from cylc.flow.scripts.validate_reinstall import (
 @pytest.mark.parametrize(
     'is_running, tvars, tvars_file, expect',
     [
-        (True, None, None, True),
-        (True, [], [], True),
+        (True, [], None, True),
         (True, ['FOO="Bar"'], None, False),
-        (True, None, ['bar.txt'], False),
+        (True, [], ['bar.txt'], False),
         (True, ['FOO="Bar"'], ['bar.txt'], False),
-        (False, None, None, True),
+        (False, [], None, True),
         (False, ['FOO="Bar"'], ['bar.txt'], True),
-        (False, None, ['bar.txt'], True),
+        (False, [], ['bar.txt'], True),
         (False, ['FOO="Bar"'], ['bar.txt'], True),
     ]
 )
@@ -45,5 +44,5 @@ def test_check_tvars_and_workflow_stopped(
     result = check_tvars_and_workflow_stopped(is_running, tvars, tvars_file)
     assert result == expect
     if expect is False:
-        warn = 'Template variables can only be changed'
+        warn = 'can only be changed if'
         assert warn in caplog.records[0].msg

@@ -106,13 +106,11 @@ def check_tvars_and_workflow_stopped(
         tvars: options.tvars, from `--set`
         tvars_file: options.tvars_file, from `--set-file`
     """
-    if is_running and (tvars or [] or tvars_file or []):
-        msg = (
-            'Template variables can only be changed if a'
-            ' workflow is stopped. You tried to change:')
-        for tvar in tvars or [] + tvars_file or []:
-            msg += f'\n * {tvar}'
-        LOG.warning(msg)
+    if is_running and (tvars or tvars_file):
+        LOG.warning(
+            'Template variables (from --set/--set-file) can '
+            'only be changed if the workflow is stopped.'
+        )
         return False
     return True
 
