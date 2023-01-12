@@ -92,6 +92,29 @@ def get_option_parser() -> COP:
     return parser
 
 
+def check_tvars_and_workflow_stopped(
+    is_running: bool, tvars: list, tvars_file: list
+) -> bool:
+    """are template variables set and workflow stopped?
+
+    Template vars set by --set (options.templatevars) or --set-file
+    (optiions.templatevars_file) are only valid if the workflow is stopped
+    and vr will play it.
+
+    args:
+        is_running: Is workflow running?
+        tvars: options.tvars, from `--set`
+        tvars_file: options.tvars_file, from `--set-file`
+    """
+    if is_running and (tvars or tvars_file):
+        LOG.warning(
+            'Template variables (from --set/--set-file) can '
+            'only be changed if the workflow is stopped.'
+        )
+        return False
+    return True
+
+
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str):
     sys.exit(vro_cli(parser, options, workflow_id))
@@ -117,6 +140,13 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     else:
         # Workflow is definately stopped:
         workflow_running = False
+
+    # options.tvars and tvars_file are _only_ valid when playing a stopped
+    # workflow: Fail if they are set and workflow running:
+    if not check_tvars_and_workflow_stopped(
+        workflow_running, options.templatevars, options.templatevars_file
+    ):
+        return 1
 
     # Force on the against_source option:
     options.against_source = True   # Make validate check against source.
