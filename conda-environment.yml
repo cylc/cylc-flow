@@ -2,7 +2,6 @@ name: cylc-dev
 channels:
   - conda-forge
 dependencies:
-  - aiofiles >=0.7.0,<0.8.0
   - ansimarkup >=1.0.0
   - async-timeout>=3.0.0
   - colorama >=0.4,<1.0
