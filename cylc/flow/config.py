@@ -532,6 +532,16 @@ class WorkflowConfig:
         self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
+        for queue in self.cfg["scheduling"]["queues"]:
+            for name in self.cfg["scheduling"]["queues"][queue][
+                "members"
+            ]:
+                if (
+                    name not in self.taskdefs
+                    and name not in self.cfg['runtime']
+                ):
+                    self.implicit_tasks.add(name)
+
         self._check_implicit_tasks()
         self._check_sequence_bounds()
         self.validate_namespace_names()
