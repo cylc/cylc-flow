@@ -36,11 +36,10 @@ from typing import (
     Tuple, TYPE_CHECKING, Union
 )
 
-import aiofiles
 import zmq.auth
 
-import cylc.flow.flags
 from cylc.flow import LOG
+from cylc.flow.async_util import make_async
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
@@ -51,6 +50,7 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
     handle_rmtree_err,
 )
+import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
     close_log,
@@ -621,10 +621,18 @@ def get_workflow_srv_dir(reg):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg: str) -> Dict[str, str]:
+def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
+    if not run_dir:
+        path = Path(get_contact_file_path(id_))
+    else:
+        path = Path(
+            run_dir,
+            WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.CONTACT
+        )
     try:
-        with open(get_contact_file_path(reg)) as f:
+        with open(path) as f:
             file_content = f.read()
     except IOError:
         raise ServiceFileError("Couldn't load contact file")
@@ -640,29 +648,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
     return data
 
 
-async def load_contact_file_async(reg, run_dir=None):
-    if not run_dir:
-        path = Path(get_contact_file_path(reg))
-    else:
-        path = Path(
-            run_dir,
-            WorkflowFiles.Service.DIRNAME,
-            WorkflowFiles.Service.CONTACT
-        )
-    try:
-        async with aiofiles.open(path, mode='r') as cont:
-            data = {}
-            async for line in cont:
-                key, value = [item.strip() for item in line.split("=", 1)]
-                # BACK COMPAT: contact pre "suite" to "workflow" conversion.
-                # from:
-                #     Cylc 8
-                # remove at:
-                #     Cylc 8.x
-                data[key.replace('SUITE', 'WORKFLOW')] = value
-            return data
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+load_contact_file_async = make_async(load_contact_file)
 
 
 def register(
