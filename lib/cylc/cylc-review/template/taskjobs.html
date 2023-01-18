@@ -180,6 +180,16 @@
 
 <div class="container-fluid">
   <div class="row">
+
+    {% if eight_point_zero == True %}
+    <div class="warning col-md-11">
+      <b>WARNING:</b> Cylc Review cannot display all jobs for Cylc 8.0.x Workflows, some jobs
+      may be hidden.
+      <br>
+      Upgrading to 8.1.x will fix this problem, but may not be possible for workflows with multiple "flows".
+      <br>
+    </div>
+    {% endif %}
     <div class="col-md-11">
       {% include "suite-state.html" -%}
     </div>
