@@ -29,7 +29,7 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.platforms import validate_platforms
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
-from cylc.flow.network.client_factory import CommsMeth, CLICommsMeth
+from cylc.flow.network.client_factory import CommsMeth, LocalCommsMeth
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
@@ -1204,9 +1204,11 @@ with Conf('global.cylc', desc='''
                    The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
-                http
+                https
                    Via the running Hub proxy and/or UI-Server (requires UI
                    Server installation)
+
+                   .. versionadded:: 8.2.0
 
                 .. versionchanged:: 8.0.0
 
@@ -1649,6 +1651,22 @@ with Conf('global.cylc', desc='''
 
                    :cylc:conf:`global.cylc[platforms][<platform name>]hosts`
             ''')
+            Conf('communication method',
+                 VDR.V_STRING, 'zmq',
+                 options=[meth.value for meth in LocalCommsMeth], desc='''
+                The communication method used by the command line interface and
+                local task messaging to interact with running workflow(s).
+
+                Options:
+
+                zmq
+                   Direct client-server TCP communication via network ports
+                https
+                   Via the running Hub proxy and/or UI-Server (requires UI
+                   Server installation)
+
+                .. versionchanged:: 8.2.0
+            ''')
             with Conf(
                 'selection', meta=Selection,
                 desc=(
@@ -1776,27 +1794,6 @@ with Conf('global.cylc', desc='''
                 "[runtime][<namespace>][events]submission timeout"
             )
         ))
-    with Conf('CLI', desc='''
-        Configure command line interface options.
-
-        .. versionadded:: 8.1.0
-    '''):
-        Conf('communication method',
-             VDR.V_STRING, 'zmq',
-             options=[meth.value for meth in CLICommsMeth], desc='''
-            The communication method used to interact with a running workflow
-            via the command line interface.
-
-            Options:
-
-            zmq
-               Direct client-server TCP communication via network ports
-            http
-               Via the running Hub proxy and/or UI-Server (requires UI
-               Server installation)
-
-            .. versionchanged:: 8.1.0
-        ''')
 
 
 def upg(cfg, descr):

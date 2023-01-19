@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 from pkg_resources import parse_version
 
 from cylc.flow import LOG, __version__
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -493,23 +494,27 @@ def _resume(workflow_id, options):
 
 def _http_play(workflow_id, options):
     """Resume the workflow if it is already running."""
-    if options.comms_method == CommsMeth.HTTP.value:
+    if options.comms_method is None:
+        options.comms_method = glbl_cfg().get(
+            ['platforms', 'localhost', 'communication method']
+        )
+    if options.comms_method == CommsMeth.HTTPS.value:
         print(
             cparse(
-                "Requesting UI Server started workflow.\n"
-                "<orange>"
-                "Note: "
-                "</orange>"
-                " The workflow will be started at the same cylc version as"
-                " the UI Server. Any set files need to be accessible to the"
-                " UI Server."
-                " Options currently unavailable with UIS started runs:"
-                "  - start-task"
-                "  - no-detach"
-                "  - profile"
-                "  - reference-*"
-                "  - format"
-                "  - downgrade/upgrade"
+                'Requesting UI Server workflow play.\n'
+                '<yellow>'
+                'Note: '
+                '</yellow>'
+                '\n The workflow will be started at the same Cylc version as'
+                ' the UI Server. Any set files need to be accessible to the'
+                ' UI Server.'
+                '\n Options currently unavailable using UIS started runs:'
+                '\n  - start-task'
+                '\n  - no-detach'
+                '\n  - profile'
+                '\n  - reference-*'
+                '\n  - format'
+                '\n  - downgrade/upgrade'
             )
         )
         pclient = get_client(

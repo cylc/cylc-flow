@@ -31,14 +31,14 @@ class CommsMeth(Enum):
     POLL = 'poll'
     SSH = 'ssh'
     ZMQ = 'zmq'
-    HTTP = 'http'
+    HTTPS = 'https'
 
 
-class CLICommsMeth(Enum):
+class LocalCommsMeth(Enum):
     """String literals used for identifying CLI communication methods"""
 
     ZMQ = 'zmq'
-    HTTP = 'http'
+    HTTPS = 'https'
 
 
 def get_comms_method(comms_method: Union[str, None] = None) -> CommsMeth:
@@ -47,7 +47,9 @@ def get_comms_method(comms_method: Union[str, None] = None) -> CommsMeth:
         comms_method = os.getenv('CYLC_TASK_COMMS_METHOD')
         # separate to avoid extra config file read
         if comms_method is None:
-            comms_method = glbl_cfg().get(['CLI', 'communication method'])
+            comms_method = glbl_cfg().get(
+                ['platforms', 'localhost', 'communication method']
+            )
     return CommsMeth(comms_method)
 
 
@@ -64,14 +66,14 @@ def get_runtime_client(
     """
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import WorkflowRuntimeClient
-    elif comms_method == CommsMeth.HTTP:
+    elif comms_method == CommsMeth.HTTPS:
         try:
             from cylc.uiserver.client import (  # type: ignore[no-redef]
                 WorkflowRuntimeClient
             )
         except ImportError as exc:
             raise ClientError(
-                'HTTP comms method requires UI Server installation',
+                'HTTPS comms method requires UI Server installation',
                 f'{exc}'
             )
     else:
