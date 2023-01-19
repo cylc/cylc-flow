@@ -1240,6 +1240,8 @@ def check_deprecation(path, warn=True):
         cylc.flow.flags.cylc7_back_compat = True
         if warn:
             LOG.warning(SUITERC_DEPR_MSG)
+        return True
+    return False
 
 
 def validate_workflow_name(

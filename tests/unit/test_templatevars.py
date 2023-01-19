@@ -153,3 +153,10 @@ def test_get_old_tvars(key, expect, _setup_db):
     """It can extract a variety of items from a workflow database.
     """
     assert _setup_db[key] == expect
+
+
+def test_dont_get_old_tvars_back_compat(tmp_path):
+    """It won't even try to extract workflow_template_vars in compat mode.
+    """
+    tmp_path.touch('suite.rc')
+    assert get_template_vars_from_db(tmp_path) == {}

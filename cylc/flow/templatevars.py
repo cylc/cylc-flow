@@ -20,17 +20,19 @@ from optparse import Values
 from typing import Any, Dict
 
 from cylc.flow.exceptions import InputError
-
-
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.workflow_files import check_deprecation
 
 
 def get_template_vars_from_db(run_dir):
     """Get template vars stored in a workflow run database.
     """
     template_vars = {}
+    if check_deprecation(run_dir):
+        # Check whether we are trying to open a Cylc 7 Database.
+        return template_vars
     if (run_dir / 'log/db').exists():
-        dao = CylcWorkflowDAO(str(run_dir / 'log/db'))
+        dao = CylcWorkflowDAO(str(run_dir / 'log/db'), is_public=True)
         dao.select_workflow_template_vars(
             lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
         )
