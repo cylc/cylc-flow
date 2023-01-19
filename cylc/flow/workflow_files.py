@@ -1751,7 +1751,7 @@ def install_workflow(
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     close_log(install_log)
-    return source, rundir, workflow_name
+    return source, rundir, named_run
 
 
 def get_run_dir_info(
