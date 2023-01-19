@@ -22,6 +22,7 @@ import unittest
 from types import SimpleNamespace
 
 
+from cylc.flow import __version__ as cylc_version
 from cylc.flow.exceptions import PluginError
 from cylc.flow.templatevars import (
     get_template_vars_from_db,
@@ -123,6 +124,21 @@ def _setup_db(tmp_path_factory):
                 key,
                 value
             )
+        '''
+    )
+    conn.execute(
+        r'''
+            CREATE TABLE workflow_params (
+                key,
+                value
+            )
+        '''
+    )
+    conn.execute(
+        rf'''
+            INSERT INTO workflow_params
+            VALUES
+                ("cylc_version", "{cylc_version}")
         '''
     )
     conn.execute(
