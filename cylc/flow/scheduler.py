@@ -752,6 +752,13 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.is_restart = True
         distinct_install_target_platforms = []
         for itask in self.pool.get_tasks():
+
+            # get a platform if the task proxy hasn't got one:
+            if itask.platform is None:
+                itask.platform = get_platform(
+                    itask.tdef.rtconfig, bad_hosts=self.bad_hosts
+                )
+
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
             if (

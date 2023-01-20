@@ -1300,6 +1300,10 @@ class TaskEventsManager():
         # update job in database
         # NOTE: the job must be added to the DB earlier so that Cylc can
         # reconnect with job submissions if the scheduler is restarted
+        if itask.platform:
+            platform_name = itask.platform['name']
+        else:
+            platform_name = itask.tdef.rtconfig['platform']
         self.workflow_db_mgr.put_update_task_jobs(
             itask,
             {
@@ -1309,7 +1313,7 @@ class TaskEventsManager():
                 # NOTE: the platform name may have changed since task
                 # preparation started due to intelligent host (and or
                 # platform) selection
-                'platform_name': itask.platform['name'],
+                'platform_name': platform_name,
             }
         )
 

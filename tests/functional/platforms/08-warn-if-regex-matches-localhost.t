@@ -19,7 +19,7 @@
 # not set in ``global.cylc``.
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 3
 
 # shellcheck disable=SC2016
 create_test_global_config '' '
@@ -46,16 +46,13 @@ __HEREDOC__
 ERR_STR='cannot be defined using a regular expression'
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_fail "${TEST_NAME}" cylc validate "${RND_WORKFLOW_SOURCE}"
-grep_ok "${ERR_STR}" \
-    "${TEST_NAME}.stderr" -F
+run_ok "${TEST_NAME}" cylc validate "${RND_WORKFLOW_SOURCE}"
 
 TEST_NAME="${TEST_NAME_BASE}-cylc-install"
 run_fail "${TEST_NAME}" cylc install \
     "${RND_WORKFLOW_SOURCE}" \
     --workflow-name "${RND_WORKFLOW_NAME}"
-grep_ok "${ERR_STR}" \
-    "${TEST_NAME}.stderr" -F
+grep_ok "${ERR_STR}" "${TEST_NAME}.stderr" -F
 
 purge_rnd_workflow
 exit

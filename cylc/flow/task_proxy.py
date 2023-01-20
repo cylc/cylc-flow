@@ -28,7 +28,6 @@ from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
-from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.flow.taskdef import generate_graph_children
@@ -237,10 +236,7 @@ class TaskProxy:
 
         self.local_job_file_path: Optional[str] = None
 
-        if data_mode:
-            self.platform = {}
-        else:
-            self.platform = get_platform()
+        self.platform = {}
 
         self.job_vacated = False
         self.poll_timer: Optional['TaskActionTimer'] = None

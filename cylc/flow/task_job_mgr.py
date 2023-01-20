@@ -969,7 +969,7 @@ class TaskJobManager:
 
         submit_delays = (
             rtconfig['submission retry delays']
-            or itask.platform['submission retry delays']
+            or itask.platform and itask.platform['submission retry delays']
         )
 
         for key, delays in [
@@ -985,11 +985,13 @@ class TaskJobManager:
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
+        sim_platform = get_platform()
+        sim_platform['name'] = 'SIMULATION'
         for itask in itasks:
+            itask.platform = sim_platform
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
-            itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length']
@@ -1229,7 +1231,12 @@ class TaskJobManager:
             'submit_num': itask.submit_num,
             'try_num': itask.get_try_num(),
         })
+
         # create a DB entry for the submit-failed job
+        if itask.platform:
+            platform_name = itask.platform['name']
+        else:
+            platform_name = itask.tdef.rtconfig['platform']
         self.workflow_db_mgr.put_insert_task_jobs(
             itask,
             {
@@ -1238,7 +1245,7 @@ class TaskJobManager:
                 'is_manual_submit': itask.is_manual_submit,
                 'try_num': itask.get_try_num(),
                 'time_submit': get_current_time_string(),
-                'platform_name': itask.platform['name'],
+                'platform_name': platform_name,
                 'job_runner_name': itask.summary['job_runner_name'],
             }
         )
