@@ -239,7 +239,7 @@ class TaskPool:
         # Register pool node reference
         self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
         # Create new data-store n-distance graph window about this task
-        self.data_store_mgr.increment_graph_window(itask)
+        self.data_store_mgr.increment_graph_window(itask, self)
         self.data_store_mgr.delta_task_state(itask)
         self.data_store_mgr.delta_task_held(itask)
         self.data_store_mgr.delta_task_queued(itask)
@@ -740,6 +740,14 @@ class TaskPool:
                 point_itasks[point] += list(itask_id_map.values())
 
         return point_itasks
+
+    def get_task(self, point, name):
+        """Retrieve a task from the pool."""
+        rel_id = f'{point}/{name}'
+        for pool in (self.main_pool, self.hidden_pool):
+            tasks = pool.get(point)
+            if tasks and rel_id in tasks:
+                return tasks[rel_id]
 
     def _get_hidden_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return runahead pool task by ID if it exists, or None."""

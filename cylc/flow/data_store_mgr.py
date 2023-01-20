@@ -651,7 +651,7 @@ class DataStoreMgr:
         self.parents = parents
 
     def increment_graph_window(
-            self, itask, edge_distance=0, active_id=None,
+            self, itask, pool, edge_distance=0, active_id=None,
             descendant=False, is_parent=False):
         """Generate graph window about given origin to n-edge-distance.
 
@@ -723,6 +723,7 @@ class DataStoreMgr:
                 if edge_distance == 1:
                     descendant = True
                 self._expand_graph_window(
+                    pool,
                     s_tokens,
                     items,
                     active_id,
@@ -736,6 +737,7 @@ class DataStoreMgr:
                 itask.tdef, itask.point
             ).values():
                 self._expand_graph_window(
+                    pool,
                     s_tokens,
                     items,
                     active_id,
@@ -764,6 +766,7 @@ class DataStoreMgr:
 
     def _expand_graph_window(
         self,
+        pool,
         s_tokens,
         items,
         active_id,
@@ -815,11 +818,20 @@ class DataStoreMgr:
                 self.n_window_edges[active_id].add(e_id)
             if t_tokens.id in self.n_window_nodes[active_id]:
                 continue
-            self.increment_graph_window(
-                TaskProxy(
+            # retrieve TaskProxy from the TaskPool if it is present
+            tp = pool.get_task(t_point, t_name)
+            if not tp:
+                # create it for graphing purposes if not
+                # TODO: avoid doing this
+                # see https://github.com/cylc/cylc-flow/issues/5315
+                tp = TaskProxy(
                     self.schd.config.get_taskdef(t_name),
                     t_point, flow_nums, submit_num=0
-                ),
+                )
+
+            self.increment_graph_window(
+                tp,
+                pool,
                 edge_distance, active_id, descendant, is_parent)
 
     def remove_pool_node(self, name, point):
