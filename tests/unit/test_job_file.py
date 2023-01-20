@@ -53,7 +53,7 @@ def test_get_variable_value_definition(in_value, out_value):
 
 
 @pytest.fixture
-def fixture_get_platform():
+def fixture_get_platform(clean_platform_cache):
     """ Allows pytest to cache default platform dictionary.
 
     Args:

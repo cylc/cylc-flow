@@ -153,3 +153,12 @@ def capcall(monkeypatch):
         return calls
 
     return _capcall
+
+
+@pytest.fixture
+def clean_platform_cache():
+    """Clears cached platforms responses between tests."""
+    from cylc.flow.platforms import platform_from_name
+    platform_from_name.cache_clear()
+    yield
+    platform_from_name.cache_clear()

@@ -40,7 +40,7 @@ def test_get_platform_no_args():
         'localhost, xylophone\\d{1,5}'
     ]
 )
-def test_get_localhost_platform(mock_glbl_cfg, platform_re):
+def test_get_localhost_platform(mock_glbl_cfg, clean_platform_cache, platform_re):
     # Check that an arbitrary string name returns a sensible platform
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
@@ -70,7 +70,11 @@ def test_get_localhost_platform(mock_glbl_cfg, platform_re):
         'sumac|asafoetida, saffron',
     ]
 )
-def test_get_platform_from_platform_name_str(mock_glbl_cfg, platform_re):
+def test_get_platform_from_platform_name_str(
+    mock_glbl_cfg,
+    clean_platform_cache,
+    platform_re,
+):
     # Check that an arbitrary string name returns a sensible platform
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
@@ -119,7 +123,10 @@ def test_get_platform_from_platform_name_str(mock_glbl_cfg, platform_re):
     ]
 )
 def test_get_platform_cylc7_8_syntax_mix_fails(
-    task_conf: dict, err_expected: bool, mock_glbl_cfg: Callable
+    task_conf: dict,
+    err_expected: bool,
+    mock_glbl_cfg: Callable,
+    clean_platform_cache,
 ):
     """If a task with a mix of Cylc7 and 8 syntax is passed to get_platform
     this should return an error.
@@ -145,7 +152,10 @@ def test_get_platform_cylc7_8_syntax_mix_fails(
         get_platform(task_conf)
 
 
-def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
+def test_get_platform_from_config_with_platform_name(
+    mock_glbl_cfg,
+    clean_platform_cache,
+):
     # A platform name is present, and no clashing cylc7 configs are:
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
@@ -209,7 +219,10 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
     ]
 )
 def test_get_platform_using_platform_name_from_job_info(
-    mock_glbl_cfg, task_conf, expected_platform_name
+    mock_glbl_cfg,
+    clean_platform_cache,
+    task_conf,
+    expected_platform_name,
 ):
     """Calculate platform from Cylc 7 config: n.b. If this fails we don't
     warn because this might lead to many thousands of warnings
@@ -236,7 +249,7 @@ def test_get_platform_using_platform_name_from_job_info(
     assert get_platform(task_conf)['name'] == expected_platform_name
 
 
-def test_get_platform_groups_basic(mock_glbl_cfg):
+def test_get_platform_groups_basic(mock_glbl_cfg, clean_platform_cache):
     # get platform from group works.
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
@@ -280,7 +293,7 @@ def test_get_localhost_install_target():
     assert get_localhost_install_target() == 'localhost'
 
 
-def test_localhost_different_install_target(mock_glbl_cfg):
+def test_localhost_different_install_target(mock_glbl_cfg, clean_platform_cache):
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''

@@ -166,7 +166,6 @@ def get_platform(
 @lru_cache(100)
 def platform_from_name(
     platform_name: Optional[str] = None,
-    platforms: Optional[Dict[str, Dict[str, Any]]] = None,
     bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     """
@@ -179,14 +178,12 @@ def platform_from_name(
 
     Args:
         platform_name: name of platform to be retrieved.
-        platforms: global.cylc platforms given as a dict.
 
     Returns:
         platform: object containing settings for a platform, loaded from
             Global Config.
     """
-    if platforms is None:
-        platforms = glbl_cfg().get(['platforms'])
+    platforms = glbl_cfg().get(['platforms'])
     platform_groups = glbl_cfg().get(['platform groups'])
 
     if platform_name is None:

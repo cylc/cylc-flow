@@ -1314,7 +1314,8 @@ def test_remote_clean(
     exc_expected: bool,
     expected_err_msgs: List[str],
     monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture, log_filter: Callable
+    caplog: pytest.LogCaptureFixture, log_filter: Callable,
+    clean_platform_cache,
 ) -> None:
     """Test remote_clean() logic.
 

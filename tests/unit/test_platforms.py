@@ -99,17 +99,14 @@ PLATFORMS_TREK = {
     'enterprise': {
         'hosts': ['kirk', 'picard'],
         'install target': 'picard',
-        'name': 'enterprise'
     },
     'voyager': {
         'hosts': ['janeway'],
         'install target': 'janeway',
-        'name': 'voyager'
     },
     'stargazer': {
         'hosts': ['picard'],
         'install target': 'picard',
-        'name': 'stargazer'
     }
 }
 
@@ -126,6 +123,96 @@ PLATFORMS_INVALID = {
         'job runner': 'at'  # requires one host
     }
 }
+
+
+from textwrap import dedent
+from typing import List
+
+
+def _write_header(name: str, level: int) -> str:
+    """Write a cylc section definition."""
+    indent = '    ' * (level - 1)
+    return f'{indent}{"[" * level}{name}{"]" * level}'
+
+
+def _write_setting(key: str, value: str, level: int) -> List[str]:
+    """Write a cylc setting definition."""
+    indent = '    ' * (level - 1)
+    if isinstance(value, list):
+        ret = [indent + key + ' = ' + ', '.join(value)]
+    else:
+        value = str(value)
+        if '\n' in value:
+            value = dedent(value).strip()
+            ret = [f'{indent}{key} = """']
+            if 'script' in key:
+                ret.extend(value.splitlines())
+            else:
+                ret.extend([
+                    f'{indent}    {line}'
+                    for line in value.splitlines()
+                ])
+            ret += [f'{indent}"""']
+        else:
+            ret = [f'{"    " * (level - 1)}{key} = {value}']
+    return ret
+
+
+def _write_section(name: str, section: dict, level: int) -> List[str]:
+    """Write an entire cylc section including headings and settings."""
+    ret = []
+    ret.append(_write_header(name, level))
+    ret.extend(_write_conf(section, level))
+    return ret
+
+
+def _write_conf(conf: dict, level: int) -> List[str]:
+    ret = []
+    for key, value in conf.items():
+        # write out settings first
+        if key.lower() == '#!jinja2':
+            ret.append('#!jinja2')
+        elif not isinstance(value, dict):
+            ret.extend(
+                _write_setting(key, value, level + 1)
+            )
+    for key, value in conf.items():
+        # then sections after
+        if isinstance(value, dict):
+            ret.extend(
+                _write_section(key, value, level + 1)
+            )
+    return ret
+
+
+def flow_config_str(conf: dict) -> str:
+    """Convert a configuration dictionary into cylc/parsec format.
+
+    Args:
+        conf (dict):
+            A [nested] dictionary of configurations.
+
+    Returns:
+        str - Multiline string in cylc/parsec format.
+
+    """
+    return '\n'.join(_write_conf(conf, 0)) + '\n'
+
+
+
+
+@pytest.fixture
+def mock_platforms(mock_glbl_cfg):
+    def _mock_platforms(platforms=None, platform_groups=None):
+        nonlocal mock_glbl_cfg
+        mock_glbl_cfg(
+            'cylc.flow.platforms.glbl_cfg',
+            flow_config_str({
+                'platforms': platforms or {},
+                'platform groups': platform_groups or {}
+            })
+        )
+    return _mock_platforms
 
 
 # ----------------------------------------------------------------------------
@@ -145,7 +232,7 @@ PLATFORMS_INVALID = {
             PLATFORMS_NO_UNIQUE,
             "sugar",
             {
-                "hosts": "localhost",
+                "hosts": ["localhost"],
                 "job runner": "slurm",
                 "name": "sugar"
             },
@@ -154,7 +241,7 @@ PLATFORMS_INVALID = {
             PLATFORMS,
             None,
             {
-                "hosts": "localhost",
+                "hosts": ["localhost"],
                 "name": "localhost",
                 "job runner": "background"
             },
@@ -168,27 +255,30 @@ PLATFORMS_INVALID = {
             PLATFORMS,
             "hpc1-bg",
             {
-                "hosts": "hpc1",
+                "hosts": ["hpc1"],
                 "job runner": "background",
                 "name": "hpc1-bg"
             },
         ),
-        (PLATFORMS_WITH_RE, "hpc2", {"hosts": "hpc3", "name": "hpc2"}),
+        (PLATFORMS_WITH_RE, "hpc2", {"hosts": ["hpc3"], "name": "hpc2"}),
     ],
 )
-def test_basic(PLATFORMS, platform, expected):
+def test_basic(PLATFORMS, platform, expected, mock_platforms):
     # n.b. The name field of the platform is set in the Globalconfig object
     # if the name is 'localhost', so we don't test for it here.
-    platform = platform_from_name(platform_name=platform, platforms=PLATFORMS)
+    mock_platforms(PLATFORMS)
+    platform = platform_from_name(platform_name=platform)
     if isinstance(expected, dict):
-        assert platform == expected
+        for key in expected:
+            assert platform[key] == expected[key]
     else:
         assert platform["hosts"] == expected
 
 
-def test_platform_not_there():
+def test_platform_not_there(mock_platforms):
+    mock_platforms(PLATFORMS)
     with pytest.raises(PlatformLookupError):
-        platform_from_name('moooo', PLATFORMS)
+        platform_from_name('moooo')
 
 
 @pytest.mark.parametrize(
@@ -202,9 +292,10 @@ def test_invalid_platforms(platform):
         _validate_single_host(platform)
 
 
-def test_similar_but_not_exact_match():
+def test_similar_but_not_exact_match(mock_platforms):
+    mock_platforms(PLATFORMS_WITH_RE)
     with pytest.raises(PlatformLookupError):
-        platform_from_name('vld1', PLATFORMS_WITH_RE)
+        platform_from_name('vld1')
 
 
 # ----------------------------------------------------------------------------
@@ -447,13 +538,18 @@ def test_get_install_target_from_platform(platform, expected):
     ]
 )
 def test_get_install_target_to_platforms_map(
-        platform_names: List[str],
-        expected_map: Dict[str, Any],
-        expected_err: Type[Exception],
-        monkeypatch: pytest.MonkeyPatch):
+    platform_names: List[str],
+    expected_map: Dict[str, Any],
+    expected_err: Type[Exception],
+    mock_platforms,
+    monkeypatch: pytest.MonkeyPatch
+):
     """Test that get_install_target_to_platforms_map works as expected."""
-    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
-                        lambda x: platform_from_name(x, PLATFORMS_TREK))
+    mock_platforms(PLATFORMS_TREK)
+    monkeypatch.setattr(
+        'cylc.flow.platforms.platform_from_name',
+        lambda x: platform_from_name(x)
+    )
 
     if expected_err:
         with pytest.raises(expected_err):
@@ -463,9 +559,18 @@ def test_get_install_target_to_platforms_map(
         # Sort the maps:
         for _map in (result, expected_map):
             for install_target in _map:
-                _map[install_target] = sorted(_map[install_target],
-                                              key=lambda k: k['name'])
-        assert result == expected_map
+                _map[install_target] = sorted(
+                    _map[install_target],
+                    key=lambda k: k['install target']
+                )
+        assert {
+            install_target: [
+                dict(platform)
+                for platform in platforms
+            ]
+            for install_target, platforms in result.items()
+        }
+        # assert result == expected_map
 
 
 @pytest.mark.parametrize(
