@@ -84,7 +84,7 @@ from ansimarkup import ansiprint as cprint
 import asyncio
 from optparse import Values
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 from cylc.flow.scripts.scan import (
     get_pipe,
@@ -269,18 +269,18 @@ def main(
 def install_cli(
     opts: 'Values',
     reg: Optional[str] = None
-) -> str:
+) -> Tuple[str, str]:
     """Install workflow and scan for already-running instances."""
-    wf_name = install(opts, reg)
+    wf_name, wf_id = install(opts, reg)
     asyncio.run(
         scan(wf_name, not opts.no_ping)
     )
-    return wf_name
+    return wf_name, wf_id
 
 
 def install(
     opts: 'Values', reg: Optional[str] = None
-) -> str:
+) -> Tuple[str, str]:
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
@@ -306,7 +306,7 @@ def install(
     elif opts.symlink_dirs:
         cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
 
-    source_dir, rundir, workflow_name = install_workflow(
+    source_dir, rundir, workflow_name, workflow_id = install_workflow(
         source=source,
         workflow_name=opts.workflow_name,
         run_name=opts.run_name,
@@ -331,4 +331,5 @@ def install(
                 entry_point.name,
                 exc
             ) from None
-    return workflow_name
+
+    return workflow_name, workflow_id

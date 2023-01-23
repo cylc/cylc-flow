@@ -1633,7 +1633,7 @@ def install_workflow(
     run_name: Optional[str] = None,
     no_run_name: bool = False,
     cli_symlink_dirs: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Tuple[Path, Path, str]:
+) -> Tuple[Path, Path, str, str]:
     """Install a workflow, or renew its installation.
 
     Install workflow into new run directory.
@@ -1751,7 +1751,7 @@ def install_workflow(
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     close_log(install_log)
-    return source, rundir, named_run
+    return source, rundir, workflow_name, named_run
 
 
 def get_run_dir_info(
