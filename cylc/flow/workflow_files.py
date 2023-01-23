@@ -44,6 +44,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
+    CylcVersionError,
     PlatformError,
     PlatformLookupError,
     ServiceFileError,
@@ -502,11 +503,15 @@ def detect_old_contact_file(
             return
 
     try:
+        old_version: str = contact_data[ContactFileFields.VERSION]
         old_host: str = contact_data[ContactFileFields.HOST]
         old_port: str = contact_data[ContactFileFields.PORT]
         old_pid: str = contact_data[ContactFileFields.PID]
         old_cmd: str = contact_data[ContactFileFields.COMMAND]
     except KeyError as exc:
+        # scenario - playing a workflow which is already running with Cylc 7:
+        if old_version and int(old_version.split('.')[0]) < 8:
+            raise CylcVersionError(version=old_version, status="Running")
         # this shouldn't happen
         # but if it does re-raise the error as something more informative
         raise Exception(f'Found contact file with incomplete data:\n{exc}.')

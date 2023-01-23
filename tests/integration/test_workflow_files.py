@@ -24,6 +24,7 @@ import pytest
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import (
     CylcError,
+    CylcVersionError,
     ServiceFileError,
 )
 from cylc.flow.workflow_files import (

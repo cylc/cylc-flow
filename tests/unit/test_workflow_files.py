@@ -28,6 +28,7 @@ from cylc.flow import CYLC_LOG
 from cylc.flow import workflow_files
 from cylc.flow.exceptions import (
     CylcError,
+    CylcVersionError,
     PlatformError,
     ServiceFileError,
     InputError,
@@ -37,6 +38,7 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     NESTED_DIRS_MSG,
+    ContactFileFields,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
@@ -45,6 +47,7 @@ from cylc.flow.workflow_files import (
     check_reserved_dir_names,
     clean,
     detect_both_flow_and_suite,
+    detect_old_contact_file,
     get_rsync_rund_cmd,
     get_run_dir_info,
     get_source_workflow_name,
@@ -2049,3 +2052,14 @@ def test_validate_abort_if_flow_file_in_path():
     with pytest.raises(InputError) as exc_info:
         abort_if_flow_file_in_path(Path("path/to/wflow/flow.cylc"))
     assert "Not a valid workflow ID or source directory" in str(exc_info.value)
+
+
+def test_detect_old_contact_file_errors_with_running_cylc_7_workflow():
+    """Cylc 7 contact_data will be missing ContactFileFields.PID field"""
+    contact_data = {
+        ContactFileFields.VERSION: "7.1.1",
+        ContactFileFields.HOST: "Some Host"
+    }
+    expected_msg = "Running Cylc 7.1.1 workflow is not compatible with Cylc 8."
+    with pytest.raises(CylcVersionError,  match=expected_msg):
+        detect_old_contact_file("some_workflow", contact_data)
