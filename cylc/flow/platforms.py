@@ -162,6 +162,59 @@ def get_platform(
             )
 
 
+def platform_cache(func):
+    """Wrapper to memoize "expand platform".
+
+    The deepcopy performed by that function is very expensive and should be
+    avoided unless absolutely necessary.
+    """
+    cache = {}
+
+    def _inner(platform_name, platform_name_re, platforms, platform_group):
+        nonlocal cache
+        if (platform_name, platform_name_re) in cache:
+            return cache[(platform_name, platform_name_re, platform_group)]
+        else:
+            result = func(
+                platform_name, platform_name_re, platforms, platform_group)
+            cache.update({
+                (platform_name, platform_name_re, platform_group): result
+            })
+            return result
+    return _inner
+
+
+@platform_cache
+def expand_platform(
+    platform_name: str,
+    platform_name_re: str,
+    platforms: Dict[str, 'Any'],
+    platform_group: Union[str, None]
+) -> Dict[str, 'Any']:
+    """Give a platform name, and a matching platform global config object
+    get a full platform definition.
+    """
+    # Deepcopy prevents contaminating platforms with data
+    # from other platforms matching platform_name_re
+    platform_data = deepcopy(platforms[platform_name_re])
+
+    # If hosts are not filled in make remote
+    # hosts the platform name.
+    # Example: `[platforms][workplace_vm_123]<nothing>`
+    #   should create a platform where
+    #   `remote_hosts = ['workplace_vm_123']`
+    if (
+        'hosts' not in platform_data.keys() or
+        not platform_data['hosts']
+    ):
+        platform_data['hosts'] = [platform_name]
+    # Fill in the "private" name field.
+    platform_data['name'] = platform_name
+    if platform_group:
+        platform_data['group'] = platform_group
+    return platform_data
+
+
 def platform_from_name(
     platform_name: Optional[str] = None,
     platforms: Optional[Dict[str, Dict[str, Any]]] = None,
@@ -226,25 +279,8 @@ def platform_from_name(
                 platform_name
             )
         ):
-            # Deepcopy prevents contaminating platforms with data
-            # from other platforms matching platform_name_re
-            platform_data = deepcopy(platforms[platform_name_re])
-
-            # If hosts are not filled in make remote
-            # hosts the platform name.
-            # Example: `[platforms][workplace_vm_123]<nothing>`
-            #   should create a platform where
-            #   `remote_hosts = ['workplace_vm_123']`
-            if (
-                'hosts' not in platform_data.keys() or
-                not platform_data['hosts']
-            ):
-                platform_data['hosts'] = [platform_name]
-            # Fill in the "private" name field.
-            platform_data['name'] = platform_name
-            if platform_group:
-                platform_data['group'] = platform_group
-            return platform_data
+            return expand_platform(
+                platform_name, platform_name_re, platforms, platform_group)
 
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")
