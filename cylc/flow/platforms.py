@@ -18,11 +18,10 @@
 
 import random
 import re
-from copy import deepcopy
+import json
 from typing import (
     TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set, Union, overload
 )
-
 from cylc.flow import LOG
 
 from cylc.flow.exceptions import (
@@ -228,7 +227,7 @@ def platform_from_name(
         ):
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
-            platform_data = deepcopy(platforms[platform_name_re])
+            platform_data = json.loads(json.dumps(platforms[platform_name_re]))
 
             # If hosts are not filled in make remote
             # hosts the platform name.
@@ -653,7 +652,7 @@ def get_all_platforms_for_install_target(
     all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
     for k, v in all_platforms.iteritems():  # noqa: B301 (iteritems valid here)
         if (v.get('install target', k) == install_target):
-            v_copy = deepcopy(v)
+            v_copy = json.loads(json.dumps(v))
             v_copy['name'] = k
             platforms.append(v_copy)
     return platforms
