@@ -107,7 +107,10 @@ class Tokens(dict):
         if args:
             if len(args) > 1:
                 raise ValueError()
-            kwargs = tokenise(str(args[0]), relative)
+            if isinstance(args[0], str):
+                kwargs = tokenise(str(args[0]), relative)
+            else:
+                kwargs = dict(args[0])
         else:
             for key in kwargs:
                 if key not in self._KEYS:
