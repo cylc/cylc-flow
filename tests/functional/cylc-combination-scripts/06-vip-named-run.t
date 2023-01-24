@@ -31,7 +31,7 @@ run_ok "${TEST_NAME_BASE}-from-path" \
     --workflow-name "${WORKFLOW_NAME}" \
     --initial-cycle-point=1300 \
     --run-name sardine \
-    --reference-test \
+    --reference-test
 
 grep_ok "13000101T0000Z" "${TEST_NAME_BASE}-from-path.stdout"
 
