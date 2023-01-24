@@ -108,7 +108,7 @@ class Tokens(dict):
             if len(args) > 1:
                 raise ValueError()
             if isinstance(args[0], str):
-                kwargs = tokenise(str(args[0]), relative)
+                kwargs = tokenise(args[0], relative)
             else:
                 kwargs = dict(args[0])
         else:
