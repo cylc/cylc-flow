@@ -142,6 +142,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             'Cannot tell if the workflow is running'
             '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
         )
+        raise
     else:
         # Workflow is definitely stopped:
         workflow_running = False
