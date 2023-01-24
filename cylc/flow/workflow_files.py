@@ -1655,6 +1655,7 @@ def install_workflow(
         rundir: absolute path to run directory, where the workflow has been
             installed into.
         workflow_name: installed workflow name (which may be computed here).
+        named_run: Name of the run.
 
     Raise:
         WorkflowFilesError:
