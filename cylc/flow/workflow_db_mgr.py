@@ -46,8 +46,9 @@ if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
 
-# # TODO: narrow down Any (should be str | int) after implementing type
-# # annotations in cylc.flow.task_state.TaskState
+Version = Any
+# TODO: narrow down Any (should be str | int) after implementing type
+# annotations in cylc.flow.task_state.TaskState
 DbArgDict = Dict[str, Any]
 DbUpdateTuple = Tuple[DbArgDict, DbArgDict]
 
@@ -693,18 +694,28 @@ class WorkflowDatabaseManager:
             self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
             self.process_queued_ops()
 
-    def _get_last_run_version(self, pri_dao: CylcWorkflowDAO) -> str:
-        return pri_dao.connect().execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {self.TABLE_WORKFLOW_PARAMS}
-                WHERE
-                    key == ?
-            ''',  # nosec (table name is a code constant)
-            [self.KEY_CYLC_VERSION]
-        ).fetchone()[0]
+    def _get_last_run_version(self, pri_dao: CylcWorkflowDAO) -> Version:
+        """Return the version of Cylc this DB was last run with.
+
+        Args:
+            pri_dao: Open private database connection object.
+
+        """
+        try:
+            last_run_ver = pri_dao.connect().execute(
+                rf'''
+                    SELECT
+                        value
+                    FROM
+                        {self.TABLE_WORKFLOW_PARAMS}
+                    WHERE
+                        key == ?
+                ''',  # nosec (table name is a code constant)
+                [self.KEY_CYLC_VERSION]
+            ).fetchone()[0]
+        except TypeError:
+            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
+        return parse_version(last_run_ver)
 
     def upgrade_pre_803(self, pri_dao: CylcWorkflowDAO) -> None:
         """Upgrade on restart from a pre-8.0.3 database.
@@ -760,30 +771,17 @@ class WorkflowDatabaseManager:
         )
         conn.commit()
 
-    def _get_last_run_ver(self, pri_dao):
-        """Return the version of Cylc this DB was last run with.
-
-        Args:
-            pri_dao: Open private database connection object.
-
-        """
-        try:
-            last_run_ver = self._get_last_run_version(pri_dao)
-        except TypeError:
-            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
-        return parse_version(last_run_ver)
-
     def upgrade(self):
         """Upgrade this database to this Cylc version.
         """
         with self.get_pri_dao() as pri_dao:
-            last_run_ver = self._get_last_run_ver(pri_dao)
+            last_run_ver = self._get_last_run_version(pri_dao)
             if last_run_ver < parse_version("8.0.3.dev"):
                 self.upgrade_pre_803(pri_dao)
             if last_run_ver < parse_version("8.1.0.dev"):
                 self.upgrade_pre_810(pri_dao)
 
-    def check_workflow_db_compatibility(self):
+    def check_workflow_db_compatibility(self) -> Version:
         """Check this DB is compatible with this Cylc version.
 
         Raises:
@@ -796,7 +794,7 @@ class WorkflowDatabaseManager:
             raise FileNotFoundError(self.pri_path)
 
         with self.get_pri_dao() as pri_dao:
-            last_run_ver = self._get_last_run_ver(pri_dao)
+            last_run_ver = self._get_last_run_version(pri_dao)
             # WARNING: Do no upgrade the DB here
 
         restart_incompat_ver = parse_version(
