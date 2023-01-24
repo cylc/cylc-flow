@@ -1284,6 +1284,13 @@ class TaskEventsManager():
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
         job_conf = itask.jobs[-1]
 
+        # Extract a resolved platform name if one is available from the itask
+        # else get an unresolved platform name from the task def:
+        if itask.platform:
+            platform_name = itask.platform['name']
+        else:
+            platform_name = itask.tdef.rtconfig['platform']
+
         # insert job into data store
         self.data_store_mgr.insert_job(
             itask.tdef.name,
@@ -1294,16 +1301,12 @@ class TaskEventsManager():
                 # NOTE: the platform name may have changed since task
                 # preparation started due to intelligent host (and or
                 # platform) selection
-                'platform': itask.platform,
+                'platform': platform_name,
             },
         )
         # update job in database
         # NOTE: the job must be added to the DB earlier so that Cylc can
         # reconnect with job submissions if the scheduler is restarted
-        if itask.platform:
-            platform_name = itask.platform['name']
-        else:
-            platform_name = itask.tdef.rtconfig['platform']
         self.workflow_db_mgr.put_update_task_jobs(
             itask,
             {
