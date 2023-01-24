@@ -285,8 +285,8 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
         }
 
 
-def test_queue_treated_as_implicit(flow, validate):
-    """Tasks listed in queue should be regarded as implicit
+def test_queue_treated_as_implicit(flow, validate, caplog):
+    """Tasks in queues but not in runtime generate a warning.
 
     https://github.com/cylc/cylc-flow/issues/5260
     """
@@ -299,8 +299,11 @@ def test_queue_treated_as_implicit(flow, validate):
             "runtime": {"task2": {}},
         }
     )
-    with pytest.raises(WorkflowConfigError, match="implicit tasks detected"):
-        validate(reg)
+    validate(reg)
+    assert (
+        'Queues contain tasks not defined in runtime'
+        in caplog.records[0].message
+    )
 
 
 def test_queue_treated_as_comma_separated(flow, validate):
