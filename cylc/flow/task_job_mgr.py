@@ -985,10 +985,8 @@ class TaskJobManager:
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
-        sim_platform = get_platform()
-        sim_platform['name'] = 'SIMULATION'
         for itask in itasks:
-            itask.platform = sim_platform
+            itask.platform = {'name': 'SIMULATION'}
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
