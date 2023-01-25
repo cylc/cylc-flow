@@ -688,7 +688,7 @@ with Conf(
 
                     If set to 0 this queue is not limited.
                 ''')
-                Conf('members', VDR.V_STRING_LIST, desc='''
+                Conf('members', VDR.V_SPACELESS_STRING_LIST, desc='''
                     A list of member tasks, or task family names to assign to
                     this queue.
 
