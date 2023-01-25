@@ -753,11 +753,6 @@ class Scheduler:
         distinct_install_target_platforms = []
 
         for itask in self.pool.get_tasks():
-            # get a platform if the task proxy hasn't got one:
-            if not itask.platform:
-                itask.platform = get_platform(
-                    itask.tdef.rtconfig, bad_hosts=self.bad_hosts
-                )
 
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
