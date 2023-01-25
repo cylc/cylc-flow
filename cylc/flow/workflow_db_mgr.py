@@ -194,7 +194,7 @@ class WorkflowDatabaseManager:
         """Delete workflow stop task from workflow_params table."""
         self.delete_workflow_params(self.KEY_STOP_TASK)
 
-    def _get_pri_dao(self, use_pri_dao=True) -> CylcWorkflowDAO:
+    def _get_dao(self, use_pri_dao=True) -> CylcWorkflowDAO:
         """Return the primary DAO.
 
         Note: the DAO should be closed after use. It is better to use the
@@ -205,6 +205,9 @@ class WorkflowDatabaseManager:
         else:
             return CylcWorkflowDAO(self.pub_path, is_public=True)
 
+    def _get_pri_dao(self):
+        return self._get_dao()
+
     def get_pri_dao(self):
         return self.get_dao()
 
@@ -214,7 +217,7 @@ class WorkflowDatabaseManager:
     ) -> Generator[CylcWorkflowDAO, None, None]:
         """Return the primary DAO and close it after the context manager
         exits."""
-        pri_dao = self._get_pri_dao(use_pri_dao)
+        pri_dao = self._get_dao(use_pri_dao)
         try:
             yield pri_dao
         finally:
