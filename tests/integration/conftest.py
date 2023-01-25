@@ -469,7 +469,7 @@ def install(test_dir, run_dir):
         # Cylc install's default limit.
         opts.workflow_name = (
             f'{str(test_dir.relative_to(run_dir))}.{source.name}')
-        workflow_id = cylc_install(opts, str(source))
+        workflow_id, _ = cylc_install(opts, str(source))
         workflow_id = infer_latest_run_from_id(workflow_id)
         return workflow_id
     yield _inner
