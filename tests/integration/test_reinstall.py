@@ -80,7 +80,7 @@ def one_run(one_src, test_dir, run_dir):
     )
     return SimpleNamespace(
         path=w_run_dir,
-        id=w_run_dir.relative_to(run_dir),
+        id=str(w_run_dir.relative_to(run_dir)),
     )
 
 
