@@ -20,6 +20,13 @@ ones in. -->
 [#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
 command option: `cylc vip --run-name`.
 
+[#5319](https://github.com/cylc/cylc-flow/pull/5319),
+[#5321](https://github.com/cylc/cylc-flow/pull/5321),
+[#5325](https://github.com/cylc/cylc-flow/pull/5325) -
+Various efficiency optimisations to the scheduler which particularly impact
+workflows with many-to-many dependencies (e.g. `<a> => <b>`).
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Released 2023-01-16</span>)__
 
 ### Breaking Changes
