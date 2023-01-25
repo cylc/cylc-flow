@@ -168,12 +168,12 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
         )
         return 1
 
-    # Run reload if workflow is running, else play:
+    # Run reload if workflow is running or paused:
     if workflow_running:
         log_subcommand('reload', workflow_id)
         cylc_reload(options, workflow_id)
 
-    # run play anyway, to resume a paused workflow:
+    # run play anyway, to play a stopped workflow:
     else:
         cleanup_sysargv(
             'play',
