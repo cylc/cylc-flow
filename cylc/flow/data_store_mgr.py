@@ -1285,7 +1285,7 @@ class DataStoreMgr:
         Args:
             name (str): Corresponding task name.
             point_string (str): Cycle point string
-            status: ??
+            status: Job-state - i.e. running, submitted, failed, submit failed
             job_conf (dic):
                 Dictionary of job configuration used to generate
                 the job script.

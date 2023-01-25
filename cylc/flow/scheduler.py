@@ -751,10 +751,10 @@ class Scheduler:
         """Remote init for all submitted/running tasks in the pool."""
         self.task_job_mgr.task_remote_mgr.is_restart = True
         distinct_install_target_platforms = []
-        for itask in self.pool.get_tasks():
 
+        for itask in self.pool.get_tasks():
             # get a platform if the task proxy hasn't got one:
-            if itask.platform is None:
+            if not itask.platform:
                 itask.platform = get_platform(
                     itask.tdef.rtconfig, bad_hosts=self.bad_hosts
                 )

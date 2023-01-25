@@ -969,7 +969,7 @@ class TaskJobManager:
 
         submit_delays = (
             rtconfig['submission retry delays']
-            or itask.platform and itask.platform['submission retry delays']
+            or itask.platform.get('submission retry delays')
         )
 
         for key, delays in [
