@@ -205,15 +205,13 @@ class WorkflowDatabaseManager:
         else:
             return CylcWorkflowDAO(self.pub_path, is_public=True)
 
-
     def get_pri_dao(self):
         return self.get_dao()
-
 
     @contextmanager
     def get_dao(
         self, use_pri_dao=True
-    )-> Generator[CylcWorkflowDAO, None, None]:
+    ) -> Generator[CylcWorkflowDAO, None, None]:
         """Return the primary DAO and close it after the context manager
         exits."""
         pri_dao = self._get_pri_dao(use_pri_dao)
