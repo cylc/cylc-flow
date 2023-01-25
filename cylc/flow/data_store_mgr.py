@@ -1328,10 +1328,10 @@ class DataStoreMgr:
         )
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.
-        j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
+        j_cfg = self._apply_broadcasts_to_runtime(
             tp_tokens.relative_id,
             self.schd.config.cfg['runtime'][tproxy.name]
-        ))
+        )
         for key, val in job_conf.items():
             j_cfg[key] = val
         j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
