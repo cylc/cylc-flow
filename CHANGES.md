@@ -15,6 +15,8 @@ ones in. -->
 
 ### Fixes
 
+[#5314](https://github.com/cylc/cylc-flow/pull/5323) - Raise error when playing a workflow which is actively running with Cylc 7.
+
 [#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
 command option: `cylc vip --run-name`.
 
