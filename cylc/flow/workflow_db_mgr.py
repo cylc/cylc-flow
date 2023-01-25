@@ -205,6 +205,11 @@ class WorkflowDatabaseManager:
         else:
             return CylcWorkflowDAO(self.pub_path, is_public=True)
 
+
+    def get_pri_dao(self):
+        return self.get_dao()
+
+
     @contextmanager
     def get_dao(
         self, use_pri_dao=True
