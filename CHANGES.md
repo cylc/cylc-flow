@@ -11,9 +11,12 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.1 (<span actions:bind='release-date'>Awaiting Release</span>)__
+## __cylc-8.1.1 (<span actions:bind='release-date'>Coming Soon</span>)__
 
 ### Fixes
+
+[#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
+command option: `cylc vip --run-name`.
 
 [#5319](https://github.com/cylc/cylc-flow/pull/5319),
 [#5321](https://github.com/cylc/cylc-flow/pull/5321),
