@@ -21,7 +21,7 @@ from copy import copy
 from fnmatch import fnmatchcase
 from time import time
 from typing import (
-    Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+    Any, Callable, Dict, List, Set, Tuple, Optional, Union, TYPE_CHECKING
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -236,7 +236,9 @@ class TaskProxy:
 
         self.local_job_file_path: Optional[str] = None
 
-        self.platform = {}
+        self.platform: Union[None, Dict[str, 'Any']] = None
+        if data_mode:
+            self.platform = {}
 
         self.job_vacated = False
         self.poll_timer: Optional['TaskActionTimer'] = None
