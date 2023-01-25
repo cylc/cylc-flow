@@ -29,8 +29,8 @@ def get_template_vars_from_db(run_dir):
     """
     template_vars = {}
     if (run_dir / 'log/db').exists():
-        WorkflowDatabaseManager(
-            str(run_dir / 'log')).check_workflow_db_compatibility()
+        wdbm = WorkflowDatabaseManager(pub_d=str(run_dir / 'log'))
+        wdbm.check_workflow_db_compatibility(use_pri_dao=False)
         dao = CylcWorkflowDAO(str(run_dir / 'log/db'), is_public=True)
         dao.select_workflow_template_vars(
             lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))

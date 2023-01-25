@@ -194,19 +194,24 @@ class WorkflowDatabaseManager:
         """Delete workflow stop task from workflow_params table."""
         self.delete_workflow_params(self.KEY_STOP_TASK)
 
-    def _get_pri_dao(self) -> CylcWorkflowDAO:
+    def _get_pri_dao(self, use_pri_dao=True) -> CylcWorkflowDAO:
         """Return the primary DAO.
 
         Note: the DAO should be closed after use. It is better to use the
         context manager method below, which handles this for you.
         """
-        return CylcWorkflowDAO(self.pri_path)
+        if use_pri_dao:
+            return CylcWorkflowDAO(self.pri_path)
+        else:
+            return CylcWorkflowDAO(self.pub_path, is_public=True)
 
     @contextmanager
-    def get_pri_dao(self) -> Generator[CylcWorkflowDAO, None, None]:
+    def get_dao(
+        self, use_pri_dao=True
+    )-> Generator[CylcWorkflowDAO, None, None]:
         """Return the primary DAO and close it after the context manager
         exits."""
-        pri_dao = self._get_pri_dao()
+        pri_dao = self._get_pri_dao(use_pri_dao)
         try:
             yield pri_dao
         finally:
@@ -783,7 +788,7 @@ class WorkflowDatabaseManager:
             if last_run_ver < parse_version("8.1.0.dev"):
                 self.upgrade_pre_810(pri_dao)
 
-    def check_workflow_db_compatibility(self):
+    def check_workflow_db_compatibility(self, use_pri_dao=True):
         """Check this DB is compatible with this Cylc version.
 
         Raises:
@@ -792,11 +797,14 @@ class WorkflowDatabaseManager:
                 current version of Cylc.
 
         """
-        if not os.path.isfile(self.pri_path):
+        if (
+            use_pri_dao and not os.path.isfile(self.pri_path)
+            or not use_pri_dao and not os.path.isfile(self.pub_path)
+        ):
             raise FileNotFoundError(self.pri_path)
 
-        with self.get_pri_dao() as pri_dao:
-            last_run_ver = self._get_last_run_ver(pri_dao)
+        with self.get_dao(use_pri_dao) as dao:
+            last_run_ver = self._get_last_run_ver(dao)
             # WARNING: Do no upgrade the DB here
 
         restart_incompat_ver = parse_version(
