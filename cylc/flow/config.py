@@ -224,6 +224,7 @@ class WorkflowConfig:
 
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
     VIS_N_POINTS = 3
+    MAX_WARNING_LINES = 5
 
     def __init__(
         self,
@@ -532,6 +533,9 @@ class WorkflowConfig:
         self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
+        self._warn_if_queues_have_implicit_tasks(
+            self.cfg, self.taskdefs, self.MAX_WARNING_LINES)
+
         self._check_implicit_tasks()
         self._check_sequence_bounds()
         self.validate_namespace_names()
@@ -570,6 +574,38 @@ class WorkflowConfig:
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    @staticmethod
+    def _warn_if_queues_have_implicit_tasks(
+        config, taskdefs, max_warning_lines
+    ):
+        """Warn if queues contain implict tasks.
+        """
+        implicit_q_msg = ''
+
+        # Get the names of the first N implicit queue tasks:
+        for queue in config["scheduling"]["queues"]:
+            for name in config["scheduling"]["queues"][queue][
+                "members"
+            ]:
+                if (
+                    name not in taskdefs
+                    and name not in config['runtime']
+                    and len(implicit_q_msg.split('\n')) <= max_warning_lines
+                ):
+                    implicit_q_msg += f'\n * task {name!r} in queue {queue!r}'
+
+        # Warn users if tasks are implied by queues.
+        if implicit_q_msg:
+            truncation_msg = (
+                f"\n...showing first {max_warning_lines} tasks..."
+                if len(implicit_q_msg.split('\n')) > max_warning_lines
+                else ""
+            )
+            LOG.warning(
+                'Queues contain tasks not defined in'
+                f' runtime: {implicit_q_msg}{truncation_msg}'
+            )
 
     def prelim_process_graph(self) -> None:
         """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1

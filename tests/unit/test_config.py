@@ -1543,3 +1543,25 @@ def test_find_taskdefs(
     assert sorted(
         t.name for t in awe_config.find_taskdefs(name)
     ) == sorted(expected)
+
+
+def test__warn_if_queues_have_implicit_tasks(caplog):
+    """It Warns that queues imply tasks undefined in runtime.
+    """
+    config = {
+        'scheduling': {'queues': {
+            'q1': {'members': ['foo']},
+            'q2': {'members': ['bar', 'baz']}
+        }},
+        'runtime': {}
+    }
+    taskdefs = {}
+    max_warning_lines = 2
+    WorkflowConfig._warn_if_queues_have_implicit_tasks(
+        config, taskdefs, max_warning_lines)
+    result = caplog.records[0].message
+    assert "'foo' in queue 'q1'" in result
+    assert "'bar' in queue 'q2'" in result
+    assert "'baz'" not in result
+    assert f"showing first {max_warning_lines}" in result
+

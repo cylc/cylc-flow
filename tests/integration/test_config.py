@@ -17,6 +17,7 @@
 import pytest
 
 from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.parsec.exceptions import ListValueError
 
 
 @pytest.mark.parametrize(
@@ -282,3 +283,42 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
             'foo(P1D)',
             'foot(P1D)'
         }
+
+
+def test_queue_treated_as_implicit(flow, validate, caplog):
+    """Tasks in queues but not in runtime generate a warning.
+
+    https://github.com/cylc/cylc-flow/issues/5260
+    """
+    reg = flow(
+        {
+            "scheduling": {
+                "queues": {"my_queue": {"members": "task1, task2"}},
+                "graph": {"R1": "task2"},
+            },
+            "runtime": {"task2": {}},
+        }
+    )
+    validate(reg)
+    assert (
+        'Queues contain tasks not defined in runtime'
+        in caplog.records[0].message
+    )
+
+
+def test_queue_treated_as_comma_separated(flow, validate):
+    """Tasks listed in queue should be separated with commas, not spaces.
+
+    https://github.com/cylc/cylc-flow/issues/5260
+    """
+    reg = flow(
+        {
+            "scheduling": {
+                "queues": {"my_queue": {"members": "task1 task2"}},
+                "graph": {"R1": "task2"},
+            },
+            "runtime": {"task1": {}, "task2": {}},
+        }
+    )
+    with pytest.raises(ListValueError, match="cannot contain a space"):
+        validate(reg)

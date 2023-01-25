@@ -15,6 +15,8 @@ ones in. -->
 
 ### Fixes
 
+[#5312](https://github.com/cylc/cylc-flow/pull/5312) - task names must be comma-separated in queue member lists. Any implicit tasks (i.e. with no task definition under runtime) assigned to a queue will generate a warning.
+
 [#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
 command option: `cylc vip --run-name`.
 
