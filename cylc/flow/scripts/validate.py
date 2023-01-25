@@ -39,6 +39,7 @@ from cylc.flow.exceptions import (
     TriggerExpressionError
 )
 import cylc.flow.flags
+from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
@@ -167,7 +168,11 @@ async def wrapped_main(
         print('Instantiating tasks to check trigger expressions')
     for name, taskdef in cfg.taskdefs.items():
         try:
-            itask = TaskProxy(taskdef, cfg.start_point)
+            itask = TaskProxy(
+                Tokens(workflow_id),
+                taskdef,
+                cfg.start_point,
+            )
         except TaskProxySequenceBoundsError:
             # Should already failed above
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
