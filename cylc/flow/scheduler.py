@@ -754,6 +754,11 @@ class Scheduler:
 
         for itask in self.pool.get_tasks():
 
+            if not itask.platform:
+                itask.platform = get_platform(
+                    itask.tdef.rtconfig, bad_hosts=self.bad_hosts
+                )
+
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
             if (
