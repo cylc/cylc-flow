@@ -16,6 +16,7 @@
 
 import contextlib
 import os
+from pathlib import Path
 import sqlite3
 import unittest
 from unittest import mock
@@ -119,11 +120,9 @@ def test_remove_columns():
         conn.commit()
         conn.close()
 
-        dao = CylcWorkflowDAO(temp_db)
-        dao.remove_columns('foo', ['bar', 'baz'])
-
-        conn = dao.connect()
-        data = list(conn.execute(r'SELECT * from foo'))
+        with CylcWorkflowDAO(temp_db) as dao:
+            dao.remove_columns('foo', ['bar', 'baz'])
+            data = list(dao.connect().execute(r'SELECT * from foo'))
         assert data == [('PUB',)]
 
 
@@ -131,22 +130,21 @@ def test_operational_error(monkeypatch, tmp_path, caplog):
     """Test logging on operational error."""
     # create a db object
     db_file = tmp_path / 'db'
-    dao = CylcWorkflowDAO(db_file)
+    with CylcWorkflowDAO(db_file) as dao:
+        # stage some stuff
+        dao.add_delete_item(CylcWorkflowDAO.TABLE_TASK_JOBS)
+        dao.add_insert_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+        dao.add_update_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
 
-    # stage some stuff
-    dao.add_delete_item(CylcWorkflowDAO.TABLE_TASK_JOBS)
-    dao.add_insert_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
-    dao.add_update_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+        # connect the to DB
+        dao.connect()
 
-    # connect the to DB
-    dao.connect()
+        # then delete the file - this will result in an OperationalError
+        db_file.unlink()
 
-    # then delete the file - this will result in an OperationalError
-    db_file.unlink()
-
-    # execute & commit the staged items
-    with pytest.raises(sqlite3.OperationalError):
-        dao.execute_queued_items()
+        # execute & commit the staged items
+        with pytest.raises(sqlite3.OperationalError):
+            dao.execute_queued_items()
 
     # ensure that the failed transaction is logged for debug purposes
     assert len(caplog.messages) == 1
@@ -155,3 +153,31 @@ def test_operational_error(monkeypatch, tmp_path, caplog):
     assert 'DELETE FROM task_jobs' in message
     assert 'INSERT OR REPLACE INTO task_jobs' in message
     assert 'UPDATE task_jobs' in message
+
+
+def test_table_creation(tmp_path: Path):
+    """Test tables are NOT created by default."""
+    db_file = tmp_path / 'db'
+    stmt = "SELECT name FROM sqlite_master WHERE type='table'"
+    with CylcWorkflowDAO(db_file) as dao:
+        tables = list(dao.connect().execute(stmt))
+    assert tables == []
+    with CylcWorkflowDAO(db_file, create_tables=True) as dao:
+        tables = [i[0] for i in dao.connect().execute(stmt)]
+    assert CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS in tables
+
+
+def test_context_manager_exit(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """Test connection is closed even if an exception occurs somewhere."""
+    db_file = tmp_path / 'db'
+    mock_close = mock.Mock()
+    with monkeypatch.context() as mp:
+        mp.setattr(CylcWorkflowDAO, 'close', mock_close)
+        with CylcWorkflowDAO(db_file) as dao, pytest.raises(RuntimeError):
+            mock_close.assert_not_called()
+            raise RuntimeError('mock err')
+        mock_close.assert_called_once()
+    # Close connection for real:
+    dao.close()
