@@ -1,0 +1,83 @@
+name: Sync PR
+
+on:
+  schedule:
+    - cron: '43 05 * * 1-5'  # 05:43 UTC Mon-Fri
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to merge into master
+        required: false
+  # push:
+  #   branches:
+  #     - master
+  #     - '8.*.x'
+
+env:
+  FORCE_COLOR: 2
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BRANCH: ${{ inputs.branch || '8.1.x' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        uses: cylc/release-actions/configure-git@v1
+
+      - name: Check for existing PR
+        id: check
+        run: |
+          DECONFLICT_BRANCH="${BRANCH}-deconflict"
+          echo "DECONFLICT_BRANCH=${DECONFLICT_BRANCH}" >> $GITHUB_ENV
+
+          if gh pr view "$BRANCH" || gh pr view "${DECONFLICT_BRANCH}"; then
+            echo "::notice::Found existing PR"
+            exit 0
+          fi
+          echo "continue=true" >> $GITHUB_OUTPUT
+
+      - name: Attempt merge
+        id: merge
+        if: steps.check.outputs.continue
+        continue-on-error: true
+        run: git merge "origin/${BRANCH}"
+
+      - name: Diff
+        id: diff
+        if: steps.merge.outcome == 'success'
+        run: |
+          if [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]; then
+            echo "::notice::master is up to date with $BRANCH"
+            exit 0
+          fi
+          if git diff HEAD^ --exit-code --stat; then
+            echo "::notice::No diff between master and $BRANCH"
+            exit 0
+          fi
+          echo "continue=true" >> $GITHUB_OUTPUT
+
+      - name: Create deconflict branch
+        if: steps.merge.outcome == 'failure'
+        run: |
+          git merge --abort
+          git checkout -b "$DECONFLICT_BRANCH" "origin/${BRANCH}"
+          git push origin "$DECONFLICT_BRANCH"
+          echo "BRANCH=${DECONFLICT_BRANCH}" >> $GITHUB_ENV
+
+      - name: Open PR
+        if: steps.merge.outcome == 'failure' || steps.diff.outputs.continue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --head "$BRANCH" \
+            --title "🤖 Merge ${BRANCH} into master" \
+            --body "Please do a **normal merge**, not squash merge\n\n---\n\nTriggered by ${GITHUB_EVENT_NAME}"
+
+          gh pr edit "$BRANCH" --add-label "sync" || true
