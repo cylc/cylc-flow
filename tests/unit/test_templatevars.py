@@ -20,6 +20,7 @@ import tempfile
 import unittest
 
 from cylc.flow import __version__ as cylc_version
+from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.templatevars import (
     get_template_vars_from_db,
@@ -151,8 +152,31 @@ def test_get_old_tvars(key, expect, _setup_db):
     assert _setup_db[key] == expect
 
 
-def test_dont_get_old_tvars_back_compat(tmp_path):
+def test_get_tvars_from_db_safe_with_c7_db(tmp_path):
     """It won't even try to extract workflow_template_vars in compat mode.
     """
-    tmp_path.touch('suite.rc')
-    assert get_template_vars_from_db(tmp_path) == {}
+    dbpath = tmp_path / WorkflowFiles.LogDir.DIRNAME / WorkflowFiles.LogDir.DB
+
+    # Try with a file conting nothing:
+    dbpath.parent.mkdir()
+    dbpath.touch()
+    with pytest.raises(ServiceFileError, match='database is incompatible'):
+        get_template_vars_from_db(tmp_path)
+
+    # Try with a Cylc 7 db:
+    with CylcWorkflowDAO(dbpath, create_tables=False) as dao:
+        dao.connect().execute(
+            rf'''
+                CREATE TABLE suite_params
+                    ("cylc_version", "7.8.42")
+            '''
+        )
+        dao.connect().execute(
+            r'''
+                CREATE TABLE suite_template_vars
+                    ("FOO", "42")
+            '''
+        )
+
+    assert get_template_vars_from_db(dbpath) == {}
+
