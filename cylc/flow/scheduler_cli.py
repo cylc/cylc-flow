@@ -445,6 +445,13 @@ def _resume(workflow_id, options):
         }
         pclient('graphql', mutation_kwargs)
         sys.exit(0)
+    except Exception as exc:
+        LOG.error(exc)
+        LOG.critical(
+            'Cannot tell if the workflow is running'
+            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
+        )
+        sys.exit(1)
 
 
 def _version_check(
