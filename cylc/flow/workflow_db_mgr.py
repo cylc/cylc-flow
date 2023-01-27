@@ -23,14 +23,14 @@ This module provides the logic to:
 * Manage existing run database files on restart.
 """
 
-from contextlib import contextmanager
 import json
 import os
 from pkg_resources import parse_version
 from shutil import copy, rmtree
+from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
-    Any, AnyStr, Dict, Generator, List, Set, TYPE_CHECKING, Tuple, Union
+    Any, AnyStr, Dict, List, Set, TYPE_CHECKING, Tuple, Union
 )
 
 from cylc.flow import LOG
@@ -42,12 +42,14 @@ from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
 
-# # TODO: narrow down Any (should be str | int) after implementing type
-# # annotations in cylc.flow.task_state.TaskState
+Version = Any
+# TODO: narrow down Any (should be str | int) after implementing type
+# annotations in cylc.flow.task_state.TaskState
 DbArgDict = Dict[str, Any]
 DbUpdateTuple = Tuple[DbArgDict, DbArgDict]
 
@@ -194,23 +196,13 @@ class WorkflowDatabaseManager:
         """Delete workflow stop task from workflow_params table."""
         self.delete_workflow_params(self.KEY_STOP_TASK)
 
-    def _get_pri_dao(self) -> CylcWorkflowDAO:
+    def get_pri_dao(self) -> CylcWorkflowDAO:
         """Return the primary DAO.
 
-        Note: the DAO should be closed after use. It is better to use the
-        context manager method below, which handles this for you.
+        NOTE: the DAO should be closed after use. You can use this function as
+        a context manager, which handles this for you.
         """
-        return CylcWorkflowDAO(self.pri_path)
-
-    @contextmanager
-    def get_pri_dao(self) -> Generator[CylcWorkflowDAO, None, None]:
-        """Return the primary DAO and close it after the context manager
-        exits."""
-        pri_dao = self._get_pri_dao()
-        try:
-            yield pri_dao
-        finally:
-            pri_dao.close()
+        return CylcWorkflowDAO(self.pri_path, create_tables=True)
 
     @staticmethod
     def _namedtuple2json(obj):
@@ -227,7 +219,7 @@ class WorkflowDatabaseManager:
         else:
             return json.dumps([type(obj).__name__, obj.__getnewargs__()])
 
-    def on_workflow_start(self, is_restart):
+    def on_workflow_start(self, is_restart: bool) -> None:
         """Initialise data access objects.
 
         Ensure that:
@@ -243,7 +235,7 @@ class WorkflowDatabaseManager:
                 # ... however, in case there is a directory at the path for
                 # some bizarre reason:
                 rmtree(self.pri_path, ignore_errors=True)
-        self.pri_dao = self._get_pri_dao()
+        self.pri_dao = self.get_pri_dao()
         os.chmod(self.pri_path, PERM_PRIVATE)
         self.pub_dao = CylcWorkflowDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
@@ -693,20 +685,32 @@ class WorkflowDatabaseManager:
             self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
             self.process_queued_ops()
 
-    def _get_last_run_version(self, pri_dao: CylcWorkflowDAO) -> str:
-        return pri_dao.connect().execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {self.TABLE_WORKFLOW_PARAMS}
-                WHERE
-                    key == ?
-            ''',  # nosec (table name is a code constant)
-            [self.KEY_CYLC_VERSION]
-        ).fetchone()[0]
+    @classmethod
+    def _get_last_run_version(cls, pri_dao: CylcWorkflowDAO) -> Version:
+        """Return the version of Cylc this DB was last run with.
 
-    def upgrade_pre_803(self, pri_dao: CylcWorkflowDAO) -> None:
+        Args:
+            pri_dao: Open private database connection object.
+
+        """
+        try:
+            last_run_ver = pri_dao.connect().execute(
+                rf'''
+                    SELECT
+                        value
+                    FROM
+                        {cls.TABLE_WORKFLOW_PARAMS}
+                    WHERE
+                        key == ?
+                ''',  # nosec (table name is a code constant)
+                [cls.KEY_CYLC_VERSION]
+            ).fetchone()[0]
+        except (TypeError, OperationalError):
+            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
+        return parse_version(last_run_ver)
+
+    @classmethod
+    def upgrade_pre_803(cls, pri_dao: CylcWorkflowDAO) -> None:
         """Upgrade on restart from a pre-8.0.3 database.
 
         Add "is_manual_submit" column to the task states table.
@@ -716,10 +720,10 @@ class WorkflowDatabaseManager:
         c_name = "is_manual_submit"
         LOG.info(
             f"DB upgrade (pre-8.0.3): "
-            f"add {c_name} column to {self.TABLE_TASK_STATES}"
+            f"add {c_name} column to {cls.TABLE_TASK_STATES}"
         )
         conn.execute(
-            rf"ALTER TABLE {self.TABLE_TASK_STATES} "
+            rf"ALTER TABLE {cls.TABLE_TASK_STATES} "
             rf"ADD COLUMN {c_name} INTEGER "
             r"DEFAULT 0 NOT NULL"
         )
@@ -760,30 +764,19 @@ class WorkflowDatabaseManager:
         )
         conn.commit()
 
-    def _get_last_run_ver(self, pri_dao):
-        """Return the version of Cylc this DB was last run with.
-
-        Args:
-            pri_dao: Open private database connection object.
-
-        """
-        try:
-            last_run_ver = self._get_last_run_version(pri_dao)
-        except TypeError:
-            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
-        return parse_version(last_run_ver)
-
-    def upgrade(self):
+    @classmethod
+    def upgrade(cls, db_file: Union['Path', str]) -> None:
         """Upgrade this database to this Cylc version.
         """
-        with self.get_pri_dao() as pri_dao:
-            last_run_ver = self._get_last_run_ver(pri_dao)
+        with CylcWorkflowDAO(db_file, create_tables=True) as pri_dao:
+            last_run_ver = cls._get_last_run_version(pri_dao)
             if last_run_ver < parse_version("8.0.3.dev"):
-                self.upgrade_pre_803(pri_dao)
+                cls.upgrade_pre_803(pri_dao)
             if last_run_ver < parse_version("8.1.0.dev"):
-                self.upgrade_pre_810(pri_dao)
+                cls.upgrade_pre_810(pri_dao)
 
-    def check_workflow_db_compatibility(self):
+    @classmethod
+    def check_db_compatibility(cls, db_file: Union['Path', str]) -> Version:
         """Check this DB is compatible with this Cylc version.
 
         Raises:
@@ -792,11 +785,11 @@ class WorkflowDatabaseManager:
                 current version of Cylc.
 
         """
-        if not os.path.isfile(self.pri_path):
-            raise FileNotFoundError(self.pri_path)
+        if not os.path.isfile(db_file):
+            raise FileNotFoundError(db_file)
 
-        with self.get_pri_dao() as pri_dao:
-            last_run_ver = self._get_last_run_ver(pri_dao)
+        with CylcWorkflowDAO(db_file) as dao:
+            last_run_ver = cls._get_last_run_version(dao)
             # WARNING: Do no upgrade the DB here
 
         restart_incompat_ver = parse_version(
@@ -804,7 +797,6 @@ class WorkflowDatabaseManager:
         )
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
-                f"{INCOMPAT_MSG} (workflow last run with "
-                f"Cylc {last_run_ver})."
+                f"{INCOMPAT_MSG} (workflow last run with Cylc {last_run_ver})."
             )
         return last_run_ver

@@ -265,10 +265,10 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     live_job_id is the job ID if job is running, else None.
 
     """
-    workflow_dao = CylcWorkflowDAO(
-        get_workflow_run_pub_db_path(workflow_id), is_public=True)
-    task_job_data = workflow_dao.select_task_job(point, task, submit_num)
-    workflow_dao.close()
+    with CylcWorkflowDAO(
+        get_workflow_run_pub_db_path(workflow_id), is_public=True
+    ) as dao:
+        task_job_data = dao.select_task_job(point, task, submit_num)
     if task_job_data is None:
         return (None, None, None)
     job_runner_name = task_job_data["job_runner_name"]

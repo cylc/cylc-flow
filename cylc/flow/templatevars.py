@@ -17,20 +17,26 @@
 
 from ast import literal_eval
 from optparse import Values
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from cylc.flow.exceptions import InputError
-
-
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.workflow_files import WorkflowFiles
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-def get_template_vars_from_db(run_dir):
+def get_template_vars_from_db(run_dir: 'Path') -> dict:
     """Get template vars stored in a workflow run database.
     """
-    template_vars = {}
-    if (run_dir / 'log/db').exists():
-        dao = CylcWorkflowDAO(str(run_dir / 'log/db'))
+    pub_db_file = (
+        run_dir / WorkflowFiles.LogDir.DIRNAME / WorkflowFiles.LogDir.DB
+    )
+    template_vars: dict = {}
+    if not pub_db_file.exists():
+        return template_vars
+    with CylcWorkflowDAO(pub_db_file, is_public=True) as dao:
         dao.select_workflow_template_vars(
             lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
         )

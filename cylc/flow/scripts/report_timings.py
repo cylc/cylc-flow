@@ -132,8 +132,8 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         # No output specified - choose summary by default
         options.show_summary = True
 
-    run_db = _get_dao(workflow_id)
-    row_buf = format_rows(*run_db.select_task_times())
+    with _get_dao(workflow_id) as dao:
+        row_buf = format_rows(*dao.select_task_times())
     with smart_open(options.output_filename) as output:
         if options.show_raw:
             output.write(row_buf.getvalue())
