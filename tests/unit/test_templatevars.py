@@ -150,3 +150,14 @@ def test_get_old_tvars(key, expect, _setup_db):
     """It can extract a variety of items from a workflow database.
     """
     assert _setup_db[key] == expect
+
+
+def test_get_old_tvars_fails_if_cylc_7_db(tmp_path):
+    """get_template_vars_from_db fails with error if db file is not a valid
+    Cylc 8 DB.
+    """
+    dbfile = tmp_path / WorkflowFiles.LogDir.DIRNAME / WorkflowFiles.LogDir.DB
+    dbfile.parent.mkdir()
+    dbfile.touch()
+    with pytest.raises(ServiceFileError, match='database is incompatible'):
+        get_template_vars_from_db(tmp_path)
