@@ -14,21 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 import pytest
-import sqlite3
 import tempfile
 import unittest
 
-from types import SimpleNamespace
-
-
 from cylc.flow import __version__ as cylc_version
-from cylc.flow.exceptions import PluginError
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.templatevars import (
     get_template_vars_from_db,
-    get_template_vars,
     load_template_vars
 )
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 class TestTemplatevars(unittest.TestCase):
@@ -113,46 +110,29 @@ class TestTemplatevars(unittest.TestCase):
 
 @pytest.fixture(scope='module')
 def _setup_db(tmp_path_factory):
-    tmp_path = tmp_path_factory.mktemp('test_get_old_tvars')
-    logfolder = tmp_path / "log/"
+    tmp_path: Path = tmp_path_factory.mktemp('test_get_old_tvars')
+    logfolder = tmp_path / WorkflowFiles.LogDir.DIRNAME
     logfolder.mkdir()
-    db_path = logfolder / 'db'
-    conn = sqlite3.connect(db_path)
-    conn.execute(
-        r'''
-            CREATE TABLE workflow_template_vars (
-                key,
-                value
-            )
-        '''
-    )
-    conn.execute(
-        r'''
-            CREATE TABLE workflow_params (
-                key,
-                value
-            )
-        '''
-    )
-    conn.execute(
-        rf'''
-            INSERT INTO workflow_params
-            VALUES
-                ("cylc_version", "{cylc_version}")
-        '''
-    )
-    conn.execute(
-        r'''
-            INSERT INTO workflow_template_vars
-            VALUES
-                ("FOO", "42"),
-                ("BAR", "'hello world'"),
-                ("BAZ", "'foo', 'bar', 48"),
-                ("QUX", "['foo', 'bar', 21]")
-        '''
-    )
-    conn.commit()
-    conn.close()
+    db_path = logfolder / WorkflowFiles.LogDir.DB
+    with CylcWorkflowDAO(db_path, create_tables=True) as dao:
+        dao.connect().execute(
+            rf'''
+                INSERT INTO workflow_params
+                VALUES
+                    ("cylc_version", "{cylc_version}")
+            '''
+        )
+        dao.connect().execute(
+            r'''
+                INSERT INTO workflow_template_vars
+                VALUES
+                    ("FOO", "42"),
+                    ("BAR", "'hello world'"),
+                    ("BAZ", "'foo', 'bar', 48"),
+                    ("QUX", "['foo', 'bar', 21]")
+            '''
+        )
+        dao.connect().commit()
     yield get_template_vars_from_db(tmp_path)
 
 

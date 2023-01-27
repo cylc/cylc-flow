@@ -82,10 +82,10 @@ from cylc.flow.remote import (
     construct_cylc_server_ssh_cmd,
     construct_ssh_cmd,
 )
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -202,6 +202,9 @@ class WorkflowFiles:
 
         VERSION = 'version'
         """Version control log dir"""
+
+        DB = 'db'
+        """The public database"""
 
     SHARE_DIR = 'share'
     """Workflow share directory."""
@@ -1200,7 +1203,7 @@ def get_workflow_title(reg):
     return title
 
 
-def get_platforms_from_db(run_dir):
+def get_platforms_from_db(run_dir: Path) -> Set[str]:
     """Return the set of names of platforms (that jobs ran on) from the DB.
 
     Warning:
@@ -1213,16 +1216,16 @@ def get_platforms_from_db(run_dir):
         compatibility. We can't apply upgraders which don't exist yet.
 
     Args:
-        run_dir (str): The workflow run directory.
+        run_dir: The workflow run directory.
 
     Raises:
         sqlite3.OperationalError: in the event the table/field required for
         cleaning is not present.
 
     """
-    workflow_db_mgr = WorkflowDatabaseManager(
-        os.path.join(run_dir, WorkflowFiles.Service.DIRNAME))
-    with workflow_db_mgr.get_pri_dao() as pri_dao:
+    with CylcWorkflowDAO(
+        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
+    ) as pri_dao:
         platform_names = pri_dao.select_task_job_platforms()
 
     return platform_names

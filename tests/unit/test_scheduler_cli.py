@@ -26,19 +26,14 @@ from cylc.flow.scheduler_cli import (
 
 
 @pytest.fixture
-def stopped_workflow_db(tmp_path, monkeypatch):
-    """Returns a workflow DB with the `cylc_version` set to the provided string.
+def stopped_workflow_db(tmp_path):
+    """Returns a workflow DB with the `cylc_version` set to the provided
+    string.
 
     def test_x(stopped_workflow_db):
         db_file = stopped_workflow_db(version)
 
     """
-    # disable workflow DB upgraders
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.WorkflowDatabaseManager.upgrade',
-        lambda x, y, z: None,
-    )
-
     def _stopped_workflow_db(version):
         nonlocal tmp_path
         db_file = tmp_path / 'db'
