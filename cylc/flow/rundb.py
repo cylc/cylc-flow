@@ -334,7 +334,7 @@ class CylcWorkflowDAO:
 
         Args:
             db_file_name: Path to the database file.
-            is_public: If True, allow retries, etc.
+            is_public: If True, allow retries.
             create_tables: If True, create the tables if they
                 don't already exist.
 
