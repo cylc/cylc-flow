@@ -95,7 +95,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     validate_main(parser, options, str(source))
 
     log_subcommand('install', source)
-    workflow_id = cylc_install(options, workflow_id)
+    _, workflow_id = cylc_install(options, workflow_id)
 
     cleanup_sysargv(
         'play',

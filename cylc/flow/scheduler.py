@@ -1035,8 +1035,9 @@ class Scheduler:
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
         # Things that can't change on workflow reload:
-        pri_dao = self.workflow_db_mgr._get_pri_dao()
-        pri_dao.select_workflow_params(self._load_workflow_params)
+        self.workflow_db_mgr.pri_dao.select_workflow_params(
+            self._load_workflow_params
+        )
 
         try:
             self.load_flow_file(is_reload=True)
