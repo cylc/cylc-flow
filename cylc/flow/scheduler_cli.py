@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 from pkg_resources import parse_version
 
 from cylc.flow import LOG, __version__
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import ContactFileExists, ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
@@ -431,7 +431,7 @@ def _resume(workflow_id, options):
     """Resume the workflow if it is already running."""
     try:
         detect_old_contact_file(workflow_id)
-    except ServiceFileError as exc:
+    except ContactFileExists as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(
             workflow_id,
@@ -445,7 +445,7 @@ def _resume(workflow_id, options):
         }
         pclient('graphql', mutation_kwargs)
         sys.exit(0)
-    except Exception as exc:
+    except ServiceFileError as exc:
         LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'

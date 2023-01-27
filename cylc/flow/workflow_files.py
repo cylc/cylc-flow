@@ -43,6 +43,7 @@ import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.async_util import make_async
 from cylc.flow.exceptions import (
+    ContactFileExists,
     CylcError,
     InputError,
     ServiceFileError,
@@ -325,7 +326,7 @@ To start a new run, stop the old one first with one or more of these:
 
 * cylc stop --now %(workflow)s        # don't wait for active tasks
 * cylc stop --now --now %(workflow)s  # don't wait
-* ssh -n "%(host)s" kill %(pid)s   # final brute force!
+* ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
 SUITERC_DEPR_MSG = "Backward compatibility mode ON"
@@ -446,7 +447,7 @@ def detect_old_contact_file(
     * If one does exist but the workflow process is definitely not alive,
       remove it.
     * If one exists and the workflow process is still alive, raise
-      ServiceFileError.
+      ContactFileExists.
 
     Args:
         reg: workflow name
@@ -456,7 +457,7 @@ def detect_old_contact_file(
         CylcError:
             If it is not possible to tell for sure if the workflow is running
             or not.
-        ServiceFileError(CylcError):
+        ContactFileExists:
             If old contact file exists and the workflow process still alive.
 
     """
@@ -475,9 +476,10 @@ def detect_old_contact_file(
         old_pid: str = contact_data[ContactFileFields.PID]
         old_cmd: str = contact_data[ContactFileFields.COMMAND]
     except KeyError as exc:
-        # this shouldn't happen
-        # but if it does re-raise the error as something more informative
-        raise Exception(f'Found contact file with incomplete data:\n{exc}.')
+        # this can happen if contact file is from an outdated version of Cylc
+        raise ServiceFileError(
+            f'Found contact file with incomplete data:\n{exc}.'
+        )
 
     # check if the workflow process is running ...
     # NOTE: can raise CylcError
@@ -486,7 +488,7 @@ def detect_old_contact_file(
     fname = get_contact_file_path(reg)
     if process_is_running:
         # ... the process is running, raise an exception
-        raise ServiceFileError(
+        raise ContactFileExists(
             CONTACT_FILE_EXISTS_MSG % {
                 "host": old_host,
                 "port": old_port,
