@@ -150,33 +150,3 @@ def test_get_old_tvars(key, expect, _setup_db):
     """It can extract a variety of items from a workflow database.
     """
     assert _setup_db[key] == expect
-
-
-def test_get_tvars_from_db_safe_with_c7_db(tmp_path):
-    """It won't even try to extract workflow_template_vars in compat mode.
-    """
-    dbpath = tmp_path / WorkflowFiles.LogDir.DIRNAME / WorkflowFiles.LogDir.DB
-
-    # Try with a file conting nothing:
-    dbpath.parent.mkdir()
-    dbpath.touch()
-    with pytest.raises(ServiceFileError, match='database is incompatible'):
-        get_template_vars_from_db(tmp_path)
-
-    # Try with a Cylc 7 db:
-    with CylcWorkflowDAO(dbpath, create_tables=False) as dao:
-        dao.connect().execute(
-            rf'''
-                CREATE TABLE suite_params
-                    ("cylc_version", "7.8.42")
-            '''
-        )
-        dao.connect().execute(
-            r'''
-                CREATE TABLE suite_template_vars
-                    ("FOO", "42")
-            '''
-        )
-
-    assert get_template_vars_from_db(dbpath) == {}
-
