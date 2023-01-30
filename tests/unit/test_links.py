@@ -54,6 +54,11 @@ def get_links():
 @pytest.mark.linkcheck
 @pytest.mark.parametrize('link', get_links())
 def test_embedded_url(link):
+    """Check links in the source code are not broken.
+
+    TIP: use `--dist=load` when running pytest to enable parametrized tests
+    to run in parallel
+    """
     try:
         urllib.request.urlopen(link).getcode()
     except urllib.error.HTTPError:

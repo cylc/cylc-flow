@@ -116,4 +116,4 @@ jobs:
 
       - name: Linkcheck
         if: startsWith(matrix.python-version, '3.10')
-        run: pytest -m linkcheck tests/unit
+        run: pytest -m linkcheck --dist=load tests/unit
