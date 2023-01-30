@@ -137,7 +137,8 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     except ServiceFileError:
         # Workflow is definitely running:
         workflow_running = True
-    except Exception:
+    except Exception as exc:
+        LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'
             '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'

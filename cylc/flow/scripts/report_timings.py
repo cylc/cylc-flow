@@ -133,7 +133,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         options.show_summary = True
 
     db_file = get_workflow_run_pub_db_path(workflow_id)
-    with CylcWorkflowDAO(db_file) as dao:
+    with CylcWorkflowDAO(db_file, is_public=True) as dao:
         row_buf = format_rows(*dao.select_task_times())
     with smart_open(options.output_filename) as output:
         if options.show_raw:
