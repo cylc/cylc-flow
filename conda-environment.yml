@@ -19,7 +19,7 @@ dependencies:
   - setuptools >=49
   - urwid >=2,<3
   # Add # [py<3.11] for tomli once Python 3.11 Released
-  - tomli >=2.0.0
+  - tomli >=2
 
 # optional dependencies
   #- empy >=3.3,<3.4
