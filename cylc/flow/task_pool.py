@@ -500,12 +500,19 @@ class TaskPool:
                         flow_nums,
                     )
             ):
-                key = (prereq_cycle, prereq_name, prereq_output)
-                sat[key] = satisfied if satisfied != '0' else False
+                # Prereq satisfaction as recorded in the DB.
+                sat[
+                    (prereq_cycle, prereq_name, prereq_output)
+                ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
-                for key, _ in itask_prereq.satisfied.items():
-                    itask_prereq.satisfied[key] = sat[key]
+                for key in itask_prereq.satisfied.keys():
+                    try:
+                        itask_prereq.satisfied[key] = sat[key]
+                    except KeyError:
+                        # This prereq is not in the DB: new dependencies
+                        # added to an already-spawned task before restart.
+                        itask_prereq.satisfied[key] = False
 
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
