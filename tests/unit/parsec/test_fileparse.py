@@ -22,6 +22,7 @@ from pytest import param
 import sqlite3
 from types import SimpleNamespace
 
+from cylc.flow import __version__ as cylc_version
 from cylc.flow.parsec.exceptions import (
     FileParseError,
     IncludeFileNotFoundError,
@@ -627,6 +628,14 @@ def _mock_old_template_vars_db(tmp_path):
             "INSERT INTO workflow_template_vars VALUES"
             "    ('Marius', '\"Consul\"')"
         )
+        conn.execute(
+            "CREATE TABLE workflow_params"
+            "(key TEXT, value TEXT, PRIMARY KEY(key)) ;"
+        )
+        conn.execute(
+            "INSERT INTO workflow_params VALUES"
+            f"    ('cylc_version', '{cylc_version}')"
+        )
         conn.commit()
         conn.close()
 
@@ -658,7 +667,7 @@ def _mock_old_template_vars_db(tmp_path):
         ),
     ]
 )
-def test__prepend_old_templatevars2(_mock_old_template_vars_db, expect, tvars):
+def test__prepend_old_templatevars(_mock_old_template_vars_db, expect, tvars):
     # Create a target for a source symlink
     result = _prepend_old_templatevars(
         _mock_old_template_vars_db(), tvars)
