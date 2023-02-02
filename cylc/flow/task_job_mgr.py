@@ -1125,7 +1125,9 @@ class TaskJobManager:
                 )
             else:
                 platform_name = self.task_remote_mgr.subshell_eval(
-                    rtconfig['platform'], PLATFORM_REC_COMMAND
+                    rtconfig['platform'],
+                    PLATFORM_REC_COMMAND,
+                    host_check=False
                 )
         except PlatformError as exc:
             itask.waiting_on_job_prep = False

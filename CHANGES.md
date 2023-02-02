@@ -39,6 +39,12 @@ Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 for `cylc lint`.
 
 -------------------------------------------------------------------------------
+## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
+
+[#5343](https://github.com/cylc/cylc-flow/pull/5343) - Fix a bug causing
+platform names to be checked as if they were hosts.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
 
 ### Fixes
