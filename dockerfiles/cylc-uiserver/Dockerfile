@@ -22,6 +22,7 @@ LABEL version="1.0" \
 # TODO: this installs from master, we we are on a maintainance branch we will
 # need to pick an appropriate UIS branch
 RUN . $HOME/.bashrc && \
+    apt-get -qq -y install git && \
     pip install "cylc-uiserver[hub] @ git+https://github.com/cylc/cylc-uiserver"
 
 ENTRYPOINT . $HOME/.bashrc && \
