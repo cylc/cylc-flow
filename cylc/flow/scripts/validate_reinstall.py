@@ -47,6 +47,14 @@ if TYPE_CHECKING:
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.id_cli import parse_id
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+    combine_options,
+    log_subcommand,
+    cleanup_sysargv
+)
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
@@ -58,14 +66,6 @@ from cylc.flow.scripts.reinstall import (
 from cylc.flow.scripts.reload import (
     reload_cli as cylc_reload
 )
-from cylc.flow.option_parsers import (
-    WORKFLOW_ID_ARG_DOC,
-    CylcOptionParser as COP,
-    combine_options,
-    log_subcommand,
-    cleanup_sysargv
-)
-from cylc.flow.id_cli import parse_id
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import detect_old_contact_file
 
@@ -135,10 +135,17 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     try:
         detect_old_contact_file(workflow_id)
     except ServiceFileError:
-        # Workflow is definately running:
+        # Workflow is definitely running:
         workflow_running = True
+    except Exception as exc:
+        LOG.error(exc)
+        LOG.critical(
+            'Cannot tell if the workflow is running'
+            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
+        )
+        raise
     else:
-        # Workflow is definately stopped:
+        # Workflow is definitely stopped:
         workflow_running = False
 
     # options.tvars and tvars_file are _only_ valid when playing a stopped

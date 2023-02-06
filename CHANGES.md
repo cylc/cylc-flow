@@ -11,11 +11,16 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.1 (<span actions:bind='release-date'>Coming Soon</span>)__
+## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
 
 ### Fixes
 
-[#5312](https://github.com/cylc/cylc-flow/pull/5312) - task names must be comma-separated in queue member lists. Any implicit tasks (i.e. with no task definition under runtime) assigned to a queue will generate a warning.
+[#5313](https://github.com/cylc/cylc-flow/pull/5313) - Fix a bug
+causing Cylc to be unable to parse previously played Cylc 7 workflows.
+
+[#5312](https://github.com/cylc/cylc-flow/pull/5312) - task names must be
+comma-separated in queue member lists. Any implicit tasks
+(i.e. with no task definition under runtime) assigned to a queue will generate a warning.
 
 [#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
 command option: `cylc vip --run-name`.

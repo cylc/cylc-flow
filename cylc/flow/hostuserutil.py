@@ -16,8 +16,7 @@
 """Host name utilities
 
 ATTRIBUTION:
-https://web.archive.org/web/20140606052543/http://www.linux-support.com/cms/
-get-local-ip-address-with-python/
+https://web.archive.org/web/20140606052543/http://www.linux-support.com/cms/get-local-ip-address-with-python/
 
 Fetching the outgoing IP address of a computer might be a difficult
 task. Computers can contain a large set of network devices, each
