@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Check links inserted into internal documentation.
 
 Reason for doing this here:
@@ -20,51 +21,47 @@ Reason for doing this here:
 - As we have more links it's worth checking them here, rather than waiting
   for them to show up in Cylc.
 """
-from functools import lru_cache
+
+import fnmatch
 from pathlib import Path
 import re
-from shlex import split
-from subprocess import run
 from time import sleep
 import pytest
 import urllib
 
 EXCLUDE = [
-    'http://www.gnu.org/licenses/',
-    'http://my-site.com/workflows/%(workflow)s/index.html',
-    'http://ahost/%(owner)s/notes/%(workflow)s',
-    'http://my-site.com/workflows/%(workflow)s/'
+    r'*//www.gnu.org/licenses/',
+    r'*//my-site.com/*',
+    r'*//ahost/%(owner)s/notes/%(workflow)s',
+    r'*//web.archive.org/*'
 ]
 
+
 def get_links():
-    searchdir = Path(__file__).parent.parent.parent / 'cylc/flow'
-    results = {}
-    for file_ in searchdir.rglob('*.py'):
+    searchdir = Path(__file__).parent.parent.parent / 'cylc' / 'flow'
+    return sorted({
+        url
+        for file_ in searchdir.rglob('*.py')
         for url in re.findall(
             r'(https?:\/\/.*?)[\n\s\>`"\',]', file_.read_text()
-        ):
-            if url not in EXCLUDE and url in results:
-                results[url].append(file_)
-            if url not in EXCLUDE and url not in results:
-                results[url] = [file_]
-    return results
+        )
+        if not any(
+            fnmatch.fnmatch(url, pattern) for pattern in EXCLUDE
+        )
+    })
 
 
 @pytest.mark.linkcheck
-@pytest.mark.parametrize(
-    'link, files', [
-        pytest.param(
-            link,
-            files,
-            id=f"{link}"
-        )
-        for link, files in get_links().items()
-    ]
-)
-def test_embedded_url(link, files):
+@pytest.mark.parametrize('link', get_links())
+def test_embedded_url(link):
+    """Check links in the source code are not broken.
+
+    TIP: use `--dist=load` when running pytest to enable parametrized tests
+    to run in parallel
+    """
     try:
         urllib.request.urlopen(link).getcode()
-    except urllib.error.HTTPError as exc:
+    except urllib.error.HTTPError:
         # Sleep and retry to reduce risk of flakiness:
         sleep(10)
         try:
@@ -73,7 +70,4 @@ def test_embedded_url(link, files):
             # Allowing 403 - just because a site forbids us doesn't mean the
             # link is wrong.
             if exc.code != 403:
-                raise Exception(f'{exc} | {link} | {", ".join(files)}')
-
-
-
+                raise Exception(f'{exc} | {link}')

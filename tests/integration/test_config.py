@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+import sqlite3
 import pytest
 
-from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.exceptions import ServiceFileError, WorkflowConfigError
 from cylc.flow.parsec.exceptions import ListValueError
+from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
 
 @pytest.mark.parametrize(
@@ -322,3 +325,35 @@ def test_queue_treated_as_comma_separated(flow, validate):
     )
     with pytest.raises(ListValueError, match="cannot contain a space"):
         validate(reg)
+
+
+def test_validate_incompatible_db(one_conf, flow, validate):
+    """Validation should fail for an incompatible DB due to not being able
+    to load template vars."""
+    wid = flow(one_conf)
+    # Create fake outdated DB
+    db_file = Path(get_workflow_run_pub_db_path(wid))
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    db_file.touch()
+    conn = sqlite3.connect(db_file)
+    try:
+        conn.execute(
+            'CREATE TABLE suite_params(key TEXT, value TEXT, PRIMARY KEY(key))'
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    with pytest.raises(
+        ServiceFileError, match="Workflow database is incompatible"
+    ):
+        validate(wid)
+
+    # No tables should have been created
+    stmt = "SELECT name FROM sqlite_master WHERE type='table'"
+    conn = sqlite3.connect(db_file)
+    try:
+        tables = [i[0] for i in conn.execute(stmt)]
+    finally:
+        conn.close()
+    assert tables == ['suite_params']

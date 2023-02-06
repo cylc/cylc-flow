@@ -21,7 +21,7 @@ Tests for worklfow_db_manager
 import pytest
 import sqlite3
 
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.workflow_db_mgr import (
     CylcWorkflowDAO,
     WorkflowDatabaseManager,
@@ -31,8 +31,9 @@ from cylc.flow.workflow_db_mgr import (
 @pytest.fixture
 def _setup_db(tmp_path):
     """Fixture to create old DB."""
-    def _inner(values):
-        db_file = tmp_path / 'sql.db'
+    def _inner(values, db_file_name='sql.db'):
+        db_file = tmp_path / db_file_name
+        db_file.parent.mkdir(parents=True, exist_ok=True)
         # Note: cannot use CylcWorkflowDAO here as creating outdated DB
         conn = sqlite3.connect(str(db_file))
         conn.execute((
@@ -50,7 +51,8 @@ def _setup_db(tmp_path):
             r' job_runner_name TEXT, job_id TEXT,'
             r' PRIMARY KEY(cycle, name, submit_num));'
         ))
-        conn.execute(values)
+        for value in values:
+            conn.execute(value)
         conn.execute((
             r"INSERT INTO task_jobs VALUES"
             r"    ('10090101T0000Z', 'foo', 1, 0, 1, '2022-12-05T14:46:06Z',"
@@ -65,12 +67,12 @@ def _setup_db(tmp_path):
 
 
 def test_upgrade_pre_810_fails_on_multiple_flows(_setup_db):
-    values = (
+    values = [(
         r'INSERT INTO task_states VALUES'
         r"    ('foo', '10050101T0000Z', '[1, 3]',"
         r" '2022-12-05T14:46:33Z',"
         r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
-    )
+    )]
     db_file_name = _setup_db(values)
     with CylcWorkflowDAO(db_file_name) as dao, pytest.raises(
         CylcError,
@@ -80,12 +82,12 @@ def test_upgrade_pre_810_fails_on_multiple_flows(_setup_db):
 
 
 def test_upgrade_pre_810_pass_on_single_flow(_setup_db):
-    values = (
+    values = [(
         r'INSERT INTO task_states VALUES'
         r"    ('foo', '10050101T0000Z', '[1]',"
         r" '2022-12-05T14:46:33Z',"
         r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
-    )
+    )]
     db_file_name = _setup_db(values)
     with CylcWorkflowDAO(db_file_name) as dao:
         WorkflowDatabaseManager.upgrade_pre_810(dao)
@@ -93,3 +95,24 @@ def test_upgrade_pre_810_pass_on_single_flow(_setup_db):
             'SELECT DISTINCT flow_nums FROM task_jobs;'
         ).fetchall()[0][0]
     assert result == '[1]'
+
+
+def test_check_workflow_db_compat(_setup_db, capsys):
+    """method can pick private or public db to check.
+    """
+    # Create public and private databases with different cylc versions:
+    create = r'CREATE TABLE workflow_params(key TEXT, value TEXT)'
+    insert = (
+        r'INSERT INTO workflow_params VALUES'
+        r'("cylc_version", "{}")'
+    )
+    pri_path = _setup_db(
+        [create, insert.format('7.99.99')], db_file_name='private/db')
+    pub_path = _setup_db(
+        [create, insert.format('7.99.98')], db_file_name='public/db')
+
+    with pytest.raises(ServiceFileError, match='99.98'):
+        WorkflowDatabaseManager.check_db_compatibility(pub_path)
+
+    with pytest.raises(ServiceFileError, match='99.99'):
+        WorkflowDatabaseManager.check_db_compatibility(pri_path)
