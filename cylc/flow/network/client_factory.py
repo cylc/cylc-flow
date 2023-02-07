@@ -51,7 +51,7 @@ def get_runtime_client(
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import WorkflowRuntimeClient
     else:
-        from cylc.flow.network.client import (  # type: ignore[no-redef]
+        from cylc.flow.network.client import (  # type: ignore[assignment]
             WorkflowRuntimeClient
         )
     return WorkflowRuntimeClient(workflow, timeout=timeout)
