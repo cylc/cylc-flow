@@ -831,6 +831,9 @@ def cleanup_sysargv(
                     not in ['store_true', 'store_false']
                 ):
                     sys.argv.pop(index)
+            elif arg in [i.split('=')[0] for i in sys.argv]:
+                index = [i.split('=')[0] for i in sys.argv].index(arg)
+                sys.argv.pop(index)
 
     # replace compound script name:
     sys.argv[1] = script_name
