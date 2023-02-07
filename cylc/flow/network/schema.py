@@ -1461,7 +1461,6 @@ class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
             Override `[runtime]` configurations in a workflow.
-            Valid for: ['running'] workflows.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
@@ -1490,7 +1489,7 @@ class Broadcast(Mutation):
             Note: a "clear" broadcast for a specific cycle or namespace does
             *not* clear all-cycle or all-namespace broadcasts.
 
-
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1550,8 +1549,8 @@ class SetHoldPoint(Mutation):
         description = sstrip('''
             Set workflow hold after cycle point. All tasks after this point
             will be held.
-            Valid for: ['running'] workflows.
 
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1569,9 +1568,9 @@ class Pause(Mutation):
     class Meta:
         description = sstrip('''
             Pause a workflow.
-            Valid for: ['running'] workflows.
-
             This suspends submission of tasks.
+
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1585,7 +1584,6 @@ class Message(Mutation):
     class Meta:
         description = sstrip('''
             Record task messages.
-            Valid for: ['running'] workflows.
 
             Send messages to:
             - The job stdout/stderr.
@@ -1596,6 +1594,8 @@ class Message(Mutation):
             as success and failure. Applications run by jobs can use
             this command to report messages and to report registered task
             outputs.
+
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='put_messages')
 
@@ -1616,10 +1616,10 @@ class ReleaseHoldPoint(Mutation):
     class Meta:
         description = sstrip('''
             Release all tasks and unset the workflow hold point, if set.
-            Valid for: ['running'] workflows.
 
             Held tasks do not submit their jobs even if ready to run.
 
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1633,10 +1633,9 @@ class Resume(Mutation):
     class Meta:
         description = sstrip('''
             Resume a paused workflow.
-            Valid for: ['paused', 'stopped'] workflows.
-
             See also the opposite command `pause`.
 
+            Valid for: paused workflows.
         ''')
         resolver = mutator
 
@@ -1650,7 +1649,6 @@ class Reload(Mutation):
     class Meta:
         description = sstrip('''
             Reload the configuration of a workflow.
-            Valid for: ['running'] workflows.
 
             All settings including task definitions, with the exception of
             workflow log config, can be changed on reload. Changes to task
@@ -1664,6 +1662,8 @@ class Reload(Mutation):
 
             If the modified workflow config does not parse, failure to reload
             will be reported but no harm will be done to the running workflow.
+
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='reload_workflow')
 
@@ -1677,11 +1677,12 @@ class SetVerbosity(Mutation):
     class Meta:
         description = sstrip('''
             Change the logging severity level of a running workflow.
-            Valid for: ['running'] workflows.
 
             Only messages at or above the chosen severity level will be logged;
             for example, if you choose `WARNING`, only warnings and critical
             messages will be logged.
+
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1697,7 +1698,8 @@ class SetGraphWindowExtent(Mutation):
         description = sstrip('''
             Set the maximum graph distance (n) from an active node
             of the data-store graph window.
-            Valid for: ['running'] workflows.
+
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1713,7 +1715,6 @@ class Stop(Mutation):
         description = sstrip(f'''
             Tell a workflow to shut down or stop a specified
             flow from spawning any further.
-            Valid for: ['paused', 'running'] workflows.
 
             By default stopping workflows wait for submitted and running tasks
             to complete before shutting down. You can change this behaviour
@@ -1725,6 +1726,7 @@ class Stop(Mutation):
             be executed prior to shutdown, unless
             the stop mode is `{WorkflowStopMode.Now.name}`.
 
+            Valid for: paused, running workflows.
         ''')
         resolver = mutator
 
@@ -1753,7 +1755,6 @@ class ExtTrigger(Mutation):
     class Meta:
         description = sstrip('''
             Report an external event message to a scheduler.
-            Valid for: ['running'] workflows.
 
             External triggers allow any program to send
             messages to the Cylc scheduler. Cylc can use such
@@ -1775,6 +1776,7 @@ class ExtTrigger(Mutation):
             Note: To manually trigger a task use "Trigger" not
             "ExtTrigger".
 
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='put_ext_trigger')
 
@@ -1851,9 +1853,10 @@ class Hold(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Hold tasks within a workflow.
-            Valid for: ['running'] workflows.
 
             Held tasks do not submit their jobs even if ready to run.
+
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1862,9 +1865,10 @@ class Release(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Release held tasks within a workflow.
-            Valid for: ['running'] workflows.
 
             See also the opposite command `hold`.
+
+            Valid for: running workflows.
         ''')
         resolver = mutator
 
@@ -1874,8 +1878,8 @@ class Kill(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Kill running or submitted jobs.
-            Valid for: ['running'] workflows.
 
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='kill_tasks')
 
@@ -1884,7 +1888,6 @@ class Poll(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Poll (query) jobs to verify and update their statuses.
-            Valid for: ['running'] workflows.
 
             This checks the job status file and queries the
             job runner on the job platform.
@@ -1893,6 +1896,7 @@ class Poll(Mutation, TaskMutation):
             an associated job ID, including incomplete finished
             tasks.
 
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='poll_tasks')
 
@@ -1904,7 +1908,8 @@ class Remove(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Remove one or more task instances from a running workflow.
-            Valid for: ['running'] workflows.
+
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='remove_tasks')
 
@@ -1913,12 +1918,13 @@ class SetOutputs(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Artificially mark task outputs as completed.
-            Valid for: ['running'] workflows.
 
             This allows you to manually intervene with Cylc's scheduling
             algorithm by artificially satisfying outputs of tasks.
 
             By default this makes tasks appear as if they succeeded.
+
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='force_spawn_children')
 
@@ -1935,13 +1941,14 @@ class Trigger(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Manually trigger tasks.
-            Valid for: ['running'] workflows.
 
             Warning: waiting tasks that are queue-limited will be queued if
             triggered, to submit as normal when released by the queue; queued
             tasks will submit immediately if triggered, even if that violates
             the queue limit (so you may need to trigger a queue-limited task
             twice to get it to submit immediately).
+
+            Valid for: running workflows.
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
