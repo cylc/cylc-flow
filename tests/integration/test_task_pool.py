@@ -577,3 +577,96 @@ async def test_runahead_after_remove(
     # Should update after removing the first point.
     task_pool.remove_tasks(['1/*'])
     assert int(task_pool.runahead_limit_point) == 5
+
+
+def list_tasks(schd):
+    """Return a list of task pool tasks (incl hidden pool tasks).
+
+    Returns a list in the format:
+        [
+            (cycle, task, state)
+        ]
+
+    """
+    return sorted(
+        (itask.tokens['cycle'], itask.tokens['task'], itask.state.status)
+        for itask in schd.pool.get_all_tasks()
+    )
+
+
+async def tests_restart_graph_change(flow, scheduler, start):
+    """It should handle prerequisite changes on restart.
+
+    If the graph has changed when a workflow is restarted those changes should
+    be applied to tasks already in the pool.
+
+    See https://github.com/cylc/cylc-flow/pull/5334
+
+    """
+
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    a => z
+                    b => z
+                ''',
+            }
+        }
+    }
+    id_ = flow(conf)
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+    async with start(schd):
+        # release tasks 1/a and 1/b
+        schd.pool.release_runahead_tasks()
+        schd.release_queued_tasks()
+        assert list_tasks(schd) == [
+            ('1', 'a', 'running'),
+            ('1', 'b', 'running'),
+        ]
+
+        # mark 1/a as succeeded and spawn 1/z
+        schd.pool.get_all_tasks()[0].state_reset('succeeded')
+        schd.pool.spawn_on_output(schd.pool.get_all_tasks()[0], 'succeeded')
+        assert list_tasks(schd) == [
+            ('1', 'b', 'running'),
+            ('1', 'z', 'waiting'),
+        ]
+
+        # save our progress
+        schd.workflow_db_mgr.put_task_pool(schd.pool)
+
+    # edit the workflow to add a new dependency on "z"
+    conf['scheduling']['graph']['R1'] += '\n c => z'
+    id_ = flow(conf, id_=id_)
+
+    # and restart it
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+    async with start(schd):
+        # load jobs from db
+        schd.pool.reload_taskdefs()
+        schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
+            schd.data_store_mgr.insert_db_job
+        )
+        assert list_tasks(schd) == [
+            ('1', 'b', 'running'),
+            ('1', 'z', 'waiting'),
+        ]
+
+        # ensure the new dependency 1/c has been added to 1/z
+        # and is *not* satisfied
+        task_z = schd.pool.get_all_tasks()[0]
+        assert sorted(
+            (
+                p.satisfied
+                for p in task_z.state.prerequisites
+            ),
+            key=lambda d: tuple(d.keys())[0],
+        ) == [
+            {('1', 'a', 'succeeded'): 'satisfied naturally'},
+            {('1', 'b', 'succeeded'): False},
+            {('1', 'c', 'succeeded'): False},
+
+        ]
