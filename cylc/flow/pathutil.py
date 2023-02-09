@@ -19,12 +19,13 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
+from time import sleep
 from typing import Dict, Iterable, Set, Union, Optional, Any
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    InputError, WorkflowFilesError, handle_rmtree_err
+    InputError, WorkflowFilesError
 )
 from cylc.flow.platforms import get_localhost_install_target
 
@@ -297,7 +298,7 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
                 "Removing symlink and its target directory: "
                 f"{path} -> {target}"
             )
-            rmtree(target, onerror=handle_rmtree_err)
+            _rmtree(target)
         else:
             LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
@@ -305,7 +306,19 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         raise FileNotFoundError(path)
     else:
         LOG.info(f'Removing directory: {path}')
-        rmtree(path, onerror=handle_rmtree_err)
+        _rmtree(path)
+
+
+def _rmtree(target, retries=5, sleep_time=0.5):
+    for _try_num in range(retries):
+        try:
+            rmtree(target)
+            return
+        except OSError as exc:
+            err = exc
+            sleep(sleep_time)
+            continue
+    raise err
 
 
 def remove_dir_or_file(path: Union[Path, str]) -> None:
@@ -325,7 +338,7 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
         os.remove(path)
     else:
         LOG.info(f"Removing directory: {path}")
-        rmtree(path, onerror=handle_rmtree_err)
+        _rmtree(path)
 
 
 def remove_empty_parents(
