@@ -18,6 +18,7 @@
 
 from collections import Counter
 from copy import copy
+from contextlib import suppress
 from fnmatch import fnmatchcase
 from time import time
 from typing import (
@@ -288,7 +289,27 @@ class TaskProxy:
         reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
-        reload_successor.state.prerequisites = self.state.prerequisites
+
+        # Prerequisites: the graph might have changed before reload, so
+        # we need to use the new prerequisites but update them with the
+        # pre-reload state of prerequisites that still exist post-reload.
+
+        # Get all prereq states, e.g. {('1', 'c', 'succeeded'): False, ...}
+        pre_reload = {
+            k: v
+            for pre in self.state.prerequisites
+            for (k, v) in pre.satisfied.items()
+        }
+        # Use them to update the new prerequisites.
+        # - unchanged prerequisites will keep their pre-reload state.
+        # - removed prerequisites will not be carried over
+        # - added prerequisites will be recorded as unsatisfied
+        #   NOTE: even if the corresponding output was completed pre-reload!
+        for pre in reload_successor.state.prerequisites:
+            for k in pre.satisfied.keys():
+                with suppress(KeyError):
+                    pre.satisfied[k] = pre_reload[k]
+
         reload_successor.state.xtriggers.update({
             # copy across any special "_cylc" xtriggers which were added
             # dynamically at runtime (i.e. execution retry xtriggers)

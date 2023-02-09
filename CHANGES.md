@@ -73,8 +73,8 @@ for `cylc lint`.
 
 ### Fixes
 
-[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Fix to prevent scheduler
-crash if already-spawned tasks have new prerequisites added before a restart.
+[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite 
+changes to already-spawned tasks after reload or restart.
 
 
 -------------------------------------------------------------------------------
