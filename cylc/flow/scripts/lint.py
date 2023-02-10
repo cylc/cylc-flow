@@ -135,6 +135,18 @@ STYLE_CHECKS = {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
         'url': '',
         'index': 8
+    },
+    re.compile(r'platform\s*=\s*\$\(.*?\)'): {
+        'short': 'Host Selection Script may be redundant with platform',
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'major-changes/platforms.html'
+        ),
+        'index': 9
+    },
+    re.compile(r'platform\s*=\s*(`.*?`)'): {
+        'short': 'Using backticks to invoke subshell is deprecated',
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825'
     }
     # re.compile(r'^.{{maxlen},}'): {
     #     'short': 'line > {maxlen} characters.',
@@ -176,6 +188,10 @@ MANUAL_DEPRECATIONS = {
             '``global.cylc[platforms][<platform name>]job runner``'
         )
     },
+    re.compile(r'host\s*=\s*(`.*?`)'): {
+        'short': 'Using backticks to invoke subshell will fail at Cylc 8.',
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825'
+    }
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {

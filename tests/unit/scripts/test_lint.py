@@ -132,6 +132,9 @@ TEST_FILE = """
      [[remote]]
 
  [meta]
+    [[and_another_thing]]
+        [[[remote]]]
+            host = `rose host-select thingy`
 """
 
 
@@ -150,6 +153,10 @@ LINT_TEST_FILE = """
         inherit = hello
      [[[job]]]
 something\t
+    [[bar]]
+        platform = $(some-script foo)
+    [[baz]]
+        platform = `no backticks`
 """
 
 LINT_TEST_FILE += (
