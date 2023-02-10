@@ -622,7 +622,7 @@ class Scheduler:
             await asyncio.gather(
                 *main_loop.get_runners(
                     self.main_loop_plugins,
-                    main_loop.CoroTypes.StartUp,
+                    [main_loop.CoroTypes.StartUp],
                     self
                 )
             )
@@ -643,7 +643,7 @@ class Scheduler:
                 await asyncio.gather(
                     *main_loop.get_runners(
                         self.main_loop_plugins,
-                        main_loop.CoroTypes.ShutDown,
+                        [main_loop.CoroTypes.ShutDown],
                         self
                     )
                 )
@@ -1330,6 +1330,7 @@ class Scheduler:
         log = LOG.debug
         if self.options.reftest or self.options.genref:
             log = LOG.info
+        submitted_tasks = []
         for itask in self.task_job_mgr.submit_task_jobs(
             self.workflow,
             pre_prep_tasks,
@@ -1337,6 +1338,7 @@ class Scheduler:
             self.server.client_pub_key_dir,
             is_simulation=self.config.run_mode('simulation')
         ):
+            submitted_tasks.append(itask)
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
             else:
@@ -1345,6 +1347,7 @@ class Scheduler:
                 f"{itask.identity} -triggered off "
                 f"{itask.state.get_resolved_dependencies()} in flow {flow}"
             )
+        return submitted_tasks
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1612,8 +1615,7 @@ class Scheduler:
                 # (Could do this periodically?)
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
-            self.pool.set_expired_tasks()
-            self.release_queued_tasks()
+            submitted_tasks = self.release_queued_tasks()
 
             if self.pool.sim_time_check(self.message_queue):
                 # A simulated task state change occurred.
@@ -1653,8 +1655,12 @@ class Scheduler:
             await asyncio.gather(
                 *main_loop.get_runners(
                     self.main_loop_plugins,
-                    main_loop.CoroTypes.Periodic,
-                    self
+                    (
+                        main_loop.CoroTypes.Periodic,
+                        main_loop.CoroTypes.Submit,
+                    ),
+                    self,
+                    submitted_tasks=submitted_tasks
                 )
             )
 

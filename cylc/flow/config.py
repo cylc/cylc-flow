@@ -270,7 +270,7 @@ class WorkflowConfig:
         self.start_point: 'PointBase'
         self.stop_point: Optional['PointBase'] = None
         self.final_point: Optional['PointBase'] = None
-        self.sequences: List['SequenceBase'] = []
+        self.sequences: Dict['SequenceBase', List[str]] = {}
         self.actual_first_point: Optional['PointBase'] = None
         self._start_point_for_actual_first_point: Optional['PointBase'] = None
 
@@ -1661,6 +1661,7 @@ class WorkflowConfig:
             elif not suicide:
                 # "foo => !bar" does not define a sequence for bar
                 taskdef.add_sequence(seq)
+                self.sequences[seq].append(name)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
                           suicide, task_triggers):
@@ -2095,7 +2096,7 @@ class WorkflowConfig:
                 if isinstance(exc, CylcError):
                     msg += ' %s' % exc.args[0]
                 raise WorkflowConfigError(msg)
-            self.sequences.append(seq)
+            self.sequences.setdefault(seq, [])
             parser = GraphParser(
                 family_map,
                 self.parameters,

@@ -1681,43 +1681,6 @@ class TaskPool:
                 sim_task_state_changed = True
         return sim_task_state_changed
 
-    def set_expired_tasks(self):
-        res = False
-        for itask in self.get_tasks():
-            if self._set_expired_task(itask):
-                res = True
-        return res
-
-    def _set_expired_task(self, itask):
-        """Check if task has expired. Set state and event handler if so.
-
-        Return True if task has expired.
-        """
-        if (
-                not itask.state(
-                    TASK_STATUS_WAITING,
-                    is_held=False
-                )
-                or itask.tdef.expiration_offset is None
-        ):
-            return False
-        if itask.expire_time is None:
-            itask.expire_time = (
-                itask.get_point_as_seconds() +
-                itask.get_offset_as_seconds(itask.tdef.expiration_offset))
-        if time() > itask.expire_time:
-            msg = 'Task expired (skipping job).'
-            LOG.warning(f"[{itask}] {msg}")
-            self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
-            # TODO succeeded and expired states are useless due to immediate
-            # removal under all circumstances (unhandled failed is still used).
-            if itask.state_reset(TASK_STATUS_EXPIRED, is_held=False):
-                self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_held(itask)
-            self.remove(itask, 'expired')
-            return True
-        return False
-
     def task_succeeded(self, id_):
         """Return True if task with id_ is in the succeeded state."""
         return any(

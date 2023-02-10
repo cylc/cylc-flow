@@ -175,7 +175,7 @@ class MainLoopPluginException(Exception):
     """
 
 
-async def _wrapper(fcn, scheduler, state, timings=None):
+async def _wrapper(fcn, scheduler, state, coro_type, timings=None, **kwargs):
     """Wrapper for all plugin functions.
 
     * Logs the function's execution.
@@ -186,8 +186,11 @@ async def _wrapper(fcn, scheduler, state, timings=None):
     sig = f'{fcn.__module__}:{fcn.__name__}'
     LOG.debug(f'main_loop [run] {sig}')
     start_time = time()
+    args = (scheduler, state)
+    if coro_type == CoroTypes.Submit:
+        args = (*args, kwargs['submitted_tasks'])
     try:
-        await fcn(scheduler, state)
+        await fcn(*args)
     except CylcError as exc:
         # allow CylcErrors through (e.g. SchedulerStop)
         # NOTE: the `from None` bit gets rid of this gunk:
@@ -301,12 +304,20 @@ def periodic(fcn):
     return fcn
 
 
+def submit(fcn):
+    """
+    """
+    fcn.main_loop = CoroTypes.Submit
+    return fcn
+
+
 class CoroTypes:
     """Different types of coroutine which can be used with the main loop."""
 
     StartUp = startup
     ShutDown = shutdown
     Periodic = periodic
+    Submit = submit
 
 
 def load(config, additional_plugins=None):
@@ -358,14 +369,26 @@ def load(config, additional_plugins=None):
     return plugins
 
 
-def get_runners(plugins, coro_type, scheduler):
+def get_runners(plugins, coro_types, scheduler, **kwargs):
+    if (
+        CoroTypes.Submit in coro_types
+        and not kwargs.get('submitted_tasks')
+    ):
+        coro_types = [
+            coro_type
+            for coro_type in coro_types
+            if coro_type != CoroTypes.Submit
+        ]
     return [
         _wrapper(
             coro,
             scheduler,
             plugins['state'][plugin_name],
-            timings=plugins['timings'][(plugin_name, coro_name)]
+            coro_type,
+            timings=plugins['timings'][(plugin_name, coro_name)],
+            **kwargs
         )
+        for coro_type in coro_types
         for (plugin_name, coro_name), coro
         in plugins.get(coro_type, {}).items()
         if coro_type != CoroTypes.Periodic
