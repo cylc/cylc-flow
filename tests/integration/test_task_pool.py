@@ -719,6 +719,9 @@ async def test_restart_prereqs(
         )
         assert list_tasks(schd) == expected_3
 
+        # To cover some code for loading prereqs from the DB at restart:
+        schd.data_store_mgr.update_data_structure()
+
         # Check resulting dependencies of task z
         task_z = schd.pool.get_all_tasks()[0]
         assert sorted(
