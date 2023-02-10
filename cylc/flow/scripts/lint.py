@@ -131,6 +131,11 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'task-naming-conventions',
         'index': 7
     },
+    re.compile(r'({%.*%})|({{.*}})'): {
+        'short': JINJA2_FOUND_WITHOUT_SHEBANG,
+        'url': '',
+        'index': 8
+    }
     # re.compile(r'^.{{maxlen},}'): {
     #     'short': 'line > {maxlen} characters.',
     #     'url': STYLE_GUIDE + 'line-length-and-continuation',

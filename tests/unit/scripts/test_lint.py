@@ -142,6 +142,9 @@ LINT_TEST_FILE = """
 
 [[dependencies]]
 
+{% foo %}
+{{foo}}
+
 [runtime]
           [[foo]]
         inherit = hello
