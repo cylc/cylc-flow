@@ -125,7 +125,8 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'trailing-whitespace',
         'index': 6
     },
-    re.compile(r'inherit\s*=\s*[a-z].*$'): {
+    # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any
+    re.compile(r'(inherit\s*=\s*.*[a-z].*)|(\w[a-z]\w:.+?-a(ll|ny))'): {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
         'index': 7
