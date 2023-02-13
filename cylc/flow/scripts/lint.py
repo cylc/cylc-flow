@@ -497,8 +497,11 @@ def check_cylc_file(
                 and (
                     not line.strip().startswith('#')
                     or (
-                        'Cylc will process commented Jinja2!' in message['short'] and check.findall(line)
-            ))):
+                        'commented Jinja2!' in message['short']
+                        and check.findall(line)
+                    )
+                )
+            ):
                 count += 1
                 if modify:
                     if message['url'].startswith('http'):
