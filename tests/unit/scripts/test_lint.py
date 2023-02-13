@@ -147,6 +147,7 @@ LINT_TEST_FILE = """
 
 {% foo %}
 {{foo}}
+# {{quix}}
 
 [runtime]
           [[foo]]

@@ -146,7 +146,13 @@ STYLE_CHECKS = {
     },
     re.compile(r'platform\s*=\s*(`.*?`)'): {
         'short': 'Using backticks to invoke subshell is deprecated',
-        'url': 'https://github.com/cylc/cylc-flow/issues/3825'
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825',
+        'index': 10
+    },
+    re.compile(r'#.*?{[{%].*[}%]}'): {
+        'short': 'Cylc will process commented Jinja2!',
+        'url': '',
+        'index': 11
     }
     # re.compile(r'^.{{maxlen},}'): {
     #     'short': 'line > {maxlen} characters.',
@@ -486,7 +492,13 @@ def check_cylc_file(
             ):
                 continue
 
-            if check.findall(line) and not line.strip().startswith('#'):
+            if (
+                check.findall(line)
+                and (
+                    not line.strip().startswith('#')
+                    or (
+                        'Cylc will process commented Jinja2!' in message['short'] and check.findall(line)
+            ))):
                 count += 1
                 if modify:
                     if message['url'].startswith('http'):
