@@ -126,12 +126,12 @@ STYLE_CHECKS = {
         'index': 6
     },
     # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any
-    re.compile(r'(inherit\s*=\s*.*[a-z].*)|(\w[a-z]\w:.+?-a(ll|ny))'): {
+    re.compile(r'(inherit\s*=\s*.*[a-z].*)|(\w[a-z]\w:\w+?-a(ll|ny))'): {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
         'index': 7
     },
-    re.compile(r'({%.*%})|({{.*}})'): {
+    re.compile(r'{[{%]'): {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
         'url': '',
         'index': 8
@@ -149,7 +149,7 @@ STYLE_CHECKS = {
         'url': 'https://github.com/cylc/cylc-flow/issues/3825',
         'index': 10
     },
-    re.compile(r'#.*?{[{%].*[}%]}'): {
+    re.compile(r'#.*?{[{%]'): {
         'short': 'Cylc will process commented Jinja2!',
         'url': '',
         'index': 11
