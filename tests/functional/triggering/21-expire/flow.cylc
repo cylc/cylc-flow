@@ -1,0 +1,11 @@
+[scheduling]
+    initial cycle point = 1999
+    [[special tasks]]
+        clock-expire = foo(PT0S)
+    [[graph]]
+        R1 = """
+            foo:expire? => bar
+            foo => baz
+        """
+[runtime]
+   [[foo, bar, baz]]

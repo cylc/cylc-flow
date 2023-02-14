@@ -17,8 +17,11 @@ ones in. -->
 [5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
 group selection order bug.
 
+[#5412](https://github.com/cylc/cylc-flow/pull/5412) -
+Fix task expire trigger.
+
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
-Fixes `cylc set-verbosity`.
+Fix `cylc set-verbosity`.
 
 [#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
 absence of `job name length maximum` in PBS platform settings would cause

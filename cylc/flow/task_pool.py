@@ -686,6 +686,7 @@ class TaskPool:
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
             LOG.debug(f"[{itask}] {msg}")
+            self.task_queue_mgr.remove_task(itask)
             return
 
         try:
@@ -696,9 +697,9 @@ class TaskPool:
             self.main_pool_changed = True
             if not self.main_pool[itask.point]:
                 del self.main_pool[itask.point]
-                self.task_queue_mgr.remove_task(itask)
-                if itask.tdef.max_future_prereq_offset is not None:
-                    self.set_max_future_offset()
+            self.task_queue_mgr.remove_task(itask)
+            if itask.tdef.max_future_prereq_offset is not None:
+                self.set_max_future_offset()
 
             # Notify the data-store manager of their removal
             # (the manager uses window boundary tracking for pruning).
@@ -815,8 +816,8 @@ class TaskPool:
 
         for itask in released:
             itask.state_reset(is_queued=False)
-            itask.waiting_on_job_prep = True
             self.data_store_mgr.delta_task_queued(itask)
+            itask.waiting_on_job_prep = True
 
             if cylc.flow.flags.cylc7_back_compat:
                 # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
@@ -994,8 +995,7 @@ class TaskPool:
                 and itask.state(*TASK_STATUSES_ACTIVE)
                 and not itask.state.kill_failed
             )
-            # we don't need to check for preparing tasks because they will be
-            # reset to waiting on restart
+            # preparing tasks because they will be reset to waiting on restart
             for itask in self.get_tasks()
         )
 
@@ -1321,7 +1321,7 @@ class TaskPool:
                 )
             else:
                 # Remove as completed.
-                self.remove(itask, 'finished')
+                self.remove(itask, 'completed')
                 if itask.identity == self.stop_task_id:
                     self.stop_task_finished = True
                 if self.compute_runahead():
@@ -1701,21 +1701,24 @@ class TaskPool:
                 or itask.tdef.expiration_offset is None
         ):
             return False
+
         if itask.expire_time is None:
             itask.expire_time = (
                 itask.get_point_as_seconds() +
                 itask.get_offset_as_seconds(itask.tdef.expiration_offset))
-        if time() > itask.expire_time:
-            msg = 'Task expired (skipping job).'
+
+        if (
+            time() > itask.expire_time and
+            itask.state_reset(TASK_STATUS_EXPIRED)
+        ):
+            msg = 'Task expired: will not submit job.'
             LOG.warning(f"[{itask}] {msg}")
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
-            # TODO succeeded and expired states are useless due to immediate
-            # removal under all circumstances (unhandled failed is still used).
-            if itask.state_reset(TASK_STATUS_EXPIRED, is_held=False):
-                self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_held(itask)
+            self.data_store_mgr.delta_task_state(itask)
+            self.spawn_on_output(itask, "expired")
             self.remove(itask, 'expired')
             return True
+
         return False
 
     def task_succeeded(self, id_):
