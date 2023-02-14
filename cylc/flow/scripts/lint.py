@@ -125,11 +125,35 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'trailing-whitespace',
         'index': 6
     },
-    re.compile(r'inherit\s*=\s*[a-z].*$'): {
+    # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any
+    re.compile(r'(inherit\s*=\s*.*[a-z].*)|(\w[a-z]\w:\w+?-a(ll|ny))'): {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
         'index': 7
     },
+    re.compile(r'{[{%]'): {
+        'short': JINJA2_FOUND_WITHOUT_SHEBANG,
+        'url': '',
+        'index': 8
+    },
+    re.compile(r'platform\s*=\s*\$\(.*?\)'): {
+        'short': 'Host Selection Script may be redundant with platform',
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'major-changes/platforms.html'
+        ),
+        'index': 9
+    },
+    re.compile(r'platform\s*=\s*(`.*?`)'): {
+        'short': 'Using backticks to invoke subshell is deprecated',
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825',
+        'index': 10
+    },
+    re.compile(r'#.*?{[{%]'): {
+        'short': 'Cylc will process commented Jinja2!',
+        'url': '',
+        'index': 11
+    }
     # re.compile(r'^.{{maxlen},}'): {
     #     'short': 'line > {maxlen} characters.',
     #     'url': STYLE_GUIDE + 'line-length-and-continuation',
@@ -170,6 +194,10 @@ MANUAL_DEPRECATIONS = {
             '``global.cylc[platforms][<platform name>]job runner``'
         )
     },
+    re.compile(r'host\s*=\s*(`.*?`)'): {
+        'short': 'Using backticks to invoke subshell will fail at Cylc 8.',
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825'
+    }
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {
@@ -464,7 +492,16 @@ def check_cylc_file(
             ):
                 continue
 
-            if check.findall(line) and not line.strip().startswith('#'):
+            if (
+                check.findall(line)
+                and (
+                    not line.strip().startswith('#')
+                    or (
+                        'commented Jinja2!' in message['short']
+                        and check.findall(line)
+                    )
+                )
+            ):
                 count += 1
                 if modify:
                     if message['url'].startswith('http'):
