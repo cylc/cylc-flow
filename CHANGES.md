@@ -13,8 +13,13 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
 
+### Fixes
+
 [#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
 only worked when used with a space, not an `=`.
+
+[#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
+for `cylc lint`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
