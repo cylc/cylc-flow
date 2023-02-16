@@ -18,6 +18,9 @@ ones in. -->
 [#5367](https://github.com/cylc/cylc-flow/pull/5367) - Enable using
 Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 
+[#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
+for `cylc lint`.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
 
