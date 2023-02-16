@@ -18,6 +18,9 @@ ones in. -->
 [#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
 only worked when used with a space, not an `=`.
 
+[#5367](https://github.com/cylc/cylc-flow/pull/5367) - Enable using
+Rose options (`-O`, `-S` & `-D`) with `cylc view`.
+
 [#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
 for `cylc lint`.
 
