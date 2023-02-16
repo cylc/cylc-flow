@@ -11,9 +11,12 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.2 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
 
 ### Fixes
+
+[#5367](https://github.com/cylc/cylc-flow/pull/5367) - Enable using
+Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 
 [#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
 for `cylc lint`.
