@@ -821,6 +821,7 @@ def cleanup_sysargv(
         for x in compound_script_opts
     }
     # Filter out non-cylc-play options.
+    args = [i.split('=')[0] for i in sys.argv]
     for unwanted_opt in (set(options.__dict__)) - set(script_opts_by_dest):
         for arg in compound_opts_by_dest[unwanted_opt].args:
             if arg in sys.argv:
@@ -831,6 +832,9 @@ def cleanup_sysargv(
                     not in ['store_true', 'store_false']
                 ):
                     sys.argv.pop(index)
+            elif arg in args:
+                index = args.index(arg)
+                sys.argv.pop(index)
 
     # replace compound script name:
     sys.argv[1] = script_name
