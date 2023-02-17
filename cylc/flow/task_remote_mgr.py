@@ -149,7 +149,7 @@ class TaskRemoteMgr:
                 elif value is None:
                     return  # command not yet ready
                 else:
-                    command = value  # command succeeded
+                    platform_or_host_str = value  # command succeeded
             else:
                 # Command not launched (or already reset)
                 self.proc_pool.put_command(
@@ -164,16 +164,17 @@ class TaskRemoteMgr:
                 return self.remote_command_map[cmd_str]
 
         # Environment variable substitution
-        command = os.path.expandvars(command)
+        platform_or_host_str = os.path.expandvars(platform_or_host_str)
+
         # Remote?
         # TODO - Remove at Cylc 8.x as this only makes sense with host logic
         if host_check is True:
-            if is_remote_host(command):
-                return command
+            if is_remote_host(platform_or_host_str):
+                return platform_or_host_str
             else:
                 return 'localhost'
         else:
-            return command
+            return platform_or_host_str
 
     def subshell_eval_reset(self):
         """Reset remote eval subshell results.
