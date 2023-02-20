@@ -22,6 +22,7 @@ from typing import Optional, Tuple
 
 import zmq
 import zmq.asyncio
+import zmq.auth
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
