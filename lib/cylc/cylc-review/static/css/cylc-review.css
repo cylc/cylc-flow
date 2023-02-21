@@ -113,3 +113,8 @@ th,
 .livestamp {
   white-space: nowrap;
 }
+
+.warning {
+  background-color: #FFBF00;
+  border-radius: 4px;
+}

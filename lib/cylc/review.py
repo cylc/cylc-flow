@@ -379,9 +379,14 @@ class CylcReviewService(object):
             self.suite_dao.get_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
-        entries, of_n_entries = self.suite_dao.get_suite_job_entries(
-            user, suite, cycles, tasks, task_status, job_status, order,
-            per_page, (page - 1) * per_page)
+        (
+            entries, of_n_entries, eight_point_zero
+        ) = self.suite_dao.get_suite_job_entries(
+            user, suite, cycles, tasks,
+            task_status, job_status, order,
+            per_page, (page - 1) * per_page
+        )
+        data["eight_point_zero"] = eight_point_zero
         data["entries"] = entries
         data["of_n_entries"] = of_n_entries
         if per_page:
