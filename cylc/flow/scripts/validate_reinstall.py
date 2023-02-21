@@ -125,6 +125,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # Attempt to work out whether the workflow is running.
     # We are trying to avoid reinstalling then subsequently being
     # unable to play or reload because we cannot identify workflow state.
+    unparsed_wid = workflow_id
     workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
@@ -178,7 +179,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     else:
         cleanup_sysargv(
             'play',
-            workflow_id,
+            unparsed_wid,
             options,
             compound_script_opts=VR_OPTIONS,
             script_opts=(
@@ -187,5 +188,5 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             ),
             source='',  # Intentionally blank
         )
-        log_subcommand('play', workflow_id)
+        log_subcommand(' '.join(sys.argv))
         scheduler_cli(options, workflow_id)

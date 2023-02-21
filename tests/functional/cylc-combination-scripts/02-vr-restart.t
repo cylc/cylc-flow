@@ -21,15 +21,14 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 7
 
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
 run_ok "setup (install)" \
     cylc install \
-    --workflow-name "${WORKFLOW_NAME}" \
-    --no-run-name
+    --workflow-name "${WORKFLOW_NAME}"
 
 export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
 
@@ -39,11 +38,16 @@ export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
 sed -i 's@P1Y@P5Y@' flow.cylc
 run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
+# cat "${TEST_NAME_BASE}-runs.stdout" >&2
+
 # Grep for vr reporting revalidation, reinstallation and playing the workflow.
 grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
 named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
 named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
-named_grep_ok "${TEST_NAME_BASE}-it-played" "$ cylc play" "VIPOUT.txt"
+named_grep_ok "${TEST_NAME_BASE}-it-played" "cylc play" "VIPOUT.txt"
+# Ensure that we don't have two copies of the workflow name
+# https://github.com/cylc/cylc-flow/pull/5377
+grep_fail "${WORKFLOW_NAME} ${WORKFLOW_NAME}" VIPOUT.txt
 
 
 # Clean Up.
