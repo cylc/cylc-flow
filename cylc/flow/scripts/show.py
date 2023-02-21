@@ -187,6 +187,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multitask=True,
         argdoc=[ID_MULTI_ARG_DOC],
     )
@@ -393,6 +394,7 @@ async def show(workflow_id, tokens_list, opts):
     pclient = get_client(
         workflow_id,
         timeout=opts.comms_timeout,
+        method=opts.comms_method
     )
     json_filter: 'Dict' = {}
 

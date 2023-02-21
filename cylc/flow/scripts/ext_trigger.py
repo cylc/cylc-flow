@@ -81,6 +81,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         argdoc=[
             WORKFLOW_ID_ARG_DOC,
             ("MSG", "External trigger message"),
@@ -116,7 +117,11 @@ def main(
     LOG.info(
         'Send to workflow %s: "%s" (%s)', workflow_id, event_msg, event_id
     )
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)

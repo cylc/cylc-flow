@@ -94,6 +94,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         argdoc=[
             COP.optional(WORKFLOW_ID_ARG_DOC),
             COP.optional(
@@ -175,4 +176,4 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(workflow_id, job_id, messages)
+    record_messages(workflow_id, job_id, messages, options)

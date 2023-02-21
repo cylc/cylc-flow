@@ -39,7 +39,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
 )
-from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.terminal import cli_function
 
@@ -64,6 +64,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multitask=True,
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
@@ -72,8 +73,11 @@ def get_option_parser() -> COP:
 
 
 async def run(options: 'Values', workflow_id: str) -> None:
-    pclient = WorkflowRuntimeClient(workflow_id, timeout=options.comms_timeout)
-
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {

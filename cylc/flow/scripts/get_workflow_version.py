@@ -54,6 +54,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
@@ -61,7 +62,11 @@ def get_option_parser():
 
 
 async def run(options, workflow_id, *_):
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     query_kwargs = {
         'request_string': QUERY,

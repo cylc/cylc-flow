@@ -113,6 +113,7 @@ Port Mapping:
     Comms Method:
         * +0 - "tcp" & "ssh"
         * +1 - "poll"
+        * +2 - "https"
 __USAGE__
     exit 0
 }
@@ -246,6 +247,14 @@ fi
 POLL_OPTS=(
     '-e' 'HOST_HOSTNAME=false'
 )
+
+# docker run opts for HTTPS/hub comms
+HTTPS_OPTS=(
+    # expose the hub port in the image (hardcoded) to the host OS
+    '-p' '44000:8042'
+    "${TCP_OPTS[@]}"
+)
+
 # the lowest port to use for communicating with containers
 BASE_PORT=42220
 
@@ -253,9 +262,10 @@ BASE_PORT=42220
 _run () {
     # run a container
     local fs="$1"  # i.e. indep, shared
-    local comms="$2"  # i.e. tcp, poll
+    local comms="$2"  # i.e. tcp, poll, https
     local detached="${3:-false}"  # i.e. true, false
     local port
+    local image='cylc-remote:latest'
 
     # set the detach args
     local opts=()
@@ -283,6 +293,10 @@ _run () {
     elif [[ $comms == poll ]]; then
         opts+=("${POLL_OPTS[@]}")
         (( port += 1 ))
+    elif [[ $comms == https ]]; then
+        opts+=("${HTTPS_OPTS[@]}")
+        (( port += 2 ))
+        image='cylc-uiserver:latest'
     else
         echo "invalid comms method '$comms'" >&2
         exit 1
@@ -294,7 +308,7 @@ _run () {
         -t --privileged \
         -p "$port:22" \
         "${opts[@]}" \
-        cylc-remote:latest
+        "${image}"
 }
 
 # build all docker images
@@ -305,6 +319,9 @@ build () {
     docker build . \
         -f dockerfiles/cylc-remote/Dockerfile \
         -t cylc-remote:latest
+    docker build . \
+        -f dockerfiles/cylc-uiserver/Dockerfile \
+        -t cylc-uiserver:latest
 }
 
 # configure the system so we can use these images as cylc platforms

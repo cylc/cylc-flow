@@ -48,6 +48,7 @@ query ($wFlows: [ID]) {
   workflows(ids: $wFlows) {
     id
     name
+    host
     port
     pubPort
   }
@@ -68,6 +69,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multitask=True,
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
@@ -81,7 +83,11 @@ async def run(
     workflow_id: str,
     *tokens_list,
 ) -> Dict:
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     ret: Dict[str, Any] = {
         'stdout': [],
@@ -101,12 +107,13 @@ async def run(
     msg = ""
     for flow in result['workflows']:
         w_name = flow['name']
+        w_host = getattr(pclient, 'host', flow['host'])
         w_port = flow['port']
         w_pub_port = flow['pubPort']
         if cylc.flow.flags.verbosity > 0:
             ret['stdout'].append(
                 f'{w_name} running on '
-                f'{pclient.host}:{w_port} {w_pub_port}\n'
+                f'{w_host}:{w_port} {w_pub_port}\n'
             )
 
         # ping called with task-like objects

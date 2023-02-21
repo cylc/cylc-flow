@@ -84,6 +84,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         jset=True,
         argdoc=[WORKFLOW_ID_ARG_DOC],
     )

@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 from pkg_resources import parse_version
 
 from cylc.flow import LOG, __version__
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -38,7 +39,7 @@ from cylc.flow.loggingutil import (
     close_log,
     RotatingLogFileHandler,
 )
-from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.client_factory import get_client, CommsMeth
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -106,6 +107,45 @@ At restart, tasks recorded as submitted or running are polled to determine what
 happened to them while the workflow was down.
 """
 
+PLAY_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $iCP: CyclePoint,
+  $startCP: CyclePoint,
+  $fCP: CyclePoint,
+  $stopCP: CyclePoint,
+  $pauseOnStart: Boolean,
+  $holdCP: CyclePoint,
+  $runMode: RunMode,
+  $runHost: String,
+  $mainLoopPlugins: [String],
+  $abortIfTaskFail: Boolean,
+  $debug: Boolean,
+  $noTimestamp: Boolean,
+  $setJinja2: [String],
+  $setJinja2File: String,
+) {
+  play (
+    workflows: $wFlows,
+    initialCyclePoint: $iCP,
+    startCyclePoint: $startCP,
+    finalCyclePoint: $fCP,
+    stopCyclePoint: $stopCP,
+    pause: $pauseOnStart,
+    holdCyclePoint: $holdCP,
+    mode: $runMode,
+    host: $runHost,
+    mainLoop: $mainLoopPlugins,
+    abortIfAnyTaskFails: $abortIfTaskFail,
+    debug: $debug,
+    noTimestamp: $noTimestamp,
+    set: $setJinja2,
+    setFile: $setJinja2File
+  ) {
+    result
+  }
+}
+'''
 
 RESUME_MUTATION = '''
 mutation (
@@ -300,6 +340,7 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         PLAY_DOC,
         jset=True,
         comms=True,
+        commsmethod=True,
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
@@ -370,6 +411,9 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
         # warn_depr=False,  # TODO
     )
 
+    # start workflow with UI Server if comms method http
+    _http_play(workflow_id, options)
+
     # resume the workflow if it is already running
     _resume(workflow_id, options)
 
@@ -433,9 +477,10 @@ def _resume(workflow_id, options):
         detect_old_contact_file(workflow_id)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(
+        pclient = get_client(
             workflow_id,
             timeout=options.comms_timeout,
+            method=options.comms_method
         )
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
@@ -452,6 +497,60 @@ def _resume(workflow_id, options):
             '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
         )
         sys.exit(1)
+
+
+def _http_play(workflow_id, options):
+    """Resume the workflow if it is already running."""
+    if options.comms_method is None:
+        options.comms_method = glbl_cfg().get(
+            ['platforms', 'localhost', 'communication method']
+        )
+    if options.comms_method == CommsMeth.HTTPS.value:
+        print(
+            cparse(
+                'Requesting UI Server workflow play.\n'
+                '<yellow>'
+                'Note: '
+                '</yellow>'
+                '\n The workflow will be started at the same Cylc version as'
+                ' the UI Server. Any set files need to be accessible to the'
+                ' UI Server.'
+                '\n Options currently unavailable using UIS started runs:'
+                '\n  - start-task'
+                '\n  - no-detach'
+                '\n  - profile'
+                '\n  - reference-*'
+                '\n  - format'
+                '\n  - downgrade/upgrade'
+            )
+        )
+        pclient = get_client(
+            workflow_id,
+            timeout=options.comms_timeout,
+            method=options.comms_method
+        )
+        mutation_kwargs = {
+            'request_string': PLAY_MUTATION,
+            'variables': {
+                'wFlows': [workflow_id],
+                'iCP': options.icp,
+                'startCP': options.startcp,
+                'fCP': options.fcp,
+                'stopCP': options.stopcp,
+                'pauseOnStart': options.paused_start,
+                'holdCP': options.holdcp,
+                'runMode': options.run_mode or 'Live',
+                'runHost': options.host,
+                'mainLoopPlugins': options.main_loop,
+                'abortIfTaskFail': options.abort_if_any_task_fails,
+                'debug': options.verbosity,
+                'noTimestamp': options.log_timestamp,
+                'setJinja2': options.templatevars,
+                'setJinja2File': options.templatevars_file,
+            }
+        }
+        pclient('graphql', mutation_kwargs)
+        sys.exit(0)
 
 
 def _version_check(

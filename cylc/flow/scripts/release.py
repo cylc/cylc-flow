@@ -85,6 +85,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multitask=True,
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
@@ -115,7 +116,11 @@ def _validate(options: 'Values', *tokens_list: str) -> None:
 async def run(options: 'Values', workflow_id, *tokens_list):
     _validate(options, *tokens_list)
 
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     if options.release_all:
         mutation = RELEASE_HOLD_POINT_MUTATION

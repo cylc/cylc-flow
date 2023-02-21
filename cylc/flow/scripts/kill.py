@@ -66,6 +66,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multitask=True,
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
@@ -75,7 +76,11 @@ def get_option_parser() -> COP:
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list: Tokens):
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     mutation_kwargs = {
         'request_string': MUTATION,

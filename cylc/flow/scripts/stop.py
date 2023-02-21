@@ -145,6 +145,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         multiworkflow=True,
         argdoc=[
             ID_MULTI_ARG_DOC,
@@ -220,7 +221,11 @@ async def run(
     _validate(options, stop_task, stop_cycle, *tokens_list)
 
     try:
-        pclient = get_client(workflow_id, timeout=options.comms_timeout)
+        pclient = get_client(
+            workflow_id,
+            timeout=options.comms_timeout,
+            method=options.comms_method
+        )
     except WorkflowStopped:
         # nothing to do, return a success code
         return 0

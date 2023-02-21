@@ -151,6 +151,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
+        commsmethod=True,
         argdoc=[WORKFLOW_ID_ARG_DOC],
     )
     parser.add_option(
@@ -184,7 +185,11 @@ def main(_, options: 'Values', workflow_id: str) -> None:
         workflow_id,
         constraint='workflows',
     )
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        timeout=options.comms_timeout,
+        method=options.comms_method
+    )
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}

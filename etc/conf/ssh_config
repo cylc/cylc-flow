@@ -19,6 +19,9 @@ Host _remote_background_indep_ssh
 Host _remote_background_indep_poll
     Port 42221
 
+Host _remote_background_indep_https
+    Port 42222
+
 Host _remote_background_shared_tcp
     Port 42230
 

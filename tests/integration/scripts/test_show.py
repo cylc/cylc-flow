@@ -79,6 +79,7 @@ async def test_workflow_meta_query(mod_my_schd, capsys):
     colour_init(strip=True, autoreset=True)
     opts = SimpleNamespace(
         comms_timeout=5,
+        comms_method=None,
         json=False,
         list_prereqs=False,
         task_defs=None,
@@ -115,6 +116,7 @@ async def test_task_meta_query(mod_my_schd, capsys):
     colour_init(strip=True, autoreset=True)
     opts = SimpleNamespace(
         comms_timeout=5,
+        comms_method=None,
         json=False,
         list_prereqs=False,
         task_defs=['foo'],

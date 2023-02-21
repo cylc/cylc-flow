@@ -18,6 +18,9 @@ from enum import Enum
 import os
 from typing import TYPE_CHECKING, Union
 
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import ClientError
+
 if TYPE_CHECKING:
     from cylc.flow.network.client import WorkflowRuntimeClientBase
 
@@ -28,13 +31,26 @@ class CommsMeth(Enum):
     POLL = 'poll'
     SSH = 'ssh'
     ZMQ = 'zmq'
+    HTTPS = 'https'
 
 
-def get_comms_method() -> CommsMeth:
+class LocalCommsMeth(Enum):
+    """String literals used for identifying CLI communication methods"""
+
+    ZMQ = 'zmq'
+    HTTPS = 'https'
+
+
+def get_comms_method(comms_method: Union[str, None] = None) -> CommsMeth:
     """"Return Communication Method from environment variable, default zmq"""
-    return CommsMeth(
-        os.getenv('CYLC_TASK_COMMS_METHOD', CommsMeth.ZMQ.value)
-    )
+    if comms_method is None:
+        comms_method = os.getenv('CYLC_TASK_COMMS_METHOD')
+        # separate to avoid extra config file read
+        if comms_method is None:
+            comms_method = glbl_cfg().get(
+                ['platforms', 'localhost', 'communication method']
+            )
+    return CommsMeth(comms_method)
 
 
 def get_runtime_client(
@@ -50,6 +66,16 @@ def get_runtime_client(
     """
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import WorkflowRuntimeClient
+    elif comms_method == CommsMeth.HTTPS:
+        try:
+            from cylc.uiserver.client import (  # type: ignore[no-redef]
+                WorkflowRuntimeClient
+            )
+        except ImportError as exc:
+            raise ClientError(
+                'HTTPS comms method requires UI Server installation',
+                f'{exc}'
+            )
     else:
         from cylc.flow.network.client import (  # type: ignore[assignment]
             WorkflowRuntimeClient
@@ -57,7 +83,10 @@ def get_runtime_client(
     return WorkflowRuntimeClient(workflow, timeout=timeout)
 
 
-def get_client(workflow, timeout=None):
+def get_client(workflow, timeout=None, method=None):
     """Get communication method and return correct WorkflowRuntimeClient"""
-
-    return get_runtime_client(get_comms_method(), workflow, timeout=timeout)
+    return get_runtime_client(
+        get_comms_method(method),
+        workflow,
+        timeout=timeout
+    )
