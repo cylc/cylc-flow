@@ -83,6 +83,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
+    OptionSettings,
     Options,
     WORKFLOW_ID_ARG_DOC,
 )
@@ -100,6 +101,18 @@ if TYPE_CHECKING:
 _input = input  # to enable testing
 
 
+REINSTALL_CYLC_ROSE_OPTIONS = [
+    OptionSettings(
+        ['--clear-rose-install-options'],
+        help="Clear options previously set by cylc-rose.",
+        action='store_true',
+        default=False,
+        dest="clear_rose_install_opts",
+        sources={'reinstall'}
+    )
+]
+
+
 def get_option_parser() -> COP:
     parser = COP(
         __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
@@ -112,14 +125,8 @@ def get_option_parser() -> COP:
     except ImportError:
         pass
     else:
-        parser.add_option(
-            "--clear-rose-install-options",
-            help="Clear options previously set by cylc-rose.",
-            action='store_true',
-            default=False,
-            dest="clear_rose_install_opts"
-        )
-
+        for option in REINSTALL_CYLC_ROSE_OPTIONS:
+            parser.add_option(*option.args, **option.kwargs)
     return parser
 
 
@@ -187,7 +194,6 @@ def reinstall_cli(
 
             display_rose_warning(source)
             display_cylcignore_tip()
-
             # prompt for permission to continue
             while usr not in ['y', 'n']:
                 usr = _input(
@@ -207,14 +213,14 @@ def reinstall_cli(
         reinstall(opts, workflow_id, source, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
         display_cylc_reload_tip(workflow_id)
+        return True
 
     else:
         # no reinstall
         print(
             cparse('<magenta>Reinstall canceled, no changes made.</magenta>')
         )
-
-    return True
+        return False
 
 
 def reinstall(

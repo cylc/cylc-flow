@@ -36,11 +36,10 @@ from typing import (
     Tuple, TYPE_CHECKING, Union
 )
 
-import aiofiles
 import zmq.auth
 
-import cylc.flow.flags
 from cylc.flow import LOG
+from cylc.flow.async_util import make_async
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
@@ -51,6 +50,7 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
     handle_rmtree_err,
 )
+import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
     close_log,
@@ -82,10 +82,10 @@ from cylc.flow.remote import (
     construct_cylc_server_ssh_cmd,
     construct_ssh_cmd,
 )
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -202,6 +202,9 @@ class WorkflowFiles:
 
         VERSION = 'version'
         """Version control log dir"""
+
+        DB = 'db'
+        """The public database"""
 
     SHARE_DIR = 'share'
     """Workflow share directory."""
@@ -464,7 +467,9 @@ def _is_process_running(
     return cli_format(process['cmdline']) == command
 
 
-def detect_old_contact_file(reg: str, contact_data=None) -> None:
+def detect_old_contact_file(
+    reg: str, contact_data=None
+) -> None:
     """Check if the workflow process is still running.
 
     As a side-effect this should detect and rectify the situation
@@ -480,6 +485,7 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
 
     Args:
         reg: workflow name
+        contact_date:
 
     Raises:
         CylcError:
@@ -618,10 +624,18 @@ def get_workflow_srv_dir(reg):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg: str) -> Dict[str, str]:
+def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
+    if not run_dir:
+        path = Path(get_contact_file_path(id_))
+    else:
+        path = Path(
+            run_dir,
+            WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.CONTACT
+        )
     try:
-        with open(get_contact_file_path(reg)) as f:
+        with open(path) as f:
             file_content = f.read()
     except IOError:
         raise ServiceFileError("Couldn't load contact file")
@@ -637,29 +651,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
     return data
 
 
-async def load_contact_file_async(reg, run_dir=None):
-    if not run_dir:
-        path = Path(get_contact_file_path(reg))
-    else:
-        path = Path(
-            run_dir,
-            WorkflowFiles.Service.DIRNAME,
-            WorkflowFiles.Service.CONTACT
-        )
-    try:
-        async with aiofiles.open(path, mode='r') as cont:
-            data = {}
-            async for line in cont:
-                key, value = [item.strip() for item in line.split("=", 1)]
-                # BACK COMPAT: contact pre "suite" to "workflow" conversion.
-                # from:
-                #     Cylc 8
-                # remove at:
-                #     Cylc 8.x
-                data[key.replace('SUITE', 'WORKFLOW')] = value
-            return data
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+load_contact_file_async = make_async(load_contact_file)
 
 
 def register(
@@ -1197,7 +1189,7 @@ def get_workflow_title(reg):
     return title
 
 
-def get_platforms_from_db(run_dir):
+def get_platforms_from_db(run_dir: Path) -> Set[str]:
     """Return the set of names of platforms (that jobs ran on) from the DB.
 
     Warning:
@@ -1210,16 +1202,16 @@ def get_platforms_from_db(run_dir):
         compatibility. We can't apply upgraders which don't exist yet.
 
     Args:
-        run_dir (str): The workflow run directory.
+        run_dir: The workflow run directory.
 
     Raises:
         sqlite3.OperationalError: in the event the table/field required for
         cleaning is not present.
 
     """
-    workflow_db_mgr = WorkflowDatabaseManager(
-        os.path.join(run_dir, WorkflowFiles.Service.DIRNAME))
-    with workflow_db_mgr.get_pri_dao() as pri_dao:
+    with CylcWorkflowDAO(
+        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
+    ) as pri_dao:
         platform_names = pri_dao.select_task_job_platforms()
 
     return platform_names
@@ -1630,7 +1622,7 @@ def install_workflow(
     run_name: Optional[str] = None,
     no_run_name: bool = False,
     cli_symlink_dirs: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Tuple[Path, Path, str]:
+) -> Tuple[Path, Path, str, str]:
     """Install a workflow, or renew its installation.
 
     Install workflow into new run directory.
@@ -1652,6 +1644,7 @@ def install_workflow(
         rundir: absolute path to run directory, where the workflow has been
             installed into.
         workflow_name: installed workflow name (which may be computed here).
+        named_run: Name of the run.
 
     Raise:
         WorkflowFilesError:
@@ -1748,7 +1741,7 @@ def install_workflow(
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     close_log(install_log)
-    return source, rundir, workflow_name
+    return source, rundir, workflow_name, named_run
 
 
 def get_run_dir_info(

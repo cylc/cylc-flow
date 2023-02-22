@@ -30,7 +30,7 @@ This script is equivalent to:
 
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
-    wrapped_main as validate_main
+    _main as validate_main
 )
 from cylc.flow.scripts.install import (
     INSTALL_OPTIONS, install_cli as cylc_install, get_source_location
@@ -75,7 +75,10 @@ def get_option_parser() -> COP:
         ]
     )
     for option in VIP_OPTIONS:
-        parser.add_option(*option.args, **option.kwargs)
+        # Make a special exception for option against_source which makes
+        # no sense in a VIP context.
+        if option.kwargs.get('dest') != 'against_source':
+            parser.add_option(*option.args, **option.kwargs)
     return parser
 
 
@@ -92,7 +95,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     validate_main(parser, options, str(source))
 
     log_subcommand('install', source)
-    workflow_id = cylc_install(options, workflow_id)
+    _, workflow_id = cylc_install(options, workflow_id)
 
     cleanup_sysargv(
         'play',

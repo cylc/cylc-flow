@@ -21,11 +21,14 @@ from os.path import expandvars
 from pprint import pformat
 import sqlite3
 import traceback
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from cylc.flow import LOG
 from cylc.flow.util import deserialise
 import cylc.flow.flags
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @dataclass
@@ -318,25 +321,43 @@ class CylcWorkflowDAO:
         ],
     }
 
-    def __init__(self, db_file_name, is_public=False):
+    def __init__(
+        self,
+        db_file_name: Union['Path', str],
+        is_public: bool = False,
+        create_tables: bool = False
+    ):
         """Initialise database access object.
 
+        An instance of this class can also be opened as a context manager
+        which will automatically close the DB connection.
+
         Args:
-            db_file_name (str): Path to the database file.
-            is_public (bool): If True, allow retries, etc.
+            db_file_name: Path to the database file.
+            is_public: If True, allow retries.
+            create_tables: If True, create the tables if they
+                don't already exist.
 
         """
         self.db_file_name = expandvars(db_file_name)
         self.is_public = is_public
-        self.conn = None
+        self.conn: Optional[sqlite3.Connection] = None
         self.n_tries = 0
 
-        self.tables = {}
-        for name, attrs in sorted(self.TABLES_ATTRS.items()):
-            self.tables[name] = CylcWorkflowDAOTable(name, attrs)
+        self.tables = {
+            name: CylcWorkflowDAOTable(name, attrs)
+            for name, attrs in sorted(self.TABLES_ATTRS.items())
+        }
 
-        if not self.is_public:
+        if create_tables:
             self.create_tables()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Close DB connection when leaving context manager."""
+        self.close()
 
     def add_delete_item(self, table_name, where_args=None):
         """Queue a DELETE item for a given table.

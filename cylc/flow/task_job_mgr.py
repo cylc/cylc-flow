@@ -36,7 +36,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -663,7 +663,13 @@ class TaskJobManager:
 
     def _kill_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
-        self.kill_task_jobs(workflow, [itask])
+        with suppress(NoHostsError):
+            # if there is another host to kill on, try again, otherwise fail
+            get_host_from_platform(
+                itask.platform,
+                bad_hosts=self.task_remote_mgr.bad_hosts
+            )
+            self.kill_task_jobs(workflow, [itask])
 
     def _kill_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
@@ -791,7 +797,13 @@ class TaskJobManager:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
-        self.poll_task_jobs(workflow, [itask])
+        with suppress(NoHostsError):
+            # if there is another host to poll on, try again, otherwise fail
+            get_host_from_platform(
+                itask.platform,
+                bad_hosts=self.task_remote_mgr.bad_hosts
+            )
+            self.poll_task_jobs(workflow, [itask])
 
     def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""
@@ -947,38 +959,29 @@ class TaskJobManager:
             )
 
     @staticmethod
-    def _set_retry_timers(itask, rtconfig=None, retry=True):
+    def _set_retry_timers(
+        itask: 'TaskProxy',
+        rtconfig: Optional[dict] = None
+    ) -> None:
         """Set try number and retry delays."""
         if rtconfig is None:
             rtconfig = itask.tdef.rtconfig
-        if (
-            itask.tdef.run_mode + ' mode' in rtconfig and
-            'disable retries' in rtconfig[itask.tdef.run_mode + ' mode']
-        ):
-            retry = False
 
-        if retry:
-            if rtconfig['submission retry delays']:
-                submit_delays = rtconfig['submission retry delays']
-            else:
-                submit_delays = itask.platform['submission retry delays']
+        submit_delays = (
+            rtconfig['submission retry delays']
+            or itask.platform['submission retry delays']
+        )
 
-            for key, delays in [
-                    (
-                        TimerFlags.SUBMISSION_RETRY,
-                        submit_delays
-                    ),
-                    (
-                        TimerFlags.EXECUTION_RETRY,
-                        rtconfig['execution retry delays']
-                    )
-            ]:
-                if delays is None:
-                    delays = []
-                try:
-                    itask.try_timers[key].set_delays(delays)
-                except KeyError:
-                    itask.try_timers[key] = TaskActionTimer(delays=delays)
+        for key, delays in [
+            (TimerFlags.SUBMISSION_RETRY, submit_delays),
+            (TimerFlags.EXECUTION_RETRY, rtconfig['execution retry delays'])
+        ]:
+            if delays is None:
+                delays = []
+            try:
+                itask.try_timers[key].set_delays(delays)
+            except KeyError:
+                itask.try_timers[key] = TaskActionTimer(delays=delays)
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
@@ -1168,7 +1171,6 @@ class TaskJobManager:
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(workflow, itask)
-                self._set_retry_timers(itask, rtconfig, False)
                 self._prep_submit_task_job_error(
                     workflow, itask, '(platform not defined)', exc)
                 return False

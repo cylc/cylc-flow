@@ -17,9 +17,32 @@
 
 from ast import literal_eval
 from optparse import Values
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from cylc.flow.exceptions import InputError
+from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_files import WorkflowFiles
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+def get_template_vars_from_db(run_dir: 'Path') -> dict:
+    """Get template vars stored in a workflow run database.
+    """
+    pub_db_file = (
+        run_dir / WorkflowFiles.LogDir.DIRNAME / WorkflowFiles.LogDir.DB
+    )
+    template_vars: dict = {}
+    if not pub_db_file.exists():
+        return template_vars
+    WorkflowDatabaseManager.check_db_compatibility(pub_db_file)
+    with CylcWorkflowDAO(pub_db_file, is_public=True) as dao:
+        dao.select_workflow_template_vars(
+            lambda _, row: template_vars.__setitem__(row[0], eval_var(row[1]))
+        )
+    return template_vars
 
 
 def eval_var(var):
@@ -65,6 +88,7 @@ def load_template_vars(template_vars=None, template_vars_file=None):
                     continue
                 key, val = line.split("=", 1)
                 res[key.strip()] = eval_var(val.strip())
+
     if template_vars:
         for pair in template_vars:
             key, val = pair.split("=", 1)
@@ -82,6 +106,4 @@ def get_template_vars(options: Values) -> Dict[str, Any]:
     Returns:
         template_vars: Template variables to give to a Cylc config.
     """
-    return load_template_vars(
-        options.templatevars, options.templatevars_file
-    )
+    return load_template_vars(options.templatevars, options.templatevars_file)

@@ -149,6 +149,7 @@ class TaskProxy:
         is_held: True if the task is held, else False.
         submit_num: Number of times the task has attempted job submission.
         is_late: Is the task late?
+        data_mode: Reduced store reference data.
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -192,6 +193,7 @@ class TaskProxy:
         is_late: bool = False,
         is_manual_submit: bool = False,
         flow_wait: bool = False,
+        data_mode: bool = False,
     ) -> None:
 
         self.tdef = tdef
@@ -234,7 +236,10 @@ class TaskProxy:
 
         self.local_job_file_path: Optional[str] = None
 
-        self.platform = get_platform()
+        if data_mode:
+            self.platform = {}
+        else:
+            self.platform = get_platform()
 
         self.job_vacated = False
         self.poll_timer: Optional['TaskActionTimer'] = None
@@ -395,7 +400,7 @@ class TaskProxy:
         """Are ALL prerequisites satisfied?"""
         return (
             all(pre.is_satisfied() for pre in self.state.prerequisites)
-            and all(tri for tri in self.state.external_triggers.values())
+            and self.state.external_triggers_all_satisfied()
             and self.state.xtriggers_all_satisfied()
         )
 

@@ -146,7 +146,7 @@ def test_Options_std_opts():
             [{ARGS: ['-f', '--foo'], KWARGS: {}, SOURCES: {'cook'}}],
             [{
                 ARGS: ['-f', '--foo'],
-                KWARGS: {'help': 'not identical'},
+                KWARGS: {'help': 'not identical', 'dest': 'foobius'},
                 SOURCES: {'bake'},
                 USEIF: ''
             }],
@@ -396,6 +396,19 @@ def test_combine_options(inputs, expect):
             },
             'play --foo something myworkflow'.split(),
             id='no path given'
+        ),
+        param(
+            'vip --bar=something'.split(),
+            {
+                'script_name': 'play',
+                'workflow_id': 'myworkflow',
+                'compound_script_opts': [
+                    OptionSettings(['--bar', '-b'])],
+                'script_opts': [],
+                'source': './myworkflow',
+            },
+            'play myworkflow'.split(),
+            id='removes --key=value'
         ),
     ]
 )

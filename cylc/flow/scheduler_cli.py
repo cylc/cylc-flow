@@ -445,6 +445,13 @@ def _resume(workflow_id, options):
         }
         pclient('graphql', mutation_kwargs)
         sys.exit(0)
+    except Exception as exc:
+        LOG.error(exc)
+        LOG.critical(
+            'Cannot tell if the workflow is running'
+            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
+        )
+        sys.exit(1)
 
 
 def _version_check(
@@ -456,9 +463,8 @@ def _version_check(
     if not db_file.is_file():
         # not a restart
         return True
-    wdbm = WorkflowDatabaseManager(db_file.parent)
     this_version = parse_version(__version__)
-    last_run_version = wdbm.check_workflow_db_compatibility()
+    last_run_version = WorkflowDatabaseManager.check_db_compatibility(db_file)
 
     for itt, (this, that) in enumerate(zip_longest(
         this_version.release,
@@ -524,7 +530,7 @@ def _version_check(
     return True
 
 
-def _upgrade_database(db_file):
+def _upgrade_database(db_file: Path) -> None:
     """Upgrade the workflow database if needed.
 
     Note:
@@ -532,8 +538,7 @@ def _upgrade_database(db_file):
 
     """
     if db_file.is_file():
-        wdbm = WorkflowDatabaseManager(db_file.parent)
-        wdbm.upgrade()
+        WorkflowDatabaseManager.upgrade(db_file)
 
 
 def _print_startup_message(options):

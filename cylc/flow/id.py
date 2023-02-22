@@ -25,6 +25,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
 )
@@ -80,16 +81,21 @@ class Tokens(dict):
         <id: ~u/w//c/t/02>
 
     """
-    # valid dictionary keys
-    _KEYS = {
-        # regular tokens
-        *{token.value for token in IDTokens},
-        # selector tokens
-        *{
-            f'{token.value}_sel'
-            for token in IDTokens
-            if token != IDTokens.User
-        },
+    _REGULAR_KEYS: Set[str] = {token.value for token in IDTokens}
+    _SELECTOR_KEYS = {
+        f'{token.value}_sel'
+        for token in IDTokens
+        if token != IDTokens.User
+    }
+
+    # all valid dictionary keys
+    _KEYS = _REGULAR_KEYS | _SELECTOR_KEYS
+
+    _TASK_LIKE_KEYS = {
+        key for key in _KEYS if not (
+            key.startswith(IDTokens.User.value)
+            or key.startswith(IDTokens.Workflow.value)
+        )
     }
 
     def __init__(
@@ -101,7 +107,10 @@ class Tokens(dict):
         if args:
             if len(args) > 1:
                 raise ValueError()
-            kwargs = tokenise(str(args[0]), relative)
+            if isinstance(args[0], str):
+                kwargs = tokenise(args[0], relative)
+            else:
+                kwargs = dict(args[0])
         else:
             for key in kwargs:
                 if key not in self._KEYS:
@@ -278,9 +287,7 @@ class Tokens(dict):
 
         """
         return any(
-            bool(self[token.value])
-            for token in IDTokens
-            if token not in {IDTokens.User, IDTokens.Workflow}
+            self[key] for key in self._TASK_LIKE_KEYS
         )
 
     @property
@@ -296,12 +303,7 @@ class Tokens(dict):
             **{
                 key: value
                 for key, value in self.items()
-                if key in {
-                    key
-                    for key in self._KEYS
-                    if not key.startswith(IDTokens.User.value)
-                    and not key.startswith(IDTokens.Workflow.value)
-                }
+                if key in self._TASK_LIKE_KEYS
             }
         )
 
@@ -318,12 +320,7 @@ class Tokens(dict):
             **{
                 key: value
                 for key, value in self.items()
-                if key in {
-                    key
-                    for key in self._KEYS
-                    if key.startswith(IDTokens.User.value)
-                    or key.startswith(IDTokens.Workflow.value)
-                }
+                if key not in self._TASK_LIKE_KEYS
             }
         )
 
@@ -344,8 +341,7 @@ class Tokens(dict):
 
         """
         return not any(
-            bool(self[token.value])
-            for token in IDTokens
+            self[key] for key in self._REGULAR_KEYS
         )
 
     def update_tokens(
@@ -411,6 +407,10 @@ class Tokens(dict):
             Make a copy and modify it:
             >>> tokens1.duplicate(cycle='1').id
             '~u/w//1'
+
+            Original not changed
+            >>> tokens1.id
+            '~u/w'
         """
         ret = Tokens(self)
         ret.update_tokens(tokens, **kwargs)
@@ -742,44 +742,41 @@ def detokenise(
         ValueError: No tokens provided
 
     """
-    toks = {
-        token.value
-        for token in IDTokens
-        if tokens.get(token.value)
+    keys = {
+        key for key in Tokens._REGULAR_KEYS
+        if tokens.get(key)
     }
-    is_relative = not toks & {'user', 'workflow'}
-    is_partial = not toks & {'cycle', 'task', 'job'}
+    is_relative = keys.isdisjoint(('user', 'workflow'))
+    is_partial = keys.isdisjoint(('cycle', 'task', 'job'))
     if is_relative and is_partial:
         raise ValueError('No tokens provided')
 
     # determine the lowest token
     for lowest_token in reversed(IDTokens):
-        if lowest_token.value in toks:
+        if lowest_token.value in keys:
             break
 
-    highest_token: 'Optional[IDTokens]'
+    highest_token: Optional[IDTokens]
+    identifier = []
     if is_relative:
         highest_token = IDTokens.Cycle
-        identifier = []
         if not relative:
             identifier = ['/']
     else:
         highest_token = IDTokens.User
-        identifier = []
 
     for token in IDTokens:
-        if highest_token and token != highest_token:
-            continue
-        elif highest_token:
+        if highest_token:
+            if token != highest_token:
+                continue
             highest_token = None
-        value: 'Optional[str]'
-        value = tokens.get(token.value)
+        value: Optional[str] = tokens.get(token.value)
         if not value and token == IDTokens.User:
             continue
         elif token == IDTokens.User:
             value = f'~{value}'
         elif token == IDTokens.Job and value != 'NN':
-            value = f'{int(value):02}'  # type: ignore
+            value = f'{int(value):02}'  # type: ignore[arg-type]
         value = value or '*'
         if selectors and tokens.get(token.value + '_sel'):
             # include selectors

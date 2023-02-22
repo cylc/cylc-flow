@@ -24,6 +24,7 @@ import os
 from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
+from socket import gaierror
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from threading import Barrier, Thread
@@ -64,7 +65,10 @@ from cylc.flow.exceptions import (
     InputError,
 )
 import cylc.flow.flags
-from cylc.flow.host_select import select_workflow_host
+from cylc.flow.host_select import (
+    HostSelectException,
+    select_workflow_host,
+)
 from cylc.flow.hostuserutil import (
     get_host,
     get_user,
@@ -1031,8 +1035,9 @@ class Scheduler:
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
         # Things that can't change on workflow reload:
-        pri_dao = self.workflow_db_mgr._get_pri_dao()
-        pri_dao.select_workflow_params(self._load_workflow_params)
+        self.workflow_db_mgr.pri_dao.select_workflow_params(
+            self._load_workflow_params
+        )
 
         try:
             self.load_flow_file(is_reload=True)
@@ -1480,27 +1485,32 @@ class Scheduler:
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
         for attempt_no in range(max_retries):
-            new_host = select_workflow_host(cached=False)[0]
-            LOG.info(f'Attempting to restart on "{new_host}"')
-            # proc will start with current env (incl CYLC_HOME etc)
-            proc = Popen(  # nosec
-                [*cmd, f'--host={new_host}'],
-                stdin=DEVNULL,
-                stdout=PIPE,
-                stderr=PIPE,
-                text=True
-            )
+            error: Optional[str] = None
+            proc = None
+            try:
+                new_host = select_workflow_host(cached=False)[0]
+            except (gaierror, HostSelectException) as exc:
+                error = str(exc)
+            else:
+                LOG.info(f'Attempting to restart on "{new_host}"')
+                # proc will start with current env (incl CYLC_HOME etc)
+                proc = Popen(  # nosec
+                    [*cmd, f'--host={new_host}'],
+                    stdin=DEVNULL,
+                    stdout=PIPE,
+                    stderr=PIPE,
+                    text=True
+                )
+                if proc.wait():
+                    error = proc.communicate()[1]
             # * new_host comes from internal interface which can only return
             #   host names
-            if proc.wait():
+            if error is not None:
                 msg = 'Could not restart workflow'
                 if attempt_no < max_retries:
                     msg += (
                         f' will retry in {self.INTERVAL_AUTO_RESTART_ERROR}s')
-                LOG.critical(
-                    f"{msg}. Restart error:\n",
-                    f"{proc.communicate()[1]}"
-                )
+                LOG.critical(f"{msg}. Restart error:\n{error}")
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
                 LOG.info(f'Workflow now running on "{new_host}".')

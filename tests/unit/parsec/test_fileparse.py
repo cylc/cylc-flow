@@ -16,15 +16,23 @@
 
 import tempfile
 
+import os
 import pytest
+from pytest import param
+import sqlite3
+from types import SimpleNamespace
 
+from cylc.flow import __version__ as cylc_version
 from cylc.flow.parsec.exceptions import (
     FileParseError,
     IncludeFileNotFoundError,
     Jinja2Error,
+    ParsecError,
 )
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.fileparse import (
+    _prepend_old_templatevars,
+    _get_fpath_for_source,
     addict,
     addsect,
     multiline,
@@ -599,3 +607,103 @@ def test_unclosed_multiline():
 def test_merge_template_vars(caplog, expect, native_tvars, plugin_result, log):
     assert merge_template_vars(native_tvars, plugin_result) == expect
     assert [r.msg for r in caplog.records] == log
+
+
+@pytest.fixture
+def _mock_old_template_vars_db(tmp_path):
+    def _inner(create_srclink=True):
+        # Create a fake workflow dir:
+        (tmp_path / 'flow.cylc').touch()
+        (tmp_path / 'log').mkdir()
+        db_path = tmp_path / 'log/db'
+        db_path.touch()
+
+        # Set up a fake workflow database:
+        conn = sqlite3.connect(str(db_path))
+        conn.execute(
+            "CREATE TABLE workflow_template_vars"
+            "(key TEXT, value TEXT, PRIMARY KEY(key)) ;"
+        )
+        conn.execute(
+            "INSERT INTO workflow_template_vars VALUES"
+            "    ('Marius', '\"Consul\"')"
+        )
+        conn.execute(
+            "CREATE TABLE workflow_params"
+            "(key TEXT, value TEXT, PRIMARY KEY(key)) ;"
+        )
+        conn.execute(
+            "INSERT INTO workflow_params VALUES"
+            f"    ('cylc_version', '{cylc_version}')"
+        )
+        conn.commit()
+        conn.close()
+
+        # Simulate being an installed rundir by creating a sourcelink:
+        if create_srclink:
+            src = (tmp_path / 'src')
+            src.mkdir(exist_ok=True)
+            link = tmp_path.parent / '_cylc-install/source'
+            link.parent.mkdir(exist_ok=True)
+            try:
+                os.symlink(src, link)
+            except FileExistsError:
+                # We don't mind the link persisting.
+                pass
+        return tmp_path / 'flow.cylc'
+    yield _inner
+
+
+@pytest.mark.parametrize(
+    'expect, tvars',
+    [
+        param(
+            {'Marius': 'Consul', 'Julius': 'Pontifex'}, {'Julius': 'Pontifex'},
+            id='It adds a new key at the end'
+        ),
+        param(
+            {'Marius': 'Tribune'}, {'Marius': 'Tribune'},
+            id='It overrides an existing key'
+        ),
+    ]
+)
+def test__prepend_old_templatevars(_mock_old_template_vars_db, expect, tvars):
+    # Create a target for a source symlink
+    result = _prepend_old_templatevars(
+        _mock_old_template_vars_db(), tvars)
+    assert result == expect
+
+
+def test_get_fpath_for_source(tmp_path):
+    # Create rundir and srcdir:
+    srcdir = tmp_path / 'source'
+    rundir = tmp_path / 'run'
+    srcdir.mkdir()
+    rundir.mkdir()
+    (rundir / 'flow.cylc').touch()
+    (srcdir / 'flow.cylc').touch()
+
+    # Mock Options object:
+    opts = SimpleNamespace()
+
+    # It raises an error if source is not linked:
+    with pytest.raises(
+        ParsecError, match=f'Cannot validate {rundir} against source:'
+    ):
+        opts.against_source = True
+        _get_fpath_for_source(rundir / 'flow.cylc', opts)
+
+    # Create symlinks:
+    link = rundir / '_cylc-install/source'
+    link.parent.mkdir(exist_ok=True)
+    os.symlink(srcdir, link)
+
+    # It does nothing if opts.against_source is False:
+    opts.against_source = False
+    assert _get_fpath_for_source(
+        rundir / 'flow.cylc', opts) == rundir / 'flow.cylc'
+
+    # It gets source dir if opts.against_source is True:
+    opts.against_source = True
+    assert _get_fpath_for_source(
+        rundir / 'flow.cylc', opts) == str(srcdir / 'flow.cylc')

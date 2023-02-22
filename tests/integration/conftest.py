@@ -20,18 +20,25 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
-from typing import List, TYPE_CHECKING, Set, Tuple
+from typing import List, TYPE_CHECKING, Set, Tuple, Union
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.option_parsers import Options
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.validate import ValidateOptions
+from cylc.flow.scripts.install import (
+    install as cylc_install,
+    get_option_parser as install_gop
+)
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.workflow_files import infer_latest_run_from_id
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
+    _make_src_flow,
     _make_scheduler,
     _run_flow,
     _start_flow,
@@ -40,6 +47,9 @@ from .utils.flow_tools import (
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
+
+
+InstallOpts = Options(install_gop())
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -335,7 +345,8 @@ def validate(run_dir):
         reg - The flow to validate
         kwargs - Arguments to pass to ValidateOptions
     """
-    def _validate(reg: str, **kwargs) -> WorkflowConfig:
+    def _validate(reg: Union[str, Path], **kwargs) -> WorkflowConfig:
+        reg = str(reg)
         return WorkflowConfig(
             reg,
             str(Path(run_dir, reg, 'flow.cylc')),
@@ -404,3 +415,61 @@ def capture_polling():
         return polled_tasks
 
     return _disable_polling
+
+
+@pytest.fixture(scope='module')
+def mod_workflow_source(mod_flow, tmp_path_factory):
+    """Create a workflow source directory.
+
+    Args:
+        cfg: Can be passed a config dictionary.
+
+    Yields:
+        Path to source directory.
+    """
+    def _inner(cfg):
+        src_dir = _make_src_flow(tmp_path_factory.getbasetemp(), cfg)
+        return src_dir
+    yield _inner
+
+
+@pytest.fixture
+def workflow_source(mod_flow, tmp_path):
+    """Create a workflow source directory.
+
+    Args:
+        cfg: Can be passed a config dictionary.
+
+    Yields:
+        Path to source directory.
+    """
+    def _inner(cfg):
+        src_dir = _make_src_flow(tmp_path, cfg)
+        return src_dir
+    yield _inner
+
+
+@pytest.fixture
+def install(test_dir, run_dir):
+    """Install a workflow from source
+
+    Args:
+        (Actually args for _inner, but what the fixture appears to take to
+        the user)
+        source: Directory containing the source.
+        **kwargs: Options for cylc install.
+
+    Returns:
+        Workflow id, including run directory.
+    """
+    def _inner(source, **kwargs):
+        opts = InstallOpts(**kwargs)
+        # Note we append the source.name to the string rather than creating
+        # a subfolder because the extra layer of directories would exceed
+        # Cylc install's default limit.
+        opts.workflow_name = (
+            f'{str(test_dir.relative_to(run_dir))}.{source.name}')
+        workflow_id, _ = cylc_install(opts, str(source))
+        workflow_id = infer_latest_run_from_id(workflow_id)
+        return workflow_id
+    yield _inner

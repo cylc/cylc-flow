@@ -9,9 +9,51 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+-------------------------------------------------------------------------------
+## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
+clock triggers as wall_clock xtriggers.
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.0 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
+
+### Fixes
+
+[#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
+only worked when used with a space, not an `=`.
+
+[#5367](https://github.com/cylc/cylc-flow/pull/5367) - Enable using
+Rose options (`-O`, `-S` & `-D`) with `cylc view`.
+
+[#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
+for `cylc lint`.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
+
+### Fixes
+
+[#5313](https://github.com/cylc/cylc-flow/pull/5313) - Fix a bug
+causing Cylc to be unable to parse previously played Cylc 7 workflows.
+
+[#5312](https://github.com/cylc/cylc-flow/pull/5312) - task names must be
+comma-separated in queue member lists. Any implicit tasks
+(i.e. with no task definition under runtime) assigned to a queue will generate a warning.
+
+[#5314](https://github.com/cylc/cylc-flow/pull/5314) - Fix broken
+command option: `cylc vip --run-name`.
+
+[#5319](https://github.com/cylc/cylc-flow/pull/5319),
+[#5321](https://github.com/cylc/cylc-flow/pull/5321),
+[#5325](https://github.com/cylc/cylc-flow/pull/5325) -
+Various efficiency optimisations to the scheduler which particularly impact
+workflows with many-to-many dependencies (e.g. `<a> => <b>`).
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.0 (<span actions:bind='release-date'>Released 2023-01-16</span>)__
 
 ### Breaking Changes
 
@@ -20,13 +62,16 @@ ones in. -->
 
 ### Enhancements
 
-[#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
-clock triggers as wall_clock xtriggers.
+[#5229](https://github.com/cylc/cylc-flow/pull/5229) -
+- Added a single command to validate a previously run workflow against changes
+  to its source and reinstall a workflow.
+- Allows Cylc commands (including validate, list, view, config, and graph) to load template variables
+  configured by `cylc install` and `cylc play`.
 
 [#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
 runs of the same workflow at install time.
 
-[#5094](https://github.com/cylc/cylc-flow/pull/5094) - Added a single
+[#5121](https://github.com/cylc/cylc-flow/pull/5121) - Added a single
 command to validate, install and play a workflow.
 
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
@@ -43,6 +88,15 @@ gets logged at "INFO" level in scheduler logs.
 
 [#5259](https://github.com/cylc/cylc-flow/pull/5259) - Add flow_nums
 to task_jobs table in the workflow database.
+
+### Fixes
+
+[#5286](https://github.com/cylc/cylc-flow/pull/5286) - Fix bug where
+`[scheduling][special tasks]clock-trigger` would skip execution retry delays.
+
+[#5292](https://github.com/cylc/cylc-flow/pull/5292) -
+Fix an issue where polling could be repeated if the job's platform
+was not available.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__

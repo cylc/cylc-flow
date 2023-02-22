@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+import sqlite3
 import pytest
 
-from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.exceptions import ServiceFileError, WorkflowConfigError
+from cylc.flow.parsec.exceptions import ListValueError
+from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
 
 @pytest.mark.parametrize(
@@ -282,3 +286,74 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
             'foo(P1D)',
             'foot(P1D)'
         }
+
+
+def test_queue_treated_as_implicit(flow, validate, caplog):
+    """Tasks in queues but not in runtime generate a warning.
+
+    https://github.com/cylc/cylc-flow/issues/5260
+    """
+    reg = flow(
+        {
+            "scheduling": {
+                "queues": {"my_queue": {"members": "task1, task2"}},
+                "graph": {"R1": "task2"},
+            },
+            "runtime": {"task2": {}},
+        }
+    )
+    validate(reg)
+    assert (
+        'Queues contain tasks not defined in runtime'
+        in caplog.records[0].message
+    )
+
+
+def test_queue_treated_as_comma_separated(flow, validate):
+    """Tasks listed in queue should be separated with commas, not spaces.
+
+    https://github.com/cylc/cylc-flow/issues/5260
+    """
+    reg = flow(
+        {
+            "scheduling": {
+                "queues": {"my_queue": {"members": "task1 task2"}},
+                "graph": {"R1": "task2"},
+            },
+            "runtime": {"task1": {}, "task2": {}},
+        }
+    )
+    with pytest.raises(ListValueError, match="cannot contain a space"):
+        validate(reg)
+
+
+def test_validate_incompatible_db(one_conf, flow, validate):
+    """Validation should fail for an incompatible DB due to not being able
+    to load template vars."""
+    wid = flow(one_conf)
+    # Create fake outdated DB
+    db_file = Path(get_workflow_run_pub_db_path(wid))
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    db_file.touch()
+    conn = sqlite3.connect(db_file)
+    try:
+        conn.execute(
+            'CREATE TABLE suite_params(key TEXT, value TEXT, PRIMARY KEY(key))'
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    with pytest.raises(
+        ServiceFileError, match="Workflow database is incompatible"
+    ):
+        validate(wid)
+
+    # No tables should have been created
+    stmt = "SELECT name FROM sqlite_master WHERE type='table'"
+    conn = sqlite3.connect(db_file)
+    try:
+        tables = [i[0] for i in conn.execute(stmt)]
+    finally:
+        conn.close()
+    assert tables == ['suite_params']

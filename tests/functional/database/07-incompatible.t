@@ -19,13 +19,14 @@
 # and that suitable error message is given.
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 6
 
 install_workflow
 # install the cylc7 restart database
 SRV_DIR="${WORKFLOW_RUN_DIR}/.service"
 mkdir "$SRV_DIR"
 sqlite3 "${SRV_DIR}/db" < 'db.sqlite3'
+sqlite3 "${SRV_DIR}/db" '.tables' > orig_tables.txt
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
@@ -34,6 +35,9 @@ run_fail "$TEST_NAME" cylc play "$WORKFLOW_NAME"
 grep_ok \
     'Workflow database is incompatible with Cylc .*, or is corrupted' \
     "${TEST_NAME}.stderr"
+
+# Check no new tables have been created
+cmp_ok orig_tables.txt <<< "$(sqlite3 "${SRV_DIR}/db" '.tables')"
 
 TEST_NAME="${TEST_NAME_BASE}-clean-fail"
 run_fail "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
