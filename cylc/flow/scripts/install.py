@@ -105,7 +105,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir
 )
-from cylc.flow.workflow_files import (
+from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
     search_install_source_dirs

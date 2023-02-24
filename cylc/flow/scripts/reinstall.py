@@ -80,6 +80,9 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowFilesError,
 )
+from cylc.flow.install import (
+    reinstall_workflow,
+)
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -91,7 +94,6 @@ from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     load_contact_file,
-    reinstall_workflow,
 )
 from cylc.flow.terminal import cli_function, DIM, is_terminal
 
