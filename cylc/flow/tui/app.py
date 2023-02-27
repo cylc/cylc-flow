@@ -481,6 +481,7 @@ class TuiApp:
                 See `urwid` docs for details.
 
         """
+        # create the overlay
         kwargs = {'width': 'pack', 'height': 'pack', **kwargs}
         overlay = urwid.Overlay(
             urwid.LineBox(
@@ -503,8 +504,14 @@ class TuiApp:
             top=self.stack * 5,
             **kwargs,
         )
+
+        # add it into the overlay stack
         self.loop.widget = overlay
         self.stack += 1
+
+        # force urwid to render the overlay now rather than waiting until the
+        # event loop becomes idle
+        self.loop.draw_screen()
 
     def close_topmost(self):
         """Remove the topmost frame or uit the app if none present."""
