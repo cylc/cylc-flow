@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
 from subprocess import Popen, PIPE
 import sys
 
@@ -84,7 +85,6 @@ QUERY = '''
 MUTATIONS = {
     'workflow': [
         'pause',
-        'resume',
         'reload',
         'stop',
     ],
@@ -130,6 +130,46 @@ MUTATION_TEMPLATES = {
 }
 
 
+def cli_cmd(*cmd):
+    """Issue a CLI command.
+
+    Args:
+        cmd:
+            The command without the 'cylc' prefix'.
+
+    Rasies:
+        ClientError:
+            In the event of mishap for consistency with the network
+            client alternative.
+
+    """
+    proc = Popen(  # nosec (command constructed internally, no untrusted input)
+        ['cylc', *cmd],
+        stderr=PIPE,
+        stdout=PIPE,
+        text=True,
+    )
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+        raise ClientError(err)
+
+
+def _clean(workflow):
+    # for now we will exit tui when the workflow is cleaned
+    # this will change when tui supports multiple workflows
+    cli_cmd('clean', workflow)
+    sys.exit(0)
+
+
+OFFLINE_MUTATIONS = {
+    'workflow': {
+        'play': partial(cli_cmd, 'play'),
+        'clean': _clean,
+        'reinstall-reload': partial(cli_cmd, 'vr', '--yes'),
+    }
+}
+
+
 def generate_mutation(mutation, arguments):
     graphql_args = ', '.join([
         f'${argument}: {ARGUMENT_TYPES[argument]}'
@@ -149,10 +189,16 @@ def generate_mutation(mutation, arguments):
     '''
 
 
-def list_mutations(selection):
+def list_mutations(client, selection):
     context = extract_context(selection)
     selection_type = list(context)[-1]
-    return MUTATIONS.get(selection_type, [])
+    ret = []
+    if client:
+        # add the online mutations
+        ret.extend(MUTATIONS.get(selection_type, []))
+    # add the offline mutations
+    ret.extend(OFFLINE_MUTATIONS.get(selection_type, []))
+    return sorted(ret)
 
 
 def context_to_variables(context):
@@ -181,6 +227,18 @@ def context_to_variables(context):
 
 
 def mutate(client, mutation, selection):
+    if mutation in OFFLINE_MUTATIONS['workflow']:
+        offline_mutate(mutation, selection)
+    elif client:
+        online_mutate(client, mutation, selection)
+    else:
+        raise Exception(
+            f'Cannot peform command {mutation} on a stopped workflow'
+            ' or invalid command.'
+        )
+
+
+def online_mutate(client, mutation, selection):
     """Issue a mutation over a network interface."""
     context = extract_context(selection)
     variables = context_to_variables(context)
@@ -199,39 +257,5 @@ def offline_mutate(mutation, selection):
     context = extract_context(selection)
     variables = context_to_variables(context)
     for workflow in variables['workflow']:
-        if mutation == 'play':
-            cli_cmd('play', workflow)
-        elif mutation == 'clean':  # noqa: SIM106
-            cli_cmd('clean', workflow)
-            # tui only supports single-workflow display ATM so
-            # clean should shut down the program
-            sys.exit()
-        elif mutation in list_mutations(selection):  # noqa: SIM106
-            # this is an "online" mutation -> ignore
-            pass
-        else:
-            raise Exception(f'Invalid mutation: {mutation}')
-
-
-def cli_cmd(*cmd):
-    """Issue a CLI command.
-
-    Args:
-        cmd:
-            The command without the 'cylc' prefix'.
-
-    Rasies:
-        ClientError:
-            In the event of mishap for consistency with the network
-            client alternative.
-
-    """
-    proc = Popen(  # nosec (command constructed internally, no untrusted input)
-        ['cylc', *cmd],
-        stderr=PIPE,
-        stdout=PIPE,
-        text=True,
-    )
-    out, err = proc.communicate()
-    if proc.returncode != 0:
-        raise ClientError(err)
+        # NOTE: this currently only supports workflow mutations
+        OFFLINE_MUTATIONS['workflow'][mutation](workflow)

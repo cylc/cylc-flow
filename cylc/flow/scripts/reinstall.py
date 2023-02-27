@@ -120,8 +120,8 @@ REINSTALL_OPTIONS = [
         help='Skip interactive prompts.',
         action="store_true",
         default=False,
-        dest="check_circular",
-        sources={'validate'}
+        dest="skip_interactive",
+        sources={'reinstall'}
     ),
 ]
 
