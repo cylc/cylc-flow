@@ -48,7 +48,7 @@ jobs:
 
     - name: Publish GitHub release
       id: create-release
-      uses: actions/create-release@v1
+      uses: cylc/release-actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:

@@ -215,12 +215,16 @@ async def scan(wf_name: str, ping: bool = True) -> None:
         'source': False,
         'ping': ping,  # get status of scanned workflows
     })
-    active = [
-        item async for item in get_pipe(
-            opts, None,
-            scan_dir=get_workflow_run_dir(wf_name)  # restricted scan
-        )
-    ]
+    active = sorted(
+        [
+            item async for item in get_pipe(
+                opts,
+                None,
+                scan_dir=get_workflow_run_dir(wf_name)  # restricted scan
+            )
+        ],
+        key=lambda flow: flow['name']
+    )
     if active:
         n = len(active)
         grammar = (
