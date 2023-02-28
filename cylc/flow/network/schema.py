@@ -1648,7 +1648,7 @@ class Resume(Mutation):
 class Reload(Mutation):
     class Meta:
         description = sstrip('''
-            Reload the configuration of a workflow.
+            Reload the configuration of a running workflow.
 
             All settings including task definitions, with the exception of
             workflow log config, can be changed on reload. Changes to task
