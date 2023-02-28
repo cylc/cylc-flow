@@ -532,7 +532,7 @@ class CylcOptionParser(OptionParser):
                 help=(
                     "Use optional Rose Config Setting"
                     " (If Cylc-Rose is installed)"),
-                action="append", default=[], dest="opt_conf_keys",
+                action="append", default=None, dest="opt_conf_keys",
                 sources={'cylc-rose'},
             ),
             OptionSettings(
@@ -543,14 +543,14 @@ class CylcOptionParser(OptionParser):
                     " Can be used to disable a setting using the syntax"
                     " `--define=[SECTION]!KEY` or"
                     " even `--define=[!SECTION]`."),
-                action="append", default=[], dest="defines",
+                action="append", default=None, dest="defines",
                 sources={'cylc-rose'}),
             OptionSettings(
                 ["--rose-template-variable", '-S', '--define-suite'],
                 help=(
                     "As `--define`, but with an implicit `[SECTION]` for"
                     " workflow variables."),
-                action="append", default=[], dest="rose_template_vars",
+                action="append", default=None, dest="rose_template_vars",
                 sources={'cylc-rose'},
             )
         ]

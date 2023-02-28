@@ -168,7 +168,8 @@ INSTALL_OPTIONS = [
         dest='no_ping',
         sources={'install'},
     )
-]
+] + COP.get_cylc_rose_options()
+
 
 
 def get_option_parser() -> COP:
@@ -183,9 +184,7 @@ def get_option_parser() -> COP:
         ]
     )
 
-    options = parser.get_cylc_rose_options() + INSTALL_OPTIONS
-
-    for option in options:
+    for option in INSTALL_OPTIONS:
         parser.add_option(*option.args, **option.kwargs)
 
     return parser

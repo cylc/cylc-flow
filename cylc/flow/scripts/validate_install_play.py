@@ -52,12 +52,12 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
+# CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
 VIP_OPTIONS = combine_options(
     VALIDATE_OPTIONS,
     INSTALL_OPTIONS,
     PLAY_OPTIONS,
-    CYLC_ROSE_OPTIONS,
+    # CYLC_ROSE_OPTIONS,
     modify={'cylc-rose': 'validate, install'}
 )
 
@@ -119,7 +119,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
         options,
         compound_script_opts=VIP_OPTIONS,
         script_opts=(
-            PLAY_OPTIONS + CYLC_ROSE_OPTIONS
+            PLAY_OPTIONS  # + CYLC_ROSE_OPTIONS
             + parser.get_std_options()
         ),
         source=orig_source,

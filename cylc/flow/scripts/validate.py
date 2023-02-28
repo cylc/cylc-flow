@@ -96,7 +96,7 @@ VALIDATE_OPTIONS = [
     VALIDATE_RUN_MODE,
     VALIDATE_ICP_OPTION,
     VALIDATE_AGAINST_SOURCE_OPTION,
-]
+] + COP.get_cylc_rose_options()
 
 
 def get_option_parser():
@@ -106,9 +106,7 @@ def get_option_parser():
         argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
-    validate_options = parser.get_cylc_rose_options() + VALIDATE_OPTIONS
-
-    for option in validate_options:
+    for option in VALIDATE_OPTIONS:
         parser.add_option(*option.args, **option.kwargs)
 
     parser.set_defaults(is_validate=True)
