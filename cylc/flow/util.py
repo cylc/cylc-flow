@@ -24,7 +24,13 @@ from typing import (
     List,
     Tuple,
     Union,
+    Optional,
+    TYPE_CHECKING,
 )
+
+if TYPE_CHECKING:
+    from optparse import OptionParser, Values
+    from cylc.flow.option_parsers import OptionSettings
 
 
 _NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
@@ -77,7 +83,95 @@ def natural_sort(items: List[str], fcns=(int, str)) -> None:
     items.sort(key=partial(natural_sort_key, fcns=fcns))
 
 
-def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
+def format_parsed_opts(
+    parser: 'OptionParser',
+    cmd: List[str],
+    options: 'Values',
+    arguments: List[str],
+    opt_filter: 'Optional[List[OptionSettings]]' = None,
+    width: Optional[int] = None,
+    ps1: str = '',
+) -> str:
+    """Format parsed options as they would have appeared on the CLI.
+
+    Effectively the reverse of OptionParser.parse_args.
+
+    Args:
+        parser:
+            The argument parser used to parse the options.
+        cmd:
+            The command being parsed e.g. ['cylc', 'validate'].
+        options:
+            The parsed options i.e. OptionParser.parse_args[0].
+        arguments:
+            The parsed arguments i.e. OptionParser.parse_args[1].
+        opt_filter:
+            If present, only options which are present in this
+            list will be included in the output.
+        width:
+            The max width of each line of the formatted command.
+            I.E. the width of the terminal you are writing to.
+
+    Returns:
+        A string, potentially containing newlines.
+
+    """
+    _cmd = get_parsed_opts(parser, options, opt_filter=opt_filter)
+    return format_cmd([*cmd, *_cmd, *arguments], maxlen=width or 60, ps1=ps1)
+
+
+def get_parsed_opts(
+    parser: 'OptionParser',
+    options: 'Values',
+    opt_filter: 'Optional[List[OptionSettings]]' = None,
+) -> List[str]:
+    """Return parsed options as a list of the CLI strings that preceded them.
+
+    This is the reverse of OptionParser.parse_args, it gives you the CLI
+    strings which would have been required to produce the given options,
+
+    See format_parsed_opts for details.
+
+    Note:
+        This does not support all optparse options e.g. decrement & increment.
+        Anything it can't handle will be ignored.
+
+    """
+    ret: List[str] = []
+    filter_dests: Optional[List[str]] = None
+    if opt_filter:
+        filter_dests = [
+            option.kwargs.get('dest', option.args[0].replace('--', '').replace('-', '_'))
+            for option in opt_filter
+        ]
+    for option in parser._get_all_options():
+        if not option.dest:
+            continue
+        if filter_dests is not None and option.dest not in filter_dests:
+            continue
+        value = getattr(options, option.dest)
+        if value and value == option.default:
+            continue
+        if option.action in {'store'}:
+            if value:
+                ret.append(option.get_opt_string())
+                ret.append(value)
+        if option.action in {'store_true'}:
+            if value and option.default in {('NO', 'DEFAULT'), False}:
+                ret.append(option.get_opt_string())
+        if option.action in {'store_false'}:
+            if not value and option.default is True:
+                ret.append(option.get_opt_string())
+        if option.action in {'append'}:
+            for item in value or []:
+                ret.extend([
+                    option.get_opt_string(),
+                    item
+                ])
+    return ret
+
+
+def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60, ps1='') -> str:
     r"""Convert a shell command list to a user-friendly representation.
 
     Examples:
@@ -85,6 +179,8 @@ def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
         'echo hello world'
         >>> format_cmd(['echo', 'hello', 'world'], 5)
         'echo \\ \n    hello \\ \n    world'
+        >>> format_cmd(['/usr/bin/true', 'to', 'your', 'heart'], ps1='$ ')
+        '$ /usr/bin/true to your heart'
 
     """
     ret = []
@@ -97,7 +193,7 @@ def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
             line += f' {part}'
     if line:
         ret.append(line)
-    return ' \\ \n    '.join(ret)
+    return ps1 + ' \\ \n    '.join(ret)
 
 
 def cli_format(cmd: List[str]):

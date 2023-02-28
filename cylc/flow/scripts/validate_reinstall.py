@@ -52,7 +52,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
     combine_options,
-    log_subcommand,
+    log_combined_action,
     cleanup_sysargv
 )
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
@@ -68,7 +68,7 @@ from cylc.flow.scripts.reinstall import (
 from cylc.flow.scripts.reload import (
     reload_cli as cylc_reload
 )
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function, get_width
 from cylc.flow.workflow_files import detect_old_contact_file
 
 
@@ -158,12 +158,28 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     ):
         return 1
 
+    term_width = get_width()
+
     # Force on the against_source option:
     options.against_source = True   # Make validate check against source.
-    log_subcommand('validate --against-source', workflow_id)
+    log_combined_action(
+        parser,
+        'validate',
+        options,
+        [workflow_id],
+        opt_filter=VALIDATE_OPTIONS,
+        width=term_width,
+    )
     cylc_validate(parser, options, workflow_id)
 
-    log_subcommand('reinstall', workflow_id)
+    log_combined_action(
+        parser,
+        'reinstall',
+        options,
+        [workflow_id],
+        opt_filter=REINSTALL_OPTIONS,
+        width=term_width,
+    )
     reinstall_ok = cylc_reinstall(options, workflow_id)
     if not reinstall_ok:
         LOG.warning(
@@ -174,7 +190,14 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
 
     # Run reload if workflow is running or paused:
     if workflow_running:
-        log_subcommand('reload', workflow_id)
+        log_combined_action(
+            parser,
+            'reload',
+            options,
+            [workflow_id],
+            opt_filter=[],
+            width=term_width,
+        )
         cylc_reload(options, workflow_id)
 
     # run play anyway, to play a stopped workflow:
@@ -190,5 +213,12 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             ),
             source='',  # Intentionally blank
         )
-        log_subcommand('play', workflow_id)
+        log_combined_action(
+            parser,
+            'play',
+            options,
+            [workflow_id],
+            opt_filter=PLAY_OPTIONS,
+            width=term_width,
+        )
         scheduler_cli(options, workflow_id)

@@ -40,10 +40,10 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     combine_options,
     cleanup_sysargv,
-    log_subcommand,
+    log_combined_action,
 )
 from cylc.flow.scheduler_cli import _play
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function, get_width
 
 from typing import TYPE_CHECKING, Optional
 
@@ -88,13 +88,29 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     if not workflow_id:
         workflow_id = '.'
 
+    term_width = get_width()
+
     orig_source = workflow_id
     source = get_source_location(workflow_id)
 
-    log_subcommand('validate', source)
+    log_combined_action(
+        parser,
+        'validate',
+        options,
+        [str(source)],
+        opt_filter=VALIDATE_OPTIONS,
+        width=term_width,
+    )
     validate_main(parser, options, str(source))
 
-    log_subcommand('install', source)
+    log_combined_action(
+        parser,
+        'install',
+        options,
+        [str(source)],
+        opt_filter=INSTALL_OPTIONS,
+        width=term_width,
+    )
     _, workflow_id = cylc_install(options, workflow_id)
 
     cleanup_sysargv(
@@ -109,5 +125,12 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
         source=orig_source,
     )
 
-    log_subcommand('play', workflow_id)
+    log_combined_action(
+        parser,
+        'play',
+        options,
+        [workflow_id],
+        opt_filter=PLAY_OPTIONS,
+        width=term_width,
+    )
     _play(parser, options, workflow_id)

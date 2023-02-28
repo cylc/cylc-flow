@@ -42,6 +42,8 @@ from cylc.flow.loggingutil import (
     CylcLogFormatter,
     setup_segregated_log_streams,
 )
+from cylc.flow.util import format_parsed_opts
+
 
 WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
 WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
@@ -846,12 +848,31 @@ def cleanup_sysargv(
         sys.argv.append(workflow_id)
 
 
-def log_subcommand(command, workflow_id):
-    """Log a command run as part of a sequence.
+def log_combined_action(
+    parser: OptionParser,
+    cmd: str,
+    options: Values,
+    arguments: List[str],
+    opt_filter: Optional[List[OptionSettings]] = None,
+    width: Optional[int] = None
+) -> None:
+    """Log a command run as part of a combined action e.g. "vip".
 
-    Example:
-        >>> log_subcommand('ruin', 'my_workflow')
-        \x1b[1m\x1b[36m$ cylc ruin my_workflow\x1b[0m\x1b[1m\x1b[0m\n
+    See cylc.flow.util.format_parsed_opts.__doc__ for details.
+
     """
-    print(cparse(
-        f'<b><cyan>$ cylc {command} {workflow_id}</cyan></b>'))
+    print(
+        cparse(
+            '<b><cyan>'
+            + format_parsed_opts(
+                parser,
+                ['cylc', cmd],
+                options,
+                arguments,
+                opt_filter=opt_filter,
+                width=width,
+                ps1='$ ',
+            )
+            + '</cyan></b>'
+        )
+    )

@@ -121,7 +121,7 @@ REINSTALL_OPTIONS = [
         action="store_true",
         default=False,
         dest="skip_interactive",
-        sources={'reinstall'}
+        sources={'validate'}
     ),
 ]
 
