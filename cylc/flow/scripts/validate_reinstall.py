@@ -188,5 +188,5 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             ),
             source='',  # Intentionally blank
         )
-        log_subcommand(' '.join(sys.argv))
+        log_subcommand(sys.argv[1:])
         scheduler_cli(options, workflow_id)
