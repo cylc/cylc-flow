@@ -23,23 +23,30 @@ export REQUIRE_PLATFORM='loc:remote runner:background fs:shared'
 
 set_test_number 4
 
+create_test_global_config '' """
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST}
+
+"""
+
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
+sed -i 's@pause@stop --now --now@' flow.cylc
 run_ok "setup (install)" \
-    cylc install \
+    cylc vip \
     --workflow-name "${WORKFLOW_NAME}" \
-
-export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
+    --no-detach
 
 # It validates and restarts:
 # Change source workflow and run vr:
 sed -i 's@P1Y@P5Y@' flow.cylc
-TEST_NAME="${TEST_NAME_BASE}-fails-to-reinvoke"
-run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}" --host="${CYLC_TEST_HOST}"
+TEST_NAME="${TEST_NAME_BASE}-reinvoke"
+run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}"
 
 grep_fail \
-    "${WORKFLOW_NAME} --host=${CYLC_TEST_HOST} ${WORKFLOW_NAME}/run1" \
+    "${WORKFLOW_NAME} ${WORKFLOW_NAME}/run1" \
     "${TEST_NAME}.stderr"
 
 # Clean Up.

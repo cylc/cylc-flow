@@ -853,5 +853,7 @@ def log_subcommand(*args):
         >>> log_subcommand('ruin', 'my_workflow')
         \x1b[1m\x1b[36m$ cylc ruin my_workflow\x1b[0m\x1b[1m\x1b[0m\n
     """
+    # Args might be posixpath or similar.
+    args = [str(a) for a in args]
     print(cparse(
         f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'))
