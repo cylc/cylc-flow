@@ -26,12 +26,12 @@ LOG = logging.getLogger(CYLC_LOG)
 LOG.addHandler(logging.NullHandler())
 
 LOG_LEVELS = {
+    "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,
     "NORMAL": logging.INFO,
     "WARNING": logging.WARNING,
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
-    "DEBUG": logging.DEBUG,
 }
 
 
