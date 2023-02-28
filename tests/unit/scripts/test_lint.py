@@ -92,10 +92,10 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = foo
+            graph = MyFaM:finish-all => remote
 
 [runtime]
-    [[MYFAM]]
+    [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
         script = {{HELLOWORLD}}
@@ -127,10 +127,14 @@ TEST_FILE = """
 
 # Shouldn't object to a comment, unlike the terrible indents below:
    [[bad indent]]
+        inherit = MyFaM
 
      [[remote]]
 
  [meta]
+    [[and_another_thing]]
+        [[[remote]]]
+            host = `rose host-select thingy`
 """
 
 
@@ -141,11 +145,19 @@ LINT_TEST_FILE = """
 
 [[dependencies]]
 
+{% foo %}
+{{foo}}
+# {{quix}}
+
 [runtime]
           [[foo]]
         inherit = hello
      [[[job]]]
 something\t
+    [[bar]]
+        platform = $(some-script foo)
+    [[baz]]
+        platform = `no backticks`
 """
 
 LINT_TEST_FILE += (

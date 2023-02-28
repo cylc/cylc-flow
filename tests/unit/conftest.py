@@ -28,11 +28,13 @@ from cylc.flow.cycling.loader import (
     INTEGER_CYCLING_TYPE
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.install import (
+    link_runN,
+    unlink_runN,
+)
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.workflow_files import (
     WorkflowFiles,
-    link_runN,
-    unlink_runN,
 )
 from cylc.flow.xtrigger_mgr import XtriggerManager
 

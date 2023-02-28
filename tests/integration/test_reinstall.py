@@ -22,16 +22,18 @@ from uuid import uuid1
 
 import pytest
 
-from cylc.flow.workflow_files import (
-    WorkflowFiles,
-    reinstall_workflow,
-)
 from cylc.flow.exceptions import (
     WorkflowFilesError,
+)
+from cylc.flow.install import (
+    reinstall_workflow,
 )
 from cylc.flow.scripts.reinstall import (
     ReInstallOptions,
     reinstall_cli,
+)
+from cylc.flow.workflow_files import (
+    WorkflowFiles,
 )
 
 
@@ -280,7 +282,7 @@ def test_keyboard_interrupt(
 def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
     """It should raise an error on rsync failure."""
     mock_glbl_cfg(
-        'cylc.flow.workflow_files.glbl_cfg',
+        'cylc.flow.install.glbl_cfg',
         '''
             [platforms]
                 [[localhost]]

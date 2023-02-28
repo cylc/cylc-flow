@@ -397,6 +397,19 @@ def test_combine_options(inputs, expect):
             'play --foo something myworkflow'.split(),
             id='no path given'
         ),
+        param(
+            'vip --bar=something'.split(),
+            {
+                'script_name': 'play',
+                'workflow_id': 'myworkflow',
+                'compound_script_opts': [
+                    OptionSettings(['--bar', '-b'])],
+                'script_opts': [],
+                'source': './myworkflow',
+            },
+            'play myworkflow'.split(),
+            id='removes --key=value'
+        ),
     ]
 )
 def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):

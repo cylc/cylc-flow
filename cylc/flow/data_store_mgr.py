@@ -2124,7 +2124,7 @@ class DataStoreMgr:
         tp_delta.stamp = f'{tp_id}@{update_time}'
         ext_trigger = tp_delta.external_triggers[trig]
         ext_trigger.message = message
-        ext_trigger.satisfied = True
+        ext_trigger.satisfied = satisfied
         ext_trigger.time = update_time
         self.updates_pending = True
 

@@ -385,7 +385,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
-        nat_ids = set(args.get('native_ids', []))
+        nat_ids = uniq(args.get('native_ids', []))
         # Both cases just as common so 'if' not 'try'
         if 'sub_id' in args and args['delta_store']:
             flow_data = [
@@ -447,7 +447,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
 
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
-        nat_ids = set(args.get('native_ids', []))
+        nat_ids = uniq(args.get('native_ids', []))
         if 'sub_id' in args and args['delta_store']:
             flow_data = [
                 delta[args['delta_type']]
@@ -470,6 +470,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         nodes = root_nodes
         node_ids = {n.id for n in root_nodes}
         edges = []
+        # NOTE: we don't expect edges to be returned in definition order
+        # so it is ok to use `set` here
         edge_ids = set()
         # Setup for edgewise search.
         new_nodes = root_nodes
@@ -492,6 +494,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             edges += new_edges
             # Gather nodes.
             # One of source or target will be in current set of nodes.
+            # NOTE: we don't expect node-edges to be returned in definition
+            # order so it is ok to use `set` here
             new_node_ids = set(
                 [e.source for e in new_edges]
                 + [e.target for e in new_edges]).difference(node_ids)
@@ -518,6 +522,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         yielded GraphQL subscription objects.
 
         """
+        # NOTE: we don't expect workflows to be returned in definition order
+        # so it is ok to use `set` here
         workflow_ids = set(args.get('workflows', args.get('ids', ())))
         sub_id = uuid4()
         info.variable_values['backend_sub_id'] = sub_id
@@ -546,6 +552,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             while True:
                 if not workflow_ids:
                     old_ids = w_ids
+                    # NOTE: we don't expect workflows to be returned in
+                    # definition order so it is ok to use `set` here
                     w_ids = set(delta_queues.keys())
                     for remove_id in old_ids.difference(w_ids):
                         if remove_id in self.delta_store[sub_id]:
