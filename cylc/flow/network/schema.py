@@ -19,7 +19,6 @@
 from copy import deepcopy
 from functools import partial
 import json
-import logging
 from operator import attrgetter
 from textwrap import dedent
 from typing import (
@@ -38,6 +37,7 @@ from graphene import (
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
+from cylc.flow import LOG_LEVELS
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
@@ -1426,9 +1426,11 @@ class TimePoint(String):
 
 LogLevels = graphene.Enum(
     'LogLevels',
-    list(logging._nameToLevel.items()),
-    description=lambda x: f'Python logging level: {x.name} = {x.value}.'
-    if x else ''
+    list(LOG_LEVELS.items()),
+    description=lambda x: (
+        f'Logging level: {x.name} = {x.value}.'
+        if x else ''
+    )
 )
 
 
@@ -1678,9 +1680,9 @@ class SetVerbosity(Mutation):
         description = sstrip('''
             Change the logging severity level of a running workflow.
 
-            Only messages at or above the chosen severity level will be logged;
-            for example, if you choose `WARNING`, only warnings and critical
-            messages will be logged.
+            Only messages at or above the chosen severity level will be logged.
+            For example, if you choose `WARNING`, only warning, error and
+            critical level messages will be logged.
 
             Valid for: paused, running workflows.
         ''')
