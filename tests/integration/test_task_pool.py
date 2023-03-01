@@ -17,7 +17,6 @@
 from cylc.flow import CYLC_LOG
 from copy import deepcopy
 import logging
-from pathlib import Path
 import pytest
 from pytest import param
 from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
@@ -34,10 +33,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
 )
-
-from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
-from .utils.flow_tools import _make_flow
-
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
 # paused) they get spawned out to the runahead limit. 2/pub spawns
@@ -824,8 +819,7 @@ async def test_reload_prereqs(
 
         # Modify flow.cylc to add a new dependency on "z"
         conf['scheduling']['graph']['R1'] = graph_2
-        run_dir = Path(get_workflow_run_dir(id_))
-        _make_flow(get_cylc_run_dir(), run_dir, conf, '')
+        flow(conf, id_=id_)
 
         # Reload the workflow config
         schd.command_reload_workflow()
@@ -841,3 +835,102 @@ async def test_reload_prereqs(
             ),
             key=lambda d: tuple(d.keys())[0],
         ) == expected_4
+
+
+async def _test_restart_prereqs_sat():
+    # YIELD: the workflow has now started...
+    schd = yield
+
+    # Release tasks 1/a and 1/b
+    schd.pool.release_runahead_tasks()
+    schd.release_queued_tasks()
+    assert list_tasks(schd) == [
+        ('1', 'a', 'running'),
+        ('1', 'b', 'running')
+    ]
+
+    # Mark both as succeeded and spawn 1/c
+    for itask in schd.pool.get_all_tasks():
+        itask.state_reset('succeeded')
+        schd.pool.spawn_on_output(itask, 'succeeded')
+        schd.workflow_db_mgr.put_insert_task_outputs(itask)
+        schd.pool.remove_if_complete(itask)
+    schd.workflow_db_mgr.process_queued_ops()
+    assert list_tasks(schd) == [
+        ('1', 'c', 'waiting')
+    ]
+
+    # YIELD: the workflow has now restarted or reloaded with the new config...
+    schd = yield
+    assert list_tasks(schd) == [
+        ('1', 'c', 'waiting')
+    ]
+
+    # Check resulting dependencies of task z
+    task_c = schd.pool.get_all_tasks()[0]
+    assert sorted(
+        (*key, satisfied)
+        for prereq in task_c.state.prerequisites
+        for key, satisfied in prereq.satisfied.items()
+    ) == [
+        ('1', 'a', 'succeeded', 'satisfied naturally'),
+        ('1', 'b', 'succeeded', 'satisfied naturally')
+    ]
+
+
+@pytest.mark.parametrize('do_restart', [True, False])
+async def test_graph_change_prereq_satisfaction(
+    flow, scheduler, start, do_restart
+):
+    """It should handle graph prerequisites change on reload/restart.
+
+    If the graph is changed to add a dependency which has been previously
+    satisfied, then Cylc should perform a DB check and mark the prerequsite
+    as satisfied accordingly.
+
+    See https://github.com/cylc/cylc-flow/pull/5334
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    a => c
+                    b
+                '''
+            }
+        }
+    }
+    id_ = flow(conf)
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+    test = _test_restart_prereqs_sat()
+    test.asend(None)
+
+    if do_restart:
+        async with start(schd):
+            # start the workflow and run part 1 of the tests
+            test.asend(schd)
+
+        # shutdown and change the workflow definiton
+        conf['scheduling']['graph']['R1'] += '\nb => c'
+        flow(conf, id_=id_)
+        schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+        async with start(schd):
+            # restart the workflow and run part 2 of the tests
+            test.asend(schd)
+
+    else:
+        async with start(schd):
+            test.asend(schd)
+
+            # Modify flow.cylc to add a new dependency on "b"
+            conf['scheduling']['graph']['R1'] += '\nb => c'
+            flow(conf, id_=id_)
+
+            # Reload the workflow config
+            schd.command_reload_workflow()
+
+            test.asend(schd)

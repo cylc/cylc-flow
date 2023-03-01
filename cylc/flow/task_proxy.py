@@ -272,7 +272,7 @@ class TaskProxy:
             f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"
         )
 
-    def copy_to_reload_successor(self, reload_successor):
+    def copy_to_reload_successor(self, reload_successor, check_output):
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
@@ -307,8 +307,15 @@ class TaskProxy:
         #   NOTE: even if the corresponding output was completed pre-reload!
         for pre in reload_successor.state.prerequisites:
             for k in pre.satisfied.keys():
-                with suppress(KeyError):
+                try:
                     pre.satisfied[k] = pre_reload[k]
+                except KeyError:
+                    # Look through task outputs to see if is has been
+                    # satisfied
+                    pre.satisfied[k] = check_output(
+                        *k,
+                        self.flow_nums,
+                    )
 
         reload_successor.state.xtriggers.update({
             # copy across any special "_cylc" xtriggers which were added
