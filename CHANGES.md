@@ -22,6 +22,11 @@ Fixes `cylc set-verbosity`.
 
 ### Fixes
 
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+absence of `job name length maximum` in PBS platform settings would cause
+Cylc to crash when preparing the job script.
+
 [#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
 only worked when used with a space, not an `=`.
 
