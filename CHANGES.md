@@ -18,14 +18,18 @@ ones in. -->
 Fixes `cylc set-verbosity`.
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
+## __cylc-8.1.3 (<span actions:bind='release-date'>Coming Soon</span>)__
 
 ### Fixes
-
 
 [#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
+
+### Fixes
 
 [#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
 only worked when used with a space, not an `=`.
