@@ -19,7 +19,7 @@ import pytest
 from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
 
 
-VERY_LONG_STR = 'x'.join(['' for i in range(240)])
+VERY_LONG_STR = 'x' * 240
 
 
 @pytest.mark.parametrize(
