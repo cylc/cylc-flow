@@ -43,7 +43,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='it sets basic directives'
+            id='basic'
         ),
         pytest.param(
             {
@@ -62,7 +62,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='it handles job name len max unset in config'
+            id='long-job-name'
         ),
         pytest.param(
             {
@@ -82,7 +82,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='it truncates a long job name'
+            id='truncate-job-name'
         ),
         pytest.param(
             {
@@ -109,7 +109,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -V',
                 '#PBS -l mem=256gb',
             ],
-            id='it adds custom directives'
+            id='custom-directives'
         ),
     ],
 )
