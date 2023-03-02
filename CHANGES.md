@@ -17,11 +17,6 @@ ones in. -->
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 
--------------------------------------------------------------------------------
-## __cylc-8.1.3 (<span actions:bind='release-date'>Coming Soon</span>)__
-
-### Fixes
-
 [#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
