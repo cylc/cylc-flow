@@ -57,7 +57,7 @@ VERY_LONG_STR = 'x' * 240
                 }
             },
             [
-                f'#PBS -N None.{VERY_LONG_STR[:231]}',
+                f'#PBS -N None.{VERY_LONG_STR[:PBSHandler.JOB_NAME_LEN_MAX - 5]}',
                 '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
