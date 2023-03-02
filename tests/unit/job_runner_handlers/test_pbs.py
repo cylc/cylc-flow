@@ -16,7 +16,10 @@
 
 import pytest
 
-from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.pbs import (
+    JOB_RUNNER_HANDLER,
+    PBSHandler
+)
 
 
 VERY_LONG_STR = 'x' * 240
