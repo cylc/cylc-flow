@@ -38,8 +38,6 @@ export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
 sed -i 's@P1Y@P5Y@' flow.cylc
 run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
-# cat "${TEST_NAME_BASE}-runs.stdout" >&2
-
 # Grep for vr reporting revalidation, reinstallation and playing the workflow.
 grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
 named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
