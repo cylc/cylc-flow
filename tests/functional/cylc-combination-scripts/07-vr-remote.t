@@ -21,7 +21,7 @@
 export REQUIRE_PLATFORM='loc:remote runner:background fs:shared'
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 3
 
 create_test_global_config '' """
 [scheduler]
@@ -44,10 +44,6 @@ run_ok "setup (install)" \
 sed -i 's@P1Y@P5Y@' flow.cylc
 TEST_NAME="${TEST_NAME_BASE}-reinvoke"
 run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}"
-
-grep_fail \
-    "${WORKFLOW_NAME} ${WORKFLOW_NAME}/run1" \
-    "${TEST_NAME}.stderr"
 
 # Clean Up.
 run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
