@@ -237,18 +237,25 @@ def test_get_platform_using_platform_name_from_job_info(
 
 
 def test_get_platform_groups_basic(mock_glbl_cfg):
-    # get platform from group works.
+    """get platform from group works.
+
+    Additionally, ensure that we stop after selecting the first
+    appropriate platform.
+    """
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''
         [platforms]
-            [[aleph]]
-                hosts = aleph
-            [[bet]]
-                hosts = bet
+            [[aleph, bet, alpha, beta]]
 
         [platform groups]
             [[hebrew_letters]]
+                platforms = alpha, beta
+                [[[selection]]]
+                    method = definition order
+            [[aleph]]
+                platforms = alpha
+            [[.*_letters]]
                 platforms = aleph, bet
                 [[[selection]]]
                     method = definition order
