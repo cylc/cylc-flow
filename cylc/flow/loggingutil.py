@@ -353,7 +353,7 @@ def setup_segregated_log_streams(
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.DEBUG)
     # Filter out >= warnings from stdout
-    stdout_handler.addFilter(lambda rec: int(rec.levelno < logging.WARNING))
+    stdout_handler.addFilter(lambda rec: rec.levelno < logging.WARNING)
     if stderr_handler.formatter:
         stdout_handler.setFormatter(stderr_handler.formatter)
     logger.addHandler(stdout_handler)
