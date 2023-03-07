@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle point = 1500
+    [[graph]]
+        R1 = foo
+
+[runtime]
+    [[foo]]
+        script = cylc stop --now --now ${CYLC_WORKFLOW_ID}
