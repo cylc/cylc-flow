@@ -1,8 +1,9 @@
+[scheduler]
+    allow implicit tasks = true
+    [[events]]
+        startup handlers = cylc stop --now --now %(workflow)s
+
 [scheduling]
     initial cycle point = 1500
     [[graph]]
         P1Y = foo
-
-[runtime]
-    [[foo]]
-        script = cylc stop --now --now ${CYLC_WORKFLOW_ID}
