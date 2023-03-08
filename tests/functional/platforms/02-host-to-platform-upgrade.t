@@ -45,6 +45,7 @@ grep_ok "\[T2\]\[remote\]host = ${CYLC_TEST_HOST}"\
     "${TEST_NAME_BASE}-run.stderr"
 
 # Run the workflow
+echo $CYLC_TEST_HOST >&2
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test \
     -s CYLC_TEST_HOST="'$CYLC_TEST_HOST'" \
