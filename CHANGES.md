@@ -22,6 +22,13 @@ absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
 
 -------------------------------------------------------------------------------
+## __cylc-8.2.0 (<span actions:bind='release-date'>Coming Soon</span>)__
+
+### Fixes
+[#5328](https://github.com/cylc/cylc-flow/pull/5328) -
+Efficiency improvements to reduce task management overheads on the Scheduler.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
 
 ### Fixes

@@ -273,10 +273,11 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = Tokens(
+        self.tokens = Tokens(
             user=self.owner,
             workflow=self.workflow,
-        ).id
+        )
+        self.id = self.tokens.id
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -462,6 +463,7 @@ class Scheduler:
                 get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
+            self.tokens,
             self.config,
             self.workflow_db_mgr,
             self.task_events_mgr,
