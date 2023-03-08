@@ -66,7 +66,7 @@ def get_option_parser() -> COP:
     return parser
 
 
-async def run(options: 'Values', severity, workflow_id) -> None:
+async def run(options: 'Values', severity: str, workflow_id: str) -> None:
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
@@ -81,11 +81,9 @@ async def run(options: 'Values', severity, workflow_id) -> None:
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', severity_str: str, *ids) -> None:
-    try:
-        severity = LOG_LEVELS[severity_str]
-    except KeyError:
-        raise InputError("Illegal logging level, %s" % severity_str)
+def main(parser: COP, options: 'Values', severity: str, *ids: str) -> None:
+    if severity not in LOG_LEVELS:
+        raise InputError(f"Illegal logging level, {severity}")
     call_multi(
         partial(run, options, severity),
         *ids,

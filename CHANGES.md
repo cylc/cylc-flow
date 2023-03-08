@@ -9,6 +9,17 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+-------------------------------------------------------------------------------
+## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Fixes
+
+[#5384](https://github.com/cylc/cylc-flow/pull/5384) -
+Fixes `cylc set-verbosity`.
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+absence of `job name length maximum` in PBS platform settings would cause
+Cylc to crash when preparing the job script.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
