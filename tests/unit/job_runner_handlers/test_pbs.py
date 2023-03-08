@@ -16,13 +16,19 @@
 
 import pytest
 
-from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.pbs import (
+    JOB_RUNNER_HANDLER,
+    PBSHandler
+)
+
+
+VERY_LONG_STR = 'x' * 240
 
 
 @pytest.mark.parametrize(
     'job_conf,lines',
     [
-        (  # basic
+        pytest.param(
             {
                 'directives': {},
                 'execution_time_limit': 180,
@@ -40,8 +46,28 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
+            id='basic'
         ),
-        (  # super short job name length maximum
+        pytest.param(
+            {
+                'directives': {},
+                'execution_time_limit': 180,
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
+                'workflow_name': 'chop',
+                'task_id': VERY_LONG_STR,
+                'platform': {
+                    'job runner': 'pbs',
+                }
+            },
+            [
+                f'#PBS -N None.{VERY_LONG_STR[:PBSHandler.JOB_NAME_LEN_MAX - 5]}',
+                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#PBS -l walltime=180',
+            ],
+            id='long-job-name'
+        ),
+        pytest.param(
             {
                 'directives': {},
                 'execution_time_limit': 180,
@@ -59,8 +85,9 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
+            id='truncate-job-name'
         ),
-        (  # some useful directives
+        pytest.param(
             {
                 'directives': {
                     '-q': 'forever',
@@ -85,6 +112,7 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 '#PBS -V',
                 '#PBS -l mem=256gb',
             ],
+            id='custom-directives'
         ),
     ],
 )
