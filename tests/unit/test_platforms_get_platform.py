@@ -254,6 +254,9 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
                 [[[selection]]]
                     method = definition order
             [[aleph]]
+            # Group with same name as platform to try and
+            # trip up the platform selection logic after it
+            # has processed [[.*_letters]] below
                 platforms = alpha
             [[.*_letters]]
                 platforms = aleph, bet
