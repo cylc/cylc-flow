@@ -34,7 +34,7 @@ export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
 
 # It validates and restarts:
 
-# Change source workflow and run vr:
+# Run VR
 run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
 # Grep for vr reporting revalidation, reinstallation and playing the workflow.
