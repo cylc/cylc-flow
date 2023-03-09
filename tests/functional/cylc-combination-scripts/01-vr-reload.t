@@ -36,7 +36,6 @@ poll_workflow_running
 
 # It validates and reloads:
 
-# sed -i 's@P1Y@P5Y@' flow.cylc
 run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
 # Grep for VR reporting revalidation, reinstallation and reloading
