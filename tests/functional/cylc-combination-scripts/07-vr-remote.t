@@ -40,11 +40,16 @@ run_ok "setup (install)" \
 
 # It validates and restarts:
 # Change source workflow and run vr:
-sed -i 's@P1Y@P5Y@' flow.cylc
 TEST_NAME="${TEST_NAME_BASE}-reinvoke"
-run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}" --no-detach
+
+ls "${RUN_DIR}/${WORKFLOW_NAME}/runN/log/scheduler" > logdir.txt
+cmp_ok logdir.txt <<__HERE__
+01-start-01.log
+02-start-01.log
+log
+__HERE__
 
 # Clean Up.
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0
