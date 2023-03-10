@@ -18,7 +18,6 @@
 
 from collections import Counter
 from copy import copy
-from contextlib import suppress
 from fnmatch import fnmatchcase
 from time import time
 from typing import (
