@@ -74,6 +74,7 @@ class ExampleHandler():
     You can then define a Cylc platform using the handler:
 
     .. code-block:: cylc
+       :caption: global.cylc
 
        [platforms]
            [[my_platform]]
@@ -83,6 +84,7 @@ class ExampleHandler():
     And configure tasks to submit to it:
 
     .. code-block:: cylc
+       :caption: flow.cylc
 
        [runtime]
            [[my_task]]
@@ -185,7 +187,7 @@ class ExampleHandler():
 
     .. note::
 
-       Don't subclass this module as it provides optional interfaces which
+       Don't subclass this class as it provides optional interfaces which
        you may not want to inherit.
 
     """
@@ -243,7 +245,7 @@ class ExampleHandler():
     """
 
     REC_ID_FROM_SUBMIT_OUT: re.Pattern
-    """Regular expression to extract job ids from submission stderr.
+    """Regular expression to extract job IDs from submission stderr.
 
     A regular expression (compiled) to extract the job "id" from the standard
     output or standard error of the job submission command.
@@ -251,7 +253,7 @@ class ExampleHandler():
     """
 
     REC_ID_FROM_SUBMIT_ERR: re.Pattern
-    """Regular expression to extract job ids from submission stderr.
+    """Regular expression to extract job IDs from submission stderr.
 
     See :py:attr:`ExampleHandler.REC_ID_FROM_SUBMIT_OUT`.
 
@@ -289,7 +291,7 @@ class ExampleHandler():
             out: Job poll stdout.
 
         Returns:
-            List of job ids
+            List of job IDs
 
         """
         raise NotImplementedError()
@@ -315,7 +317,7 @@ class ExampleHandler():
     def format_directives(self, job_conf: dict) -> List[str]:
         """Returns lines to be appended to the job script.
 
-        If relevant, this method formats the job directives for a job file, if
+        This method formats the job directives for a job file, if
         job file directives are relevant for the job runner. The argument
         "job_conf" is a dict containing the job configuration.
 
@@ -332,7 +334,7 @@ class ExampleHandler():
         """Return a command to poll the specified jobs.
 
         Args:
-            job_id_list: The listof job ids to poll.
+            job_id_list: The list of job IDs to poll.
 
         Returns:
             command e.g. ['foo', '--bar', 'baz']
