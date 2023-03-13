@@ -35,10 +35,11 @@ def test_is_remote_user_on_current_user():
     assert not is_remote_user(os.getenv('USER'))
 
 
-def test_is_remote_host_on_localhost():
+def test_is_remote_host_on_localhost(monkeypatch):
     """is_remote_host with localhost."""
     assert not is_remote_host(None)
     assert not is_remote_host('localhost')
+    assert not is_remote_host('localhost4.localhost42')
     assert not is_remote_host(os.getenv('HOSTNAME'))
     assert not is_remote_host(get_host())
 
