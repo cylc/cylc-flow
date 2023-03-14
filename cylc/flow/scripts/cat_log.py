@@ -44,6 +44,9 @@ Examples:
   # Print workflow log:
   $ cylc cat-log foo
 
+  # Print specific workflow log:
+  $ cylc cat-log foo -f 02-start-01.log
+
   # Print task stdout:
   $ cylc cat-log foo//2020/bar
   $ cylc cat-log -f o foo//2020/bar
@@ -76,6 +79,7 @@ from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_scheduler_log_path)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -322,10 +326,6 @@ def main(
         mode = options.mode
 
     if not tokens or not tokens.get('task'):
-        # Cat workflow logs, local only.
-        if options.filename is not None:
-            raise InputError("The '-f' option is for job logs only.")
-
         logpath = get_workflow_run_scheduler_log_path(workflow_id)
         if options.rotation_num:
             log_dir = Path(logpath).parent
@@ -336,6 +336,11 @@ def main(
             except IndexError:
                 raise InputError(
                     "max rotation %d" % (len(logs) - 1))
+        # Cat workflow logs, local only.
+        if options.filename is not None and not options.rotation_num:
+            logpath = Path(
+                get_workflow_run_scheduler_log_dir(
+                    workflow_id)).joinpath(options.filename)
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
         )
