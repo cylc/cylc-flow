@@ -120,10 +120,11 @@ class HostUtil:
                 target = socket.getfqdn()
             if (
                 IS_MAC_OS
-                and target == (
+                and target in {
                     '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
-                    '0.0.0.0.0.0.ip6.arpa'
-                )
+                    '0.0.0.0.0.0.ip6.arpa',
+                    '1.0.0.127.in-addr.arpa'
+                }
             ):
                 # Python's socket bindings don't play nicely with mac os
                 # so by default we get the above ip6.arpa address from
