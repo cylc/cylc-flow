@@ -10,7 +10,13 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5414](https://github.com/cylc/cylc-flow/pull/5414) -
+Enable cat-log to view workflow logs with -f option.
 
 ### Fixes
 
