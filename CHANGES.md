@@ -18,7 +18,7 @@ ones in. -->
 group selection order bug.
 
 [#5412](https://github.com/cylc/cylc-flow/pull/5412) -
-Fix task expire trigger.
+Fix task expire trigger, and add expire-all trigger.
 
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fix `cylc set-verbosity`.

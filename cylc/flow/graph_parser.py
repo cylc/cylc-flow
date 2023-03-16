@@ -32,6 +32,7 @@ from cylc.flow.param_expand import GraphExpander
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_FAILED,
@@ -114,6 +115,8 @@ class GraphParser:
     QUAL_FAM_SUBMIT_ANY = "submit-any"
     QUAL_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
     QUAL_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
+    QUAL_FAM_EXPIRE_ALL = "expire-all"
+    QUAL_FAM_EXPIRE_ANY = "expire-any"
 
     # Map family trigger type to (member-trigger, any/all), for use in
     # expanding family trigger expressions to member trigger expressions.
@@ -122,6 +125,8 @@ class GraphParser:
     # E.g. QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True) simply maps
     #   "FAM:start-all" to "MEMBER:started" and "-all" (all members).
     fam_to_mem_trigger_map: Dict[str, Tuple[str, bool]] = {
+        QUAL_FAM_EXPIRE_ALL: (TASK_OUTPUT_EXPIRED, True),
+        QUAL_FAM_EXPIRE_ANY: (TASK_OUTPUT_EXPIRED, False),
         QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True),
         QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
         QUAL_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, True),
@@ -138,6 +143,8 @@ class GraphParser:
 
     # Map family pseudo triggers to affected member outputs.
     fam_to_mem_output_map: Dict[str, List[str]] = {
+        QUAL_FAM_EXPIRE_ANY: [TASK_OUTPUT_EXPIRED],
+        QUAL_FAM_EXPIRE_ALL: [TASK_OUTPUT_EXPIRED],
         QUAL_FAM_START_ANY: [TASK_OUTPUT_STARTED],
         QUAL_FAM_START_ALL: [TASK_OUTPUT_STARTED],
         QUAL_FAM_SUCCEED_ANY: [TASK_OUTPUT_SUCCEEDED],
@@ -734,6 +741,10 @@ class GraphParser:
         # Do not infer output optionality from suicide triggers:
         if suicide:
             return
+
+        if output == TASK_OUTPUT_EXPIRED and not optional:
+            raise GraphParseError(
+                f"Expired-output {name}:{output} must be optional")
 
         if output == TASK_OUTPUT_FINISHED:
             # Interpret :finish pseudo-output
