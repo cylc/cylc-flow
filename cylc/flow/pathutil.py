@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functions to return paths to common workflow files and directories."""
 
+import errno
 import os
 from pathlib import Path
 import re
@@ -25,7 +26,7 @@ from typing import Dict, Iterable, Set, Union, Optional, Any
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    InputError, WorkflowFilesError
+    FileRemovalError, InputError, WorkflowFilesError
 )
 from cylc.flow.platforms import get_localhost_install_target
 
@@ -309,16 +310,24 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         _rmtree(path)
 
 
-def _rmtree(target, retries=5, sleep_time=0.5):
+def _rmtree(target: Union[Path, str],
+            retries: int = 5,
+            sleep_time: float = 0.5):
+    """Make rmtree more robust to nfs issues.
+
+    shutil.rmtree will be retried (default 5 times)
+    """
     for _try_num in range(retries):
         try:
             rmtree(target)
             return
         except OSError as exc:
-            err = exc
-            sleep(sleep_time)
-            continue
-    raise err
+            if exc.errno == errno.ENOTEMPTY:
+                err = exc
+                sleep(sleep_time)
+            else:
+                raise
+    raise FileRemovalError(err)
 
 
 def remove_dir_or_file(path: Union[Path, str]) -> None:
