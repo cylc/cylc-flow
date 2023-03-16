@@ -1,11 +1,19 @@
 [scheduling]
-    initial cycle point = 1999
-    [[special tasks]]
-        clock-expire = foo(PT0S)
-    [[graph]]
-        R1 = """
-            foo:expire? => bar
-            foo => baz
-        """
+   initial cycle point = 1999
+   [[special tasks]]
+      clock-expire = foo1(PT0S), foo2(PT0S), bar1(PT0S), x(PT0S)
+   [[graph]]
+      # Expire: foo1, foo2, bar1, x
+      # Run: y, bar2, baz, qux
+      R1 = """
+         x:expire? => y
+         FOO:expire-all? => baz
+         BAR:expire-any? => qux
+      """
 [runtime]
-   [[foo, bar, baz]]
+   [[FOO, BAR]]
+   [[foo1, foo2]]
+      inherit = FOO
+   [[bar1, bar2]]
+      inherit = BAR
+   [[x, y, baz, qux]]
