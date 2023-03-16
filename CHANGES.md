@@ -14,8 +14,8 @@ ones in. -->
 
 ### Fixes
 
-[#5384](https://github.com/cylc/cylc-flow/pull/5384) -
-Fixes `cylc set-verbosity`.
+[#5414](https://github.com/cylc/cylc-flow/pull/5414) -
+Enable cat-log to view workflow logs with -f option.
 
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
