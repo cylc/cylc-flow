@@ -338,9 +338,8 @@ def main(
                     "max rotation %d" % (len(logs) - 1))
         # Cat workflow logs, local only.
         if options.filename is not None and not options.rotation_num:
-            logpath = Path(
-                get_workflow_run_scheduler_log_dir(
-                    workflow_id)).joinpath(options.filename)
+            logpath = os.path.join(get_workflow_run_scheduler_log_dir(
+                    workflow_id)/str(options.filename))
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
         )
