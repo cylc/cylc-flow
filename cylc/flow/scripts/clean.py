@@ -199,7 +199,6 @@ async def run(*ids: str, opts: 'Values') -> None:
             init_clean(workflow, opts)
         except Exception as exc:
             failed[workflow] = exc
-            LOG.warning(exc)
     if failed:
         msg = "Clean failed:"
         for workflow, exc_message in failed.items():
