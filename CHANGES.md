@@ -24,6 +24,9 @@ Fixes `cylc set-verbosity`.
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
 
+[#5343](https://github.com/cylc/cylc-flow/pull/5343) - Fix a bug causing
+platform names to be checked as if they were hosts.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
 
@@ -37,12 +40,6 @@ Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 
 [#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
 for `cylc lint`.
-
--------------------------------------------------------------------------------
-## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
-
-[#5343](https://github.com/cylc/cylc-flow/pull/5343) - Fix a bug causing
-platform names to be checked as if they were hosts.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
