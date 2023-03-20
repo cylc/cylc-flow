@@ -273,6 +273,19 @@ def test__run_command_exit_no_255_callback(caplog, mock_ctx):
     assert 'callback called' in caplog.records[0].msg
 
 
+def test__run_command_exit_no_gettable_platform(caplog, mock_ctx):
+    """It logs being unable to select a platform"""
+    ret_ctx = TaskJobLogsRetrieveContext(
+        ctx_type='raa',
+        platform_name='rhenas',
+        max_size=256,
+        key='rhenas'
+    )
+    ctx = mock_ctx(cmd_key=ret_ctx, cmd=['ssh'], ret_code=255)
+    SubProcPool._run_command_exit(ctx, callback=_test_callback)
+    assert 'platform: rhenas' in caplog.records[0].msg
+
+
 def test__run_command_exit_no_255_args(caplog, mock_ctx):
     """It runs the 255 callback with the args of the callback if no
     callback 255 args provided.

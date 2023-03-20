@@ -29,7 +29,8 @@ import logging
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
-from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.exceptions import (
+    WorkflowConfigError, PointParsingError, PlatformLookupError)
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -54,6 +55,7 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
+    TASK_STATUS_SUBMIT_FAILED,
 )
 from cylc.flow.util import (
     serialise,
@@ -447,6 +449,7 @@ class TaskPool:
                 flow_wait=bool(flow_wait),
                 is_manual_submit=bool(is_manual_submit)
             )
+
         except WorkflowConfigError:
             LOG.exception(
                 f'ignoring task {name} from the workflow run database\n'
@@ -461,7 +464,12 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
-                itask.platform = get_platform(platform_name)
+                # If we get a failure from the platform selection function
+                # set task status to submit-failed.
+                try:
+                    itask.platform = get_platform(platform_name)
+                except PlatformLookupError:
+                    status = TASK_STATUS_SUBMIT_FAILED
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)

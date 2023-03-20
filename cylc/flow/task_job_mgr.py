@@ -42,7 +42,6 @@ from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
     NoHostsError,
-    NoPlatformsError,
     PlatformError,
     PlatformLookupError,
     WorkflowConfigError,
@@ -310,7 +309,7 @@ class TaskJobManager:
                                 itask.tdef.rtconfig['platform'],
                                 bad_hosts=self.bad_hosts
                             )
-                        except NoPlatformsError:
+                        except PlatformLookupError:
                             pass
                         else:
                             # If were able to select a new platform;
@@ -912,7 +911,14 @@ class TaskJobManager:
 
         # Go through each list of itasks and carry out commands as required.
         for platform_name, itasks in sorted(auth_itasks.items()):
-            platform = get_platform(platform_name)
+            try:
+                platform = get_platform(platform_name)
+            except PlatformLookupError:
+                LOG.error(
+                    f'Unable to run command {cmd_key}: Unable to find'
+                    f' platform {platform_name}.'
+                )
+                break
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -1165,7 +1171,6 @@ class TaskJobManager:
                 platform = get_platform(
                     rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
                 )
-
             except PlatformLookupError as exc:
                 itask.waiting_on_job_prep = False
                 itask.summary['platforms_used'][itask.submit_num] = ''

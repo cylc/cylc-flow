@@ -577,3 +577,19 @@ async def test_runahead_after_remove(
     # Should update after removing the first point.
     task_pool.remove_tasks(['1/*'])
     assert int(task_pool.runahead_limit_point) == 5
+
+
+async def test_load_db_bad_platform(
+    flow: Callable, scheduler: Callable, start: Callable, one_conf: Callable
+):
+    """Test that loading an unavailable platform from the database doesn't
+    cause calamitous failure."""
+    schd: Scheduler = scheduler(flow(one_conf))
+
+    async with start(schd):
+        schd.pool.load_db_task_pool_for_restart(0, (
+            '1', 'one', '{"1": 1}', "0", False, False, "failed",
+            False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
+        ))
+        itask = schd.pool.main_pool[IntegerPoint(1)]['1/one']
+        assert itask.state.status == 'submit-failed'

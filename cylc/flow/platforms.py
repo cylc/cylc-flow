@@ -117,11 +117,22 @@ def get_platform(
         task_conf: If str this is assumed to be the platform name, otherwise
             this should be a configuration for a task.
         task_name: Help produce more helpful error messages.
+        bad_hosts: A set of hosts known to be unreachable (had an ssh 255
+            error)
 
     Returns:
         platform: A platform definition dictionary. Uses either
             get_platform() or platform_name_from_job_info(), but to the
             user these look the same.
+
+    Raises:
+        NoPlatformsError:
+            Platform group has no platforms with usable hosts.
+            This should be caught if this function is used on a raw on config,
+            or in any other context where a platform group might be selected.
+        PlatformLookupError:
+            Raised if the name of a platform cannot be selected based on the
+            information given.
     """
     if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
@@ -175,13 +186,21 @@ def platform_from_name(
     raises error if platform is not in global.cylc or returns 'localhost' if
     no platform is initially selected.
 
+    n.b. Lists of platforms/groups from global config are reversed: This allows
+    user global configs to override site configs.
+
     Args:
         platform_name: name of platform to be retrieved.
         platforms: global.cylc platforms given as a dict.
+        bad_hosts: A set of hosts known to be unreachable (had an ssh 255
+            error)
 
     Returns:
         platform: object containing settings for a platform, loaded from
             Global Config.
+
+    Raises:
+        NoPlatformsError: Platform group has no platforms with usable hosts.
     """
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])
@@ -190,10 +209,6 @@ def platform_from_name(
     if platform_name is None:
         platform_name = 'localhost'
 
-    platform_group = None
-    # The list is reversed to allow user-set platform groups (which are loaded
-    # later than site set platforms) to be matched first and override site
-    # defined platforms.
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
@@ -214,9 +229,7 @@ def platform_from_name(
                 'regular expression. See the documentation for '
                 '"global.cylc[platforms][localhost]" for more information.'
             )
-    # The list is reversed to allow user-set platforms (which are loaded
-    # later than site set platforms) to be matched first and override site
-    # defined platforms.
+
     for platform_name_re in reversed(list(platforms)):
         # We substitute commas with or without spaces to
         # allow lists of platforms
@@ -246,8 +259,6 @@ def platform_from_name(
                 platform_data['hosts'] = [platform_name]
             # Fill in the "private" name field.
             platform_data['name'] = platform_name
-            if platform_group:
-                platform_data['group'] = platform_group
             return platform_data
 
     raise PlatformLookupError(
@@ -507,6 +518,10 @@ def get_host_from_platform(
 
     Returns:
         hostname: The name of a host.
+
+    Raises:
+        NoHostsError:
+            This error should be caught by caller to prevent workflow shutdown.
     """
     # Get list of goodhosts:
     if bad_hosts:
