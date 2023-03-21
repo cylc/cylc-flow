@@ -211,6 +211,12 @@ class NaturalSort:
         >>> N('10') < N('9')
         False
 
+        Negative integers should sort correctly:
+        >>> N('-1') < N('0')
+        True
+        >>> N('1') == N('-1')
+        False
+
         Integers rank higher than strings:
         >>> N('1') < N('a')
         True
@@ -235,11 +241,13 @@ class NaturalSort:
 
     """
 
-    PATTERN = re.compile(r'(\d+)')
+    PATTERN = re.compile(r'([\d\-]+)')
 
     def __init__(self, value):
         self.value = tuple(
-            int(item) if item.isdigit() else item
+            int(item)
+            if item.isdigit() or (item[0] == '-' and item[1:].isdigit())
+            else item
             for item in self.PATTERN.split(value)
             # remove empty strings if value ends with a digit
             if item
