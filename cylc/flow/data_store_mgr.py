@@ -498,6 +498,7 @@ class DataStoreMgr:
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
+        self.pruned_task_proxies = set()
         self.updates_pending = False
         self.publish_pending = False
 
@@ -1496,6 +1497,8 @@ class DataStoreMgr:
         if self.updates_pending:
             # Update workflow statuses and totals if needed
             self.update_workflow()
+            # Don't process updated deltas of pruned nodes
+            self.prune_pruned_updated_nodes()
 
             # Apply current deltas
             self.batch_deltas()
@@ -1546,8 +1549,6 @@ class DataStoreMgr:
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
-        tp_updated = self.updated[TASK_PROXIES]
-        j_updated = self.updated[JOBS]
         parent_ids = set()
         for tp_id in list(node_ids):
             if tp_id in self.n_window_nodes:
@@ -1566,13 +1567,6 @@ class DataStoreMgr:
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
 
-            # Don't process updated deltas of pruned node
-            if tp_id in tp_updated:
-                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
-                    if j_id in j_updated:
-                        del j_updated[j_id]
-                del tp_updated[tp_id]
-
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)
             self.deltas[EDGES].pruned.extend(node.edges)
@@ -1586,6 +1580,7 @@ class DataStoreMgr:
         if self.family_pruned_ids:
             self.deltas[FAMILY_PROXIES].pruned.extend(self.family_pruned_ids)
         if node_ids:
+            self.pruned_task_proxies.update(node_ids)
             self.updates_pending = True
 
     def _family_ascent_point_prune(
@@ -1634,6 +1629,32 @@ class DataStoreMgr:
         checked_ids.add(fp_id)
         if fp_id in parent_ids:
             parent_ids.remove(fp_id)
+
+    def prune_pruned_updated_nodes(self):
+        """Remove updated nodes that will also be pruned this batch.
+
+        This will avoid processing and sending deltas that will immediately
+        be pruned. Kept separate from other pruning to allow for update
+        information to be included in summaries.
+
+        """
+        tp_data = self.data[self.workflow_id][TASK_PROXIES]
+        tp_added = self.added[TASK_PROXIES]
+        tp_updated = self.updated[TASK_PROXIES]
+        j_updated = self.updated[JOBS]
+        for tp_id in self.pruned_task_proxies:
+            if tp_id in tp_updated:
+                if tp_id in tp_data:
+                    node = tp_data[tp_id]
+                elif tp_id in tp_added:
+                    node = tp_added[tp_id]
+                else:
+                    continue
+                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
+                    if j_id in j_updated:
+                        del j_updated[j_id]
+                del tp_updated[tp_id]
+        self.pruned_task_proxies.clear()
 
     def update_family_proxies(self):
         """Update state & summary of flagged families and ancestors.
