@@ -108,8 +108,7 @@ def run_cmd(
           if unsuccessful and capture_status=True the remote command exit code.
         * Otherwise exit with an error message.
 
-    Exits:
-        1: In the event of certain command errors.
+    Exits with code 1 in the event of certain command errors.
 
     """
     # CODACY ISSUE:
