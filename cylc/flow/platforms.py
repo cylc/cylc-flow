@@ -209,6 +209,9 @@ def platform_from_name(
     if platform_name is None:
         platform_name = 'localhost'
 
+    # The list is reversed to allow user-set platform groups (which are
+    # appended to site set platform groups) to be matched first and override
+    # site defined platform groups.
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
@@ -230,6 +233,9 @@ def platform_from_name(
                 '"global.cylc[platforms][localhost]" for more information.'
             )
 
+    # The list is reversed to allow user-set platforms (which are appended to
+    # than site set platforms) to be matched first and override site defined
+    # platforms.
     for platform_name_re in reversed(list(platforms)):
         # We substitute commas with or without spaces to
         # allow lists of platforms
