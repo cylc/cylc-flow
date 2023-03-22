@@ -231,7 +231,7 @@ class TuiApp:
         self.reg = reg
         self.client = None
         self.loop = None
-        self.screen = None
+        self.screen = screen
         self.stack = 0
         self.tree_walker = None
 

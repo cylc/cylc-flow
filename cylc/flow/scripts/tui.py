@@ -66,9 +66,10 @@ def get_option_parser() -> COP:
             'Specify the display technology to use.'
             ' "raw" for interactive in-terminal display.'
             ' "html" for non-interactive html output.'
+            ' "curses" for ncurses (EXPERIMENTAL).'
         ),
         action='store',
-        choices=['raw', 'html'],
+        choices=['raw', 'html', 'curses'],
         default='raw',
     )
     parser.add_option(
@@ -100,10 +101,12 @@ def main(_, options: 'Values', workflow_id: str) -> None:
             [tuple(map(int, options.v_term_size.split(',')))],
             []
         )
+    elif options.display == 'curses':
+        from urwid.curses_display import Screen
+        screen = Screen()
 
     try:
         TuiApp(workflow_id, screen=screen).main()
-
         if options.display == 'html':
             for fragment in html_fragment.screenshot_collect():
                 print(fragment)
