@@ -33,7 +33,7 @@ create_test_global_config '' """
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 cp "${TEST_SOURCE_DIR}/vr_workflow_stop/flow.cylc" .
-run_ok "setup (install)" \
+run_ok "${TEST_NAME_BASE}-install" \
     cylc vip \
     --workflow-name "${WORKFLOW_NAME}" \
     --no-detach
