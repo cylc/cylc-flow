@@ -19,6 +19,7 @@ import errno
 from textwrap import wrap
 from typing import (
     Callable,
+    Dict,
     Iterable,
     NoReturn,
     Optional,
@@ -366,11 +367,10 @@ class PlatformLookupError(CylcConfigError):
 class HostSelectException(CylcError):
     """No hosts could be selected from the provided configuration."""
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, dict]):
         self.data = data
-        CylcError.__init__(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret = 'Could not select host from:'
         for host, data in sorted(self.data.items()):
             if host != 'ranking':
@@ -430,7 +430,6 @@ class NoHostsError(CylcError):
     """None of the hosts of a given platform were reachable."""
     def __init__(self, platform):
         self.platform_name = platform['name']
-        super().__init__()
 
     def __str__(self):
         return f'Unable to find valid host for {self.platform_name}'
@@ -440,7 +439,6 @@ class NoPlatformsError(CylcError):
     """None of the platforms of a given group were reachable."""
     def __init__(self, platform_group):
         self.platform_group = platform_group
-        super().__init__()
 
     def __str__(self):
         return f'Unable to find a platform from group {self.platform_group}.'

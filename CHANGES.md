@@ -14,6 +14,9 @@ ones in. -->
 
 ### Fixes
 
+[5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
+group selection order bug.
+
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 
