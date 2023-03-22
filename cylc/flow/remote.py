@@ -388,8 +388,7 @@ def remote_cylc_cmd(
     Raises:
         NoHostsError: If the platform is not contactable.
 
-    Exits:
-        1: In the event of certain command errors.
+    Exits with code 1 in the event of certain command errors.
 
     """
     if not host:
@@ -432,8 +431,7 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
     Raises:
         NoHostsError: If the platform is not contactable.
 
-    Exits:
-        1: In the event of certain command errors.
+    Exits with code 1 in the event of certain command errors.
 
     """
     return remote_cylc_cmd(
