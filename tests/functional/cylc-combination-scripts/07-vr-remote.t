@@ -17,33 +17,39 @@
 
 #------------------------------------------------------------------------------
 # Test `cylc vr` (Validate Reinstall restart)
-# In this case the target workflow is stopped so cylc play is run.
-
-
+# Test that args for re-invocation are correct:
+export REQUIRE_PLATFORM='loc:remote runner:background fs:shared'
 . "$(dirname "$0")/test_header"
-set_test_number 6
+
+set_test_number 3
+
+create_test_global_config '' """
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST}
+
+"""
 
 # Setup
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
-cp "${TEST_SOURCE_DIR}/vr_workflow/flow.cylc" .
-run_ok "setup (install)" \
-    cylc install \
-    --workflow-name "${WORKFLOW_NAME}"
-
-export WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
+cp "${TEST_SOURCE_DIR}/vr_workflow_stop/flow.cylc" .
+run_ok "${TEST_NAME_BASE}-install" \
+    cylc vip \
+    --workflow-name "${WORKFLOW_NAME}" \
+    --no-detach
 
 # It validates and restarts:
+# Change source workflow and run vr:
+TEST_NAME="${TEST_NAME_BASE}-reinvoke"
+run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}" --no-detach
 
-# Run VR
-run_ok "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
-
-# Grep for vr reporting revalidation, reinstallation and playing the workflow.
-grep "\$" "${TEST_NAME_BASE}-runs.stdout" > VIPOUT.txt
-named_grep_ok "${TEST_NAME_BASE}-it-revalidated" "$ cylc validate --against-source" "VIPOUT.txt"
-named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
-named_grep_ok "${TEST_NAME_BASE}-it-played" "cylc play" "VIPOUT.txt"
+ls "${RUN_DIR}/${WORKFLOW_NAME}/runN/log/scheduler" > logdir.txt
+cmp_ok logdir.txt <<__HERE__
+01-start-01.log
+02-start-01.log
+log
+__HERE__
 
 # Clean Up.
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

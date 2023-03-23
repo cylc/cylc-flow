@@ -846,12 +846,14 @@ def cleanup_sysargv(
         sys.argv.append(workflow_id)
 
 
-def log_subcommand(command, workflow_id):
+def log_subcommand(*args):
     """Log a command run as part of a sequence.
 
     Example:
         >>> log_subcommand('ruin', 'my_workflow')
         \x1b[1m\x1b[36m$ cylc ruin my_workflow\x1b[0m\x1b[1m\x1b[0m\n
     """
+    # Args might be posixpath or similar.
+    args = [str(a) for a in args]
     print(cparse(
-        f'<b><cyan>$ cylc {command} {workflow_id}</cyan></b>'))
+        f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'))
