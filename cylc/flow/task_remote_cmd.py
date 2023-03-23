@@ -151,10 +151,11 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
         'job.sh',
         os.path.join(WorkflowFiles.Service.DIRNAME, 'etc')
     )
+    # Extract sent contact file from stdin:
     try:
-        tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
-        tarhandle.extractall()
-        tarhandle.close()
+        with tarfile.open(fileobj=sys.stdin.buffer, mode='r|') as tarhandle:
+            tarhandle.extractall()  # nosec B202 - there should not be any
+            # untrusted members in the tar stream, only the contact file
     finally:
         os.chdir(oldcwd)
     print("KEYSTART", end='')

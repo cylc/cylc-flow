@@ -212,21 +212,22 @@ class TaskRemoteMgr:
 
         # Determine what items to install
         comms_meth: CommsMeth = CommsMeth(platform['communication method'])
-        items = self._remote_init_items(comms_meth)
+        remote_init_items = self._remote_init_items(comms_meth)
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
         tmphandle = self.proc_pool.get_temporary_file()
-        tarhandle = tarfile.open(fileobj=tmphandle, mode='w')
-        for path, arcname in items:
-            tarhandle.add(path, arcname=arcname)
-        tarhandle.close()
+        with tarfile.open(fileobj=tmphandle, mode='w') as tarhandle:
+            for path, arcname in remote_init_items:
+                tarhandle.add(path, arcname=arcname)
         tmphandle.seek(0)
         # Build the remote-init command to be run over ssh
-        cmd = ['remote-init']
-        cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
-        cmd.append(str(install_target))
-        cmd.append(get_remote_workflow_run_dir(self.workflow))
+        cmd = [
+            'remote-init',
+            *verbosity_to_opts(cylc.flow.flags.verbosity),
+            str(install_target),
+            get_remote_workflow_run_dir(self.workflow)
+        ]
         dirs_to_symlink = get_dirs_to_symlink(install_target, self.workflow)
         for key, value in dirs_to_symlink.items():
             if value is not None:
@@ -584,8 +585,12 @@ class TaskRemoteMgr:
         file_name = f"{log_num:02d}-{load_type}-{install_target}.log"
         return file_name
 
-    def _remote_init_items(self, comms_meth: CommsMeth):
+    def _remote_init_items(
+        self, comms_meth: CommsMeth
+    ) -> List[Tuple[str, str]]:
         """Return list of items to install based on communication method.
+
+        (At the moment this is only the contact file.)
 
         Return (list):
             Each item is (source_path, dest_path) where:
@@ -593,14 +598,14 @@ class TaskRemoteMgr:
             - dest_path is relative path under workflow run directory
               at target remote.
         """
-        items = []
-
-        if comms_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
-            # Contact file
-            items.append((
+        if comms_meth not in {CommsMeth.SSH, CommsMeth.ZMQ}:
+            return []
+        return [
+            (
                 get_contact_file_path(self.workflow),
                 os.path.join(
                     WorkflowFiles.Service.DIRNAME,
-                    WorkflowFiles.Service.CONTACT)))
-
-        return items
+                    WorkflowFiles.Service.CONTACT
+                )
+            )
+        ]
