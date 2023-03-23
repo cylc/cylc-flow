@@ -310,24 +310,29 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         _rmtree(path)
 
 
-def _rmtree(target: Union[Path, str],
-            retries: int = 5,
-            sleep_time: float = 0.5):
+def _rmtree(
+    target: Union[Path, str],
+    retries: int = 5,
+    sleep_time: float = 0.5,
+):
     """Make rmtree more robust to nfs issues.
-    
-    If a file is deleted which is being held open for reading by another process
-    NFS will create a ".nfs" file in the containing directory to handle this.
 
-    If you try to delete the directory which contains these files you will get either
-    a ENOTEMPTY or EBUSY error.
-    
-    A likely cause of open file handles in cylc-run directories is `cylc cat-log -m t`.
-    If the file being cat-log'ged is removed, the command will fail on its next poll.
-    The default poll interval is one second, so if we wait a couple of seconds and
+    If a file is deleted which is being held open for reading by
+    another process. NFS will create a ".nfs" file in the
+    containing directory to handle this.
+
+    If you try to delete the directory which contains these
+    files you will get either a ENOTEMPTY or EBUSY error.
+
+    A likely cause of open file handles in cylc-run directories
+    is `cylc cat-log -m t`. If the file being cat-log'ged is removed,
+    the command will fail on its next poll. The default poll
+    interval is one second, so if we wait a couple of seconds and
     retry the removal it will likely work.
 
-    This command retries removal a specified number of times at a specified
-    interval before failing to give cat-log process a chance to die gracefully and
+    This command retries removal a specified number
+    of times at a specified interval before failing to
+    give cat-log process a chance to die gracefully and
     release their filesystem locks. For more info see:
     https://github.com/cylc/cylc-flow/pull/5359#issuecomment-1479989975
     """
