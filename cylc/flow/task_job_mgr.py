@@ -42,6 +42,7 @@ from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
     NoHostsError,
+    NoPlatformsError,
     PlatformError,
     PlatformLookupError,
     WorkflowConfigError,
@@ -913,6 +914,11 @@ class TaskJobManager:
         for platform_name, itasks in sorted(auth_itasks.items()):
             try:
                 platform = get_platform(platform_name)
+            except NoPlatformsError:
+                LOG.error(
+                    f'Unable to run command {cmd_key}: Unable to find'
+                    f' platform {platform_name} with accessible hosts.'
+                )
             except PlatformLookupError:
                 LOG.error(
                     f'Unable to run command {cmd_key}: Unable to find'
