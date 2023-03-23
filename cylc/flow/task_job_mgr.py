@@ -918,7 +918,7 @@ class TaskJobManager:
                     f'Unable to run command {cmd_key}: Unable to find'
                     f' platform {platform_name}.'
                 )
-                break
+                continue
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
