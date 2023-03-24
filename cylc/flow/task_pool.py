@@ -55,7 +55,6 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_STATUS_SUBMIT_FAILED,
 )
 from cylc.flow.util import (
     serialise,
@@ -468,8 +467,14 @@ class TaskPool:
                 # set task status to submit-failed.
                 try:
                     itask.platform = get_platform(platform_name)
-                except PlatformLookupError:
-                    status = TASK_STATUS_SUBMIT_FAILED
+                except PlatformLookupError as exc:
+                    LOG.critical(
+                        f'Unable to find platform {platform_name}.'
+                        ' This is probably caused by changes to your'
+                        ' site or personal global.cylc since you last played'
+                        ' this workflow.'
+                    )
+                    raise exc
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)

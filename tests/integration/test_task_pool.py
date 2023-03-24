@@ -23,6 +23,7 @@ from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
 
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.task_state import (
@@ -587,9 +588,8 @@ async def test_load_db_bad_platform(
     schd: Scheduler = scheduler(flow(one_conf))
 
     async with start(schd):
-        schd.pool.load_db_task_pool_for_restart(0, (
-            '1', 'one', '{"1": 1}', "0", False, False, "failed",
-            False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
-        ))
-        itask = schd.pool.main_pool[IntegerPoint(1)]['1/one']
-        assert itask.state.status == 'submit-failed'
+        with pytest.raises(PlatformLookupError, match='No matching platform'):
+            schd.pool.load_db_task_pool_for_restart(0, (
+                '1', 'one', '{"1": 1}', "0", False, False, "failed",
+                False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
+            ))
