@@ -186,6 +186,41 @@ CLEAR_FIELD_MAP = {
 }
 
 
+def setbuff(obj, key, value):
+    """Set an attribute on a protobuf object.
+
+    Although `None` is a valid value for an `optional` field in protobuf e.g:
+
+       >>> job = PbJob(job_id=None)
+
+    Attempting to set a field to none after initiation results in error:
+
+       >>> job.job_id = None
+       Traceback (most recent call last):
+       TypeError: ...
+
+    For safety this method only sets the attribute if the value is not None.
+
+    Note:
+        If the above doctest fails, then the behaviour of protobuf has changed
+        and this wrapper might not be necessary any more.
+
+    See:
+        https://github.com/cylc/cylc-flow/issues/5388
+
+    Example:
+        >>> from types import SimpleNamespace
+        >>> obj = SimpleNamespace()
+        >>> setbuff(obj, 'a', 1); obj
+        namespace(a=1)
+        >>> setbuff(obj, 'b', None); obj
+        namespace(a=1)
+
+    """
+    if value is not None:
+        setattr(obj, key, value)
+
+
 def generate_checksum(in_strings):
     """Generate cross platform & python checksum from strings."""
     # can't use hash(), it's not the same across 32-64bit or python invocations
@@ -552,7 +587,7 @@ class DataStoreMgr:
             user_defined_meta = {}
             for key, val in dict(tdef.describe()).items():
                 if key in ['title', 'description', 'URL']:
-                    setattr(task.meta, key, val)
+                    setbuff(task.meta, key, val)
                 else:
                     user_defined_meta[key] = val
             task.meta.user_defined = json.dumps(user_defined_meta)
@@ -587,7 +622,7 @@ class DataStoreMgr:
                 user_defined_meta = {}
                 for key, val in famcfg.get('meta', {}).items():
                     if key in ['title', 'description', 'URL']:
-                        setattr(family.meta, key, val)
+                        setbuff(family.meta, key, val)
                     else:
                         user_defined_meta[key] = val
                 family.meta.user_defined = json.dumps(user_defined_meta)
@@ -625,7 +660,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
-                setattr(workflow.meta, key, val)
+                setbuff(workflow.meta, key, val)
             else:
                 user_defined_meta[key] = val
         workflow.meta.user_defined = json.dumps(user_defined_meta)
@@ -639,7 +674,7 @@ class DataStoreMgr:
         else:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
-            setattr(workflow.time_zone_info, key, val)
+            setbuff(workflow.time_zone_info, key, val)
 
         workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
@@ -1045,7 +1080,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in dict(tdef.describe()).items():
             if key in ['title', 'description', 'URL']:
-                setattr(task.meta, key, val)
+                setbuff(task.meta, key, val)
             else:
                 user_defined_meta[key] = val
         task.meta.user_defined = json.dumps(user_defined_meta)
@@ -2182,7 +2217,7 @@ class DataStoreMgr:
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
-        setattr(j_delta, attr_key, attr_val)
+        setbuff(j_delta, attr_key, attr_val)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
@@ -2223,7 +2258,7 @@ class DataStoreMgr:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
         time_attr = f'{event_key}_time'
-        setattr(j_delta, time_attr, time_str)
+        setbuff(j_delta, time_attr, time_str)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
