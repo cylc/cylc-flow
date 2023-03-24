@@ -14,11 +14,18 @@ ones in. -->
 
 ### Fixes
 
+[5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
+group selection order bug.
+
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 
 [#5394](https://github.com/cylc/cylc-flow/pull/5394) -
 Fixes a possible scheduler traceback observed with remote task polling.
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+absence of `job name length maximum` in PBS platform settings would cause
+Cylc to crash when preparing the job script.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__

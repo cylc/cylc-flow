@@ -96,7 +96,10 @@ class PBSHandler:
             f'{tokens["task"]}.{tokens["cycle"]}'
             f".{job_conf['workflow_name'].replace('/', '-')}"
         )
-        job_name_len_max = job_conf['platform']["job name length maximum"]
+        job_name_len_max = job_conf['platform'].get(
+            "job name length maximum",
+            self.JOB_NAME_LEN_MAX
+        )
         if job_name_len_max:
             directives["-N"] = directives["-N"][0:job_name_len_max]
 
