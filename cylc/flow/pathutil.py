@@ -312,8 +312,8 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
 
 def _rmtree(
     target: Union[Path, str],
-    retries: int = 5,
-    sleep_time: float = 0.5,
+    retries: int = 10,
+    sleep_time: float = 1,
 ):
     """Make rmtree more robust to nfs issues.
 
