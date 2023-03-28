@@ -10,8 +10,7 @@
  /usr/share/gtksourceview-2.0/language-specs/
 
  If your installation uses GNOME 3, the '2.0' in the paths will need
- to be '3.0', and the version="2.0" string below will need changing
- as well.
+ to be '3.0'.
 
  If using gedit, gedit will need to be totally closed down and reloaded.
 

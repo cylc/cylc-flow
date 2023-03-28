@@ -9,6 +9,37 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+-------------------------------------------------------------------------------
+## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Fixes
+
+[5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
+group selection order bug.
+
+[#5384](https://github.com/cylc/cylc-flow/pull/5384) -
+Fixes `cylc set-verbosity`.
+
+[#5394](https://github.com/cylc/cylc-flow/pull/5394) -
+Fixes a possible scheduler traceback observed with remote task polling.
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+absence of `job name length maximum` in PBS platform settings would cause
+Cylc to crash when preparing the job script.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
+
+### Fixes
+
+[#5349](https://github.com/cylc/cylc-flow/pull/5349) - Bugfix: `cylc vip --workflow-name`
+only worked when used with a space, not an `=`.
+
+[#5367](https://github.com/cylc/cylc-flow/pull/5367) - Enable using
+Rose options (`-O`, `-S` & `-D`) with `cylc view`.
+
+[#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
+for `cylc lint`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__

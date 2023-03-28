@@ -98,35 +98,7 @@ def create_temp_db():
     conn.close()  # doesn't raise error on re-invocation
 
 
-def test_remove_columns():
-    """Test workaround for dropping columns in sqlite3."""
-    with create_temp_db() as (temp_db, conn):
-        conn.execute(
-            r'''
-                CREATE TABLE foo (
-                    bar,
-                    baz,
-                    pub
-                )
-            '''
-        )
-        conn.execute(
-            r'''
-                INSERT INTO foo
-                VALUES (?,?,?)
-            ''',
-            ['BAR', 'BAZ', 'PUB']
-        )
-        conn.commit()
-        conn.close()
-
-        with CylcWorkflowDAO(temp_db) as dao:
-            dao.remove_columns('foo', ['bar', 'baz'])
-            data = list(dao.connect().execute(r'SELECT * from foo'))
-        assert data == [('PUB',)]
-
-
-def test_operational_error(monkeypatch, tmp_path, caplog):
+def test_operational_error(tmp_path, caplog):
     """Test logging on operational error."""
     # create a db object
     db_file = tmp_path / 'db'
