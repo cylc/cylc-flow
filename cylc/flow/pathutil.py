@@ -15,16 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functions to return paths to common workflow files and directories."""
 
+import errno
 import os
 from pathlib import Path
 import re
 from shutil import rmtree
+from time import sleep
 from typing import Dict, Iterable, Set, Union, Optional, Any
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    InputError, WorkflowFilesError, handle_rmtree_err
+    FileRemovalError, InputError, WorkflowFilesError
 )
 from cylc.flow.platforms import get_localhost_install_target
 
@@ -297,7 +299,7 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
                 "Removing symlink and its target directory: "
                 f"{path} -> {target}"
             )
-            rmtree(target, onerror=handle_rmtree_err)
+            _rmtree(target)
         else:
             LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
@@ -305,7 +307,46 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         raise FileNotFoundError(path)
     else:
         LOG.info(f'Removing directory: {path}')
-        rmtree(path, onerror=handle_rmtree_err)
+        _rmtree(path)
+
+
+def _rmtree(
+    target: Union[Path, str],
+    retries: int = 10,
+    sleep_time: float = 1,
+):
+    """Make rmtree more robust to nfs issues.
+
+    If a file is deleted which is being held open for reading by
+    another process. NFS will create a ".nfs" file in the
+    containing directory to handle this.
+
+    If you try to delete the directory which contains these
+    files you will get either a ENOTEMPTY or EBUSY error.
+
+    A likely cause of open file handles in cylc-run directories
+    is `cylc cat-log -m t`. If the file being cat-log'ged is removed,
+    the command will fail on its next poll. The default poll
+    interval is one second, so if we wait a couple of seconds and
+    retry the removal it will likely work.
+
+    This command retries removal a specified number
+    of times at a specified interval before failing to
+    give cat-log process a chance to die gracefully and
+    release their filesystem locks. For more info see:
+    https://github.com/cylc/cylc-flow/pull/5359#issuecomment-1479989975
+    """
+    for _try_num in range(retries):
+        try:
+            rmtree(target)
+            return
+        except OSError as exc:
+            if exc.errno in {errno.ENOTEMPTY, errno.EBUSY}:
+                err = exc
+                sleep(sleep_time)
+            else:
+                raise
+    raise FileRemovalError(err)
 
 
 def remove_dir_or_file(path: Union[Path, str]) -> None:
@@ -325,7 +366,7 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
         os.remove(path)
     else:
         LOG.info(f"Removing directory: {path}")
-        rmtree(path, onerror=handle_rmtree_err)
+        _rmtree(path)
 
 
 def remove_empty_parents(
