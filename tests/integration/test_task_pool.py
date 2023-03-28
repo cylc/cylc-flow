@@ -588,8 +588,8 @@ async def test_load_db_bad_platform(
     schd: Scheduler = scheduler(flow(one_conf))
 
     async with start(schd):
-        with pytest.raises(PlatformLookupError, match='No matching platform'):
-            schd.pool.load_db_task_pool_for_restart(0, (
-                '1', 'one', '{"1": 1}', "0", False, False, "failed",
-                False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
-            ))
+        result = schd.pool.load_db_task_pool_for_restart(0, (
+            '1', 'one', '{"1": 1}', "0", False, False, "failed",
+            False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
+        ))
+        assert result == 'culdee-fell-summit'

@@ -24,7 +24,7 @@ async def test_process_job_logs_retrieval_warns_no_platform(
     one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
     db_select: Fixture, caplog: Fixture
 ):
-    """Test the paused status is unset on normal shutdown."""
+    """Job log retrieval handles `NoHostsError`"""
 
     ctx = TaskJobLogsRetrieveContext(
         ctx_type='raa',

@@ -41,9 +41,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONF__'
 [runtime]
     [[foo]]
         script = """
-            # Make the workflow stop, but keep the task running.
             cylc stop ${CYLC_WORKFLOW_ID} --now --now
-            sleep 1000
         """
         platform = myplatform
 __FLOW_CONF__
@@ -61,7 +59,7 @@ run_fail "${TEST_NAME_BASE}-restart" \
     cylc play "${WORKFLOW_NAME}" --no-detach
 named_grep_ok \
     "${TEST_NAME_BASE}-cannot-restart" \
-    "Unable to find platform myplatform" \
+    "platforms are not defined in the global.cylc" \
     "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log"
 
 purge

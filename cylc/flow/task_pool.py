@@ -429,6 +429,9 @@ class TaskPool:
         as submitted or running are polled to confirm their true status.
         Tasks are added to queues again on release from runahead pool.
 
+        Returns:
+            Names of platform if attempting to look up that platform
+            has led to a PlatformNotFoundError.
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
@@ -467,14 +470,8 @@ class TaskPool:
                 # set task status to submit-failed.
                 try:
                     itask.platform = get_platform(platform_name)
-                except PlatformLookupError as exc:
-                    LOG.critical(
-                        f'Unable to find platform {platform_name}.'
-                        ' This is probably caused by changes to your'
-                        ' site or personal global.cylc since you last played'
-                        ' this workflow.'
-                    )
-                    raise exc
+                except PlatformLookupError:
+                    return platform_name
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)

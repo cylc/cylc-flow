@@ -186,9 +186,6 @@ def platform_from_name(
     raises error if platform is not in global.cylc or returns 'localhost' if
     no platform is initially selected.
 
-    n.b. Lists of platforms/groups from global config are reversed: This allows
-    user global configs to override site configs.
-
     Args:
         platform_name: name of platform to be retrieved.
         platforms: global.cylc platforms given as a dict.

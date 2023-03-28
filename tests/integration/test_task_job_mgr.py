@@ -113,7 +113,7 @@ async def test__run_job_cmd_logs_platform_lookup_fail(
     one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
     db_select: Fixture, caplog: Fixture
 ) -> None:
-    """Test the paused status is unset on normal shutdown."""
+    """TaskJobMg._run_job_cmd handles failure to get platform."""
     reg: str = flow(one_conf)
     schd: 'Scheduler' = scheduler(reg, paused_start=True)
     # Run
