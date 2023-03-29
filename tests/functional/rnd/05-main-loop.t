@@ -55,7 +55,7 @@ __FLOW_CYLC__
 # run a workflow with all the development main-loop plugins turned on
 run_ok "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" \
-        -n \
+        --no-detach \
         --debug \
         --main-loop 'log data store' \
         --main-loop 'log db' \
