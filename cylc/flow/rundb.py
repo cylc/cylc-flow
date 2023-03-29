@@ -684,6 +684,14 @@ class CylcWorkflowDAO:
         except sqlite3.DatabaseError:
             return None
 
+    def select_platforms_used(self):
+        """Get a list of platforms used by tasks."""
+        stmt = r'SELECT platform_name FROM task_jobs'
+        try:
+            return {r[0] for r in self.connect().execute(stmt)}
+        except sqlite3.DatabaseError:
+            return None
+
     def select_jobs_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
 

@@ -21,14 +21,14 @@ from typing import Any, Dict, List, Optional, Type
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
-    get_all_platforms_for_install_target,
     get_platform,
     get_platform_deprecated_settings,
-    get_random_platform_for_install_target, is_platform_definition_subshell,
+    is_platform_definition_subshell,
     platform_from_name, platform_name_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match,
+    map_platforms_used_for_install_targets,
     _validate_single_host
 )
 from cylc.flow.exceptions import (
@@ -511,47 +511,6 @@ def test_generic_items_match(platform, job, remote, expect):
     assert generic_items_match(platform, job, remote) == expect
 
 
-def test_get_all_platforms_for_install_target(mock_glbl_cfg):
-    mock_glbl_cfg(
-        'cylc.flow.platforms.glbl_cfg',
-        '''
-                [platforms]
-                    [[localhost]]
-                        hosts = localhost
-                        install target = localhost
-                    [[olaf]]
-                        hosts = snow, ice, sparkles
-                        install target = arendelle
-                    [[snow white]]
-                        hosts = happy, sleepy, dopey
-                        install target = forest
-                    [[kristoff]]
-                        hosts = anna, elsa, hans
-                        install target = arendelle
-                    [[belle]]
-                        hosts = beast, maurice
-                        install target = france
-                    [[bambi]]
-                        hosts = thumper, faline, flower
-                        install target = forest
-                    [[merida]]
-                        hosts = angus, fergus
-                        install target = forest
-                    [[forest]]
-                        hosts = fir, oak, elm
-                '''
-    )
-    actual = get_all_platforms_for_install_target('forest')
-    expected = ['snow white', 'bambi', 'merida', 'forest']
-    for platform in actual:
-        assert platform['name'] in expected
-    arendelle_platforms = ['kristoff', 'olaf']
-    assert get_random_platform_for_install_target(
-        'arendelle')['name'] in arendelle_platforms
-    assert get_random_platform_for_install_target(
-        'forest')['name'] not in arendelle_platforms
-
-
 @pytest.mark.parametrize(
     'task_conf, expected',
     [
@@ -647,3 +606,94 @@ def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
     ])
     result = get_platform(task_conf)['name']
     assert result == 'skarloey'
+
+
+@pytest.mark.parametrize(
+    'platform_names, install_targets, glblcfg, expect',
+    [
+        pytest.param(
+            # Two platforms share an install target. Both are reachable.
+            ['sir_handel', 'peter_sam'],
+            ['mountain_railway'],
+            '''
+            [platforms]
+                [[peter_sam, sir_handel]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['sir_handel', 'peter_sam']},
+                'unreachable': set()
+            },
+            id='basic'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly; i.e. the platform name is the same as the
+            # install target name.
+            ['sir_handel'],
+            ['sir_handel'],
+            '''
+            [platforms]
+                [[sir_handel]]
+            ''',
+            {
+                'targets': {'sir_handel': ['sir_handel']},
+                'unreachable': set()
+            },
+            id='implicit-target'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly, and the platform name is defined using a
+            # regex.
+            ['sir_handel42'],
+            ['sir_handel42'],
+            '''
+            [platforms]
+                [[sir_handel..]]
+            ''',
+            {
+                'targets': {'sir_handel42': ['sir_handel42']},
+                'unreachable': set()
+            },
+            id='implicit-target-regex'
+        ),
+        pytest.param(
+            # One of our install targets (rusty) has no defined platforms
+            # causing a PlatformLookupError.
+            ['duncan', 'rusty'],
+            ['mountain_railway', 'rusty'],
+            '''
+            [platforms]
+                [[duncan]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['duncan']},
+                'unreachable': {'rusty'}
+            },
+            id='PlatformLookupError'
+        )
+    ]
+)
+def test_map_platforms_used_for_install_targets(
+    mock_glbl_cfg,
+    platform_names, install_targets, glblcfg, expect
+):
+    def flatten_install_targets_map(itm):
+        result = {}
+        for target, platforms in itm.items():
+            result[target] = [p['name'] for p in platforms]
+        return result
+
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glblcfg)
+    install_targets_map, unreachable_targets = (
+        map_platforms_used_for_install_targets(
+            platform_names, install_targets))
+
+    assert (
+        expect['targets'] == flatten_install_targets_map(install_targets_map))
+
+    assert (
+        expect['unreachable'] == unreachable_targets)
+

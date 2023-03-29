@@ -153,3 +153,23 @@ def test_context_manager_exit(
         mock_close.assert_called_once()
     # Close connection for real:
     dao.close()
+
+
+def test_select_platforms_used(tmp_path):
+    """It returns a set of platforms used by task_jobs.
+    """
+    # Setup DB
+    db_file = tmp_path / 'db'
+    dao = CylcWorkflowDAO(db_file_name=db_file, create_tables=True)
+
+    # Write database with 6 tasks using 3 platforms:
+    platforms = ['foo', 'bar', 'bar', 'qux', 'qux', 'qux']
+    line = (
+        r"    ('', '', {}, 0, 1, '', '', 0, '', '', '', 0, '', '{}', 4377, '')")
+    stmt = r"INSERT INTO task_jobs VALUES" + r','.join([
+        line.format(i, platform) for i, platform in enumerate(platforms)
+    ])
+    dao.conn.execute(stmt)
+
+    # Assert that we only have 3 platforms reported by function:
+    assert dao.select_platforms_used() == {'bar', 'qux', 'foo'}

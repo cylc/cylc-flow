@@ -14,6 +14,9 @@ ones in. -->
 
 ### Fixes
 
+[5445](https://github.com/cylc/cylc-flow/pull/5445) - Fix remote tidy
+ bug where install target is not explicit in platform definition.
+
 [5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
 group selection order bug.
 

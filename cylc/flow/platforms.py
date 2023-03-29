@@ -20,7 +20,8 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set, Union, overload
+    TYPE_CHECKING, Any, Dict, Iterable,
+    List, Optional, Set, Tuple, Union, overload
 )
 
 from cylc.flow import LOG
@@ -649,32 +650,52 @@ def is_platform_with_target_in_list(
     )
 
 
-def get_all_platforms_for_install_target(
-    install_target: str
-) -> List[Dict[str, Any]]:
-    """Return list of platform dictionaries for given install target."""
-    platforms: List[Dict[str, Any]] = []
-    all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
-    for k, v in all_platforms.iteritems():  # noqa: B301 (iteritems valid here)
-        if (v.get('install target', k) == install_target):
-            v_copy = deepcopy(v)
-            v_copy['name'] = k
-            platforms.append(v_copy)
-    return platforms
+def map_platforms_used_for_install_targets(
+    platform_names: Set[str],
+    install_targets: Set[str]
+) -> Tuple[Dict[str, List[Dict[Any, Any]]], Set[str]]:
+    """Get a mapping of install targets to platforms.
 
+    Different from get_install_target_platforms_map because it is passed
+    a list of install targets actually used to look for.
 
-def get_random_platform_for_install_target(
-    install_target: str
-) -> Dict[str, Any]:
-    """Return a randomly selected platform (dict) for given install target."""
-    platforms = get_all_platforms_for_install_target(install_target)
-    try:
-        return random.choice(platforms)  # nosec (not crypto related)
-    except IndexError:
-        # No platforms to choose from
-        raise PlatformLookupError(
-            f'Could not select platform for install target: {install_target}'
-        )
+    Returns:
+        install_target_map: {
+            'install target': [
+                {...platform2...},
+                {...platform2...}
+            ]
+        }
+        unreachable_targets:
+            A list of install_targets which we cannot get platforms for.
+    """
+    install_targets_map: Dict[str, List] = {
+        target: [] for target in install_targets}
+    for platform_name in platform_names:
+        try:
+            platform = get_platform(platform_name)
+        except PlatformLookupError:
+            # We only need one working platform per install target:
+            continue
+        else:
+            # Install Target
+            if 'install target' in platform and platform['install target']:
+                install_targets_map[platform['install target']].append(
+                    platform)
+            else:
+                install_targets_map[platform['name']].append(platform)
+
+    # Look for unreachable install targets and report them:
+    unreachable_targets = {
+        target for target, platforms
+        in install_targets_map.items()
+        if not platforms
+    }
+    # Remove unreachable targets from list:
+    [install_targets_map.pop(i) for i in unreachable_targets]
+    # Otherwise return out targets map object.
+
+    return install_targets_map, unreachable_targets
 
 
 def get_localhost_install_target() -> str:

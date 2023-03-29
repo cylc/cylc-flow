@@ -27,6 +27,7 @@ from contextlib import suppress
 from pathlib import Path
 from cylc.flow.option_parsers import verbosity_to_opts
 import os
+import random
 from shlex import quote
 import re
 from subprocess import Popen, PIPE, DEVNULL
@@ -35,7 +36,7 @@ from time import sleep, time
 from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformError
+from cylc.flow.exceptions import PlatformError, PlatformLookupError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
@@ -51,8 +52,8 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
-    get_random_platform_for_install_target,
     log_platform_event,
+    map_platforms_used_for_install_targets
 )
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -91,7 +92,7 @@ class RemoteTidyQueueTuple(NamedTuple):
 class TaskRemoteMgr:
     """Manage task remote initialisation, tidy, selection."""
 
-    def __init__(self, workflow, proc_pool, bad_hosts):
+    def __init__(self, workflow, proc_pool, bad_hosts, db_mgr):
         self.workflow = workflow
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|PlatformError|None}
@@ -105,6 +106,7 @@ class TaskRemoteMgr:
         self.bad_hosts = bad_hosts
         self.is_reload = False
         self.is_restart = False
+        self.db_mgr = db_mgr
 
     def subshell_eval(self, command, command_pattern, host_check=True):
         """Evaluate a task platform from a subshell string.
@@ -293,19 +295,39 @@ class TaskRemoteMgr:
         This method is called on workflow shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
+        # Get a list of all platforms used from workflow database:
+        platforms_used = (
+            self.db_mgr.get_pri_dao().select_platforms_used())
+        # For each install target compile a list of platforms:
+        install_targets = {
+            target for target, msg
+            in self.remote_init_map.items()
+            if msg == REMOTE_FILE_INSTALL_DONE
+        }
+        install_targets_map, unreachable_targets = (
+            map_platforms_used_for_install_targets(
+                platforms_used, install_targets))
+        # If we couldn't find a platform for a target, we cannot tidy it -
+        # raise an Error:
+        if unreachable_targets:
+            msg = 'No platforms available to remote tidy install targets:'
+            for unreachable_target in unreachable_targets:
+                msg = (
+                    'Unable to tidy the following install targets'
+                    ' because no matching platform was found:'
+                )
+                msg += f'\n * {unreachable_target}'
+            LOG.error(msg)
+
         # Issue all SSH commands in parallel
         queue: Deque[RemoteTidyQueueTuple] = deque()
-        for install_target, message in self.remote_init_map.items():
-            if message != REMOTE_FILE_INSTALL_DONE:
-                continue
+        for install_target in install_targets_map.keys():
             if install_target == get_localhost_install_target():
                 continue
+            platform = random.choice(list(install_targets_map[install_target]))
             try:
-                platform = get_random_platform_for_install_target(
-                    install_target
-                )
                 cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
-            except (NoHostsError, PlatformLookupError) as exc:
+            except NoHostsError as exc:
                 LOG.warning(
                     PlatformError(
                         f'{PlatformError.MSG_TIDY}\n{exc}',
