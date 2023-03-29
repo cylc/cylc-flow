@@ -664,7 +664,8 @@ class Scheduler:
                     'An uncaught error caused Cylc to shut down.'
                     '\nIf you think this was an issue in Cylc,'
                     ' please report the following traceback to the developers.'
-                    '\nhttps://github.com/cylc/cylc-flow/issues/new?assignees=&labels=bug&template=bug.md&title=;'
+                    '\nhttps://github.com/cylc/cylc-flow/issues/new'
+                    '?assignees=&labels=bug&template=bug.md&title=;'
                 )
             await self.handle_exception(exc)
 
