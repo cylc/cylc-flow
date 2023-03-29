@@ -18,6 +18,7 @@
 import re
 from copy import deepcopy
 from threading import RLock
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import (
@@ -27,11 +28,15 @@ from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report,
 )
 from cylc.flow.cfgspec.workflow import SPEC
-from cylc.flow.id import Tokens
+
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import listjoin
 from cylc.flow.parsec.validate import BroadcastConfigValidator
+
+if TYPE_CHECKING:
+    from cylc.flow.id import Tokens
+
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
@@ -156,28 +161,21 @@ class BroadcastMgr:
             return (None, {"expire": [cutoff]})
         return self.clear_broadcast(point_strings=point_strings, **kwargs)
 
-    def get_broadcast(self, task_id=None):
+    def get_broadcast(self, tokens: 'Optional[Tokens]' = None) -> dict:
         """Retrieve all broadcast variables that target a given task ID."""
-        if task_id == "None":
-            task_id = None
-        if not task_id:
+        if tokens is None or tokens == 'None':
             # all broadcasts requested
             return self.broadcasts
-        try:
-            tokens = Tokens(task_id, relative=True)
-            name = tokens['task']
-            point_string = tokens['cycle']
-        except ValueError:
-            raise Exception("Can't split task_id %s" % task_id)
-
-        ret = {}
+        ret: dict = {}
         # The order is:
         #    all:root -> all:FAM -> ... -> all:task
         # -> tag:root -> tag:FAM -> ... -> tag:task
-        for cycle in ALL_CYCLE_POINTS_STRS + [point_string]:
+        for cycle in ALL_CYCLE_POINTS_STRS + [tokens['cycle']]:
             if cycle not in self.broadcasts:
                 continue
-            for namespace in reversed(self.linearized_ancestors[name]):
+            for namespace in reversed(
+                    self.linearized_ancestors[tokens['task']]
+            ):
                 if namespace in self.broadcasts[cycle]:
                     addict(ret, self.broadcasts[cycle][namespace])
         return ret

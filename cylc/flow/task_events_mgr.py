@@ -430,7 +430,7 @@ class TaskEventsManager():
 
     def _get_remote_conf(self, itask, key):
         """Get deprecated "[remote]" items that default to platforms."""
-        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         SKEY = 'remote'
         if SKEY not in overrides:
             overrides[SKEY] = {}
@@ -442,7 +442,7 @@ class TaskEventsManager():
 
     def _get_workflow_platforms_conf(self, itask, key):
         """Return top level [runtime] items that default to platforms."""
-        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         return (
             overrides.get(key) or
             itask.tdef.rtconfig[key] or
@@ -923,7 +923,7 @@ class TaskEventsManager():
     def _get_events_conf(self, itask, key, default=None):
         """Return an events setting from workflow then global configuration."""
         for getter in [
-                self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
+                self.broadcast_mgr.get_broadcast(itask.tokens).get("events"),
                 itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
                 glbl_cfg().get(["scheduler", "mail"]),
