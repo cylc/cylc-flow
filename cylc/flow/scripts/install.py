@@ -137,7 +137,7 @@ INSTALL_OPTIONS = [
         sources={'install'},
     ),
     OptionSettings(
-        ["--run-name"],
+        ["--run-name", "-r"],
         help=(
             "Give the run a custom name instead of automatically"
             " numbering it."),

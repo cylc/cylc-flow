@@ -134,7 +134,7 @@ PLAY_RUN_MODE.sources = {'play'}
 
 PLAY_OPTIONS = [
     OptionSettings(
-        ["-n", "--no-detach", "--non-daemon"],
+        ["-N", "--no-detach", "--non-daemon"],
         help="Do not daemonize the scheduler (infers --format=plain)",
         action='store_true', dest="no_detach", sources={'play'}),
     OptionSettings(
