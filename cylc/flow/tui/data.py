@@ -151,7 +151,7 @@ def cli_cmd(*cmd):
     )
     out, err = proc.communicate()
     if proc.returncode != 0:
-        raise ClientError(err)
+        raise ClientError(f'Error in command {" ".join(cmd)}\n{err}')
 
 
 def _clean(workflow):
