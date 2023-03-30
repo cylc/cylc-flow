@@ -15,8 +15,9 @@ ones in. -->
 
 ### Enhancements
 
-[#5414](https://github.com/cylc/cylc-flow/pull/5414) -
-Enable cat-log to view workflow logs with -f option.
+[#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
+list and view workflow log files including install logs and workflow
+configuration files.
 
 ### Fixes
 

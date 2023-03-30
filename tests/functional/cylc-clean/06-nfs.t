@@ -45,7 +45,7 @@ init_workflow "${TEST_NAME_BASE}" <<< '# blank workflow'
 WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/scheduler"
 mkdir -p "$WORKFLOW_LOG_DIR"
 LOG_STUFF='foo bar baz'
-echo "${LOG_STUFF}" > "${WORKFLOW_LOG_DIR}/log"
+echo "${LOG_STUFF}" > "${WORKFLOW_LOG_DIR}/01-start-01.log"
 
 # start cat-log running - this runs "tail -f"
 cylc cat-log -m t "$WORKFLOW_NAME" > out 2>err & PID="$!"

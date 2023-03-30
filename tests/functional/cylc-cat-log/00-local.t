@@ -18,7 +18,7 @@
 # Test "cylc cat-log" on the workflow host.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 31
+set_test_number 40
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -32,10 +32,32 @@ contains_ok "${TEST_NAME}.stdout" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-workflow-log-ok
 LOG_DIR="$(dirname "$(cylc cat-log -m p "${WORKFLOW_NAME}")")"
+echo "This is file 02-restart-02.log" > "${LOG_DIR}/02-restart-02.log"
 echo "This is file 03-restart-02.log" > "${LOG_DIR}/03-restart-02.log"
-run_ok "${TEST_NAME}" cylc cat-log -f 03-restart-02.log "${WORKFLOW_NAME}"
+# it should accept file paths relative to the scheduler log directory
+run_ok "${TEST_NAME}" cylc cat-log -f scheduler/03-restart-02.log "${WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stdout" - << __END__
 This is file 03-restart-02.log
+__END__
+# it should pick the latest scheduler log file if no rotation number is provided
+run_ok "${TEST_NAME}" cylc cat-log --file s "${WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" - << __END__
+This is file 03-restart-02.log
+__END__
+# it should apply rotation number to scheduler log files
+run_ok "${TEST_NAME}" cylc cat-log -f s -r 1 "${WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" - << __END__
+This is file 02-restart-02.log
+__END__
+# it should list scheduler log files
+run_ok "${TEST_NAME}" cylc cat-log -m l "${WORKFLOW_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - << __END__
+config/01-start-01.cylc
+config/flow-processed.cylc
+install/01-install.log
+scheduler/01-start-01.log
+scheduler/02-restart-02.log
+scheduler/03-restart-02.log
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out
@@ -114,5 +136,11 @@ grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
 TEST_NAME=${TEST_NAME_BASE}-un-norm-path
 run_fail "${TEST_NAME}" cylc cat-log -f j/../02/j "${WORKFLOW_NAME}//1/a-task"
 grep_ok 'InputError' "${TEST_NAME}.stderr"
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}-prepend-path
+run_ok "${TEST_NAME}-get-path" cylc cat-log -m p "${WORKFLOW_NAME}//1/a-task"
+run_ok "${TEST_NAME}" cylc cat-log --prepend-path "${WORKFLOW_NAME}//1/a-task"
+grep_ok "$(cat "#.*${TEST_NAME}-get-path.stdout")" "${TEST_NAME}.stdout"
+#-------------------------------------------------------------------------------
 purge
 exit

@@ -21,7 +21,7 @@ set_test_number 1
 init_workflow "${TEST_NAME_BASE}" '/dev/null'
 
 # Populate its cylc-run dir with empty log files.
-LOG_DIR="$(dirname "$(cylc cat-log -m p "${WORKFLOW_NAME}")")"
+LOG_DIR="$HOME/cylc-run/$WORKFLOW_NAME/log/scheduler"
 mkdir -p "${LOG_DIR}"
 touch -t '201001011200.00' "${LOG_DIR}/01-start-01.log"
 touch -t '201001011200.01' "${LOG_DIR}/02-start-01.log"
