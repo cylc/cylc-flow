@@ -655,8 +655,18 @@ class Scheduler:
                 LOG.exception(exc)
                 raise
 
-        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
-            # Includes SchedulerError
+        except (KeyboardInterrupt, asyncio.CancelledError) as exc:
+            await self.handle_exception(exc)
+
+        except Exception as exc:  # Includes SchedulerError
+            with suppress(Exception):
+                LOG.critical(
+                    'An uncaught error caused Cylc to shut down.'
+                    '\nIf you think this was an issue in Cylc,'
+                    ' please report the following traceback to the developers.'
+                    '\nhttps://github.com/cylc/cylc-flow/issues/new'
+                    '?assignees=&labels=bug&template=bug.md&title=;'
+                )
             await self.handle_exception(exc)
 
         else:
