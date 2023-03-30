@@ -18,7 +18,7 @@
 # Test "cylc cat-log" on the workflow host.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 29
+set_test_number 31
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -107,5 +107,10 @@ TEST_NAME=${TEST_NAME_BASE}-task-job-path
 run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${WORKFLOW_NAME}//1/a-task"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
+# it shouldn't let you modify the file path to access other resources
+# use the dedicated options
+TEST_NAME=${TEST_NAME_BASE}-un-norm-path
+run_fail "${TEST_NAME}" cylc cat-log -f j/../02/j "${WORKFLOW_NAME}//1/a-task"
+grep_ok 'InputError' "${TEST_NAME}.stderr"
 purge
 exit

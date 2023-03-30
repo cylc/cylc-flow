@@ -156,6 +156,48 @@ def colorise_cat_log(cat_proc, color=False, stdout=None):
         cat_proc.wait()
 
 
+def _check_fs_path(path):
+    """Ensure a path is relative and normalised.
+
+    Useful for checking input paths which are intended to be
+    relative to a specified directory.
+
+    Examples:
+        # good paths
+        >>> _check_fs_path('a')
+        >>> _check_fs_path('a/b')
+        >>> _check_fs_path('a/b/')
+
+        # bad paths
+        >>> _check_fs_path('/a')
+        Traceback (most recent call last):
+         ...
+        InputError: ...
+        >>> _check_fs_path('a/../b')
+        Traceback (most recent call last):
+         ...
+        InputError: ...
+        >>> _check_fs_path('../a')
+        Traceback (most recent call last):
+         ...
+        InputError: ...
+        >>> _check_fs_path('./a')
+        Traceback (most recent call last):
+         ...
+        InputError: ...
+
+    Raises:
+        InputError
+
+    """
+    # join the path onto something to test normalisation
+    _path = os.path.join('x', path).rstrip(os.sep)
+    if os.path.isabs(path) or os.path.normpath(_path) != _path:
+        raise InputError(
+            f'File paths must be relative to the job log directory: {path}'
+        )
+
+
 def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
              color=False):
     """View (by mode) local log file. This is only called on the file host.
@@ -297,10 +339,14 @@ def main(
       b) remote: re-invoke cylc cat-log as a) on the remote account
 
     """
+    if options.filename is not None:
+        _check_fs_path(options.filename)
+
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands from global config on workflow host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
+        _check_fs_path(logpath)
         logpath = expand_path(logpath)
         tail_tmpl = expand_path(tail_tmpl)
         try:
