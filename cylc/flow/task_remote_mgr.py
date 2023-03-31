@@ -27,17 +27,17 @@ from contextlib import suppress
 from pathlib import Path
 from cylc.flow.option_parsers import verbosity_to_opts
 import os
-import random
 from shlex import quote
 import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import sleep, time
-from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
+from typing import (
+    Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Set, Tuple)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
-    PlatformError, PlatformLookupError, NoHostsError
+    PlatformError, PlatformLookupError, NoHostsError, NoPlatformsError
 )
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
@@ -291,7 +291,7 @@ class TaskRemoteMgr:
     @staticmethod
     def _get_remote_tidy_targets(
         platform_names: List[str],
-        install_targets: List[str]
+        install_targets: Set[str]
     ) -> Dict[str, List[Dict[str, Any]]]:
         """Finds valid platforms for install targets, warns about in invalid
         install targets.
@@ -317,10 +317,6 @@ class TaskRemoteMgr:
         if unreachable_targets:
             msg = 'No platforms available to remote tidy install targets:'
             for unreachable_target in unreachable_targets:
-                msg = (
-                    'Unable to tidy the following install targets'
-                    ' because no matching platform was found:'
-                )
                 msg += f'\n * {unreachable_target}'
             LOG.error(msg)
 
@@ -347,30 +343,35 @@ class TaskRemoteMgr:
 
         # Issue all SSH commands in parallel
         queue: Deque[RemoteTidyQueueTuple] = deque()
-        for install_target in install_targets_map.keys():
+        for install_target, platforms in install_targets_map.items():
             if install_target == get_localhost_install_target():
                 continue
-            platform = random.choice(list(install_targets_map[install_target]))
-            try:
-                cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
-            except NoHostsError as exc:
-                LOG.warning(
-                    PlatformError(
-                        f'{PlatformError.MSG_TIDY}\n{exc}',
-                        platform['name'],
+            for platform in platforms:
+                try:
+                    cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
+                except NoHostsError as exc:
+                    LOG.warning(
+                        PlatformError(
+                            f'{PlatformError.MSG_TIDY}\n{exc}',
+                            platform['name'],
+                        )
                     )
-                )
+                else:
+                    log_platform_event('remote tidy', platform, host)
+                    queue.append(
+                        RemoteTidyQueueTuple(
+                            platform,
+                            host,
+                            Popen(  # nosec
+                                cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
+                                text=True
+                            )  # * command constructed by internal interface
+                        )
+                    )
+                    break
             else:
-                log_platform_event('remote tidy', platform, host)
-                queue.append(
-                    RemoteTidyQueueTuple(
-                        platform,
-                        host,
-                        Popen(  # nosec
-                            cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
-                            text=True
-                        )  # * command constructed by internal interface
-                    )
+                LOG.error(
+                    NoPlatformsError(install_target, 'install target')
                 )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0

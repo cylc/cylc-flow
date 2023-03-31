@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cylc
-from cylc.flow.exceptions import NoHostsError
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED
@@ -46,14 +45,21 @@ async def test_remote_tidy(
           - baz - Install target is set explicitly.
         - An install target (qux) where we cannot get a platform: Ensure
           that we get the desired error.
+
+    Test that platforms with no good hosts (no host not in bad hosts).
     """
     # Monkeypatch away subprocess.Popen calls - prevent any interaction with
     # remotes actually happening:
     class MockProc:
         def __init__(self, *args, **kwargs):
-            breakpoint()
             self.poll = lambda: True
-            self.returncode = 0
+            if (
+                'baum' in args[0]
+                or 'bay' in args[0]
+            ):
+                self.returncode = 255
+            else:
+                self.returncode = 0
             self.communicate = lambda: ('out', 'err')
 
     monkeypatch.setattr(
@@ -62,6 +68,25 @@ async def test_remote_tidy(
         lambda *args, **kwargs: MockProc(*args, **kwargs)
     )
 
+    # Monkeypath function to add a sort order which we don't need in the
+    # real code but rely to prevent the test becoming flaky:
+    def mock_get_install_target_platforms_map(*args, **kwargs):
+        """Add sort to original function to ensure test consistency"""
+        from cylc.flow.platforms import get_install_target_to_platforms_map
+        result = get_install_target_to_platforms_map(*args, **kwargs)
+        sorted_result = {}
+        for key in sorted(result):
+            sorted_result[key] = sorted(
+                result[key], key=lambda x: x['name'], reverse=True)
+        return sorted_result
+
+    monkeypatch.setattr(
+        cylc.flow.task_remote_mgr,
+        'get_install_target_to_platforms_map',
+        mock_get_install_target_platforms_map
+    )
+
+    # Set up global config
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''
@@ -74,9 +99,14 @@ async def test_remote_tidy(
                     # hosts = bar1 to bar9 (implicit)
                 [[baz]]
                     install target = baz
+                    # baum and bay should be uncontactable:
                     hosts = baum, bay, baz
                     [[[selection]]]
                         method = definition order
+                [[notthisone]]
+                    install target = baz
+                    hosts = baum, bay
+                [[bay]]
         ''',
     )
 
@@ -85,7 +115,7 @@ async def test_remote_tidy(
     schd = scheduler(id_)
     async with start(schd) as log:
         # Write database with 6 tasks using 3 platforms:
-        platforms = ['baz', 'bar9', 'foo']
+        platforms = ['baz', 'bar9', 'foo', 'notthisone', 'bay']
         line = r"('', '', {}, 0, 1, '', '', 0,'', '', '', 0, '', '{}', 4, '')"
         stmt = r"INSERT INTO task_jobs VALUES" + r','.join([
             line.format(i, platform) for i, platform in enumerate(platforms)
@@ -95,24 +125,24 @@ async def test_remote_tidy(
 
         # Mock a remote init map.
         schd.task_job_mgr.task_remote_mgr.remote_init_map = {
-            'baz': REMOTE_FILE_INSTALL_DONE,     # Should match platform baz
-            'bar9': REMOTE_FILE_INSTALL_DONE,    # Should match platform bar.
-            'foo': REMOTE_FILE_INSTALL_DONE,     # Should match plaform foo
-            'qux': REMOTE_FILE_INSTALL_DONE,     # Should not match a plaform
-            'quiz': REMOTE_FILE_INSTALL_FAILED,  # Should not be considered
+            'baz': REMOTE_FILE_INSTALL_DONE,      # Should match platform baz
+            'bar9': REMOTE_FILE_INSTALL_DONE,     # Should match platform bar.
+            'foo': REMOTE_FILE_INSTALL_DONE,      # Should match plaform foo
+            'qux': REMOTE_FILE_INSTALL_DONE,      # Should not match a plaform
+            'quiz': REMOTE_FILE_INSTALL_FAILED,   # Should not be considered
+            'bay': REMOTE_FILE_INSTALL_DONE,      # Should return NoPlatforms
         }
 
         # Clear the log, run the test:
         log.clear()
-        # schd.task_job_mgr.bad_hosts.update(['baum', 'bay'])
+        schd.task_job_mgr.task_remote_mgr.bad_hosts.update(['baum', 'bay'])
         schd.task_job_mgr.task_remote_mgr.remote_tidy()
+        pass
 
     records = [str(r.msg) for r in log.records]
 
     # We can't get qux, no defined platform has a matching install target:
-    qux_msg = (
-        'Unable to tidy the following install targets because no'
-        ' matching platform was found:\n * qux')
+    qux_msg = 'No platforms available to remote tidy install targets:\n * qux'
     assert qux_msg in records
 
     # We can get foo bar baz, and we try to remote tidy them.
@@ -124,3 +154,11 @@ async def test_remote_tidy(
     # We haven't done anything with Quiz because we're only looking
     # at cases where platform == REMOTE_FILE_INSTALL_DONE
     assert not [r for r in records if 'quiz' in r]
+
+    notthisone_msg = (
+        'platform: notthisone - clean up did not complete'
+        '\nUnable to find valid host for notthisone'
+    )
+    assert notthisone_msg in records
+
+    assert 'Unable to find a platform from install target bay.' in records

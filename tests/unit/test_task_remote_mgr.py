@@ -112,7 +112,7 @@ def test_get_log_file_name(tmp_path: Path,
                            install_target: str,
                            load_type: Optional[str],
                            expected: str):
-    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None)
+    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None)
     if load_type == 'restart':
         task_remote_mgr.is_restart = True
     elif load_type == 'reload':

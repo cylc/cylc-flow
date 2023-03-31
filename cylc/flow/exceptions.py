@@ -436,12 +436,20 @@ class NoHostsError(CylcError):
 
 
 class NoPlatformsError(CylcError):
-    """None of the platforms of a given group were reachable."""
-    def __init__(self, platform_group):
-        self.platform_group = platform_group
+    """None of the platforms of a given set were reachable.
+
+    Instatiation args:
+        identity: The name of the platform group or install target
+        _type: Whether the set of platforms is a platform group or an
+            install target
+    """
+    def __init__(self, identity: str, set_type: str = 'group'):
+        self.identity = identity
+        self.type = set_type
 
     def __str__(self):
-        return f'Unable to find a platform from group {self.platform_group}.'
+        return (
+            f'Unable to find a platform from {self.type} {self.identity}.')
 
 
 class CylcVersionError(CylcError):

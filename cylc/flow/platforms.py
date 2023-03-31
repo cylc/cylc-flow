@@ -21,7 +21,7 @@ import re
 from copy import deepcopy
 from typing import (
     TYPE_CHECKING, Any, Dict, Iterable,
-    List, Optional, Set, Tuple, Union, overload
+    List, Optional, Set, Union, overload
 )
 
 from cylc.flow import LOG
