@@ -28,7 +28,6 @@ from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report,
 )
 from cylc.flow.cfgspec.workflow import SPEC
-
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import listjoin
