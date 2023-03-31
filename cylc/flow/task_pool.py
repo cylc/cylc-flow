@@ -128,7 +128,7 @@ class TaskPool:
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
@@ -137,7 +137,7 @@ class TaskPool:
         """Set stop after a task."""
         tokens = Tokens(task_id, relative=True)
         name = tokens['task']
-        if name in self.config.get_task_name_list():
+        if name in self.config.taskdefs:
             task_id = TaskID.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
             self.stop_task_id = task_id
@@ -174,7 +174,7 @@ class TaskPool:
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}")
         self.compute_runahead()
-        for name in self.config.get_task_name_list():
+        for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
             point = tdef.first_point(self.config.start_point)
             self.spawn_to_rh_limit(tdef, point, {flow_num})
@@ -925,7 +925,7 @@ class TaskPool:
         del self.task_queue_mgr
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
 
@@ -1385,7 +1385,7 @@ class TaskPool:
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
         various workflow limits."""
-        if name not in self.config.get_task_name_list():
+        if name not in self.config.taskdefs:
             LOG.debug('No task definition %s', name)
             return False
         # Don't spawn outside of graph limits.
