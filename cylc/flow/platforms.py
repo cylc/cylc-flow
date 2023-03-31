@@ -613,18 +613,29 @@ def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
 
 
 def get_install_target_to_platforms_map(
-        platform_names: Iterable[str]
+    platform_names: Iterable[str],
+    quiet: bool = False
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
     Args:
         platform_names: List of platform names to look up in the global config.
+        quiet: Supress PlatformNotFound Errors
 
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     platform_names = set(platform_names)
-    platforms = [platform_from_name(p_name) for p_name in platform_names]
+    platforms: List[Dict[str, Any]] = []
+    for p_name in platform_names:
+        try:
+            platform = platform_from_name(p_name)
+        except PlatformLookupError as exc:
+            if not quiet:
+                raise exc
+        else:
+            platforms.append(platform)
+
     install_targets = {
         get_install_target_from_platform(platform)
         for platform in platforms
@@ -648,54 +659,6 @@ def is_platform_with_target_in_list(
         install_target == distinct_platform['install target']
         for distinct_platform in distinct_platforms_list
     )
-
-
-def map_platforms_used_for_install_targets(
-    platform_names: Set[str],
-    install_targets: Set[str]
-) -> Tuple[Dict[str, List[Dict[Any, Any]]], Set[str]]:
-    """Get a mapping of install targets to platforms.
-
-    Different from get_install_target_platforms_map because it is passed
-    a list of install targets actually used to look for.
-
-    Returns:
-        install_target_map: {
-            'install target': [
-                {...platform2...},
-                {...platform2...}
-            ]
-        }
-        unreachable_targets:
-            A list of install_targets which we cannot get platforms for.
-    """
-    install_targets_map: Dict[str, List] = {
-        target: [] for target in install_targets}
-    for platform_name in platform_names:
-        try:
-            platform = get_platform(platform_name)
-        except PlatformLookupError:
-            # We only need one working platform per install target:
-            continue
-        else:
-            # Install Target
-            if 'install target' in platform and platform['install target']:
-                install_targets_map[platform['install target']].append(
-                    platform)
-            else:
-                install_targets_map[platform['name']].append(platform)
-
-    # Look for unreachable install targets and report them:
-    unreachable_targets = {
-        target for target, platforms
-        in install_targets_map.items()
-        if not platforms
-    }
-    # Remove unreachable targets from list:
-    [install_targets_map.pop(i) for i in unreachable_targets]
-    # Otherwise return out targets map object.
-
-    return install_targets_map, unreachable_targets
 
 
 def get_localhost_install_target() -> str:

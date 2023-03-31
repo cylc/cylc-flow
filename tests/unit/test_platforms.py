@@ -28,7 +28,6 @@ from cylc.flow.platforms import (
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match,
-    map_platforms_used_for_install_targets,
     _validate_single_host
 )
 from cylc.flow.exceptions import (
@@ -414,6 +413,7 @@ def test_get_install_target_from_platform(platform, expected):
     assert get_install_target_from_platform(platform) == expected
 
 
+@pytest.mark.parametrize('quiet', [True, False])
 @pytest.mark.parametrize(
     'platform_names, expected_map, expected_err',
     [
@@ -450,14 +450,18 @@ def test_get_install_target_to_platforms_map(
         platform_names: List[str],
         expected_map: Dict[str, Any],
         expected_err: Type[Exception],
-        monkeypatch: pytest.MonkeyPatch):
+        quiet: bool,
+        monkeypatch: pytest.MonkeyPatch
+):
     """Test that get_install_target_to_platforms_map works as expected."""
     monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
                         lambda x: platform_from_name(x, PLATFORMS_TREK))
 
-    if expected_err:
+    if expected_err and not quiet:
         with pytest.raises(expected_err):
             get_install_target_to_platforms_map(platform_names)
+    elif expected_err and quiet:
+        result = get_install_target_to_platforms_map(platform_names, quiet)
     else:
         result = get_install_target_to_platforms_map(platform_names)
         # Sort the maps:
@@ -606,94 +610,3 @@ def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
     ])
     result = get_platform(task_conf)['name']
     assert result == 'skarloey'
-
-
-@pytest.mark.parametrize(
-    'platform_names, install_targets, glblcfg, expect',
-    [
-        pytest.param(
-            # Two platforms share an install target. Both are reachable.
-            ['sir_handel', 'peter_sam'],
-            ['mountain_railway'],
-            '''
-            [platforms]
-                [[peter_sam, sir_handel]]
-                    install target = mountain_railway
-            ''',
-            {
-                'targets': {'mountain_railway': ['sir_handel', 'peter_sam']},
-                'unreachable': set()
-            },
-            id='basic'
-        ),
-        pytest.param(
-            # One of our install targets matches one of our platforms,
-            # but only implicitly; i.e. the platform name is the same as the
-            # install target name.
-            ['sir_handel'],
-            ['sir_handel'],
-            '''
-            [platforms]
-                [[sir_handel]]
-            ''',
-            {
-                'targets': {'sir_handel': ['sir_handel']},
-                'unreachable': set()
-            },
-            id='implicit-target'
-        ),
-        pytest.param(
-            # One of our install targets matches one of our platforms,
-            # but only implicitly, and the platform name is defined using a
-            # regex.
-            ['sir_handel42'],
-            ['sir_handel42'],
-            '''
-            [platforms]
-                [[sir_handel..]]
-            ''',
-            {
-                'targets': {'sir_handel42': ['sir_handel42']},
-                'unreachable': set()
-            },
-            id='implicit-target-regex'
-        ),
-        pytest.param(
-            # One of our install targets (rusty) has no defined platforms
-            # causing a PlatformLookupError.
-            ['duncan', 'rusty'],
-            ['mountain_railway', 'rusty'],
-            '''
-            [platforms]
-                [[duncan]]
-                    install target = mountain_railway
-            ''',
-            {
-                'targets': {'mountain_railway': ['duncan']},
-                'unreachable': {'rusty'}
-            },
-            id='PlatformLookupError'
-        )
-    ]
-)
-def test_map_platforms_used_for_install_targets(
-    mock_glbl_cfg,
-    platform_names, install_targets, glblcfg, expect
-):
-    def flatten_install_targets_map(itm):
-        result = {}
-        for target, platforms in itm.items():
-            result[target] = [p['name'] for p in platforms]
-        return result
-
-    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glblcfg)
-    install_targets_map, unreachable_targets = (
-        map_platforms_used_for_install_targets(
-            platform_names, install_targets))
-
-    assert (
-        expect['targets'] == flatten_install_targets_map(install_targets_map))
-
-    assert (
-        expect['unreachable'] == unreachable_targets)
-

@@ -36,7 +36,9 @@ from time import sleep, time
 from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformError, PlatformLookupError
+from cylc.flow.exceptions import (
+    PlatformError, PlatformLookupError, NoHostsError
+)
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
@@ -47,13 +49,11 @@ from cylc.flow.pathutil import (
     get_workflow_run_dir,
 )
 from cylc.flow.platforms import (
-    NoHostsError,
-    PlatformLookupError,
     get_host_from_platform,
     get_install_target_from_platform,
+    get_install_target_to_platforms_map,
     get_localhost_install_target,
     log_platform_event,
-    map_platforms_used_for_install_targets
 )
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -288,6 +288,44 @@ class TaskRemoteMgr:
         cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
         return cmd, host
 
+    @staticmethod
+    def _get_remote_tidy_targets(
+        platform_names: List[str],
+        install_targets: List[str]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Finds valid platforms for install targets, warns about in invalid
+        install targets.
+
+        logs:
+            A list of install targets where no platform can be found.
+
+        returns:
+            A mapping of install targets to valid platforms only where
+            platforms are available.
+        """
+        if platform_names is None and install_targets:
+            install_targets_map = {t: [] for t in install_targets}
+        else:
+            install_targets_map = get_install_target_to_platforms_map(
+                platform_names, quiet=True)
+
+        # If we couldn't find a platform for a target, we cannot tidy it -
+        # raise an Error:
+        unreachable_targets = {
+            t for t in install_targets if not install_targets_map.get(t)
+        }
+        if unreachable_targets:
+            msg = 'No platforms available to remote tidy install targets:'
+            for unreachable_target in unreachable_targets:
+                msg = (
+                    'Unable to tidy the following install targets'
+                    ' because no matching platform was found:'
+                )
+                msg += f'\n * {unreachable_target}'
+            LOG.error(msg)
+
+        return install_targets_map
+
     def remote_tidy(self) -> None:
         """Remove workflow contact files and keys from initialised remotes.
 
@@ -304,20 +342,8 @@ class TaskRemoteMgr:
             in self.remote_init_map.items()
             if msg == REMOTE_FILE_INSTALL_DONE
         }
-        install_targets_map, unreachable_targets = (
-            map_platforms_used_for_install_targets(
-                platforms_used, install_targets))
-        # If we couldn't find a platform for a target, we cannot tidy it -
-        # raise an Error:
-        if unreachable_targets:
-            msg = 'No platforms available to remote tidy install targets:'
-            for unreachable_target in unreachable_targets:
-                msg = (
-                    'Unable to tidy the following install targets'
-                    ' because no matching platform was found:'
-                )
-                msg += f'\n * {unreachable_target}'
-            LOG.error(msg)
+        install_targets_map = self._get_remote_tidy_targets(
+            platforms_used, install_targets)
 
         # Issue all SSH commands in parallel
         queue: Deque[RemoteTidyQueueTuple] = deque()

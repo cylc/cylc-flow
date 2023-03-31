@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import cylc
+from cylc.flow.exceptions import NoHostsError
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED
@@ -25,7 +27,8 @@ async def test_remote_tidy(
     scheduler,
     start,
     mock_glbl_cfg,
-    one_conf
+    one_conf,
+    monkeypatch
 ):
     """Remote tidy gets platforms for install targets.
 
@@ -44,6 +47,21 @@ async def test_remote_tidy(
         - An install target (qux) where we cannot get a platform: Ensure
           that we get the desired error.
     """
+    # Monkeypatch away subprocess.Popen calls - prevent any interaction with
+    # remotes actually happening:
+    class MockProc:
+        def __init__(self, *args, **kwargs):
+            breakpoint()
+            self.poll = lambda: True
+            self.returncode = 0
+            self.communicate = lambda: ('out', 'err')
+
+    monkeypatch.setattr(
+        cylc.flow.task_remote_mgr,
+        'Popen',
+        lambda *args, **kwargs: MockProc(*args, **kwargs)
+    )
+
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''
@@ -56,7 +74,9 @@ async def test_remote_tidy(
                     # hosts = bar1 to bar9 (implicit)
                 [[baz]]
                     install target = baz
-                    hosts = baz
+                    hosts = baum, bay, baz
+                    [[[selection]]]
+                        method = definition order
         ''',
     )
 
@@ -84,7 +104,9 @@ async def test_remote_tidy(
 
         # Clear the log, run the test:
         log.clear()
+        # schd.task_job_mgr.bad_hosts.update(['baum', 'bay'])
         schd.task_job_mgr.task_remote_mgr.remote_tidy()
+
     records = [str(r.msg) for r in log.records]
 
     # We can't get qux, no defined platform has a matching install target:

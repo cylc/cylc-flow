@@ -127,3 +127,111 @@ def test_get_log_file_name(tmp_path: Path,
     log_name = task_remote_mgr.get_log_file_name(
         install_target, install_log_dir=log_dir)
     assert log_name == expected
+
+
+@pytest.mark.parametrize(
+    'platform_names, install_targets, glblcfg, expect',
+    [
+        pytest.param(
+            # Two platforms share an install target. Both are reachable.
+            ['sir_handel', 'peter_sam'],
+            ['mountain_railway'],
+            '''
+            [platforms]
+                [[peter_sam, sir_handel]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['peter_sam', 'sir_handel']},
+                'unreachable': set()
+            },
+            id='basic'
+        ),
+        pytest.param(
+            # Two platforms share an install target. Both are reachable.
+            None,
+            ['mountain_railway'],
+            '''
+            [platforms]
+                [[peter_sam, sir_handel]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': []},
+                'unreachable': 'mountain_railway'
+            },
+            id='platform_unreachable'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly; i.e. the platform name is the same as the
+            # install target name.
+            ['sir_handel'],
+            ['sir_handel'],
+            '''
+            [platforms]
+                [[sir_handel]]
+            ''',
+            {
+                'targets': {'sir_handel': ['sir_handel']},
+                'unreachable': set()
+            },
+            id='implicit-target'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly, and the platform name is defined using a
+            # regex.
+            ['sir_handel42'],
+            ['sir_handel42'],
+            '''
+            [platforms]
+                [[sir_handel..]]
+            ''',
+            {
+                'targets': {'sir_handel42': ['sir_handel42']},
+                'unreachable': set()
+            },
+            id='implicit-target-regex'
+        ),
+        pytest.param(
+            # One of our install targets (rusty) has no defined platforms
+            # causing a PlatformLookupError.
+            ['duncan', 'rusty'],
+            ['mountain_railway', 'rusty'],
+            '''
+            [platforms]
+                [[duncan]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['duncan']},
+                'unreachable': 'rusty'
+            },
+            id='PlatformLookupError'
+        )
+    ]
+)
+def test_map_platforms_used_for_install_targets(
+    mock_glbl_cfg,
+    platform_names, install_targets, glblcfg, expect, caplog
+):
+    def flatten_install_targets_map(itm):
+        result = {}
+        for target, platforms in itm.items():
+            result[target] = sorted([p['name'] for p in platforms])
+        return result
+
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glblcfg)
+
+    install_targets_map = TaskRemoteMgr._get_remote_tidy_targets(
+        platform_names, install_targets)
+
+    assert (
+        expect['targets'] == flatten_install_targets_map(install_targets_map))
+
+    if expect['unreachable']:
+        assert (
+            expect['unreachable'] in caplog.records[0].msg)
+    else:
+        assert not caplog.records
