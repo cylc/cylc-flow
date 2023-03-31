@@ -85,20 +85,20 @@ async def test_remote_tidy(
         # Clear the log, run the test:
         log.clear()
         schd.task_job_mgr.task_remote_mgr.remote_tidy()
-        records = [str(r.msg) for r in log.records]
+    records = [str(r.msg) for r in log.records]
 
-        # We can't get qux, no defined platform has a matching install target:
-        qux_msg = (
-            'Unable to tidy the following install targets because no'
-            ' matching platform was found:\n * qux')
-        assert qux_msg in records
+    # We can't get qux, no defined platform has a matching install target:
+    qux_msg = (
+        'Unable to tidy the following install targets because no'
+        ' matching platform was found:\n * qux')
+    assert qux_msg in records
 
-        # We can get foo bar baz, and we try to remote tidy them.
-        # (This will ultimately fail, but past the point we are testing).
-        for target in ['foo', 'bar9', 'baz']:
-            msg = f'platform: {target} - remote tidy (on {target})'
-            assert msg in records
+    # We can get foo bar baz, and we try to remote tidy them.
+    # (This will ultimately fail, but past the point we are testing).
+    for target in ['foo', 'bar9', 'baz']:
+        msg = f'platform: {target} - remote tidy (on {target})'
+        assert msg in records
 
-        # We haven't done anything with Quiz because we're only looking
-        # at cases where platform == REMOTE_FILE_INSTALL_DONE
-        assert not [r for r in records if 'quiz' in r]
+    # We haven't done anything with Quiz because we're only looking
+    # at cases where platform == REMOTE_FILE_INSTALL_DONE
+    assert not [r for r in records if 'quiz' in r]
