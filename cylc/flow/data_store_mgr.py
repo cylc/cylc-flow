@@ -1153,7 +1153,7 @@ class DataStoreMgr:
             fp_delta.runtime.CopyFrom(
                 runtime_from_config(
                     self._apply_broadcasts_to_runtime(
-                        tokens.relative_id,
+                        tokens,
                         self.schd.config.cfg['runtime'][fam.name]
                     )
                 )
@@ -1312,15 +1312,15 @@ class DataStoreMgr:
         tproxy.runtime.CopyFrom(
             runtime_from_config(
                 self._apply_broadcasts_to_runtime(
-                    itask.identity,
+                    itask.tokens,
                     itask.tdef.rtconfig
                 )
             )
         )
 
-    def _apply_broadcasts_to_runtime(self, relative_id, rtconfig):
+    def _apply_broadcasts_to_runtime(self, tokens, rtconfig):
         # Handle broadcasts
-        overrides = self.schd.broadcast_mgr.get_broadcast(relative_id)
+        overrides = self.schd.broadcast_mgr.get_broadcast(tokens)
         if overrides:
             rtconfig = pdeepcopy(rtconfig)
             poverride(rtconfig, overrides, prepend=True)
@@ -1375,7 +1375,7 @@ class DataStoreMgr:
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.
         j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
-            tp_tokens.relative_id,
+            tp_tokens,
             self.schd.config.cfg['runtime'][tproxy.name]
         ))
         for key, val in job_conf.items():
@@ -1887,7 +1887,7 @@ class DataStoreMgr:
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
-                    tokens.relative_id,
+                    tokens,
                     cfg['runtime'][node.name]
                 )
             )

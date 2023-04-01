@@ -1084,7 +1084,7 @@ class TaskJobManager:
 
         # Handle broadcasts
         overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.identity
+            itask.tokens
         )
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
