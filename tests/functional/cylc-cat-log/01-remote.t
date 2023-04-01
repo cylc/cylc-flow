@@ -19,7 +19,7 @@
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 14
+set_test_number 16
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
@@ -110,6 +110,13 @@ grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-task-job-path
 cylc cat-log -m p -f j "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}-un-norm-path
+run_fail "${TEST_NAME}" cylc cat-log "${WORKFLOW_NAME}//1/a-task" \
+    --remote-arg=j/../02/j \
+    --remote-arg=cat \
+    --remote-arg='tail -f'
+grep_ok 'InputError' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 # Clean up the task host.
 purge
