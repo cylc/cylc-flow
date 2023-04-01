@@ -869,14 +869,6 @@ class Output(ObjectType):
     time = Float()
 
 
-class ClockTrigger(ObjectType):
-    class Meta:
-        description = """Task clock-trigger"""
-    time = Float()
-    time_string = String()
-    satisfied = Boolean()
-
-
 class XTrigger(ObjectType):
     class Meta:
         description = """Task trigger"""
@@ -919,7 +911,6 @@ class TaskProxy(ObjectType):
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
-    clock_trigger = Field(ClockTrigger)
     external_triggers = graphene.List(
         XTrigger,
         description="""Task external trigger prerequisites.""",

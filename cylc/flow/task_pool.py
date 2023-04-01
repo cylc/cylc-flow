@@ -943,11 +943,6 @@ class TaskPool:
                 # Already queued
                 continue
             ready_check_items = itask.is_ready_to_run()
-            # Use this periodic checking point for data-store delta
-            # creation, some items aren't event driven (i.e. clock).
-            if itask.tdef.clocktrigger_offset is not None:
-                self.data_store_mgr.delta_task_clock_trigger(
-                    itask, ready_check_items)
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
 

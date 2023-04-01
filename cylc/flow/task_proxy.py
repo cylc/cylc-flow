@@ -19,7 +19,6 @@
 from collections import Counter
 from copy import copy
 from fnmatch import fnmatchcase
-from time import time
 from typing import (
     Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
 )
@@ -51,7 +50,7 @@ class TaskProxy:
     Attributes:
         .clock_trigger_time:
             Clock trigger time in seconds since epoch.
-            (Used for both old-style clock triggers and wall_clock xtrigger).
+            (Used for wall_clock xtrigger).
         .expire_time:
             Time in seconds since epoch when this task is considered expired.
         .identity:
@@ -364,7 +363,7 @@ class TaskProxy:
         """Is this task ready to run?
 
         Takes account of all dependence: on other tasks, xtriggers, and
-        old-style ext- and clock-triggers. Or, manual triggering.
+        old-style ext-triggers. Or, manual triggering.
 
         """
         if self.is_manual_submit:
@@ -378,7 +377,6 @@ class TaskProxy:
             return (self.try_timers[self.state.status].is_delay_done(),)
         return (
             self.state(TASK_STATUS_WAITING),
-            self.is_waiting_clock_done(),
             self.is_waiting_prereqs_done()
         )
 
@@ -392,18 +390,6 @@ class TaskProxy:
         else:
             self.summary[event_key + '_time'] = float(str2time(time_str))
         self.summary[event_key + '_time_string'] = time_str
-
-    def is_waiting_clock_done(self):
-        """Is this task done waiting for its old-style clock trigger time?
-
-        Return True if there is no clock trigger or when clock trigger is done.
-        """
-        if self.tdef.clocktrigger_offset is None:
-            return True
-        return (
-            time() >
-            self.get_clock_trigger_time(str(self.tdef.clocktrigger_offset))
-        )
 
     def is_task_prereqs_not_done(self):
         """Are some task prerequisites not satisfied?"""

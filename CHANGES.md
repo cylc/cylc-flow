@@ -9,6 +9,13 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+-------------------------------------------------------------------------------
+## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
+clock triggers as wall_clock xtriggers.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
