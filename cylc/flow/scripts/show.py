@@ -334,7 +334,6 @@ async def prereqs_and_outputs_query(
                             f'{ext_trig["label"]} ... {state}',
                             state)
                     for xtrig in t_proxy['xtriggers']:
-                        print(xtrig)
                         state = xtrig['satisfied']
                         print_msg_state(
                             f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
