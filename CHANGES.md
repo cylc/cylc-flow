@@ -32,9 +32,13 @@ Fixes `cylc set-verbosity`.
 [#5394](https://github.com/cylc/cylc-flow/pull/5394) -
 Fixes a possible scheduler traceback observed with remote task polling.
 
-[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) - Fix bug where
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
+
+[#5359](https://github.com/cylc/cylc-flow/pull/5359) - Fix bug where viewing
+a workflow's log in the GUI or using `cylc cat-log` would prevent `cylc clean`
+from working.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Coming Soon</span>)__

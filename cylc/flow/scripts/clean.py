@@ -193,15 +193,17 @@ async def run(*ids: str, opts: 'Values') -> None:
     if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit
 
-    failed = []
+    failed = {}
     for workflow in sorted(workflows):
         try:
             init_clean(workflow, opts)
         except Exception as exc:
-            failed.append(workflow)
-            LOG.warning(exc)
+            failed[workflow] = exc
     if failed:
-        raise CylcError(f"Clean failed: {', '.join(failed)}")
+        msg = "Clean failed:"
+        for workflow, exc_message in failed.items():
+            msg += f"\nWorkflow: {workflow}\nError: {exc_message}"
+        raise CylcError(msg)
 
 
 @cli_function(get_option_parser)
