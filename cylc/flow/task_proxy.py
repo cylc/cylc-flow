@@ -184,6 +184,7 @@ class TaskProxy:
 
     def __init__(
         self,
+        scheduler_tokens: 'Tokens',
         tdef: 'TaskDef',
         start_point: 'PointBase',
         flow_nums: Optional[Set[int]] = None,
@@ -208,8 +209,7 @@ class TaskProxy:
             self.flow_nums = copy(flow_nums)
         self.flow_wait = flow_wait
         self.point = start_point
-        self.tokens = Tokens(
-            # TODO: make these absolute?
+        self.tokens = scheduler_tokens.duplicate(
             cycle=str(self.point),
             task=self.tdef.name,
         )

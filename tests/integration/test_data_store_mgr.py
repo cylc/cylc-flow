@@ -24,6 +24,7 @@ from cylc.flow.data_store_mgr import (
     TASK_PROXIES,
     WORKFLOW
 )
+from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
@@ -226,10 +227,10 @@ def test_delta_job_msg(harness):
     """Test method adding messages to job element."""
     schd, data = harness
     j_id = ext_id(schd)
-    job_d = int_id(schd)
+    tokens = Tokens(j_id)
     # First update creation
     assert schd.data_store_mgr.updated[JOBS].get('j_id') is None
-    schd.data_store_mgr.delta_job_msg(job_d, 'The Atomic Age')
+    schd.data_store_mgr.delta_job_msg(tokens, 'The Atomic Age')
     assert schd.data_store_mgr.updated[JOBS][j_id].messages
 
 
@@ -237,7 +238,7 @@ def test_delta_job_attr(harness):
     """Test method modifying job fields to job element."""
     schd, data = harness
     schd.data_store_mgr.delta_job_attr(
-        int_id(schd), 'job_runner_name', 'at')
+        Tokens(ext_id(schd)), 'job_runner_name', 'at')
     assert schd.data_store_mgr.updated[JOBS][ext_id(schd)].messages != (
         schd.data_store_mgr.added[JOBS][ext_id(schd)].job_runner_name
     )
@@ -248,7 +249,7 @@ def test_delta_job_time(harness):
     schd, data = harness
     event_time = get_current_time_string()
     schd.data_store_mgr.delta_job_time(
-        int_id(schd), 'submitted', event_time)
+        Tokens(ext_id(schd)), 'submitted', event_time)
     job_updated = schd.data_store_mgr.updated[JOBS][ext_id(schd)]
     with pytest.raises(ValueError):
         job_updated.HasField('jumped_time')

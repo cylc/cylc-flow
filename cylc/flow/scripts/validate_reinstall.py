@@ -61,7 +61,9 @@ from cylc.flow.scripts.validate import (
     _main as cylc_validate
 )
 from cylc.flow.scripts.reinstall import (
-    REINSTALL_CYLC_ROSE_OPTIONS, reinstall_cli as cylc_reinstall
+    REINSTALL_CYLC_ROSE_OPTIONS,
+    REINSTALL_OPTIONS,
+    reinstall_cli as cylc_reinstall,
 )
 from cylc.flow.scripts.reload import (
     reload_cli as cylc_reload
@@ -73,6 +75,7 @@ from cylc.flow.workflow_files import detect_old_contact_file
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
 VR_OPTIONS = combine_options(
     VALIDATE_OPTIONS,
+    REINSTALL_OPTIONS,
     REINSTALL_CYLC_ROSE_OPTIONS,
     PLAY_OPTIONS,
     CYLC_ROSE_OPTIONS,
@@ -125,6 +128,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # Attempt to work out whether the workflow is running.
     # We are trying to avoid reinstalling then subsequently being
     # unable to play or reload because we cannot identify workflow state.
+    unparsed_wid = workflow_id
     workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
@@ -178,7 +182,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     else:
         cleanup_sysargv(
             'play',
-            workflow_id,
+            unparsed_wid,
             options,
             compound_script_opts=VR_OPTIONS,
             script_opts=(
@@ -187,5 +191,5 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             ),
             source='',  # Intentionally blank
         )
-        log_subcommand('play', workflow_id)
+        log_subcommand(*sys.argv[1:])
         scheduler_cli(options, workflow_id)

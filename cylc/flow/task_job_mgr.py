@@ -370,7 +370,7 @@ class TaskJobManager:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
                                 job=str(itask.submit_num)
-                            ).relative_id,
+                            ),
                             self.REMOTE_INIT_MSG,
                         )
                     continue
@@ -399,7 +399,7 @@ class TaskJobManager:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
                                 job=str(itask.submit_num)
-                            ).relative_id,
+                            ),
                             self.REMOTE_INIT_MSG
                         )
                     continue
@@ -423,7 +423,7 @@ class TaskJobManager:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
                             job=str(itask.submit_num)
-                        ).relative_id,
+                        ),
                         self.REMOTE_INIT_MSG,
                     )
                 continue
@@ -457,7 +457,7 @@ class TaskJobManager:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
                             job=str(itask.submit_num)
-                        ).relative_id,
+                        ),
                         REMOTE_FILE_INSTALL_IN_PROGRESS
                     )
                 continue
@@ -706,7 +706,7 @@ class TaskJobManager:
         self.data_store_mgr.delta_job_msg(
             itask.tokens.duplicate(
                 job=str(itask.submit_num)
-            ).relative_id,
+            ),
             log_msg
         )
         LOG.log(log_lvl, f"[{itask}] {log_msg}")
@@ -811,17 +811,17 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
-            self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
+            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
-            self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
+            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
@@ -1084,7 +1084,7 @@ class TaskJobManager:
 
         # Handle broadcasts
         overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.identity
+            itask.tokens
         )
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
@@ -1285,7 +1285,8 @@ class TaskJobManager:
         """
         return {
             # NOTE: these fields should match get_simulation_job_conf
-            # TODO: turn this into a namedtuple or similar
+            # TODO: formalise this
+            # https://github.com/cylc/cylc-flow/issues/5387
             'job_runner_name': itask.platform['job runner'],
             'job_runner_command_template': (
                 itask.platform['job runner command template']

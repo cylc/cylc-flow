@@ -855,6 +855,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     WorkflowSpecifics.abbrev_util = CylcTimeParser(
         None, None, WorkflowSpecifics.iso8601_parsers
     )
+    return WorkflowSpecifics
 
 
 def get_dump_format():

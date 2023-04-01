@@ -87,13 +87,14 @@ class TaskPool:
 
     def __init__(
         self,
+        tokens: 'Tokens',
         config: 'WorkflowConfig',
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
         data_store_mgr: 'DataStoreMgr',
         flow_mgr: 'FlowMgr'
     ) -> None:
-
+        self.tokens = tokens
         self.config: 'WorkflowConfig' = config
         self.stop_point = config.stop_point or config.final_point
         self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
@@ -128,7 +129,7 @@ class TaskPool:
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
@@ -137,7 +138,7 @@ class TaskPool:
         """Set stop after a task."""
         tokens = Tokens(task_id, relative=True)
         name = tokens['task']
-        if name in self.config.get_task_name_list():
+        if name in self.config.taskdefs:
             task_id = TaskID.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
             self.stop_task_id = task_id
@@ -174,7 +175,7 @@ class TaskPool:
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}")
         self.compute_runahead()
-        for name in self.config.get_task_name_list():
+        for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
             point = tdef.first_point(self.config.start_point)
             self.spawn_to_rh_limit(tdef, point, {flow_num})
@@ -437,6 +438,7 @@ class TaskPool:
          outputs_str) = row
         try:
             itask = TaskProxy(
+                self.tokens,
                 self.config.get_taskdef(name),
                 get_point(cycle),
                 deserialise(flow_nums),
@@ -906,8 +908,12 @@ class TaskPool:
                     )
             else:
                 new_task = TaskProxy(
+                    self.tokens,
                     self.config.get_taskdef(itask.tdef.name),
-                    itask.point, itask.flow_nums, itask.state.status)
+                    itask.point,
+                    itask.flow_nums,
+                    itask.state.status,
+                )
                 itask.copy_to_reload_successor(new_task)
                 self._swap_out(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
@@ -925,7 +931,7 @@ class TaskPool:
         del self.task_queue_mgr
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
 
@@ -1380,7 +1386,7 @@ class TaskPool:
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
         various workflow limits."""
-        if name not in self.config.get_task_name_list():
+        if name not in self.config.taskdefs:
             LOG.debug('No task definition %s', name)
             return False
         # Don't spawn outside of graph limits.
@@ -1452,12 +1458,13 @@ class TaskPool:
             return None
 
         itask = TaskProxy(
+            self.tokens,
             taskdef,
             point,
             flow_nums,
             submit_num=submit_num,
             is_manual_submit=is_manual_submit,
-            flow_wait=flow_wait
+            flow_wait=flow_wait,
         )
         if (name, point) in self.tasks_to_hold:
             LOG.info(f"[{itask}] holding (as requested earlier)")
@@ -1533,7 +1540,12 @@ class TaskPool:
         n_warnings, task_items = self.match_taskdefs(items)
         for (_, point), taskdef in sorted(task_items.items()):
             # This the parent task:
-            itask = TaskProxy(taskdef, point, flow_nums=flow_nums)
+            itask = TaskProxy(
+                self.tokens,
+                taskdef,
+                point,
+                flow_nums=flow_nums,
+            )
             # Spawn children of selected outputs.
             for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:

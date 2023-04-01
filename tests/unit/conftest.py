@@ -28,11 +28,13 @@ from cylc.flow.cycling.loader import (
     INTEGER_CYCLING_TYPE
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.install import (
+    link_runN,
+    unlink_runN,
+)
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.workflow_files import (
     WorkflowFiles,
-    link_runN,
-    unlink_runN,
 )
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
@@ -180,7 +182,10 @@ def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setattr(
             'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         if ctype == ISO8601_CYCLING_TYPE:
-            iso8601_init(time_zone=time_zone, custom_dump_format=dump_format)
+            monkeypatch.setattr(
+                'cylc.flow.cycling.iso8601.WorkflowSpecifics',
+                iso8601_init(time_zone=time_zone, custom_dump_format=dump_format)
+            )
     return _set_cycling_type
 
 

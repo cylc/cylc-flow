@@ -78,7 +78,7 @@ def run_cmd(
     manage=False,
     text=True,
 ):
-    """Run a given cylc command on another account and/or host.
+    """Run a given cylc command on another host.
 
     Arguments:
         command (list):
@@ -107,6 +107,9 @@ def run_cmd(
         * Else True if the remote command is executed successfully, or
           if unsuccessful and capture_status=True the remote command exit code.
         * Otherwise exit with an error message.
+
+    Exits with code 1 in the event of certain command errors.
+
     """
     # CODACY ISSUE:
     #   subprocess call - check for execution of untrusted input.
@@ -385,6 +388,8 @@ def remote_cylc_cmd(
     Raises:
         NoHostsError: If the platform is not contactable.
 
+    Exits with code 1 in the event of certain command errors.
+
     """
     if not host:
         # no host selected => perform host selection from platform config
@@ -425,6 +430,8 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
 
     Raises:
         NoHostsError: If the platform is not contactable.
+
+    Exits with code 1 in the event of certain command errors.
 
     """
     return remote_cylc_cmd(

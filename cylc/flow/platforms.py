@@ -191,6 +191,9 @@ def platform_from_name(
         platform_name = 'localhost'
 
     platform_group = None
+    # The list is reversed to allow user-set platform groups (which are loaded
+    # later than site set platform groups) to be matched first and override
+    # site defined platform groups.
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
@@ -198,6 +201,7 @@ def platform_from_name(
                 platform_groups[platform_name_re], group_name=platform_name,
                 bad_hosts=bad_hosts
             )
+            break
 
     for platform_name_re in list(platforms):
         if (

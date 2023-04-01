@@ -105,7 +105,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir
 )
-from cylc.flow.workflow_files import (
+from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
     search_install_source_dirs
@@ -137,7 +137,7 @@ INSTALL_OPTIONS = [
         sources={'install'},
     ),
     OptionSettings(
-        ["--run-name"],
+        ["--run-name", "-r"],
         help=(
             "Give the run a custom name instead of automatically"
             " numbering it."),
@@ -215,12 +215,16 @@ async def scan(wf_name: str, ping: bool = True) -> None:
         'source': False,
         'ping': ping,  # get status of scanned workflows
     })
-    active = [
-        item async for item in get_pipe(
-            opts, None,
-            scan_dir=get_workflow_run_dir(wf_name)  # restricted scan
-        )
-    ]
+    active = sorted(
+        [
+            item async for item in get_pipe(
+                opts,
+                None,
+                scan_dir=get_workflow_run_dir(wf_name)  # restricted scan
+            )
+        ],
+        key=lambda flow: flow['name']
+    )
     if active:
         n = len(active)
         grammar = (

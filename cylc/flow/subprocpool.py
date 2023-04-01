@@ -575,9 +575,10 @@ class SubProcPool:
                 f'testing connectivity for {ctx.host} using {ssh_test_cmd}'
             )
             ssh_test = run(
-                shlex.split(f'{ssh_cmd} {ctx.host} true'),
+                shlex.split(f'{ssh_cmd} {ctx.host} true'),  # nosec B603 *
                 capture_output=True
             )
+            # * (command is trusted input)
             if ssh_test.returncode == 255:
                 rsync_255_fail = True
         elif (

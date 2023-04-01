@@ -61,7 +61,13 @@ from collections import Counter, deque
 from copy import deepcopy
 import json
 from time import time
-from typing import Union, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Union,
+)
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
@@ -177,6 +183,41 @@ CLEAR_FIELD_MAP = {
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
 }
+
+
+def setbuff(obj, key, value):
+    """Set an attribute on a protobuf object.
+
+    Although `None` is a valid value for an `optional` field in protobuf e.g:
+
+       >>> job = PbJob(job_id=None)
+
+    Attempting to set a field to none after initiation results in error:
+
+       >>> job.job_id = None
+       Traceback (most recent call last):
+       TypeError: ...
+
+    For safety this method only sets the attribute if the value is not None.
+
+    Note:
+        If the above doctest fails, then the behaviour of protobuf has changed
+        and this wrapper might not be necessary any more.
+
+    See:
+        https://github.com/cylc/cylc-flow/issues/5388
+
+    Example:
+        >>> from types import SimpleNamespace
+        >>> obj = SimpleNamespace()
+        >>> setbuff(obj, 'a', 1); obj
+        namespace(a=1)
+        >>> setbuff(obj, 'b', None); obj
+        namespace(a=1)
+
+    """
+    if value is not None:
+        setattr(obj, key, value)
 
 
 def generate_checksum(in_strings):
@@ -545,7 +586,7 @@ class DataStoreMgr:
             user_defined_meta = {}
             for key, val in dict(tdef.describe()).items():
                 if key in ['title', 'description', 'URL']:
-                    setattr(task.meta, key, val)
+                    setbuff(task.meta, key, val)
                 else:
                     user_defined_meta[key] = val
             task.meta.user_defined = json.dumps(user_defined_meta)
@@ -580,7 +621,7 @@ class DataStoreMgr:
                 user_defined_meta = {}
                 for key, val in famcfg.get('meta', {}).items():
                     if key in ['title', 'description', 'URL']:
-                        setattr(family.meta, key, val)
+                        setbuff(family.meta, key, val)
                     else:
                         user_defined_meta[key] = val
                 family.meta.user_defined = json.dumps(user_defined_meta)
@@ -618,7 +659,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
-                setattr(workflow.meta, key, val)
+                setbuff(workflow.meta, key, val)
             else:
                 user_defined_meta[key] = val
         workflow.meta.user_defined = json.dumps(user_defined_meta)
@@ -632,7 +673,7 @@ class DataStoreMgr:
         else:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
-            setattr(workflow.time_zone_info, key, val)
+            setbuff(workflow.time_zone_info, key, val)
 
         workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
@@ -650,17 +691,17 @@ class DataStoreMgr:
         self.parents = parents
 
     def increment_graph_window(
-            self,
-            source_tokens,
-            point,
-            flow_nums,
-            edge_distance=0,
-            active_id=None,
-            descendant=False,
-            is_parent=False,
-            is_manual_submit=False,
-            itask=None
-    ):
+        self,
+        source_tokens: Tokens,
+        point,
+        flow_nums,
+        edge_distance=0,
+        active_id: Optional[str] = None,
+        descendant=False,
+        is_parent=False,
+        is_manual_submit=False,
+        itask=None
+    ) -> None:
         """Generate graph window about active task proxy to n-edge-distance.
 
         A recursive function, that creates a node then moves to children and
@@ -685,7 +726,6 @@ class DataStoreMgr:
                 Active/Other task proxy, passed in with pool invocation.
 
         Returns:
-
             None
 
         """
@@ -734,6 +774,8 @@ class DataStoreMgr:
         edge_distance += 1
 
         # Don't expand window about orphan task.
+        child_tokens: Tokens
+        parent_tokens: Tokens
         if not is_orphan:
             tdef = self.schd.config.taskdefs[source_tokens['task']]
             if graph_children is None:
@@ -825,7 +867,12 @@ class DataStoreMgr:
                 getattr(self.updated[WORKFLOW], EDGES).edges.extend(
                     self.n_window_edges[active_id])
 
-    def generate_edge(self, parent_tokens, child_tokens, active_id):
+    def generate_edge(
+        self,
+        parent_tokens: Tokens,
+        child_tokens: Tokens,
+        active_id: str,
+    ) -> None:
         """Construct edge of child and parent task proxy node."""
         # Initiate edge element.
         e_id = self.edge_id(parent_tokens, child_tokens)
@@ -883,12 +930,12 @@ class DataStoreMgr:
 
     def generate_ghost_task(
         self,
-        tokens,
+        tokens: Tokens,
         point,
         flow_nums,
         is_parent=False,
         itask=None
-    ):
+    ) -> Tuple[bool, Optional[dict]]:
         """Create task-point element populated with static data.
 
         Args:
@@ -901,8 +948,7 @@ class DataStoreMgr:
                 Update task-node from corresponding task proxy object.
 
         Returns:
-
-            (True/False, Dict/None)
+            (is_orphan, graph_children)
 
         Orphan tasks with no children return (True, None) respectively.
 
@@ -926,6 +972,7 @@ class DataStoreMgr:
 
         if itask is None:
             itask = TaskProxy(
+                self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
                 flow_nums,
@@ -1032,7 +1079,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in dict(tdef.describe()).items():
             if key in ['title', 'description', 'URL']:
-                setattr(task.meta, key, val)
+                setbuff(task.meta, key, val)
             else:
                 user_defined_meta[key] = val
         task.meta.user_defined = json.dumps(user_defined_meta)
@@ -1105,7 +1152,7 @@ class DataStoreMgr:
             fp_delta.runtime.CopyFrom(
                 runtime_from_config(
                     self._apply_broadcasts_to_runtime(
-                        tokens.relative_id,
+                        tokens,
                         self.schd.config.cfg['runtime'][fam.name]
                     )
                 )
@@ -1258,26 +1305,26 @@ class DataStoreMgr:
         tproxy.runtime.CopyFrom(
             runtime_from_config(
                 self._apply_broadcasts_to_runtime(
-                    itask.identity,
+                    itask.tokens,
                     itask.tdef.rtconfig
                 )
             )
         )
 
-    def _apply_broadcasts_to_runtime(self, relative_id, rtconfig):
+    def _apply_broadcasts_to_runtime(self, tokens, rtconfig):
         # Handle broadcasts
-        overrides = self.schd.broadcast_mgr.get_broadcast(relative_id)
+        overrides = self.schd.broadcast_mgr.get_broadcast(tokens)
         if overrides:
             rtconfig = pdeepcopy(rtconfig)
             poverride(rtconfig, overrides, prepend=True)
         return rtconfig
 
-    def insert_job(self, name, point_string, status, job_conf):
+    def insert_job(self, name, cycle_point, status, job_conf):
         """Insert job into data-store.
 
         Args:
             name (str): Corresponding task name.
-            point_string (str): Cycle point string
+            cycle_point (str|PointBase): Cycle point string
             job_conf (dic):
                 Dictionary of job configuration used to generate
                 the job script.
@@ -1289,17 +1336,16 @@ class DataStoreMgr:
 
         """
         sub_num = job_conf['submit_num']
-        tp_id, tproxy = self.store_node_fetcher(name, point_string)
+        tp_tokens = self.id_.duplicate(
+            cycle=str(cycle_point),
+            task=name,
+        )
+        tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
             return
         update_time = time()
-        tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(sub_num))
-        j_id, job = self.store_node_fetcher(
-            j_tokens['task'],
-            j_tokens['cycle'],
-            j_tokens['job'],
-        )
+        j_id, job = self.store_node_fetcher(j_tokens)
         if job:
             # Job already exists (i.e. post-submission submit failure)
             return
@@ -1322,7 +1368,7 @@ class DataStoreMgr:
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.
         j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
-            tp_tokens.relative_id,
+            tp_tokens,
             self.schd.config.cfg['runtime'][tproxy.name]
         ))
         for key, val in job_conf.items():
@@ -1364,11 +1410,13 @@ class DataStoreMgr:
             job_id,
             platform_name
         ) = row
-
-        tp_id, tproxy = self.store_node_fetcher(name, point_string)
+        tp_tokens = self.id_.duplicate(
+            cycle=point_string,
+            task=name,
+        )
+        tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
             return
-        tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(submit_num))
         j_id = j_tokens.id
 
@@ -1832,7 +1880,7 @@ class DataStoreMgr:
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
-                    tokens.relative_id,
+                    tokens,
                     cfg['runtime'][node.name]
                 )
             )
@@ -1859,7 +1907,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         update_time = time()
@@ -1893,7 +1941,7 @@ class DataStoreMgr:
     def delta_task_held(
         self,
         itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
-    ):
+    ) -> None:
         """Create delta for change in task proxy held state.
 
         Args:
@@ -1903,13 +1951,16 @@ class DataStoreMgr:
 
         """
         if isinstance(itask, TaskProxy):
-            name = itask.tdef.name
-            cycle = itask.point
+            tokens = itask.tokens
             is_held = itask.state.is_held
         else:
             name, cycle, is_held = itask
+            tokens = self.id_.duplicate(
+                task=name,
+                cycle=str(cycle),
+            )
 
-        tp_id, tproxy = self.store_node_fetcher(name, cycle)
+        tp_id, tproxy = self.store_node_fetcher(tokens)
         if not tproxy:
             return
         tp_delta = self.updated[TASK_PROXIES].setdefault(
@@ -1919,7 +1970,7 @@ class DataStoreMgr:
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
-    def delta_task_queued(self, itask):
+    def delta_task_queued(self, itask: TaskProxy) -> None:
         """Create delta for change in task proxy queued state.
 
         Args:
@@ -1928,7 +1979,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         tp_delta = self.updated[TASK_PROXIES].setdefault(
@@ -1938,7 +1989,7 @@ class DataStoreMgr:
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
-    def delta_task_runahead(self, itask):
+    def delta_task_runahead(self, itask: TaskProxy) -> None:
         """Create delta for change in task proxy runahead state.
 
         Args:
@@ -1947,7 +1998,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         tp_delta = self.updated[TASK_PROXIES].setdefault(
@@ -1957,7 +2008,11 @@ class DataStoreMgr:
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
-    def delta_task_output(self, itask, message):
+    def delta_task_output(
+        self,
+        itask: TaskProxy,
+        message: str,
+    ) -> None:
         """Create delta for change in task proxy output.
 
         Args:
@@ -1966,7 +2021,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         item = itask.state.outputs.get_item(message)
@@ -1985,7 +2040,7 @@ class DataStoreMgr:
         output.time = update_time
         self.updates_pending = True
 
-    def delta_task_outputs(self, itask):
+    def delta_task_outputs(self, itask: TaskProxy) -> None:
         """Create delta for change in all task proxy outputs.
 
         Args:
@@ -1994,7 +2049,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         update_time = time()
@@ -2009,7 +2064,7 @@ class DataStoreMgr:
 
         self.updates_pending = True
 
-    def delta_task_prerequisite(self, itask):
+    def delta_task_prerequisite(self, itask: TaskProxy) -> None:
         """Create delta for change in task proxy prerequisite.
 
         Args:
@@ -2018,7 +2073,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         update_time = time()
@@ -2036,7 +2091,13 @@ class DataStoreMgr:
         tp_delta.prerequisites.extend(prereq_list)
         self.updates_pending = True
 
-    def delta_task_ext_trigger(self, itask, trig, message, satisfied):
+    def delta_task_ext_trigger(
+        self,
+        itask: TaskProxy,
+        trig: str,
+        message: str,
+        satisfied: bool,
+    ) -> None:
         """Create delta for change in task proxy external_trigger.
 
         Args:
@@ -2047,7 +2108,7 @@ class DataStoreMgr:
             message (str): Trigger message.
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
         # update task instance
@@ -2086,14 +2147,9 @@ class DataStoreMgr:
     # -----------
     # Job Deltas
     # -----------
-    def delta_job_msg(self, job_d, msg):
+    def delta_job_msg(self, tokens: Tokens, msg: str) -> None:
         """Add message to job."""
-        tokens = Tokens(job_d, relative=True)
-        j_id, job = self.store_node_fetcher(
-            tokens['task'],
-            tokens['cycle'],
-            tokens['job'],
-        )
+        j_id, job = self.store_node_fetcher(tokens)
         if not job:
             return
         j_delta = self.updated[JOBS].setdefault(
@@ -2109,32 +2165,31 @@ class DataStoreMgr:
             j_delta.messages.append(msg)
         self.updates_pending = True
 
-    def delta_job_attr(self, job_d, attr_key, attr_val):
+    def delta_job_attr(
+        self,
+        tokens: Tokens,
+        attr_key: str,
+        attr_val: Any,
+    ) -> None:
         """Set job attribute."""
-        tokens = Tokens(job_d, relative=True)
-        j_id, job = self.store_node_fetcher(
-            tokens['task'],
-            tokens['cycle'],
-            tokens['job'],
-        )
+        j_id, job = self.store_node_fetcher(tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
-        setattr(j_delta, attr_key, attr_val)
+        setbuff(j_delta, attr_key, attr_val)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
         ).MergeFrom(j_delta)
         self.updates_pending = True
 
-    def delta_job_state(self, job_d, status):
+    def delta_job_state(
+        self,
+        tokens: Tokens,
+        status: str,
+    ) -> None:
         """Set job state."""
-        tokens = Tokens(job_d, relative=True)
-        j_id, job = self.store_node_fetcher(
-            tokens['task'],
-            tokens['cycle'],
-            tokens['job'],
-        )
+        j_id, job = self.store_node_fetcher(tokens)
         if not job or status not in JOB_STATUS_SET:
             return
         j_delta = PbJob(
@@ -2147,46 +2202,35 @@ class DataStoreMgr:
         ).MergeFrom(j_delta)
         self.updates_pending = True
 
-    def delta_job_time(self, job_d, event_key, time_str=None):
+    def delta_job_time(
+        self,
+        tokens: Tokens,
+        event_key: str,
+        time_str: Optional[str] = None,
+    ) -> None:
         """Set an event time in job pool object.
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        tokens = Tokens(job_d, relative=True)
-        j_id, job = self.store_node_fetcher(
-            tokens['task'],
-            tokens['cycle'],
-            tokens['job'],
-        )
+        j_id, job = self.store_node_fetcher(tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
         time_attr = f'{event_key}_time'
-        setattr(j_delta, time_attr, time_str)
+        setbuff(j_delta, time_attr, time_str)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
         ).MergeFrom(j_delta)
         self.updates_pending = True
 
-    def store_node_fetcher(
-            self, name, point=None, sub_num=None, node_type=TASK_PROXIES):
+    def store_node_fetcher(self, tokens: Tokens) -> Tuple[str, Any]:
         """Check that task proxy is in or being added to the store"""
-        if point is None:
-            node_id = self.definition_id(name)
-            node_type = TASKS
-        elif sub_num is None:
-            node_id = self.id_.duplicate(
-                cycle=str(point),
-                task=name,
-            ).id
-        else:
-            node_id = self.id_.duplicate(
-                cycle=str(point),
-                task=name,
-                job=str(sub_num),
-            ).id
-            node_type = JOBS
+        node_type = {
+            'task': TASK_PROXIES,
+            'job': JOBS,
+        }[tokens.lowest_token]
+        node_id = tokens.id
         if node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
         elif node_id in self.data[self.workflow_id][node_type]:

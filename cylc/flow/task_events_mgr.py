@@ -430,7 +430,7 @@ class TaskEventsManager():
 
     def _get_remote_conf(self, itask, key):
         """Get deprecated "[remote]" items that default to platforms."""
-        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         SKEY = 'remote'
         if SKEY not in overrides:
             overrides[SKEY] = {}
@@ -442,7 +442,7 @@ class TaskEventsManager():
 
     def _get_workflow_platforms_conf(self, itask, key):
         """Return top level [runtime] items that default to platforms."""
-        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         return (
             overrides.get(key) or
             itask.tdef.rtconfig[key] or
@@ -594,7 +594,7 @@ class TaskEventsManager():
         else:
             new_msg = message
         self.data_store_mgr.delta_job_msg(
-            itask.tokens.duplicate(job=str(submit_num)).relative_id,
+            itask.tokens.duplicate(job=str(submit_num)),
             new_msg
         )
 
@@ -675,11 +675,11 @@ class TaskEventsManager():
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
             if itask.tdef.run_mode != 'simulation':
-                job_d = itask.tokens.duplicate(
+                job_tokens = itask.tokens.duplicate(
                     job=str(itask.submit_num)
-                ).relative_id
+                )
                 self.data_store_mgr.delta_job_attr(
-                    job_d, 'job_id', itask.summary['submit_method_id'])
+                    job_tokens, 'job_id', itask.summary['submit_method_id'])
 
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -923,7 +923,7 @@ class TaskEventsManager():
     def _get_events_conf(self, itask, key, default=None):
         """Return an events setting from workflow then global configuration."""
         for getter in [
-                self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
+                self.broadcast_mgr.get_broadcast(itask.tokens).get("events"),
                 itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
                 glbl_cfg().get(["scheduler", "mail"]),
@@ -1101,9 +1101,9 @@ class TaskEventsManager():
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_FAILED)
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
+        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_FAILED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -1133,9 +1133,9 @@ class TaskEventsManager():
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.warning(f"[{itask}] Vacated job restarted")
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-        self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
+        self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
+        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -1151,9 +1151,10 @@ class TaskEventsManager():
 
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
+
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
+        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_SUCCEEDED)
         itask.set_summary_time('finished', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -1206,9 +1207,12 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
 
         # Register newly submit-failed job with the database and datastore.
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_state(
+            job_tokens,
+            TASK_STATUS_SUBMIT_FAILED
+        )
 
         self._reset_job_timers(itask)
 
@@ -1257,13 +1261,24 @@ class TaskEventsManager():
         # Register the newly submitted job with the database and datastore.
         # Do after itask has changed state
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
+        self.data_store_mgr.delta_job_time(
+            job_tokens,
+            'submitted',
+            event_time,
+        )
         if itask.tdef.run_mode == 'simulation':
             # Simulate job started as well.
-            self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
+            self.data_store_mgr.delta_job_time(
+                job_tokens,
+                'started',
+                event_time,
+            )
         else:
-            self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
+            self.data_store_mgr.delta_job_state(
+                job_tokens,
+                TASK_STATUS_SUBMITTED,
+            )
 
     def _insert_task_job(
         self,

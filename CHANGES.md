@@ -18,7 +18,44 @@ ones in. -->
 clock triggers as wall_clock xtriggers.
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.2 (<span actions:bind='release-date'>Coming Soon</span>)__
+## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+[#5439](https://github.com/cylc/cylc-flow/pull/5439) - Small CLI short option chages:
+Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
+short option for `--no-detach` to `-N`; add `-r` as a short option for
+`--run-name`.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Fixes
+
+[5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
+group selection order bug.
+
+[#5384](https://github.com/cylc/cylc-flow/pull/5384) -
+Fixes `cylc set-verbosity`.
+
+[#5394](https://github.com/cylc/cylc-flow/pull/5394) -
+Fixes a possible scheduler traceback observed with remote task polling.
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) - Fix bug where
+absence of `job name length maximum` in PBS platform settings would cause
+Cylc to crash when preparing the job script.
+
+[#5359](https://github.com/cylc/cylc-flow/pull/5359) - Fix bug where viewing
+a workflow's log in the GUI or using `cylc cat-log` would prevent `cylc clean`
+from working.
+
+-------------------------------------------------------------------------------
+## __cylc-8.2.0 (<span actions:bind='release-date'>Coming Soon</span>)__
+
+### Fixes
+[#5328](https://github.com/cylc/cylc-flow/pull/5328) -
+Efficiency improvements to reduce task management overheads on the Scheduler.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
 
 ### Fixes
 

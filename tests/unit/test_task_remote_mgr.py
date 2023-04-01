@@ -23,8 +23,35 @@ from unittest.mock import MagicMock, Mock
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE, REMOTE_INIT_IN_PROGRESS, TaskRemoteMgr)
+from cylc.flow.workflow_files import WorkflowFiles, get_workflow_srv_dir
 
 Fixture = Any
+
+
+@pytest.mark.parametrize(
+    'comms_meth, expected',
+    [
+        (CommsMeth.SSH, True),
+        (CommsMeth.ZMQ, True),
+        (CommsMeth.POLL, False)
+    ]
+)
+def test__remote_init_items(comms_meth: CommsMeth, expected: bool):
+    """Test _remote_init_items().
+
+    Should only includes files under .service/
+    """
+    reg = 'barclay'
+    mock_mgr = Mock(workflow=reg)
+    srv_dir = get_workflow_srv_dir(reg)
+    items = TaskRemoteMgr._remote_init_items(mock_mgr, comms_meth)
+    if expected:
+        assert items
+        for src_path, dst_path in items:
+            Path(src_path).relative_to(srv_dir)
+            Path(dst_path).relative_to(WorkflowFiles.Service.DIRNAME)
+    else:
+        assert not items
 
 
 @pytest.mark.parametrize(
@@ -81,7 +108,7 @@ def test_remote_init_skip(
          '03-reload-another_install_target.log')
     ]
 )
-def test_get_log_file_name(tmp_path,
+def test_get_log_file_name(tmp_path: Path,
                            install_target: str,
                            load_type: Optional[str],
                            expected: str):
@@ -92,7 +119,7 @@ def test_get_log_file_name(tmp_path,
         task_remote_mgr.is_reload = True
     # else load type is start (no flag required)
     run_dir = tmp_path
-    log_dir = Path(run_dir/'some_workflow'/'log'/'remote-install')
+    log_dir = run_dir / 'some_workflow' / 'log' / 'remote-install'
     log_dir.mkdir(parents=True)
     for log_num in range(1, 3):
         Path(f"{log_dir}/{log_num:02d}-start-{install_target}.log").touch()

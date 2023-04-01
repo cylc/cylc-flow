@@ -1426,7 +1426,8 @@ with Conf('global.cylc', desc='''
                        "[remote]retrieve job logs retry delays")}
             ''')
             Conf('tail command template',
-                 VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc=f'''
+                 VDR.V_STRING, 'tail -n +1 --follow=name -F %(filename)s',
+                 desc=f'''
                 A command template (with ``%(filename)s`` substitution) to
                 tail-follow job logs this platform, by ``cylc cat-log``.
 
