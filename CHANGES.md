@@ -14,6 +14,10 @@ ones in. -->
 
 ### Fixes
 
+[5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
+better error messages if [sections] and settings are mixed up in a
+configuration.
+
 [5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
 group selection order bug.
 

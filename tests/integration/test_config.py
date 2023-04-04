@@ -172,22 +172,6 @@ def test_no_graph(flow, validate):
     assert 'missing [scheduling][[graph]] section.' in str(exc_ctx.value)
 
 
-def test_parameter_templates_setting(flow, one_conf, validate):
-    """It should fail if [task parameter]templates is a setting.
-
-    It should be a section.
-    """
-    reg = flow({
-        **one_conf,
-        'task parameters': {
-            'templates': 'foo'
-        }
-    })
-    with pytest.raises(WorkflowConfigError) as exc_ctx:
-        validate(reg)
-    assert '[templates] is a section' in str(exc_ctx.value)
-
-
 @pytest.mark.parametrize(
     'section', [
         'external-trigger',
