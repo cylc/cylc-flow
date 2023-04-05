@@ -155,7 +155,8 @@ class TestSubProcPool(unittest.TestCase):
             with the_answer_file.open(mode="w") as f:
                 f.write("""the_answer = lambda: 42""")
                 f.flush()
-            fn = get_func("the_answer", temp_dir)
+                f_name = "the_answer"
+            fn = get_func(f_name, f_name, temp_dir)
             result = fn()
             self.assertEqual(42, result)
 
@@ -166,19 +167,18 @@ class TestSubProcPool(unittest.TestCase):
             python_dir.mkdir(parents=True)
             amandita_file = python_dir / "amandita.py"
             with amandita_file.open(mode="w") as f:
-                f.write("""amandita = lambda: 'chocolate'""")
+                f.write("""choco = lambda: 'chocolate'""")
                 f.flush()
-            fn = get_func("amandita", temp_dir)
+            m_name = "amandita"  # module
+            f_name =  "choco"  # function
+            fn = get_func(m_name, f_name, temp_dir)
             result = fn()
             self.assertEqual('chocolate', result)
 
             # is in the cache
-            self.assertTrue('amandita' in _XTRIG_FUNCS)
+            self.assertTrue((m_name, f_name) in _XTRIG_FUNCS)
             # returned from cache
-            self.assertEqual(fn, get_func("amandita", temp_dir))
-            del _XTRIG_FUNCS['amandita']
-            # is not in the cache
-            self.assertFalse('amandita' in _XTRIG_FUNCS)
+            self.assertEqual(fn, get_func(m_name, f_name, temp_dir))
 
     def test_xfunction_import_error(self):
         """Test for error on importing a xtrigger function.
@@ -189,7 +189,7 @@ class TestSubProcPool(unittest.TestCase):
         """
         with TemporaryDirectory() as temp_dir:
             with self.assertRaises(ModuleNotFoundError):
-                get_func("invalid-module-name", temp_dir)
+                get_func("invalid-module-name", "func-name", temp_dir)
 
     def test_xfunction_attribute_error(self):
         """Test for error on looking for an attribute in a xtrigger script."""
@@ -200,8 +200,9 @@ class TestSubProcPool(unittest.TestCase):
             with the_answer_file.open(mode="w") as f:
                 f.write("""the_droid = lambda: 'excalibur'""")
                 f.flush()
+            f_name = "the_sword"
             with self.assertRaises(AttributeError):
-                get_func("the_sword", temp_dir)
+                get_func(f_name, f_name, temp_dir)
 
 
 @pytest.fixture

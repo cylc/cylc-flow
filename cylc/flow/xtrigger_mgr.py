@@ -262,8 +262,9 @@ class XtriggerManager:
 
         """
         fname: str = fctx.func_name
+
         try:
-            func = get_func(fname, fdir)
+            func = get_func(fname, fname, fdir)
         except ImportError:
             raise XtriggerConfigError(
                 label,

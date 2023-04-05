@@ -17,6 +17,8 @@
 """xtrigger function to trigger off of a wall clock time."""
 
 from time import time
+from cylc.flow.cycling.iso8601 import interval_parse
+from cylc.flow.exceptions import WorkflowConfigError
 
 
 def wall_clock(trigger_time=None):
@@ -27,3 +29,32 @@ def wall_clock(trigger_time=None):
             Trigger time as seconds since Unix epoch.
     """
     return time() > trigger_time
+
+
+def validate_config(f_args, f_kwargs, f_signature):
+    """Validate and manipulate args parsed from the workflow config.
+
+    wall_clock()  # zero offset
+    wall_clock(PT1H)
+    wall_clock(offset=PT1H)
+
+    The offset must be a valid ISO 8601 interval.
+
+    If f_args used, convert to f_kwargs for clarity.
+
+    """
+    n_args = len(f_args)
+    n_kwargs = len(f_kwargs)
+
+    if n_args + n_kwargs > 1:
+        raise WorkflowConfigError(f"xtrigger: too many args: {f_signature}")
+
+    if n_args:
+        f_kwargs["offset"] = f_args[0]
+    elif not n_kwargs:
+        f_kwargs["offset"] = "P0Y"
+
+    try:
+        interval_parse(f_kwargs["offset"])
+    except ValueError:
+        raise WorkflowConfigError(f"xtrigger: invalid offset: {f_signature}")
