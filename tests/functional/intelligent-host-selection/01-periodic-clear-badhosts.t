@@ -76,6 +76,7 @@ platform: fake-platform - initialisation did not complete
 platform: fake-platform - remote init (on localhost)
 platform: fake-platform - remote file install (on localhost)
 platform: fake-platform - initialisation did not complete
+platform: fake-platform - remote tidy (on localhost)
 __HERE__
 
 purge
