@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Functionality for (loacl) workflow installation."""
+"""Functionality for (local) workflow installation."""
 
 import logging
 import os
