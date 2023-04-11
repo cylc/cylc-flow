@@ -1287,7 +1287,8 @@ class TaskJobManager:
         """
         return {
             # NOTE: these fields should match get_simulation_job_conf
-            # TODO: turn this into a namedtuple or similar
+            # TODO: formalise this
+            # https://github.com/cylc/cylc-flow/issues/5387
             'job_runner_name': itask.platform['job runner'],
             'job_runner_command_template': (
                 itask.platform['job runner command template']
