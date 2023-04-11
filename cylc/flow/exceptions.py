@@ -438,7 +438,7 @@ class NoHostsError(CylcError):
 class NoPlatformsError(CylcError):
     """None of the platforms of a given set were reachable.
 
-    Instatiation args:
+    Args:
         identity: The name of the platform group or install target
         _type: Whether the set of platforms is a platform group or an
             install target
