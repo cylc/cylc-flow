@@ -93,7 +93,7 @@ jobs:
         run: |
           pytest tests/integration
 
-      - name: Upload artifact
+      - name: Upload failed tests artifact
         if: failure()
         uses: actions/upload-artifact@v3
         with:
@@ -105,15 +105,32 @@ jobs:
           coverage xml
           coverage report
 
-      - name: Codecov upload
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: '${{ github.workflow }} ${{ matrix.os }} py-${{ matrix.python-version }}'
-          flags: fast-tests
-          fail_ci_if_error: true
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
+          name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
+          path: coverage.xml
+          retention-days: 7
 
       - name: Linkcheck
         if: startsWith(matrix.python-version, '3.10')
         run: pytest -m linkcheck --dist=load tests/unit
+
+  codecov:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Codecov upload
+        uses: codecov/codecov-action@v3
+        with:
+          name: ${{ github.workflow }}
+          flags: fast-tests
+          fail_ci_if_error: true
+          verbose: true
+          # Token not required for public repos, but avoids upload failure due
+          # to rate-limiting (but not for PRs opened from forks)
+          token: ${{ secrets.CODECOV_TOKEN }}
