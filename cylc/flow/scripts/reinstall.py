@@ -87,7 +87,6 @@ from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     OptionSettings,
-    Options,
     WORKFLOW_ID_ARG_DOC,
 )
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -131,22 +130,19 @@ def get_option_parser() -> COP:
         __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
-    parser.add_cylc_rose_options()
-    options = REINSTALL_OPTIONS
     try:
         # If cylc-rose plugin is available
         __import__('cylc.rose')
-        options.extend(REINSTALL_CYLC_ROSE_OPTIONS)
     except ImportError:
-        pass
+        options = REINSTALL_OPTIONS
+    else:
+        parser.add_cylc_rose_options()
+        options = REINSTALL_CYLC_ROSE_OPTIONS + REINSTALL_OPTIONS
 
     for option in options:
         parser.add_option(*option.args, **option.kwargs)
 
     return parser
-
-
-ReInstallOptions = Options(get_option_parser())
 
 
 @cli_function(get_option_parser)
