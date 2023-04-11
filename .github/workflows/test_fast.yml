@@ -35,20 +35,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Brew Install
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          # speed up install (https://docs.brew.sh/Manpage#environment)
-          export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
-          echo "[command]brew update"
-          brew update
-          echo "[command]brew install ..."
-          brew install bash coreutils
-          # add GNU coreutils and sed to the user PATH
-          # (see instructions in brew install output)
-          echo "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-
       - name: Apt-Get Install
         if: startsWith(matrix.os, 'ubuntu')
         run: |
