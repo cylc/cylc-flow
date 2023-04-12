@@ -146,6 +146,7 @@ def main(
 def reinstall_cli(
     opts: 'Values',
     args: Optional[str] = None,
+    print_reload_tip: bool = True,
 ) -> bool:
     """Implement cylc reinstall.
 
@@ -212,7 +213,8 @@ def reinstall_cli(
         # reinstall for real
         reinstall(opts, workflow_id, source, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
-        display_cylc_reload_tip(workflow_id)
+        if print_reload_tip:
+            display_cylc_reload_tip(workflow_id)
         return True
 
     else:

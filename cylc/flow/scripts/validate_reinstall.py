@@ -162,7 +162,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     cylc_validate(parser, options, workflow_id)
 
     log_subcommand('reinstall', workflow_id)
-    reinstall_ok = cylc_reinstall(options, workflow_id)
+    reinstall_ok = cylc_reinstall(options, workflow_id, print_reload_tip=False)
     if not reinstall_ok:
         LOG.warning(
             'No changes to source: No reinstall or'
