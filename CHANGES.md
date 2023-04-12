@@ -17,13 +17,15 @@ ones in. -->
 [#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
 clock triggers as wall_clock xtriggers.
 
--------------------------------------------------------------------------------
-## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
-
 [#5439](https://github.com/cylc/cylc-flow/pull/5439) - Small CLI short option chages:
 Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
+
+### Fixes
+
+[#5458](https://github.com/cylc/cylc-flow/pull/5458) - Fix a small bug
+causing option parsing to fail with Cylc Reinstall.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__

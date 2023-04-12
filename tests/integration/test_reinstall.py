@@ -28,14 +28,18 @@ from cylc.flow.exceptions import (
 from cylc.flow.install import (
     reinstall_workflow,
 )
+from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.reinstall import (
-    ReInstallOptions,
+    get_option_parser as reinstall_gop,
     reinstall_cli,
 )
+from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import (
     WorkflowFiles,
 )
 
+
+ReInstallOptions = Options(reinstall_gop())
 
 # cli opts
 
