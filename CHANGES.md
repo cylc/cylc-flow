@@ -14,6 +14,9 @@ ones in. -->
 
 ### Enhancements
 
+[#5461](https://github.com/cylc/cylc-flow/pull/5461) - Preserve colour
+formatting when starting workflows in distributed mode using `run hosts`.
+
 [#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
 clock triggers as wall_clock xtriggers.
 
