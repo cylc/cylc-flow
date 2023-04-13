@@ -35,20 +35,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Brew Install
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          # speed up install (https://docs.brew.sh/Manpage#environment)
-          export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
-          echo "[command]brew update"
-          brew update
-          echo "[command]brew install ..."
-          brew install bash coreutils
-          # add GNU coreutils and sed to the user PATH
-          # (see instructions in brew install output)
-          echo "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-
       - name: Apt-Get Install
         if: startsWith(matrix.os, 'ubuntu')
         run: |
@@ -93,7 +79,7 @@ jobs:
         run: |
           pytest tests/integration
 
-      - name: Upload artifact
+      - name: Upload failed tests artifact
         if: failure()
         uses: actions/upload-artifact@v3
         with:
@@ -105,15 +91,35 @@ jobs:
           coverage xml
           coverage report
 
-      - name: Codecov upload
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: '${{ github.workflow }} ${{ matrix.os }} py-${{ matrix.python-version }}'
-          flags: fast-tests
-          fail_ci_if_error: true
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }} # Token not required for public repos, but might reduce chance of random 404 error?
+          name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
+          path: coverage.xml
+          retention-days: 7
 
       - name: Linkcheck
         if: startsWith(matrix.python-version, '3.10')
         run: pytest -m linkcheck --dist=load tests/unit
+
+  codecov:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Codecov upload
+        uses: codecov/codecov-action@v3
+        with:
+          name: ${{ github.workflow }}
+          flags: fast-tests
+          fail_ci_if_error: true
+          verbose: true
+          # Token not required for public repos, but avoids upload failure due
+          # to rate-limiting (but not for PRs opened from forks)
+          token: ${{ secrets.CODECOV_TOKEN }}
