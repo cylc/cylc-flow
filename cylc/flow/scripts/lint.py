@@ -273,7 +273,7 @@ def get_pyproject_toml(dir_):
             raise CylcError(f'pyproject.toml did not load: {exc}')
 
         if any(
-            [i in loadeddata for i in ['cylc-lint', 'cylclint', 'cylc_lint']]
+            i in loadeddata for i in ['cylc-lint', 'cylclint', 'cylc_lint']
         ):
             for key in keys:
                 tomldata[key] = loadeddata.get('cylc-lint').get(key, [])

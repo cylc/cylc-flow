@@ -487,10 +487,10 @@ def generic_items_match(
         # Get a set of items actually set in both platform and task_section.
         shared_items = set(task_section).intersection(set(platform_spec))
         # If any set items do not match, we can't use this platform.
-        if not all([
+        if not all(
             platform_spec[item] == task_section[item]
             for item in shared_items
-        ]):
+        ):
             return False
     return True
 
