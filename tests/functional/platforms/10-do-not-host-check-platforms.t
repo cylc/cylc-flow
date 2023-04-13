@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that we don't check whether the platform name is a valid host.
+# Check that platform names are not treated as host names. E.g. a platform
+# name starting with "localhost" should not be treated as localhost.
+# https://github.com/cylc/cylc-flow/issues/5342
 . "$(dirname "$0")/test_header"
 
 set_test_number 2
