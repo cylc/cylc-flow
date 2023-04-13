@@ -104,7 +104,7 @@ class OptionSettings():
     def _in_list(self, others):
         """CLI arguments for this option found in any of a list of
         other options."""
-        return any([self & other for other in others])
+        return any(self & other for other in others)
 
     def _update_sources(self, other):
         """Update the sources from this and 1 other OptionSettings object"""
