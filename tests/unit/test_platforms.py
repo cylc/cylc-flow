@@ -461,6 +461,7 @@ def test_get_install_target_to_platforms_map(
         with pytest.raises(expected_err):
             get_install_target_to_platforms_map(platform_names)
     elif expected_err and quiet:
+        # No error should be raised in quiet mode.
         assert get_install_target_to_platforms_map(platform_names, quiet=quiet)
     else:
         result = get_install_target_to_platforms_map(platform_names)

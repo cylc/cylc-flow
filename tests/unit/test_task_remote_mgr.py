@@ -148,7 +148,7 @@ def test_get_log_file_name(tmp_path: Path,
             id='basic'
         ),
         pytest.param(
-            # Two platforms share an install target. Both are reachable.
+            # Two platforms share an install target. Both are unreachable.
             None,
             ['mountain_railway'],
             '''

@@ -440,7 +440,7 @@ class NoPlatformsError(CylcError):
 
     Args:
         identity: The name of the platform group or install target
-        _type: Whether the set of platforms is a platform group or an
+        set_type: Whether the set of platforms is a platform group or an
             install target
         place: Where the attempt to get the platform failed.
     """

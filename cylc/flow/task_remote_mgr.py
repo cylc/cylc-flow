@@ -290,7 +290,7 @@ class TaskRemoteMgr:
 
     @staticmethod
     def _get_remote_tidy_targets(
-        platform_names: List[str],
+        platform_names: Optional[List[str]],
         install_targets: Set[str]
     ) -> Dict[str, List[Dict[str, Any]]]:
         """Finds valid platforms for install targets, warns about in invalid
@@ -311,9 +311,7 @@ class TaskRemoteMgr:
 
         # If we couldn't find a platform for a target, we cannot tidy it -
         # raise an Error:
-        unreachable_targets = {
-            t for t in install_targets if not install_targets_map.get(t)
-        }
+        unreachable_targets = install_targets.difference(install_targets_map)
         if unreachable_targets:
             msg = 'No platforms available to remote tidy install targets:'
             for unreachable_target in unreachable_targets:
