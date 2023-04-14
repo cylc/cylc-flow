@@ -70,8 +70,6 @@ https://docs.python.org/3/library/logging.html#logging-levels:
 - WARNING
 - INFO
 - DEBUG
-- NOTSET
-
 
 Note:
   To abort a job script with a custom error message, use cylc__job_abort:
