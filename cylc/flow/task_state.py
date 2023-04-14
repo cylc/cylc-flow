@@ -474,9 +474,11 @@ class TaskState:
             for dependency in dependencies:
                 cpre = dependency.get_prerequisite(point, tdef)
                 if dependency.suicide:
-                    self.suicide_prerequisites.append(cpre)
+                    if cpre not in self.suicide_prerequisites:
+                        self.suicide_prerequisites.append(cpre)
                 else:
-                    self.prerequisites.append(cpre)
+                    if cpre not in self.prerequisites:
+                        self.prerequisites.append(cpre)
 
         if tdef.sequential:
             # Add a previous-instance succeeded prerequisite.
@@ -492,7 +494,8 @@ class TaskState:
                 cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
                          p_prev < tdef.start_point)
                 cpre.set_condition(tdef.name)
-                self.prerequisites.append(cpre)
+                if cpre not in self.prerequisites:
+                    self.prerequisites.append(cpre)
 
     def add_xtrigger(self, label, satisfied=False):
         self.xtriggers[label] = satisfied

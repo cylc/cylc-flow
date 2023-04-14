@@ -79,6 +79,15 @@ class Prerequisite:
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied = None
 
+    def __eq__(self, other):
+        """Test equality of prerequisites. Ignore derived attributes."""
+        return (
+            self.point == other.point
+            and self.start_point == other.start_point
+            and self.conditional_expression == other.conditional_expression
+            and self.satisfied == other.satisfied
+        )
+
     def add(self, name, point, output, pre_initial=False):
         """Register an output with this prerequisite.
 
@@ -190,7 +199,7 @@ class Prerequisite:
         return res
 
     def satisfy_me(self, all_task_outputs):
-        """Evaluate pre-requisite against known outputs.
+        """Evaluate prerequisite against known outputs.
 
         Updates cache with the evaluation result.
 
