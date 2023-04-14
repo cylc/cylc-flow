@@ -59,6 +59,20 @@ Each message can be prefixed with a severity level using the syntax
 The default message severity is INFO. The --severity=SEVERITY option can be
 used to set the default severity level for all unprefixed messages.
 
+Increased severity will make messages more visible in workflow logs, using
+colour and format changes. DEBUG messages will not be shown in logs by default.
+
+The severity levels are those of the Python Logging Library
+https://docs.python.org/3/library/logging.html#logging-levels:
+
+- CRITICAL
+- ERROR
+- WARNING
+- INFO
+- DEBUG
+- NOTSET
+
+
 Note:
   To abort a job script with a custom error message, use cylc__job_abort:
     cylc__job_abort 'message...'
