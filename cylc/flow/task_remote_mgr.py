@@ -34,7 +34,7 @@ import tarfile
 from time import sleep, time
 from typing import (
     Any, Deque, Dict, TYPE_CHECKING, List,
-    NamedTuple, Optional, Tuple
+    NamedTuple, Optional, Set, Tuple
 )
 
 from cylc.flow import LOG
@@ -52,8 +52,6 @@ from cylc.flow.pathutil import (
 from cylc.flow.platforms import (
     HOST_REC_COMMAND,
     PLATFORM_REC_COMMAND,
-    NoHostsError,
-    PlatformLookupError,
     get_host_from_platform,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
@@ -305,7 +303,7 @@ class TaskRemoteMgr:
 
     @staticmethod
     def _get_remote_tidy_targets(
-        platform_names: Optional[List[str]],
+        platform_names: List[str],
         install_targets: Set[str]
     ) -> Dict[str, List[Dict[str, Any]]]:
         """Finds valid platforms for install targets, warns about in invalid
@@ -319,7 +317,8 @@ class TaskRemoteMgr:
             platforms are available.
         """
         if platform_names is None and install_targets:
-            install_targets_map = {t: [] for t in install_targets}
+            install_targets_map: Dict[str, List[Dict[str, Any]]] = {
+                t: [] for t in install_targets}
         else:
             install_targets_map = get_install_target_to_platforms_map(
                 platform_names, quiet=True)
