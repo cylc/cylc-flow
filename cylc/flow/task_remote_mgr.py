@@ -33,14 +33,15 @@ from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import sleep, time
 from typing import (
-    Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Set, Tuple)
+    Any, Deque, Dict, TYPE_CHECKING, List,
+    NamedTuple, Optional, Tuple
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
     PlatformError, PlatformLookupError, NoHostsError, NoPlatformsError
 )
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
     get_dirs_to_symlink,
@@ -49,6 +50,10 @@ from cylc.flow.pathutil import (
     get_workflow_run_dir,
 )
 from cylc.flow.platforms import (
+    HOST_REC_COMMAND,
+    PLATFORM_REC_COMMAND,
+    NoHostsError,
+    PlatformLookupError,
     get_host_from_platform,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
@@ -68,6 +73,7 @@ from cylc.flow.workflow_files import (
 )
 
 from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
+from cylc.flow.hostuserutil import is_remote_host
 
 if TYPE_CHECKING:
     from zmq.auth.thread import ThreadAuthenticator
@@ -108,39 +114,31 @@ class TaskRemoteMgr:
         self.is_restart = False
         self.db_mgr = db_mgr
 
-    def subshell_eval(self, command, command_pattern, host_check=True):
-        """Evaluate a task platform from a subshell string.
-
-        At Cylc 7, from a host string.
+    def _subshell_eval(
+        self, eval_str: str, command_pattern: re.Pattern
+    ) -> Optional[str]:
+        """Evaluate a platform or host from a possible subshell string.
 
         Arguments:
-            command (str):
-                An explicit host name, a command in back-tick or $(command)
-                format, or an environment variable holding a hostname.
-            command_pattern (re.Pattern):
+            eval_str:
+                An explicit host/platform name, a command, or an environment
+                variable holding a host/patform name.
+            command_pattern:
                 A compiled regex pattern designed to match subshell strings.
-            host_check (bool):
-                A flag to enable remote testing. If True, and if the command
-                is running locally, then it will return 'localhost'.
 
-        Return (str):
+        Return:
             - None if evaluation of command is still taking place.
-            - If command is not defined or the evaluated name is equivalent
-              to 'localhost', _and_ host_check is set to True then
-              'localhost'
-            - Otherwise, return the evaluated host name on success.
+            - 'localhost' if string is empty/not defined.
+            - Otherwise, return the evaluated host/platform name on success.
 
         Raise PlatformError on error.
 
         """
-        # BACK COMPAT: references to "host"
-        # remove at:
-        #     Cylc8.x
-        if not command:
+        if not eval_str:
             return 'localhost'
 
         # Host selection command: $(command) or `command`
-        match = command_pattern.match(command)
+        match = command_pattern.match(eval_str)
         if match:
             cmd_str = match.groups()[1]
             if cmd_str in self.remote_command_map:
@@ -148,34 +146,51 @@ class TaskRemoteMgr:
                 value = self.remote_command_map[cmd_str]
                 if isinstance(value, PlatformError):
                     raise value  # command failed
-                elif value is None:
-                    return  # command not yet ready
-                else:
-                    command = value  # command succeeded
+                if value is None:
+                    return None  # command not yet ready
+                eval_str = value  # command succeeded
             else:
                 # Command not launched (or already reset)
                 self.proc_pool.put_command(
                     SubProcContext(
                         'remote-host-select',
                         ['bash', '-c', cmd_str],
-                        env=dict(os.environ)),
+                        env=dict(os.environ)
+                    ),
                     callback=self._subshell_eval_callback,
                     callback_args=[cmd_str]
                 )
                 self.remote_command_map[cmd_str] = None
-                return self.remote_command_map[cmd_str]
+                return None
 
         # Environment variable substitution
-        command = os.path.expandvars(command)
-        # Remote?
-        # TODO - Remove at Cylc 8.x as this only makes sense with host logic
-        if host_check is True:
-            if is_remote_host(command):
-                return command
-            else:
-                return 'localhost'
-        else:
-            return command
+        return os.path.expandvars(eval_str)
+
+    # BACK COMPAT: references to "host"
+        # remove at:
+        #     Cylc8.x
+    def eval_host(self, host_str: str) -> Optional[str]:
+        """Evaluate a host from a possible subshell string.
+
+        Args:
+            host_str: An explicit host name, a command in back-tick or
+                $(command) format, or an environment variable holding
+                a hostname.
+
+        Returns 'localhost' if evaluated name is equivalent
+        (e.g. localhost4.localdomain4).
+        """
+        host = self._subshell_eval(host_str, HOST_REC_COMMAND)
+        return host if is_remote_host(host) else 'localhost'
+
+    def eval_platform(self, platform_str: str) -> Optional[str]:
+        """Evaluate a platform from a possible subshell string.
+
+        Args:
+            platform_str: An explicit platform name, a command in $(command)
+                format, or an environment variable holding a platform name.
+        """
+        return self._subshell_eval(platform_str, PLATFORM_REC_COMMAND)
 
     def subshell_eval_reset(self):
         """Reset remote eval subshell results.

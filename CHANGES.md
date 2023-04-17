@@ -30,6 +30,9 @@ Fixes a possible scheduler traceback observed with remote task polling.
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
 
+[#5343](https://github.com/cylc/cylc-flow/pull/5343) - Fix a bug causing
+platform names to be checked as if they were hosts.
+
 [#5359](https://github.com/cylc/cylc-flow/pull/5359) - Fix bug where viewing
 a workflow's log in the GUI or using `cylc cat-log` would prevent `cylc clean`
 from working.
