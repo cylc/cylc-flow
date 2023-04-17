@@ -161,4 +161,7 @@ async def test_remote_tidy(
     )
     assert notthisone_msg in records
 
-    assert 'Unable to find a platform from install target bay.' in records
+    bay_msg = (
+        'Unable to find a platform from install target'
+        ' bay during remote tidy.')
+    assert bay_msg in records

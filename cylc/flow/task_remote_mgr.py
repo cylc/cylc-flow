@@ -331,7 +331,7 @@ class TaskRemoteMgr:
         """
         # Get a list of all platforms used from workflow database:
         platforms_used = (
-            self.db_mgr.get_pri_dao().select_platforms_used())
+            self.db_mgr.get_pri_dao().select_task_job_platforms())
         # For each install target compile a list of platforms:
         install_targets = {
             target for target, msg
@@ -371,8 +371,8 @@ class TaskRemoteMgr:
                     break
             else:
                 LOG.error(
-                    NoPlatformsError(install_target, 'install target')
-                )
+                    NoPlatformsError(
+                        install_target, 'install target', 'remote tidy'))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while queue and time() < timeout:

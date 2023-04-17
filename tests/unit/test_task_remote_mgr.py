@@ -158,7 +158,7 @@ def test_get_log_file_name(tmp_path: Path,
             ''',
             {
                 'targets': {'mountain_railway': []},
-                'unreachable': 'mountain_railway'
+                'unreachable': {'mountain_railway'}
             },
             id='platform_unreachable'
         ),
@@ -206,7 +206,7 @@ def test_get_log_file_name(tmp_path: Path,
             ''',
             {
                 'targets': {'mountain_railway': ['duncan']},
-                'unreachable': 'rusty'
+                'unreachable': {'rusty'}
             },
             id='PlatformLookupError'
         )
@@ -231,7 +231,8 @@ def test_map_platforms_used_for_install_targets(
         expect['targets'] == flatten_install_targets_map(install_targets_map))
 
     if expect['unreachable']:
-        assert (
-            expect['unreachable'] in caplog.records[0].msg)
+        for unreachable in expect["unreachable"]:
+            assert (
+                unreachable in caplog.records[0].msg)
     else:
         assert not caplog.records

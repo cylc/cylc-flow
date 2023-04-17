@@ -442,14 +442,23 @@ class NoPlatformsError(CylcError):
         identity: The name of the platform group or install target
         _type: Whether the set of platforms is a platform group or an
             install target
+        place: Where the attempt to get the platform failed.
     """
-    def __init__(self, identity: str, set_type: str = 'group'):
+    def __init__(
+        self, identity: str, set_type: str = 'group', place: str = ''
+    ):
         self.identity = identity
         self.type = set_type
+        if place:
+            self.place = f' during {place}.'
+        else:
+            self.place = '.'
 
     def __str__(self):
         return (
-            f'Unable to find a platform from {self.type} {self.identity}.')
+            f'Unable to find a platform from {self.type} {self.identity}'
+            f'{self.place}'
+        )
 
 
 class CylcVersionError(CylcError):
