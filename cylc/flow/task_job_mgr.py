@@ -58,8 +58,6 @@ from cylc.flow.parsec.util import (
 )
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
-    HOST_REC_COMMAND,
-    PLATFORM_REC_COMMAND,
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
@@ -1120,12 +1118,12 @@ class TaskJobManager:
         host_n, platform_name = None, None
         try:
             if rtconfig['remote']['host'] is not None:
-                host_n = self.task_remote_mgr.subshell_eval(
-                    rtconfig['remote']['host'], HOST_REC_COMMAND
+                host_n = self.task_remote_mgr.eval_host(
+                    rtconfig['remote']['host']
                 )
             else:
-                platform_name = self.task_remote_mgr.subshell_eval(
-                    rtconfig['platform'], PLATFORM_REC_COMMAND
+                platform_name = self.task_remote_mgr.eval_platform(
+                    rtconfig['platform']
                 )
         except PlatformError as exc:
             itask.waiting_on_job_prep = False
