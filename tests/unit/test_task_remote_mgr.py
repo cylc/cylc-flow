@@ -149,7 +149,7 @@ def test_get_log_file_name(tmp_path: Path,
         ),
         pytest.param(
             # Two platforms share an install target. Both are unreachable.
-            None,
+            set(),
             ['mountain_railway'],
             '''
             [platforms]
@@ -225,7 +225,7 @@ def test_map_platforms_used_for_install_targets(
     mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glblcfg)
 
     install_targets_map = TaskRemoteMgr._get_remote_tidy_targets(
-        platform_names, install_targets)
+        set(platform_names), set(install_targets))
 
     assert (
         expect['targets'] == flatten_install_targets_map(install_targets_map))
