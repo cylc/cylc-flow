@@ -316,19 +316,18 @@ class TaskRemoteMgr:
             A mapping of install targets to valid platforms only where
             platforms are available.
         """
-        if not platform_names and install_targets:
+        if install_targets and not platform_names:
             install_targets_map: Dict[str, List[Dict[str, Any]]] = {
                 t: [] for t in install_targets}
+            unreachable_targets = install_targets
         else:
             install_targets_map = get_install_target_to_platforms_map(
                 platform_names, quiet=True)
+            # If we couldn't find a platform for a target, we cannot tidy it -
+            # raise an Error:
+            unreachable_targets = install_targets.difference(
+                install_targets_map)
 
-        # If we couldn't find a platform for a target, we cannot tidy it -
-        # raise an Error:
-        unreachable_targets = [
-            t for t, v in install_targets_map.items()
-            if not v
-        ] + list(install_targets.difference(install_targets_map))
         if unreachable_targets:
             msg = 'No platforms available to remote tidy install targets:'
             for unreachable_target in unreachable_targets:
