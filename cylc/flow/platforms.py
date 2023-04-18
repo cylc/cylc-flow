@@ -128,7 +128,7 @@ def get_platform(
     Raises:
         NoPlatformsError:
             Platform group has no platforms with usable hosts.
-            This should be caught if this function is used on a raw on config,
+            This should be caught if this function is used on a raw config,
             or in any other context where a platform group might be selected.
         PlatformLookupError:
             Raised if the name of a platform cannot be selected based on the
