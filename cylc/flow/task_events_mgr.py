@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, Optional, Union, cast
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import NoHostsError
+from cylc.flow.exceptions import NoHostsError, PlatformLookupError
 from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
 from cylc.flow.parsec.config import ItemNotFoundError
 from cylc.flow.pathutil import (
@@ -48,7 +48,10 @@ from cylc.flow.task_action_timer import (
     TaskActionTimer,
     TimerFlags
 )
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import (
+    get_platform, get_host_from_platform,
+    log_platform_event
+)
 from cylc.flow.task_job_logs import (
     get_task_job_log,
     get_task_job_activity_log,
@@ -941,8 +944,8 @@ class TaskEventsManager():
     def _process_job_logs_retrieval(self, schd, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
         # get a host to run retrieval on
-        platform = get_platform(ctx.platform_name)
         try:
+            platform = get_platform(ctx.platform_name)
             host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
         except NoHostsError:
             # All of the platforms hosts have been found to be uncontactable.
@@ -961,6 +964,13 @@ class TaskEventsManager():
                 for id_key in id_keys:
                     self.unset_waiting_event_timer(id_key)
                 return
+        except PlatformLookupError:
+            log_platform_event(
+                'Unable to retrieve job logs.',
+                {'name': ctx.platform_name},
+                level='warning',
+            )
+            return
 
         # construct the retrieval command
         ssh_str = str(platform["ssh command"])

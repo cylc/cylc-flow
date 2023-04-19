@@ -435,7 +435,7 @@ class NoHostsError(CylcError):
         return f'Unable to find valid host for {self.platform_name}'
 
 
-class NoPlatformsError(CylcError):
+class NoPlatformsError(PlatformLookupError):
     """None of the platforms of a given group were reachable."""
     def __init__(self, platform_group):
         self.platform_group = platform_group

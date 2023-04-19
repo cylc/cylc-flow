@@ -38,6 +38,9 @@ causing option parsing to fail with Cylc Reinstall.
 [5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
 group selection order bug.
 
+[#5395](https://github.com/cylc/cylc-flow/pull/5395) - Fix bug where workflow
+shuts down if all hosts for all platforms in a platform group are unreachable.
+
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 

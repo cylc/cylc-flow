@@ -31,6 +31,7 @@ from typing import Any, Callable, List, Optional
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
+from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.platforms import (
     log_platform_event,
@@ -487,7 +488,14 @@ class SubProcPool:
         # that you can use that platform's ssh command.
         platform = None
         if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
-            platform = get_platform(ctx.cmd_key.platform_name)
+            try:
+                platform = get_platform(ctx.cmd_key.platform_name)
+            except PlatformLookupError:
+                log_platform_event(
+                    'Unable to retrieve job logs.',
+                    {'name': ctx.cmd_key.platform_name},
+                    level='warning',
+                )
         elif callback_args:
             platform = callback_args[0]
             if not (

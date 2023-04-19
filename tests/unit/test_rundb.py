@@ -21,9 +21,11 @@ import sqlite3
 import unittest
 from unittest import mock
 from tempfile import mktemp
+from types import SimpleNamespace
 
 import pytest
 
+from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.rundb import CylcWorkflowDAO
 
 
@@ -153,3 +155,23 @@ def test_context_manager_exit(
         mock_close.assert_called_once()
     # Close connection for real:
     dao.close()
+
+
+def test_select_task_pool_for_restart_if_not_platforms(tmp_path):
+    """Returns error if platform error or errors raised by callback.
+    """
+    # Setup a fake callback function which returns the fake "platform_name":
+    def callback(index, row):
+        return ''.join(row)
+
+    db_file = tmp_path / 'db'
+    dao = CylcWorkflowDAO(db_file, create_tables=True)
+    # Fiddle the connect method to return a list of fake "platform_names":
+    dao.connect = lambda: SimpleNamespace(execute=lambda _: ['foo', 'bar'])
+
+    # Assert that an error is raised and that it mentions both fake platforms:
+    with pytest.raises(
+        PlatformLookupError,
+        match='not defined.*\n.*foo.*\n.*bar'
+    ):
+        dao.select_task_pool_for_restart(callback)
