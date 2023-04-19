@@ -454,6 +454,7 @@ class NoPlatformsError(CylcError):
         else:
             self.place = '.'
 
+
     def __str__(self):
         return (
             f'Unable to find a platform from {self.type} {self.identity}'
