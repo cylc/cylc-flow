@@ -15,9 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import Any as Fixture
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import TASK_STATUS_RUNNING
+
 
 
 async def test_run_job_cmd_no_hosts_error(
@@ -104,3 +107,24 @@ async def test_run_job_cmd_no_hosts_error(
             log,
             contains='No available hosts for no-host-platform',
         )
+
+
+async def test__run_job_cmd_logs_platform_lookup_fail(
+    one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
+    db_select: Fixture, caplog: Fixture
+) -> None:
+    """TaskJobMg._run_job_cmd handles failure to get platform."""
+    reg: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    # Run
+    async with run(schd):
+        from types import SimpleNamespace
+        schd.task_job_mgr._run_job_cmd(
+            schd.task_job_mgr.JOBS_POLL,
+            'foo',
+            [SimpleNamespace(platform={'name': 'culdee fell summit'})],
+            None
+        )
+        warning = caplog.records[-1]
+        assert warning.levelname == 'ERROR'
+        assert 'Unable to run command jobs-poll' in warning.msg

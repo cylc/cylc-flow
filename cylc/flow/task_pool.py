@@ -29,7 +29,8 @@ import logging
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
-from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.exceptions import (
+    WorkflowConfigError, PointParsingError, PlatformLookupError)
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -428,6 +429,9 @@ class TaskPool:
         as submitted or running are polled to confirm their true status.
         Tasks are added to queues again on release from runahead pool.
 
+        Returns:
+            Names of platform if attempting to look up that platform
+            has led to a PlatformNotFoundError.
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
@@ -447,6 +451,7 @@ class TaskPool:
                 flow_wait=bool(flow_wait),
                 is_manual_submit=bool(is_manual_submit)
             )
+
         except WorkflowConfigError:
             LOG.exception(
                 f'ignoring task {name} from the workflow run database\n'
@@ -461,7 +466,12 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
-                itask.platform = get_platform(platform_name)
+                # If we get a failure from the platform selection function
+                # set task status to submit-failed.
+                try:
+                    itask.platform = get_platform(platform_name)
+                except PlatformLookupError:
+                    return platform_name
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
