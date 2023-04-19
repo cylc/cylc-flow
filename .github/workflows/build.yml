@@ -1,0 +1,42 @@
+name: Build
+
+# build the project whenever the configuration is changed
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'README.md'       # check markdown is valid
+      - 'MANIFEST.in'     # check packaging
+      - 'pyproject.toml'  # check build config
+      - 'setup.cfg'       # check deps and project config
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        python: ['3.7', '3.8', '3.9', '3.10']
+        include:
+          - os: 'macos-latest'
+            python: '3.7'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Build
+        uses: cylc/release-actions/build-python-package@v1
+
+      - name: Inspect
+        run: |
+          unzip -l dist/*.whl | tee files
+          grep 'cylc/flow/py.typed' files
+          grep 'cylc/flow/etc' files
+          grep 'cylc/flow/etc/cylc-completion.bash' files
