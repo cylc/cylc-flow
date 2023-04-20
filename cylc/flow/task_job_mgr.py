@@ -308,7 +308,7 @@ class TaskJobManager:
                                 itask.tdef.rtconfig['platform'],
                                 bad_hosts=self.bad_hosts
                             )
-                        except (PlatformLookupError, NoPlatformsError):
+                        except PlatformLookupError:
                             pass
                         else:
                             # If were able to select a new platform;
