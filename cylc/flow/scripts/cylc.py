@@ -23,6 +23,7 @@ import sys
 from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
+from importlib_metadata import files
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
@@ -391,12 +392,11 @@ def print_id_help():
     print(ID_HELP)
 
 
-def print_license():
-    print(
-        pkg_resources.get_distribution('cylc-flow').get_resource_string(
-            __name__, 'COPYING'
-        ).decode()
-    )
+def print_license() -> None:
+    license_file = next(filter(
+        lambda f: f.name == 'COPYING', files('cylc-flow')
+    ))
+    print(license_file.read_text())
 
 
 def print_command_list(commands=None, indent=0):
