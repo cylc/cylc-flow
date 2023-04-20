@@ -435,7 +435,7 @@ class NoHostsError(CylcError):
         return f'Unable to find valid host for {self.platform_name}'
 
 
-class NoPlatformsError(CylcError):
+class NoPlatformsError(PlatformLookupError):
     """None of the platforms of a given set were reachable.
 
     Args:
