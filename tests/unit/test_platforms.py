@@ -21,10 +21,9 @@ from typing import Any, Dict, List, Optional, Type
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
-    get_all_platforms_for_install_target,
     get_platform,
     get_platform_deprecated_settings,
-    get_random_platform_for_install_target, is_platform_definition_subshell,
+    is_platform_definition_subshell,
     platform_from_name, platform_name_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
@@ -414,6 +413,7 @@ def test_get_install_target_from_platform(platform, expected):
     assert get_install_target_from_platform(platform) == expected
 
 
+@pytest.mark.parametrize('quiet', [True, False])
 @pytest.mark.parametrize(
     'platform_names, expected_map, expected_err',
     [
@@ -450,14 +450,19 @@ def test_get_install_target_to_platforms_map(
         platform_names: List[str],
         expected_map: Dict[str, Any],
         expected_err: Type[Exception],
-        monkeypatch: pytest.MonkeyPatch):
+        quiet: bool,
+        monkeypatch: pytest.MonkeyPatch
+):
     """Test that get_install_target_to_platforms_map works as expected."""
     monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
                         lambda x: platform_from_name(x, PLATFORMS_TREK))
 
-    if expected_err:
+    if expected_err and not quiet:
         with pytest.raises(expected_err):
             get_install_target_to_platforms_map(platform_names)
+    elif expected_err and quiet:
+        # No error should be raised in quiet mode.
+        assert get_install_target_to_platforms_map(platform_names, quiet=quiet)
     else:
         result = get_install_target_to_platforms_map(platform_names)
         # Sort the maps:
@@ -509,47 +514,6 @@ def test_get_install_target_to_platforms_map(
 )
 def test_generic_items_match(platform, job, remote, expect):
     assert generic_items_match(platform, job, remote) == expect
-
-
-def test_get_all_platforms_for_install_target(mock_glbl_cfg):
-    mock_glbl_cfg(
-        'cylc.flow.platforms.glbl_cfg',
-        '''
-                [platforms]
-                    [[localhost]]
-                        hosts = localhost
-                        install target = localhost
-                    [[olaf]]
-                        hosts = snow, ice, sparkles
-                        install target = arendelle
-                    [[snow white]]
-                        hosts = happy, sleepy, dopey
-                        install target = forest
-                    [[kristoff]]
-                        hosts = anna, elsa, hans
-                        install target = arendelle
-                    [[belle]]
-                        hosts = beast, maurice
-                        install target = france
-                    [[bambi]]
-                        hosts = thumper, faline, flower
-                        install target = forest
-                    [[merida]]
-                        hosts = angus, fergus
-                        install target = forest
-                    [[forest]]
-                        hosts = fir, oak, elm
-                '''
-    )
-    actual = get_all_platforms_for_install_target('forest')
-    expected = ['snow white', 'bambi', 'merida', 'forest']
-    for platform in actual:
-        assert platform['name'] in expected
-    arendelle_platforms = ['kristoff', 'olaf']
-    assert get_random_platform_for_install_target(
-        'arendelle')['name'] in arendelle_platforms
-    assert get_random_platform_for_install_target(
-        'forest')['name'] not in arendelle_platforms
 
 
 @pytest.mark.parametrize(
