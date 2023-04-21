@@ -17,10 +17,9 @@ dependencies:
   - python
   - pyzmq >=22,<23
   - setuptools >=49, <67
-  - importlib_metadata
+  - importlib_metadata # [py<3.8]
   - urwid >=2,<3
-  # Add # [py<3.11] for tomli once Python 3.11 Released
-  - tomli >=2
+  - tomli >=2 # [py<3.11]
 
 # optional dependencies
   #- empy >=3.3,<3.4

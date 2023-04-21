@@ -23,7 +23,6 @@ import sys
 from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
-from importlib_metadata import files
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
@@ -393,6 +392,10 @@ def print_id_help():
 
 
 def print_license() -> None:
+    try:
+        from importlib.metadata import files
+    except ImportError:
+        from importlib_metadata import files
     license_file = next(filter(
         lambda f: f.name == 'COPYING', files('cylc-flow')
     ))
