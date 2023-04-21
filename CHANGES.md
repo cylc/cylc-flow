@@ -33,6 +33,12 @@ causing option parsing to fail with Cylc Reinstall.
 -------------------------------------------------------------------------------
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Enhancements
+
+[#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
+list and view workflow log files including install logs and workflow
+configuration files.
+
 ### Fixes
 
 [5445](https://github.com/cylc/cylc-flow/pull/5445) - Fix remote tidy
