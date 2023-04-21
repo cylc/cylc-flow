@@ -155,7 +155,7 @@ class TaskJobManager:
         self.bad_hosts = bad_hosts
         self.bad_hosts_to_clear = set()
         self.task_remote_mgr = TaskRemoteMgr(
-            workflow, proc_pool, self.bad_hosts)
+            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr)
 
     def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.

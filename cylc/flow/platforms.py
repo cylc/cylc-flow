@@ -20,7 +20,8 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set, Union, overload
+    TYPE_CHECKING, Any, Dict, Iterable,
+    List, Optional, Set, Union, overload
 )
 
 from cylc.flow import LOG
@@ -630,18 +631,29 @@ def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
 
 
 def get_install_target_to_platforms_map(
-        platform_names: Iterable[str]
+    platform_names: Iterable[str],
+    quiet: bool = False
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
     Args:
         platform_names: List of platform names to look up in the global config.
+        quiet: Supress PlatformNotFound Errors
 
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     platform_names = set(platform_names)
-    platforms = [platform_from_name(p_name) for p_name in platform_names]
+    platforms: List[Dict[str, Any]] = []
+    for p_name in platform_names:
+        try:
+            platform = platform_from_name(p_name)
+        except PlatformLookupError as exc:
+            if not quiet:
+                raise exc
+        else:
+            platforms.append(platform)
+
     install_targets = {
         get_install_target_from_platform(platform)
         for platform in platforms
@@ -665,38 +677,6 @@ def is_platform_with_target_in_list(
         install_target == distinct_platform['install target']
         for distinct_platform in distinct_platforms_list
     )
-
-
-def get_all_platforms_for_install_target(
-    install_target: str
-) -> List[Dict[str, Any]]:
-    """Return list of platform dictionaries for given install target."""
-    platforms: List[Dict[str, Any]] = []
-    all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
-    for k, v in all_platforms.iteritems():  # noqa: B301 (iteritems valid here)
-        if (v.get('install target', k) == install_target):
-            v_copy = deepcopy(v)
-            v_copy['name'] = k
-            platforms.append(v_copy)
-    return platforms
-
-
-def get_random_platform_for_install_target(
-    install_target: str
-) -> Dict[str, Any]:
-    """Return a randomly selected platform (dict) for given install target.
-
-    Raises:
-        PlatformLookupError: We can't get a platform for this install target.
-    """
-    platforms = get_all_platforms_for_install_target(install_target)
-    try:
-        return random.choice(platforms)  # nosec (not crypto related)
-    except IndexError:
-        # No platforms to choose from
-        raise PlatformLookupError(
-            f'Could not select platform for install target: {install_target}'
-        )
 
 
 def get_localhost_install_target() -> str:
