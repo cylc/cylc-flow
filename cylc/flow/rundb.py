@@ -785,12 +785,9 @@ class CylcWorkflowDAO:
 
     def select_latest_flow_nums(self):
         """Return a list of the most recent previous flow numbers."""
-        # Ignore bandit false positive: B608: hardcoded_sql_expressions
-        # Not an injection, simply putting the table name in the SQL query
-        # expression as a string constant local to this module.
-        stmt = (  # nosec
-            r"SELECT flow_nums, MAX(time_created) FROM %(name)s"
-        ) % {"name": self.TABLE_TASK_STATES}
+        stmt = rf'''
+            SELECT flow_nums, MAX(time_created) FROM {self.TABLE_TASK_STATES}
+        '''  # nosec (table name is code constant)
         flow_nums_str = list(self.connect().execute(stmt))[0][0]
         return deserialise(flow_nums_str)
 
