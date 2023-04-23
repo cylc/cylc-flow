@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         manylinux: ['1']
-        os: ['ubuntu-18.04']  # run on the oldest linux we have access to
+        os: ['ubuntu-20.04']  # run on the oldest linux we have access to
         python-version: ['3.7', '3.8', '3.9', '3.10']
 
     steps:
@@ -73,7 +73,7 @@ jobs:
             >> _manylinux.py
 
       - name: Install
-        timeout-minutes: 25
+        timeout-minutes: 35
         run: |
           PYTHONPATH="$PWD:$PYTHONPATH" pip install ."[all]"
 
@@ -84,6 +84,6 @@ jobs:
           import cylc.flow.scheduler
 
       - name: Test
-        timeout-minutes: 15
+        timeout-minutes: 5
         run: |
           pytest -n 5

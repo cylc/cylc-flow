@@ -391,12 +391,15 @@ def print_id_help():
     print(ID_HELP)
 
 
-def print_license():
-    print(
-        pkg_resources.get_distribution('cylc-flow').get_resource_string(
-            __name__, 'COPYING'
-        ).decode()
-    )
+def print_license() -> None:
+    try:
+        from importlib.metadata import files
+    except ImportError:
+        from importlib_metadata import files
+    license_file = next(filter(
+        lambda f: f.name == 'COPYING', files('cylc-flow')
+    ))
+    print(license_file.read_text())
 
 
 def print_command_list(commands=None, indent=0):
