@@ -24,6 +24,7 @@ from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.task_state import (
@@ -840,6 +841,7 @@ async def test_reload_prereqs(
 async def _test_restart_prereqs_sat():
     # YIELD: the workflow has now started...
     schd = yield
+    await schd.update_data_structure()
 
     # Release tasks 1/a and 1/b
     schd.pool.release_runahead_tasks()
@@ -862,6 +864,7 @@ async def _test_restart_prereqs_sat():
 
     # YIELD: the workflow has now restarted or reloaded with the new config...
     schd = yield
+    await schd.update_data_structure()
     assert list_tasks(schd) == [
         ('1', 'c', 'waiting')
     ]
@@ -874,8 +877,28 @@ async def _test_restart_prereqs_sat():
         for key, satisfied in prereq.satisfied.items()
     ) == [
         ('1', 'a', 'succeeded', 'satisfied naturally'),
-        ('1', 'b', 'succeeded', 'satisfied naturally')
+        ('1', 'b', 'succeeded', 'satisfied from database')
     ]
+
+    # The prereqs in the data store should have been updated too
+    # await schd.update_data_structure()
+    tasks = (
+        schd.data_store_mgr.data[schd.data_store_mgr.workflow_id][TASK_PROXIES]
+    )
+    task_c_prereqs = tasks[
+        schd.data_store_mgr.id_.duplicate(cycle='1', task='c').id
+    ].prerequisites
+    assert sorted(
+        (condition.task_proxy, condition.satisfied, condition.message)
+        for prereq in task_c_prereqs
+        for condition in prereq.conditions
+    ) == [
+        ('1/a', True, 'satisfied naturally'),
+        ('1/b', True, 'satisfied from database'),
+    ]
+
+    # and we're done, yield back control and return
+    yield
 
 
 @pytest.mark.parametrize('do_restart', [True, False])
@@ -906,12 +929,12 @@ async def test_graph_change_prereq_satisfaction(
     schd = scheduler(id_, run_mode='simulation', paused_start=False)
 
     test = _test_restart_prereqs_sat()
-    test.asend(None)
+    await test.asend(None)
 
     if do_restart:
         async with start(schd):
             # start the workflow and run part 1 of the tests
-            test.asend(schd)
+            await test.asend(schd)
 
         # shutdown and change the workflow definiton
         conf['scheduling']['graph']['R1'] += '\nb => c'
@@ -920,11 +943,11 @@ async def test_graph_change_prereq_satisfaction(
 
         async with start(schd):
             # restart the workflow and run part 2 of the tests
-            test.asend(schd)
+            await test.asend(schd)
 
     else:
         async with start(schd):
-            test.asend(schd)
+            await test.asend(schd)
 
             # Modify flow.cylc to add a new dependency on "b"
             conf['scheduling']['graph']['R1'] += '\nb => c'
@@ -932,5 +955,6 @@ async def test_graph_change_prereq_satisfaction(
 
             # Reload the workflow config
             schd.command_reload_workflow()
+            schd.pool.reload_taskdefs()
 
-            test.asend(schd)
+            await test.asend(schd)

@@ -444,7 +444,7 @@ class TaskPool:
                 # this task is in the right flow
                 task_outputs = json.loads(task_outputs)
                 return (
-                    'satisfied naturally'
+                    'satisfied from database'
                     if output in task_outputs
                     else False
                 )
@@ -970,6 +970,7 @@ class TaskPool:
                     self.check_task_output,
                 )
                 self._swap_out(new_task)
+                self.data_store_mgr.delta_task_prerequisite(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
