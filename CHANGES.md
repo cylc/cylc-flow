@@ -57,6 +57,9 @@ shuts down if all hosts for all platforms in a platform group are unreachable.
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 
+[#5479](https://github.com/cylc/cylc-flow/pull/5479) -
+Fixes `cylc help license`
+
 [#5394](https://github.com/cylc/cylc-flow/pull/5394) -
 Fixes a possible scheduler traceback observed with remote task polling.
 
