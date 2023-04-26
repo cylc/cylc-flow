@@ -1,39 +1,37 @@
 name: Sync PR
 
 on:
-  schedule:
-    - cron: '33 15 * * 1-5'  # 15:33 UTC Mon-Fri
+  push:
+    branches:
+      - '8.*.x'
   workflow_dispatch:
     inputs:
       branch:
         description: Branch to merge into master
-        required: false
-  # push:
-  #   branches:
-  #     - master
-  #     - '8.*.x'
+        required: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      BRANCH: ${{ inputs.branch || '8.1.x' }}
+      BRANCH: ${{ inputs.branch || github.ref_name }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Configure git
-        uses: cylc/release-actions/configure-git@v1
-
       - name: Check branch name
+        shell: python
         run: |
-          git show-branch "origin/${BRANCH}"
+          import os
+          import sys
 
-          DECONFLICT_BRANCH="${BRANCH}-deconflict"
-          echo "DECONFLICT_BRANCH=${DECONFLICT_BRANCH}" >> $GITHUB_ENV
+          branch = os.environ['BRANCH'].strip()
+          if not branch:
+            sys.exit("::error::Branch name cannot be empty")
+          if branch.endswith('deconflict'):
+            sys.exit("::error::Do not run this workflow for already-created deconflict branches")
+
+          with open(os.environ['GITHUB_ENV'], 'a') as F:
+            print(f'BRANCH={branch}', file=F)
+            print(f'DECONFLICT_BRANCH={branch}-deconflict', file=F)
 
       - name: Check for existing PR
         id: check-pr
@@ -48,20 +46,33 @@ jobs:
 
           for env_var in ('BRANCH', 'DECONFLICT_BRANCH'):
             branch = os.environ[env_var]
-            cmd = f'gh pr list -B master -H {branch} -s open --json url'
+            cmd = f'gh pr list -B master -H {branch} -s open --json url -R ${{ github.repository }}'
             ret = subprocess.run(
-              cmd, shell=True, check=True, capture_output=True, text=True
+              cmd, shell=True, capture_output=True, text=True
             )
             print(ret.stdout)
             if ret.stderr:
-              print(f"::warning::{ret.stderr}")
+              print(f"::error::{ret.stderr}")
+            if ret.returncode:
+              sys.exit(ret.returncode)
             if json.loads(ret.stdout):
               print(f"::notice::Found existing PR for {branch}")
               sys.exit(0)
 
           print("No open PRs found")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            f.write('continue=true')
+            print('continue=true', file=f)
+
+      - name: Checkout
+        if: steps.check-pr.outputs.continue
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Configure git
+        if: steps.check-pr.outputs.continue
+        uses: cylc/release-actions/configure-git@v1
 
       - name: Attempt merge
         id: merge
@@ -73,7 +84,7 @@ jobs:
         id: diff
         if: steps.merge.outcome == 'success'
         run: |
-          if [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]; then
+          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse master)" ]]; then
             echo "::notice::master is up to date with $BRANCH"
             exit 0
           fi
