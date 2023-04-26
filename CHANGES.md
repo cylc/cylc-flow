@@ -21,6 +21,9 @@ configuration files.
 
 ### Fixes
 
+[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
+changes to already-spawned tasks after reload or restart.
+
 [5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
 better error messages if [sections] and settings are mixed up in a
 configuration.
@@ -67,15 +70,6 @@ Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 
 [#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
 for `cylc lint`.
-
--------------------------------------------------------------------------------
-## __cylc-8.1.2 (<span actions:bind='release-date'>Upcoming</span>)__
-
-### Fixes
-
-[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite 
-changes to already-spawned tasks after reload or restart.
-
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
