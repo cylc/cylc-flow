@@ -53,7 +53,7 @@ logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \
-    "Workflow stalled with 1/bad (submit-failed)" \
+    "MEOW MEOW MEOW" \
     "1/bad did not complete required outputs" \
     "$logfile"
 
