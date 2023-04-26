@@ -490,7 +490,7 @@ class TaskState:
                     adjusted.append(prv)
             if adjusted:
                 p_prev = max(adjusted)
-                cpre = Prerequisite(point, tdef.start_point)
+                cpre = Prerequisite(point)
                 cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
                          p_prev < tdef.start_point)
                 cpre.set_condition(tdef.name)

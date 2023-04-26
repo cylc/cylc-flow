@@ -200,7 +200,7 @@ class Dependency:
 
         """
         # Create Prerequisite.
-        cpre = Prerequisite(point, tdef.start_point)
+        cpre = Prerequisite(point)
 
         # Loop over TaskTrigger instances.
         for task_trigger in self.task_triggers:

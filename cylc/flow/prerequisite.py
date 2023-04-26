@@ -42,7 +42,7 @@ class Prerequisite:
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["satisfied", "_all_satisfied",
-                 "target_point_strings", "start_point",
+                 "target_point_strings",
                  "conditional_expression", "point"]
 
     # Extracts T from "foo.T succeeded" etc.
@@ -53,14 +53,10 @@ class Prerequisite:
     DEP_STATE_OVERRIDDEN = 'force satisfied'
     DEP_STATE_UNSATISFIED = False
 
-    def __init__(self, point, start_point=None):
+    def __init__(self, point):
         # The cycle point to which this prerequisite belongs.
         # cylc.flow.cycling.PointBase
         self.point = point
-
-        # Start point for prerequisite validity.
-        # cylc.flow.cycling.PointBase
-        self.start_point = start_point
 
         # List of cycle point strings that this prerequisite depends on.
         self.target_point_strings = []
@@ -83,7 +79,6 @@ class Prerequisite:
         """Test equality of prerequisites. Ignore derived attributes."""
         return (
             self.point == other.point
-            and self.start_point == other.start_point
             and self.conditional_expression == other.conditional_expression
             and self.satisfied == other.satisfied
         )
