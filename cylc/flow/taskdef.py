@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 def generate_graph_children(tdef, point):
-    """Determine graph children of this task (for spawning)."""
+    """Determine graph children of this task at point."""
     graph_children = {}
     for seq, dout in tdef.graph_children.items():
         for output, downs in dout.items():
@@ -74,9 +74,16 @@ def generate_graph_children(tdef, point):
 
 
 def generate_graph_parents(tdef, point):
-    """Determine graph parents of this task."""
+    """Determine graph parents of this task at point."""
     graph_parents = {}
     for seq, ups in tdef.graph_parents.items():
+        if not seq.is_valid(point):
+            # Ignore this upstream trigger if the child point is not on
+            # the sequence (recurrence) the trigger belongs to. E.g.:
+            #   PT6H = "waz"
+            #   T06 = "waz[-PT6H] => foo"
+            # Here waz[-PT6H] is a parent of T06/foo but not T12/foo.
+            continue
         graph_parents[seq] = []
         for name, trigger in ups:
             parent_point = trigger.get_parent_point(point)
@@ -85,11 +92,7 @@ def generate_graph_parents(tdef, point):
             if is_abs and parent_point != point:
                 # If 'foo[^] => bar' only spawn off of '^'.
                 continue
-            if seq.is_valid(parent_point):
-                # E.g.: foo should trigger only on T06:
-                #   PT6H = "waz"
-                #   T06 = "waz[-PT6H] => foo"
-                graph_parents[seq].append((name, parent_point, is_abs))
+            graph_parents[seq].append((name, parent_point, is_abs))
 
     if tdef.sequential:
         # Add prev-instance parent.
