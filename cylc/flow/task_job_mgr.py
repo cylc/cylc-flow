@@ -628,11 +628,12 @@ class TaskJobManager:
             line = "%s %s" % (timestamp, content)
         job_activity_log = get_task_job_activity_log(
             workflow, itask.point, itask.tdef.name)
+        if not line.endswith("\n"):
+            line += "\n"
+        line = host + line
         try:
-            with open(os.path.expandvars(job_activity_log), "ab") as handle:
-                if not line.endswith("\n"):
-                    line += "\n"
-                handle.write((host + line).encode())
+            with open(os.path.expandvars(job_activity_log), "a") as handle:
+                handle.write(line)
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning(f"[{itask}] {host}{line}")

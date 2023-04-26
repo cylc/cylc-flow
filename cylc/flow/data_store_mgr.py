@@ -729,6 +729,7 @@ class DataStoreMgr:
             None
 
         """
+        is_active = not (descendant or is_parent)
         # ID passed through recursion as reference to original/active node.
         if active_id is None:
             source_tokens = self.id_.duplicate(source_tokens)
@@ -742,7 +743,7 @@ class DataStoreMgr:
 
         # Setup and check if active node is another's boundary node
         # to flag its paths for pruning.
-        if edge_distance == 0:
+        if is_active:
             self.n_window_edges[active_id] = set()
             self.n_window_boundary_nodes[active_id] = {}
             self.n_window_nodes[active_id] = set()
@@ -778,81 +779,79 @@ class DataStoreMgr:
         parent_tokens: Tokens
         if not is_orphan:
             tdef = self.schd.config.taskdefs[source_tokens['task']]
-            if graph_children is None:
-                graph_children = generate_graph_children(tdef, point)
-            if (
-                    (not any(graph_children.values()) and descendant)
-                    or self.n_edge_distance == 0
-            ):
-                self.n_window_boundary_nodes[
-                    active_id
-                ].setdefault(edge_distance - 1, set()).add(source_tokens.id)
-
             # TODO: xtrigger is workflow_state edges too
             # Reference set for workflow relations
             final_point = self.schd.config.final_point
-            if edge_distance == 1:
-                descendant = True
-            # Children/downstream nodes
-            for items in graph_children.values():
-                for child_name, child_point, _ in items:
-                    if child_point > final_point:
-                        continue
-                    child_tokens = self.id_.duplicate(
-                        cycle=str(child_point),
-                        task=child_name,
-                    )
-                    # We still increment the graph one further to find
-                    # boundary nodes, but don't create elements.
-                    if edge_distance <= self.n_edge_distance:
-                        self.generate_edge(
-                            source_tokens,
-                            child_tokens,
-                            active_id
+            if descendant or is_active:
+                if graph_children is None:
+                    graph_children = generate_graph_children(tdef, point)
+                if not any(graph_children.values()):
+                    self.n_window_boundary_nodes[active_id].setdefault(
+                        edge_distance - 1,
+                        set()
+                    ).add(source_tokens.id)
+
+                # Children/downstream nodes
+                for items in graph_children.values():
+                    for child_name, child_point, _ in items:
+                        if child_point > final_point:
+                            continue
+                        child_tokens = self.id_.duplicate(
+                            cycle=str(child_point),
+                            task=child_name,
                         )
-                    if child_tokens.id in self.n_window_nodes[active_id]:
-                        continue
-                    self.increment_graph_window(
-                        child_tokens,
-                        child_point,
-                        flow_nums,
-                        edge_distance,
-                        active_id,
-                        descendant,
-                        False
-                    )
+                        # We still increment the graph one further to find
+                        # boundary nodes, but don't create elements.
+                        if edge_distance <= self.n_edge_distance:
+                            self.generate_edge(
+                                source_tokens,
+                                child_tokens,
+                                active_id
+                            )
+                        if child_tokens.id in self.n_window_nodes[active_id]:
+                            continue
+                        self.increment_graph_window(
+                            child_tokens,
+                            child_point,
+                            flow_nums,
+                            edge_distance,
+                            active_id,
+                            True,
+                            False
+                        )
 
             # Parents/upstream nodes
-            for items in generate_graph_parents(tdef, point).values():
-                for parent_name, parent_point, _ in items:
-                    if parent_point > final_point:
-                        continue
-                    parent_tokens = self.id_.duplicate(
-                        cycle=str(parent_point),
-                        task=parent_name,
-                    )
-                    if edge_distance <= self.n_edge_distance:
-                        # reverse for parent
-                        self.generate_edge(
-                            parent_tokens,
-                            source_tokens,
-                            active_id
+            if is_parent or is_active:
+                for items in generate_graph_parents(tdef, point).values():
+                    for parent_name, parent_point, _ in items:
+                        if parent_point > final_point:
+                            continue
+                        parent_tokens = self.id_.duplicate(
+                            cycle=str(parent_point),
+                            task=parent_name,
                         )
-                    if parent_tokens.id in self.n_window_nodes[active_id]:
-                        continue
-                    self.increment_graph_window(
-                        parent_tokens,
-                        parent_point,
-                        flow_nums,
-                        edge_distance,
-                        active_id,
-                        False,
-                        True
-                    )
+                        if edge_distance <= self.n_edge_distance:
+                            # reverse for parent
+                            self.generate_edge(
+                                parent_tokens,
+                                source_tokens,
+                                active_id
+                            )
+                        if parent_tokens.id in self.n_window_nodes[active_id]:
+                            continue
+                        self.increment_graph_window(
+                            parent_tokens,
+                            parent_point,
+                            flow_nums,
+                            edge_distance,
+                            active_id,
+                            False,
+                            True
+                        )
 
         # If this is the active task (edge_distance has been incremented),
         # then add the most distant child as a trigger to prune it.
-        if edge_distance == 1:
+        if is_active:
             levels = self.n_window_boundary_nodes[active_id].keys()
             # Could be self-reference node foo:failed => foo
             if not levels:

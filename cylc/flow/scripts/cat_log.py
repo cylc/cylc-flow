@@ -454,6 +454,8 @@ def main(
                     # set of log/<x> directories to scan for files in
                     Path(log_dir, _file_name).parent
                     for _, _file_name in WORKFLOW_LOG_OPTS.values()
+                    # don't try to list directories which aren't there
+                    if Path(log_dir, _file_name).parent.exists()
                 }
                 for path in dirpath.iterdir()
                 # strip out file aliases such as scheduler/log
