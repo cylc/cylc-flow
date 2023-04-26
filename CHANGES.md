@@ -15,6 +15,10 @@ ones in. -->
 
 ### Enhancements
 
+[#5475](https://github.com/cylc/cylc-flow/pull/5475) - much faster computation
+of the visualization window around active tasks (at the cost, for now, of not
+showing non-active "cousin" nodes).
+
 [#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
 list and view workflow log files including install logs and workflow
 configuration files.
