@@ -166,7 +166,7 @@ def get_platform(
                 task_conf['remote'] if 'remote' in task_conf else {})
             return platform_from_name(
                 platform_name_from_job_info(
-                    glbl_cfg(cached=False).get(['platforms']),
+                    glbl_cfg().get(['platforms']),
                     task_job_section,
                     task_remote_section
                 ),
