@@ -1228,7 +1228,12 @@ class DataStoreMgr:
                     self.db_load_task_proxies[ikey][0].state.prerequisites
             ):
                 for key in itask_prereq.satisfied.keys():
-                    itask_prereq.satisfied[key] = prereqs[key]
+                    try:
+                        itask_prereq.satisfied[key] = prereqs[key]
+                    except KeyError:
+                        # This prereq is not in the DB: new dependencies
+                        # added to an already-spawned task before restart.
+                        itask_prereq.satisfied[key] = False
 
         # Extract info from itasks to data-store.
         for task_info in self.db_load_task_proxies.values():

@@ -69,6 +69,15 @@ Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 for `cylc lint`.
 
 -------------------------------------------------------------------------------
+## __cylc-8.1.2 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Fixes
+
+[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite 
+changes to already-spawned tasks after reload or restart.
+
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
 
 ### Fixes
