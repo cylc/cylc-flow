@@ -28,6 +28,9 @@ configuration files.
 [#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
 changes to already-spawned tasks after reload or restart.
 
+[5466](https://github.com/cylc/cylc-flow/pull/5466) - Don't generate duplicate
+prerequisites from recurrences with coincident points.
+
 [5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
 better error messages if [sections] and settings are mixed up in a
 configuration.
