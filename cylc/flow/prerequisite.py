@@ -75,10 +75,6 @@ class Prerequisite:
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied = None
 
-    def __eq__(self, other):
-        """Test equality of prerequisites. Ignore derived attributes."""
-        return self.hash() == other.hash()
-
     def instantaneous_hash(self):
         """Generate a hash of this prerequisite in its current state.
 
