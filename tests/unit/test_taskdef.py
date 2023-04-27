@@ -48,7 +48,7 @@ def test_generate_graph_parents(tmp_flow_config):
         ISO8601Point('20230101T06')
     ]:
         parents = generate_graph_parents(
-            cfg.taskdefs['every_cycle'], point
+            cfg.taskdefs['every_cycle'], point, cfg.taskdefs
         )
         assert list(parents.values()) == [
             [

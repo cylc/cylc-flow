@@ -73,8 +73,8 @@ def generate_graph_children(tdef, point):
     return graph_children
 
 
-def generate_graph_parents(tdef, point):
-    """Determine graph parents of this task at point."""
+def generate_graph_parents(tdef, point, taskdefs):
+    """Determine graph parents of this task at this point."""
     graph_parents = {}
     for seq, ups in tdef.graph_parents.items():
         if not seq.is_valid(point):
@@ -85,17 +85,27 @@ def generate_graph_parents(tdef, point):
             # Here waz[-PT6H] is a parent of T06/foo but not T12/foo.
             continue
         graph_parents[seq] = []
-        for name, trigger in ups:
+        for parent_name, trigger in ups:
             parent_point = trigger.get_parent_point(point)
+            if (
+                parent_point != point and
+                not taskdefs[parent_name].is_valid_point(parent_point)
+            ):
+                # Inferred parent is not valid w.r.t its own recurrences.
+                # Have to check this for intercycle triggers, because an
+                # offset trigger does not define the cycling of the parent:
+                #   woo[-P1D] => foo
+                # (This does not imply woo[-P1D] exists for any foo point).
+                continue
             is_abs = (trigger.offset_is_absolute or
                       trigger.offset_is_from_icp)
             if is_abs and parent_point != point:
                 # If 'foo[^] => bar' only spawn off of '^'.
                 continue
-            graph_parents[seq].append((name, parent_point, is_abs))
+            graph_parents[seq].append((parent_name, parent_point, is_abs))
 
     if tdef.sequential:
-        # Add prev-instance parent.
+        # Add implicit prevous-instance parent.
         prevs = []
         for seq in tdef.sequences:
             prev = seq.get_prev_point(point)

@@ -816,7 +816,11 @@ class DataStoreMgr:
 
             # Parents/upstream nodes
             if is_parent or is_active:
-                for items in generate_graph_parents(tdef, point).values():
+                for items in generate_graph_parents(
+                    tdef,
+                    point,
+                    self.schd.config.taskdefs
+                ).values():
                     for parent_name, parent_point, _ in items:
                         if parent_point > final_point:
                             continue
