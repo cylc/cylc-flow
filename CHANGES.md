@@ -15,6 +15,10 @@ ones in. -->
 
 ### Enhancements
 
+[#5475](https://github.com/cylc/cylc-flow/pull/5475) - much faster computation
+of the visualization window around active tasks (at the cost, for now, of not
+showing non-active "cousin" nodes).
+
 [#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
 list and view workflow log files including install logs and workflow
 configuration files.
@@ -23,6 +27,9 @@ configuration files.
 
 [#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
 changes to already-spawned tasks after reload or restart.
+
+[5466](https://github.com/cylc/cylc-flow/pull/5466) - Don't generate duplicate
+prerequisites from recurrences with coincident points.
 
 [5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
 better error messages if [sections] and settings are mixed up in a
