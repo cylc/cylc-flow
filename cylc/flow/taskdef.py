@@ -96,6 +96,7 @@ def generate_graph_parents(tdef, point, taskdefs):
                 # offset trigger does not define the cycling of the parent:
                 #   woo[-P1D] => foo
                 # (This does not imply woo[-P1D] exists for any foo point).
+                # This also avoids pre-initial parents.
                 continue
             is_abs = (trigger.offset_is_absolute or
                       trigger.offset_is_from_icp)

@@ -17,10 +17,12 @@
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.cycling.integer import IntegerPoint
+
 from .test_config import tmp_flow_config
 
 
-def test_generate_graph_parents(tmp_flow_config):
+def test_generate_graph_parents_1(tmp_flow_config):
     """Test that parents are only generated from valid recurrences."""
     reg = 'pan-galactic'
     flow_file = tmp_flow_config(
@@ -59,3 +61,40 @@ def test_generate_graph_parents(tmp_flow_config):
                 )
             ]
         ]
+
+
+def test_generate_graph_parents_2(tmp_flow_config):
+    """Test inferred parents are valid w.r.t to their own recurrences."""
+    reg = 'gargle-blaster'
+    flow_file = tmp_flow_config(
+        reg,
+        f"""
+            [scheduling]
+                cycling mode = integer
+                [[graph]]
+                    P1 = "foo[-P1] => foo"
+            [runtime]
+                [[foo]]
+        """
+    )
+    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+
+    # Each instance of every_cycle should have a parent only at T00.
+    parents = generate_graph_parents(
+        cfg.taskdefs['foo'], IntegerPoint("1"), cfg.taskdefs
+    )
+    assert list(parents.values()) == [[]]  # No parents at first point.
+
+    parents = generate_graph_parents(
+        cfg.taskdefs['foo'], IntegerPoint("2"), cfg.taskdefs
+    )
+
+    assert list(parents.values()) == [
+        [
+            (
+                "foo",
+                IntegerPoint('1'),
+                False
+            )
+        ]
+    ]
