@@ -20,14 +20,16 @@ LABEL version="1.0" \
       description="Cylc remote job host for background & at jobs."
 
 # install deps
-RUN apt-get -qq -y install at ssh && \
+RUN  \
+    apt-get -qq -y install ssh iputils-ping && \
     apt-get autoclean
 
 # copy public ssh key (don't setup two way ssh)
 COPY .docker-ssh-keys/*.pub .ssh/
 
 # authorise that key
-RUN mkdir ~/.ssh -p && \
+RUN \
+    mkdir ~/.ssh -p && \
     chmod 700 ~/.ssh && \
     touch ~/.ssh/authorized_keys && \
     chmod 600 ~/.ssh/authorized_keys && \
@@ -40,7 +42,8 @@ EXPOSE 22
 COPY dockerfiles/cylc-remote/configure bin/host-configure
 
 # configure on boot and start the required services
-ENTRYPOINT service ssh start && \
+ENTRYPOINT \
+    service ssh start && \
     atd && \
     /bin/host-configure && \
     /usr/bin/env bash
