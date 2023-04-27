@@ -44,7 +44,6 @@ class Prerequisite:
     __slots__ = (
         "satisfied",
         "_all_satisfied",
-        "target_point_strings",
         "start_point",
         "conditional_expression",
         "point",
