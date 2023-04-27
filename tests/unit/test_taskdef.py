@@ -19,6 +19,8 @@ from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.cycling.integer import IntegerPoint
 
+from .test_config import tmp_flow_config
+
 
 def test_generate_graph_parents_1(tmp_flow_config):
     """Test that parents are only generated from valid recurrences."""
