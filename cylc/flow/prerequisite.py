@@ -84,7 +84,6 @@ class Prerequisite:
             self.point,
             self.conditional_expression,
             tuple(self.satisfied.keys()),
-            tuple(self.satisfied.values()),
         ))
 
     def add(self, name, point, output, pre_initial=False):
