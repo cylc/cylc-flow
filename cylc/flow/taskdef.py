@@ -74,29 +74,33 @@ def generate_graph_children(tdef, point):
 
 
 def generate_graph_parents(tdef, point, taskdefs):
-    """Determine graph parents of this task at this point."""
+    """Determine concrent graph parents of task tdef at point.
+
+    Infer parents be reversing upstream triggers that lead to point/task.
+    """
     graph_parents = {}
-    for seq, ups in tdef.graph_parents.items():
+    for seq, triggers in tdef.graph_parents.items():
         if not seq.is_valid(point):
-            # Ignore this upstream trigger if the child point is not on
-            # the sequence (recurrence) the trigger belongs to. E.g.:
-            #   PT6H = "waz"
+            # Don't infer parents if the trigger belongs to a sequence that
+            # does not include the child point. E.g.:
             #   T06 = "waz[-PT6H] => foo"
-            # Here waz[-PT6H] is a parent of T06/foo but not T12/foo.
+            # here waz[-PT6H] is a parent of T06/foo but not of T12/foo.
             continue
         graph_parents[seq] = []
-        for parent_name, trigger in ups:
+        for parent_name, trigger in triggers:
             parent_point = trigger.get_parent_point(point)
             if (
                 parent_point != point and
                 not taskdefs[parent_name].is_valid_point(parent_point)
             ):
-                # Inferred parent is not valid w.r.t its own recurrences.
-                # Have to check this for intercycle triggers, because an
-                # offset trigger does not define the cycling of the parent:
-                #   woo[-P1D] => foo
-                # (This does not imply woo[-P1D] exists for any foo point).
-                # This also avoids pre-initial parents.
+                # Don't infer inter-cycle parents if the upstream point is
+                # not valid for the parent (which depends on its sequences).
+                # NOTE this includes pre-initial dependence where the offset
+                # extends back beyond the initial point AND erroneous offsets
+                # when different tasks are involved, e.g.:
+                #   woo[-Px] => foo
+                # where (point -Px) does not land on a valid point for woo.
+                # TODO ideally validation would flag this as an error.
                 continue
             is_abs = (trigger.offset_is_absolute or
                       trigger.offset_is_from_icp)
@@ -106,7 +110,7 @@ def generate_graph_parents(tdef, point, taskdefs):
             graph_parents[seq].append((parent_name, parent_point, is_abs))
 
     if tdef.sequential:
-        # Add implicit prevous-instance parent.
+        # Add implicit previous-instance parent.
         prevs = []
         for seq in tdef.sequences:
             prev = seq.get_prev_point(point)
