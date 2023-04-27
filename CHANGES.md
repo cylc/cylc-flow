@@ -11,7 +11,7 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
 
-## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
 
 ### Enhancements
 
