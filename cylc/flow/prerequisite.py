@@ -77,11 +77,19 @@ class Prerequisite:
 
     def __eq__(self, other):
         """Test equality of prerequisites. Ignore derived attributes."""
-        return (
-            self.point == other.point
-            and self.conditional_expression == other.conditional_expression
-            and self.satisfied == other.satisfied
-        )
+        return self.hash() == other.hash()
+
+    def instantaneous_hash(self):
+        """Generate a hash of this prerequisite in its current state.
+
+        Note not using `__hash__` because Prerequisite objects are mutable.
+        """
+        return hash((
+            self.point,
+            self.conditional_expression,
+            tuple(self.satisfied.keys()),
+            tuple(self.satisfied.values()),
+        ))
 
     def add(self, name, point, output, pre_initial=False):
         """Register an output with this prerequisite.
