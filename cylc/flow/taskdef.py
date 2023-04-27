@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 def generate_graph_children(tdef, point):
-    """Determine graph children of this task (for spawning)."""
+    """Determine graph children of this task at point."""
     graph_children = {}
     for seq, dout in tdef.graph_children.items():
         for output, downs in dout.items():
@@ -73,26 +73,44 @@ def generate_graph_children(tdef, point):
     return graph_children
 
 
-def generate_graph_parents(tdef, point):
-    """Determine graph parents of this task."""
+def generate_graph_parents(tdef, point, taskdefs):
+    """Determine concrent graph parents of task tdef at point.
+
+    Infer parents be reversing upstream triggers that lead to point/task.
+    """
     graph_parents = {}
-    for seq, ups in tdef.graph_parents.items():
+    for seq, triggers in tdef.graph_parents.items():
+        if not seq.is_valid(point):
+            # Don't infer parents if the trigger belongs to a sequence that
+            # does not include the child point. E.g.:
+            #   T06 = "waz[-PT6H] => foo"
+            # here waz[-PT6H] is a parent of T06/foo but not of T12/foo.
+            continue
         graph_parents[seq] = []
-        for name, trigger in ups:
+        for parent_name, trigger in triggers:
             parent_point = trigger.get_parent_point(point)
+            if (
+                parent_point != point and
+                not taskdefs[parent_name].is_valid_point(parent_point)
+            ):
+                # Don't infer inter-cycle parents if the upstream point is
+                # not valid for the parent (which depends on its sequences).
+                # NOTE this includes pre-initial dependence where the offset
+                # extends back beyond the initial point AND erroneous offsets
+                # when different tasks are involved, e.g.:
+                #   woo[-Px] => foo
+                # where (point -Px) does not land on a valid point for woo.
+                # TODO ideally validation would flag this as an error.
+                continue
             is_abs = (trigger.offset_is_absolute or
                       trigger.offset_is_from_icp)
             if is_abs and parent_point != point:
                 # If 'foo[^] => bar' only spawn off of '^'.
                 continue
-            if seq.is_valid(parent_point):
-                # E.g.: foo should trigger only on T06:
-                #   PT6H = "waz"
-                #   T06 = "waz[-PT6H] => foo"
-                graph_parents[seq].append((name, parent_point, is_abs))
+            graph_parents[seq].append((parent_name, parent_point, is_abs))
 
     if tdef.sequential:
-        # Add prev-instance parent.
+        # Add implicit previous-instance parent.
         prevs = []
         for seq in tdef.sequences:
             prev = seq.get_prev_point(point)

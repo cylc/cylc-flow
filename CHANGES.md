@@ -25,6 +25,9 @@ configuration files.
 
 ### Fixes
 
+[#5495](https://github.com/cylc/cylc-flow/pull/5495) - Fix bug that could cause
+invalid parent tasks to appear in the UI datastore.
+
 [#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
 changes to already-spawned tasks after reload or restart.
 
