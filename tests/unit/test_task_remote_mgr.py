@@ -20,10 +20,12 @@ import pytest
 from typing import (Any, Optional)
 from unittest.mock import MagicMock, Mock
 
+from cylc.flow.exceptions import PlatformError
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE, REMOTE_INIT_IN_PROGRESS, TaskRemoteMgr)
 from cylc.flow.workflow_files import WorkflowFiles, get_workflow_srv_dir
+
 
 Fixture = Any
 
@@ -236,3 +238,100 @@ def test_map_platforms_used_for_install_targets(
                 unreachable in caplog.records[0].msg)
     else:
         assert not caplog.records
+
+
+shared_eval_params = [
+    pytest.param(
+        'localhost', {}, 'localhost', id="localhost"
+    ),
+    pytest.param(
+        '$(some-cmd)', {}, None, id="subshell_1st_eval"
+    ),
+    pytest.param(
+        '$(some-cmd)', {'some-cmd': None}, None,
+        id="subshell_awaiting_eval"
+    ),
+    pytest.param(
+        '$(some-cmd)', {'some-cmd': 'isaac clarke'}, 'isaac clarke',
+        id="subshell_finished_eval"
+    ),
+    pytest.param(
+        '$SOME_ENV', {}, 'nolan stross', id="env_var"
+    ),
+    pytest.param(
+        '$(env-cmd)', {'env-cmd': '$SOME_ENV'}, 'nolan stross',
+        id="subshell_env_var"
+    ),
+    pytest.param(
+        'titan_station', {}, 'titan_station', id="verbatim_name"
+    ),
+    pytest.param(
+        '', {}, 'localhost', id="empty"
+    ),
+]
+
+
+@pytest.fixture
+def task_remote_mgr_eval(monkeypatch: pytest.MonkeyPatch):
+    """Fixture providing a task remote manager for eval_platform() &
+    eval_host() tests."""
+    def _task_remote_mgr_eval(remote_cmd_map: dict) -> TaskRemoteMgr:
+        monkeypatch.setenv('SOME_ENV', 'nolan stross')
+        task_remote_mgr = TaskRemoteMgr(
+            workflow='usg_ishimura',
+            proc_pool=Mock(),
+            bad_hosts=[],
+            db_mgr=None
+        )
+        task_remote_mgr.remote_command_map = remote_cmd_map
+        return task_remote_mgr
+
+    return _task_remote_mgr_eval
+
+
+@pytest.mark.parametrize(
+    'eval_str, remote_cmd_map, expected',
+    [
+        *shared_eval_params,
+        pytest.param(
+            'localhost_tau_volantis', {}, 'localhost_tau_volantis',
+            id="name_begin_w_localhost"
+        )
+    ]
+)
+def test_eval_platform(
+    eval_str: str, remote_cmd_map: dict, expected: Optional[str],
+    task_remote_mgr_eval,
+):
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(remote_cmd_map)
+    assert task_remote_mgr.eval_platform(eval_str) == expected
+
+
+def test_eval_platform_bad(task_remote_mgr_eval):
+    exc_msg = "foreign contaminant detected"
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(
+        {'cmd': PlatformError(exc_msg, 'aegis_vii')}
+    )
+    with pytest.raises(PlatformError, match=exc_msg):
+        task_remote_mgr.eval_platform('$(cmd)')
+
+
+@pytest.mark.parametrize(
+    'eval_str, remote_cmd_map, expected',
+    [
+        *shared_eval_params,
+        pytest.param(
+            'localhost4.localdomain4', {}, 'localhost', id="localhost_variant"
+        ),
+        pytest.param(
+            '`other cmd`', {'other cmd': 'nicole brennan'}, 'nicole brennan',
+            id="backticks"
+        ),
+    ]
+)
+def test_eval_host(
+    eval_str: str, remote_cmd_map: dict, expected: Optional[str],
+    task_remote_mgr_eval,
+):
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(remote_cmd_map)
+    assert task_remote_mgr.eval_host(eval_str) == expected
