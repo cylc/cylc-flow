@@ -41,9 +41,12 @@ class Prerequisite:
     """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["satisfied", "_all_satisfied",
-                 "target_point_strings",
-                 "conditional_expression", "point"]
+    __slots__ = (
+        "satisfied",
+        "_all_satisfied",
+        "conditional_expression",
+        "point",
+    )
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
@@ -57,9 +60,6 @@ class Prerequisite:
         # The cycle point to which this prerequisite belongs.
         # cylc.flow.cycling.PointBase
         self.point = point
-
-        # List of cycle point strings that this prerequisite depends on.
-        self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
         # {('point string', 'task name', 'output'): DEP_STATE_X, ...}
@@ -106,8 +106,6 @@ class Prerequisite:
             self.satisfied[message] = self.DEP_STATE_UNSATISFIED
         if self._all_satisfied is not None:
             self._all_satisfied = False
-        if point and str(point) not in self.target_point_strings:
-            self.target_point_strings.append(str(point))
 
     def get_raw_conditional_expression(self):
         """Return a representation of this prereq as a string.
@@ -247,7 +245,9 @@ class Prerequisite:
             satisfied=self.is_satisfied(),
         )
         prereq_buf.conditions.extend(conds)
-        prereq_buf.cycle_points.extend(self.target_point_strings)
+        prereq_buf.cycle_points.extend(
+            sorted(self.iter_target_point_strings())
+        )
         return prereq_buf
 
     def set_satisfied(self):
@@ -279,10 +279,18 @@ class Prerequisite:
         else:
             self._all_satisfied = self._conditional_is_satisfied()
 
+    def iter_target_point_strings(self):
+        yield from {
+            message[0]
+            for message in self.satisfied
+        }
+
     def get_target_points(self):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return [get_point(p) for p in self.target_point_strings]
+        return [
+            get_point(p) for p in self.iter_target_point_strings()
+        ]
 
     def get_resolved_dependencies(self):
         """Return a list of satisfied dependencies.
