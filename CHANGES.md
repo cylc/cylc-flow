@@ -10,7 +10,16 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.1.4 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Fixes
+
+[#5506](https://github.com/cylc/cylc-flow/pull/5506) -
+Fix bug introduced in 8.1.3 where specifying a subshell command for
+`flow.cylc[runtime][<namespace>][remote]host` (e.g. `$(rose host-select)`)
+would always result in localhost.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
 
 ### Enhancements
