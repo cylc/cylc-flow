@@ -44,7 +44,6 @@ class Prerequisite:
     __slots__ = (
         "satisfied",
         "_all_satisfied",
-        "start_point",
         "conditional_expression",
         "point",
     )
@@ -57,14 +56,10 @@ class Prerequisite:
     DEP_STATE_OVERRIDDEN = 'force satisfied'
     DEP_STATE_UNSATISFIED = False
 
-    def __init__(self, point, start_point=None):
+    def __init__(self, point):
         # The cycle point to which this prerequisite belongs.
         # cylc.flow.cycling.PointBase
         self.point = point
-
-        # Start point for prerequisite validity.
-        # cylc.flow.cycling.PointBase
-        self.start_point = start_point
 
         # Dictionary of messages pertaining to this prerequisite.
         # {('point string', 'task name', 'output'): DEP_STATE_X, ...}
@@ -79,6 +74,17 @@ class Prerequisite:
         # * `True` (prerequisite satisfied)
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied = None
+
+    def instantaneous_hash(self):
+        """Generate a hash of this prerequisite in its current state.
+
+        Note not using `__hash__` because Prerequisite objects are mutable.
+        """
+        return hash((
+            self.point,
+            self.conditional_expression,
+            tuple(self.satisfied.keys()),
+        ))
 
     def add(self, name, point, output, pre_initial=False):
         """Register an output with this prerequisite.
@@ -189,7 +195,7 @@ class Prerequisite:
         return res
 
     def satisfy_me(self, all_task_outputs):
-        """Evaluate pre-requisite against known outputs.
+        """Evaluate prerequisite against known outputs.
 
         Updates cache with the evaluation result.
 

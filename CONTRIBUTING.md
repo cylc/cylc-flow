@@ -82,6 +82,7 @@ requests_).
  - Ronnie Dutta
  - John Haiducek
  - (Andrew Huang)
+ - Cheng Da
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

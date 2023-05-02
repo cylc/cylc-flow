@@ -25,21 +25,29 @@ Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
-### Fixes
-
-[#5458](https://github.com/cylc/cylc-flow/pull/5458) - Fix a small bug
-causing option parsing to fail with Cylc Reinstall.
-
 -------------------------------------------------------------------------------
-## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
 
 ### Enhancements
+
+[#5475](https://github.com/cylc/cylc-flow/pull/5475) - much faster computation
+of the visualization window around active tasks (at the cost, for now, of not
+showing non-active "cousin" nodes).
 
 [#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
 list and view workflow log files including install logs and workflow
 configuration files.
 
 ### Fixes
+
+[#5495](https://github.com/cylc/cylc-flow/pull/5495) - Fix bug that could cause
+invalid parent tasks to appear in the UI datastore.
+
+[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
+changes to already-spawned tasks after reload or restart.
+
+[5466](https://github.com/cylc/cylc-flow/pull/5466) - Don't generate duplicate
+prerequisites from recurrences with coincident points.
 
 [5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
 better error messages if [sections] and settings are mixed up in a

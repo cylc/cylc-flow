@@ -21,8 +21,14 @@ from collections import Counter
 import json
 from time import time
 from typing import (
-    Dict, Iterable, List, Optional,
-    Set, TYPE_CHECKING, Tuple
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
+    Union,
 )
 import logging
 
@@ -423,6 +429,30 @@ class TaskPool:
         cycle, name, output = row
         self.abs_outputs_done.add((cycle, name, output))
 
+    def check_task_output(
+        self,
+        cycle: str,
+        task: str,
+        output: str,
+        flow_nums: 'FlowNums',
+    ) -> Union[str, bool]:
+        """Returns truthy if the specified output is satisfied in the DB."""
+        for task_outputs, task_flow_nums in (
+            self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
+        ).items():
+            # loop through matching tasks
+            if flow_nums.intersection(task_flow_nums):
+                # this task is in the right flow
+                task_outputs = json.loads(task_outputs)
+                return (
+                    'satisfied from database'
+                    if output in task_outputs
+                    else False
+                )
+        else:
+            # no matching entries
+            return False
+
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load tasks from DB task pool/states/jobs tables.
 
@@ -512,12 +542,29 @@ class TaskPool:
                         flow_nums,
                     )
             ):
-                key = (prereq_cycle, prereq_name, prereq_output)
-                sat[key] = satisfied if satisfied != '0' else False
+                # Prereq satisfaction as recorded in the DB.
+                sat[
+                    (prereq_cycle, prereq_name, prereq_output)
+                ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
-                for key, _ in itask_prereq.satisfied.items():
-                    itask_prereq.satisfied[key] = sat[key]
+                for key in itask_prereq.satisfied.keys():
+                    try:
+                        itask_prereq.satisfied[key] = sat[key]
+                    except KeyError:
+                        # This prereq is not in the DB: new dependencies
+                        # added to an already-spawned task before restart.
+                        # Look through task outputs to see if is has been
+                        # satisfied
+                        prereq_cycle, prereq_task, prereq_output = key
+                        itask_prereq.satisfied[key] = (
+                            self.check_task_output(
+                                prereq_cycle,
+                                prereq_task,
+                                prereq_output,
+                                itask.flow_nums,
+                            )
+                        )
 
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
@@ -924,8 +971,12 @@ class TaskPool:
                     itask.flow_nums,
                     itask.state.status,
                 )
-                itask.copy_to_reload_successor(new_task)
+                itask.copy_to_reload_successor(
+                    new_task,
+                    self.check_task_output,
+                )
                 self._swap_out(new_task)
+                self.data_store_mgr.delta_task_prerequisite(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(

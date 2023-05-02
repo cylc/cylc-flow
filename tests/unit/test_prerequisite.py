@@ -23,10 +23,7 @@ from cylc.flow.prerequisite import Prerequisite
 @pytest.fixture
 def prereq(set_cycling_type):
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    prereq = Prerequisite(
-        get_point('2000'),
-        start_point=get_point('2000')
-    )
+    prereq = Prerequisite(get_point('2000'))
     prereq.add(
         'a',
         '1999',
