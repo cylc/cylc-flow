@@ -127,13 +127,12 @@ Coroutines
 ^^^^^^^^^^
 
 .. _coroutines: https://docs.python.org/3/library/asyncio-task.html#coroutines
-.. _aiofiles: https://github.com/Tinche/aiofiles
 
 Plugins provide asynchronous functions (`coroutines`_) which Cylc will
 then run inside the scheduler.
 
 Coroutines should be fast running (read as gentle on the scheduler)
-and perform IO asynchronously e.g. by using `aiofiles`_.
+and perform IO asynchronously.
 
 Coroutines shouldn't meddle with the state of the scheduler and should be
 parallel-safe with other plugins.

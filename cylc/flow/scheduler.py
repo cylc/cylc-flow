@@ -273,10 +273,11 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = Tokens(
+        self.tokens = Tokens(
             user=self.owner,
             workflow=self.workflow,
-        ).id
+        )
+        self.id = self.tokens.id
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -462,6 +463,7 @@ class Scheduler:
                 get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
+            self.tokens,
             self.config,
             self.workflow_db_mgr,
             self.task_events_mgr,
@@ -653,8 +655,18 @@ class Scheduler:
                 LOG.exception(exc)
                 raise
 
-        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
-            # Includes SchedulerError
+        except (KeyboardInterrupt, asyncio.CancelledError) as exc:
+            await self.handle_exception(exc)
+
+        except Exception as exc:  # Includes SchedulerError
+            with suppress(Exception):
+                LOG.critical(
+                    'An uncaught error caused Cylc to shut down.'
+                    '\nIf you think this was an issue in Cylc,'
+                    ' please report the following traceback to the developers.'
+                    '\nhttps://github.com/cylc/cylc-flow/issues/new'
+                    '?assignees=&labels=bug&template=bug.md&title=;'
+                )
             await self.handle_exception(exc)
 
         else:
@@ -1597,13 +1609,6 @@ class Scheduler:
                     and not itask.state.external_triggers_all_satisfied()
                     and self.broadcast_mgr.check_ext_triggers(
                         itask, self.ext_trigger_queue)
-                    and all(itask.is_ready_to_run())
-                ):
-                    self.pool.queue_task(itask)
-
-                # Old-style clock-trigger tasks:
-                if (
-                    itask.tdef.clocktrigger_offset is not None
                     and all(itask.is_ready_to_run())
                 ):
                     self.pool.queue_task(itask)

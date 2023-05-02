@@ -1,5 +1,0 @@
-Initial point: 20141106T0900Z
-Final point: 20141106T0900Z
-20141106T0900Z/woo -triggered off []
-20141106T0900Z/foo -triggered off ['20141106T0900Z/woo']
-20141106T0900Z/show -triggered off ['20141106T0900Z/woo']

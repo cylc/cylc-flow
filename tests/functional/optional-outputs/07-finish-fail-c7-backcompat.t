@@ -33,7 +33,7 @@ DEPR_MSG_1=$(python -c \
 grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
 
 # Stall expected at FCP (but not at runahead limit).
-workflow_run_fail "${TEST_NAME_BASE}-run" cylc play -n --debug "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok grep-0 "Workflow stalled"
 grep_workflow_log_ok grep-1 "ERROR - Incomplete tasks:"

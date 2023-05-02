@@ -58,7 +58,6 @@ from cylc.flow.tui import (
 from cylc.flow.tui.data import (
     list_mutations,
     mutate,
-    offline_mutate,
 )
 from cylc.flow.tui.util import (
     get_task_icon
@@ -218,15 +217,13 @@ def context(app):
 
     def _mutate(mutation, _):
         nonlocal app
+        app.open_overlay(partial(progress, text='Running Command'))
         try:
-            if app.client:
-                mutate(app.client, mutation, selection)
-            else:
-                offline_mutate(mutation, selection)
+            mutate(app.client, mutation, selection)
         except ClientError as exc:
-            # app.set_header([('workflow_error', str(exc))])
             app.open_overlay(partial(error, text=str(exc)))
         else:
+            app.close_topmost()
             app.close_topmost()
 
     widget = urwid.ListBox(
@@ -245,18 +242,14 @@ def context(app):
                     mutation,
                     on_press=partial(_mutate, mutation)
                 )
-                for mutation in (
-                    list_mutations(selection)
-                    if app.client
-                    else ['play', 'clean']
-                )
+                for mutation in list_mutations(app.client, selection)
             ]
         )
     )
 
     return (
         widget,
-        {'width': 30, 'height': 15}
+        {'width': 30, 'height': 20}
     )
 
 
@@ -269,4 +262,14 @@ def error(app, text=''):
             urwid.Text(text),
         ]),
         {'width': 50, 'height': 40}
+    )
+
+
+def progress(app, text='Working'):
+    """An overlay for presenting a running action."""
+    return (
+        urwid.ListBox([
+            urwid.Text(text),
+        ]),
+        {'width': 30, 'height': 10}
     )

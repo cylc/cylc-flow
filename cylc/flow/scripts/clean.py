@@ -64,6 +64,7 @@ import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
+from cylc.flow.clean import init_clean, get_contained_workflows
 from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
@@ -74,7 +75,6 @@ from cylc.flow.option_parsers import (
     Options,
 )
 from cylc.flow.terminal import cli_function, is_terminal
-from cylc.flow.workflow_files import init_clean, get_contained_workflows
 
 if TYPE_CHECKING:
     from optparse import Values

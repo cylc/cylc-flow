@@ -720,10 +720,11 @@ with Conf(
 
             .. deprecated:: 8.0.0
 
-               Please read :ref:`Section External Triggers` before
-               using the older clock triggers described in this section.
+               These are now auto-upgraded to the newer wall_clock xtriggers
+               (see :ref:`Section External Triggers`). The old way defining
+               clock-triggers will be removed in an upcoming Cylc version.
 
-            Clock-trigger tasks (see :ref:`ClockTriggerTasks`) wait on a wall
+            Clock-triggered tasks (see :ref:`ClockTriggerTasks`) wait on a wall
             clock time specified as an offset from their own cycle point.
 
             Example:
