@@ -219,7 +219,7 @@ def platform_from_name(
             )
             break
 
-    for platform_name_re in list(platforms):
+    for platform_name_re in platforms:
         if (
             # If the platform_name_re contains special regex chars
             re.escape(platform_name_re) != platform_name_re
@@ -237,15 +237,13 @@ def platform_from_name(
     for platform_name_re in reversed(list(platforms)):
         # We substitute commas with or without spaces to
         # allow lists of platforms
-        if (
-            re.fullmatch(
-                re.sub(
-                    r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*',
-                    '|',
-                    platform_name_re
-                ),
-                platform_name
-            )
+        if re.fullmatch(
+            re.sub(
+                r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*',
+                '|',
+                platform_name_re
+            ),
+            platform_name
         ):
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
@@ -255,9 +253,11 @@ def platform_from_name(
             # hosts the platform name.
             # Example: `[platforms][workplace_vm_123]<nothing>`
             #   should create a platform where
-            #   `remote_hosts = ['workplace_vm_123']`
+            #   `hosts = ['workplace_vm_123']`
+            # NOTE: Probably don't use .get() due to OrderedDictWithDefaults -
+            # see https://github.com/cylc/cylc-flow/pull/4975
             if (
-                'hosts' not in platform_data.keys() or
+                'hosts' not in platform_data or
                 not platform_data['hosts']
             ):
                 platform_data['hosts'] = [platform_name]
@@ -292,15 +292,13 @@ def get_platform_from_group(
     TODO: Uses host_selection methods; should also allow custom select methods.
     """
     if bad_hosts:
-        good_platforms = []
-        for platform in group['platforms']:
+        platform_names = [
+            platform for platform in group['platforms']
             if any(
                 host not in bad_hosts
                 for host in platform_from_name(platform)['hosts']
-            ):
-                good_platforms.append(platform)
-
-        platform_names = list(good_platforms)
+            )
+        ]
     else:
         platform_names = group['platforms']
 
@@ -639,33 +637,21 @@ def get_install_target_to_platforms_map(
 
     Args:
         platform_names: List of platform names to look up in the global config.
-        quiet: Supress PlatformNotFound Errors
+        quiet: Supress PlatformLookupErrors
 
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
-    platform_names = set(platform_names)
-    platforms: List[Dict[str, Any]] = []
-    for p_name in platform_names:
+    ret: Dict[str, List[Dict[str, Any]]] = {}
+    for p_name in set(platform_names):
         try:
             platform = platform_from_name(p_name)
         except PlatformLookupError as exc:
             if not quiet:
                 raise exc
         else:
-            platforms.append(platform)
-
-    install_targets = {
-        get_install_target_from_platform(platform)
-        for platform in platforms
-    }
-    return {
-        target: [
-            platform
-            for platform in platforms
-            if get_install_target_from_platform(platform) == target
-        ]
-        for target in install_targets
-    }
+            install_target = get_install_target_from_platform(platform)
+            ret.setdefault(install_target, []).append(platform)
+    return ret
 
 
 def is_platform_with_target_in_list(
