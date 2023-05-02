@@ -468,15 +468,20 @@ class TaskState:
         self._is_satisfied = None
         self._suicide_is_satisfied = None
 
+        # Use dicts to avoid generating duplicate prerequisites from sequences
+        # with coincident cycle points.
+        prerequisites = {}
+        suicide_prerequisites = {}
+
         for sequence, dependencies in tdef.dependencies.items():
             if not sequence.is_valid(point):
                 continue
             for dependency in dependencies:
                 cpre = dependency.get_prerequisite(point, tdef)
                 if dependency.suicide:
-                    self.suicide_prerequisites.append(cpre)
+                    suicide_prerequisites[cpre.instantaneous_hash()] = cpre
                 else:
-                    self.prerequisites.append(cpre)
+                    prerequisites[cpre.instantaneous_hash()] = cpre
 
         if tdef.sequential:
             # Add a previous-instance succeeded prerequisite.
@@ -488,11 +493,14 @@ class TaskState:
                     adjusted.append(prv)
             if adjusted:
                 p_prev = max(adjusted)
-                cpre = Prerequisite(point, tdef.start_point)
+                cpre = Prerequisite(point)
                 cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
                          p_prev < tdef.start_point)
                 cpre.set_condition(tdef.name)
-                self.prerequisites.append(cpre)
+                prerequisites[cpre.instantaneous_hash()] = cpre
+
+        self.suicide_prerequisites = list(suicide_prerequisites.values())
+        self.prerequisites = list(prerequisites.values())
 
     def add_xtrigger(self, label, satisfied=False):
         self.xtriggers[label] = satisfied

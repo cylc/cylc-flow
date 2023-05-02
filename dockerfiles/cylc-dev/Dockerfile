@@ -1,51 +1,49 @@
-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 1) The Mamba image
+#    This image has mamba installed, we use it to create and pack
+#    the required Conda environment.
+FROM mambaorg/micromamba AS mamba
 
-FROM conda/miniconda3:latest
+# create the environment
+COPY conda-environment.yml .
+RUN micromamba env create -f conda-environment.yml --prefix ./env
 
-LABEL version="1.0" \
-      description="Image with Cylc installed with Conda from a working copy."
+# pack the environment
+RUN \
+    micromamba create -c conda-forge -n conda-pack conda-pack && \
+    micromamba run -n conda-pack conda-pack --prefix ./env -o ./packed-env.tar && \
+    pwd && \
+    mkdir ./venv && \
+    cd ./venv && \
+    tar -xf ../packed-env.tar && \
+    rm ../packed-env.tar
 
-ARG CONDA_ENV="cylc-dev"
-ARG CYLC_FLOW_DIR="./"
 
-# suppress bizarre error messages
-# mesg: ttyname failed: Inappropriate ioctl for device
-RUN sed -i 's/mesg.*/tty -s \&\& &/' "$HOME/.profile"
+# 2) The Cylc image
+#    This has the Cylc Mamba environment installed and activated by default in
+#    Bash shells. However, it does not have Mamba installed.
+FROM ubuntu:latest as cylc-dev
 
-# copy in cylc source files
-COPY "$CYLC_FLOW_DIR" "cylc"
+COPY --from=mamba /tmp/venv /venv
+COPY ./ /cylc
 
-# install cylc dependencies
-RUN apt-get update && \
-    # build-deps: build-essential
-    # run deps: procps, rsync
-    apt-get -qq -y install build-essential procps rsync tree && \
-    # install conda stuff
-    conda init bash && \
-    . ./usr/local/etc/profile.d/conda.sh && \
-    conda env create -n "${CONDA_ENV}" -f './cylc/conda-environment.yml' && \
-    conda clean -y --all && \
-    apt-get -y remove build-essential && \
-    apt-get autoclean && \
-    echo "conda activate $CONDA_ENV" >> $HOME/.bashrc && \
-    # tests require TMPDIR
+SHELL ["/bin/bash", "-c", "-l"]
+ENTRYPOINT /bin/bash
+
+# wipe the default crud then auto-activate the Cylc Mamba environment
+RUN \
+    rm $HOME/.bashrc && \
+    echo '. /venv/bin/activate' >> $HOME/.bashrc && \
     echo "export TMPDIR=/tmp" >> $HOME/.bashrc
 
-# run setup logic
-RUN . $HOME/.bashrc && \
-    pip install -e ./cylc[all] && \
-    cylc version
+# unpack the Mamba environment, then install Cylc into it from source
+RUN \
+    /venv/bin/conda-unpack && \
+    pip install --no-deps -e /cylc coverage && \
+    pip cache purge && \
+    cylc version --long
+
+# install system dependencies
+RUN \
+    apt-get update && \
+    apt-get -qq -y install procps rsync tree at && \
+    apt-get autoclean

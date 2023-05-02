@@ -55,11 +55,15 @@ def _make_flow(
     test_dir: Path,
     conf: Union[dict, str],
     name: Optional[str] = None,
+    id_: Optional[str] = None,
 ) -> str:
     """Construct a workflow on the filesystem."""
-    if name is None:
-        name = str(uuid1())
-    flow_run_dir = (test_dir / name)
+    if id_:
+        flow_run_dir = (cylc_run_dir / id_)
+    else:
+        if name is None:
+            name = str(uuid1())
+        flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
     reg = str(flow_run_dir.relative_to(cylc_run_dir))
     if isinstance(conf, dict):
