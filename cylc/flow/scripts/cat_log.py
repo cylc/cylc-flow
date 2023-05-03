@@ -261,11 +261,6 @@ def view_log(
         # Print location even if the workflow does not exist yet.
         print(logpath)
         return 0
-    if not os.path.exists(logpath) and batchview_cmd is None:
-        # Note: batchview_cmd may not need to have access to logpath, so don't
-        # test for existence of path if it is set.
-        sys.stderr.write('file not found: %s\n' % logpath)
-        return 1
     if mode == 'print-dir':
         print(os.path.dirname(logpath))
         return 0
@@ -273,6 +268,11 @@ def view_log(
         for entry in sorted(os.listdir(os.path.dirname(logpath))):
             print(entry)
         return 0
+    if not os.path.exists(logpath) and batchview_cmd is None:
+        # Note: batchview_cmd may not need to have access to logpath, so don't
+        # test for existence of path if it is set.
+        sys.stderr.write('file not found: %s\n' % logpath)
+        return 1
     if prepend_path:
         from cylc.flow.hostuserutil import get_host
         print(f'# {get_host()}:{logpath}')
@@ -364,9 +364,13 @@ def get_option_parser() -> COP:
 
 
 def get_task_job_attrs(workflow_id, point, task, submit_num):
-    """Return job (platform, job_runner_name, live_job_id).
+    """Retrieve job info from the database.
 
-    live_job_id is the job ID if job is running, else None.
+    * live_job_id is the job ID if job is running, else None.
+    * submit_failed is True if the the submission failed.
+
+    Returns:
+        tuple - (platform, job_runner_name, live_job_id, submit_failed)
 
     """
     with CylcWorkflowDAO(
@@ -374,7 +378,7 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     ) as dao:
         task_job_data = dao.select_task_job(point, task, submit_num)
     if task_job_data is None:
-        return (None, None, None)
+        return (None, None, None, None)
     job_runner_name = task_job_data["job_runner_name"]
     job_id = task_job_data["job_id"]
     if (not job_runner_name or not job_id
@@ -383,7 +387,12 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
         live_job_id = None
     else:
         live_job_id = job_id
-    return (task_job_data["platform_name"], job_runner_name, live_job_id)
+    return (
+        task_job_data["platform_name"],
+        job_runner_name,
+        live_job_id,
+        bool(task_job_data['submit_status']),
+    )
 
 
 @cli_function(get_option_parser)
@@ -512,7 +521,7 @@ def main(
             with suppress(KeyError):
                 options.filename = JOB_LOG_OPTS[options.filename]
                 # KeyError: Is already long form (standard log, or custom).
-        platform_name, job_runner_name, live_job_id = get_task_job_attrs(
+        platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
         platform = get_platform(platform_name)
         batchview_cmd = None
@@ -538,11 +547,24 @@ def main(
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}
 
+        local_log_dir = get_workflow_run_job_dir(
+            workflow_id, point, task, submit_num
+        )
+
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
-        if log_is_remote and (not log_is_retrieved or options.force_remote):
+        if (
+            # only go remote for log files we can't get locally
+            log_is_remote
+            # don't look for remote log files for submit-failed tasks
+            # (there might not be any at all)
+            and not submit_failed
+            # don't go remote if the log should be retrieved (unless
+            # --force-remote is specified)
+            and (not log_is_retrieved or options.force_remote)
+        ):
             logpath = os.path.normpath(get_remote_workflow_run_job_dir(
                 workflow_id, point, task, submit_num,
                 options.filename))
@@ -568,11 +590,20 @@ def main(
                     manage=(mode == 'tail'),
                     text=False
                 )
+            if (
+                mode == 'list-dir'
+                and os.path.exists(
+                    os.path.join(
+                        local_log_dir,
+                        'job-activity.log'
+                    )
+                )
+            ):
+                # add the local-only job-activity.log file to the remote-list
+                print('job-activity.log')
         else:
             # Local task job or local job log.
-            logpath = os.path.normpath(get_workflow_run_job_dir(
-                workflow_id, point, task, submit_num,
-                options.filename))
+            logpath = os.path.join(local_log_dir, options.filename)
             tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(
                 logpath,

@@ -18,7 +18,7 @@
 # Test "cylc cat-log" on the workflow host.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 41
+set_test_number 43
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -141,6 +141,13 @@ TEST_NAME=${TEST_NAME_BASE}-prepend-path
 run_ok "${TEST_NAME}-get-path" cylc cat-log -m p "${WORKFLOW_NAME}//1/a-task"
 run_ok "${TEST_NAME}" cylc cat-log --prepend-path "${WORKFLOW_NAME}//1/a-task"
 grep_ok "$(cat "#.*${TEST_NAME}-get-path.stdout")" "${TEST_NAME}.stdout"
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}-submit-failed
+run_ok "${TEST_NAME}" cylc cat-log -m l "${WORKFLOW_NAME}//1/submit-failed"
+contains_ok "${TEST_NAME}.stdout" <<__END__
+job.tmp
+job-activity.log
+__END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-list-no-install-dir
 rm -r "${WORKFLOW_RUN_DIR}/log/install"
