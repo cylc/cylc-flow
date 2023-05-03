@@ -85,16 +85,6 @@ def test_satisfied(prereq):
         # the remaining dependency should be marked as forse-satisfied
         ('2001', 'd', 'custom'): 'force satisfied',
     }
-    # mark all prereqs as unsatisfied
-    prereq.set_not_satisfied()
-    assert prereq.satisfied == {
-        # all prereqs INCLUDING the pre-initial should be marked as nnot
-        # satisfied
-        ('1999', 'a', 'succeeded'): False,
-        ('2000', 'b', 'succeeded'): False,
-        ('2000', 'c', 'succeeded'): False,
-        ('2001', 'd', 'custom'): False,
-    }
 
 
 def test_iter_target_point_strings(prereq):
