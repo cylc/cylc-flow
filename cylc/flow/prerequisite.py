@@ -264,21 +264,6 @@ class Prerequisite:
         else:
             self._all_satisfied = self._conditional_is_satisfied()
 
-    def set_not_satisfied(self):
-        """Force this prerequisite into the un-satisfied state.
-
-        State can be overridden by calling `self.satisfy_me`.
-
-        """
-        for message in self.satisfied:
-            self.satisfied[message] = self.DEP_STATE_UNSATISFIED
-        if not self.satisfied:
-            self._all_satisfied = True
-        elif self.conditional_expression is None:
-            self._all_satisfied = False
-        else:
-            self._all_satisfied = self._conditional_is_satisfied()
-
     def iter_target_point_strings(self):
         yield from {
             message[0]

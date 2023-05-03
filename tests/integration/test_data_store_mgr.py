@@ -298,7 +298,10 @@ def test_delta_task_prerequisite(harness):
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
         for p in t.prerequisites})
     for itask in schd.pool.get_all_tasks():
-        itask.state.set_prerequisites_not_satisfied()
+        # set prereqs as not-satisfied
+        for prereq in itask.state.prerequisites:
+            prereq._all_satisfied = False
+            prereq.satisfied = {key: False for key in prereq.satisfied}
         schd.data_store_mgr.delta_task_prerequisite(itask)
     assert not any({
         p.satisfied
