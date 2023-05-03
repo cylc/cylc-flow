@@ -18,7 +18,6 @@
 import asyncio
 from contextlib import suppress
 from collections import deque
-from dataclasses import dataclass
 from optparse import Values
 import os
 from pathlib import Path
@@ -161,7 +160,6 @@ class SchedulerError(CylcError):
     """Scheduler expected error stop."""
 
 
-@dataclass
 class Scheduler:
     """Cylc scheduler server."""
 
@@ -1803,6 +1801,9 @@ class Scheduler:
         sys.stdout.flush()
         sys.stderr.flush()
 
+        if self.contact_data and self.task_job_mgr:
+            self.task_job_mgr.task_remote_mgr.remote_tidy()
+
         try:
             # Remove ZMQ keys from scheduler
             LOG.debug("Removing authentication keys from scheduler")
@@ -1830,8 +1831,6 @@ class Scheduler:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
                 self.contact_data = None
-            if self.task_job_mgr:
-                self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         # The getattr() calls and if tests below are used in case the
         # workflow is not fully configured before the shutdown is called.

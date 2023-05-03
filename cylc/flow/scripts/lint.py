@@ -38,7 +38,21 @@ from colorama import Fore
 from optparse import Values
 from pathlib import Path
 import re
-import tomli
+try:
+    # BACK COMPAT: tomli
+    #   Support for Python versions before tomllib was added to the
+    #   standard library.
+    # FROM: Python 3.7
+    # TO: Python: 3.10
+    from tomli import (
+        loads as toml_loads,
+        TOMLDecodeError,
+    )
+except ImportError:
+    from tomllib import (  # type: ignore[no-redef]
+        loads as toml_loads,
+        TOMLDecodeError,
+    )
 from typing import Generator, Union
 
 from cylc.flow import LOG
@@ -268,8 +282,8 @@ def get_pyproject_toml(dir_):
     tomldata = {}
     if tomlfile.is_file():
         try:
-            loadeddata = tomli.loads(tomlfile.read_text())
-        except tomli.TOMLDecodeError as exc:
+            loadeddata = toml_loads(tomlfile.read_text())
+        except TOMLDecodeError as exc:
             raise CylcError(f'pyproject.toml did not load: {exc}')
 
         if any(
