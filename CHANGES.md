@@ -15,7 +15,10 @@ ones in. -->
 
 ### Enhancements
 
-[#5461](https://github.com/cylc/cylc-flow/pull/5461) - Preserve colour
+[#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
+help, and add scheduler PID to the output.
+
+[#5461](https://github.com/cylc/cylc-flow/pull/5461) - preserve colour
 formatting when starting workflows in distributed mode using `run hosts`.
 
 [#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
