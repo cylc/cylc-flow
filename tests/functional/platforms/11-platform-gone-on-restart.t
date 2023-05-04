@@ -36,7 +36,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONF__'
 [scheduling]
     initial cycle point = 2934
     [[graph]]
-        R1 = foo
+        R1 = foo => bar
 
 [runtime]
     [[foo]]
@@ -44,6 +44,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONF__'
             cylc stop ${CYLC_WORKFLOW_ID} --now --now
         """
         platform = myplatform
+    [[bar]]
+        script = true  # only runs on restart
 __FLOW_CONF__
 
 run_ok "${TEST_NAME_BASE}-play" \
@@ -63,5 +65,3 @@ named_grep_ok \
     "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log"
 
 purge
-exit 0
-
