@@ -1241,7 +1241,7 @@ class TaskJobManager:
         })
 
         # create a DB entry for the submit-failed job
-        if itask.platform:
+        if itask.platform and itask.platform.get('name', None):
             platform_name = itask.platform['name']
         else:
             platform_name = itask.tdef.rtconfig['platform']
