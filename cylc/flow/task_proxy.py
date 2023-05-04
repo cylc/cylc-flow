@@ -267,7 +267,7 @@ class TaskProxy:
             f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"
         )
 
-    def copy_to_reload_successor(self, reload_successor):
+    def copy_to_reload_successor(self, reload_successor, check_output):
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
@@ -284,7 +284,34 @@ class TaskProxy:
         reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
-        reload_successor.state.prerequisites = self.state.prerequisites
+
+        # Prerequisites: the graph might have changed before reload, so
+        # we need to use the new prerequisites but update them with the
+        # pre-reload state of prerequisites that still exist post-reload.
+
+        # Get all prereq states, e.g. {('1', 'c', 'succeeded'): False, ...}
+        pre_reload = {
+            k: v
+            for pre in self.state.prerequisites
+            for (k, v) in pre.satisfied.items()
+        }
+        # Use them to update the new prerequisites.
+        # - unchanged prerequisites will keep their pre-reload state.
+        # - removed prerequisites will not be carried over
+        # - added prerequisites will be recorded as unsatisfied
+        #   NOTE: even if the corresponding output was completed pre-reload!
+        for pre in reload_successor.state.prerequisites:
+            for k in pre.satisfied.keys():
+                try:
+                    pre.satisfied[k] = pre_reload[k]
+                except KeyError:
+                    # Look through task outputs to see if is has been
+                    # satisfied
+                    pre.satisfied[k] = check_output(
+                        *k,
+                        self.flow_nums,
+                    )
+
         reload_successor.state.xtriggers.update({
             # copy across any special "_cylc" xtriggers which were added
             # dynamically at runtime (i.e. execution retry xtriggers)

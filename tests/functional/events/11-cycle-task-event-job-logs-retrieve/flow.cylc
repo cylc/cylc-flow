@@ -1,4 +1,3 @@
-#!jinja2
 [meta]
     title = Task Event Job Log Retrieve
 
@@ -16,13 +15,9 @@
     [[T]]
         script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
         execution retry delays = PT0S, 2*PT1S
-        [[[remote]]]
-            host = {{ environ['CYLC_TEST_HOST'] }}
     [[t1]]
         inherit = T
-        [[[remote]]]
-            retrieve job logs = True
+        platform = _retrieve
     [[t2]]
         inherit = T
-        [[[remote]]]
-            retrieve job logs = False
+        platform = _no_retrieve

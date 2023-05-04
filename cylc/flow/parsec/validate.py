@@ -204,10 +204,28 @@ class ParsecValidator:
                 else:
                     speckey = key
                 specval = spec[speckey]
-                if isinstance(value, dict) and not specval.is_leaf():
+
+                cfg_is_section = isinstance(value, dict)
+                spec_is_section = not specval.is_leaf()
+                if cfg_is_section and not spec_is_section:
+                    # config is a [section] but it should be a setting=
+                    raise IllegalItemError(
+                        keys,
+                        key,
+                        msg=f'"{key}" should be a setting not a [section]',
+                    )
+                if (not cfg_is_section) and spec_is_section:
+                    # config is a setting= but it should be a [section]
+                    raise IllegalItemError(
+                        keys,
+                        key,
+                        msg=f'"{key}" should be a [section] not a setting',
+                    )
+
+                if cfg_is_section and spec_is_section:
                     # Item is dict, push to queue
                     queue.append([value, specval, keys + [key]])
-                elif value is not None and specval.is_leaf():
+                elif value is not None and not spec_is_section:
                     # Item is value, coerce according to value type
                     cfg[key] = self.coercers[specval.vdr](value, keys + [key])
                     if specval.options:

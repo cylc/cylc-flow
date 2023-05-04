@@ -20,7 +20,8 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set, Union, overload
+    TYPE_CHECKING, Any, Dict, Iterable,
+    List, Optional, Set, Union, overload
 )
 
 from cylc.flow import LOG
@@ -117,11 +118,22 @@ def get_platform(
         task_conf: If str this is assumed to be the platform name, otherwise
             this should be a configuration for a task.
         task_name: Help produce more helpful error messages.
+        bad_hosts: A set of hosts known to be unreachable (had an ssh 255
+            error)
 
     Returns:
         platform: A platform definition dictionary. Uses either
             get_platform() or platform_name_from_job_info(), but to the
             user these look the same.
+
+    Raises:
+        NoPlatformsError:
+            Platform group has no platforms with usable hosts.
+            This should be caught if this function is used on a raw config,
+            or in any other context where a platform group might be selected.
+        PlatformLookupError:
+            Raised if the name of a platform cannot be selected based on the
+            information given.
     """
     if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
@@ -178,10 +190,15 @@ def platform_from_name(
     Args:
         platform_name: name of platform to be retrieved.
         platforms: global.cylc platforms given as a dict.
+        bad_hosts: A set of hosts known to be unreachable (had an ssh 255
+            error)
 
     Returns:
         platform: object containing settings for a platform, loaded from
             Global Config.
+
+    Raises:
+        NoPlatformsError: Platform group has no platforms with usable hosts.
     """
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])
@@ -190,10 +207,9 @@ def platform_from_name(
     if platform_name is None:
         platform_name = 'localhost'
 
-    platform_group = None
-    # The list is reversed to allow user-set platform groups (which are loaded
-    # later than site set platforms) to be matched first and override site
-    # defined platforms.
+    # The list is reversed to allow user-set platform groups (which are
+    # appended to site set platform groups) to be matched first and override
+    # site defined platform groups.
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
@@ -214,9 +230,10 @@ def platform_from_name(
                 'regular expression. See the documentation for '
                 '"global.cylc[platforms][localhost]" for more information.'
             )
-    # The list is reversed to allow user-set platforms (which are loaded
-    # later than site set platforms) to be matched first and override site
-    # defined platforms.
+
+    # The list is reversed to allow user-set platforms (which are appended to
+    # than site set platforms) to be matched first and override site defined
+    # platforms.
     for platform_name_re in reversed(list(platforms)):
         # We substitute commas with or without spaces to
         # allow lists of platforms
@@ -246,8 +263,6 @@ def platform_from_name(
                 platform_data['hosts'] = [platform_name]
             # Fill in the "private" name field.
             platform_data['name'] = platform_name
-            if platform_group:
-                platform_data['group'] = platform_group
             return platform_data
 
     raise PlatformLookupError(
@@ -487,10 +502,10 @@ def generic_items_match(
         # Get a set of items actually set in both platform and task_section.
         shared_items = set(task_section).intersection(set(platform_spec))
         # If any set items do not match, we can't use this platform.
-        if not all([
+        if not all(
             platform_spec[item] == task_section[item]
             for item in shared_items
-        ]):
+        ):
             return False
     return True
 
@@ -507,6 +522,10 @@ def get_host_from_platform(
 
     Returns:
         hostname: The name of a host.
+
+    Raises:
+        NoHostsError:
+            This error should be caught by caller to prevent workflow shutdown.
     """
     # Get list of goodhosts:
     if bad_hosts:
@@ -612,18 +631,29 @@ def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
 
 
 def get_install_target_to_platforms_map(
-        platform_names: Iterable[str]
+    platform_names: Iterable[str],
+    quiet: bool = False
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
     Args:
         platform_names: List of platform names to look up in the global config.
+        quiet: Supress PlatformNotFound Errors
 
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     platform_names = set(platform_names)
-    platforms = [platform_from_name(p_name) for p_name in platform_names]
+    platforms: List[Dict[str, Any]] = []
+    for p_name in platform_names:
+        try:
+            platform = platform_from_name(p_name)
+        except PlatformLookupError as exc:
+            if not quiet:
+                raise exc
+        else:
+            platforms.append(platform)
+
     install_targets = {
         get_install_target_from_platform(platform)
         for platform in platforms
@@ -647,34 +677,6 @@ def is_platform_with_target_in_list(
         install_target == distinct_platform['install target']
         for distinct_platform in distinct_platforms_list
     )
-
-
-def get_all_platforms_for_install_target(
-    install_target: str
-) -> List[Dict[str, Any]]:
-    """Return list of platform dictionaries for given install target."""
-    platforms: List[Dict[str, Any]] = []
-    all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
-    for k, v in all_platforms.iteritems():  # noqa: B301 (iteritems valid here)
-        if (v.get('install target', k) == install_target):
-            v_copy = deepcopy(v)
-            v_copy['name'] = k
-            platforms.append(v_copy)
-    return platforms
-
-
-def get_random_platform_for_install_target(
-    install_target: str
-) -> Dict[str, Any]:
-    """Return a randomly selected platform (dict) for given install target."""
-    platforms = get_all_platforms_for_install_target(install_target)
-    try:
-        return random.choice(platforms)  # nosec (not crypto related)
-    except IndexError:
-        # No platforms to choose from
-        raise PlatformLookupError(
-            f'Could not select platform for install target: {install_target}'
-        )
 
 
 def get_localhost_install_target() -> str:

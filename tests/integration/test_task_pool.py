@@ -23,6 +23,8 @@ from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
 
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.task_state import (
@@ -32,7 +34,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
 )
-
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
 # paused) they get spawned out to the runahead limit. 2/pub spawns
@@ -577,3 +578,383 @@ async def test_runahead_after_remove(
     # Should update after removing the first point.
     task_pool.remove_tasks(['1/*'])
     assert int(task_pool.runahead_limit_point) == 5
+
+
+async def test_load_db_bad_platform(
+    flow: Callable, scheduler: Callable, start: Callable, one_conf: Callable
+):
+    """Test that loading an unavailable platform from the database doesn't
+    cause calamitous failure."""
+    schd: Scheduler = scheduler(flow(one_conf))
+
+    async with start(schd):
+        result = schd.pool.load_db_task_pool_for_restart(0, (
+            '1', 'one', '{"1": 1}', "0", False, False, "failed",
+            False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
+        ))
+        assert result == 'culdee-fell-summit'
+
+
+def list_tasks(schd):
+    """Return a list of task pool tasks (incl hidden pool tasks).
+
+    Returns a list in the format:
+        [
+            (cycle, task, state)
+        ]
+
+    """
+    return sorted(
+        (itask.tokens['cycle'], itask.tokens['task'], itask.state.status)
+        for itask in schd.pool.get_all_tasks()
+    )
+
+
+@pytest.mark.parametrize(
+    'graph_1, graph_2, '
+    'expected_1, expected_2, expected_3, expected_4',
+    [
+        param(  # Restart after adding a prerequisite to task z
+            '''a => z
+               b => z''',
+            '''a => z
+               b => z
+               c => z''',
+            [
+                ('1', 'a', 'running'),
+                ('1', 'b', 'running'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'b', 'succeeded'): False},
+                {('1', 'c', 'succeeded'): False},
+            ]
+        ),
+        param(  # Restart after removing a prerequisite from task z
+            '''a => z
+               b => z
+               c => z''',
+            '''a => z
+               b => z''',
+            [
+                ('1', 'a', 'running'),
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'b', 'succeeded'): False},
+            ]
+        )
+    ]
+)
+async def test_restart_prereqs(
+    flow, scheduler, start,
+    graph_1, graph_2,
+    expected_1, expected_2, expected_3, expected_4
+):
+    """It should handle graph prerequisites change on restart.
+
+    Prerequisite changes must be applied to tasks already in the pool.
+    See https://github.com/cylc/cylc-flow/pull/5334
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': graph_1
+            }
+        }
+    }
+    id_ = flow(conf)
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+    async with start(schd):
+        # Release tasks 1/a and 1/b
+        schd.pool.release_runahead_tasks()
+        schd.release_queued_tasks()
+        assert list_tasks(schd) == expected_1
+
+        # Mark 1/a as succeeded and spawn 1/z
+        schd.pool.get_all_tasks()[0].state_reset('succeeded')
+        schd.pool.spawn_on_output(schd.pool.get_all_tasks()[0], 'succeeded')
+        assert list_tasks(schd) == expected_2
+
+        # Save our progress
+        schd.workflow_db_mgr.put_task_pool(schd.pool)
+
+    # Edit the workflow to add a new dependency on "z"
+    conf['scheduling']['graph']['R1'] = graph_2
+    id_ = flow(conf, id_=id_)
+
+    # Restart it
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+    async with start(schd):
+        # Load jobs from db
+        schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
+            schd.data_store_mgr.insert_db_job
+        )
+        assert list_tasks(schd) == expected_3
+
+        # To cover some code for loading prereqs from the DB at restart:
+        schd.data_store_mgr.update_data_structure()
+
+        # Check resulting dependencies of task z
+        task_z = schd.pool.get_all_tasks()[0]
+        assert sorted(
+            (
+                p.satisfied
+                for p in task_z.state.prerequisites
+            ),
+            key=lambda d: tuple(d.keys())[0],
+        ) == expected_4
+
+
+@pytest.mark.parametrize(
+    'graph_1, graph_2, '
+    'expected_1, expected_2, expected_3, expected_4',
+    [
+        param(  # Reload after adding a prerequisite to task z
+            '''a => z
+               b => z''',
+            '''a => z
+               b => z
+               c => z''',
+            [
+                ('1', 'a', 'running'),
+                ('1', 'b', 'running'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'b', 'succeeded'): False},
+                {('1', 'c', 'succeeded'): False},
+            ]
+        ),
+        param(  # Reload after removing a prerequisite from task z
+            '''a => z
+               b => z
+               c => z''',
+            '''a => z
+               b => z''',
+            [
+                ('1', 'a', 'running'),
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                ('1', 'b', 'running'),
+                ('1', 'c', 'running'),
+                ('1', 'z', 'waiting'),
+            ],
+            [
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'b', 'succeeded'): False},
+            ]
+        )
+    ]
+)
+async def test_reload_prereqs(
+    flow, scheduler, start,
+    graph_1, graph_2,
+    expected_1, expected_2, expected_3, expected_4
+):
+    """It should handle graph prerequisites change on reload.
+
+    Prerequisite changes must be applied to tasks already in the pool.
+    See https://github.com/cylc/cylc-flow/pull/5334
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': graph_1
+            }
+        }
+    }
+    id_ = flow(conf)
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+    async with start(schd):
+        # Release tasks 1/a and 1/b
+        schd.pool.release_runahead_tasks()
+        schd.release_queued_tasks()
+        assert list_tasks(schd) == expected_1
+
+        # Mark 1/a as succeeded and spawn 1/z
+        schd.pool.get_all_tasks()[0].state_reset('succeeded')
+        schd.pool.spawn_on_output(schd.pool.get_all_tasks()[0], 'succeeded')
+        assert list_tasks(schd) == expected_2
+
+        # Modify flow.cylc to add a new dependency on "z"
+        conf['scheduling']['graph']['R1'] = graph_2
+        flow(conf, id_=id_)
+
+        # Reload the workflow config
+        schd.command_reload_workflow()
+        schd.pool.reload_taskdefs()
+        assert list_tasks(schd) == expected_3
+
+        # Check resulting dependencies of task z
+        task_z = schd.pool.get_all_tasks()[0]
+        assert sorted(
+            (
+                p.satisfied
+                for p in task_z.state.prerequisites
+            ),
+            key=lambda d: tuple(d.keys())[0],
+        ) == expected_4
+
+
+async def _test_restart_prereqs_sat():
+    # YIELD: the workflow has now started...
+    schd = yield
+    await schd.update_data_structure()
+
+    # Release tasks 1/a and 1/b
+    schd.pool.release_runahead_tasks()
+    schd.release_queued_tasks()
+    assert list_tasks(schd) == [
+        ('1', 'a', 'running'),
+        ('1', 'b', 'running')
+    ]
+
+    # Mark both as succeeded and spawn 1/c
+    for itask in schd.pool.get_all_tasks():
+        itask.state_reset('succeeded')
+        schd.pool.spawn_on_output(itask, 'succeeded')
+        schd.workflow_db_mgr.put_insert_task_outputs(itask)
+        schd.pool.remove_if_complete(itask)
+    schd.workflow_db_mgr.process_queued_ops()
+    assert list_tasks(schd) == [
+        ('1', 'c', 'waiting')
+    ]
+
+    # YIELD: the workflow has now restarted or reloaded with the new config...
+    schd = yield
+    await schd.update_data_structure()
+    assert list_tasks(schd) == [
+        ('1', 'c', 'waiting')
+    ]
+
+    # Check resulting dependencies of task z
+    task_c = schd.pool.get_all_tasks()[0]
+    assert sorted(
+        (*key, satisfied)
+        for prereq in task_c.state.prerequisites
+        for key, satisfied in prereq.satisfied.items()
+    ) == [
+        ('1', 'a', 'succeeded', 'satisfied naturally'),
+        ('1', 'b', 'succeeded', 'satisfied from database')
+    ]
+
+    # The prereqs in the data store should have been updated too
+    # await schd.update_data_structure()
+    tasks = (
+        schd.data_store_mgr.data[schd.data_store_mgr.workflow_id][TASK_PROXIES]
+    )
+    task_c_prereqs = tasks[
+        schd.data_store_mgr.id_.duplicate(cycle='1', task='c').id
+    ].prerequisites
+    assert sorted(
+        (condition.task_proxy, condition.satisfied, condition.message)
+        for prereq in task_c_prereqs
+        for condition in prereq.conditions
+    ) == [
+        ('1/a', True, 'satisfied naturally'),
+        ('1/b', True, 'satisfied from database'),
+    ]
+
+    # and we're done, yield back control and return
+    yield
+
+
+@pytest.mark.parametrize('do_restart', [True, False])
+async def test_graph_change_prereq_satisfaction(
+    flow, scheduler, start, do_restart
+):
+    """It should handle graph prerequisites change on reload/restart.
+
+    If the graph is changed to add a dependency which has been previously
+    satisfied, then Cylc should perform a DB check and mark the prerequsite
+    as satisfied accordingly.
+
+    See https://github.com/cylc/cylc-flow/pull/5334
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    a => c
+                    b
+                '''
+            }
+        }
+    }
+    id_ = flow(conf)
+    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+    test = _test_restart_prereqs_sat()
+    await test.asend(None)
+
+    if do_restart:
+        async with start(schd):
+            # start the workflow and run part 1 of the tests
+            await test.asend(schd)
+
+        # shutdown and change the workflow definiton
+        conf['scheduling']['graph']['R1'] += '\nb => c'
+        flow(conf, id_=id_)
+        schd = scheduler(id_, run_mode='simulation', paused_start=False)
+
+        async with start(schd):
+            # restart the workflow and run part 2 of the tests
+            await test.asend(schd)
+
+    else:
+        async with start(schd):
+            await test.asend(schd)
+
+            # Modify flow.cylc to add a new dependency on "b"
+            conf['scheduling']['graph']['R1'] += '\nb => c'
+            flow(conf, id_=id_)
+
+            # Reload the workflow config
+            schd.command_reload_workflow()
+            schd.pool.reload_taskdefs()
+
+            await test.asend(schd)

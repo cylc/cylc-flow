@@ -16,13 +16,11 @@
 
 import asyncio
 import logging
-from pathlib import Path
 import pytest
 from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
@@ -33,8 +31,6 @@ from cylc.flow.task_state import (
 )
 
 from cylc.flow.workflow_status import AutoRestartMode
-
-from .utils.flow_tools import _make_flow
 
 
 Fixture = Any
@@ -290,18 +286,17 @@ async def test_illegal_config_load(
     """
     if not reload:
         one_conf.update(test_conf)
-    reg: str = flow(one_conf)
-    schd: Scheduler = scheduler(reg)
+    id_: str = flow(one_conf)
+    schd: Scheduler = scheduler(id_)
     log: pytest.LogCaptureFixture
 
     if reload:
         one_conf.update(test_conf)
-        run_dir = Path(get_workflow_run_dir(reg))
         async with run(schd) as log:
             # Shouldn't be any errors at this stage:
             assert not log_filter(log, level=logging.ERROR)
             # Modify flow.cylc:
-            _make_flow(get_cylc_run_dir(), run_dir, one_conf, '')
+            flow(one_conf, id_=id_)
             schd.queue_command('reload_workflow', {})
         assert log_filter(
             log, level=logging.ERROR,

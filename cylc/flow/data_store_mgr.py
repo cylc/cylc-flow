@@ -180,6 +180,41 @@ CLEAR_FIELD_MAP = {
 }
 
 
+def setbuff(obj, key, value):
+    """Set an attribute on a protobuf object.
+
+    Although `None` is a valid value for an `optional` field in protobuf e.g:
+
+       >>> job = PbJob(job_id=None)
+
+    Attempting to set a field to none after initiation results in error:
+
+       >>> job.job_id = None
+       Traceback (most recent call last):
+       TypeError: ...
+
+    For safety this method only sets the attribute if the value is not None.
+
+    Note:
+        If the above doctest fails, then the behaviour of protobuf has changed
+        and this wrapper might not be necessary any more.
+
+    See:
+        https://github.com/cylc/cylc-flow/issues/5388
+
+    Example:
+        >>> from types import SimpleNamespace
+        >>> obj = SimpleNamespace()
+        >>> setbuff(obj, 'a', 1); obj
+        namespace(a=1)
+        >>> setbuff(obj, 'b', None); obj
+        namespace(a=1)
+
+    """
+    if value is not None:
+        setattr(obj, key, value)
+
+
 def generate_checksum(in_strings):
     """Generate cross platform & python checksum from strings."""
     # can't use hash(), it's not the same across 32-64bit or python invocations
@@ -546,7 +581,7 @@ class DataStoreMgr:
             user_defined_meta = {}
             for key, val in dict(tdef.describe()).items():
                 if key in ['title', 'description', 'URL']:
-                    setattr(task.meta, key, val)
+                    setbuff(task.meta, key, val)
                 else:
                     user_defined_meta[key] = val
             task.meta.user_defined = json.dumps(user_defined_meta)
@@ -581,7 +616,7 @@ class DataStoreMgr:
                 user_defined_meta = {}
                 for key, val in famcfg.get('meta', {}).items():
                     if key in ['title', 'description', 'URL']:
-                        setattr(family.meta, key, val)
+                        setbuff(family.meta, key, val)
                     else:
                         user_defined_meta[key] = val
                 family.meta.user_defined = json.dumps(user_defined_meta)
@@ -619,7 +654,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
-                setattr(workflow.meta, key, val)
+                setbuff(workflow.meta, key, val)
             else:
                 user_defined_meta[key] = val
         workflow.meta.user_defined = json.dumps(user_defined_meta)
@@ -633,7 +668,7 @@ class DataStoreMgr:
         else:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
-            setattr(workflow.time_zone_info, key, val)
+            setbuff(workflow.time_zone_info, key, val)
 
         workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
@@ -690,6 +725,7 @@ class DataStoreMgr:
             None
 
         """
+        is_active = not (descendant or is_parent)
         # ID passed through recursion as reference to original/active node.
         if active_id is None:
             source_tokens = self.id_.duplicate(source_tokens)
@@ -703,7 +739,7 @@ class DataStoreMgr:
 
         # Setup and check if active node is another's boundary node
         # to flag its paths for pruning.
-        if edge_distance == 0:
+        if is_active:
             self.n_window_edges[active_id] = set()
             self.n_window_boundary_nodes[active_id] = {}
             self.n_window_nodes[active_id] = set()
@@ -737,81 +773,83 @@ class DataStoreMgr:
         # Don't expand window about orphan task.
         if not is_orphan:
             tdef = self.schd.config.taskdefs[source_tokens['task']]
-            if graph_children is None:
-                graph_children = generate_graph_children(tdef, point)
-            if (
-                    (not any(graph_children.values()) and descendant)
-                    or self.n_edge_distance == 0
-            ):
-                self.n_window_boundary_nodes[
-                    active_id
-                ].setdefault(edge_distance - 1, set()).add(source_tokens.id)
-
             # TODO: xtrigger is workflow_state edges too
             # Reference set for workflow relations
             final_point = self.schd.config.final_point
-            if edge_distance == 1:
-                descendant = True
-            # Children/downstream nodes
-            for items in graph_children.values():
-                for child_name, child_point, _ in items:
-                    if child_point > final_point:
-                        continue
-                    child_tokens = self.id_.duplicate(
-                        cycle=str(child_point),
-                        task=child_name,
-                    )
-                    # We still increment the graph one further to find
-                    # boundary nodes, but don't create elements.
-                    if edge_distance <= self.n_edge_distance:
-                        self.generate_edge(
-                            source_tokens,
-                            child_tokens,
-                            active_id
+            if descendant or is_active:
+                if graph_children is None:
+                    graph_children = generate_graph_children(tdef, point)
+                if not any(graph_children.values()):
+                    self.n_window_boundary_nodes[active_id].setdefault(
+                        edge_distance - 1,
+                        set()
+                    ).add(source_tokens.id)
+
+                # Children/downstream nodes
+                for items in graph_children.values():
+                    for child_name, child_point, _ in items:
+                        if child_point > final_point:
+                            continue
+                        child_tokens = self.id_.duplicate(
+                            cycle=str(child_point),
+                            task=child_name,
                         )
-                    if child_tokens.id in self.n_window_nodes[active_id]:
-                        continue
-                    self.increment_graph_window(
-                        child_tokens,
-                        child_point,
-                        flow_nums,
-                        edge_distance,
-                        active_id,
-                        descendant,
-                        False
-                    )
+                        # We still increment the graph one further to find
+                        # boundary nodes, but don't create elements.
+                        if edge_distance <= self.n_edge_distance:
+                            self.generate_edge(
+                                source_tokens,
+                                child_tokens,
+                                active_id
+                            )
+                        if child_tokens.id in self.n_window_nodes[active_id]:
+                            continue
+                        self.increment_graph_window(
+                            child_tokens,
+                            child_point,
+                            flow_nums,
+                            edge_distance,
+                            active_id,
+                            True,
+                            False
+                        )
 
             # Parents/upstream nodes
-            for items in generate_graph_parents(tdef, point).values():
-                for parent_name, parent_point, _ in items:
-                    if parent_point > final_point:
-                        continue
-                    parent_tokens = self.id_.duplicate(
-                        cycle=str(parent_point),
-                        task=parent_name,
-                    )
-                    if edge_distance <= self.n_edge_distance:
-                        # reverse for parent
-                        self.generate_edge(
-                            parent_tokens,
-                            source_tokens,
-                            active_id
+            if is_parent or is_active:
+                for items in generate_graph_parents(
+                    tdef,
+                    point,
+                    self.schd.config.taskdefs
+                ).values():
+                    for parent_name, parent_point, _ in items:
+                        if parent_point > final_point:
+                            continue
+                        parent_tokens = self.id_.duplicate(
+                            cycle=str(parent_point),
+                            task=parent_name,
                         )
-                    if parent_tokens.id in self.n_window_nodes[active_id]:
-                        continue
-                    self.increment_graph_window(
-                        parent_tokens,
-                        parent_point,
-                        flow_nums,
-                        edge_distance,
-                        active_id,
-                        False,
-                        True
-                    )
+                        if edge_distance <= self.n_edge_distance:
+                            # reverse for parent
+                            self.generate_edge(
+                                parent_tokens,
+                                source_tokens,
+                                active_id
+                            )
+                        if parent_tokens.id in self.n_window_nodes[active_id]:
+                            continue
+                        self.increment_graph_window(
+                            parent_tokens,
+                            parent_point,
+                            flow_nums,
+                            edge_distance,
+                            active_id,
+                            False,
+                            True
+                        )
 
         # If this is the active task (edge_distance has been incremented),
         # then add the most distant child as a trigger to prune it.
-        if edge_distance == 1:
+        if is_active:
             levels = self.n_window_boundary_nodes[active_id].keys()
             # Could be self-reference node foo:failed => foo
             if not levels:
@@ -1033,7 +1071,7 @@ class DataStoreMgr:
         user_defined_meta = {}
         for key, val in dict(tdef.describe()).items():
             if key in ['title', 'description', 'URL']:
-                setattr(task.meta, key, val)
+                setbuff(task.meta, key, val)
             else:
                 user_defined_meta[key] = val
         task.meta.user_defined = json.dumps(user_defined_meta)
@@ -1194,7 +1232,12 @@ class DataStoreMgr:
                     self.db_load_task_proxies[ikey][0].state.prerequisites
             ):
                 for key in itask_prereq.satisfied.keys():
-                    itask_prereq.satisfied[key] = prereqs[key]
+                    try:
+                        itask_prereq.satisfied[key] = prereqs[key]
+                    except KeyError:
+                        # This prereq is not in the DB: new dependencies
+                        # added to an already-spawned task before restart.
+                        itask_prereq.satisfied[key] = False
 
         # Extract info from itasks to data-store.
         for task_info in self.db_load_task_proxies.values():
@@ -2158,7 +2201,7 @@ class DataStoreMgr:
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
-        setattr(j_delta, attr_key, attr_val)
+        setbuff(j_delta, attr_key, attr_val)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
@@ -2200,7 +2243,7 @@ class DataStoreMgr:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
         time_attr = f'{event_key}_time'
-        setattr(j_delta, time_attr, time_str)
+        setbuff(j_delta, time_attr, time_str)
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)

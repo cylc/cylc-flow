@@ -17,6 +17,8 @@
 import pytest
 
 from cylc.flow.taskdef import TaskDef
+from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
+from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
     TaskState,
     TASK_STATUS_SUCCEEDED,
@@ -127,3 +129,26 @@ def test_reset_outputs(before, after, outputs):
     assert tstate.outputs.get_completed() == []
     tstate.reset(status=new_status, is_held=new_is_held)
     assert tstate.outputs.get_completed() == outputs
+
+
+def test_task_prereq_duplicates(set_cycling_type):
+    """Test prerequisite duplicates from multiple recurrences are discarded."""
+
+    set_cycling_type()
+
+    seq1 = IntegerSequence('R1', "1")
+    seq2 = IntegerSequence('R/1/P1', "1")
+
+    trig = TaskTrigger('a', "1", 'succeeded', None, None, None, None)
+
+    dep = Dependency([trig], [trig], False)
+
+    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tdef.add_dependency(dep, seq1)
+    tdef.add_dependency(dep, seq2)  # duplicate!
+
+    tstate = TaskState(tdef, IntegerPoint("1"), TASK_STATUS_WAITING, False)
+
+    prereqs = [p.satisfied for p in tstate.prerequisites]
+
+    assert prereqs == [{("1", "a", "succeeded"): False}]

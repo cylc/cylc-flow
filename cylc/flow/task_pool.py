@@ -21,15 +21,22 @@ from collections import Counter
 import json
 from time import time
 from typing import (
-    Dict, Iterable, List, Optional,
-    Set, TYPE_CHECKING, Tuple
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
+    Union,
 )
 import logging
 
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
-from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.exceptions import (
+    WorkflowConfigError, PointParsingError, PlatformLookupError)
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -128,7 +135,7 @@ class TaskPool:
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
@@ -137,7 +144,7 @@ class TaskPool:
         """Set stop after a task."""
         tokens = Tokens(task_id, relative=True)
         name = tokens['task']
-        if name in self.config.get_task_name_list():
+        if name in self.config.taskdefs:
             task_id = TaskID.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
             self.stop_task_id = task_id
@@ -174,7 +181,7 @@ class TaskPool:
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}")
         self.compute_runahead()
-        for name in self.config.get_task_name_list():
+        for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
             point = tdef.first_point(self.config.start_point)
             self.spawn_to_rh_limit(tdef, point, {flow_num})
@@ -421,6 +428,30 @@ class TaskPool:
         cycle, name, output = row
         self.abs_outputs_done.add((cycle, name, output))
 
+    def check_task_output(
+        self,
+        cycle: str,
+        task: str,
+        output: str,
+        flow_nums: 'FlowNums',
+    ) -> Union[str, bool]:
+        """Returns truthy if the specified output is satisfied in the DB."""
+        for task_outputs, task_flow_nums in (
+            self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
+        ).items():
+            # loop through matching tasks
+            if flow_nums.intersection(task_flow_nums):
+                # this task is in the right flow
+                task_outputs = json.loads(task_outputs)
+                return (
+                    'satisfied from database'
+                    if output in task_outputs
+                    else False
+                )
+        else:
+            # no matching entries
+            return False
+
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load tasks from DB task pool/states/jobs tables.
 
@@ -428,6 +459,9 @@ class TaskPool:
         as submitted or running are polled to confirm their true status.
         Tasks are added to queues again on release from runahead pool.
 
+        Returns:
+            Names of platform if attempting to look up that platform
+            has led to a PlatformNotFoundError.
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
@@ -447,6 +481,7 @@ class TaskPool:
                 flow_wait=bool(flow_wait),
                 is_manual_submit=bool(is_manual_submit)
             )
+
         except WorkflowConfigError:
             LOG.exception(
                 f'ignoring task {name} from the workflow run database\n'
@@ -461,7 +496,12 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
-                itask.platform = get_platform(platform_name)
+                # If we get a failure from the platform selection function
+                # set task status to submit-failed.
+                try:
+                    itask.platform = get_platform(platform_name)
+                except PlatformLookupError:
+                    return platform_name
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
@@ -500,12 +540,29 @@ class TaskPool:
                         flow_nums,
                     )
             ):
-                key = (prereq_cycle, prereq_name, prereq_output)
-                sat[key] = satisfied if satisfied != '0' else False
+                # Prereq satisfaction as recorded in the DB.
+                sat[
+                    (prereq_cycle, prereq_name, prereq_output)
+                ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
-                for key, _ in itask_prereq.satisfied.items():
-                    itask_prereq.satisfied[key] = sat[key]
+                for key in itask_prereq.satisfied.keys():
+                    try:
+                        itask_prereq.satisfied[key] = sat[key]
+                    except KeyError:
+                        # This prereq is not in the DB: new dependencies
+                        # added to an already-spawned task before restart.
+                        # Look through task outputs to see if is has been
+                        # satisfied
+                        prereq_cycle, prereq_task, prereq_output = key
+                        itask_prereq.satisfied[key] = (
+                            self.check_task_output(
+                                prereq_cycle,
+                                prereq_task,
+                                prereq_output,
+                                itask.flow_nums,
+                            )
+                        )
 
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
@@ -908,8 +965,12 @@ class TaskPool:
                 new_task = TaskProxy(
                     self.config.get_taskdef(itask.tdef.name),
                     itask.point, itask.flow_nums, itask.state.status)
-                itask.copy_to_reload_successor(new_task)
+                itask.copy_to_reload_successor(
+                    new_task,
+                    self.check_task_output,
+                )
                 self._swap_out(new_task)
+                self.data_store_mgr.delta_task_prerequisite(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
@@ -925,7 +986,7 @@ class TaskPool:
         del self.task_queue_mgr
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
-            self.config.get_task_name_list(),
+            self.task_name_list,
             self.config.runtime['descendants']
         )
 
@@ -1385,7 +1446,7 @@ class TaskPool:
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
         various workflow limits."""
-        if name not in self.config.get_task_name_list():
+        if name not in self.config.taskdefs:
             LOG.debug('No task definition %s', name)
             return False
         # Don't spawn outside of graph limits.

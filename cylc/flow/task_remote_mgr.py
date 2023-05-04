@@ -32,12 +32,16 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import sleep, time
-from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
+from typing import (
+    Any, Deque, Dict, TYPE_CHECKING, List,
+    NamedTuple, Optional, Set, Tuple
+)
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformError
+from cylc.flow.exceptions import (
+    PlatformError, PlatformLookupError, NoHostsError, NoPlatformsError
+)
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
     get_dirs_to_symlink,
@@ -46,12 +50,12 @@ from cylc.flow.pathutil import (
     get_workflow_run_dir,
 )
 from cylc.flow.platforms import (
-    NoHostsError,
-    PlatformLookupError,
+    HOST_REC_COMMAND,
+    PLATFORM_REC_COMMAND,
     get_host_from_platform,
     get_install_target_from_platform,
+    get_install_target_to_platforms_map,
     get_localhost_install_target,
-    get_random_platform_for_install_target,
     log_platform_event,
 )
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
@@ -67,6 +71,7 @@ from cylc.flow.workflow_files import (
 )
 
 from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
+from cylc.flow.hostuserutil import is_remote_host
 
 if TYPE_CHECKING:
     from zmq.auth.thread import ThreadAuthenticator
@@ -91,7 +96,7 @@ class RemoteTidyQueueTuple(NamedTuple):
 class TaskRemoteMgr:
     """Manage task remote initialisation, tidy, selection."""
 
-    def __init__(self, workflow, proc_pool, bad_hosts):
+    def __init__(self, workflow, proc_pool, bad_hosts, db_mgr):
         self.workflow = workflow
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|PlatformError|None}
@@ -105,40 +110,33 @@ class TaskRemoteMgr:
         self.bad_hosts = bad_hosts
         self.is_reload = False
         self.is_restart = False
+        self.db_mgr = db_mgr
 
-    def subshell_eval(self, command, command_pattern, host_check=True):
-        """Evaluate a task platform from a subshell string.
-
-        At Cylc 7, from a host string.
+    def _subshell_eval(
+        self, eval_str: str, command_pattern: re.Pattern
+    ) -> Optional[str]:
+        """Evaluate a platform or host from a possible subshell string.
 
         Arguments:
-            command (str):
-                An explicit host name, a command in back-tick or $(command)
-                format, or an environment variable holding a hostname.
-            command_pattern (re.Pattern):
+            eval_str:
+                An explicit host/platform name, a command, or an environment
+                variable holding a host/patform name.
+            command_pattern:
                 A compiled regex pattern designed to match subshell strings.
-            host_check (bool):
-                A flag to enable remote testing. If True, and if the command
-                is running locally, then it will return 'localhost'.
 
-        Return (str):
+        Return:
             - None if evaluation of command is still taking place.
-            - If command is not defined or the evaluated name is equivalent
-              to 'localhost', _and_ host_check is set to True then
-              'localhost'
-            - Otherwise, return the evaluated host name on success.
+            - 'localhost' if string is empty/not defined.
+            - Otherwise, return the evaluated host/platform name on success.
 
         Raise PlatformError on error.
 
         """
-        # BACK COMPAT: references to "host"
-        # remove at:
-        #     Cylc8.x
-        if not command:
+        if not eval_str:
             return 'localhost'
 
         # Host selection command: $(command) or `command`
-        match = command_pattern.match(command)
+        match = command_pattern.match(eval_str)
         if match:
             cmd_str = match.groups()[1]
             if cmd_str in self.remote_command_map:
@@ -146,34 +144,53 @@ class TaskRemoteMgr:
                 value = self.remote_command_map[cmd_str]
                 if isinstance(value, PlatformError):
                     raise value  # command failed
-                elif value is None:
-                    return  # command not yet ready
-                else:
-                    command = value  # command succeeded
+                if value is None:
+                    return None  # command not yet ready
+                eval_str = value  # command succeeded
             else:
                 # Command not launched (or already reset)
                 self.proc_pool.put_command(
                     SubProcContext(
                         'remote-host-select',
                         ['bash', '-c', cmd_str],
-                        env=dict(os.environ)),
+                        env=dict(os.environ)
+                    ),
                     callback=self._subshell_eval_callback,
                     callback_args=[cmd_str]
                 )
                 self.remote_command_map[cmd_str] = None
-                return self.remote_command_map[cmd_str]
+                return None
 
         # Environment variable substitution
-        command = os.path.expandvars(command)
-        # Remote?
-        # TODO - Remove at Cylc 8.x as this only makes sense with host logic
-        if host_check is True:
-            if is_remote_host(command):
-                return command
-            else:
-                return 'localhost'
-        else:
-            return command
+        return os.path.expandvars(eval_str)
+
+    # BACK COMPAT: references to "host"
+        # remove at:
+        #     Cylc8.x
+    def eval_host(self, host_str: str) -> Optional[str]:
+        """Evaluate a host from a possible subshell string.
+
+        Args:
+            host_str: An explicit host name, a command in back-tick or
+                $(command) format, or an environment variable holding
+                a hostname.
+
+        Returns 'localhost' if evaluated name is equivalent
+        (e.g. localhost4.localdomain4).
+        """
+        host = self._subshell_eval(host_str, HOST_REC_COMMAND)
+        if host is not None and not is_remote_host(host):
+            return 'localhost'
+        return host
+
+    def eval_platform(self, platform_str: str) -> Optional[str]:
+        """Evaluate a platform from a possible subshell string.
+
+        Args:
+            platform_str: An explicit platform name, a command in $(command)
+                format, or an environment variable holding a platform name.
+        """
+        return self._subshell_eval(platform_str, PLATFORM_REC_COMMAND)
 
     def subshell_eval_reset(self):
         """Reset remote eval subshell results.
@@ -286,6 +303,41 @@ class TaskRemoteMgr:
         cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
         return cmd, host
 
+    @staticmethod
+    def _get_remote_tidy_targets(
+        platform_names: List[str],
+        install_targets: Set[str]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Finds valid platforms for install targets, warns about in invalid
+        install targets.
+
+        logs:
+            A list of install targets where no platform can be found.
+
+        returns:
+            A mapping of install targets to valid platforms only where
+            platforms are available.
+        """
+        if install_targets and not platform_names:
+            install_targets_map: Dict[str, List[Dict[str, Any]]] = {
+                t: [] for t in install_targets}
+            unreachable_targets = install_targets
+        else:
+            install_targets_map = get_install_target_to_platforms_map(
+                platform_names, quiet=True)
+            # If we couldn't find a platform for a target, we cannot tidy it -
+            # raise an Error:
+            unreachable_targets = install_targets.difference(
+                install_targets_map)
+
+        if unreachable_targets:
+            msg = 'No platforms available to remote tidy install targets:'
+            for unreachable_target in unreachable_targets:
+                msg += f'\n * {unreachable_target}'
+            LOG.error(msg)
+
+        return install_targets_map
+
     def remote_tidy(self) -> None:
         """Remove workflow contact files and keys from initialised remotes.
 
@@ -293,37 +345,50 @@ class TaskRemoteMgr:
         This method is called on workflow shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
+        # Get a list of all platforms used from workflow database:
+        platforms_used = (
+            self.db_mgr.get_pri_dao().select_task_job_platforms())
+        # For each install target compile a list of platforms:
+        install_targets = {
+            target for target, msg
+            in self.remote_init_map.items()
+            if msg == REMOTE_FILE_INSTALL_DONE
+        }
+        install_targets_map = self._get_remote_tidy_targets(
+            platforms_used, install_targets)
+
         # Issue all SSH commands in parallel
         queue: Deque[RemoteTidyQueueTuple] = deque()
-        for install_target, message in self.remote_init_map.items():
-            if message != REMOTE_FILE_INSTALL_DONE:
-                continue
+        for install_target, platforms in install_targets_map.items():
             if install_target == get_localhost_install_target():
                 continue
-            try:
-                platform = get_random_platform_for_install_target(
-                    install_target
-                )
-                cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
-            except (NoHostsError, PlatformLookupError) as exc:
-                LOG.warning(
-                    PlatformError(
-                        f'{PlatformError.MSG_TIDY}\n{exc}',
-                        platform['name'],
+            for platform in platforms:
+                try:
+                    cmd, host = self.construct_remote_tidy_ssh_cmd(platform)
+                except NoHostsError as exc:
+                    LOG.warning(
+                        PlatformError(
+                            f'{PlatformError.MSG_TIDY}\n{exc}',
+                            platform['name'],
+                        )
                     )
-                )
+                else:
+                    log_platform_event('remote tidy', platform, host)
+                    queue.append(
+                        RemoteTidyQueueTuple(
+                            platform,
+                            host,
+                            Popen(  # nosec
+                                cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
+                                text=True
+                            )  # * command constructed by internal interface
+                        )
+                    )
+                    break
             else:
-                log_platform_event('remote tidy', platform, host)
-                queue.append(
-                    RemoteTidyQueueTuple(
-                        platform,
-                        host,
-                        Popen(  # nosec
-                            cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
-                            text=True
-                        )  # * command constructed by internal interface
-                    )
-                )
+                LOG.error(
+                    NoPlatformsError(
+                        install_target, 'install target', 'remote tidy'))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while queue and time() < timeout:

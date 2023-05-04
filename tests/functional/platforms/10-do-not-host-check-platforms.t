@@ -15,28 +15,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Tests that cylc cat-log correctly handles log rotation.
+# Check that platform names are not treated as host names. E.g. a platform
+# name starting with "localhost" should not be treated as localhost.
+# https://github.com/cylc/cylc-flow/issues/5342
 . "$(dirname "$0")/test_header"
-set_test_number 1
-init_workflow "${TEST_NAME_BASE}" '/dev/null'
 
-# Populate its cylc-run dir with empty log files.
-LOG_DIR="$HOME/cylc-run/$WORKFLOW_NAME/log/scheduler"
-mkdir -p "${LOG_DIR}"
-touch -t '201001011200.00' "${LOG_DIR}/01-start-01.log"
-touch -t '201001011200.01' "${LOG_DIR}/02-start-01.log"
-touch -t '201001011200.02' "${LOG_DIR}/03-restart-02.log"
+set_test_number 2
 
-# Test log rotation.
-for I in {0..2}; do
-    basename "$(cylc cat-log "${WORKFLOW_NAME}" -m p -r "${I}")"
-done >'result'
+# shellcheck disable=SC2016
+create_test_global_config '' '
+[platforms]
+    [[localhost_spice]]
+        hosts = unreachable
+'
 
-cmp_ok 'result' <<'__CMP__'
-03-restart-02.log
-02-start-01.log
-01-start-01.log
-__CMP__
+make_rnd_workflow
 
-purge
+cat > "${RND_WORKFLOW_SOURCE}/flow.cylc" <<__HEREDOC__
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        platform = localhost_spice
+__HEREDOC__
+
+ERR_STR='Unable to find valid host for localhost_spice'
+
+TEST_NAME="${TEST_NAME_BASE}-vip-workflow"
+run_fail "${TEST_NAME}" cylc vip "${RND_WORKFLOW_SOURCE}" --no-detach
+grep_ok "${ERR_STR}" \
+    "${TEST_NAME}.stderr" -F
+
+purge_rnd_workflow
 exit

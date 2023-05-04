@@ -40,8 +40,7 @@ workflow_run_ok "${TEST_NAME_BASE}-workflow-run" \
 cylc cat-log "${WORKFLOW_NAME}" \
     | grep -E -m 1 -A 2 "ERROR - \[jobs-submit cmd\]" \
        | sed -e 's/^.* \(ERROR\)/\1/' > log
-
-WORKFLOW_LOG_DIR=$(cylc cat-log -m p "${WORKFLOW_NAME}")
+WORKFLOW_LOG_DIR=$(cylc cat-log -m p "${WORKFLOW_NAME}" | sed 's/01-start-01\.//')
 JOB_LOG_DIR="${WORKFLOW_LOG_DIR%scheduler/log}"
 JOB_LOG_DIR="${JOB_LOG_DIR/$HOME/\$HOME}"
 

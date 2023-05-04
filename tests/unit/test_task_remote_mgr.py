@@ -20,10 +20,12 @@ import pytest
 from typing import (Any, Optional)
 from unittest.mock import MagicMock, Mock
 
+from cylc.flow.exceptions import PlatformError
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE, REMOTE_INIT_IN_PROGRESS, TaskRemoteMgr)
 from cylc.flow.workflow_files import WorkflowFiles, get_workflow_srv_dir
+
 
 Fixture = Any
 
@@ -112,7 +114,7 @@ def test_get_log_file_name(tmp_path: Path,
                            install_target: str,
                            load_type: Optional[str],
                            expected: str):
-    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None)
+    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None)
     if load_type == 'restart':
         task_remote_mgr.is_restart = True
     elif load_type == 'reload':
@@ -127,3 +129,209 @@ def test_get_log_file_name(tmp_path: Path,
     log_name = task_remote_mgr.get_log_file_name(
         install_target, install_log_dir=log_dir)
     assert log_name == expected
+
+
+@pytest.mark.parametrize(
+    'platform_names, install_targets, glblcfg, expect',
+    [
+        pytest.param(
+            # Two platforms share an install target. Both are reachable.
+            ['sir_handel', 'peter_sam'],
+            ['mountain_railway'],
+            '''
+            [platforms]
+                [[peter_sam, sir_handel]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['peter_sam', 'sir_handel']},
+                'unreachable': set()
+            },
+            id='basic'
+        ),
+        pytest.param(
+            # Two platforms share an install target. Both are unreachable.
+            set(),
+            ['mountain_railway'],
+            '''
+            [platforms]
+                [[peter_sam, sir_handel]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': []},
+                'unreachable': {'mountain_railway'}
+            },
+            id='platform_unreachable'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly; i.e. the platform name is the same as the
+            # install target name.
+            ['sir_handel'],
+            ['sir_handel'],
+            '''
+            [platforms]
+                [[sir_handel]]
+            ''',
+            {
+                'targets': {'sir_handel': ['sir_handel']},
+                'unreachable': set()
+            },
+            id='implicit-target'
+        ),
+        pytest.param(
+            # One of our install targets matches one of our platforms,
+            # but only implicitly, and the platform name is defined using a
+            # regex.
+            ['sir_handel42'],
+            ['sir_handel42'],
+            '''
+            [platforms]
+                [[sir_handel..]]
+            ''',
+            {
+                'targets': {'sir_handel42': ['sir_handel42']},
+                'unreachable': set()
+            },
+            id='implicit-target-regex'
+        ),
+        pytest.param(
+            # One of our install targets (rusty) has no defined platforms
+            # causing a PlatformLookupError.
+            ['duncan', 'rusty'],
+            ['mountain_railway', 'rusty'],
+            '''
+            [platforms]
+                [[duncan]]
+                    install target = mountain_railway
+            ''',
+            {
+                'targets': {'mountain_railway': ['duncan']},
+                'unreachable': {'rusty'}
+            },
+            id='PlatformLookupError'
+        )
+    ]
+)
+def test_map_platforms_used_for_install_targets(
+    mock_glbl_cfg,
+    platform_names, install_targets, glblcfg, expect, caplog
+):
+    def flatten_install_targets_map(itm):
+        result = {}
+        for target, platforms in itm.items():
+            result[target] = sorted([p['name'] for p in platforms])
+        return result
+
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glblcfg)
+
+    install_targets_map = TaskRemoteMgr._get_remote_tidy_targets(
+        set(platform_names), set(install_targets))
+
+    assert (
+        expect['targets'] == flatten_install_targets_map(install_targets_map))
+
+    if expect['unreachable']:
+        for unreachable in expect["unreachable"]:
+            assert (
+                unreachable in caplog.records[0].msg)
+    else:
+        assert not caplog.records
+
+
+shared_eval_params = [
+    pytest.param(
+        'localhost', {}, 'localhost', id="localhost"
+    ),
+    pytest.param(
+        '$(some-cmd)', {}, None, id="subshell_1st_eval"
+    ),
+    pytest.param(
+        '$(some-cmd)', {'some-cmd': None}, None,
+        id="subshell_awaiting_eval"
+    ),
+    pytest.param(
+        '$(some-cmd)', {'some-cmd': 'isaac clarke'}, 'isaac clarke',
+        id="subshell_finished_eval"
+    ),
+    pytest.param(
+        '$SOME_ENV', {}, 'nolan stross', id="env_var"
+    ),
+    pytest.param(
+        '$(env-cmd)', {'env-cmd': '$SOME_ENV'}, 'nolan stross',
+        id="subshell_env_var"
+    ),
+    pytest.param(
+        'titan_station', {}, 'titan_station', id="verbatim_name"
+    ),
+    pytest.param(
+        '', {}, 'localhost', id="empty"
+    ),
+]
+
+
+@pytest.fixture
+def task_remote_mgr_eval(monkeypatch: pytest.MonkeyPatch):
+    """Fixture providing a task remote manager for eval_platform() &
+    eval_host() tests."""
+    def _task_remote_mgr_eval(remote_cmd_map: dict) -> TaskRemoteMgr:
+        monkeypatch.setenv('SOME_ENV', 'nolan stross')
+        task_remote_mgr = TaskRemoteMgr(
+            workflow='usg_ishimura',
+            proc_pool=Mock(),
+            bad_hosts=[],
+            db_mgr=None
+        )
+        task_remote_mgr.remote_command_map = remote_cmd_map
+        return task_remote_mgr
+
+    return _task_remote_mgr_eval
+
+
+@pytest.mark.parametrize(
+    'eval_str, remote_cmd_map, expected',
+    [
+        *shared_eval_params,
+        pytest.param(
+            'localhost_tau_volantis', {}, 'localhost_tau_volantis',
+            id="name_begin_w_localhost"
+        )
+    ]
+)
+def test_eval_platform(
+    eval_str: str, remote_cmd_map: dict, expected: Optional[str],
+    task_remote_mgr_eval,
+):
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(remote_cmd_map)
+    assert task_remote_mgr.eval_platform(eval_str) == expected
+
+
+def test_eval_platform_bad(task_remote_mgr_eval):
+    exc_msg = "foreign contaminant detected"
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(
+        {'cmd': PlatformError(exc_msg, 'aegis_vii')}
+    )
+    with pytest.raises(PlatformError, match=exc_msg):
+        task_remote_mgr.eval_platform('$(cmd)')
+
+
+@pytest.mark.parametrize(
+    'eval_str, remote_cmd_map, expected',
+    [
+        *shared_eval_params,
+        pytest.param(
+            'localhost4.localdomain4', {}, 'localhost', id="localhost_variant"
+        ),
+        pytest.param(
+            '`other cmd`', {'other cmd': 'nicole brennan'}, 'nicole brennan',
+            id="backticks"
+        ),
+    ]
+)
+def test_eval_host(
+    eval_str: str, remote_cmd_map: dict, expected: Optional[str],
+    task_remote_mgr_eval,
+):
+    task_remote_mgr: TaskRemoteMgr = task_remote_mgr_eval(remote_cmd_map)
+    assert task_remote_mgr.eval_host(eval_str) == expected

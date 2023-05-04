@@ -10,19 +10,75 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.1.3 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
+
+[#5514](https://github.com/cylc/cylc-flow/pull/5514) -
+Ensure `cylc cat-log` directory listings always include the `job-activity.log`
+file when present and are able to list submit-failed jobs.
+
+[#5506](https://github.com/cylc/cylc-flow/pull/5506) -
+Fix bug introduced in 8.1.3 where specifying a subshell command for
+`flow.cylc[runtime][<namespace>][remote]host` (e.g. `$(rose host-select)`)
+would always result in localhost.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
+
+### Enhancements
+
+[#5475](https://github.com/cylc/cylc-flow/pull/5475) - much faster computation
+of the visualization window around active tasks (at the cost, for now, of not
+showing non-active "cousin" nodes).
+
+[#5453](https://github.com/cylc/cylc-flow/pull/5453) - `cylc cat-log` can now
+list and view workflow log files including install logs and workflow
+configuration files.
+
+### Fixes
+
+[#5495](https://github.com/cylc/cylc-flow/pull/5495) - Fix bug that could cause
+invalid parent tasks to appear in the UI datastore.
+
+[#5334](https://github.com/cylc/cylc-flow/pull/5334) - Apply graph prerequisite
+changes to already-spawned tasks after reload or restart.
+
+[5466](https://github.com/cylc/cylc-flow/pull/5466) - Don't generate duplicate
+prerequisites from recurrences with coincident points.
+
+[5450](https://github.com/cylc/cylc-flow/pull/5450) - Validation provides
+better error messages if [sections] and settings are mixed up in a
+configuration.
+
+[5445](https://github.com/cylc/cylc-flow/pull/5445) - Fix remote tidy
+ bug where install target is not explicit in platform definition.
 
 [5398](https://github.com/cylc/cylc-flow/pull/5398) - Fix platform from
 group selection order bug.
 
+[#5395](https://github.com/cylc/cylc-flow/pull/5395) - Fix bug where workflow
+shuts down if all hosts for all platforms in a platform group are unreachable.
+
 [#5384](https://github.com/cylc/cylc-flow/pull/5384) -
 Fixes `cylc set-verbosity`.
 
-[#5386](https://github.com/cylc/cylc-flow/pull/5386) Fix bug where
+[#5479](https://github.com/cylc/cylc-flow/pull/5479) -
+Fixes `cylc help license`
+
+[#5394](https://github.com/cylc/cylc-flow/pull/5394) -
+Fixes a possible scheduler traceback observed with remote task polling.
+
+[#5386](https://github.com/cylc/cylc-flow/pull/5386) - Fix bug where
 absence of `job name length maximum` in PBS platform settings would cause
 Cylc to crash when preparing the job script.
+
+[#5343](https://github.com/cylc/cylc-flow/pull/5343) - Fix a bug causing
+platform names to be checked as if they were hosts.
+
+[#5359](https://github.com/cylc/cylc-flow/pull/5359) - Fix bug where viewing
+a workflow's log in the GUI or using `cylc cat-log` would prevent `cylc clean`
+from working.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__

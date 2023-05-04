@@ -6,16 +6,22 @@
        inactivity timeout = PT3M
 [scheduling]
     [[graph]]
-        R1 = a-task
+        R1 = submit-failed:submit-failed => a-task
 [runtime]
     [[a-task]]
         script = """
-# Write to task stdout log
-echo "the quick brown fox"
-# Write to task stderr log
-echo "jumped over the lazy dog" >&2
-# Write to a custom log file
-echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
-# Generate a warning message in the workflow log.
-cylc message -p WARNING 'marmite and squashed bananas'
-"""
+            # Write to task stdout log
+            echo "the quick brown fox"
+            # Write to task stderr log
+            echo "jumped over the lazy dog" >&2
+            # Write to a custom log file
+            echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
+            # Generate a warning message in the workflow log.
+            cylc message -p WARNING 'marmite and squashed bananas'
+            # Remove the submit-failed task.
+            cylc remove "${CYLC_WORKFLOW_NAME}//1/submit-failed"
+        """
+    [[submit-failed]]
+        # This causes a submission failure due to Bash syntax check.
+        # In this case the job file isn't even written remotely.
+        script = if
