@@ -179,7 +179,9 @@ class TaskRemoteMgr:
         (e.g. localhost4.localdomain4).
         """
         host = self._subshell_eval(host_str, HOST_REC_COMMAND)
-        return host if is_remote_host(host) else 'localhost'
+        if host is not None and not is_remote_host(host):
+            return 'localhost'
+        return host
 
     def eval_platform(self, platform_str: str) -> Optional[str]:
         """Evaluate a platform from a possible subshell string.

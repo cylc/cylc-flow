@@ -89,6 +89,7 @@ TEST_NAME=${TEST_NAME_BASE}-task-list-remote-NN
 cylc cat-log -f j -m l "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 contains_ok "${TEST_NAME}.out" <<__END__
 job
+job-activity.log
 job.custom-log
 job.err
 job.out
