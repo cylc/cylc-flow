@@ -33,6 +33,19 @@ short option for `--no-detach` to `-N`; add `-r` as a short option for
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
+-------------------------------------------------------------------------------
+## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
+
+### Fixes
+
+[#5514](https://github.com/cylc/cylc-flow/pull/5514) -
+Ensure `cylc cat-log` directory listings always include the `job-activity.log`
+file when present and are able to list submit-failed jobs.
+
+[#5506](https://github.com/cylc/cylc-flow/pull/5506) -
+Fix bug introduced in 8.1.3 where specifying a subshell command for
+`flow.cylc[runtime][<namespace>][remote]host` (e.g. `$(rose host-select)`)
+would always result in localhost.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
