@@ -43,7 +43,7 @@ import sys
 
 from cylc.flow import LOG
 import cylc.flow.flags
-from cylc.flow.loggingutil import disable_timestamps
+from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.resources import get_resources, list_resources
 from cylc.flow.terminal import cli_function
@@ -75,7 +75,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, opts, resource=None, tgt_dir=None):
     if cylc.flow.flags.verbosity < 2:
-        disable_timestamps(LOG)
+        set_timestamps(LOG, False)
     if not resource or opts.list:
         list_resources()
         sys.exit(0)

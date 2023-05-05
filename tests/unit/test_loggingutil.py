@@ -20,6 +20,8 @@ import tempfile
 from time import sleep
 import pytest
 from pytest import param
+import re
+import sys
 from typing import Callable
 from unittest import mock
 
@@ -28,7 +30,8 @@ from cylc.flow.loggingutil import (
     RotatingLogFileHandler,
     CylcLogFormatter,
     get_reload_start_number,
-    get_sorted_logs_by_time
+    get_sorted_logs_by_time,
+    set_timestamps,
 )
 
 
@@ -173,3 +176,24 @@ def test_get_reload_number_no_logs(tmp_run_dir: Callable):
     config_log_dir.mkdir(exist_ok=True, parents=True)
     config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
     assert get_reload_start_number(config_logs) == '01'
+
+
+def test_set_timestamps(capsys):
+    """The enable and disable timstamp methods do what they say"""
+    # Setup log handler
+    log_handler = logging.StreamHandler(sys.stderr)
+    log_handler.setFormatter(CylcLogFormatter())
+    LOG.addHandler(log_handler)
+
+    # Log some messages with timestamps on or off:
+    LOG.warning('foo')
+    set_timestamps(LOG, False)
+    LOG.warning('bar')
+    set_timestamps(LOG, True)
+    LOG.warning('baz')
+
+    # Check 1st and 3rd error have something timestamp-like:
+    errors = capsys.readouterr().err.split('\n')
+    assert re.match('^[0-9]{4}', errors[0])
+    assert re.match('^WARNING - bar', errors[1])
+    assert re.match('^[0-9]{4}', errors[2])
