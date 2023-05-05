@@ -1198,7 +1198,8 @@ class DataStoreMgr:
                 cycle=cycle,
                 task=name,
             )
-            itask, is_parent = self.db_load_task_proxies[tokens.relative_id]
+            relative_id = tokens.relative_id
+            itask, is_parent = self.db_load_task_proxies[relative_id]
             itask.submit_num = submit_num
             flow_nums = deserialise(flow_nums_str)
             # Do not set states and outputs for future tasks in flow.
@@ -1223,7 +1224,7 @@ class DataStoreMgr:
                 for message in json.loads(outputs_str):
                     itask.state.outputs.set_completion(message, True)
             # Gather tasks with flow id.
-            prereq_ids.add(f'{tokens.relative_id}/{flow_nums_str}')
+            prereq_ids.add(f'{relative_id}/{flow_nums_str}')
 
         # Batch load prerequisites of tasks according to flow.
         prereqs_map = {}
@@ -1305,7 +1306,7 @@ class DataStoreMgr:
             self.xtrigger_tasks.setdefault(sig, set()).add(tproxy.id)
 
         if tproxy.state in self.latest_state_tasks:
-            tp_ref = Tokens(tproxy.id).relative_id
+            tp_ref = itask.identity
             tp_queue = self.latest_state_tasks[tproxy.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
@@ -1953,7 +1954,7 @@ class DataStoreMgr:
         tp_delta.state = itask.state.status
         self.state_update_families.add(tproxy.first_parent)
         if tp_delta.state in self.latest_state_tasks:
-            tp_ref = Tokens(tproxy.id).relative_id
+            tp_ref = itask.identity
             tp_queue = self.latest_state_tasks[tp_delta.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
