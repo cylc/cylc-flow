@@ -49,10 +49,9 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONF__'
 __FLOW_CONF__
 
 run_ok "${TEST_NAME_BASE}-play" \
-    cylc play "${WORKFLOW_NAME}"
+    cylc play "${WORKFLOW_NAME}" --no-detach
 
 # Wait for workflow to stop, then wreck the global config:
-poll_workflow_stopped
 create_test_global_config "" "
 "
 
