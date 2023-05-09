@@ -295,7 +295,7 @@ def apply_delta(key, delta, data):
             # Clear fields that require overwrite with delta
             field_set = {f.name for f, _ in delta.updated.ListFields()}
             for field in CLEAR_FIELD_MAP[key]:
-                if field in field_set:
+                if field in field_set or delta.updated.states_updated:
                     data[key].ClearField(field)
             data[key].MergeFrom(delta.updated)
         else:
@@ -1494,10 +1494,14 @@ class DataStoreMgr:
         if self.state_update_families:
             self.update_family_proxies()
 
+        next_update_pending = False
         if self.updates_pending:
             # Update workflow statuses and totals if needed
             self.update_workflow()
+
             # Don't process updated deltas of pruned nodes
+            if self.pruned_task_proxies:
+                next_update_pending = True
             self.prune_pruned_updated_nodes()
 
             # Apply current deltas
@@ -1513,7 +1517,7 @@ class DataStoreMgr:
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
 
-        self.updates_pending = False
+        self.updates_pending = next_update_pending
 
         # Clear deltas
         self.clear_delta_batch()
@@ -1827,6 +1831,7 @@ class DataStoreMgr:
             for state, state_cnt in state_counter.items():
                 w_delta.state_totals[state] = state_cnt
 
+            w_delta.states_updated = True
             w_delta.is_held_total = is_held_total
             w_delta.is_queued_total = is_queued_total
             w_delta.is_runahead_total = is_runahead_total
