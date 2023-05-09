@@ -1597,7 +1597,7 @@ class Message(Mutation):
             this command to report messages and to report registered task
             outputs.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = partial(mutator, command='put_messages')
 
@@ -1728,7 +1728,7 @@ class Stop(Mutation):
             be executed prior to shutdown, unless
             the stop mode is `{WorkflowStopMode.Now.name}`.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = mutator
 
@@ -1881,7 +1881,7 @@ class Kill(Mutation, TaskMutation):
         description = sstrip('''
             Kill running or submitted jobs.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = partial(mutator, command='kill_tasks')
 
@@ -1898,7 +1898,7 @@ class Poll(Mutation, TaskMutation):
             an associated job ID, including incomplete finished
             tasks.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = partial(mutator, command='poll_tasks')
 
