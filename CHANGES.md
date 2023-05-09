@@ -29,6 +29,9 @@ Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
+[#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
+in `share/bin` and Python modules in `share/bin/python`.
+
 ### Fixes
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.

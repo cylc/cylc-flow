@@ -91,7 +91,10 @@ ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
             |               |-- 01
             |               \`-- NN -> 01
             |-- share
-            |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
+            |   |-- bin
+            |   |-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
+            |   \`-- lib
+            |       \`-- python
             \`-- work
                 \`-- 1
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
