@@ -38,6 +38,7 @@ from colorama import Fore
 from optparse import Values
 from pathlib import Path
 import re
+import shutil
 try:
     # BACK COMPAT: tomli
     #   Support for Python versions before tomllib was added to the
@@ -53,7 +54,7 @@ except ImportError:
         loads as toml_loads,
         TOMLDecodeError,
     )
-from typing import Generator, Union
+from typing import Dict, Generator, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -134,7 +135,7 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'indentation',
         'index': 5
     },
-    re.compile(r'\s$'): {
+    re.compile(r'[ \t]$'): {
         'short': 'trailing whitespace.',
         'url': STYLE_GUIDE + 'trailing-whitespace',
         'index': 6
@@ -483,26 +484,71 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
 
 
 def check_cylc_file(
-    dir_, file_, checks,
+    file_,
+    file_rel,
+    checks,
+    counter,
     modify=False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
-    file_rel = file_.relative_to(dir_)
-    # Set mode as read-write or read only.
-    outlines = []
+    with open(file_, 'r') as cylc_file:
+        # generator which reads and lints one line at a time
+        linter = lint(
+            file_rel,
+            cylc_file,
+            checks,
+            counter,
+            modify,
+        )
 
-    # Open file, and read it's line to memory.
-    lines = file_.read_text().split('\n')
-    jinja_shebang = lines[0].strip().lower() == JINJA2_SHEBANG
-    count = 0
-    for line_no, line in enumerate(lines, start=1):
+        if modify:
+            # write modifications into a ".temp" file
+            modify_file_path = file_.parent / f'{file_.name}.temp'
+            with open(modify_file_path, 'w+') as modify_file:
+                for line in linter:
+                    modify_file.write(line)
+            # replace the original with the ".temp" file
+            shutil.move(modify_file_path, file_)
+        else:
+            for _line in linter:
+                pass
+
+
+def lint(file_rel, lines, checks, counter, modify=False, write=print):
+    """Lint text, one line at a time.
+
+    Arguments:
+        file_rel:
+            The filepath relative to the workflow configuration directory
+            (used in messages).
+        lines:
+            Iterator which produces one line of text at a time
+            e.g. open(file) or iter(['foo\n', 'bar\n', 'baz\n'].
+        counter:
+            Dictionary for counting lint hits per category.
+        modify:
+            If True, this generator will yield the file one line at a time
+            with comments inserted to help users fix their lint.
+        write:
+            A function for reporting lint messages.
+
+    Yields:
+        The original file with added comments when `modify is True`.
+
+    """
+    # get the first line
+    line_no = 1
+    line = next(lines)
+    # check if it is a jinja2 shebang
+    jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
+
+    while True:
+        # run lint checks against the current line
         for check, message in checks.items():
-            # Tests with for presence of Jinja2 if no shebang line is
-            # present.
+            # skip Jinja2 checks if Jinja2 is not being used
             if (
                 jinja_shebang
-                and message['short'].startswith(
-                    JINJA2_FOUND_WITHOUT_SHEBANG)
+                and message['short'].startswith(JINJA2_FOUND_WITHOUT_SHEBANG)
             ):
                 continue
 
@@ -516,28 +562,37 @@ def check_cylc_file(
                     )
                 )
             ):
-                count += 1
+                # we have lint!
+                counter.setdefault(message['purpose'], 0)
+                counter[message['purpose']] += 1
                 if modify:
+                    # insert a command to help the user
                     if message['url'].startswith('http'):
                         url = message['url']
                     else:
                         url = URL_STUB + message['url']
-                    outlines.append(
+                    yield (
                         f'# [{message["purpose"]}{message["index"]:03d}]: '
                         f'{message["short"]}\n'
-                        f'# - see {url}'
+                        f'# - see {url}\n'
                     )
                 else:
-                    print(
+                    # write a message to inform the user
+                    write(
                         Fore.YELLOW +
                         f'[{message["purpose"]}{message["index"]:03d}]'
                         f' {file_rel}:{line_no}: {message["short"]}'
                     )
         if modify:
-            outlines.append(line)
-    if modify:
-        file_.write_text('\n'.join(outlines))
-    return count
+            yield line
+
+        try:
+            # get the next line
+            line = next(lines)
+        except StopIteration:
+            # end of interator
+            return
+        line_no += 1
 
 
 def get_cylc_files(
@@ -704,7 +759,6 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
     # Get a list of checks bas ed on the checking options:
     # Allow us to check any number of folders at once
-    count = 0
     target = target.parent
     ruleset_default = False
     if options.linter == 'all':
@@ -748,21 +802,25 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         ignores=mergedopts['ignore'],
         max_line_len=mergedopts['max-line-length']
     )
+
+    counter: Dict[str, int] = {}
     for file_ in get_cylc_files(target, mergedopts['exclude']):
         LOG.debug(f'Checking {file_}')
-        count += check_cylc_file(
-            target,
+        check_cylc_file(
             file_,
+            file_.relative_to(target),
             checks,
+            counter,
             options.inplace,
         )
 
-    if count > 0:
+    if counter:
+        total_lint_hits = sum(counter.values())
         msg = (
             f'\n{Fore.YELLOW}'
             f'Checked {target} against {check_names} '
-            f'rules and found {count} issue'
-            f'{"s" if count > 1 else ""}.'
+            f'rules and found {total_lint_hits} issue'
+            f'{"s" if total_lint_hits > 1 else ""}.'
         )
     else:
         msg = (
