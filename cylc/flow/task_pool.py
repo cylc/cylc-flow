@@ -133,8 +133,8 @@ class TaskPool:
             self.config.runtime['descendants']
         )
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
-        self.tasks_to_spawn = {}
-        self.tasks_to_spawn_forced = {}
+        self.tasks_to_spawn: Dict[List[TaskProxy], str] = {}
+        self.tasks_to_spawn_forced: Dict[List[TaskProxy], str] = {}
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
