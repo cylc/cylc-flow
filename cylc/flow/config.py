@@ -113,7 +113,6 @@ if TYPE_CHECKING:
     from optparse import Values
     from cylc.flow.cycling import IntervalBase, PointBase, SequenceBase
 
-
 RE_CLOCK_OFFSET = re.compile(
     rf'''
         ^
@@ -125,6 +124,7 @@ RE_CLOCK_OFFSET = re.compile(
     ''',
     re.X,
 )
+
 RE_EXT_TRIGGER = re.compile(
     r'''
         ^
@@ -260,7 +260,6 @@ class WorkflowConfig:
             'SequenceBase', Set[Tuple[str, str, bool, bool]]
         ] = {}
         self.taskdefs: Dict[str, TaskDef] = {}
-        self.clock_offsets = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
@@ -494,14 +493,10 @@ class WorkflowConfig:
                             # (sub-family)
                             continue
                         result.append(member + extn)
-                        if s_type == 'clock-trigger':
-                            self.clock_offsets[member] = offset_interval
                         if s_type == 'clock-expire':
                             self.expiration_offsets[member] = offset_interval
                         if s_type == 'external-trigger':
                             self.ext_triggers[member] = ext_trigger_msg
-                elif s_type == 'clock-trigger':
-                    self.clock_offsets[name] = offset_interval
                 elif s_type == 'clock-expire':
                     self.expiration_offsets[name] = offset_interval
                 elif s_type == 'external-trigger':
@@ -547,6 +542,8 @@ class WorkflowConfig:
                             msg, name, seen[msg]))
                     raise WorkflowConfigError(
                         "external triggers must be used only once.")
+
+        self.upgrade_clock_triggers()
 
         self.leaves = self.get_task_name_list()
         for ancestors in self.runtime['first-parent ancestors'].values():
@@ -1739,7 +1736,6 @@ class WorkflowConfig:
                 )
 
         for label in xtrig_labels:
-
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:
@@ -2277,8 +2273,6 @@ class WorkflowConfig:
 
         # TODO - put all taskd.foo items in a single config dict
 
-        if name in self.clock_offsets:
-            taskd.clocktrigger_offset = self.clock_offsets[name]
         if name in self.expiration_offsets:
             taskd.expiration_offset = self.expiration_offsets[name]
         if name in self.ext_triggers:
@@ -2429,3 +2423,34 @@ class WorkflowConfig:
             for task, _ in list(owners.items())[:5]:
                 msg += f'\n  * {task}"'
             raise WorkflowConfigError(msg)
+
+    def upgrade_clock_triggers(self):
+        """Convert old-style clock triggers to clock xtriggers.
+
+        [[special tasks]]
+           clock-trigger = foo(PT1D)
+
+        becomes:
+
+        [[xtriggers]]
+           _cylc_wall_clock_foo = wallclock(PT1D)
+
+        Not done by parsec upgrade because the graph has to be parsed first.
+        """
+        for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
+            match = RE_CLOCK_OFFSET.match(item)
+            # (Already validated during "special tasks" parsing above.)
+            task_name, offset = match.groups()
+            # Derive an xtrigger label.
+            label = '_'.join(('_cylc', 'wall_clock', task_name))
+            # Define the xtrigger function.
+            xtrig = SubFuncContext(label, 'wall_clock', [], {})
+            xtrig.func_kwargs["offset"] = offset
+            if self.xtrigger_mgr is None:
+                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
+            else:
+                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            # Add it to the task, for each sequence that the task appears in.
+            taskdef = self.get_taskdef(task_name)
+            for seq in taskdef.sequences:
+                taskdef.add_xtrig_label(label, seq)

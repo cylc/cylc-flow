@@ -17,21 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc scan [OPTIONS]
 
-List Cylc workflows.
+List your source, and/or installed, and/or running workflows.
 
-By default this shows only running or paused workflows.
+By default, running workflows are listed as indicated by the presence of
+scheduler contact files, ~/cylc-run/<Workflow-ID>/.service/contact.
+
+With "--ping" or "-t rich", attempt to contact the schedulers. If any are not
+found to be running, their contact files will be removed (these files may left
+behind if the scheduler did not shut down cleanly).
 
 Examples:
-  # list all "active" workflows (i.e. running or paused)
+  # list all active workflows (i.e. running or paused)
   $ cylc scan
 
-  # show more information about these workflows
+  # show more information about active workflows
   $ cylc scan -t rich
 
   # don't rely on colour for job state totals
   $ cylc scan -t rich --colour-blind
 
-  # list all "inactive" workflows (i.e. registered or stopped)
+  # list workflows that are installed but stopped or not run yet
   $ cylc scan --state stopped
 
   # list all workflows (active or inactive)
@@ -41,11 +46,11 @@ Examples:
   # filter workflows by name
   $ cylc scan --name '^f.*'  # show only flows starting with "f"
 
-  # list source workflows in a tree
+  # list source workflows in tree format
   # (looks in the dirs configured by "global.cylc[install]source dirs")
   $ cylc scan --source -t tree
 
-  # get results in JSON format
+  # print contact file data in JSON format
   $ cylc scan -t json
 """
 
@@ -204,12 +209,12 @@ def get_option_parser() -> COP:
     parser.add_option(
         '--format', '-t',
         help=(
-            'Set the output format.'
-            ' (rich: multi-line, human readable)'
-            ' (plain: single-line)'
-            ' (json: machine readable)'
-            ' (tree: display registration hierarchy as a tree)'
-            ' (name: just show flow names, machine readable)'
+            'Output data and format (default "plain").'
+            ' ("name": list the workflow names only)'
+            ' ("plain": name,host:port,PID on one line)'
+            ' ("tree": name,host:port,PID in tree format)'
+            ' ("json": full contact data in JSON format)'
+            ' ("rich": include task state summary data)'
         ),
         choices=('rich', 'plain', 'json', 'tree', 'name'),
         default='plain'
@@ -225,7 +230,7 @@ def get_option_parser() -> COP:
         '--colour-blind', '--color-blind',
         help=(
             "Don't depend on colour to convey information. "
-            ' Use this rather than --color=never so you still get bold text.'
+            'Use this rather than --color=never so you still get bold text.'
         ),
         action='store_true'
     )
@@ -233,11 +238,9 @@ def get_option_parser() -> COP:
     parser.add_option(
         '--ping',
         help=(
-            'Test the connection to the flow. Scan normally just reads flow'
-            ' contact files, but --ping forces a connection to the scheduler'
-            ' and removes the contact file if it is not found to be running'
-            " (this can happen if the scheduler gets killed and can't clean"
-            ' up after itself).'
+            "Connect to schedulers and remove contact files if they are not "
+            "found to be running. Contact files can be left behind when "
+            "schedulers get killed."
         ),
         action='store_true'
     )
@@ -297,7 +300,11 @@ def _format_plain(flow, _):
     """A single line format of the form: <name> [<host>:<port>]"""
     if flow.get('contact'):
         try:
-            return f"<b>{flow['name']}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}"
+            return (
+                f"<b>{flow['name']}</b> "
+                f"{flow[Cont.HOST]}:{flow[Cont.PORT]} "
+                f"{flow[Cont.PID]}"
+            )
         except KeyError:
             LOG.warning(BAD_CONTACT_FILE_MSG.format(flow_name=flow['name']))
             return None
@@ -340,7 +347,8 @@ def _format_rich(flow, opts):
                 for name, key in (
                     ('version', 'cylcVersion'),
                     ('host', Cont.HOST),
-                    ('port', Cont.PORT)
+                    ('port', Cont.PORT),
+                    ('PID', Cont.PID)
                 )
             }
         }
@@ -407,7 +415,8 @@ async def _tree(pipe, formatter, opts, write):
 
     # print tree
     ret = get_tree(tree, '', sort=False, use_unicode=True)
-    write('\n'.join(ret))
+    if ret:
+        write('\n'.join(ret))
 
 
 def _construct_tree(flows, tree, formatter, opts, write):
@@ -555,9 +564,8 @@ async def main(
         )
     ):
         raise InputError(
-            '--states must be set to a comma separated list of workflow'
-            ' states. \nSee `cylc scan --help` for a list of supported'
-            ' states.'
+            '--states must be a comma separated list of workflow states.'
+            '\nSee `cylc scan --help` for supported states.'
         )
 
     if not color:

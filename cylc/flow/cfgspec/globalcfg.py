@@ -1399,6 +1399,17 @@ with Conf('global.cylc', desc='''
                  desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs command']}
 
+                .. note::
+                   The default command (``rsync -a``) means that the retrieved
+                   files (and the directories above including ``job/log``) get
+                   the same permissions as on the remote host. This can cause
+                   problems if the remote host uses different permissions to
+                   the scheduler host (e.g. no world read access). To avoid
+                   this problem you can set the command to
+                   ``rsync -a --no-p --no-g --chmod=ugo=rwX`` which means the
+                   retrieved files get the default permissions used on the
+                   scheduler host.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs

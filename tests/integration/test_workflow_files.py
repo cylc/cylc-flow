@@ -16,6 +16,7 @@
 
 from itertools import product
 import logging
+from os import unlink
 from pathlib import Path
 from textwrap import dedent
 
@@ -209,7 +210,8 @@ def test_detect_old_contact_file_removal_errors(
         nonlocal process_running
         if not contact_present_after:
             # remove the contact file midway through detect_old_contact_file
-            workflow.contact_file.unlink()
+            unlink(workflow.contact_file)
+
         return process_running
 
     monkeypatch.setattr(

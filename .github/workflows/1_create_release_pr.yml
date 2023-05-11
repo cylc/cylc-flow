@@ -32,8 +32,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          # return to 3.x once compatible with 3.10+ (pyuv)
-          python-version: '3.9'
+          python-version: '3.x'
 
       - name: Create & checkout PR branch
         uses: cylc/release-actions/stage-1/checkout-pr-branch@v1

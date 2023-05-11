@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 mkdir "${WORKFLOW_RUN_DIR}/.service"
 sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" <'db.sqlite3'
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}" --upgrade
+    cylc play --reference-test --debug --no-detach --upgrade "${WORKFLOW_NAME}"
 
 purge
 exit
