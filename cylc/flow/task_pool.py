@@ -1221,26 +1221,25 @@ class TaskPool:
             if forced:
                 self.tasks_to_spawn_forced[
                     (itask, output)
-                ] = itask.graph_children[output]
+                ] = list(itask.graph_children[output])
             else:
                 self.tasks_to_spawn[
                     (itask, output)
-                ] = itask.graph_children[output]
+                ] = list(itask.graph_children[output])
         except KeyError:
             # No children depend on this output
             pass
         else:
             self.spawn_children()
 
-	# Remove after spawning, to avoid briefly emptying the task pool
-	# in simple cases (foo[-P1] => foo) - which can lead to shutdown.
+        # Remove after spawning, to avoid briefly emptying the task pool
+        # in simple cases (foo[-P1] => foo) - which can lead to shutdown.
         if not forced and output in [
             TASK_OUTPUT_SUCCEEDED,
             TASK_OUTPUT_EXPIRED,
             TASK_OUTPUT_FAILED
         ]:
             self.remove_if_complete(itask)
-
 
     def spawn_children(self):
         self._spawn_children(self.tasks_to_spawn)
@@ -1305,8 +1304,7 @@ class TaskPool:
                             (str(itask.point), itask.tdef.name, output)
                         })
                         self.data_store_mgr.delta_task_prerequisite(t)
-                        # Add it to the hidden pool or move it to the main
-                        # pool.
+                        # Add it to hidden pool or move it to main pool.
                         self.add_to_pool(t)
 
                         if t.point <= self.runahead_limit_point:
