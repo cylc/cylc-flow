@@ -30,7 +30,7 @@ short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
 [#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
-in `share/bin` and Python modules in `share/bin/python`.
+in `share/bin` and Python modules in `share/lib/python`.
 
 ### Fixes
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
