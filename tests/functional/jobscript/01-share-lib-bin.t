@@ -27,6 +27,6 @@ set_test_number 2
 # Setup:
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}.validate" cylc validate "${WORKFLOW_NAME}"
-run_ok "${TEST_NAME_BASE}.play" cylc play --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}.play" cylc play --no-detach "${WORKFLOW_NAME}"
 
 purge
