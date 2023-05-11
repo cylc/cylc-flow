@@ -30,8 +30,21 @@ short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
 ### Fixes
+
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
+
+-------------------------------------------------------------------------------
+## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Fixes
+
+[#5228](https://github.com/cylc/cylc-flow/pull/5228) -
+Enabled the "stop", "poll", "kill" and "message" commands to be issued from
+the UI whilst the workflow is in the process of shutting down.
+
+[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
+for `cylc play` when called by `cylc vip` or `cylc vr`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__

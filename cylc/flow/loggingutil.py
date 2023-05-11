@@ -333,11 +333,11 @@ def re_formatter(log_string):
     return log_string
 
 
-def disable_timestamps(logger: logging.Logger) -> None:
-    """For readability omit timestamps from logging."""
+def set_timestamps(logger: logging.Logger, enable: bool) -> None:
+    """Enable or disable logging timestamps."""
     for handler in logger.handlers:
         if isinstance(handler.formatter, CylcLogFormatter):
-            handler.formatter.configure(timestamp=False)
+            handler.formatter.configure(timestamp=enable)
 
 
 def setup_segregated_log_streams(
