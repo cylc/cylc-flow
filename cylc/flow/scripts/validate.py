@@ -40,7 +40,7 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_id_async
-from cylc.flow.loggingutil import disable_timestamps
+from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     AGAINST_SOURCE_OPTION,
     WORKFLOW_ID_OR_PATH_ARG_DOC,
@@ -144,7 +144,7 @@ async def wrapped_main(
     profiler.start()
 
     if cylc.flow.flags.verbosity < 2:
-        disable_timestamps(LOG)
+        set_timestamps(LOG, False)
 
     workflow_id, _, flow_file = await parse_id_async(
         workflow_id,

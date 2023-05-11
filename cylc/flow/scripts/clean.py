@@ -67,7 +67,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
-from cylc.flow.loggingutil import disable_timestamps
+from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
@@ -209,7 +209,7 @@ async def run(*ids: str, opts: 'Values') -> None:
 @cli_function(get_option_parser)
 def main(_, opts: 'Values', *ids: str):
     if cylc.flow.flags.verbosity < 2:
-        disable_timestamps(LOG)
+        set_timestamps(LOG, False)
 
     if opts.local_only and opts.remote_only:
         raise InputError(

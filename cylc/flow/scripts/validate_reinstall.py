@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.id_cli import parse_id
+from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -177,6 +178,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
 
     # run play anyway, to play a stopped workflow:
     else:
+        set_timestamps(LOG, options.log_timestamp)
         cleanup_sysargv(
             'play',
             unparsed_wid,
