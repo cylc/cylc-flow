@@ -11,6 +11,9 @@
 [runtime]
     [[install_cold]]
         script = """
+            mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/lib/python"
+            mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/bin"
+
             cat > "${CYLC_WORKFLOW_SHARE_DIR}/lib/python/mypythonscript.py" <<__HERE__
             def my_function():
                 print("I can speak Esperanto like a native.")
@@ -30,4 +33,3 @@
 
     [[run_mypythonscript]]
         script = python -c 'from mypythonscript import my_function; my_function()'
-

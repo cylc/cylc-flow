@@ -136,8 +136,7 @@ cylc__job__main() {
     export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
     export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
-    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/lib/python" || true
-    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/bin" || true
+    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
