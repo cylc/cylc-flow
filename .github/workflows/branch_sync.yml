@@ -84,7 +84,7 @@ jobs:
         id: diff
         if: steps.merge.outcome == 'success'
         run: |
-          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse master)" ]]; then
+          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/master)" ]]; then
             echo "::notice::master is up to date with $BRANCH"
             exit 0
           fi
