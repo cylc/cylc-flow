@@ -656,7 +656,12 @@ class Scheduler:
         except (KeyboardInterrupt, asyncio.CancelledError) as exc:
             await self.handle_exception(exc)
 
-        except Exception as exc:  # Includes SchedulerError
+        except CylcError as exc:  # Includes SchedulerError
+            # catch "expected" errors
+            await self.handle_exception(exc)
+
+        except Exception as exc:
+            # catch "unexpected" errors
             with suppress(Exception):
                 LOG.critical(
                     'An uncaught error caused Cylc to shut down.'
