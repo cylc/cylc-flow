@@ -10,6 +10,14 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.1.5 (<span actions:bind='release-date'>Awaiting Release</span>)__
+
+### Fixes
+
+[#5228](https://github.com/cylc/cylc-flow/pull/5228) -
+Enabled the "stop", "poll", "kill" and "message" commands to be issued from
+the UI whilst the workflow is in the process of shutting down.
+
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
