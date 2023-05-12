@@ -523,6 +523,7 @@ def _version_check(
                     process=str.lower,
                 )
             # we are in non-interactive mode, abort abort abort
+            print(cparse('Use "--upgrade" to upgrade the workflow.'))
             return False
         elif itt > 2 and this > that:
             # restart would INCREASE the Cylc version in a little way
