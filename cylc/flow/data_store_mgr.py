@@ -295,7 +295,7 @@ def apply_delta(key, delta, data):
             # Clear fields that require overwrite with delta
             field_set = {f.name for f, _ in delta.updated.ListFields()}
             for field in CLEAR_FIELD_MAP[key]:
-                if field in field_set:
+                if field in field_set or delta.updated.states_updated:
                     data[key].ClearField(field)
             data[key].MergeFrom(delta.updated)
         else:
@@ -498,6 +498,7 @@ class DataStoreMgr:
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
+        self.pruned_task_proxies = set()
         self.updates_pending = False
         self.publish_pending = False
 
@@ -1493,9 +1494,15 @@ class DataStoreMgr:
         if self.state_update_families:
             self.update_family_proxies()
 
+        next_update_pending = False
         if self.updates_pending:
             # Update workflow statuses and totals if needed
             self.update_workflow()
+
+            # Don't process updated deltas of pruned nodes
+            if self.pruned_task_proxies:
+                next_update_pending = True
+            self.prune_pruned_updated_nodes()
 
             # Apply current deltas
             self.batch_deltas()
@@ -1510,7 +1517,7 @@ class DataStoreMgr:
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
 
-        self.updates_pending = False
+        self.updates_pending = next_update_pending
 
         # Clear deltas
         self.clear_delta_batch()
@@ -1546,8 +1553,6 @@ class DataStoreMgr:
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
-        tp_updated = self.updated[TASK_PROXIES]
-        j_updated = self.updated[JOBS]
         parent_ids = set()
         for tp_id in list(node_ids):
             if tp_id in self.n_window_nodes:
@@ -1566,13 +1571,6 @@ class DataStoreMgr:
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
 
-            # Don't process updated deltas of pruned node
-            if tp_id in tp_updated:
-                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
-                    if j_id in j_updated:
-                        del j_updated[j_id]
-                del tp_updated[tp_id]
-
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)
             self.deltas[EDGES].pruned.extend(node.edges)
@@ -1586,6 +1584,7 @@ class DataStoreMgr:
         if self.family_pruned_ids:
             self.deltas[FAMILY_PROXIES].pruned.extend(self.family_pruned_ids)
         if node_ids:
+            self.pruned_task_proxies.update(node_ids)
             self.updates_pending = True
 
     def _family_ascent_point_prune(
@@ -1634,6 +1633,32 @@ class DataStoreMgr:
         checked_ids.add(fp_id)
         if fp_id in parent_ids:
             parent_ids.remove(fp_id)
+
+    def prune_pruned_updated_nodes(self):
+        """Remove updated nodes that will also be pruned this batch.
+
+        This will avoid processing and sending deltas that will immediately
+        be pruned. Kept separate from other pruning to allow for update
+        information to be included in summaries.
+
+        """
+        tp_data = self.data[self.workflow_id][TASK_PROXIES]
+        tp_added = self.added[TASK_PROXIES]
+        tp_updated = self.updated[TASK_PROXIES]
+        j_updated = self.updated[JOBS]
+        for tp_id in self.pruned_task_proxies:
+            if tp_id in tp_updated:
+                if tp_id in tp_data:
+                    node = tp_data[tp_id]
+                elif tp_id in tp_added:
+                    node = tp_added[tp_id]
+                else:
+                    continue
+                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
+                    if j_id in j_updated:
+                        del j_updated[j_id]
+                del tp_updated[tp_id]
+        self.pruned_task_proxies.clear()
 
     def update_family_proxies(self):
         """Update state & summary of flagged families and ancestors.
@@ -1806,6 +1831,7 @@ class DataStoreMgr:
             for state, state_cnt in state_counter.items():
                 w_delta.state_totals[state] = state_cnt
 
+            w_delta.states_updated = True
             w_delta.is_held_total = is_held_total
             w_delta.is_queued_total = is_queued_total
             w_delta.is_runahead_total = is_runahead_total
