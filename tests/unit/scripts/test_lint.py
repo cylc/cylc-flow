@@ -237,6 +237,12 @@ def test_check_exclusions(create_testable_file, exclusion):
         assert item not in result.out
 
 
+def test_check_cylc_file_jinja2_comments(create_testable_file):
+    # Repalce the '# {{' line to be '{# {{' which should not be a warning
+    result, _ = create_testable_file(LINT_TEST_FILE.replace('# {{', '{# {{'), ['style'])
+    assert 'S011' not in result.out
+
+
 @pytest.fixture
 def create_testable_dir(tmp_path):
     test_file = (tmp_path / 'suite.rc')
