@@ -625,8 +625,10 @@ class Scheduler:
                 self.task_job_mgr.task_remote_mgr.is_restart = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
                     self.config.get_validated_rsync_includes())
-                self.restart_remote_init()
-                self.command_poll_tasks(['*/*'])
+                if self.pool.get_all_tasks():
+                    # (If we're not restarting a finished workflow)
+                    self.restart_remote_init()
+                    self.command_poll_tasks(['*/*'])
 
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
