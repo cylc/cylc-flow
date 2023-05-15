@@ -305,7 +305,9 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if msg['command'] in PB_METHOD_MAP:
             response = {'data': res}
         else:
-            response = decode_(res.decode())
+            response = decode_(
+                res.decode() if isinstance(res, bytes) else res
+            )
         LOG.debug('zmq:recv %s', response)
 
         try:
@@ -316,8 +318,8 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                 {'message': f'Received invalid response: {response}'},
             )
             raise ClientError(
-                error.get('message'),
-                error.get('traceback'),
+                error.get('message'),  # type: ignore
+                error.get('traceback'),  # type: ignore
             )
 
     def get_header(self) -> dict:

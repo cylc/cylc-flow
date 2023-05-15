@@ -36,6 +36,6 @@ DEPR_MSG="deprecated graph items were automatically upgraded"  # (not back-compa
 grep_ok "${DEPR_MSG}" "${TEST_NAME}.stderr"
 
 # No stall expected.
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play -n --debug "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
 purge

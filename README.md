@@ -53,6 +53,12 @@ cylc play example
 cylc tui example
 ```
 
+### The Cylc Ecosystem
+
+- [cylc-flow](https://github.com/cylc/cylc-flow) - The core Cylc Scheduler for defining and running workflows.
+- [cylc-uiserver](https://github.com/cylc/cylc-uiserver) - The web-based Cylc graphical user interface for monitoring and controlling workflows.
+- [cylc-rose](https://github.com/cylc/cylc-rose) - Provides integration with [Rose](http://metomi.github.io/rose/).
+
 ### Migrating From Cylc 7
 
 [Migration Guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)

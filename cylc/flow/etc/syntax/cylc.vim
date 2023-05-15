@@ -44,42 +44,46 @@ syn match lineCon "\\$"
 syn match badLineCon "\\ \+$"
 syn match trailingWS " \+\(\n\)\@="
 
-syn region jinja2 start='{%' end='%}'
-syn region jinja2 start='{{' end='}}'
-syn region jinja2 start='{#' end='#}'
+syn region jinja2Block start='{%' end='%}'
+syn region jinja2Print start='{{' end='}}'
+syn region jinja2Comment start='{#' end='#}'
 
 syn region empy start='@\[' end=']'
 syn region empy start='@{' end='}'
 syn region empy start='@(' end=')'
 
-syn region cylcSection start='\[' end='\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
-syn region cylcSection start='\[\[' end='\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
-syn region cylcSection start='\[\[\[' end='\]\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
+syn region cylcSection start='\[' end='\]' contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy
+syn region cylcSection start='\[\[' end='\]\]' contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy
+syn region cylcSection start='\[\[\[' end='\]\]\]' contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy
 
-syn match cylcItem ' *\zs\(\w\| \|\-\)*\> *=\@='
+syn match cylcItem ' *\zs\(\w\|+\|\/\| \|\-\)*\> *=\@='
 syn match cylcEquals '='
 
 syn match trigger /=>/ contained
-syn match output /:[a-zA-Z0-9-]*\>/ contained
+syn match xtrigger /@[a-zA-Z0-9_-]*/ contained
+syn match parameter /<[^>]*>/ contained
+syn match output /:[a-zA-Z0-9_-]*\>/ contained
 syn match suicide /\!\w\+/ contained
 syn match offset /\[.\{-}\]/ contained
+syn match optional /?/ contained
 
 "file inclusion:
-syn match cylcInclude '%include *\(\w\|\-\|\/\|\.\)*'
+syn match cylcInclude '%include *\(\w\|"\| \|\-\|\/\|\.\)*'
 "inlined file markers:
 syn match cylcInclude '\_^!\{1,}'
 syn match cylcInclude '.*\(START INLINED\|END INLINED\).*'
 
 syn match cylcToDo /[Tt][Oo][Dd][Oo]/
+syn match cylcToDo /[Ff][Ii][Xx][Mm][Ee]/
 
 syn match empyVariable /@[a-zA-Z0-9]\+/
 syn match empyComment /@#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon
-syn match cylcComment /#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2,empy
+syn match cylcComment /#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy
 
-syn region cylcString start=+'+ skip=+\\'+ end=+'+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,cylcToDo
-syn region cylcString start=+"+ skip=+\\"+ end=+"+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,cylcToDo
-syn region cylcString start=+=\@<= *"""+ end=+"""+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,empyComment,cylcComment,trigger,output,suicide,offset,cylcToDo
-syn region cylcString start=+=\@<= *'''+ end=+'''+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,empyComment,cylcComment,trigger,output,suicide,offset,cylcToDo
+syn region cylcString start=+'+ skip=+\\'+ end=+'+ contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy,cylcToDo
+syn region cylcString start=+"+ skip=+\\"+ end=+"+ contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy,cylcToDo
+syn region cylcString start=+=\@<= *"""+ end=+"""+ contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy,empyComment,cylcComment,optional,trigger,output,suicide,offset,cylcToDo,xtrigger,parameter
+syn region cylcString start=+=\@<= *'''+ end=+'''+ contains=trailingWS,lineCon,badLineCon,jinja2Block,jinja2Print,jinja2Comment,empy,empyComment,cylcComment,optional,trigger,output,suicide,offset,cylcToDo,xtrigger,parameter
 
 "de-emphasize strings as quoting is irrelevant in cylc
 hi def link cylcString Normal
@@ -93,13 +97,19 @@ hi def link badLineCon Error
 hi def link trailingWS Underlined
 
 hi def link cylcToDo Todo
-hi def link cylcInclude MatchParen
-hi def link jinja2 CursorColumn
-hi def link empy CursorColumn
+hi def link cylcInclude Include
+hi def link jinja2Block PreProc
+hi def link jinja2Print PreProc
+hi def link jinja2Comment Comment
+hi def link empy PreProc
 hi def link empyComment CursorColumn
-hi def link empyVariable CursorColumn
+hi def link empyVariable PreProc
 hi def link cylcEquals LineNr
-hi def link output Special
+hi def link output Identifier
 hi def link suicide Special
 hi def link offset Special
 hi def link trigger Constant
+hi def link optional Type
+
+hi def link xtrigger Function
+hi def link parameter Function

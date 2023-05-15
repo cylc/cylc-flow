@@ -346,8 +346,9 @@ class TaskRemoteMgr:
         Timeout any incomplete commands after 10 seconds.
         """
         # Get a list of all platforms used from workflow database:
-        platforms_used = (
-            self.db_mgr.get_pri_dao().select_task_job_platforms())
+        with self.db_mgr.get_pri_dao() as pri_dao:
+            platforms_used = pri_dao.select_task_job_platforms()
+
         # For each install target compile a list of platforms:
         install_targets = {
             target for target, msg

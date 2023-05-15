@@ -30,14 +30,14 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate --set="INCL_B_C=True" "${WORKF
 run_ok "${TEST_NAME_BASE}-validate" cylc validate --set="INCL_B_C=False" "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play -n "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach "${WORKFLOW_NAME}"
 
 # Restart with removed tasks should not cause an error.
 # It should shut down cleanly after orphaned task a and incomplete failed task
 # b are polled (even though b has been removed from the graph) and a finishes
 # (after checking the poll results).
 TEST_NAME="${TEST_NAME_BASE}-restart"
-workflow_run_ok "${TEST_NAME}" cylc play --set="INCL_B_C=False" -n "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --set="INCL_B_C=False" --no-detach "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok "grep-3" "\[1/a running job:01 flows:1\] (polled)started"
 grep_workflow_log_ok "grep-4" "\[1/b failed job:01 flows:1\] (polled)failed"

@@ -11,15 +11,31 @@ updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
+## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Enhancements
+
+[#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
+help, and add scheduler PID to the output.
+
+[#5461](https://github.com/cylc/cylc-flow/pull/5461) - preserve colour
+formatting when starting workflows in distributed mode using `run hosts`.
+
+[#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
+clock triggers as wall_clock xtriggers.
+
+[#5439](https://github.com/cylc/cylc-flow/pull/5439) - Small CLI short option chages:
+Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
+short option for `--no-detach` to `-N`; add `-r` as a short option for
+`--run-name`.
 
 ### Fixes
 
-[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
-for `cylc play` when called by `cylc vip` or `cylc vr`.
+[#5328](https://github.com/cylc/cylc-flow/pull/5328) -
+Efficiency improvements to reduce task management overheads on the Scheduler.
 
 -------------------------------------------------------------------------------
-## __cylc-8.1.5 (<span actions:bind='release-date'>Awaiting Release</span>)__
+## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Fixes
 
@@ -27,6 +43,10 @@ for `cylc play` when called by `cylc vip` or `cylc vr`.
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
 the UI whilst the workflow is in the process of shutting down.
 
+[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
+for `cylc play` when called by `cylc vip` or `cylc vr`.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
@@ -148,13 +168,17 @@ workflows with many-to-many dependencies (e.g. `<a> => <b>`).
 - Allows Cylc commands (including validate, list, view, config, and graph) to load template variables
   configured by `cylc install` and `cylc play`.
 
-[#5184](https://github.com/cylc/cylc-flow/pull/5184) - scan for active
-runs of the same workflow at install time.
-
 [#5121](https://github.com/cylc/cylc-flow/pull/5121) - Added a single
 command to validate, install and play a workflow.
 
-[#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
+[#5184](https://github.com/cylc/cylc-flow/pull/5184) - Scan for active
+runs of the same workflow at install time.
+
+[#5084](https://github.com/cylc/cylc-flow/pull/5084) - Assign the most recent
+previous flow numbers to tasks triggered when no flows are present (e.g. on
+restarting a finished workflow).
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - Set a default limit of
 100 for the "default" queue.
 
 [#5055](https://github.com/cylc/cylc-flow/pull/5055) and

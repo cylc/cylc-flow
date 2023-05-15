@@ -127,7 +127,6 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
             {"label": "succeeded", "message": "succeeded", "satisfied": false},
             {"label": "failed", "message": "failed", "satisfied": false}
         ],
-        "clockTrigger": {"timeString": "", "satisfied": false},
         "externalTriggers": [],
         "xtriggers": []
     }

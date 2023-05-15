@@ -46,7 +46,7 @@ grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
 
 # And it should run without stalling with an incomplete task.
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
+    cylc play --no-detach --reference-test --debug "${WORKFLOW_NAME}"
 
 purge
 exit
