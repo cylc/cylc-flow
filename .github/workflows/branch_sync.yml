@@ -106,9 +106,15 @@ jobs:
         if: steps.merge.outcome == 'failure' || steps.diff.outputs.continue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BODY: |
+            Please do a **normal merge**, not squash merge
+
+            ---
+
+            Triggered by `${{ github.event_name }}`
         run: |
           gh pr create --head "$BRANCH" \
             --title "🤖 Merge ${BRANCH} into master" \
-            --body "Please do a **normal merge**, not squash merge\n\n---\n\nTriggered by ${GITHUB_EVENT_NAME}"
+            --body "$BODY"
 
           gh pr edit "$BRANCH" --add-label "sync" || true
