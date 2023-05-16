@@ -33,12 +33,14 @@ from cylc.flow.scripts.lint import (
     get_upgrader_info,
     merge_cli_with_tomldata,
     parse_checks,
+    sort_checks,
     validate_toml_items
 )
 from cylc.flow.exceptions import CylcError
 
 
 UPG_CHECKS = parse_checks(['728'])
+
 TEST_FILE = """
 [visualization]
 
@@ -536,3 +538,13 @@ def test_parse_checks_reference_mode(ref, expect):
     key = [i for i in result.keys()][-1]
     value = result[key]
     assert expect in value['short']
+
+
+def test_checks_are_sorted():
+    checks = {}
+    for i in range(2):
+        for origin in [STYLE_CHECKS, UPG_CHECKS]:
+            checks[[k for k in origin][i]] = [v for v in origin.values()][i]
+    sorted_checks = sorted(checks.items(), key=sort_checks)
+    result = [i[1]['purpose'] + str(i[1]['index']) for i in sorted_checks]
+    assert result == ['S1', 'S2', 'U1', 'U2']

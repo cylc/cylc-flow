@@ -157,11 +157,6 @@ STYLE_CHECKS = {
         'url': '',
         'index': 11
     }
-    # re.compile(r'^.{{maxlen},}'): {
-    #     'short': 'line > {maxlen} characters.',
-    #     'url': STYLE_GUIDE + 'line-length-and-continuation',
-    #     'index': 8
-    # },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
@@ -465,7 +460,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 parsedchecks[re.compile(regex)] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-                    'index': 8,
+                    'index': len(STYLE_GUIDE) + 1,
                     'purpose': 'S'
                 }
     return parsedchecks
@@ -546,6 +541,12 @@ def get_cylc_files(
                 yield path
 
 
+def sort_checks(check):
+    """Return check purpose and index for sorting:
+    """
+    return (check[1]['purpose'], check[1]['index'])
+
+
 def get_reference_rst(checks):
     """Print a reference for checks to be carried out.
 
@@ -554,7 +555,7 @@ def get_reference_rst(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in checks.items():
+    for check, meta in sorted(checks.items(), key=sort_checks):
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
@@ -591,7 +592,7 @@ def get_reference_text(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in checks.items():
+    for check, meta in sorted(checks.items(), key=sort_checks):
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
