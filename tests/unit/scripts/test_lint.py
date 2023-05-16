@@ -239,7 +239,7 @@ def test_check_exclusions(create_testable_file, exclusion):
 
 def test_check_cylc_file_jinja2_comments(create_testable_file):
     # Repalce the '# {{' line to be '{# {{' which should not be a warning
-    result, _ = create_testable_file(LINT_TEST_FILE.replace('# {{', '{# {{'), ['style'])
+    result, _ = create_testable_file('{# {{ foo }} #}', ['style'])
     assert 'S011' not in result.out
 
 
