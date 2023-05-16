@@ -206,6 +206,34 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 
 
 @pytest.mark.parametrize(
+    'inherit_line',
+    (
+        'inherit = foo, b, a, r',
+        'inherit = FOO, bar',
+        'inherit = None, bar',
+        'inherit = g',
+        'inherit = B, None',
+    )
+)
+def test_inherit_lowercase_matches(create_testable_file, inherit_line):
+    result, _ = create_testable_file(inherit_line, ['style'])
+    assert 'S007' in result.out
+
+
+@pytest.mark.parametrize(
+    'inherit_line',
+    (
+        'inherit = None',
+        'inherit = None,',
+        'inherit = None, FOO',
+    )
+)
+def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
+    result, _ = create_testable_file(inherit_line, ['style'])
+    assert 'S007' not in result.out
+
+
+@pytest.mark.parametrize(
     'number', range(len(STYLE_CHECKS))
 )
 def test_check_cylc_file_lint(create_testable_file, number):
