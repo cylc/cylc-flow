@@ -22,14 +22,18 @@ first Pull Request (for each Cylc repository you contribute to).
 
 ## Contribute Code
 
-**Enhancements** are made on the `master` branch.
+We use [semver](https://semver.org/) to separate riskier changes (e.g. new features
+& code refactors) from bugfixes to provide more stable releases for production environments.
 
-**Bugfixes** are made on the branch of the same name as the issue's milestone.
-E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
-develop your bugfix, then raise the pull request against the `8.0.x` branch.
-We will later merge the `8.0.x` branch into `master`.
+**Enhancements** are made on the `master` branch and released in the next minor version
+(e.g. 8.1, 8.2, 8.3)
 
-Feel free to ask questions on the issue or developers chat if unsure about
+**Bugfixes** and minor usability enhancements are made on bugfix branches and
+released as the next maintainance version (e.g. 8.0.1, 8.0.2, 8.0.3). E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
+develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
+
+Feel free to ask questions on the issue or
+[developers chat](https://matrix.to/#/#cylc-general:matrix.org) if unsure about
 anything.
 
 
