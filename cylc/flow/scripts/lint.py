@@ -152,8 +152,8 @@ STYLE_CHECKS = {
         'url': 'https://github.com/cylc/cylc-flow/issues/3825',
         'index': 10
     },
-    re.compile(r'#.*?{[{%]'): {
-        'short': 'Cylc will process commented Jinja2!',
+    re.compile(r'(?<!{)#.*?{[{%]'): {
+        'short': 'Cylc comments (#) do not prevent Jinja2 processing.',
         'url': '',
         'index': 11
     }
