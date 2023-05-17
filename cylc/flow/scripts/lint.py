@@ -85,6 +85,7 @@ JOBANDREMOTE_SECTION_MSG = {
 }
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
 CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
+LINE_LEN_NO = 12
 STYLE_CHECKS = {
     re.compile(r'^\t'): {
         'short': 'Use multiple spaces, not tabs',
@@ -446,7 +447,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                     meta.update({'index': index})
                 if f'{purpose}{index:03d}' not in ignores:
                     parsedchecks.update({pattern: meta})
-            if 'S' in purpose and "S012" not in ignores:
+            if 'S' in purpose and f"S{LINE_LEN_NO:03d}" not in ignores:
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
@@ -460,7 +461,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 parsedchecks[re.compile(regex)] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-                    'index': 12,
+                    'index': LINE_LEN_NO,
                     'purpose': 'S'
                 }
     return parsedchecks
