@@ -47,7 +47,7 @@ __HERE__
 
 # Control tests
 TEST_NAME="it lints without toml file"
-run_ok "${TEST_NAME}" cylc lint
+run_fail "${TEST_NAME}" cylc lint
 TESTOUT="${TEST_NAME}.stdout"
 named_grep_ok "it returns error code" "S004" "${TESTOUT}"
 named_grep_ok "it returns error from subdirectory" "niwa.cylc" "${TESTOUT}"
@@ -75,7 +75,7 @@ __HERE__
 
 # Test that results are different:
 TEST_NAME="it_lints_with_toml_file"
-run_ok "${TEST_NAME}" cylc lint
+run_fail "${TEST_NAME}" cylc lint
 TESTOUT="${TEST_NAME}.stdout"
 grep_fail "S004" "${TESTOUT}"
 grep_fail "niwa.cylc" "${TESTOUT}"
@@ -93,7 +93,7 @@ cat > flow.cylc <<__HERE__
 __HERE__
 
 TEST_NAME="it_fails_if_max-line-length_set"
-run_ok "${TEST_NAME}" cylc lint
+run_fail "${TEST_NAME}" cylc lint
 named_grep_ok "${TEST_NAME}-line-too-long-message" \
     "\[S008\] flow.cylc:2: line > 4 characters." \
     "${TEST_NAME}.stdout"

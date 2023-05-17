@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 18
+set_test_number 20
 
 cat > flow.cylc <<__HERE__
 # This is definitely not an OK flow.cylc file.
@@ -29,15 +29,15 @@ __HERE__
 rm etc/global.cylc
 
 TEST_NAME="${TEST_NAME_BASE}.vanilla"
-run_ok "${TEST_NAME}" cylc lint .
+run_fail "${TEST_NAME}" cylc lint .
 named_grep_ok "check-for-error-code" "S004" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
-run_ok "${TEST_NAME}" cylc lint . -r 728
+run_fail "${TEST_NAME}" cylc lint . -r 728
 named_grep_ok "check-for-error-code" "U024" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.inplace"
-run_ok "${TEST_NAME}" cylc lint . -i
+run_fail "${TEST_NAME}" cylc lint . -i
 named_grep_ok "check-for-error-code-in-file" "U024" flow.cylc
 
 rm flow.cylc
@@ -47,12 +47,18 @@ cat > suite.rc <<__HERE__
 {{FOO}}
 __HERE__
 
-TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
-run_ok "${TEST_NAME}" cylc lint . -r 728
+TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset-728"
+run_fail "${TEST_NAME}" cylc lint . -r 728
 named_grep_ok "do-not-upgrade-check-if-compat-mode" "Lint after renaming" "${TEST_NAME}.stderr"
 
-TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset2"
-run_ok "${TEST_NAME}" cylc lint . -r all
+TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset-728-exit-zero"
+run_ok "${TEST_NAME}" cylc lint . -r 728 --exit-zero
+
+TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset-all"
+run_fail "${TEST_NAME}" cylc lint . -r all
+
+TEST_NAME="${TEST_NAME_BASE}.exit-zero"
+run_ok "${TEST_NAME}" cylc lint --exit-zero .
 
 rm suite.rc
 
