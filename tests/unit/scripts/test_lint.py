@@ -233,19 +233,10 @@ def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
     assert 'S007' not in result.out
 
 
-@pytest.mark.parametrize(
-    'number', range(len(STYLE_CHECKS))
-)
-def test_check_cylc_file_lint(create_testable_file, number):
-    try:
-        result, _ = create_testable_file(
-            LINT_TEST_FILE, ['style'])
-        assert f'S{(number + 1):03d}' in result.out
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number S{number:03d}:'
-            f'{[*STYLE_CHECKS.keys()][number].pattern}'
-        )
+def test_check_cylc_file_lint(create_testable_file):
+    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
+    for number in range(1, len(STYLE_CHECKS) + 1):
+        assert f'S{number:03d}' in result.out
 
 
 @pytest.mark.parametrize(

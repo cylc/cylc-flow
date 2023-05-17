@@ -503,10 +503,7 @@ def check_cylc_file(
                 check.findall(line)
                 and (
                     not line.strip().startswith('#')
-                    or (
-                        'commented Jinja2!' in message['short']
-                        and check.findall(line)
-                    )
+                    or message['index'] == 11  # commented-out Jinja2
                 )
             ):
                 count += 1
