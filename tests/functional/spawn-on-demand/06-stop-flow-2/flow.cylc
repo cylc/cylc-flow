@@ -14,7 +14,7 @@
          script = """
 if (( CYLC_TASK_SUBMIT_NUMBER == 2 )); then
    cylc stop --flow=1 ${CYLC_WORKFLOW_ID}
-   cylc__job__poll_grep_workflow_log "Command succeeded: stop"
+   cylc__job__poll_grep_workflow_log "Command actioned: stop"
 fi
          """
     [[baz]]

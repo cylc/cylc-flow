@@ -64,7 +64,7 @@ log_scan "${TEST_NAME_BASE}-scan" \
     "$(cylc cat-log -m p "${WORKFLOW_NAME}")" \
     1 1 \
     '1/broken .* (received)failed/ERR' \
-    'Command succeeded: reload_workflow()' \
+    'Command actioned: reload_workflow()' \
     'xtrigger satisfied: _cylc_retry_1/broken' \
     '\[1/broken .* => succeeded'
 

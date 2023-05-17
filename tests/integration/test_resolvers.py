@@ -234,6 +234,6 @@ async def test_stop(
         resolvers.stop(StopMode.REQUEST_CLEAN)
         one.process_command_queue()
         assert log_filter(
-            log, level=logging.INFO, contains="Command succeeded: stop"
+            log, level=logging.INFO, contains="Command actioned: stop"
         )
         assert one.stop_mode == StopMode.REQUEST_CLEAN
