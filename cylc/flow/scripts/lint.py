@@ -460,7 +460,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 parsedchecks[re.compile(regex)] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-                    'index': len(STYLE_GUIDE) + 1,
+                    'index': 12,
                     'purpose': 'S'
                 }
     return parsedchecks
@@ -494,10 +494,7 @@ def check_cylc_file(
                 check.findall(line)
                 and (
                     not line.strip().startswith('#')
-                    or (
-                        'commented Jinja2!' in message['short']
-                        and check.findall(line)
-                    )
+                    or 'commented Jinja2!' in message['short']
                 )
             ):
                 count += 1

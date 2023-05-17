@@ -24,7 +24,6 @@ from pytest import param
 import re
 
 from cylc.flow.scripts.lint import (
-    STYLE_CHECKS,
     check_cylc_file,
     get_cylc_files,
     get_reference_rst,
@@ -38,7 +37,7 @@ from cylc.flow.scripts.lint import (
 )
 from cylc.flow.exceptions import CylcError
 
-
+STYLE_CHECKS = parse_checks(['style'])
 UPG_CHECKS = parse_checks(['728'])
 
 TEST_FILE = """
@@ -236,13 +235,13 @@ def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(STYLE_CHECKS))
+    'number', range(1, len(STYLE_CHECKS))
 )
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
         result, _ = create_testable_file(
             LINT_TEST_FILE, ['style'])
-        assert f'S{(number + 1):03d}' in result.out
+        assert f'S{(number):03d}' in result.out
     except AssertionError:
         raise AssertionError(
             f'missing error number S{number:03d}:'
@@ -283,11 +282,11 @@ def create_testable_dir(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(UPG_CHECKS))
+    'number', range(1, len(UPG_CHECKS) + 1)
 )
 def test_check_cylc_file_inplace(create_testable_dir, number):
     try:
-        assert f'[U{number + 1:03d}]' in create_testable_dir
+        assert f'[U{number:03d}]' in create_testable_dir
     except AssertionError:
         raise AssertionError(
             f'missing error number {number:03d}:7-to-8 - '
@@ -535,7 +534,7 @@ def test_invalid_tomlfile(tmp_path):
 )
 def test_parse_checks_reference_mode(ref, expect):
     result = parse_checks(['style'], reference=ref)
-    key = [i for i in result.keys()][-1]
+    key = list(result.keys())[-1]
     value = result[key]
     assert expect in value['short']
 
@@ -548,3 +547,11 @@ def test_checks_are_sorted():
     sorted_checks = sorted(checks.items(), key=sort_checks)
     result = [i[1]['purpose'] + str(i[1]['index']) for i in sorted_checks]
     assert result == ['S1', 'S2', 'U1', 'U2']
+
+
+@pytest.mark.parametrize(
+    'test_set', [STYLE_CHECKS, UPG_CHECKS]
+)
+def test_lint_codes_are_sequential(test_set):
+    checks = [i['index'] for i in test_set.values()]
+    assert list(range(1, len(checks) + 1)) == checks
