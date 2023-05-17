@@ -446,7 +446,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                     meta.update({'index': index})
                 if f'{purpose}{index:03d}' not in ignores:
                     parsedchecks.update({pattern: meta})
-            if 'S' in purpose and "S008" not in ignores:
+            if 'S' in purpose and "S012" not in ignores:
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
@@ -460,7 +460,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 parsedchecks[re.compile(regex)] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-                    'index': len(STYLE_GUIDE) + 1,
+                    'index': 12,
                     'purpose': 'S'
                 }
     return parsedchecks
@@ -494,10 +494,7 @@ def check_cylc_file(
                 check.findall(line)
                 and (
                     not line.strip().startswith('#')
-                    or (
-                        'commented Jinja2!' in message['short']
-                        and check.findall(line)
-                    )
+                    or 'commented Jinja2!' in message['short']
                 )
             ):
                 count += 1
@@ -541,7 +538,7 @@ def get_cylc_files(
                 yield path
 
 
-def sort_checks(check):
+def get_sort_key(check):
     """Return check purpose and index for sorting:
     """
     return (check[1]['purpose'], check[1]['index'])
@@ -555,7 +552,7 @@ def get_reference_rst(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in sorted(checks.items(), key=sort_checks):
+    for check, meta in sorted(checks.items(), key=get_sort_key):
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
@@ -592,7 +589,7 @@ def get_reference_text(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in sorted(checks.items(), key=sort_checks):
+    for check, meta in sorted(checks.items(), key=get_sort_key):
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
