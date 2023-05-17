@@ -150,7 +150,7 @@ STYLE_CHECKS = {
         'index': 10
     },
     re.compile(r'(?<!{)#.*?{[{%]'): {
-        'short': 'Cylc will process commented Jinja2!',
+        'short': 'Cylc comments (#) do not prevent Jinja2 processing.',
         'url': '',
         'index': 11
     }
