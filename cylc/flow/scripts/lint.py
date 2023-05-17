@@ -31,6 +31,9 @@ By default, suggestions are written to stdout.
 In-place mode ("-i, --inplace") writes suggestions into the file as comments.
 Commit to version control before using this, in case you want to back out.
 
+A non-zero return code will be returned if any issues are identified.
+This can be overridden by providing the "--exit-zero" flag.
+
 Configurations for Cylc lint can also be set in a pyproject.toml file.
 
 """
@@ -38,6 +41,7 @@ from colorama import Fore
 from optparse import Values
 from pathlib import Path
 import re
+import sys
 import tomli
 from typing import Generator, Union
 
@@ -666,6 +670,13 @@ def get_option_parser() -> COP:
         metavar="CODE",
         choices=tuple([f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()])
     )
+    parser.add_option(
+        '--exit-zero',
+        help='Exit with status code "0" even if there are issues.',
+        action='store_true',
+        default=False,
+        dest='exit_zero'
+    )
 
     return parser
 
@@ -678,7 +689,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         else:
             rulesets = [options.linter]
         print(get_reference_text(parse_checks(rulesets, reference=True)))
-        exit(0)
+        sys.exit(0)
 
     # If target not given assume we are looking at PWD
     if target is None:
@@ -724,7 +735,9 @@ def main(parser: COP, options: 'Values', target=None) -> None:
             'Lint after renaming '
             '"suite.rc" to "flow.cylc"'
         )
-        exit(0)
+        # Exit with an error code if --exit-zero was not set.
+        # Return codes: sys.exit(True) == 1, sys.exit(False) == 0
+        sys.exit(not options.exit_zero)
     elif not cylc8 and '728' in mergedopts['rulesets']:
         check_names = mergedopts['rulesets']
         check_names.remove('728')
@@ -761,6 +774,11 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         )
 
     print(msg)
+
+    # Exit with an error code if there were warnings and
+    # if --exit-zero was not set.
+    # Return codes: sys.exit(True) == 1, sys.exit(False) == 0
+    sys.exit(count != 0 and not options.exit_zero)
 
 
 # NOTE: use += so that this works with __import__
