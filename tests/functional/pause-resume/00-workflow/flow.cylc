@@ -19,7 +19,7 @@
         script = """
             wait
             cylc pause "${CYLC_WORKFLOW_ID}"
-            cylc__job__poll_grep_workflow_log -F 'INFO - Command succeeded: pause()'
+            cylc__job__poll_grep_workflow_log -F 'INFO - Command actioned: pause()'
             cylc play "${CYLC_WORKFLOW_ID}"
         """
     [[foo,bar]]
