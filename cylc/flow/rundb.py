@@ -783,6 +783,14 @@ class CylcWorkflowDAO:
             ret[submit_num] = (flow_wait == 1, deserialise(flow_nums_str))
         return ret
 
+    def select_latest_flow_nums(self):
+        """Return a list of the most recent previous flow numbers."""
+        stmt = rf'''
+            SELECT flow_nums, MAX(time_created) FROM {self.TABLE_TASK_STATES}
+        '''  # nosec (table name is code constant)
+        flow_nums_str = list(self.connect().execute(stmt))[0][0]
+        return deserialise(flow_nums_str)
+
     def select_task_outputs(self, name, point):
         """Select task outputs for each flow.
 

@@ -44,6 +44,7 @@ def task_pool(set_cycling_type: Callable):
         tdef = create_autospec(TaskDef, namespace_hierarchy=hier)
         tdef.name = tokens['task']
         return TaskProxy(
+            Tokens('~user/workflow'),
             tdef,
             start_point=IntegerPoint(tokens['cycle']),
             status=tokens['task_sel'],

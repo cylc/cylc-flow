@@ -14,30 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Cylc 7 stall backward compatibility, multi-parent case
-
+#-------------------------------------------------------------------------------
+# CYLC_WORKFLOW_SHARE_DIR/bin is added to the PATH
+# CYLC_WORKFLOW_SHARE_DIR/lib/python is added to PYTHONPATH
+#
+# Workflow creates scripts in CYLC_WORKFLOW_SHARE_DIR in `install_cold` task
+# Which are then used in subsequent tasks. We check for the output of those
+# tasks.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 2
 
+# Setup:
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
-# It should now validate, with a deprecation message
-TEST_NAME="${TEST_NAME_BASE}-validate_as_c7"
-run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-
-DEPR_MSG_1=$(python -c \
-  'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
-grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
-
-# Should stall and abort with an unsatisfied prerequisite.
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --reference-test --debug "${WORKFLOW_NAME}"
-
-grep_workflow_log_ok grep-1 "WARNING - Partially satisfied prerequisites"
-grep_workflow_log_ok grep-2 "Workflow stalled"
-grep_workflow_log_ok grep-3 "1/baz is waiting on"
-grep_workflow_log_ok grep-4 'Workflow shutting down \- "abort on stall timeout" is set'
+run_ok "${TEST_NAME_BASE}.validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}.play" cylc play --no-detach "${WORKFLOW_NAME}"
 
 purge
-exit

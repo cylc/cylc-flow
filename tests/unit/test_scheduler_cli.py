@@ -21,6 +21,7 @@ import pytest
 
 from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.scheduler_cli import (
+    _distribute,
     _version_check,
 )
 
@@ -222,3 +223,39 @@ def test_version_check_no_db(tmp_path):
     """It should pass if there is no DB file (e.g. on workflow first start)."""
     db_file = tmp_path / 'db'  # non-existent file
     assert _version_check(db_file, False, False)
+
+
+@pytest.mark.parametrize(
+    'cli_colour, is_terminal, distribute_colour',
+    [
+        ('never', True, '--color=never'),
+        ('auto', True, '--color=always'),
+        ('always', True, '--color=always'),
+        ('never', False, '--color=never'),
+        ('auto', False, '--color=never'),
+        ('always', False, '--color=never'),
+    ]
+)
+def test_distribute_colour(
+    monkeymock,
+    cli_colour,
+    is_terminal,
+    distribute_colour,
+):
+    """It should start detached workflows with the correct --colour option.
+
+    The is_terminal test will fail for detached scheduler processes which means
+    that the colour formatting will be stripped for startup. This includes
+    the Cylc header logo and any warnings/errors raised during config parsing.
+
+    In order to preserver colour formatting we must set the `--colour` arg to
+    `always` when we want the detached process to start in colour mode.
+
+    See https://github.com/cylc/cylc-flow/issues/5159
+    """
+    monkeymock('cylc.flow.scheduler_cli.sys.exit')
+    _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
+    _is_terminal.return_value = is_terminal
+    _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    _distribute('myhost', 'foo', 'foo/run1', cli_colour)
+    assert distribute_colour in _cylc_server_cmd.call_args[0][0]

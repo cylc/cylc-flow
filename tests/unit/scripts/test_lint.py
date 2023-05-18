@@ -14,23 +14,23 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Tests `cylc lint` CLI Utility.
-"""
-import difflib
-from itertools import combinations
-from pathlib import Path
+"""Tests `cylc lint` CLI Utility."""
+
+from pprint import pformat
+import re
+from types import SimpleNamespace
+
 import pytest
 from pytest import param
-import re
 
 from cylc.flow.scripts.lint import (
     STYLE_CHECKS,
-    check_cylc_file,
     get_cylc_files,
+    get_pyproject_toml,
     get_reference_rst,
     get_reference_text,
-    get_pyproject_toml,
     get_upgrader_info,
+    lint,
     merge_cli_with_tomldata,
     parse_checks,
     validate_toml_items
@@ -158,51 +158,69 @@ something\t
         platform = $(some-script foo)
     [[baz]]
         platform = `no backticks`
-"""
-
-LINT_TEST_FILE += (
+""" + (
     '\nscript = the quick brown fox jumps over the lazy dog '
-    'until it becomes clear that this line is far longer the 79 characters.')
-
-
-@pytest.fixture()
-def create_testable_file(monkeypatch, capsys):
-    def _inner(test_file, checks, ignores=None):
-        if ignores is None:
-            ignores = []
-        monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
-        checks = parse_checks(checks, ignores)
-        check_cylc_file(Path('x'), Path('x'), checks)
-        return capsys.readouterr(), checks
-    return _inner
-
-
-@pytest.mark.parametrize(
-    'number', range(1, len(UPG_CHECKS))
+    'until it becomes clear that this line is far longer the 79 characters.'
 )
-def test_check_cylc_file_7to8(create_testable_file, number, capsys):
-    try:
-        result, checks = create_testable_file(TEST_FILE, ['728'])
-        assert f'[U{number:03d}]' in result.out
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number U{number:03d}'
-            f'{[*checks.keys()][number]}'
+
+
+def lint_text(text, checks, ignores=None, modify=False):
+    checks = parse_checks(checks, ignores)
+    counter = {}
+    messages = []
+    outlines = [
+        line
+        for line in lint(
+            'flow.cylc',
+            iter(text.splitlines()),
+            checks,
+            counter,
+            modify=modify,
+            write=messages.append
+        )
+    ]
+    return SimpleNamespace(
+        counter=counter,
+        messages=messages,
+        outlines=outlines
+    )
+
+
+def filter_strings(items, contains):
+    """Return only items which contain a given string."""
+    return [
+        message
+        for message in items
+        if contains in message
+    ]
+
+
+def assert_contains(items, contains):
+    """Pass if at least one item contains a given string."""
+    if not filter_strings(items, contains):
+        raise Exception(
+            f'Could not find: "{contains}" in:\n'
+            + pformat(items)
         )
 
 
-def test_check_cylc_file_7to8_has_shebang(create_testable_file):
+@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS)))
+def test_check_cylc_file_7to8(number):
+    lint = lint_text(TEST_FILE, ['728'])
+    assert_contains(lint.messages, f'[U{number:03d}]')
+
+
+def test_check_cylc_file_7to8_has_shebang():
     """Jinja2 code comments will not be added if shebang present"""
-    result, _ = create_testable_file('#!jinja2\n{{FOO}}', '', '[scheduler]')
-    result = result.out
-    assert result == ''
+    lint = lint_text('#!jinja2\n{{FOO}}', '', '[scheduler]')
+    assert not lint.counter
 
 
-def test_check_cylc_file_line_no(create_testable_file, capsys):
+def test_check_cylc_file_line_no():
     """It prints the correct line numbers"""
-    result, _ = create_testable_file(TEST_FILE, ['728'])
-    result = result.out
-    assert result.split()[1] == '.:2:'
+    lint = lint_text(TEST_FILE, ['728'])
+    # the first message should be for line number 2 (line is a shebang)
+    assert ':2:' in lint.messages[0]
 
 
 @pytest.mark.parametrize(
@@ -215,9 +233,9 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
         'inherit = B, None',
     )
 )
-def test_inherit_lowercase_matches(create_testable_file, inherit_line):
-    result, _ = create_testable_file(inherit_line, ['style'])
-    assert 'S007' in result.out
+def test_inherit_lowercase_matches(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert any('S007' in msg for msg in lint.messages)
 
 
 @pytest.mark.parametrize(
@@ -228,66 +246,37 @@ def test_inherit_lowercase_matches(create_testable_file, inherit_line):
         'inherit = None, FOO',
     )
 )
-def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
-    result, _ = create_testable_file(inherit_line, ['style'])
-    assert 'S007' not in result.out
+def test_inherit_lowercase_not_match_none(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert not any('S007' in msg for msg in lint.messages)
 
 
-def test_check_cylc_file_lint(create_testable_file):
-    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
-    for number in range(1, len(STYLE_CHECKS) + 1):
-        assert f'S{number:03d}' in result.out
+@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS) + 1))
+def test_check_cylc_file_lint(number):
+    lint = lint_text(LINT_TEST_FILE, ['style'])
+    assert_contains(lint.messages, f'S{number:03d}')
 
 
-@pytest.mark.parametrize(
-    'exclusion',
-    [
-        comb for i in range(len(STYLE_CHECKS.values()))
-        for comb in combinations(
-            [f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()], i + 1
-        )
-    ]
-)
-def test_check_exclusions(create_testable_file, exclusion):
+@pytest.mark.parametrize('exclusion', range(len(STYLE_CHECKS.values())))
+def test_check_exclusions(exclusion):
     """It does not report any items excluded."""
-    result, _ = create_testable_file(
-        LINT_TEST_FILE, ['style'], list(exclusion))
-    for item in exclusion:
-        assert item not in result.out
+    code = f'S{exclusion:03d}'
+    lint = lint_text(LINT_TEST_FILE, ['style'], [code])
+    assert not filter_strings(lint.messages, code)
 
 
-def test_check_cylc_file_jinja2_comments(create_testable_file):
+def test_check_cylc_file_jinja2_comments():
     # Repalce the '# {{' line to be '{# {{' which should not be a warning
-    result, _ = create_testable_file('{# {{ foo }} #}', ['style'])
-    assert 'S011' not in result.out
-
-
-@pytest.fixture
-def create_testable_dir(tmp_path):
-    test_file = (tmp_path / 'suite.rc')
-    test_file.write_text(TEST_FILE)
-    check_cylc_file(
-        test_file.parent,
-        test_file,
-        parse_checks(['728', 'style']),
-        modify=True,
-    )
-    return '\n'.join([*difflib.Differ().compare(
-        TEST_FILE.split('\n'), test_file.read_text().split('\n')
-    )])
+    lint = lint_text('{# {{ foo }} #}', ['style'])
+    assert not any('S011' in msg for msg in lint.messages)
 
 
 @pytest.mark.parametrize(
     'number', range(len(UPG_CHECKS))
 )
-def test_check_cylc_file_inplace(create_testable_dir, number):
-    try:
-        assert f'[U{number + 1:03d}]' in create_testable_dir
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number {number:03d}:7-to-8 - '
-            f'{[*UPG_CHECKS.keys()][number]}'
-        )
+def test_check_cylc_file_inplace(number):
+    lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
+    assert_contains(lint.outlines, f'[U{number + 1:03d}]')
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
