@@ -459,6 +459,8 @@ def detect_old_contact_file(
             or not.
         ContactFileExists:
             If old contact file exists and the workflow process still alive.
+        ServiceFileError:
+            For corrupt / incompatible contact files.
 
     """
     # An old workflow of the same name may be running if a contact file exists
