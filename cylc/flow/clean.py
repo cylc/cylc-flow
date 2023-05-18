@@ -47,6 +47,7 @@ from typing import (
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
+    ContactFileExists,
     CylcError,
     InputError,
     PlatformError,
@@ -124,7 +125,7 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
         return
     try:
         detect_old_contact_file(reg)
-    except ServiceFileError as exc:
+    except ContactFileExists as exc:
         raise ServiceFileError(
             f"Cannot clean running workflow {reg}.\n\n{exc}"
         )

@@ -30,8 +30,8 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
+    ContactFileExists,
     CylcError,
-    ServiceFileError,
     WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
@@ -147,7 +147,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         # behind a contact file?
         try:
             detect_old_contact_file(self.workflow)
-        except (AssertionError, ServiceFileError):
+        except ContactFileExists:
             # old contact file exists and the workflow process still alive
             return
         else:
