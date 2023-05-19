@@ -52,6 +52,8 @@ from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.terminal import cli_function
 
+FUNCTION = 'function'
+
 STYLE_GUIDE = (
     'https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/'
     'style-guide.html#'
@@ -84,104 +86,110 @@ JOBANDREMOTE_SECTION_MSG = {
     )
 }
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
-CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
+CHECKS_DESC = {
+    'U': '7 to 8 upgrades',
+    'A': 'Auto Generated 7 to 8 upgrades',
+    'S': 'Style'
+}
 STYLE_CHECKS = {
-    re.compile(r'^\t'): {
+    1: {
         'short': 'Use multiple spaces, not tabs',
         'url': STYLE_GUIDE + 'tab-characters',
-        'index': 1
+        FUNCTION: re.compile(r'^\t')
     },
-    # Not a full test, but if a non section is not indented...
-    re.compile(r'^[^\{\[|\s]'): {
+    2: {
         'short': 'Item not indented.',
+        # Not a full test, but if a non section is not indented...
         'url': STYLE_GUIDE + 'indentation',
-        'index': 2
+        FUNCTION: re.compile(r'^[^\{\[|\s]')
     },
-    #            [section]
-    re.compile(r'^\s+\[[^\[.]*\]'): {
+    3: {
         'short': 'Top level sections should not be indented.',
         'url': STYLE_GUIDE + 'indentation',
-        'index': 3
+        FUNCTION: re.compile(r'^\s+\[[^\[.]*\]')
     },
-    # 2 or 4 space indentation both seem reasonable:
-    re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]'): {
+    4: {
         'short': (
             'Second level sections should be indented exactly '
             '4 spaces.'
         ),
         'url': STYLE_GUIDE + 'indentation',
-        'index': 4
+        FUNCTION: re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]')
     },
-    re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]'): {
+    5: {
         'short': (
             'Third level sections should be indented exactly '
             '8 spaces.'
         ),
         'url': STYLE_GUIDE + 'indentation',
-        'index': 5
+        FUNCTION: re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]')
     },
-    re.compile(r'\s$'): {
+    6: {
         'short': 'trailing whitespace.',
         'url': STYLE_GUIDE + 'trailing-whitespace',
-        'index': 6
+        FUNCTION: re.compile(r'\s$')
     },
     # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any.
     # Do not match inherit lines with `None` at the start.
-    re.compile(
-        r'(inherit\s*=(?!\s*None\s*(?!.*[a-z])))|(\w[a-z]\w:\w+?-a(ll|ny))'
-    ): {
+    7: {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
-        'index': 7
+        FUNCTION: re.compile(
+            r'(inherit\s*=(?!\s*None\s*(?!.*[a-z])))|(\w[a-z]\w:\w+?-a(ll|ny))'
+        ),
     },
-    re.compile(r'{[{%]'): {
+    8: {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
         'url': '',
-        'index': 8
+        FUNCTION: re.compile(r'{[{%]'),
     },
-    re.compile(r'platform\s*=\s*\$\(.*?\)'): {
+    9: {
         'short': 'Host Selection Script may be redundant with platform',
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
             'major-changes/platforms.html'
         ),
-        'index': 9
+        FUNCTION: re.compile(r'platform\s*=\s*\$\(.*?\)'),
     },
-    re.compile(r'platform\s*=\s*(`.*?`)'): {
+    10: {
         'short': 'Using backticks to invoke subshell is deprecated',
         'url': 'https://github.com/cylc/cylc-flow/issues/3825',
-        'index': 10
+        FUNCTION: re.compile(r'platform\s*=\s*(`.*?`)'),
     },
-    re.compile(r'#.*?{[{%]'): {
+    11: {
         'short': 'Cylc will process commented Jinja2!',
         'url': '',
-        'index': 11
+        FUNCTION: re.compile(r'#.*?{[{%]')
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
 MANUAL_DEPRECATIONS = {
-    re.compile(SECTION2.format('dependencies')): {
+    1: {
         'short': DEPENDENCY_SECTION_MSG['text'],
         'url': '',
-        'rst': DEPENDENCY_SECTION_MSG['rst']
+        'rst': DEPENDENCY_SECTION_MSG['rst'],
+        FUNCTION: re.compile(SECTION2.format('dependencies')),
     },
-    re.compile(r'graph\s*=\s*'): {
+    2: {
         'short': DEPENDENCY_SECTION_MSG['text'],
         'url': '',
-        'rst': DEPENDENCY_SECTION_MSG['rst']
+        'rst': DEPENDENCY_SECTION_MSG['rst'],
+        FUNCTION: re.compile(r'graph\s*=\s*'),
     },
-    re.compile(SECTION3.format('remote')): {
+    3: {
         'short': JOBANDREMOTE_SECTION_MSG['text'].format('remote'),
         'url': '',
-        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('remote')
+        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('remote'),
+        FUNCTION: re.compile(SECTION3.format('remote'))
     },
-    re.compile(SECTION3.format('job')): {
+    4: {
         'short': JOBANDREMOTE_SECTION_MSG['text'].format('job'),
         'url': '',
-        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('job')
+        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('job'),
+        FUNCTION: re.compile(SECTION3.format('job')),
     },
-    re.compile(r'batch system\s*=\s*'): {
+    5: {
         'short': (
             'flow.cylc[runtime][<namespace>][job]batch system -> '
             'global.cylc[platforms][<platform name>]job runner'
@@ -190,11 +198,13 @@ MANUAL_DEPRECATIONS = {
         'rst': (
             '``flow.cylc[runtime][<namespace>][job]batch system`` -> '
             '``global.cylc[platforms][<platform name>]job runner``'
-        )
+        ),
+        FUNCTION: re.compile(r'batch system\s*=\s*'),
     },
-    re.compile(r'host\s*=\s*(`.*?`)'): {
+    6: {
         'short': 'Using backticks to invoke subshell will fail at Cylc 8.',
-        'url': 'https://github.com/cylc/cylc-flow/issues/3825'
+        'url': 'https://github.com/cylc/cylc-flow/issues/3825',
+        FUNCTION: re.compile(r'host\s*=\s*(`.*?`)'),
     }
 }
 RULESETS = ['728', 'style', 'all']
@@ -367,10 +377,13 @@ def get_upgrader_info():
     """Extract info about obseletions and deprecations from Parsec Objects."""
     conf = ParsecConfig(SPEC, upg)
     upgrades = conf.upgrader(conf.dense, '').upgrades
+    from copy import copy
     deprecations = {}
 
     for _, upgrades_for_version in upgrades.items():
-        for upgrade in upgrades_for_version:
+        for index, upgrade in enumerate(
+            upgrades_for_version, start=len(MANUAL_DEPRECATIONS)
+        ):
             # Set a flag indicating that a variable has been moved.
             if upgrade['new'] is None:
                 section_name = list_to_config(
@@ -401,20 +414,20 @@ def get_upgrader_info():
                 expr = rf'^\s*{name}\s*=\s*.*'
                 regex = re.compile(expr)
 
-            deprecations[regex] = {
+            deprecations[index] = {
                 'short': short,
                 'url': '',
                 'rst': rst,
+                FUNCTION: regex,
             }
     # Some deprecations are not specified in a straightforward to scrape
     # way and these are specified in MANUAL_DEPRECATIONS:
-    deprecations.update(MANUAL_DEPRECATIONS)
     return deprecations
 
 
 PURPOSE_FILTER_MAP = {
     'style': 'S',
-    '728': 'U',
+    '728': 'UA',
 }
 
 
@@ -433,20 +446,26 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
     """
     ignores = ignores or []
     parsedchecks = {}
-    purpose_filters = [PURPOSE_FILTER_MAP[i] for i in check_args]
 
-    checks = {'U': get_upgrader_info(), 'S': STYLE_CHECKS}
+    purpose_filters = []
+    for arg in check_args:
+        for purpose in PURPOSE_FILTER_MAP[arg]:
+            purpose_filters.append(purpose)
+
+    checks = {
+        'U': MANUAL_DEPRECATIONS,
+        'A': get_upgrader_info(),
+        'S': STYLE_CHECKS
+    }
 
     for purpose, ruleset in checks.items():
         if purpose in purpose_filters:
             # Run through the rest of the config items.
-            for index, (pattern, meta) in enumerate(ruleset.items(), start=1):
+            for index, meta in ruleset.items():
                 meta.update({'purpose': purpose})
-                if 'index' not in meta:
-                    meta.update({'index': index})
                 if f'{purpose}{index:03d}' not in ignores:
-                    parsedchecks.update({pattern: meta})
-            if 'S' in purpose and "S008" not in ignores:
+                    parsedchecks.update({index: meta})
+            if 'S' in purpose and "S012" not in ignores:
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
@@ -457,10 +476,10 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                     )
                 else:
                     msg = f'line > {max_line_len} characters.'
-                parsedchecks[re.compile(regex)] = {
+                parsedchecks[12] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-                    'index': 12,
+                    FUNCTION: re.compile(regex),
                     'purpose': 'S'
                 }
     return parsedchecks
@@ -480,7 +499,7 @@ def check_cylc_file(
     jinja_shebang = lines[0].strip().lower() == JINJA2_SHEBANG
     count = 0
     for line_no, line in enumerate(lines, start=1):
-        for check, message in checks.items():
+        for index, message in checks.items():
             # Tests with for presence of Jinja2 if no shebang line is
             # present.
             if (
@@ -491,7 +510,7 @@ def check_cylc_file(
                 continue
 
             if (
-                check.findall(line)
+                message['function'].findall(line)
                 and (
                     not line.strip().startswith('#')
                     or 'commented Jinja2!' in message['short']
@@ -511,7 +530,7 @@ def check_cylc_file(
                 else:
                     print(
                         Fore.YELLOW +
-                        f'[{message["purpose"]}{message["index"]:03d}]'
+                        f'[{message["purpose"]}{index:03d}]'
                         f' {file_rel}:{line_no}: {message["short"]}'
                     )
         if modify:
@@ -538,12 +557,6 @@ def get_cylc_files(
                 yield path
 
 
-def sort_checks(check):
-    """Return check purpose and index for sorting:
-    """
-    return (check[1]['purpose'], check[1]['index'])
-
-
 def get_reference_rst(checks):
     """Print a reference for checks to be carried out.
 
@@ -552,9 +565,10 @@ def get_reference_rst(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in sorted(checks.items(), key=sort_checks):
+    for index, meta in sorted(checks.items()):
         # Check if the purpose has changed - if so create a new
         # section title:
+        check = meta[FUNCTION]
         if meta['purpose'] != current_checkset:
             current_checkset = meta['purpose']
             title = CHECKS_DESC[meta["purpose"]]
@@ -574,7 +588,7 @@ def get_reference_rst(checks):
             checkset=meta['purpose'],
             summary=summary,
             url=url,
-            index=meta['index'],
+            index=index,
         )
         output += msg
     output += '\n'
@@ -589,7 +603,7 @@ def get_reference_text(checks):
     """
     output = ''
     current_checkset = ''
-    for check, meta in sorted(checks.items(), key=sort_checks):
+    for index, meta in sorted(checks.items()):
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
@@ -606,11 +620,11 @@ def get_reference_text(checks):
         else:
             url = URL_STUB + meta['url']
         msg = template.format(
-            title=check.pattern.replace('\\', ''),
+            title=index,
             checkset=meta['purpose'],
             summary=meta['short'],
             url=url,
-            index=meta['index'],
+            index=index,
         )
         output += msg
     output += '\n'
@@ -662,7 +676,7 @@ def get_option_parser() -> COP:
         default=[],
         dest='ignores',
         metavar="CODE",
-        choices=tuple([f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()])
+        choices=tuple([f'S{i:03d}' for i in STYLE_CHECKS])
     )
 
     return parser

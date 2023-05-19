@@ -24,6 +24,7 @@ from pytest import param
 import re
 
 from cylc.flow.scripts.lint import (
+    MANUAL_DEPRECATIONS,
     check_cylc_file,
     get_cylc_files,
     get_reference_rst,
@@ -32,7 +33,6 @@ from cylc.flow.scripts.lint import (
     get_upgrader_info,
     merge_cli_with_tomldata,
     parse_checks,
-    sort_checks,
     validate_toml_items
 )
 from cylc.flow.exceptions import CylcError
@@ -179,12 +179,12 @@ def create_testable_file(monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
-    'number', range(1, len(UPG_CHECKS))
+    'number', range(1, len(UPG_CHECKS) - len(MANUAL_DEPRECATIONS))
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
     try:
         result, checks = create_testable_file(TEST_FILE, ['728'])
-        assert f'[U{number:03d}]' in result.out
+        assert f'[A{number:03d}]' in result.out
     except AssertionError:
         raise AssertionError(
             f'missing error number U{number:03d}'
@@ -252,9 +252,9 @@ def test_check_cylc_file_lint(create_testable_file, number):
 @pytest.mark.parametrize(
     'exclusion',
     [
-        comb for i in range(len(STYLE_CHECKS.values()))
+        comb for i in range(len(STYLE_CHECKS))
         for comb in combinations(
-            [f'S{i["index"]:03d}' for i in STYLE_CHECKS.values()], i + 1
+            [f'S{i:03d}' for i in STYLE_CHECKS.keys()], i + 1
         )
     ]
 )
@@ -544,8 +544,8 @@ def test_checks_are_sorted():
     for i in range(2):
         for origin in [STYLE_CHECKS, UPG_CHECKS]:
             checks[[k for k in origin][i]] = [v for v in origin.values()][i]
-    sorted_checks = sorted(checks.items(), key=sort_checks)
-    result = [i[1]['purpose'] + str(i[1]['index']) for i in sorted_checks]
+    sorted_checks = sorted(checks.items())
+    result = [i[1]['purpose'] + str(i[0]) for i in sorted_checks]
     assert result == ['S1', 'S2', 'U1', 'U2']
 
 
@@ -553,5 +553,5 @@ def test_checks_are_sorted():
     'test_set', [STYLE_CHECKS, UPG_CHECKS]
 )
 def test_lint_codes_are_sequential(test_set):
-    checks = [i['index'] for i in test_set.values()]
+    checks = [i for i in test_set.keys()]
     assert list(range(1, len(checks) + 1)) == checks
