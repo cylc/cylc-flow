@@ -21,6 +21,12 @@ for `cylc play` when called by `cylc vip` or `cylc vr`.
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Awaiting Release</span>)__
 
+### Enhancements
+
+[#5546](https://github.com/cylc/cylc-flow/pull/5546) -
+`cylc lint` will provide a non-zero return code if any issues are identified.
+This can be overridden using the new `--exit-zero` flag.
+
 ### Fixes
 
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -

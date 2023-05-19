@@ -898,10 +898,11 @@ class Scheduler:
             else:
                 if n_warnings:
                     LOG.info(
-                        'Command succeeded with %s warning(s): %s' %
-                        (n_warnings, cmdstr))
+                        f"Command actioned with {n_warnings} warning(s): "
+                        f"{cmdstr}"
+                    )
                 else:
-                    LOG.info(f"Command succeeded: {cmdstr}")
+                    LOG.info(f"Command actioned: {cmdstr}")
                 self.is_updated = True
             self.command_queue.task_done()
 

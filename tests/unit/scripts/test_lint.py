@@ -6,7 +6,8 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+#PID: 12632 Threads: 1 RSS: 1044
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -237,26 +238,10 @@ def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
     assert 'S007' not in result.out
 
 
-@pytest.mark.parametrize(
-    'number', range(1, len(STYLE_CHECKS) + 1)
-)
-def test_check_cylc_file_lint(create_testable_file, number):
-    try:
-        result, _ = create_testable_file(
-            LINT_TEST_FILE, ['style'])
-        assert f'S{(number):03d}' in result.out
-    except AssertionError:
-        breakpoint()
-        try:
-            result, _ = create_testable_file(
-                '#!jinja2\n' + LINT_TEST_FILE, ['style'])
-            assert f'S{(number):03d}' in result.out
-        except AssertionError:
-            breakpoint()
-            raise AssertionError(
-                f'missing error number S{number:03d}:'
-                f'{[*STYLE_CHECKS.keys()][number].pattern}'
-            )
+def test_check_cylc_file_lint(create_testable_file):
+    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
+    for number in range(1, len(STYLE_CHECKS) + 1):
+        assert f'S{number:03d}' in result.out
 
 
 @pytest.mark.parametrize(
@@ -274,6 +259,12 @@ def test_check_exclusions(create_testable_file, exclusion):
         LINT_TEST_FILE, ['style'], list(exclusion))
     for item in exclusion:
         assert item not in result.out
+
+
+def test_check_cylc_file_jinja2_comments(create_testable_file):
+    # Repalce the '# {{' line to be '{# {{' which should not be a warning
+    result, _ = create_testable_file('{# {{ foo }} #}', ['style'])
+    assert 'S011' not in result.out
 
 
 @pytest.fixture
