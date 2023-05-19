@@ -31,6 +31,9 @@ By default, suggestions are written to stdout.
 In-place mode ("-i, --inplace") writes suggestions into the file as comments.
 Commit to version control before using this, in case you want to back out.
 
+A non-zero return code will be returned if any issues are identified.
+This can be overridden by providing the "--exit-zero" flag.
+
 Configurations for Cylc lint can also be set in a pyproject.toml file.
 
 """
@@ -38,6 +41,7 @@ from colorama import Fore
 from optparse import Values
 from pathlib import Path
 import re
+import sys
 import tomli
 from typing import Generator, Union
 
@@ -86,11 +90,16 @@ JOBANDREMOTE_SECTION_MSG = {
     )
 }
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
+<<<<<<< HEAD
 CHECKS_DESC = {
     'U': '7 to 8 upgrades',
     'A': 'Auto Generated 7 to 8 upgrades',
     'S': 'Style'
 }
+=======
+CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
+LINE_LEN_NO = 12
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
 STYLE_CHECKS = {
     1: {
         'short': 'Use multiple spaces, not tabs',
@@ -464,8 +473,13 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
             for index, meta in ruleset.items():
                 meta.update({'purpose': purpose})
                 if f'{purpose}{index:03d}' not in ignores:
+<<<<<<< HEAD
                     parsedchecks.update({index: meta})
             if 'S' in purpose and "S012" not in ignores:
+=======
+                    parsedchecks.update({pattern: meta})
+            if 'S' in purpose and f"S{LINE_LEN_NO:03d}" not in ignores:
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
@@ -479,7 +493,11 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                 parsedchecks[12] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
+<<<<<<< HEAD
                     FUNCTION: re.compile(regex),
+=======
+                    'index': LINE_LEN_NO,
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
                     'purpose': 'S'
                 }
     return parsedchecks
@@ -513,7 +531,11 @@ def check_cylc_file(
                 message['function'].findall(line)
                 and (
                     not line.strip().startswith('#')
+<<<<<<< HEAD
                     or 'commented Jinja2!' in message['short']
+=======
+                    or message['index'] == 11  # commented-out Jinja2
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
                 )
             ):
                 count += 1
@@ -557,6 +579,15 @@ def get_cylc_files(
                 yield path
 
 
+<<<<<<< HEAD
+=======
+def get_sort_key(check):
+    """Return check purpose and index for sorting:
+    """
+    return (check[1]['purpose'], check[1]['index'])
+
+
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
 def get_reference_rst(checks):
     """Print a reference for checks to be carried out.
 
@@ -565,7 +596,11 @@ def get_reference_rst(checks):
     """
     output = ''
     current_checkset = ''
+<<<<<<< HEAD
     for index, meta in sorted(checks.items()):
+=======
+    for check, meta in sorted(checks.items(), key=get_sort_key):
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
         # Check if the purpose has changed - if so create a new
         # section title:
         check = meta[FUNCTION]
@@ -603,7 +638,11 @@ def get_reference_text(checks):
     """
     output = ''
     current_checkset = ''
+<<<<<<< HEAD
     for index, meta in sorted(checks.items()):
+=======
+    for check, meta in sorted(checks.items(), key=get_sort_key):
+>>>>>>> 17d027bf27feff0ddce3362911143157bd934989
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
@@ -678,6 +717,13 @@ def get_option_parser() -> COP:
         metavar="CODE",
         choices=tuple([f'S{i:03d}' for i in STYLE_CHECKS])
     )
+    parser.add_option(
+        '--exit-zero',
+        help='Exit with status code "0" even if there are issues.',
+        action='store_true',
+        default=False,
+        dest='exit_zero'
+    )
 
     return parser
 
@@ -690,7 +736,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         else:
             rulesets = [options.linter]
         print(get_reference_text(parse_checks(rulesets, reference=True)))
-        exit(0)
+        sys.exit(0)
 
     # If target not given assume we are looking at PWD
     if target is None:
@@ -736,7 +782,9 @@ def main(parser: COP, options: 'Values', target=None) -> None:
             'Lint after renaming '
             '"suite.rc" to "flow.cylc"'
         )
-        exit(0)
+        # Exit with an error code if --exit-zero was not set.
+        # Return codes: sys.exit(True) == 1, sys.exit(False) == 0
+        sys.exit(not options.exit_zero)
     elif not cylc8 and '728' in mergedopts['rulesets']:
         check_names = mergedopts['rulesets']
         check_names.remove('728')
@@ -773,6 +821,11 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         )
 
     print(msg)
+
+    # Exit with an error code if there were warnings and
+    # if --exit-zero was not set.
+    # Return codes: sys.exit(True) == 1, sys.exit(False) == 0
+    sys.exit(count != 0 and not options.exit_zero)
 
 
 # NOTE: use += so that this works with __import__

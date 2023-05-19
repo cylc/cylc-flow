@@ -6,7 +6,8 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+#PID: 12632 Threads: 1 RSS: 1044
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -162,8 +163,11 @@ something\t
 """
 
 LINT_TEST_FILE += (
-    '\nscript = the quick brown fox jumps over the lazy dog '
-    'until it becomes clear that this line is far longer the 79 characters.')
+    '\nscript = the quick brown fox jumps over the lazy dog,'
+    ' Sphinx of black quartz hear my vow,'
+    ' Lorum ipsum doobity doo'
+    ' until it becomes clear that this line'
+    ' is far longer the 79 characters.')
 
 
 @pytest.fixture()
@@ -234,19 +238,10 @@ def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
     assert 'S007' not in result.out
 
 
-@pytest.mark.parametrize(
-    'number', range(1, len(STYLE_CHECKS))
-)
-def test_check_cylc_file_lint(create_testable_file, number):
-    try:
-        result, _ = create_testable_file(
-            LINT_TEST_FILE, ['style'])
-        assert f'S{(number):03d}' in result.out
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number S{number:03d}:'
-            f'{[*STYLE_CHECKS.keys()][number].pattern}'
-        )
+def test_check_cylc_file_lint(create_testable_file):
+    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
+    for number in range(1, len(STYLE_CHECKS) + 1):
+        assert f'S{number:03d}' in result.out
 
 
 @pytest.mark.parametrize(
@@ -264,6 +259,12 @@ def test_check_exclusions(create_testable_file, exclusion):
         LINT_TEST_FILE, ['style'], list(exclusion))
     for item in exclusion:
         assert item not in result.out
+
+
+def test_check_cylc_file_jinja2_comments(create_testable_file):
+    # Repalce the '# {{' line to be '{# {{' which should not be a warning
+    result, _ = create_testable_file('{# {{ foo }} #}', ['style'])
+    assert 'S011' not in result.out
 
 
 @pytest.fixture
@@ -540,18 +541,21 @@ def test_parse_checks_reference_mode(ref, expect):
 
 
 def test_checks_are_sorted():
-    checks = {}
-    for i in range(2):
-        for origin in [STYLE_CHECKS, UPG_CHECKS]:
-            checks[[k for k in origin][i]] = [v for v in origin.values()][i]
-    sorted_checks = sorted(checks.items())
-    result = [i[1]['purpose'] + str(i[0]) for i in sorted_checks]
-    assert result == ['S1', 'S2', 'U1', 'U2']
+    sorted_checks = sorted(
+        [*UPG_CHECKS.items(), *STYLE_CHECKS.items()],
+        key=get_sort_key
+    )
+    assert [
+        f"{v['purpose']}{v['index']}" for _, v in sorted_checks
+    ] == [
+        *[f"S{n}" for n in range(1, len(STYLE_CHECKS) + 1)],
+        *[f"U{n}" for n in range(1, len(UPG_CHECKS) + 1)]
+    ]
 
 
 @pytest.mark.parametrize(
     'test_set', [STYLE_CHECKS, UPG_CHECKS]
 )
 def test_lint_codes_are_sequential(test_set):
-    checks = [i for i in test_set.keys()]
-    assert list(range(1, len(checks) + 1)) == checks
+    checks = [i['index'] for i in test_set.values()]
+    assert checks == list(range(1, len(checks) + 1))

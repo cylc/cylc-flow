@@ -39,7 +39,7 @@ workflow_run_ok "${TEST_NAME}-run" cylc play --pause "$WORKFLOW_NAME"
 
 run_ok "$TEST_NAME" cylc set-verbosity DEBUG "$WORKFLOW_NAME"
 log_scan "${TEST_NAME}-grep" "${WORKFLOW_RUN_DIR}/log/scheduler/log" 5 1 \
-    'Command succeeded: set_verbosity'
+    'Command actioned: set_verbosity'
 
 cylc stop "$WORKFLOW_NAME"
 purge
