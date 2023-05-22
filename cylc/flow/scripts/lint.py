@@ -38,6 +38,7 @@ Configurations for Cylc lint can also be set in a pyproject.toml file.
 
 """
 from colorama import Fore
+import functools
 from optparse import Values
 from pathlib import Path
 import re
@@ -54,7 +55,139 @@ from cylc.flow.option_parsers import (
 from cylc.flow.cfgspec.workflow import upg, SPEC
 from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.terminal import cli_function
+
+DEPRECATED_ENV_VARS = {
+    'CYLC_SUITE_HOST': 'CYLC_WORKFLOW_HOST',
+    'CYLC_SUITE_OWNER': 'CYLC_WORKFLOW_OWNER',
+    'CYLC_SUITE_SHARE_DIR': 'CYLC_WORKFLOW_SHARE_DIR',
+    'CYLC_SUITE_SHARE_PATH': 'CYLC_WORKFLOW_SHARE_PATH',
+    'CYLC_SUITE_NAME': 'CYLC_WORKFLOW_ID',
+    'CYLC_SUITE_LOG_DIR': 'CYLC_WORKFLOW_LOG_DIR',
+    'CYLC_SUITE_INITIAL_CYCLE_POINT': 'CYLC_WORKFLOW_INITIAL_CYCLE_POINT',
+    'CYLC_SUITE_INITIAL_CYCLE_TIME': 'CYLC_WORKFLOW_INITIAL_CYCLE_TIME',
+    'CYLC_SUITE_FINAL_CYCLE_POINT': 'CYLC_WORKFLOW_FINAL_CYCLE_POINT',
+    'CYLC_SUITE_FINAL_CYCLE_TIME': 'CYLC_WORKFLOW_FINAL_CYCLE_TIME',
+    'CYLC_SUITE_WORK_DIR': 'CYLC_WORKFLOW_WORK_DIR',
+    'CYLC_SUITE_UUID': 'CYLC_WORKFLOW_UUID',
+    'CYLC_SUITE_RUN_DIR': 'CYLC_WORKFLOW_RUN_DIR',
+}
+
+OBSOLETE_ENV_VARS = {
+    'CYLC_SUITE_DEF_PATH',
+    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'
+}
+
+
+def check_jinja2_no_shebang(line, **kwargs):
+    """Check ONLY top level workflow files for jinja without shebangs.
+
+    Examples:
+        >>> fallback = re.compile(r'{{').findall
+
+        >>> check_jinja2_no_shebang(
+        ... '{{FOO}}',
+        ... fallback=fallback, jinja_shebang=True, file_=Path('foo.cylc'))
+        False
+
+        >>> check_jinja2_no_shebang(
+        ... '{{FOO}}',
+        ... fallback=fallback, jinja_shebang=False, file_=Path('suite.rc'))
+        ['{{']
+    """
+    if (
+        kwargs['jinja_shebang']
+        or kwargs['file_'].name not in ('flow.cylc', 'suite.rc')
+    ):
+        return False
+    return kwargs['fallback'](line)
+
+
+def check_if_jinja2(line, **kwargs):
+    """Check for fallback, but only if Jinja2 switched on:
+
+    Examples:
+        >>> fallback = re.compile('foo').findall
+
+        >>> check_if_jinja2('barfoo', jinja_shebang=False, fallback=fallback)
+        False
+
+        >>> check_if_jinja2('foofoo', jinja_shebang=True, fallback=fallback)
+        ['foo', 'foo']
+    """
+    if kwargs['jinja_shebang']:
+        return kwargs['fallback'](line)
+    return False
+
+
+def check_dead_ends(line):
+    """Check for dead end cylc scripts as defined in cylc.flow.scripts.cylc
+
+    Examples:
+        # Context:
+        # [runtime]
+        #   [[task]]
+        #     script = \"\"\"
+
+        >>> check_dead_ends('        cylc check-software')
+        True
+
+        >>> check_dead_ends('        cylc log')
+        False
+    """
+    return any(
+        dead_end for dead_end in DEAD_ENDS
+        if f'cylc {dead_end}' in line
+    )
+
+
+def check_for_suicide_triggers(line, **kwargs):
+    """Check for suicide triggers, if file is a .cylc file.
+
+    Examples:
+        >>> fallback = MANUAL_DEPRECATIONS['U008']['fallback']
+
+        # Suicide trigger in a *.cylc file:
+        >>> check_for_suicide_triggers(
+        ... 'x:fail => !y', fallback=fallback, file_=Path('foo.cylc'))
+        ['=> !y']
+
+        # Suicide trigger in a suite.rc file:
+        >>> check_for_suicide_triggers(
+        ... 'x:fail => !y', fallback=fallback, file_=Path('suite.rc'))
+        False
+    """
+    if kwargs['file_'].name.endswith('.cylc'):
+        return kwargs['fallback'](line)
+    return False
+
+
+def check_for_deprecated_environment_variables(line):
+    """Warn that environment variables with SUITE in are deprecated"""
+
+    vars_found = {k: v for k, v in DEPRECATED_ENV_VARS.items() if k in line}
+
+    if vars_found:
+        vars_found = [f'{k} -> {v}' for k, v in vars_found.items()]
+    if len(vars_found) == 1:
+        return {'vars': vars_found}
+    elif vars_found:
+        return {'vars': '\n * ' + '\n * '.join(vars_found)}
+    return False
+
+
+def check_for_obsolete_environment_variables(line):
+    """Warn that environment variables are obsolete.
+
+    Examples:
+
+        >>> this = check_for_obsolete_environment_variables
+        >>> this('CYLC_SUITE_DEF_PATH')
+        ['CYLC_SUITE_DEF_PATH']
+    """
+    return [i for i in OBSOLETE_ENV_VARS if i in line]
+
 
 FUNCTION = 'function'
 
@@ -90,115 +223,116 @@ JOBANDREMOTE_SECTION_MSG = {
     )
 }
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
-<<<<<<< HEAD
 CHECKS_DESC = {
     'U': '7 to 8 upgrades',
     'A': 'Auto Generated 7 to 8 upgrades',
     'S': 'Style'
 }
-=======
-CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
-LINE_LEN_NO = 12
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+LINE_LEN_NO = 'S012'
 STYLE_CHECKS = {
-    1: {
+    "S001": {
         'short': 'Use multiple spaces, not tabs',
         'url': STYLE_GUIDE + 'tab-characters',
-        FUNCTION: re.compile(r'^\t')
+        FUNCTION: re.compile(r'^\t').findall
     },
-    2: {
+    "S002": {
         'short': 'Item not indented.',
         # Not a full test, but if a non section is not indented...
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^[^\{\[|\s]')
+        FUNCTION: re.compile(r'^[^\{\[|\s]').findall
     },
-    3: {
+    "S003": {
         'short': 'Top level sections should not be indented.',
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^\s+\[[^\[.]*\]')
+        FUNCTION: re.compile(r'^\s+\[[^\[.]*\]').findall
     },
-    4: {
+    "S004": {
         'short': (
             'Second level sections should be indented exactly '
             '4 spaces.'
         ),
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]')
+        FUNCTION: re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]').findall
     },
-    5: {
+    "S005": {
         'short': (
             'Third level sections should be indented exactly '
             '8 spaces.'
         ),
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]')
+        FUNCTION: re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]').findall
     },
-    6: {
+    "S006": {
         'short': 'trailing whitespace.',
         'url': STYLE_GUIDE + 'trailing-whitespace',
-        FUNCTION: re.compile(r'\s$')
+        FUNCTION: re.compile(r'\s$').findall
     },
     # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any.
     # Do not match inherit lines with `None` at the start.
-    7: {
+    "S007": {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
         FUNCTION: re.compile(
             r'(inherit\s*=(?!\s*None\s*(?!.*[a-z])))|(\w[a-z]\w:\w+?-a(ll|ny))'
-        ),
+        ).findall,
     },
-    8: {
+    "S008": {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
         'url': '',
-        FUNCTION: re.compile(r'{[{%]'),
+        'kwargs': True,
+        FUNCTION: check_jinja2_no_shebang,
+        'fallback': re.compile(r'{[{%]').findall
+        # FUNCTION: re.compile(r'{[{%]').findall,
     },
-    9: {
+    "S009": {
         'short': 'Host Selection Script may be redundant with platform',
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
             'major-changes/platforms.html'
         ),
-        FUNCTION: re.compile(r'platform\s*=\s*\$\(.*?\)'),
+        FUNCTION: re.compile(r'platform\s*=\s*\$\(.*?\)').findall,
     },
-    10: {
+    "S010": {
         'short': 'Using backticks to invoke subshell is deprecated',
         'url': 'https://github.com/cylc/cylc-flow/issues/3825',
-        FUNCTION: re.compile(r'platform\s*=\s*(`.*?`)'),
+        FUNCTION: re.compile(r'platform\s*=\s*(`.*?`)').findall,
     },
-    11: {
+    "S011": {
         'short': 'Cylc will process commented Jinja2!',
         'url': '',
-        FUNCTION: re.compile(r'#.*?{[{%]')
+        'kwargs': True,
+        FUNCTION: check_if_jinja2,
+        'fallback': re.compile(r'(?<!{)#.*?{[{%]').findall,
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
 MANUAL_DEPRECATIONS = {
-    1: {
+    "U001": {
         'short': DEPENDENCY_SECTION_MSG['text'],
         'url': '',
         'rst': DEPENDENCY_SECTION_MSG['rst'],
-        FUNCTION: re.compile(SECTION2.format('dependencies')),
+        FUNCTION: re.compile(SECTION2.format('dependencies')).findall,
     },
-    2: {
+    "U002": {
         'short': DEPENDENCY_SECTION_MSG['text'],
         'url': '',
         'rst': DEPENDENCY_SECTION_MSG['rst'],
-        FUNCTION: re.compile(r'graph\s*=\s*'),
+        FUNCTION: re.compile(r'graph\s*=\s*').findall,
     },
-    3: {
+    "U003": {
         'short': JOBANDREMOTE_SECTION_MSG['text'].format('remote'),
         'url': '',
         'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('remote'),
-        FUNCTION: re.compile(SECTION3.format('remote'))
+        FUNCTION: re.compile(SECTION3.format('remote')).findall
     },
-    4: {
+    "U004": {
         'short': JOBANDREMOTE_SECTION_MSG['text'].format('job'),
         'url': '',
         'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('job'),
-        FUNCTION: re.compile(SECTION3.format('job')),
+        FUNCTION: re.compile(SECTION3.format('job')).findall,
     },
-    5: {
+    "U005": {
         'short': (
             'flow.cylc[runtime][<namespace>][job]batch system -> '
             'global.cylc[platforms][<platform name>]job runner'
@@ -208,12 +342,82 @@ MANUAL_DEPRECATIONS = {
             '``flow.cylc[runtime][<namespace>][job]batch system`` -> '
             '``global.cylc[platforms][<platform name>]job runner``'
         ),
-        FUNCTION: re.compile(r'batch system\s*=\s*'),
+        FUNCTION: re.compile(r'batch system\s*=\s*').findall,
     },
-    6: {
+    "U006": {
         'short': 'Using backticks to invoke subshell will fail at Cylc 8.',
         'url': 'https://github.com/cylc/cylc-flow/issues/3825',
-        FUNCTION: re.compile(r'host\s*=\s*(`.*?`)'),
+        FUNCTION: re.compile(r'host\s*=\s*(`.*?`)').findall,
+    },
+    'U007': {
+        'short': (
+            'Use built in platform selection instead of rose host-select.'),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'major-changes/platforms.html'),
+        FUNCTION: re.compile(r'platform\s*=\s*\$\(\s*rose host-select').findall
+    },
+    'U008': {
+        'short': 'Suicide triggers are not required at Cylc 8.',
+        'url': '',
+        'kwargs': True,
+        FUNCTION: check_for_suicide_triggers,
+        'fallback': re.compile(r'=>\s*\!.*').findall,
+    },
+    'U009': {
+        'short': 'This line contains a deprecated Cylc CLI command.',
+        'url': '',
+        FUNCTION: check_dead_ends
+    },
+    'U010': {
+        'short': 'rose suite-hook is deprecated at Rose 2,',
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8'
+            '/major-changes/suicide-triggers.html'),
+        FUNCTION: lambda line: 'rose suite-hook' in line,
+    },
+    'U011': {
+        'short': 'Leading zeros are no longer valid for Jinja2 integers.',
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes'
+            '/python-2-3.html#jinja2-integers-with-leading-zeros'),
+        'kwargs': True,
+        FUNCTION: check_if_jinja2,
+        'fallback': re.compile(r'\{%\s*set\s*.+?\s*=\s*0\d+\s*%\}').findall
+    },
+    'U012': {
+        'short': (
+            'Deprecated environment variables: {vars}'),
+        'rst': (
+            'The following environment variables are deprecated:\n\n'
+            '.. list-table::'
+            '\n   :header-rows: 1'
+            '\n\n   * - Deprecated Variable'
+            '\n     - New Variable'
+        ) + ''.join(
+            [
+                f'\n   * - ``{old}``\n     - ``{new}``'
+                for old, new in DEPRECATED_ENV_VARS.items()
+            ]
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/reference/'
+            'job-script-vars/index.html'
+        ),
+        FUNCTION: check_for_deprecated_environment_variables,
+    },
+    'U013': {
+        'short': (
+            'Obsolete environment variables: {vars}'),
+        'rst': (
+            'The following environment variables are obsolete:\n\n'
+            + ''.join([f'\n * ``{old}``' for old in OBSOLETE_ENV_VARS])
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/reference/'
+            'job-script-vars/index.html'
+        ),
+        FUNCTION: check_for_obsolete_environment_variables,
     }
 }
 RULESETS = ['728', 'style', 'all']
@@ -221,10 +425,7 @@ EXTRA_TOML_VALIDATION = {
     'ignore': {
         lambda x: re.match(r'[A-Z]\d\d\d', x):
             '{item} not valid: Ignore codes should be in the form X001',
-        lambda x: x in [
-            f'{i["purpose"]}{i["index"]:03d}'
-            for i in parse_checks(['728', 'style']).values()
-        ]:
+        lambda x: x in parse_checks(['728', 'style']):
             '{item} is a not a known linter code.'
     },
     'rulesets': {
@@ -386,19 +587,18 @@ def get_upgrader_info():
     """Extract info about obseletions and deprecations from Parsec Objects."""
     conf = ParsecConfig(SPEC, upg)
     upgrades = conf.upgrader(conf.dense, '').upgrades
-    from copy import copy
     deprecations = {}
 
-    for _, upgrades_for_version in upgrades.items():
-        for index, upgrade in enumerate(
-            upgrades_for_version, start=len(MANUAL_DEPRECATIONS)
-        ):
+    for upgrades_for_version in upgrades.values():
+        for index, upgrade in enumerate(upgrades_for_version):
             # Set a flag indicating that a variable has been moved.
+            is_dep, is_obs = False, False
             if upgrade['new'] is None:
                 section_name = list_to_config(
                     upgrade["old"], upgrade["is_section"])
                 short = f'{section_name} - not available at Cylc 8'
                 rst = f'``{section_name}`` is not available at Cylc 8'
+                is_obs = True
             elif upgrade["old"][-1] == upgrade['new'][-1]:
                 # Where an item with the same name has been moved
                 # a 1 line regex isn't going to work.
@@ -410,6 +610,7 @@ def get_upgrader_info():
                     upgrade["new"], upgrade["is_section"])
                 short = f'{old} -> {new}'
                 rst = f'``{old}`` is now ``{new}``'
+                is_dep = True
 
             # Check whether upgrade is section:
             if upgrade['is_section'] is True:
@@ -417,20 +618,20 @@ def get_upgrader_info():
                 start = r'\[' * section_depth
                 end = r'\]' * section_depth
                 name = upgrade["old"][-1]
-                regex = re.compile(fr'{start}\s*{name}\s*{end}\s*$')
+                expr = fr'{start}\s*{name}\s*{end}\s*$'
             else:
                 name = upgrade["old"][-1]
                 expr = rf'^\s*{name}\s*=\s*.*'
-                regex = re.compile(expr)
 
-            deprecations[index] = {
+            deprecations[f'A{index:03d}'] = {
                 'short': short,
                 'url': '',
                 'rst': rst,
-                FUNCTION: regex,
+                FUNCTION: re.compile(expr).findall,
+                'is_obs': is_obs,
+                'is_dep': is_dep,
             }
-    # Some deprecations are not specified in a straightforward to scrape
-    # way and these are specified in MANUAL_DEPRECATIONS:
+
     return deprecations
 
 
@@ -455,31 +656,26 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
     """
     ignores = ignores or []
     parsedchecks = {}
-
-    purpose_filters = []
-    for arg in check_args:
-        for purpose in PURPOSE_FILTER_MAP[arg]:
-            purpose_filters.append(purpose)
+    purpose_filters = [
+        purpose
+        for arg in check_args
+        for purpose in PURPOSE_FILTER_MAP[arg]
+    ]
 
     checks = {
+        'S': STYLE_CHECKS,
         'U': MANUAL_DEPRECATIONS,
         'A': get_upgrader_info(),
-        'S': STYLE_CHECKS
     }
-
     for purpose, ruleset in checks.items():
         if purpose in purpose_filters:
             # Run through the rest of the config items.
             for index, meta in ruleset.items():
                 meta.update({'purpose': purpose})
-                if f'{purpose}{index:03d}' not in ignores:
-<<<<<<< HEAD
+                if f'{index}' not in ignores:
                     parsedchecks.update({index: meta})
-            if 'S' in purpose and "S012" not in ignores:
-=======
-                    parsedchecks.update({pattern: meta})
-            if 'S' in purpose and f"S{LINE_LEN_NO:03d}" not in ignores:
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+            if 'S' in purpose and LINE_LEN_NO not in ignores:
+                # Special handling for max line length:
                 if not max_line_len:
                     max_line_len = 130
                 regex = r"^.{" + str(max_line_len) + r"}"
@@ -490,17 +686,24 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
                     )
                 else:
                     msg = f'line > {max_line_len} characters.'
-                parsedchecks[12] = {
+                parsedchecks[LINE_LEN_NO] = {
                     'short': msg,
                     'url': STYLE_GUIDE + 'line-length-and-continuation',
-<<<<<<< HEAD
-                    FUNCTION: re.compile(regex),
-=======
-                    'index': LINE_LEN_NO,
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+                    FUNCTION: re.compile(regex).findall,
                     'purpose': 'S'
                 }
     return parsedchecks
+
+
+def get_index_str(meta, index):
+    """Printable purpose string - mask useless numbers for auto-generated
+    upgrades."""
+    if meta.get('is_dep', None):
+        return 'U998'
+    elif meta.get('is_obs', None):
+        return 'U999'
+    else:
+        return f'{index}'
 
 
 def check_cylc_file(
@@ -518,42 +721,51 @@ def check_cylc_file(
     count = 0
     for line_no, line in enumerate(lines, start=1):
         for index, message in checks.items():
-            # Tests with for presence of Jinja2 if no shebang line is
-            # present.
-            if (
-                jinja_shebang
-                and message['short'].startswith(
-                    JINJA2_FOUND_WITHOUT_SHEBANG)
-            ):
-                continue
+            if message.get('kwargs', False):
+                # Use a more complex function with keywords:
+                check_function = functools.partial(
+                    message['function'],
+                    message=message,
+                    file_=file_,
+                    jinja_shebang=jinja_shebang,
+                    fallback=message.get('fallback')
+                )
+            else:
+                # Just going to pass the line to the check function:
+                check_function = message['function']
 
+            # Run the check:
+            check = check_function(line)
+
+            # Log a problem if check is Truthy
             if (
-                message['function'].findall(line)
+                check
                 and (
                     not line.strip().startswith('#')
-<<<<<<< HEAD
-                    or 'commented Jinja2!' in message['short']
-=======
-                    or message['index'] == 11  # commented-out Jinja2
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+                    or index == 11  # commented-out Jinja2
                 )
             ):
+                if isinstance(check, dict):
+                    msg = message['short'].format(**check)
+                else:
+                    msg = message['short']
                 count += 1
                 if modify:
                     if message['url'].startswith('http'):
                         url = message['url']
                     else:
                         url = URL_STUB + message['url']
+
                     outlines.append(
-                        f'# [{message["purpose"]}{message["index"]:03d}]: '
-                        f'{message["short"]}\n'
+                        f'# [{get_index_str(message, index)}]: '
+                        f'{msg}\n'
                         f'# - see {url}'
                     )
                 else:
                     print(
                         Fore.YELLOW +
-                        f'[{message["purpose"]}{index:03d}]'
-                        f' {file_rel}:{line_no}: {message["short"]}'
+                        f'[{get_index_str(message, index)}]'
+                        f' {file_rel}:{line_no}: {msg}'
                     )
         if modify:
             outlines.append(line)
@@ -579,15 +791,6 @@ def get_cylc_files(
                 yield path
 
 
-<<<<<<< HEAD
-=======
-def get_sort_key(check):
-    """Return check purpose and index for sorting:
-    """
-    return (check[1]['purpose'], check[1]['index'])
-
-
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
 def get_reference_rst(checks):
     """Print a reference for checks to be carried out.
 
@@ -596,36 +799,42 @@ def get_reference_rst(checks):
     """
     output = ''
     current_checkset = ''
-<<<<<<< HEAD
-    for index, meta in sorted(checks.items()):
-=======
-    for check, meta in sorted(checks.items(), key=get_sort_key):
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+    for index, meta in checks.items():
         # Check if the purpose has changed - if so create a new
         # section title:
-        check = meta[FUNCTION]
         if meta['purpose'] != current_checkset:
             current_checkset = meta['purpose']
             title = CHECKS_DESC[meta["purpose"]]
             output += f'\n{title}\n{"-" * len(title)}\n\n'
 
-        # Fill a template with info about the issue.
-        template = (
-            '{checkset}{index:003d}\n^^^^\n{summary}\n\n'
-        )
-        if meta['url'].startswith('http'):
-            url = meta['url']
+            if current_checkset == 'A':
+                output += (
+                    '\n.. note::\n'
+                    '\n   U998 and U999 represent automatically generated'
+                    'sets of deprecations and upgrades.'
+                    ' Because of the automation they cannot be'
+                    ' consistently numbered.\n\n\n'
+                )
+
+        if current_checkset == 'A':
+            summary = meta.get("rst", meta['short'])
+            output += '\n- ' + summary
         else:
-            url = URL_STUB + meta['url']
-        summary = meta.get("rst", meta['short'])
-        msg = template.format(
-            title=check.pattern.replace('\\', ''),
-            checkset=meta['purpose'],
-            summary=summary,
-            url=url,
-            index=index,
-        )
-        output += msg
+            # Fill a template with info about the issue.
+            template = (
+                '{check}\n^^^^\n{summary}\n\n'
+            )
+            if meta['url'].startswith('http'):
+                url = meta['url']
+            else:
+                url = URL_STUB + meta['url']
+            summary = meta.get("rst", meta['short'])
+            msg = template.format(
+                check=get_index_str(meta, index),
+                summary=summary,
+                url=url,
+            )
+            output += msg
     output += '\n'
     return output
 
@@ -638,11 +847,7 @@ def get_reference_text(checks):
     """
     output = ''
     current_checkset = ''
-<<<<<<< HEAD
-    for index, meta in sorted(checks.items()):
-=======
-    for check, meta in sorted(checks.items(), key=get_sort_key):
->>>>>>> 17d027bf27feff0ddce3362911143157bd934989
+    for index, meta in checks.items():
         # Check if the purpose has changed - if so create a new
         # section title:
         if meta['purpose'] != current_checkset:
@@ -650,22 +855,32 @@ def get_reference_text(checks):
             title = CHECKS_DESC[meta["purpose"]]
             output += f'\n{title}\n{"-" * len(title)}\n\n'
 
+            if current_checkset == 'A':
+                output += (
+                    'U998 and U999 represent automatically generated'
+                    ' sets of deprecations and upgrades.'
+                    '\nBecause of the automation they cannot be'
+                    ' consistently numbered.\n\n'
+                )
         # Fill a template with info about the issue.
-        template = (
-            '{checkset}{index:003d}:\n    {summary}\n\n'
-        )
-        if meta['url'].startswith('http'):
-            url = meta['url']
+        if current_checkset == 'A':
+            summary = meta.get("rst", meta['short']).replace('``', '')
+            output += '\n* ' + summary
         else:
-            url = URL_STUB + meta['url']
-        msg = template.format(
-            title=index,
-            checkset=meta['purpose'],
-            summary=meta['short'],
-            url=url,
-            index=index,
-        )
-        output += msg
+            template = (
+                '{check}:\n    {summary}\n\n'
+            )
+            if meta['url'].startswith('http'):
+                url = meta['url']
+            else:
+                url = URL_STUB + meta['url']
+            msg = template.format(
+                title=index,
+                check=get_index_str(meta, index),
+                summary=meta['short'],
+                url=url,
+            )
+            output += msg
     output += '\n'
     return output
 
@@ -677,7 +892,6 @@ def get_option_parser() -> COP:
             COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)
         ],
     )
-
     parser.add_option(
         '--inplace', '-i',
         help=(
@@ -715,7 +929,7 @@ def get_option_parser() -> COP:
         default=[],
         dest='ignores',
         metavar="CODE",
-        choices=tuple([f'S{i:03d}' for i in STYLE_CHECKS])
+        choices=tuple(STYLE_CHECKS)
     )
     parser.add_option(
         '--exit-zero',

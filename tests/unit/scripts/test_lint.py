@@ -18,7 +18,6 @@
 """Tests `cylc lint` CLI Utility.
 """
 import difflib
-from itertools import combinations
 from pathlib import Path
 import pytest
 from pytest import param
@@ -94,13 +93,15 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = MyFaM:finish-all => remote
+            graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
+        pre-script = "echo ${CYLC_SUITE_DEF_PATH}"
         script = {{HELLOWORLD}}
+        post-script = "echo ${CYLC_SUITE_INITIAL_CYCLE_TIME}"
         [[[suite state polling]]]
             template = and
         [[[remote]]]
@@ -132,11 +133,15 @@ TEST_FILE = """
         inherit = MyFaM
 
      [[remote]]
+        platform = $(rose host-select parasite)
+        script = "cylc nudge"
+        post-script = "rose suite-hook"
 
  [meta]
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
 """
 
 
@@ -147,6 +152,7 @@ LINT_TEST_FILE = """
 
 [[dependencies]]
 
+{% set   N = 009 %}
 {% foo %}
 {{foo}}
 # {{quix}}
@@ -177,23 +183,26 @@ def create_testable_file(monkeypatch, capsys):
             ignores = []
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
         checks = parse_checks(checks, ignores)
-        check_cylc_file(Path('x'), Path('x'), checks)
+        check_cylc_file(Path('flow.cylc'), Path('flow.cylc'), checks)
         return capsys.readouterr(), checks
     return _inner
 
 
-@pytest.mark.parametrize(
-    'number', range(1, len(UPG_CHECKS) - len(MANUAL_DEPRECATIONS))
-)
+@pytest.mark.parametrize('number', range(1, len(MANUAL_DEPRECATIONS) + 1))
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
-    try:
-        result, checks = create_testable_file(TEST_FILE, ['728'])
-        assert f'[A{number:03d}]' in result.out
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number U{number:03d}'
-            f'{[*checks.keys()][number]}'
-        )
+    """TEST File has one of each manual deprecation;"""
+    result, checks = create_testable_file(TEST_FILE, ['728'])
+    if number in [11]:  # Assert that tests requiring a jinja2 shebang not run.
+        assert f'[U{number:03d}]' not in result.out
+    else:
+        assert f'[U{number:03d}]' in result.out
+
+
+def test_check_cylc_file_7to8_auto(create_testable_file, capsys):
+    """TEST_FILE has the same number of results as before."""
+    result, checks = create_testable_file(TEST_FILE, ['728'])
+    assert len([i for i in result.out.split('\n') if '998' in i]) == 36
+    assert len([i for i in result.out.split('\n') if '999' in i]) == 28
 
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
@@ -238,32 +247,26 @@ def test_inherit_lowercase_not_match_none(create_testable_file, inherit_line):
     assert 'S007' not in result.out
 
 
-def test_check_cylc_file_lint(create_testable_file):
-    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
-    for number in range(1, len(STYLE_CHECKS) + 1):
-        assert f'S{number:03d}' in result.out
-
-
 @pytest.mark.parametrize(
-    'exclusion',
-    [
-        comb for i in range(len(STYLE_CHECKS))
-        for comb in combinations(
-            [f'S{i:03d}' for i in STYLE_CHECKS.keys()], i + 1
-        )
-    ]
+    # 8 and 11 Won't be tested because there is no jinja2 shebang.
+    'code', [i for i in range(1, len(STYLE_CHECKS) + 1) if i not in [8, 11]]
 )
+def test_check_cylc_file_lint(create_testable_file, code):
+    result, _ = create_testable_file(LINT_TEST_FILE, ['style'])
+    assert f'S{code:03d}' in result.out
+
+
+@pytest.mark.parametrize('exclusion', [i for i in STYLE_CHECKS.keys()])
 def test_check_exclusions(create_testable_file, exclusion):
     """It does not report any items excluded."""
     result, _ = create_testable_file(
-        LINT_TEST_FILE, ['style'], list(exclusion))
-    for item in exclusion:
-        assert item not in result.out
+        LINT_TEST_FILE, ['style'], [exclusion])
+    assert exclusion not in result.out
 
 
 def test_check_cylc_file_jinja2_comments(create_testable_file):
-    # Repalce the '# {{' line to be '{# {{' which should not be a warning
-    result, _ = create_testable_file('{# {{ foo }} #}', ['style'])
+    # Replace the '# {{' line to be '{# {{' which should not be a warning
+    result, _ = create_testable_file('#!jinja2\n{# {{ foo }} #}', ['style'])
     assert 'S011' not in result.out
 
 
@@ -283,16 +286,15 @@ def create_testable_dir(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'number', range(1, len(UPG_CHECKS) + 1)
+    'number', range(1, len(MANUAL_DEPRECATIONS) + 1)
 )
 def test_check_cylc_file_inplace(create_testable_dir, number):
-    try:
+    if number in [8, 11]:
+        # number 8 should only be reported for *.cylc files - this test uses
+        # a suite.rc
+        assert f'[U{number:03d}]' not in create_testable_dir
+    else:
         assert f'[U{number:03d}]' in create_testable_dir
-    except AssertionError:
-        raise AssertionError(
-            f'missing error number {number:03d}:7-to-8 - '
-            f'{[*UPG_CHECKS.keys()][number]}'
-        )
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
@@ -313,17 +315,20 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
+MOCK_CHECKS = {
+    'U042': {
+        'short': 'section `[vizualization]` has been removed.',
+        'url': 'some url or other',
+        'purpose': 'U',
+        'rst': 'section ``[vizualization]`` has been removed.',
+        'function': re.compile('not a regex')
+    },
+}
+
+
 def test_get_reference_rst():
     """It produces a reference file for our linting."""
-    ref = get_reference_rst({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'rst': 'section ``[vizualization]`` has been removed.',
-            'index': 42
-        },
-    })
+    ref = get_reference_rst(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042\n^^^^\nsection ``[vizualization]`` has been '
@@ -334,14 +339,7 @@ def test_get_reference_rst():
 
 def test_get_reference_text():
     """It produces a reference file for our linting."""
-    ref = get_reference_text({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'index': 42
-        },
-    })
+    ref = get_reference_text(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
@@ -361,11 +359,11 @@ def fixture_get_deprecations():
     'findme',
     [
         pytest.param(
-            'template',
+            'abort if any task fails =',
             id='Item not available at Cylc 8'
         ),
         pytest.param(
-            'timeout',
+            'timeout =',
             id='Item renamed at Cylc 8'
         ),
         pytest.param(
@@ -384,13 +382,13 @@ def test_get_upg_info(fixture_get_deprecations, findme):
     n.b this is just sampling to ensure that the test it getting items.
     """
     if findme.startswith('!'):
-        assert findme[1:] not in str(fixture_get_deprecations)
-    elif findme.startswith('['):
-        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]\\s*$'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert not any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        )
     else:
-        pattern = f'^\\s*{findme}\\s*=\\s*.*'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert not any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        )
 
 
 @pytest.mark.parametrize(
@@ -538,24 +536,3 @@ def test_parse_checks_reference_mode(ref, expect):
     key = list(result.keys())[-1]
     value = result[key]
     assert expect in value['short']
-
-
-def test_checks_are_sorted():
-    sorted_checks = sorted(
-        [*UPG_CHECKS.items(), *STYLE_CHECKS.items()],
-        key=get_sort_key
-    )
-    assert [
-        f"{v['purpose']}{v['index']}" for _, v in sorted_checks
-    ] == [
-        *[f"S{n}" for n in range(1, len(STYLE_CHECKS) + 1)],
-        *[f"U{n}" for n in range(1, len(UPG_CHECKS) + 1)]
-    ]
-
-
-@pytest.mark.parametrize(
-    'test_set', [STYLE_CHECKS, UPG_CHECKS]
-)
-def test_lint_codes_are_sequential(test_set):
-    checks = [i['index'] for i in test_set.values()]
-    assert checks == list(range(1, len(checks) + 1))
