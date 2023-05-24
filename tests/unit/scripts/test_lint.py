@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
-from itertools import combinations
-from pathlib import Path
 from pprint import pformat
 import re
 from types import SimpleNamespace
@@ -27,7 +25,6 @@ from pytest import param
 
 from cylc.flow.scripts.lint import (
     STYLE_CHECKS,
-    check_cylc_file,
     get_cylc_files,
     get_pyproject_toml,
     get_reference_rst,
@@ -226,10 +223,38 @@ def test_check_cylc_file_line_no():
     assert ':2:' in lint.messages[0]
 
 
-@pytest.mark.parametrize('number', range(len(STYLE_CHECKS)))
+@pytest.mark.parametrize(
+    'inherit_line',
+    (
+        'inherit = foo, b, a, r',
+        'inherit = FOO, bar',
+        'inherit = None, bar',
+        'inherit = g',
+        'inherit = B, None',
+    )
+)
+def test_inherit_lowercase_matches(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert any('S007' in msg for msg in lint.messages)
+
+
+@pytest.mark.parametrize(
+    'inherit_line',
+    (
+        'inherit = None',
+        'inherit = None,',
+        'inherit = None, FOO',
+    )
+)
+def test_inherit_lowercase_not_match_none(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert not any('S007' in msg for msg in lint.messages)
+
+
+@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS) + 1))
 def test_check_cylc_file_lint(number):
     lint = lint_text(LINT_TEST_FILE, ['style'])
-    assert_contains(lint.messages, f'S{(number + 1):03d}')
+    assert_contains(lint.messages, f'S{number:03d}')
 
 
 @pytest.mark.parametrize('exclusion', range(len(STYLE_CHECKS.values())))
@@ -238,6 +263,12 @@ def test_check_exclusions(exclusion):
     code = f'S{exclusion:03d}'
     lint = lint_text(LINT_TEST_FILE, ['style'], [code])
     assert not filter_strings(lint.messages, code)
+
+
+def test_check_cylc_file_jinja2_comments():
+    # Repalce the '# {{' line to be '{# {{' which should not be a warning
+    lint = lint_text('{# {{ foo }} #}', ['style'])
+    assert not any('S011' in msg for msg in lint.messages)
 
 
 @pytest.mark.parametrize(

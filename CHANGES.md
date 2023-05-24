@@ -40,6 +40,12 @@ Efficiency improvements to reduce task management overheads on the Scheduler.
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Enhancements
+
+[#5546](https://github.com/cylc/cylc-flow/pull/5546) -
+`cylc lint` will provide a non-zero return code if any issues are identified.
+This can be overridden using the new `--exit-zero` flag.
+
 ### Fixes
 
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -
