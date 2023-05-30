@@ -31,6 +31,8 @@ from cylc.flow.config import interpolate_template, ParamExpandError
 # the maximum number of task dependencies which Cylc will list before
 # omitting the CYLC_TASK_DEPENDENCIES environment variable
 # see: https://github.com/cylc/cylc-flow/issues/5551
+# NOTE: please update `src/reference/job-script-vars/var-list.txt`
+#       in cylc-doc if changing this value
 MAX_CYLC_TASK_DEPENDENCIES_LEN = 50
 
 
