@@ -216,6 +216,8 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
             'inherit = FOO, bar',
             'inherit = None, bar',
             'inherit = A, b, C',
+            'inherit = "A", "b"',
+            "inherit = 'A', 'b'",
             # parameters, jinja2 and empy should be ignored
             # but any lowercase chars before or after should not
             'inherit = a<x>z',
@@ -234,7 +236,10 @@ def test_inherit_lowercase_matches(create_testable_file, inherit_line):
     (
         param(item, id=str(ind))
         for ind, item in enumerate([
-            # none, None and root are valid family names
+            # undefined values are ok
+            'inherit =',
+            'inherit =  ',
+            # none, None and root are ok
             'inherit = none',
             'inherit = None',
             'inherit = root',
@@ -250,14 +255,22 @@ def test_inherit_lowercase_matches(create_testable_file, inherit_line):
             'inherit = FOO_BAR_0',
             # parameters should be ignored
             'inherit = A<a>Z',
-            'inherit = <a=1>',
+            'inherit = <a=1, b-1, c+1>',
             # jinja2 should be ignored
             'inherit = A{{ a }}Z, {% for x in range(5) %}'
             'A{{ x }}, {% endfor %}',
             # empy should be ignored
             'inherit = A@( a )Z',
+            # trailing comments should be ignored
+            'inherit = A, B # no, comment',
+            'inherit = # a',
+            # quotes are ok
+            'inherit = "A", "B"',
+            "inherit = 'A', 'B'",
+            'inherit = "None", B',
+            'inherit = <a = 1, b - 1>',
             # one really awkward, but valid example
-            'inherit = none, root, FOO_BAR_0, <a>, A<a>Z, A{{a}}Z, A@(a)Z',
+            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
         ])
     )
 )

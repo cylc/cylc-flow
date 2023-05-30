@@ -138,10 +138,13 @@ STYLE_CHECKS = {
           (?!
             \s*
             # none, None and root are valid family names
-            (none|None|root|
+            # and `inherit =` or `inherit = # x` are valid too
+            (['"]?(none|None|root|\#.*|$)['"]?|
               (
                 # as are families named with capital letters
                 [A-Z0-9_-]+
+                # and optional quotes
+                | [\'\"]
                 # which may include Cylc parameters
                 | (<[^>]+>)
                 # or Jinja2
@@ -154,10 +157,12 @@ STYLE_CHECKS = {
             (
               \s*,\s*
               # none, None and root are valid family names
-              (none|None|root|
+              (['"]?(none|None|root)['"]?|
                 (
                   # as are families named with capital letters
                   [A-Z0-9_-]+
+                  # and optional quotes
+                  | [\'\"]
                   # which may include Cylc parameters
                   | (<[^>]+>)
                   # or Jinja2
@@ -169,6 +174,8 @@ STYLE_CHECKS = {
             )*
             # allow trailing commas and whitespace
             \s*,?\s*
+            # allow trailing comments
+            (\#.*)?
             $
           )
         ''',
