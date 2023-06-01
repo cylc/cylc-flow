@@ -16,11 +16,10 @@
 """Utilities for use with asynchronous code."""
 
 import asyncio
+from functools import partial, wraps
 import os
 from pathlib import Path
 from typing import List, Union
-
-from aiofiles.os import wrap  # type: ignore[attr-defined]
 
 from cylc.flow import LOG
 
@@ -60,12 +59,12 @@ class _AsyncPipe:
     """
 
     def __init__(
-            self,
-            func,
-            args=None,
-            kwargs=None,
-            filter_stop=True,
-            preserve_order=True
+        self,
+        func,
+        args=None,
+        kwargs=None,
+        filter_stop=True,
+        preserve_order=True
     ):
         self.func = func
         self.args = args or ()
@@ -393,9 +392,6 @@ def pipe(func=None, preproc=None):
         return _pipe
 
 
-async_listdir = wrap(os.listdir)
-
-
 async def scandir(path: Union[Path, str]) -> List[Path]:
     """Asynchronous directory listing (performs os.listdir in an executor)."""
     return [
@@ -449,3 +445,23 @@ async def unordered_map(coroutine, iterator):
         )
         for task in done:
             yield task._args, task.result()
+
+
+def make_async(fcn):
+    """Make a synchronous function async by running it in an executor.
+
+    The default asyncio executor is the ThreadPoolExecutor so this essentially
+    syntactic sugar for running the wrapped function in a thread.
+    """
+    @wraps(fcn)
+    async def _fcn(*args, executor=None, **kwargs):
+        nonlocal fcn
+        return await asyncio.get_event_loop().run_in_executor(
+            executor,
+            partial(fcn, *args, **kwargs),
+        )
+
+    return _fcn
+
+
+async_listdir = make_async(os.listdir)

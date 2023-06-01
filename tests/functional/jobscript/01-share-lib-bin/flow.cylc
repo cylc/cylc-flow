@@ -1,0 +1,35 @@
+#!jinja2
+[scheduler]
+    [[events]]
+        stall timeout = PT0M
+
+[scheduling]
+    initial cycle point = 1266
+    [[graph]]
+        R1 = install_cold => run_mypythonscript & run_myscript
+
+[runtime]
+    [[install_cold]]
+        script = """
+            mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/lib/python"
+            mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}/bin"
+
+            cat > "${CYLC_WORKFLOW_SHARE_DIR}/lib/python/mypythonscript.py" <<__HERE__
+            def my_function():
+                print("I can speak Esperanto like a native.")
+            __HERE__
+
+            cat > "${CYLC_WORKFLOW_SHARE_DIR}/bin/myscript.sh" <<__HERE__
+                #!/usr/bin/bash
+                echo "A sure cure for seasickness is to sit under a tree."
+            __HERE__
+
+            chmod +x "${CYLC_WORKFLOW_SHARE_DIR}/lib/python/mypythonscript.py"
+            chmod +x "${CYLC_WORKFLOW_SHARE_DIR}/bin/myscript.sh"
+        """
+
+    [[run_myscript]]
+        script = myscript.sh
+
+    [[run_mypythonscript]]
+        script = python -c 'from mypythonscript import my_function; my_function()'

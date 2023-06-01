@@ -75,6 +75,10 @@ class FlowMgr:
 
     def _log(self) -> None:
         """Write current flow info to log."""
+        if not self.flows:
+            LOG.info("Flows: (none)")
+            return
+
         LOG.info(
             "Flows:\n" + "\n".join(
                 (

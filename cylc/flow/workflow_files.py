@@ -14,81 +14,58 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Workflow service files management."""
+"""Files which define workflows or are created by Cylc.
 
-from collections import deque
-from contextlib import suppress
-from enum import Enum
-from functools import partial
-import glob
-import logging
+See also:
+* cylc.flow.install - for installing files from source dirs into the run dir.
+* cylc.flow.clean - for removing files from the run dir.
+
+"""
+
 import os
-from pathlib import Path
-from random import shuffle
 import re
-from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
-import shlex
 import shutil
-import sqlite3
-from time import sleep
-from typing import (
-    Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
-    Tuple, TYPE_CHECKING, Union
+from enum import Enum
+from pathlib import Path
+from subprocess import (
+    PIPE,
+    Popen,
+    TimeoutExpired,
 )
-
-import aiofiles
-import zmq.auth
+from typing import (
+    Dict,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import cylc.flow.flags
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.async_util import make_async
 from cylc.flow.exceptions import (
+    ContactFileExists,
     CylcError,
-    PlatformError,
-    PlatformLookupError,
-    ServiceFileError,
     InputError,
+    ServiceFileError,
     WorkflowFilesError,
     handle_rmtree_err,
 )
-from cylc.flow.loggingutil import (
-    CylcLogFormatter,
-    close_log,
-    get_next_log_number,
-    get_sorted_logs_by_time
+from cylc.flow.hostuserutil import (
+    get_user,
+    is_remote_host,
 )
 from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
     make_localhost_symlinks,
-    parse_rm_dirs,
-    remove_dir_and_target,
-    get_next_rundir_number,
-    remove_dir_or_file,
-    remove_empty_parents
-)
-from cylc.flow.platforms import (
-    get_host_from_platform,
-    get_install_target_to_platforms_map,
-    get_localhost_install_target,
-)
-from cylc.flow.hostuserutil import (
-    get_user,
-    is_remote_host
 )
 from cylc.flow.remote import (
-    DEFAULT_RSYNC_OPTS,
     construct_cylc_server_ssh_cmd,
-    construct_ssh_cmd,
 )
-from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
-
-if TYPE_CHECKING:
-    from optparse import Values
 
 
 class KeyType(Enum):
@@ -141,7 +118,7 @@ class KeyInfo():  # noqa: SIM119 (not really relevant here)
 
             if key_type == KeyType.PRIVATE:
                 file_extension = WorkflowFiles.Service.PRIVATE_FILE_EXTENSION
-            elif key_type == KeyType.PUBLIC:
+            else:
                 file_extension = WorkflowFiles.Service.PUBLIC_FILE_EXTENSION
 
             self.file_name = f"{file_name}{file_extension}"
@@ -334,12 +311,6 @@ class ContactFileFields:
     """Remote command setting for Scheduler."""
 
 
-class RemoteCleanQueueTuple(NamedTuple):
-    proc: 'Popen[str]'
-    install_target: str
-    platforms: List[Dict[str, Any]]
-
-
 REG_DELIM = "/"
 
 NO_TITLE = "No title provided"
@@ -355,7 +326,7 @@ To start a new run, stop the old one first with one or more of these:
 
 * cylc stop --now %(workflow)s        # don't wait for active tasks
 * cylc stop --now --now %(workflow)s  # don't wait
-* ssh -n "%(host)s" kill %(pid)s   # final brute force!
+* ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
 SUITERC_DEPR_MSG = "Backward compatibility mode ON"
@@ -363,11 +334,6 @@ SUITERC_DEPR_MSG = "Backward compatibility mode ON"
 NO_FLOW_FILE_MSG = (
     f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
     "in {}"
-)
-
-NESTED_DIRS_MSG = (
-    "Nested {dir_type} directories not allowed - cannot install workflow"
-    " in '{dest}' as '{existing}' is already a valid {dir_type} directory."
 )
 
 
@@ -481,7 +447,7 @@ def detect_old_contact_file(
     * If one does exist but the workflow process is definitely not alive,
       remove it.
     * If one exists and the workflow process is still alive, raise
-      ServiceFileError.
+      ContactFileExists.
 
     Args:
         reg: workflow name
@@ -491,8 +457,10 @@ def detect_old_contact_file(
         CylcError:
             If it is not possible to tell for sure if the workflow is running
             or not.
-        ServiceFileError(CylcError):
+        ContactFileExists:
             If old contact file exists and the workflow process still alive.
+        ServiceFileError:
+            For corrupt / incompatible contact files.
 
     """
     # An old workflow of the same name may be running if a contact file exists
@@ -510,9 +478,10 @@ def detect_old_contact_file(
         old_pid: str = contact_data[ContactFileFields.PID]
         old_cmd: str = contact_data[ContactFileFields.COMMAND]
     except KeyError as exc:
-        # this shouldn't happen
-        # but if it does re-raise the error as something more informative
-        raise Exception(f'Found contact file with incomplete data:\n{exc}.')
+        # this can happen if contact file is from an outdated version of Cylc
+        raise ServiceFileError(
+            f'Found contact file with incomplete data:\n{exc}.'
+        )
 
     # check if the workflow process is running ...
     # NOTE: can raise CylcError
@@ -521,7 +490,7 @@ def detect_old_contact_file(
     fname = get_contact_file_path(reg)
     if process_is_running:
         # ... the process is running, raise an exception
-        raise ServiceFileError(
+        raise ContactFileExists(
             CONTACT_FILE_EXISTS_MSG % {
                 "host": old_host,
                 "port": old_port,
@@ -624,10 +593,18 @@ def get_workflow_srv_dir(reg):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg: str) -> Dict[str, str]:
+def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
+    if not run_dir:
+        path = Path(get_contact_file_path(id_))
+    else:
+        path = Path(
+            run_dir,
+            WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.CONTACT
+        )
     try:
-        with open(get_contact_file_path(reg)) as f:
+        with open(path) as f:
             file_content = f.read()
     except IOError:
         raise ServiceFileError("Couldn't load contact file")
@@ -643,29 +620,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
     return data
 
 
-async def load_contact_file_async(reg, run_dir=None):
-    if not run_dir:
-        path = Path(get_contact_file_path(reg))
-    else:
-        path = Path(
-            run_dir,
-            WorkflowFiles.Service.DIRNAME,
-            WorkflowFiles.Service.CONTACT
-        )
-    try:
-        async with aiofiles.open(path, mode='r') as cont:
-            data = {}
-            async for line in cont:
-                key, value = [item.strip() for item in line.split("=", 1)]
-                # BACK COMPAT: contact pre "suite" to "workflow" conversion.
-                # from:
-                #     Cylc 8
-                # remove at:
-                #     Cylc 8.x
-                data[key.replace('SUITE', 'WORKFLOW')] = value
-            return data
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+load_contact_file_async = make_async(load_contact_file)
 
 
 def register(
@@ -733,169 +688,6 @@ def is_installed(rund: Union[Path, str]) -> bool:
     return cylc_install_dir.is_dir() or alt_cylc_install_dir.is_dir()
 
 
-async def get_contained_workflows(partial_id) -> List[str]:
-    """Return the sorted names of any workflows in a directory.
-
-    Args:
-        path: Absolute path to the dir.
-        scan_depth: How many levels deep to look inside the dir.
-    """
-    from cylc.flow.network.scan import scan
-    run_dir = Path(get_workflow_run_dir(partial_id))
-    # Note: increased scan depth for safety
-    scan_depth = glbl_cfg().get(['install', 'max depth']) + 1
-    return sorted(
-        [i['name'] async for i in scan(scan_dir=run_dir, max_depth=scan_depth)]
-    )
-
-
-def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
-    """Check whether a workflow can be cleaned.
-
-    Args:
-        reg: Workflow name.
-        run_dir: Path to the workflow run dir on the filesystem.
-    """
-    validate_workflow_name(reg)
-    reg = os.path.normpath(reg)
-    # Thing to clean must be a dir or broken symlink:
-    if not run_dir.is_dir() and not run_dir.is_symlink():
-        raise FileNotFoundError(f"No directory to clean at {run_dir}")
-    db_path = (
-        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
-    )
-    if opts.local_only and not db_path.is_file():
-        # Will reach here if this is cylc clean re-invoked on remote host
-        # (workflow DB only exists on scheduler host); don't need to worry
-        # about contact file.
-        return
-    try:
-        detect_old_contact_file(reg)
-    except ServiceFileError as exc:
-        raise ServiceFileError(
-            f"Cannot clean running workflow {reg}.\n\n{exc}"
-        )
-
-
-def init_clean(id_: str, opts: 'Values') -> None:
-    """Initiate the process of removing a stopped workflow from the local
-    scheduler filesystem and remote hosts.
-
-    Args:
-        id_: Workflow ID.
-        opts: CLI options object for cylc clean.
-
-    """
-    local_run_dir = Path(get_workflow_run_dir(id_))
-    with suppress(InputError):
-        local_run_dir, id_ = infer_latest_run(
-            local_run_dir, implicit_runN=False, warn_runN=False
-        )
-    try:
-        _clean_check(opts, id_, local_run_dir)
-    except FileNotFoundError as exc:
-        LOG.info(exc)
-        return
-
-    # Parse --rm option to make sure it's valid
-    rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
-
-    if not opts.local_only:
-        platform_names = None
-        db_file = Path(get_workflow_srv_dir(id_), 'db')
-        if not db_file.is_file():
-            # no DB -> do nothing
-            if opts.remote_only:
-                raise ServiceFileError(
-                    f"No workflow database for {id_} - cannot perform "
-                    "remote clean"
-                )
-            LOG.info(
-                f"No workflow database for {id_} - will only clean locally"
-            )
-        else:
-            # DB present -> load platforms
-            try:
-                platform_names = get_platforms_from_db(local_run_dir)
-            except ServiceFileError as exc:
-                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
-            except sqlite3.OperationalError as exc:
-                # something went wrong with the query
-                # e.g. the table/field we need isn't there
-                LOG.warning(
-                    'This database is either corrupted or not compatible with'
-                    ' this version of "cylc clean".'
-                    '\nTry using the version of Cylc the workflow was last ran'
-                    ' with to remove it.'
-                    '\nOtherwise please delete the database file.'
-                )
-                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
-
-        if platform_names and platform_names != {'localhost'}:
-            remote_clean(
-                id_, platform_names, opts.rm_dirs, opts.remote_timeout
-            )
-
-    if not opts.remote_only:
-        # Must be after remote clean
-        clean(id_, local_run_dir, rm_dirs)
-
-
-def clean(id_: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
-    """Remove a stopped workflow from the local filesystem only.
-
-    Deletes the workflow run directory and any symlink dirs, or just the
-    specified sub dirs if rm_dirs is specified.
-
-    Note: if the run dir has already been manually deleted, it will not be
-    possible to clean any symlink dirs.
-
-    Args:
-        id_: Workflow ID.
-        run_dir: Absolute path of the workflow's run dir.
-        rm_dirs: Set of sub dirs to remove instead of the whole run dir.
-
-    """
-    symlink_dirs = get_symlink_dirs(id_, run_dir)
-    if rm_dirs is not None:
-        # Targeted clean
-        for pattern in rm_dirs:
-            _clean_using_glob(run_dir, pattern, symlink_dirs)
-    else:
-        # Wholesale clean
-        LOG.debug(f"Cleaning {run_dir}")
-        for symlink in symlink_dirs:
-            # Remove <symlink_dir>/cylc-run/<id>/<symlink>
-            remove_dir_and_target(run_dir / symlink)
-        if '' not in symlink_dirs:
-            # if run dir isn't a symlink dir and hasn't been deleted yet
-            remove_dir_and_target(run_dir)
-
-    # Tidy up if necessary
-    # Remove `runN` symlink if it's now broken
-    runN = run_dir.parent / WorkflowFiles.RUN_N
-    if (
-        runN.is_symlink() and
-        not run_dir.exists() and
-        os.readlink(str(runN)) == run_dir.name
-    ):
-        runN.unlink()
-    # Remove _cylc-install if it's the only thing left
-    cylc_install_dir = run_dir.parent / WorkflowFiles.Install.DIRNAME
-    for entry in run_dir.parent.iterdir():
-        if entry == cylc_install_dir:
-            continue
-        break
-    else:  # no break
-        if cylc_install_dir.is_dir():
-            remove_dir_or_file(cylc_install_dir)
-    # Remove any empty parents of run dir up to ~/cylc-run/
-    remove_empty_parents(run_dir, id_)
-    for symlink, target in symlink_dirs.items():
-        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        remove_empty_parents(target, Path(id_, symlink))
-
-
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     """Return the standard symlink dirs and their targets if they exist in
     the workflow run dir.
@@ -924,224 +716,6 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     return ret
 
 
-def glob_in_run_dir(
-    run_dir: Union[Path, str], pattern: str, symlink_dirs: Container[Path]
-) -> List[Path]:
-    """Execute a (recursive) glob search in the given run directory.
-
-    Returns list of any absolute paths that match the pattern. However:
-    * Does not follow symlinks (apart from the spcedified symlink dirs).
-    * Also does not return matching subpaths of matching directories (because
-        that would be redundant).
-
-    Args:
-        run_dir: Absolute path of the workflow run dir.
-        pattern: The glob pattern.
-        symlink_dirs: Absolute paths to the workflow's symlink dirs.
-    """
-    # Note: use os.path.join, not pathlib, to preserve trailing slash if
-    # present in pattern
-    pattern = os.path.join(glob.escape(str(run_dir)), pattern)
-    # Note: don't use pathlib.Path.glob() because when you give it an exact
-    # filename instead of pattern, it doesn't return broken symlinks
-    matches = sorted(Path(i) for i in glob.iglob(pattern, recursive=True))
-    # sort guarantees parents come before their children
-    if len(matches) == 1 and not os.path.lexists(matches[0]):
-        # https://bugs.python.org/issue35201
-        return []
-    results: List[Path] = []
-    subpath_excludes: Set[Path] = set()
-    for path in matches:
-        for rel_ancestor in reversed(path.relative_to(run_dir).parents):
-            ancestor = run_dir / rel_ancestor
-            if ancestor in subpath_excludes:
-                break
-            if ancestor.is_symlink() and ancestor not in symlink_dirs:
-                # Do not follow non-standard symlinks
-                subpath_excludes.add(ancestor)
-                break
-            if not symlink_dirs and (ancestor in results):
-                # We can be sure all subpaths of this ancestor are redundant
-                subpath_excludes.add(ancestor)
-                break
-            if ancestor == path.parent:  # noqa: SIM102
-                # Final iteration over ancestors
-                if ancestor in matches and path not in symlink_dirs:
-                    # Redundant (but don't exclude subpaths in case any of the
-                    # subpaths are std symlink dirs)
-                    break
-        else:  # No break
-            results.append(path)
-    return results
-
-
-def _clean_using_glob(
-    run_dir: Path, pattern: str, symlink_dirs: Iterable[str]
-) -> None:
-    """Delete the files/dirs in the run dir that match the pattern.
-
-    Does not follow symlinks (apart from the standard symlink dirs).
-
-    Args:
-        run_dir: Absolute path of workflow run dir.
-        pattern: The glob pattern.
-        symlink_dirs: Paths of the workflow's symlink dirs relative to
-            the run dir.
-    """
-    abs_symlink_dirs = tuple(sorted(
-        (run_dir / d for d in symlink_dirs),
-        reverse=True  # ordered by deepest to shallowest
-    ))
-    matches = glob_in_run_dir(run_dir, pattern, abs_symlink_dirs)
-    if not matches:
-        LOG.info(f"No files matching '{pattern}' in {run_dir}")
-        return
-    # First clean any matching symlink dirs
-    for path in abs_symlink_dirs:
-        if path in matches:
-            remove_dir_and_target(path)
-            if path == run_dir:
-                # We have deleted the run dir
-                return
-            matches.remove(path)
-    # Now clean the rest
-    for path in matches:
-        remove_dir_or_file(path)
-
-
-def remote_clean(
-    reg: str,
-    platform_names: Iterable[str],
-    rm_dirs: Optional[List[str]] = None,
-    timeout: str = '120'
-) -> None:
-    """Run subprocesses to clean workflows on remote install targets
-    (skip localhost), given a set of platform names to look up.
-
-    Args:
-        reg: Workflow name.
-        platform_names: List of platform names to look up in the global
-            config, in order to determine the install targets to clean on.
-        rm_dirs: Sub dirs to remove instead of the whole run dir.
-        timeout: Number of seconds to wait before cancelling.
-    """
-    try:
-        install_targets_map = (
-            get_install_target_to_platforms_map(platform_names))
-    except PlatformLookupError as exc:
-        raise PlatformLookupError(
-            f"Cannot clean {reg} on remote platforms as the workflow database "
-            f"is out of date/inconsistent with the global config - {exc}")
-    queue: Deque[RemoteCleanQueueTuple] = deque()
-    remote_clean_cmd = partial(
-        _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
-    )
-    for target, platforms in install_targets_map.items():
-        if target == get_localhost_install_target():
-            continue
-        shuffle(platforms)
-        LOG.info(
-            f"Cleaning {reg} on install target: "
-            f"{platforms[0]['install target']}"
-        )
-        # Issue ssh command:
-        queue.append(
-            RemoteCleanQueueTuple(
-                remote_clean_cmd(platform=platforms[0]), target, platforms
-            )
-        )
-    failed_targets: Dict[str, PlatformError] = {}
-    # Handle subproc pool results almost concurrently:
-    while queue:
-        item = queue.popleft()
-        ret_code = item.proc.poll()
-        if ret_code is None:  # proc still running
-            queue.append(item)
-            continue
-        out, err = item.proc.communicate()
-        if out:
-            LOG.info(f"[{item.install_target}]\n{out}")
-        if ret_code:
-            this_platform = item.platforms.pop(0)
-            excp = PlatformError(
-                PlatformError.MSG_TIDY,
-                this_platform['name'],
-                cmd=item.proc.args,
-                ret_code=ret_code,
-                out=out,
-                err=err,
-            )
-            if ret_code == 255 and item.platforms:
-                # SSH error; try again using the next platform for this
-                # install target
-                LOG.debug(excp)
-                queue.append(
-                    item._replace(
-                        proc=remote_clean_cmd(platform=item.platforms[0])
-                    )
-                )
-            else:  # Exhausted list of platforms
-                failed_targets[item.install_target] = excp
-        elif err:
-            # Only show stderr from remote host in debug mode if ret code 0
-            # because stderr often contains useless stuff like ssh login
-            # messages
-            LOG.debug(f"[{item.install_target}]\n{err}")
-        sleep(0.2)
-    if failed_targets:
-        for target, excp in failed_targets.items():
-            LOG.error(
-                f"Could not clean {reg} on install target: {target}\n{excp}"
-            )
-        raise CylcError(f"Remote clean failed for {reg}")
-
-
-def _remote_clean_cmd(
-    reg: str,
-    platform: Dict[str, Any],
-    rm_dirs: Optional[List[str]],
-    timeout: str
-) -> 'Popen[str]':
-    """Remove a stopped workflow on a remote host.
-
-    Call "cylc clean --local-only" over ssh and return the subprocess.
-
-    Args:
-        reg: Workflow name.
-        platform: Config for the platform on which to remove the workflow.
-        rm_dirs: Sub dirs to remove instead of the whole run dir.
-        timeout: Number of seconds to wait before cancelling the command.
-
-    Raises:
-        NoHostsError: If the platform is not contactable.
-
-    """
-    LOG.debug(
-        f"Cleaning {reg} on install target: {platform['install target']} "
-        f"(using platform: {platform['name']})"
-    )
-    cmd = ['clean', '--local-only', reg]
-    if rm_dirs is not None:
-        for item in rm_dirs:
-            cmd.extend(['--rm', item])
-    cmd = construct_ssh_cmd(
-        cmd,
-        platform,
-        get_host_from_platform(platform),
-        timeout=timeout,
-        set_verbosity=True,
-    )
-    LOG.debug(" ".join(cmd))
-    return Popen(  # nosec
-        cmd,
-        stdin=DEVNULL,
-        stdout=PIPE,
-        stderr=PIPE,
-        text=True,
-    )
-    # * command constructed by internal interface
-
-
 def remove_keys_on_server(keys):
     """Removes server-held authentication keys"""
     # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
@@ -1158,6 +732,7 @@ def create_server_keys(keys, workflow_srv_dir):
     """Create or renew authentication keys for workflow 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
+    import zmq.auth
 
     # ZMQ keys generated in .service directory.
     # .service/client_public_keys will store client public keys generated on
@@ -1201,34 +776,6 @@ def get_workflow_title(reg):
             if match:
                 title = match.groups()[0].strip('"\'')
     return title
-
-
-def get_platforms_from_db(run_dir: Path) -> Set[str]:
-    """Return the set of names of platforms (that jobs ran on) from the DB.
-
-    Warning:
-        This does NOT upgrade the workflow database!
-
-        We could upgrade the DB for backward compatiblity, but we haven't
-        got any upgraders for this table yet so there's no point.
-
-        Note that upgrading the DB here would not help with forward
-        compatibility. We can't apply upgraders which don't exist yet.
-
-    Args:
-        run_dir: The workflow run directory.
-
-    Raises:
-        sqlite3.OperationalError: in the event the table/field required for
-        cleaning is not present.
-
-    """
-    with CylcWorkflowDAO(
-        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
-    ) as pri_dao:
-        platform_names = pri_dao.select_task_job_platforms()
-
-    return platform_names
 
 
 def check_deprecation(path, warn=True):
@@ -1356,69 +903,6 @@ def infer_latest_run(
     return (path, reg)
 
 
-def check_nested_dirs(
-    run_dir: Path,
-    install_dir: Optional[Path] = None
-) -> None:
-    """Disallow nested dirs:
-
-    - Nested installed run dirs
-    - Nested installed workflow dirs
-
-    Args:
-        run_dir: Absolute workflow run directory path.
-        install_dir: Absolute workflow install directory path
-            (contains _cylc-install). If None, will not check for nested
-            install dirs.
-
-    Raises:
-        WorkflowFilesError if reg dir is nested inside a run dir, or an
-            install dirs are nested.
-    """
-    if install_dir is not None:
-        install_dir = Path(os.path.normpath(install_dir))
-    # Check parents:
-    for parent_dir in run_dir.parents:
-        # Stop searching at ~/cylc-run
-        if parent_dir == Path(get_cylc_run_dir()):
-            break
-        # check for run directories:
-        if is_valid_run_dir(parent_dir):
-            raise WorkflowFilesError(
-                NESTED_DIRS_MSG.format(
-                    dir_type='run',
-                    dest=run_dir,
-                    existing=get_cylc_run_abs_path(parent_dir)
-                )
-            )
-        # Check for install directories:
-        if (
-            install_dir
-            and parent_dir in install_dir.parents
-            and (parent_dir / WorkflowFiles.Install.DIRNAME).is_dir()
-        ):
-            raise WorkflowFilesError(
-                NESTED_DIRS_MSG.format(
-                    dir_type='install',
-                    dest=run_dir,
-                    existing=get_cylc_run_abs_path(parent_dir)
-                )
-            )
-
-    if install_dir:
-        # Search child tree for install directories:
-        for depth in range(glbl_cfg().get(['install', 'max depth'])):
-            search_pattern = f'*/{"*/" * depth}{WorkflowFiles.Install.DIRNAME}'
-            for result in install_dir.glob(search_pattern):
-                raise WorkflowFilesError(
-                    NESTED_DIRS_MSG.format(
-                        dir_type='install',
-                        dest=run_dir,
-                        existing=get_cylc_run_abs_path(result.parent)
-                    )
-                )
-
-
 def is_valid_run_dir(path: Union[Path, str]) -> bool:
     """Return True if path is a valid, existing run directory, else False.
 
@@ -1444,358 +928,6 @@ def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
     if os.path.isabs(path):
         return path
     return get_workflow_run_dir(path)
-
-
-def _get_logger(rund, log_name, open_file=True):
-    """Get log and create and open if necessary.
-
-    Args:
-        rund:
-            The workflow run directory of the associated workflow.
-        log_name:
-            The name of the log to open.
-        open_file:
-            Open the appropriate log file and add it as a file handler to
-            the logger. I.E. Start writing the log to a file if not already
-            doing so.
-
-    """
-    logger = logging.getLogger(log_name)
-    if logger.getEffectiveLevel != logging.INFO:
-        logger.setLevel(logging.INFO)
-    if open_file and not logger.hasHandlers():
-        _open_install_log(rund, logger)
-    return logger
-
-
-def _open_install_log(rund, logger):
-    """Open Cylc log handlers for install/reinstall."""
-    rund = Path(rund).expanduser()
-    log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
-    log_dir = Path(
-        rund, WorkflowFiles.LogDir.DIRNAME, WorkflowFiles.LogDir.INSTALL)
-    log_files = get_sorted_logs_by_time(log_dir, '*.log')
-    log_num = get_next_log_number(log_files[-1]) if log_files else 1
-    log_path = Path(log_dir, f"{log_num:02d}-{log_type}.log")
-    log_parent_dir = log_path.parent
-    log_parent_dir.mkdir(exist_ok=True, parents=True)
-    handler = logging.FileHandler(log_path)
-    handler.setFormatter(CylcLogFormatter())
-    logger.addHandler(handler)
-
-
-def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
-    """Create and return the rsync command used for cylc install/re-install.
-
-    Args:
-        src (str):
-            file path location of source directory
-        dst (str):
-            file path location of destination directory
-        reinstall (bool):
-            indicate reinstall (--delete option added)
-        dry-run (bool):
-            indicate dry-run, rsync will not take place but report output if a
-            real run were to be executed
-
-    Return:
-        list: command to use for rsync.
-
-    """
-    rsync_cmd = shlex.split(
-        glbl_cfg().get(['platforms', 'localhost', 'rsync command'])
-    )
-    rsync_cmd += DEFAULT_RSYNC_OPTS
-    if dry_run:
-        rsync_cmd.append("--dry-run")
-    if reinstall:
-        rsync_cmd.append('--delete')
-
-    exclusions = [
-        '.git',
-        '.svn',
-        '.cylcignore',
-        'opt/rose-suite-cylc-install.conf',
-        WorkflowFiles.LogDir.DIRNAME,
-        WorkflowFiles.WORK_DIR,
-        WorkflowFiles.SHARE_DIR,
-        WorkflowFiles.Install.DIRNAME,
-        WorkflowFiles.Service.DIRNAME
-    ]
-
-    # This is a hack to make sure that changes to rose-suite.conf
-    # are considered when re-installing.
-    # It should be removed after https://github.com/cylc/cylc-rose/issues/149
-    if not dry_run:
-        exclusions.append('rose-suite.conf')
-
-    for exclude in exclusions:
-        if (
-            Path(src).joinpath(exclude).exists() or
-            Path(dst).joinpath(exclude).exists()
-        ):
-            # Note '/' is the rsync "anchor" to the top level:
-            rsync_cmd.append(f"--exclude=/{exclude}")
-    cylcignore_file = Path(src).joinpath('.cylcignore')
-    if cylcignore_file.exists():
-        rsync_cmd.append(f"--exclude-from={cylcignore_file}")
-    rsync_cmd.append(f"{src}/")
-    rsync_cmd.append(f"{dst}/")
-
-    return rsync_cmd
-
-
-def reinstall_workflow(
-    source: Path,
-    named_run: str,
-    rundir: Path,
-    dry_run: bool = False
-) -> str:
-    """Reinstall workflow.
-
-    Args:
-        source: source directory
-        named_run: name of the run e.g. my-flow/run1
-        rundir: run directory
-        dry_run: if True, will not execute the file transfer but report what
-            would be changed.
-
-    Raises:
-        WorkflowFilesError:
-            If rsync returns non-zero.
-
-    Returns:
-        Stdout from the rsync command.
-
-    """
-    validate_source_dir(source, named_run)
-    check_nested_dirs(rundir)
-    reinstall_log = _get_logger(
-        rundir,
-        'cylc-reinstall',
-        open_file=not dry_run,  # don't open the log file for --dry-run
-    )
-    reinstall_log.info(
-        f'Reinstalling "{named_run}", from "{source}" to "{rundir}"'
-    )
-    rsync_cmd = get_rsync_rund_cmd(
-        source,
-        rundir,
-        reinstall=True,
-        dry_run=dry_run,
-    )
-
-    # Add '+++' to -out-format to mark lines passed through formatter.
-    rsync_cmd.append('--out-format=+++%o %n%L+++')
-
-    # Run rsync command:
-    reinstall_log.info(cli_format(rsync_cmd))
-    LOG.debug(cli_format(rsync_cmd))
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
-    # * command is constructed via internal interface
-    stdout, stderr = proc.communicate()
-
-    # Strip unwanted output.
-    stdout = ('\n'.join(re.findall(r'\+\+\+(.*)\+\+\+', stdout))).strip()
-    stderr = stderr.strip()
-
-    if proc.returncode != 0:
-        raise WorkflowFilesError(
-            f'An error occurred reinstalling from {source} to {rundir}'
-            f'\n{stderr}'
-        )
-
-    check_flow_file(rundir)
-    reinstall_log.info(f'REINSTALLED {named_run} from {source}')
-    print(
-        f'REINSTALL{"ED" if not dry_run else ""} {named_run} from {source}'
-    )
-    close_log(reinstall_log)
-    return stdout
-
-
-def abort_if_flow_file_in_path(source: Path) -> None:
-    """Raise an exception if a flow file is found in a source path.
-
-    This allows us to avoid seemingly silly warnings that "path/flow.cylc"
-    is not a valid workflow ID, when "path" is valid and the user was just
-    (erroneously) trying to (e.g.) validate the config file directly.
-
-    """
-    if source.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-        raise InputError(
-            f"Not a valid workflow ID or source directory: {source}"
-            f"\n(Note you should not include {source.name}"
-            " in the workflow source path)"
-        )
-
-
-def install_workflow(
-    source: Path,
-    workflow_name: Optional[str] = None,
-    run_name: Optional[str] = None,
-    no_run_name: bool = False,
-    cli_symlink_dirs: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Tuple[Path, Path, str, str]:
-    """Install a workflow, or renew its installation.
-
-    Install workflow into new run directory.
-    Create symlink to workflow source location, creating any symlinks for run,
-    work, log, share, share/cycle directories.
-
-    Args:
-        source: absolute path to workflow source directory.
-        workflow_name: workflow name, default basename($PWD).
-        run_name: name of the run, overrides run1, run2, run 3 etc...
-            If specified, cylc install will not create runN symlink.
-        rundir: for overriding the default cylc-run directory.
-        no_run_name: Flag as True to install workflow into
-            ~/cylc-run/<workflow_name>
-        cli_symlink_dirs: Symlink dirs, if entered on the cli.
-
-    Return:
-        source: absolute path to source directory.
-        rundir: absolute path to run directory, where the workflow has been
-            installed into.
-        workflow_name: installed workflow name (which may be computed here).
-        named_run: Name of the run.
-
-    Raise:
-        WorkflowFilesError:
-            No flow.cylc file found in source location.
-            Illegal name (can look like a relative path, but not absolute).
-            Another workflow already has this name.
-            Trying to install a workflow that is nested inside of another.
-    """
-    abort_if_flow_file_in_path(source)
-    source = Path(expand_path(source)).resolve()
-    if not workflow_name:
-        workflow_name = get_source_workflow_name(source)
-    validate_workflow_name(workflow_name, check_reserved_names=True)
-    if run_name is not None:
-        if len(Path(run_name).parts) != 1:
-            raise WorkflowFilesError(
-                f'Run name cannot be a path. (You used {run_name})'
-            )
-        check_reserved_dir_names(run_name)
-    validate_source_dir(source, workflow_name)
-    run_path_base = Path(get_workflow_run_dir(workflow_name))
-    relink, run_num, rundir = get_run_dir_info(
-        run_path_base, run_name, no_run_name
-    )
-    max_scan_depth = glbl_cfg().get(['install', 'max depth'])
-    workflow_id = rundir.relative_to(get_cylc_run_dir())
-    if len(workflow_id.parts) > max_scan_depth:
-        raise WorkflowFilesError(
-            f"Cannot install: workflow ID '{workflow_id}' would exceed "
-            f"global.cylc[install]max depth = {max_scan_depth}"
-        )
-    check_nested_dirs(rundir, run_path_base)
-    if rundir.exists():
-        raise WorkflowFilesError(
-            f"'{rundir}' already exists\n"
-            "To reinstall, use `cylc reinstall`"
-        )
-    symlinks_created = {}
-    named_run = workflow_name
-    if run_name:
-        named_run = os.path.join(named_run, run_name)
-    elif run_num:
-        named_run = os.path.join(named_run, f'run{run_num}')
-    symlinks_created = make_localhost_symlinks(
-        rundir, named_run, symlink_conf=cli_symlink_dirs)
-    install_log = _get_logger(rundir, 'cylc-install')
-    if symlinks_created:
-        for target, symlink in symlinks_created.items():
-            install_log.info(f"Symlink created: {symlink} -> {target}")
-    try:
-        rundir.mkdir(exist_ok=True, parents=True)
-    except FileExistsError:
-        # This occurs when the file exists but is _not_ a directory.
-        raise WorkflowFilesError(
-            f"Cannot install as there is an existing file at {rundir}."
-        )
-    if relink:
-        link_runN(rundir)
-    rsync_cmd = get_rsync_rund_cmd(source, rundir)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
-    # * command is constructed via internal interface
-    stdout, stderr = proc.communicate()
-    install_log.info(
-        f"Copying files from {source} to {rundir}"
-        f"\n{stdout}"
-    )
-    if proc.returncode != 0:
-        install_log.warning(
-            f"An error occurred when copying files from {source} to {rundir}")
-        install_log.warning(f" Warning: {stderr}")
-    cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_deprecation(check_flow_file(rundir))
-    if no_run_name:
-        cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
-    source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
-    # check source link matches the source symlink from workflow dir.
-    cylc_install.mkdir(parents=True, exist_ok=True)
-    if not source_link.exists():
-        if source_link.is_symlink():
-            # Condition represents a broken symlink.
-            raise WorkflowFilesError(
-                f'Symlink broken: {source_link} -> {source_link.resolve()}.'
-            )
-        install_log.info(f"Creating symlink from {source_link}")
-        source_link.symlink_to(source.resolve())
-    else:
-        if source_link.resolve() != source.resolve():
-            raise WorkflowFilesError(
-                f"Failed to install from {source.resolve()}: "
-                f"previous installations were from {source_link.resolve()}"
-            )
-        install_log.info(
-            f'Symlink from "{source_link}" to "{source}" in place.')
-    install_log.info(f'INSTALLED {named_run} from {source}')
-    print(f'INSTALLED {named_run} from {source}')
-    close_log(install_log)
-    return source, rundir, workflow_name, named_run
-
-
-def get_run_dir_info(
-    run_path_base: Path, run_name: Optional[str], no_run_name: bool
-) -> Tuple[bool, Optional[int], Path]:
-    """Get (numbered, named or unnamed) run directory info for current install.
-
-    Args:
-        run_path_base: The workflow directory absolute path.
-        run_name: Name of the run.
-        no_run_name: Flag as True to indicate no run name - workflow installed
-            into ~/cylc-run/<run_path_base>.
-
-    Returns:
-        relink: True if runN symlink needs updating.
-        run_num: Run number of the current install, if using numbered runs.
-        rundir: Run directory absolute path.
-    """
-    relink = False
-    run_num = None
-    if no_run_name:
-        rundir = run_path_base
-    elif run_name:
-        rundir = run_path_base.joinpath(run_name)
-        if run_path_base.exists() and detect_flow_exists(run_path_base, True):
-            raise WorkflowFilesError(
-                f"--run-name option not allowed as '{run_path_base}' contains "
-                "installed numbered runs."
-            )
-    else:
-        run_num = get_next_rundir_number(run_path_base)
-        rundir = Path(run_path_base, f'run{run_num}')
-        if run_path_base.exists() and detect_flow_exists(run_path_base, False):
-            raise WorkflowFilesError(
-                f"Path: \"{run_path_base}\" contains an installed"
-                " workflow. Use --run-name to create a new run."
-            )
-        unlink_runN(run_path_base)
-        relink = True
-    return relink, run_num, rundir
 
 
 def detect_both_flow_and_suite(path: Path) -> None:
@@ -1845,32 +977,6 @@ def is_forbidden(flow_file: Path) -> bool:
     return False
 
 
-def detect_flow_exists(
-    run_path_base: Union[Path, str], numbered: bool
-) -> bool:
-    """Returns True if installed flow already exists.
-
-    Args:
-        run_path_base: Absolute path of workflow directory,
-            i.e ~/cylc-run/<workflow_name>
-        numbered: If True, will detect if numbered runs exist. If False, will
-            detect if non-numbered runs exist, i.e. runs installed
-            by --run-name.
-    """
-    for entry in Path(run_path_base).iterdir():
-        is_numbered = bool(re.search(r'^run\d+$', entry.name))
-        if (
-            entry.is_dir()
-            and entry.name not in {
-                WorkflowFiles.Install.DIRNAME, WorkflowFiles.RUN_N
-            }
-            and Path(entry, WorkflowFiles.FLOW_FILE).exists()
-            and is_numbered == numbered
-        ):
-            return True
-    return False
-
-
 def check_flow_file(path: Union[Path, str]) -> Path:
     """Checks the path for a suite.rc or flow.cylc file.
 
@@ -1894,131 +1000,17 @@ def check_flow_file(path: Union[Path, str]) -> Path:
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
 
-def validate_source_dir(
-    source: Union[Path, str], workflow_name: str
-) -> None:
-    """Ensure the source directory is valid:
-        - has flow file
-        - does not contain reserved dir names
+def abort_if_flow_file_in_path(source: Path) -> None:
+    """Raise an exception if a flow file is found in a source path.
 
-    Args:
-        source: Path to source directory
-    Raises:
-        WorkflowFilesError:
-            If log, share, work or _cylc-install directories exist in the
-            source directory.
+    This allows us to avoid seemingly silly warnings that "path/flow.cylc"
+    is not a valid workflow ID, when "path" is valid and the user was just
+    (erroneously) trying to (e.g.) validate the config file directly.
+
     """
-    # Source dir must not contain reserved run dir names (as file or dir).
-    for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
-        if Path(source, dir_).exists():
-            raise WorkflowFilesError(
-                f"{workflow_name} installation failed "
-                f"- {dir_} exists in source directory."
-            )
-    check_flow_file(source)
-
-
-def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
-    """Converts command line entered symlink dirs to a dictionary.
-
-    Args:
-        symlink_dirs: As entered by user on cli,
-                            e.g. "log=$DIR, share=$DIR2".
-
-    Raises:
-        WorkflowFilesError: If directory to be symlinked is not in permitted
-                            dirs: run, log, share, work, share/cycle
-
-    Returns:
-        dict: In the same form as would be returned by global config.
-            e.g. {'localhost': {'log': '$DIR',
-                                'share': '$DIR2'
-                                }
-                }
-    """
-    # Ensures the same nested dict format which is returned by the glb cfg
-    symdict: Dict[str, Dict[str, Any]] = {'localhost': {'run': None}}
-    if symlink_dirs == "":
-        return symdict
-    symlist = symlink_dirs.strip(',').split(',')
-    possible_symlink_dirs = set(WorkflowFiles.SYMLINK_DIRS.union(
-        {WorkflowFiles.RUN_DIR})
-    )
-    possible_symlink_dirs.remove('')
-    for pair in symlist:
-        try:
-            key, val = pair.split("=")
-            key = key.strip()
-        except ValueError:
-            raise InputError(
-                'There is an error in --symlink-dirs option:'
-                f' {pair}. Try entering option in the form '
-                '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
-            )
-        if key not in possible_symlink_dirs:
-            dirs = ', '.join(possible_symlink_dirs)
-            raise InputError(
-                f"{key} not a valid entry for --symlink-dirs. "
-                f"Configurable symlink dirs are: {dirs}"
-            )
-        symdict['localhost'][key] = val.strip() or None
-
-    return symdict
-
-
-def unlink_runN(path: Union[Path, str]) -> bool:
-    """Remove symlink runN if it exists.
-
-    Args:
-        path: Absolute path to workflow dir containing runN.
-    """
-    try:
-        Path(expand_path(path, WorkflowFiles.RUN_N)).unlink()
-    except OSError:
-        return False
-    return True
-
-
-def link_runN(latest_run: Union[Path, str]):
-    """Create symlink runN, pointing at the latest run"""
-    latest_run = Path(latest_run)
-    run_n = Path(latest_run.parent, WorkflowFiles.RUN_N)
-    with suppress(OSError):
-        run_n.symlink_to(latest_run.name)
-
-
-def search_install_source_dirs(workflow_name: Union[Path, str]) -> Path:
-    """Return the path of a workflow source dir if it is present in the
-    'global.cylc[install]source dirs' search path."""
-    abort_if_flow_file_in_path(Path(workflow_name))
-    search_path: List[str] = get_source_dirs()
-    if not search_path:
-        raise WorkflowFilesError(
-            "Cannot find workflow as 'global.cylc[install]source dirs' "
-            "does not contain any paths")
-    for path in search_path:
-        try:
-            return check_flow_file(Path(path, workflow_name)).parent
-        except WorkflowFilesError:
-            continue
-    raise WorkflowFilesError(
-        f"Could not find workflow '{workflow_name}' in: "
-        f"{', '.join(search_path)}")
-
-
-def get_source_workflow_name(source: Path) -> str:
-    """Return workflow name relative to configured source dirs if possible,
-    else the basename of the given path.
-    Note the source path provided should be fully expanded (user and env vars)
-    and normalised.
-    """
-    for dir_ in get_source_dirs():
-        try:
-            return str(source.relative_to(Path(expand_path(dir_)).resolve()))
-        except ValueError:
-            continue
-    return source.name
-
-
-def get_source_dirs() -> List[str]:
-    return glbl_cfg().get(['install', 'source dirs'])
+    if source.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
+        raise InputError(
+            f"Not a valid workflow ID or source directory: {source}"
+            f"\n(Note you should not include {source.name}"
+            " in the workflow source path)"
+        )

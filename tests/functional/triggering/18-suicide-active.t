@@ -27,7 +27,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug -n "${WORKFLOW_NAME}"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "suiciding while active"
 
