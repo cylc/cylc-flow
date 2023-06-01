@@ -32,13 +32,18 @@ short option for `--no-detach` to `-N`; add `-r` as a short option for
 [#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
 in `share/bin` and Python modules in `share/lib/python`.
 
-### Fixes
-
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
+
+### Breaking Changes
+
+[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
+The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
+in job environments if there are more than 50 dependencies. This avoids an
+issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
@@ -48,12 +53,12 @@ This can be overridden using the new `--exit-zero` flag.
 
 ### Fixes
 
+[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
+for `cylc play` when called by `cylc vip` or `cylc vr`.
+
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
 the UI whilst the workflow is in the process of shutting down.
-
-[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
-for `cylc play` when called by `cylc vip` or `cylc vr`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
