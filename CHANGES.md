@@ -13,14 +13,6 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
-### Fixes
-
-[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
-for `cylc play` when called by `cylc vip` or `cylc vr`.
-
--------------------------------------------------------------------------------
-## __cylc-8.1.5 (<span actions:bind='release-date'>Awaiting Release</span>)__
-
 ### Enhancements
 
 [#5546](https://github.com/cylc/cylc-flow/pull/5546) -
@@ -28,6 +20,10 @@ for `cylc play` when called by `cylc vip` or `cylc vr`.
 This can be overridden using the new `--exit-zero` flag.
 
 ### Fixes
+
+[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
+for `cylc play` when called by `cylc vip` or `cylc vr`.
+
 
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
