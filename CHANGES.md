@@ -31,9 +31,6 @@ This can be overridden using the new `--exit-zero` flag.
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.
 
-[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
-for `cylc play` when called by `cylc vip` or `cylc vr`.
-
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
 the UI whilst the workflow is in the process of shutting down.
