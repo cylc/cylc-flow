@@ -13,6 +13,13 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Breaking Changes
+
+[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
+The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
+in job environments if there are more than 50 dependencies. This avoids an
+issue which could cause jobs to fail if this variable became too long.
+
 ### Enhancements
 
 [#5546](https://github.com/cylc/cylc-flow/pull/5546) -
@@ -24,6 +31,8 @@ This can be overridden using the new `--exit-zero` flag.
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.
 
+[#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
+for `cylc play` when called by `cylc vip` or `cylc vr`.
 
 [#5228](https://github.com/cylc/cylc-flow/pull/5228) -
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
