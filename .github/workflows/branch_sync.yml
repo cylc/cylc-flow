@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - '8.*.x'
+  schedule:
+    - cron: '33 04 * * 1-5' # 04:33 UTC Mon-Fri
   workflow_dispatch:
     inputs:
-      branch:
+      head_branch:
         description: Branch to merge into master
         required: true
 
@@ -15,23 +17,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      BRANCH: ${{ inputs.branch || github.ref_name }}
+      HEAD_BRANCH: ${{ inputs.head_branch || github.ref_name }}
+      STATUS_JSON: https://raw.githubusercontent.com/cylc/cylc-admin/master/docs/status/branches.json
     steps:
       - name: Check branch name
         shell: python
         run: |
           import os
+          import json
           import sys
+          from urllib.request import urlopen
 
-          branch = os.environ['BRANCH'].strip()
-          if not branch:
-            sys.exit("::error::Branch name cannot be empty")
-          if branch.endswith('deconflict'):
-            sys.exit("::error::Do not run this workflow for already-created deconflict branches")
+          if os.environ['GITHUB_EVENT_NAME'] == 'schedule':
+            # Get branch from status page
+            meta = json.loads(
+              urlopen(os.environ['STATUS_JSON']).read()
+            )['meta_releases']
+            version = min(meta)
+            branch = meta[version][os.environ['GITHUB_REPOSITORY']]
+          else:
+            branch = os.environ['HEAD_BRANCH'].strip()
+
+          if branch.endswith('-sync'):
+            sys.exit("::error::Do not run this workflow for already-created sync branches")
 
           with open(os.environ['GITHUB_ENV'], 'a') as F:
-            print(f'BRANCH={branch}', file=F)
-            print(f'DECONFLICT_BRANCH={branch}-deconflict', file=F)
+            print(f'HEAD_BRANCH={branch}', file=F)
+            print(f'SYNC_BRANCH={branch}-sync', file=F)
 
       - name: Check for existing PR
         id: check-pr
@@ -44,7 +56,7 @@ jobs:
           import subprocess
           import sys
 
-          for env_var in ('BRANCH', 'DECONFLICT_BRANCH'):
+          for env_var in ('HEAD_BRANCH', 'SYNC_BRANCH'):
             branch = os.environ[env_var]
             cmd = f'gh pr list -B master -H {branch} -s open --json url -R ${{ github.repository }}'
             ret = subprocess.run(
@@ -55,8 +67,9 @@ jobs:
               print(f"::error::{ret.stderr}")
             if ret.returncode:
               sys.exit(ret.returncode)
-            if json.loads(ret.stdout):
-              print(f"::notice::Found existing PR for {branch}")
+            results: list = json.loads(ret.stdout)
+            if results:
+              print(f"::notice::Found existing PR for {branch} - {results[0]['url']}")
               sys.exit(0)
 
           print("No open PRs found")
@@ -78,43 +91,51 @@ jobs:
         id: merge
         if: steps.check-pr.outputs.continue
         continue-on-error: true
-        run: git merge "origin/${BRANCH}"
+        run: git merge "origin/${HEAD_BRANCH}"
+
+      - name: Abort merge
+        if: steps.merge.outcome == 'failure'
+        run: git merge --abort
 
       - name: Diff
         id: diff
         if: steps.merge.outcome == 'success'
         run: |
           if [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/master)" ]]; then
-            echo "::notice::master is up to date with $BRANCH"
+            echo "::notice::master is up to date with $HEAD_BRANCH"
             exit 0
           fi
           if git diff HEAD^ --exit-code --stat; then
-            echo "::notice::No diff between master and $BRANCH"
+            echo "::notice::No diff between master and $HEAD_BRANCH"
             exit 0
           fi
           echo "continue=true" >> $GITHUB_OUTPUT
 
-      - name: Create deconflict branch
-        if: steps.merge.outcome == 'failure'
+      - name: Push sync branch
+        id: push
+        if: steps.merge.outcome == 'failure' || steps.diff.outputs.continue
         run: |
-          git merge --abort
-          git checkout -b "$DECONFLICT_BRANCH" "origin/${BRANCH}"
-          git push origin "$DECONFLICT_BRANCH"
-          echo "BRANCH=${DECONFLICT_BRANCH}" >> $GITHUB_ENV
+          git checkout -b "$SYNC_BRANCH" "origin/${HEAD_BRANCH}"
+          git push origin "$SYNC_BRANCH"
+          echo "continue=true" >> $GITHUB_OUTPUT
 
       - name: Open PR
-        if: steps.merge.outcome == 'failure' || steps.diff.outputs.continue
+        if: steps.push.outputs.continue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BODY: |
-            Please do a **normal merge**, not squash merge
+            Please do a **normal merge**, not squash merge.
+            Please fix conflicts if necessary.
 
             ---
 
             Triggered by `${{ github.event_name }}`
         run: |
-          gh pr create --head "$BRANCH" \
-            --title "🤖 Merge ${BRANCH} into master" \
+          url="$(
+            gh pr create --head "$SYNC_BRANCH" \
+            --title "🤖 Merge ${SYNC_BRANCH} into master" \
             --body "$BODY"
+          )"
+          echo "::notice::PR created at ${url}"
 
-          gh pr edit "$BRANCH" --add-label "sync" || true
+          gh pr edit "$SYNC_BRANCH" --add-label "sync" || true
