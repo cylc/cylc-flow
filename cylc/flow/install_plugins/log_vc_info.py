@@ -68,6 +68,7 @@ from typing import (
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
+import cylc.flow.flags
 from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
@@ -162,14 +163,14 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
             missing_base = True
             LOG.debug(exc)
         except OSError as exc:
-            if not any(
+            if any(
                 exc.strerror.lower().startswith(err)
                 for err in NOT_REPO_ERRS[vcs]
             ):
-                raise exc
-            else:
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")
-                continue
+            elif cylc.flow.flags.verbosity > -1:
+                LOG.warning(exc)
+            continue
 
         info['version control system'] = vcs
         if vcs == SVN:
