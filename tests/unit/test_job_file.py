@@ -29,7 +29,10 @@ from cylc.flow import (
     __version__,
     __file__ as cylc_flow_file,
 )
-from cylc.flow.job_file import JobFileWriter
+from cylc.flow.job_file import (
+    JobFileWriter,
+    MAX_CYLC_TASK_DEPENDENCIES_LEN,
+)
 from cylc.flow.platforms import platform_from_name
 
 
@@ -533,3 +536,47 @@ def test_homeless_platform(fixture_get_platform):
         job_sh_txt = job_sh.read()
         if 'HOME' in job_sh_txt:
             raise Exception('$HOME found in job.sh\n{job_sh_txt}')
+
+
+def test_cylc_task_dependencies_length():
+    f"""Test CYLC_TASK_DEPENDENCIES variable toggle.
+
+    The CYLC_TASK_DEPENDENCIES variriable should only be exported if there are
+    { MAX_CYLC_TASK_DEPENDENCIES_LEN } or fewer dependencies.
+
+    See: https://github.com/cylc/cylc-flow/issues/5551
+
+    """
+    job_conf = {
+        'platform': {'communication method': 'zmq'},
+        'job_d': 'a/b/c',
+        'namespace_hierarchy': ['a', 'b'],
+        # the maximum permitted number of dependencies before the environment
+        # variable is omitted
+        'dependencies': ['a'] * (MAX_CYLC_TASK_DEPENDENCIES_LEN),
+        'try_num': 1,
+        'flow_nums': {1},
+        'param_var': {},
+        'work_d': 'b/c/d',
+    }
+
+    # write the job environment
+    with io.StringIO() as fake_file:
+        JobFileWriter()._write_task_environment(fake_file, job_conf)
+        output = fake_file.getvalue()
+
+    # assert the env var is exported
+    lines = [line.strip().split('=')[0] for line in output.splitlines()]
+    assert 'export CYLC_TASK_DEPENDENCIES' in lines
+
+    # add an extra dependency to push it over the limit
+    job_conf['dependencies'] += ['b']
+
+    # write the job environment
+    with io.StringIO() as fake_file:
+        JobFileWriter()._write_task_environment(fake_file, job_conf)
+        output = fake_file.getvalue()
+
+    # assert the env var is redacted
+    lines = [line.strip().split('=')[0] for line in output.splitlines()]
+    assert '# CYLC_TASK_DEPENDENCIES' in lines  # var should be commented out
