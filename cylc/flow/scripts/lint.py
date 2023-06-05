@@ -229,6 +229,16 @@ CHECKS_DESC = {
     'S': 'Style'
 }
 LINE_LEN_NO = 'S012'
+# Checks Dictionary fields:
+# TODO: Consider making the checks an object.
+# Key: A unique reference number.
+# - short: A short description of the issue.
+# - url: A link to a fuller description.
+# - function: A function to use to run the check.
+# - fallback: A second function(The first function might want to call this?)
+# - kwargs: We want to pass a set of common kwargs to the check function.
+# - evaluate commented lines: Run this check on commented lines.
+# - rst: An rst description, for use in the Cylc docs.
 STYLE_CHECKS = {
     "S001": {
         'short': 'Use multiple spaces, not tabs',
