@@ -15,7 +15,7 @@
             # Write to task stderr log
             echo "jumped over the lazy dog" >&2
             # Write to a custom log file
-            echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
+            echo "drugs, money & whitespace" > "${CYLC_TASK_LOG_ROOT} custom.log"
             # Generate a warning message in the workflow log.
             cylc message -p WARNING 'marmite and squashed bananas'
             # Remove the submit-failed task.

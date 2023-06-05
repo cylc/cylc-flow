@@ -294,7 +294,7 @@ def view_log(
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
-            cmd = tailer_tmpl % {"filename": logpath}
+            cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
         with suppress(KeyboardInterrupt):
