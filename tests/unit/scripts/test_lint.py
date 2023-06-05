@@ -432,9 +432,9 @@ def test_get_upg_info(fixture_get_deprecations, findme):
             i['function'](findme) for i in fixture_get_deprecations.values()
         )
     else:
-        assert not any(
+        assert any(
             i['function'](findme) for i in fixture_get_deprecations.values()
-        )
+        ) is True
 
 
 @pytest.mark.parametrize(

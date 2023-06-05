@@ -349,6 +349,7 @@ STYLE_CHECKS = {
         'short': 'Cylc will process commented Jinja2!',
         'url': '',
         'kwargs': True,
+        'evaluate commented lines': True,
         FUNCTION: check_if_jinja2,
         'fallback': re.compile(r'(?<!{)#.*?{[{%]').findall,
     }
@@ -768,51 +769,52 @@ def check_cylc_file(
     jinja_shebang = lines[0].strip().lower() == JINJA2_SHEBANG
     count = 0
     for line_no, line in enumerate(lines, start=1):
-        for index, message in checks.items():
-            if message.get('kwargs', False):
+        for index, check_meta in checks.items():
+            # Skip commented line unless check says not to.
+            if (
+                line.strip().startswith('#')
+                and not check_meta.get('evaluate commented lines', False)
+            ):
+                continue
+
+            if check_meta.get('kwargs', False):
                 # Use a more complex function with keywords:
                 check_function = functools.partial(
-                    message['function'],
-                    message=message,
+                    check_meta['function'],
+                    check_meta=check_meta,
                     file_=file_,
                     jinja_shebang=jinja_shebang,
-                    fallback=message.get('fallback')
+                    fallback=check_meta.get('fallback')
                 )
             else:
                 # Just going to pass the line to the check function:
-                check_function = message['function']
+                check_function = check_meta['function']
 
             # Run the check:
             check = check_function(line)
 
             # Log a problem if check is Truthy
-            if (
-                check
-                and (
-                    not line.strip().startswith('#')
-                    or index == 11  # commented-out Jinja2
-                )
-            ):
+            if check:
                 if isinstance(check, dict):
-                    msg = message['short'].format(**check)
+                    msg = check_meta['short'].format(**check)
                 else:
-                    msg = message['short']
+                    msg = check_meta['short']
                 count += 1
                 if modify:
-                    if message['url'].startswith('http'):
-                        url = message['url']
+                    if check_meta['url'].startswith('http'):
+                        url = check_meta['url']
                     else:
-                        url = URL_STUB + message['url']
+                        url = URL_STUB + check_meta['url']
 
                     outlines.append(
-                        f'# [{get_index_str(message, index)}]: '
+                        f'# [{get_index_str(check_meta, index)}]: '
                         f'{msg}\n'
                         f'# - see {url}'
                     )
                 else:
                     print(
                         Fore.YELLOW +
-                        f'[{get_index_str(message, index)}]'
+                        f'[{get_index_str(check_meta, index)}]'
                         f' {file_rel}:{line_no}: {msg}'
                     )
         if modify:
