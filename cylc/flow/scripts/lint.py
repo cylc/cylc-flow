@@ -80,7 +80,9 @@ OBSOLETE_ENV_VARS = {
 }
 
 
-def check_jinja2_no_shebang(line, file_, jinja_shebang=False, fallback=None, **kwargs):
+def check_jinja2_no_shebang(
+    line, file_, jinja_shebang=False, fallback=None, **kwargs
+):
     """Check ONLY top level workflow files for jinja without shebangs.
 
     Examples:
@@ -97,14 +99,14 @@ def check_jinja2_no_shebang(line, file_, jinja_shebang=False, fallback=None, **k
         ['{{']
     """
     if (
-        kwargs['jinja_shebang']
-        or kwargs['file_'].name not in ('flow.cylc', 'suite.rc')
+        jinja_shebang
+        or file_.name not in ('flow.cylc', 'suite.rc')
     ):
         return False
-    return kwargs['fallback'](line)
+    return fallback(line)
 
 
-def check_if_jinja2(line, **kwargs):
+def check_if_jinja2(line, jinja_shebang, **kwargs):
     """Check for fallback, but only if Jinja2 switched on:
 
     Examples:
@@ -116,7 +118,7 @@ def check_if_jinja2(line, **kwargs):
         >>> check_if_jinja2('foofoo', jinja_shebang=True, fallback=fallback)
         ['foo', 'foo']
     """
-    if kwargs['jinja_shebang']:
+    if jinja_shebang:
         return kwargs['fallback'](line)
     return False
 
@@ -141,24 +143,24 @@ def check_dead_ends(line):
     )
 
 
-def check_for_suicide_triggers(line, **kwargs):
+def check_for_suicide_triggers(line, file_, fallback, **kwargs):
     """Check for suicide triggers, if file is a .cylc file.
 
     Examples:
-        >>> fallback = MANUAL_DEPRECATIONS['U008']['fallback']
+        >>> fallback = lambda line: line
 
         # Suicide trigger in a *.cylc file:
         >>> check_for_suicide_triggers(
         ... 'x:fail => !y', fallback=fallback, file_=Path('foo.cylc'))
-        ['=> !y']
+        'x:fail => !y'
 
         # Suicide trigger in a suite.rc file:
         >>> check_for_suicide_triggers(
         ... 'x:fail => !y', fallback=fallback, file_=Path('suite.rc'))
         False
     """
-    if kwargs['file_'].name.endswith('.cylc'):
-        return kwargs['fallback'](line)
+    if file_.name.endswith('.cylc'):
+        return fallback(line)
     return False
 
 
@@ -337,9 +339,10 @@ STYLE_CHECKS = {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
         'url': '',
         'kwargs': True,
-        FUNCTION: check_jinja2_no_shebang,
-        'fallback': re.compile(r'{[{%]').findall
-        # FUNCTION: re.compile(r'{[{%]').findall,
+        FUNCTION: functools.partial(
+            check_jinja2_no_shebang,
+            fallback=re.compile(r'{[{%]').findall
+        )
     },
     "S009": {
         'short': 'Host Selection Script may be redundant with platform',
@@ -359,8 +362,10 @@ STYLE_CHECKS = {
         'url': '',
         'kwargs': True,
         'evaluate commented lines': True,
-        FUNCTION: check_if_jinja2,
-        'fallback': re.compile(r'(?<!{)#.*?{[{%]').findall,
+        FUNCTION: functools.partial(
+            check_if_jinja2,
+            fallback=re.compile(r'(?<!{)#.*?{[{%]').findall
+        )
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
@@ -419,8 +424,10 @@ MANUAL_DEPRECATIONS = {
         'short': 'Suicide triggers are not required at Cylc 8.',
         'url': '',
         'kwargs': True,
-        FUNCTION: check_for_suicide_triggers,
-        'fallback': re.compile(r'=>\s*\!.*').findall,
+        FUNCTION: functools.partial(
+            check_for_suicide_triggers,
+            fallback=re.compile(r'=>\s*\!.*').findall
+        ),
     },
     'U009': {
         'short': 'This line contains an obsolete Cylc CLI command.',
@@ -440,8 +447,10 @@ MANUAL_DEPRECATIONS = {
             'https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes'
             '/python-2-3.html#jinja2-integers-with-leading-zeros'),
         'kwargs': True,
-        FUNCTION: check_if_jinja2,
-        'fallback': re.compile(r'\{%\s*set\s*.+?\s*=\s*0\d+\s*%\}').findall
+        FUNCTION: functools.partial(
+            check_if_jinja2,
+            fallback=re.compile(r'\{%\s*set\s*.+?\s*=\s*0\d+\s*%\}').findall
+        )
     },
     'U012': {
         'short': (
@@ -793,7 +802,6 @@ def check_cylc_file(
                     check_meta=check_meta,
                     file_=file_,
                     jinja_shebang=jinja_shebang,
-                    fallback=check_meta.get('fallback')
                 )
             else:
                 # Just going to pass the line to the check function:
