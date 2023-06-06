@@ -80,7 +80,7 @@ OBSOLETE_ENV_VARS = {
 }
 
 
-def check_jinja2_no_shebang(line, **kwargs):
+def check_jinja2_no_shebang(line, file_, jinja_shebang=False, fallback=None, **kwargs):
     """Check ONLY top level workflow files for jinja without shebangs.
 
     Examples:
@@ -137,8 +137,7 @@ def check_dead_ends(line):
         False
     """
     return any(
-        dead_end for dead_end in DEAD_ENDS
-        if f'cylc {dead_end}' in line
+        f'cylc {dead_end}' in line for dead_end in DEAD_ENDS
     )
 
 
@@ -247,7 +246,7 @@ STYLE_CHECKS = {
     },
     "S002": {
         'short': 'Item not indented.',
-        # Not a full test, but if a non section is not indented...
+        # Non-indented items should be sections:
         'url': STYLE_GUIDE + 'indentation',
         FUNCTION: re.compile(r'^[^\{\[|\s]').findall
     },
@@ -424,7 +423,7 @@ MANUAL_DEPRECATIONS = {
         'fallback': re.compile(r'=>\s*\!.*').findall,
     },
     'U009': {
-        'short': 'This line contains a deprecated Cylc CLI command.',
+        'short': 'This line contains an obsolete Cylc CLI command.',
         'url': '',
         FUNCTION: check_dead_ends
     },

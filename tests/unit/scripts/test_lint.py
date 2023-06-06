@@ -311,7 +311,7 @@ def test_check_exclusions(create_testable_file, exclusion):
 
 
 def test_check_cylc_file_jinja2_comments(create_testable_file):
-    # Replace the '# {{' line to be '{# {{' which should not be a warning
+    """Jinja2 inside a Jinja2 comment should not warn"""
     result, _ = create_testable_file('#!jinja2\n{# {{ foo }} #}', ['style'])
     assert 'S011' not in result.out
 
