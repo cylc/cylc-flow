@@ -877,10 +877,8 @@ def get_reference_rst(checks):
             if current_checkset == 'A':
                 output += (
                     '\n.. note::\n'
-                    '\n   U998 and U999 represent automatically generated'
+                    '\n   U998 and U999 represent automatically generated '
                     'sets of deprecations and upgrades.'
-                    ' Because of the automation they cannot be'
-                    ' consistently numbered.\n\n\n'
                 )
 
         if current_checkset == 'A':
@@ -926,8 +924,6 @@ def get_reference_text(checks):
                 output += (
                     'U998 and U999 represent automatically generated'
                     ' sets of deprecations and upgrades.'
-                    '\nBecause of the automation they cannot be'
-                    ' consistently numbered.\n\n'
                 )
         # Fill a template with info about the issue.
         if current_checkset == 'A':
