@@ -320,6 +320,11 @@ class TaskState:
         """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
 
+    def xtriggers_set_all_satisfied(self):
+        """Set all xtriggers to satisfied."""
+        for xtrig in self.xtriggers.keys():
+            self.xtriggers[xtrig] = True
+
     def external_triggers_all_satisfied(self):
         """Return True if all external triggers are satisfied."""
         return all(self.external_triggers.values())
