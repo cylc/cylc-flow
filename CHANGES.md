@@ -10,9 +10,27 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
+
+
 -------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Enhancements
+
+[#5549](https://github.com/cylc/cylc-flow/pull/5549) - A large number of
+enhancements to ``cylc lint``:
+
+  * Fix Numbering of issues (n.b. Issue numbers should now be permenantly
+    unchanging, but will probably have changed, so old pyproject.toml files
+    may need updating).
+  * Check for Suicide triggers in .cylc files.
+  * Check for ``platform = $(rose host-select)``.
+  * Check for use of deprecated Cylc commands (and ``rose suite-hook``).
+  * Check for zero prefixed Jinja2 integers.
+  * __Only__ check for missing Jinja2 shebangs in ``flow.cylc`` and
+    ``suite.rc`` files.
+
+### Fixes
 ### Breaking Changes
 
 [#5600](https://github.com/cylc/cylc-flow/pull/5600) -

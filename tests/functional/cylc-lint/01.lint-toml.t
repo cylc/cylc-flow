@@ -23,6 +23,8 @@ set_test_number 12
 # Set Up:
 rm etc/global.cylc
 
+LINE_LEN_NO=$(python -c "from cylc.flow.scripts.lint import LINE_LEN_NO; print(LINE_LEN_NO)")
+
 cat > flow.cylc <<__HERE__
 # This is definitely not an OK flow.cylc file.
 \t[scheduler]
@@ -95,7 +97,7 @@ __HERE__
 TEST_NAME="it_fails_if_max-line-length_set"
 run_fail "${TEST_NAME}" cylc lint
 named_grep_ok "${TEST_NAME}-line-too-long-message" \
-    "\[S008\] flow.cylc:2: line > 4 characters." \
+    "\[${LINE_LEN_NO}\] flow.cylc:2: line > 4 characters." \
     "${TEST_NAME}.stdout"
 
 TEST_NAME="it_does_not_fail_if_max-line-length_set_but_ignored"
@@ -107,7 +109,7 @@ cat > pyproject.toml <<__HERE__
     ]
     #  do not check for these errors
     ignore = [
-        "S008"
+        "${LINE_LEN_NO}"
     ]
     exclude = [
         "sites/*.cylc",
