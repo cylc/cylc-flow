@@ -283,4 +283,4 @@ def test_untracked_svn_subdir(
     source_dir = Path(repo_dir, 'jar_jar_binks')
     source_dir.mkdir()
     assert get_vc_info(source_dir) is None
-    assert log_filter(caplog, level=logging.WARNING, contains="E200009")
+    assert log_filter(caplog, level=logging.WARNING, contains="$ svn info")

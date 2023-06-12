@@ -169,7 +169,7 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
             ):
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")
             elif cylc.flow.flags.verbosity > -1:
-                LOG.warning(exc)
+                LOG.warning(f"$ {vcs} {' '.join(args)}\n{exc}")
             continue
 
         info['version control system'] = vcs

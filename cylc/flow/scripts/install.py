@@ -285,7 +285,7 @@ def install_cli(
 def install(
     opts: 'Values', reg: Optional[str] = None
 ) -> Tuple[str, str]:
-    set_timestamps(LOG, opts.verbosity > 1)
+    set_timestamps(LOG, opts.log_timestamp and opts.verbosity > 1)
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
