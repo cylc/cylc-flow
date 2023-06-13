@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,7 +24,7 @@ import pytest
 from pytest import param
 
 from cylc.flow.scripts.lint import (
-    STYLE_CHECKS,
+    MANUAL_DEPRECATIONS,
     get_cylc_files,
     get_pyproject_toml,
     get_reference_rst,
@@ -37,8 +37,9 @@ from cylc.flow.scripts.lint import (
 )
 from cylc.flow.exceptions import CylcError
 
-
+STYLE_CHECKS = parse_checks(['style'])
 UPG_CHECKS = parse_checks(['728'])
+
 TEST_FILE = """
 [visualization]
 
@@ -92,13 +93,15 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = MyFaM:finish-all => remote
+            graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
+        pre-script = "echo ${CYLC_SUITE_DEF_PATH}"
         script = {{HELLOWORLD}}
+        post-script = "echo ${CYLC_SUITE_INITIAL_CYCLE_TIME}"
         [[[suite state polling]]]
             template = and
         [[[remote]]]
@@ -130,11 +133,15 @@ TEST_FILE = """
         inherit = MyFaM
 
      [[remote]]
+        platform = $(rose host-select parasite)
+        script = "cylc nudge"
+        post-script = "rose suite-hook"
 
  [meta]
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
 """
 
 
@@ -145,6 +152,7 @@ LINT_TEST_FILE = """
 
 [[dependencies]]
 
+{% set   N = 009 %}
 {% foo %}
 {{foo}}
 # {{quix}}
@@ -204,8 +212,9 @@ def assert_contains(items, contains):
         )
 
 
-@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS)))
+@pytest.mark.parametrize('number', range(1, len(MANUAL_DEPRECATIONS) + 1))
 def test_check_cylc_file_7to8(number):
+    """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
     assert_contains(lint.messages, f'[U{number:03d}]')
 
@@ -297,13 +306,16 @@ def test_inherit_lowercase_not_match_none(inherit_line):
     assert not any('S007' in msg for msg in lint.messages)
 
 
-@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS) + 1))
+@pytest.mark.parametrize(
+    # 8 and 11 Won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(STYLE_CHECKS) + 1)) - {8, 11}
+)
 def test_check_cylc_file_lint(number):
     lint = lint_text(LINT_TEST_FILE, ['style'])
     assert_contains(lint.messages, f'S{number:03d}')
 
 
-@pytest.mark.parametrize('exclusion', range(len(STYLE_CHECKS.values())))
+@pytest.mark.parametrize('exclusion', STYLE_CHECKS.keys())
 def test_check_exclusions(exclusion):
     """It does not report any items excluded."""
     code = f'S{exclusion:03d}'
@@ -312,17 +324,17 @@ def test_check_exclusions(exclusion):
 
 
 def test_check_cylc_file_jinja2_comments():
-    # Repalce the '# {{' line to be '{# {{' which should not be a warning
-    lint = lint_text('{# {{ foo }} #}', ['style'])
+    """Jinja2 inside a Jinja2 comment should not warn"""
+    lint = lint_text('#!jinja2\n{# {{ foo }} #}', ['style'])
     assert not any('S011' in msg for msg in lint.messages)
 
 
 @pytest.mark.parametrize(
-    'number', range(len(UPG_CHECKS))
+    'number', range(1, len(MANUAL_DEPRECATIONS) + 1)
 )
 def test_check_cylc_file_inplace(number):
     lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
-    assert_contains(lint.outlines, f'[U{number + 1:03d}]')
+    assert_contains(lint.outlines, f'[U{number:03d}]')
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
@@ -343,17 +355,20 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
+MOCK_CHECKS = {
+    'U042': {
+        'short': 'section `[vizualization]` has been removed.',
+        'url': 'some url or other',
+        'purpose': 'U',
+        'rst': 'section ``[vizualization]`` has been removed.',
+        'function': re.compile('not a regex')
+    },
+}
+
+
 def test_get_reference_rst():
     """It produces a reference file for our linting."""
-    ref = get_reference_rst({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'rst': 'section ``[vizualization]`` has been removed.',
-            'index': 42
-        },
-    })
+    ref = get_reference_rst(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042\n^^^^\nsection ``[vizualization]`` has been '
@@ -364,14 +379,7 @@ def test_get_reference_rst():
 
 def test_get_reference_text():
     """It produces a reference file for our linting."""
-    ref = get_reference_text({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'index': 42
-        },
-    })
+    ref = get_reference_text(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
@@ -391,11 +399,11 @@ def fixture_get_deprecations():
     'findme',
     [
         pytest.param(
-            'template',
+            'abort if any task fails =',
             id='Item not available at Cylc 8'
         ),
         pytest.param(
-            'timeout',
+            'timeout =',
             id='Item renamed at Cylc 8'
         ),
         pytest.param(
@@ -414,13 +422,13 @@ def test_get_upg_info(fixture_get_deprecations, findme):
     n.b this is just sampling to ensure that the test it getting items.
     """
     if findme.startswith('!'):
-        assert findme[1:] not in str(fixture_get_deprecations)
-    elif findme.startswith('['):
-        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]\\s*$'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert not any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        )
     else:
-        pattern = f'^\\s*{findme}\\s*=\\s*.*'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        ) is True
 
 
 @pytest.mark.parametrize(
@@ -565,6 +573,6 @@ def test_invalid_tomlfile(tmp_path):
 )
 def test_parse_checks_reference_mode(ref, expect):
     result = parse_checks(['style'], reference=ref)
-    key = [i for i in result.keys()][-1]
+    key = list(result.keys())[-1]
     value = result[key]
     assert expect in value['short']
