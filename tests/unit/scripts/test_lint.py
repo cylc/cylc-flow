@@ -226,11 +226,22 @@ def test_check_cylc_file_line_no():
 @pytest.mark.parametrize(
     'inherit_line',
     (
-        'inherit = foo, b, a, r',
-        'inherit = FOO, bar',
-        'inherit = None, bar',
-        'inherit = g',
-        'inherit = B, None',
+        param(item, id=str(ind))
+        for ind, item in enumerate([
+            # lowercase family names are not permitted
+            'inherit = g',
+            'inherit = foo, b, a, r',
+            'inherit = FOO, bar',
+            'inherit = None, bar',
+            'inherit = A, b, C',
+            'inherit = "A", "b"',
+            "inherit = 'A', 'b'",
+            # parameters, jinja2 and empy should be ignored
+            # but any lowercase chars before or after should not
+            'inherit = a<x>z',
+            'inherit = a{{ x }}z',
+            'inherit = a@( x )z',
+        ])
     )
 )
 def test_inherit_lowercase_matches(inherit_line):
@@ -241,9 +252,44 @@ def test_inherit_lowercase_matches(inherit_line):
 @pytest.mark.parametrize(
     'inherit_line',
     (
-        'inherit = None',
-        'inherit = None,',
-        'inherit = None, FOO',
+        param(item, id=str(ind))
+        for ind, item in enumerate([
+            # undefined values are ok
+            'inherit =',
+            'inherit =  ',
+            # none, None and root are ok
+            'inherit = none',
+            'inherit = None',
+            'inherit = root',
+            # trailing commas and whitespace are ok
+            'inherit = None,',
+            'inherit = None, ',
+            'inherit = None , ',
+            # uppercase family names are ok
+            'inherit = None, FOO, BAR',
+            'inherit = FOO',
+            'inherit = BAZ',
+            'inherit = root',
+            'inherit = FOO_BAR_0',
+            # parameters should be ignored
+            'inherit = A<a>Z',
+            'inherit = <a=1, b-1, c+1>',
+            # jinja2 should be ignored
+            'inherit = A{{ a }}Z, {% for x in range(5) %}'
+            'A{{ x }}, {% endfor %}',
+            # empy should be ignored
+            'inherit = A@( a )Z',
+            # trailing comments should be ignored
+            'inherit = A, B # no, comment',
+            'inherit = # a',
+            # quotes are ok
+            'inherit = "A", "B"',
+            "inherit = 'A', 'B'",
+            'inherit = "None", B',
+            'inherit = <a = 1, b - 1>',
+            # one really awkward, but valid example
+            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
+        ])
     )
 )
 def test_inherit_lowercase_not_match_none(inherit_line):

@@ -73,7 +73,7 @@ echo "the quick brown fox"
 # Write to task stderr log
 echo "jumped over the lazy dog" >&2
 # Write to a custom log file
-echo "drugs and money" > \${CYLC_TASK_LOG_ROOT}.custom-log
+echo "drugs, money & whitespace" > "\${CYLC_TASK_LOG_ROOT} custom.log"
 # Generate a warning message in the workflow log.
 cylc message -p WARNING 'marmite and squashed bananas'
 __END__
@@ -91,15 +91,15 @@ run_ok "${TEST_NAME}" cylc cat-log -f a "${WORKFLOW_NAME}//1/a-task"
 grep_ok '\[jobs-submit ret_code\] 0' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-custom
-run_ok "${TEST_NAME}" cylc cat-log -f 'job.custom-log' "${WORKFLOW_NAME}//1/a-task"
-grep_ok "drugs and money" "${TEST_NAME}.stdout"
+run_ok "${TEST_NAME}" cylc cat-log -f 'job custom.log' "${WORKFLOW_NAME}//1/a-task"
+grep_ok "drugs, money & whitespace" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-NN
 run_ok "${TEST_NAME}" cylc cat-log -f a -m l "${WORKFLOW_NAME}//1/a-task"
 contains_ok "${TEST_NAME}.stdout" <<__END__
 job
 job-activity.log
-job.custom-log
+job custom.log
 job.err
 job.out
 job.status
@@ -110,7 +110,7 @@ run_ok "${TEST_NAME}" cylc cat-log -f a -m l -s 1 "${WORKFLOW_NAME}//1/a-task"
 contains_ok "${TEST_NAME}.stdout" <<__END__
 job
 job-activity.log
-job.custom-log
+job custom.log
 job.err
 job.out
 job.status

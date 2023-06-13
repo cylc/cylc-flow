@@ -144,10 +144,57 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'trailing-whitespace',
         'index': 6
     },
-    # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any.
-    # Do not match inherit lines with `None` at the start.
+    # Look for families in inherit= configurations.
     re.compile(
-        r'(inherit\s*=(?!\s*None\s*(?!.*[a-z])))|(\w[a-z]\w:\w+?-a(ll|ny))'
+        r'''
+          # match all inherit statements
+          ^\s*inherit\s*=
+          # filtering out those which match only valid family names
+          (?!
+            \s*
+            # none, None and root are valid family names
+            # and `inherit =` or `inherit = # x` are valid too
+            (['"]?(none|None|root|\#.*|$)['"]?|
+              (
+                # as are families named with capital letters
+                [A-Z0-9_-]+
+                # and optional quotes
+                | [\'\"]
+                # which may include Cylc parameters
+                | (<[^>]+>)
+                # or Jinja2
+                | ({[{%].*[%}]})
+                # or EmPy
+                | (@[\[{\(]).*([\]\}\)])
+              )+
+            )
+            # this can be a comma separated list
+            (
+              \s*,\s*
+              # none, None and root are valid family names
+              (['"]?(none|None|root)['"]?|
+                (
+                  # as are families named with capital letters
+                  [A-Z0-9_-]+
+                  # and optional quotes
+                  | [\'\"]
+                  # which may include Cylc parameters
+                  | (<[^>]+>)
+                  # or Jinja2
+                  | ({[{%].*[%}]})
+                  # or EmPy
+                  | (@[\[{\(]).*([\]\}\)])
+                )+
+              )
+            )*
+            # allow trailing commas and whitespace
+            \s*,?\s*
+            # allow trailing comments
+            (\#.*)?
+            $
+          )
+        ''',
+        re.X
     ): {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
