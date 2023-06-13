@@ -92,9 +92,9 @@ from cylc.flow.scripts.scan import (
     FLOW_STATE_SYMBOLS,
     FLOW_STATE_CMAP
 )
-from cylc.flow import iter_entry_points
+from cylc.flow import LOG, iter_entry_points
 from cylc.flow.exceptions import PluginError, InputError
-from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.loggingutil import CylcLogFormatter, set_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     OptionSettings,
@@ -285,6 +285,7 @@ def install_cli(
 def install(
     opts: 'Values', reg: Optional[str] = None
 ) -> Tuple[str, str]:
+    set_timestamps(LOG, opts.log_timestamp and opts.verbosity > 1)
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
@@ -335,5 +336,7 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+
+    print(f'INSTALLED {workflow_id} from {source_dir}')
 
     return workflow_name, workflow_id

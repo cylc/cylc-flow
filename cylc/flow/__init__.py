@@ -35,6 +35,13 @@ LOG_LEVELS = {
 }
 
 
+class LoggerAdaptor(logging.LoggerAdapter):
+    """Adds a prefix to log messages."""
+    def process(self, msg, kwargs):
+        ret = f"[{self.extra['prefix']}] {msg}" if self.extra else msg
+        return ret, kwargs
+
+
 def environ_init():
     """Initialise cylc environment."""
     # Python output buffering delays appearance of stdout and stderr
