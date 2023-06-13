@@ -337,4 +337,6 @@ def install(
                 exc
             ) from None
 
+    print(f'INSTALLED {workflow_id} from {source_dir}')
+
     return workflow_name, workflow_id

@@ -66,13 +66,15 @@ from typing import (
     Any, Dict, Iterable, List, Optional, TYPE_CHECKING, TextIO, Union, overload
 )
 
-from cylc.flow import LOG
+from cylc.flow import LOG as _LOG, LoggerAdaptor
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
 from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
     from optparse import Values
+
+LOG = LoggerAdaptor(_LOG, {'prefix': __name__})
 
 
 SVN = 'svn'
