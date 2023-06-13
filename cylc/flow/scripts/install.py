@@ -108,7 +108,8 @@ from cylc.flow.pathutil import (
 from cylc.flow.workflow_files import (
     install_workflow,
     parse_cli_sym_dirs,
-    search_install_source_dirs
+    search_install_source_dirs,
+    check_deprecation,
 )
 from cylc.flow.terminal import cli_function
 
@@ -290,6 +291,11 @@ def install(
             "options --no-run-name and --run-name are mutually exclusive."
         )
     source = get_source_location(reg)
+
+    # Check deprecation to allow plugins to have access to correct flags
+    # for compatibility mode:
+    check_deprecation(source)
+
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
