@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
+from pathlib import Path
 from pprint import pformat
 import re
 from types import SimpleNamespace
@@ -167,8 +168,8 @@ something\t
     [[baz]]
         platform = `no backticks`
 """ + (
-    '\nscript = the quick brown fox jumps over the lazy dog '
-    'until it becomes clear that this line is far longer the 79 characters.'
+    '\nscript = the quick brown fox jumps over the lazy dog until it becomes '
+    'clear that this line is longer than the default 130 character limit.'
 )
 
 
@@ -179,7 +180,7 @@ def lint_text(text, checks, ignores=None, modify=False):
     outlines = [
         line
         for line in lint(
-            'flow.cylc',
+            Path('flow.cylc'),
             iter(text.splitlines()),
             checks,
             counter,
@@ -212,7 +213,10 @@ def assert_contains(items, contains):
         )
 
 
-@pytest.mark.parametrize('number', range(1, len(MANUAL_DEPRECATIONS) + 1))
+@pytest.mark.parametrize(
+    # 11 won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(MANUAL_DEPRECATIONS) + 1)) - {11}
+)
 def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
@@ -307,7 +311,7 @@ def test_inherit_lowercase_not_match_none(inherit_line):
 
 
 @pytest.mark.parametrize(
-    # 8 and 11 Won't be tested because there is no jinja2 shebang
+    # 8 and 11 won't be tested because there is no jinja2 shebang
     'number', set(range(1, len(STYLE_CHECKS) + 1)) - {8, 11}
 )
 def test_check_cylc_file_lint(number):
@@ -315,10 +319,9 @@ def test_check_cylc_file_lint(number):
     assert_contains(lint.messages, f'S{number:03d}')
 
 
-@pytest.mark.parametrize('exclusion', STYLE_CHECKS.keys())
-def test_check_exclusions(exclusion):
+@pytest.mark.parametrize('code', STYLE_CHECKS.keys())
+def test_check_exclusions(code):
     """It does not report any items excluded."""
-    code = f'S{exclusion:03d}'
     lint = lint_text(LINT_TEST_FILE, ['style'], [code])
     assert not filter_strings(lint.messages, code)
 
@@ -330,7 +333,8 @@ def test_check_cylc_file_jinja2_comments():
 
 
 @pytest.mark.parametrize(
-    'number', range(1, len(MANUAL_DEPRECATIONS) + 1)
+    # 11 won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(MANUAL_DEPRECATIONS) + 1)) - {11}
 )
 def test_check_cylc_file_inplace(number):
     lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
