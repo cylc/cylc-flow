@@ -34,11 +34,11 @@ named_grep_ok "check-for-error-code" "S004" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
 run_fail "${TEST_NAME}" cylc lint . -r 728
-named_grep_ok "check-for-error-code" "U024" "${TEST_NAME}.stdout"
+named_grep_ok "check-for-error-code" "U998" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.inplace"
 run_fail "${TEST_NAME}" cylc lint . -i
-named_grep_ok "check-for-error-code-in-file" "U024" flow.cylc
+named_grep_ok "check-for-error-code-in-file" "U998" flow.cylc
 
 rm flow.cylc
 

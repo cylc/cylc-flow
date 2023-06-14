@@ -10,7 +10,6 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 
--------------------------------------------------------------------------------
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Enhancements
@@ -35,7 +34,6 @@ in `share/bin` and Python modules in `share/lib/python`.
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
 
 ### Breaking Changes
@@ -51,6 +49,18 @@ issue which could cause jobs to fail if this variable became too long.
 `cylc lint` will provide a non-zero return code if any issues are identified.
 This can be overridden using the new `--exit-zero` flag.
 
+[#5549](https://github.com/cylc/cylc-flow/pull/5549) - A large number of
+enhancements to `cylc lint`:
+* Fix numbering of lint codes (n.b. lint codes should now be permenantly
+  unchanging, but may have changed since Cylc 8.1.4, so `pyproject.toml` files
+  may need updating).
+* Check for suicide triggers in `.cylc` files.
+* Check for `platform = $(rose host-select)`.
+* Check for use of deprecated Cylc commands (and `rose suite-hook`).
+* Check for zero prefixed Jinja2 integers.
+* Only check for missing Jinja2 shebangs in `flow.cylc` and
+  `suite.rc` files.
+
 ### Fixes
 
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
@@ -60,7 +70,6 @@ for `cylc play` when called by `cylc vip` or `cylc vr`.
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
 the UI whilst the workflow is in the process of shutting down.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
@@ -74,7 +83,6 @@ Fix bug introduced in 8.1.3 where specifying a subshell command for
 `flow.cylc[runtime][<namespace>][remote]host` (e.g. `$(rose host-select)`)
 would always result in localhost.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.3 (<span actions:bind='release-date'>Released 2023-04-27</span>)__
 
 ### Enhancements
@@ -131,7 +139,6 @@ platform names to be checked as if they were hosts.
 a workflow's log in the GUI or using `cylc cat-log` would prevent `cylc clean`
 from working.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.2 (<span actions:bind='release-date'>Released 2023-02-20</span>)__
 
 ### Fixes
@@ -145,7 +152,6 @@ Rose options (`-O`, `-S` & `-D`) with `cylc view`.
 [#5363](https://github.com/cylc/cylc-flow/pull/5363) Improvements and bugfixes
 for `cylc lint`.
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.1 (<span actions:bind='release-date'>Released 2023-01-31</span>)__
 
 ### Fixes
@@ -166,7 +172,6 @@ command option: `cylc vip --run-name`.
 Various efficiency optimisations to the scheduler which particularly impact
 workflows with many-to-many dependencies (e.g. `<a> => <b>`).
 
--------------------------------------------------------------------------------
 ## __cylc-8.1.0 (<span actions:bind='release-date'>Released 2023-01-16</span>)__
 
 ### Breaking Changes
@@ -216,7 +221,6 @@ to task_jobs table in the workflow database.
 Fix an issue where polling could be repeated if the job's platform
 was not available.
 
--------------------------------------------------------------------------------
 ## __cylc-8.0.4 (<span actions:bind='release-date'>Released 2022-12-14</span>)__
 
 Maintenance release.
@@ -243,7 +247,6 @@ the consolidation tutorial.
 Fix issue where workflows can fail to shutdown due to unavailable remote
 platforms and make job log retrieval more robust.
 
--------------------------------------------------------------------------------
 ## __cylc-8.0.3 (<span actions:bind='release-date'>Released 2022-10-17</span>)__
 
 Maintenance release.
@@ -280,7 +283,6 @@ source dir (for git/svn repos).
 [#5131](https://github.com/cylc/cylc-flow/pull/5131) - Infer workflow run number
 for `workflow_state` xtrigger.
 
--------------------------------------------------------------------------------
 ## __cylc-8.0.2 (<span actions:bind='release-date'>Released 2022-09-12</span>)__
 
 Maintenance release.
@@ -312,7 +314,6 @@ daemonisation.
 [#5110](https://github.com/cylc/cylc-flow/pull/5110) - Fix bug where reloading
 a stalled workflow would cause it stall again.
 
--------------------------------------------------------------------------------
 ## __cylc-8.0.1 (<span actions:bind='release-date'>Released 2022-08-16</span>)__
 
 Maintenance release.
@@ -345,7 +346,6 @@ bugs related to auto restart.
 [#5062](https://github.com/cylc/cylc-flow/pull/5062) - Fix bug where preparing
 tasks could sometimes get orphaned when an auto restart occurred.
 
--------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 
 Cylc 8 production-ready release.
@@ -468,7 +468,6 @@ overwrite symlink dir targets if they were not cleaned properly before.
 targeting a specific cycle point would not work if using an abbreviated
 cycle point format.
 
--------------------------------------------------------------------------------
 
 ## Older Releases
 
