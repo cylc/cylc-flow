@@ -15,6 +15,10 @@ ones in. -->
 
 ### Enhancements
 
+[#5585](https://github.com/cylc/cylc-flow/pull/5585) - Make `cylc trigger` 
+act incrementally with each call: first runahead release and satisfy
+prerequisites, then xtriggers, then queue release.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
