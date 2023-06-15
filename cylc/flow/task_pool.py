@@ -1658,17 +1658,20 @@ class TaskPool:
     ) -> int:
         """Forced (manual) task triggering.
 
-        Force-triggering a future (n>0) task:
-          - spawns it into n=0 with prerequisites satisfied
-            (and with the given or default flow numbers)
+        - If a task has unsatisfied prerequisites, triggering will satisfy them
+        - Otherwise, it will satisfy any unsatisfied xtriggers
+        - Otherwise, it will submit the task to run despite queue limiting
 
-        Force-triggering an n=0 task:
-          - satisfies its prerequisites, if any are unsatisfied;
-          - else satisfies its xtriggers, if any are unsatisfied;
-          - else queues it, if not already queued;
-          - else releases it to run, if queued.
+        If a task has unsatisfied prerequisites and xtriggers, and belongs to a
+        limited queue, you may need to trigger it three times to make it run
+        immediately.
 
-        This always releases tasks from runahead limiting.
+        The runahead limit is ignored (i.e., you can trigger tasks beyond it).
+
+        Tasks in the active window already belong to a flow. Others belong to
+        all active flows by default. See --flow for other options.
+
+        Triggering an active task has no effect (it is already triggered).
 
         TODO - extend to push ext-triggers.
 
