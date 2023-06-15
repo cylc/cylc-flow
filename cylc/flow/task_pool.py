@@ -262,18 +262,17 @@ class TaskPool:
         self.data_store_mgr.delta_task_queued(itask)
         self.data_store_mgr.delta_task_runahead(itask)
 
-    def release_runahead_tasks(self):
-        """Release tasks below the runahead limit.
+    def release_runahead_tasks(self) -> bool:
+        """Release all runhead-limited tasks that are now below the limit.
 
         Return True if any tasks are released, else False.
-        Call when RH limit changes.
+        Call this method whenever the runahead limit changes.
         """
         if not self.main_pool or not self.runahead_limit_point:
             # (At start-up main pool might not exist yet)
             return False
 
         released = False
-
         # An intermediate list is needed here: auto-spawning of parentless
         # tasks can cause the task pool to change size during iteration.
         release_me = [
@@ -673,11 +672,9 @@ class TaskPool:
         )
 
     def runahead_release(self, itask: TaskProxy) -> None:
-        """Release a task from runahead limiting, and queue it if ready.
+        """Release a specific task from runahead limiting, on demand.
 
-        This method does not check the task's point against the runahead limit
-        because tasks can be force triggered beyond the limit.
-
+        Can be called to force-trigger tasks beyond the runahead limit.
         """
         if itask.state_reset(is_runahead=False):
             self.data_store_mgr.delta_task_runahead(itask)
@@ -709,7 +706,7 @@ class TaskPool:
         """Spawn parentless instances of tdef out to the runahead limit.
 
         Tasks can be parented in some cycles and not in others so we have to
-        check ahead for ever task ... maybe we should not allow this!
+        check future instances of every task ( maybe we shouldn't allow this!)
         """
         if not flow_nums or point is None:
             # Force-triggered no-flow task, or invalid point.
@@ -836,9 +833,9 @@ class TaskPool:
         return None
 
     def queue_if_ready(self, itask: TaskProxy) -> None:
-        """Queue a task if not already queue, and ready to run.
+        """Queue a task if ready to run and not already queued.
 
-        Call after any event that affects a task's readiness.
+        Call the method after any event that could affect a task's readiness.
         """
         if (
             itask.state.is_runahead
