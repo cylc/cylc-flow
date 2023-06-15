@@ -167,8 +167,8 @@ def test_install_gets_back_compat_mode_for_plugins(
 
         @staticmethod
         def raiser(*_, **__):
-            import cylc
-            if cylc.flow.flags.cylc7_back_compat is True:
+            import cylc.flow.flags
+            if cylc.flow.flags.cylc7_back_compat:
                 print('Plugin:True')
                 return True
             print('Plugin:False')
