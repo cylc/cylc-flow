@@ -1237,12 +1237,12 @@ def check_deprecation(path, warn=True):
     Path can point to config file or parent directory (i.e. workflow name).
     """
     if (
-        (
+        # Don't want to log if it's already been set True.
+        not cylc.flow.flags.cylc7_back_compat
+        and (
             path.resolve().name == WorkflowFiles.SUITE_RC
             or (path / WorkflowFiles.SUITE_RC).is_file()
         )
-        # Don't want to log if it's already been set True.
-        and not cylc.flow.flags.cylc7_back_compat
     ):
         cylc.flow.flags.cylc7_back_compat = True
         if warn:
