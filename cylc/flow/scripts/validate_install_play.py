@@ -28,6 +28,8 @@ This script is equivalent to:
 
 """
 
+import sys
+
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
     _main as validate_main
@@ -111,5 +113,5 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     )
 
     set_timestamps(LOG, options.log_timestamp)
-    log_subcommand('play', workflow_id)
+    log_subcommand(*sys.argv[1:])
     _play(parser, options, workflow_id)
