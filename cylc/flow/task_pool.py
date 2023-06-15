@@ -286,7 +286,6 @@ class TaskPool:
 
         for itask in release_me:
             self.runahead_release(itask)
-            self.queue_if_ready(itask)
             released = True
 
         return released
@@ -580,7 +579,6 @@ class TaskPool:
                 or itask.is_manual_submit  # TODO check abuse of (graduated)
             ):
                 self.runahead_release(itask)
-                self.queue_if_ready(itask)
 
             self.compute_runahead()
             self.release_runahead_tasks()
@@ -1339,7 +1337,6 @@ class TaskPool:
 
                     if t.point <= self.runahead_limit_point:
                         self.runahead_release(t)
-                        self.queue_if_ready(itask)
 
                     # Event-driven suicide.
                     if (
@@ -1456,7 +1453,6 @@ class TaskPool:
                     and c_task.point <= self.runahead_limit_point
                 ):
                     self.runahead_release(c_task)
-                    self.queue_if_ready(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
@@ -1727,7 +1723,6 @@ class TaskPool:
             itask.state.set_prerequisites_all_satisfied()
             self.add_to_pool(itask)
             self.runahead_release(itask)
-            self.queue_if_ready(itask)
 
         for itask in itasks:
             # Trigger existing n=0 tasks.
@@ -1751,7 +1746,6 @@ class TaskPool:
                 )
                 itask.state.set_prerequisites_all_satisfied()
                 self.runahead_release(itask)
-                self.queue_if_ready(itask)
                 continue
 
             if (
