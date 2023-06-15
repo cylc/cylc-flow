@@ -12,6 +12,13 @@ ones in. -->
 
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Breaking Changes
+
+[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
+The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
+in job environments if there are more than 50 dependencies. This avoids an
+issue which could cause jobs to fail if this variable became too long.
+
 ### Enhancements
 
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
@@ -33,17 +40,6 @@ in `share/bin` and Python modules in `share/lib/python`.
 
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
-
-## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
-
-### Breaking Changes
-
-[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
-The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
-in job environments if there are more than 50 dependencies. This avoids an
-issue which could cause jobs to fail if this variable became too long.
-
-### Enhancements
 
 [#5546](https://github.com/cylc/cylc-flow/pull/5546) -
 `cylc lint` will provide a non-zero return code if any issues are identified.
@@ -72,6 +68,10 @@ the UI whilst the workflow is in the process of shutting down.
 
 [#5582](https://github.com/cylc/cylc-flow/pull/5582) - Set Cylc 7 compatibility
 mode before running pre-configure plugins.
+
+[#5587](https://github.com/cylc/cylc-flow/pull/5587) -
+Permit commas in xtrigger arguments and fix minor issues with the parsing of
+xtrigger function signatures.
 
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
