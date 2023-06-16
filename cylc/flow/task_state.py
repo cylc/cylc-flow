@@ -321,7 +321,10 @@ class TaskState:
         return all(self.xtriggers.values())
 
     def xtriggers_set_all_satisfied(self):
-        """Set all xtriggers to satisfied."""
+        """Set all xtriggers to satisfied.
+
+        WARNING: you must invoke xtrigger manager housekeeping after this.
+        """
         for xtrig in self.xtriggers.keys():
             self.xtriggers[xtrig] = True
 

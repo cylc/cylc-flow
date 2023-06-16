@@ -81,6 +81,7 @@ if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
+    from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
@@ -99,7 +100,8 @@ class TaskPool:
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
         data_store_mgr: 'DataStoreMgr',
-        flow_mgr: 'FlowMgr'
+        flow_mgr: 'FlowMgr',
+        xtrigger_mgr: 'XtriggerManager'
     ) -> None:
         self.tokens = tokens
         self.config: 'WorkflowConfig' = config
@@ -110,6 +112,7 @@ class TaskPool:
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
+        self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
 
         self.do_reload = False
         self.max_future_offset: Optional['IntervalBase'] = None
@@ -572,7 +575,7 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED,
                     TASK_STATUS_EXPIRED
                 )
-                or itask.is_manual_submit  # TODO check abuse of (graduated)
+                or itask.is_manual_submit
             ):
                 self.runahead_release(itask)
 
@@ -1766,8 +1769,8 @@ class TaskPool:
                     "\nYou may need to trigger this task again"
                     " to force queue-release."
                 )
-                # TODO - does xtrigger manager need to know?
                 itask.state.xtriggers_set_all_satisfied()
+                self.xtrigger_mgr.housekeep(self.get_tasks())
                 self.runahead_release(itask)
                 continue
 

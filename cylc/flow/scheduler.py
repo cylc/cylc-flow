@@ -466,7 +466,8 @@ class Scheduler:
             self.workflow_db_mgr,
             self.task_events_mgr,
             self.data_store_mgr,
-            self.flow_mgr
+            self.flow_mgr,
+            self.xtrigger_mgr
         )
 
         self.data_store_mgr.initiate_data_model()
