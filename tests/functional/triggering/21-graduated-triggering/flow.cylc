@@ -1,0 +1,36 @@
+[scheduler]
+    [[events]]
+        abort on inactivity timeout = True
+        abort on stall timeout = True
+        stall timeout = PT0S
+        inactivity timeout = PT2M
+        expected task failures = 1/failer
+[scheduling]
+    [[queues]]
+        [[[cheese]]]
+            members = triggerer, foo
+            limit = 1
+    [[xtriggers]]
+        never = xrandom("0","0")
+    [[graph]]
+        R1 = """
+            triggerer
+            @never => foo
+            failer => foo
+        """
+[runtime]
+    [[foo]]
+        script = "cylc remove $CYLC_WORKFLOW_ID//1/failer"
+    [[failer]]
+        script = false
+    [[triggerer]]
+        script = """
+            cylc__job__poll_grep_workflow_log "1/failer failed"
+            cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc__job__poll_grep_workflow_log -E "1/foo .* Force-satisfying prerequisites"
+            cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc__job__poll_grep_workflow_log -E "1/foo .* Force-satisfying xtriggers"
+            cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc__job__poll_grep_workflow_log -E "1/foo .* Forcing queue release"
+            cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
+        """
