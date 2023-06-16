@@ -91,9 +91,6 @@ class TaskPool:
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
     SUICIDE_MSG = "suicide"
-    FORCE_TRIGGER_MSG = (
-        "Trigger me again to run immediately, if I have other constraints"
-    )
 
     def __init__(
         self,
@@ -1713,14 +1710,21 @@ class TaskPool:
             if itask is None:
                 continue
             itask.is_manual_submit = True
-            LOG.info(
-                f"[{itask}] - forcing prerequisites (a)"
-                f"\n{self.__class__.FORCE_TRIGGER_MSG}"
+            msg = "Force-satisfying prerequisites."
+            if itask.state.xtriggers:
+                # xtriggers not satisfied as we just spawned the task
+                msg += (
+                    "\nYou may need to trigger this task again"
+                    " to force-satisfy xtriggers."
+                )
+            msg += (
+                "\nYou may need to trigger this task again"
+                " to override queue limits."
             )
+            LOG.warning(f"[{itask}] - {msg}")
             itask.state.set_prerequisites_all_satisfied()
             self.add_to_pool(itask)
             self.runahead_release(itask)
-
         for itask in itasks:
             # Trigger existing n=0 tasks.
             # These might not be runahead limited.
@@ -1737,10 +1741,18 @@ class TaskPool:
                 itask.reset_try_timers()
 
             if itask.is_task_prereqs_not_done():
-                LOG.info(
-                    f"[{itask}] - forcing prerequisites (b)"
-                    f"\n{self.__class__.FORCE_TRIGGER_MSG}"
+                msg = "Force-satisfying prerequisites."
+                if not itask.state.xtriggers_all_satisfied():
+                    # xtriggers not satisfied as we just spawned the task
+                    msg += (
+                        "\nYou may need to trigger this task again"
+                        " to force-satisfy xtriggers."
+                    )
+                msg += (
+                    "\nYou may need to trigger this task again"
+                    " to override queue limits."
                 )
+                LOG.warning(f"[{itask}] - {msg}")
                 itask.state.set_prerequisites_all_satisfied()
                 self.runahead_release(itask)
                 continue
@@ -1749,21 +1761,19 @@ class TaskPool:
                 itask.state.xtriggers and
                 not itask.state.xtriggers_all_satisfied()
             ):
-                LOG.info(
-                    f"[{itask}] - forcing xtriggers"
-                    f"\n{self.__class__.FORCE_TRIGGER_MSG}"
+                LOG.warning(
+                    f"[{itask}] - Force-satisfying xtriggers."
+                    "\nYou may need to trigger this task again"
+                    " to force queue-release."
                 )
                 # TODO - does xtrigger manager need to know?
                 itask.state.xtriggers_set_all_satisfied()
                 self.runahead_release(itask)
                 continue
 
-            # TODO - ONLY IF QUEUED?
-            LOG.info(
-                f"[{itask}] - forcing queue release"
-                f"\n{self.__class__.FORCE_TRIGGER_MSG}"
-            )
-            self.task_queue_mgr.force_release_task(itask)
+            if itask.state.is_queued:
+                LOG.warning(f"[{itask}] - Forcing queue release.")
+                self.task_queue_mgr.force_release_task(itask)
 
         return len(unmatched)
 
