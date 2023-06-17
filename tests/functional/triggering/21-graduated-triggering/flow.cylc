@@ -12,6 +12,8 @@
             limit = 1
     [[xtriggers]]
         never = xrandom("0","0")
+    [[special tasks]]
+        external-trigger = foo("Ain't never gonna happen.")
     [[graph]]
         R1 = """
             triggerer
@@ -29,7 +31,7 @@
             cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
             cylc__job__poll_grep_workflow_log -E "1/foo .* Force-satisfying prerequisites"
             cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
-            cylc__job__poll_grep_workflow_log -E "1/foo .* Force-satisfying xtriggers"
+            cylc__job__poll_grep_workflow_log -E "1/foo .* Force-satisfying external triggers"
             cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"
             cylc__job__poll_grep_workflow_log -E "1/foo .* Forcing queue release"
             cylc trigger "${CYLC_WORKFLOW_ID}//1/foo"

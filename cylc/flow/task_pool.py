@@ -1666,8 +1666,6 @@ class TaskPool:
 
         Triggering an active task has no effect (it is already triggered).
 
-        TODO - extend to push ext-triggers.
-
         """
         # Process provided flow options.
         if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):
@@ -1714,11 +1712,11 @@ class TaskPool:
                 continue
             itask.is_manual_submit = True
             msg = "Force-satisfying prerequisites."
-            if itask.state.xtriggers:
-                # xtriggers not satisfied as we just spawned the task
+            if itask.state.xtriggers or itask.state.external_triggers:
+                # these can't be satisfied as we just spawned the task
                 msg += (
                     "\nYou may need to trigger this task again"
-                    " to force-satisfy xtriggers."
+                    " to force-satisfy external triggers."
                 )
             msg += (
                 "\nYou may need to trigger this task again"
@@ -1744,13 +1742,16 @@ class TaskPool:
                 self.data_store_mgr.delta_task_state(itask)
                 itask.reset_try_timers()
 
+            # Satisfy prerequisites, if any.
             if itask.is_task_prereqs_not_done():
                 msg = "Force-satisfying prerequisites."
-                if not itask.state.xtriggers_all_satisfied():
-                    # xtriggers not satisfied as we just spawned the task
+                if (
+                    not itask.state.xtriggers_all_satisfied()
+                    or not itask.state.external_triggers_all_satisfied()
+                ):
                     msg += (
                         "\nYou may need to trigger this task again"
-                        " to force-satisfy xtriggers."
+                        " to force-satisfy external triggers."
                     )
                 msg += (
                     "\nYou may need to trigger this task again"
@@ -1761,20 +1762,35 @@ class TaskPool:
                 self.runahead_release(itask)
                 continue
 
+            # Satisfy xtriggers and ext-triggers, if any.
+            # (Let's log both kinds as "external triggers')
+            extrigs_forced = False
             if (
                 itask.state.xtriggers and
                 not itask.state.xtriggers_all_satisfied()
             ):
-                LOG.warning(
-                    f"[{itask}] - Force-satisfying xtriggers."
-                    "\nYou may need to trigger this task again"
-                    " to force queue-release."
-                )
                 itask.state.xtriggers_set_all_satisfied()
                 self.xtrigger_mgr.housekeep(self.get_tasks())
                 self.runahead_release(itask)
+                extrigs_forced = True
+
+            if (
+                itask.state.external_triggers and
+                not itask.state.external_triggers_all_satisfied()
+            ):
+                itask.state.external_triggers_set_all_satisfied()
+                self.runahead_release(itask)
+                extrigs_forced = True
+
+            if extrigs_forced:
+                LOG.warning(
+                    f"[{itask}] - Force-satisfying external triggers."
+                    "\nYou may need to trigger this task again"
+                    " to force queue-release."
+                )
                 continue
 
+            # Queue, or queue-release if already queued.
             if itask.state.is_queued:
                 LOG.warning(f"[{itask}] - Forcing queue release.")
                 self.task_queue_mgr.force_release_task(itask)

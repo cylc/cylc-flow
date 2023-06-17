@@ -321,7 +321,7 @@ class TaskState:
         return all(self.xtriggers.values())
 
     def xtriggers_set_all_satisfied(self):
-        """Set all xtriggers to satisfied.
+        """Force-satisfy all xtriggers.
 
         WARNING: you must invoke xtrigger manager housekeeping after this.
         """
@@ -331,6 +331,11 @@ class TaskState:
     def external_triggers_all_satisfied(self):
         """Return True if all external triggers are satisfied."""
         return all(self.external_triggers.values())
+
+    def external_triggers_set_all_satisfied(self):
+        """Force-satisfy all external triggers."""
+        for key in self.external_triggers.keys():
+            self.external_triggers[key] = True
 
     def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
