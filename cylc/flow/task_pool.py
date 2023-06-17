@@ -1728,6 +1728,7 @@ class TaskPool:
             itask.state.set_prerequisites_all_satisfied()
             self.add_to_pool(itask)
             self.runahead_release(itask)
+
         for itask in itasks:
             # Trigger existing n=0 tasks.
             # These might not be runahead limited.
@@ -1777,6 +1778,8 @@ class TaskPool:
             if itask.state.is_queued:
                 LOG.warning(f"[{itask}] - Forcing queue release.")
                 self.task_queue_mgr.force_release_task(itask)
+            else:
+                self.queue_if_ready(itask)
 
         return len(unmatched)
 
