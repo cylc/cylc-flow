@@ -138,6 +138,11 @@ R1 = """
     foo[PT1M1H] => bar  # incorrect component ordering
     foo[01T00] => bar  # truncated date
     foo[T00] => bar  # truncated date
+
+    # SYNTAX: 2.10
+    # the "?" and optionally the qualifier should be highlighted
+    foo? => bar
+    foo:succeeded? => bar
 """
 
 # graph strings should not highlight here, this should display as a setting:

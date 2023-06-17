@@ -46,7 +46,10 @@ if TYPE_CHECKING:
     from optparse import Values
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import (
+    ContactFileExists,
+    CylcError,
+)
 from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
@@ -62,7 +65,9 @@ from cylc.flow.scripts.validate import (
     _main as cylc_validate
 )
 from cylc.flow.scripts.reinstall import (
-    REINSTALL_CYLC_ROSE_OPTIONS, reinstall_cli as cylc_reinstall
+    REINSTALL_CYLC_ROSE_OPTIONS,
+    REINSTALL_OPTIONS,
+    reinstall_cli as cylc_reinstall,
 )
 from cylc.flow.scripts.reload import (
     reload_cli as cylc_reload
@@ -74,6 +79,7 @@ from cylc.flow.workflow_files import detect_old_contact_file
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
 VR_OPTIONS = combine_options(
     VALIDATE_OPTIONS,
+    REINSTALL_OPTIONS,
     REINSTALL_CYLC_ROSE_OPTIONS,
     PLAY_OPTIONS,
     CYLC_ROSE_OPTIONS,
@@ -136,10 +142,10 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # outcome which we want to capture before we install.
     try:
         detect_old_contact_file(workflow_id)
-    except ServiceFileError:
+    except ContactFileExists:
         # Workflow is definitely running:
         workflow_running = True
-    except Exception as exc:
+    except CylcError as exc:
         LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'
@@ -163,7 +169,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     cylc_validate(parser, options, workflow_id)
 
     log_subcommand('reinstall', workflow_id)
-    reinstall_ok = cylc_reinstall(options, workflow_id)
+    reinstall_ok = cylc_reinstall(options, workflow_id, print_reload_tip=False)
     if not reinstall_ok:
         LOG.warning(
             'No changes to source: No reinstall or'

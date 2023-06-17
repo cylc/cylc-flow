@@ -105,7 +105,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir
 )
-from cylc.flow.workflow_files import (
+from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
     search_install_source_dirs,
@@ -138,7 +138,7 @@ INSTALL_OPTIONS = [
         sources={'install'},
     ),
     OptionSettings(
-        ["--run-name"],
+        ["--run-name", "-r"],
         help=(
             "Give the run a custom name instead of automatically"
             " numbering it."),

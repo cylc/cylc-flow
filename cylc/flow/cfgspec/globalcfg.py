@@ -1399,6 +1399,17 @@ with Conf('global.cylc', desc='''
                  desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs command']}
 
+                .. note::
+                   The default command (``rsync -a``) means that the retrieved
+                   files (and the directories above including ``job/log``) get
+                   the same permissions as on the remote host. This can cause
+                   problems if the remote host uses different permissions to
+                   the scheduler host (e.g. no world read access). To avoid
+                   this problem you can set the command to
+                   ``rsync -a --no-p --no-g --chmod=ugo=rwX`` which means the
+                   retrieved files get the default permissions used on the
+                   scheduler host.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
@@ -1426,12 +1437,15 @@ with Conf('global.cylc', desc='''
                        "[remote]retrieve job logs retry delays")}
             ''')
             Conf('tail command template',
-                 VDR.V_STRING, 'tail -n +1 --follow=name -F %(filename)s',
+                 VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
                  desc=f'''
                 A command template (with ``%(filename)s`` substitution) to
                 tail-follow job logs this platform, by ``cylc cat-log``.
 
-                You are are unlikely to need to override this.
+                .. warning::
+
+                   You are are unlikely to need to override this. Doing so may
+                   adversely affect the UI log view.
 
                 .. versionchanged:: 8.0.0
 

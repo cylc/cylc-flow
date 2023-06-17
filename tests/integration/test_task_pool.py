@@ -636,7 +636,8 @@ def list_tasks(schd):
                 {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
-            ]
+            ],
+            id='added'
         ),
         param(  # Restart after removing a prerequisite from task z
             '''a => z
@@ -662,7 +663,8 @@ def list_tasks(schd):
             [
                 {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
-            ]
+            ],
+            id='removed'
         )
     ]
 )
@@ -755,7 +757,8 @@ async def test_restart_prereqs(
                 {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
-            ]
+            ],
+            id='added'
         ),
         param(  # Reload after removing a prerequisite from task z
             '''a => z
@@ -781,7 +784,8 @@ async def test_restart_prereqs(
             [
                 {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
-            ]
+            ],
+            id='removed'
         )
     ]
 )

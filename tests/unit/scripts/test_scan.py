@@ -44,17 +44,19 @@ def test_good_contact_info() -> None:
     port = 8888
     host = "wizard"
     name = "blargh/run1"
+    pid = 12345
     res = _format_plain(
         {
             "name": name,
             "contact": Path(f"/path/to/{name}"),
             "CYLC_WORKFLOW_HOST": host,
             "CYLC_WORKFLOW_PORT": port,
+            "CYLC_WORKFLOW_PID": pid,
         },
         None
     )
     assert name in res
-    assert f"{host}:{port}" in res
+    assert f"{host}:{port} {pid}" in res
 
 
 def test_bad_contact_info(caplog: pytest.LogCaptureFixture) -> None:
