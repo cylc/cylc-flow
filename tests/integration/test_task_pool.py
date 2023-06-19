@@ -828,7 +828,6 @@ async def test_reload_prereqs(
 
         # Reload the workflow config
         await schd.command_reload_workflow()
-        schd.pool.reload_taskdefs()
         assert list_tasks(schd) == expected_3
 
         # Check resulting dependencies of task z
@@ -959,6 +958,5 @@ async def test_graph_change_prereq_satisfaction(
 
             # Reload the workflow config
             await schd.command_reload_workflow()
-            schd.pool.reload_taskdefs()
 
             await test.asend(schd)

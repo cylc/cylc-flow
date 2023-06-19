@@ -1095,7 +1095,7 @@ class Scheduler:
         self._update_workflow_state()
         LOG.info("Reloading the workflow definition.")
         try:
-            cfg = self.load_flow_file(is_reload=True)
+            config = self.load_flow_file(is_reload=True)
         except (ParsecError, CylcConfigError) as exc:
             if cylc.flow.flags.verbosity > 1:
                 # log full traceback in debug mode
@@ -1116,10 +1116,10 @@ class Scheduler:
             self.workflow_db_mgr.pri_dao.select_workflow_params(
                 self._load_workflow_params
             )
-            self.apply_new_config(cfg, is_reload=True)
+            self.apply_new_config(config, is_reload=True)
             self.broadcast_mgr.linearized_ancestors = (
                 self.config.get_linearized_ancestors())
-            self.pool.set_do_reload(self.config)
+
             self.task_events_mgr.mail_interval = self.cylc_config['mail'][
                 'task event batch interval']
             self.task_events_mgr.mail_smtp = self._get_events_conf("smtp")
@@ -1137,6 +1137,24 @@ class Scheduler:
             self.is_updated = True
             self.is_reloaded = True
             self._update_workflow_state()
+
+            # Re-initialise data model on reload
+            self.data_store_mgr.initiate_data_model(reloaded=True)
+
+            # Reset the remote init map to trigger fresh file installation
+            self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
+            self.task_job_mgr.task_remote_mgr.is_reload = True
+            self.pool.reload_taskdefs(config)
+            # Load jobs from DB
+            self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
+                self.data_store_mgr.insert_db_job
+            )
+            if self.pool.compute_runahead(force=True):
+                self.pool.release_runahead_tasks()
+            self.is_reloaded = True
+            self.is_updated = True
+
+            LOG.info("Reload completed.")
 
         # resume the workflow if previously paused
         self.reload_pending = False
@@ -1644,21 +1662,6 @@ class Scheduler:
             # self.pool.log_task_pool(logging.CRITICAL)
             if self.incomplete_ri_map:
                 self.manage_remote_init()
-            if self.pool.do_reload:
-                # Re-initialise data model on reload
-                self.data_store_mgr.initiate_data_model(reloaded=True)
-                # Reset the remote init map to trigger fresh file installation
-                self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
-                self.task_job_mgr.task_remote_mgr.is_reload = True
-                self.pool.reload_taskdefs()
-                # Load jobs from DB
-                self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
-                    self.data_store_mgr.insert_db_job)
-                LOG.info("Reload completed.")
-                if self.pool.compute_runahead(force=True):
-                    self.pool.release_runahead_tasks()
-                self.is_reloaded = True
-                self.is_updated = True
 
             await self.process_command_queue()
             self.proc_pool.process()
