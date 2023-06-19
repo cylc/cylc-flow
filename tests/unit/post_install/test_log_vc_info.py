@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import logging
 from pathlib import Path
 import pytest
 from pytest import MonkeyPatch, TempPathFactory
@@ -272,3 +273,14 @@ def test_no_base_commit_git(tmp_path: Path):
     diff_file = write_diff('git', source_dir, run_dir)
     for line in diff_file.read_text().splitlines():
         assert line.startswith('#')
+
+
+@require_svn
+def test_untracked_svn_subdir(
+    svn_source_repo: Tuple[str, str, str], caplog, log_filter
+):
+    repo_dir, *_ = svn_source_repo
+    source_dir = Path(repo_dir, 'jar_jar_binks')
+    source_dir.mkdir()
+    assert get_vc_info(source_dir) is None
+    assert log_filter(caplog, level=logging.WARNING, contains="$ svn info")

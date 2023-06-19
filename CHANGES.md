@@ -70,6 +70,9 @@ for `cylc play` when called by `cylc vip` or `cylc vr`.
 Enabled the "stop", "poll", "kill" and "message" commands to be issued from
 the UI whilst the workflow is in the process of shutting down.
 
+[#5582](https://github.com/cylc/cylc-flow/pull/5582) - Set Cylc 7 compatibility
+mode before running pre-configure plugins.
+
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
