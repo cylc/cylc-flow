@@ -367,7 +367,6 @@ def install_workflow(
         install_log.info(
             f'Symlink from "{source_link}" to "{source}" in place.')
     install_log.info(f'INSTALLED {named_run} from {source}')
-    print(f'INSTALLED {named_run} from {source}')
     close_log(install_log)
     return source, rundir, workflow_name, named_run
 
