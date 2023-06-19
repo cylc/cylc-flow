@@ -14,6 +14,10 @@ ones in. -->
 
 ### Enhancements
 
+[#5992](https://github.com/cylc/cylc-flow/pull/5992) -
+The scheduler will now wait for preparing tasks to submit before attempting
+to perform a reload and will also pause/unpause the workflow.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
