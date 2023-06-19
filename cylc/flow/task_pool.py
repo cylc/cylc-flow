@@ -1739,9 +1739,12 @@ class TaskPool:
                 conf = itask.tdef.rtconfig['simulation']
                 job_d = itask.tokens.duplicate(job=str(itask.submit_num))
                 now_str = get_current_time_string()
-                if (itask.point in conf['fail cycle points'] and
-                        (itask.get_try_num() == 1 or
-                         not conf['fail try 1 only'])):
+                if (
+                    conf['fail cycle points'] is None  # i.e. "all"
+                    or itask.point in conf['fail cycle points']
+                ) and (
+                    itask.get_try_num() == 1 or not conf['fail try 1 only']
+                ):
                     message_queue.put(
                         TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
                     )
