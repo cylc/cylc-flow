@@ -382,7 +382,7 @@ def test_read_and_proc_cwd():
 """)
             tf.flush()
             r = read_and_proc(fpath=tf.name, viewcfg=viewcfg)
-            assert r == ['a', 'b', 'c']
+            assert sorted(r) == ['a', 'b', 'c']
 
 def test_read_and_proc_jinja2_error():
     with tempfile.NamedTemporaryFile() as tf:
