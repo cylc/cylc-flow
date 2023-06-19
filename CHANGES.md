@@ -33,6 +33,10 @@ After successful reload the scheduler will unpause the workflow.
 [#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
 in family names to be split, e.g. `<foo>FAM<bar>`.
 
+[#5589](https://github.com/cylc/cylc-flow/pull/5589) - Move to workflow
+directory during file parsing, to give the template processor access to
+workflow files.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
