@@ -1,12 +1,4 @@
 Initial point: 1
 Final point: 1
-1/foo_i3 -triggered off []
-1/foo_i1 -triggered off []
-1/foo_i4 -triggered off []
-1/foo_i2 -triggered off []
-1/foo_i5 -triggered off []
-1/foo_i3 -triggered off []
-1/foo_i1 -triggered off []
-1/foo_i4 -triggered off []
-1/foo_i2 -triggered off []
-1/foo_i5 -triggered off []
+1/foo -triggered off []
+1/foo -triggered off []
