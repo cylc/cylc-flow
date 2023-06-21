@@ -1283,7 +1283,6 @@ class TaskPool:
                     (str(itask.point), itask.tdef.name, output))
                 self.workflow_db_mgr.put_insert_abs_output(
                     str(itask.point), itask.tdef.name, output)
-                self.workflow_db_mgr.process_queued_ops()
 
             c_taskid = Tokens(
                 cycle=str(c_point),
@@ -1351,6 +1350,8 @@ class TaskPool:
             TASK_OUTPUT_FAILED
         ]:
             self.remove_if_complete(itask)
+
+        self.workflow_db_mgr.process_queued_ops()
 
     def remove_if_complete(self, itask):
         """Remove finished itask if required outputs are complete.
