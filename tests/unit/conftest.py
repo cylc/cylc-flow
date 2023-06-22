@@ -204,3 +204,11 @@ def xtrigger_mgr() -> XtriggerManager:
             create_autospec(Scheduler, workflow=workflow_name, owner=user)
         )
     )
+
+
+@pytest.fixture()
+def prevent_symlinking(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.make_symlink_dir',
+        lambda *_, **__: {}
+    )
