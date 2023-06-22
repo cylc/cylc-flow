@@ -162,7 +162,7 @@ class SubFuncContext(SubProcContext):
     def __str__(self):
         return (
             f'{self.func_name}('
-            f'{", ".join(self.func_args + list(self.func_kwargs))}'
+            f'{", ".join(map(str, self.func_args + list(self.func_kwargs)))}'
             f'):{self.intvl}'
         )
 
