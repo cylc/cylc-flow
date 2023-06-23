@@ -58,6 +58,7 @@ foo_m1=>bar_m1_n2
 
 from contextlib import suppress
 import re
+from typing import List, Tuple
 
 from cylc.flow.exceptions import ParamExpandError
 from cylc.flow.task_id import TaskID
@@ -70,9 +71,6 @@ REC_NAMES = re.compile(r'(?:[^,<]|<[^>]*>)+')
 REC_P_ALL = re.compile(r"(%s)?(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
-# As REC_P_ALL, but retaining <> so that we can tell which bits of re.split
-# are templates, and which are plain text:
-REC_P_MATCH = re.compile(r'(<[^>]*>)')
 # To extract parameter name and optional offset or value e.g. 'm-1'.
 REC_P_OFFS = re.compile(
     r'(\w+)\s*([\-+]\s*\d+|=\s*%s)?' % TaskID.NAME_SUFFIX_RE)
@@ -205,7 +203,7 @@ class NameExpander:
                 self._expand_name(results, tmpl, params[1:], spec_vals)
 
     @staticmethod
-    def _parse_task_name_string(parent):
+    def _parse_task_name_string(task_str: str) -> Tuple[List[str], str]:
         """Takes a parent string and returns a list of parameters and a
         template string.
 
@@ -240,34 +238,32 @@ class NameExpander:
             >>> this('FAM<i = cat ,j=3>')
             (['i = cat', 'j=3'], 'FAM{i}{j}')
         """
-        tmpl_list = REC_P_MATCH.split(parent)
         param_list = []
-        for template in tmpl_list:
-            group = REC_P_GROUP.findall(template)
-            if group:
-                param = group[0]
-                if ',' in param:
-                    # parameter syntax `<foo, bar>`
-                    replacement = ''
-                    for sub_param in param.split(','):
-                        sub_param = sub_param.strip()
-                        param_list.append(sub_param)
-                        if '=' in sub_param:
-                            sub_param = sub_param.split('=')[0].strip()
-                        replacement += '{' + sub_param + '}'
+
+        def _parse_replacement(match: re.Match) -> str:
+            nonlocal param_list
+            param = match.group(1)
+            if ',' in param:
+                # parameter syntax `<foo, bar>`
+                replacement = ''
+                for sub_param in param.split(','):
+                    sub_param = sub_param.strip()
+                    param_list.append(sub_param)
+                    if '=' in sub_param:
+                        sub_param = sub_param.split('=')[0].strip()
+                    replacement += '{' + sub_param + '}'
+            else:
+                # parameter syntax: `<foo><bar>`
+                param_list.append(param)
+                if '=' in param:
+                    replacement = '{' + param.split('=')[0] + '}'
                 else:
-                    # parameter syntax: `<foo><bar>`
-                    param_list.append(param)
-                    if '=' in param:
-                        replacement = '{' + param.split('=')[0] + '}'
-                    else:
-                        replacement = '{' + param + '}'
+                    replacement = '{' + param + '}'
+            return replacement
 
-                # Replace param in template list with template.
-                if f'<{param}>' in tmpl_list:
-                    tmpl_list[tmpl_list.index(f'<{param}>')] = replacement
+        replacement = REC_P_GROUP.sub(_parse_replacement, task_str)
 
-        return param_list, ''.join(tmpl_list)
+        return param_list, replacement
 
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
