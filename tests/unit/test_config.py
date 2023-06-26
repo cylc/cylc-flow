@@ -1580,7 +1580,8 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_WORK_DIR': False,
                 'CYLC_WORKFLOW_SHARE_DIR': False,
                 'CYLC_WORKFLOW_LOG_DIR': False,
-            }
+            },
+        id="source-dir"
         ),
         pytest.param(
             True,
@@ -1592,7 +1593,8 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_WORK_DIR': False,
                 'CYLC_WORKFLOW_SHARE_DIR': False,
                 'CYLC_WORKFLOW_LOG_DIR': False,
-            }
+            },
+        id="run-dir"
         ),
         pytest.param(
             True,
@@ -1604,7 +1606,8 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_WORK_DIR': True,
                 'CYLC_WORKFLOW_SHARE_DIR': True,
                 'CYLC_WORKFLOW_LOG_DIR': True,
-            }
+            },
+        id="run-dir-from-scheduler"
         ),
     ]
 )

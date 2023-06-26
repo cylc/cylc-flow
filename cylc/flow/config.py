@@ -74,7 +74,11 @@ from cylc.flow.param_expand import NameExpander
 from cylc.flow.parsec.exceptions import ItemNotFoundError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
-from cylc.flow.pathutil import get_workflow_name_from_id
+from cylc.flow.pathutil import (
+    get_workflow_name_from_id,
+    get_cylc_run_dir,
+    is_relative_to,
+)
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
@@ -100,7 +104,6 @@ from cylc.flow.workflow_files import (
     NO_TITLE,
     WorkflowFiles,
     check_deprecation,
-    is_installed,
 )
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
@@ -235,14 +238,22 @@ class WorkflowConfig:
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None
     ) -> None:
+        """
+        Initialize the workflow config object.
+
+        Positional args:
+            workflow: workflow ID
+            fpath: workflow config file path
+             options: CLI options
+        """
         check_deprecation(Path(fpath))
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
-        self.workflow = workflow  # workflow id
+        self.workflow = workflow
         self.workflow_name = get_workflow_name_from_id(self.workflow)
-        self.fpath: Path = Path(fpath)  # workflow definition
+        self.fpath: Path = Path(fpath)
         self.fdir = str(self.fpath.parent)
         self.run_dir = run_dir
         self.log_dir = log_dir
@@ -1500,7 +1511,7 @@ class WorkflowConfig:
         }.items():
             os.environ[key] = value
 
-        if is_installed(self.fdir):
+        if is_relative_to(self.fdir, get_cylc_run_dir()):
             # This is an installed workflow.
             #  - self.run_dir is only defined by the scheduler
             #  - but the run dir exists, created at installation
@@ -1513,7 +1524,8 @@ class WorkflowConfig:
                 os.environ[key] = value
 
         if self.run_dir is not None:
-            # This is the scheduler; run sub-dirs must exist.
+            # Run directory is only defined if the scheduler is running; in
+            # which case the following run sub-directories must exist.
             for key, value in {
                 'CYLC_WORKFLOW_LOG_DIR': str(self.log_dir),
                 'CYLC_WORKFLOW_WORK_DIR': str(self.work_dir),
