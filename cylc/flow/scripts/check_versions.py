@@ -48,7 +48,7 @@ from cylc.flow.exceptions import NoHostsError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ def main(_, options: 'Values', *ids) -> None:
         workflow_id,
         flow_file,
         options,
-        load_template_vars(options.templatevars, options.templatevars_file))
+        get_template_vars(options))
 
     platforms = {
         config.get_config(['runtime', name, 'platform'])

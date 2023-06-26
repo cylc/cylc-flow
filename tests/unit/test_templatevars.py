@@ -16,11 +16,12 @@
 
 from pathlib import Path
 import pytest
+from pytest import param
 import tempfile
 import unittest
 
 from cylc.flow import __version__ as cylc_version
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import ServiceFileError, InputError
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.templatevars import (
     get_template_vars_from_db,
@@ -161,3 +162,61 @@ def test_get_old_tvars_fails_if_cylc_7_db(tmp_path):
     dbfile.touch()
     with pytest.raises(ServiceFileError, match='database is incompatible'):
         get_template_vars_from_db(tmp_path)
+
+
+@pytest.mark.parametrize(
+    'tvars_lists, expect',
+    (
+        param(
+            ['FOO=a,b,c'], {'FOO': ['a', 'b', 'c']},
+            id='basic'
+        ),
+        param(
+            ['FOO=a,"b,b",c'], {'FOO': ['a', 'b,b', 'c']},
+            id='contains-quotes'
+        ),
+    )
+)
+def test_load_var_lists(tvars_lists, expect):
+    """
+    load_template_vars should parse template vars lists and dump these
+    into template vars.
+    """
+    result = load_template_vars(templatevars_lists=tvars_lists)
+    assert result == expect
+
+
+def test_load_var_lists_warns_overwriting(caplog):
+    """It wars user if same tvar name used twice."""
+    load_template_vars(template_vars=["BAZ='HEY'", "BAZ='THERE'"])
+    assert 'BAZ' in caplog.records[-1].message
+    load_template_vars(templatevars_lists=['FOO=a,b', 'FOO=b,c'])
+    assert 'FOO' in caplog.records[-1].message
+
+
+def test_load_var_lists_fails():
+    """
+    load_template_vars should fail if the same var is set using -s and -z
+    """
+    errmsg = r"FOO=a and FOO=\['a', 'b'\]"
+    with pytest.raises(InputError, match=errmsg):
+        load_template_vars(
+            template_vars=['FOO="a"'],
+            templatevars_lists=['FOO=a,b']
+        )
+
+
+def test_load_vars_invalid_value_pairs():
+    with pytest.raises(InputError, match="FOO\n.*qux\n.*BAZ\n.*QUX"):
+        load_template_vars(
+            template_vars=['FOO', 'qux'],
+            templatevars_lists=['BAZ', 'QUX']
+        )
+
+
+def test_load_template_vars_ValueError_fm_file(monkeypatch):
+    from io import StringIO
+    handle = StringIO('Hello')
+    monkeypatch.setattr('builtins.open', lambda *_: handle)
+    with pytest.raises(InputError, match='Hello'):
+        load_template_vars(template_vars_file='foo')

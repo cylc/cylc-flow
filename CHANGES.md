@@ -21,6 +21,10 @@ issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
+-[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
+-a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
+-`cylc command -z X=a,bc,d`.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
