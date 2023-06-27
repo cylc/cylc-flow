@@ -1632,9 +1632,10 @@ def test_cylc_env_at_parsing(
 
     flow_file.write_text(flow_config)
 
-    monkeypatch.setattr(
-        'cylc.flow.config.is_installed',
-        lambda _: installed
+    # Make it looks as if path is relative to cylc-run (i.e. installed).
+    monkeypatch.setattrt (
+        'cylc.flow.config.is_relative_to',
+        lambda _a, _b: installed
     )
 
     # Parse the workflow config then check the environment.
