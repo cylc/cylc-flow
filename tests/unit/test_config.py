@@ -1581,7 +1581,7 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_SHARE_DIR': False,
                 'CYLC_WORKFLOW_LOG_DIR': False,
             },
-        id="source-dir"
+            id="source-dir"
         ),
         pytest.param(
             True,
@@ -1594,7 +1594,7 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_SHARE_DIR': False,
                 'CYLC_WORKFLOW_LOG_DIR': False,
             },
-        id="run-dir"
+            id="run-dir"
         ),
         pytest.param(
             True,
@@ -1607,7 +1607,7 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
                 'CYLC_WORKFLOW_SHARE_DIR': True,
                 'CYLC_WORKFLOW_LOG_DIR': True,
             },
-        id="run-dir-from-scheduler"
+            id="run-dir-from-scheduler"
         ),
     ]
 )
@@ -1633,7 +1633,7 @@ def test_cylc_env_at_parsing(
     flow_file.write_text(flow_config)
 
     # Make it looks as if path is relative to cylc-run (i.e. installed).
-    monkeypatch.setattrt (
+    monkeypatch.setattr(
         'cylc.flow.config.is_relative_to',
         lambda _a, _b: installed
     )

@@ -241,10 +241,10 @@ class WorkflowConfig:
         """
         Initialize the workflow config object.
 
-        Positional args:
+        Args:
             workflow: workflow ID
             fpath: workflow config file path
-             options: CLI options
+            options: CLI options
         """
         check_deprecation(Path(fpath))
         self.mem_log = mem_log_func
