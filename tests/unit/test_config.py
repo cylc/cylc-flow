@@ -22,6 +22,7 @@ import pytest
 import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
+from contextlib import suppress
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
@@ -1621,6 +1622,12 @@ def test_cylc_env_at_parsing(
     """Check that CYLC_ environment vars exported during config file parsing
        are appropriate to the workflow context (source, installed, or running).
     """
+
+    # Purge environment from previous tests.
+    for key in cylc_vars.keys():
+        with suppress(KeyError):
+            del os.environ[key]
+
     flow_file = tmp_path / WorkflowFiles.FLOW_FILE
     flow_config = """
     [scheduler]
@@ -1632,7 +1639,7 @@ def test_cylc_env_at_parsing(
 
     flow_file.write_text(flow_config)
 
-    # Make it looks as if path is relative to cylc-run (i.e. installed).
+    # Make it look as if path is relative to cylc-run (i.e. installed).
     monkeypatch.setattr(
         'cylc.flow.config.is_relative_to',
         lambda _a, _b: installed
