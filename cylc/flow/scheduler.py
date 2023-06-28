@@ -699,8 +699,8 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            await self.configure()
             self._configure_contact()
+            await self.configure()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
@@ -1807,7 +1807,11 @@ class Scheduler:
         sys.stdout.flush()
         sys.stderr.flush()
 
-        if self.contact_data and self.task_job_mgr:
+        if (
+            self.workflow_db_mgr.pri_path
+            and Path(self.workflow_db_mgr.pri_path).exists()
+        ):
+            # only attempt remote tidy if the workflow has been started
             self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         try:
