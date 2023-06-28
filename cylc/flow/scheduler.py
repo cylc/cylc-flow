@@ -1792,7 +1792,9 @@ class Scheduler:
         self.data_store_mgr.batch_deltas()
         self.data_store_mgr.apply_delta_batch()
         self.data_store_mgr.apply_delta_checksum()
-        self.data_store_mgr.publish_deltas = self.data_store_mgr.get_publish_deltas()
+        self.data_store_mgr.publish_deltas = (
+            self.data_store_mgr.get_publish_deltas()
+        )
         self.server.publish_queue.put(
             self.data_store_mgr.publish_deltas)
 
