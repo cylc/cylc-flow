@@ -1140,7 +1140,7 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
         WorkflowConfig(
             workflow=reg, fpath=flow_file, options=Values())
     assert (
-        'Invalid message trigger "[runtime][foo][outputs]x = '
+        'Invalid task message "[runtime][foo][outputs]x = '
         'the quick: brown fox"'
     ) in str(cm.value)
 

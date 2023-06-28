@@ -1655,10 +1655,25 @@ with Conf(
                 this section (:ref:`MessageTriggers`)
             '''):
                 Conf('<output>', VDR.V_STRING, desc='''
-                    Task output messages (:ref:`MessageTriggers`).
+                    Define custom task outputs (aka :ref:`MessageTriggers`).
 
-                    The item name is used to select the custom output
-                    message in graph trigger notation.
+                    :term:`custom outputs <custom output>` allow you to extend
+                    the built-in task outputs e.g. ``succeeded`` and ``failed``
+                    in order to provide more detailed information about task
+                    state. Custom outputs can be used to express dependencies
+                    in the graph as with built-in outputs.
+
+                    Custom outputs are defined in the form:
+
+                    .. code-block:: cylc
+
+                       output = message
+
+                    Where ``output`` is the name of the output as it is used in
+                    the graph, and ``message`` is the task message sent by
+                    the ``cylc message`` command which tells Cylc that this
+                    output has been completed. See :ref:`MessageTriggers` for
+                    more details.
 
                     Examples:
 
@@ -1667,10 +1682,13 @@ with Conf(
                        out1 = "sea state products ready"
                        out2 = "NWP restart files completed"
 
-                    Task outputs are validated by
-                    :py:class:`cylc.flow.unicode_rules.TaskOutputValidator`.
+                    Custom outputs must satisfy these rules:
 
                     .. autoclass:: cylc.flow.unicode_rules.TaskOutputValidator
+
+                    Task messages must satisfy these rules:
+
+                    .. autoclass:: cylc.flow.unicode_rules.TaskMessageValidator
                 ''')
 
             with Conf('parameter environment templates', desc='''

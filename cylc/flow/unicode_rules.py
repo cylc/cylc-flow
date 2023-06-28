@@ -22,6 +22,7 @@ from cylc.flow.task_id import (
     _TASK_NAME_CHARACTERS,
     _TASK_NAME_PREFIX,
 )
+from cylc.flow.task_qualifiers import TASK_QUALIFIERS
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
@@ -175,7 +176,39 @@ def not_starts_with(string):
     )
 
 
-def not_equals(string):
+def _human_format_list(lst):
+    """Write a list in plain text.
+
+    Examples:
+        >>> _human_format_list(['a'])
+        'a'
+        >>> _human_format_list(['a', 'b'])
+        'a or b'
+        >>> _human_format_list(['a', 'b', 'c'])
+        'a, b or c'
+
+    """
+    if len(lst) > 1:
+        return ', '.join(lst[:-1]) + f' or {lst[-1]}'
+    return lst[0]
+
+
+def _re_format_list(lst):
+    """Write a list in regex format.
+
+    Examples:
+        >>> _re_format_list('a')
+        '(a)'
+        >>> _re_format_list(['a', 'b'])
+        '(a|b)'
+        >>> _re_format_list(['a', 'b', 'c'])
+        '(a|b|c)'
+
+    """
+    return f"({'|'.join(map(re.escape, lst))})"
+
+
+def not_equals(*strings):
     """Restrict entire string.
 
     Example:
@@ -188,6 +221,13 @@ def not_equals(string):
         >>> bool(regex.match('foo'))
         False
 
+        Regular use (multi):
+        >>> regex, message = not_equals('foo', 'bar', 'baz')
+        >>> regex.pattern
+        '^(?!^(foo|bar|baz)$).*$'
+        >>> message
+        'cannot be: ``foo, bar or baz``'
+
         Note regex chars are escaped automatically:
         >>> regex, message = not_equals('...')
         >>> bool(regex.match('...'))
@@ -197,8 +237,9 @@ def not_equals(string):
 
     """
     return (
-        re.compile(rf'^(?!{re.escape(string)}$).*$'),
-        f'cannot be: ``{string}``'
+        re.compile(rf'^(?!^{_re_format_list(strings)}$).*$'),
+        # rf'^(?!{_re_format_list(strings)})$'),
+        f'cannot be: ``{_human_format_list(strings)}``'
     )
 
 
@@ -288,7 +329,13 @@ class TaskMessageValidator(UnicodeRuleChecker):
     """The rules for valid task messages:"""
 
     RULES = [
-        disallow_char_if_not_at_end_of_first_word(':')
+        # <severity>:<message> e.g. "WARN: something went wrong
+        disallow_char_if_not_at_end_of_first_word(':'),
+        # blacklist built-in qualifiers
+        # (techincally we need only blacklist task messages, however, to avoid
+        # confusion it's best to blacklist qualifiers too)
+        not_equals(*TASK_QUALIFIERS),
+        not_starts_with('_cylc'),
     ]
 
 
@@ -296,7 +343,14 @@ class TaskOutputValidator(UnicodeRuleChecker):
     """The rules for valid task outputs/message triggers:"""
 
     RULES = [
-        disallowed_characters(':')
+        # restrict outputs to sensible characters
+        allowed_characters(r'\w', r'\d', r'\-', r'\.'),
+        # blacklist the _cylc prefix
+        not_starts_with('_cylc'),
+        # blacklist keywords
+        not_equals('required', 'optional', 'all'),
+        # blacklist built-in task qualifiers
+        not_equals(*TASK_QUALIFIERS),
     ]
 
 

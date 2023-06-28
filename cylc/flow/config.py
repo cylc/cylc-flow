@@ -98,6 +98,7 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
     TaskNameValidator,
     TaskOutputValidator,
+    TaskMessageValidator,
     XtriggerNameValidator,
 )
 from cylc.flow.wallclock import (
@@ -2244,10 +2245,17 @@ class WorkflowConfig:
                 for output, message in (
                     self.cfg['runtime'][name]['outputs'].items()
                 ):
-                    valid, msg = TaskOutputValidator.validate(message)
+                    valid, msg = TaskOutputValidator.validate(output)
                     if not valid:
                         raise WorkflowConfigError(
-                            f'Invalid message trigger "'
+                            f'Invalid task output "'
+                            f'[runtime][{name}][outputs]'
+                            f'{output} = {message}" - {msg}'
+                        )
+                    valid, msg = TaskMessageValidator.validate(message)
+                    if not valid:
+                        raise WorkflowConfigError(
+                            f'Invalid task message "'
                             f'[runtime][{name}][outputs]'
                             f'{output} = {message}" - {msg}'
                         )

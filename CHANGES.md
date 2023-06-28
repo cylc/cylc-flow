@@ -59,6 +59,10 @@ enhancements to `cylc lint`:
 
 ### Fixes
 
+[#5605](https://github.com/cylc/cylc-flow/pull/5605) -
+Task outputs and messages are now validated to avoid conflicts with built-in
+outputs, messages, qualifiers and Cylc keywords.
+
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.
 
