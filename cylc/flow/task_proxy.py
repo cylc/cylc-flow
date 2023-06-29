@@ -390,12 +390,9 @@ class TaskProxy:
         """Is this task ready to run?
 
         Takes account of all dependence: on other tasks, xtriggers, and
-        old-style ext-triggers. Or, manual triggering.
+        old-style ext-triggers.
 
         """
-        if self.is_manual_submit:
-            # Manually triggered, ignore unsatisfied prerequisites.
-            return (True,)
         if self.state.is_held:
             # A held task is not ready to run.
             return (False,)

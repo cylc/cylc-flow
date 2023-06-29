@@ -81,6 +81,7 @@ if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
+    from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
@@ -99,7 +100,8 @@ class TaskPool:
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
         data_store_mgr: 'DataStoreMgr',
-        flow_mgr: 'FlowMgr'
+        flow_mgr: 'FlowMgr',
+        xtrigger_mgr: 'XtriggerManager'
     ) -> None:
         self.tokens = tokens
         self.config: 'WorkflowConfig' = config
@@ -110,6 +112,7 @@ class TaskPool:
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
+        self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
 
         self.do_reload = False
         self.max_future_offset: Optional['IntervalBase'] = None
@@ -259,35 +262,29 @@ class TaskPool:
         self.data_store_mgr.delta_task_queued(itask)
         self.data_store_mgr.delta_task_runahead(itask)
 
-    def release_runahead_tasks(self):
-        """Release tasks below the runahead limit.
+    def release_runahead_tasks(self) -> bool:
+        """Release all runhead-limited tasks that are now below the limit.
 
         Return True if any tasks are released, else False.
-        Call when RH limit changes.
+        Call this method whenever the runahead limit changes.
         """
         if not self.main_pool or not self.runahead_limit_point:
             # (At start-up main pool might not exist yet)
             return False
 
         released = False
-
         # An intermediate list is needed here: auto-spawning of parentless
         # tasks can cause the task pool to change size during iteration.
         release_me = [
             itask
             for point, itask_id_map in self.main_pool.items()
             for itask in itask_id_map.values()
-            if point <= self.runahead_limit_point
             if itask.state.is_runahead
+            if point <= self.runahead_limit_point
         ]
 
         for itask in release_me:
-            self.rh_release_and_queue(itask)
-            self.spawn_to_rh_limit(
-                itask.tdef,
-                itask.tdef.next_point(itask.point),
-                itask.flow_nums
-            )
+            self.runahead_release(itask)
             released = True
 
         return released
@@ -585,7 +582,7 @@ class TaskPool:
                 )
                 or itask.is_manual_submit
             ):
-                self.rh_release_and_queue(itask)
+                self.runahead_release(itask)
 
             self.compute_runahead()
             self.release_runahead_tasks()
@@ -679,17 +676,19 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def rh_release_and_queue(self, itask) -> None:
-        """Release a task from runahead limiting, and queue it if ready.
+    def runahead_release(self, itask: TaskProxy) -> None:
+        """Release a specific task from runahead limiting, on demand.
 
-        Check the task against the RH limit before calling this method (in
-        forced triggering we need to release even if beyond the limit).
+        Can be called to force-trigger tasks beyond the runahead limit.
         """
         if itask.state_reset(is_runahead=False):
             self.data_store_mgr.delta_task_runahead(itask)
-        if all(itask.is_ready_to_run()):
-            # (otherwise waiting on xtriggers etc.)
-            self.queue_task(itask)
+            self.spawn_to_rh_limit(
+                itask.tdef,
+                itask.tdef.next_point(itask.point),
+                itask.flow_nums
+            )
+        self.queue_if_ready(itask)
 
     def _get_spawned_or_merged_task(
         self, point: 'PointBase', name: str, flow_nums: 'FlowNums'
@@ -709,10 +708,13 @@ class TaskPool:
         return ntask  # may be None
 
     def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
-        """Spawn parentless task instances from point to runahead limit."""
+        """Spawn parentless instances of tdef out to the runahead limit.
+
+        Tasks can be parented in some cycles and not in others so we have to
+        check future instances of every task ( maybe we shouldn't allow this!)
+        """
         if not flow_nums or point is None:
-            # Force-triggered no-flow task.
-            # Or called with an invalid next_point.
+            # Force-triggered no-flow task, or invalid point.
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
@@ -722,11 +724,13 @@ class TaskPool:
                     point, tdef.name, flow_nums
                 )
                 if ntask is not None:
+                    ntask.state_reset(is_runahead=False)
+                    self.data_store_mgr.delta_task_runahead(ntask)
                     self.add_to_pool(ntask)
-                    self.rh_release_and_queue(ntask)
+                    self.queue_if_ready(ntask)
             point = tdef.next_point(point)
 
-        # Once more (for the rh-limited task: don't rh release it!)
+        # The last task is runahead limited (don't release or queue it)
         if point is not None and tdef.is_parentless(point):
             ntask = self._get_spawned_or_merged_task(
                 point, tdef.name, flow_nums
@@ -833,11 +837,20 @@ class TaskPool:
                 return itask_ids[id_]
         return None
 
-    def queue_task(self, itask: TaskProxy) -> None:
-        """Queue a task that is ready to run."""
-        if itask.state_reset(is_queued=True):
-            self.data_store_mgr.delta_task_queued(itask)
-            self.task_queue_mgr.push_task(itask)
+    def queue_if_ready(self, itask: TaskProxy) -> None:
+        """Queue a task if ready to run and not already queued.
+
+        Call the method after any event that could affect a task's readiness.
+        """
+        if (
+            itask.state.is_runahead
+            or itask.state.is_queued
+            or not all(itask.is_ready_to_run())
+        ):
+            return
+        itask.state_reset(is_queued=True)
+        self.data_store_mgr.delta_task_queued(itask)
+        self.task_queue_mgr.push_task(itask)
 
     def release_queued_tasks(self):
         """Return list of queue-released tasks awaiting job prep.
@@ -1005,12 +1018,7 @@ class TaskPool:
         for itask in self.get_tasks():
             # Recreate data store elements from main pool.
             self.create_data_store_elements(itask)
-            if itask.state.is_queued:
-                # Already queued
-                continue
-            ready_check_items = itask.is_ready_to_run()
-            if all(ready_check_items) and not itask.state.is_runahead:
-                self.queue_task(itask)
+            self.queue_if_ready(itask)
 
         self.do_reload = False
 
@@ -1183,8 +1191,7 @@ class TaskPool:
     def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=False):
             self.data_store_mgr.delta_task_held(itask)
-            if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
-                self.queue_task(itask)
+            self.queue_if_ready(itask)
         self.tasks_to_hold.discard((itask.tdef.name, itask.point))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
@@ -1331,7 +1338,7 @@ class TaskPool:
                     self.add_to_pool(t)
 
                     if t.point <= self.runahead_limit_point:
-                        self.rh_release_and_queue(t)
+                        self.runahead_release(t)
 
                     # Event-driven suicide.
                     if (
@@ -1447,7 +1454,7 @@ class TaskPool:
                     self.runahead_limit_point is not None
                     and c_task.point <= self.runahead_limit_point
                 ):
-                    self.rh_release_and_queue(c_task)
+                    self.runahead_release(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
@@ -1647,14 +1654,25 @@ class TaskPool:
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ) -> int:
-        """Manual task triggering.
+        """Forced (manual) task triggering.
 
-        Don't get a new flow number for existing n=0 tasks (e.g. incomplete
-        tasks). These can carry on in the original flow if retriggered.
+        - If a task has unsatisfied prerequisites, triggering will satisfy them
+        - Otherwise, it will satisfy any unsatisfied xtriggers
+        - Otherwise, it will submit the task to run despite queue limiting
 
-        Queue the task if not queued, otherwise release it to run.
+        If a task has unsatisfied prerequisites and xtriggers, and belongs to a
+        limited queue, you may need to trigger it three times to make it run
+        immediately.
+
+        The runahead limit is ignored (i.e., you can trigger tasks beyond it).
+
+        Tasks in the active window already belong to a flow. Others belong to
+        all active flows by default. See --flow for other options.
+
+        Triggering an active task has no effect (it is already triggered).
 
         """
+        # Process provided flow options.
         if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):
             if len(flow) != 1:
                 LOG.warning(
@@ -1677,16 +1695,16 @@ class TaskPool:
                 )
                 return 0
 
-        # n_warnings, task_items = self.match_taskdefs(items)
+        # Attempt to match target tasks.
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
             future=True,
             warn=False,
         )
 
-        # Spawn future tasks.
         for name, point in future_tasks:
-            # (Flow values already validated by the trigger client).
+            # Trigger future_tasks with prerequisites satisfied.
+            # These will be spawned as runahead limited.
             itask = self.spawn_task(
                 name,
                 point,
@@ -1697,32 +1715,92 @@ class TaskPool:
             )
             if itask is None:
                 continue
-            itasks.append(itask)
+            itask.is_manual_submit = True
+            msg = "Force-satisfying prerequisites."
+            if itask.state.xtriggers or itask.state.external_triggers:
+                # these can't be satisfied as we just spawned the task
+                msg += (
+                    "\nYou may need to trigger this task again"
+                    " to force-satisfy external triggers."
+                )
+            msg += (
+                "\nYou may need to trigger this task again"
+                " to override queue limits."
+            )
+            LOG.warning(f"[{itask}] - {msg}")
+            itask.state.set_prerequisites_all_satisfied()
+            self.add_to_pool(itask)
+            self.runahead_release(itask)
 
-        # Trigger matched tasks if not already active.
         for itask in itasks:
+            # Trigger existing n=0 tasks.
+            # These might not be runahead limited.
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
                 continue
+
             itask.is_manual_submit = True
-            itask.reset_try_timers()
-            # (If None, spawner reports cycle bounds errors).
-            if itask.state_reset(TASK_STATUS_WAITING):
-                # (could also be unhandled failed)
-                self.data_store_mgr.delta_task_state(itask)
-            # (No need to set prerequisites satisfied here).
             self.add_to_pool(itask)  # move from hidden if necessary.
-            if itask.state.is_runahead:
-                # Release from runahead, and queue it.
-                self.rh_release_and_queue(itask)
-                self.spawn_to_rh_limit(
-                    itask.tdef,
-                    itask.tdef.next_point(itask.point),
-                    itask.flow_nums
+
+            if itask.state_reset(TASK_STATUS_WAITING):
+                # We're retriggering an incomplete task.
+                self.data_store_mgr.delta_task_state(itask)
+                itask.reset_try_timers()
+
+            # Satisfy prerequisites, if any.
+            if itask.is_task_prereqs_not_done():
+                msg = "Force-satisfying prerequisites."
+                if (
+                    not itask.state.xtriggers_all_satisfied()
+                    or not itask.state.external_triggers_all_satisfied()
+                ):
+                    msg += (
+                        "\nYou may need to trigger this task again"
+                        " to force-satisfy external triggers."
+                    )
+                msg += (
+                    "\nYou may need to trigger this task again"
+                    " to override queue limits."
                 )
-            else:
-                # De-queue it to run now.
+                LOG.warning(f"[{itask}] - {msg}")
+                itask.state.set_prerequisites_all_satisfied()
+                self.runahead_release(itask)
+                continue
+
+            # Satisfy xtriggers and ext-triggers, if any.
+            # (Let's log both kinds as "external triggers')
+            extrigs_forced = False
+            if (
+                itask.state.xtriggers and
+                not itask.state.xtriggers_all_satisfied()
+            ):
+                itask.state.xtriggers_set_all_satisfied()
+                self.xtrigger_mgr.housekeep(self.get_tasks())
+                self.runahead_release(itask)
+                extrigs_forced = True
+
+            if (
+                itask.state.external_triggers and
+                not itask.state.external_triggers_all_satisfied()
+            ):
+                itask.state.external_triggers_set_all_satisfied()
+                self.runahead_release(itask)
+                extrigs_forced = True
+
+            if extrigs_forced:
+                LOG.warning(
+                    f"[{itask}] - Force-satisfying external triggers."
+                    "\nYou may need to trigger this task again"
+                    " to force queue-release."
+                )
+                continue
+
+            # Queue, or queue-release if already queued.
+            if itask.state.is_queued:
+                LOG.warning(f"[{itask}] - Forcing queue release.")
                 self.task_queue_mgr.force_release_task(itask)
+            else:
+                self.queue_if_ready(itask)
 
         return len(unmatched)
 
@@ -2056,7 +2134,7 @@ class TaskPool:
             # Re-queue incomplete task to run again in the merged flow.
             LOG.info(f"[{itask}] incomplete task absorbed by new flow.")
             itask.state_reset(TASK_STATUS_WAITING)
-            self.queue_task(itask)
+            self.queue_if_ready(itask)
             self.data_store_mgr.delta_task_state(itask)
 
         elif merge_with_no_flow or itask.flow_wait:

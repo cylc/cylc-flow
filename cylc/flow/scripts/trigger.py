@@ -17,18 +17,22 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run despite unsatisfied prerequisites.
+Force tasks to run despite the runahead limit, unsatisfied prerequisites,
+xtriggers, and queue limiting.
 
-* Triggering an unqueued waiting task queues it, regardless of prerequisites.
-* Triggering a queued task submits it, regardless of queue limiting.
-* Triggering an active task has no effect (it already triggered).
+- If a task has unsatisfied prerequisites, triggering will satisfy them
+- Otherwise, it will satisfy any unsatisfied xtriggers
+- Otherwise, it will submit the task to run despite queue limiting
 
-Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them queues them to run (or rerun) in the same flow.
+If a task has unsatisfied prerequisites and xtriggers, and belongs to a limited
+queue, you may need to trigger it three times to make it run immediately.
 
-Beyond n=0, triggered tasks get all current active flow numbers by default, or
-specified flow numbers via the --flow option. Those flows - if/when they catch
-up - will see tasks that ran after triggering event as having run already.
+The runahead limit is ignored (i.e., you can trigger tasks beyond the limit).
+
+Tasks in the n=0 window already belong to a flow. Others will be assigned all
+current active flows by default (see --flow for other options).
+
+Triggering an active task has no effect (it is already triggered).
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -98,10 +102,11 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--flow", action="append", dest="flow", metavar="FLOW",
-        help=f"Assign the triggered task to all active flows ({FLOW_ALL});"
-             f" no flow ({FLOW_NONE}); a new flow ({FLOW_NEW});"
-             f" or a specific flow (e.g. 2). The default is {FLOW_ALL}."
-             " Reuse the option to assign multiple specific flows."
+        help=f"If the target task does not already belong to a flow,"
+             f" assign it to all active flows ({FLOW_ALL});"
+             f" or to no flow ({FLOW_NONE}); or to a new flow ({FLOW_NEW});"
+             f" or to a specific flow (e.g. 2). The default is {FLOW_ALL}."
+             " Reuse the option to assign to multiple specific flows."
     )
 
     parser.add_option(
