@@ -240,8 +240,7 @@ class NameExpander:
         """
         param_list = []
 
-        def _parse_replacement(match: re.Match) -> str:
-            nonlocal param_list
+        for match in REC_P_GROUP.finditer(task_str):
             param = match.group(1)
             if ',' in param:
                 # parameter syntax `<foo, bar>`
@@ -259,11 +258,10 @@ class NameExpander:
                     replacement = '{' + param.split('=')[0] + '}'
                 else:
                     replacement = '{' + param + '}'
-            return replacement
 
-        replacement = REC_P_GROUP.sub(_parse_replacement, task_str)
+            task_str = task_str.replace(match.group(0), replacement, 1)
 
-        return param_list, replacement
+        return param_list, task_str
 
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
