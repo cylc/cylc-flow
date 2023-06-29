@@ -29,8 +29,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        # return to 3.x once compatible with 3.10+ (pyuv)
-        python-version: '3.9'
+        python-version: '3.x'
 
     - name: Get the version number
       uses: cylc/release-actions/stage-2/get-version-from-pr@v1
@@ -39,7 +38,7 @@ jobs:
       uses: cylc/release-actions/build-python-package@v1
 
     - name: Publish distribution to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.6.4
+      uses: pypa/gh-action-pypi-publish@v1.8.7
       with:
         user: __token__ # uses the API token feature of PyPI - least permissions possible
         password: ${{ secrets.PYPI_TOKEN }}

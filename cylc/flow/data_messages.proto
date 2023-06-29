@@ -195,12 +195,6 @@ message PbOutput {
     optional double time = 4;
 }
 
-message PbClockTrigger {
-    optional double time = 1;
-    optional string time_string = 2;
-    optional bool satisfied = 3;
-}
-
 message PbTrigger {
     optional string id = 1;
     optional string label = 2;
@@ -227,7 +221,6 @@ message PbTaskProxy {
     repeated string edges = 18;
     repeated string ancestors = 19;
     optional string flow_nums = 20;
-    optional PbClockTrigger clock_trigger = 22;
     map<string, PbTrigger> external_triggers = 23;
     map<string, PbTrigger> xtriggers = 24;
     optional bool is_queued = 25;

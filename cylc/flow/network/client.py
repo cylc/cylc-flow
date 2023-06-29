@@ -30,8 +30,8 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
+    ContactFileExists,
     CylcError,
-    ServiceFileError,
     WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
@@ -147,7 +147,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         # behind a contact file?
         try:
             detect_old_contact_file(self.workflow)
-        except (AssertionError, ServiceFileError):
+        except ContactFileExists:
             # old contact file exists and the workflow process still alive
             return
         else:
@@ -305,7 +305,9 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if msg['command'] in PB_METHOD_MAP:
             response = {'data': res}
         else:
-            response = decode_(res.decode())
+            response = decode_(
+                res.decode() if isinstance(res, bytes) else res
+            )
         LOG.debug('zmq:recv %s', response)
 
         try:
@@ -316,8 +318,8 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                 {'message': f'Received invalid response: {response}'},
             )
             raise ClientError(
-                error.get('message'),
-                error.get('traceback'),
+                error.get('message'),  # type: ignore
+                error.get('traceback'),  # type: ignore
             )
 
     def get_header(self) -> dict:

@@ -18,7 +18,6 @@
 import asyncio
 from contextlib import suppress
 from collections import deque
-from dataclasses import dataclass
 from optparse import Values
 import os
 from pathlib import Path
@@ -161,7 +160,6 @@ class SchedulerError(CylcError):
     """Scheduler expected error stop."""
 
 
-@dataclass
 class Scheduler:
     """Cylc scheduler server."""
 
@@ -273,10 +271,11 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = Tokens(
+        self.tokens = Tokens(
             user=self.owner,
             workflow=self.workflow,
-        ).id
+        )
+        self.id = self.tokens.id
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -462,6 +461,7 @@ class Scheduler:
                 get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
+            self.tokens,
             self.config,
             self.workflow_db_mgr,
             self.task_events_mgr,
@@ -653,8 +653,23 @@ class Scheduler:
                 LOG.exception(exc)
                 raise
 
-        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
-            # Includes SchedulerError
+        except (KeyboardInterrupt, asyncio.CancelledError) as exc:
+            await self.handle_exception(exc)
+
+        except CylcError as exc:  # Includes SchedulerError
+            # catch "expected" errors
+            await self.handle_exception(exc)
+
+        except Exception as exc:
+            # catch "unexpected" errors
+            with suppress(Exception):
+                LOG.critical(
+                    'An uncaught error caused Cylc to shut down.'
+                    '\nIf you think this was an issue in Cylc,'
+                    ' please report the following traceback to the developers.'
+                    '\nhttps://github.com/cylc/cylc-flow/issues/new'
+                    '?assignees=&labels=bug&template=bug.md&title=;'
+                )
             await self.handle_exception(exc)
 
         else:
@@ -684,8 +699,8 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            await self.configure()
             self._configure_contact()
+            await self.configure()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
@@ -1118,7 +1133,7 @@ class Scheduler:
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
         # one is starting
-        # NOTE: raises ServiceFileError if workflow is running
+        # NOTE: raises ContactFileExists if workflow is running
         workflow_files.detect_old_contact_file(self.workflow)
 
         # Extract contact data.
@@ -1602,13 +1617,6 @@ class Scheduler:
                 ):
                     self.pool.queue_task(itask)
 
-                # Old-style clock-trigger tasks:
-                if (
-                    itask.tdef.clocktrigger_offset is not None
-                    and all(itask.is_ready_to_run())
-                ):
-                    self.pool.queue_task(itask)
-
             if housekeep_xtriggers:
                 # (Could do this periodically?)
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
@@ -1799,6 +1807,13 @@ class Scheduler:
         sys.stdout.flush()
         sys.stderr.flush()
 
+        if (
+            self.workflow_db_mgr.pri_path
+            and Path(self.workflow_db_mgr.pri_path).exists()
+        ):
+            # only attempt remote tidy if the workflow has been started
+            self.task_job_mgr.task_remote_mgr.remote_tidy()
+
         try:
             # Remove ZMQ keys from scheduler
             LOG.debug("Removing authentication keys from scheduler")
@@ -1826,8 +1841,6 @@ class Scheduler:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
                 self.contact_data = None
-            if self.task_job_mgr:
-                self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         # The getattr() calls and if tests below are used in case the
         # workflow is not fully configured before the shutdown is called.

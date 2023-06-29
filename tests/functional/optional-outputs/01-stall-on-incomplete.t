@@ -26,7 +26,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
+    cylc play --no-detach --reference-test --debug "${WORKFLOW_NAME}"
 
 LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 grep_ok "Incomplete tasks" "${LOG}"

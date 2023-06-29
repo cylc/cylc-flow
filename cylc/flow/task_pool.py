@@ -94,13 +94,14 @@ class TaskPool:
 
     def __init__(
         self,
+        tokens: 'Tokens',
         config: 'WorkflowConfig',
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
         data_store_mgr: 'DataStoreMgr',
         flow_mgr: 'FlowMgr'
     ) -> None:
-
+        self.tokens = tokens
         self.config: 'WorkflowConfig' = config
         self.stop_point = config.stop_point or config.final_point
         self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
@@ -311,12 +312,17 @@ class TaskPool:
         changed (needed if max_future_offset changed, or on reload).
         """
         points: List['PointBase'] = []
+        sequence_points: Set['PointBase']
         if not self.main_pool:
             # Start at first point in each sequence, after the initial point.
-            points = list({
-                seq.get_first_point(self.config.start_point)
-                for seq in self.config.sequences
-            })
+            points = [
+                point
+                for point in {
+                    seq.get_first_point(self.config.start_point)
+                    for seq in self.config.sequences
+                }
+                if point is not None
+            ]
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
@@ -471,6 +477,7 @@ class TaskPool:
          outputs_str) = row
         try:
             itask = TaskProxy(
+                self.tokens,
                 self.config.get_taskdef(name),
                 get_point(cycle),
                 deserialise(flow_nums),
@@ -791,7 +798,7 @@ class TaskPool:
                 self._hidden_pool_list.extend(list(itask_id_maps.values()))
         return self._hidden_pool_list
 
-    def get_tasks_by_point(self):
+    def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.main_pool.items():
@@ -963,8 +970,12 @@ class TaskPool:
                     )
             else:
                 new_task = TaskProxy(
+                    self.tokens,
                     self.config.get_taskdef(itask.tdef.name),
-                    itask.point, itask.flow_nums, itask.state.status)
+                    itask.point,
+                    itask.flow_nums,
+                    itask.state.status,
+                )
                 itask.copy_to_reload_successor(
                     new_task,
                     self.check_task_output,
@@ -998,11 +1009,6 @@ class TaskPool:
                 # Already queued
                 continue
             ready_check_items = itask.is_ready_to_run()
-            # Use this periodic checking point for data-store delta
-            # creation, some items aren't event driven (i.e. clock).
-            if itask.tdef.clocktrigger_offset is not None:
-                self.data_store_mgr.delta_task_clock_trigger(
-                    itask, ready_check_items)
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
 
@@ -1518,12 +1524,13 @@ class TaskPool:
             return None
 
         itask = TaskProxy(
+            self.tokens,
             taskdef,
             point,
             flow_nums,
             submit_num=submit_num,
             is_manual_submit=is_manual_submit,
-            flow_wait=flow_wait
+            flow_wait=flow_wait,
         )
         if (name, point) in self.tasks_to_hold:
             LOG.info(f"[{itask}] holding (as requested earlier)")
@@ -1599,17 +1606,30 @@ class TaskPool:
         n_warnings, task_items = self.match_taskdefs(items)
         for (_, point), taskdef in sorted(task_items.items()):
             # This the parent task:
-            itask = TaskProxy(taskdef, point, flow_nums=flow_nums)
+            itask = TaskProxy(
+                self.tokens,
+                taskdef,
+                point,
+                flow_nums=flow_nums,
+            )
             # Spawn children of selected outputs.
             for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:
                     LOG.info(f"[{itask}] Forced spawning on {out}")
                     self.spawn_on_output(itask, out, forced=True)
 
-    def _get_active_flow_nums(self):
+    def _get_active_flow_nums(self) -> Set[int]:
+        """Return all active, or most recent previous, flow numbers.
+
+        If there are any active flows, return all active flow numbers.
+        Otherwise (e.g. on restarting a completed workflow) return
+        the flow numbers of the most recent previous active task.
+        """
         fnums = set()
         for itask in self.get_all_tasks():
             fnums.update(itask.flow_nums)
+        if not fnums:
+            fnums = self.workflow_db_mgr.pri_dao.select_latest_flow_nums()
         return fnums
 
     def remove_tasks(self, items):
@@ -1724,9 +1744,12 @@ class TaskPool:
                 conf = itask.tdef.rtconfig['simulation']
                 job_d = itask.tokens.duplicate(job=str(itask.submit_num))
                 now_str = get_current_time_string()
-                if (itask.point in conf['fail cycle points'] and
-                        (itask.get_try_num() == 1 or
-                         not conf['fail try 1 only'])):
+                if (
+                    conf['fail cycle points'] is None  # i.e. "all"
+                    or itask.point in conf['fail cycle points']
+                ) and (
+                    itask.get_try_num() == 1 or not conf['fail try 1 only']
+                ):
                     message_queue.put(
                         TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
                     )

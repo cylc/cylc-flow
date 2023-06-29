@@ -395,7 +395,11 @@ def print_license() -> None:
     try:
         from importlib.metadata import files
     except ImportError:
-        from importlib_metadata import files
+        # BACK COMPAT: importlib_metadata
+        #   importlib.metadata was added in Python 3.8
+        # FROM: Python 3.7
+        # TO: Python: 3.8
+        from importlib_metadata import files  # type: ignore[no-redef]
     license_file = next(filter(
         lambda f: f.name == 'COPYING', files('cylc-flow')
     ))

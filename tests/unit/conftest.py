@@ -28,11 +28,13 @@ from cylc.flow.cycling.loader import (
     INTEGER_CYCLING_TYPE
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.install import (
+    link_runN,
+    unlink_runN,
+)
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.workflow_files import (
     WorkflowFiles,
-    link_runN,
-    unlink_runN,
 )
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
@@ -201,4 +203,12 @@ def xtrigger_mgr() -> XtriggerManager:
         data_store_mgr=DataStoreMgr(
             create_autospec(Scheduler, workflow=workflow_name, owner=user)
         )
+    )
+
+
+@pytest.fixture()
+def prevent_symlinking(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.make_symlink_dir',
+        lambda *_, **__: {}
     )

@@ -25,7 +25,7 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbPrerequisite,
     PbCondition,
 )
-from cylc.flow.id import Tokens
+from cylc.flow.id import quick_relative_detokenise
 
 
 class Prerequisite:
@@ -41,9 +41,12 @@ class Prerequisite:
     """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["satisfied", "_all_satisfied",
-                 "target_point_strings",
-                 "conditional_expression", "point"]
+    __slots__ = (
+        "satisfied",
+        "_all_satisfied",
+        "conditional_expression",
+        "point",
+    )
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
@@ -57,9 +60,6 @@ class Prerequisite:
         # The cycle point to which this prerequisite belongs.
         # cylc.flow.cycling.PointBase
         self.point = point
-
-        # List of cycle point strings that this prerequisite depends on.
-        self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
         # {('point string', 'task name', 'output'): DEP_STATE_X, ...}
@@ -106,8 +106,6 @@ class Prerequisite:
             self.satisfied[message] = self.DEP_STATE_UNSATISFIED
         if self._all_satisfied is not None:
             self._all_satisfied = False
-        if point and str(point) not in self.target_point_strings:
-            self.target_point_strings.append(str(point))
 
     def get_raw_conditional_expression(self):
         """Return a representation of this prereq as a string.
@@ -216,39 +214,41 @@ class Prerequisite:
         if not self.satisfied:
             return None
         if self.conditional_expression:
-            temp = self.get_raw_conditional_expression()
-            temp = temp.replace('|', ' | ')
-            temp = temp.replace('&', ' & ')
+            expr = (
+                self.get_raw_conditional_expression()
+            ).replace('|', ' | ').replace('&', ' & ')
         else:
-            for s_msg in self.satisfied:
-                temp = self.MESSAGE_TEMPLATE % s_msg
+            expr = ' & '.join(
+                self.MESSAGE_TEMPLATE % s_msg
+                for s_msg in self.satisfied
+            )
         conds = []
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             point, name = message_tuple[0:2]
-            t_id = Tokens(cycle=str(point), task=name).relative_id
+            t_id = quick_relative_detokenise(point, name)
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
             c_bool = bool(c_val)
             if c_bool is False:
                 c_val = "unsatisfied"
-            cond = PbCondition(
-                task_proxy=t_id,
-                expr_alias=char,
-                req_state=message_tuple[2],
-                satisfied=c_bool,
-                message=c_val,
+            conds.append(
+                PbCondition(
+                    task_proxy=t_id,
+                    expr_alias=char,
+                    req_state=message_tuple[2],
+                    satisfied=c_bool,
+                    message=c_val,
+                )
             )
-            conds.append(cond)
-            temp = temp.replace(c_msg, char)
-        prereq_buf = PbPrerequisite(
-            expression=temp,
+            expr = expr.replace(c_msg, char)
+        return PbPrerequisite(
+            expression=expr,
             satisfied=self.is_satisfied(),
+            conditions=conds,
+            cycle_points=sorted(self.iter_target_point_strings()),
         )
-        prereq_buf.conditions.extend(conds)
-        prereq_buf.cycle_points.extend(self.target_point_strings)
-        return prereq_buf
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.
@@ -264,25 +264,18 @@ class Prerequisite:
         else:
             self._all_satisfied = self._conditional_is_satisfied()
 
-    def set_not_satisfied(self):
-        """Force this prerequisite into the un-satisfied state.
-
-        State can be overridden by calling `self.satisfy_me`.
-
-        """
-        for message in self.satisfied:
-            self.satisfied[message] = self.DEP_STATE_UNSATISFIED
-        if not self.satisfied:
-            self._all_satisfied = True
-        elif self.conditional_expression is None:
-            self._all_satisfied = False
-        else:
-            self._all_satisfied = self._conditional_is_satisfied()
+    def iter_target_point_strings(self):
+        yield from {
+            message[0]
+            for message in self.satisfied
+        }
 
     def get_target_points(self):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return [get_point(p) for p in self.target_point_strings]
+        return [
+            get_point(p) for p in self.iter_target_point_strings()
+        ]
 
     def get_resolved_dependencies(self):
         """Return a list of satisfied dependencies.
