@@ -59,6 +59,10 @@ enhancements to `cylc lint`:
 
 ### Fixes
 
+[#5604](https://github.com/cylc/cylc-flow/pull/5604) -
+Fix a possible issue where workflows started using
+`cylc play --start-cycle-point` could hang during startup.
+
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.
 
