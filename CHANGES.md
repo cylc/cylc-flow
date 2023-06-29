@@ -21,6 +21,10 @@ issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
+-[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
+-a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
+-`cylc command -z X=a,bc,d`.
+
 [#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
 in family names to be split, e.g. `<foo>FAM<bar>`.
 

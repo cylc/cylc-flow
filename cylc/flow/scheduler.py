@@ -140,7 +140,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
     TASK_STATUS_FAILED)
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -278,10 +278,7 @@ class Scheduler:
         self.id = self.tokens.id
         self.uuid_str = str(uuid4())
         self.options = options
-        self.template_vars = load_template_vars(
-            self.options.templatevars,
-            self.options.templatevars_file
-        )
+        self.template_vars = get_template_vars(self.options)
 
         # mutable defaults
         self._profile_amounts = {}
