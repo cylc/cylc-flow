@@ -75,7 +75,6 @@ def test_outputs(outputs, valid, flow, validate):
     """
     # test that each output validates correctly
     for output in outputs:
-        print(output)
         assert TaskOutputValidator.validate(output)[0] is valid
 
     # test that output validation is actually being performed
@@ -142,7 +141,6 @@ def test_messages(messages, valid, flow, validate):
     """
     # test that each message validates correctly
     for message in messages:
-        print(message)
         assert TaskMessageValidator.validate(message)[0] is valid
 
     # test that output validation is actually being performed

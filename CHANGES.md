@@ -59,7 +59,7 @@ enhancements to `cylc lint`:
 
 ### Fixes
 
-[#5605](https://github.com/cylc/cylc-flow/pull/5605) -
+[#5606](https://github.com/cylc/cylc-flow/pull/5606) -
 Task outputs and messages are now validated to avoid conflicts with built-in
 outputs, messages, qualifiers and Cylc keywords.
 

@@ -1657,7 +1657,7 @@ with Conf(
                 Conf('<output>', VDR.V_STRING, desc='''
                     Define custom task outputs (aka :ref:`MessageTriggers`).
 
-                    :term:`custom outputs <custom output>` allow you to extend
+                    :term:`Custom outputs <custom output>` allow you to extend
                     the built-in task outputs e.g. ``succeeded`` and ``failed``
                     in order to provide more detailed information about task
                     state. Custom outputs can be used to express dependencies

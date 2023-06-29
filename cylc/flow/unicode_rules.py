@@ -226,7 +226,7 @@ def not_equals(*strings):
         >>> regex.pattern
         '^(?!^(foo|bar|baz)$).*$'
         >>> message
-        'cannot be: ``foo, bar or baz``'
+        'cannot be: ``foo``, ``bar`` or ``baz``'
 
         Note regex chars are escaped automatically:
         >>> regex, message = not_equals('...')
@@ -239,7 +239,8 @@ def not_equals(*strings):
     return (
         re.compile(rf'^(?!^{_re_format_list(strings)}$).*$'),
         # rf'^(?!{_re_format_list(strings)})$'),
-        f'cannot be: ``{_human_format_list(strings)}``'
+        formatted  _human_format_list([f'``{s}``' for s in strings])
+        f'cannot be: {formatted}'
     )
 
 
@@ -332,7 +333,7 @@ class TaskMessageValidator(UnicodeRuleChecker):
         # <severity>:<message> e.g. "WARN: something went wrong
         disallow_char_if_not_at_end_of_first_word(':'),
         # blacklist built-in qualifiers
-        # (techincally we need only blacklist task messages, however, to avoid
+        # (technically we need only blacklist task messages, however, to avoid
         # confusion it's best to blacklist qualifiers too)
         not_equals(*TASK_QUALIFIERS),
         not_starts_with('_cylc'),
