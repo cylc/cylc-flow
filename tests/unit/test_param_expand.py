@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import pytest
+from pytest import param
 
 from cylc.flow.exceptions import ParamExpandError
 from cylc.flow.param_expand import NameExpander, GraphExpander
@@ -204,7 +206,8 @@ class TestParamExpand(unittest.TestCase):
         self.assertRaises(
             ParamExpandError, self.graph_expander.expand, 'foo<k>')
 
-    def _param_expand_params(self):
+    @staticmethod
+    def _param_expand_params():
         """Test data for test_parameter_graph_mixing_offset_and_conditional.
 
             params_map, templates, expanded_str, expanded_values
@@ -344,3 +347,116 @@ class TestParamExpand(unittest.TestCase):
                     expected.replace(' ', '') in expanded,
                     f"Expected value {expected.replace(' ', '')} "
                     f"not in {expanded}")
+
+
+class myParam():
+    def __init__(
+        self, raw_str,
+        parameter_values=None, templates=None, raises=None,
+        id_=None,
+        expect=None,
+    ):
+        """Ease of reading wrapper for pytest.param
+
+        Args:
+            expect:
+                Output of expand_parent_params()
+            raw_str:
+                The parent_params input string.
+            parameter_values
+        """
+        parameter_values = parameter_values if parameter_values else {}
+        templates = templates if templates else {}
+        self.raises = raises
+        self.expect = expect
+        self.raw_str = raw_str
+        self.parameter_values = parameter_values
+        self.templates = templates
+        self.parameters = ((parameter_values, templates))
+        self.name_expander = NameExpander(self.parameters)
+        self.id_ = 'raises:' + id_ if raises else id_
+
+    def get(self):
+        return param(self, id=self.id_)
+
+
+@pytest.mark.parametrize(
+    "param",
+    (
+        myParam(
+            expect=(None, 'no_params_here'),
+            raw_str='no_params_here',
+            id_='basic'
+        ).get(),
+        myParam(
+            expect=({'bar': 1}, 'bar1'),
+            raw_str='<bar>',
+            parameter_values={'bar': 1},
+            templates={'bar': 'bar%(bar)s'},
+            id_='one-valid_-param'
+        ).get(),
+        myParam(
+            expect=({'bar': 1}, 'foo_bar1_baz'),
+            raw_str='foo<bar>baz',
+            parameter_values={'bar': 1},
+            templates={'bar': '_bar%(bar)s_'},
+            id_='one-valid_-param'
+        ).get(),
+        myParam(
+            raw_str='foo<bar>baz',
+            parameter_values={'qux': 2},
+            templates={'bar': '_bar%(bar)s_'},
+            raises=(ParamExpandError, 'parameter \'bar\' undefined'),
+            id_='one-invalid_-param'
+        ).get(),
+        myParam(
+            expect=({'bar': 1, 'baz': 42}, 'foo_bar1_baz42'),
+            raw_str='foo<bar, baz>',
+            parameter_values={'bar': 1, 'baz': 42},
+            templates={'bar': '_bar%(bar)s', 'baz': '_baz%(baz)s'},
+            id_='two-valid_-param'
+        ).get(),
+        myParam(
+            expect=({'bar': 1, 'baz': 42}, 'foo_bar1qux_baz42'),
+            raw_str='foo<bar>qux<baz>',
+            parameter_values={'bar': 1, 'baz': 42},
+            templates={'bar': '_bar%(bar)s', 'baz': '_baz%(baz)s'},
+            id_='two-valid_-param-sep-brackets',
+        ).get(),
+        myParam(
+            raw_str='foo<bar-1>baz',
+            raises=(ParamExpandError, '^parameter offsets illegal here'),
+            id_='offsets-illegal'
+        ).get(),
+        myParam(
+            expect=({'bar': 1}, 'foo_bar1_baz'),
+            raw_str='foo<bar=1>baz',
+            parameter_values={'bar': [1, 2]},
+            templates={'bar': '_bar%(bar)s_'},
+            id_='value-set'
+        ).get(),
+        myParam(
+            raw_str='foo<bar=3>baz',
+            parameter_values={'bar': [1, 2]},
+            raises=(ParamExpandError, '^illegal'),
+            id_='illegal-value'
+        ).get(),
+        myParam(
+            expect=({'bar': 1}, 'foo_bar1_baz'),
+            raw_str='foo<bar=3>baz',
+            raises=(ParamExpandError, '^parameter \'bar\' undefined'),
+            id_='parameter-undefined'
+        ).get(),
+    )
+)
+def test_expand_parent_params(param):
+    if not param.raises:
+        # Good Path tests:
+        result = param.name_expander.expand_parent_params(
+            param.raw_str, param.parameter_values, 'Errortext')
+        assert result == param.expect
+    else:
+        # Bad path tests:
+        with pytest.raises(param.raises[0], match=param.raises[1]):
+            param.name_expander.expand_parent_params(
+                param.raw_str, param.parameter_values, 'Errortext')
