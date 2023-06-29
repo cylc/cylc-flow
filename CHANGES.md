@@ -21,6 +21,9 @@ issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
+[#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
+in family names to be split, e.g. `<foo>FAM<bar>`.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
