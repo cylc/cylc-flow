@@ -312,12 +312,17 @@ class TaskPool:
         changed (needed if max_future_offset changed, or on reload).
         """
         points: List['PointBase'] = []
+        sequence_points: Set['PointBase']
         if not self.main_pool:
             # Start at first point in each sequence, after the initial point.
-            points = list({
-                seq.get_first_point(self.config.start_point)
-                for seq in self.config.sequences
-            })
+            points = [
+                point
+                for point in {
+                    seq.get_first_point(self.config.start_point)
+                    for seq in self.config.sequences
+                }
+                if point is not None
+            ]
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
@@ -793,7 +798,7 @@ class TaskPool:
                 self._hidden_pool_list.extend(list(itask_id_maps.values()))
         return self._hidden_pool_list
 
-    def get_tasks_by_point(self):
+    def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.main_pool.items():

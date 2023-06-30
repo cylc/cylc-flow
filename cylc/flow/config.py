@@ -75,11 +75,9 @@ from cylc.flow.parsec.exceptions import ItemNotFoundError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 from cylc.flow.pathutil import (
-    get_workflow_run_dir,
-    get_workflow_run_scheduler_log_dir,
-    get_workflow_run_share_dir,
-    get_workflow_run_work_dir,
-    get_workflow_name_from_id
+    get_workflow_name_from_id,
+    get_cylc_run_dir,
+    is_relative_to,
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
@@ -241,20 +239,27 @@ class WorkflowConfig:
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None
     ) -> None:
+        """
+        Initialize the workflow config object.
+
+        Args:
+            workflow: workflow ID
+            fpath: workflow config file path
+            options: CLI options
+        """
         check_deprecation(Path(fpath))
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
-        self.workflow = workflow  # workflow id
+        self.workflow = workflow
         self.workflow_name = get_workflow_name_from_id(self.workflow)
-        self.fpath = str(fpath)  # workflow definition
-        self.fdir = os.path.dirname(fpath)
-        self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
-        self.log_dir = (log_dir or
-                        get_workflow_run_scheduler_log_dir(self.workflow))
-        self.share_dir = share_dir or get_workflow_run_share_dir(self.workflow)
-        self.work_dir = work_dir or get_workflow_run_work_dir(self.workflow)
+        self.fpath: Path = Path(fpath)
+        self.fdir = str(self.fpath.parent)
+        self.run_dir = run_dir
+        self.log_dir = log_dir
+        self.share_dir = share_dir
+        self.work_dir = work_dir
         self.options = options
         self.implicit_tasks: Set[str] = set()
         self.edges: Dict[
@@ -891,7 +896,7 @@ class WorkflowConfig:
             )
         # Allow implicit tasks in back-compat mode unless rose-suite.conf
         # present (to maintain compat with Rose 2019)
-        elif not Path(self.run_dir, 'rose-suite.conf').is_file():
+        elif not (self.fpath.parent / "rose-suite.conf").is_file():
             LOG.debug(msg)
             return
 
@@ -1492,18 +1497,40 @@ class WorkflowConfig:
         print_tree(tree, padding=padding, use_unicode=pretty)
 
     def process_workflow_env(self):
-        """Workflow context is exported to the local environment."""
+        """Export Workflow context to the local environment.
+
+        A source workflow has only a name.
+        Once installed it also has an ID and a run directory.
+        And at scheduler start-up it has work, share, and log sub-dirs too.
+        """
         for key, value in {
             **verbosity_to_env(cylc.flow.flags.verbosity),
-            'CYLC_WORKFLOW_ID': self.workflow,
             'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_WORKFLOW_NAME_BASE': str(Path(self.workflow_name).name),
-            'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
-            'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
-            'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
-            'CYLC_WORKFLOW_SHARE_DIR': self.share_dir,
         }.items():
             os.environ[key] = value
+
+        if is_relative_to(self.fdir, get_cylc_run_dir()):
+            # This is an installed workflow.
+            #  - self.run_dir is only defined by the scheduler
+            #  - but the run dir exists, created at installation
+            #  - run sub-dirs may exist, if this installation was run already
+            #    but if the scheduler is not running they shouldn't be used.
+            for key, value in {
+                'CYLC_WORKFLOW_ID': self.workflow,
+                'CYLC_WORKFLOW_RUN_DIR': str(self.fdir),
+            }.items():
+                os.environ[key] = value
+
+        if self.run_dir is not None:
+            # Run directory is only defined if the scheduler is running; in
+            # which case the following run sub-directories must exist.
+            for key, value in {
+                'CYLC_WORKFLOW_LOG_DIR': str(self.log_dir),
+                'CYLC_WORKFLOW_WORK_DIR': str(self.work_dir),
+                'CYLC_WORKFLOW_SHARE_DIR': str(self.share_dir),
+            }.items():
+                os.environ[key] = value
 
     def process_config_env(self):
         """Set local config derived environment."""

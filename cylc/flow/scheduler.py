@@ -140,7 +140,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
     TASK_STATUS_FAILED)
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -278,10 +278,7 @@ class Scheduler:
         self.id = self.tokens.id
         self.uuid_str = str(uuid4())
         self.options = options
-        self.template_vars = load_template_vars(
-            self.options.templatevars,
-            self.options.templatevars_file
-        )
+        self.template_vars = get_template_vars(self.options)
 
         # mutable defaults
         self._profile_amounts = {}
@@ -699,8 +696,8 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            await self.configure()
             self._configure_contact()
+            await self.configure()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
@@ -1807,7 +1804,11 @@ class Scheduler:
         sys.stdout.flush()
         sys.stderr.flush()
 
-        if self.contact_data and self.task_job_mgr:
+        if (
+            self.workflow_db_mgr.pri_path
+            and Path(self.workflow_db_mgr.pri_path).exists()
+        ):
+            # only attempt remote tidy if the workflow has been started
             self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         try:

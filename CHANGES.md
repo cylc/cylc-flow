@@ -21,6 +21,13 @@ issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
+-[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
+-a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
+-`cylc command -z X=a,bc,d`.
+
+[#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
+in family names to be split, e.g. `<foo>FAM<bar>`.
+
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
 
@@ -59,9 +66,14 @@ enhancements to `cylc lint`:
 
 ### Fixes
 
+
 [#5606](https://github.com/cylc/cylc-flow/pull/5606) -
 Task outputs and messages are now validated to avoid conflicts with built-in
 outputs, messages, qualifiers and Cylc keywords.
+
+[#5604](https://github.com/cylc/cylc-flow/pull/5604) -
+Fix a possible issue where workflows started using
+`cylc play --start-cycle-point` could hang during startup.
 
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.

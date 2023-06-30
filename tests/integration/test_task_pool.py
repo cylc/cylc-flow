@@ -962,3 +962,30 @@ async def test_graph_change_prereq_satisfaction(
             schd.pool.reload_taskdefs()
 
             await test.asend(schd)
+
+
+async def test_runahead_limit_for_sequence_before_start_cycle(
+    flow,
+    scheduler,
+    start,
+):
+    """It should obey the runahead limit.
+
+    Ensure the runahead limit is computed correctly for sequences before the start cycle
+
+    See https://github.com/cylc/cylc-flow/issues/5603
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'initial cycle point': '2000',
+            'runahead limit': 'P2Y',
+            'graph': {
+                'R1/2000': 'a',
+                'P1Y': 'b[-P1Y] => b',
+            },
+        }
+    })
+    schd = scheduler(id_, startcp='2005')
+    async with start(schd):
+        assert str(schd.pool.runahead_limit_point) == '20070101T0000Z'
