@@ -238,9 +238,7 @@ def not_equals(*strings):
     """
     return (
         re.compile(rf'^(?!^{_re_format_list(strings)}$).*$'),
-        # rf'^(?!{_re_format_list(strings)})$'),
-        formatted  _human_format_list([f'``{s}``' for s in strings])
-        f'cannot be: {formatted}'
+        'cannot be: ' + _human_format_list([f'``{s}``' for s in strings])
     )
 
 
