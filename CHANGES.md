@@ -48,12 +48,14 @@ in `share/bin` and Python modules in `share/lib/python`.
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
-[#5546](https://github.com/cylc/cylc-flow/pull/5546) -
-`cylc lint` will provide a non-zero return code if any issues are identified.
-This can be overridden using the new `--exit-zero` flag.
+[#5611](https://github.com/cylc/cylc-flow/pull/5611) -
+Improve the documentation of the GraphQL schema.
 
-[#5549](https://github.com/cylc/cylc-flow/pull/5549) - A large number of
-enhancements to `cylc lint`:
+[#5549](https://github.com/cylc/cylc-flow/pull/5549),
+[#5546](https://github.com/cylc/cylc-flow/pull/5546) -
+Various enhancements to `cylc lint`:
+* `cylc lint` will provide a non-zero return code if any issues are identified.
+  This can be overridden using the new `--exit-zero` flag.
 * Fix numbering of lint codes (n.b. lint codes should now be permenantly
   unchanging, but may have changed since Cylc 8.1.4, so `pyproject.toml` files
   may need updating).
