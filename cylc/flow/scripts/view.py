@@ -35,7 +35,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.parsec.fileparse import read_and_proc
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -114,7 +114,6 @@ async def _main(options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
-
     # read in the flow.cylc file
     viewcfg = {
         'mark': options.mark,
@@ -128,7 +127,7 @@ async def _main(options: 'Values', workflow_id: str) -> None:
     }
     for line in read_and_proc(
         flow_file,
-        load_template_vars(options.templatevars, options.templatevars_file),
+        get_template_vars(options),
         viewcfg=viewcfg,
         opts=options,
     ):

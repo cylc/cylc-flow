@@ -544,7 +544,10 @@ class ISO8601Sequence(SequenceBase):
             return self.get_next_point_on_sequence(result)
         return result
 
-    def get_first_point(self, point):
+    def get_first_point(
+        self,
+        point: ISO8601Point
+    ) -> Optional[ISO8601Point]:
         """Return the first point >= to point, or None if out of bounds."""
         with contextlib.suppress(KeyError):
             return ISO8601Point(self._cached_first_point_values[point.value])

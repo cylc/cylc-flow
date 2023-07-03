@@ -39,7 +39,7 @@ from cylc.flow.option_parsers import (
     icp_option,
 )
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -155,9 +155,7 @@ def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
     if workflow_file_1_ == workflow_file_2_:
         parser.error("You can't diff a single workflow.")
     print(f"Parsing {workflow_id_1} ({workflow_file_1_})")
-    template_vars = load_template_vars(
-        options.templatevars, options.templatevars_file
-    )
+    template_vars = get_template_vars(options)
     config1 = WorkflowConfig(
         workflow_id_1, workflow_file_1_, options, template_vars
     ).cfg

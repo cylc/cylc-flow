@@ -1,20 +1,17 @@
 [scheduler]
     [[events]]
-        inactivity timeout = PT1M
+        inactivity timeout = PT20S
         abort on inactivity timeout = True
-        stall timeout = PT1M
+        stall timeout = PT20S
         abort on stall timeout = True
-
-[task parameters]
-    i = 1..5
 
 [scheduling]
     [[graph]]
-        R1 = foo<i>
+        R1 = foo
 
 [runtime]
-    [[foo<i>]]
+    [[foo]]
         script = true
         platform = $(my-host-select)
         [[[job]]]
-            submission retry delays = PT10S
+            submission retry delays = PT5S

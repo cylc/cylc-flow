@@ -12,11 +12,25 @@ ones in. -->
 
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
 
+### Breaking Changes
+
+[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
+The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
+in job environments if there are more than 50 dependencies. This avoids an
+issue which could cause jobs to fail if this variable became too long.
+
 ### Enhancements
 
 [#5992](https://github.com/cylc/cylc-flow/pull/5992) -
 The scheduler will now wait for preparing tasks to submit before attempting
 to perform a reload and will also pause/unpause the workflow.
+
+-[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
+-a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
+-`cylc command -z X=a,bc,d`.
+
+[#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
+in family names to be split, e.g. `<foo>FAM<bar>`.
 
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
@@ -38,17 +52,6 @@ in `share/bin` and Python modules in `share/lib/python`.
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
 
-## __cylc-8.1.5 (<span actions:bind='release-date'>Upcoming</span>)__
-
-### Breaking Changes
-
-[#5600](https://github.com/cylc/cylc-flow/pull/5600) -
-The `CYLC_TASK_DEPENDENCIES` environment variable will no longer be exported
-in job environments if there are more than 50 dependencies. This avoids an
-issue which could cause jobs to fail if this variable became too long.
-
-### Enhancements
-
 [#5546](https://github.com/cylc/cylc-flow/pull/5546) -
 `cylc lint` will provide a non-zero return code if any issues are identified.
 This can be overridden using the new `--exit-zero` flag.
@@ -67,6 +70,10 @@ enhancements to `cylc lint`:
 
 ### Fixes
 
+[#5604](https://github.com/cylc/cylc-flow/pull/5604) -
+Fix a possible issue where workflows started using
+`cylc play --start-cycle-point` could hang during startup.
+
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.
 
@@ -76,6 +83,10 @@ the UI whilst the workflow is in the process of shutting down.
 
 [#5582](https://github.com/cylc/cylc-flow/pull/5582) - Set Cylc 7 compatibility
 mode before running pre-configure plugins.
+
+[#5587](https://github.com/cylc/cylc-flow/pull/5587) -
+Permit commas in xtrigger arguments and fix minor issues with the parsing of
+xtrigger function signatures.
 
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
