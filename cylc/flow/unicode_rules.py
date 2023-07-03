@@ -209,16 +209,18 @@ def _re_format_list(lst):
 
 
 def not_equals(*strings):
-    """Restrict entire string.
+    r"""Restrict entire string.
 
     Example:
         Regular usage:
         >>> regex, message = not_equals('foo')
         >>> message
         'cannot be: ``foo``'
-        >>> bool(regex.match('foot'))
+        >>> bool(regex.match('foot'))  # "foot" shouldn't match
         True
-        >>> bool(regex.match('foo'))
+        >>> bool(regex.match('a\nb'))  # newlines should be tolerated
+        True
+        >>> bool(regex.match('foo'))   # "foo" should match
         False
 
         Regular use (multi):
@@ -237,7 +239,7 @@ def not_equals(*strings):
 
     """
     return (
-        re.compile(rf'^(?!^{_re_format_list(strings)}$).*$'),
+        re.compile(rf'^(?!^{_re_format_list(strings)}$).*$', re.M),
         'cannot be: ' + _human_format_list([f'``{s}``' for s in strings])
     )
 
