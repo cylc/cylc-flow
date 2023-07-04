@@ -82,7 +82,7 @@ class PBSHandler:
     # system, so there is no need to filter its output.
     POLL_CMD = "qstat"
     POLL_CANT_CONNECT_ERR = "Connection refused"
-    REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
+    REC_ID_FROM_SUBMIT_OUT = re.compile(r"^\s*(?P<id>\d+)", re.M)
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
 
     def format_directives(self, job_conf):
@@ -122,6 +122,11 @@ class PBSHandler:
                 # E.g. -V
                 lines.append(self.DIRECTIVE_PREFIX + key)
         return lines
+
+    @classmethod
+    def filter_poll_many_output(cls, out):
+        """Strip trailing stuff from the job ID."""
+        return cls.REC_ID_FROM_SUBMIT_OUT.findall(out)
 
 
 JOB_RUNNER_HANDLER = PBSHandler()
