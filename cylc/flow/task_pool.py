@@ -1270,11 +1270,11 @@ class TaskPool:
             and itask.identity not in self.expected_failed_tasks
         ):
             self.abort_task_failed = True
-        try:
-            children = itask.graph_children[output]
-        except KeyError:
-            # No children depend on this output
-            children = []
+
+        children = []
+        if itask.flow_nums or forced:
+            with suppress(KeyError):
+                children = itask.graph_children[output]
 
         suicide = []
         for c_name, c_point, is_abs in children:
@@ -1404,6 +1404,8 @@ class TaskPool:
            associated prerequisites of spawned children to satisifed.
 
         """
+        if not itask.flow_nums:
+            return
         if completed_only:
             outputs = itask.state.outputs.get_completed()
         else:

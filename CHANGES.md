@@ -85,6 +85,10 @@ in a timely fashion when tasks completed.
 Task outputs and messages are now validated to avoid conflicts with built-in
 outputs, messages, qualifiers and Cylc keywords.
 
+[#5614](https://github.com/cylc/cylc-flow/pull/5614) -
+Fix a bug in Cylc 7 compatibility mode where tasks running in the `none` flow
+(e.g. via `cylc trigger --flow=none`) would trigger downstream tasks.
+
 [#5604](https://github.com/cylc/cylc-flow/pull/5604) -
 Fix a possible issue where workflows started using
 `cylc play --start-cycle-point` could hang during startup.
