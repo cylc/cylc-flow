@@ -727,7 +727,7 @@ class Workflow(ObjectType):
     )
     is_runahead_total = Int(
         description=sstrip('''
-            The number of tasks which are held back by the runahead limmit.
+            The number of tasks which are held back by the runahead limit.
         ''')
     )
     state_totals = GenericScalar(
@@ -1053,7 +1053,7 @@ class TaskProxy(ObjectType):
         description=sstrip('''
             True if this task is "queued".
 
-            This relatetes to Cylc's internal task queues, not a job runner
+            This relates to Cylc's internal task queues, not a job runner
             queue.
         '''),
     )
@@ -1130,7 +1130,7 @@ class TaskProxy(ObjectType):
     )
     first_parent = Field(
         lambda: FamilyProxy,
-        description="Task first parent (i.e. it's containing family).",
+        description="The task's first parent (i.e. its containing family).",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
