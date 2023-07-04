@@ -536,13 +536,6 @@ async def workflow_params(flow):
     Requires:
         * is_active(True)
     """
-    params = {}
-
-    def _callback(_, entry):
-        nonlocal params
-        key, value = entry
-        params[key] = value
-
     # NOTE: use the public DB for reading
     # (only the scheduler process/thread should access the private database)
     db_file = Path(get_workflow_run_dir(
@@ -550,7 +543,6 @@ async def workflow_params(flow):
     ))
     if db_file.exists():
         with CylcWorkflowDAO(db_file, is_public=True) as dao:
-            dao.select_workflow_params(_callback)
-            flow['workflow_params'] = params
+            flow['workflow_params'] = dict(dao.select_workflow_params())
 
     return flow

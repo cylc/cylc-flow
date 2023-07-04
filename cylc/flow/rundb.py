@@ -21,7 +21,7 @@ from os.path import expandvars
 from pprint import pformat
 import sqlite3
 import traceback
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformLookupError
@@ -545,13 +545,10 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_workflow_params(self, callback):
-        """Select from workflow_params.
+    def select_workflow_params(self) -> Iterable[Tuple[str, str]]:
+        """Select all from workflow_params.
 
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [key, value]
-
-        E.g. a row might be ['UTC mode', '1']
+        E.g. a row might be ('UTC mode', '1')
         """
         stmt = rf'''
             SELECT
@@ -559,8 +556,7 @@ class CylcWorkflowDAO:
             FROM
                 {self.TABLE_WORKFLOW_PARAMS}
         '''  # nosec (table name is code constant)
-        for row_idx, row in enumerate(self.connect().execute(stmt)):
-            callback(row_idx, list(row))
+        return self.connect().execute(stmt)
 
     def select_workflow_flows(self, flow_nums):
         """Return flow data for selected flows."""

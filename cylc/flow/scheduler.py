@@ -285,7 +285,7 @@ class Scheduler:
         self._profile_update_times = {}
         self.bad_hosts: Set[str] = set()
 
-        self.restored_stop_task_id = None
+        self.restored_stop_task_id: Optional[str] = None
 
         self.timers: Dict[str, Timer] = {}
 
@@ -536,7 +536,7 @@ class Scheduler:
         with self.workflow_db_mgr.get_pri_dao() as pri_dao:
             # This logic handles lack of initial cycle point in flow.cylc and
             # things that can't change on workflow restart/reload.
-            pri_dao.select_workflow_params(self._load_workflow_params)
+            self._load_workflow_params(pri_dao.select_workflow_params())
             pri_dao.select_workflow_template_vars(self._load_template_vars)
             pri_dao.execute_queued_items()
 
@@ -1048,8 +1048,8 @@ class Scheduler:
         LOG.info("Reloading the workflow definition.")
         old_tasks = set(self.config.get_task_name_list())
         # Things that can't change on workflow reload:
-        self.workflow_db_mgr.pri_dao.select_workflow_params(
-            self._load_workflow_params
+        self._load_workflow_params(
+            self.workflow_db_mgr.pri_dao.select_workflow_params()
         )
 
         try:
@@ -1203,7 +1203,7 @@ class Scheduler:
             'CYLC_WORKFLOW_FINAL_CYCLE_POINT': str(self.config.final_point),
         })
 
-    def _load_workflow_params(self, row_idx, row):
+    def _load_workflow_params(self, params: Iterable[Tuple[str, str]]) -> None:
         """Load a row in the "workflow_params" table in a restart/reload.
 
         This currently includes:
@@ -1214,62 +1214,64 @@ class Scheduler:
         * A flag to indicate if the workflow should be paused or not.
         * Original workflow run time zone.
         """
-        if row_idx == 0:
-            LOG.info('LOADING workflow parameters')
-        key, value = row
-        if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            self.options.icp = value
-            LOG.info(f"+ initial point = {value}")
-        elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            self.options.startcp = value
-            LOG.info(f"+ start point = {value}")
-        elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.fcp == 'reload':
-                LOG.debug(f"- final point = {value} (ignored)")
-            elif self.options.fcp is None:
-                self.options.fcp = value
-                LOG.info(f"+ final point = {value}")
-        elif key == self.workflow_db_mgr.KEY_STOP_CYCLE_POINT:
-            if self.is_restart and self.options.stopcp == 'reload':
-                LOG.debug(f"- stop point = {value} (ignored)")
-            elif self.options.stopcp is None:
-                self.options.stopcp = value
-                LOG.info(f"+ stop point = {value}")
-        elif key == self.workflow_db_mgr.KEY_RUN_MODE:
-            if self.options.run_mode is None:
+        LOG.info('LOADING workflow parameters')
+        for key, value in params:
+            if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
+                self.options.icp = value
+                LOG.info(f"+ initial point = {value}")
+            elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
+                self.options.startcp = value
+                LOG.info(f"+ start point = {value}")
+            elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
+                if self.is_restart and self.options.fcp == 'reload':
+                    LOG.debug(f"- final point = {value} (ignored)")
+                elif self.options.fcp is None:
+                    self.options.fcp = value
+                    LOG.info(f"+ final point = {value}")
+            elif key == self.workflow_db_mgr.KEY_STOP_CYCLE_POINT:
+                if self.is_restart and self.options.stopcp == 'reload':
+                    LOG.debug(f"- stop point = {value} (ignored)")
+                elif self.options.stopcp is None:
+                    self.options.stopcp = value
+                    LOG.info(f"+ stop point = {value}")
+            elif (
+                key == self.workflow_db_mgr.KEY_RUN_MODE
+                and self.options.run_mode is None
+            ):
                 self.options.run_mode = value
                 LOG.info(f"+ run mode = {value}")
-        elif key == self.workflow_db_mgr.KEY_UUID_STR:
-            self.uuid_str = value
-            LOG.info('+ workflow UUID = %s', value)
-        elif key == self.workflow_db_mgr.KEY_PAUSED:
-            if self.options.paused_start is None:
-                self.options.paused_start = bool(value)
-                LOG.info(f'+ paused = {bool(value)}')
-        elif key == self.workflow_db_mgr.KEY_HOLD_CYCLE_POINT:
-            if self.options.holdcp is None:
+            elif key == self.workflow_db_mgr.KEY_UUID_STR:
+                self.uuid_str = value
+                LOG.info(f"+ workflow UUID = {value}")
+            elif key == self.workflow_db_mgr.KEY_PAUSED:
+                bool_val = bool(int(value))
+                if bool_val and not self.options.paused_start:
+                    self.options.paused_start = bool_val
+                    LOG.info(f"+ paused = {bool_val}")
+            elif (
+                key == self.workflow_db_mgr.KEY_HOLD_CYCLE_POINT
+                and self.options.holdcp is None
+            ):
                 self.options.holdcp = value
-                LOG.info('+ hold point = %s', value)
-        elif key == self.workflow_db_mgr.KEY_STOP_CLOCK_TIME:
-            value = int(value)
-            if time() <= value:
-                self.stop_clock_time = value
-                LOG.info('+ stop clock time = %d (%s)', value, time2str(value))
-            else:
-                LOG.debug(
-                    '- stop clock time = %d (%s) (ignored)',
-                    value,
-                    time2str(value))
-        elif key == self.workflow_db_mgr.KEY_STOP_TASK:
-            self.restored_stop_task_id = value
-            LOG.info('+ stop task = %s', value)
-        elif key == self.workflow_db_mgr.KEY_UTC_MODE:
-            value = bool(int(value))
-            self.options.utc_mode = value
-            LOG.info(f"+ UTC mode = {value}")
-        elif key == self.workflow_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
-            self.options.cycle_point_tz = value
-            LOG.info(f"+ cycle point time zone = {value}")
+                LOG.info(f"+ hold point = {value}")
+            elif key == self.workflow_db_mgr.KEY_STOP_CLOCK_TIME:
+                int_val = int(value)
+                msg = f"stop clock time = {int_val} ({time2str(int_val)})"
+                if time() <= int_val:
+                    self.stop_clock_time = int_val
+                    LOG.info(f"+ {msg}")
+                else:
+                    LOG.debug(f"- {msg} (ignored)")
+            elif key == self.workflow_db_mgr.KEY_STOP_TASK:
+                self.restored_stop_task_id = value
+                LOG.info(f"+ stop task = {value}")
+            elif key == self.workflow_db_mgr.KEY_UTC_MODE:
+                bool_val = bool(int(value))
+                self.options.utc_mode = bool_val
+                LOG.info(f"+ UTC mode = {bool_val}")
+            elif key == self.workflow_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
+                self.options.cycle_point_tz = value
+                LOG.info(f"+ cycle point time zone = {value}")
 
     def _load_template_vars(self, _, row):
         """Load workflow start up template variables."""
