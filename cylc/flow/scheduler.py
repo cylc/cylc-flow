@@ -1649,6 +1649,7 @@ class Scheduler:
             # Shutdown workflow if timeouts have occurred
             self.timeout_check()
 
+            self.pool.spawn_children()
             # Does the workflow need to shutdown on task failure?
             await self.workflow_shutdown()
 
