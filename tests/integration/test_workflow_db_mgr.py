@@ -17,8 +17,6 @@
 import pytest
 import sqlite3
 
-from pkg_resources import parse_version
-
 from cylc.flow.scheduler import Scheduler
 
 
@@ -109,3 +107,23 @@ async def test_db_upgrade_pre_803(
     # Restart should now succeed.
     async with start(schd):
         assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')
+
+
+async def test_workflow_param_rapid_toggle(
+    one_conf, flow, scheduler, run
+):
+    """Check that queuing a workflow param toggle operation twice before
+    processing does not cause any problems.
+
+    https://github.com/cylc/cylc-flow/issues/5593
+    """
+    schd: Scheduler = scheduler(flow(one_conf), paused_start=False)
+    async with run(schd):
+        assert schd.is_paused is False
+        schd.pause_workflow()
+        schd.resume_workflow()
+        schd.process_workflow_db_queue()
+        assert schd.is_paused is False
+
+        w_params = dict(schd.workflow_db_mgr.pri_dao.select_workflow_params())
+        assert w_params['is_paused'] == '0'

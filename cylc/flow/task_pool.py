@@ -161,10 +161,9 @@ class TaskPool:
             LOG.info("Stop task %s finished" % self.stop_task_id)
             self.stop_task_id = None
             self.stop_task_finished = False
-            self.workflow_db_mgr.delete_workflow_stop_task()
+            self.workflow_db_mgr.put_workflow_stop_task(None)
             return True
-        else:
-            return False
+        return False
 
     def _swap_out(self, itask):
         """Swap old task for new, during reload."""
@@ -1241,7 +1240,7 @@ class TaskPool:
             self.release_held_active_task(itask)
         self.tasks_to_hold.clear()
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        self.workflow_db_mgr.delete_workflow_hold_cycle_point()
+        self.workflow_db_mgr.put_workflow_hold_cycle_point(None)
 
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.

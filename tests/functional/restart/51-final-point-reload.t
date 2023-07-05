@@ -87,8 +87,7 @@ cmp_ok 'taskpool.out' <'/dev/null'
 workflow_run_ok "${TEST_NAME_BASE}-restart-3" \
     cylc play "${WORKFLOW_NAME}" --no-detach --fcp=reload
 dumpdbtables
-cmp_ok 'fcp.out' <'/dev/null'
+cmp_ok 'fcp.out' <<<'fcp|'
 cmp_ok 'taskpool.out' <'/dev/null'
 
 purge
-exit

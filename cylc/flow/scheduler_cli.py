@@ -203,6 +203,7 @@ PLAY_OPTIONS = [
         ["--pause"],
         help="Pause the workflow immediately on start up.",
         action='store_true',
+        default=False,
         dest="paused_start",
         sources={'play'},
     ),

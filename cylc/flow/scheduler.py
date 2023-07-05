@@ -1216,6 +1216,8 @@ class Scheduler:
         """
         LOG.info('LOADING workflow parameters')
         for key, value in params:
+            if not value:
+                continue
             if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
                 self.options.icp = value
                 LOG.info(f"+ initial point = {value}")
@@ -1901,7 +1903,7 @@ class Scheduler:
             LOG.info("Wall clock stop time reached: %s", time2str(
                 self.stop_clock_time))
             self.stop_clock_time = None
-            self.workflow_db_mgr.delete_workflow_stop_clock_time()
+            self.workflow_db_mgr.put_workflow_stop_clock_time(None)
             self.update_data_store()
             return True
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
@@ -1935,7 +1937,7 @@ class Scheduler:
         # Can shut down.
         if self.pool.stop_point:
             # Forget early stop point in case of a restart.
-            self.workflow_db_mgr.delete_workflow_stop_cycle_point()
+            self.workflow_db_mgr.put_workflow_stop_cycle_point(None)
 
         return True
 
@@ -1946,7 +1948,7 @@ class Scheduler:
             return
         LOG.info("PAUSING the workflow now")
         self.is_paused = True
-        self.workflow_db_mgr.put_workflow_paused()
+        self.workflow_db_mgr.put_workflow_paused(True)
         self.update_data_store()
 
     def resume_workflow(self, quiet: bool = False) -> None:
@@ -1962,7 +1964,7 @@ class Scheduler:
         if not quiet:
             LOG.info("RESUMING the workflow now")
         self.is_paused = False
-        self.workflow_db_mgr.delete_workflow_paused()
+        self.workflow_db_mgr.put_workflow_paused(False)
         self.update_data_store()
 
     def command_force_trigger_tasks(self, items, flow, flow_wait, flow_descr):

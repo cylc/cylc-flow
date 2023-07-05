@@ -30,7 +30,7 @@ from shutil import copy, rmtree
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
-    Any, AnyStr, Dict, List, Set, TYPE_CHECKING, Tuple, Union
+    Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
 )
 
 from cylc.flow import LOG
@@ -168,33 +168,6 @@ class WorkflowDatabaseManager:
             if os.path.exists(temp_pub_db_file_name):
                 os.remove(temp_pub_db_file_name)
             raise
-
-    def delete_workflow_params(self, *keys):
-        """Schedule deletion of rows from workflow_params table by keys."""
-        for key in keys:
-            self.db_deletes_map[self.TABLE_WORKFLOW_PARAMS].append(
-                {'key': key}
-            )
-
-    def delete_workflow_paused(self):
-        """Delete paused status."""
-        self.delete_workflow_params(self.KEY_PAUSED)
-
-    def delete_workflow_hold_cycle_point(self):
-        """Delete workflow hold cycle point."""
-        self.delete_workflow_params(self.KEY_HOLD_CYCLE_POINT)
-
-    def delete_workflow_stop_clock_time(self):
-        """Delete workflow stop clock time from workflow_params table."""
-        self.delete_workflow_params(self.KEY_STOP_CLOCK_TIME)
-
-    def delete_workflow_stop_cycle_point(self):
-        """Delete workflow stop cycle point from workflow_params table."""
-        self.delete_workflow_params(self.KEY_STOP_CYCLE_POINT)
-
-    def delete_workflow_stop_task(self):
-        """Delete workflow stop task from workflow_params table."""
-        self.delete_workflow_params(self.KEY_STOP_TASK)
 
     def get_pri_dao(self) -> CylcWorkflowDAO:
         """Return the primary DAO.
@@ -345,14 +318,12 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
             {"key": self.KEY_RESTART_COUNT, "value": self.n_restart},
+            {"key": self.KEY_CYCLE_POINT_FORMAT,
+             "value": schd.config.cycle_point_dump_format},
+            {"key": self.KEY_PAUSED, "value": int(schd.is_paused)},
+            {"key": self.KEY_STOP_CLOCK_TIME, "value": schd.stop_clock_time},
+            {"key": self.KEY_STOP_TASK, "value": schd.stop_task},
         ])
-        if schd.config.cycle_point_dump_format is not None:
-            self.put_workflow_params_1(
-                self.KEY_CYCLE_POINT_FORMAT,
-                schd.config.cycle_point_dump_format
-            )
-        if schd.is_paused:
-            self.put_workflow_params_1(self.KEY_PAUSED, 1)
         for key in (
             self.KEY_INITIAL_CYCLE_POINT,
             self.KEY_FINAL_CYCLE_POINT,
@@ -360,38 +331,34 @@ class WorkflowDatabaseManager:
             self.KEY_STOP_CYCLE_POINT
         ):
             value = getattr(schd.options, key, None)
-            if value is not None and value != 'reload':
-                self.put_workflow_params_1(key, value)
+            value = None if value == 'reload' else value
+            self.put_workflow_params_1(key, value)
         for key in (
             self.KEY_RUN_MODE,
             self.KEY_CYCLE_POINT_TIME_ZONE
         ):
-            value = getattr(schd.options, key, None)
-            if value is not None:
-                self.put_workflow_params_1(key, value)
-        for key in (
-            self.KEY_STOP_CLOCK_TIME,
-            self.KEY_STOP_TASK
-        ):
-            value = getattr(schd, key, None)
-            if value is not None:
-                self.put_workflow_params_1(key, value)
+            self.put_workflow_params_1(key, getattr(schd.options, key, None))
 
     def put_workflow_params_1(
-        self, key: str, value: Union[AnyStr, float]
+        self, key: str, value: Union[AnyStr, float, None]
     ) -> None:
         """Queue insertion of 1 key=value pair to the workflow_params table."""
         self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append(
             {"key": key, "value": value}
         )
 
-    def put_workflow_paused(self):
+    def put_workflow_paused(self, value: bool) -> None:
         """Put workflow paused flag to workflow_params table."""
-        self.put_workflow_params_1(self.KEY_PAUSED, 1)
+        self.put_workflow_params_1(self.KEY_PAUSED, int(value))
 
-    def put_workflow_hold_cycle_point(self, value):
+    def put_workflow_hold_cycle_point(
+        self, value: Optional['PointBase']
+    ) -> None:
         """Put workflow hold cycle point to workflow_params table."""
-        self.put_workflow_params_1(self.KEY_HOLD_CYCLE_POINT, str(value))
+        self.put_workflow_params_1(
+            self.KEY_HOLD_CYCLE_POINT,
+            str(value) if value is not None else None
+        )
 
     def put_workflow_stop_clock_time(self, value):
         """Put workflow stop clock time to workflow_params table."""
