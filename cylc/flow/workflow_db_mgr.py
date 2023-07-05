@@ -360,26 +360,29 @@ class WorkflowDatabaseManager:
             str(value) if value is not None else None
         )
 
-    def put_workflow_stop_clock_time(self, value):
+    def put_workflow_stop_clock_time(self, value: Optional[str]) -> None:
         """Put workflow stop clock time to workflow_params table."""
         self.put_workflow_params_1(self.KEY_STOP_CLOCK_TIME, value)
 
-    def put_workflow_stop_cycle_point(self, value):
+    def put_workflow_stop_cycle_point(self, value: Optional[str]) -> None:
         """Put workflow stop cycle point to workflow_params table."""
         self.put_workflow_params_1(self.KEY_STOP_CYCLE_POINT, value)
 
-    def put_workflow_stop_task(self, value):
+    def put_workflow_stop_task(self, value: Optional[str]) -> None:
         """Put workflow stop task to workflow_params table."""
         self.put_workflow_params_1(self.KEY_STOP_TASK, value)
 
-    def put_workflow_template_vars(self, template_vars):
+    def put_workflow_template_vars(
+        self, template_vars: Dict[str, Any]
+    ) -> None:
         """Put template_vars in runtime database.
 
         This method queues the relevant insert statements.
         """
-        for key, value in template_vars.items():
-            self.db_inserts_map[self.TABLE_WORKFLOW_TEMPLATE_VARS].append(
-                {"key": key, "value": repr(value)})
+        self.db_inserts_map[self.TABLE_WORKFLOW_TEMPLATE_VARS].extend(
+            {"key": key, "value": repr(value)}
+            for key, value in template_vars.items()
+        )
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""

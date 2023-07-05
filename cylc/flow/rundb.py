@@ -545,7 +545,7 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_workflow_params(self) -> Iterable[Tuple[str, str]]:
+    def select_workflow_params(self) -> Iterable[Tuple[str, Optional[str]]]:
         """Select all from workflow_params.
 
         E.g. a row might be ('UTC mode', '1')

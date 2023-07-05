@@ -31,6 +31,7 @@ from time import sleep, time
 import traceback
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Iterable,
     NoReturn,
@@ -194,6 +195,7 @@ class Scheduler:
     id: str  # noqa: A003 (instance attr not local)
     uuid_str: str
     is_restart: bool
+    bad_hosts: Set[str]
 
     # directories
     workflow_log_dir: str
@@ -223,6 +225,7 @@ class Scheduler:
     config: WorkflowConfig  # flow config
     options: Values
     cylc_config: DictTree  # [scheduler] config
+    template_vars: Dict[str, Any]
 
     # tcp / zmq
     server: WorkflowRuntimeServer
@@ -231,14 +234,10 @@ class Scheduler:
 
     # flow information
     contact_data: Optional[dict] = None
-    bad_hosts: Optional[Set[str]] = None
 
     # configuration
     flow_file: Optional[str] = None
     flow_file_update_time: Optional[float] = None
-
-    # run options
-    template_vars: Optional[dict] = None
 
     # workflow params
     stop_mode: Optional[StopMode] = None
@@ -1104,14 +1103,14 @@ class Scheduler:
             fields.OWNER:
                 self.owner,
             fields.PORT:
-                str(self.server.port),  # type: ignore
+                str(self.server.port),
             fields.PID:
                 str(proc.pid),
             fields.COMMAND:
                 cli_format(proc.cmdline()),
             fields.PUBLISH_PORT:
-                str(self.server.pub_port),  # type: ignore
-            fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:  # type: ignore
+                str(self.server.pub_port),
+            fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
                 self.workflow_run_dir,
             fields.UUID:
                 self.uuid_str,
@@ -1203,7 +1202,9 @@ class Scheduler:
             'CYLC_WORKFLOW_FINAL_CYCLE_POINT': str(self.config.final_point),
         })
 
-    def _load_workflow_params(self, params: Iterable[Tuple[str, str]]) -> None:
+    def _load_workflow_params(
+        self, params: Iterable[Tuple[str, Optional[str]]]
+    ) -> None:
         """Load a row in the "workflow_params" table in a restart/reload.
 
         This currently includes:
@@ -1216,7 +1217,7 @@ class Scheduler:
         """
         LOG.info('LOADING workflow parameters')
         for key, value in params:
-            if not value:
+            if value is None:
                 continue
             if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
                 self.options.icp = value
