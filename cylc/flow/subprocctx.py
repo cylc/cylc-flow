@@ -158,12 +158,3 @@ class SubFuncContext(SubProcContext):
         args = self.func_args + [
             "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
         return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
-
-    def __str__(self):
-        return (
-            f'{self.func_name}('
-            f'{", ".join(map(str, self.func_args + list(self.func_kwargs)))}'
-            f'):{self.intvl}'
-        )
-
-    __repr__ = __str__
