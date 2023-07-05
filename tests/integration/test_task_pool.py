@@ -989,3 +989,67 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
     schd = scheduler(id_, startcp='2005')
     async with start(schd):
         assert str(schd.pool.runahead_limit_point) == '20070101T0000Z'
+
+
+def list_pool_from_db(schd):
+    """Returns the task pool table as a sorted list."""
+    db_task_pool = []
+    schd.workflow_db_mgr.pri_dao.select_task_pool(
+        lambda _, row: db_task_pool.append(row)
+    )
+    return sorted(db_task_pool)
+
+
+async def test_db_update_on_removal(
+    flow,
+    scheduler,
+    start,
+):
+    """It should updated the task_pool table when tasks complete.
+
+    There was a bug where the task_pool table was only being updated when tasks
+    in the pool were updated. This meant that if a task was removed the DB
+    would not reflect this change and would hold a record of the task in the
+    wrong state.
+
+    This test ensures that the DB is updated when a task is removed from the
+    pool.
+
+    See: https://github.com/cylc/cylc-flow/issues/5598
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'true',
+        },
+        'scheduling': {
+            'graph': {
+                'R1': 'a',
+            },
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        task_a = schd.pool.get_tasks()[0]
+
+        # set the task to running
+        task_a.state_reset('running')
+
+        # update the db
+        await schd.update_data_structure()
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # the task should appear in the DB
+        assert list_pool_from_db(schd) == [
+            ['1', 'a', 'running', 0],
+        ]
+
+        # mark the task as succeeded and allow it to be removed from the pool
+        task_a.state_reset('succeeded')
+        schd.pool.remove_if_complete(task_a)
+
+        # update the DB, note no new tasks have been added to the pool
+        await schd.update_data_structure()
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # the task should be gone from the DB
+        assert list_pool_from_db(schd) == []
