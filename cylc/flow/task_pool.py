@@ -123,6 +123,7 @@ class TaskPool:
         self._hidden_pool_list: List[TaskProxy] = []
         self.main_pool_changed = False
         self.hidden_pool_changed = False
+        self.tasks_removed = False
 
         self.hold_point: Optional['PointBase'] = None
         self.abs_outputs_done: Set[Tuple[str, str, str]] = set()
@@ -736,6 +737,7 @@ class TaskPool:
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
+        self.tasks_removed = True
         msg = "task proxy removed"
         if reason:
             msg += f" ({reason})"

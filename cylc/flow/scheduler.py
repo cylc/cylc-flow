@@ -1691,7 +1691,11 @@ class Scheduler:
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
-        has_updated = self.is_updated or updated_tasks
+        has_updated = (
+            self.is_updated
+            or updated_tasks
+            or self.pool.tasks_removed
+        )
         reloaded = self.is_reloaded
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
@@ -1716,6 +1720,7 @@ class Scheduler:
             for itask in updated_tasks:
                 itask.state.is_updated = False
             self.update_data_store()
+            self.pool.tasks_removed = False
         return has_updated
 
     def check_workflow_timers(self):
