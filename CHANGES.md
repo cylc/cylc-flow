@@ -94,6 +94,10 @@ mode before running pre-configure plugins.
 Permit commas in xtrigger arguments and fix minor issues with the parsing of
 xtrigger function signatures.
 
+[#5618](https://github.com/cylc/cylc-flow/pull/5618) -
+Fix a bug when rapidly issuing the same/opposite commands e.g. pausing &
+resuming a workflow.
+
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
