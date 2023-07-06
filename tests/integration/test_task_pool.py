@@ -560,7 +560,7 @@ async def test_reload_stopcp(
     schd: Scheduler = scheduler(flow(cfg))
     async with start(schd):
         assert str(schd.pool.stop_point) == '2020'
-        schd.command_reload_workflow()
+        await schd.command_reload_workflow()
         assert str(schd.pool.stop_point) == '2020'
 
 
@@ -829,8 +829,7 @@ async def test_reload_prereqs(
         flow(conf, id_=id_)
 
         # Reload the workflow config
-        schd.command_reload_workflow()
-        schd.pool.reload_taskdefs()
+        await schd.command_reload_workflow()
         assert list_tasks(schd) == expected_3
 
         # Check resulting dependencies of task z
@@ -960,8 +959,7 @@ async def test_graph_change_prereq_satisfaction(
             flow(conf, id_=id_)
 
             # Reload the workflow config
-            schd.command_reload_workflow()
-            schd.pool.reload_taskdefs()
+            await schd.command_reload_workflow()
 
             await test.asend(schd)
 
