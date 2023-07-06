@@ -20,13 +20,15 @@ import asyncio
 from cylc.flow import logging
 
 
-async def test_log_xtrigger_stdout(flow, scheduler, run_dir, run):
+async def test_log_xtrigger_stdout(
+    flow, scheduler, run_dir, start, log_filter
+):
     """Output from xtriggers should appear in the scheduler log:
 
     (As per the toy example in the Cylc Docs)
     """
     # Setup a workflow:
-    reg = flow({
+    id_ = flow({
         'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'graph': {'R1': '@myxtrigger => foo'},
@@ -34,7 +36,7 @@ async def test_log_xtrigger_stdout(flow, scheduler, run_dir, run):
         }
     })
     # Create an xtrigger:
-    xt_lib = run_dir / reg / 'lib/python/myxtrigger.py'
+    xt_lib = run_dir / id_ / 'lib/python/myxtrigger.py'
     xt_lib.parent.mkdir(parents=True, exist_ok=True)
     xt_lib.write_text(
         "from sys import stderr\n\n\n"
@@ -43,20 +45,17 @@ async def test_log_xtrigger_stdout(flow, scheduler, run_dir, run):
         "    print('Hello Hades', file=stderr)\n"
         "    return True, {}"
     )
-    schd = scheduler(reg)
-    async with run(schd, level=logging.DEBUG) as log:
+    schd = scheduler(id_)
+    async with start(schd, level=logging.DEBUG) as log:
         # Set off check for x-trigger:
-        schd.xtrigger_mgr.call_xtriggers_async(
-            schd.pool.get_tasks()[0])
+        task = schd.pool.get_tasks()[0]
+        schd.xtrigger_mgr.call_xtriggers_async(task)
 
-        # Wait on the main-loop until the xtrigger has finished:
-        xt_complete = False
-        while not xt_complete:
-            xt_complete = schd.xtrigger_mgr._get_xtrigs(
-                schd.pool.get_tasks()[0])[0][3]
-            await asyncio.sleep(1)
+        # while not schd.xtrigger_mgr._get_xtrigs(task):
+        while schd.proc_pool.is_not_done():
+            schd.proc_pool.process()
 
         # Assert that both stderr and out from the print statement
         # in our xtrigger appear in the log.
         for expected in ['Hello World', 'Hello Hades']:
-            assert any(expected in i.message for i in log.records)
+            assert log_filter(log, contains=expected)
