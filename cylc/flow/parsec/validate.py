@@ -1063,8 +1063,9 @@ class CylcConfigValidator(ParsecValidator):
         Checks for legal string templates in arg values too.
 
         Examples:
-            >>> ctx = CylcConfigValidator.coerce_xtrigger(
-            ... 'a(b, c):PT1M', [None])
+            >>> xtrig = CylcConfigValidator.coerce_xtrigger
+
+            >>> ctx = xtrig('a(b, c):PT1M', [None])
             >>> ctx.get_signature()
             'a(b, c)'
             >>> ctx.intvl
