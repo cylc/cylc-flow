@@ -31,7 +31,11 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = reloader1 => stopper => reloader2
 [runtime]
     [[reloader1, reloader2]]
-        script = cylc reload "${CYLC_WORKFLOW_ID}"
+        script = """
+            cylc reload "${CYLC_WORKFLOW_ID}"
+            # wait for the command to complete
+            cylc__job__poll_grep_workflow_log 'Reload completed'
+        """
     [[stopper]]
         script = cylc stop --now --now "${CYLC_WORKFLOW_ID}"
 __FLOW_CONFIG__
@@ -54,6 +58,8 @@ cmp_ok conf_1.out << __EOF__
 02-reload-01.cylc
 flow-processed.cylc
 __EOF__
+
+mv "$WORKFLOW_RUN_DIR/cylc.flow.main_loop.log_db.sql" "$WORKFLOW_RUN_DIR/01.cylc.flow.main_loop.log_db.sql"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 

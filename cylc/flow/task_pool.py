@@ -111,7 +111,6 @@ class TaskPool:
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
-        self.do_reload = False
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
         self._prev_runahead_sequence_points: Optional[Set['PointBase']] = None
@@ -133,7 +132,6 @@ class TaskPool:
         self.abort_task_failed = False
         self.expected_failed_tasks = self.config.get_expected_failed_tasks()
 
-        self.orphans: List[str] = []
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
@@ -920,25 +918,7 @@ class TaskPool:
         if max_offset != orig and self.compute_runahead(force=True):
             self.release_runahead_tasks()
 
-    def set_do_reload(self, config: 'WorkflowConfig') -> None:
-        """Set the task pool to reload mode."""
-        self.config = config
-        self.stop_point = config.stop_point or config.final_point
-        self.do_reload = True
-
-        # find any old tasks that have been removed from the workflow
-        old_task_name_list = self.task_name_list
-        self.task_name_list = self.config.get_task_name_list()
-        for name in old_task_name_list:
-            if name not in self.task_name_list:
-                self.orphans.append(name)
-        for name in self.task_name_list:
-            if name in self.orphans:
-                self.orphans.remove(name)
-        # adjust the new workflow config to handle the orphans
-        self.config.adopt_orphans(self.orphans)
-
-    def reload_taskdefs(self) -> None:
+    def reload_taskdefs(self, config: 'WorkflowConfig') -> None:
         """Reload the definitions of task proxies in the pool.
 
         Orphaned tasks (whose definitions were removed from the workflow):
@@ -948,18 +928,33 @@ class TaskPool:
         Otherwise: replace task definitions but copy over existing outputs etc.
 
         """
+        self.config = config
+        self.stop_point = config.stop_point or config.final_point
+
+        # find any old tasks that have been removed from the workflow
+        old_task_name_list = self.task_name_list
+        self.task_name_list = self.config.get_task_name_list()
+        orphans = [
+            task
+            for task in old_task_name_list
+            if task not in self.task_name_list
+        ]
+
+        # adjust the new workflow config to handle the orphans
+        self.config.adopt_orphans(orphans)
+
         LOG.info("Reloading task definitions.")
         tasks = self.get_all_tasks()
         # Log tasks orphaned by a reload but not currently in the task pool.
-        for name in self.orphans:
+        for name in orphans:
             if name not in (itask.tdef.name for itask in tasks):
                 LOG.warning("Removed task: '%s'", name)
         for itask in tasks:
-            if itask.tdef.name in self.orphans:
+            if itask.tdef.name in orphans:
                 if (
-                        itask.state(TASK_STATUS_WAITING)
-                        or itask.state.is_held
-                        or itask.state.is_queued
+                    itask.state(TASK_STATUS_WAITING)
+                    or itask.state.is_held
+                    or itask.state.is_queued
                 ):
                     # Remove orphaned task if it hasn't started running yet.
                     self.remove(itask, 'task definition removed')
@@ -1013,8 +1008,6 @@ class TaskPool:
             ready_check_items = itask.is_ready_to_run()
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
-
-        self.do_reload = False
 
     def set_stop_point(self, stop_point: 'PointBase') -> bool:
         """Set the workflow stop cycle point.
