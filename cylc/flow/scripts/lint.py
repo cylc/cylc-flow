@@ -878,7 +878,7 @@ def get_reference_rst(checks):
                 output += (
                     '\n.. note::\n'
                     '\n   U998 and U999 represent automatically generated '
-                    'sets of deprecations and upgrades.'
+                    'sets of deprecations and upgrades.\n\n'
                 )
 
         if current_checkset == 'A':
