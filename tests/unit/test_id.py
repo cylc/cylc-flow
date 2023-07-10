@@ -320,12 +320,19 @@ def test_tokens():
     with pytest.raises(ValueError):
         Tokens()['foo'] = 'a'
 
+    # test equality
     assert Tokens('a') == Tokens('a')
     assert Tokens('a') != Tokens('b')
     assert Tokens('a', relative=True) == Tokens('a', relative=True)
     assert Tokens('a', relative=True) != Tokens('b', relative=True)
     assert Tokens() != Tokens('a')
     assert Tokens(workflow='a') == Tokens('a')
+
+    # test equality with non Tokens objects
+    assert Tokens('a') != 'a'
+    assert not Tokens('a') == 'a'
+    assert Tokens('a') != 1
+    assert not Tokens('a') == 1
 
     tokens = Tokens('a//b')
     tokens.update({'cycle': 'c', 'task': 'd'})

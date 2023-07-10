@@ -232,7 +232,7 @@ async def test_stop(
             schd=one
         )
         resolvers.stop(StopMode.REQUEST_CLEAN)
-        one.process_command_queue()
+        await one.process_command_queue()
         assert log_filter(
             log, level=logging.INFO, contains="Command actioned: stop"
         )

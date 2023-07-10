@@ -22,7 +22,7 @@ from optparse import (
     OptionParser,
     Values,
     Option,
-    IndentedHelpFormatter
+    IndentedHelpFormatter,
 )
 import os
 import re
@@ -363,6 +363,15 @@ class CylcOptionParser(OptionParser):
             See `cylc help id` for more details.
     '''))
 
+    CAN_BE_USED_MULTIPLE = (
+        " This option can be used multiple times on the command line.")
+
+    NOTE_PERSIST_ACROSS_RESTARTS = (
+        " NOTE: these settings persist across workflow restarts,"
+        " but can be set again on the \"cylc play\""
+        " command line if they need to be overridden."
+    )
+
     STD_OPTIONS = [
         OptionSettings(
             ['-q', '--quiet'], help='Decrease verbosity.',
@@ -403,13 +412,27 @@ class CylcOptionParser(OptionParser):
                 " Values should be valid Python literals so strings"
                 " must be quoted"
                 " e.g. 'STR=\"string\"', INT=43, BOOL=True."
-                " This option can be used multiple "
-                " times on the command line."
-                " NOTE: these settings persist across workflow restarts,"
-                " but can be set again on the \"cylc play\""
-                " command line if they need to be overridden."
+                + CAN_BE_USED_MULTIPLE
+                + NOTE_PERSIST_ACROSS_RESTARTS
             ),
-            action='append', default=[], dest='templatevars', useif='jset'),
+            action='append', default=[], dest='templatevars', useif='jset'
+        ),
+        OptionSettings(
+            ['-z', '--set-list', '--template-list'],
+            metavar='NAME=VALUE1,VALUE2,...',
+            help=(
+                'Set the value of a Jinja2 template variable in the'
+                ' workflow definition as a comma separated'
+                ' list of Python strings.'
+                ' Values containing commas must be quoted.'
+                " e.g. '+s STR=a,b,c' => ['a', 'b', 'c']"
+                " or '+ s STR=a,\"b,c\"' => ['a', 'b,c']"
+                + CAN_BE_USED_MULTIPLE
+                + NOTE_PERSIST_ACROSS_RESTARTS
+            ),
+            action='append', default=[], dest='templatevars_lists',
+            useif='jset'
+        ),
         OptionSettings(
             ['--set-file'], metavar='FILE',
             help=(
@@ -418,9 +441,7 @@ class CylcOptionParser(OptionParser):
                 " pairs (one per line)."
                 " As with --set values should be valid Python literals "
                 " so strings must be quoted e.g. STR='string'."
-                " NOTE: these settings persist across workflow restarts,"
-                " but can be set again on the \"cylc play\""
-                " command line if they need to be overridden."
+                + NOTE_PERSIST_ACROSS_RESTARTS
             ),
             action='store', default=None, dest='templatevars_file',
             useif='jset'

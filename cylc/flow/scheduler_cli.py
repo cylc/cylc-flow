@@ -28,7 +28,11 @@ from typing import TYPE_CHECKING
 from pkg_resources import parse_version
 
 from cylc.flow import LOG, __version__
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import (
+    ContactFileExists,
+    CylcError,
+    ServiceFileError,
+)
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
@@ -134,7 +138,7 @@ PLAY_RUN_MODE.sources = {'play'}
 
 PLAY_OPTIONS = [
     OptionSettings(
-        ["-n", "--no-detach", "--non-daemon"],
+        ["-N", "--no-detach", "--non-daemon"],
         help="Do not daemonize the scheduler (infers --format=plain)",
         action='store_true', dest="no_detach", sources={'play'}),
     OptionSettings(
@@ -386,7 +390,7 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     _upgrade_database(db_file)
 
     # re-execute on another host if required
-    _distribute(options.host, workflow_id_raw, workflow_id)
+    _distribute(options.host, workflow_id_raw, workflow_id, options.color)
 
     # print the start message
     _print_startup_message(options)
@@ -431,7 +435,7 @@ def _resume(workflow_id, options):
     """Resume the workflow if it is already running."""
     try:
         detect_old_contact_file(workflow_id)
-    except ServiceFileError as exc:
+    except ContactFileExists as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(
             workflow_id,
@@ -445,7 +449,7 @@ def _resume(workflow_id, options):
         }
         pclient('graphql', mutation_kwargs)
         sys.exit(0)
-    except Exception as exc:
+    except CylcError as exc:
         LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'
@@ -558,7 +562,7 @@ def _print_startup_message(options):
         LOG.warning(SUITERC_DEPR_MSG)
 
 
-def _distribute(host, workflow_id_raw, workflow_id):
+def _distribute(host, workflow_id_raw, workflow_id, color):
     """Re-invoke this command on a different host if requested.
 
     Args:
@@ -589,6 +593,15 @@ def _distribute(host, workflow_id_raw, workflow_id):
 
         # Prevent recursive host selection
         cmd.append("--host=localhost")
+
+        # Preserve CLI colour
+        if is_terminal() and color != 'never':
+            # the detached process doesn't pass the is_terminal test
+            # so we have to explicitly tell Cylc to use color
+            cmd.append('--color=always')
+        else:
+            # otherwise set --color=never to make testing easier
+            cmd.append('--color=never')
 
         # Re-invoke the command
         # NOTE: has the potential to raise NoHostsError, however, this will

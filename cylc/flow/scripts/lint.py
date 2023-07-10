@@ -43,8 +43,23 @@ from optparse import Values
 from pathlib import Path
 import re
 import sys
-import tomli
-from typing import Generator, Union
+import shutil
+try:
+    # BACK COMPAT: tomli
+    #   Support for Python versions before tomllib was added to the
+    #   standard library.
+    # FROM: Python 3.7
+    # TO: Python: 3.10
+    from tomli import (
+        loads as toml_loads,
+        TOMLDecodeError,
+    )
+except ImportError:
+    from tomllib import (  # type: ignore[no-redef]
+        loads as toml_loads,
+        TOMLDecodeError,
+    )
+from typing import Callable, Dict, Iterator, List, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -81,49 +96,59 @@ OBSOLETE_ENV_VARS = {
 
 
 def check_jinja2_no_shebang(
-    line, file_, jinja_shebang=False, fallback=None, **kwargs
+    line: str,
+    file: Path,
+    function: Callable,
+    jinja_shebang: bool = False,
+    **kwargs
 ):
     """Check ONLY top level workflow files for jinja without shebangs.
 
     Examples:
-        >>> fallback = re.compile(r'{{').findall
+        >>> func = re.compile(r'{{').findall
 
         >>> check_jinja2_no_shebang(
         ... '{{FOO}}',
-        ... fallback=fallback, jinja_shebang=True, file_=Path('foo.cylc'))
+        ... function=func, jinja_shebang=True, file=Path('foo.cylc'))
         False
 
         >>> check_jinja2_no_shebang(
         ... '{{FOO}}',
-        ... fallback=fallback, jinja_shebang=False, file_=Path('suite.rc'))
+        ... function=func, jinja_shebang=False, file=Path('suite.rc'))
         ['{{']
     """
     if (
         jinja_shebang
-        or file_.name not in ('flow.cylc', 'suite.rc')
+        or file.name not in {'flow.cylc', 'suite.rc'}
     ):
         return False
-    return fallback(line)
+    return function(line)
 
 
-def check_if_jinja2(line, jinja_shebang, **kwargs):
-    """Check for fallback, but only if Jinja2 switched on:
+def check_if_jinja2(
+    line: str,
+    jinja_shebang: bool,
+    function: Callable,
+    **kwargs
+):
+    """Run function if Jinja2 switched on.
 
     Examples:
-        >>> fallback = re.compile('foo').findall
+        >>> func = re.compile('foo').findall
 
-        >>> check_if_jinja2('barfoo', jinja_shebang=False, fallback=fallback)
+        >>> check_if_jinja2('barfoo', jinja_shebang=False, function=func)
         False
 
-        >>> check_if_jinja2('foofoo', jinja_shebang=True, fallback=fallback)
+        >>> check_if_jinja2('foofoo', jinja_shebang=True, function=func)
         ['foo', 'foo']
+
     """
     if jinja_shebang:
-        return kwargs['fallback'](line)
+        return function(line)
     return False
 
 
-def check_dead_ends(line):
+def check_dead_ends(line: str) -> bool:
     """Check for dead end cylc scripts as defined in cylc.flow.scripts.cylc
 
     Examples:
@@ -143,34 +168,41 @@ def check_dead_ends(line):
     )
 
 
-def check_for_suicide_triggers(line, file_, fallback, **kwargs):
+def check_for_suicide_triggers(
+    line: str,
+    file: Path,
+    function: Callable,
+    **kwargs
+):
     """Check for suicide triggers, if file is a .cylc file.
 
     Examples:
-        >>> fallback = lambda line: line
+        >>> func = lambda line: line
 
         # Suicide trigger in a *.cylc file:
         >>> check_for_suicide_triggers(
-        ... 'x:fail => !y', fallback=fallback, file_=Path('foo.cylc'))
+        ... 'x:fail => !y', function=func, file=Path('foo.cylc'))
         'x:fail => !y'
 
         # Suicide trigger in a suite.rc file:
         >>> check_for_suicide_triggers(
-        ... 'x:fail => !y', fallback=fallback, file_=Path('suite.rc'))
+        ... 'x:fail => !y', function=func, file=Path('suite.rc'))
         False
     """
-    if file_.name.endswith('.cylc'):
-        return fallback(line)
+    if file.name.endswith('.cylc'):
+        return function(line)
     return False
 
 
-def check_for_deprecated_environment_variables(line):
+def check_for_deprecated_environment_variables(
+    line: str
+) -> Union[bool, dict]:
     """Warn that environment variables with SUITE in are deprecated"""
+    vars_found = [
+        f'{k}: {v}' for k, v in DEPRECATED_ENV_VARS.items()
+        if k in line
+    ]
 
-    vars_found = {k: v for k, v in DEPRECATED_ENV_VARS.items() if k in line}
-
-    if vars_found:
-        vars_found = [f'{k} -> {v}' for k, v in vars_found.items()]
     if len(vars_found) == 1:
         return {'vars': vars_found}
     elif vars_found:
@@ -178,7 +210,7 @@ def check_for_deprecated_environment_variables(line):
     return False
 
 
-def check_for_obsolete_environment_variables(line):
+def check_for_obsolete_environment_variables(line: str) -> List[str]:
     """Warn that environment variables are obsolete.
 
     Examples:
@@ -276,7 +308,7 @@ STYLE_CHECKS = {
     "S006": {
         'short': 'trailing whitespace.',
         'url': STYLE_GUIDE + 'trailing-whitespace',
-        FUNCTION: re.compile(r'\s$').findall
+        FUNCTION: re.compile(r'[ \t]$').findall
     },
     # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any.
     # Do not match inherit lines with `None` at the start.
@@ -341,7 +373,7 @@ STYLE_CHECKS = {
         'kwargs': True,
         FUNCTION: functools.partial(
             check_jinja2_no_shebang,
-            fallback=re.compile(r'{[{%]').findall
+            function=re.compile(r'{[{%]').findall
         )
     },
     "S009": {
@@ -364,7 +396,7 @@ STYLE_CHECKS = {
         'evaluate commented lines': True,
         FUNCTION: functools.partial(
             check_if_jinja2,
-            fallback=re.compile(r'(?<!{)#.*?{[{%]').findall
+            function=re.compile(r'(?<!{)#.*?{[{%]').findall
         )
     }
 }
@@ -426,7 +458,7 @@ MANUAL_DEPRECATIONS = {
         'kwargs': True,
         FUNCTION: functools.partial(
             check_for_suicide_triggers,
-            fallback=re.compile(r'=>\s*\!.*').findall
+            function=re.compile(r'=>\s*\!.*').findall
         ),
     },
     'U009': {
@@ -449,7 +481,7 @@ MANUAL_DEPRECATIONS = {
         'kwargs': True,
         FUNCTION: functools.partial(
             check_if_jinja2,
-            fallback=re.compile(r'\{%\s*set\s*.+?\s*=\s*0\d+\s*%\}').findall
+            function=re.compile(r'\{%\s*set\s*.+?\s*=\s*0\d+\s*%\}').findall
         )
     },
     'U012': {
@@ -553,8 +585,8 @@ def get_pyproject_toml(dir_):
     tomldata = {}
     if tomlfile.is_file():
         try:
-            loadeddata = tomli.loads(tomlfile.read_text())
-        except tomli.TOMLDecodeError as exc:
+            loadeddata = toml_loads(tomlfile.read_text())
+        except TOMLDecodeError as exc:
             raise CylcError(f'pyproject.toml did not load: {exc}')
 
         if any(
@@ -762,7 +794,7 @@ def parse_checks(check_args, ignores=None, max_line_len=None, reference=False):
     return parsedchecks
 
 
-def get_index_str(meta, index):
+def get_index_str(meta: dict, index: str) -> str:
     """Printable purpose string - mask useless numbers for auto-generated
     upgrades."""
     if meta.get('is_dep', None):
@@ -774,19 +806,73 @@ def get_index_str(meta, index):
 
 
 def check_cylc_file(
-    dir_, file_, checks,
-    modify=False,
+    file: Path,
+    file_rel: Path,
+    checks: Dict[str, dict],
+    counter: Dict[str, int],
+    modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
-    file_rel = file_.relative_to(dir_)
-    # Set mode as read-write or read only.
-    outlines = []
+    with open(file, 'r') as cylc_file:
+        # generator which reads and lints one line at a time
+        linter = lint(
+            file_rel,
+            cylc_file,
+            checks,
+            counter,
+            modify,
+        )
 
-    # Open file, and read it's line to memory.
-    lines = file_.read_text().split('\n')
-    jinja_shebang = lines[0].strip().lower() == JINJA2_SHEBANG
-    count = 0
-    for line_no, line in enumerate(lines, start=1):
+        if modify:
+            # write modifications into a ".temp" file
+            modify_file_path = file.parent / f'{file.name}.temp'
+            with open(modify_file_path, 'w+') as modify_file:
+                for line in linter:
+                    modify_file.write(line)
+            # replace the original with the ".temp" file
+            shutil.move(str(modify_file_path), file)
+        else:
+            for _line in linter:
+                pass
+
+
+def lint(
+    file_rel: Path,
+    lines: Iterator[str],
+    checks: Dict[str, dict],
+    counter: Dict[str, int],
+    modify: bool = False,
+    write: Callable = print
+) -> Iterator[str]:
+    """Lint text, one line at a time.
+
+    Arguments:
+        file_rel:
+            The filepath relative to the workflow configuration directory
+            (used in messages).
+        lines:
+            Iterator which produces one line of text at a time
+            e.g. open(file) or iter(['foo\n', 'bar\n', 'baz\n'].
+        counter:
+            Dictionary for counting lint hits per category.
+        modify:
+            If True, this generator will yield the file one line at a time
+            with comments inserted to help users fix their lint.
+        write:
+            A function for reporting lint messages.
+
+    Yields:
+        The original file with added comments when `modify is True`.
+
+    """
+    # get the first line
+    line_no = 1
+    line = next(lines)
+    # check if it is a jinja2 shebang
+    jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
+
+    while True:
+        # run lint checks against the current line
         for index, check_meta in checks.items():
             # Skip commented line unless check says not to.
             if (
@@ -800,7 +886,7 @@ def check_cylc_file(
                 check_function = functools.partial(
                     check_meta['function'],
                     check_meta=check_meta,
-                    file_=file_,
+                    file=file_rel,
                     jinja_shebang=jinja_shebang,
                 )
             else:
@@ -810,40 +896,48 @@ def check_cylc_file(
             # Run the check:
             check = check_function(line)
 
-            # Log a problem if check is Truthy
             if check:
+                # we have lint!
                 if isinstance(check, dict):
                     msg = check_meta['short'].format(**check)
                 else:
                     msg = check_meta['short']
-                count += 1
+                counter.setdefault(check_meta['purpose'], 0)
+                counter[check_meta['purpose']] += 1
                 if modify:
+                    # insert a command to help the user
                     if check_meta['url'].startswith('http'):
                         url = check_meta['url']
                     else:
                         url = URL_STUB + check_meta['url']
 
-                    outlines.append(
+                    yield (
                         f'# [{get_index_str(check_meta, index)}]: '
                         f'{msg}\n'
-                        f'# - see {url}'
+                        f'# - see {url}\n'
                     )
                 else:
-                    print(
+                    # write a message to inform the user
+                    write(
                         Fore.YELLOW +
                         f'[{get_index_str(check_meta, index)}]'
                         f' {file_rel}:{line_no}: {msg}'
                     )
         if modify:
-            outlines.append(line)
-    if modify:
-        file_.write_text('\n'.join(outlines))
-    return count
+            yield line
+
+        try:
+            # get the next line
+            line = next(lines)
+        except StopIteration:
+            # end of interator
+            return
+        line_no += 1
 
 
 def get_cylc_files(
     base: Path, exclusions: Union[list, None] = None
-) -> Generator[Path, None, None]:
+) -> Iterator[Path]:
     """Given a directory yield paths to check."""
     exclusions = [] if exclusions is None else exclusions
     except_these_files = [
@@ -1028,7 +1122,6 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
     # Get a list of checks bas ed on the checking options:
     # Allow us to check any number of folders at once
-    count = 0
     target = target.parent
     ruleset_default = False
     if options.linter == 'all':
@@ -1074,21 +1167,25 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         ignores=mergedopts['ignore'],
         max_line_len=mergedopts['max-line-length']
     )
-    for file_ in get_cylc_files(target, mergedopts['exclude']):
-        LOG.debug(f'Checking {file_}')
-        count += check_cylc_file(
-            target,
-            file_,
+
+    counter: Dict[str, int] = {}
+    for file in get_cylc_files(target, mergedopts['exclude']):
+        LOG.debug(f'Checking {file}')
+        check_cylc_file(
+            file,
+            file.relative_to(target),
             checks,
+            counter,
             options.inplace,
         )
 
-    if count > 0:
+    if counter:
+        total_lint_hits = sum(counter.values())
         msg = (
             f'\n{Fore.YELLOW}'
             f'Checked {target} against {check_names} '
-            f'rules and found {count} issue'
-            f'{"s" if count > 1 else ""}.'
+            f'rules and found {total_lint_hits} issue'
+            f'{"s" if total_lint_hits > 1 else ""}.'
         )
     else:
         msg = (
@@ -1102,7 +1199,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     # Exit with an error code if there were warnings and
     # if --exit-zero was not set.
     # Return codes: sys.exit(True) == 1, sys.exit(False) == 0
-    sys.exit(count != 0 and not options.exit_zero)
+    sys.exit(bool(counter) and not options.exit_zero)
 
 
 # NOTE: use += so that this works with __import__

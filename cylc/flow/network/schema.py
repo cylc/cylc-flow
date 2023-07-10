@@ -606,91 +606,172 @@ class Workflow(ObjectType):
     class Meta:
         description = """Global workflow info."""
     id = ID()  # noqa: A003 (required for definition)
-    name = String()
-    status = String()
-    status_msg = String()
-    host = String()
-    port = Int()
-    pub_port = Int()
-    owner = String()
+    name = String(
+        description='The workflow ID with the ~user/ prefix removed.',
+    )
+    status = String(
+        description='The workflow status e.g. `running`.',
+    )
+    status_msg = String(
+        description='A description of the workflow status.',
+    )
+    host = String(
+        description='The host where the scheduler process is running.',
+    )
+    port = Int(
+        description='The port for sending ZMQ requests to the scheduler.',
+    )
+    pub_port = Int(
+        description=sstrip('''
+            The port for subscribing to ZMQ updates from the scheduler.
+        '''),
+    )
+    owner = String(
+        description='The user account that the workflow is running under.',
+    )
     tasks = graphene.List(
         lambda: Task,
-        description="""Task definitions.""",
+        description="Task definitions.",
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     families = graphene.List(
         lambda: Family,
-        description="""Family definitions.""",
+        description="Family definitions.",
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     task_proxies = graphene.List(
         lambda: TaskProxy,
-        description="""Task cycle instances.""",
+        description="Task instances.",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     family_proxies = graphene.List(
         lambda: FamilyProxy,
-        description="""Family cycle instances.""",
+        description="Family instances.",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     jobs = graphene.List(
         lambda: Job,
-        description="""Jobs.""",
+        description="Jobs.",
         args=JOB_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     edges = Field(
         lambda: Edges,
         args=EDGE_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        description="""Graph edges""")
+        description="Graph edges.",
+    )
     nodes_edges = Field(
         lambda: NodesEdges,
         args=NODES_EDGES_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_edges)
-    api_version = Int()
-    cylc_version = String()
-    last_updated = Float()
-    meta = Field(NodeMeta)
-    newest_active_cycle_point = String()
-    oldest_active_cycle_point = String()
-    reloaded = Boolean()
-    run_mode = String()
-    is_held_total = Int()
-    is_queued_total = Int()
-    is_runahead_total = Int()
-    state_totals = GenericScalar(resolver=resolve_state_totals)
+        resolver=get_nodes_edges,
+        description='Graph nodes and edges.'
+    )
+    api_version = Int(
+        description='The Cylc scheduler communication protocol version number.'
+    )
+    cylc_version = String(
+        description='The Cylc version this workflow is running under.',
+    )
+    last_updated = Float(
+        description='The time of the most recent state change in the workflow.'
+    )
+    meta = Field(
+        NodeMeta,
+        description="The workflow's `[meta]` section.",
+    )
+    newest_active_cycle_point = String(
+        description='The newest cycle point which has active tasks.'
+    )
+    oldest_active_cycle_point = String(
+        description='The oldest cycle point which has active tasks.'
+    )
+    reloaded = Boolean(
+        description=sstrip('''
+            When subscribing to workflow updates, this field is `True` if the
+            update relates to a workflow reload.
+        '''),
+    )
+    run_mode = String(
+        description="The scheduler's run-mode e.g. `live`.",
+    )
+    is_held_total = Int(
+        description='The number of "held" tasks.',
+    )
+    is_queued_total = Int(
+        description='The number of queued tasks.',
+    )
+    is_runahead_total = Int(
+        description=sstrip('''
+            The number of tasks which are held back by the runahead limit.
+        ''')
+    )
+    state_totals = GenericScalar(
+        resolver=resolve_state_totals,
+        description='The number of tasks in each state as a JSON object.',
+    )
     latest_state_tasks = GenericScalar(
         states=graphene.List(
             String,
             description="List of task states to show",
             default_value=TASK_STATUSES_ORDERED),
-        resolver=resolve_state_tasks)
-    workflow_log_dir = String()
-    time_zone_info = Field(TimeZone)
-    tree_depth = Int()
-    ns_def_order = graphene.List(String)
-    job_log_names = graphene.List(String)
-    states = graphene.List(String)
+        resolver=resolve_state_tasks,
+        description='The latest tasks to have entered each task state.',
+    )
+    workflow_log_dir = String(
+        description="The path to the workflow's run directory.",
+    )
+    time_zone_info = Field(
+        TimeZone,
+        description='The scheduler time zone.',
+    )
+    tree_depth = Int()  # TODO: what is this? write description
+    ns_def_order = graphene.List(
+        String,
+        description=sstrip('''
+            Namespace definition order.
+
+            The order in which tasks were defined in the workflow
+            configuration.
+        '''),
+    )
+    job_log_names = graphene.List(
+        # TODO: remove, see https://github.com/cylc/cylc-flow/issues/5610
+        String,
+        description='Deprecated, do not use this.',
+    )
+    states = graphene.List(
+        String,
+        description=sstrip('''
+            The task states present in the workflow.
+
+            Similar to stateTotals.
+        '''),
+    )
     broadcasts = GenericScalar(
         ids=graphene.List(
             ID,
@@ -698,9 +779,12 @@ class Workflow(ObjectType):
                 Node IDs, cycle point and/or-just family/task namespace:
                     ["1234/foo", "1234/FAM", "*/FAM"]
             '''),
-            default_value=[]),
-        resolver=resolve_broadcasts)
-    pruned = Boolean()
+            default_value=[]
+        ),
+        resolver=resolve_broadcasts,
+        description='Any active workflow broadcasts.'
+    )
+    pruned = Boolean()  # TODO: what is this? write description
 
 
 class RuntimeSetting(ObjectType):
@@ -757,45 +841,100 @@ RUNTIME_FIELD_TO_CFG_MAP = {
 
 class Job(ObjectType):
     class Meta:
-        description = """Jobs."""
+        description = "Jobs."
+
     id = ID()  # noqa: A003 (required for definition)
-    submit_num = Int()
-    state = String()
-    # name and cycle_point for filtering/sorting
-    name = String()
-    cycle_point = String()
+    submit_num = Int(
+        description='The submission number for this job, starts at 1.',
+    )
+    state = String(
+        description='The job state e.g. `running` or `succeeded`.',
+    )
+    name = String(
+        description='The name of the task which submitted this job.',
+    )
+    cycle_point = String(
+        description='The cycle of the task which submitted this job.',
+    )
     task_proxy = Field(
         lambda: TaskProxy,
-        description="""Associated Task Proxy""",
+        description="The TaskProxy of the task which submitted this job",
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
-    submitted_time = String()
-    started_time = String()
-    finished_time = String()
-    job_id = ID()
-    job_runner_name = String()
-    execution_time_limit = Float()
-    platform = String()
-    job_log_dir = String()
-    extra_logs = graphene.List(String)
-    messages = graphene.List(String)
-    runtime = Field(Runtime)
+    submitted_time = String(
+        description='The time this job was submitted to the job runner.',
+    )
+    started_time = String(
+        description='The time this job started running (if it has yet).',
+    )
+    finished_time = String(
+        description='The time this job finished running (if it has yet).',
+    )
+    job_id = ID(
+        description='The ID of this job in the job runner it was submitted to.'
+    )
+    job_runner_name = String(
+        description='The job runner this job was submitted to.',
+    )
+    execution_time_limit = Float(
+        description='The time limit for this job if configured.',
+    )
+    platform = String(
+        description='The Cylc platform this job was submitted to.',
+    )
+    job_log_dir = String(
+        description="The path to the job's log directory.",
+    )
+    extra_logs = graphene.List(
+        # TODO: remove. see https://github.com/cylc/cylc-flow/issues/5610
+        String,
+        description='Obsolete, do not use.',
+    )
+    messages = graphene.List(
+        String,
+        description='The list of task messages generated by this job.',
+    )
+    runtime = Field(
+        Runtime,
+        description=sstrip('''
+            The `[runtime]` configuration of the task which submitted this job.
+        '''),
+    )
 
 
 class Task(ObjectType):
     class Meta:
-        description = """Task definition, static fields"""
+        description = sstrip("""
+            Task definitions.
+
+            These are the task "definitions" as they appear in the
+            configuration as opposed to task "instances" which you will find
+            in the `TaskProxies` field.
+        """)
+
     id = ID()  # noqa: A003 (required for definition)
-    name = String()
-    meta = Field(NodeMeta)
-    runtime = Field(Runtime)
-    mean_elapsed_time = Float()
-    depth = Int()
+    name = String(
+        description='The task name.'
+    )
+    meta = Field(
+        NodeMeta,
+        description="The task's `[meta]` section.",
+    )
+    runtime = Field(
+        Runtime,
+        description="The task's `[runtime`] section.",
+    )
+    mean_elapsed_time = Float(
+        description="The task's average runtime."
+    )
+    depth = Int(
+        description='The family inheritance depth.'
+    )
     proxies = graphene.List(
         lambda: TaskProxy,
-        description="""Associated cycle point proxies""",
+        description="Associated cycle point proxies",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -803,7 +942,7 @@ class Task(ObjectType):
         resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
-        description="""Family definition parent.""",
+        description="Family definition parent.",
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -812,7 +951,7 @@ class Task(ObjectType):
     namespace = graphene.List(String)
     first_parent = Field(
         lambda: Family,
-        description="""Task first parent.""",
+        description="Task first parent.",
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -869,14 +1008,6 @@ class Output(ObjectType):
     time = Float()
 
 
-class ClockTrigger(ObjectType):
-    class Meta:
-        description = """Task clock-trigger"""
-    time = Float()
-    time_string = String()
-    satisfied = Boolean()
-
-
 class XTrigger(ObjectType):
     class Meta:
         description = """Task trigger"""
@@ -893,24 +1024,60 @@ class TaskProxy(ObjectType):
     id = ID()  # noqa: A003 (required for schema definition)
     task = Field(
         Task,
-        description="""Task definition""",
+        description="The task definition relating to this task instance.",
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
-    runtime = Field(Runtime)
-    state = String()
-    cycle_point = String()
-    is_held = Boolean()
-    is_queued = Boolean()
-    is_runahead = Boolean()
-    flow_nums = String()
-    flow_wait = Boolean()
-    depth = Int()
-    job_submits = Int()
+    runtime = Field(
+        Runtime,
+        description="This task's `[runtime]` section.",
+    )
+    state = String(
+        description='The task state e.g. `running`.',
+    )
+    name = String(
+        description="The task's name.",
+    )
+    cycle_point = String(
+        description="The task's cycle point.",
+    )
+    namespace = graphene.List(
+        String,
+        description='The inheritance order for this task.',
+    )
+    is_held = Boolean(
+        description='True if this task is "held".',
+    )
+    is_queued = Boolean(
+        description=sstrip('''
+            True if this task is "queued".
+
+            This relates to Cylc's internal task queues, not a job runner
+            queue.
+        '''),
+    )
+    is_runahead = Boolean(
+        description='True if this task is held back by the "runahead limit".',
+    )
+    flow_nums = String(
+        description='The flows this task instance belongs to.',
+    )
+    flow_wait = Boolean(
+        description=sstrip('''
+            True if this task will wait for an approaching flow before spawning
+            outputs downstream.
+        '''),
+    )
+    depth = Int(
+        description='The family inheritance depth',
+    )
+    job_submits = Int(
+        description='The number of job submissions for this task instance.',
+    )
     outputs = graphene.List(
         Output,
-        description="""Task outputs.""",
+        description="Outputs this task instance has generated.",
         sort=SortArgs(default_value=None),
         sort_order=graphene.List(
             String,
@@ -919,10 +1086,9 @@ class TaskProxy(ObjectType):
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
-    clock_trigger = Field(ClockTrigger)
     external_triggers = graphene.List(
         XTrigger,
-        description="""Task external trigger prerequisites.""",
+        description="Task external trigger prerequisites.",
         sort=SortArgs(default_value=None),
         sort_order=graphene.List(String),
         limit=Int(default_value=0),
@@ -930,49 +1096,56 @@ class TaskProxy(ObjectType):
         resolver=resolve_mapping_to_list)
     xtriggers = graphene.List(
         XTrigger,
-        description="""Task xtrigger prerequisites.""",
+        description="Task xtrigger prerequisites.",
         sort=SortArgs(default_value=None),
         sort_order=graphene.List(String),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
-    extras = GenericScalar(resolver=resolve_json_dump)
-    # name & namespace for filtering/sorting
-    name = String()
-    namespace = graphene.List(String)
-    prerequisites = graphene.List(Prerequisite)
+    extras = GenericScalar(
+        # TODO: what is this? write description
+        resolver=resolve_json_dump,
+    )
+    prerequisites = graphene.List(
+        Prerequisite,
+        description='The prerequisites of this task.',
+    )
     jobs = graphene.List(
         Job,
-        description="""Jobs.""",
+        description="Jobs.",
         args=JOB_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     parents = graphene.List(
         lambda: FamilyProxy,
-        description="""Task parents.""",
+        description="Task parents (i.e. families).",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
     first_parent = Field(
         lambda: FamilyProxy,
-        description="""Task first parent.""",
+        description="The task's first parent (i.e. its containing family).",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_node_by_id)
+        resolver=get_node_by_id,
+    )
     ancestors = graphene.List(
         lambda: FamilyProxy,
-        description="""First parent ancestors.""",
+        description="First parent ancestors (i.e. inheritance hierarchy).",
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
+        resolver=get_nodes_by_ids,
+    )
 
 
 class Family(ObjectType):

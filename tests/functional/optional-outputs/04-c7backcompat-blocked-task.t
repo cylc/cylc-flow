@@ -32,7 +32,7 @@ grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
 
 # Should stall and abort with an unsatisfied prerequisite.
 workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
+    cylc play --no-detach --reference-test --debug "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok grep-1 "WARNING - Partially satisfied prerequisites"
 grep_workflow_log_ok grep-2 "Workflow stalled"

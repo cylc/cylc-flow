@@ -364,12 +364,6 @@ class TaskState:
             prereq.set_satisfied()
         self._is_satisfied = None
 
-    def set_prerequisites_not_satisfied(self):
-        """Reset prerequisites."""
-        for prereq in self.prerequisites:
-            prereq.set_not_satisfied()
-        self._is_satisfied = None
-
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task.
 

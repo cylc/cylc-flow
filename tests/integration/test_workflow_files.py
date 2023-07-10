@@ -16,6 +16,7 @@
 
 from itertools import product
 import logging
+from os import unlink
 from pathlib import Path
 from textwrap import dedent
 
@@ -23,8 +24,8 @@ import pytest
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import (
+    ContactFileExists,
     CylcError,
-    ServiceFileError,
 )
 from cylc.flow.workflow_files import (
     ContactFileFields as CFF,
@@ -105,7 +106,7 @@ async def workflow(flow, scheduler, one_conf, run_dir):
 def test_detect_old_contact_file_running(workflow):
     """It should raise an error if the workflow is running."""
     # the workflow is running so we should get a ServiceFileError
-    with pytest.raises(ServiceFileError):
+    with pytest.raises(ContactFileExists):
         detect_old_contact_file(workflow.reg)
     # the contact file is valid so should be left alone
     assert workflow.contact_file.exists()
@@ -209,7 +210,8 @@ def test_detect_old_contact_file_removal_errors(
         nonlocal process_running
         if not contact_present_after:
             # remove the contact file midway through detect_old_contact_file
-            workflow.contact_file.unlink()
+            unlink(workflow.contact_file)
+
         return process_running
 
     monkeypatch.setattr(
@@ -233,7 +235,7 @@ def test_detect_old_contact_file_removal_errors(
     # try to remove the contact file
     if process_running:
         # this should error if the process is running
-        with pytest.raises(ServiceFileError):
+        with pytest.raises(ContactFileExists):
             detect_old_contact_file(workflow.reg)
     else:
         detect_old_contact_file(workflow.reg)

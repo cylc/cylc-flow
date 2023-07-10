@@ -86,7 +86,7 @@ def src_run_dirs(
         src=('w1', 'w2')
     )
     mock_glbl_cfg(
-        'cylc.flow.workflow_files.glbl_cfg',
+        'cylc.flow.install.glbl_cfg',
         f'''
             [install]
                 source dirs = {tmp_src_path}

@@ -80,18 +80,19 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowFilesError,
 )
+from cylc.flow.install import (
+    reinstall_workflow,
+)
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     OptionSettings,
-    Options,
     WORKFLOW_ID_ARG_DOC,
 )
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     load_contact_file,
-    reinstall_workflow,
 )
 from cylc.flow.terminal import cli_function, DIM, is_terminal
 
@@ -112,25 +113,36 @@ REINSTALL_CYLC_ROSE_OPTIONS = [
     )
 ]
 
+REINSTALL_OPTIONS = [
+    OptionSettings(
+        ["--yes"],
+        help='Skip interactive prompts.',
+        action="store_true",
+        default=False,
+        dest="skip_interactive",
+        sources={'reinstall'}
+    ),
+]
+
 
 def get_option_parser() -> COP:
     parser = COP(
         __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
-    parser.add_cylc_rose_options()
     try:
         # If cylc-rose plugin is available
         __import__('cylc.rose')
     except ImportError:
-        pass
+        options = REINSTALL_OPTIONS
     else:
-        for option in REINSTALL_CYLC_ROSE_OPTIONS:
-            parser.add_option(*option.args, **option.kwargs)
+        parser.add_cylc_rose_options()
+        options = REINSTALL_CYLC_ROSE_OPTIONS + REINSTALL_OPTIONS
+
+    for option in options:
+        parser.add_option(*option.args, **option.kwargs)
+
     return parser
-
-
-ReInstallOptions = Options(get_option_parser())
 
 
 @cli_function(get_option_parser)
@@ -146,6 +158,7 @@ def main(
 def reinstall_cli(
     opts: 'Values',
     args: Optional[str] = None,
+    print_reload_tip: bool = True,
 ) -> bool:
     """Implement cylc reinstall.
 
@@ -175,7 +188,8 @@ def reinstall_cli(
 
     usr: str = ''
     try:
-        if is_terminal():  # interactive mode - perform dry-run and prompt
+        if is_terminal() and not opts.skip_interactive:
+            # interactive mode - perform dry-run and prompt
             # dry-mode reinstall
             if not reinstall(
                 opts,
@@ -212,7 +226,8 @@ def reinstall_cli(
         # reinstall for real
         reinstall(opts, workflow_id, source, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
-        display_cylc_reload_tip(workflow_id)
+        if print_reload_tip:
+            display_cylc_reload_tip(workflow_id)
         return True
 
     else:

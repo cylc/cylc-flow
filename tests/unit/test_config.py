@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from optparse import Values
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from pathlib import Path
@@ -21,6 +22,7 @@ import pytest
 import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
+from contextlib import suppress
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
@@ -1140,7 +1142,7 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
         WorkflowConfig(
             workflow=reg, fpath=flow_file, options=Values())
     assert (
-        'Invalid message trigger "[runtime][foo][outputs]x = '
+        'Invalid task message "[runtime][foo][outputs]x = '
         'the quick: brown fox"'
     ) in str(cm.value)
 
@@ -1565,3 +1567,94 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
     assert "'baz'" not in result
     assert f"showing first {max_warning_lines}" in result
 
+
+@pytest.mark.parametrize(
+    'installed, run_dir, cylc_vars',
+    [
+        pytest.param(
+            False,  # not installed (parsing a source dir)
+            None,  # no run directory passed to config object by scheduler
+            {
+                'CYLC_WORKFLOW_NAME': True,  # expected environment variables
+                'CYLC_WORKFLOW_ID': False,
+                'CYLC_WORKFLOW_RUN_DIR': False,
+                'CYLC_WORKFLOW_WORK_DIR': False,
+                'CYLC_WORKFLOW_SHARE_DIR': False,
+                'CYLC_WORKFLOW_LOG_DIR': False,
+            },
+            id="source-dir"
+        ),
+        pytest.param(
+            True,
+            None,
+            {
+                'CYLC_WORKFLOW_NAME': True,
+                'CYLC_WORKFLOW_ID': True,
+                'CYLC_WORKFLOW_RUN_DIR': True,
+                'CYLC_WORKFLOW_WORK_DIR': False,
+                'CYLC_WORKFLOW_SHARE_DIR': False,
+                'CYLC_WORKFLOW_LOG_DIR': False,
+            },
+            id="run-dir"
+        ),
+        pytest.param(
+            True,
+            "/some/path",
+            {
+                'CYLC_WORKFLOW_NAME': True,
+                'CYLC_WORKFLOW_ID': True,
+                'CYLC_WORKFLOW_RUN_DIR': True,
+                'CYLC_WORKFLOW_WORK_DIR': True,
+                'CYLC_WORKFLOW_SHARE_DIR': True,
+                'CYLC_WORKFLOW_LOG_DIR': True,
+            },
+            id="run-dir-from-scheduler"
+        ),
+    ]
+)
+def test_cylc_env_at_parsing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    installed,
+    run_dir,
+    cylc_vars
+):
+    """Check that CYLC_ environment vars exported during config file parsing
+       are appropriate to the workflow context (source, installed, or running).
+    """
+
+    # Purge environment from previous tests.
+    for key in cylc_vars.keys():
+        with suppress(KeyError):
+            del os.environ[key]
+
+    flow_file = tmp_path / WorkflowFiles.FLOW_FILE
+    flow_config = """
+    [scheduler]
+        allow implicit tasks = True
+    [scheduling]
+        [[graph]]
+            R1 = 'foo'
+    """
+
+    flow_file.write_text(flow_config)
+
+    # Make it look as if path is relative to cylc-run (i.e. installed).
+    monkeypatch.setattr(
+        'cylc.flow.config.is_relative_to',
+        lambda _a, _b: installed
+    )
+
+    # Parse the workflow config then check the environment.
+    WorkflowConfig(
+        workflow="name", fpath=flow_file, options=Mock(spec=[]),
+        run_dir=run_dir
+    )
+
+    cylc_env = [k for k in os.environ.keys() if k.startswith('CYLC_')]
+
+    for var, expected in cylc_vars.items():
+        if expected:
+            assert var in cylc_env
+        else:
+            assert var not in cylc_env

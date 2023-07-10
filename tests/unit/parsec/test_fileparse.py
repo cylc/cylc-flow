@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import tempfile
+from tempfile import NamedTemporaryFile
+from contextlib import suppress
 
 import os
 import pytest
@@ -278,7 +279,7 @@ def test_multiline():
 
 
 def test_read_and_proc_no_template_engine():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = None
         viewcfg = {
@@ -305,7 +306,7 @@ def test_read_and_proc_no_template_engine():
 
 
 def test_inline():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = None
         viewcfg = {
@@ -313,7 +314,7 @@ def test_inline():
             'contin': False, 'inline': True,
             'mark': None, 'single': None, 'label': None
         }
-        with tempfile.NamedTemporaryFile() as include_file:
+        with NamedTemporaryFile() as include_file:
             include_file.write("c=d".encode())
             include_file.flush()
             tf.write(("a=b\n%include \"{0}\""
@@ -325,7 +326,7 @@ def test_inline():
 
 
 def test_inline_error():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = None
         viewcfg = {
@@ -342,7 +343,7 @@ def test_inline_error():
 
 
 def test_read_and_proc_jinja2():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = {
             'name': 'Cylc'
@@ -358,8 +359,44 @@ def test_read_and_proc_jinja2():
         assert r == ['a=Cylc']
 
 
+def test_read_and_proc_cwd(tmp_path):
+    """The template processor should be able to read workflow files.
+
+    This relies on moving to the config dir during file parsing.
+    """
+
+    sdir = tmp_path / "sub"
+    sdir.mkdir()
+
+    for sub in ["a", "b", "c"]:
+        (sdir / sub).touch()
+
+    viewcfg = {
+        'empy': False,
+        'jinja2': True,
+        'contin': False,
+        'inline': False
+    }
+
+    tmpf = tmp_path / "a.conf"
+
+    with open(tmpf, 'w') as tf:
+        tf.write(
+            '#!Jinja2'
+            '\n{% from "os" import listdir %}'
+            '\n{% for f in listdir("sub") %}'
+            '\n{{f}}'
+            '\n{% endfor %}'
+        )
+
+    with open(tmpf, 'r') as tf:
+        r = read_and_proc(fpath=tf.name, viewcfg=viewcfg)
+
+    assert sorted(r) == ['a', 'b', 'c']
+
+
 def test_read_and_proc_jinja2_error():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = {
             'name': 'Cylc'
@@ -380,7 +417,7 @@ def test_read_and_proc_jinja2_error():
 
 
 def test_read_and_proc_jinja2_error_missing_shebang():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = {
             'name': 'Cylc'
@@ -400,112 +437,107 @@ def test_read_and_proc_jinja2_error_missing_shebang():
 # --- originally we had a test for empy here, moved to test_empysupport
 
 def test_parse_keys_only_singleline():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write("#!jinja2\na={{ name }}\n".encode())
-            tf.flush()
-            r = parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            expected = OrderedDictWithDefaults()
-            expected['a'] = 'Cylc'
-            assert r == expected
-            of.flush()
-            output_file_contents = of.read().decode()
-            assert output_file_contents == 'a=Cylc\n'
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write("#!jinja2\na={{ name }}\n".encode())
+        tf.flush()
+        r = parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        expected = OrderedDictWithDefaults()
+        expected['a'] = 'Cylc'
+        assert r == expected
+        of.flush()
+        output_file_contents = of.read().decode()
+        assert output_file_contents == 'a=Cylc\n'
 
 
 def test_parse_keys_only_multiline():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write(
-                "#!jinja2\na='''value is \\\n{{ name }}'''\n".encode())
-            tf.flush()
-            r = parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            expected = OrderedDictWithDefaults()
-            expected['a'] = "'''value is Cylc'''"
-            assert r == expected
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(
+            "#!jinja2\na='''value is \\\n{{ name }}'''\n".encode())
+        tf.flush()
+        r = parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        expected = OrderedDictWithDefaults()
+        expected['a'] = "'''value is Cylc'''"
+        assert r == expected
 
 
 def test_parse_invalid_line():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write("#!jinja2\n{{ name }}\n".encode())
-            tf.flush()
-            with pytest.raises(FileParseError) as cm:
-                parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            exc = cm.value
-            assert exc.reason == 'Invalid line'
-            assert exc.line_num == 1
-            assert exc.line == 'Cylc'
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write("#!jinja2\n{{ name }}\n".encode())
+        tf.flush()
+        with pytest.raises(FileParseError) as cm:
+            parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        exc = cm.value
+        assert exc.reason == 'Invalid line'
+        assert exc.line_num == 1
+        assert exc.line == 'Cylc'
 
 
 def test_parse_comments():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write("#!jinja2\na={{ name }}\n# comment!".encode())
-            tf.flush()
-            r = parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            expected = OrderedDictWithDefaults()
-            expected['a'] = 'Cylc'
-            assert r == expected
-            of.flush()
-            output_file_contents = of.read().decode()
-            assert output_file_contents == 'a=Cylc\n# comment!\n'
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write("#!jinja2\na={{ name }}\n# comment!".encode())
+        tf.flush()
+        r = parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        expected = OrderedDictWithDefaults()
+        expected['a'] = 'Cylc'
+        assert r == expected
+        of.flush()
+        output_file_contents = of.read().decode()
+        assert output_file_contents == 'a=Cylc\n# comment!\n'
 
 
 def test_parse_with_sections():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write(("#!jinja2\n[section1]\n"
-                      "a={{ name }}\n# comment!\n"
-                      "[[subsection1]]\n"
-                      "[[subsection2]]\n"
-                      "[section2]").encode())
-            tf.flush()
-            r = parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            expected = OrderedDictWithDefaults()
-            expected['section1'] = OrderedDictWithDefaults()
-            expected['section1']['a'] = 'Cylc'
-            expected['section1']['subsection1'] = OrderedDictWithDefaults()
-            expected['section1']['subsection2'] = OrderedDictWithDefaults()
-            expected['section2'] = OrderedDictWithDefaults()
-            assert r == expected
-            of.flush()
-            output_file_contents = of.read().decode()
-            assert output_file_contents == (
-                '[section1]\na=Cylc\n# comment!\n'
-                '[[subsection1]]\n'
-                '[[subsection2]]\n'
-                '[section2]\n'
-            )
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(("#!jinja2\n[section1]\n"
+                  "a={{ name }}\n# comment!\n"
+                  "[[subsection1]]\n"
+                  "[[subsection2]]\n"
+                  "[section2]").encode())
+        tf.flush()
+        r = parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        expected = OrderedDictWithDefaults()
+        expected['section1'] = OrderedDictWithDefaults()
+        expected['section1']['a'] = 'Cylc'
+        expected['section1']['subsection1'] = OrderedDictWithDefaults()
+        expected['section1']['subsection2'] = OrderedDictWithDefaults()
+        expected['section2'] = OrderedDictWithDefaults()
+        assert r == expected
+        of.flush()
+        output_file_contents = of.read().decode()
+        assert output_file_contents == (
+            '[section1]\na=Cylc\n# comment!\n'
+            '[[subsection1]]\n'
+            '[[subsection2]]\n'
+            '[section2]\n'
+        )
 
 
 def test_parse_with_sections_missing_bracket():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = {
             'name': 'Cylc'
@@ -522,27 +554,26 @@ def test_parse_with_sections_missing_bracket():
 
 
 def test_parse_with_sections_error_wrong_level():
-    with tempfile.NamedTemporaryFile() as of:
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            tf.write(("#!jinja2\n[section1]\n"
-                      "a={{ name }}\n# comment!\n"
-                      "[[[subsection1]]]\n")  # expected [[]] instead!
-                     .encode())
-            tf.flush()
-            with pytest.raises(FileParseError) as cm:
-                parse(fpath=fpath, output_fname=of.name,
-                      template_vars=template_vars)
-            exc = cm.value
-            assert exc.line_num == 4
-            assert exc.line == '[[[subsection1]]]'
+    with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(("#!jinja2\n[section1]\n"
+                  "a={{ name }}\n# comment!\n"
+                  "[[[subsection1]]]\n")  # expected [[]] instead!
+                 .encode())
+        tf.flush()
+        with pytest.raises(FileParseError) as cm:
+            parse(fpath=fpath, output_fname=of.name,
+                  template_vars=template_vars)
+        exc = cm.value
+        assert exc.line_num == 4
+        assert exc.line == '[[[subsection1]]]'
 
 
 def test_unclosed_multiline():
-    with tempfile.NamedTemporaryFile() as tf:
+    with NamedTemporaryFile() as tf:
         fpath = tf.name
         template_vars = {
             'name': 'Cylc'
@@ -645,11 +676,9 @@ def _mock_old_template_vars_db(tmp_path):
             src.mkdir(exist_ok=True)
             link = tmp_path.parent / '_cylc-install/source'
             link.parent.mkdir(exist_ok=True)
-            try:
-                os.symlink(src, link)
-            except FileExistsError:
+            with suppress(FileExistsError):
                 # We don't mind the link persisting.
-                pass
+                os.symlink(src, link)
         return tmp_path / 'flow.cylc'
     yield _inner
 

@@ -58,6 +58,7 @@ foo_m1=>bar_m1_n2
 
 from contextlib import suppress
 import re
+from typing import List, Tuple
 
 from cylc.flow.exceptions import ParamExpandError
 from cylc.flow.task_id import TaskID
@@ -201,6 +202,67 @@ class NameExpander:
                 spec_vals[params[0][0]] = param_val
                 self._expand_name(results, tmpl, params[1:], spec_vals)
 
+    @staticmethod
+    def _parse_task_name_string(task_str: str) -> Tuple[List[str], str]:
+        """Takes a parent string and returns a list of parameters and a
+        template string.
+
+        Examples:
+            >>> this = NameExpander._parse_task_name_string
+
+            # Parent doesn't contain a parameter:
+            >>> this('foo')
+            ([], 'foo')
+
+            # Parent contains a simple single parameter:
+            >>> this('<foo>')
+            (['foo'], '{foo}')
+
+            # Parent contains 2 parameters in 1 <>:
+            >>> this('something<foo, bar>other')
+            (['foo', 'bar'], 'something{foo}{bar}other')
+
+            # Parent contains 2 parameters in 2 <>:
+            >>> this('something<foo>middlebit<bar>other')
+            (['foo', 'bar'], 'something{foo}middlebit{bar}other')
+
+            # Parent contains 2 parameters, once with an = sign in it.
+            >>> this('something<foo=42>middlebit<bar>other')
+            (['foo=42', 'bar'], 'something{foo}middlebit{bar}other')
+
+            # Parent contains 2 parameters in 2 <>:
+            >>> this('something<foo,bar=99>other')
+            (['foo', 'bar=99'], 'something{foo}{bar}other')
+
+            # Parent contains spaces around = sign:
+            >>> this('FAM<i = cat ,j=3>')
+            (['i = cat', 'j=3'], 'FAM{i}{j}')
+        """
+        param_list = []
+
+        for match in REC_P_GROUP.finditer(task_str):
+            param = match.group(1)
+            if ',' in param:
+                # parameter syntax `<foo, bar>`
+                replacement = ''
+                for sub_param in param.split(','):
+                    sub_param = sub_param.strip()
+                    param_list.append(sub_param)
+                    if '=' in sub_param:
+                        sub_param = sub_param.split('=')[0].strip()
+                    replacement += '{' + sub_param + '}'
+            else:
+                # parameter syntax: `<foo><bar>`
+                param_list.append(param)
+                if '=' in param:
+                    replacement = '{' + param.split('=')[0] + '}'
+                else:
+                    replacement = '{' + param + '}'
+
+            task_str = task_str.replace(match.group(0), replacement, 1)
+
+        return param_list, task_str
+
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
 
@@ -214,11 +276,13 @@ class NameExpander:
         then it must be a legal value for that parameter.
 
         """
-        head, p_list_str, tail = REC_P_ALL.match(parent).groups()
-        if not p_list_str:
-            return (None, head)
+        p_list, tmpl = self._parse_task_name_string(parent)
+
+        if not p_list:
+            return (None, parent)
+
         used = {}
-        for item in (i.strip() for i in p_list_str.split(',')):
+        for item in p_list:
             if '-' in item or '+' in item:
                 raise ParamExpandError(
                     "parameter offsets illegal here: '%s'" % origin)
@@ -244,14 +308,10 @@ class NameExpander:
                     raise ParamExpandError(
                         "parameter '%s' undefined in '%s'" % (
                             item, origin))
-        if head:
-            tmpl = head
-        else:
-            tmpl = ''
-        for pname in used:
-            tmpl += self.param_tmpl_cfg[pname]
-        if tail:
-            tmpl += tail
+
+        # For each parameter substitute the param_tmpl_cfg.
+        tmpl = tmpl.format(**self.param_tmpl_cfg)
+        # Insert parameter values into template.
         return (used, tmpl % used)
 
 
