@@ -16,7 +16,6 @@
 
 import tempfile
 
-from pathlib import Path
 import os
 import pytest
 from pytest import param
@@ -358,31 +357,42 @@ def test_read_and_proc_jinja2():
                           viewcfg=viewcfg)
         assert r == ['a=Cylc']
 
-def test_read_and_proc_cwd():
+
+def test_read_and_proc_cwd(tmp_path):
     """The template processor should be able to read workflow files.
 
-    This relies on moving to the config dir during file parsing. 
+    This relies on moving to the config dir during file parsing.
     """
-    with tempfile.TemporaryDirectory() as td:
-        sdir = Path(td + "/sub")
-        sdir.mkdir()
-        for sub in ["a", "b", "c"]:
-            (sdir / Path(sub)).touch()
-        viewcfg = {
-            'empy': False, 'jinja2': True,
-            'contin': False, 'inline': False
-        }
-        with open(td / Path("a.conf"), 'w') as tf:
-            tf.write(
-"""#!Jinja2
-{% from "os" import listdir %}
-{% for f in listdir("sub") %}
-{{f}}
-{% endfor %}
-""")
-            tf.flush()
-            r = read_and_proc(fpath=tf.name, viewcfg=viewcfg)
-            assert sorted(r) == ['a', 'b', 'c']
+
+    sdir = tmp_path / "sub"
+    sdir.mkdir()
+
+    for sub in ["a", "b", "c"]:
+        (sdir / sub).touch()
+
+    viewcfg = {
+        'empy': False,
+        'jinja2': True,
+        'contin': False,
+        'inline': False
+    }
+
+    tmpf = tmp_path / "a.conf"
+
+    with open(tmpf, 'w') as tf:
+        tf.write(
+            '#!Jinja2'
+            '\n{% from "os" import listdir %}'
+            '\n{% for f in listdir("sub") %}'
+            '\n{{f}}'
+            '\n{% endfor %}'
+        )
+
+    with open(tmpf, 'r') as tf:
+        r = read_and_proc(fpath=tf.name, viewcfg=viewcfg)
+
+    assert sorted(r) == ['a', 'b', 'c']
+
 
 def test_read_and_proc_jinja2_error():
     with tempfile.NamedTemporaryFile() as tf:
