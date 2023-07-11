@@ -68,6 +68,8 @@ Various enhancements to `cylc lint`:
 
 ### Fixes
 
+[#5616](https://github.com/cylc/cylc-flow/pull/5616) -
+Improve PBS support for job IDs with trailing components.
 
 [#5606](https://github.com/cylc/cylc-flow/pull/5606) -
 Task outputs and messages are now validated to avoid conflicts with built-in
