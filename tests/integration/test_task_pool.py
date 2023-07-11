@@ -470,7 +470,9 @@ async def test_hold_point(
     # Test release
     task_pool.release_hold_point()
 
-    assert db_select(example_flow, True, 'workflow_params', key='holdcp') == []
+    assert db_select(example_flow, True, 'workflow_params', key='holdcp') == [
+        ('holdcp', None)
+    ]
 
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is False
