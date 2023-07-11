@@ -202,11 +202,12 @@ async def test_no_poll_waiting_tasks(
     See https://github.com/cylc/cylc-flow/issues/4658
     """
     reg: str = flow(one_conf)
-    one: Scheduler = scheduler(reg, paused_start=True)
+    # start the scheduler in live mode in order to activate regular polling
+    # logic
+    one: Scheduler = scheduler(reg, run_mode='live')
 
     log: pytest.LogCaptureFixture
     async with start(one) as log:
-
         # Test assumes start up with a waiting task.
         task = (one.pool.get_all_tasks())[0]
         assert task.state.status == TASK_STATUS_WAITING

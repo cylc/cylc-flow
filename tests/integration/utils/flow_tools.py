@@ -79,8 +79,12 @@ def _make_scheduler():
     schd: Scheduler = None  # type: ignore[assignment]
 
     def __make_scheduler(reg: str, **opts: Any) -> Scheduler:
-        # This allows paused_start to be overridden:
-        opts = {'paused_start': True, **opts}
+        opts = {
+            # safe n sane defaults for integration tests
+            'paused_start': True,
+            'run_mode': 'simulation',
+            **opts,
+        }
         options = RunOptions(**opts)
         # create workflow
         nonlocal schd
