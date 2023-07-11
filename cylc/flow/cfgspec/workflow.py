@@ -1530,7 +1530,7 @@ with Conf(
 
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
-                except that the target workflow name and the
+                except that the target workflow ID and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
 

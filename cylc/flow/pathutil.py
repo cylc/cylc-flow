@@ -56,19 +56,19 @@ def expand_path(*args: Union[Path, str]) -> str:
 
 
 def get_remote_workflow_run_dir(
-    workflow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_id: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return remote workflow run directory, joining any extra args,
     NOT expanding vars or user."""
-    return os.path.join(_CYLC_RUN_DIR, workflow_name, *args)
+    return os.path.join(_CYLC_RUN_DIR, workflow_id, *args)
 
 
 def get_remote_workflow_run_job_dir(
-    workflow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_id: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return remote workflow job log directory, joining any extra args,
     NOT expanding vars or user."""
-    return get_remote_workflow_run_dir(workflow_name, 'log', 'job', *args)
+    return get_remote_workflow_run_dir(workflow_id, 'log', 'job', *args)
 
 
 def get_cylc_run_dir() -> str:
@@ -77,14 +77,14 @@ def get_cylc_run_dir() -> str:
 
 
 def get_workflow_run_dir(
-    workflow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_id: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return local workflow run directory, joining any extra args, and
     expanding vars and user.
 
     Does not check that the directory exists.
     """
-    return expand_path(_CYLC_RUN_DIR, workflow_name, *args)
+    return expand_path(_CYLC_RUN_DIR, workflow_id, *args)
 
 
 def get_workflow_run_job_dir(workflow, *args):
@@ -157,7 +157,7 @@ def make_localhost_symlinks(
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
-        named_sub_dir: e.g workflow_name/run1
+        named_sub_dir: e.g workflow_id/run1
         symlink_conf: Symlinks dirs configuration passed from cli
 
     Returns:
@@ -195,7 +195,7 @@ def make_localhost_symlinks(
 
 def get_dirs_to_symlink(
     install_target: str,
-    workflow_name: str,
+    workflow_id: str,
     symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
 ) -> Dict[str, str]:
     """Returns dictionary of directories to symlink.
@@ -204,7 +204,7 @@ def get_dirs_to_symlink(
 
     Args:
         install_target: Symlinks to be created on this install target
-        flow_name: full name of the run, e.g. myflow/run1
+        flow_id: full id of the run, e.g. myflow/run1
         symlink_conf: Symlink dirs, if sent on the cli.
             Defaults to None, in which case global config symlink dirs will
             be applied.
@@ -220,13 +220,13 @@ def get_dirs_to_symlink(
     base_dir = symlink_conf[install_target]['run']
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(
-            base_dir, 'cylc-run', workflow_name)
+            base_dir, 'cylc-run', workflow_id)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(
-            link, 'cylc-run', workflow_name, dir_)
+            link, 'cylc-run', workflow_id, dir_)
     return dirs_to_symlink
 
 

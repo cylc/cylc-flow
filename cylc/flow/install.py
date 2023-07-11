@@ -548,7 +548,7 @@ def detect_flow_exists(
 
     Args:
         run_path_base: Absolute path of workflow directory,
-            i.e ~/cylc-run/<workflow_name>
+            i.e ~/cylc-run/<workflow_id>
         numbered: If True, will detect if numbered runs exist. If False, will
             detect if non-numbered runs exist, i.e. runs installed
             by --run-name.

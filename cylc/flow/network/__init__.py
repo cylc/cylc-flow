@@ -67,7 +67,7 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
     NB: if it fails to load the workflow contact file, it will exit.
 
     Args:
-        workflow: workflow name
+        workflow: workflow ID
     Returns:
         Tuple (host name, port number, publish port number)
     Raises:
