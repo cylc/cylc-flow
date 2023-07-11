@@ -25,8 +25,8 @@ from pathlib import Path
 # test _make_flow via the conftest fixture
 def test_flow(run_dir, flow, one_conf):
     """It should create a flow in the run directory."""
-    reg = flow(one_conf)
-    assert Path(run_dir / reg).exists()
-    assert Path(run_dir / reg / 'flow.cylc').exists()
-    with open(Path(run_dir / reg / 'flow.cylc'), 'r') as flow_file:
+    id_ = flow(one_conf)
+    assert Path(run_dir / id_).exists()
+    assert Path(run_dir / id_ / 'flow.cylc').exists()
+    with open(Path(run_dir / id_ / 'flow.cylc'), 'r') as flow_file:
         assert 'scheduling' in flow_file.read()

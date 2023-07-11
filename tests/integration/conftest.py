@@ -100,7 +100,7 @@ def run_dir():
 
 @pytest.fixture(scope='session')
 def ses_test_dir(request, run_dir):
-    """The root reg dir for test flows in this test session."""
+    """The root run dir for test flows in this test session."""
     timestamp = get_current_time_string(use_basic_format=True)
     uuid = f'cit-{timestamp}'
     path = Path(run_dir, uuid)
@@ -111,7 +111,7 @@ def ses_test_dir(request, run_dir):
 
 @pytest.fixture(scope='module')
 def mod_test_dir(request, ses_test_dir):
-    """The root reg dir for test flows in this test module."""
+    """The root run dir for test flows in this test module."""
     path = Path(ses_test_dir, request.module.__name__)
     path.mkdir(exist_ok=True)
     yield path
@@ -125,7 +125,7 @@ def mod_test_dir(request, ses_test_dir):
 
 @pytest.fixture
 def test_dir(request, mod_test_dir):
-    """The root reg dir for test flows in this test function."""
+    """The root run dir for test flows in this test function."""
     path = Path(mod_test_dir, request.function.__name__)
     path.mkdir(parents=True, exist_ok=True)
     yield path
@@ -164,7 +164,7 @@ def scheduler():
     """Return a Scheduler object for a flow.
 
     Args:
-        reg (str): Workflow name.
+        id_ (str): Workflow name.
         **opts (Any): Options to be passed to the Scheduler.
     """
     with _make_scheduler() as _scheduler:
@@ -226,15 +226,15 @@ def mod_one_conf():
 @pytest.fixture
 def one(one_conf, flow, scheduler):
     """Return a Scheduler for the simple "R1 = one" graph."""
-    reg = flow(one_conf)
-    schd = scheduler(reg)
+    id_ = flow(one_conf)
+    schd = scheduler(id_)
     return schd
 
 
 @pytest.fixture(scope='module')
 def mod_one(mod_one_conf, mod_flow, mod_scheduler):
-    reg = mod_flow(mod_one_conf)
-    schd = mod_scheduler(reg)
+    id_ = mod_flow(mod_one_conf)
+    schd = mod_scheduler(id_)
     return schd
 
 
@@ -342,14 +342,14 @@ def validate(run_dir):
     errors.
 
     Args:
-        reg - The flow to validate
+        id_ - The flow to validate
         kwargs - Arguments to pass to ValidateOptions
     """
-    def _validate(reg: Union[str, Path], **kwargs) -> WorkflowConfig:
-        reg = str(reg)
+    def _validate(id_: Union[str, Path], **kwargs) -> WorkflowConfig:
+        id_ = str(id_)
         return WorkflowConfig(
-            reg,
-            str(Path(run_dir, reg, 'flow.cylc')),
+            id_,
+            str(Path(run_dir, id_, 'flow.cylc')),
             ValidateOptions(**kwargs)
         )
 

@@ -198,7 +198,7 @@ def _get_inheritance_nodes_and_edges(
 
 
 def get_config(workflow_id: str, opts: 'Values', flow_file) -> WorkflowConfig:
-    """Return a WorkflowConfig object for the provided reg / path."""
+    """Return a WorkflowConfig object for the provided id_ / path."""
     template_vars = get_template_vars(opts)
     return WorkflowConfig(
         workflow_id, flow_file, opts, template_vars=template_vars

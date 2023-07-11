@@ -54,13 +54,13 @@ def _tmp_flow_config(tmp_run_dir: Callable):
     """Create a temporary flow config file for use in init'ing WorkflowConfig.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow name.
         config: The flow file content.
 
     Returns the path to the flow file.
     """
-    def __tmp_flow_config(reg: str, config: str) -> Path:
-        run_dir: Path = tmp_run_dir(reg)
+    def __tmp_flow_config(id_: str, config: str) -> Path:
+        run_dir: Path = tmp_run_dir(id_)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
@@ -239,8 +239,8 @@ def test_family_inheritance_and_quotes(
                 hosts = localhost
         '''
     )
-    reg = 'test'
-    file_path = tmp_flow_config(reg, f'''
+    id_ = 'test'
+    file_path = tmp_flow_config(id_, f'''
         [scheduler]
             allow implicit tasks = True
         [task parameters]
@@ -259,7 +259,7 @@ def test_family_inheritance_and_quotes(
                 inherit = 'MAINFAM<major, minor>', {fam_txt}
     ''')
     config = WorkflowConfig(
-        reg, file_path, template_vars={}, options=Values()
+        id_, file_path, template_vars={}, options=Values()
     )
     assert ('goodbye_0_major1_minor10' in
             config.runtime['descendants']['MAINFAM_major1_minor10'])
@@ -780,8 +780,8 @@ def test_stopcp_after_fcp(
     """Test that setting a stop after cycle point that is beyond the final
     cycle point is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
-    reg = 'cassini'
-    flow_file: Path = tmp_flow_config(reg, f"""
+    id_ = 'cassini'
+    flow_file: Path = tmp_flow_config(id_, f"""
     [scheduler]
         allow implicit tasks = True
     [scheduling]
@@ -791,7 +791,7 @@ def test_stopcp_after_fcp(
         [[graph]]
             P1Y = huygens
     """)
-    cfg = WorkflowConfig(reg, flow_file, options=RunOptions(**opts))
+    cfg = WorkflowConfig(id_, flow_file, options=RunOptions(**opts))
     msg = "will have no effect as it is after the final cycle point"
     if warning_expected:
         assert msg in caplog.text
@@ -992,8 +992,8 @@ def test_cycle_point_tz(caplog, monkeypatch):
 
 
 def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
-    reg = 'rsynctest'
-    flow_file = tmp_flow_config(reg, """
+    id_ = 'rsynctest'
+    flow_file = tmp_flow_config(id_, """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -1004,15 +1004,15 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
 
     with pytest.raises(WorkflowConfigError) as exc:
         WorkflowConfig(
-            workflow=reg, fpath=flow_file, options=Values()
+            workflow=id_, fpath=flow_file, options=Values()
         )
     assert "Directories can only be from the top level" in str(exc.value)
 
 
 def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
     """Test that the rsync includes in the correct """
-    reg = 'rsynctest'
-    flow_file = tmp_flow_config(reg, """
+    id_ = 'rsynctest'
+    flow_file = tmp_flow_config(id_, """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -1023,7 +1023,7 @@ def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
     """)
 
     config = WorkflowConfig(
-        workflow=reg, fpath=flow_file, options=Values()
+        workflow=id_, fpath=flow_file, options=Values()
     )
 
     rsync_includes = WorkflowConfig.get_validated_rsync_includes(config)
@@ -1078,8 +1078,8 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
     if opt:
         setattr(options, opt, True)
 
-    reg = 'circular'
-    flow_file = tmp_flow_config(reg, """
+    id_ = 'circular'
+    flow_file = tmp_flow_config(id_, """
     [scheduling]
         cycling mode = integer
         [[graph]]
@@ -1091,7 +1091,7 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
 
     def WorkflowConfig__assert_err_raised():
         with pytest.raises(WorkflowConfigError) as exc:
-            WorkflowConfig(workflow=reg, fpath=flow_file, options=options)
+            WorkflowConfig(workflow=id_, fpath=flow_file, options=options)
         assert "circular edges detected" in str(exc.value)
 
     # ----- The actual test -----
@@ -1110,8 +1110,8 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
 
 def test_undefined_custom_output(tmp_flow_config: Callable):
     """Test error on undefined custom output referenced in graph."""
-    reg = 'custom_out1'
-    flow_file = tmp_flow_config(reg, """
+    id_ = 'custom_out1'
+    flow_file = tmp_flow_config(id_, """
     [scheduling]
         [[graph]]
             R1 = "foo:x => bar"
@@ -1120,14 +1120,14 @@ def test_undefined_custom_output(tmp_flow_config: Callable):
     """)
 
     with pytest.raises(WorkflowConfigError) as cm:
-        WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
+        WorkflowConfig(workflow=id_, fpath=flow_file, options=Values())
     assert "Undefined custom output" in str(cm.value)
 
 
 def test_invalid_custom_output_msg(tmp_flow_config: Callable):
     """Test invalid output message (colon not allowed)."""
-    reg = 'invalid_output'
-    flow_file = tmp_flow_config(reg, """
+    id_ = 'invalid_output'
+    flow_file = tmp_flow_config(id_, """
     [scheduling]
         [[graph]]
             R1 = "foo:x => bar"
@@ -1140,7 +1140,7 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
 
     with pytest.raises(WorkflowConfigError) as cm:
         WorkflowConfig(
-            workflow=reg, fpath=flow_file, options=Values())
+            workflow=id_, fpath=flow_file, options=Values())
     assert (
         'Invalid task message "[runtime][foo][outputs]x = '
         'the quick: brown fox"'
@@ -1155,8 +1155,8 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch):
 
     """
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    reg = 'custom_out2'
-    flow_file = tmp_flow_config(reg, '''
+    id_ = 'custom_out2'
+    flow_file = tmp_flow_config(id_, '''
     [scheduling]
         [[graph]]
             R1 = """
@@ -1171,7 +1171,7 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch):
                 x = x
     ''')
 
-    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     for taskdef in cfg.taskdefs.values():
         for output, (_, required) in taskdef.outputs.items():
@@ -1191,8 +1191,8 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch):
 )
 def test_implicit_success_required(tmp_flow_config, graph):
     """Check foo:succeed is required if success/fail not used in the graph."""
-    reg = 'blargh'
-    flow_file = tmp_flow_config(reg, f"""
+    id_ = 'blargh'
+    flow_file = tmp_flow_config(id_, f"""
     [scheduling]
         [[graph]]
             R1 = {graph}
@@ -1202,7 +1202,7 @@ def test_implicit_success_required(tmp_flow_config, graph):
            [[[outputs]]]
                x = "the quick brown fox"
     """)
-    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
     assert cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
 
 
@@ -1215,8 +1215,8 @@ def test_implicit_success_required(tmp_flow_config, graph):
 )
 def test_success_after_optional_submit(tmp_flow_config, graph):
     """Check foo:succeed is not required if foo:submit is optional."""
-    reg = 'blargh'
-    flow_file = tmp_flow_config(reg, f"""
+    id_ = 'blargh'
+    flow_file = tmp_flow_config(id_, f"""
     [scheduling]
         [[graph]]
             R1 = {graph}
@@ -1224,7 +1224,7 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
         [[bar]]
         [[foo]]
     """)
-    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
     assert not cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
 
 
@@ -1281,8 +1281,8 @@ def test_implicit_tasks(
             implicit tasks in the err msg.
     """
     # Setup
-    reg = 'rincewind'
-    flow_file: Path = tmp_flow_config(reg, f"""
+    id_ = 'rincewind'
+    flow_file: Path = tmp_flow_config(id_, f"""
     [scheduler]
         {
             f'allow implicit tasks = {allow_implicit_tasks}'
@@ -1302,7 +1302,7 @@ def test_implicit_tasks(
         expected_exc = WorkflowConfigError
     extra_msg_expected &= (allow_implicit_tasks is None)
     # Test
-    args: dict = {'workflow': reg, 'fpath': flow_file, 'options': None}
+    args: dict = {'workflow': id_, 'fpath': flow_file, 'options': None}
     expected_msg = r"implicit tasks detected.*"
     if expected_exc:
         with pytest.raises(expected_exc, match=expected_msg) as excinfo:
@@ -1385,8 +1385,8 @@ def test_zero_interval(
 ):
     """Test that a zero-duration recurrence with >1 repetition gets an
     appropriate warning."""
-    reg = 'ordinary'
-    flow_file: Path = tmp_flow_config(reg, f"""
+    id_ = 'ordinary'
+    flow_file: Path = tmp_flow_config(id_, f"""
     [scheduler]
         UTC mode = True
         allow implicit tasks = True
@@ -1396,7 +1396,7 @@ def test_zero_interval(
         [[graph]]
             {recurrence} = slidescape36
     """)
-    WorkflowConfig(reg, flow_file, options=opts)
+    WorkflowConfig(id_, flow_file, options=opts)
     logged = log_filter(
         caplog,
         level=logging.WARNING,
@@ -1433,8 +1433,8 @@ def test_chain_expr(
 
     Note the order matters when "nominal" units (years, months) are used.
     """
-    reg = 'osgiliath'
-    flow_file: Path = tmp_flow_config(reg, f"""
+    id_ = 'osgiliath'
+    flow_file: Path = tmp_flow_config(id_, f"""
         [scheduler]
             UTC mode = True
             allow implicit tasks = True
@@ -1444,7 +1444,7 @@ def test_chain_expr(
             [[graph]]
                 P1D = faramir
     """)
-    cfg = WorkflowConfig(reg, flow_file, options=ValidateOptions())
+    cfg = WorkflowConfig(id_, flow_file, options=ValidateOptions())
     assert cfg.final_point == ISO8601Point(expected_fcp).standardise()
 
 
@@ -1497,8 +1497,8 @@ def test_check_for_owner(runtime_cfg):
 @pytest.fixture(scope='module')
 def awe_config(mod_tmp_flow_config: Callable) -> WorkflowConfig:
     """Return a workflow config object."""
-    reg = 'awe'
-    flow_file = mod_tmp_flow_config(reg, '''
+    id_ = 'awe'
+    flow_file = mod_tmp_flow_config(id_, '''
         [scheduling]
             cycling mode = integer
             [[graph]]
@@ -1512,7 +1512,7 @@ def awe_config(mod_tmp_flow_config: Callable) -> WorkflowConfig:
                 inherit = MOON
     ''')
     return WorkflowConfig(
-        workflow=reg, fpath=flow_file, options=ValidateOptions()
+        workflow=id_, fpath=flow_file, options=ValidateOptions()
     )
 
 

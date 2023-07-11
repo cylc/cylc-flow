@@ -251,9 +251,9 @@ async def test_scan_cleans_stuck_contact_files(
 ):
     """Ensure scan tidies up contact files from crashed flows."""
     # create a flow
-    reg = flow(one_conf, name='-crashed-')
-    schd = scheduler(reg)
-    srv_dir = Path(run_dir, reg, WorkflowFiles.Service.DIRNAME)
+    id_ = flow(one_conf, name='-crashed-')
+    schd = scheduler(id_)
+    srv_dir = Path(run_dir, id_, WorkflowFiles.Service.DIRNAME)
     tmp_dir = test_dir / 'srv'
     cont = srv_dir / WorkflowFiles.Service.CONTACT
 
@@ -269,9 +269,9 @@ async def test_scan_cleans_stuck_contact_files(
     # integration test the process is the pytest process and it is still
     # running so we need to change the command so that Cylc sees the flow as
     # having crashed
-    contact_info = load_contact_file(reg)
+    contact_info = load_contact_file(id_)
     contact_info[ContactFileFields.COMMAND] += 'xyz'
-    dump_contact_file(reg, contact_info)
+    dump_contact_file(id_, contact_info)
 
     # make sure this flow shows for a regular filesystem-only scan
     opts = ScanOptions(states='running,paused', format='name')
@@ -306,9 +306,9 @@ async def test_scan_fail_well_when_client_unreachable(
     elegently.
     """
     # create a flow
-    reg = flow(one_conf, name='-crashed-')
-    schd = scheduler(reg)
-    srv_dir = Path(run_dir, reg, WorkflowFiles.Service.DIRNAME)
+    id_ = flow(one_conf, name='-crashed-')
+    schd = scheduler(id_)
+    srv_dir = Path(run_dir, id_, WorkflowFiles.Service.DIRNAME)
     tmp_dir = test_dir / 'srv'
 
     # run the flow, copy the contact, stop the flow, copy back the contact
@@ -323,9 +323,9 @@ async def test_scan_fail_well_when_client_unreachable(
     # integration test the process is the pytest process and it is still
     # running so we need to change the command so that Cylc sees the flow as
     # having crashed
-    contact_info = load_contact_file(reg)
+    contact_info = load_contact_file(id_)
     contact_info[ContactFileFields.COMMAND] += 'xyz'
-    dump_contact_file(reg, contact_info)
+    dump_contact_file(id_, contact_info)
 
     # Run Cylc Scan
     opts = ScanOptions(states='all', format='rich', ping=True)

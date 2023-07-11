@@ -100,8 +100,8 @@ async def mod_example_flow(
     This is module-scoped so faster than example_flow, but should only be used
     where the test does not mutate the state of the scheduler or task pool.
     """
-    reg = mod_flow(EXAMPLE_FLOW_CFG)
-    schd: Scheduler = mod_scheduler(reg, paused_start=True)
+    id_ = mod_flow(EXAMPLE_FLOW_CFG)
+    schd: Scheduler = mod_scheduler(id_, paused_start=True)
     async with mod_run(schd):
         pass
     return schd
@@ -122,8 +122,8 @@ async def example_flow(
     # The run(schd) fixture doesn't work for modifying the DB, so have to
     # set up caplog and do schd.install()/.initialise()/.configure() instead
     caplog.set_level(logging.INFO, CYLC_LOG)
-    reg = flow(EXAMPLE_FLOW_CFG)
-    schd: Scheduler = scheduler(reg)
+    id_ = flow(EXAMPLE_FLOW_CFG)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         yield schd
 

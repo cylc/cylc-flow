@@ -271,9 +271,9 @@ class Scheduler:
 
     time_next_kill: Optional[float] = None
 
-    def __init__(self, reg: str, options: Values) -> None:
+    def __init__(self, id_: str, options: Values) -> None:
         # flow information
-        self.workflow = reg
+        self.workflow = id_
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()

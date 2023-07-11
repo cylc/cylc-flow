@@ -32,8 +32,8 @@ async def test_process_job_logs_retrieval_warns_no_platform(
         max_size=256,
         key='skarloey'
     )
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     # Run
     async with run(schd):
         schd.task_events_mgr._process_job_logs_retrieval(

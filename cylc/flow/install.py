@@ -583,7 +583,7 @@ def check_nested_dirs(
             install dirs.
 
     Raises:
-        WorkflowFilesError if reg dir is nested inside a run dir, or an
+        WorkflowFilesError if id_ dir is nested inside a run dir, or an
             install dirs are nested.
     """
     if install_dir is not None:

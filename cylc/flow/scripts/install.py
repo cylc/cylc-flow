@@ -265,18 +265,18 @@ InstallOptions = Options(get_option_parser())
 def main(
     _parser: COP,
     opts: 'Values',
-    reg: Optional[str] = None
+    id_: Optional[str] = None
 ) -> None:
     """CLI wrapper."""
-    install_cli(opts, reg)
+    install_cli(opts, id_)
 
 
 def install_cli(
     opts: 'Values',
-    reg: Optional[str] = None
+    id_: Optional[str] = None
 ) -> Tuple[str, str]:
     """Install workflow and scan for already-running instances."""
-    wf_name, wf_id = install(opts, reg)
+    wf_name, wf_id = install(opts, id_)
     asyncio.run(
         scan(wf_name, not opts.no_ping)
     )
@@ -284,14 +284,14 @@ def install_cli(
 
 
 def install(
-    opts: 'Values', reg: Optional[str] = None
+    opts: 'Values', id_: Optional[str] = None
 ) -> Tuple[str, str]:
     set_timestamps(LOG, opts.log_timestamp and opts.verbosity > 1)
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
         )
-    source = get_source_location(reg)
+    source = get_source_location(id_)
 
     # Check deprecation to allow plugins to have access to correct flags
     # for compatibility mode:
