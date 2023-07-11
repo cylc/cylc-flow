@@ -1065,11 +1065,11 @@ class CylcConfigValidator(ParsecValidator):
         Examples:
             >>> xtrig = CylcConfigValidator.coerce_xtrigger
 
-            # parse xtrig function signatures
-            >>> xtrig('a(b, c):PT1M', [None])
-            a(b, c):60.0
-            >>> xtrig('a(x, "1,2,3", y):PT1S', [None])
-            a(x, 1,2,3, y):1.0
+            >>> ctx = xtrig('a(b, c):PT1M', [None])
+            >>> ctx.get_signature()
+            'a(b, c)'
+            >>> ctx.intvl
+            60.0
 
             # cast types
             >>> x = xtrig('a(1, 1.1, True, abc, x=True, y=1.1)', [None])
