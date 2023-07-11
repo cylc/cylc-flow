@@ -341,6 +341,16 @@ def test_family_inheritance_and_quotes(
             (WorkflowConfigError, "does not meet the constraints"),
             id="Violated constraints"
         ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
+            {
+                'initial cycle point': 'a',
+            },
+            None,
+            None,
+            (WorkflowConfigError, 'Invalid ISO 8601 date representation: a'),
+            id="invalid"
+        ),
     ]
 )
 def test_process_icp(
