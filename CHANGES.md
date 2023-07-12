@@ -107,6 +107,9 @@ xtrigger function signatures.
 Fix a bug when rapidly issuing the same/opposite commands e.g. pausing &
 resuming a workflow.
 
+[#5625](https://github.com/cylc/cylc-flow/pull/5625) - Exclude `setuptools`
+version (v67) which results in dependency check failure with editable installs.
+
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 
 ### Fixes
