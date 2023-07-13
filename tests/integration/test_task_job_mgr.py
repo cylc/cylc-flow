@@ -114,8 +114,8 @@ async def test__run_job_cmd_logs_platform_lookup_fail(
     db_select: Fixture, caplog: Fixture
 ) -> None:
     """TaskJobMg._run_job_cmd handles failure to get platform."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     # Run
     async with run(schd):
         from types import SimpleNamespace

@@ -21,7 +21,7 @@ from cylc.flow.network.client import WorkflowRuntimeClient
 
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
-    reg = mod_flow({
+    id_ = mod_flow({
         'scheduling': {
             'graph': {
                 'R1': '''
@@ -42,9 +42,9 @@ async def harness(mod_flow, mod_scheduler, mod_run):
             'b': {},
         },
     })
-    schd = mod_scheduler(reg)
+    schd = mod_scheduler(id_)
     async with mod_run(schd):
-        client = WorkflowRuntimeClient(reg)
+        client = WorkflowRuntimeClient(id_)
 
         async def _query(query_string):
             nonlocal client

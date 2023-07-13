@@ -21,7 +21,7 @@
 Initialise an install target.
 
 Initialisation creates a workflow run directory on the install target,
-"$HOME/cylc-run/<WORKFLOW_NAME>/". The .service directory is also created and
+"$HOME/cylc-run/<WORKFLOW_ID>/". The .service directory is also created and
 populated with the install target authentication files and the contact file.
 
 Symlinks are created for run, work, share, share/cycle, log directories,

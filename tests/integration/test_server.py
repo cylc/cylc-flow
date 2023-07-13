@@ -26,8 +26,8 @@ from cylc.flow.scheduler import Scheduler
 
 @pytest.fixture(scope='module')
 async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
-    reg = mod_flow(mod_one_conf)
-    schd = mod_scheduler(reg)
+    id_ = mod_flow(mod_one_conf)
+    schd = mod_scheduler(id_)
     async with mod_run(schd):
         yield schd
 

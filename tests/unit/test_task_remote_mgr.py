@@ -43,9 +43,9 @@ def test__remote_init_items(comms_meth: CommsMeth, expected: bool):
 
     Should only includes files under .service/
     """
-    reg = 'barclay'
-    mock_mgr = Mock(workflow=reg)
-    srv_dir = get_workflow_srv_dir(reg)
+    id_ = 'barclay'
+    mock_mgr = Mock(workflow=id_)
+    srv_dir = get_workflow_srv_dir(id_)
     items = TaskRemoteMgr._remote_init_items(mock_mgr, comms_meth)
     if expected:
         assert items

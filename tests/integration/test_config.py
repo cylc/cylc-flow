@@ -48,7 +48,7 @@ def test_validate_task_name(
     valid: bool
 ):
     """It should raise errors for invalid task names in the runtime section."""
-    reg = flow({
+    id_ = flow({
         **one_conf,
         'runtime': {
             task_name: {}
@@ -56,10 +56,10 @@ def test_validate_task_name(
     })
 
     if valid:
-        validate(reg)
+        validate(id_)
     else:
         with pytest.raises(WorkflowConfigError) as exc_ctx:
-            validate(reg)
+            validate(id_)
         assert task_name in str(exc_ctx.value)
 
 
@@ -82,7 +82,7 @@ def test_validate_implicit_task_name(
     Here we ensure that names which look like valid graph node names but which
     are blacklisted get caught and raise errors.
     """
-    reg = flow({
+    id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True'
         },
@@ -99,7 +99,7 @@ def test_validate_implicit_task_name(
     })
 
     with pytest.raises(WorkflowConfigError) as exc_ctx:
-        validate(reg)
+        validate(id_)
     assert str(exc_ctx.value).splitlines()[0] == (
         f'invalid task name "{task_name}"'
     )
@@ -114,7 +114,7 @@ def test_validate_implicit_task_name(
 )
 def test_validate_env_vars(flow, one_conf, validate, env_var, valid):
     """It should validate environment variable names."""
-    reg = flow({
+    id_ = flow({
         **one_conf,
         'runtime': {
             'foo': {
@@ -125,10 +125,10 @@ def test_validate_env_vars(flow, one_conf, validate, env_var, valid):
         }
     })
     if valid:
-        validate(reg)
+        validate(id_)
     else:
         with pytest.raises(WorkflowConfigError) as exc_ctx:
-            validate(reg)
+            validate(id_)
         assert env_var in str(exc_ctx.value)
 
 
@@ -147,7 +147,7 @@ def test_validate_param_env_templ(
     log_filter,
 ):
     """It should validate parameter environment templates."""
-    reg = flow({
+    id_ = flow({
         **one_conf,
         'runtime': {
             'foo': {
@@ -157,18 +157,18 @@ def test_validate_param_env_templ(
             }
         }
     })
-    validate(reg)
+    validate(id_)
     assert log_filter(caplog, contains='bad parameter environment template')
     assert log_filter(caplog, contains=env_val)
 
 
 def test_no_graph(flow, validate):
     """It should fail for missing graph sections."""
-    reg = flow({
+    id_ = flow({
         'scheduling': {},
     })
     with pytest.raises(WorkflowConfigError) as exc_ctx:
-        validate(reg)
+        validate(id_)
     assert 'missing [scheduling][[graph]] section.' in str(exc_ctx.value)
 
 
@@ -181,7 +181,7 @@ def test_no_graph(flow, validate):
 )
 def test_parse_special_tasks_invalid(flow, validate, section):
     """It should fail for invalid "special tasks"."""
-    reg = flow({
+    id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
         },
@@ -196,14 +196,14 @@ def test_parse_special_tasks_invalid(flow, validate, section):
         }
     })
     with pytest.raises(WorkflowConfigError) as exc_ctx:
-        validate(reg)
+        validate(id_)
     assert f'Illegal {section} spec' in str(exc_ctx.value)
     assert 'foo' in str(exc_ctx.value)
 
 
 def test_parse_special_tasks_interval(flow, validate):
     """It should fail for invalid durations in clock-triggers."""
-    reg = flow({
+    id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
         },
@@ -218,7 +218,7 @@ def test_parse_special_tasks_interval(flow, validate):
         }
     })
     with pytest.raises(WorkflowConfigError) as exc_ctx:
-        validate(reg)
+        validate(id_)
     assert 'Illegal clock-trigger spec' in str(exc_ctx.value)
     assert 'PT1Y' in str(exc_ctx.value)
 
@@ -232,7 +232,7 @@ def test_parse_special_tasks_interval(flow, validate):
 )
 def test_parse_special_tasks_families(flow, scheduler, validate, section):
     """It should expand families in special tasks."""
-    reg = flow({
+    id_ = flow({
         'scheduling': {
             'initial cycle point': 'now',
             'special tasks': {
@@ -261,10 +261,10 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
         # external triggers cannot be used for multiple tasks so if family
         # expansion is completed correctly, validation should fail
         with pytest.raises(WorkflowConfigError) as exc_ctx:
-            config = validate(reg)
+            config = validate(id_)
         assert 'external triggers must be used only once' in str(exc_ctx.value)
     else:
-        config = validate(reg)
+        config = validate(id_)
         assert set(config.cfg['scheduling']['special tasks'][section]) == {
             # the family FOO has been expanded to the tasks foo, foot
             'foo(P1D)',
@@ -277,7 +277,7 @@ def test_queue_treated_as_implicit(flow, validate, caplog):
 
     https://github.com/cylc/cylc-flow/issues/5260
     """
-    reg = flow(
+    id_ = flow(
         {
             "scheduling": {
                 "queues": {"my_queue": {"members": "task1, task2"}},
@@ -286,7 +286,7 @@ def test_queue_treated_as_implicit(flow, validate, caplog):
             "runtime": {"task2": {}},
         }
     )
-    validate(reg)
+    validate(id_)
     assert (
         'Queues contain tasks not defined in runtime'
         in caplog.records[0].message
@@ -298,7 +298,7 @@ def test_queue_treated_as_comma_separated(flow, validate):
 
     https://github.com/cylc/cylc-flow/issues/5260
     """
-    reg = flow(
+    id_ = flow(
         {
             "scheduling": {
                 "queues": {"my_queue": {"members": "task1 task2"}},
@@ -308,7 +308,7 @@ def test_queue_treated_as_comma_separated(flow, validate):
         }
     )
     with pytest.raises(ListValueError, match="cannot contain a space"):
-        validate(reg)
+        validate(id_)
 
 
 def test_validate_incompatible_db(one_conf, flow, validate):

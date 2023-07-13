@@ -23,10 +23,10 @@ from cylc.flow.network.server import PB_METHOD_MAP
 
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
-    reg = mod_flow(mod_one_conf)
-    schd = mod_scheduler(reg)
+    id_ = mod_flow(mod_one_conf)
+    schd = mod_scheduler(id_)
     async with mod_run(schd):
-        client = WorkflowRuntimeClient(reg)
+        client = WorkflowRuntimeClient(id_)
         yield schd, client
 
 

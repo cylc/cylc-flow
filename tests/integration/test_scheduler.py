@@ -43,8 +43,8 @@ async def test_is_paused_after_stop(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is unset on normal shutdown."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     # Run
     async with run(schd):
         assert not schd.is_restart
@@ -52,7 +52,7 @@ async def test_is_paused_after_stop(
     # Stopped
     assert ('is_paused', '1') not in db_select(schd, False, 'workflow_params')
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert not schd.is_paused
@@ -62,8 +62,8 @@ async def test_is_paused_after_crash(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is not unset for an interrupted workflow."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
 
     def ctrl_c():
         raise asyncio.CancelledError("Mock keyboard interrupt")
@@ -81,7 +81,7 @@ async def test_is_paused_after_crash(
     # Reset patched method
     setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert schd.is_paused
@@ -154,8 +154,8 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
     See https://github.com/cylc/cylc-flow/issues/4278
     """
-    reg = flow(one_conf)
-    one = scheduler(reg, paused_start=True)
+    id_ = flow(one_conf)
+    one = scheduler(id_, paused_start=True)
 
     # run the workflow
     async with start(one):
@@ -201,12 +201,13 @@ async def test_no_poll_waiting_tasks(
 
     See https://github.com/cylc/cylc-flow/issues/4658
     """
-    reg: str = flow(one_conf)
-    one: Scheduler = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    # start the scheduler in live mode in order to activate regular polling
+    # logic
+    one: Scheduler = scheduler(id_, run_mode='live')
 
     log: pytest.LogCaptureFixture
     async with start(one) as log:
-
         # Test assumes start up with a waiting task.
         task = (one.pool.get_all_tasks())[0]
         assert task.state.status == TASK_STATUS_WAITING

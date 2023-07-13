@@ -136,8 +136,8 @@ def test_install_workflow__symlink_target_exists(
 ):
     """Test that you can't install workflow when run dir symlink dir target
     already exists."""
-    reg = 'smeagol'
-    src_dir: Path = tmp_src_dir(reg)
+    id_ = 'smeagol'
+    src_dir: Path = tmp_src_dir(id_)
     tmp_run_dir()
     sym_run = tmp_path / 'sym-run'
     sym_log = tmp_path / 'sym-log'
@@ -153,13 +153,13 @@ def test_install_workflow__symlink_target_exists(
     )
     msg = "Symlink dir target already exists: .*{}"
     # Test:
-    (sym_run / 'cylc-run' / reg / 'run1').mkdir(parents=True)
+    (sym_run / 'cylc-run' / id_ / 'run1').mkdir(parents=True)
     with pytest.raises(WorkflowFilesError, match=msg.format(sym_run)):
         install_workflow(src_dir)
 
     shutil.rmtree(sym_run)
     (
-        sym_log / 'cylc-run' / reg / 'run1' / WorkflowFiles.LogDir.DIRNAME
+        sym_log / 'cylc-run' / id_ / 'run1' / WorkflowFiles.LogDir.DIRNAME
     ).mkdir(parents=True)
     with pytest.raises(WorkflowFilesError, match=msg.format(sym_log)):
         install_workflow(src_dir)

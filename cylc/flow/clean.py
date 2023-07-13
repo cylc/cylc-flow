@@ -103,15 +103,15 @@ async def get_contained_workflows(partial_id) -> List[str]:
     )
 
 
-def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
+def _clean_check(opts: 'Values', id_: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow name.
         run_dir: Path to the workflow run dir on the filesystem.
     """
-    validate_workflow_name(reg)
-    reg = os.path.normpath(reg)
+    validate_workflow_name(id_)
+    id_ = os.path.normpath(id_)
     # Thing to clean must be a dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         raise FileNotFoundError(f"No directory to clean at {run_dir}")
@@ -124,10 +124,10 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
         # about contact file.
         return
     try:
-        detect_old_contact_file(reg)
+        detect_old_contact_file(id_)
     except ContactFileExists as exc:
         raise ServiceFileError(
-            f"Cannot clean running workflow {reg}.\n\n{exc}"
+            f"Cannot clean running workflow {id_}.\n\n{exc}"
         )
 
 
@@ -336,7 +336,7 @@ def _clean_using_glob(
 
 
 def remote_clean(
-    reg: str,
+    id_: str,
     platform_names: Iterable[str],
     rm_dirs: Optional[List[str]] = None,
     timeout: str = '120'
@@ -345,7 +345,7 @@ def remote_clean(
     (skip localhost), given a set of platform names to look up.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow name.
         platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
@@ -356,18 +356,18 @@ def remote_clean(
             get_install_target_to_platforms_map(platform_names))
     except PlatformLookupError as exc:
         raise PlatformLookupError(
-            f"Cannot clean {reg} on remote platforms as the workflow database "
+            f"Cannot clean {id_} on remote platforms as the workflow database "
             f"is out of date/inconsistent with the global config - {exc}")
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
-        _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
+        _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
     )
     for target, platforms in install_targets_map.items():
         if target == get_localhost_install_target():
             continue
         shuffle(platforms)
         LOG.info(
-            f"Cleaning {reg} on install target: "
+            f"Cleaning {id_} on install target: "
             f"{platforms[0]['install target']}"
         )
         # Issue ssh command:
@@ -417,13 +417,13 @@ def remote_clean(
     if failed_targets:
         for target, excp in failed_targets.items():
             LOG.error(
-                f"Could not clean {reg} on install target: {target}\n{excp}"
+                f"Could not clean {id_} on install target: {target}\n{excp}"
             )
-        raise CylcError(f"Remote clean failed for {reg}")
+        raise CylcError(f"Remote clean failed for {id_}")
 
 
 def _remote_clean_cmd(
-    reg: str,
+    id_: str,
     platform: Dict[str, Any],
     rm_dirs: Optional[List[str]],
     timeout: str
@@ -433,7 +433,7 @@ def _remote_clean_cmd(
     Call "cylc clean --local-only" over ssh and return the subprocess.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow name.
         platform: Config for the platform on which to remove the workflow.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
@@ -443,10 +443,10 @@ def _remote_clean_cmd(
 
     """
     LOG.debug(
-        f"Cleaning {reg} on install target: {platform['install target']} "
+        f"Cleaning {id_} on install target: {platform['install target']} "
         f"(using platform: {platform['name']})"
     )
-    cmd = ['clean', '--local-only', reg]
+    cmd = ['clean', '--local-only', id_]
     if rm_dirs is not None:
         for item in rm_dirs:
             cmd.extend(['--rm', item])

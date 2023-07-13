@@ -78,7 +78,7 @@ Note:
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.
-Otherwise, the first 2 arguments are assumed to be workflow name and job
+Otherwise, the first 2 arguments are assumed to be workflow ID and job
 identifier.
 """
 
