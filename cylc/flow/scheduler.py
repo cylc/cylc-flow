@@ -281,7 +281,6 @@ class Scheduler:
             workflow=self.workflow,
         )
         self.id = self.tokens.id
-        self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = get_template_vars(self.options)
 
@@ -306,6 +305,9 @@ class Scheduler:
             pub_d=os.path.join(self.workflow_run_dir, 'log')
         )
         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+        if not self.is_restart:
+            self.uuid_str = str(uuid4())
+
         # Map used to track incomplete remote inits for restart
         # {install_target: platform}
         self.incomplete_ri_map: Dict[str, Dict] = {}
@@ -393,7 +395,6 @@ class Scheduler:
             self.bad_hosts,
             self.reset_inactivity_timer
         )
-        self.task_events_mgr.uuid_str = self.uuid_str
 
         self.task_job_mgr = TaskJobManager(
             self.workflow,
@@ -403,7 +404,6 @@ class Scheduler:
             self.data_store_mgr,
             self.bad_hosts
         )
-        self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
 
@@ -701,8 +701,10 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
-            self._configure_contact()
             await self.configure()
+            self.task_events_mgr.uuid_str = self.uuid_str
+            self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
+            self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
