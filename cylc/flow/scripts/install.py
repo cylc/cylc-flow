@@ -27,14 +27,14 @@ Normal installation creates a numbered run directory
 
 If a SOURCE_NAME is supplied, Cylc will search for the workflow source in the
 list of directories given by "global.cylc[install]source dirs", and install
-the first match. The installed workflow ID will be the same as SOURCE_NAME,
+the first match. The installed workflow ID will start with SOURCE_NAME,
 unless --workflow-name is used.
 
 If a PATH is supplied, Cylc will install the workflow from the source directory
 given by the path. Relative paths must start with "./" to avoid ambiguity with
 SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
 "./foo/bar" will be interpreted as a path). The installed workflow ID will
-be the basename of the path, unless --workflow-name is used.
+start with the basename of the path, unless --workflow-name is used.
 
 If no argument is supplied, Cylc will install the workflow from the source
 in the current working directory.

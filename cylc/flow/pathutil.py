@@ -157,7 +157,7 @@ def make_localhost_symlinks(
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
-        named_sub_dir: e.g workflow_id/run1
+        named_sub_dir: e.g workflow_name/run1
         symlink_conf: Symlinks dirs configuration passed from cli
 
     Returns:
@@ -204,7 +204,7 @@ def get_dirs_to_symlink(
 
     Args:
         install_target: Symlinks to be created on this install target
-        flow_id: full id of the run, e.g. myflow/run1
+        workflow_id: full id of the run, e.g. myflow/run1
         symlink_conf: Symlink dirs, if sent on the cli.
             Defaults to None, in which case global config symlink dirs will
             be applied.
