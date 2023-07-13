@@ -14,17 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow import CYLC_LOG
 from copy import deepcopy
 import logging
-import pytest
-from pytest import param
 from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
 
+import pytest
+from pytest import param
+
+from cylc.flow import CYLC_LOG
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.task_state import (
@@ -1053,3 +1054,66 @@ async def test_db_update_on_removal(
 
         # the task should be gone from the DB
         assert list_pool_from_db(schd) == []
+
+
+async def test_no_flow_tasks_dont_spawn(
+    flow,
+    scheduler,
+    start,
+):
+    """Ensure no-flow tasks don't spawn downstreams.
+
+    No-flow tasks (i.e `--flow=none`) are one-offs which are not attached to
+    any "flow".
+
+    See https://github.com/cylc/cylc-flow/issues/5613
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b => c'
+            }
+        },
+        'scheduler': {
+            'allow implicit tasks': 'true',
+        },
+    })
+
+    schd = scheduler(id_)
+    async with start(schd):
+        # mark task 1/a as succeeded
+        task_a = schd.pool.get_tasks()[0]
+        task_a.state_reset(TASK_OUTPUT_SUCCEEDED)
+
+        for flow_nums, force, pool in (
+            # outputs yielded from a no-flow task should not spawn downstreams
+            (set(), False, []),
+            # forced spawning downstream of a no-flow task should spawn
+            # downstreams with flow_nums={}
+            (set(), True, [('1/b', set())]),
+            # outputs yielded from a task with flow numbers should spawn
+            # downstreams in the same flow
+            ({1}, False, [('1/b', {1})]),
+            # forced spawning should work in the same way
+            ({1}, True, [('1/b', {1})]),
+        ):
+            # set the flow-nums on 1/a
+            task_a.flow_nums = flow_nums
+
+            # spawn on the succeeded output
+            schd.pool.spawn_on_output(
+                task_a,
+                TASK_OUTPUT_SUCCEEDED,
+                forced=force,
+            )
+            schd.pool.spawn_on_all_outputs(task_a)
+
+            # ensure the pool is as expected
+            assert [
+                (itask.identity, itask.flow_nums)
+                for pool in [
+                    schd.pool.get_tasks(),
+                    schd.pool.get_hidden_tasks(),
+                ]
+                for itask in pool
+            ] == pool
