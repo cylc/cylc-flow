@@ -1081,3 +1081,27 @@ class CylcWorkflowDAO:
     def vacuum(self):
         """Vacuum to the database."""
         return self.connect().execute("VACUUM")
+
+    def message_in_db(self, itask, event_time, submit, message):
+        """Has this message been logged in the DB (task_events table)?
+
+        SQL Query in plain English:
+            Say whether the inner query returns any results:
+
+            If the event is a standard task message (e.g. Submit) then
+            there will be no message, so we chect the event column too.
+        """
+        task_name = itask.tokens['task']
+        cycle = itask.tokens['cycle']
+        stmt = r"""
+            SELECT EXISTS (
+                SELECT 1 FROM task_events WHERE
+                    name == ?
+                    AND cycle == ?
+                    AND (message == ? OR event == ?)
+                    AND submit_num == ?
+                    AND time == ?
+            )
+        """
+        stmt_args = [task_name, cycle, message, message, submit, event_time]
+        return bool(self.connect().execute(stmt, stmt_args).fetchone()[0])

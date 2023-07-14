@@ -1508,7 +1508,8 @@ class Scheduler:
                 itask.is_late = True
                 LOG.warning(f"[{itask}] {msg}")
                 self.task_events_mgr.setup_event_handlers(
-                    itask, self.task_events_mgr.EVENT_LATE, msg)
+                    itask, time2str(now),
+                    self.task_events_mgr.EVENT_LATE, msg)
                 self.workflow_db_mgr.put_insert_task_late_flags(itask)
 
     def reset_inactivity_timer(self):
@@ -1737,6 +1738,7 @@ class Scheduler:
             self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
             self.late_tasks_check()
 
+            self.process_workflow_db_queue()
             self.process_queued_task_messages()
             await self.process_command_queue()
             self.task_events_mgr.process_events(self)

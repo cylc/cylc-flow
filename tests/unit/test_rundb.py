@@ -24,6 +24,7 @@ from tempfile import mktemp
 from types import SimpleNamespace
 
 import pytest
+from pytest import param
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -175,3 +176,81 @@ def test_select_task_pool_for_restart_if_not_platforms(tmp_path):
         match='not defined.*\n.*foo.*\n.*bar'
     ):
         dao.select_task_pool_for_restart(callback)
+
+
+@pytest.fixture(scope='module')
+def setup_message_in_db(tmp_path_factory):
+    """Create a database for use when testing message_in_db"""
+    tmp_path = tmp_path_factory.mktemp('message_in_db')
+    db_file = tmp_path / 'db'
+    dao = CylcWorkflowDAO(db_file, create_tables=True)
+    setup_stmt = r"""
+        INSERT INTO task_events
+        VALUES
+            (
+                "qux", "-191",
+                "morning", "1", "started", ""),
+            (
+                "qux", "-190",
+                "afternoon", "1", "message critical", "Hello Rome");
+    """
+    dao.connect().execute(setup_stmt)
+    yield dao
+
+
+@pytest.mark.parametrize(
+    'query, expect',
+    (
+        param(
+            (
+                SimpleNamespace(tokens={'task': 'qux', 'cycle': '-191'}),
+                "morning", 1, "started",
+            ),
+            True,
+            id="event-name-in-db"
+        ),
+        param(
+            (
+                SimpleNamespace(tokens={'task': 'qux', 'cycle': '-190'}),
+                "afternoon", 1, "Hello Rome",
+            ),
+            True,
+            id="message-in-db"
+        ),
+    )
+)
+def test_message_in_db(setup_message_in_db, query, expect):
+    """Method correctly says if message is in DB.
+    """
+    assert setup_message_in_db.message_in_db(*query) is expect
+
+
+def test_message_not_in_db(setup_message_in_db):
+    """Method correctly says if message is NOT in DB:
+    """
+    def use_message_in_db(args_):
+        """Gather up boilerplate of setting up a fake itask and
+        providing args to message_in_db."""
+        itask = SimpleNamespace(
+            tokens={'task': args_['name'], 'cycle': args_['cycle']})
+        return setup_message_in_db.message_in_db(
+            itask, args_['event_time'], args_['submit'], args_['message'])
+
+    # A list of args which _should_ be in the db:
+    args_ = {
+        'name': "qux",
+        'cycle': '-190',
+        'event_time': "afternoon",
+        'submit': 1,
+        'message': 'Hello Rome',
+    }
+
+    # Control - can we get True if all args are correct?
+    assert use_message_in_db(args_) is True
+
+    # One at a time break each arg:
+    for key in args_:
+        old_arg = args_[key]
+        args_[key] = 'garbage'
+        assert use_message_in_db(args_) is False
+        args_[key] = old_arg

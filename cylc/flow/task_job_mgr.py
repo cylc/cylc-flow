@@ -1009,7 +1009,7 @@ class TaskJobManager:
                 self.get_simulation_job_conf(itask, workflow)
             )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED
+                itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
 
         return itasks

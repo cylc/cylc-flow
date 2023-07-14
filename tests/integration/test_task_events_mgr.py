@@ -17,6 +17,7 @@
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 
+from pathlib import Path
 from typing import Any as Fixture
 
 
@@ -42,3 +43,34 @@ async def test_process_job_logs_retrieval_warns_no_platform(
         warning = caplog.records[-1]
         assert warning.levelname == 'WARNING'
         assert 'Unable to retrieve' in warning.msg
+
+
+async def test_process_message_no_repeat(
+    one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture
+):
+    """Don't log received messages if they are found again when."""
+    reg: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    message: str = 'The dead swans lay in the stagnant pool'
+    message_time: str = 'Thursday Lunchtime'
+
+    async with run(schd) as log:
+        # Set up the database with a message already received:
+        itask = schd.pool.get_tasks()[0]
+        itask.tdef.run_mode = 'live'
+        schd.workflow_db_mgr.put_insert_task_events(
+            itask, {'time': message_time, 'event': '', 'message': message})
+        schd.process_workflow_db_queue()
+
+        # Task event manager returns None:
+        assert schd.task_events_mgr.process_message(
+            itask=itask, severity='comical', message=message,
+            event_time=message_time, submit_num=0,
+            flag=schd.task_events_mgr.FLAG_POLLED
+        ) is None
+
+        # Log doesn't contain a repeat message:
+        assert (
+            schd.task_events_mgr.FLAG_POLLED
+            not in log.records[-1].message
+        )
