@@ -199,13 +199,13 @@ async def myflow(mod_flow, mod_scheduler, mod_one_conf):
 
 
 def test_module_scoped_fixture(myflow):
-    """Ensure the uuid is set on __init__.
+    """Ensure the host is set on __init__.
 
     The myflow fixture will be shared between all test functions within this
     Python module.
 
     """
-    assert myflow.uuid_str
+    assert myflow.host
 
 
 async def test_db_select(one, start, db_select):

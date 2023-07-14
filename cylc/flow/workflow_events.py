@@ -107,7 +107,7 @@ class EventData(Enum):
 
     .. deprecated:: 8.0.0
 
-       Use "uuid_str".
+       Use "uuid".
     """
 
     # BACK COMPAT: "suite_url" deprecated

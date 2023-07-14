@@ -19,6 +19,7 @@ import logging
 from os import unlink
 from pathlib import Path
 from textwrap import dedent
+from uuid import uuid4
 
 import pytest
 
@@ -69,6 +70,7 @@ async def workflow(flow, scheduler, one_conf, run_dir):
     from collections import namedtuple
     Server = namedtuple('Server', ['port', 'pub_port'])
     schd.server = Server(1234, pub_port=2345)
+    schd.uuid_str = str(uuid4())
 
     contact_data = schd.get_contact_data()
     contact_file = Path(

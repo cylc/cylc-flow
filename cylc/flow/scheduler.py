@@ -305,8 +305,6 @@ class Scheduler:
             pub_d=os.path.join(self.workflow_run_dir, 'log')
         )
         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
-        if not self.is_restart:
-            self.uuid_str = str(uuid4())
 
         # Map used to track incomplete remote inits for restart
         # {install_target: platform}
@@ -426,6 +424,8 @@ class Scheduler:
 
         if self.is_restart:
             self.load_workflow_params_and_tmpl_vars()
+        else:
+            self.uuid_str = str(uuid4())
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -703,7 +703,6 @@ class Scheduler:
 
             await self.configure()
             self.task_events_mgr.uuid_str = self.uuid_str
-            self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
