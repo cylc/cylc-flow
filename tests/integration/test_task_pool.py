@@ -1139,10 +1139,7 @@ async def test_task_proxy_remove_from_queues(
             # Move some tasks to the hidden_pool to ensure that these are
             # removed too:
             if 'hidden' in itask.identity:
-                schd.pool.hidden_pool.setdefault(point, {})
-                schd.pool.hidden_pool[point][itask.identity] = itask
-                schd.pool.hidden_pool[
-                    point][id_] = schd.pool.main_pool[point][id_]
+                schd.pool.hidden_pool.setdefault(point, {id_: itask})
                 del schd.pool.main_pool[point][id_]
 
             # The meat of the test - remove itask from pool if it
