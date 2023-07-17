@@ -70,7 +70,7 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     Adds the runN symlink automatically if the workflow ID ends with /run__.
 
     Args:
-        reg: Workflow name.
+        id_: Workflow name.
         installed: If True, make it look like the workflow was installed
             using cylc install (creates _cylc-install dir).
         named: If True and installed is True, the _cylc-install dir will
@@ -83,7 +83,7 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         cylc_run_dir = tmp_run_dir()
     """
     def __tmp_run_dir(
-        reg: Optional[str] = None,
+        id_: Optional[str] = None,
         installed: bool = False,
         named: bool = False
     ) -> Path:
@@ -92,8 +92,8 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
-        if reg:
-            run_dir = cylc_run_dir.joinpath(reg)
+        if id_:
+            run_dir = cylc_run_dir.joinpath(id_)
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
             (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
@@ -102,8 +102,8 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
                 link_runN(run_dir)
             if installed:
                 if named:
-                    if len(Path(reg).parts) < 2:
-                        raise ValueError("Named run requires two-level reg")
+                    if len(Path(id_).parts) < 2:
+                        raise ValueError("Named run requires two-level id_")
                     (run_dir.parent / WorkflowFiles.Install.DIRNAME).mkdir(
                         exist_ok=True)
                 else:

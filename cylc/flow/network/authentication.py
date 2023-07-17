@@ -24,12 +24,12 @@ from cylc.flow.workflow_files import (
     remove_keys_on_server)
 
 
-def key_housekeeping(reg, platform=None, create=True):
+def key_housekeeping(id_, platform=None, create=True):
 
     """Clean any existing authentication keys and create new ones.
         If create is set to false, keys will only be cleaned from
         server."""
-    workflow_srv_dir = get_workflow_srv_dir(reg)
+    workflow_srv_dir = get_workflow_srv_dir(id_)
     keys = {
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,

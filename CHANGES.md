@@ -21,12 +21,21 @@ issue which could cause jobs to fail if this variable became too long.
 
 ### Enhancements
 
+[#5992](https://github.com/cylc/cylc-flow/pull/5992) -
+Before trying to reload the workflow definition, the scheduler will
+now wait for preparing tasks to submit, and pause the workflow. 
+After successful reload the scheduler will unpause the workflow.
+
 -[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
 -a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
 -`cylc command -z X=a,bc,d`.
 
 [#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
 in family names to be split, e.g. `<foo>FAM<bar>`.
+
+[#5589](https://github.com/cylc/cylc-flow/pull/5589) - Move to workflow
+directory during file parsing, to give the template processor access to
+workflow files.
 
 [#5405](https://github.com/cylc/cylc-flow/pull/5405) - Improve scan command
 help, and add scheduler PID to the output.
@@ -71,9 +80,17 @@ Various enhancements to `cylc lint`:
 [#5616](https://github.com/cylc/cylc-flow/pull/5616) -
 Improve PBS support for job IDs with trailing components.
 
+[#5619](https://github.com/cylc/cylc-flow/pull/5619) -
+Fix an issue where the `task_pool` table in the database wasn't being updated
+in a timely fashion when tasks completed.
+
 [#5606](https://github.com/cylc/cylc-flow/pull/5606) -
 Task outputs and messages are now validated to avoid conflicts with built-in
 outputs, messages, qualifiers and Cylc keywords.
+
+[#5614](https://github.com/cylc/cylc-flow/pull/5614) -
+Fix a bug in Cylc 7 compatibility mode where tasks running in the `none` flow
+(e.g. via `cylc trigger --flow=none`) would trigger downstream tasks.
 
 [#5604](https://github.com/cylc/cylc-flow/pull/5604) -
 Fix a possible issue where workflows started using
@@ -92,6 +109,13 @@ mode before running pre-configure plugins.
 [#5587](https://github.com/cylc/cylc-flow/pull/5587) -
 Permit commas in xtrigger arguments and fix minor issues with the parsing of
 xtrigger function signatures.
+
+[#5618](https://github.com/cylc/cylc-flow/pull/5618) -
+Fix a bug when rapidly issuing the same/opposite commands e.g. pausing &
+resuming a workflow.
+
+[#5625](https://github.com/cylc/cylc-flow/pull/5625) - Exclude `setuptools`
+version (v67) which results in dependency check failure with editable installs.
 
 ## __cylc-8.1.4 (<span actions:bind='release-date'>Released 2023-05-04</span>)__
 

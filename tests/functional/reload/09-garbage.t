@@ -29,6 +29,8 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-grep_ok 'Command failed: reload_workflow' "${WORKFLOW_RUN_DIR}/log/scheduler/log"
+grep_ok \
+    'Reload failed - IllegalItemError: \[scheduling\]garbage' \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 purge

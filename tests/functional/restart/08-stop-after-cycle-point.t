@@ -47,7 +47,7 @@ cmp_ok db_taskpool.out.out << '__OUT__'
 1971|hello|waiting
 __OUT__
 # Check that the config stop point does not get stored in DB
-cmp_ok db_stopcp.out < /dev/null
+cmp_ok db_stopcp.out <<< ''
 
 
 CFG_STOPCP="1972"
@@ -65,7 +65,7 @@ cmp_ok db_taskpool.out.out << '__OUT__'
 1972|hello|waiting
 1973|hello|waiting
 __OUT__
-cmp_ok db_stopcp.out < /dev/null
+cmp_ok db_stopcp.out <<< ''
 
 
 # Check that the command line stop point works
@@ -92,7 +92,7 @@ cmp_ok db_taskpool.out.out <<'__OUT__'
 1975|hello|waiting
 __OUT__
 # Stop point should be removed from DB once reached
-cmp_ok db_stopcp.out < /dev/null
+cmp_ok db_stopcp.out <<< ''
 
 
 # Restart again with new CLI stop point
@@ -122,7 +122,7 @@ cmp_ok db_taskpool.out.out << '__OUT__'
 1978|hello|waiting
 __OUT__
 # Stop point should be removed from DB if --stopcp=reload used
-cmp_ok db_stopcp.out < /dev/null
+cmp_ok db_stopcp.out <<< ''
 
 
 CFG_STOPCP="1971"
@@ -136,6 +136,6 @@ cmp_ok db_taskpool.out.out << '__OUT__'
 1977|hello|waiting
 1978|hello|waiting
 __OUT__
-cmp_ok db_stopcp.out < /dev/null
+cmp_ok db_stopcp.out <<< ''
 
 purge

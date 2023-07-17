@@ -408,8 +408,8 @@ async def test_scan_sigstop(
 
     """
     # run a workflow
-    reg = flow(one_conf)
-    schd = scheduler(reg)
+    id_ = flow(one_conf)
+    schd = scheduler(id_)
     async with start(schd):
         # stop the server to make the flow un-responsive
         await schd.server.stop('make-unresponsive')
@@ -419,7 +419,7 @@ async def test_scan_sigstop(
         async for flow in pipe:
             raise Exception("There shouldn't be any scan results")
         # there should, however, be a warning
-        name = Path(reg).name
+        name = Path(id_).name
         assert (
             (30, f'Workflow not running: {name}')
             in [(level, msg) for _, level, msg in caplog.record_tuples]

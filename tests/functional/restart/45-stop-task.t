@@ -21,7 +21,7 @@
 
 dumpdbtables() {
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT * FROM workflow_params WHERE key=="stop_task";' >'stoptask.out'
+        'SELECT value FROM workflow_params WHERE key=="stop_task";' >'stoptask.out'
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
@@ -61,7 +61,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'stoptask.out' <<<'stop_task|1/t_i5'
+cmp_ok 'stoptask.out' <<<'1/t_i5'
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i3|waiting
 __OUT__
@@ -69,7 +69,7 @@ __OUT__
 workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'stoptask.out' <'/dev/null'
+cmp_ok 'stoptask.out' <<<''
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i6|waiting
 __OUT__
@@ -77,7 +77,7 @@ __OUT__
 workflow_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'stoptask.out' <'/dev/null'
+cmp_ok 'stoptask.out' <<<''
 cmp_ok 'taskpool.out' <'/dev/null'
 
 purge

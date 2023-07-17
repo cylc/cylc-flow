@@ -77,7 +77,7 @@ def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
     Send the messages to the workflow, if possible.
 
     Arguments:
-        workflow: Workflow name.
+        workflow: Workflow ID.
         job_id: Job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
         messages: List of messages "[[severity, message], ...]".
     """

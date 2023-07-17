@@ -24,9 +24,9 @@ from .test_config import tmp_flow_config
 
 def test_generate_graph_parents_1(tmp_flow_config):
     """Test that parents are only generated from valid recurrences."""
-    reg = 'pan-galactic'
+    id_ = 'pan-galactic'
     flow_file = tmp_flow_config(
-        reg,
+        id_,
         f"""
             [scheduler]
                 UTC mode = True
@@ -41,7 +41,7 @@ def test_generate_graph_parents_1(tmp_flow_config):
                 [[every_cycle, run_once_at_midnight]]
         """
     )
-    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     # Each instance of every_cycle should have a parent only at T00.
     for point in [
@@ -65,9 +65,9 @@ def test_generate_graph_parents_1(tmp_flow_config):
 
 def test_generate_graph_parents_2(tmp_flow_config):
     """Test inferred parents are valid w.r.t to their own recurrences."""
-    reg = 'gargle-blaster'
+    id_ = 'gargle-blaster'
     flow_file = tmp_flow_config(
-        reg,
+        id_,
         f"""
             [scheduling]
                 cycling mode = integer
@@ -77,7 +77,7 @@ def test_generate_graph_parents_2(tmp_flow_config):
                 [[foo]]
         """
     )
-    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     # Each instance of every_cycle should have a parent only at T00.
     parents = generate_graph_parents(

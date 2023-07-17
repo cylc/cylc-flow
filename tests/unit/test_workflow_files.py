@@ -93,7 +93,7 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
 
 
 @pytest.mark.parametrize(
-    'reg, expected_err, expected_msg',
+    'id_, expected_err, expected_msg',
     [('foo/bar/', None, None),
      ('/foo/bar', WorkflowFilesError, "cannot be an absolute path"),
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
@@ -101,14 +101,14 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
      ('meow/..', WorkflowFilesError,
       "cannot be a path that points to the cylc-run directory or above")]
 )
-def test_validate_workflow_name(reg, expected_err, expected_msg):
+def test_validate_workflow_name(id_, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            validate_workflow_name(reg)
+            validate_workflow_name(id_)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
-        validate_workflow_name(reg)
+        validate_workflow_name(id_)
 
 
 @pytest.mark.parametrize(
@@ -169,7 +169,7 @@ def test_infer_latest_run(
     Params:
         path: Input arg.
         implicit_runN: Input arg.
-        expected_reg: The reg part of the expected returned tuple.
+        expected_reg: The id_ part of the expected returned tuple.
     """
     # Setup
     cylc_run_dir: Path = tmp_run_dir()
@@ -307,11 +307,11 @@ def test_get_symlink_dirs(
     # Setup
     cylc_run_dir = tmp_run_dir()
     create_filetree(filetree, tmp_path, tmp_path)
-    reg = 'foo/bar'
+    id_ = 'foo/bar'
     for k, v in expected.items():
         expected[k] = Path(tmp_path / v)
     # Test
-    assert get_symlink_dirs(reg, cylc_run_dir / reg) == expected
+    assert get_symlink_dirs(id_, cylc_run_dir / id_) == expected
 
 
 
@@ -484,14 +484,14 @@ def test_check_flow_file_symlink(
 
 
 @pytest.mark.parametrize(
-    'reg, installed, named,  expected',
+    'id_, installed, named,  expected',
     [('reg1/run1', True, True, True),
      ('reg2', True, False, True),
      ('reg3', False, False, False)]
 )
-def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
+def test_is_installed(tmp_run_dir: Callable, id_, installed, named, expected):
     """Test is_installed correctly identifies presence of _cylc-install dir"""
-    cylc_run_dir: Path = tmp_run_dir(reg, installed=installed, named=named)
+    cylc_run_dir: Path = tmp_run_dir(id_, installed=installed, named=named)
     actual = is_installed(cylc_run_dir)
     assert actual == expected
 

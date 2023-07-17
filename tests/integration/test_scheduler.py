@@ -43,8 +43,8 @@ async def test_is_paused_after_stop(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is unset on normal shutdown."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     # Run
     async with run(schd):
         assert not schd.is_restart
@@ -52,7 +52,7 @@ async def test_is_paused_after_stop(
     # Stopped
     assert ('is_paused', '1') not in db_select(schd, False, 'workflow_params')
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert not schd.is_paused
@@ -62,8 +62,8 @@ async def test_is_paused_after_crash(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is not unset for an interrupted workflow."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
 
     def ctrl_c():
         raise asyncio.CancelledError("Mock keyboard interrupt")
@@ -81,7 +81,7 @@ async def test_is_paused_after_crash(
     # Reset patched method
     setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert schd.is_paused
@@ -154,8 +154,8 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
     See https://github.com/cylc/cylc-flow/issues/4278
     """
-    reg = flow(one_conf)
-    one = scheduler(reg, paused_start=True)
+    id_ = flow(one_conf)
+    one = scheduler(id_, paused_start=True)
 
     # run the workflow
     async with start(one):
@@ -201,12 +201,13 @@ async def test_no_poll_waiting_tasks(
 
     See https://github.com/cylc/cylc-flow/issues/4658
     """
-    reg: str = flow(one_conf)
-    one: Scheduler = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    # start the scheduler in live mode in order to activate regular polling
+    # logic
+    one: Scheduler = scheduler(id_, run_mode='live')
 
     log: pytest.LogCaptureFixture
     async with start(one) as log:
-
         # Test assumes start up with a waiting task.
         task = (one.pool.get_all_tasks())[0]
         assert task.state.status == TASK_STATUS_WAITING
@@ -239,80 +240,6 @@ async def test_no_poll_waiting_tasks(
 
     # For good measure, check the faked running task is reported at shutdown.
     assert "Orphaned tasks:\n* 1/one (running)" in log.messages
-
-
-@pytest.mark.parametrize('reload', [False, True])
-@pytest.mark.parametrize(
-    'test_conf, expected_msg',
-    [
-        pytest.param(
-            {'Alan Wake': "It's not a lake, it's an ocean"},
-            "IllegalItemError: Alan Wake",
-            id="illegal item"
-        ),
-        pytest.param(
-            {
-                'scheduling': {
-                    'initial cycle point': "2k22",
-                    'graph': {'R1': "a => b"}
-                }
-            },
-            ("IllegalValueError: (type=cycle point) "
-             "[scheduling]initial cycle point = 2k22 - (Invalid cycle point)"),
-            id="illegal cycle point"
-        )
-    ]
-)
-async def test_illegal_config_load(
-    test_conf: dict,
-    expected_msg: str,
-    reload: bool,
-    flow: Callable,
-    one_conf: dict,
-    start: Callable,
-    run: Callable,
-    scheduler: Callable,
-    log_filter: Callable
-):
-    """Test that ParsecErrors (illegal config) - that occur during config load
-    when running a workflow - are displayed without traceback.
-
-    Params:
-        test_conf: Dict to update one_conf with.
-        expected_msg: Expected log message at error level.
-        reload: If False, test a workflow start with invalid config.
-            If True, test a workflow start with valid config followed by
-            reload with invalid config.
-    """
-    if not reload:
-        one_conf.update(test_conf)
-    id_: str = flow(one_conf)
-    schd: Scheduler = scheduler(id_)
-    log: pytest.LogCaptureFixture
-
-    if reload:
-        one_conf.update(test_conf)
-        async with run(schd) as log:
-            # Shouldn't be any errors at this stage:
-            assert not log_filter(log, level=logging.ERROR)
-            # Modify flow.cylc:
-            flow(one_conf, id_=id_)
-            schd.queue_command('reload_workflow', {})
-        assert log_filter(
-            log, level=logging.ERROR,
-            exact_match=f"Command failed: reload_workflow()\n{expected_msg}"
-        )
-    else:
-        with pytest.raises(ParsecError):
-            async with start(schd) as log:
-                pass
-        assert log_filter(
-            log,
-            level=logging.ERROR,
-            exact_match=f"Workflow shutting down - {expected_msg}"
-        )
-
-    assert TRACEBACK_MSG not in log.text
 
 
 async def test_unexpected_ParsecError(

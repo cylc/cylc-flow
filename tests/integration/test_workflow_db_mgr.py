@@ -17,8 +17,6 @@
 import pytest
 import sqlite3
 
-from pkg_resources import parse_version
-
 from cylc.flow.scheduler import Scheduler
 
 
@@ -26,12 +24,12 @@ async def test_restart_number(
     flow, one_conf, start, scheduler, log_filter, db_select
 ):
     """The restart number should increment correctly."""
-    reg = flow(one_conf)
+    id_ = flow(one_conf)
 
     async def test(expected_restart_num: int, do_reload: bool = False):
         """(Re)start the workflow and check the restart number is as expected.
         """
-        schd: Scheduler = scheduler(reg, paused_start=True)
+        schd: Scheduler = scheduler(id_, paused_start=True)
         async with start(schd) as log:
             if do_reload:
                 schd.command_reload_workflow()
@@ -81,10 +79,10 @@ async def test_db_upgrade_pre_803(
     flow, one_conf, start, scheduler, log_filter, db_select
 ):
     """Test scheduler restart with upgrade of pre-8.0.3 DB."""
-    reg = flow(one_conf)
+    id_ = flow(one_conf)
 
     # Run a scheduler to create a DB.
-    schd: Scheduler = scheduler(reg, paused_start=True)
+    schd: Scheduler = scheduler(id_, paused_start=True)
     async with start(schd):
         assert ('n_restart', '0') in db_select(schd, False, 'workflow_params')
 
@@ -92,7 +90,7 @@ async def test_db_upgrade_pre_803(
     db_remove_column(schd, "task_states", "is_manual_submit")
     db_remove_column(schd, "task_jobs", "flow_nums")
 
-    schd: Scheduler = scheduler(reg, paused_start=True)
+    schd: Scheduler = scheduler(id_, paused_start=True)
 
     # Restart should fail due to the missing column.
     with pytest.raises(sqlite3.OperationalError):
@@ -100,7 +98,7 @@ async def test_db_upgrade_pre_803(
             pass
     assert ('n_restart', '1') in db_select(schd, False, 'workflow_params')
 
-    schd: Scheduler = scheduler(reg, paused_start=True)
+    schd: Scheduler = scheduler(id_, paused_start=True)
 
     # Run the DB upgrader for version 8.0.2
     # (8.0.2 requires upgrade)
@@ -109,3 +107,23 @@ async def test_db_upgrade_pre_803(
     # Restart should now succeed.
     async with start(schd):
         assert ('n_restart', '2') in db_select(schd, False, 'workflow_params')
+
+
+async def test_workflow_param_rapid_toggle(
+    one_conf, flow, scheduler, run
+):
+    """Check that queuing a workflow param toggle operation twice before
+    processing does not cause any problems.
+
+    https://github.com/cylc/cylc-flow/issues/5593
+    """
+    schd: Scheduler = scheduler(flow(one_conf), paused_start=False)
+    async with run(schd):
+        assert schd.is_paused is False
+        schd.pause_workflow()
+        schd.resume_workflow()
+        schd.process_workflow_db_queue()
+        assert schd.is_paused is False
+
+        w_params = dict(schd.workflow_db_mgr.pri_dao.select_workflow_params())
+        assert w_params['is_paused'] == '0'

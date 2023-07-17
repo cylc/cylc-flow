@@ -438,21 +438,21 @@ def test_remove_empty_parents(tmp_path: Path):
     """Test that _remove_empty_parents() doesn't remove parents containing a
     sibling."""
     # -- Setup --
-    reg = 'foo/bar/baz/qux'
-    path = tmp_path.joinpath(reg)
+    id_ = 'foo/bar/baz/qux'
+    path = tmp_path.joinpath(id_)
     tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
     # Note qux does not exist, but that shouldn't matter
     sibling_reg = 'foo/darmok'
     sibling_path = tmp_path.joinpath(sibling_reg)
     sibling_path.mkdir()
     # -- Test --
-    remove_empty_parents(path, reg)
+    remove_empty_parents(path, id_)
     assert tmp_path.joinpath('foo/bar').exists() is False
     assert tmp_path.joinpath('foo').exists() is True
     # Check it skips non-existent dirs, and stops at the right place too
     tmp_path.joinpath('foo/bar').mkdir()
     sibling_path.rmdir()
-    remove_empty_parents(path, reg)
+    remove_empty_parents(path, id_)
     assert tmp_path.joinpath('foo').exists() is False
     assert tmp_path.exists() is True
 

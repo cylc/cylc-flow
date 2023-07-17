@@ -24,8 +24,8 @@ from ..conftest import MonkeyMock
 
 def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
     """Test that the workflow_state xtrigger infers the run number"""
-    reg = 'isildur'
-    expected_workflow_id = f'{reg}/run1'
+    id_ = 'isildur'
+    expected_workflow_id = f'{id_}/run1'
     cylc_run_dir = str(tmp_run_dir())
     tmp_run_dir(expected_workflow_id, installed=True, named=True)
     mock_db_checker = monkeymock(
@@ -35,6 +35,6 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
         )
     )
 
-    _, results = workflow_state(reg, task='precious', point='3000')
+    _, results = workflow_state(id_, task='precious', point='3000')
     mock_db_checker.assert_called_once_with(cylc_run_dir, expected_workflow_id)
     assert results['workflow'] == expected_workflow_id

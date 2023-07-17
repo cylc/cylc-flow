@@ -401,6 +401,12 @@ def read_and_proc(
     fpath = _get_fpath_for_source(fpath, opts)
     fdir = os.path.dirname(fpath)
 
+    odir = os.getcwd()
+
+    # Move to the file location to give the template processor easy access to
+    # other files in the workflow directory (whether source or installed).
+    os.chdir(fdir)
+
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
     workflow_lib_python = os.path.join(fdir, "lib", "python")
     if (
@@ -493,6 +499,8 @@ def read_and_proc(
     # concatenate continuation lines
     if do_contin:
         flines = _concatenate(flines)
+
+    os.chdir(odir)
 
     # return rstripped lines
     return [fl.rstrip() for fl in flines]

@@ -46,7 +46,7 @@ def get_runtime_client(
 
         Args:
             comm_method: communication method
-            workflow: workflow name
+            workflow: workflow ID
     """
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import WorkflowRuntimeClient
