@@ -1638,8 +1638,8 @@ with Conf(
                     .. note::
 
                        As with other Cylc configurations, leading or trailing
-                       whitespace will be stripped, so the following two examples
-                       are equivalent:
+                       whitespace will be stripped, so the following two
+                       examples are equivalent:
 
                        .. list-table::
                           :class: grid-table
