@@ -77,6 +77,9 @@ Various enhancements to `cylc lint`:
 
 ### Fixes
 
+[#5616](https://github.com/cylc/cylc-flow/pull/5616) -
+Improve PBS support for job IDs with trailing components.
+
 [#5619](https://github.com/cylc/cylc-flow/pull/5619) -
 Fix an issue where the `task_pool` table in the database wasn't being updated
 in a timely fashion when tasks completed.
