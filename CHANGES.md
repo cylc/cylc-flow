@@ -23,7 +23,7 @@ issue which could cause jobs to fail if this variable became too long.
 
 [#5992](https://github.com/cylc/cylc-flow/pull/5992) -
 Before trying to reload the workflow definition, the scheduler will
-now wait for preparing tasks to submit, and pause the workflow. 
+now wait for preparing tasks to submit, and pause the workflow.
 After successful reload the scheduler will unpause the workflow.
 
 -[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
@@ -69,10 +69,11 @@ Various enhancements to `cylc lint`:
 * Only check for missing Jinja2 shebangs in `flow.cylc` and
   `suite.rc` files.
 
-### Fixes
 
 [#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
 in `share/bin` and Python modules in `share/lib/python`.
+
+### Fixes
 
 [#5328](https://github.com/cylc/cylc-flow/pull/5328) -
 Efficiency improvements to reduce task management overheads on the Scheduler.
