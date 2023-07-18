@@ -57,7 +57,9 @@ async def test_mail_footer_template(
 
     # start the workflow and get it to send an email
     async with start(mod_one) as one_log:
-        mod_one.run_event_handlers(
+        one_log.clear()  # clear previous log messages
+        mod_one.workflow_event_handler.handle(
+            mod_one,
             WorkflowEventHandler.EVENT_STARTUP,
             'event message'
         )
@@ -100,7 +102,9 @@ async def test_custom_event_handler_template(
 
     # start the workflow and get it to send an email
     async with start(mod_one) as one_log:
-        mod_one.run_event_handlers(
+        one_log.clear()  # clear previous log messages
+        mod_one.workflow_event_handler.handle(
+            mod_one,
             WorkflowEventHandler.EVENT_STARTUP,
             'event message'
         )

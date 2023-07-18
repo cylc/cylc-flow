@@ -100,8 +100,8 @@ async def harness(mod_flow, mod_scheduler, mod_start):
             }
         }
     }
-    reg: str = mod_flow(flow_def)
-    schd: 'Scheduler' = mod_scheduler(reg)
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
     async with mod_start(schd):
         await schd.update_data_structure()
         data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]

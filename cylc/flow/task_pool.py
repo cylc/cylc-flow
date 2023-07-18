@@ -111,7 +111,6 @@ class TaskPool:
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
-        self.do_reload = False
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
         self._prev_runahead_sequence_points: Optional[Set['PointBase']] = None
@@ -123,6 +122,7 @@ class TaskPool:
         self._hidden_pool_list: List[TaskProxy] = []
         self.main_pool_changed = False
         self.hidden_pool_changed = False
+        self.tasks_removed = False
 
         self.hold_point: Optional['PointBase'] = None
         self.abs_outputs_done: Set[Tuple[str, str, str]] = set()
@@ -132,7 +132,6 @@ class TaskPool:
         self.abort_task_failed = False
         self.expected_failed_tasks = self.config.get_expected_failed_tasks()
 
-        self.orphans: List[str] = []
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
@@ -160,10 +159,9 @@ class TaskPool:
             LOG.info("Stop task %s finished" % self.stop_task_id)
             self.stop_task_id = None
             self.stop_task_finished = False
-            self.workflow_db_mgr.delete_workflow_stop_task()
+            self.workflow_db_mgr.put_workflow_stop_task(None)
             return True
-        else:
-            return False
+        return False
 
     def _swap_out(self, itask):
         """Swap old task for new, during reload."""
@@ -312,12 +310,17 @@ class TaskPool:
         changed (needed if max_future_offset changed, or on reload).
         """
         points: List['PointBase'] = []
+        sequence_points: Set['PointBase']
         if not self.main_pool:
             # Start at first point in each sequence, after the initial point.
-            points = list({
-                seq.get_first_point(self.config.start_point)
-                for seq in self.config.sequences
-            })
+            points = [
+                point
+                for point in {
+                    seq.get_first_point(self.config.start_point)
+                    for seq in self.config.sequences
+                }
+                if point is not None
+            ]
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
@@ -731,6 +734,7 @@ class TaskPool:
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
+        self.tasks_removed = True
         msg = "task proxy removed"
         if reason:
             msg += f" ({reason})"
@@ -793,7 +797,7 @@ class TaskPool:
                 self._hidden_pool_list.extend(list(itask_id_maps.values()))
         return self._hidden_pool_list
 
-    def get_tasks_by_point(self):
+    def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.main_pool.items():
@@ -913,25 +917,7 @@ class TaskPool:
         if max_offset != orig and self.compute_runahead(force=True):
             self.release_runahead_tasks()
 
-    def set_do_reload(self, config: 'WorkflowConfig') -> None:
-        """Set the task pool to reload mode."""
-        self.config = config
-        self.stop_point = config.stop_point or config.final_point
-        self.do_reload = True
-
-        # find any old tasks that have been removed from the workflow
-        old_task_name_list = self.task_name_list
-        self.task_name_list = self.config.get_task_name_list()
-        for name in old_task_name_list:
-            if name not in self.task_name_list:
-                self.orphans.append(name)
-        for name in self.task_name_list:
-            if name in self.orphans:
-                self.orphans.remove(name)
-        # adjust the new workflow config to handle the orphans
-        self.config.adopt_orphans(self.orphans)
-
-    def reload_taskdefs(self) -> None:
+    def reload_taskdefs(self, config: 'WorkflowConfig') -> None:
         """Reload the definitions of task proxies in the pool.
 
         Orphaned tasks (whose definitions were removed from the workflow):
@@ -941,18 +927,33 @@ class TaskPool:
         Otherwise: replace task definitions but copy over existing outputs etc.
 
         """
+        self.config = config
+        self.stop_point = config.stop_point or config.final_point
+
+        # find any old tasks that have been removed from the workflow
+        old_task_name_list = self.task_name_list
+        self.task_name_list = self.config.get_task_name_list()
+        orphans = [
+            task
+            for task in old_task_name_list
+            if task not in self.task_name_list
+        ]
+
+        # adjust the new workflow config to handle the orphans
+        self.config.adopt_orphans(orphans)
+
         LOG.info("Reloading task definitions.")
         tasks = self.get_all_tasks()
         # Log tasks orphaned by a reload but not currently in the task pool.
-        for name in self.orphans:
+        for name in orphans:
             if name not in (itask.tdef.name for itask in tasks):
                 LOG.warning("Removed task: '%s'", name)
         for itask in tasks:
-            if itask.tdef.name in self.orphans:
+            if itask.tdef.name in orphans:
                 if (
-                        itask.state(TASK_STATUS_WAITING)
-                        or itask.state.is_held
-                        or itask.state.is_queued
+                    itask.state(TASK_STATUS_WAITING)
+                    or itask.state.is_held
+                    or itask.state.is_queued
                 ):
                     # Remove orphaned task if it hasn't started running yet.
                     self.remove(itask, 'task definition removed')
@@ -1006,8 +1007,6 @@ class TaskPool:
             ready_check_items = itask.is_ready_to_run()
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
-
-        self.do_reload = False
 
     def set_stop_point(self, stop_point: 'PointBase') -> bool:
         """Set the workflow stop cycle point.
@@ -1234,7 +1233,7 @@ class TaskPool:
             self.release_held_active_task(itask)
         self.tasks_to_hold.clear()
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        self.workflow_db_mgr.delete_workflow_hold_cycle_point()
+        self.workflow_db_mgr.put_workflow_hold_cycle_point(None)
 
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.
@@ -1270,11 +1269,11 @@ class TaskPool:
             and itask.identity not in self.expected_failed_tasks
         ):
             self.abort_task_failed = True
-        try:
-            children = itask.graph_children[output]
-        except KeyError:
-            # No children depend on this output
-            children = []
+
+        children = []
+        if itask.flow_nums or forced:
+            with suppress(KeyError):
+                children = itask.graph_children[output]
 
         suicide = []
         for c_name, c_point, is_abs in children:
@@ -1404,6 +1403,8 @@ class TaskPool:
            associated prerequisites of spawned children to satisifed.
 
         """
+        if not itask.flow_nums:
+            return
         if completed_only:
             outputs = itask.state.outputs.get_completed()
         else:
@@ -1739,9 +1740,12 @@ class TaskPool:
                 conf = itask.tdef.rtconfig['simulation']
                 job_d = itask.tokens.duplicate(job=str(itask.submit_num))
                 now_str = get_current_time_string()
-                if (itask.point in conf['fail cycle points'] and
-                        (itask.get_try_num() == 1 or
-                         not conf['fail try 1 only'])):
+                if (
+                    conf['fail cycle points'] is None  # i.e. "all"
+                    or itask.point in conf['fail cycle points']
+                ) and (
+                    itask.get_try_num() == 1 or not conf['fail try 1 only']
+                ):
                     message_queue.put(
                         TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
                     )

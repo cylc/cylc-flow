@@ -201,7 +201,7 @@ class TuiApp:
     tab/selection panel.
 
     Arguments:
-        reg (str):
+        id_ (str):
             Workflow registration
 
     """
@@ -227,8 +227,8 @@ class TuiApp:
         for status, spec in WORKFLOW_COLOURS.items()
     ]
 
-    def __init__(self, reg, screen=None):
-        self.reg = reg
+    def __init__(self, id_, screen=None):
+        self.id_ = id_
         self.client = None
         self.loop = None
         self.screen = None
@@ -297,7 +297,7 @@ class TuiApp:
         """
         try:
             if not self.client:
-                self.client = get_client(self.reg, timeout=self.CLIENT_TIMEOUT)
+                self.client = get_client(self.id_, timeout=self.CLIENT_TIMEOUT)
             data = self.client(
                 'graphql',
                 {
@@ -315,7 +315,7 @@ class TuiApp:
         except WorkflowStopped:
             # Distinguish stopped flow from non-existent flow.
             self.client = None
-            full_path = Path(get_workflow_run_dir(self.reg))
+            full_path = Path(get_workflow_run_dir(self.id_))
             if (
                 (full_path / WorkflowFiles.SUITE_RC).is_file()
                 or (full_path / WorkflowFiles.FLOW_FILE).is_file()
@@ -324,12 +324,12 @@ class TuiApp:
             else:
                 message = (
                     f"No {WorkflowFiles.SUITE_RC} or {WorkflowFiles.FLOW_FILE}"
-                    f"found in {self.reg}."
+                    f"found in {self.id_}."
                 )
 
             return dummy_flow({
-                'name': self.reg,
-                'id': self.reg,
+                'name': self.id_,
+                'id': self.id_,
                 'status': message,
                 'stateTotals': {}
             })

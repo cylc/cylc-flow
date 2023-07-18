@@ -41,11 +41,19 @@ sqlite3 "${DB_FILE}" \
     'SELECT key, value FROM workflow_params
     WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
     >"${NAME}"
-sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
 cmp_ok "${NAME}" << __EOF__
 UTC_mode|0
-cylc_version|<SOME-VERSION>
+cycle_point_format|
+cylc_version|$(cylc --version)
+fcp|
+icp|
+is_paused|0
 n_restart|0
+run_mode|
+startcp|
+stop_clock_time|
+stop_task|
+stopcp|
 __EOF__
 
 NAME='select-task-events.out'

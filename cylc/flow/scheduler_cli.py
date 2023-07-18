@@ -28,7 +28,11 @@ from typing import TYPE_CHECKING
 from pkg_resources import parse_version
 
 from cylc.flow import LOG, __version__
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import (
+    ContactFileExists,
+    CylcError,
+    ServiceFileError,
+)
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
@@ -199,6 +203,7 @@ PLAY_OPTIONS = [
         ["--pause"],
         help="Pause the workflow immediately on start up.",
         action='store_true',
+        default=False,
         dest="paused_start",
         sources={'play'},
     ),
@@ -431,7 +436,7 @@ def _resume(workflow_id, options):
     """Resume the workflow if it is already running."""
     try:
         detect_old_contact_file(workflow_id)
-    except ServiceFileError as exc:
+    except ContactFileExists as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(
             workflow_id,
@@ -445,7 +450,7 @@ def _resume(workflow_id, options):
         }
         pclient('graphql', mutation_kwargs)
         sys.exit(0)
-    except Exception as exc:
+    except CylcError as exc:
         LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'
@@ -523,6 +528,7 @@ def _version_check(
                     process=str.lower,
                 )
             # we are in non-interactive mode, abort abort abort
+            print('Use "--upgrade" to upgrade the workflow.', file=sys.stderr)
             return False
         elif itt > 2 and this > that:
             # restart would INCREASE the Cylc version in a little way

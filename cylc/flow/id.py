@@ -545,6 +545,21 @@ LEGACY_CYCLE_SLASH_TASK = re.compile(
 )
 
 
+def quick_relative_detokenise(cycle, task):
+    """Generate a relative ID for a task.
+
+    This is a more efficient solution to `Tokens` for cases where
+    you only want the ID string and don't have any use for a Tokens object.
+
+    Example:
+        >>> q = quick_relative_detokenise
+        >>> q('1', 'a') == Tokens(cycle='1', task='a').relative_id
+        True
+
+    """
+    return f'{cycle}/{task}'
+
+
 def _dict_strip(dictionary):
     """Run str.strip against dictionary values.
 

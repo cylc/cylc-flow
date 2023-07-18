@@ -39,6 +39,20 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED
 )
+from cylc.flow.task_qualifiers import (
+    QUAL_FAM_SUCCEED_ALL,
+    QUAL_FAM_SUCCEED_ANY,
+    QUAL_FAM_FAIL_ALL,
+    QUAL_FAM_FAIL_ANY,
+    QUAL_FAM_FINISH_ALL,
+    QUAL_FAM_FINISH_ANY,
+    QUAL_FAM_START_ALL,
+    QUAL_FAM_START_ANY,
+    QUAL_FAM_SUBMIT_ALL,
+    QUAL_FAM_SUBMIT_ANY,
+    QUAL_FAM_SUBMIT_FAIL_ALL,
+    QUAL_FAM_SUBMIT_FAIL_ANY,
+)
 
 
 class Replacement:
@@ -101,19 +115,6 @@ class GraphParser:
     XTRIG = '@'
     CONTINUATION_STRS = (ARROW, OP_AND, OP_OR)
     BAD_STRS = (OP_AND_ERR, OP_OR_ERR)
-
-    QUAL_FAM_SUCCEED_ALL = "succeed-all"
-    QUAL_FAM_SUCCEED_ANY = "succeed-any"
-    QUAL_FAM_FAIL_ALL = "fail-all"
-    QUAL_FAM_FAIL_ANY = "fail-any"
-    QUAL_FAM_FINISH_ALL = "finish-all"
-    QUAL_FAM_FINISH_ANY = "finish-any"
-    QUAL_FAM_START_ALL = "start-all"
-    QUAL_FAM_START_ANY = "start-any"
-    QUAL_FAM_SUBMIT_ALL = "submit-all"
-    QUAL_FAM_SUBMIT_ANY = "submit-any"
-    QUAL_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
-    QUAL_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
 
     # Map family trigger type to (member-trigger, any/all), for use in
     # expanding family trigger expressions to member trigger expressions.
@@ -860,7 +861,7 @@ class GraphParser:
                 if not output:
                     # (Plain family name on RHS).
                     # Make implicit success explicit.
-                    output = self.__class__.QUAL_FAM_SUCCEED_ALL
+                    output = QUAL_FAM_SUCCEED_ALL
                 elif output.startswith("finish"):
                     if optional:
                         raise GraphParseError(

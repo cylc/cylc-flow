@@ -15,7 +15,7 @@ dependencies:
   - psutil >=5.6.0
   - python
   - pyzmq >=22
-  - setuptools >=49, <67
+  - setuptools >=49,!=67.*
   - importlib_metadata # [py<3.8]
   - urwid >=2,<3
   - tomli >=2 # [py<3.11]

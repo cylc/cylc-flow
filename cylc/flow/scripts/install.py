@@ -27,14 +27,14 @@ Normal installation creates a numbered run directory
 
 If a SOURCE_NAME is supplied, Cylc will search for the workflow source in the
 list of directories given by "global.cylc[install]source dirs", and install
-the first match. The installed workflow name will be the same as SOURCE_NAME,
+the first match. The installed workflow ID will start with SOURCE_NAME,
 unless --workflow-name is used.
 
 If a PATH is supplied, Cylc will install the workflow from the source directory
 given by the path. Relative paths must start with "./" to avoid ambiguity with
 SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
-"./foo/bar" will be interpreted as a path). The installed workflow name will
-be the basename of the path, unless --workflow-name is used.
+"./foo/bar" will be interpreted as a path). The installed workflow ID will
+start with the basename of the path, unless --workflow-name is used.
 
 If no argument is supplied, Cylc will install the workflow from the source
 in the current working directory.
@@ -92,9 +92,9 @@ from cylc.flow.scripts.scan import (
     FLOW_STATE_SYMBOLS,
     FLOW_STATE_CMAP
 )
-from cylc.flow import iter_entry_points
+from cylc.flow import LOG, iter_entry_points
 from cylc.flow.exceptions import PluginError, InputError
-from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.loggingutil import CylcLogFormatter, set_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     OptionSettings,
@@ -108,7 +108,8 @@ from cylc.flow.pathutil import (
 from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
-    search_install_source_dirs
+    search_install_source_dirs,
+    check_deprecation,
 )
 from cylc.flow.terminal import cli_function
 
@@ -264,18 +265,18 @@ InstallOptions = Options(get_option_parser())
 def main(
     _parser: COP,
     opts: 'Values',
-    reg: Optional[str] = None
+    id_: Optional[str] = None
 ) -> None:
     """CLI wrapper."""
-    install_cli(opts, reg)
+    install_cli(opts, id_)
 
 
 def install_cli(
     opts: 'Values',
-    reg: Optional[str] = None
+    id_: Optional[str] = None
 ) -> Tuple[str, str]:
     """Install workflow and scan for already-running instances."""
-    wf_name, wf_id = install(opts, reg)
+    wf_name, wf_id = install(opts, id_)
     asyncio.run(
         scan(wf_name, not opts.no_ping)
     )
@@ -283,13 +284,19 @@ def install_cli(
 
 
 def install(
-    opts: 'Values', reg: Optional[str] = None
+    opts: 'Values', id_: Optional[str] = None
 ) -> Tuple[str, str]:
+    set_timestamps(LOG, opts.log_timestamp and opts.verbosity > 1)
     if opts.no_run_name and opts.run_name:
         raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
         )
-    source = get_source_location(reg)
+    source = get_source_location(id_)
+
+    # Check deprecation to allow plugins to have access to correct flags
+    # for compatibility mode:
+    check_deprecation(source)
+
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
@@ -335,5 +342,7 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+
+    print(f'INSTALLED {workflow_id} from {source_dir}')
 
     return workflow_name, workflow_id

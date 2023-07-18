@@ -25,7 +25,7 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbPrerequisite,
     PbCondition,
 )
-from cylc.flow.id import Tokens
+from cylc.flow.id import quick_relative_detokenise
 
 
 class Prerequisite:
@@ -214,41 +214,41 @@ class Prerequisite:
         if not self.satisfied:
             return None
         if self.conditional_expression:
-            temp = self.get_raw_conditional_expression()
-            temp = temp.replace('|', ' | ')
-            temp = temp.replace('&', ' & ')
+            expr = (
+                self.get_raw_conditional_expression()
+            ).replace('|', ' | ').replace('&', ' & ')
         else:
-            for s_msg in self.satisfied:
-                temp = self.MESSAGE_TEMPLATE % s_msg
+            expr = ' & '.join(
+                self.MESSAGE_TEMPLATE % s_msg
+                for s_msg in self.satisfied
+            )
         conds = []
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             point, name = message_tuple[0:2]
-            t_id = Tokens(cycle=str(point), task=name).relative_id
+            t_id = quick_relative_detokenise(point, name)
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
             c_bool = bool(c_val)
             if c_bool is False:
                 c_val = "unsatisfied"
-            cond = PbCondition(
-                task_proxy=t_id,
-                expr_alias=char,
-                req_state=message_tuple[2],
-                satisfied=c_bool,
-                message=c_val,
+            conds.append(
+                PbCondition(
+                    task_proxy=t_id,
+                    expr_alias=char,
+                    req_state=message_tuple[2],
+                    satisfied=c_bool,
+                    message=c_val,
+                )
             )
-            conds.append(cond)
-            temp = temp.replace(c_msg, char)
-        prereq_buf = PbPrerequisite(
-            expression=temp,
+            expr = expr.replace(c_msg, char)
+        return PbPrerequisite(
+            expression=expr,
             satisfied=self.is_satisfied(),
+            conditions=conds,
+            cycle_points=sorted(self.iter_target_point_strings()),
         )
-        prereq_buf.conditions.extend(conds)
-        prereq_buf.cycle_points.extend(
-            sorted(self.iter_target_point_strings())
-        )
-        return prereq_buf
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.

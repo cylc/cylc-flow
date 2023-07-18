@@ -110,14 +110,14 @@ def test_install_scan_no_ping(
     opts = InstallOptions()
     opts.no_ping = True
 
-    install_cli(opts, reg='w1')
+    install_cli(opts, id_='w1')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w1/run2') in out
     assert WF_ACTIVE_MSG.format(wf='w1') in out
     # Empty contact file faked with "touch":
     assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
-    install_cli(opts, reg='w2')
+    install_cli(opts, id_='w2')
     out = capsys.readouterr().out
     assert WF_ACTIVE_MSG.format(wf='w2') not in out
     assert INSTALLED_MSG.format(wfrun='w2/run1') in out
@@ -136,7 +136,7 @@ def test_install_scan_ping(
     opts = InstallOptions()
     opts.no_ping = False
 
-    install_cli(opts, reg='w1')
+    install_cli(opts, id_='w1')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w1/run2') in out
     assert WF_ACTIVE_MSG.format(wf='w1') in out
@@ -144,7 +144,47 @@ def test_install_scan_ping(
     # Empty contact file faked with "touch":
     assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
-    install_cli(opts, reg='w2')
+    install_cli(opts, id_='w2')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w2/run1') in out
     assert WF_ACTIVE_MSG.format(wf='w2') not in out
+
+
+def test_install_gets_back_compat_mode_for_plugins(
+    src_run_dirs: Callable,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+):
+    """Assert that pre cylc install will detect whether a workflow
+    should use back compat mode _before_ running pre_configure plugins
+    so that those plugins can use that information.
+    """
+    class failIfDeprecated:
+        """A fake Cylc Plugin entry point"""
+        @staticmethod
+        def resolve():
+            return failIfDeprecated.raiser
+
+        @staticmethod
+        def raiser(*_, **__):
+            import cylc.flow.flags
+            if cylc.flow.flags.cylc7_back_compat:
+                print('Plugin:True')
+                return True
+            print('Plugin:False')
+            return False
+
+    # Monkeypatch our fake entry point into iter_entry_points:
+    monkeypatch.setattr(
+        'cylc.flow.scripts.install.iter_entry_points',
+        lambda x: [failIfDeprecated]
+    )
+    opts = InstallOptions()
+
+    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', False)
+    install_cli(opts, id_='w1')
+    assert capsys.readouterr()[0].split('\n')[0] == 'Plugin:False'
+
+    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
+    install_cli(opts, id_='w1')
+    assert capsys.readouterr()[0].split('\n')[0] == 'Plugin:True'

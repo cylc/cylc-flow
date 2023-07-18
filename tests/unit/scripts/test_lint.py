@@ -6,7 +6,7 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
-from itertools import combinations
 from pathlib import Path
 from pprint import pformat
 import re
@@ -26,8 +25,7 @@ import pytest
 from pytest import param
 
 from cylc.flow.scripts.lint import (
-    STYLE_CHECKS,
-    check_cylc_file,
+    MANUAL_DEPRECATIONS,
     get_cylc_files,
     get_pyproject_toml,
     get_reference_rst,
@@ -40,8 +38,9 @@ from cylc.flow.scripts.lint import (
 )
 from cylc.flow.exceptions import CylcError
 
-
+STYLE_CHECKS = parse_checks(['style'])
 UPG_CHECKS = parse_checks(['728'])
+
 TEST_FILE = """
 [visualization]
 
@@ -95,13 +94,15 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = MyFaM:finish-all => remote
+            graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
+        pre-script = "echo ${CYLC_SUITE_DEF_PATH}"
         script = {{HELLOWORLD}}
+        post-script = "echo ${CYLC_SUITE_INITIAL_CYCLE_TIME}"
         [[[suite state polling]]]
             template = and
         [[[remote]]]
@@ -133,11 +134,15 @@ TEST_FILE = """
         inherit = MyFaM
 
      [[remote]]
+        platform = $(rose host-select parasite)
+        script = "cylc nudge"
+        post-script = "rose suite-hook"
 
  [meta]
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
 """
 
 
@@ -148,6 +153,7 @@ LINT_TEST_FILE = """
 
 [[dependencies]]
 
+{% set   N = 009 %}
 {% foo %}
 {{foo}}
 # {{quix}}
@@ -162,8 +168,8 @@ something\t
     [[baz]]
         platform = `no backticks`
 """ + (
-    '\nscript = the quick brown fox jumps over the lazy dog '
-    'until it becomes clear that this line is far longer the 79 characters.'
+    '\nscript = the quick brown fox jumps over the lazy dog until it becomes '
+    'clear that this line is longer than the default 130 character limit.'
 )
 
 
@@ -174,7 +180,7 @@ def lint_text(text, checks, ignores=None, modify=False):
     outlines = [
         line
         for line in lint(
-            'flow.cylc',
+            Path('flow.cylc'),
             iter(text.splitlines()),
             checks,
             counter,
@@ -207,8 +213,12 @@ def assert_contains(items, contains):
         )
 
 
-@pytest.mark.parametrize('number', range(1, len(STYLE_CHECKS)))
+@pytest.mark.parametrize(
+    # 11 won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(MANUAL_DEPRECATIONS) + 1)) - {11}
+)
 def test_check_cylc_file_7to8(number):
+    """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
     assert_contains(lint.messages, f'[U{number:03d}]')
 
@@ -226,26 +236,109 @@ def test_check_cylc_file_line_no():
     assert ':2:' in lint.messages[0]
 
 
-@pytest.mark.parametrize('number', range(len(STYLE_CHECKS)))
+@pytest.mark.parametrize(
+    'inherit_line',
+    (
+        param(item, id=str(ind))
+        for ind, item in enumerate([
+            # lowercase family names are not permitted
+            'inherit = g',
+            'inherit = foo, b, a, r',
+            'inherit = FOO, bar',
+            'inherit = None, bar',
+            'inherit = A, b, C',
+            'inherit = "A", "b"',
+            "inherit = 'A', 'b'",
+            # parameters, jinja2 and empy should be ignored
+            # but any lowercase chars before or after should not
+            'inherit = a<x>z',
+            'inherit = a{{ x }}z',
+            'inherit = a@( x )z',
+        ])
+    )
+)
+def test_inherit_lowercase_matches(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert any('S007' in msg for msg in lint.messages)
+
+
+@pytest.mark.parametrize(
+    'inherit_line',
+    (
+        param(item, id=str(ind))
+        for ind, item in enumerate([
+            # undefined values are ok
+            'inherit =',
+            'inherit =  ',
+            # none, None and root are ok
+            'inherit = none',
+            'inherit = None',
+            'inherit = root',
+            # trailing commas and whitespace are ok
+            'inherit = None,',
+            'inherit = None, ',
+            'inherit = None , ',
+            # uppercase family names are ok
+            'inherit = None, FOO, BAR',
+            'inherit = FOO',
+            'inherit = BAZ',
+            'inherit = root',
+            'inherit = FOO_BAR_0',
+            # parameters should be ignored
+            'inherit = A<a>Z',
+            'inherit = <a=1, b-1, c+1>',
+            # jinja2 should be ignored
+            'inherit = A{{ a }}Z, {% for x in range(5) %}'
+            'A{{ x }}, {% endfor %}',
+            # empy should be ignored
+            'inherit = A@( a )Z',
+            # trailing comments should be ignored
+            'inherit = A, B # no, comment',
+            'inherit = # a',
+            # quotes are ok
+            'inherit = "A", "B"',
+            "inherit = 'A', 'B'",
+            'inherit = "None", B',
+            'inherit = <a = 1, b - 1>',
+            # one really awkward, but valid example
+            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
+        ])
+    )
+)
+def test_inherit_lowercase_not_match_none(inherit_line):
+    lint = lint_text(inherit_line, ['style'])
+    assert not any('S007' in msg for msg in lint.messages)
+
+
+@pytest.mark.parametrize(
+    # 8 and 11 won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(STYLE_CHECKS) + 1)) - {8, 11}
+)
 def test_check_cylc_file_lint(number):
     lint = lint_text(LINT_TEST_FILE, ['style'])
-    assert_contains(lint.messages, f'S{(number + 1):03d}')
+    assert_contains(lint.messages, f'S{number:03d}')
 
 
-@pytest.mark.parametrize('exclusion', range(len(STYLE_CHECKS.values())))
-def test_check_exclusions(exclusion):
+@pytest.mark.parametrize('code', STYLE_CHECKS.keys())
+def test_check_exclusions(code):
     """It does not report any items excluded."""
-    code = f'S{exclusion:03d}'
     lint = lint_text(LINT_TEST_FILE, ['style'], [code])
     assert not filter_strings(lint.messages, code)
 
 
+def test_check_cylc_file_jinja2_comments():
+    """Jinja2 inside a Jinja2 comment should not warn"""
+    lint = lint_text('#!jinja2\n{# {{ foo }} #}', ['style'])
+    assert not any('S011' in msg for msg in lint.messages)
+
+
 @pytest.mark.parametrize(
-    'number', range(len(UPG_CHECKS))
+    # 11 won't be tested because there is no jinja2 shebang
+    'number', set(range(1, len(MANUAL_DEPRECATIONS) + 1)) - {11}
 )
 def test_check_cylc_file_inplace(number):
     lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
-    assert_contains(lint.outlines, f'[U{number + 1:03d}]')
+    assert_contains(lint.outlines, f'[U{number:03d}]')
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
@@ -266,17 +359,20 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
+MOCK_CHECKS = {
+    'U042': {
+        'short': 'section `[vizualization]` has been removed.',
+        'url': 'some url or other',
+        'purpose': 'U',
+        'rst': 'section ``[vizualization]`` has been removed.',
+        'function': re.compile('not a regex')
+    },
+}
+
+
 def test_get_reference_rst():
     """It produces a reference file for our linting."""
-    ref = get_reference_rst({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'rst': 'section ``[vizualization]`` has been removed.',
-            'index': 42
-        },
-    })
+    ref = get_reference_rst(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042\n^^^^\nsection ``[vizualization]`` has been '
@@ -287,14 +383,7 @@ def test_get_reference_rst():
 
 def test_get_reference_text():
     """It produces a reference file for our linting."""
-    ref = get_reference_text({
-        re.compile('not a regex'): {
-            'short': 'section `[vizualization]` has been removed.',
-            'url': 'some url or other',
-            'purpose': 'U',
-            'index': 42
-        },
-    })
+    ref = get_reference_text(MOCK_CHECKS)
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
@@ -314,11 +403,11 @@ def fixture_get_deprecations():
     'findme',
     [
         pytest.param(
-            'template',
+            'abort if any task fails =',
             id='Item not available at Cylc 8'
         ),
         pytest.param(
-            'timeout',
+            'timeout =',
             id='Item renamed at Cylc 8'
         ),
         pytest.param(
@@ -337,13 +426,13 @@ def test_get_upg_info(fixture_get_deprecations, findme):
     n.b this is just sampling to ensure that the test it getting items.
     """
     if findme.startswith('!'):
-        assert findme[1:] not in str(fixture_get_deprecations)
-    elif findme.startswith('['):
-        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]\\s*$'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert not any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        )
     else:
-        pattern = f'^\\s*{findme}\\s*=\\s*.*'
-        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+        assert any(
+            i['function'](findme) for i in fixture_get_deprecations.values()
+        ) is True
 
 
 @pytest.mark.parametrize(
@@ -488,6 +577,6 @@ def test_invalid_tomlfile(tmp_path):
 )
 def test_parse_checks_reference_mode(ref, expect):
     result = parse_checks(['style'], reference=ref)
-    key = [i for i in result.keys()][-1]
+    key = list(result.keys())[-1]
     value = result[key]
     assert expect in value['short']

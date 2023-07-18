@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 import shutil
 from pathlib import Path
@@ -30,7 +29,6 @@ from typing import (
 
 import pytest
 
-from cylc.flow import workflow_files
 from cylc.flow.exceptions import (
     InputError,
     WorkflowFilesError,
@@ -82,7 +80,8 @@ def test_install_workflow__max_depth(
     err_expected: bool,
     tmp_run_dir: Callable,
     tmp_src_dir: Callable,
-    glbl_cfg_max_scan_depth: NonCallableFixture
+    glbl_cfg_max_scan_depth: NonCallableFixture,
+    prevent_symlinking,
 ):
     """Test that trying to install beyond max depth fails."""
     tmp_run_dir()
@@ -109,7 +108,8 @@ def test_install_workflow__next_to_flow_file(
     flow_file: Optional[str],
     expected_exc: Optional[Type[Exception]],
     tmp_run_dir: Callable,
-    tmp_src_dir: Callable
+    tmp_src_dir: Callable,
+    prevent_symlinking,
 ):
     """Test that you can't install into a dir that contains a workflow file."""
     # Setup
@@ -136,8 +136,8 @@ def test_install_workflow__symlink_target_exists(
 ):
     """Test that you can't install workflow when run dir symlink dir target
     already exists."""
-    reg = 'smeagol'
-    src_dir: Path = tmp_src_dir(reg)
+    id_ = 'smeagol'
+    src_dir: Path = tmp_src_dir(id_)
     tmp_run_dir()
     sym_run = tmp_path / 'sym-run'
     sym_log = tmp_path / 'sym-log'
@@ -153,13 +153,13 @@ def test_install_workflow__symlink_target_exists(
     )
     msg = "Symlink dir target already exists: .*{}"
     # Test:
-    (sym_run / 'cylc-run' / reg / 'run1').mkdir(parents=True)
+    (sym_run / 'cylc-run' / id_ / 'run1').mkdir(parents=True)
     with pytest.raises(WorkflowFilesError, match=msg.format(sym_run)):
         install_workflow(src_dir)
 
     shutil.rmtree(sym_run)
     (
-        sym_log / 'cylc-run' / reg / 'run1' / WorkflowFiles.LogDir.DIRNAME
+        sym_log / 'cylc-run' / id_ / 'run1' / WorkflowFiles.LogDir.DIRNAME
     ).mkdir(parents=True)
     with pytest.raises(WorkflowFilesError, match=msg.format(sym_log)):
         install_workflow(src_dir)

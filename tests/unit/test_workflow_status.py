@@ -36,12 +36,14 @@ def schd(
     stop_mode=None,
     stop_point=None,
     stop_task_id=None,
+    reload_pending=False,
 ):
     return SimpleNamespace(
         is_paused=is_paused,
         is_stalled=is_stalled,
         stop_clock_time=stop_clock_time,
         stop_mode=stop_mode,
+        reload_pending=reload_pending,
         pool=SimpleNamespace(
             hold_point=hold_point,
             stop_point=stop_point,
@@ -58,7 +60,13 @@ def schd(
         (
             {'is_paused': True},
             WorkflowStatus.PAUSED,
-            'paused'),
+            'paused'
+        ),
+        (
+            {'reload_pending': 'message'},
+            WorkflowStatus.PAUSED,
+            'reloading: message'
+        ),
         (
             {'stop_mode': StopMode.AUTO},
             WorkflowStatus.STOPPING,

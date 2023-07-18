@@ -367,7 +367,6 @@ def install_workflow(
         install_log.info(
             f'Symlink from "{source_link}" to "{source}" in place.')
     install_log.info(f'INSTALLED {named_run} from {source}')
-    print(f'INSTALLED {named_run} from {source}')
     close_log(install_log)
     return source, rundir, workflow_name, named_run
 
@@ -548,7 +547,7 @@ def detect_flow_exists(
     """Returns True if installed flow already exists.
 
     Args:
-        run_path_base: Absolute path of workflow directory,
+        run_path_base: Absolute path of the parent of the workflow's run dir,
             i.e ~/cylc-run/<workflow_name>
         numbered: If True, will detect if numbered runs exist. If False, will
             detect if non-numbered runs exist, i.e. runs installed
@@ -584,8 +583,8 @@ def check_nested_dirs(
             install dirs.
 
     Raises:
-        WorkflowFilesError if reg dir is nested inside a run dir, or an
-            install dirs are nested.
+        WorkflowFilesError if run_dir is nested inside an existing run dir,
+            or install dirs are nested.
     """
     if install_dir is not None:
         install_dir = Path(os.path.normpath(install_dir))

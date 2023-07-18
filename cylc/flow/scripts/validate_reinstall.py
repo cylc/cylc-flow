@@ -46,7 +46,10 @@ if TYPE_CHECKING:
     from optparse import Values
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import (
+    ContactFileExists,
+    CylcError,
+)
 from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
@@ -139,10 +142,10 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
     # outcome which we want to capture before we install.
     try:
         detect_old_contact_file(workflow_id)
-    except ServiceFileError:
+    except ContactFileExists:
         # Workflow is definitely running:
         workflow_running = True
-    except Exception as exc:
+    except CylcError as exc:
         LOG.error(exc)
         LOG.critical(
             'Cannot tell if the workflow is running'

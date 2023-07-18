@@ -135,6 +135,10 @@ class WorkflowFilesError(CylcError):
     bullet = "\n    -"
 
 
+class ContactFileExists(CylcError):
+    """Workflow contact file exists."""
+
+
 def handle_rmtree_err(
     function: Callable,
     path: str,

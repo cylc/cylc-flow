@@ -33,10 +33,7 @@
 # "rm" to pass on a subsequent attempt.
 
 . "$(dirname "$0")/test_header"
-if [[ $OSTYPE == darwin* ]]; then
-    skip_all "don't run test on Mac OS (BSD uses different error messages)"
-fi
-set_test_number 4
+set_test_number 2
 
 # install a blank source workflow
 init_workflow "${TEST_NAME_BASE}" <<< '# blank workflow'
@@ -50,21 +47,15 @@ echo "${LOG_STUFF}" > "${WORKFLOW_LOG_DIR}/01-start-01.log"
 # start cat-log running - this runs "tail -f"
 cylc cat-log -m t "$WORKFLOW_NAME" > out 2>err & PID="$!"
 
-# wait for cat-log to reach the end of the file
-for _retry in $(seq 1 5); do
-    echo "# try $_retry"
-    if [[ "$(cat out)" != "$LOG_STUFF" ]]; then
-        sleep 1
-    fi
-done
-cmp_ok out <<< "$LOG_STUFF"
+# wait for tail to start
+poll pgrep -P "$PID" tail
 
 # try to clean the workflow
 run_ok "${TEST_NAME_BASE}-clean" cylc clean -y "${WORKFLOW_NAME}"
 
 # the tail command should have detected that the file isn't there any more
-# and released the file handle
-grep_ok 'has become inaccessible' err
+# and exited -> cat-log should have exited
+poll_pid_done "$PID"
 
 # ensure the log dir was removed correctly
 # run_ok "${TEST_NAME_BASE}-dir-removed" [[ ! -d "${WORKFLOW_LOG_DIR}" ]]
@@ -75,8 +66,4 @@ else
     ok "${TEST_NAME}"
 fi
 
-# kill the cat-log process group (will include the tail process)
-pkill -P "${PID}" 2>/dev/null || true
-
 purge
-exit

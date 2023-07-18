@@ -109,6 +109,38 @@ def log_filter():
     return _log_filter
 
 
+@pytest.fixture
+def log_scan():
+    """Ensure log messages appear in the correct order.
+
+    TRY TO AVOID DOING THIS!
+
+    If you are trying to test a sequence of events you are likely better off
+    doing this a different way (e.g. mock the functions you are interested in
+    and test the call arguments/returns later).
+
+    However, there are some occasions where this might be necessary, e.g.
+    testing a monolithic synchronous function.
+
+    Args:
+        log: The caplog fixture.
+        items: Iterable of string messages to compare. All are tested
+            by "contains" i.e. "item in string".
+
+    """
+    def _log_scan(log, items):
+        records = iter(log.records)
+        record = next(records)
+        for item in items:
+            while item not in record.message:
+                try:
+                    record = next(records)
+                except StopIteration:
+                    raise Exception(f'Reached end of log looking for: {item}')
+
+    return _log_scan
+
+
 @pytest.fixture(scope='session')
 def port_range():
     return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])

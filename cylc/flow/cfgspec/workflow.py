@@ -1530,7 +1530,7 @@ with Conf(
 
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
-                except that the target workflow name and the
+                except that the target workflow ID and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
 
@@ -1594,7 +1594,7 @@ with Conf(
                 You can also specify job environment templates here for
                 :ref:`parameterized tasks <User Guide Param>`.
             '''):
-                Conf('<variable>', VDR.V_STRING, desc='''
+                Conf('<variable>', VDR.V_STRING, desc=r'''
                     A custom user defined variable for a task execution
                     environment.
 
@@ -1635,6 +1635,32 @@ with Conf(
                        MYITEM = %(item)s
                        MYFILE = /path/to/%(i)03d/%(item)s
 
+                    .. note::
+
+                       As with other Cylc configurations, leading or trailing
+                       whitespace will be stripped, so the following two
+                       examples are equivalent:
+
+                       .. list-table::
+                          :class: grid-table
+
+                          * - .. code-block:: cylc
+
+                                 [environment]
+                                     FOO = " a "
+                                     BAR = """
+                                       $(foo bar baz)
+                                   """
+                            - .. code-block:: cylc
+
+                                 [environment]
+                                     FOO = "a"
+                                     BAR = "$(foo bar baz)"
+
+                       If leading or trailing whitespace is required, consider
+                       using the ``\0`` escape character, or set the variable
+                       in :cylc:conf:`[..][..]env-script`.
+
                     .. versionchanged:: 7.8.7/7.9.2
 
                        Parameter environment templates (previously in
@@ -1655,10 +1681,25 @@ with Conf(
                 this section (:ref:`MessageTriggers`)
             '''):
                 Conf('<output>', VDR.V_STRING, desc='''
-                    Task output messages (:ref:`MessageTriggers`).
+                    Define custom task outputs (aka :ref:`MessageTriggers`).
 
-                    The item name is used to select the custom output
-                    message in graph trigger notation.
+                    :term:`Custom outputs <custom output>` allow you to extend
+                    the built-in task outputs e.g. ``succeeded`` and ``failed``
+                    in order to provide more detailed information about task
+                    state. Custom outputs can be used to express dependencies
+                    in the graph as with built-in outputs.
+
+                    Custom outputs are defined in the form:
+
+                    .. code-block:: cylc
+
+                       output = message
+
+                    Where ``output`` is the name of the output as it is used in
+                    the graph, and ``message`` is the task message sent by
+                    the ``cylc message`` command which tells Cylc that this
+                    output has been completed. See :ref:`MessageTriggers` for
+                    more details.
 
                     Examples:
 
@@ -1667,10 +1708,13 @@ with Conf(
                        out1 = "sea state products ready"
                        out2 = "NWP restart files completed"
 
-                    Task outputs are validated by
-                    :py:class:`cylc.flow.unicode_rules.TaskOutputValidator`.
+                    Custom outputs must satisfy these rules:
 
                     .. autoclass:: cylc.flow.unicode_rules.TaskOutputValidator
+
+                    Task messages must satisfy these rules:
+
+                    .. autoclass:: cylc.flow.unicode_rules.TaskMessageValidator
                 ''')
 
             with Conf('parameter environment templates', desc='''

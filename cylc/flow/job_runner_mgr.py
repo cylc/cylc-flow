@@ -403,7 +403,8 @@ class JobRunnerManager():
                     rmtree(
                         os.path.join(task_log_dir, name), ignore_errors=True)
 
-    def _filter_submit_output(self, st_file_path, job_runner, out, err):
+    @classmethod
+    def _filter_submit_output(cls, st_file_path, job_runner, out, err):
         """Filter submit command output, if relevant."""
         job_id = None
         if hasattr(job_runner, "REC_ID_FROM_SUBMIT_ERR"):
@@ -421,9 +422,9 @@ class JobRunnerManager():
                         job_id = job_runner.manip_job_id(job_id)
                     with open(st_file_path, "a") as job_status_file:
                         job_status_file.write("{0}={1}\n".format(
-                            self.CYLC_JOB_ID, job_id))
+                            cls.CYLC_JOB_ID, job_id))
                         job_status_file.write("{0}={1}\n".format(
-                            self.CYLC_JOB_RUNNER_SUBMIT_TIME,
+                            cls.CYLC_JOB_RUNNER_SUBMIT_TIME,
                             get_current_time_string()))
                     break
         if hasattr(job_runner, "filter_submit_output"):

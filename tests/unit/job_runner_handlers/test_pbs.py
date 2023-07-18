@@ -20,6 +20,7 @@ from cylc.flow.job_runner_handlers.pbs import (
     JOB_RUNNER_HANDLER,
     PBSHandler
 )
+from cylc.flow.job_runner_mgr import JobRunnerManager
 
 
 VERY_LONG_STR = 'x' * 240
@@ -118,3 +119,43 @@ VERY_LONG_STR = 'x' * 240
 )
 def test_format_directives(job_conf: dict, lines: list):
     assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
+
+
+def test_filter_poll_many_output():
+    """It should strip trailing junk from job IDs.
+
+    Job IDs are assumed to be a series of numbers, optionally followed by a
+    full-stop and some other letters and numbers which are not needed for
+    job tracking purposes.
+
+    Job IDs are not expected to start with letters e.g. `abc.456` is not
+    supported.
+    """
+    assert JOB_RUNNER_HANDLER.filter_poll_many_output('''
+Job id            Name             User              Time Use S Queue
+----------------  ---------------- ----------------  -------- - -----
+12345.foo.bar.baz test-pbs         xxxxxxx                  0 Q reomq
+23456.foo         test-pbs         xxxxxxx                  0 Q romeq
+34567             test-pbs         xxxxxxx                  1 Q romeq
+abc.456           test-pbs         xxxxxxx                  2 Q romeq
+abcdef            test-pbs         xxxxxxx                  2 Q romeq
+    ''') == ['12345', '23456', '34567']
+
+
+
+def test_filter_submit_output(tmp_path):
+    """See notes for test_filter_poll_many_output."""
+    status_file = tmp_path / 'submit_out'
+    status_file.touch()
+
+    def test(out):
+        return JobRunnerManager._filter_submit_output(
+            status_file,
+            JOB_RUNNER_HANDLER,
+            out,
+            '',
+        )[2]
+
+    assert test('   12345.foo.bar.baz') == '12345'
+    assert test('   12345.foo') == '12345'
+    assert test('   12345') == '12345'

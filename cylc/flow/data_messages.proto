@@ -104,6 +104,7 @@ message PbWorkflow {
     map<string, PbTaskProxyRefs> latest_state_tasks = 36;
     optional bool pruned = 37;
     optional int32 is_runahead_total = 38;
+    optional bool states_updated = 39;
 }
 
 // Selected runtime fields
