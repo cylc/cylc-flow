@@ -307,7 +307,7 @@ async def test_restart_timeout(
     """It should wait for user input if there are no tasks in the pool.
 
     When restarting a completed workflow there are no tasks in the pool so
-    the scheduler is inclied to shutdown before the user has had the chance
+    the scheduler is inclined to shutdown before the user has had the chance
     to trigger tasks in order to allow the workflow to continue.
 
     In order to make this easier, the scheduler should enter the paused state
