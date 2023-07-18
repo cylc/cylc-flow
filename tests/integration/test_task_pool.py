@@ -1121,7 +1121,10 @@ async def test_no_flow_tasks_dont_spawn(
 async def test_task_proxy_remove_from_queues(
     flow, one_conf, scheduler, start,
 ):
-    """TaskPool.remove deletes task proxies from queues."""
+    """TaskPool.remove should delete task proxies from queues.
+    
+    See https://github.com/cylc/cylc-flow/pull/5573
+    """
     # Set up a scheduler with a non-default queue:
     one_conf['scheduling'] = {
         'queues': {'queue_two': {'members': 'one, control'}},
