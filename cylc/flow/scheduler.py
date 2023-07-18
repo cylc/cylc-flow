@@ -151,7 +151,6 @@ from cylc.flow.wallclock import (
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
-    from cylc.flow.task_proxy import TaskProxy
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
