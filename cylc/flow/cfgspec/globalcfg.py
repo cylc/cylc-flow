@@ -268,7 +268,7 @@ EVENTS_SETTINGS = {  # workflow events
         How long to wait for intervention on restarting a completed workflow.
         The timer stops if any task is triggered.
 
-        .. versionadded:: 8.1.0
+        .. versionadded:: 8.2.0
 
     '''
 }
