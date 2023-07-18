@@ -28,17 +28,14 @@ class Poller:
         """Add command line options for commands that can do polling"""
         parser.add_option(
             "--max-polls",
-            help="Maximum number of polls (default " + str(d_max_polls) + ").",
+            help=r"Maximum number of polls (default: %default).",
             metavar="INT",
             action="store",
             dest="max_polls",
             default=d_max_polls)
         parser.add_option(
             "--interval",
-            help=(
-                "Polling interval in seconds (default " + str(d_interval) +
-                ")."
-            ),
+            help=r"Polling interval in seconds (default: %default).",
             metavar="SECS",
             action="store",
             dest="interval",
