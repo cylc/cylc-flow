@@ -1760,7 +1760,7 @@ class Scheduler:
                 await self.update_data_structure(self.is_reloaded)
 
                 if not self.is_reloaded:
-                    # (A reload cannot unstall workflow by itself)
+                    # (A reload cannot un-stall workflow by itself)
                     self.is_stalled = False
                 self.is_reloaded = False
 
@@ -1875,8 +1875,7 @@ class Scheduler:
                 self.run_event_handlers(event)
             if event == self.EVENT_RESTART_TIMEOUT:
                 # Unset wait flag to allow normal shutdown.
-                with suppress(KeyError):
-                    self.is_restart_timeout_wait = False
+                self.is_restart_timeout_wait = False
 
     def check_workflow_stalled(self) -> bool:
         """Check if workflow is stalled or not."""
