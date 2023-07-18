@@ -749,6 +749,7 @@ class TaskPool:
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
             LOG.debug(f"[{itask}] {msg}")
+            self.task_queue_mgr.remove_task(itask)
             return
 
         try:
@@ -759,9 +760,9 @@ class TaskPool:
             self.main_pool_changed = True
             if not self.main_pool[itask.point]:
                 del self.main_pool[itask.point]
-                self.task_queue_mgr.remove_task(itask)
-                if itask.tdef.max_future_prereq_offset is not None:
-                    self.set_max_future_offset()
+            self.task_queue_mgr.remove_task(itask)
+            if itask.tdef.max_future_prereq_offset is not None:
+                self.set_max_future_offset()
 
             # Notify the data-store manager of their removal
             # (the manager uses window boundary tracking for pruning).

@@ -23,7 +23,7 @@ issue which could cause jobs to fail if this variable became too long.
 
 [#5992](https://github.com/cylc/cylc-flow/pull/5992) -
 Before trying to reload the workflow definition, the scheduler will
-now wait for preparing tasks to submit, and pause the workflow. 
+now wait for preparing tasks to submit, and pause the workflow.
 After successful reload the scheduler will unpause the workflow.
 
 -[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
@@ -95,6 +95,9 @@ Fix a bug in Cylc 7 compatibility mode where tasks running in the `none` flow
 [#5604](https://github.com/cylc/cylc-flow/pull/5604) -
 Fix a possible issue where workflows started using
 `cylc play --start-cycle-point` could hang during startup.
+
+[#5573](https://github.com/cylc/cylc-flow/pull/5573) - Fix bug that ran a
+queued waiting task even after removal by `cylc remove`.
 
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.

@@ -1117,3 +1117,43 @@ async def test_no_flow_tasks_dont_spawn(
                 ]
                 for itask in pool
             ] == pool
+
+async def test_task_proxy_remove_from_queues(
+    flow, one_conf, scheduler, start,
+):
+    """TaskPool.remove should delete task proxies from queues.
+    
+    See https://github.com/cylc/cylc-flow/pull/5573
+    """
+    # Set up a scheduler with a non-default queue:
+    one_conf['scheduling'] = {
+        'queues': {'queue_two': {'members': 'one, control'}},
+        'graph': {'R1': 'two & one & hidden & control & hidden_control'},
+    }
+    schd = scheduler(flow(one_conf))
+    async with start(schd):
+        # Get a list of itasks:
+        itasks = schd.pool.get_tasks()
+        point = itasks[0].point
+
+        for itask in itasks:
+            id_ = itask.identity
+
+            # Move some tasks to the hidden_pool to ensure that these are
+            # removed too:
+            if 'hidden' in itask.identity:
+                schd.pool.hidden_pool.setdefault(point, {id_: itask})
+                del schd.pool.main_pool[point][id_]
+
+            # The meat of the test - remove itask from pool if it
+            # doesn't have "control" in the name:
+            if 'control' not in id_:
+                schd.pool.remove(itask)
+
+        # Look at the queues afterwards:
+        queues_after = {
+            name: [itask.identity for itask in queue.deque]
+            for name, queue in schd.pool.task_queue_mgr.queues.items()}
+
+        assert queues_after['default'] == ['1/hidden_control']
+        assert queues_after['queue_two'] == ['1/control']
