@@ -151,7 +151,6 @@ from cylc.flow.wallclock import (
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
-    from cylc.flow.task_proxy import TaskProxy
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
@@ -173,9 +172,10 @@ class Scheduler:
     EVENT_SHUTDOWN = WorkflowEventHandler.EVENT_SHUTDOWN
     EVENT_ABORTED = WorkflowEventHandler.EVENT_ABORTED
     EVENT_WORKFLOW_TIMEOUT = WorkflowEventHandler.EVENT_WORKFLOW_TIMEOUT
-    EVENT_STALL_TIMEOUT = WorkflowEventHandler.EVENT_STALL_TIMEOUT
-    EVENT_INACTIVITY_TIMEOUT = WorkflowEventHandler.EVENT_INACTIVITY_TIMEOUT
     EVENT_STALL = WorkflowEventHandler.EVENT_STALL
+    EVENT_STALL_TIMEOUT = WorkflowEventHandler.EVENT_STALL_TIMEOUT
+    EVENT_RESTART_TIMEOUT = WorkflowEventHandler.EVENT_RESTART_TIMEOUT
+    EVENT_INACTIVITY_TIMEOUT = WorkflowEventHandler.EVENT_INACTIVITY_TIMEOUT
 
     # Intervals in seconds
     INTERVAL_MAIN_LOOP = 1.0
@@ -254,6 +254,7 @@ class Scheduler:
     is_paused = False
     is_updated = False
     is_stalled = False
+    is_restart_timeout_wait = False
     is_reloaded = False
 
     # main loop
@@ -500,7 +501,8 @@ class Scheduler:
         for event, start_now, log_reset_func in [
             (self.EVENT_INACTIVITY_TIMEOUT, True, LOG.debug),
             (self.EVENT_WORKFLOW_TIMEOUT, True, None),
-            (self.EVENT_STALL_TIMEOUT, False, None)
+            (self.EVENT_STALL_TIMEOUT, False, None),
+            (self.EVENT_RESTART_TIMEOUT, False, None)
         ]:
             interval = self._get_events_conf(event)
             if interval is not None:
@@ -508,6 +510,17 @@ class Scheduler:
                 if start_now:
                     timer.reset()
                 self.timers[event] = timer
+
+        if self.is_restart and not self.pool.get_all_tasks():
+            # This workflow completed before restart; wait for intervention.
+            with suppress(KeyError):
+                self.timers[self.EVENT_RESTART_TIMEOUT].reset()
+                self.is_restart_timeout_wait = True
+                LOG.warning(
+                    "This workflow already ran to completion."
+                    "\nTo make it continue, trigger new tasks"
+                    " before the restart timeout."
+                )
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
@@ -617,8 +630,10 @@ class Scheduler:
                 self.task_job_mgr.task_remote_mgr.is_restart = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
                     self.config.get_validated_rsync_includes())
-                self.restart_remote_init()
-                self.command_poll_tasks(['*/*'])
+                if self.pool.get_all_tasks():
+                    # (If we're not restarting a finished workflow)
+                    self.restart_remote_init()
+                    self.command_poll_tasks(['*/*'])
 
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
@@ -1523,7 +1538,7 @@ class Scheduler:
 
         # Is the workflow ready to shut down now?
         if self.pool.can_stop(self.stop_mode):
-            await self.update_data_structure()
+            await self.update_data_structure(self.is_reloaded)
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
                 # Wait for process pool to complete,
@@ -1728,11 +1743,36 @@ class Scheduler:
 
             # Update state summary, database, and uifeed
             self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
-            has_updated = await self.update_data_structure()
-            if has_updated and not self.is_stalled:
-                # Stop the stalled timer.
+
+            # List of task whose states have changed.
+            updated_task_list = [
+                t for t in self.pool.get_tasks() if t.state.is_updated]
+            has_updated = updated_task_list or self.is_updated
+
+            if updated_task_list and self.is_restart_timeout_wait:
+                # Stop restart timeout if action has been triggered.
                 with suppress(KeyError):
-                    self.timers[self.EVENT_STALL_TIMEOUT].stop()
+                    self.timers[self.EVENT_RESTART_TIMEOUT].stop()
+                    self.is_restart_timeout_wait = False
+
+            if has_updated:
+                # Update the datastore.
+                await self.update_data_structure(self.is_reloaded)
+
+                if not self.is_reloaded:
+                    # (A reload cannot un-stall workflow by itself)
+                    self.is_stalled = False
+                self.is_reloaded = False
+
+                # Reset workflow and task updated flags.
+                self.is_updated = False
+                for itask in updated_task_list:
+                    itask.state.is_updated = False
+
+                if not self.is_stalled:
+                    # Stop the stalled timer.
+                    with suppress(KeyError):
+                        self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
             self.process_workflow_db_queue()
 
@@ -1804,21 +1844,12 @@ class Scheduler:
         # than event loop
         sleep(0)
 
-    async def update_data_structure(self) -> Union[bool, List['TaskProxy']]:
+    async def update_data_structure(self, reloaded: bool = False):
         """Update DB, UIS, Summary data elements"""
-        updated_tasks = [
-            t for t in self.pool.get_tasks() if t.state.is_updated]
-        has_updated = (
-            self.is_updated
-            or updated_tasks
-            or self.pool.tasks_removed
-        )
-        reloaded = self.is_reloaded
-        # Add tasks that have moved moved from runahead to live pool.
-        if has_updated or self.data_store_mgr.updates_pending:
+        # Add tasks that have moved from runahead to live pool.
+        if self.data_store_mgr.updates_pending:
             # Collect/apply data store updates/deltas
             self.data_store_mgr.update_data_structure(reloaded=reloaded)
-            self.is_reloaded = False
             # Publish updates:
             if self.data_store_mgr.publish_pending:
                 self.data_store_mgr.publish_pending = False
@@ -1827,18 +1858,9 @@ class Scheduler:
                 # Non-async sleep - yield to other threads rather
                 # than event loop
                 sleep(0)
-        if has_updated:
-            # Database update
-            self.workflow_db_mgr.put_task_pool(self.pool)
-            # Reset workflow and task updated flags.
-            self.is_updated = False
-            if not reloaded:  # (A reload cannot unstall workflow by itself)
-                self.is_stalled = False
-            for itask in updated_tasks:
-                itask.state.is_updated = False
-            self.update_data_store()
-            self.pool.tasks_removed = False
-        return has_updated
+        # Database update
+        self.workflow_db_mgr.put_task_pool(self.pool)
+        self.update_data_store()
 
     def check_workflow_timers(self):
         """Check timers, and abort or run event handlers as configured."""
@@ -1851,6 +1873,9 @@ class Scheduler:
                 raise SchedulerError(f'"{abort_conf}" is set')
             if self._get_events_conf(f"{event} handlers") is not None:
                 self.run_event_handlers(event)
+            if event == self.EVENT_RESTART_TIMEOUT:
+                # Unset wait flag to allow normal shutdown.
+                self.is_restart_timeout_wait = False
 
     def check_workflow_stalled(self) -> bool:
         """Check if workflow is stalled or not."""
@@ -2024,27 +2049,25 @@ class Scheduler:
 
     def check_auto_shutdown(self):
         """Check if we should shut down now."""
-        if self.is_paused:
-            # Don't if paused.
-            return False
-
-        if self.check_workflow_stalled():
-            return False
-
-        if any(
-            itask for itask in self.pool.get_tasks()
-            if itask.state(
-                TASK_STATUS_PREPARING,
-                TASK_STATUS_SUBMITTED,
-                TASK_STATUS_RUNNING
-            )
-            or (
-                itask.state(TASK_STATUS_WAITING)
-                and not itask.state.is_runahead
+        if (
+            self.is_paused or
+            self.is_restart_timeout_wait or
+            self.check_workflow_stalled() or
+            # if more tasks to run (if waiting and not
+            # runahead, then held, queued, or xtriggered).
+            any(
+                itask for itask in self.pool.get_tasks()
+                if itask.state(
+                    TASK_STATUS_PREPARING,
+                    TASK_STATUS_SUBMITTED,
+                    TASK_STATUS_RUNNING
+                )
+                or (
+                    itask.state(TASK_STATUS_WAITING)
+                    and not itask.state.is_runahead
+                )
             )
         ):
-            # Don't if there are more tasks to run (if waiting and not
-            # runahead, then held, queued, or xtriggered).
             return False
 
         # Can shut down.

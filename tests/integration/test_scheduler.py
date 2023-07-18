@@ -22,6 +22,7 @@ from typing import Any, Callable
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -293,3 +294,49 @@ async def test_error_during_auto_restart(
 
     assert log_filter(log, level=logging.ERROR, contains=err_msg)
     assert TRACEBACK_MSG in log.text
+
+
+async def test_restart_timeout(
+    flow,
+    one_conf,
+    scheduler,
+    start,
+    run,
+    log_filter
+):
+    """It should wait for user input if there are no tasks in the pool.
+
+    When restarting a completed workflow there are no tasks in the pool so
+    the scheduler is inclined to shutdown before the user has had the chance
+    to trigger tasks in order to allow the workflow to continue.
+
+    In order to make this easier, the scheduler should enter the paused state
+    and wait around for a configured period before shutting itself down.
+
+    See: https://github.com/cylc/cylc-flow/issues/5078
+    """
+    id_ = flow(one_conf)
+
+    # run the workflow to completion
+    schd = scheduler(id_)
+    async with start(schd):
+        for itask in schd.pool.get_all_tasks():
+            itask.state_reset(TASK_OUTPUT_SUCCEEDED)
+            schd.pool.spawn_on_output(itask, TASK_OUTPUT_SUCCEEDED)
+
+    # restart the completed workflow
+    schd = scheduler(id_)
+    async with run(schd) as log:
+        # it should detect that the workflow has completed and alert the user
+        assert log_filter(
+            log,
+            contains='This workflow already ran to completion.'
+        )
+
+        # it should activate a timeout
+        assert log_filter(log, contains='restart timer starts NOW')
+
+        # when we trigger tasks the timeout should be cleared
+        schd.pool.force_trigger_tasks(['1/one'], {1})
+        await asyncio.sleep(0)  # yield control to the main loop
+        assert log_filter(log, contains='restart timer stopped')
