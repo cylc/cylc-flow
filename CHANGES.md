@@ -23,7 +23,7 @@ issue which could cause jobs to fail if this variable became too long.
 
 [#5992](https://github.com/cylc/cylc-flow/pull/5992) -
 Before trying to reload the workflow definition, the scheduler will
-now wait for preparing tasks to submit, and pause the workflow. 
+now wait for preparing tasks to submit, and pause the workflow.
 After successful reload the scheduler will unpause the workflow.
 
 -[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
@@ -51,14 +51,8 @@ Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
 
-[#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
-in `share/bin` and Python modules in `share/lib/python`.
-
-[#5328](https://github.com/cylc/cylc-flow/pull/5328) -
-Efficiency improvements to reduce task management overheads on the Scheduler.
-
-[#5611](https://github.com/cylc/cylc-flow/pull/5611) -
-Improve the documentation of the GraphQL schema.
+[#5231](https://github.com/cylc/cylc-flow/pull/5231) - stay up for a timeout
+period on restarting a completed workflow, to allow for manual triggering.
 
 [#5549](https://github.com/cylc/cylc-flow/pull/5549),
 [#5546](https://github.com/cylc/cylc-flow/pull/5546) -
@@ -75,7 +69,20 @@ Various enhancements to `cylc lint`:
 * Only check for missing Jinja2 shebangs in `flow.cylc` and
   `suite.rc` files.
 
+
+[#5525](https://github.com/cylc/cylc-flow/pull/5525) - Jobs can use scripts
+in `share/bin` and Python modules in `share/lib/python`.
+
 ### Fixes
+
+[#5328](https://github.com/cylc/cylc-flow/pull/5328) -
+Efficiency improvements to reduce task management overheads on the Scheduler.
+
+[#5611](https://github.com/cylc/cylc-flow/pull/5611) -
+Improve the documentation of the GraphQL schema.
+
+[#5616](https://github.com/cylc/cylc-flow/pull/5616) -
+Improve PBS support for job IDs with trailing components.
 
 [#5619](https://github.com/cylc/cylc-flow/pull/5619) -
 Fix an issue where the `task_pool` table in the database wasn't being updated
@@ -92,6 +99,9 @@ Fix a bug in Cylc 7 compatibility mode where tasks running in the `none` flow
 [#5604](https://github.com/cylc/cylc-flow/pull/5604) -
 Fix a possible issue where workflows started using
 `cylc play --start-cycle-point` could hang during startup.
+
+[#5573](https://github.com/cylc/cylc-flow/pull/5573) - Fix bug that ran a
+queued waiting task even after removal by `cylc remove`.
 
 [#5524](https://github.com/cylc/cylc-flow/pull/5524) - Logging includes timestamps
 for `cylc play` when called by `cylc vip` or `cylc vr`.

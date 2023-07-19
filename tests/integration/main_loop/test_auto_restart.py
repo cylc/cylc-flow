@@ -42,8 +42,8 @@ async def test_no_detach(
         'cylc.flow.main_loop.auto_restart._should_auto_restart',
         Mock(return_value=AutoRestartMode.RESTART_NORMAL)
     )
-    reg: str = flow(one_conf)
-    schd: Scheduler = scheduler(reg, paused_start=True, no_detach=True)
+    id_: str = flow(one_conf)
+    schd: Scheduler = scheduler(id_, paused_start=True, no_detach=True)
     with pytest.raises(MainLoopPluginException) as exc:
         async with run(schd) as log:
             await asyncio.sleep(2)

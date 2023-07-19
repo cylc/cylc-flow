@@ -263,6 +263,13 @@ EVENTS_SETTINGS = {  # workflow events
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on inactivity``.
+    ''',
+    'restart timeout': '''
+        How long to wait for intervention on restarting a completed workflow.
+        The timer stops if any task is triggered.
+
+        .. versionadded:: 8.2.0
+
     '''
 }
 
@@ -839,6 +846,8 @@ with Conf('global.cylc', desc='''
                     vdr_type = VDR.V_INTERVAL
                     if item == "stall timeout":
                         default = DurationFloat(3600)
+                    elif item == "restart timeout":
+                        default = DurationFloat(120)
                     else:
                         default = None
                 Conf(item, vdr_type, default, desc=desc)
@@ -1024,11 +1033,11 @@ with Conf('global.cylc', desc='''
                     Alternative location for the run dir.
 
                     If specified, the workflow run directory will
-                    be created in ``<this-path>/cylc-run/<workflow-name>``
+                    be created in ``<this-path>/cylc-run/<workflow-id>``
                     and a symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-name>``.
+                    ``$HOME/cylc-run/<workflow-id>``.
                     If not specified the workflow run directory will be created
-                    in ``$HOME/cylc-run/<workflow-name>``.
+                    in ``$HOME/cylc-run/<workflow-id>``.
                     All the workflow files and the ``.service`` directory get
                     installed into this directory.
 
@@ -1038,11 +1047,11 @@ with Conf('global.cylc', desc='''
                     Alternative location for the log dir.
 
                     If specified the workflow log directory will be created in
-                    ``<this-path>/cylc-run/<workflow-name>/log`` and a
+                    ``<this-path>/cylc-run/<workflow-id>/log`` and a
                     symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-name>/log``. If not specified
+                    ``$HOME/cylc-run/<workflow-id>/log``. If not specified
                     the workflow log directory will be created in
-                    ``$HOME/cylc-run/<workflow-name>/log``.
+                    ``$HOME/cylc-run/<workflow-id>/log``.
 
                     .. versionadded:: 8.0.0
                 """)
@@ -1050,11 +1059,11 @@ with Conf('global.cylc', desc='''
                     Alternative location for the share dir.
 
                     If specified the workflow share directory will be
-                    created in ``<this-path>/cylc-run/<workflow-name>/share``
+                    created in ``<this-path>/cylc-run/<workflow-id>/share``
                     and a symbolic link will be created from
-                    ``<$HOME/cylc-run/<workflow-name>/share``. If not specified
+                    ``<$HOME/cylc-run/<workflow-id>/share``. If not specified
                     the workflow share directory will be created in
-                    ``$HOME/cylc-run/<workflow-name>/share``.
+                    ``$HOME/cylc-run/<workflow-id>/share``.
 
                     .. versionadded:: 8.0.0
                 """)
@@ -1063,11 +1072,11 @@ with Conf('global.cylc', desc='''
 
                     If specified the workflow share/cycle directory
                     will be created in
-                    ``<this-path>/cylc-run/<workflow-name>/share/cycle``
+                    ``<this-path>/cylc-run/<workflow-id>/share/cycle``
                     and a symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-name>/share/cycle``. If not
+                    ``$HOME/cylc-run/<workflow-id>/share/cycle``. If not
                     specified the workflow share/cycle directory will be
-                    created in ``$HOME/cylc-run/<workflow-name>/share/cycle``.
+                    created in ``$HOME/cylc-run/<workflow-id>/share/cycle``.
 
                     .. versionadded:: 8.0.0
                 """)
@@ -1075,11 +1084,11 @@ with Conf('global.cylc', desc='''
                     Alternative directory for the work dir.
 
                     If specified the workflow work directory will be created in
-                    ``<this-path>/cylc-run/<workflow-name>/work`` and a
+                    ``<this-path>/cylc-run/<workflow-id>/work`` and a
                     symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-name>/work``. If not specified
+                    ``$HOME/cylc-run/<workflow-id>/work``. If not specified
                     the workflow work directory will be created in
-                    ``$HOME/cylc-run/<workflow-name>/work``.
+                    ``$HOME/cylc-run/<workflow-id>/work``.
 
                     .. versionadded:: 8.0.0
                 """)

@@ -434,7 +434,7 @@ def _is_process_running(
 
 
 def detect_old_contact_file(
-    reg: str, contact_data=None
+    id_: str, contact_data=None
 ) -> None:
     """Check if the workflow process is still running.
 
@@ -450,7 +450,7 @@ def detect_old_contact_file(
       ContactFileExists.
 
     Args:
-        reg: workflow name
+        id_: workflow ID
         contact_date:
 
     Raises:
@@ -467,7 +467,7 @@ def detect_old_contact_file(
     # and can be loaded.
     if not contact_data:
         try:
-            contact_data = load_contact_file(reg)
+            contact_data = load_contact_file(id_)
         except (IOError, ValueError, ServiceFileError):
             # Contact file does not exist or corrupted, workflow should be dead
             return
@@ -487,7 +487,7 @@ def detect_old_contact_file(
     # NOTE: can raise CylcError
     process_is_running = _is_process_running(old_host, old_pid, old_cmd)
 
-    fname = get_contact_file_path(reg)
+    fname = get_contact_file_path(id_)
     if process_is_running:
         # ... the process is running, raise an exception
         raise ContactFileExists(
@@ -496,7 +496,7 @@ def detect_old_contact_file(
                 "port": old_port,
                 "pid": old_pid,
                 "fname": fname,
-                "workflow": reg,
+                "workflow": id_,
             }
         )
     else:
@@ -512,16 +512,16 @@ def detect_old_contact_file(
             # unexpected error removing the contact file
             # (note the FileNotFoundError incorporated errno.ENOENT)
             LOG.error(
-                f'Failed to remove contact file for {reg}:\n{exc}'
+                f'Failed to remove contact file for {id_}:\n{exc}'
             )
         else:
             LOG.info(
-                f'Removed contact file for {reg}'
+                f'Removed contact file for {id_}'
                 ' (workflow no longer running).'
             )
 
 
-def dump_contact_file(reg, data):
+def dump_contact_file(id_, data):
     """Create contact file. Data should be a key=value dict."""
     # Note:
     # 1st fsync for writing the content of the contact file to disk.
@@ -529,24 +529,24 @@ def dump_contact_file(reg, data):
     # The double fsync logic ensures that if the contact file is written to
     # a shared file system e.g. via NFS, it will be immediately visible
     # from by a process on other hosts after the current process returns.
-    with open(get_contact_file_path(reg), "wb") as handle:
+    with open(get_contact_file_path(id_), "wb") as handle:
         for key, value in sorted(data.items()):
             handle.write(("%s=%s\n" % (key, value)).encode())
         os.fsync(handle.fileno())
-    dir_fileno = os.open(get_workflow_srv_dir(reg), os.O_DIRECTORY)
+    dir_fileno = os.open(get_workflow_srv_dir(id_), os.O_DIRECTORY)
     os.fsync(dir_fileno)
     os.close(dir_fileno)
 
 
-def get_contact_file_path(reg: str) -> str:
+def get_contact_file_path(id_: str) -> str:
     """Return name of contact file."""
     return os.path.join(
-        get_workflow_srv_dir(reg), WorkflowFiles.Service.CONTACT)
+        get_workflow_srv_dir(id_), WorkflowFiles.Service.CONTACT)
 
 
-def get_flow_file(reg: str) -> Path:
+def get_flow_file(id_: str) -> Path:
     """Return the path of a workflow's flow.cylc file."""
-    run_dir = get_workflow_run_dir(reg)
+    run_dir = get_workflow_run_dir(id_)
     path = check_flow_file(run_dir)
     return path
 
@@ -581,15 +581,15 @@ def get_workflow_source_dir(
             return None, None
 
 
-def get_workflow_srv_dir(reg):
+def get_workflow_srv_dir(id_):
     """Return service directory of a workflow."""
     run_d = os.getenv("CYLC_WORKFLOW_RUN_DIR")
     if (
         not run_d
-        or os.getenv("CYLC_WORKFLOW_ID") != reg
+        or os.getenv("CYLC_WORKFLOW_ID") != id_
         or os.getenv("CYLC_WORKFLOW_OWNER") != get_user()
     ):
-        run_d = get_workflow_run_dir(reg)
+        run_d = get_workflow_run_dir(id_)
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
@@ -688,7 +688,7 @@ def is_installed(rund: Union[Path, str]) -> bool:
     return cylc_install_dir.is_dir() or alt_cylc_install_dir.is_dir()
 
 
-def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
+def get_symlink_dirs(id_: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     """Return the standard symlink dirs and their targets if they exist in
     the workflow run dir.
 
@@ -706,7 +706,7 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
                 raise WorkflowFilesError(
                     f'Invalid symlink at {path}.\n'
                     f'Link target is not a directory: {target}')
-            expected_end = str(Path('cylc-run', reg, _dir))
+            expected_end = str(Path('cylc-run', id_, _dir))
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid symlink at {path}\n'
@@ -729,7 +729,7 @@ def remove_keys_on_server(keys):
 
 
 def create_server_keys(keys, workflow_srv_dir):
-    """Create or renew authentication keys for workflow 'reg' in the .service
+    """Create or renew authentication keys for workflow 'id_' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
     import zmq.auth
@@ -756,7 +756,7 @@ def create_server_keys(keys, workflow_srv_dir):
     os.umask(old_umask)
 
 
-def get_workflow_title(reg):
+def get_workflow_title(id_):
     """Return the the workflow title without a full file parse
 
     Limitations:
@@ -764,7 +764,7 @@ def get_workflow_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    with open(get_flow_file(reg), 'r') as handle:
+    with open(get_flow_file(id_), 'r') as handle:
         for line in handle:
             if line.lstrip().startswith("[meta]"):
                 # continue : title comes inside [meta] section
@@ -842,8 +842,8 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
 
 def infer_latest_run_from_id(workflow_id: str) -> str:
     run_dir = Path(get_workflow_run_dir(workflow_id))
-    _, reg = infer_latest_run(run_dir)
-    return reg
+    _, id_ = infer_latest_run(run_dir)
+    return id_
 
 
 def infer_latest_run(
@@ -862,7 +862,7 @@ def infer_latest_run(
     Returns:
         path: Absolute path of the numbered run dir if applicable, otherwise
             the input arg path.
-        reg: The workflow name (including the numbered run if applicable).
+        id_: The workflow name (including the numbered run if applicable).
 
     Raises:
         - WorkflowFilesError if the runN symlink is not valid.
@@ -870,12 +870,12 @@ def infer_latest_run(
     """
     cylc_run_dir = get_cylc_run_dir()
     try:
-        reg = str(path.relative_to(cylc_run_dir))
+        id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if not path.exists():
         raise InputError(
-            f'Workflow ID not found: {reg}\n(Directory not found: {path})'
+            f'Workflow ID not found: {id_}\n(Directory not found: {path})'
         )
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
@@ -888,9 +888,9 @@ def infer_latest_run(
     elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N
         if not os.path.lexists(runN_path):
-            return (path, reg)
+            return (path, id_)
     else:
-        return (path, reg)
+        return (path, id_)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
             f"{runN_path} symlink not valid"
@@ -903,8 +903,8 @@ def infer_latest_run(
             f"{runN_path} symlink target not valid: {numbered_run}"
         )
     path = runN_path.parent / numbered_run
-    reg = str(path.relative_to(cylc_run_dir))
-    return (path, reg)
+    id_ = str(path.relative_to(cylc_run_dir))
+    return (path, id_)
 
 
 def is_valid_run_dir(path: Union[Path, str]) -> bool:

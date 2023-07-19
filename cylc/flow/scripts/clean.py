@@ -29,7 +29,7 @@ not backed up elsewhere, it will be lost.
 
 It will also remove any symlink directory targets.
 
-Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
+Workflow IDs can be hierarchical, corresponding to the path under ~/cylc-run.
 
 Examples:
   # Remove the workflow at ~/cylc-run/foo/bar

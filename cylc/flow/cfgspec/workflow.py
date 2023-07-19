@@ -1530,7 +1530,7 @@ with Conf(
 
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
-                except that the target workflow name and the
+                except that the target workflow ID and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
 
@@ -1594,7 +1594,7 @@ with Conf(
                 You can also specify job environment templates here for
                 :ref:`parameterized tasks <User Guide Param>`.
             '''):
-                Conf('<variable>', VDR.V_STRING, desc='''
+                Conf('<variable>', VDR.V_STRING, desc=r'''
                     A custom user defined variable for a task execution
                     environment.
 
@@ -1634,6 +1634,32 @@ with Conf(
                        MYNUM = %(i)d
                        MYITEM = %(item)s
                        MYFILE = /path/to/%(i)03d/%(item)s
+
+                    .. note::
+
+                       As with other Cylc configurations, leading or trailing
+                       whitespace will be stripped, so the following two
+                       examples are equivalent:
+
+                       .. list-table::
+                          :class: grid-table
+
+                          * - .. code-block:: cylc
+
+                                 [environment]
+                                     FOO = " a "
+                                     BAR = """
+                                       $(foo bar baz)
+                                   """
+                            - .. code-block:: cylc
+
+                                 [environment]
+                                     FOO = "a"
+                                     BAR = "$(foo bar baz)"
+
+                       If leading or trailing whitespace is required, consider
+                       using the ``\0`` escape character, or set the variable
+                       in :cylc:conf:`[..][..]env-script`.
 
                     .. versionchanged:: 7.8.7/7.9.2
 

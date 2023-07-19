@@ -60,7 +60,7 @@ def remove_keys_on_client(srvd, install_target, full_clean=False):
 
 
 def create_client_keys(srvd, install_target):
-    """Create or renew authentication keys for workflow 'reg' in the .service
+    """Create or renew authentication keys for workflow 'id_' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
 

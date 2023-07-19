@@ -210,7 +210,7 @@ def get_option_parser() -> COP:
         '--format', '-t',
         help=(
             'Output data and format (default "plain").'
-            ' ("name": list the workflow names only)'
+            ' ("name": list the workflow IDs only)'
             ' ("plain": name,host:port,PID on one line)'
             ' ("tree": name,host:port,PID in tree format)'
             ' ("json": full contact data in JSON format)'

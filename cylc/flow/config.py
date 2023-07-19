@@ -59,11 +59,11 @@ from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 from cylc.flow.exceptions import (
     CylcError,
-    WorkflowConfigError,
+    InputError,
     IntervalParsingError,
-    TaskDefError,
     ParamExpandError,
-    InputError
+    TaskDefError,
+    WorkflowConfigError,
 )
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
@@ -209,6 +209,8 @@ def dequote(string):
         'foo'
         >>> dequote('"f')
         '"f'
+        >>> dequote('f')
+        'f'
 
     """
     if len(string) < 2:

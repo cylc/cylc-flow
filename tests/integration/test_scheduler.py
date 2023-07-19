@@ -24,6 +24,7 @@ from typing import Any, Callable
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -45,8 +46,8 @@ async def test_is_paused_after_stop(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is unset on normal shutdown."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     # Run
     async with run(schd):
         assert not schd.is_restart
@@ -54,7 +55,7 @@ async def test_is_paused_after_stop(
     # Stopped
     assert ('is_paused', '1') not in db_select(schd, False, 'workflow_params')
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert not schd.is_paused
@@ -64,8 +65,8 @@ async def test_is_paused_after_crash(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
     """Test the paused status is not unset for an interrupted workflow."""
-    reg: str = flow(one_conf)
-    schd: 'Scheduler' = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
 
     def ctrl_c():
         raise asyncio.CancelledError("Mock keyboard interrupt")
@@ -83,7 +84,7 @@ async def test_is_paused_after_crash(
     # Reset patched method
     setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
     # Restart
-    schd = scheduler(reg, paused_start=None)
+    schd = scheduler(id_, paused_start=None)
     async with run(schd):
         assert schd.is_restart
         assert schd.is_paused
@@ -156,8 +157,8 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
     See https://github.com/cylc/cylc-flow/issues/4278
     """
-    reg = flow(one_conf)
-    one = scheduler(reg, paused_start=True)
+    id_ = flow(one_conf)
+    one = scheduler(id_, paused_start=True)
 
     # run the workflow
     async with start(one):
@@ -203,12 +204,13 @@ async def test_no_poll_waiting_tasks(
 
     See https://github.com/cylc/cylc-flow/issues/4658
     """
-    reg: str = flow(one_conf)
-    one: Scheduler = scheduler(reg, paused_start=True)
+    id_: str = flow(one_conf)
+    # start the scheduler in live mode in order to activate regular polling
+    # logic
+    one: Scheduler = scheduler(id_, run_mode='live')
 
     log: pytest.LogCaptureFixture
     async with start(one) as log:
-
         # Test assumes start up with a waiting task.
         task = (one.pool.get_all_tasks())[0]
         assert task.state.status == TASK_STATUS_WAITING
@@ -322,3 +324,49 @@ async def test_uuid_unchanged_on_restart(
         # and the scheduler.
         cf_uuid = uuid_re.findall(contact_file.read_text())[0]
         assert schd.uuid_str == cf_uuid
+
+        
+async def test_restart_timeout(
+    flow,
+    one_conf,
+    scheduler,
+    start,
+    run,
+    log_filter
+):
+    """It should wait for user input if there are no tasks in the pool.
+
+    When restarting a completed workflow there are no tasks in the pool so
+    the scheduler is inclined to shutdown before the user has had the chance
+    to trigger tasks in order to allow the workflow to continue.
+
+    In order to make this easier, the scheduler should enter the paused state
+    and wait around for a configured period before shutting itself down.
+
+    See: https://github.com/cylc/cylc-flow/issues/5078
+    """
+    id_ = flow(one_conf)
+
+    # run the workflow to completion
+    schd = scheduler(id_)
+    async with start(schd):
+        for itask in schd.pool.get_all_tasks():
+            itask.state_reset(TASK_OUTPUT_SUCCEEDED)
+            schd.pool.spawn_on_output(itask, TASK_OUTPUT_SUCCEEDED)
+
+    # restart the completed workflow
+    schd = scheduler(id_)
+    async with run(schd) as log:
+        # it should detect that the workflow has completed and alert the user
+        assert log_filter(
+            log,
+            contains='This workflow already ran to completion.'
+        )
+
+        # it should activate a timeout
+        assert log_filter(log, contains='restart timer starts NOW')
+
+        # when we trigger tasks the timeout should be cleared
+        schd.pool.force_trigger_tasks(['1/one'], {1})
+        await asyncio.sleep(0)  # yield control to the main loop
+        assert log_filter(log, contains='restart timer stopped')

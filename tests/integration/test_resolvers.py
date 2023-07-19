@@ -56,7 +56,7 @@ async def mock_flow(
     mod_start,
 ) -> AsyncGenerator[Scheduler, None]:
     ret = Mock()
-    ret.reg = mod_flow({
+    ret.id_ = mod_flow({
         'scheduler': {
             'allow implicit tasks': True
         },
@@ -69,7 +69,7 @@ async def mock_flow(
         }
     })
 
-    ret.schd = mod_scheduler(ret.reg, paused_start=True)
+    ret.schd = mod_scheduler(ret.id_, paused_start=True)
     async with mod_start(ret.schd):
         ret.schd.pool.release_runahead_tasks()
         ret.schd.data_store_mgr.initiate_data_model()
