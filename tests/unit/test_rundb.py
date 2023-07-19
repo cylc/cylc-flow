@@ -183,7 +183,6 @@ def setup_message_in_db(tmp_path_factory):
     """Create a database for use when testing message_in_db"""
     tmp_path = tmp_path_factory.mktemp('message_in_db')
     db_file = tmp_path / 'db'
-    dao = CylcWorkflowDAO(db_file, create_tables=True)
     setup_stmt = r"""
         INSERT INTO task_events
         VALUES
@@ -194,8 +193,9 @@ def setup_message_in_db(tmp_path_factory):
                 "qux", "-190",
                 "afternoon", "1", "message critical", "Hello Rome");
     """
-    dao.connect().execute(setup_stmt)
-    yield dao
+    with CylcWorkflowDAO(db_file, create_tables=True) as dao:
+        dao.connect().execute(setup_stmt)
+        yield dao
 
 
 @pytest.mark.parametrize(
