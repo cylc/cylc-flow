@@ -792,8 +792,7 @@ class TaskJobManager:
             workflow,
             itasks,
             self._poll_task_job_callback_255,
-            {self.job_runner_mgr.OUT_PREFIX_MESSAGE:
-             self._poll_task_job_message_callback})
+            )
 
     def _poll_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
         with suppress(NoHostsError):
@@ -888,7 +887,10 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, severity, message, event_time,
                 self.task_events_mgr.FLAG_POLLED)
-        log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
+        log_task_job_activity(
+            self.task_events_mgr.FLAG_POLLED + line
+            , workflow, itask.point, itask.tdef.name
+        )
 
     def _run_job_cmd(
         self, cmd_key, workflow, itasks, callback, callback_255=None
