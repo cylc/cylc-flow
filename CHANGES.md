@@ -26,9 +26,10 @@ Before trying to reload the workflow definition, the scheduler will
 now wait for preparing tasks to submit, and pause the workflow.
 After successful reload the scheduler will unpause the workflow.
 
--[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
--a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
--`cylc command -z X=a,bc,d`.
+[#5605](https://github.com/cylc/cylc-flow/pull/5605) - Added `-z` shorthand
+option for defining a list of strings:
+- Before: `cylc command -s "X=['a', 'bc', 'd']"`
+- After: `cylc command -z X=a,bc,d`.
 
 [#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
 in family names to be split, e.g. `<foo>FAM<bar>`.
