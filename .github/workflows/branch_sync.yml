@@ -45,8 +45,25 @@ jobs:
             print(f'HEAD_BRANCH={branch}', file=F)
             print(f'SYNC_BRANCH={branch}-sync', file=F)
 
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Configure git
+        uses: cylc/release-actions/configure-git@v1
+
+      - name: Attempt fast-forward
+        id: ff
+        continue-on-error: true
+        run: |
+          git merge "origin/${HEAD_BRANCH}" --ff-only
+          git push origin master
+
       - name: Check for existing PR
         id: check-pr
+        if: steps.ff.outcome == 'failure'
         shell: python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,17 +92,6 @@ jobs:
           print("No open PRs found")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             print('continue=true', file=f)
-
-      - name: Checkout
-        if: steps.check-pr.outputs.continue
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: master
-
-      - name: Configure git
-        if: steps.check-pr.outputs.continue
-        uses: cylc/release-actions/configure-git@v1
 
       - name: Attempt merge
         id: merge
