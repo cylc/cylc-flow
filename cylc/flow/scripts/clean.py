@@ -60,6 +60,7 @@ Examples:
 """
 
 import asyncio
+from optparse import SUPPRESS_HELP
 import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
@@ -120,8 +121,15 @@ def get_option_parser():
     parser.add_option(
         '--timeout',
         help=("The number of seconds to wait for cleaning to take place on "
-              "remote hosts before cancelling."),
+              r"remote hosts before cancelling. Default: %default."),
         action='store', default='120', dest='remote_timeout'
+    )
+
+    parser.add_option(
+        '--no-scan',
+        help=SUPPRESS_HELP, action='store_true', dest='no_scan'
+        # Used on remote re-invocation - do not scan for workflows, just
+        # clean exactly what you were told to clean
     )
 
     return parser
@@ -173,28 +181,31 @@ async def scan(
 
 
 async def run(*ids: str, opts: 'Values') -> None:
-    # parse ids from the CLI
-    workflows, multi_mode = await parse_ids_async(
-        *ids,
-        constraint='workflows',
-        match_workflows=True,
-        match_active=False,
-        infer_latest_runs=False,  # don't infer latest runs like other cmds
-    )
+    if opts.no_scan:
+        workflows: Iterable[str] = ids
+    else:
+        # parse ids from the CLI
+        workflows, multi_mode = await parse_ids_async(
+            *ids,
+            constraint='workflows',
+            match_workflows=True,
+            match_active=False,
+            infer_latest_runs=False,  # don't infer latest runs like other cmds
+        )
 
-    # expand partial workflow ids (including run names)
-    workflows, multi_mode = await scan(workflows, multi_mode)
+        # expand partial workflow ids (including run names)
+        workflows, multi_mode = await scan(workflows, multi_mode)
 
-    if not workflows:
-        LOG.warning(f"No workflows matching {', '.join(ids)}")
-        return
+        if not workflows:
+            LOG.warning(f"No workflows matching {', '.join(ids)}")
+            return
 
-    workflows.sort()
-    if multi_mode and not opts.skip_interactive:
-        prompt(workflows)  # prompt for approval or exit
+        workflows.sort()
+        if multi_mode and not opts.skip_interactive:
+            prompt(workflows)  # prompt for approval or exit
 
     failed = {}
-    for workflow in sorted(workflows):
+    for workflow in workflows:
         try:
             init_clean(workflow, opts)
         except Exception as exc:

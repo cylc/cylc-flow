@@ -115,8 +115,8 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--time-zone", metavar="TEMPLATE",
-        help="Control the formatting of the result's timezone e.g. "
-             "(Z, +13:00, -hh",
+        help="Control the formatting of the result's timezone (e.g. "
+             "Z, +13:00, -hh)",
         action="store", default=None, dest="time_zone")
 
     parser.add_option(

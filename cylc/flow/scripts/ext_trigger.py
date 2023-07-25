@@ -89,14 +89,22 @@ def get_option_parser() -> COP:
     )
 
     parser.add_option(
-        "--max-tries", help="Maximum number of send attempts "
-        "(default %s)." % MAX_N_TRIES, metavar="INT",
-        action="store", default=MAX_N_TRIES, dest="max_n_tries")
+        "--max-tries",
+        help=r"Maximum number of send attempts (default: %default).",
+        metavar="INT",
+        action="store",
+        default=MAX_N_TRIES,
+        dest="max_n_tries"
+    )
 
     parser.add_option(
-        "--retry-interval", help="Delay in seconds before retrying "
-        "(default %s)." % RETRY_INTVL_SECS, metavar="SEC",
-        action="store", default=RETRY_INTVL_SECS, dest="retry_intvl_secs")
+        "--retry-interval",
+        help=r"Delay in seconds before retrying (default: %default).",
+        metavar="SEC",
+        action="store",
+        default=RETRY_INTVL_SECS,
+        dest="retry_intvl_secs"
+    )
 
     return parser
 
