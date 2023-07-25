@@ -322,8 +322,8 @@ async def test_uuid_unchanged_on_restart(
     async with start(schd):
         # UUID in contact file should be the same as that set in the database
         # and the scheduler.
-        cf_uuid = uuid_re.findall(contact_file.read_text())[0]
-        assert schd.uuid_str == cf_uuid
+        cf_uuid = uuid_re.findall(contact_file.read_text())
+        assert cf_uuid == [schd.uuid_str]
 
         
 async def test_restart_timeout(
