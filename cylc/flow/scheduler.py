@@ -716,9 +716,9 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
+            self._configure_contact()
             await self.configure()
             self.task_events_mgr.uuid_str = self.uuid_str
-            self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
