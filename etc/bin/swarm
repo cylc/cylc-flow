@@ -204,7 +204,7 @@ append_config () {
         if prompt "Write \"$LINE\" to \"$LOC\"?"; then
             if [[ "$POS" == top ]]; then
                 # ... at the top of the file
-                echo -e "${LINE}\n$(cat ${LOC})" > "$LOC"
+                echo -e "${LINE}\n$(cat "$LOC")" > temp && mv temp "$LOC"
             elif [[ "$POS" == bottom ]]; then
                 # ... at the bottom of the file
                 echo -e "\n$LINE" >> "$LOC"
