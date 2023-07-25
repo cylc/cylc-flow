@@ -17,12 +17,17 @@
 #-------------------------------------------------------------------------------
 # Test restart with running task with execution timeout.
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 4
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play "${WORKFLOW_NAME}" --no-detach --reference-test
+contains_ok "${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log" <<'__LOG__'
+[(('event-handler-00', 'execution timeout'), 1) cmd] echo 1/foo 'execution timeout'
+[(('event-handler-00', 'execution timeout'), 1) ret_code] 0
+[(('event-handler-00', 'execution timeout'), 1) out] 1/foo execution timeout
+__LOG__
 purge
 exit
