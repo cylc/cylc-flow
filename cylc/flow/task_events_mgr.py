@@ -589,17 +589,16 @@ class TaskEventsManager():
         # Any message represents activity.
         self.reset_inactivity_timer_func()
 
-        message_already_received = self.workflow_db_mgr.pri_dao.message_in_db(
-            itask, event_time, submit_num, message)
+        quiet_msg_check = False
         if (
             itask.tdef.run_mode == 'live'
-            and message_already_received
+            and self.workflow_db_mgr.pri_dao.message_in_db(
+                itask, event_time, submit_num, message)
         ):
-            return None
-
-        if (
-            not self._process_message_check(
-                itask, severity, message, event_time, flag, submit_num)
+            quiet_msg_check = True
+        if not self._process_message_check(
+            itask, severity, message, event_time, flag, submit_num,
+            quiet=quiet_msg_check,
         ):
             return None
 
@@ -770,6 +769,7 @@ class TaskEventsManager():
         event_time: str,
         flag: str,
         submit_num: int,
+        quiet: bool = False,
     ) -> bool:
         """Helper for `.process_message`.
 
@@ -835,7 +835,8 @@ class TaskEventsManager():
         }:
             severity = DEBUG
 
-        LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
+        if not quiet:
+            LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(
