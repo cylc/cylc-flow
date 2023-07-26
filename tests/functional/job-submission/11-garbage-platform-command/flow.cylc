@@ -10,6 +10,7 @@
     [[t1]]
         script = true
         platform = badhost
+        completion = submit_failed or succeeded
     [[t2]]
         script = """
             cylc broadcast "${CYLC_WORKFLOW_ID}" \

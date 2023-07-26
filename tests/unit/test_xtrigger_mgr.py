@@ -150,7 +150,7 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     xtrig.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={},
         run_mode="live",
         start_point=1,
         initial_point=1
@@ -194,7 +194,7 @@ def test__call_xtriggers_async(xtrigger_mgr):
     # create a task
     tdef = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={},
         run_mode="live",
         start_point=1,
         initial_point=1
@@ -298,7 +298,7 @@ def test_check_xtriggers(xtrigger_mgr):
     get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef1 = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={},
         run_mode="live",
         start_point=1,
         initial_point=1
@@ -322,7 +322,7 @@ def test_check_xtriggers(xtrigger_mgr):
     # create a task
     tdef2 = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={},
         run_mode="live",
         start_point=1,
         initial_point=1

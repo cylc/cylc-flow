@@ -8,12 +8,13 @@
 [scheduling]
     [[graph]]
         R1 = """
-t1:hello => t2
-t1:greet? => t3
-"""
+            t1:hello => t2
+            t1:greet? => t3
+        """
 [runtime]
     [[t1]]
         script = cylc message 'hello'
+        completion = succeeded and hello
         [[[outputs]]]
             hello = hello
             greet = greeting

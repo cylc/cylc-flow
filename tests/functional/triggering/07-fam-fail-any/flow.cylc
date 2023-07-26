@@ -8,6 +8,7 @@
 [runtime]
     [[FAM]]
         script = "true"
+        completion = succeeded or failed
     [[a,c]]
         inherit = FAM
     [[b]]

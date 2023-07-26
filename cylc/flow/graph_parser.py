@@ -37,7 +37,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUBMIT_FAILED
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_EXPIRED,
 )
 from cylc.flow.task_qualifiers import (
     QUAL_FAM_SUCCEED_ALL,
@@ -782,6 +783,8 @@ class GraphParser:
         # Check opposite output where appropriate.
         for opposites in [
             (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED),
+            (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED),
+            (TASK_OUTPUT_FAILED, TASK_OUTPUT_EXPIRED),
             (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED)
         ]:
             if output not in opposites:

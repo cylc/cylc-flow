@@ -22,10 +22,12 @@
             default run length = PT0S
     [[foo]]
         script = true
+        completion = succeeded
         [[[outputs]]]
             meet = meet
     [[bar]]
         script = true
+        completion = succeeded
         [[[outputs]]]
             greet = greet
     [[baz]]

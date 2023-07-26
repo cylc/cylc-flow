@@ -811,13 +811,22 @@ class TaskPool:
 
         return point_itasks
 
-    def get_task(self, point, name):
+    def get_task(
+        self,
+        point: Union[str, 'PointBase'],
+        name: str
+    ) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
         rel_id = f'{point}/{name}'
+        if isinstance(point, str):
+            # convenient for tests, use PointBase instances for efficiency
+            # otherwise
+            point = get_point(point)
         for pool in (self.main_pool, self.hidden_pool):
             tasks = pool.get(point)
             if tasks and rel_id in tasks:
                 return tasks[rel_id]
+        return None
 
     def _get_hidden_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return runahead pool task by ID if it exists, or None."""
@@ -1100,8 +1109,9 @@ class TaskPool:
         for itask in self.get_tasks():
             if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            outputs = itask.state.outputs.get_incomplete()
-            if outputs:
+
+            if itask.state.outputs.is_incomplete():
+                outputs = itask.state.outputs.get_incomplete()
                 incomplete.append((itask.identity, outputs))
 
         if incomplete:
@@ -1374,12 +1384,11 @@ class TaskPool:
             if self.compute_runahead():
                 self.release_runahead_tasks()
         else:
-            incomplete = itask.state.outputs.get_incomplete()
-            if incomplete:
+            if itask.state.outputs.is_incomplete():
                 # Retain as incomplete.
                 LOG.warning(
                     f"[{itask}] did not complete required outputs:"
-                    f" {incomplete}"
+                    f" {itask.state.outputs.get_incomplete()}"
                 )
             else:
                 # Remove as completed.
@@ -1763,8 +1772,14 @@ class TaskPool:
         return sim_task_state_changed
 
     def set_expired_tasks(self):
+        """Check whether any tasks have expired.
+
+        Note, this must check tasks with partially-satisfied prerequisites,
+        see proposal point (6):
+        https://github.com/cylc/cylc-admin/blob/master/docs/proposal-optional-output-extension.md
+        """
         res = False
-        for itask in self.get_tasks():
+        for itask in self.get_all_tasks():
             if self._set_expired_task(itask):
                 res = True
         return res
@@ -1775,11 +1790,11 @@ class TaskPool:
         Return True if task has expired.
         """
         if (
-                not itask.state(
-                    TASK_STATUS_WAITING,
-                    is_held=False
-                )
-                or itask.tdef.expiration_offset is None
+            not itask.state(
+                TASK_STATUS_WAITING,
+                is_held=False
+            )
+            or itask.tdef.expiration_offset is None
         ):
             return False
         if itask.expire_time is None:
@@ -2048,7 +2063,7 @@ class TaskPool:
 
         if (
             itask.state(*TASK_STATUSES_FINAL)
-            and itask.state.outputs.get_incomplete()
+            and itask.state.outputs.is_incomplete()
         ):
             # Re-queue incomplete task to run again in the merged flow.
             LOG.info(f"[{itask}] incomplete task absorbed by new flow.")

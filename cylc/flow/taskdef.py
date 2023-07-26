@@ -125,6 +125,31 @@ def generate_graph_parents(tdef, point, taskdefs):
     return graph_parents
 
 
+def set_implicit_required_outputs(outputs):
+    """Set implicit "submitted" and "succeeded" required outputs.
+
+    * If :succeed or :fail not set, assume success is required.
+    * Unless submit (and submit-fail) is optional (don't stall
+      because of missing succeed if submit is optional).
+
+    """
+    if (
+        outputs[TASK_OUTPUT_SUCCEEDED][1] is None
+        and outputs[TASK_OUTPUT_FAILED][1] is None
+        and outputs[TASK_OUTPUT_SUBMITTED][1] is not False
+        and outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
+    ):
+        outputs[TASK_OUTPUT_SUCCEEDED] = (TASK_OUTPUT_SUCCEEDED, True)
+
+    # In Cylc 7 back compat mode, make all success outputs required.
+    if cylc.flow.flags.cylc7_back_compat:
+        for output in [
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_SUCCEEDED
+        ]:
+            outputs[output] = (output, True)
+
+
 class TaskDef:
     """Task definition."""
 
@@ -184,33 +209,9 @@ class TaskDef:
         for output in SORT_ORDERS:
             self.outputs[output] = (output, None)
 
-    def set_required_output(self, output, required):
-        """Set outputs to required or optional."""
-        # (Note outputs and associated messages already defined.)
-        message, _ = self.outputs[output]
-        self.outputs[output] = (message, required)
-
-    def tweak_outputs(self):
-        """Output consistency checking and tweaking."""
-
-        # If :succeed or :fail not set, assume success is required.
-        # Unless submit (and submit-fail) is optional (don't stall
-        # because of missing succeed if submit is optional).
-        if (
-            self.outputs[TASK_OUTPUT_SUCCEEDED][1] is None
-            and self.outputs[TASK_OUTPUT_FAILED][1] is None
-            and self.outputs[TASK_OUTPUT_SUBMITTED][1] is not False
-            and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
-        ):
-            self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
-
-        # In Cylc 7 back compat mode, make all success outputs required.
-        if cylc.flow.flags.cylc7_back_compat:
-            for output in [
-                TASK_OUTPUT_SUBMITTED,
-                TASK_OUTPUT_SUCCEEDED
-            ]:
-                self.set_required_output(output, True)
+    def set_implicit_required_outputs(self):
+        """Set implicit "submitted" and "succeeded" required outputs."""
+        set_implicit_required_outputs(self.outputs)
 
     def add_graph_child(self, trigger, taskname, sequence):
         """Record child task instances that depend on my outputs.

@@ -1,5 +1,6 @@
 [[root]]
     platform = 
+    completion = 
     inherit = 
     init-script = 
     env-script = 
@@ -76,6 +77,7 @@
     [[[parameter environment templates]]]
 [[OPS]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     platform = 
     inherit = 
     init-script = 
@@ -152,6 +154,7 @@
     [[[parameter environment templates]]]
 [[VAR]]
     script = echo "RUN: run-var.sh"
+    completion = 
     platform = 
     inherit = 
     init-script = 
@@ -228,6 +231,7 @@
     [[[parameter environment templates]]]
 [[SERIAL]]
     platform = 
+    completion = 
     inherit = 
     init-script = 
     env-script = 
@@ -305,6 +309,7 @@
     [[[parameter environment templates]]]
 [[PARALLEL]]
     platform = 
+    completion = 
     inherit = 
     init-script = 
     env-script = 
@@ -382,6 +387,7 @@
     [[[parameter environment templates]]]
 [[ops_s1]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     inherit = OPS, SERIAL
     platform = 
     init-script = 
@@ -459,6 +465,7 @@
     [[[parameter environment templates]]]
 [[ops_s2]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     inherit = OPS, SERIAL
     platform = 
     init-script = 
@@ -536,6 +543,7 @@
     [[[parameter environment templates]]]
 [[ops_p1]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     inherit = OPS, PARALLEL
     platform = 
     init-script = 
@@ -613,6 +621,7 @@
     [[[parameter environment templates]]]
 [[ops_p2]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     inherit = OPS, PARALLEL
     platform = 
     init-script = 
@@ -690,6 +699,7 @@
     [[[parameter environment templates]]]
 [[var_s1]]
     script = echo "RUN: run-var.sh"
+    completion = 
     inherit = VAR, SERIAL
     platform = 
     init-script = 
@@ -767,6 +777,7 @@
     [[[parameter environment templates]]]
 [[var_s2]]
     script = echo "RUN: run-var.sh"
+    completion = 
     inherit = VAR, SERIAL
     platform = 
     init-script = 
@@ -844,6 +855,7 @@
     [[[parameter environment templates]]]
 [[var_p1]]
     script = echo "RUN: run-var.sh"
+    completion = 
     inherit = VAR, PARALLEL
     platform = 
     init-script = 
@@ -921,6 +933,7 @@
     [[[parameter environment templates]]]
 [[var_p2]]
     script = echo "RUN: run-var.sh"
+    completion = 
     inherit = VAR, PARALLEL
     platform = 
     init-script = 

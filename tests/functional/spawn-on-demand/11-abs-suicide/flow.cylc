@@ -4,28 +4,30 @@
 # cleanly. Otherwise it will abort on stall with unsatisfied prerequisites.
 
 [scheduler]
-  [[events]]
-     stall timeout = PT0S
-     abort on stall timeout = True
-     expected task failures = 1/a
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+        expected task failures = 1/a
 
 [scheduling]
-   cycling mode = integer
-   initial cycle point = 1
-   final cycle point = 5
-   runahead limit = P4
-   [[graph]]
-      R1 = "a?"
-      P1 = """
-         a[^]? => c & !x
-         a[^]:fail? => x & !c
-         b => c & x
-      """
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 5
+    runahead limit = P4
+    [[graph]]
+        R1 = "a?"
+        P1 = """
+            a[^]? => c & !x
+            a[^]:fail? => x & !c
+            b => c & x
+        """
+
 [runtime]
-   [[b,c,x]]
-   [[a]]
-      # Fail after c is spawned out to the runahead limit.
-      script = """
-         cylc__job__poll_grep_workflow_log "spawned 5/c"
-         false
-      """
+    [[b,c,x]]
+    [[a]]
+        # Fail after c is spawned out to the runahead limit.
+        script = """
+            cylc__job__poll_grep_workflow_log "spawned 5/c"
+            false
+        """
+        completion = succeeded or failed

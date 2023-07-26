@@ -88,8 +88,11 @@ from cylc.flow.task_events_mgr import (
 )
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_SUCCEEDED,
-    TaskOutputs
+    TaskOutputs,
+    get_optional_outputs,
+    trigger_to_completion_variable,
 )
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
@@ -534,6 +537,7 @@ class WorkflowConfig:
 
         self._check_implicit_tasks()
         self._check_sequence_bounds()
+        self.check_completion_expressions()
         self.validate_namespace_names()
 
         # Check that external trigger messages are only used once (they have to
@@ -1126,6 +1130,100 @@ class WorkflowConfig:
                     bad for bad in sorted(bads)
                 )
             )
+
+    def check_completion_expressions(self):
+        """Check any configured completion expressions.
+
+        * Ensure completion expressions are not used in Cylc 7 compat mode.
+        * Ensure completion expressions do not reference missing task outputs.
+        * Ensure completion expressions are valid and do not use forbidden
+          syntax.
+        * Ensure optional/required outputs are consistent between the
+          completion expression and the graph.
+
+        Raises:
+            WorkflowConfigError: If any of the above checks fail.
+
+        """
+        for name, rtcfg in self.cfg['runtime'].items():
+            expr = rtcfg.get('completion')
+            if not expr:
+                # no expression to validate
+                continue
+
+            if 'submit-failed' in expr:
+                raise WorkflowConfigError(
+                    f'Error in [runtime][{name}]completion:'
+                    f'\nUse "submit_failed" rather than "submit-failed"'
+                    ' in completion expressions.'
+                )
+
+            # check completion expressions are not being used in compat mode
+            if cylc.flow.flags.cylc7_back_compat:
+                raise WorkflowConfigError(
+                    '[runtime][<namespace>]completion cannot be used'
+                    ' in Cylc 7 compatibility mode.'
+                )
+
+            # get the outputs and completion expression for this task
+            try:
+                outputs = self.taskdefs[name].outputs
+            except KeyError:
+                # this is a family
+                continue
+
+            # get the optional/required outputs defined in the graph
+            graph_optionals = {
+                trigger_to_completion_variable(output): (
+                    None if is_required is None else not is_required
+                )
+                for output, (_, is_required)
+                in outputs.items()
+            }
+
+            # get the optional/required outputs defined in the expression
+            try:
+                # this involves running the expression which also validates it
+                expression_optionals = get_optional_outputs(expr, outputs)
+            except NameError as exc:
+                # expression references an output which has not been registered
+                raise WorkflowConfigError(
+                    # NOTE: str(exc) == "name 'x' is not defined"
+                    # tested in tests/integration/test_optional_outputs.py
+                    f'Error in [runtime][{name}]completion:'
+                    f'\nInput {str(exc)[5:]}'
+                )
+            except Exception as exc:  # includes InvalidCompletionExpression
+                # expression contains non-whitelisted syntax
+                # or any other error in the expression e.g. SyntaxError
+                raise WorkflowConfigError(
+                    f'Error in [runtime][{name}]completion:'
+                    f'\n{str(exc)}'
+                )
+
+            # ensure the optional/required outputs defined in the
+            # graph/expression
+            for output in (*graph_optionals, *expression_optionals):
+                graph_opt = graph_optionals.get(output)
+                expr_opt = expression_optionals.get(output)
+                if (
+                    # output is used in graph
+                    graph_opt is not None
+                    # output optionality does not match between graph and expr
+                    and graph_opt != expr_opt
+                ):
+                    if graph_opt is True:
+                        raise WorkflowConfigError(
+                            f'{name}:{output} is optional in the graph'
+                            ' (? symbol), but required in the completion'
+                            ' expression.'
+                        )
+                    if expr_opt is True:
+                        raise WorkflowConfigError(
+                            f'{name}:{output} is optional in the completion'
+                            ' expression, but required in the graph'
+                            ' (? symbol).'
+                        )
 
     def filter_env(self):
         """Filter environment variables after sparse inheritance"""
@@ -2101,7 +2199,12 @@ class WorkflowConfig:
 
         # Parse and process each graph section.
         task_triggers = {}
-        task_output_opt = {}
+        task_output_opt = {
+            # <task>:expired is inferred to be optional if <task> is
+            # clock-expired
+            (name, TASK_OUTPUT_EXPIRED): (True, True, True)
+            for name in self.expiration_offsets
+        }
         for section, graph in sections:
             try:
                 seq = get_sequence(section, icp, fcp)
@@ -2136,7 +2239,7 @@ class WorkflowConfig:
             raise WorkflowConfigError('task and @xtrigger names clash')
 
         for tdef in self.taskdefs.values():
-            tdef.tweak_outputs()
+            tdef.set_implicit_required_outputs()
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
@@ -2194,13 +2297,14 @@ class WorkflowConfig:
             task_output_opt: {(task, output): (is-optional, default, is_set)}
         """
         for name, taskdef in self.taskdefs.items():
+            outputs = taskdef.outputs
             for output in taskdef.outputs:
                 try:
-                    optional, _, _ = task_output_opt[(name, output)]
+                    optional_graph, *_ = task_output_opt[(name, output)]
                 except KeyError:
                     # Output not used in graph.
                     continue
-                taskdef.set_required_output(output, not optional)
+                outputs[output] = (outputs[output][0], not optional_graph)
 
     def find_taskdefs(self, name: str) -> Set[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".

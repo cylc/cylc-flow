@@ -15,12 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Misc functionality."""
 
+import ast
 from contextlib import suppress
 from functools import partial
 import json
 import re
 from typing import (
     Any,
+    Callable,
     List,
     Tuple,
     Union,
@@ -134,3 +136,204 @@ def serialise(flow_nums: set):
 def deserialise(flow_num_str: str):
     """Converts string to set."""
     return set(json.loads(flow_num_str))
+
+
+class _RestrictedEvalError(Exception):
+    """For internal use.
+
+    Raised in the event non-whitelisted syntax is detected in an expression.
+    """
+
+    def __init__(self, node):
+        self.node = node
+
+
+class RestrictedNodeVisitor(ast.NodeVisitor):
+    """AST node visitor which error on non-whitelisted syntax.
+
+    Raises _RestrictedEvalError if a non-whitelisted node is visited.
+    """
+
+    def __init__(self, whitelist):
+        super().__init__()
+        self._whitelist: Tuple[type] = whitelist
+
+    def visit(self, node):
+        if not isinstance(node, self._whitelist):
+            # only permit whitelisted operations
+            raise _RestrictedEvalError(node)
+        return super().visit(node)
+
+
+def restricted_evaluator(
+    *whitelist: type,
+    error_class: Callable = ValueError,
+) -> Callable:
+    """Returns a Python eval statement restricted to whitelisted operations.
+
+    The "eval" function can be used to run arbitrary code. This is useful
+    but presents security issues. This returns an "eval" method which will
+    only allow whitelisted operations to be performed allowing it to be used
+    safely with user-provided input.
+
+    The code passed into the evaluator will be parsed into an abstract syntax
+    tree AST), then that tree will be executed using Python's internal logic.
+    The evaluator will check the type of each node before it is executed and
+    fail with a ValueError if it is not permitted.
+
+    The node types are documented in the ast module:
+        https://docs.python.org/3/library/ast.html
+
+    The evaluator returned is only as safe as the nodes you whitelist, read the
+    docs carefully.
+
+    Note:
+        If you don't need to parse expressions, use ast.literal_eval instead.
+
+    Args:
+        whitelist:
+            Types to permit e.g. `ast.Expression`, see the ast docs for
+            details.
+        error_class:
+            An Exception class or callable which returns an Exception instance.
+            This is called and its result raised in the event that an
+            expression contains non-whitelisted operations. It will be provided
+            with the error message as an argument, additionally the following
+            keyword arguments will be provided if defined:
+                expr:
+                    The expression the evaluator was called with.
+                expr_node:
+                    The AST node containing the parsed expression.
+                error_node:
+                    The first non-whitelisted AST node in the expression.
+                    E.G. `<AST.Sub>` for a `-` operator.
+                error_type:
+                    error_node.__class__.__name__.
+                    E.G. `Sub` for a `-` operator.
+
+    Returns:
+        An "eval" function restricted to the whitelisted nodes.
+
+    Examples:
+        Optionally, provide an error class to be raised in the event of
+        non-whitelisted syntax (or you'll get ValueError):
+        >>> class RestrictedSyntaxError(Exception):
+        ...     def __init__(self, message, error_node):
+        ...         self.args = (str(error_node.__class__),)
+
+        Create an evaluator, whitelisting allowed node types:
+        >>> evaluator = restricted_evaluator(
+        ...     ast.Expression,  # required for all uses
+        ...     ast.BinOp,       # an operation (e.g. addition or division)
+        ...     ast.Add,         # the "+" operator
+        ...     ast.Constant,    # required for literals e.g. "1"
+        ...     ast.Name,        # required for using variables in expressions
+        ...     ast.Load,        # required for accessing variable values
+        ...     ast.Num,         # for Python 3.7 compatibility
+        ...     error_class=RestrictedSyntaxError,  # error to raise
+        ... )
+
+        This will correctly evaluate intended expressions:
+        >>> evaluator('1 + 1')
+        2
+
+        But will fail if a non-whitelisted node type is present:
+        >>> evaluator('1 - 1')
+        Traceback (most recent call last):
+        RestrictedSyntaxError: <class 'ast.Sub'>
+        >>> evaluator('my_function()')
+        Traceback (most recent call last):
+        RestrictedSyntaxError: <class 'ast.Call'>
+        >>> evaluator('__import__("os")')
+        Traceback (most recent call last):
+        RestrictedSyntaxError: <class 'ast.Call'>
+
+        The evaluator cannot see the containing scope:
+        >>> a = b = 1
+        >>> evaluator('a + b')
+        Traceback (most recent call last):
+        NameError: name 'a' is not defined
+
+        To use variables you must explicitly pass them in:
+        >>> evaluator('a + b', a=1, b=2)
+        3
+
+    """
+    # the node visitor is called for each node in the AST,
+    # this is the bit which rejects types which are not whitelisted
+    visitor = RestrictedNodeVisitor(whitelist)
+
+    def _eval(expr, **variables):
+        nonlocal visitor
+
+        # parse the expression
+        try:
+            expr_node = ast.parse(expr.strip(), mode='eval')
+        except SyntaxError as exc:
+            raise _get_exception(
+                error_class,
+                f'{exc.msg}: {exc.text}',
+                {'expr': expr}
+            )
+
+        # check against whitelisted types
+        try:
+            visitor.visit(expr_node)
+        except _RestrictedEvalError as exc:
+            # non-whitelisted node detected in expression
+            # => raise exception
+            error_node = exc.args[0]
+            raise _get_exception(
+                error_class,
+                (
+                    f'Invalid expression: {expr}'
+                    f'\n"{error_node.__class__.__name__}" not permitted'
+                ),
+                {
+                    'expr': expr,
+                    'expr_node': expr_node,
+                    'error_node': error_node,
+                    'error_type': error_node.__class__.__name__,
+                },
+            )
+
+        # run the expresion
+        # Note: this may raise runtime errors
+        return eval(  # nosec
+            # acceptable use of eval as only whitelisted operations are
+            # permitted
+            compile(expr_node, '<string>', 'eval'),
+            # deny access to builtins
+            {'__builtins__': {}},
+            # provide access to explicitly provided variables
+            variables,
+        )
+
+    return _eval
+
+
+def _get_exception(
+    error_class: Callable,
+    message: str,
+    context: dict
+) -> Exception:
+    """Helper which returns exception instances.
+
+    Filters the arguments in context by the parameters of the error_class.
+
+    This allows the error_class to decide what fields it wants, and for us
+    to add/change these params in the future.
+    """
+    import inspect  # no need to import unless errors occur
+    try:
+        params = dict(inspect.signature(error_class).parameters)
+    except ValueError:
+        params = {}
+
+    context = {
+        key: value
+        for key, value in context.items()
+        if key in params
+    }
+
+    return error_class(message, **context)

@@ -37,8 +37,10 @@
         script = """
             cylc__job__poll_grep_workflow_log -E "1/setter .* => succeeded"
         """
+        completion = succeeded
     [[bar]]
         script = true
+        completion = succeeded
     [[setter]]
         # (To the rescue).
         script = """

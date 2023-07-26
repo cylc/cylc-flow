@@ -17,7 +17,7 @@
 
 import logging
 import pytest
-from itertools import product
+from itertools import product, permutations
 from pytest import param
 from types import SimpleNamespace
 
@@ -29,7 +29,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_EXPIRED,
 )
 
 
@@ -840,8 +841,33 @@ def test_fail_family_triggers_on_tasks(ftrig):
     gp = GraphParser()
     with pytest.raises(GraphParseError) as cm:
         gp.parse_graph(f"foo:{ftrig} => bar")
-        assert (
-            str(cm.value).startswith(
-                "family trigger on non-family namespace"
-            )
+    assert (
+        str(cm.value).startswith(
+            "family trigger on non-family namespace"
         )
+    )
+
+
+@pytest.mark.parametrize(
+    'output1, output2',
+    permutations(
+        [
+            TASK_OUTPUT_SUCCEEDED,
+            TASK_OUTPUT_FAILED,
+            TASK_OUTPUT_EXPIRED,
+        ],
+        2
+    )
+)
+def test_opposite_outputs(output1, output2):
+    """Succeeded, failed and expired are three orthogonal completion outcomes.
+
+    The graph parser should error if one is required and another succeeded.
+
+    See proposal point (4)
+    https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html
+    """
+    gp = GraphParser()
+    with pytest.raises(GraphParseError) as cm:
+        gp.parse_graph(f'a:{output1}? | a:{output2} => b')
+    assert 'Opposite outputs' in str(cm.value)

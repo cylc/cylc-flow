@@ -239,7 +239,7 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
                 section: 'FOO(P1D)',
             },
             'graph': {
-                'R1': 'foo & foot',
+                'R1': 'foo? & foot?',
             }
         },
         'runtime': {

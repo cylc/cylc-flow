@@ -15,9 +15,9 @@
     [[graph]]
         R1 = """
             a
-    {% if INCL_B_C %}
-	    b & c?
-    {% endif %}
+{% if INCL_B_C %}
+	        b & c?
+{% endif %}
         """
 [runtime]
     [[a]]
@@ -28,5 +28,8 @@
             cylc__job__poll_grep_workflow_log "1/a .*(polled)started"
             cylc__job__poll_grep_workflow_log "1/b .*(polled)failed"
         """
-    [[b, c]]
-       script = "false"
+    [[b]]
+        script = false
+    [[c]]
+        script = false
+        completion = succeeded or failed

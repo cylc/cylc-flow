@@ -15,6 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Task output message manager and constants."""
 
+import ast
+import re
+
+from cylc.flow.exceptions import InvalidCompletionExpression
+from cylc.flow.util import restricted_evaluator
+
 
 # Standard task output strings, used for triggering.
 TASK_OUTPUT_EXPIRED = "expired"
@@ -48,6 +54,119 @@ _MESSAGE = 1
 _IS_COMPLETED = 2
 
 
+# this evaluates task completion expressions
+CompletionEvaluator = restricted_evaluator(
+    # expressions
+    ast.Expression,
+    # variables
+    ast.Name, ast.Load,
+    # operations
+    ast.BoolOp, ast.And, ast.Or, ast.BinOp,
+    error_class=InvalidCompletionExpression,
+)
+
+
+def trigger_to_completion_variable(output):
+    """Turn a trigger into something that can be used in an expression.
+
+    Examples:
+        >>> trigger_to_completion_variable('succeeded')
+        'succeeded'
+        >>> trigger_to_completion_variable('submit-failed')
+        'submit_failed'
+
+    """
+    return output.replace('-', '_')
+
+
+def get_completion_expression(tdef):
+    """Return a task's completion expression."""
+    expr = tdef.rtconfig.get('completion')
+    if expr:
+        # the expression has been explicitly provided in the configuration
+        return expr
+
+    # default behaviour:
+    # * succeeded is a required output unless stated otherwise
+    # * if optional outputs are defined in the graph, one or more must be
+    #   generated.
+    ands = []
+    ors = []
+    for trigger, (_message, required) in tdef.outputs.items():
+        trig = trigger_to_completion_variable(trigger)
+        if required is True:
+            ands.append(trig)
+        if required is False:
+            ors.append(trig)
+
+    if not ands and not ors:
+        # task is not used in the graph
+        # e.g. task has been removed by restart/reload
+        # we cannot tell what the completion condition was because it is not
+        # defined in the runtime section so we allow any completion status
+        return 'succeeded or failed or expired'
+
+    # sort for stable output
+    ands.sort()
+    ors.sort()
+
+    # join the lists of "ands" and "ors" into statements
+    _ands = ''
+    if ands:
+        _ands = ' and '.join(ands)
+    _ors = ''
+    if ors:
+        _ors = ' or '.join(ors)
+
+    # join the statements of "ands" and "ors" into an expression
+    if ands and ors:
+        if len(ors) > 1:
+            expr = f'{_ands} and ({_ors})'
+        else:
+            expr = f'{_ands} and {_ors}'
+    elif ands:
+        expr = _ands
+    else:
+        expr = _ors
+
+    return expr
+
+
+def get_optional_outputs(expression, outputs):
+    """Determine which outputs are optional in an expression
+
+    Raises:
+        NameError:
+            If an output referenced in the expression is not present in the
+            outputs dict provided.
+        InvalidCompletionExpression:
+            If any syntax used in the completion expression is not permitted.
+        Exception:
+            For errors executing the completion expression itself.
+
+    """
+    _outputs = [trigger_to_completion_variable(o) for o in outputs]
+    return {  # output: is_optional
+        output: CompletionEvaluator(
+            expression,
+            **{o: o != output for o in _outputs}
+        )
+        for output in _outputs
+    }
+
+
+def get_used_outputs(expression, outputs):
+    """Return all outputs which are used in the expression.
+
+    Called on stall to determine what outputs weren't generated.
+    """
+    return {
+        output
+        for output in outputs
+        if re.findall(rf'\b{output}\b', expression)
+    }
+
+
 class TaskOutputs:
     """Task output message manager.
 
@@ -64,28 +183,26 @@ class TaskOutputs:
     """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["_by_message", "_by_trigger", "_required"]
+    __slots__ = ["_by_message", "_by_trigger", "_completion_expression"]
 
     def __init__(self, tdef):
         self._by_message = {}
         self._by_trigger = {}
-        self._required = set()
+        self._completion_expression = get_completion_expression(tdef)
         # Add outputs from task def.
-        for trigger, (message, required) in tdef.outputs.items():
-            self._add(message, trigger, required=required)
+        for trigger, (message, _required) in tdef.outputs.items():
+            self._add(message, trigger)
 
-    def _add(self, message, trigger, is_completed=False, required=False):
+    def _add(self, message, trigger, is_completed=False):
         """Add a new output message"""
         self._by_message[message] = [trigger, message, is_completed]
         self._by_trigger[trigger] = self._by_message[message]
-        if required:
-            self._required.add(trigger)
 
     def set_completed_by_msg(self, message):
         """For flow trigger --wait: set completed outputs from the DB."""
         for trig, msg, _ in self._by_trigger.values():
             if message == msg:
-                self._add(message, trig, True, trig in self._required)
+                self._add(message, trig, True)
                 break
 
     def all_completed(self):
@@ -190,19 +307,24 @@ class TaskOutputs:
 
     def is_incomplete(self):
         """Return True if any required outputs are not complete."""
-        return any(
-            not completed
-            and trigger in self._required
+        outputs = {
+            trigger_to_completion_variable(trigger): completed
             for trigger, (_, _, completed) in self._by_trigger.items()
-        )
+        }
+        return not CompletionEvaluator(self._completion_expression, **outputs)
 
     def get_incomplete(self):
-        """Return a list of required outputs that are not complete."""
-        return [
+        """Return a list of outputs that are not complete."""
+        used_outputs = get_used_outputs(
+            self._completion_expression,
+            self._by_trigger,
+        )
+        return sorted(
             trigger
             for trigger, (_, _, is_completed) in self._by_trigger.items()
-            if not is_completed and trigger in self._required
-        ]
+            if not is_completed
+            and trigger in used_outputs
+        )
 
     def get_item(self, message):
         """Return output item by message.

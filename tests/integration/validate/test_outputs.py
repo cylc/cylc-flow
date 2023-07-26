@@ -32,7 +32,6 @@ from cylc.flow.unicode_rules import TaskOutputValidator, TaskMessageValidator
                 'foo',
                 'foo-bar',
                 'foo_bar',
-                'foo.bar',
                 '0foo0',
                 '123',
             ],
@@ -151,7 +150,7 @@ def test_messages(messages, valid, flow, validate):
         'runtime': {
             'foo': {
                 'outputs': {
-                    str(random()): message
+                    str(random()).replace('.', ''): message
                     for message in messages
                 }
             }

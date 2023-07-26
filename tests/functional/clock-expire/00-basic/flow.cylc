@@ -3,7 +3,8 @@
 [meta]
     title = task expire example workflow
     description = """
-Skip a daily post-processing workflow if the 'copy' task has expired."""
+        Skip a daily post-processing workflow if the 'copy' task has expired.
+    """
 
 [scheduler]
     cycle point format = %Y-%m-%dT%H
@@ -12,6 +13,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[events]]
         abort on stall timeout = True
         stall timeout = PT1M
+
 [scheduling]
     initial cycle point = now
     final cycle point = +P3D
@@ -23,16 +25,17 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
         # behind "now + 1 day". This makes the first two 'copy' tasks expire.
     [[graph]]
         P1D = """
-            model[-P1D] => model => copy => proc
+            model[-P1D] => model => copy? => proc
             copy:expired? => !proc
         """
+
 [runtime]
     [[root]]
         script = true
     [[copy]]
         script = """
-# Abort if I run in either of the first two cycle points.
-test "${CYLC_TASK_CYCLE_POINT}" != "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
-P2D="$(cylc cyclepoint --offset='P1D' "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}")"
-test "${CYLC_TASK_CYCLE_POINT}" != "${P2D}"
-"""
+            # Abort if I run in either of the first two cycle points.
+            test "${CYLC_TASK_CYCLE_POINT}" != "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
+            P2D="$(cylc cyclepoint --offset='P1D' "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}")"
+            test "${CYLC_TASK_CYCLE_POINT}" != "${P2D}"
+        """

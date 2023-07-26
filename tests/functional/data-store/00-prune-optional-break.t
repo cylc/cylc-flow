@@ -27,19 +27,22 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
     final cycle point = 1
     [[graph]]
         P1 = """
-a? => b? => c?
-d => e
-"""
+            a? => b? => c?
+            d => e
+        """
+
 [runtime]
+    [[a,b,c]]
+        completion = succeeded or failed
     [[a,c,e]]
         script = true
     [[b]]
         script = false
     [[d]]
         script = """
-cylc workflow-state \$CYLC_WORKFLOW_ID --task=b --point=1 --status=failed --interval=2
-cylc pause \$CYLC_WORKFLOW_ID
-"""
+            cylc workflow-state \$CYLC_WORKFLOW_ID --task=b --point=1 --status=failed --interval=2
+            cylc pause \$CYLC_WORKFLOW_ID
+        """
 __FLOW__
 
 # run workflow
