@@ -700,7 +700,10 @@ class Scheduler:
         Lightweight wrapper for testing convenience.
 
         """
-        params = self.load_workflow_params_and_tmpl_vars()
+        if self.is_restart:
+            params = self.load_workflow_params_and_tmpl_vars()
+        else:
+            params = []
 
         try:
             await self.initialise()
