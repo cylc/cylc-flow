@@ -685,7 +685,7 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    def load_workflow_params_and_tmpl_vars(self) -> None:
+    def load_workflow_params_and_tmpl_vars(self) -> List[Tuple[str, str]]:
         """Load workflow params and template variables"""
         with self.workflow_db_mgr.get_pri_dao() as pri_dao:
             # This logic handles lack of initial cycle point in flow.cylc and
