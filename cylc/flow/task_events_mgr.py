@@ -589,16 +589,19 @@ class TaskEventsManager():
         # Any message represents activity.
         self.reset_inactivity_timer_func()
 
-        quiet_msg_check = False
+        # In live mode check whether the message has been recieved and
+        # put in the database before:
+        repeat_message = False
         if (
             itask.tdef.run_mode == 'live'
             and self.workflow_db_mgr.pri_dao.message_in_db(
                 itask, event_time, submit_num, message)
         ):
-            quiet_msg_check = True
+            repeat_message = True
+
         if not self._process_message_check(
             itask, severity, message, event_time, flag, submit_num,
-            quiet=quiet_msg_check,
+            quiet=repeat_message,
         ):
             return None
 
@@ -607,14 +610,15 @@ class TaskEventsManager():
             new_msg = f'{message} {self.FLAG_POLLED}'
         else:
             new_msg = message
-        self.data_store_mgr.delta_job_msg(
-            itask.tokens.duplicate(job=str(submit_num)),
-            new_msg
-        )
+
+        if not repeat_message:
+            self.data_store_mgr.delta_job_msg(
+                itask.tokens.duplicate(job=str(submit_num)),
+                new_msg
+            )
 
         # Satisfy my output, if possible, and spawn children.
         # (first remove signal: failed/EXIT -> failed)
-
         msg0 = message.split('/')[0]
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=msg0, is_completed=True)
