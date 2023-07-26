@@ -11,12 +11,6 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
-## __cylc-8.2.1 (<span actions:bind='release-date'>Upcoming</span>)__
-# Fixes
-
-[#5652](https://github.com/cylc/cylc-flow/pull/5562) - Prevent the same
-message being logged multiple times when polled.
-
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Released 2023-07-21</span>)__
 
 ### Breaking Changes
