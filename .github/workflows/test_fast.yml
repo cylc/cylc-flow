@@ -48,6 +48,10 @@ jobs:
       - name: Configure git  # Needed by the odd test
         uses: cylc/release-actions/configure-git@v1
 
+      - name: Check changelog
+        if: startsWith(matrix.os, 'ubuntu')
+        run: towncrier build --draft
+
       - name: Style
         if: startsWith(matrix.os, 'ubuntu')
         run: |

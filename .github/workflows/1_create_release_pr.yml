@@ -43,14 +43,13 @@ jobs:
           init-file: 'cylc/flow/__init__.py'
           pypi-package-name: 'cylc-flow'
 
-      - name: Update "released on" date in changelog
-        continue-on-error: true
-        uses: cylc/release-actions/stage-1/update-changelog-release-date@v1
-        with:
-          changelog-file: 'CHANGES.md'
-
       - name: Test build
         uses: cylc/release-actions/build-python-package@v1
+
+      - name: Generate changelog
+        run: |
+          python3 -m pip install -q towncrier
+          towncrier build --yes
 
       - name: Create pull request
         uses: cylc/release-actions/stage-1/create-release-pr@v1

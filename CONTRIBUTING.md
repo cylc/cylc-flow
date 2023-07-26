@@ -36,6 +36,11 @@ Feel free to ask questions on the issue or
 [developers chat](https://matrix.to/#/#cylc-general:matrix.org) if unsure about
 anything.
 
+We use [towncrier](https://towncrier.readthedocs.io/en/stable/index.html) for
+generating the changelog. Changelog entries are added by running
+```
+towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
+```
 
 ## Code Contributors
 
