@@ -1741,3 +1741,33 @@ def test_cylc_env_at_parsing(
             assert var in cylc_env
         else:
             assert var not in cylc_env
+
+
+def test_warn_if_run_mode_not_live(caplog):
+    """Assert that we are warned that config items with non-live
+    run mode items are warned about.
+    """
+    example = {
+        'foo1': {'run mode': 'simulation'},
+        'foo2': {'run mode': 'simulation'},
+        'foo3': {'run mode': 'simulation'},
+        'foo4': {'run mode': 'simulation'},
+        'foo5': {'run mode': 'simulation'},
+        'foo6': {'run mode': 'simulation'},
+        'bar': {'run mode': 'skip'},
+        'baz': {'run mode': 'dummy'},
+        'qux': {'run mode': 'live'},
+    }
+    WorkflowConfig.warn_if_run_mode_not_live(example)
+    results = '\n'.join([i.message for i in caplog.records])
+
+    # No warning about live/dummy mode tasks:
+    assert 'live' not in results
+    assert 'dummy' not in results
+
+    # No warning about task beyond truncation limit:
+    assert 'foo6' not in results
+
+    # Warnings about tasks in simulation and skip mode:
+    assert 'simulation mode:\n[\'foo1' in results
+    assert 'skip mode:\n[\'bar' in results

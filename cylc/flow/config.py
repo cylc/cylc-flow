@@ -404,6 +404,7 @@ class WorkflowConfig:
         # Done before inheritance to avoid repetition
         self.check_env_names()
         self.check_param_env_tmpls()
+        self.warn_if_run_mode_not_live(self.get_config(['runtime']))
         self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
@@ -1126,6 +1127,27 @@ class WorkflowConfig:
                     bad for bad in sorted(bads)
                 )
             )
+
+    @staticmethod
+    def warn_if_run_mode_not_live(
+        runtime_items: Dict, truncate: int = 5
+    ) -> None:
+        """Warn if [runtime][<namespace>] items have a run mode other than
+        live set.
+        """
+        for run_mode in ['simulation', 'skip']:
+            tasks = [
+                name
+                for name, section in runtime_items.items()
+                if section['run mode'] == run_mode
+            ]
+            if tasks:
+                truncated = '' if len(tasks) < truncate else ' ...truncated'
+                LOG.warning(
+                    'Task/Family (namespace) definitions set to'
+                    f' {run_mode} mode:'
+                    f'\n{tasks[:truncate]}{truncated}'
+                )
 
     def filter_env(self):
         """Filter environment variables after sparse inheritance"""

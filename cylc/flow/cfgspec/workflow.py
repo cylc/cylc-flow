@@ -1140,6 +1140,17 @@ with Conf(
                     "[platforms][<platform name>]submission retry delays"
                 )
             )
+            Conf(
+                'run mode',
+                default='live',
+                options=['live', 'simulation', 'dummy', 'skip'],
+                desc='''
+                    Set the run mode for this task. Will override
+                    the workflow run mode.
+
+                    TODO: Add docs link
+                '''
+            )
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
@@ -1266,6 +1277,36 @@ with Conf(
                     If ``True`` configured task event handlers
                     will not be called in simulation or dummy modes.
                 ''')
+
+            with Conf('skip', desc='''
+                Settings for skip mode.
+
+                TODO: Add docs link here.
+            '''):
+                # Todo We need to expand this somewhere, probably
+                # in /cylc/flow/config.py
+                # I doubt we can do it until outputs section is parsed.
+                Conf(
+                    'outputs',
+                    VDR.V_STRING_LIST,
+                    default=[],
+                    desc='''
+                        Define the outputs to be generated when this
+                        task runs in skip mode. By default, all
+                        required outputs will be generated.
+                    '''
+                )
+                Conf(
+                    'enable task event handlers',
+                    VDR.V_BOOLEAN,
+                    default=False,
+                    desc='''
+                        Enable  the event handlers which would normally
+                        be called on task lifecycle events.
+                        By default event handers will be turned off
+                        in skip mode.
+                    '''
+                )
 
             with Conf('environment filter', desc='''
                 This section contains environment variable inclusion and
