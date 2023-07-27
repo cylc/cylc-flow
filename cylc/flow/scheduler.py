@@ -1755,10 +1755,11 @@ class Scheduler:
                     self.timers[self.EVENT_RESTART_TIMEOUT].stop()
                     self.is_restart_timeout_wait = False
 
-            if has_updated:
+            if has_updated or self.data_store_mgr.updates_pending:
                 # Update the datastore.
                 await self.update_data_structure(self.is_reloaded)
 
+            if has_updated:
                 if not self.is_reloaded:
                     # (A reload cannot un-stall workflow by itself)
                     self.is_stalled = False
@@ -1846,18 +1847,16 @@ class Scheduler:
 
     async def update_data_structure(self, reloaded: bool = False):
         """Update DB, UIS, Summary data elements"""
-        # Add tasks that have moved from runahead to live pool.
-        if self.data_store_mgr.updates_pending:
-            # Collect/apply data store updates/deltas
-            self.data_store_mgr.update_data_structure(reloaded=reloaded)
-            # Publish updates:
-            if self.data_store_mgr.publish_pending:
-                self.data_store_mgr.publish_pending = False
-                self.server.publish_queue.put(
-                    self.data_store_mgr.publish_deltas)
-                # Non-async sleep - yield to other threads rather
-                # than event loop
-                sleep(0)
+        # Collect/apply data store updates/deltas
+        self.data_store_mgr.update_data_structure(reloaded=reloaded)
+        # Publish updates:
+        if self.data_store_mgr.publish_pending:
+            self.data_store_mgr.publish_pending = False
+            self.server.publish_queue.put(
+                self.data_store_mgr.publish_deltas)
+            # Non-async sleep - yield to other threads rather
+            # than event loop
+            sleep(0)
         # Database update
         self.workflow_db_mgr.put_task_pool(self.pool)
         self.update_data_store()
