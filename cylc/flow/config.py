@@ -140,6 +140,7 @@ RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_WORKFLOW_ID_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?ID}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
+SIM_MODES = {'simulation', 'skip'}
 
 
 def check_varnames(env: Iterable[str]) -> List[str]:
@@ -1135,7 +1136,7 @@ class WorkflowConfig:
         """Warn if [runtime][<namespace>] items have a run mode other than
         live set.
         """
-        for run_mode in ['simulation', 'skip']:
+        for run_mode in SIM_MODES:
             tasks = [
                 name
                 for name, section in runtime_items.items()

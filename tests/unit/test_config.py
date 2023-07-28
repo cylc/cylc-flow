@@ -1744,8 +1744,12 @@ def test_cylc_env_at_parsing(
 
 
 def test_warn_if_run_mode_not_live(caplog):
-    """Assert that we are warned that config items with non-live
-    run mode items are warned about.
+    """If the run mode is set to simulation or
+    skip in the workflow configuration, then cylc
+    validate and cylc lint should produce a warning
+
+    https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
+    Section #proposal.3
     """
     example = {
         'foo1': {'run mode': 'simulation'},

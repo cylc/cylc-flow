@@ -138,6 +138,11 @@ TEST_FILE = """
         script = "cylc nudge"
         post-script = "rose suite-hook"
 
+    [[skip_mode]]
+        run mode = skip
+    [[garbage]]
+        run mode = earth
+
  [meta]
     [[and_another_thing]]
         [[[remote]]]
@@ -159,6 +164,10 @@ LINT_TEST_FILE = """
 # {{quix}}
 
 [runtime]
+    [[skip_mode]]
+        run mode = skip
+    [[garbage]]
+        run mode = earth
           [[foo]]
         inherit = hello
      [[[job]]]

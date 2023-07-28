@@ -93,6 +93,8 @@ OBSOLETE_ENV_VARS = {
     'CYLC_SUITE_DEF_PATH',
     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'
 }
+# TODO: Find a better home for this.
+RUN_MODES = {'live', 'dummy', 'simulation', 'skip'}
 
 
 def check_jinja2_no_shebang(
@@ -220,6 +222,33 @@ def check_for_obsolete_environment_variables(line: str) -> List[str]:
         ['CYLC_SUITE_DEF_PATH']
     """
     return [i for i in OBSOLETE_ENV_VARS if i in line]
+
+
+def check_run_modes(line: str) -> bool:
+    """Check for legal run modes
+
+    Examples:
+        >>> this = check_run_modes
+        >>> this('run mode = "simulation"')
+        True
+        >>> this('run mode = "skip"')
+        True
+        >>> this('run mode = "live"')
+        True
+        >>> this('run mode = "dummy"')
+        True
+        >>> this('run mode = "asdf"')
+        False
+        >>> this("It's not irrelephant! It's a hippopotamus!")
+        False
+    """
+    matches = re.findall(r'run mode\s*=\s*(.*)', line)
+    if (
+        matches
+        and matches[0].strip("\"'") in RUN_MODES
+    ):
+        return True
+    return False
 
 
 FUNCTION = 'function'
@@ -397,8 +426,19 @@ STYLE_CHECKS = {
         FUNCTION: functools.partial(
             check_if_jinja2,
             function=re.compile(r'(?<!{)#.*?{[{%]').findall
-        )
-    }
+        ),
+    },
+    # "S012" is handled elsewhere, don't use it.
+    "S013": {
+        'short': '[runtime][<namespace>]run mode set to a testing mode.',
+        'url': '@TODO: There should be an updated reference',
+        FUNCTION: re.compile(r'run mode\s*=\s*(simulation|skip)').findall,
+    },
+    "S014": {
+        'short': f'[runtime][<namespace>]run mode is not in {RUN_MODES}.',
+        'url': '@TODO: There should be an updated reference',
+        FUNCTION: check_run_modes,
+    },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
