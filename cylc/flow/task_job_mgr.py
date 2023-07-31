@@ -261,12 +261,13 @@ class TaskJobManager:
 
         Return (list): list of tasks that attempted submission.
         """
-
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks, workflow)
+
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
+
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
@@ -1000,16 +1001,24 @@ class TaskJobManager:
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
-            itask.platform = {'name': 'SIMULATION'}
+
+            # We largely want a clean "platform" and not localhost,
+            # but we need to get the existing submission retry delays
+            # to stop _set_retry_delays missing it on retry.
+            itask.platform = {
+                'name': 'SIMULATION',
+                'submission retry delays':
+                    itask.platform['submission retry delays']
+            }
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['job']['simulated run length']
+                itask.tdef.rtconfig['simulation']['simulated run length']
             )
             itask.jobs.append(
                 self.get_simulation_job_conf(itask, workflow)
             )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED
+                itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
 
         return itasks

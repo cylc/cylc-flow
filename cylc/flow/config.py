@@ -79,8 +79,8 @@ from cylc.flow.pathutil import (
     get_cylc_run_dir,
     is_relative_to,
 )
-from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
+from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
@@ -521,7 +521,8 @@ class WorkflowConfig:
         self.process_runahead_limit()
 
         if self.run_mode('simulation', 'dummy'):
-            self.configure_sim_modes()
+            configure_sim_modes(
+                self.taskdefs.values(), self.run_mode())
 
         self.configure_workflow_state_polling_tasks()
 
@@ -1339,68 +1340,6 @@ class WorkflowConfig:
             comstr += " " + tdef.workflow_polling_cfg['workflow']
             script = "echo " + comstr + "\n" + comstr
             rtc['script'] = script
-
-    def configure_sim_modes(self):
-        """Adjust task defs for simulation and dummy mode."""
-        for tdef in self.taskdefs.values():
-            # Compute simulated run time by scaling the execution limit.
-            rtc = tdef.rtconfig
-            limit = rtc['execution time limit']
-            speedup = rtc['simulation']['speedup factor']
-            if limit and speedup:
-                sleep_sec = (DurationParser().parse(
-                    str(limit)).get_seconds() / speedup)
-            else:
-                sleep_sec = DurationParser().parse(
-                    str(rtc['simulation']['default run length'])
-                ).get_seconds()
-            rtc['execution time limit'] = (
-                sleep_sec + DurationParser().parse(str(
-                    rtc['simulation']['time limit buffer'])).get_seconds()
-            )
-            rtc['job']['simulated run length'] = sleep_sec
-
-            # Generate dummy scripting.
-            rtc['init-script'] = ""
-            rtc['env-script'] = ""
-            rtc['pre-script'] = ""
-            rtc['post-script'] = ""
-            scr = "sleep %d" % sleep_sec
-            # Dummy message outputs.
-            for msg in rtc['outputs'].values():
-                scr += "\ncylc message '%s'" % msg
-            if rtc['simulation']['fail try 1 only']:
-                arg1 = "true"
-            else:
-                arg1 = "false"
-            arg2 = " ".join(rtc['simulation']['fail cycle points'])
-            scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
-            rtc['script'] = scr
-
-            # Dummy mode jobs should run on platform localhost
-            # All Cylc 7 config items which conflict with platform are removed.
-            for section, keys in FORBIDDEN_WITH_PLATFORM.items():
-                if section in rtc:
-                    for key in keys:
-                        if key in rtc[section]:
-                            rtc[section][key] = None
-
-            rtc['platform'] = 'localhost'
-
-            # Disable environment, in case it depends on env-script.
-            rtc['environment'] = {}
-
-            # Simulation mode tasks should fail in which cycle points?
-            f_pts = []
-            f_pts_orig = rtc['simulation']['fail cycle points']
-            if 'all' in f_pts_orig:
-                # None for "fail all points".
-                f_pts = None
-            else:
-                # (And [] for "fail no points".)
-                for point_str in f_pts_orig:
-                    f_pts.append(get_point(point_str).standardise())
-            rtc['simulation']['fail cycle points'] = f_pts
 
     def get_parent_lists(self):
         return self.runtime['parents']

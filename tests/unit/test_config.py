@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import os
 import sys
 from optparse import Values
@@ -38,12 +39,13 @@ from cylc.flow.exceptions import (
 from cylc.flow.parsec.exceptions import Jinja2Error, EmPyError
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
+from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
 )
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -1741,3 +1743,32 @@ def test_cylc_env_at_parsing(
             assert var in cylc_env
         else:
             assert var not in cylc_env
+
+
+def test_configure_sim_mode(caplog):
+    job_section = {}
+    sim_section = {
+        'speedup factor': '',
+        'default run length': 'PT10S',
+        'time limit buffer': 'PT0S',
+        'fail try 1 only': False,
+        'fail cycle points': '',
+    }
+    rtconfig_1 = {
+        'execution time limit': '',
+        'simulation': sim_section,
+        'job': job_section,
+        'outputs': {},
+    }
+    rtconfig_2 = deepcopy(rtconfig_1)
+    rtconfig_2['job'] = job_section
+    rtconfig_2['simulation']['default run length'] = 'PT2S'
+
+    taskdefs = [
+        SimpleNamespace(rtconfig=rtconfig_1),
+        SimpleNamespace(rtconfig=rtconfig_2),
+    ]
+    configure_sim_modes(taskdefs, 'simulation')
+    results = [
+        i.rtconfig['simulation']['simulated run length'] for i in taskdefs]
+    assert results == [10.0, 2.0]
