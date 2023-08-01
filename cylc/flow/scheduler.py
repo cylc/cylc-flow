@@ -1775,8 +1775,6 @@ class Scheduler:
                     with suppress(KeyError):
                         self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
-                self.update_data_store()
-
             self.process_workflow_db_queue()
 
             # If public database is stuck, blast it away by copying the content
