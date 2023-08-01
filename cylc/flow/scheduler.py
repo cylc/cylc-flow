@@ -1859,7 +1859,6 @@ class Scheduler:
             sleep(0)
         # Database update
         self.workflow_db_mgr.put_task_pool(self.pool)
-        self.update_data_store()
 
     def check_workflow_timers(self):
         """Check timers, and abort or run event handlers as configured."""
