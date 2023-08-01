@@ -209,7 +209,7 @@ def get_option_parser() -> COP:
     parser.add_option(
         '--format', '-t',
         help=(
-            'Output data and format (default "plain").'
+            r'Output data and format (default "%default").'
             ' ("name": list the workflow IDs only)'
             ' ("plain": name,host:port,PID on one line)'
             ' ("tree": name,host:port,PID in tree format)'

@@ -341,7 +341,7 @@ def remote_clean(
     rm_dirs: Optional[List[str]] = None,
     timeout: str = '120'
 ) -> None:
-    """Run subprocesses to clean workflows on remote install targets
+    """Run subprocesses to clean a workflow on its remote install targets
     (skip localhost), given a set of platform names to look up.
 
     Args:
@@ -446,7 +446,7 @@ def _remote_clean_cmd(
         f"Cleaning {id_} on install target: {platform['install target']} "
         f"(using platform: {platform['name']})"
     )
-    cmd = ['clean', '--local-only', id_]
+    cmd = ['clean', '--local-only', '--no-scan', id_]
     if rm_dirs is not None:
         for item in rm_dirs:
             cmd.extend(['--rm', item])

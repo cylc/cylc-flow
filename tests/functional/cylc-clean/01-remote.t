@@ -50,6 +50,7 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [runtime]
     [[root]]
         platform = ${CYLC_TEST_PLATFORM}
+        script = touch flow.cylc # testing that remote clean does not scan for workflows
 __FLOW__
 
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
@@ -94,6 +95,8 @@ ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
             |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
             \`-- work
                 \`-- 1
+                    \`-- santa
+                        \`-- flow.cylc
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
@@ -135,4 +138,3 @@ ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
 __TREE__
 
 purge
-exit

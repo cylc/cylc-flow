@@ -244,7 +244,7 @@ PLAY_OPTIONS = [
     ),
     OptionSettings(
         ["--format"],
-        help="The format of the output: 'plain'=human readable, 'json",
+        help="The format of the output: 'plain'=human readable, 'json'",
         choices=('plain', 'json'),
         default="plain",
         dest='format',

@@ -992,9 +992,11 @@ def test_remote_clean_cmd(
     monkeymock('cylc.flow.clean.Popen')
 
     cylc_clean._remote_clean_cmd(id_, platform, rm_dirs, timeout='dunno')
-    args, kwargs = mock_construct_ssh_cmd.call_args
+    args, _kwargs = mock_construct_ssh_cmd.call_args
     constructed_cmd = args[0]
-    assert constructed_cmd == ['clean', '--local-only', id_, *expected_args]
+    assert constructed_cmd == [
+        'clean', '--local-only', '--no-scan', id_, *expected_args
+    ]
 
 
 def test_clean_top_level(tmp_run_dir: Callable):

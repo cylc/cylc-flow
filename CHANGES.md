@@ -4,13 +4,14 @@ List of notable changes, for a complete list of changes see the
 [closed milestones](https://github.com/cylc/cylc-flow/milestones?state=closed)
 for each release.
 
-<!-- The topmost release date is automatically updated by GitHub Actions. When
-creating a new release entry be sure to copy & paste the span tag with the
-`actions:bind` attribute, which is used by a regex to find the text to be
-updated. Only the first match gets replaced, so it's fine to leave the old
-ones in. -->
+<!--
+NOTE: Do not add entries here, use towncrier fragments instead:
+$ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
+-->
 
-## __cylc-8.2.0 (<span actions:bind='release-date'>Upcoming</span>)__
+<!-- towncrier release notes start -->
+
+## __cylc-8.2.0 (<span actions:bind='release-date'>Released 2023-07-21</span>)__
 
 ### Breaking Changes
 
@@ -26,9 +27,10 @@ Before trying to reload the workflow definition, the scheduler will
 now wait for preparing tasks to submit, and pause the workflow.
 After successful reload the scheduler will unpause the workflow.
 
--[#5605](https://github.com/cylc/cylc-flow/pull/5605) - A shorthand for defining
--a list of strings - Before: `cylc command -s "X=['a', 'bc', 'd']"` - After:
--`cylc command -z X=a,bc,d`.
+[#5605](https://github.com/cylc/cylc-flow/pull/5605) - Added `-z` shorthand
+option for defining a list of strings:
+- Before: `cylc command -s "X=['a', 'bc', 'd']"`
+- After: `cylc command -z X=a,bc,d`.
 
 [#5537](https://github.com/cylc/cylc-flow/pull/5537) - Allow parameters
 in family names to be split, e.g. `<foo>FAM<bar>`.
