@@ -424,7 +424,7 @@ class Scheduler:
         self._check_startup_opts()
 
         if self.is_restart:
-            self._parse_workflow_params(params)
+            self._set_workflow_params(params)
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -1134,7 +1134,7 @@ class Scheduler:
             self.reload_pending = 'applying the new config'
             old_tasks = set(self.config.get_task_name_list())
             # Things that can't change on workflow reload:
-            self._parse_workflow_params(
+            self._set_workflow_params(
                 self.workflow_db_mgr.pri_dao.select_workflow_params()
             )
             self.apply_new_config(config, is_reload=True)
@@ -1315,10 +1315,10 @@ class Scheduler:
             'CYLC_WORKFLOW_FINAL_CYCLE_POINT': str(self.config.final_point),
         })
 
-    def _parse_workflow_params(
+    def _set_workflow_params(
         self, params: Iterable[Tuple[str, Optional[str]]]
     ) -> None:
-        """Load a row in the "workflow_params" table in a restart/reload.
+        """Set workflow params on restart/reload.
 
         This currently includes:
         * Initial/Final cycle points.
