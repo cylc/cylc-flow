@@ -1775,6 +1775,8 @@ class Scheduler:
                     with suppress(KeyError):
                         self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
+                # Database update
+                self.workflow_db_mgr.put_task_pool(self.pool)
                 self.update_data_store()
 
             self.process_workflow_db_queue()
@@ -1859,8 +1861,6 @@ class Scheduler:
             # Non-async sleep - yield to other threads rather
             # than event loop
             sleep(0)
-        # Database update
-        self.workflow_db_mgr.put_task_pool(self.pool)
 
     def check_workflow_timers(self):
         """Check timers, and abort or run event handlers as configured."""
