@@ -452,7 +452,8 @@ Event handlers can be stored in the workflow ``bin/`` directory, or
 anywhere the scheduler environment ``$PATH``. They should return quickly.
 
 Multiple event handlers can be specified as a list of command line templates.
-For supported template variables see :ref:`task_event_template_variables`.
+For supported template variables see :ref:`user_guide.runtime.\
+event_handlers.task_event_handling.template_variables`.
 Python template substitution syntax is used:
 `String Formatting Operations in the Python documentation
 <https://docs.python.org/3/library/stdtypes.html
@@ -461,18 +462,38 @@ Python template substitution syntax is used:
 
 TASK_EVENTS_SETTINGS = {
     'handlers': '''
-        Specify a list of command lines or command line templates as generic
-        task event handlers for each event set in
+        Commands to run on task :cylc:conf:`[..]handler events`.
+
+        A command or list of commands to run for each task event handler
+        set in
         :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler events`.
+
+        Information about the event can be provided to the command
+        using :ref:`user_guide.runtime.event_handlers.\
+task_event_handling.template_variables`.
+        For more information, see
+        :ref:`user_guide.runtime.task_event_handling`.
+
+        For workflow events, see
+        :ref:`user_guide.scheduler.workflow_event_handling`.
+
+        Example::
+
+           echo %(event)s occurred in %(workflow)s >> my-log-file
+
     ''',
     'execution timeout': '''
         If a task has not finished after the specified interval, the execution
         timeout event handler(s) will be called.
     ''',
     'handler events': '''
+        A list of events for which :cylc:conf:`[..]handlers` are run.
+
         Specify the events for which the general task event handlers
         :cylc:conf:`flow.cylc[runtime][<namespace>][events]handlers`
         should be invoked.
+
+        See :ref:`user_guide.runtime.task_event_handling` for more information.
 
         Example::
 
