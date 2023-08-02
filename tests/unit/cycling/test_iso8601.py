@@ -584,6 +584,29 @@ def test_multiple_exclusions_extensive(set_cycling_type):
     assert sequence.get_prev_point(point_4) == point_1
 
 
+def test_exclusion_zero_duration_warning(set_cycling_type, caplog, log_filter):
+    """It should not log zero-duration warnings for exclusion points.
+
+    Exclusions may either be sequences or points. We first attempt to parse
+    them as sequences, if this fails, we attempt to parse them as points.
+
+    The zero-duration recurrence warning would be logged if we attempted to
+    parse a point as a sequence. To avoid spurious warnings this should be
+    turned off for exclusion parsing.
+
+    """
+    # parsing a point as a sequences causes a zero-duration warning
+    set_cycling_type(ISO8601_CYCLING_TYPE, "+05")
+    with pytest.raises(Exception):
+        ISO8601Sequence('3000', '2999')
+    assert log_filter(caplog, contains='zero-duration')
+
+    # parsing a point in an exclusion should not
+    caplog.clear()
+    ISO8601Sequence('P1Y ! 3000', '2999')
+    assert not log_filter(caplog, contains='zero-duration')
+
+
 def test_simple(set_cycling_type):
     """Run some simple tests for date-time cycling."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
