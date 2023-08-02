@@ -1,0 +1,52 @@
+[scheduler]
+   allow implicit tasks = True
+   [[events]]
+      inactivity timeout = PT1M
+      abort on inactivity timeout = True
+[scheduling]
+   [[graph]]
+      R1 = """
+         a => b => c => d => e => f => g => h
+         b => i => j => f
+      """
+[runtime]
+   [[a]]
+      script = """
+set +e
+
+read -r -d '' gqlDoc <<_DOC_
+{"request_string": "
+mutation {
+  setGraphWindowExtent (
+    workflows: [\"${CYLC_WORKFLOW_ID}\"],
+    nEdgeDistance: 5) {
+    result
+  }
+}",
+"variables": null}
+_DOC_
+
+echo "${gqlDoc}"
+
+cylc client "$CYLC_WORKFLOW_ID" graphql < <(echo ${gqlDoc}) 2>/dev/null
+
+set -e
+"""
+   [[c]]
+      script = """
+cylc show "$CYLC_WORKFLOW_ID//1/a" >> $CYLC_WORKFLOW_RUN_DIR/show-a.txt
+cylc show "$CYLC_WORKFLOW_ID//1/j" >> $CYLC_WORKFLOW_RUN_DIR/show-j.txt
+cylc show "$CYLC_WORKFLOW_ID//1/h" >> $CYLC_WORKFLOW_RUN_DIR/show-h.txt
+"""
+
+   [[i]]
+      script = """
+# Slow 2nd branch down
+sleep 5
+"""
+
+   [[f]]
+      script = """
+# test re-trigger of old point
+cylc trigger "$CYLC_WORKFLOW_ID//1/b"
+"""

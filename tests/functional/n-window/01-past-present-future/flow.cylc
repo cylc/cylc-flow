@@ -1,0 +1,41 @@
+[scheduler]
+   allow implicit tasks = True
+   [[events]]
+      inactivity timeout = PT1M
+      abort on inactivity timeout = True
+[scheduling]
+   [[graph]]
+      R1 = """
+         a => b => c => d => e
+      """
+[runtime]
+   [[a]]
+      script = """
+set +e
+
+read -r -d '' gqlDoc <<_DOC_
+{"request_string": "
+mutation {
+  setGraphWindowExtent (
+    workflows: [\"${CYLC_WORKFLOW_ID}\"],
+    nEdgeDistance: 2) {
+    result
+  }
+}",
+"variables": null}
+_DOC_
+
+echo "${gqlDoc}"
+
+cylc client "$CYLC_WORKFLOW_ID" graphql < <(echo ${gqlDoc}) 2>/dev/null
+
+set -e
+"""
+   [[c]]
+      script = """
+cylc show "$CYLC_WORKFLOW_ID//1/a" >> $CYLC_WORKFLOW_RUN_DIR/show-a.txt
+cylc show "$CYLC_WORKFLOW_ID//1/b" >> $CYLC_WORKFLOW_RUN_DIR/show-b.txt
+cylc show "$CYLC_WORKFLOW_ID//1/c" >> $CYLC_WORKFLOW_RUN_DIR/show-c.txt
+cylc show "$CYLC_WORKFLOW_ID//1/d" >> $CYLC_WORKFLOW_RUN_DIR/show-d.txt
+cylc show "$CYLC_WORKFLOW_ID//1/e" >> $CYLC_WORKFLOW_RUN_DIR/show-e.txt
+"""
