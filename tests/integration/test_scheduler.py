@@ -16,7 +16,9 @@
 
 import asyncio
 import logging
+from pathlib import Path
 import pytest
+import re
 from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
@@ -296,6 +298,34 @@ async def test_error_during_auto_restart(
     assert TRACEBACK_MSG in log.text
 
 
+async def test_uuid_unchanged_on_restart(
+    one: Scheduler,
+    scheduler: Callable,
+    start: Callable,
+):
+    """Restart gets UUID from Database:
+
+    See https://github.com/cylc/cylc-flow/issues/5615
+
+    Process:
+       * Create a scheduler then shut it down.
+       * Create a new scheduler for the same workflow and check that it has
+         retrieved the UUID from the Daatabase.
+    """
+    uuid_re = re.compile('CYLC_WORKFLOW_UUID=(.*)')
+    contact_file = Path(one.workflow_run_dir) / '.service/contact'
+
+    async with start(one):
+        pass
+
+    schd = scheduler(one.workflow_name, paused_start=True)
+    async with start(schd):
+        # UUID in contact file should be the same as that set in the database
+        # and the scheduler.
+        cf_uuid = uuid_re.findall(contact_file.read_text())
+        assert cf_uuid == [schd.uuid_str]
+
+        
 async def test_restart_timeout(
     flow,
     one_conf,
