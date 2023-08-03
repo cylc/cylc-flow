@@ -18,6 +18,9 @@ from types import SimpleNamespace
 
 from .test_workflow_events import TEMPLATES
 
+from cylc.flow.id import Tokens
+from cylc.flow.task_events_mgr import EventKey
+
 import pytest
 
 
@@ -48,7 +51,7 @@ async def test_mail_footer_template(
 
     # start the workflow and get it to send an email
     ctx = SimpleNamespace(mail_to=None, mail_from=None)
-    id_keys = [((None, 'failed'), '1', 'a', 1)]
+    id_keys = [EventKey('none', 'failed', Tokens('//1/a'))]
     async with start(mod_one) as one_log:
         mod_one.task_events_mgr._process_event_email(mod_one, ctx, id_keys)
 
