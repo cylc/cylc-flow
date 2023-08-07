@@ -17,8 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
+      BASE_BRANCH: master
       HEAD_BRANCH: ${{ inputs.head_branch || github.ref_name }}
       STATUS_JSON: https://raw.githubusercontent.com/cylc/cylc-admin/master/docs/status/branches.json
+      FORCE_COLOR: 2
     steps:
       - name: Check branch name
         shell: python
@@ -54,74 +56,47 @@ jobs:
       - name: Configure git
         uses: cylc/release-actions/configure-git@v1
 
+      - name: Checkout sync branch if it exists
+        continue-on-error: true
+        run: |
+          git switch -c "$SYNC_BRANCH" "origin/${SYNC_BRANCH}"
+          echo "BASE_BRANCH=$SYNC_BRANCH" >> "$GITHUB_ENV"
+
       - name: Attempt fast-forward
         id: ff
-        continue-on-error: true
         run: |
-          git merge "origin/${HEAD_BRANCH}" --ff-only
-          git push origin master
-
-      - name: Check for existing PR
-        id: check-pr
-        if: steps.ff.outcome == 'failure'
-        shell: python
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          import os
-          import json
-          import subprocess
-          import sys
-
-          for env_var in ('HEAD_BRANCH', 'SYNC_BRANCH'):
-            branch = os.environ[env_var]
-            cmd = f'gh pr list -B master -H {branch} -s open --json url -R ${{ github.repository }}'
-            ret = subprocess.run(
-              cmd, shell=True, capture_output=True, text=True
-            )
-            print(ret.stdout)
-            if ret.stderr:
-              print(f"::error::{ret.stderr}")
-            if ret.returncode:
-              sys.exit(ret.returncode)
-            results: list = json.loads(ret.stdout)
-            if results:
-              print(f"::notice::Found existing PR for {branch} - {results[0]['url']}")
-              sys.exit(0)
-
-          print("No open PRs found")
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            print('continue=true', file=f)
-
-      - name: Attempt merge
-        id: merge
-        if: steps.check-pr.outputs.continue
-        continue-on-error: true
-        run: git merge "origin/${HEAD_BRANCH}"
-
-      - name: Abort merge
-        if: steps.merge.outcome == 'failure'
-        run: git merge --abort
-
-      - name: Diff
-        id: diff
-        if: steps.merge.outcome == 'success'
-        run: |
-          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/master)" ]]; then
-            echo "::notice::master is up to date with $HEAD_BRANCH"
-            exit 0
+          if git merge "origin/${HEAD_BRANCH}" --ff-only; then
+            if [[ "$(git rev-parse HEAD)" == "$(git rev-parse "origin/${BASE_BRANCH}")" ]]; then
+              echo "::notice::$BASE_BRANCH is up to date with $HEAD_BRANCH"
+              exit 0
+            fi
+            git push origin "$BASE_BRANCH"
+          elif [[ "$BASE_BRANCH" == "$SYNC_BRANCH" ]]; then
+            echo "::notice::Cannot fast-forward $BASE_BRANCH to $HEAD_BRANCH; merge existing PR first"
+          else
+            echo "continue=true" >> "$GITHUB_OUTPUT"
           fi
-          if git diff HEAD^ --exit-code --stat; then
-            echo "::notice::No diff between master and $HEAD_BRANCH"
-            exit 0
+
+      - name: Attempt merge into master
+        id: merge
+        if: steps.ff.outputs.continue
+        run: |
+          git switch master
+          if git merge "origin/${HEAD_BRANCH}"; then
+            if git diff HEAD^ --exit-code --stat; then
+              echo "::notice::No diff between master and $HEAD_BRANCH"
+              exit 0
+            fi
+          else
+            git merge --abort
           fi
           echo "continue=true" >> $GITHUB_OUTPUT
 
       - name: Push sync branch
         id: push
-        if: steps.merge.outcome == 'failure' || steps.diff.outputs.continue
+        if: steps.merge.outputs.continue
         run: |
-          git checkout -b "$SYNC_BRANCH" "origin/${HEAD_BRANCH}"
+          git switch -c "$SYNC_BRANCH" "origin/${HEAD_BRANCH}"
           git push origin "$SYNC_BRANCH"
           echo "continue=true" >> $GITHUB_OUTPUT
 
