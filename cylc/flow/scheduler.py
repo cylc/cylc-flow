@@ -282,7 +282,6 @@ class Scheduler:
             workflow=self.workflow,
         )
         self.id = self.tokens.id
-        self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = get_template_vars(self.options)
 
@@ -307,6 +306,7 @@ class Scheduler:
             pub_d=os.path.join(self.workflow_run_dir, 'log')
         )
         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+
         # Map used to track incomplete remote inits for restart
         # {install_target: platform}
         self.incomplete_ri_map: Dict[str, Dict] = {}
@@ -394,7 +394,6 @@ class Scheduler:
             self.bad_hosts,
             self.reset_inactivity_timer
         )
-        self.task_events_mgr.uuid_str = self.uuid_str
 
         self.task_job_mgr = TaskJobManager(
             self.workflow,
@@ -404,11 +403,10 @@ class Scheduler:
             self.data_store_mgr,
             self.bad_hosts
         )
-        self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
 
-    async def configure(self):
+    async def configure(self, params):
         """Configure the scheduler.
 
         * Load the flow configuration.
@@ -426,7 +424,7 @@ class Scheduler:
         self._check_startup_opts()
 
         if self.is_restart:
-            self.load_workflow_params_and_tmpl_vars()
+            self._set_workflow_params(params)
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -548,15 +546,6 @@ class Scheduler:
         self.process_workflow_db_queue()
 
         self.profiler.log_memory("scheduler.py: end configure")
-
-    def load_workflow_params_and_tmpl_vars(self) -> None:
-        """Load workflow params and template variables"""
-        with self.workflow_db_mgr.get_pri_dao() as pri_dao:
-            # This logic handles lack of initial cycle point in flow.cylc and
-            # things that can't change on workflow restart/reload.
-            self._load_workflow_params(pri_dao.select_workflow_params())
-            pri_dao.select_workflow_template_vars(self._load_template_vars)
-            pri_dao.execute_queued_items()
 
     def log_start(self) -> None:
         """Log headers, that also get logged on each rollover.
@@ -696,12 +685,26 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
+    def load_workflow_params_and_tmpl_vars(self) -> List[Tuple[str, str]]:
+        """Load workflow params and template variables"""
+        with self.workflow_db_mgr.get_pri_dao() as pri_dao:
+            # This logic handles lack of initial cycle point in flow.cylc and
+            # things that can't change on workflow restart/reload.
+            pri_dao.select_workflow_template_vars(self._load_template_vars)
+            pri_dao.execute_queued_items()
+            return list(pri_dao.select_workflow_params())
+
     async def start(self):
         """Run the startup sequence but don't set the main loop running.
 
         Lightweight wrapper for testing convenience.
 
         """
+        if self.is_restart:
+            params = self.load_workflow_params_and_tmpl_vars()
+        else:
+            params = []
+
         try:
             await self.initialise()
 
@@ -716,8 +719,15 @@ class Scheduler:
             self.server.thread.start()
             barrier.wait()
 
+            # Get UUID now:
+            if self.is_restart:
+                self.uuid_str = dict(params)['uuid_str']
+            else:
+                self.uuid_str = str(uuid4())
+
             self._configure_contact()
-            await self.configure()
+            await self.configure(params)
+            self.task_events_mgr.uuid_str = self.uuid_str
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
@@ -1124,7 +1134,7 @@ class Scheduler:
             self.reload_pending = 'applying the new config'
             old_tasks = set(self.config.get_task_name_list())
             # Things that can't change on workflow reload:
-            self._load_workflow_params(
+            self._set_workflow_params(
                 self.workflow_db_mgr.pri_dao.select_workflow_params()
             )
             self.apply_new_config(config, is_reload=True)
@@ -1305,10 +1315,10 @@ class Scheduler:
             'CYLC_WORKFLOW_FINAL_CYCLE_POINT': str(self.config.final_point),
         })
 
-    def _load_workflow_params(
+    def _set_workflow_params(
         self, params: Iterable[Tuple[str, Optional[str]]]
     ) -> None:
-        """Load a row in the "workflow_params" table in a restart/reload.
+        """Set workflow params on restart/reload.
 
         This currently includes:
         * Initial/Final cycle points.
