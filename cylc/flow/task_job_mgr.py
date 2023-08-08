@@ -27,7 +27,6 @@ This module provides logic to:
 from contextlib import suppress
 import json
 import os
-from copy import deepcopy
 from logging import (
     CRITICAL,
     DEBUG,
@@ -1190,12 +1189,11 @@ class TaskJobManager:
                 self._set_retry_timers(itask, rtconfig)
 
         try:
-            job_conf = {
-                **self._prep_submit_task_job_impl(
-                    workflow, itask, rtconfig
-                ),
-                'logfiles': deepcopy(itask.summary['logfiles']),
-            }
+            job_conf = self._prep_submit_task_job_impl(
+                workflow,
+                itask,
+                rtconfig,
+            )
             itask.jobs.append(job_conf)
 
             local_job_file_path = get_task_job_job_log(
@@ -1326,8 +1324,6 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }
 
     def get_simulation_job_conf(self, itask, workflow):
@@ -1359,6 +1355,4 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': 'SIMULATION',
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }
