@@ -747,25 +747,29 @@ with Conf(
                 ``cylc ext-trigger`` command.
             ''')
             Conf('clock-expire', VDR.V_STRING_LIST, desc='''
-                Don't submit jobs if they are very late in wall clock time.
+                Don't submit jobs if they are too late in wall clock time.
 
                 Clock-expire tasks enter the ``expired`` state and skip job
                 submission if too far behind the wall clock when they become
                 ready to run.
 
-                The expiry time is specified as an offset from
-                wall-clock time; typically it should be negative - see
-                :ref:`ClockExpireTasks`.
-
-                .. note::
-                   The offset:
+                The expiry time is specified as an offset from the task's
+                cycle point. The offset:
 
                    * May be positive or negative
-                   * The offset may be omitted if it is zero.
+                   * May be omitted if it is zero
 
-                Example:
+                .. seealso::
 
-                ``PT1H`` - 1 hour
+                   :ref:`ClockExpireTasks`.
+
+                Examples:
+
+                ``foo(PT1H)`` - expire task ``foo`` if the current wall clock
+                time has reached 1 hour after the task's cycle point.
+
+                ``bar(-PT5M)`` - expire task ``bar`` if the current wall clock
+                time has reached 5 minutes *before* the task's cycle point.
             ''')
             Conf('sequential', VDR.V_STRING_LIST, desc='''
                 A list of tasks which automatically depend on their own
