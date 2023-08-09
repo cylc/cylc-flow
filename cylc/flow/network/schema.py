@@ -1072,6 +1072,11 @@ class TaskProxy(ObjectType):
     depth = Int(
         description='The family inheritance depth',
     )
+    graph_depth = Int(
+        description=sstrip('''
+            The n-window graph edge depth from closet active task(s).
+        '''),
+    )
     job_submits = Int(
         description='The number of job submissions for this task instance.',
     )

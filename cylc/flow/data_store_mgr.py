@@ -509,6 +509,8 @@ class DataStoreMgr:
         self.n_window_edges = set()
         self.n_window_node_walks = {}
         self.n_window_completed_walks = set()
+        self.n_window_depths = {}
+        self.update_window_depths = False
         self.db_load_task_proxies = {}
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
@@ -770,6 +772,10 @@ class DataStoreMgr:
                 'done_locs': set(),
                 'done_ids': set(),
                 'walk_ids': {active_id},
+                'depths': {
+                    depth: set()
+                    for depth in range(1, self.n_edge_distance + 1)
+                }
             }
             if active_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(active_id)
@@ -796,10 +802,12 @@ class DataStoreMgr:
         # children will required sifting out cousin branches.
         new_locs: List[str]
         working_locs: List[str] = []
-        if c_tag in active_locs:
-            working_locs.extend(('cc', 'cp'))
-        if p_tag in active_locs:
-            working_locs.extend(('pp', 'pc'))
+        if self.n_edge_distance > 1:
+            if c_tag in active_locs:
+                working_locs.extend(('cc', 'cp'))
+            if p_tag in active_locs:
+                working_locs.extend(('pp', 'pc'))
+            n_depth = 2
         while working_locs:
             for w_loc in working_locs:
                 loc_done = True
@@ -826,6 +834,7 @@ class DataStoreMgr:
                 if w_set:
                     active_locs[w_loc] = w_set
                     active_walk['walk_ids'].update(w_set)
+                    active_walk['depths'][n_depth].update(w_set)
                     if loc_done:
                         active_walk['done_locs'].add(w_loc[:-1])
                     active_walk['done_ids'].update(active_locs[w_loc[:-1]])
@@ -834,6 +843,7 @@ class DataStoreMgr:
                 if loc in active_locs and len(loc) < self.n_edge_distance:
                     new_locs.extend((loc + c_tag, loc + p_tag))
             working_locs = new_locs
+            n_depth += 1
 
         # Graph walk
         node_tokens: Tokens
@@ -872,6 +882,7 @@ class DataStoreMgr:
                 p_loc = location + p_tag
                 c_ids = set()
                 p_ids = set()
+                n_depth = len(location) + 1
                 # Exclude walked nodes at this location.
                 # This also helps avoid walking in a circle.
                 for node_id in loc_nodes.difference(active_walk['done_ids']):
@@ -899,10 +910,13 @@ class DataStoreMgr:
                     # Children/downstream nodes
                     # TODO: xtrigger is workflow_state edges too
                     # Reference set for workflow relations
-                    graph_children = generate_graph_children(
-                        tdef,
-                        get_point(node_tokens['cycle'])
-                    )
+                    if itask is not None and n_depth == 1:
+                        graph_children = itask.graph_children
+                    else:
+                        graph_children = generate_graph_children(
+                            tdef,
+                            get_point(node_tokens['cycle'])
+                        )
                     for items in graph_children.values():
                         for child_name, child_point, _ in items:
                             if child_point > final_point:
@@ -916,7 +930,8 @@ class DataStoreMgr:
                                 child_point,
                                 flow_nums,
                                 False,
-                                None
+                                None,
+                                n_depth
                             )
                             self.generate_edge(
                                 node_tokens,
@@ -943,7 +958,8 @@ class DataStoreMgr:
                                 parent_point,
                                 flow_nums,
                                 True,
-                                None
+                                None,
+                                n_depth
                             )
                             # reverse for parent
                             self.generate_edge(
@@ -959,12 +975,18 @@ class DataStoreMgr:
                         'done_ids': set(),
                         'done_locs': set(),
                         'orphans': set(),
-                        'walk_ids': {node_id} | c_ids | p_ids
+                        'walk_ids': {node_id} | c_ids | p_ids,
+                        'depths': {
+                            depth: set()
+                            for depth in range(1, self.n_edge_distance + 1)
+                        }
                     }
                     if c_ids:
                         all_walks[node_id]['locations'][c_tag] = c_ids
+                        all_walks[node_id]['depths'][1].update(c_ids)
                     if p_ids:
                         all_walks[node_id]['locations'][p_tag] = p_ids
+                        all_walks[node_id]['depths'][1].update(p_ids)
 
                 # Create location association
                 if c_ids:
@@ -972,6 +994,7 @@ class DataStoreMgr:
                 if p_ids:
                     active_locs.setdefault(p_loc, set()).update(p_ids)
                 active_walk['walk_ids'].update(c_ids, p_ids)
+                active_walk['depths'][n_depth].update(c_ids, p_ids)
 
         self.n_window_completed_walks.add(active_id)
         self.n_window_nodes[active_id].update(active_walk['walk_ids'])
@@ -1083,6 +1106,7 @@ class DataStoreMgr:
             task=name,
         ).id
         self.all_task_pool.add(tp_id)
+        self.update_window_depths = True
 
     def generate_ghost_task(
         self,
@@ -1090,7 +1114,8 @@ class DataStoreMgr:
         point,
         flow_nums,
         is_parent=False,
-        itask=None
+        itask=None,
+        n_depth=0,
     ):
         """Create task-point element populated with static data.
 
@@ -1163,8 +1188,10 @@ class DataStoreMgr:
                 in self.schd.pool.tasks_to_hold
             ),
             depth=task_def.depth,
+            graph_depth=n_depth,
             name=name,
         )
+        self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
 
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:
@@ -1648,6 +1675,10 @@ class DataStoreMgr:
             self.window_resize_rewalk()
             self.next_n_edge_distance = None
 
+        # Find depth changes and create deltas
+        if self.update_window_depths:
+            self.window_depth_finder()
+
         # load database history for flagged nodes
         self.apply_task_proxy_db_history()
 
@@ -1721,6 +1752,51 @@ class DataStoreMgr:
                 if k in self.all_task_pool
             ))
         )
+
+    def window_depth_finder(self):
+        """Recalculate window depths, creating depth deltas."""
+        # Setup new window depths
+        n_window_depths: Dict(int, Set(str)) = {
+            0: set().union(self.all_task_pool)
+        }
+
+        depth = 1
+        # Since starting from smaller depth, exclude those whose depth has
+        # already been found.
+        depth_found_tasks: Set(str) = set().union(self.all_task_pool)
+        while depth <= self.n_edge_distance:
+            n_window_depths[depth] = set().union(*(
+                self.n_window_node_walks[n_id]['depths'][depth]
+                for n_id in self.all_task_pool
+                if (
+                    n_id in self.n_window_node_walks
+                    and depth in self.n_window_node_walks[n_id]['depths']
+                )
+            )).difference(depth_found_tasks)
+            depth_found_tasks.update(n_window_depths[depth])
+            # Calculate next depth parameters.
+            depth += 1
+
+        # Create deltas of those whose depth has changed, a node should only
+        # appear once across all depths.
+        # So the diff will only contain it at a single depth and if it didn't
+        # appear at the same depth previously.
+        update_time = time()
+        for depth, node_set in n_window_depths.items():
+            node_set_diff = node_set.difference(
+                self.n_window_depths.setdefault(depth, set())
+            )
+            if not self.updates_pending and node_set_diff:
+                self.updates_pending = True
+            for tp_id in node_set_diff:
+                tp_delta = self.updated[TASK_PROXIES].setdefault(
+                    tp_id, PbTaskProxy(id=tp_id)
+                )
+                tp_delta.stamp = f'{tp_id}@{update_time}'
+                tp_delta.graph_depth = depth
+        # Set old to new.
+        self.n_window_depths = n_window_depths
+        self.update_window_depths = False
 
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""

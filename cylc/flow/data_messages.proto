@@ -227,6 +227,7 @@ message PbTaskProxy {
     optional bool is_runahead = 26;
     optional bool flow_wait = 27;
     optional PbRuntime runtime = 28;
+    optional int32 graph_depth = 29;
 }
 
 message PbFamily {
