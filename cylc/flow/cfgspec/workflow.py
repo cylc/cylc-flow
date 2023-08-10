@@ -605,7 +605,7 @@ with Conf(
             The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
 
-            .. note:
+            .. note::
 
                Not to be confused with :cylc:conf:`[..]final cycle point`:
                There can be more graph beyond this point, but you are
