@@ -266,6 +266,7 @@ message PbFamilyProxy {
     optional bool is_runahead = 19;
     optional int32 is_runahead_total = 20;
     optional PbRuntime runtime = 21;
+    optional int32 graph_depth = 22;
 }
 
 message PbEdge {
