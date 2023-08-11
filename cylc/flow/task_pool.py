@@ -1917,7 +1917,7 @@ class TaskPool:
                 # Glob or task state was not matched by active tasks
                 if not tokens['task']:
                     # make task globs explicit to make warnings clearer
-                    tokens['task'] = '*'
+                    tokens = tokens.duplicate(task='*')
                 LOG.warning(
                     'No active tasks matching:'
                     # preserve :selectors when logging the id
@@ -1985,7 +1985,7 @@ class TaskPool:
             point_str = tokens['cycle']
             if not tokens['task']:
                 # make task globs explicit to make warnings clearer
-                tokens['task'] = '*'
+                tokens = tokens.duplicate(task='*')
             name_str = tokens['task']
             try:
                 point_str = standardise_point_string(point_str)

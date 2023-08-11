@@ -390,7 +390,6 @@ async def list_in_workflow(tokens: Tokens, infer_run=True) -> t.List[str]:
             # list possible IDs
             cli_detokenise(
                 tokens.duplicate(
-                    tokens=None,
                     # use the workflow ID provided on the CLI to allow
                     # run name inference
                     workflow=input_workflow,

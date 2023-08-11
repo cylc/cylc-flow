@@ -294,7 +294,7 @@ async def parse_ids_async(
 
     # infer the run number if not specified the ID (and if possible)
     if infer_latest_runs:
-        _infer_latest_runs(*tokens_list, src_path=src_path)
+        _infer_latest_runs(tokens_list, src_path=src_path)
 
     _validate_number(
         *tokens_list,
@@ -409,12 +409,14 @@ def _validate_workflow_ids(*tokens_list, src_path):
         detect_both_flow_and_suite(src_path)
 
 
-def _infer_latest_runs(*tokens_list, src_path):
+def _infer_latest_runs(tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if ind == 0 and src_path:
             # source workflow passed in as a path
             continue
-        tokens['workflow'] = infer_latest_run_from_id(tokens['workflow'])
+        tokens_list[ind] = tokens.duplicate(
+            workflow=infer_latest_run_from_id(tokens['workflow'])
+        )
         pass
 
 
