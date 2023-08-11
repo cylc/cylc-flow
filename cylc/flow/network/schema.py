@@ -785,6 +785,12 @@ class Workflow(ObjectType):
         description='Any active workflow broadcasts.'
     )
     pruned = Boolean()  # TODO: what is this? write description
+    n_edge_distance = Int(
+        description=sstrip('''
+            The maximum graph distance (n) from an active node
+            of the data-store graph window.
+        '''),
+    )
 
 
 class RuntimeSetting(ObjectType):

@@ -568,6 +568,7 @@ class DataStoreMgr:
         families = self.added[FAMILIES]
         workflow = self.added[WORKFLOW]
         workflow.id = self.workflow_id
+        workflow.n_edge_distance = self.n_edge_distance
         workflow.last_updated = update_time
         workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
         # Treat play/restart as hard reload of definition.
@@ -2168,6 +2169,10 @@ class DataStoreMgr:
 
         if reloaded is not w_data.reloaded:
             w_delta.reloaded = reloaded
+
+        if w_data.n_edge_distance != self.n_edge_distance:
+            w_delta.n_edge_distance = self.n_edge_distance
+            delta_set = True
 
         if self.schd.pool.main_pool:
             pool_points = set(self.schd.pool.main_pool)
