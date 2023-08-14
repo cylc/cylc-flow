@@ -20,7 +20,7 @@
 
 Pause a workflow.
 
-This suspends submission of tasks.
+This suspends submission of all tasks in a workflow.
 
 Examples:
   # pause my_flow
@@ -29,7 +29,8 @@ Examples:
   # resume my_flow
   $ cylc play my_flow
 
-Not to be confused with `cylc hold`.
+(Not to be confused with `cylc hold` which suspends submission of individual
+tasks within a workflow).
 """
 
 from functools import partial
