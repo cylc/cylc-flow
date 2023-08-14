@@ -64,7 +64,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
-        multitask=True,
+        multitask=False,
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
