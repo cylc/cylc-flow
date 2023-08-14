@@ -11,6 +11,18 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.2.1 (Released 2023-08-14)__
+
+### 🔧 Fixes
+
+[#5631](https://github.com/cylc/cylc-flow/pull/5631) - Fix bug in remote clean for workflows that generated `flow.cylc` files at runtime.
+
+[#5650](https://github.com/cylc/cylc-flow/pull/5650) - Fix a bug preventing clean-up of finished tasks in the GUI and TUI.
+
+[#5685](https://github.com/cylc/cylc-flow/pull/5685) - Fix "cylc pause" command help (it targets workflows, not tasks, but was
+  printing task-matching documentation as well).
+
+
 ## __cylc-8.2.0 (<span actions:bind='release-date'>Released 2023-07-21</span>)__
 
 ### Breaking Changes
