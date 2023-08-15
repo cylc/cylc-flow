@@ -337,7 +337,8 @@ def apply_delta(key, delta, data):
             # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
                 # remove relationship from task
-                data[TASKS][data[key][del_id].task].proxies.remove(del_id)
+                with suppress(KeyError, ValueError):
+                    data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
@@ -347,7 +348,10 @@ def apply_delta(key, delta, data):
                 with suppress(KeyError, ValueError):
                     getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
-                data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
+                with suppress(KeyError, ValueError):
+                    data[FAMILIES][
+                        data[key][del_id].family
+                    ].proxies.remove(del_id)
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
