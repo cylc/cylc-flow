@@ -500,7 +500,7 @@ def _version_check(
                 '<blue>'
                 f'\n$ CYLC_VERSION={last_run_version} {" ".join(sys.argv[1:])}'
                 '</blue>'
-            ))
+            ), file=sys.stderr)
             return False
         elif itt < 2 and this > that:
             # restart would INCREASE the Cylc version in a big way
