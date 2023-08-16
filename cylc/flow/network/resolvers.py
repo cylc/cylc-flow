@@ -686,19 +686,22 @@ class Resolvers(BaseResolvers):
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
+
+        log_msg = f"[command] {command}"
+        user = meta.get('auth_user', self.schd.owner)
+        if user != self.schd.owner:
+            log_msg += (f" (issued by {user})")
+        LOG.info(log_msg)
+
         method = getattr(self, command, None)
         if method is not None:
             return method(**kwargs)
+
         try:
             self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
-        if command != "put_messages":
-            log_msg = f"[command] {command}"
-            user = meta.get('auth_user', self.schd.owner)
-            if user != self.schd.owner:
-                log_msg += (f" (issued by {user})")
-            LOG.info(log_msg)
+
         self.schd.queue_command(
             command,
             kwargs
