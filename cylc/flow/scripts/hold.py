@@ -75,10 +75,12 @@ HOLD_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!
+  $flowNum: Int,
 ) {
   hold (
     workflows: $wFlows,
-    tasks: $tasks
+    tasks: $tasks,
+    flowNum: $flowNum,
   ) {
     result
   }
@@ -114,6 +116,11 @@ def get_option_parser() -> COP:
         help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="hold_point_string")
 
+    parser.add_option(
+        "--flow",
+        help="Hold tasks that belong to a specific flow.",
+        metavar="INT", action="store", dest="flow_num")
+
     return parser
 
 
@@ -144,7 +151,8 @@ async def run(options, workflow_id, *tokens_list):
             'tasks': [
                 id_.relative_id_with_selectors
                 for id_ in tokens_list
-            ]
+            ],
+            'flowNum': options.flow_num
         }
 
     mutation_kwargs = {

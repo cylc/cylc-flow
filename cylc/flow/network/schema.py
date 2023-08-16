@@ -2035,6 +2035,11 @@ class Hold(Mutation, TaskMutation):
         ''')
         resolver = mutator
 
+    class Arguments(TaskMutation.Arguments):
+        flow_num = Int(
+            description='Number of flow to hold.'
+        )
+
 
 class Release(Mutation, TaskMutation):
     class Meta:

@@ -92,7 +92,7 @@ def get_option_parser() -> COP:
         action="append", default=None, dest="outputs")
 
     parser.add_option(
-        "-f", "--flow", metavar="FLOW",
+        "-f", "--flow", metavar="INT",
         help="Number of the flow to attribute the outputs.",
         action="store", default=None, dest="flow_num")
 

@@ -1191,7 +1191,7 @@ class TaskPool:
                 self.hold_active_task(itask)
         self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
 
-    def hold_tasks(self, items: Iterable[str]) -> int:
+    def hold_tasks(self, items: Iterable[str], flow_num=None) -> int:
         """Hold tasks with IDs matching the specified items."""
         # Hold active tasks:
         itasks, future_tasks, unmatched = self.filter_task_proxies(
@@ -1200,6 +1200,8 @@ class TaskPool:
             future=True,
         )
         for itask in itasks:
+            if flow_num is not None and flow_num not in itask.flow_nums:
+                continue
             self.hold_active_task(itask)
         # Set future tasks to be held:
         for name, cycle in future_tasks:
