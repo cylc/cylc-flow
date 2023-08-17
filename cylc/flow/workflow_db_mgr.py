@@ -519,7 +519,7 @@ class WorkflowDatabaseManager:
                 itask.state.time_updated = None
 
     def put_tasks_to_hold(
-        self, tasks: Set[Tuple[str, 'PointBase']]
+        self, tasks: Set[Tuple[str, 'PointBase', Optional[int]]]
     ) -> None:
         """Replace the tasks in the tasks_to_hold table."""
         # There isn't that much cost in calling this multiple times between
@@ -528,8 +528,8 @@ class WorkflowDatabaseManager:
         # whole table each time the queue is processed is a bit inefficient.
         self.db_deletes_map[self.TABLE_TASKS_TO_HOLD] = [{}]
         self.db_inserts_map[self.TABLE_TASKS_TO_HOLD] = [
-            {"name": name, "cycle": str(point)}
-            for name, point in tasks
+            {"name": name, "cycle": str(point), "flow": flow_num}
+            for name, point, flow_num in tasks
         ]
 
     def put_insert_task_events(self, itask, args):

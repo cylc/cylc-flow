@@ -138,7 +138,7 @@ class TaskPool:
             self.task_name_list,
             self.config.runtime['descendants']
         )
-        self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
+        self.tasks_to_hold: Set[Tuple[str, 'PointBase', Optional[int]]] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -673,7 +673,7 @@ class TaskPool:
         """Update the tasks_to_hold set with the tasks stored in the
         database."""
         self.tasks_to_hold.update(
-            (name, get_point(cycle)) for name, cycle in
+            (name, get_point(cycle), flow_num) for name, cycle in
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
@@ -1169,10 +1169,12 @@ class TaskPool:
         unsatisfied = self.log_unsatisfied_prereqs()
         return (incomplete or unsatisfied)
 
-    def hold_active_task(self, itask: TaskProxy) -> None:
+    def hold_active_task(
+        self, itask: TaskProxy, flow_num: Optional[int]=None
+    ) -> None:
         if itask.state_reset(is_held=True):
             self.data_store_mgr.delta_task_held(itask)
-        self.tasks_to_hold.add((itask.tdef.name, itask.point))
+        self.tasks_to_hold.add((itask.tdef.name, itask.point, flow_num))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def release_held_active_task(self, itask: TaskProxy) -> None:
@@ -1204,9 +1206,11 @@ class TaskPool:
                 continue
             self.hold_active_task(itask)
         # Set future tasks to be held:
+        to_hold = set()
         for name, cycle in future_tasks:
             self.data_store_mgr.delta_task_held((name, cycle, True))
-        self.tasks_to_hold.update(future_tasks)
+            to_hold.add((name, cycle, flow_num))
+        self.tasks_to_hold.update(to_hold)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
@@ -1531,16 +1535,22 @@ class TaskPool:
             is_manual_submit=is_manual_submit,
             flow_wait=flow_wait,
         )
-        if (name, point) in self.tasks_to_hold:
-            LOG.info(f"[{itask}] holding (as requested earlier)")
-            self.hold_active_task(itask)
-        elif self.hold_point and itask.point > self.hold_point:
-            # Hold if beyond the workflow hold point
+        if self.hold_point and itask.point > self.hold_point:
             LOG.info(
                 f"[{itask}] holding (beyond workflow "
                 f"hold point: {self.hold_point})"
             )
             self.hold_active_task(itask)
+        else:
+            for (h_name, h_point, h_flow) in self.tasks_to_hold:
+                if (
+                    h_name == name
+                    and h_point == point
+                    and (h_flow is None or h_flow in flow_nums)
+                ):
+                    LOG.info(f"[{itask}] holding (as requested earlier)")
+                    self.hold_active_task(itask, h_flow)
+                    break
 
         if self.stop_point and itask.point <= self.stop_point:
             future_trigger_overrun = False
