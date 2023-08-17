@@ -74,13 +74,13 @@ if TYPE_CHECKING:
 HOLD_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob]!
-  $flowNum: Int,
+  $tasks: [NamespaceIDGlob]!,
+  $flowNum: Int
 ) {
   hold (
     workflows: $wFlows,
     tasks: $tasks,
-    flowNum: $flowNum,
+    flowNum: $flowNum
   ) {
     result
   }

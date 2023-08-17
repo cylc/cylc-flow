@@ -2052,6 +2052,11 @@ class Release(Mutation, TaskMutation):
         ''')
         resolver = mutator
 
+    class Arguments(TaskMutation.Arguments):
+        flow_num = Int(
+            description='Number of flow to release.'
+        )
+
 
 class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?

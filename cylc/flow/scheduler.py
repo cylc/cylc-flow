@@ -1012,9 +1012,9 @@ class Scheduler:
         self.stop_mode = stop_mode
         self.update_data_store()
 
-    def command_release(self, tasks: Iterable[str]) -> int:
+    def command_release(self, tasks: Iterable[str], flow_num=None) -> int:
         """Release held tasks."""
-        return self.pool.release_held_tasks(tasks)
+        return self.pool.release_held_tasks(tasks, flow_num)
 
     def command_release_hold_point(self) -> None:
         """Release all held tasks and unset workflow hold after cycle point,

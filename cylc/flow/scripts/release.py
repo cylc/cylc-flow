@@ -57,11 +57,13 @@ if TYPE_CHECKING:
 RELEASE_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob]!
+  $tasks: [NamespaceIDGlob]!,
+  $flowNum: Int
 ) {
   release (
     workflows: $wFlows,
     tasks: $tasks,
+    flowNum: $flowNum
   ) {
     result
   }
@@ -97,6 +99,11 @@ def get_option_parser() -> COP:
             "if set."),
         action="store_true", dest="release_all")
 
+    parser.add_option(
+        "--flow",
+        help="Release tasks that belong to a specific flow.",
+        metavar="INT", action="store", dest="flow_num")
+
     return parser
 
 
@@ -126,7 +133,8 @@ async def run(options: 'Values', workflow_id, *tokens_list):
             'tasks': [
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
-            ]
+            ],
+            'flowNum': options.flow_num
         }
 
     mutation_kwargs = {

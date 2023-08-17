@@ -1215,7 +1215,7 @@ class TaskPool:
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
 
-    def release_held_tasks(self, items: Iterable[str]) -> int:
+    def release_held_tasks(self, items: Iterable[str], flow_num=None) -> int:
         """Release held tasks with IDs matching any specified items."""
         # Release active tasks:
         itasks, future_tasks, unmatched = self.filter_task_proxies(
@@ -1224,11 +1224,17 @@ class TaskPool:
             future=True,
         )
         for itask in itasks:
+            if flow_num is not None and flow_num not in itask.flow_nums:
+                continue
             self.release_held_active_task(itask)
         # Unhold future tasks:
+        to_release = set()
+        for name, cycle in future_tasks:
+            self.data_store_mgr.delta_task_held((name, cycle, True))
+            to_release.add((name, cycle, flow_num))
         for name, cycle in future_tasks:
             self.data_store_mgr.delta_task_held((name, cycle, False))
-        self.tasks_to_hold.difference_update(future_tasks)
+        self.tasks_to_hold.difference_update(to_release)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
