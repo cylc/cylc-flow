@@ -21,14 +21,14 @@
 Kill running or submitted jobs.
 
 Examples:
-  # kill a specific task in my_flow
-  $ cylc kill my_flow//1/a
+  # kill a specific task in my_workflow
+  $ cylc kill my_workflow//1/a
 
-  # kill multiple tasks in my_flow
+  # kill multiple tasks in my_workflow
   $ cylc kill myflow// //1/a //1/b //1/c
 
-  # kill all active tasks in the my_flow
-  $ cylc kill 'my_flow//*'
+  # kill all active tasks in the my_workflow
+  $ cylc kill 'my_workflow//*'
 """
 
 from functools import partial

@@ -21,17 +21,17 @@
 Release held tasks in a workflow.
 
 Examples:
-  # Release mytask at cycle 1234 in my_flow
-  $ cylc release my_flow//1234/mytask
+  # Release mytask at cycle 1234 in my_workflow
+  $ cylc release my_workflow//1234/mytask
 
-  # Release all active tasks at cycle 1234 in my_flow
-  $ cylc release 'my_flow//1234/*'
+  # Release all active tasks at cycle 1234 in my_workflow
+  $ cylc release 'my_workflow//1234/*'
 
-  # Release all active instances of mytask in my_flow
-  $ cylc release 'my_flow//*/mytask'
+  # Release all active instances of mytask in my_workflow
+  $ cylc release 'my_workflow//*/mytask'
 
   # Release all held tasks and remove the hold point
-  $ cylc release my_flow --all
+  $ cylc release my_workflow --all
 
 Held tasks do not submit their jobs even if ready to run.
 
