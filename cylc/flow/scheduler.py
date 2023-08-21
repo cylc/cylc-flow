@@ -905,7 +905,7 @@ class Scheduler:
     def queue_command(self, command: str, kwargs: dict) -> None:
         self.command_queue.put((
             command,
-            [],
+            (),
             kwargs,
         ))
 
