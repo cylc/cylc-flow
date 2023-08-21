@@ -179,7 +179,13 @@ class CylcWorkflowDAO:
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_WORKFLOW_PARAMS = "workflow_params"
-    TABLE_SUITE_PARAMS = "suite_params"  # back compat
+    # BACK COMPAT: suite_params
+    # This Cylc 7 DB table is needed to allow workflow-state
+    # xtriggers (and the `cylc workflow-state` command) to
+    # work with Cylc 7 workflows.
+    # url: https://github.com/cylc/cylc-flow/issues/5236
+    # remove at: 8.x
+    TABLE_SUITE_PARAMS = "suite_params"
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
