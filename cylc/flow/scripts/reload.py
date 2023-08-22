@@ -23,15 +23,15 @@ Reload the configuration of a running workflow.
 Example:
   # install and run the workflow
   $ cylc install
-  $ cylc play my_flow
+  $ cylc play my_workflow
 
   # make changes to the workflow source directory
 
   # reinstall the workflow
-  $ cylc reinstall my_flow
+  $ cylc reinstall my_workflow
 
   # reload the workflow to pick up changes
-  $ cylc reload my_flow
+  $ cylc reload my_workflow
   # the workflow is now running with the new config
 
 All settings including task definitions, with the exception of workflow log

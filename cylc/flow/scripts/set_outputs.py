@@ -36,13 +36,13 @@ Examples:
   '''
 
   # spawn 1/b and 1/c, but 1/d will not subsequently run
-  $ cylc set-outputs my_flow//1/a
+  $ cylc set-outputs my_workflow//1/a
 
   # spawn 1/b and 1/c as flow 2, followed by 1/d
-  $ cylc set-outputs --flow=2 my_flow//1/a
+  $ cylc set-outputs --flow=2 my_workflow//1/a
 
   # spawn 1/bar as flow 3, followed by 1/baz
-  $ cylc set-outputs --flow=3 --output=x my_flow//1/foo
+  $ cylc set-outputs --flow=3 --output=x my_workflow//1/foo
 
 Use --output multiple times to spawn off of several outputs at once.
 """

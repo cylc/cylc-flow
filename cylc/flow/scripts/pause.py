@@ -23,11 +23,11 @@ Pause a workflow.
 This suspends submission of all tasks in a workflow.
 
 Examples:
-  # pause my_flow
-  $ cylc pause my_flow
+  # pause my_workflow
+  $ cylc pause my_workflow
 
-  # resume my_flow
-  $ cylc play my_flow
+  # resume my_workflow
+  $ cylc play my_workflow
 
 (Not to be confused with `cylc hold` which suspends submission of individual
 tasks within a workflow).
