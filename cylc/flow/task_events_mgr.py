@@ -830,16 +830,15 @@ class TaskEventsManager():
                 )
             return False
 
-        severity = cast(int, LOG_LEVELS.get(severity, INFO))
-        # Demote log level to DEBUG if this is a message that duplicates what
-        # gets logged by itask state change anyway (and not manual poll)
-        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
-            self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
-        }:
-            severity = DEBUG
-
         if not quiet:
+            severity = cast(int, LOG_LEVELS.get(severity, INFO))
+            # Demote log level to DEBUG if this is a message that duplicates what
+            # gets logged by itask state change anyway (and not manual poll)
+            if severity > DEBUG and flag != self.FLAG_POLLED and message in {
+                self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
+                self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+            }:
+                severity = DEBUG
             LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
