@@ -409,7 +409,7 @@ class TaskEventsManager():
         itask.poll_timer.next(no_exhaust=True)
         return True
 
-    def check_job_time(self, itask, now):
+    def check_job_time(self, itask, now, repeat_message):
         """Check/handle job timeout and poll timer"""
         can_poll = self.check_poll_time(itask, now)
         if itask.timeout is None or now <= itask.timeout:
@@ -428,7 +428,9 @@ class TaskEventsManager():
         if msg and event:
             LOG.warning(f"[{itask}] {msg}")
             self.setup_event_handlers(
-                itask, get_time_string_from_unix_time(now), event, msg)
+                itask, get_time_string_from_unix_time(now), event, msg,
+                repeat_message,
+            )
             return True
         else:
             return can_poll
@@ -843,21 +845,28 @@ class TaskEventsManager():
             return False
 
         if not quiet:
-            severity = cast(int, LOG_LEVELS.get(severity, INFO))
+            severity_int = cast(int, LOG_LEVELS.get(severity, INFO))
             # Demote log level to DEBUG if this is a message that duplicates
             # what gets logged by itask state change anyway
             # (and not manual poll)
-            if severity > DEBUG and flag != self.FLAG_POLLED and message in {
-                self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-                self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
-            }:
-                severity = DEBUG
-            LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
+            if (
+                severity_int > DEBUG
+                and flag != self.FLAG_POLLED
+                and message in {
+                    self.EVENT_SUBMITTED,
+                    self.EVENT_STARTED,
+                    self.EVENT_SUCCEEDED,
+                    self.EVENT_SUBMIT_FAILED,
+                    f'{FAIL_MESSAGE_PREFIX}ERR'
+                }
+            ):
+                severity_int = DEBUG
+            LOG.log(severity_int, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(
         self, itask: 'TaskProxy', event_time: str, event: str, message: str,
-        repeat_message: bool
+        repeat_message: bool = False
     ) -> None:
         """Set up handlers for a task event."""
         if itask.tdef.run_mode != 'live':
