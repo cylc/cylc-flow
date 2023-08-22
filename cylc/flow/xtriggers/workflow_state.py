@@ -95,9 +95,9 @@ def workflow_state(
         my_parser = TimePointParser()
         point = str(my_parser.parse(point, dump_format=fmt))
     if message is not None:
-        satisfied = checker.task_state_met(task, point, message=message)
+        satisfied = checker.task_output_met(task, point, message)
     else:
-        satisfied = checker.task_state_met(task, point, status=status)
+        satisfied = checker.task_state_met(task, point, status)
     results = {
         'workflow': workflow,
         'task': task,
