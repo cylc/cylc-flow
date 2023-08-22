@@ -177,7 +177,7 @@ class TaskHoldMgr:
             flow_num is None
             or flow_num == self.hold[(name, point)]
         ):
-            self.hold[(name, point)]
+            del self.hold[(name, point)]
 
         self._update_stores((name, point, True))
 
