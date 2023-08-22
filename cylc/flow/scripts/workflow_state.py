@@ -119,7 +119,7 @@ class WorkflowPoller(Poller):
                 fmt = self.checker.get_remote_point_format()
             except sqlite3.OperationalError as exc:
                 try:
-                    fmt = self.checker.get_remote_point_format_back_compat()
+                    fmt = self.checker.get_remote_point_format_compat()
                 except sqlite3.OperationalError:
                     raise exc  # original error
             if fmt:
