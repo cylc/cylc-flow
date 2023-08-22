@@ -340,7 +340,7 @@ async def prereqs_and_outputs_query(
                             state)
     if not results['taskProxies']:
         ansiprint(
-            f"<red>No matching n=0 tasks found: {', '.join(ids_list)}",
+            f"<red>No matching active tasks found: {', '.join(ids_list)}",
             file=sys.stderr)
         return 1
     return 0
