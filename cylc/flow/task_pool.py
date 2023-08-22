@@ -134,15 +134,19 @@ class TaskHoldMgr:
             self.hold[(name, get_point(cycle))] = flow_num
 
     def hold_active_task(
-        self, itask: TaskProxy, flow_num: Optional[int] = None
+        self,
+        itask: TaskProxy,
+        flow_num: Optional[int] = None,
+        check: bool = True
     ) -> bool:
         """Hold itask if the specified flow_num matches or is None."""
-        if flow_num is not None and flow_num not in itask.flow_nums:
-            # specified flow does not match this task
-            return False
-        if not itask.state_reset(is_held=True):
-            # this task is already held
-            return False
+        if check:
+            if flow_num is not None and flow_num not in itask.flow_nums:
+                # specified flow does not match this task
+                return False
+            if not itask.state_reset(is_held=True):
+                # this task is already held
+                return False
 
         self.hold[(itask.tdef.name, itask.point)] = flow_num
         self._update_stores(itask)
