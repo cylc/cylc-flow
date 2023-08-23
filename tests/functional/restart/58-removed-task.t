@@ -22,7 +22,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 6
+set_test_number 8
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -39,9 +39,11 @@ workflow_run_ok "${TEST_NAME}" cylc play --no-detach "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-restart"
 workflow_run_ok "${TEST_NAME}" cylc play --set="INCL_B_C=False" --no-detach "${WORKFLOW_NAME}"
 
-grep_workflow_log_ok "grep-3" "=> failed"
+grep_ok '\[jobs-poll out\] .* "run_status": 0'  "${WORKFLOW_RUN_DIR}/log/job/1/a/NN/job-activity.log"
+grep_ok '\[jobs-poll out\] .* "run_status": 1'  "${WORKFLOW_RUN_DIR}/log/job/1/b/NN/job-activity.log"
+grep_workflow_log_ok "grep-3" "\[1/b .* => failed"
 
 # Failed (but not incomplete) task c should not have been polled.
-grep_fail "\[1/c failed job:01 flows:1\] failed" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
+grep_fail "jobs-poll" "${WORKFLOW_RUN_DIR}/log/job/1/c/NN/job-activity.log"
 
 purge
