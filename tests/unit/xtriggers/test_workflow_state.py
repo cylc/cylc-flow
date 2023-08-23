@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+import sqlite3
 from typing import Callable
 from unittest.mock import Mock
 
-
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtriggers.workflow_state import workflow_state
 from ..conftest import MonkeyMock
 
@@ -38,3 +40,47 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
     _, results = workflow_state(id_, task='precious', point='3000')
     mock_db_checker.assert_called_once_with(cylc_run_dir, expected_workflow_id)
     assert results['workflow'] == expected_workflow_id
+
+
+def test_back_compat(tmp_run_dir):
+    """Test workflow_state xtrigger backwards compatibility with Cylc 7
+    database."""
+    id_ = 'celebrimbor'
+    c7_run_dir: Path = tmp_run_dir(id_)
+    (c7_run_dir / WorkflowFiles.FLOW_FILE).rename(
+        c7_run_dir / WorkflowFiles.SUITE_RC
+    )
+    db_file = c7_run_dir / 'log' / 'db'
+    db_file.parent.mkdir(exist_ok=True)
+    # Note: cannot use CylcWorkflowDAO here as creating outdated DB
+    conn = sqlite3.connect(str(db_file))
+    try:
+        conn.execute(r"""
+            CREATE TABLE suite_params(key TEXT, value TEXT, PRIMARY KEY(key));
+        """)
+        conn.execute(r"""
+            CREATE TABLE task_states(
+                name TEXT, cycle TEXT, time_created TEXT, time_updated TEXT,
+                submit_num INTEGER, status TEXT, PRIMARY KEY(name, cycle)
+            );
+        """)
+        conn.executemany(
+            r'INSERT INTO "suite_params" VALUES(?,?);',
+            [('cylc_version', '7.8.12'),
+             ('cycle_point_format', '%Y'),
+             ('cycle_point_tz', 'Z')]
+        )
+        conn.execute(r"""
+           INSERT INTO "task_states" VALUES(
+               'mithril','2012','2023-01-30T18:19:15Z','2023-01-30T18:19:15Z',
+               0,'succeeded'
+            );
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+    satisfied, _ = workflow_state(id_, task='mithril', point='2012')
+    assert satisfied
+    satisfied, _ = workflow_state(id_, task='arkenstone', point='2012')
+    assert not satisfied
