@@ -1070,14 +1070,14 @@ class Scheduler:
         self.pause_workflow()
 
     @staticmethod
-    def command_set_verbosity(lvl: Union[int, str]) -> None:
+    def command_set_verbosity(level: Union[int, str]) -> None:
         """Set workflow verbosity."""
         try:
-            lvl = int(lvl)
-            LOG.setLevel(lvl)
+            level = int(level)
+            LOG.setLevel(level)
         except (TypeError, ValueError) as exc:
             raise CommandFailedError(exc)
-        cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
+        cylc.flow.flags.verbosity = log_level_to_verbosity(level)
 
     def command_remove_tasks(self, tasks) -> int:
         """Remove tasks."""
