@@ -1846,7 +1846,10 @@ def upg(cfg, descr):
         '8.0.0',
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
-        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'),
+        cvtr=converter(
+            lambda x: f'P{int(x)-1}' if x != '' else '',
+            '"{old}" -> "{new}"'
+        ),
         silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(

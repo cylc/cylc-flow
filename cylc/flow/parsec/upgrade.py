@@ -212,7 +212,10 @@ class upgrader:
                         if upg['new']:
                             msg += ' -> ' + self.show_keys(upg['new'],
                                                            upg['is_section'])
-                        msg += " - " + upg['cvt'].describe()
+                        msg += " - " + upg['cvt'].describe().format(
+                            old=old,
+                            new=upg['cvt'].convert(old)
+                        )
                         if not upg['silent']:
                             warnings.setdefault(vn, [])
                             warnings[vn].append(msg)
