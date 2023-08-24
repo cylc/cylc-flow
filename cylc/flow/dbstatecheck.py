@@ -56,10 +56,13 @@ class CylcWorkflowDBChecker:
         ],
     }
 
-    def __init__(self, rund, workflow):
-        db_path = expand_path(
-            rund, workflow, "log", CylcWorkflowDAO.DB_FILE_BASE_NAME
-        )
+    def __init__(self, rund, workflow, db_path=None):
+        # (Explicit dp_path arg is to make testing easier).
+        if db_path is None:
+            # Infer DB path from workflow name and run dir.
+            db_path = expand_path(
+                rund, workflow, "log", CylcWorkflowDAO.DB_FILE_BASE_NAME
+            )
         if not os.path.exists(db_path):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
         self.conn = sqlite3.connect(db_path, timeout=10.0)
@@ -73,13 +76,31 @@ class CylcWorkflowDBChecker:
                 sys.stdout.write((", ").join(row) + "\n")
 
     def get_remote_point_format(self):
-        """Query a remote workflow database for a 'cycle point format' entry"""
+        """Query a workflow database for a 'cycle point format' entry"""
         for row in self.conn.execute(
             rf'''
                 SELECT
                     value
                 FROM
                     {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
+                WHERE
+                    key==?
+            ''',  # nosec (table name is code constant)
+            ['cycle_point_format']
+        ):
+            return row[0]
+
+    def get_remote_point_format_compat(self):
+        """Query a Cylc 7 suite database for a 'cycle point format' entry.
+
+        Back compat for Cylc 8 workflow state triggers targeting Cylc 7 DBs.
+        """
+        for row in self.conn.execute(
+            rf'''
+                SELECT
+                    value
+                FROM
+                    {CylcWorkflowDAO.TABLE_SUITE_PARAMS}
                 WHERE
                     key==?
             ''',  # nosec (table name is code constant)

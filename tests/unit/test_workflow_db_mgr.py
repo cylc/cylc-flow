@@ -26,6 +26,7 @@ from cylc.flow.workflow_db_mgr import (
     CylcWorkflowDAO,
     WorkflowDatabaseManager,
 )
+from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 
 
 @pytest.fixture
@@ -116,3 +117,22 @@ def test_check_workflow_db_compat(_setup_db, capsys):
 
     with pytest.raises(ServiceFileError, match='99.99'):
         WorkflowDatabaseManager.check_db_compatibility(pri_path)
+
+
+def test_cylc_7_db_wflow_params_table(_setup_db):
+    """Test back-compat needed by workflow state xtrigger for Cylc 7 DBs."""
+    ptformat = "CCYY"
+    create = r'CREATE TABLE suite_params(key TEXT, value TEXT)'
+    insert = (
+        r'INSERT INTO suite_params VALUES'
+        rf'("cycle_point_format", "{ptformat}")'
+    )
+    db_file_name = _setup_db([create, insert])
+    checker = CylcWorkflowDBChecker('foo', 'bar', db_path=db_file_name)
+
+    with pytest.raises(
+        sqlite3.OperationalError, match="no such table: workflow_params"
+    ):
+        checker.get_remote_point_format()
+
+    assert checker.get_remote_point_format_compat() == ptformat
