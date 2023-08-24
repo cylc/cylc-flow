@@ -90,7 +90,13 @@ def workflow_state(
     except (OSError, sqlite3.Error):
         # Failed to connect to DB; target workflow may not be started.
         return (False, None)
-    fmt = checker.get_remote_point_format()
+    try:
+        fmt = checker.get_remote_point_format()
+    except sqlite3.OperationalError as exc:
+        try:
+            fmt = checker.get_remote_point_format_compat()
+        except sqlite3.OperationalError:
+            raise exc  # original error
     if fmt:
         my_parser = TimePointParser()
         point = str(my_parser.parse(point, dump_format=fmt))
