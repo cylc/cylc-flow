@@ -149,7 +149,7 @@ class _RestrictedEvalError(Exception):
 
 
 class RestrictedNodeVisitor(ast.NodeVisitor):
-    """AST node visitor which error on non-whitelisted syntax.
+    """AST node visitor which errors on non-whitelisted syntax.
 
     Raises _RestrictedEvalError if a non-whitelisted node is visited.
     """
@@ -177,7 +177,7 @@ def restricted_evaluator(
     safely with user-provided input.
 
     The code passed into the evaluator will be parsed into an abstract syntax
-    tree AST), then that tree will be executed using Python's internal logic.
+    tree (AST), then that tree will be executed using Python's internal logic.
     The evaluator will check the type of each node before it is executed and
     fail with a ValueError if it is not permitted.
 

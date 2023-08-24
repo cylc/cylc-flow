@@ -1157,6 +1157,13 @@ class WorkflowConfig:
                     f'\nUse "submit_failed" rather than "submit-failed"'
                     ' in completion expressions.'
                 )
+            elif '-' in expr:
+                raise WorkflowConfigError(
+                    f'Error in [runtime][{name}]completion:'
+                    f'\n  {expr}'
+                    '\nReplace hyphens with underscores in task outputs when'
+                    ' used in completion expressions.'
+                )
 
             # check completion expressions are not being used in compat mode
             if cylc.flow.flags.cylc7_back_compat:

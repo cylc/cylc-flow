@@ -964,24 +964,24 @@ with Conf(
             Conf('completion', VDR.V_STRING, desc='''
                 Define the condition for task completion.
 
-                The completion condition is evaluated when a task is finished,
-                it is a validation check which confirms that the task has
+                The completion condition is evaluated when a task is finished.
+                It is a validation check which confirms that the task has
                 generated the outputs it was expected to.
 
                 If the task fails this check it is considered
-                :term:`incomplete` and will cause the workflow to
-                :term:`stall` altering you that something has gone wrong which
+                :term:`incomplete` and may cause the workflow to
+                :term:`stall`, alerting you that something has gone wrong which
                 requires investigation.
 
                 By default, the completion condition ensures that the
-                task succeeds. I.E. if the task fails, then the workflow will
+                task succeeds - i.e., if the task fails, then the workflow will
                 stall.
 
                 If :ref:`User Guide Optional Outputs` are defined in the graph,
-                then one or more of the optional outputs must also be generated
-                in order for the task to be completed.
+                then by default one or more of the optional outputs must also
+                be generated in order for the task to be completed.
 
-                E.G. In this example, the task ``foo`` must succeed *and*
+                E.g., in this example, the task ``foo`` must succeed *and*
                 yield one of the outputs ``a`` or ``b`` in order to be
                 considered complete:
 
@@ -1001,7 +1001,7 @@ with Conf(
                 The ``completion`` configuration allows you to override the
                 default completion to suit your needs.
 
-                E.G. In this example, the task ``foo`` must yield both the
+                E.g., in this example, the task ``foo`` must yield both the
                 ``succeeded`` output and the :term:`custom output`
                 ``myoutput`` to be considered complete:
 
@@ -1046,7 +1046,7 @@ with Conf(
                               """
                       [runtime]
                           [[a]]
-                              # this completion condition infers that the
+                              # this completion condition implies that the
                               # succeeded output is optional
                               completion = succeeded or failed
 
@@ -1057,7 +1057,7 @@ with Conf(
                 ``succeeded or expired``
                    The task can either succeed or
                    :ref:`expire <ClockExpireTasks>`.
-                ``succeeded or (failed and some_error)``
+                ``succeeded or (failed and my_error)``
                    The task can fail, but only if it also yields the custom
                    output ``my_error``.
                 ``succeeded and (x or y or z)``

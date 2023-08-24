@@ -162,7 +162,7 @@ async def test_workflow_stalls_if_no_opt_output_generated_2(
         assert not schd.pool.is_stalled()
 
 
-async def test_completion_expiression(
+async def test_completion_expression(
     flow,
     scheduler,
     start,
@@ -205,7 +205,7 @@ async def test_completion_expiression(
         # complete the "x" output
         itask.state.outputs.set_completion('x', True)
 
-        # the task *should* not be removed from the pool as complete
+        # the task *should* be removed from the pool as complete
         schd.pool.remove_if_complete(itask)
         assert mock_remove.call_count == 1
 
@@ -290,8 +290,16 @@ def test_validate_completion_expression(
     id_ = flow(config)
     validate(id_)
 
+    # it should give a generic warning when hypens are used
+    config['runtime']['a']['completion'] = 'a-b - c'
+    id_ = flow(config)
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(id_)
+    assert '[runtime][a]completion' in str(exc_ctx.value)
+    assert 'Replace hyphens with underscores' in str(exc_ctx.value)
 
-def test_clock_expire_infers_optional_expiry(
+
+def test_clock_expire_implies_optional_expiry(
     flow,
     validate,
 ):

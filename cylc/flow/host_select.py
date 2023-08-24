@@ -19,8 +19,8 @@
 Ranking/filtering hosts can be achieved using Python expressions which work
 with the `psutil` interfaces.
 
-These expressions are used-defined, buy run a restricted evluation environment
-where only certain whitelisted operations are permitted.
+These expressions are used-defined, but run in a restricted evaluation
+environment where only certain whitelisted operations are permitted.
 
 Examples:
     >>> RankingExpressionEvaluator('1 + 1')

@@ -111,12 +111,8 @@ def get_completion_expression(tdef):
     ors.sort()
 
     # join the lists of "ands" and "ors" into statements
-    _ands = ''
-    if ands:
-        _ands = ' and '.join(ands)
-    _ors = ''
-    if ors:
-        _ors = ' or '.join(ors)
+    _ands = ' and '.join(ands)
+    _ors = ' or '.join(ors)
 
     # join the statements of "ands" and "ors" into an expression
     if ands and ors:
