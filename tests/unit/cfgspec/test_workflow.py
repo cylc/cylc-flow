@@ -19,7 +19,7 @@ import pytest
 from typing import Any, Dict, Optional
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.cfgspec.workflow import warn_about_depr_platform, upg
+from cylc.flow.cfgspec.workflow import warn_about_depr_platform
 from cylc.flow.exceptions import PlatformLookupError
 
 
@@ -87,9 +87,3 @@ def test_warn_about_depr_platform(
             assert expected_warning in caplog.text
         else:
             assert caplog.record_tuples == []
-
-
-def test_max_active_cycle_point_converter(caplog):
-    cfg = {'scheduling': {'max active cycle points': 5}}
-    upg(cfg, 'standalone run of upgrader.')
-    assert cfg['scheduling']['runahead limit'] == 'P4'
