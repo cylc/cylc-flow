@@ -275,3 +275,17 @@ class TestUpgrade(unittest.TestCase):
         expanded = self.u.expand(upg)
         self.assertEqual(1, len(expanded))
         self.assertTrue(expanded[0]['new'] is None)
+
+
+def test_template_in_converter_description(caplog, capsys):
+    """Before and after values are available to the conversion descriptor"""
+    cfg = {'old': 42}
+    u = upgrader(cfg, 'Whateva')
+    u.deprecate(
+        '2.0.0', ['old'], ['new'],
+        cvtr=converter(lambda x: x + 20, '{old} -> {new}'),
+        silent=False,
+    )
+    u.upgrade()
+    assert cfg == {'new': 62}
+    assert '42 -> 62' in caplog.records[1].message
