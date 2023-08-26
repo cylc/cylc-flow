@@ -320,8 +320,8 @@ class SequenceBase(metaclass=ABCMeta):
     They should also provide get_async_expr, get_interval,
     get_offset & set_offset (deprecated), is_on_sequence,
     get_nearest_prev_point, get_next_point,
-    get_next_point_on_sequence, get_first_point, and
-    get_stop_point.
+    get_next_point_on_sequence, get_first_point
+    get_start_point, and get_stop_point.
 
     They should also provide a self.__eq__ implementation
     which should return whether a SequenceBase-derived object
@@ -406,9 +406,30 @@ class SequenceBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_stop_point(self):
-        """Return the last point in this sequence, or None if unbounded."""
+    def get_start_point(self):
+        """Return the first point of this sequence."""
         pass
+
+    @abstractmethod
+    def get_stop_point(self):
+        """Return the last point of this sequence, or None if unbounded."""
+        pass
+
+    def get_first_n_points(self, n, point=None):
+        """Return a list of first n points of this sequence."""
+        if point is None:
+            p1 = self.get_start_point()
+        else:
+            p1 = self.get_first_point(point)
+        if p1 is None:
+            return []
+        result = [p1]
+        for _ in range(1, n):
+            p1 = self.get_next_point_on_sequence(p1)
+            if p1 is None:
+                break
+            result.append(p1)
+        return result
 
     @abstractmethod
     def __eq__(self, other) -> bool:
