@@ -314,7 +314,7 @@ class TaskPool:
         count_cycles = False
         with suppress(TypeError):
             # Count cycles (integer cycling, and optional for datetime too).
-            climit = int(limit)  # type: ignore
+            ilimit = int(limit)  # type: ignore
             count_cycles = True
 
         base_point: 'PointBase'
@@ -323,21 +323,19 @@ class TaskPool:
         if not self.main_pool:
             # No tasks yet, just consider sequence points.
             if count_cycles:
-                # Get the first climit points in each sequence.
+                # Get the first ilimit points in each sequence.
                 # (After workflow start point - sequence may begin earlier).
                 points = [
                     point
                     for plist in [
                         seq.get_first_n_points(
-                            climit, self.config.start_point)
+                            ilimit, self.config.start_point)
                         for seq in self.config.sequences
                     ]
                     for point in plist
                 ]
                 # Drop points beyond the limit.
-                if not points:
-                    return False
-                points = sorted(points)[:climit + 1]
+                points = sorted(points)[:ilimit + 1]
                 base_point = min(points)
 
             else:
@@ -351,8 +349,6 @@ class TaskPool:
                     }
                     if point is not None
                 ]
-                if not points:
-                    return False
                 base_point = min(points)
                 # Drop points beyond the limit.
                 points = [
@@ -422,7 +418,7 @@ class TaskPool:
                 while seq_point is not None:
                     if count_cycles:
                         # P0 allows only the base cycle point to run.
-                        if count > 1 + climit:
+                        if count > 1 + ilimit:
                             break
                     else:
                         # PT0H allows only the base cycle point to run.
@@ -438,7 +434,7 @@ class TaskPool:
 
         if count_cycles:
             # Some sequences may have different intervals.
-            limit_point = sorted(points)[:(climit + 1)][-1]
+            limit_point = sorted(points)[:(ilimit + 1)][-1]
         else:
             # We already stopped at the runahead limit.
             limit_point = sorted(points)[-1]
