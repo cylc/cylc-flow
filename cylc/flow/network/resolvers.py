@@ -682,18 +682,26 @@ class Resolvers(BaseResolvers):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
+    def _log_command(self, command: str, user: str) -> None:
+        """Log receipt of command, with user name if not owner."""
+        is_owner = user == self.schd.owner
+        if command == 'put_messages' and is_owner:
+            # Logging put_messages is overkill.
+            return
+        log_msg = f"[command] {command}"
+        if not is_owner:
+            log_msg += (f" (issued by {user})")
+        LOG.info(log_msg)
+
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
 
-        user = meta.get('auth_user', self.schd.owner)
-        if command != 'put_messages' or not is_owner:
-            log_msg = f"[command] {command}"
-            if not is_owner:
-                log_msg += (f" (issued by {user})")
-            LOG.info(log_msg)
-
+        self._log_command(
+            command,
+            meta.get('auth_user', self.schd.owner)
+        )
         method = getattr(self, command, None)
         if method is not None:
             return method(**kwargs)
