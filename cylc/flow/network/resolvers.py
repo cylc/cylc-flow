@@ -687,11 +687,12 @@ class Resolvers(BaseResolvers):
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
 
-        log_msg = f"[command] {command}"
         user = meta.get('auth_user', self.schd.owner)
-        if user != self.schd.owner:
-            log_msg += (f" (issued by {user})")
-        LOG.info(log_msg)
+        if command != 'put_messages' or not is_owner:
+            log_msg = f"[command] {command}"
+            if not is_owner:
+                log_msg += (f" (issued by {user})")
+            LOG.info(log_msg)
 
         method = getattr(self, command, None)
         if method is not None:
