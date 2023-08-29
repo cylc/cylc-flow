@@ -24,6 +24,7 @@ from pytest import param
 from cylc.flow import CYLC_LOG
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.scheduler import Scheduler
@@ -59,6 +60,22 @@ EXAMPLE_FLOW_CFG = {
         'FAM': {},
         'bar': {'inherit': 'FAM'}
     }
+}
+
+
+EXAMPLE_FLOW_2_CFG = {
+    'scheduler': {
+        'allow implicit tasks': True,
+        'UTC mode': True
+    },
+    'scheduling': {
+        'initial cycle point': '2001',
+        'runahead limit': 'P3Y',
+        'graph': {
+            'P1Y': 'foo',
+            'R/2025/P1Y': 'foo => bar',
+        }
+    },
 }
 
 
@@ -127,6 +144,22 @@ async def example_flow(
     schd: Scheduler = scheduler(id_)
     async with start(schd):
         yield schd
+
+
+@pytest.fixture(scope='module')
+async def mod_example_flow_2(
+    mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
+) -> Scheduler:
+    """Return a scheduler for interrogating its task pool.
+
+    This is module-scoped so faster than example_flow, but should only be used
+    where the test does not mutate the state of the scheduler or task pool.
+    """
+    id_ = mod_flow(EXAMPLE_FLOW_2_CFG)
+    schd: Scheduler = mod_scheduler(id_, paused_start=True)
+    async with mod_run(schd):
+        pass
+    return schd
 
 
 @pytest.mark.parametrize(
@@ -1157,3 +1190,14 @@ async def test_task_proxy_remove_from_queues(
 
         assert queues_after['default'] == ['1/hidden_control']
         assert queues_after['queue_two'] == ['1/control']
+
+
+async def test_runahead_offset_start(
+    mod_example_flow_2: Scheduler
+) -> None:
+    """Late-start recurrences should not break the runahead limit at start-up.
+
+    See GitHub #5708
+    """
+    task_pool = mod_example_flow_2.pool
+    assert task_pool.runahead_limit_point == ISO8601Point('2004')
