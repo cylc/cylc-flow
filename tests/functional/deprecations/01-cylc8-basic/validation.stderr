@@ -22,7 +22,7 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail to -> [runtime][foo, c
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail from -> [runtime][foo, cat, dog][mail]from - value unchanged
 WARNING -  * (8.0.0) [cylc][events]mail smtp - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail smtp - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
-WARNING -  * (8.0.0) [scheduling]max active cycle points -> [scheduling]runahead limit - "n" -> "Pn"
+WARNING -  * (8.0.0) [scheduling]max active cycle points -> [scheduling]runahead limit - "2" -> "P1"
 WARNING -  * (8.0.0) [scheduling]hold after point -> [scheduling]hold after cycle point - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][suite state polling] -> [runtime][foo, cat, dog][workflow state polling] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]execution polling intervals -> [runtime][foo, cat, dog]execution polling intervals - value unchanged

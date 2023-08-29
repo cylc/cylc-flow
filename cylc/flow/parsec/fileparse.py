@@ -422,7 +422,14 @@ def read_and_proc(
     fpath = _get_fpath_for_source(fpath, opts)
     fdir = os.path.dirname(fpath)
 
-    odir = os.getcwd()
+    try:
+        original_cwd = os.getcwd()
+    except FileNotFoundError:
+        # User's current working directory does not actually exist, so we won't
+        # be able to change back to it later. (Note this might not be enough to
+        # prevent file parsing commands failing due to missing cwd elsewhere in
+        # the Python library).
+        original_cwd = None
 
     # Move to the file location to give the template processor easy access to
     # other files in the workflow directory (whether source or installed).
@@ -520,7 +527,9 @@ def read_and_proc(
     if do_contin:
         flines = _concatenate(flines)
 
-    os.chdir(odir)
+    # If the user's original working directory exists, change back to it.
+    if original_cwd is not None:
+        os.chdir(original_cwd)
 
     # return rstripped lines
     return [fl.rstrip() for fl in flines]

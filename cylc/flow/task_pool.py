@@ -309,18 +309,54 @@ class TaskPool:
         With force=True we recompute the limit even if the base point has not
         changed (needed if max_future_offset changed, or on reload).
         """
+
+        limit = self.config.runahead_limit  # e.g. P2 or P2D
+        count_cycles = False
+        with suppress(TypeError):
+            # Count cycles (integer cycling, and optional for datetime too).
+            ilimit = int(limit)  # type: ignore
+            count_cycles = True
+
+        base_point: 'PointBase'
         points: List['PointBase'] = []
-        sequence_points: Set['PointBase']
+
         if not self.main_pool:
-            # Start at first point in each sequence, after the initial point.
-            points = [
-                point
-                for point in {
-                    seq.get_first_point(self.config.start_point)
-                    for seq in self.config.sequences
-                }
-                if point is not None
-            ]
+            # No tasks yet, just consider sequence points.
+            if count_cycles:
+                # Get the first ilimit points in each sequence.
+                # (After workflow start point - sequence may begin earlier).
+                points = [
+                    point
+                    for plist in [
+                        seq.get_first_n_points(
+                            ilimit, self.config.start_point)
+                        for seq in self.config.sequences
+                    ]
+                    for point in plist
+                ]
+                # Drop points beyond the limit.
+                points = sorted(points)[:ilimit + 1]
+                base_point = min(points)
+
+            else:
+                # Start at first point in each sequence.
+                # (After workflow start point - sequence may begin earlier).
+                points = [
+                    point
+                    for point in {
+                        seq.get_first_point(self.config.start_point)
+                        for seq in self.config.sequences
+                    }
+                    if point is not None
+                ]
+                base_point = min(points)
+                # Drop points beyond the limit.
+                points = [
+                    point
+                    for point in points
+                    if point <= base_point + limit
+                ]
+
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
@@ -344,9 +380,10 @@ class TaskPool:
                     )
                 ):
                     points.append(point)
-        if not points:
-            return False
-        base_point = min(points)
+
+            if not points:
+                return False
+            base_point = min(points)
 
         if self._prev_runahead_base_point is None:
             self._prev_runahead_base_point = base_point
@@ -363,15 +400,8 @@ class TaskPool:
             # change or the runahead limit is already at stop point.
             return False
 
-        try:
-            limit = int(self.config.runahead_limit)  # type: ignore
-        except TypeError:
-            count_cycles = False
-            limit = self.config.runahead_limit
-        else:
-            count_cycles = True
-
-        # Get all cycle points possible after the runahead base point.
+        # Get all cycle points possible after the base point.
+        sequence_points: Set['PointBase']
         if (
             not force
             and self._prev_runahead_sequence_points
@@ -388,7 +418,7 @@ class TaskPool:
                 while seq_point is not None:
                     if count_cycles:
                         # P0 allows only the base cycle point to run.
-                        if count > 1 + limit:
+                        if count > 1 + ilimit:
                             break
                     else:
                         # PT0H allows only the base cycle point to run.
@@ -404,7 +434,7 @@ class TaskPool:
 
         if count_cycles:
             # Some sequences may have different intervals.
-            limit_point = sorted(points)[:(limit + 1)][-1]
+            limit_point = sorted(points)[:(ilimit + 1)][-1]
         else:
             # We already stopped at the runahead limit.
             limit_point = sorted(points)[-1]

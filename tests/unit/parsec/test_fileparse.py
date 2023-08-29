@@ -739,6 +739,25 @@ def test_get_fpath_for_source(tmp_path):
         rundir / 'flow.cylc', opts) == str(srcdir / 'flow.cylc')
 
 
+def test_user_has_no_cwd(tmp_path):
+    """Test we can parse a config file even if cwd does not exist."""
+    cwd = tmp_path/"cwd"
+    os.mkdir(cwd)
+    os.chdir(cwd)
+    os.rmdir(cwd)
+    # (I am now located in a non-existent directory. Outrageous!)
+    with NamedTemporaryFile() as tf:
+        fpath = tf.name
+        tf.write(('''
+        [scheduling]
+            [[graph]]
+                R1 = "foo"
+        ''').encode())
+        tf.flush()
+        # Should not raise FileNotFoundError from os.getcwd():
+        parse(fpath=fpath, output_fname="")
+
+
 def test_get_cylc_env_vars(monkeypatch):
     """It should return CYLC env vars but not CYLC_VERSION or CYLC_ENV_NAME."""
     monkeypatch.setattr(
@@ -757,3 +776,4 @@ def test_get_cylc_env_vars(monkeypatch):
             "CYLC_ANSWER": "42", 
         }
     )
+

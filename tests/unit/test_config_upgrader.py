@@ -108,7 +108,7 @@ def test_upgrade_param_env_templates(cfg, expected):
 
 @pytest.mark.parametrize(
     'macp, rlim',
-    [(16, 'P16'),
+    [(16, 'P15'),
      ('', '')]
 )
 def test_upgrade_max_active_cycle_points(macp, rlim):
