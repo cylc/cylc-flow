@@ -1417,7 +1417,7 @@ with Conf('global.cylc', desc='''
                    environment variables``.
             ''')
             Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
-                 desc=f'''
+                 desc='''
                 A list containing the names of the environment variables to
                 forward with SSH connections to the server and run hosts
 
