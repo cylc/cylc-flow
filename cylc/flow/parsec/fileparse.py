@@ -105,6 +105,27 @@ _UNCLOSED_MULTILINE = re.compile(
 )
 
 
+def get_cylc_env_vars() -> t.Dict[str, str]:
+    """Return a restricted dict of CYLC_ environment variables for templating.
+
+    The following variables are ignored because the do not necessarily reflect
+    the running code version (I might not use the "cylc" wrapper, or it might
+    select a different version):
+
+    CYLC_VERSION
+        Set as a template variable elsewhere, from the hardwired code version.
+
+    CYLC_ENV_NAME
+        Providing it as a template variable would just be misleading.
+    """
+    return {
+        key: val
+        for key, val in os.environ.items()
+        if key.startswith('CYLC_')
+        if key not in ["CYLC_VERSION", "CYLC_ENV_NAME"]
+    }
+
+
 def _concatenate(lines):
     """concatenate continuation lines"""
     index = 0
@@ -453,10 +474,9 @@ def read_and_proc(
         flines = inline(
             flines, fdir, fpath, viewcfg=viewcfg)
 
+    # Add the hardwired code version to template vars as CYLC_VERSION
     template_vars['CYLC_VERSION'] = __version__
-
     template_vars = merge_template_vars(template_vars, extra_vars)
-
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
     # Fail if templating_detected ≠ hashbang
