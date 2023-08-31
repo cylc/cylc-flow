@@ -108,7 +108,7 @@ class TaskHoldMgr:
         self.db_mgr = workflow_db_mgr
 
     def _flatten(self):
-        # possibly temporary interfacing to existing flat set
+        # possibly-temporary conversion to old-style flat set
         result = set()
         for (name, point), flow in self.hold.items():
             result.add((name, point, flow))
@@ -119,7 +119,6 @@ class TaskHoldMgr:
     ):
         """Update datastore and database."""
         self.db_mgr.put_tasks_to_hold(self._flatten())
-        # TODO ADAPT TO PROXY AND FUTURE HOLD
         self.data_store_mgr.delta_task_held(itask)
         LOG.debug(f"Tasks to hold {self.hold}")
 
@@ -172,7 +171,6 @@ class TaskHoldMgr:
         """Un-flag point/name if flow matches or flow is None."""
         if (name, point) not in self.hold.keys():
             return
-
         if (
             flow_num is None
             or flow_num == self.hold[(name, point)]
@@ -206,9 +204,6 @@ class TaskHoldMgr:
     def is_held(self, name, point) -> bool:
         """Is point/name held, regardless of flow."""
         return (name, point) in self.hold
-
-    def clear(self):
-        self.hold.clear()
 
 
 class TaskPool:
@@ -1342,11 +1337,14 @@ class TaskPool:
         return len(unmatched)
 
     def release_hold_point(self) -> None:
-        """Unset the workflow hold point and release all held active tasks."""
+        """Release all held active tasks and unset the hold-after point.
+
+        Note the CLI does not currently have an option to just release tasks
+        after the hold point.
+        """
         self.hold_point = None
         for itask in self.get_all_tasks():
             self.hold_mgr.release_active_task(itask, self.queue_task)
-        self.hold_mgr.clear()  # TODO: NOT NECESSARY?
         self.workflow_db_mgr.put_workflow_hold_cycle_point(None)
 
     def check_abort_on_task_fails(self):
