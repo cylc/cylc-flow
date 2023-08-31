@@ -87,18 +87,16 @@ Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 
 class TaskHoldMgr:
-    """Keep track of current and future tasks to hold.
+    """Hold/release logic for active and future tasks.
 
-    Active task instances (i.e., task proxies in the pool):
-    - can be held/released if the given flow (flow=n) matches any of the task's
-      flow numbers, or regardless of flow number (flow=None).
+    Active tasks (i.e., task proxies in the pool):
+    - hold/release with --flow=n, or (by default) regardless of flow.
 
     Future tasks (point/name):
-    - can be flagged for future hold, or forgotten, by specific flow (flow=n)
-    or regardless of flow number (flow=None)
+    - flagg for future hold, or unflag, with --flow=n, or (by default)
+      regardless of flow.
 
     """
-
     def __init__(self, workflow_db_mgr, data_store_mgr):
         # (name, point): flow
         self.hold: Dict[Tuple[str, 'PointBase'], Optional[int]] = {}
@@ -126,7 +124,8 @@ class TaskHoldMgr:
         LOG.debug(f"Tasks to hold {self.hold}")
 
     def load_from_db(self):
-        # Note this doesn't need to reset-to-held active tasks - they're
+        """Load the store of tasks-to-hold from the run DB."""
+        # Note this doesn't need to actually hold the tasks - they're
         # automatically held at creation via their is_held attribute.
         for name, cycle, flow_num in (
             self.db_mgr.pri_dao.select_tasks_to_hold()
@@ -137,17 +136,14 @@ class TaskHoldMgr:
         self,
         itask: TaskProxy,
         flow_num: Optional[int] = None,
-        check: bool = True
     ) -> bool:
         """Hold itask if the specified flow_num matches or is None."""
-        if check:
-            if flow_num is not None and flow_num not in itask.flow_nums:
-                # specified flow does not match this task
-                return False
-            if not itask.state_reset(is_held=True):
-                # this task is already held
-                return False
-
+        if flow_num is not None and flow_num not in itask.flow_nums:
+            # specified flow does not match this task
+            return False
+        if not itask.state_reset(is_held=True):
+            # already held
+            return False
         self.hold[(itask.tdef.name, itask.point)] = flow_num
         self._update_stores(itask)
         return True
@@ -173,7 +169,7 @@ class TaskHoldMgr:
             itask.state_reset(is_held=True)
 
     def release_future_task(self, name, point, flow_num=None) -> None:
-        """Release point/name if flow matches or flow is None."""
+        """Un-flag point/name if flow matches or flow is None."""
         if (name, point) not in self.hold.keys():
             return
 

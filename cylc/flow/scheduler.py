@@ -1043,12 +1043,10 @@ class Scheduler:
                     itask.state_reset(TASK_STATUS_FAILED)
                     self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
-        # killed tasks get held
-        # TODO TAKE TASK HOLD OUT OF JOB MGR?
-        for itask in itasks:
-            if itask.state.is_held:
-                self.pool.hold_mgr.hold_active_task(itask, check=False)
+        to_kill = self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
+        # Hold killed tasks to prevent automatic retry.
+        for itask in to_kill:
+            self.pool.hold_mgr.hold_active_task(itask)
         return len(bad_items)
 
     def command_hold(self, tasks: Iterable[str], flow_num=None) -> int:
