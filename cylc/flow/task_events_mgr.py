@@ -591,11 +591,10 @@ class TaskEventsManager():
                 itask, severity, message, event_time, flag, submit_num):
             return None
 
+        new_msg = f'{severity}:{message}'
         # always update the workflow state summary for latest message
         if flag == self.FLAG_POLLED:
-            new_msg = f'{message} {self.FLAG_POLLED}'
-        else:
-            new_msg = message
+            new_msg = f'{new_msg} {self.FLAG_POLLED}'
         self.data_store_mgr.delta_job_msg(
             itask.tokens.duplicate(job=str(submit_num)),
             new_msg
