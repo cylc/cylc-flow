@@ -32,6 +32,13 @@ Opts = Options(get_option_parser())
     'opts, task_globs, expected_err',
     [
         (Opts(), ['*'], None),
+        (Opts(flow_num=None), ['*'], None),
+        (Opts(flow_num=2), ['*'], None),
+        (
+            Opts(flow_num='cat'),
+            ['*'],
+            (InputError, "--flow=cat: value must be integer")
+        ),
         (Opts(hold_point_string='2'), [], None),
         (
             Opts(hold_point_string='2'),

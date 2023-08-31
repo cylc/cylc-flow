@@ -33,6 +33,13 @@ Opts = Options(get_option_parser())
     [
         (Opts(), ['*'], None),
         (Opts(release_all=True), [], None),
+        (Opts(flow_num=None), ['*'], None),
+        (Opts(flow_num=2), ['*'], None),
+        (
+            Opts(flow_num='cat'),
+            ['*'],
+            (InputError, "--flow=cat: value must be integer")
+        ),
         (
             Opts(release_all=True),
             ['*'],

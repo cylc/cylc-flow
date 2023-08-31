@@ -50,6 +50,7 @@ Use --output multiple times to spawn off of several outputs at once.
 from functools import partial
 from optparse import Values
 
+from cylc.flow.flow_mgr import validate_flow_opt
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -57,6 +58,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
+
 
 MUTATION = '''
 mutation (
@@ -99,7 +101,14 @@ def get_option_parser() -> COP:
     return parser
 
 
+def _validate(options: 'Values', *task_globs: str) -> None:
+    """Check combination of options and task globs is valid."""
+    validate_flow_opt(options.flow_num)
+
+
 async def run(options: 'Values', workflow_id: str, *tokens_list) -> None:
+
+    _validate(options, *tokens_list)
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {

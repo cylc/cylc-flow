@@ -59,6 +59,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
+from cylc.flow.flow_mgr import validate_flow_opt
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
@@ -66,6 +67,7 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.multi import call_multi
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -135,6 +137,8 @@ def _validate(options: 'Values', *task_globs: str) -> None:
     elif not task_globs:
         raise InputError(
             "Must define Cycles/Tasks. See `cylc hold --help`.")
+
+    validate_flow_opt(options.flow_num)
 
 
 async def run(options, workflow_id, *tokens_list):

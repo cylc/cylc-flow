@@ -20,6 +20,7 @@ from typing import Dict, Set, Optional
 import datetime
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import InputError
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
@@ -29,6 +30,15 @@ FLOW_ALL = "all"
 FLOW_NEW = "new"
 FLOW_NONE = "none"
 
+
+def validate_flow_opt(val):
+    """Validate command line --flow opions."""
+    if val is not None:
+        try:
+            int(val)
+        except ValueError:
+            raise InputError(f"--flow={val}: value must be integer.")
+ 
 
 class FlowMgr:
     """Logic to manage flow counter and flow metadata."""
