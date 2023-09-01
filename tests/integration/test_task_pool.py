@@ -450,15 +450,23 @@ async def test_release_held_tasks(
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
     # Test
-    task_pool.release_held_tasks(['1/foo', '3/asd'])
+    task_pool.release_held_tasks(['1/foo', '3/asd'], 1)  # right flow, do release
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is (itask.identity == '1/bar')
 
-    expected_tasks_to_hold_ids = sorted(['1/bar'])
+    task_pool.release_held_tasks(['1/bar'], 2)  # wrong flow, don't release
+    for itask in task_pool.get_all_tasks():
+        assert itask.state.is_held is (itask.identity == '1/bar')
+
+    expected_tasks_to_hold_ids = ['1/bar']
     assert get_task_ids(task_pool.hold_mgr._flatten()) == expected_tasks_to_hold_ids
 
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
+
+    task_pool.release_held_tasks(['1/bar'])  # any flow, do release
+    for itask in task_pool.get_all_tasks():
+        assert itask.state.is_held is False
 
 
 @pytest.mark.parametrize(
