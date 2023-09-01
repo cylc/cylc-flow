@@ -532,7 +532,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.command_set_hold_point(holdcp, self.options.holdcp_flow)
+            self.command_set_hold_point(holdcp)
 
         if self.options.paused_start:
             self.pause_workflow('Paused on start up')
