@@ -143,6 +143,3 @@ class Bindings:
                     if binding['group'] == name
                 ]
             )
-
-
-BINDINGS = Bindings()

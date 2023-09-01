@@ -16,9 +16,9 @@
 
 from functools import partial
 from subprocess import Popen, PIPE
-import sys
 
 from cylc.flow.exceptions import ClientError
+from cylc.flow.id import Tokens
 from cylc.flow.tui.util import (
     extract_context
 )
@@ -29,6 +29,7 @@ QUERY = '''
     workflows {
       id
       name
+      port
       status
       stateTotals
       taskProxies(states: $taskStates) {
@@ -149,28 +150,25 @@ def cli_cmd(*cmd):
         stdout=PIPE,
         text=True,
     )
-    out, err = proc.communicate()
+    _out, err = proc.communicate()
     if proc.returncode != 0:
-        raise ClientError(f'Error in command {" ".join(cmd)}\n{err}')
-
-
-def _clean(workflow):
-    # for now we will exit tui when the workflow is cleaned
-    # this will change when tui supports multiple workflows
-    cli_cmd('clean', workflow)
-    sys.exit(0)
+        raise ClientError(f'Error in command cylc {" ".join(cmd)}\n{err}')
 
 
 OFFLINE_MUTATIONS = {
+    'user': {
+        'stop-all': partial(cli_cmd, 'stop', '*'),
+    },
     'workflow': {
         'play': partial(cli_cmd, 'play'),
-        'clean': _clean,
+        'clean': partial(cli_cmd, 'clean', '--yes'),
         'reinstall-reload': partial(cli_cmd, 'vr', '--yes'),
     }
 }
 
 
 def generate_mutation(mutation, arguments):
+    arguments.pop('user')
     graphql_args = ', '.join([
         f'${argument}: {ARGUMENT_TYPES[argument]}'
         for argument in arguments
@@ -206,28 +204,40 @@ def context_to_variables(context):
 
     Examples:
         >>> context_to_variables(extract_context(['~a/b//c/d']))
-        {'workflow': ['b'], 'task': ['c/d']}
+        {'user': ['a'], 'workflow': ['b'], 'task': ['c/d']}
 
         >>> context_to_variables(extract_context(['~a/b//c']))
-        {'workflow': ['b'], 'task': ['c/*']}
+        {'user': ['a'], 'workflow': ['b'], 'task': ['c/*']}
 
         >>> context_to_variables(extract_context(['~a/b']))
-        {'workflow': ['b']}
+        {'user': ['a'], 'workflow': ['b']}
 
     """
     # context_to_variables because it can only handle single-selection ATM
-    variables = {'workflow': context['workflow']}
+    variables = {'user': context['user']}
+
+    if 'workflow' in context:
+        variables['workflow'] = context['workflow']
     if 'task' in context:
         variables['task'] = [
-            f'{context["cycle"][0]}/{context["task"][0]}'
+            Tokens(
+                cycle=context['cycle'][0],
+                task=context['task'][0]
+            ).relative_id
         ]
     elif 'cycle' in context:
-        variables['task'] = [f'{context["cycle"][0]}/*']
+        variables['task'] = [
+            Tokens(cycle=context['cycle'][0], task='*').relative_id
+        ]
     return variables
 
 
 def mutate(client, mutation, selection):
-    if mutation in OFFLINE_MUTATIONS['workflow']:
+    if mutation in {
+        _mutation
+        for section in OFFLINE_MUTATIONS.values()
+        for _mutation in section
+    }:
         offline_mutate(mutation, selection)
     elif client:
         online_mutate(client, mutation, selection)
@@ -238,10 +248,24 @@ def mutate(client, mutation, selection):
         )
 
 
-def online_mutate(client, mutation, selection):
+def online_mutate(mutation, selection):
     """Issue a mutation over a network interface."""
     context = extract_context(selection)
     variables = context_to_variables(context)
+
+    # note this only supports single workflow mutations at present
+    workflow = variables['workflow'][0]
+    try:
+        client = get_client(workflow)
+    except WorkflowStopped:
+        raise Exception(
+            f'Cannot peform command {mutation} on a stopped workflow'
+        )
+    except (ClientError, ClientTimeout) as exc:
+        raise Exception(
+            f'Error connecting to workflow: {exc}'
+        )
+
     request_string = generate_mutation(mutation, variables)
     client(
         'graphql',
@@ -256,6 +280,9 @@ def offline_mutate(mutation, selection):
     """Issue a mutation over the CLI or other offline interface."""
     context = extract_context(selection)
     variables = context_to_variables(context)
-    for workflow in variables['workflow']:
-        # NOTE: this currently only supports workflow mutations
-        OFFLINE_MUTATIONS['workflow'][mutation](workflow)
+    if 'workflow' in variables:
+        for workflow in variables['workflow']:
+            # NOTE: this currently only supports workflow mutations
+            OFFLINE_MUTATIONS['workflow'][mutation](workflow)
+    else:
+        OFFLINE_MUTATIONS['user'][mutation]()
