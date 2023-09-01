@@ -528,10 +528,10 @@ class DataStoreMgr:
             self.__init__(self.schd)
 
         # Static elements
-        self.generate_definition_elements()
+        self.generate_definition_elements(reloaded)
 
         # Update workflow statuses and totals (assume needed)
-        self.update_workflow()
+        self.update_workflow(reloaded)
 
         # Apply current deltas
         self.batch_deltas()
@@ -548,11 +548,15 @@ class DataStoreMgr:
         self.clear_delta_store()
         self.clear_delta_batch()
 
-    def generate_definition_elements(self):
+    def generate_definition_elements(self, reloaded):
         """Generate static definition data elements.
 
         Populates the tasks, families, and workflow elements
         with data from and/or derived from the workflow definition.
+
+        Args:
+            reloaded (bool):
+                To set workflow reloaded field.
 
         """
         config = self.schd.config
@@ -563,6 +567,7 @@ class DataStoreMgr:
         workflow.id = self.workflow_id
         workflow.last_updated = update_time
         workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
+        workflow.reloaded = reloaded
 
         graph = workflow.edges
         graph.leaves[:] = config.leaves
@@ -1511,7 +1516,7 @@ class DataStoreMgr:
             self.update_family_proxies()
 
             # Update workflow statuses and totals if needed
-            self.update_workflow()
+            self.update_workflow(reloaded)
 
             # Don't process updated deltas of pruned nodes
             self.prune_pruned_updated_nodes()
@@ -1808,7 +1813,7 @@ class DataStoreMgr:
         self.next_n_edge_distance = n_edge_distance
         self.updates_pending = True
 
-    def update_workflow(self):
+    def update_workflow(self, reloaded=False):
         """Update workflow element status and state totals."""
         # Create new message and copy existing message content
         data = self.data[self.workflow_id]
@@ -1863,6 +1868,9 @@ class DataStoreMgr:
             w_delta.status = status
             w_delta.status_msg = status_msg
             delta_set = True
+
+        if reloaded is not w_data.reloaded:
+            w_delta.reloaded = reloaded
 
         if self.schd.pool.main_pool:
             pool_points = set(self.schd.pool.main_pool)
