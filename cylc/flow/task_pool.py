@@ -173,11 +173,12 @@ class TaskHoldMgr:
             return
         if (
             flow_num is None
+            or self.hold[(name, point)] is None
             or flow_num == self.hold[(name, point)]
         ):
             del self.hold[(name, point)]
 
-        self._update_stores((name, point, True))
+        self._update_stores((name, point, False))
 
     def release_active_task(
         self, itask: TaskProxy, queue_func: Callable, flow_num=None,
