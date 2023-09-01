@@ -38,7 +38,7 @@ def validate_flow_opt(val):
             int(val)
         except ValueError:
             raise InputError(f"--flow={val}: value must be integer.")
- 
+
 
 class FlowMgr:
     """Logic to manage flow counter and flow metadata."""

@@ -532,7 +532,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.command_set_hold_point(holdcp)
+            self.command_set_hold_point(holdcp, self.options.holdcp_flow)
 
         if self.options.paused_start:
             self.pause_workflow('Paused on start up')
@@ -1012,7 +1012,11 @@ class Scheduler:
         self.stop_mode = stop_mode
         self.update_data_store()
 
-    def command_release(self, tasks: Iterable[str], flow_num=None) -> int:
+    def command_release(
+        self,
+        tasks: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Release held tasks."""
         return self.pool.release_held_tasks(tasks, flow_num)
 
@@ -1049,11 +1053,19 @@ class Scheduler:
             self.pool.hold_mgr.hold_active_task(itask)
         return len(bad_items)
 
-    def command_hold(self, tasks: Iterable[str], flow_num=None) -> int:
+    def command_hold(
+        self,
+        tasks: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Hold specified tasks."""
         return self.pool.hold_tasks(tasks, flow_num)
 
-    def command_set_hold_point(self, point: str) -> None:
+    def command_set_hold_point(
+        self,
+        point: str,
+        flow_num: Optional[int] = None
+    ) -> None:
         """Hold all tasks after the specified cycle point."""
         cycle_point = TaskID.get_standardised_point(point)
         if cycle_point is None:
@@ -1061,7 +1073,7 @@ class Scheduler:
         LOG.info(
             f"Setting hold cycle point: {cycle_point}\n"
             "All tasks after this point will be held.")
-        self.pool.set_hold_point(cycle_point)
+        self.pool.set_hold_point(cycle_point, flow_num)
 
     def command_pause(self) -> None:
         """Pause the workflow."""
@@ -1333,6 +1345,8 @@ class Scheduler:
         * Original workflow run time zone.
         """
         LOG.info('LOADING workflow parameters')
+        self.options.holdcp_flow = None  # (not CLI but needed on restart)
+
         for key, value in params:
             if value is None:
                 continue
@@ -1374,6 +1388,12 @@ class Scheduler:
             ):
                 self.options.holdcp = value
                 LOG.info(f"+ hold point = {value}")
+            elif (
+                key == self.workflow_db_mgr.KEY_HOLD_CYCLE_POINT_FLOW
+                and self.options.holdcp_flow is None
+            ):
+                self.options.holdcp_flow = value
+                LOG.info(f"+ hold point flow = {value}")
             elif key == self.workflow_db_mgr.KEY_STOP_CLOCK_TIME:
                 int_val = int(value)
                 msg = f"stop clock time = {int_val} ({time2str(int_val)})"

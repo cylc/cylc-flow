@@ -92,11 +92,13 @@ mutation (
 SET_HOLD_POINT_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $point: CyclePoint!
+  $point: CyclePoint!,
+  $flowNum: Int
 ) {
   setHoldPoint (
     workflows: $wFlows,
-    point: $point
+    point: $point,
+    flowNum: $flowNum
   ) {
     result
   }
@@ -132,8 +134,8 @@ def _validate(options: 'Values', *task_globs: str) -> None:
         if task_globs:
             raise InputError(
                 "Cannot combine --after with Cylc/Task IDs.\n"
-                "`cylc hold --after` holds all tasks after the given "
-                "cycle point.")
+                "`cylc hold --after` holds ALL tasks after the given "
+                "cycle point. Can be used with `--flow`.")
     elif not task_globs:
         raise InputError(
             "Must define Cycles/Tasks. See `cylc hold --help`.")
@@ -148,7 +150,10 @@ async def run(options, workflow_id, *tokens_list):
 
     if options.hold_point_string:
         mutation = SET_HOLD_POINT_MUTATION
-        args = {'point': options.hold_point_string}
+        args = {
+            'point': options.hold_point_string,
+            'flowNum': options.flow_num
+        }
     else:
         mutation = HOLD_MUTATION
         args = {

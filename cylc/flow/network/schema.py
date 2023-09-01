@@ -1735,7 +1735,9 @@ class SetHoldPoint(Mutation):
             description='Hold all tasks after the specified cycle point.',
             required=True
         )
-
+        flow_num = Int(
+            description='Number of flow to hold.'
+        )
     result = GenericScalar()
 
 

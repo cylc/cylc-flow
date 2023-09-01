@@ -96,8 +96,14 @@ class TaskHoldMgr:
     - flagg for future hold, or unflag, with --flow=n, or (by default)
       regardless of flow.
 
+    Note this class doesn't yet handle workflow hold point.
+
     """
-    def __init__(self, workflow_db_mgr, data_store_mgr):
+    def __init__(
+        self,
+        workflow_db_mgr: 'WorkflowDatabaseManager',
+        data_store_mgr: 'DataStoreMgr',
+    ):
         # (name, point): flow
         self.hold: Dict[Tuple[str, 'PointBase'], Optional[int]] = {}
         # flow may be None: hold future task regardless of its flow number.
@@ -115,7 +121,8 @@ class TaskHoldMgr:
         return result
 
     def _update_stores(
-        self, itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
+        self,
+        itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
     ):
         """Update datastore and database."""
         self.db_mgr.put_tasks_to_hold(self._flatten())
@@ -147,12 +154,20 @@ class TaskHoldMgr:
         self._update_stores(itask)
         return True
 
-    def flag_future_task(self, name, point, flow_num=None) -> None:
+    def flag_future_task(
+        self,
+        name: str,
+        point: 'PointBase',
+        flow_num: Optional[int] = None
+    ) -> None:
         """Flag that we should hold a future task."""
         self.hold[(name, point)] = flow_num
         self._update_stores((name, point, True))
 
-    def hold_if_flagged(self, itask: TaskProxy) -> None:
+    def hold_if_flagged(
+        self,
+        itask: TaskProxy
+    ) -> None:
         """Hold a newly-spawned task if flagged in the future hold list.
 
         flow None: a future-held specific task regardless of flow.
@@ -167,7 +182,12 @@ class TaskHoldMgr:
             LOG.info(f"[{itask}] holding (as requested earlier)")
             itask.state_reset(is_held=True)
 
-    def release_future_task(self, name, point, flow_num=None) -> None:
+    def release_future_task(
+        self,
+        name: str,
+        point: 'PointBase',
+        flow_num: Optional[int] = None
+    ) -> None:
         """Un-flag point/name if flow matches or flow is None."""
         if (name, point) not in self.hold.keys():
             return
@@ -181,7 +201,10 @@ class TaskHoldMgr:
         self._update_stores((name, point, False))
 
     def release_active_task(
-        self, itask: TaskProxy, queue_func: Callable, flow_num=None,
+        self,
+        itask: TaskProxy,
+        queue_func: Callable,
+        flow_num: Optional[int] = None,
     ) -> None:
         """Release a held task if flow matches, and queue it if ready."""
         if (
@@ -202,7 +225,11 @@ class TaskHoldMgr:
         ):
             queue_func(itask)
 
-    def is_held(self, name, point) -> bool:
+    def is_held(
+        self,
+        name: str,
+        point: 'PointBase',
+    ) -> bool:
         """Is point/name held, regardless of flow."""
         return (name, point) in self.hold
 
@@ -247,6 +274,7 @@ class TaskPool:
         self.tasks_removed = False
 
         self.hold_point: Optional['PointBase'] = None
+        self.hold_point_flow: Optional[int] = None
         self.abs_outputs_done: Set[Tuple[str, str, str]] = set()
 
         self.stop_task_id: Optional[str] = None
@@ -1291,15 +1319,30 @@ class TaskPool:
         unsatisfied = self.log_unsatisfied_prereqs()
         return (incomplete or unsatisfied)
 
-    def set_hold_point(self, point: 'PointBase') -> None:
-        """Set the point after which all tasks must be held."""
+    def set_hold_point(
+        self,
+        point: 'PointBase',
+        flow_num: Optional[int] = None
+    ) -> None:
+        """Set the point after which all tasks must be held.
+
+        This can be flow-specific (hold flow n after point), but there is only
+        one hold point so flow-specific hold-point release is not needed.
+        TODO: extend to allow multiple flow-specific hold points.
+
+        """
         self.hold_point = point
+        self.hold_point_flow = flow_num
         for itask in self.get_all_tasks():
             if itask.point > point:
-                self.hold_mgr.hold_active_task(itask)
-        self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
+                self.hold_mgr.hold_active_task(itask, flow_num)
+        self.workflow_db_mgr.put_workflow_hold_cycle_point(point, flow_num)
 
-    def hold_tasks(self, items: Iterable[str], flow_num=None) -> int:
+    def hold_tasks(
+        self,
+        items: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Hold tasks with IDs matching the specified items."""
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -1316,7 +1359,11 @@ class TaskPool:
 
         return len(unmatched)
 
-    def release_held_tasks(self, items: Iterable[str], flow_num=None) -> int:
+    def release_held_tasks(
+        self,
+        items: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Release held tasks with IDs matching any specified items."""
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -1338,10 +1385,14 @@ class TaskPool:
         return len(unmatched)
 
     def release_hold_point(self) -> None:
-        """Release all held active tasks and unset the hold-after point.
+        """Release ALL held active tasks and unset the hold-after point.
 
         Note the CLI does not currently have an option to just release tasks
-        after the hold point.
+        after the hold point (there could be held tasks before the hold point).
+
+        NOTE: the hold-point can be flow-specific, but there is currently only
+        one hold-point so hold-point release need not be flow-specific yet.
+
         """
         self.hold_point = None
         for itask in self.get_all_tasks():
@@ -1641,7 +1692,13 @@ class TaskPool:
             is_manual_submit=is_manual_submit,
             flow_wait=flow_wait,
         )
-        if self.hold_point and itask.point > self.hold_point:
+        if (
+            self.hold_point and itask.point > self.hold_point
+            and (
+                self.hold_point_flow is None
+                or self.hold_point_flow in itask.flow_nums
+            )
+        ):
             # Hold new task if beyond hold point
             LOG.info(
                 f"[{itask}] holding (beyond workflow "
