@@ -20,6 +20,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
 from cylc.flow.id import Tokens
 from cylc.flow.network.resolvers import Resolvers
@@ -237,3 +238,23 @@ async def test_stop(
             log, level=logging.INFO, contains="Command actioned: stop"
         )
         assert one.stop_mode == StopMode.REQUEST_CLEAN
+
+
+async def test_command_logging(mock_flow, caplog):
+    """It should log the command, with user name if not owner."""
+    caplog.set_level(logging.INFO, logger=CYLC_LOG)
+    owner = mock_flow.owner
+    other = f"not-{mock_flow.owner}"
+
+    command = "stop"
+    mock_flow.resolvers._log_command(command, owner)
+    assert caplog.records[-1].msg == f"[command] {command}"
+    mock_flow.resolvers._log_command(command, other)
+    msg1 = f"[command] {command} (issued by {other})"
+    assert caplog.records[-1].msg == msg1
+
+    command = "put_messages"
+    mock_flow.resolvers._log_command(command, owner)
+    assert caplog.records[-1].msg == msg1  # (prev message, i.e. not logged).
+    mock_flow.resolvers._log_command(command, other)
+    assert caplog.records[-1].msg == f"[command] {command} (issued by {other})"
