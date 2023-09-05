@@ -528,35 +528,33 @@ class DataStoreMgr:
             self.__init__(self.schd)
 
         # Static elements
-        self.generate_definition_elements(reloaded)
+        self.generate_definition_elements()
 
         # Update workflow statuses and totals (assume needed)
-        self.update_workflow(reloaded)
+        self.update_workflow(True)
 
         # Apply current deltas
         self.batch_deltas()
         self.apply_delta_batch()
-
-        if not reloaded:
-            # Gather this batch of deltas for publish
-            self.apply_delta_checksum()
-            self.publish_deltas = self.get_publish_deltas()
-
-        self.updates_pending = False
-
-        # Clear deltas after application and publishing
+        # Clear deltas after application
         self.clear_delta_store()
         self.clear_delta_batch()
 
-    def generate_definition_elements(self, reloaded):
+        # Gather the store as batch of deltas for publishing
+        self.batch_deltas(True)
+        self.apply_delta_checksum()
+        self.publish_deltas = self.get_publish_deltas()
+
+        self.updates_pending = False
+
+        # Clear second batch after publishing
+        self.clear_delta_batch()
+
+    def generate_definition_elements(self):
         """Generate static definition data elements.
 
         Populates the tasks, families, and workflow elements
         with data from and/or derived from the workflow definition.
-
-        Args:
-            reloaded (bool):
-                To set workflow reloaded field.
 
         """
         config = self.schd.config
@@ -567,7 +565,8 @@ class DataStoreMgr:
         workflow.id = self.workflow_id
         workflow.last_updated = update_time
         workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
-        workflow.reloaded = reloaded
+        # Treat play/restart as hard reload of definition.
+        workflow.reloaded = True
 
         graph = workflow.edges
         graph.leaves[:] = config.leaves
@@ -1499,7 +1498,7 @@ class DataStoreMgr:
             tp_delta.jobs.append(j_id)
             self.updates_pending = True
 
-    def update_data_structure(self, reloaded=False):
+    def update_data_structure(self):
         """Workflow batch updates in the data structure."""
         # load database history for flagged nodes
         self.apply_task_proxy_db_history()
@@ -1516,7 +1515,7 @@ class DataStoreMgr:
             self.update_family_proxies()
 
             # Update workflow statuses and totals if needed
-            self.update_workflow(reloaded)
+            self.update_workflow()
 
             # Don't process updated deltas of pruned nodes
             self.prune_pruned_updated_nodes()
@@ -1526,11 +1525,7 @@ class DataStoreMgr:
             # Apply all deltas
             self.apply_delta_batch()
 
-        if reloaded:
-            self.clear_delta_batch()
-            self.batch_deltas(reloaded=True)
-
-        if self.updates_pending or reloaded:
+        if self.updates_pending:
             self.apply_delta_checksum()
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
@@ -1540,6 +1535,18 @@ class DataStoreMgr:
         # Clear deltas
         self.clear_delta_batch()
         self.clear_delta_store()
+
+    def update_workflow_states(self):
+        """Batch workflow state updates."""
+
+        # update the workflow state in the data store
+        self.update_workflow()
+
+        # push out update deltas
+        self.batch_deltas()
+        self.apply_delta_batch()
+        self.apply_delta_checksum()
+        self.publish_deltas = self.get_publish_deltas()
 
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
