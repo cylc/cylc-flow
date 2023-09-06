@@ -38,6 +38,7 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.wallclock import get_current_time_string
 
 _XTRIG_FUNCS: dict = {}
@@ -468,7 +469,7 @@ class SubProcPool:
         Args:
             ctx: SubProcContext object for this task.
             callback: Function to run on command exit.
-            callback_args: Arguments to proivide to callback
+            callback_args: Arguments to provide to callback
             callback_255: Function to run if command exits with a 255
                 error - usually associated with ssh being unable to
                 contact a remote host.
@@ -486,6 +487,7 @@ class SubProcPool:
 
         # If cmd is fileinstall, which uses rsync, get a platform so
         # that you can use that platform's ssh command.
+        platform_name = None
         platform = None
         if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
             try:
@@ -505,6 +507,15 @@ class SubProcPool:
             ):
                 # the first argument is not a platform
                 platform = None
+                # Backup, get a platform name from the config:
+                for arg in callback_args:
+                    if isinstance(arg, TaskProxy):
+                        platform_name = arg.tdef.rtconfig['platform']
+                    elif (
+                        isinstance(arg, list)
+                        and isinstance(arg[0], TaskProxy)
+                    ):
+                        platform_name = arg[0].tdef.rtconfig['platform']
 
         if cls.ssh_255_fail(ctx) or cls.rsync_255_fail(ctx, platform) is True:
             # Job log retrieval passes a special object as a command key
@@ -521,7 +532,7 @@ class SubProcPool:
                     ' unreachable hosts'
                     f'\n* {cmd_key} will retry if another host is available.'
                 ),
-                platform or {'name': None},
+                platform or {'name': platform_name},
                 level='warning',
             )
 
