@@ -835,9 +835,16 @@ class DataStoreMgr:
                     active_locs[w_loc] = w_set
                     active_walk['walk_ids'].update(w_set)
                     active_walk['depths'][n_depth].update(w_set)
-                    if loc_done:
+                    # If child/parent nodes have been pruned we will need
+                    # to regenerate them.
+                    if (
+                        loc_done
+                        and not w_set.difference(self.all_n_window_nodes)
+                    ):
                         active_walk['done_locs'].add(w_loc[:-1])
-                    active_walk['done_ids'].update(active_locs[w_loc[:-1]])
+                        active_walk['done_ids'].update(
+                            active_locs[w_loc[:-1]]
+                        )
             new_locs = []
             for loc in working_locs:
                 if loc in active_locs and len(loc) < self.n_edge_distance:
@@ -896,101 +903,125 @@ class DataStoreMgr:
                         continue
                     # Use existing children/parents from other walks.
                     # (note: nodes/edges should already be generated)
+                    c_done = False
+                    p_done = False
                     if node_id in all_walks and node_id is not active_id:
                         with suppress(KeyError):
-                            c_ids.update(
-                                all_walks[node_id]['locations'][c_tag]
-                            )
+                            # If children have been pruned, don't skip,
+                            # re-generate them (uncommon or impossible?).
+                            if not all_walks[node_id]['locations'][
+                                c_tag
+                            ].difference(self.all_n_window_nodes):
+                                c_ids.update(
+                                    all_walks[node_id]['locations'][c_tag]
+                                )
+                                c_done = True
                         with suppress(KeyError):
-                            p_ids.update(
-                                all_walks[node_id]['locations'][p_tag]
-                            )
-                        continue
+                            # If parent have been pruned, don't skip,
+                            # re-generate them (more common case).
+                            if not all_walks[node_id]['locations'][
+                                p_tag
+                            ].difference(self.all_n_window_nodes):
+                                p_ids.update(
+                                    all_walks[node_id]['locations'][p_tag]
+                                )
+                                p_done = True
+                        if p_done and c_done:
+                            continue
 
                     # Children/downstream nodes
                     # TODO: xtrigger is workflow_state edges too
                     # Reference set for workflow relations
-                    if itask is not None and n_depth == 1:
-                        graph_children = itask.graph_children
-                    else:
-                        graph_children = generate_graph_children(
-                            tdef,
-                            get_point(node_tokens['cycle'])
-                        )
-                    for items in graph_children.values():
-                        for child_name, child_point, _ in items:
-                            if child_point > final_point:
-                                continue
-                            child_tokens = self.id_.duplicate(
-                                cycle=str(child_point),
-                                task=child_name,
+                    nc_ids = set()
+                    if not c_done:
+                        if itask is not None and n_depth == 1:
+                            graph_children = itask.graph_children
+                        else:
+                            graph_children = generate_graph_children(
+                                tdef,
+                                get_point(node_tokens['cycle'])
                             )
-                            self.generate_ghost_task(
-                                child_tokens,
-                                child_point,
-                                flow_nums,
-                                False,
-                                None,
-                                n_depth
-                            )
-                            self.generate_edge(
-                                node_tokens,
-                                child_tokens,
-                                active_id
-                            )
-                            c_ids.add(child_tokens.id)
+                        for items in graph_children.values():
+                            for child_name, child_point, _ in items:
+                                if child_point > final_point:
+                                    continue
+                                child_tokens = self.id_.duplicate(
+                                    cycle=str(child_point),
+                                    task=child_name,
+                                )
+                                self.generate_ghost_task(
+                                    child_tokens,
+                                    child_point,
+                                    flow_nums,
+                                    False,
+                                    None,
+                                    n_depth
+                                )
+                                self.generate_edge(
+                                    node_tokens,
+                                    child_tokens,
+                                    active_id
+                                )
+                                nc_ids.add(child_tokens.id)
 
                     # Parents/upstream nodes
-                    for items in generate_graph_parents(
-                        tdef,
-                        get_point(node_tokens['cycle']),
-                        taskdefs
-                    ).values():
-                        for parent_name, parent_point, _ in items:
-                            if parent_point > final_point:
-                                continue
-                            parent_tokens = self.id_.duplicate(
-                                cycle=str(parent_point),
-                                task=parent_name,
-                            )
-                            self.generate_ghost_task(
-                                parent_tokens,
-                                parent_point,
-                                flow_nums,
-                                True,
-                                None,
-                                n_depth
-                            )
-                            # reverse for parent
-                            self.generate_edge(
-                                parent_tokens,
-                                node_tokens,
-                                active_id
-                            )
-                            p_ids.add(parent_tokens.id)
+                    np_ids = set()
+                    if not p_done:
+                        for items in generate_graph_parents(
+                            tdef,
+                            get_point(node_tokens['cycle']),
+                            taskdefs
+                        ).values():
+                            for parent_name, parent_point, _ in items:
+                                if parent_point > final_point:
+                                    continue
+                                parent_tokens = self.id_.duplicate(
+                                    cycle=str(parent_point),
+                                    task=parent_name,
+                                )
+                                self.generate_ghost_task(
+                                    parent_tokens,
+                                    parent_point,
+                                    flow_nums,
+                                    True,
+                                    None,
+                                    n_depth
+                                )
+                                # reverse for parent
+                                self.generate_edge(
+                                    parent_tokens,
+                                    node_tokens,
+                                    active_id
+                                )
+                                np_ids.add(parent_tokens.id)
 
                     # Register new walk
-                    all_walks[node_id] = {
-                        'locations': {},
-                        'done_ids': set(),
-                        'done_locs': set(),
-                        'orphans': set(),
-                        'walk_ids': {node_id} | c_ids | p_ids,
-                        'depths': {
-                            depth: set()
-                            for depth in range(1, self.n_edge_distance + 1)
+                    if node_id not in all_walks:
+                        all_walks[node_id] = {
+                            'locations': {},
+                            'done_ids': set(),
+                            'done_locs': set(),
+                            'orphans': set(),
+                            'walk_ids': {node_id} | nc_ids | np_ids,
+                            'depths': {
+                                depth: set()
+                                for depth in range(1, self.n_edge_distance + 1)
+                            }
                         }
-                    }
-                    if c_ids:
-                        all_walks[node_id]['locations'][c_tag] = c_ids
-                        all_walks[node_id]['depths'][1].update(c_ids)
-                    if p_ids:
-                        all_walks[node_id]['locations'][p_tag] = p_ids
-                        all_walks[node_id]['depths'][1].update(p_ids)
+                    if nc_ids:
+                        all_walks[node_id]['locations'][c_tag] = nc_ids
+                        all_walks[node_id]['depths'][1].update(nc_ids)
+                        c_ids.update(nc_ids)
+                    if np_ids:
+                        all_walks[node_id]['locations'][p_tag] = np_ids
+                        all_walks[node_id]['depths'][1].update(np_ids)
+                        p_ids.update(np_ids)
 
                 # Create location association
+                c_ids.difference_update(active_walk['walk_ids'])
                 if c_ids:
                     active_locs.setdefault(c_loc, set()).update(c_ids)
+                p_ids.difference_update(active_walk['walk_ids'])
                 if p_ids:
                     active_locs.setdefault(p_loc, set()).update(p_ids)
                 active_walk['walk_ids'].update(c_ids, p_ids)
@@ -1000,7 +1031,7 @@ class DataStoreMgr:
         self.n_window_nodes[active_id].update(active_walk['walk_ids'])
 
         # This part is vital to constructing a set of boundary nodes
-        # associated with the parents of current active node.
+        # associated with the n=0 window of current active node.
         # Only trigger pruning for furthest set of boundary nodes
         boundary_nodes: Set[str] = set()
         max_level: int = 0
@@ -1008,13 +1039,13 @@ class DataStoreMgr:
             max_level = max(
                 len(loc)
                 for loc in active_locs
-                if loc.startswith(c_tag)
+                if p_tag not in loc
             )
             # add the most distant child as a trigger to prune it.
             boundary_nodes.update(*(
                 active_locs[loc]
                 for loc in active_locs
-                if loc.startswith(c_tag) and len(loc) >= max_level
+                if p_tag not in loc and len(loc) >= max_level
             ))
         if not boundary_nodes and not max_level:
             # Could be self-reference node foo:failed => foo
@@ -1023,8 +1054,9 @@ class DataStoreMgr:
         for tp_id in boundary_nodes:
             try:
                 self.prune_trigger_nodes.setdefault(tp_id, set()).update(
-                    active_locs[p_tag]
+                    active_walk['walk_ids']
                 )
+                self.prune_trigger_nodes[tp_id].discard(tp_id)
             except KeyError:
                 self.prune_trigger_nodes.setdefault(tp_id, set()).add(
                     active_id
@@ -1191,6 +1223,7 @@ class DataStoreMgr:
             graph_depth=n_depth,
             name=name,
         )
+        self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
 
         tproxy.namespace[:] = task_def.namespace
@@ -1675,15 +1708,16 @@ class DataStoreMgr:
             self.window_resize_rewalk()
             self.next_n_edge_distance = None
 
-        # Find depth changes and create deltas
-        if self.update_window_depths:
-            self.window_depth_finder()
-
         # load database history for flagged nodes
         self.apply_task_proxy_db_history()
 
         self.updates_pending_follow_on = False
         self.prune_data_store()
+
+        # Find depth changes and create deltas
+        if self.update_window_depths:
+            self.window_depth_finder()
+
         if self.updates_pending:
             # update
             self.update_family_proxies()
