@@ -294,7 +294,7 @@ class ISO8601Sequence(SequenceBase):
 
     Args:
         dep_section:
-            The full sequence expresion.
+            The full sequence expression.
         context_start_point:
             Sequence start point from the global context.
         context_end_point:
