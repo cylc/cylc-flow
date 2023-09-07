@@ -206,9 +206,23 @@ class CylcTimeParser:
         self,
         expression: str,
         context_start_point: Optional['TimePoint'] = None,
-        context_end_point: Optional['TimePoint'] = None
+        context_end_point: Optional['TimePoint'] = None,
+        zero_duration_warning: bool = True,
     ) -> Tuple[TimeRecurrence, list]:
-        """Parse an expression in abbrev. or full ISO recurrence format."""
+        """Parse an expression in abbrev. or full ISO recurrence format.
+
+        Args:
+            expression:
+                The recurrence expression to parse.
+            context_start_point:
+                Sequence start point from the global context.
+            context_end_point:
+                Sequence end point from the global context.
+            zero_duration_warning:
+                If `False`, then zero-duration recurrence warnings will be
+                turned off. This is set for exclusion parsing.
+
+        """
         expression, exclusions = parse_exclusion(str(expression))
 
         if context_start_point is None:
@@ -301,8 +315,11 @@ class CylcTimeParser:
                     repetitions += 1
                 end_point = None
 
-            if not interval and repetitions != 1 and (
-                (format_num != 1 or start_point == end_point)
+            if (
+                zero_duration_warning
+                and not interval
+                and repetitions != 1
+                and (format_num != 1 or start_point == end_point)
             ):
                 LOG.warning(
                     "Cannot have more than 1 repetition for zero-duration "
