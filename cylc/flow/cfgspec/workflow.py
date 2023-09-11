@@ -1715,10 +1715,12 @@ with Conf(
                     Custom outputs must satisfy these rules:
 
                     .. autoclass:: cylc.flow.unicode_rules.TaskOutputValidator
+                       :noindex:
 
                     Task messages must satisfy these rules:
 
                     .. autoclass:: cylc.flow.unicode_rules.TaskMessageValidator
+                       :noindex:
                 ''')
 
             with Conf('parameter environment templates', desc='''
