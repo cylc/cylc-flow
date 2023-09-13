@@ -90,17 +90,25 @@ def test_construct_rsync_over_ssh_cmd():
     ]
 
 
-def test_construct_ssh_cmd_forward_env():
+def test_construct_ssh_cmd_forward_env(mock_glbl_cfg):
     """ Test for 'ssh forward environment variables'
     """
     import os
+
+    mock_glbl_cfg(
+        'cylc.flow.remote.glbl_cfg',
+        '''
+        [scheduler]
+            [[run hosts]]
+                ssh forward environment variables = FOO, BAR
+        '''
+    )
 
     host = 'example.com'
     config = {
         'ssh command': 'ssh',
         'use login shell': None,
         'cylc path': None,
-        'ssh forward environment variables': ['FOO'],
         }
 
     # Variable isn't set, no change to command

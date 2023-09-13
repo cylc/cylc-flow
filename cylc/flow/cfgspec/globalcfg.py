@@ -784,6 +784,14 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``[suite servers][run host select]rank``.
             ''')
+            Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
+                 desc='''
+                A list containing the names of the environment variables to
+                forward with SSH connections to the run and job hosts from
+                the host running 'cylc play'
+
+                .. versionchanged:: 8.3.0
+            ''')
 
         with Conf('host self-identification', desc=f'''
             How Cylc determines and shares the identity of the workflow host.
@@ -1415,13 +1423,6 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]copyable
                    environment variables``.
-            ''')
-            Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
-                 desc='''
-                A list containing the names of the environment variables to
-                forward with SSH connections to the server and run hosts
-
-                .. versionchanged:: 8.3.0
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN,
                  desc=f'''
