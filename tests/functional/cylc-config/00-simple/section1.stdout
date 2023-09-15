@@ -16,5 +16,7 @@ runahead limit = P4
     clock-expire = 
     sequential = 
 [[xtriggers]]
+    [[[settings]]]
+        non-sequential xtriggers = 
 [[graph]]
     R1 = OPS:finish-all => VAR

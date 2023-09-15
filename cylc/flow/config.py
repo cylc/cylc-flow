@@ -1705,7 +1705,13 @@ class WorkflowConfig:
             self.taskdefs[right].add_dependency(dependency, seq)
 
         validator = XtriggerNameValidator.validate
-        for label in self.cfg['scheduling']['xtriggers']:
+        xtrigs = self.cfg['scheduling']['xtriggers']
+        for label in xtrigs:
+            if (
+                label == 'settings'
+                and not isinstance(xtrigs[label], SubFuncContext)
+            ):
+                continue
             valid, msg = validator(label)
             if not valid:
                 raise WorkflowConfigError(
@@ -1714,7 +1720,7 @@ class WorkflowConfig:
 
         for label in xtrig_labels:
             try:
-                xtrig = self.cfg['scheduling']['xtriggers'][label]
+                xtrig = xtrigs[label]
             except KeyError:
                 if label != 'wall_clock':
                     raise WorkflowConfigError(f"xtrigger not defined: {label}")
@@ -1739,6 +1745,12 @@ class WorkflowConfig:
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
 
             self.taskdefs[right].add_xtrig_label(label, seq)
+
+        if self.xtrigger_mgr is not None:
+            with suppress(KeyError):
+                self.xtrigger_mgr.non_sequential_labels.update(
+                    set(xtrigs['settings']['non-sequential xtriggers'])
+                )
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the workflow

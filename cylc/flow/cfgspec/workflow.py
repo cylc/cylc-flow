@@ -814,8 +814,26 @@ with Conf(
 
                 Example::
 
-                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+            .. code-block:: cylc
+
+                [[xtriggers]]
+                    my_trig = my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S
+                    [[[settings]]]
+                        non-sequential xtriggers = my_trig
+
             ''')
+            with Conf('settings', desc='''
+                Section heading for xtrigger behavior settings.
+            ''') as Queue:
+                Conf('non-sequential xtriggers', VDR.V_STRING_LIST, desc='''
+                    A list of xtrigger labels whose xtrigger, of associated
+                    parentless task, be checked out to the runahead limit.
+
+                    This allows for non-sequential xtrigger checking.
+
+                    A task with multiple xtriggers requires all labels
+                    be specified to behave in this way.
+                ''')
 
         with Conf('graph', desc=f'''
             The workflow graph is defined under this section.

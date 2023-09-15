@@ -90,6 +90,7 @@ if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.taskdef import TaskDef
     from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.xtrigger_mgr import XtriggerManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
 
@@ -110,6 +111,7 @@ class TaskPool:
         config: 'WorkflowConfig',
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
+        xtrigger_mgr: 'XtriggerManager',
         data_store_mgr: 'DataStoreMgr',
         flow_mgr: 'FlowMgr'
     ) -> None:
@@ -119,6 +121,7 @@ class TaskPool:
         self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         self.task_events_mgr.spawn_func = self.spawn_on_output
+        self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
@@ -267,7 +270,7 @@ class TaskPool:
 
         for itask in release_me:
             self.rh_release_and_queue(itask)
-            if itask.flow_nums:
+            if itask.flow_nums and not itask.is_xtrigger_sequential:
                 self.spawn_to_rh_limit(
                     itask.tdef,
                     itask.tdef.next_point(itask.point),
@@ -560,6 +563,15 @@ class TaskPool:
                             )
                         )
 
+            # Set xtrigger checking type, which effects parentless spawning.
+            if (
+                itask.tdef.is_parentless(itask.point)
+                and set(itask.state.xtriggers.keys()).difference(
+                    self.xtrigger_mgr.non_sequential_labels
+                )
+            ):
+                itask.is_xtrigger_sequential = True
+
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
             self.add_to_pool(itask)
@@ -705,42 +717,65 @@ class TaskPool:
         ntask = self._get_task_by_id(
             Tokens(cycle=str(point), task=name).relative_id
         )
+        is_in_pool = False
         if ntask is None:
             # ntask does not exist: spawn it in the flow.
             ntask = self.spawn_task(name, point, flow_nums, flow_wait)
+            # if the task was found set xtrigger checking type.
+            if (
+                ntask is not None
+                and set(ntask.state.xtriggers.keys()).difference(
+                    self.xtrigger_mgr.non_sequential_labels
+                )
+            ):
+                ntask.is_xtrigger_sequential = True
         else:
             # ntask already exists (n=0): merge flows.
+            is_in_pool = True
             self.merge_flows(ntask, flow_nums)
-        return ntask  # may be None
+        return ntask, is_in_pool  # may be None
 
     def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
-        """Spawn parentless task instances from point to runahead limit."""
+        """Spawn parentless task instances from point to runahead limit.
+
+        Sequentially checked xtriggers with spawn corresponding task out to the
+        next task with any xtrigger with the same behaviour, or to the runahead
+        limit (whichever occurs first).
+
+        """
         if not flow_nums or point is None:
             # Force-triggered no-flow task.
             # Or called with an invalid next_point.
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
+
+        is_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
             if tdef.is_parentless(point):
-                ntask = self.get_or_spawn_task(
+                ntask, is_in_pool = self.get_or_spawn_task(
                     point, tdef.name, flow_nums
                 )
                 if ntask is not None:
-                    self.add_to_pool(ntask)
+                    if not is_in_pool:
+                        self.add_to_pool(ntask)
                     self.rh_release_and_queue(ntask)
+                    if ntask.is_xtrigger_sequential:
+                        is_sequential = True
+                        break
             point = tdef.next_point(point)
 
         # Once more for the runahead-limited task (don't release it).
-        self.spawn_if_parentless(tdef, point, flow_nums)
+        if not is_sequential:
+            self.spawn_if_parentless(tdef, point, flow_nums)
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
         if flow_nums and point is not None and tdef.is_parentless(point):
-            ntask = self.get_or_spawn_task(
+            ntask, is_in_pool = self.get_or_spawn_task(
                 point, tdef.name, flow_nums
             )
-            if ntask is not None:
+            if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
 
     def remove(self, itask, reason=None):
@@ -2042,6 +2077,19 @@ class TaskPool:
             # run it (or run it again for incomplete flow-wait)
             self.add_to_pool(itask)
             self._force_trigger(itask)
+
+    def spawn_parentless_sequential_xtriggers(self):
+        """Spawn successor(s) of parentless wall clock satisfied tasks."""
+        while self.xtrigger_mgr.sequential_spawn_next:
+            taskid = self.xtrigger_mgr.sequential_spawn_next.pop()
+            itask = self._get_task_by_id(taskid)
+            # Will spawn out to RH limit or next parentless clock trigger
+            # or non-parentless.
+            self.spawn_to_rh_limit(
+                itask.tdef,
+                itask.tdef.next_point(itask.point),
+                itask.flow_nums
+            )
 
     def clock_expire_tasks(self):
         """Expire any tasks past their clock-expiry time."""

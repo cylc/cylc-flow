@@ -164,6 +164,9 @@ class TaskProxy:
         .transient:
             This is a transient proxy - not to be added to the task pool, but
             used e.g. to spawn children, or to get task-specific information.
+        .is_xtrigger_sequential:
+            A flag used to determine whether this task needs to wait for
+            xtrigger satisfaction to spawn.
 
     Args:
         tdef: The definition object of this task.
@@ -206,7 +209,8 @@ class TaskProxy:
         'try_timers',
         'waiting_on_job_prep',
         'mode_settings',
-        'transient'
+        'transient',
+        'is_xtrigger_sequential',
     ]
 
     def __init__(
@@ -242,6 +246,7 @@ class TaskProxy:
             task=self.tdef.name,
         )
         self.identity = self.tokens.relative_id
+        self.is_xtrigger_sequential = False
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 

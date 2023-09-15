@@ -217,6 +217,14 @@ class XtriggerManager:
         # Signatures of active functions (waiting on callback).
         self.active: list = []
 
+        # Clock labels, to avoid repeated string comparisons
+        self.wall_clock_labels: set = set()
+        # Labels whose xtrigger will be checked out to the RH limit.
+        self.non_sequential_labels: set = set()
+        # Gather parentless tasks whose xtrigger(s) have been satisfied
+        # (these will be used to spawn the next occurance).
+        self.sequential_spawn_next: set = set()
+
         self.workflow_run_dir = workflow_run_dir
 
         # For function arg templating.
@@ -365,6 +373,8 @@ class XtriggerManager:
 
         """
         self.functx_map[label] = fctx
+        if fctx.func_name == "wall_clock":
+            self.wall_clock_labels.add(label)
 
     def mutate_trig(self, label, kwargs):
         self.functx_map[label].func_kwargs.update(kwargs)
@@ -433,7 +443,7 @@ class XtriggerManager:
 
         args = []
         kwargs = {}
-        if ctx.func_name == "wall_clock":
+        if label in self.wall_clock_labels:
             if "trigger_time" in ctx.func_kwargs:  # noqa: SIM401 (readabilty)
                 # Internal (retry timer): trigger_time already set.
                 kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
@@ -472,14 +482,16 @@ class XtriggerManager:
             itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
-            # Special case: quick synchronous clock check:
-            if sig.startswith("wall_clock"):
+            if label in self.wall_clock_labels:
+                # Special case: quick synchronous clock check.
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
+                    if itask.is_xtrigger_sequential:
+                        self.sequential_spawn_next.add(itask.identity)
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
@@ -502,6 +514,8 @@ class XtriggerManager:
                             [itask.tdef.name],
                             xtrigger_env
                         )
+                    if itask.is_xtrigger_sequential:
+                        self.sequential_spawn_next.add(itask.identity)
                 continue
 
             # Call the function to check the unsatisfied xtrigger.
