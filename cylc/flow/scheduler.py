@@ -467,6 +467,7 @@ class Scheduler:
             self.config,
             self.workflow_db_mgr,
             self.task_events_mgr,
+            self.xtrigger_mgr,
             self.data_store_mgr,
             self.flow_mgr
         )
@@ -1734,6 +1735,8 @@ class Scheduler:
                     self.pool.queue_task(itask)
 
             if housekeep_xtriggers:
+                # Spawn parentless clock-triggered
+                self.pool.spawn_parentless_clock_triggered()
                 # (Could do this periodically?)
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 

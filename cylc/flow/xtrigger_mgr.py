@@ -211,6 +211,11 @@ class XtriggerManager:
         # Signatures of active functions (waiting on callback).
         self.active: list = []
 
+        # Gather named wall-clocks closet to current time.
+        # (no need to check or spawn future clocks of tasks respectively).
+        self.wall_clock_labels: set = set()
+        self.wall_clock_spawns: list = []
+
         self.workflow_run_dir = workflow_run_dir
 
         # For function arg templating.
@@ -316,6 +321,8 @@ class XtriggerManager:
         """
         self.validate_xtrigger(label, fctx, fdir)
         self.functx_map[label] = fctx
+        if fctx.func_name == "wall_clock":
+            self.wall_clock_labels.add(label)
 
     def mutate_trig(self, label, kwargs):
         self.functx_map[label].func_kwargs.update(kwargs)
@@ -380,7 +387,7 @@ class XtriggerManager:
 
         args = []
         kwargs = {}
-        if ctx.func_name == "wall_clock":
+        if label in self.wall_clock_labels:
             if "trigger_time" in ctx.func_kwargs:
                 # Internal (retry timer): trigger_time already set.
                 kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
@@ -420,10 +427,12 @@ class XtriggerManager:
             itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
-            if sig.startswith("wall_clock"):
+            if label in self.wall_clock_labels:
                 # Special case: quick synchronous clock check.
                 if wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     itask.state.xtriggers[label] = True
+                    if itask.tdef.is_parentless(itask.point):
+                        self.wall_clock_spawns.append(itask)
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)

@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.taskdef import TaskDef
     from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.xtrigger_mgr import XtriggerManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
 
@@ -98,6 +99,7 @@ class TaskPool:
         config: 'WorkflowConfig',
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
+        xtrigger_mgr: 'XtriggerManager',
         data_store_mgr: 'DataStoreMgr',
         flow_mgr: 'FlowMgr'
     ) -> None:
@@ -108,6 +110,7 @@ class TaskPool:
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
+        self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
@@ -744,6 +747,7 @@ class TaskPool:
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
+        is_clock = False
         while point is not None and (point <= self.runahead_limit_point):
             if tdef.is_parentless(point):
                 ntask = self._get_spawned_or_merged_task(
@@ -752,10 +756,18 @@ class TaskPool:
                 if ntask is not None:
                     self.add_to_pool(ntask)
                     self.rh_release_and_queue(ntask)
+                    if (
+                        ntask.state.xtriggers
+                        and set(ntask.state.xtriggers.keys()).intersection(
+                            self.xtrigger_mgr.wall_clock_labels
+                        )
+                    ):
+                        is_clock = True
+                        break
             point = tdef.next_point(point)
 
         # Once more (for the rh-limited task: don't rh release it!)
-        if point is not None and tdef.is_parentless(point):
+        if point is not None and tdef.is_parentless(point) and not is_clock:
             ntask = self._get_spawned_or_merged_task(
                 point, tdef.name, flow_nums
             )
@@ -1752,6 +1764,18 @@ class TaskPool:
                 self.task_queue_mgr.force_release_task(itask)
 
         return len(unmatched)
+
+    def spawn_parentless_clock_triggered(self):
+        """Spawn successor(s) of parentless wall clock satisfied tasks."""
+        while self.xtrigger_mgr.wall_clock_spawns:
+            itask = self.xtrigger_mgr.wall_clock_spawns.pop()
+            # Will spawn out to RH limit or next parentless clock trigger
+            # or non-parentless.
+            self.spawn_to_rh_limit(
+                itask.tdef,
+                itask.tdef.next_point(itask.point),
+                itask.flow_nums
+            )
 
     def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
         """Simulation mode: simulate task run times and set states."""
