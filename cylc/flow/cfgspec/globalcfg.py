@@ -610,6 +610,26 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
+    with Conf('hub', desc='''
+
+        The cylc hub is mostly documented here:
+              :ref:`architecture-reference`.
+              .. _architecture-reference:
+
+
+        .. seealso::
+
+            :ref:`UI_Server_config`.
+            .. _UI_Server_config:
+
+    '''):
+        Conf('url', VDR.V_STRING, '', desc='''
+            ..versionadded:: 8.3.0
+
+            Where Jupyter Hub is used a url can be provided for routing on
+            execution of ``cylc gui`` command.
+        ''')
+
     with Conf('scheduler', desc=(
         default_for(SCHEDULER_DESCR, "[scheduler]", section=True)
     )):
