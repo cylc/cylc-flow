@@ -620,13 +620,11 @@ with Conf('global.cylc', desc='''
 
            The cylc hub is mostly documented here:
 
-           * :ref:`architecture-reference`.
-           * .. _architecture-reference:
+           :ref:`architecture-reference`.
 
         .. seealso::
 
-           * :ref:`UI_Server_config`.
-           * .. _UI_Server_config:
+           :ref:`UI_Server_config`.
 
     '''):
         Conf('url', VDR.V_STRING, '', desc='''
