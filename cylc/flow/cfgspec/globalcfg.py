@@ -611,16 +611,22 @@ with Conf('global.cylc', desc='''
        is no longer supported.
 ''') as SPEC:
     with Conf('hub', desc='''
+        Configure the public URL of Jupyter Hub.
+        
+        If configured, the ``cylc gui`` command will open a web browser at this
+        location rather than starting a standalone server when called.
 
-        The cylc hub is mostly documented here:
-              :ref:`architecture-reference`.
-              .. _architecture-reference:
+        .. note::
 
+           The cylc hub is mostly documented here:
+
+           * :ref:`architecture-reference`.
+           * .. _architecture-reference:
 
         .. seealso::
 
-            :ref:`UI_Server_config`.
-            .. _UI_Server_config:
+           * :ref:`UI_Server_config`.
+           * .. _UI_Server_config:
 
     '''):
         Conf('url', VDR.V_STRING, '', desc='''
