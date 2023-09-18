@@ -612,7 +612,7 @@ with Conf('global.cylc', desc='''
 ''') as SPEC:
     with Conf('hub', desc='''
         Configure the public URL of Jupyter Hub.
-        
+
         If configured, the ``cylc gui`` command will open a web browser at this
         location rather than starting a standalone server when called.
 
