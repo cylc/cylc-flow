@@ -20,6 +20,78 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_store_mgr import (
     TASK_PROXIES,
 )
+from cylc.flow.id import Tokens
+
+
+def increment_graph_window(schd, task):
+    """Increment the graph window about the active task."""
+    tokens = schd.tokens.duplicate(cycle='1', task=task)
+    schd.data_store_mgr.increment_graph_window(
+        tokens,
+        IntegerPoint('1'),
+        {1},
+        is_manual_submit=False,
+    )
+
+
+def get_deltas(schd):
+    """Return the ids and graph-window values in the delta store.
+
+    Note, call before get_n_window as this clears the delta store.
+
+    Returns:
+        (added, updated, pruned)
+
+    """
+    # populate added deltas
+    schd.data_store_mgr.gather_delta_elements(
+        schd.data_store_mgr.added,
+        'added',
+    )
+    # populate updated deltas
+    schd.data_store_mgr.gather_delta_elements(
+        schd.data_store_mgr.updated,
+        'updated',
+    )
+    # populate pruned deltas
+    schd.data_store_mgr.prune_data_store()
+    return (
+        {
+            # added
+            Tokens(tb_task_proxy.id)['task']: tb_task_proxy.graph_depth
+            for tb_task_proxy in schd.data_store_mgr.deltas[TASK_PROXIES].added
+        },
+        {
+            # updated
+            Tokens(tb_task_proxy.id)['task']: tb_task_proxy.graph_depth
+            for tb_task_proxy in schd.data_store_mgr.deltas[TASK_PROXIES].updated
+        },
+        {
+            # pruned
+            Tokens(id_)['task']
+            for id_ in schd.data_store_mgr.deltas[TASK_PROXIES].pruned
+        },
+    )
+
+
+async def get_n_window(schd):
+    """Read out the graph window of the workflow."""
+    await schd.update_data_structure()
+    data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+    return {
+        t.name: t.graph_depth
+        for t in data[TASK_PROXIES].values()
+    }
+
+
+async def complete_task(schd, task):
+    """Mark a task as completed."""
+    schd.data_store_mgr.remove_pool_node(task, IntegerPoint('1'))
+
+
+def add_task(schd, task):
+    """Add a waiting task to the pool."""
+    schd.data_store_mgr.add_pool_node(task, IntegerPoint('1'))
 
 
 async def test_increment_graph_window_blink(flow, scheduler, start):
@@ -59,37 +131,6 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
         }
     })
     schd = scheduler(id_)
-
-    def increment_graph_window(task):
-        """Increment the graph window about the active task."""
-        nonlocal schd
-        tokens = schd.tokens.duplicate(cycle='1', task=task)
-        schd.data_store_mgr.increment_graph_window(
-            tokens,
-            IntegerPoint('1'),
-            {1},
-            is_manual_submit=False,
-        )
-
-    async def get_n_window():
-        """Read out the graph window of the workflow."""
-        nonlocal schd
-        await schd.update_data_structure()
-        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
-        return {
-            t.name: t.graph_depth
-            for t in data[TASK_PROXIES].values()
-        }
-
-    async def complete_task(task):
-        """Mark a task as completed."""
-        nonlocal schd
-        schd.data_store_mgr.remove_pool_node(task, IntegerPoint('1'))
-        await schd.update_data_structure()
-
-    def add_task(task):
-        """Add a waiting task to the pool."""
-        schd.data_store_mgr.add_pool_node(task, IntegerPoint('1'))
 
     # the tasks traversed via the "blink" task when...
     blink = {
@@ -184,12 +225,84 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
         schd.data_store_mgr.set_graph_window_extent(3)
         await schd.update_data_structure()
 
+        previous_n_window = {}
         for previous_task, active_task, n_window in advance():
             # mark the previous task as completed
-            await complete_task(previous_task)
+            await complete_task(schd, previous_task)
             # add the next task to the pool
-            add_task(active_task)
+            add_task(schd, active_task)
             # run the graph window algorithm
-            increment_graph_window(active_task)
-            # compare the result to what we were expecting
-            assert await get_n_window() == n_window
+            increment_graph_window(schd, active_task)
+            # get the deltas which increment_graph_window created
+            added, updated, pruned = get_deltas(schd)
+
+            # compare the n-window in the store to what we were expecting
+            _n_window = await get_n_window(schd)
+            assert _n_window == n_window
+
+            # compate the deltas to what we were expecting
+            if active_task != 'a':
+                # skip the first task as this is complicated by startup logic
+                assert added == {
+                    key: value
+                    for key, value in _n_window.items()
+                    if key not in previous_n_window
+                }
+                # TODO: updated deltas don't seem to be coming through as expected
+                # assert {
+                #     key: value
+                #     for key, value in _n_window.items()
+                #     if previous_n_window.get(key, value) != value
+                # } == updated
+                assert pruned == {
+                    key
+                    for key in previous_n_window
+                    if key not in _n_window
+                }
+
+            previous_n_window = _n_window
+
+
+async def test_window_resize_rewalk(flow, scheduler, start):
+    """The window resize method should wipe and rebuild the n-window."""
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'true',
+        },
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b => c => d => e => f => g'
+            }
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # start with an empty pool
+        schd.pool.remove(schd.pool.get_tasks()[0])
+
+        # the n-window should be empty
+        assert await get_n_window(schd) == {}
+
+        # expand the window around 1/d
+        add_task(schd, 'd')
+        increment_graph_window(schd, 'd')
+
+        # set the graph window to n=3
+        schd.data_store_mgr.set_graph_window_extent(3)
+        assert set(await get_n_window(schd)) == {
+            'a', 'b', 'c', 'd', 'e', 'f', 'g'
+        }
+
+        # set the graph window to n=1
+        schd.data_store_mgr.set_graph_window_extent(1)
+        schd.data_store_mgr.window_resize_rewalk()
+        assert set(await get_n_window(schd)) == {
+            'c', 'd', 'e'
+        }
+
+        # set the graph window to n=2
+        schd.data_store_mgr.set_graph_window_extent(2)
+        schd.data_store_mgr.window_resize_rewalk()
+        assert set(await get_n_window(schd)) == {
+            'b', 'c', 'd', 'e', 'f'
+        }
