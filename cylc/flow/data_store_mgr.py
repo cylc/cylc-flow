@@ -932,6 +932,7 @@ class DataStoreMgr:
 
                     # Children/downstream nodes
                     # TODO: xtrigger is workflow_state edges too
+                    # see: https://github.com/cylc/cylc-flow/issues/4582
                     # Reference set for workflow relations
                     nc_ids = set()
                     if not c_done:
