@@ -10,12 +10,6 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 -->
 
 <!-- towncrier release notes start -->
-## __cylc-8.2.2
-
-### Enhancements
-
-[#5733](https://github.com/cylc/cylc-flow/pull/5733) - Added Hub url to global config
-
 
 ## __cylc-8.2.1 (Released 2023-08-14)__
 
