@@ -624,7 +624,7 @@ with Conf('global.cylc', desc='''
 
     '''):
         Conf('url', VDR.V_STRING, '', desc='''
-            ..versionadded:: 8.3.0
+            .. versionadded:: 8.3.0
 
             Where Jupyter Hub is used a url can be provided for routing on
             execution of ``cylc gui`` command.
