@@ -802,9 +802,21 @@ with Conf(
                     :ref:`SequentialTasks`.
             ''')
 
+        Conf('sequential xtriggers default', VDR.V_BOOLEAN, False, desc='''
+            Set to ``True``, this allows for sequential spawning of associated
+            parentless tasks on xtrigger satisfaction.
+            Instead of out to the runahead limit (default: ``False``).
+
+            This workflow wide default can be overridden by a reserved
+            keyword argument in the xtrigger function declaration
+            (``sequential=True/False``).
+
+            The presence of one sequential xtrigger on a parentless task with
+            multiple xtriggers will cause sequential behavior.
+        ''')
         with Conf('xtriggers', desc='''
-                This section is for *External Trigger* function declarations -
-                see :ref:`Section External Triggers`.
+            This section is for *External Trigger* function declarations -
+            see :ref:`Section External Triggers`.
         '''):
             Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
                 Any user-defined event trigger function declarations and
@@ -814,26 +826,8 @@ with Conf(
 
                 Example::
 
-            .. code-block:: cylc
-
-                [[xtriggers]]
-                    my_trig = my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S
-                    [[[settings]]]
-                        non-sequential xtriggers = my_trig
-
+                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
-            with Conf('settings', desc='''
-                Section heading for xtrigger behavior settings.
-            ''') as Queue:
-                Conf('non-sequential xtriggers', VDR.V_STRING_LIST, desc='''
-                    A list of xtrigger labels whose xtrigger, of associated
-                    parentless task, be checked out to the runahead limit.
-
-                    This allows for non-sequential xtrigger checking.
-
-                    A task with multiple xtriggers requires all labels
-                    be specified to behave in this way.
-                ''')
 
         with Conf('graph', desc=f'''
             The workflow graph is defined under this section.

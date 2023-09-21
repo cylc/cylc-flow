@@ -6,6 +6,7 @@ hold after cycle point =
 stop after cycle point = 
 cycling mode = integer
 runahead limit = P4
+sequential xtriggers default = False
 [[queues]]
     [[[default]]]
         limit = 100
@@ -16,7 +17,5 @@ runahead limit = P4
     clock-expire = 
     sequential = 
 [[xtriggers]]
-    [[[settings]]]
-        non-sequential xtriggers = 
 [[graph]]
     R1 = OPS:finish-all => VAR

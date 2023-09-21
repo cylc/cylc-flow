@@ -566,8 +566,8 @@ class TaskPool:
             # Set xtrigger checking type, which effects parentless spawning.
             if (
                 itask.tdef.is_parentless(itask.point)
-                and set(itask.state.xtriggers.keys()).difference(
-                    self.xtrigger_mgr.non_sequential_labels
+                and set(itask.state.xtriggers.keys()).intersection(
+                    self.xtrigger_mgr.sequential_xtrigger_labels
                 )
             ):
                 itask.is_xtrigger_sequential = True
@@ -724,8 +724,8 @@ class TaskPool:
             # if the task was found set xtrigger checking type.
             if (
                 ntask is not None
-                and set(ntask.state.xtriggers.keys()).difference(
-                    self.xtrigger_mgr.non_sequential_labels
+                and set(ntask.state.xtriggers.keys()).intersection(
+                    self.xtrigger_mgr.sequential_xtrigger_labels
                 )
             ):
                 ntask.is_xtrigger_sequential = True

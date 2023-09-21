@@ -16,7 +16,7 @@
 
 from contextlib import suppress
 from enum import Enum
-from inspect import signature
+from inspect import getfullargspec, signature
 import json
 import re
 from copy import deepcopy
@@ -186,6 +186,32 @@ class XtriggerManager:
     managed uniquely - i.e. many tasks depending on the same clock trigger
     (with same offset from cycle point) get satisfied by the same call.
 
+    Parentless tasks with xtrigger(s) are, by default, spawned out to the
+    runahead limit. This results in non-sequential, and potentially
+    unnecessary, checking out to this limit (and may introduce clutter to
+    user interfaces). An option to make this sequential is now available,
+    by changing the default for all xtriggers in a workflow, and a way to
+    override this default with a (reserved) keyword function argument
+    (i.e. "sequential=True/False"):
+
+    # Example:
+    [scheduling]
+        sequential xtrigger default = True
+        [[xtriggers]]
+            clock_0 = wall_clock()  # offset PT0H
+            clock_1 = wall_clock(offset=PT1H)
+                 # or wall_clock(PT1H)
+            workflow_x = workflow_state(
+                workflow=other,
+                point=%(task_cycle_point)s,
+                sequential=False
+            ):PT30S
+        [[graph]]
+            PT1H = '''
+                @clock_1 & @workflow_x => foo & bar
+                @wall_clock = baz  # pre-defined zero-offset clock
+            '''
+
     Args:
         workflow: workflow name
         user: workflow owner
@@ -219,8 +245,11 @@ class XtriggerManager:
 
         # Clock labels, to avoid repeated string comparisons
         self.wall_clock_labels: set = set()
-        # Labels whose xtrigger will be checked out to the RH limit.
-        self.non_sequential_labels: set = set()
+
+        # Workflow wide default, used when not specified in xtrigger kwargs.
+        self.sequential_xtriggers_default = False
+        # Labels whose xtriggers are sequentially checked.
+        self.sequential_xtrigger_labels: set = set()
         # Gather parentless tasks whose xtrigger(s) have been satisfied
         # (these will be used to spawn the next occurance).
         self.sequential_spawn_next: set = set()
@@ -271,6 +300,7 @@ class XtriggerManager:
                 * If the function module was not found.
                 * If the function was not found in the xtrigger module.
                 * If the function is not callable.
+                * If the function is not callable.
                 * If any string template in the function context
                   arguments are not present in the expected template values.
                 * If the arguments do not match the function signature.
@@ -292,6 +322,15 @@ class XtriggerManager:
         if not callable(func):
             raise XtriggerConfigError(
                 label, f"'{fname}' not callable in xtrigger module '{fname}'",
+            )
+        if 'sequential' in getfullargspec(func).args:
+            raise XtriggerConfigError(
+                label,
+                fname,
+                (
+                    f"xtrigger module '{fname}' contains reserved"
+                    " argument name 'sequential'"
+                ),
             )
 
         # Validate args and kwargs against the function signature
@@ -373,6 +412,11 @@ class XtriggerManager:
 
         """
         self.functx_map[label] = fctx
+        if fctx.func_kwargs.pop(
+            'sequential',
+            self.sequential_xtriggers_default
+        ):
+            self.sequential_xtrigger_labels.add(label)
         if fctx.func_name == "wall_clock":
             self.wall_clock_labels.add(label)
 
@@ -490,12 +534,12 @@ class XtriggerManager:
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
-                    if itask.is_xtrigger_sequential:
-                        self.sequential_spawn_next.add(itask.identity)
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
+                    if itask.is_xtrigger_sequential:
+                        self.sequential_spawn_next.add(itask.identity)
                     self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.

@@ -1707,17 +1707,16 @@ class WorkflowConfig:
         validator = XtriggerNameValidator.validate
         xtrigs = self.cfg['scheduling']['xtriggers']
         for label in xtrigs:
-            if (
-                label == 'settings'
-                and not isinstance(xtrigs[label], SubFuncContext)
-            ):
-                continue
             valid, msg = validator(label)
             if not valid:
                 raise WorkflowConfigError(
                     f'Invalid xtrigger name "{label}" - {msg}'
                 )
 
+        if self.xtrigger_mgr is not None:
+            self.xtrigger_mgr.sequential_xtriggers_default = (
+                self.cfg['scheduling']['sequential xtriggers default']
+            )
         for label in xtrig_labels:
             try:
                 xtrig = xtrigs[label]
@@ -1745,12 +1744,6 @@ class WorkflowConfig:
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
 
             self.taskdefs[right].add_xtrig_label(label, seq)
-
-        if self.xtrigger_mgr is not None:
-            with suppress(KeyError):
-                self.xtrigger_mgr.non_sequential_labels.update(
-                    set(xtrigs['settings']['non-sequential xtriggers'])
-                )
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the workflow
