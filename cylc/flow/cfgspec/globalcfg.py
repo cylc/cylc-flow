@@ -616,15 +616,11 @@ with Conf('global.cylc', desc='''
         If configured, the ``cylc gui`` command will open a web browser at this
         location rather than starting a standalone server when called.
 
-        .. note::
-
-           The cylc hub is mostly documented here:
-
-           :ref:`architecture-reference`.
 
         .. seealso::
 
-           :ref:`UI_Server_config`.
+           * The cylc hub :ref:`architecture-reference` for fuller details.
+           * :ref:`UI_Server_config` for practical details.
 
     '''):
         Conf('url', VDR.V_STRING, '', desc='''
