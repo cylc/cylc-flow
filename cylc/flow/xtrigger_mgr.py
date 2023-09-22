@@ -323,15 +323,27 @@ class XtriggerManager:
             raise XtriggerConfigError(
                 label, f"'{fname}' not callable in xtrigger module '{fname}'",
             )
-        if 'sequential' in getfullargspec(func).args:
-            raise XtriggerConfigError(
-                label,
-                fname,
-                (
-                    f"xtrigger module '{fname}' contains reserved"
-                    " argument name 'sequential'"
-                ),
-            )
+        x_argspec = getfullargspec(func)
+        if 'sequential' in x_argspec.args:
+            if (
+                x_argspec.defaults is None
+                or not isinstance(
+                    x_argspec.defaults[x_argspec.args.index('sequential')],
+                    bool
+                )
+            ):
+                raise XtriggerConfigError(
+                    label,
+                    fname,
+                    (
+                        f"xtrigger module '{fname}' contains reserved argument"
+                        " name 'sequential' that has no boolean default"
+                    ),
+                )
+            elif 'sequential' not in fctx.func_kwargs:
+                fctx.func_kwargs['sequential'] = x_argspec.defaults[
+                    x_argspec.args.index('sequential')
+                ]
 
         # Validate args and kwargs against the function signature
         sig_str = fctx.get_signature()

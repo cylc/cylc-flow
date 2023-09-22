@@ -808,8 +808,8 @@ with Conf(
             Instead of out to the runahead limit (default: ``False``).
 
             This workflow wide default can be overridden by a reserved
-            keyword argument in the xtrigger function declaration
-            (``sequential=True/False``).
+            keyword argument in the xtrigger function declaration and/or
+            function (``sequential=True/False``).
 
             The presence of one sequential xtrigger on a parentless task with
             multiple xtriggers will cause sequential behavior.
