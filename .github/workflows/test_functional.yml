@@ -62,14 +62,14 @@ jobs:
           # remote platforms
           - name: '_remote_background_indep_poll'
             os: 'ubuntu-latest'
-            python-version: '3.7'
+            python-version: '3.8'
             test-base: 'tests/f tests/k'
             chunk: '1/1'
             platform: '_remote_background_indep_poll _remote_at_indep_poll'
           - name: '_remote_background_indep_tcp'
             os: 'ubuntu-latest'
             test-base: 'tests/f tests/k'
-            python-version: '3.7'
+            python-version: '3.8'
             chunk: '1/1'
             platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
           # macos
