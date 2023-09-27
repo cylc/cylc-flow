@@ -787,7 +787,7 @@ with Conf('global.cylc', desc='''
             Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
                  desc='''
                 A list containing the names of the environment variables to
-                forward with SSH connections to the run and job hosts from
+                forward with SSH connections to the workflow host from
                 the host running 'cylc play'
 
                 .. versionchanged:: 8.3.0
