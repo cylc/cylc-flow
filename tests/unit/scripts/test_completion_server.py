@@ -246,6 +246,12 @@ async def test_complete_cylc(dummy_workflow):
         'cylc', '62656566', '--77656C6C696E67746F6E='
     ) == set()
 
+    # $ cylc cat-log f<tab><tab>
+    assert await _complete_cylc('cylc', 'cat-log', 'f') == {'foo/run2//'}
+
+    # $ cylc log f<tab><tab>  # NOTE: "log" is an alias for "cat-log"
+    assert await _complete_cylc('cylc', 'log', 'f') == {'foo/run2//'}
+
     # $ cylc help <tab><tab>
     assert 'all' in await _complete_cylc('cylc', 'help', '')
 
