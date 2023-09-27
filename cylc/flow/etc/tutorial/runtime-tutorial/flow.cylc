@@ -6,9 +6,9 @@
     # Start the workflow 7 hours before now ignoring minutes and seconds
     # * previous(T-00) takes the current time ignoring minutes and seconds.
     # * - PT7H subtracts 7 hours from the time.
-    initial cycle point = previous(T-00) - PT7H
+    initial cycle point = # Change me
     # Stop the workflow 6 hours after the initial cycle point.
-    final cycle point = +PT6H
+    final cycle point = # Change me
     [[graph]]
         # Repeat every three hours starting at the initial cycle point.
         PT3H = """
@@ -34,10 +34,10 @@
         """
 
 [runtime]
-    [[get_observations_camborne]]
     [[get_observations_heathrow]]
-    [[get_observations_aldergrove]]
+    [[get_observations_camborne]]
     [[get_observations_shetland]]
+    [[get_observations_aldergrove]]
     [[consolidate_observations]]
     [[forecast]]
     [[get_rainfall]]
