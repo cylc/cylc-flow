@@ -117,6 +117,7 @@ class CylcReviewDAO(object):
                 self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
                 if os.path.exists(db_f_name):
                     break
+        self.is_cylc8 = self.set_is_cylc8(user_name, suite_name)
         return self.daos[key]
 
     def _db_close(self, user_name, suite_name):
@@ -171,6 +172,15 @@ class CylcReviewDAO(object):
             broadcast_events.append(
                 (time_, change, point, namespace, key, value))
         return broadcast_events
+
+    @staticmethod
+    def set_is_cylc8(user_name, suite_name):
+        from cylc.review import CylcReviewService
+        suite_dir = os.path.join(
+            CylcReviewService._get_user_home(user_name),
+            "cylc-run",
+            suite_name)
+        return CylcReviewService.is_cylc8(suite_dir)
 
     def get_suite_job_entries(
             self, user_name, suite_name, cycles, tasks, task_status,
@@ -228,12 +238,7 @@ class CylcReviewDAO(object):
                 return ([], 0)
         except sqlite3.Error:
             return ([], 0)
-        from cylc.review import CylcReviewService
-        suite_dir = os.path.join(
-            CylcReviewService._get_user_home(user_name),
-            "cylc-run",
-            suite_name)
-        if CylcReviewService.is_cylc8(suite_dir):
+        if self.is_cylc8:
             stmt = (
                 "SELECT" +
                 " task_states.time_updated AS time," +
@@ -527,10 +532,24 @@ class CylcReviewDAO(object):
         except OSError:
             pass
 
+        if self.is_cylc8:
+            # Cylc 8 has a smaller set of task states.
+            # There is no way of identifying
+            # queued, runahead, retrying and submit-retrying from
+            # other waiting tasks.
+            task_status_groups = {
+                'active': ['running', 'preparing', 'submitted'],
+                'fail': ['failed', 'submit-failed'],
+                'success': ['expired', 'succeeded']
+            }
+        else:
+            task_status_groups = TASK_STATUS_GROUPS
+
         states_stmt = {}
-        for key, names in TASK_STATUS_GROUPS.items():
+        for key, names in task_status_groups.items():
             states_stmt[key] = " OR ".join(
                 ["status=='%s'" % (name) for name in names])
+
         stmt = (
             "SELECT" +
             " cycle," +
@@ -539,7 +558,11 @@ class CylcReviewDAO(object):
             " sum(" + states_stmt["success"] + ") AS n_success,"
             " sum(" + states_stmt["fail"] + ") AS n_fail"
             " FROM task_states" +
-            " GROUP BY cycle")
+            " GROUP BY cycle" +
+            " HAVING sum(" + states_stmt["active"] + ")>0" +
+            " OR sum(" + states_stmt["success"] + ")>0" +
+            " OR sum(" + states_stmt["fail"] + ")>0"
+        )
         if integer_mode:
             stmt += " ORDER BY cast(cycle as number)"
         else:
@@ -553,21 +576,20 @@ class CylcReviewDAO(object):
         entries = []
         for row in self._db_exec(user_name, suite_name, stmt, stmt_args):
             cycle, max_time_updated, n_active, n_success, n_fail = row
-            if n_active or n_success or n_fail:
-                entry_of[cycle] = {
-                    "cycle": cycle,
-                    "has_log_job_tar_gz": cycle in targzip_log_cycles,
-                    "max_time_updated": max_time_updated,
-                    "n_states": {
-                        "active": n_active,
-                        "success": n_success,
-                        "fail": n_fail,
-                        "job_active": 0,
-                        "job_success": 0,
-                        "job_fail": 0,
-                    },
-                }
-                entries.append(entry_of[cycle])
+            entry_of[cycle] = {
+                "cycle": cycle,
+                "has_log_job_tar_gz": cycle in targzip_log_cycles,
+                "max_time_updated": max_time_updated,
+                "n_states": {
+                    "active": n_active,
+                    "success": n_success,
+                    "fail": n_fail,
+                    "job_active": 0,
+                    "job_success": 0,
+                    "job_fail": 0,
+                },
+            }
+            entries.append(entry_of[cycle])
         self._db_close(user_name, suite_name)
 
         # Check if "task_jobs" table is available or not.
