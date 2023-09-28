@@ -790,7 +790,7 @@ with Conf('global.cylc', desc='''
                 forward with SSH connections to the workflow host from
                 the host running 'cylc play'
 
-                .. versionchanged:: 8.3.0
+                .. versionadded:: 8.3.0
             ''')
 
         with Conf('host self-identification', desc=f'''
