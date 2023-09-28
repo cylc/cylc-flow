@@ -37,20 +37,13 @@ Parameters:
 
 """
 
-from contextlib import suppress
 from functools import partial
 import re
 import sys
 
 import urwid
 
-from cylc.flow.exceptions import (
-    ClientError,
-    ClientTimeout,
-    WorkflowStopped,
-)
 from cylc.flow.id import Tokens
-from cylc.flow.network.client_factory import get_client
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_WAITING
@@ -61,7 +54,6 @@ from cylc.flow.tui import (
     TUI
 )
 from cylc.flow.tui.data import (
-    extract_context,
     list_mutations,
     mutate,
 )
@@ -296,20 +288,23 @@ def context(app):
     """An overlay for context menus."""
     value = app.tree_walker.get_focus()[0].get_node().get_value()
     selection = [value['id_']]  # single selection ATM
-    context = extract_context(selection)
 
-    client = None
-    if 'workflow' in context:
-        w_id = context['workflow'][0]
-        with suppress(WorkflowStopped, ClientError, ClientTimeout):
-            client = get_client(w_id)
+    is_running = True
+    if (
+        value['type_'] == 'workflow'
+        and value['data']['status'] not in {'running', 'paused'}
+    ):
+        # this is a stopped workflow
+        # => don't display mutations only valid for a running workflow
+        is_running = False
 
     def _mutate(mutation, _):
-        nonlocal app, client
+        nonlocal app, selection
+
         app.open_overlay(partial(progress, text='Running Command'))
         try:
-            mutate(client, mutation, selection)
-        except ClientError as exc:
+            mutate(mutation, selection)
+        except Exception as exc:
             app.open_overlay(partial(error, text=str(exc)))
         else:
             app.close_topmost()
@@ -334,7 +329,10 @@ def context(app):
                     mutation,
                     on_press=partial(_mutate, mutation)
                 )
-                for mutation in list_mutations(client, selection)
+                for mutation in list_mutations(
+                    selection,
+                    is_running,
+                )
             ]
         )
     )

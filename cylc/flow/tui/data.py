@@ -17,7 +17,12 @@
 from functools import partial
 from subprocess import Popen, PIPE
 
-from cylc.flow.exceptions import ClientError
+from cylc.flow.exceptions import (
+    ClientError,
+    ClientTimeout,
+    WorkflowStopped,
+)
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.id import Tokens
 from cylc.flow.tui.util import (
     extract_context
@@ -187,11 +192,25 @@ def generate_mutation(mutation, arguments):
     '''
 
 
-def list_mutations(client, selection):
+def list_mutations(selection, is_running=True):
+    """List mutations relevant to the provided selection.
+
+    Args:
+        selection:
+            The user selection.
+        is_running:
+            If False, then mutations which require the scheduler to be
+            running will be omitted.
+
+            Note, this is only relevant for workflow nodes because if a
+            workflow is stopped, then any tasks within it will be removed
+            anyway.
+
+    """
     context = extract_context(selection)
     selection_type = list(context)[-1]
     ret = []
-    if client:
+    if is_running:
         # add the online mutations
         ret.extend(MUTATIONS.get(selection_type, []))
     # add the offline mutations
@@ -232,20 +251,15 @@ def context_to_variables(context):
     return variables
 
 
-def mutate(client, mutation, selection):
+def mutate(mutation, selection):
     if mutation in {
         _mutation
         for section in OFFLINE_MUTATIONS.values()
         for _mutation in section
     }:
         offline_mutate(mutation, selection)
-    elif client:
-        online_mutate(client, mutation, selection)
     else:
-        raise Exception(
-            f'Cannot peform command {mutation} on a stopped workflow'
-            ' or invalid command.'
-        )
+        online_mutate(mutation, selection)
 
 
 def online_mutate(mutation, selection):
