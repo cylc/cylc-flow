@@ -40,8 +40,12 @@ file:
 
 .. note::
 
-   Since not all SLURM commands have a short form, cylc requires
-   the long form directives.
+   * Cylc requires long form directives (e.g. ``--begin`` not ``-b``).
+   * Cylc requires an ``=`` even if the directive does not have a value
+   * Cylc requires an ``=`` even if the directive does not have a value
+     (e.g. ``--hold=`` not ``--hold``).
+   * If a directive does not have a value you may use the short form
+     (e.g. ``-H=``). But the directive must still be suffixed with an ``=``.
 
 These are written to the top of the job script like this:
 
