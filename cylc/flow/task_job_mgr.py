@@ -101,6 +101,7 @@ from cylc.flow.task_remote_mgr import (
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE
@@ -187,6 +188,9 @@ class TaskJobManager:
                 itask.state_reset(is_held=True)
                 self.data_store_mgr.delta_task_held(itask)
                 to_kill_tasks.append(itask)
+            elif itask.state(TASK_STATUS_PREPARING):
+                itask.killed_in_job_prep = True
+                LOG.warning(f"[{itask}] killed in prep")
             else:
                 LOG.warning(f"[{itask}] not killable")
         self._run_job_cmd(
@@ -481,6 +485,16 @@ class TaskJobManager:
                     self._prep_submit_task_job_error(
                         workflow, itask, '(remote init)', ''
                     )
+                continue
+
+            if itask.killed_in_job_prep:
+                itask.waiting_on_job_prep = False
+                itask.killed_in_job_prep = False
+                itask.state_reset(TASK_STATUS_SUBMIT_FAILED)
+                self.data_store_mgr.delta_task_state(itask)
+                itask.local_job_file_path = None  # reset for retry
+                self._prep_submit_task_job_error(
+                    workflow, itask, '(killed in job prep)', '')
                 continue
 
             # Build the "cylc jobs-submit" command
@@ -1087,7 +1101,7 @@ class TaskJobManager:
         Returns:
             * itask - preparation complete.
             * None - preparation in progress.
-            * False - perparation failed.
+            * False - preparation failed.
 
         """
         if itask.local_job_file_path:

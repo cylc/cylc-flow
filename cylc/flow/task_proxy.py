@@ -134,11 +134,13 @@ class TaskProxy:
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
             flows I belong to
-         flow_wait:
+         .flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
             True whilst task is awaiting job prep, reset to False once the
             preparation has completed.
+        .killed_in_job_prep:
+            killed during job preparation. set to submit-failed once prep finished
 
     Args:
         tdef: The definition object of this task.
@@ -180,6 +182,7 @@ class TaskProxy:
         'tokens',
         'try_timers',
         'waiting_on_job_prep',
+        'killed_in_job_prep'
     ]
 
     def __init__(
@@ -252,6 +255,7 @@ class TaskProxy:
         self.late_time: Optional[float] = None
         self.is_late = is_late
         self.waiting_on_job_prep = False
+        self.killed_in_job_prep = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
