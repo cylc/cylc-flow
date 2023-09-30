@@ -140,7 +140,7 @@ class TaskProxy:
             True whilst task is awaiting job prep, reset to False once the
             preparation has completed.
         .killed_in_job_prep:
-            killed during job preparation. set to submit-failed once prep finished
+            killed during job preparation; set to submit-failed once prepped
 
     Args:
         tdef: The definition object of this task.
