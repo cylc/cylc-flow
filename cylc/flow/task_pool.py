@@ -762,12 +762,17 @@ class TaskPool:
             if ntask is not None:
                 self.add_to_pool(ntask)
 
-    def remove(self, itask, reason=""):
+    def remove(self, itask, reason="", manual=False):
         """Remove a task from the pool (e.g. after a reload)."""
         self.tasks_removed = True
         msg = "task proxy removed"
         if reason:
             msg += f" ({reason})"
+
+        if manual:
+            log = LOG.info
+        else:
+            log = LOG.debug
 
         try:
             del self.hidden_pool[itask.point][itask.identity]
@@ -778,7 +783,7 @@ class TaskPool:
             self.hidden_pool_changed = True
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
-            LOG.debug(f"[{itask}] {msg}")
+            log(f"[{itask}] {msg}")
             self.task_queue_mgr.remove_task(itask)
             return
 
@@ -800,7 +805,7 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            LOG.debug(f"[{itask}] {msg}")
+            log(f"[{itask}] {msg}")
             del itask
 
     def get_all_tasks(self) -> List[TaskProxy]:
@@ -1663,7 +1668,7 @@ class TaskPool:
         """Remove tasks from the pool."""
         itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            self.remove(itask, 'request')
+            self.remove(itask, 'request', manual=True)
         if self.compute_runahead():
             self.release_runahead_tasks()
         return len(bad_items)

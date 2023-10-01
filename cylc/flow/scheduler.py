@@ -920,6 +920,7 @@ class Scheduler:
                 name, args, kwargs = command
             except Empty:
                 break
+
             args_string = ', '.join(str(a) for a in args)
             kwargs_string = ', '.join(
                 f"{key}={value}" for key, value in kwargs.items()
