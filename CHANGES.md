@@ -24,10 +24,13 @@ management and does not bundle Jinja2.
 
 ## __cylc-7.8.14 (Upcoming)__
 
+[#5751](https://github.com/cylc/cylc-flow/pull/5309) - prevent first
+execution time limit polling delay incrementing for every task where it is
+used.
 
 ## __cylc-7.8.13 (2023-06-13)__
 
-[#5309](https://github.com/cylc/cylc-flow/pull/5309) - Cylc 8 compat for Cylc Review: 
+[#5309](https://github.com/cylc/cylc-flow/pull/5309) - Cylc 8 compat for Cylc Review:
   - Allow Cylc Review to see all jobs with different flow nums for Cylc 8.1 workflows
   - Warn that not all jobs for different flows will be visible for Cylc 8.0 workflows
 

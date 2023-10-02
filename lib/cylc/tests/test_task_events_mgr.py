@@ -54,6 +54,17 @@ class TestTaskEventsManager(unittest.TestCase):
         self.assertEqual(1, cylc_log.debug.call_count)
         self.assertTrue(cylc_log.debug.call_args.contains("ls /tmp/123"))
 
+    def test_execution_polling_delays(self):
+        delays = []
+        time_limit_delays = [20, 30]
+        time_limit = 30
+        result = TaskEventsManager(
+            None, None, None, None
+        ).process_execution_polling_delays(
+            delays, time_limit_delays, time_limit
+        )
+        assert result == [50, 60]
+
 
 if __name__ == '__main__':
     unittest.main()

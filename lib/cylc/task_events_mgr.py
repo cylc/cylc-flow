@@ -993,11 +993,15 @@ class TaskEventsManager(object):
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
+            # delays - All polling times after start
+            # timeout - Total time limit including all polling:
             delays = list(self.get_host_conf(
                 itask, 'execution polling intervals', skey='job',
                 default=[900]))  # Default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
+
+                # Get execution time limit polling intervals or set to default:
                 try:
                     host_conf = self.get_host_conf(itask, 'batch systems')
                     batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
@@ -1005,16 +1009,15 @@ class TaskEventsManager(object):
                     batch_sys_conf = {}
                 time_limit_delays = batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])
-                timeout = time_limit + sum(time_limit_delays)
-                # Remove excessive polling before time limit
-                while sum(delays) > time_limit:
-                    del delays[-1]
-                # But fill up the gap before time limit
-                if delays:
-                    size = int((time_limit - sum(delays)) / delays[-1])
-                    delays.extend([delays[-1]] * size)
-                time_limit_delays[0] += time_limit - sum(delays)
-                delays += time_limit_delays
+
+                # Total timeout after adding execution time limit polling
+                # intervals:
+                timeout = (time_limit + sum(time_limit_delays))
+
+                delays = self.process_execution_polling_delays(
+                    delays, time_limit_delays, time_limit
+                )
+
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
@@ -1024,13 +1027,16 @@ class TaskEventsManager(object):
                 default=[900]))  # Default 15 minute intervals
         try:
             itask.timeout = timeref + float(timeout)
-            timeout_str = intvl_as_str(timeout)
+            time_limit_str = intvl_as_str(time_limit)
         except (TypeError, ValueError):
             itask.timeout = None
-            timeout_str = None
+            time_limit_str = None
+
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
+
         # Log timeout and polling schedule
-        message = 'health check settings: %s=%s' % (timeout_key, timeout_str)
+        message = 'health check settings: %s=%s' % (
+            timeout_key, time_limit_str)
         # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
             items = []  # [(number of item - 1, item), ...]
@@ -1048,3 +1054,36 @@ class TaskEventsManager(object):
         LOG.info('[%s] -%s', itask, message)
         # Set next poll time
         self.check_poll_time(itask)
+
+    @staticmethod
+    def process_execution_polling_delays(
+        delays, time_limit_delays, time_limit
+    ):
+        """Create list of intervals after starting at which to poll a task.
+
+        Args:
+            delays: Input is Execution Polling intervals.
+            time_limit_delays: Execution Time Limit Polling Intervals.
+            time_limit: Execution Time Limit.
+
+        Returns: List of delays from start of task.
+        """
+        # Remove excessive polling before time limit
+        while sum(delays) > time_limit:
+            del delays[-1]
+
+        # But fill up the gap before time limit
+        if delays:
+            size = int((time_limit - sum(delays)) / delays[-1])
+            delays.extend([delays[-1]] * size)
+
+        # After the last delay before the execution time limit add the
+        # delay to get to the execution_time_limit
+        if len(time_limit_delays) > 1:
+            time_limit_delays[0] += time_limit - sum(delays)
+        else:
+            delays.append(
+                time_limit_delays[0] + time_limit - sum(delays))
+
+        delays += time_limit_delays
+        return delays
