@@ -1,0 +1,24 @@
+
+# 1. alpha graph completes
+# 2. then main graph starts, and triggers alpha/a and omega/x with --flow=none
+# 3. then when all tasks finish, omega graph runs
+
+# TODO alpha and omega graphs need special flow number treatment?
+
+[scheduling]
+    [[graph]]
+        alpha = "a => b"
+        omega = "x => y"
+        R1 = "foo => bar => baz"
+[runtime]
+    [[a]]
+    [[b]]
+    [[x]]
+    [[y]]
+    [[foo]]
+    [[bar]]
+        script = """
+            cylc trigger --flow=none $CYLC_WORKFLOW_ID//alpha/a
+            cylc trigger --flow=none $CYLC_WORKFLOW_ID//omega/x
+        """
+    [[baz]]

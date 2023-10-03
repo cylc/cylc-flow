@@ -37,6 +37,7 @@ from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import (
     WorkflowConfigError, PointParsingError, PlatformLookupError)
+from cylc.flow.cycling.nocycle import NocyclePoint, NOCYCLE_POINTS
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -172,6 +173,23 @@ class TaskPool:
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
+    def load_nocycle_graph(self, seq):
+        """blah """
+        LOG.info(f"LOADING {seq} GRAPH")
+        flow_num = self.flow_mgr.get_new_flow(f"original {seq} flow")
+        self.runahead_limit_point = None
+        for name in self.config.get_task_name_list():
+            tdef = self.config.get_taskdef(name)
+            if str(seq) not in [str(s) for s in tdef.sequences]:
+                continue
+            if tdef.is_parentless(seq.point, seq):
+                ntask = self._get_spawned_or_merged_task(
+                    seq.point, tdef.name, {flow_num}
+                )
+                if ntask is not None:
+                    self.add_to_pool(ntask)
+                    self.rh_release_and_queue(ntask)
+
     def load_from_point(self):
         """Load the task pool for the workflow start point.
 
@@ -179,6 +197,8 @@ class TaskPool:
         """
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}")
+
+        # self.runahead_limit_point = None  # reset from nocycle
         self.compute_runahead()
         for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
@@ -263,7 +283,7 @@ class TaskPool:
         Return True if any tasks are released, else False.
         Call when RH limit changes.
         """
-        if not self.main_pool or not self.runahead_limit_point:
+        if not self.main_pool:
             # (At start-up main pool might not exist yet)
             return False
 
@@ -275,7 +295,12 @@ class TaskPool:
             itask
             for point, itask_id_map in self.main_pool.items()
             for itask in itask_id_map.values()
-            if point <= self.runahead_limit_point
+            if (
+                self.runahead_limit_point and
+                point <= self.runahead_limit_point
+                or
+                str(point) in NOCYCLE_POINTS
+            )
             if itask.state.is_runahead
         ]
 
@@ -380,6 +405,11 @@ class TaskPool:
                     )
                 ):
                     points.append(point)
+
+                    points = [
+                        p for p in points
+                        if type(p) is not NocyclePoint  # type: ignore
+                    ]
 
             if not points:
                 return False
@@ -503,11 +533,17 @@ class TaskPool:
         (cycle, name, flow_nums, flow_wait, is_manual_submit, is_late, status,
          is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
          outputs_str) = row
+
+        if cycle in NOCYCLE_POINTS:
+            point = NocyclePoint(cycle)
+        else:
+            point = get_point(cycle)
+
         try:
             itask = TaskProxy(
                 self.tokens,
                 self.config.get_taskdef(name),
-                get_point(cycle),
+                point,
                 deserialise(flow_nums),
                 status=status,
                 is_held=is_held,
@@ -922,6 +958,10 @@ class TaskPool:
 
         # Note: released and pre_prep_tasks can overlap
         return list(set(released + pre_prep_tasks))
+
+    def get_points(self):
+        """Return current list of cycle points in the pool."""
+        return list(self.main_pool)
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
@@ -1355,7 +1395,10 @@ class TaskPool:
                     # Add it to the hidden pool or move it to the main pool.
                     self.add_to_pool(t)
 
-                    if t.point <= self.runahead_limit_point:
+                    if (
+                        t.point <= self.runahead_limit_point
+                        or str(t.point) in NOCYCLE_POINTS
+                    ):
                         self.rh_release_and_queue(t)
 
                     # Event-driven suicide.
@@ -1471,6 +1514,7 @@ class TaskPool:
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
                 if (
+                    # TODO NOCYCLE
                     self.runahead_limit_point is not None
                     and c_task.point <= self.runahead_limit_point
                 ):
@@ -1974,11 +2018,15 @@ class TaskPool:
             try:
                 point_str = standardise_point_string(point_str)
             except PointParsingError as exc:
-                LOG.warning(
-                    f"{id_} - invalid cycle point: {point_str} ({exc})")
-                unmatched_tasks.append(id_)
-                continue
-            point = get_point(point_str)
+                if point_str in NOCYCLE_POINTS:
+                    point = NocyclePoint(point_str)
+                else:
+                    LOG.warning(
+                        f"{id_} - invalid cycle point: {point_str} ({exc})")
+                    unmatched_tasks.append(id_)
+                    continue
+            else:
+                point = get_point(point_str)
             taskdef = self.config.taskdefs[name_str]
             if taskdef.is_valid_point(point):
                 matched_tasks.add((taskdef.name, point))

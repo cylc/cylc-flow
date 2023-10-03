@@ -249,6 +249,11 @@ workflows with many-to-many dependencies (e.g. `<a> => <b>`).
 
 ### Enhancements
 
+[#5184](https://github.com/cylc/cylc-flow/pull/5184) - Scan for active
+runs of the same workflow at install time.
+
+[#5032](https://github.com/cylc/cylc-flow/pull/5032) - Set a default limit of
+
 [#5229](https://github.com/cylc/cylc-flow/pull/5229) -
 - Added a single command to validate a previously run workflow against changes
   to its source and reinstall a workflow.
