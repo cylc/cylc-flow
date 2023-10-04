@@ -626,20 +626,32 @@ with Conf(
             365 day (never a leap year) and 366 day (always a leap year).
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
-            The scheduler runahead limit determines how many consecutive cycle
-            points can be active at once. The base point of the runahead
-            calculation is the lowest-valued point with :term:`active` or
-            :term:`incomplete` tasks present.
+            The runahead limit prevents a workflow from getting too far ahead
+            of the oldest :term:`active cycle`.
 
-            An integer interval value of ``Pn`` allows up to ``n+1`` cycle
-            points (including the base point) to be active at once.
+            A cycle is considered to be active if it contains any
+            :term:`active` tasks.
 
-            The default runahead limit is ``P4``, i.e. 5 active points
-            including the base point.
+            An integer interval value of ``Pn`` allows up to ``n+1`` cycles
+            to be active at once.
+
+            The default runahead limit is ``P4``, which means there may be up
+            to 5 active cycles.
 
             Datetime cycling workflows can optionally use a datetime interval
-            value instead, in which case the number of active cycle points
+            value instead, in which case the number of cycles
             within the interval depends on the cycling intervals present.
+
+            Examples:
+
+            ``P0``
+                Only one cycle can be active at a time.
+            ``P2``
+                The scheduler will run up to two cycles ahead of the oldest
+                active cycle.
+            ``P3D``
+                The scheduler will run cycles up to three days of cycles ahead
+                of the oldest active cycle.
 
             .. seealso::
 
