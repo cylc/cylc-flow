@@ -61,6 +61,7 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_SUBMIT_FAILED,
 )
 from cylc.flow.util import (
     serialise,
@@ -1376,9 +1377,11 @@ class TaskPool:
             self.remove(c_task, msg)
 
         if not forced and output in [
+            # final task statuses
             TASK_OUTPUT_SUCCEEDED,
             TASK_OUTPUT_EXPIRED,
-            TASK_OUTPUT_FAILED
+            TASK_OUTPUT_FAILED,
+            TASK_OUTPUT_SUBMIT_FAILED,
         ]:
             self.remove_if_complete(itask)
 

@@ -35,6 +35,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_SUBMIT_FAILED,
 )
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
@@ -1201,3 +1204,45 @@ async def test_runahead_offset_start(
     """
     task_pool = mod_example_flow_2.pool
     assert task_pool.runahead_limit_point == ISO8601Point('2004')
+
+
+async def test_detect_incomplete_tasks(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """Finished tasks should be marked as incomplete.
+
+    If a task finishes without completing all required outputs, then it should
+    be marked as incomplete.
+    """
+    incomplete_final_task_states = [
+        TASK_STATUS_FAILED,
+        TASK_STATUS_EXPIRED,
+        TASK_STATUS_SUBMIT_FAILED,
+    ]
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+        },
+        'scheduling': {
+            'graph': {
+                # a workflow with one task for each of the incomplete final
+                # task states
+                'R1': '\n'.join(incomplete_final_task_states)
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd) as log:
+        itasks = schd.pool.get_tasks()
+        for itask in itasks:
+            # spawn the output corresponding to the task
+            schd.pool.spawn_on_output(itask, itask.tdef.name)
+            # ensure that it is correctly identified as incomplete
+            assert itask.state.outputs.get_incomplete()
+            assert itask.state.outputs.is_incomplete()
+            assert log_filter(log, contains=f"[{itask}] did not complete required outputs:")
+            # the task should not have been removed
+            assert itask in schd.pool.get_tasks()
