@@ -11,6 +11,28 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.2.2 (Released 2023-10-05)__
+
+### 🚀 Enhancements
+
+[#5237](https://github.com/cylc/cylc-flow/pull/5237) - Back-compat: allow workflow-state xtriggers (and the `cylc workflow-state`
+  command) to read Cylc 7 databases.
+
+### 🔧 Fixes
+
+[#5693](https://github.com/cylc/cylc-flow/pull/5693) - Log command issuer, if not the workflow owner, for all commands.
+
+[#5694](https://github.com/cylc/cylc-flow/pull/5694) - Don't fail config file parsing if current working directory does not exist.
+  (Note however this may not be enough to prevent file parsing commands failing
+  elsewhere in the Python library).
+
+[#5704](https://github.com/cylc/cylc-flow/pull/5704) - Fix off-by-one error in automatic upgrade of Cylc 7 "max active cycle points" to Cylc 8 "runahead limit".
+
+[#5708](https://github.com/cylc/cylc-flow/pull/5708) - Fix runahead limit at start-up, with recurrences that start beyond the limit.
+
+[#5755](https://github.com/cylc/cylc-flow/pull/5755) - Fixes an issue where submit-failed tasks could be incorrectly considered as completed rather than causing the workflow to stall.
+
+
 ## __cylc-8.2.1 (Released 2023-08-14)__
 
 ### 🔧 Fixes
