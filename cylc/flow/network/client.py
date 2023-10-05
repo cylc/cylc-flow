@@ -143,6 +143,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
                 f'It has moved to {contact_host}:{contact_port}'
             )
 
+        if os.getenv('CYLC_TASK_COMMS_METHOD'):
+            # don't attempt to clean up old contact files in task messages
+            return
+
         # Cannot connect, perhaps workflow is no longer running and is leaving
         # behind a contact file?
         try:
