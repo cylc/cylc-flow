@@ -79,7 +79,7 @@ class TaskOutputs:
         if (
             # "submitted" is not declared as optional/required
             tdef.outputs[TASK_OUTPUT_SUBMITTED][1] is None
-            # and "submit-failed" is explicitly declared as optional/required
+            # and "submit-failed" is not declared as optional/required
             and tdef.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is None
         ):
             self._add(
