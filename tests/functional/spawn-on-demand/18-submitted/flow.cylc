@@ -1,0 +1,56 @@
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        # shut down once the workflow has stalled
+        # abort on stall timeout = True
+        # stall timeout = PT0S
+        stall handlers = cylc stop %(workflow)s
+        expected task failures = 1/a1, 2/a2, 3/a3
+
+[scheduling]
+    initial cycle point = 1
+    cycling mode = integer
+    runahead limit = P10
+    [[graph]]
+        R/1 = """
+            # a1 should be incomplete (submission is implicitly required)
+            a1? => b
+        """
+        R/2 = """
+            # a2 should be incomplete (submission is implicitly required)
+            a2:finished => b
+        """
+        R/3 = """
+            # a3 should be incomplete (submission is explicitly required)
+            a3? => b
+            a3:submitted => s
+        """
+        R/4 = """
+            # a4 should be complete (submission is explicitly optional)
+            a4? => b
+            a4:submitted? => s
+        """
+        R/5 = """
+            # a5 should be complete (submission is explicitly optional)
+            a5? => b
+            a5:submitted? => s
+            a5:submit-failed? => f  # branch should run
+        """
+        R/6 = """
+            # a6 should be complete (submission is explicitly optional)
+            a6? => b
+            a6:submit-failed? => f  # branch should run
+        """
+        R/7 = """
+            # a7 should be complete (submission is explicitly optional)
+            a:submit-failed? => f  # branch should run
+        """
+        R/8 = """
+            # a8 should be complete (submission is explicitly optional)
+            a:submitted? => s  # branch should run
+        """
+
+[runtime]
+    [[a1, a2, a3, a4, a5]]
+        # a task which will always submit-fail
+        platform = broken
