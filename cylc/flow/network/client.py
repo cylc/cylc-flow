@@ -303,7 +303,9 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
-                ' Check the workflow log.'
+                '\n* You might want to increase the timeout using the'
+                ' --comms-timeout option;'
+                '\n* or check the workflow log.'
             )
 
         if msg['command'] in PB_METHOD_MAP:
