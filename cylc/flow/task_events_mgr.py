@@ -1653,12 +1653,11 @@ class TaskEventsManager():
             # execution time limit:
             while sum(delays) > time_limit:
                 del delays[-1]
-        else:
+        elif delays:
             # Repeat the last execution polling interval up to the execution
             # time limit:
-            if delays:
-                size = int((time_limit - sum(delays)) / delays[-1])
-                delays.extend([delays[-1]] * size)
+            size = int((time_limit - sum(delays)) / delays[-1])
+            delays.extend([delays[-1]] * size)
 
         # After the last delay before the execution time limit add the
         # delay to get to the execution_time_limit
