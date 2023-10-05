@@ -107,4 +107,4 @@ def _report_single(report, workflow, result):
 
 
 def _report(_):
-    print('Done')
+    print('Command submitted; the scheduler will log any problems.')
