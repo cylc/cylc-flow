@@ -706,34 +706,44 @@ class TaskPool:
     def get_or_spawn_task(
         self,
         point: 'PointBase',
-        name: str,
+        tdef: 'TaskDef',
         flow_nums: 'FlowNums',
         flow_wait: bool = False
-    ) -> Optional[TaskProxy]:
+    ) -> 'Tuple[Optional[TaskProxy], bool, bool]':
         """Return new or existing task point/name with merged flow_nums.
 
         It does not add a spawned task proxy to the pool.
         """
         ntask = self._get_task_by_id(
-            Tokens(cycle=str(point), task=name).relative_id
+            Tokens(cycle=str(point), task=tdef.name).relative_id
         )
         is_in_pool = False
+        is_xtrig_sequential = False
         if ntask is None:
             # ntask does not exist: spawn it in the flow.
-            ntask = self.spawn_task(name, point, flow_nums, flow_wait)
+            ntask = self.spawn_task(tdef.name, point, flow_nums, flow_wait)
             # if the task was found set xtrigger checking type.
-            if (
-                ntask is not None
-                and set(ntask.state.xtriggers.keys()).intersection(
+            if ntask is not None:
+                if set(ntask.state.xtriggers.keys()).intersection(
                     self.xtrigger_mgr.sequential_xtrigger_labels
-                )
+                ):
+                    ntask.is_xtrigger_sequential = True
+                    is_xtrig_sequential = True
+            elif {
+                xtrig_label
+                for sequence, xtrig_labels in tdef.xtrig_labels.items()
+                for xtrig_label in xtrig_labels
+                if sequence.is_valid(point)
+            }.intersection(
+                self.xtrigger_mgr.sequential_xtrigger_labels
             ):
-                ntask.is_xtrigger_sequential = True
+                is_xtrig_sequential = True
         else:
             # ntask already exists (n=0): merge flows.
             is_in_pool = True
             self.merge_flows(ntask, flow_nums)
-        return ntask, is_in_pool  # may be None
+            is_xtrig_sequential = ntask.is_xtrigger_sequential
+        return ntask, is_in_pool, is_xtrig_sequential  # may be None
 
     def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
         """Spawn parentless task instances from point to runahead limit.
@@ -750,30 +760,33 @@ class TaskPool:
         if self.runahead_limit_point is None:
             self.compute_runahead()
 
-        is_sequential = False
+        is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
             if tdef.is_parentless(point):
-                ntask, is_in_pool = self.get_or_spawn_task(
-                    point, tdef.name, flow_nums
+                ntask, is_in_pool, is_xtrig_sequential = (
+                    self.get_or_spawn_task(
+                        point,
+                        tdef,
+                        flow_nums
+                    )
                 )
                 if ntask is not None:
                     if not is_in_pool:
                         self.add_to_pool(ntask)
                     self.rh_release_and_queue(ntask)
-                    if ntask.is_xtrigger_sequential:
-                        is_sequential = True
-                        break
+                if is_xtrig_sequential:
+                    break
             point = tdef.next_point(point)
 
         # Once more for the runahead-limited task (don't release it).
-        if not is_sequential:
+        if not is_xtrig_sequential:
             self.spawn_if_parentless(tdef, point, flow_nums)
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
         if flow_nums and point is not None and tdef.is_parentless(point):
-            ntask, is_in_pool = self.get_or_spawn_task(
-                point, tdef.name, flow_nums
+            ntask, is_in_pool, _ = self.get_or_spawn_task(
+                point, tdef, flow_nums
             )
             if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
@@ -994,6 +1007,14 @@ class TaskPool:
                     self.check_task_output,
                 )
                 self._swap_out(new_task)
+                # Set xtrigger checking type for parentless spawning.
+                if (
+                    new_task.tdef.is_parentless(new_task.point)
+                    and set(new_task.state.xtriggers.keys()).intersection(
+                        self.xtrigger_mgr.sequential_xtrigger_labels
+                    )
+                ):
+                    new_task.is_xtrigger_sequential = True
                 self.data_store_mgr.delta_task_prerequisite(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
                 if itask.state(*TASK_STATUSES_ACTIVE):
@@ -1948,6 +1969,13 @@ class TaskPool:
         """Remove tasks from the pool (forced by command)."""
         itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
+            # Spawn next occurance of xtrigger sequential task.
+            if itask.is_xtrigger_sequential:
+                self.spawn_to_rh_limit(
+                    itask.tdef,
+                    itask.tdef.next_point(itask.point),
+                    itask.flow_nums
+                )
             self.remove(itask, 'request')
         if self.compute_runahead():
             self.release_runahead_tasks()
