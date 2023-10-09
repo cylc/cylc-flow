@@ -22,22 +22,22 @@ Tell a workflow to shut down.
 
 Examples:
   # wait for active tasks to finish, then shut down
-  $ cylc stop my_flow
+  $ cylc stop my_workflow
 
   # kill active tasks, then shut down
-  $ cylc stop my_flow --kill
+  $ cylc stop my_workflow --kill
 
   # shut down immediately, leave active tasks alone
-  $ cylc stop my_flow --now
+  $ cylc stop my_workflow --now
 
   # shut down all workflows
   $ cylc stop '*'
 
   # shut down after the cycle 1234 has been passed
-  $ cylc stop my_flow//1234
+  $ cylc stop my_workflow//1234
 
   # shut down after the task foo in cycle 1234 has succeeded
-  $ cylc stop my_flow//1234/foo
+  $ cylc stop my_workflow//1234/foo
 
 By default stopping workflows wait for submitted and running tasks to complete
 before shutting down. You can change this behaviour with the --mode option.

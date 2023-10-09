@@ -25,29 +25,29 @@ Held tasks do not submit their jobs even if ready to run.
 To pause an entire workflow use "cylc pause".
 
 Examples:
-  # Hold mytask at cycle point 1234 in my_flow (if it has not yet spawned, it
-  # will hold as soon as it spawns):
-  $ cylc hold my_flow//1234/mytask
+  # Hold mytask at cycle point 1234 in my_workflow (if it has not yet spawned,
+  # it will hold as soon as it spawns):
+  $ cylc hold my_workflow//1234/mytask
 
-  # Hold all active tasks at cycle 1234 in my_flow (note: tasks before/after
-  # this cycle point will not be held):
-  $ cylc hold 'my_flow//1234/*'
+  # Hold all active tasks at cycle 1234 in my_workflow (note: tasks
+  # before/after this cycle point will not be held):
+  $ cylc hold 'my_workflow//1234/*'
 
-  # Hold all active instances of mytask in my_flow (note: this will not hold
-  # any unspawned tasks that might spawn in the future):
-  $ cylc hold 'my_flow//*/mytask'
+  # Hold all active instances of mytask in my_workflow (note: this will not
+  # hold any unspawned tasks that might spawn in the future):
+  $ cylc hold 'my_workflow//*/mytask'
 
   # Hold all active failed tasks:
-  $ cylc hold 'my_flow//*:failed'
+  $ cylc hold 'my_workflow//*:failed'
 
-  # Hold all tasks after cycle point 1234 in my_flow:
-  $ cylc hold my_flow// --after=1234
+  # Hold all tasks after cycle point 1234 in my_workflow:
+  $ cylc hold my_workflow// --after=1234
 
-  # Hold cycles 1, 2 & 3 in my_flow:
-  $ cylc hold my_flow// //1 //2 //3
+  # Hold cycles 1, 2 & 3 in my_workflow:
+  $ cylc hold my_workflow// //1 //2 //3
 
-  # Hold cycle "1" in "my_flow_1" and "my_flow_2":
-  $ cylc hold my_flow_1//1 my_flow_2//1
+  # Hold cycle "1" in "my_workflow_1" and "my_workflow_2":
+  $ cylc hold my_workflow_1//1 my_workflow_2//1
 
 Note: To pause a workflow (immediately preventing all job submission), use
 'cylc pause' instead.

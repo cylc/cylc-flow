@@ -60,7 +60,7 @@ from cylc.flow.resources import (
     list_resources as list_resources_,
     RESOURCE_DIR,
 )
-from cylc.flow.scripts.cylc import COMMANDS
+from cylc.flow.scripts.cylc import ALIASES, COMMANDS
 from cylc.flow.scripts.scan import FLOW_STATES, get_pipe, ScanOptions
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import infer_latest_run_from_id
@@ -181,7 +181,7 @@ async def complete_cylc(_root: str, *items: str) -> t.List[str]:
         return await complete_command()
     if length == 1:
         return await complete_command(partial)
-    command: str = items[0]
+    command: str = ALIASES.get(items[0], items[0])  # resolve command aliases
 
     # special logic for the pseudo "help" and "version" commands
     if command == 'help':
@@ -314,6 +314,8 @@ def list_options(command: str) -> t.List[str]:
 
     Note: This provides the long formats of options e.g. `--help` not `-h`.
     """
+    if command in COMMAND_OPTION_MAP:
+        return COMMAND_OPTION_MAP[command]
     try:
         entry_point = COMMANDS[command].resolve()
     except KeyError:
@@ -478,12 +480,29 @@ async def list_colours(
 # non-exhaustive list of Cylc commands which take non-workflow arguments
 COMMAND_MAP: t.Dict[str, t.Optional[t.Callable]] = {
     # register commands which have special positional arguments
-    'install': list_src_workflows,
     'get-resources': list_resources,
+    'install': list_src_workflows,
+    'vip': list_src_workflows,
     # commands for which we should not attempt to complete arguments
-    'scan': None,
     'cycle-point': None,
+    'hub': None,
     'message': None,
+    'scan': None,
+}
+
+
+# commands we can't list options for in the standard way
+COMMAND_OPTION_MAP = {
+    'gui': [
+        '--debug',
+        '--help',
+        '--new',
+        '--no-browser',
+    ],
+    'hub': [
+        '--debug',
+        '--help',
+    ],
 }
 
 # non-exhaustive list of Cylc CLI options

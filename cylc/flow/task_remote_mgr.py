@@ -103,7 +103,6 @@ class TaskRemoteMgr:
         self.remote_command_map = {}
         # self.remote_init_map = {(install target): status, ...}
         self.remote_init_map = {}
-        self.uuid_str = None
         # This flag is turned on when a host init/select command completes
         self.ready = False
         self.rsync_includes = None

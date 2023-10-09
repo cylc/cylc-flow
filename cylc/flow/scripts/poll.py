@@ -26,11 +26,11 @@ Pollable tasks are those in the n=0 window with an associated job ID,
 including incomplete finished tasks.
 
 Examples:
-  # poll all pollable tasks in my_flow
-  $ cylc poll 'my_flow//*'
+  # poll all pollable tasks in my_workflow
+  $ cylc poll 'my_workflow//*'
 
-  # poll specific tasks in my_flow
-  $ cylc poll my_flow// //1/a //1/b
+  # poll specific tasks in my_workflow
+  $ cylc poll my_workflow// //1/a //1/b
 """
 
 from functools import partial

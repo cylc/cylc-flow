@@ -23,6 +23,21 @@ from cylc.flow.cycling import (
     parse_exclusion,
 )
 
+from cylc.flow.cycling.integer import (
+    IntegerPoint,
+    IntegerSequence,
+)
+
+from cylc.flow.cycling.iso8601 import (
+    ISO8601Point,
+    ISO8601Sequence,
+)
+
+from cylc.flow.cycling.loader import (
+    INTEGER_CYCLING_TYPE,
+    ISO8601_CYCLING_TYPE,
+)
+
 
 def test_simple_abstract_class_test():
     """Cannot instantiate abstract classes, they must be defined in
@@ -73,3 +88,86 @@ def test_parse_bad_exclusion(expression):
     """Tests incorrectly formatted exclusions"""
     with pytest.raises(Exception):
         parse_exclusion(expression)
+
+
+@pytest.mark.parametrize(
+    'sequence, wf_start_point, expected',
+    (
+        (
+            ('R/2/P2', 1),
+            None,
+            [2,4,6,8,10]
+        ),
+        (
+            ('R/2/P2', 1),
+            3,
+            [4,6,8,10,12]
+        ),
+    ),
+)
+def test_get_first_n_points_integer(
+    set_cycling_type,
+    sequence, wf_start_point, expected
+):
+    """Test sequence get_first_n_points method.
+
+    (The method is implemented in the base class).
+    """
+    set_cycling_type(INTEGER_CYCLING_TYPE)
+    sequence = IntegerSequence(*sequence)
+    if wf_start_point is not None:
+        wf_start_point = IntegerPoint(wf_start_point)
+    expected = [
+        IntegerPoint(p)
+        for p in expected
+    ]
+    assert (
+        expected == (
+            sequence.get_first_n_points(
+                len(expected),
+                wf_start_point
+            )
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    'sequence, wf_start_point, expected',
+    (
+        (
+            ('R/2008/P2Y', '2001'),
+            None,
+            ['2008', '2010', '2012', '2014', '2016']
+        ),
+        (
+            ('R/2008/P2Y', '2001'),
+            '2009',
+            ['2010', '2012', '2014', '2016', '2018']
+        ),
+    ),
+)
+def test_get_first_n_points_iso8601(
+    set_cycling_type,
+    sequence, wf_start_point, expected
+):
+    """Test sequence get_first_n_points method.
+
+    (The method is implemented in the base class).
+    """
+    set_cycling_type(ISO8601_CYCLING_TYPE, 'Z')
+    sequence = ISO8601Sequence(*sequence)
+    if wf_start_point is not None:
+        wf_start_point = ISO8601Point(wf_start_point)
+    expected = [
+        ISO8601Point(p)
+        for p in expected
+    ]
+
+    assert (
+        expected == (
+            sequence.get_first_n_points(
+                len(expected),
+                wf_start_point
+            )
+        )
+    )

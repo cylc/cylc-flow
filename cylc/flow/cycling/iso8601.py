@@ -269,8 +269,14 @@ class ISO8601Exclusions(ExclusionBase):
         for point in excl_points:
             try:
                 # Try making an ISO8601Sequence
-                exclusion = ISO8601Sequence(point, self.exclusion_start_point,
-                                            self.exclusion_end_point)
+                exclusion = ISO8601Sequence(
+                    point,
+                    self.exclusion_start_point,
+                    self.exclusion_end_point,
+                    # disable warnings which are logged when exclusion is a
+                    # time point
+                    zero_duration_warning=False,
+                )
                 self.exclusion_sequences.append(exclusion)
             except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Point
@@ -284,7 +290,20 @@ class ISO8601Sequence(SequenceBase):
 
     """A sequence of ISO8601 date time points separated by an interval.
     Note that an ISO8601Sequence object (may) contain
-    ISO8601ExclusionSequences"""
+    ISO8601ExclusionSequences
+
+    Args:
+        dep_section:
+            The full sequence expression.
+        context_start_point:
+            Sequence start point from the global context.
+        context_end_point:
+            Sequence end point from the global context.
+        zero_duration_warning:
+            If `False`, then zero-duration recurrence warnings will be turned
+            off. This is set for exclusion parsing.
+
+    """
 
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
@@ -303,8 +322,13 @@ class ISO8601Sequence(SequenceBase):
             return "R1"
         return "R1/" + str(start_point)
 
-    def __init__(self, dep_section, context_start_point=None,
-                 context_end_point=None):
+    def __init__(
+        self,
+        dep_section,
+        context_start_point=None,
+        context_end_point=None,
+        zero_duration_warning=True,
+    ):
         SequenceBase.__init__(
             self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
@@ -344,7 +368,9 @@ class ISO8601Sequence(SequenceBase):
         # Parse_recurrence returns an isodatetime TimeRecurrence object
         # and a list of exclusion strings.
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
-            dep_section)
+            dep_section,
+            zero_duration_warning=zero_duration_warning,
+        )
 
         # Determine the exclusion start point and end point
         try:

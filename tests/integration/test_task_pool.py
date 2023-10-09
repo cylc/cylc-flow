@@ -24,6 +24,7 @@ from pytest import param
 from cylc.flow import CYLC_LOG
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.scheduler import Scheduler
@@ -34,6 +35,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_SUBMIT_FAILED,
 )
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
@@ -59,6 +63,22 @@ EXAMPLE_FLOW_CFG = {
         'FAM': {},
         'bar': {'inherit': 'FAM'}
     }
+}
+
+
+EXAMPLE_FLOW_2_CFG = {
+    'scheduler': {
+        'allow implicit tasks': True,
+        'UTC mode': True
+    },
+    'scheduling': {
+        'initial cycle point': '2001',
+        'runahead limit': 'P3Y',
+        'graph': {
+            'P1Y': 'foo',
+            'R/2025/P1Y': 'foo => bar',
+        }
+    },
 }
 
 
@@ -127,6 +147,22 @@ async def example_flow(
     schd: Scheduler = scheduler(id_)
     async with start(schd):
         yield schd
+
+
+@pytest.fixture(scope='module')
+async def mod_example_flow_2(
+    mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
+) -> Scheduler:
+    """Return a scheduler for interrogating its task pool.
+
+    This is module-scoped so faster than example_flow, but should only be used
+    where the test does not mutate the state of the scheduler or task pool.
+    """
+    id_ = mod_flow(EXAMPLE_FLOW_2_CFG)
+    schd: Scheduler = mod_scheduler(id_, paused_start=True)
+    async with mod_run(schd):
+        pass
+    return schd
 
 
 @pytest.mark.parametrize(
@@ -1157,3 +1193,56 @@ async def test_task_proxy_remove_from_queues(
 
         assert queues_after['default'] == ['1/hidden_control']
         assert queues_after['queue_two'] == ['1/control']
+
+
+async def test_runahead_offset_start(
+    mod_example_flow_2: Scheduler
+) -> None:
+    """Late-start recurrences should not break the runahead limit at start-up.
+
+    See GitHub #5708
+    """
+    task_pool = mod_example_flow_2.pool
+    assert task_pool.runahead_limit_point == ISO8601Point('2004')
+
+
+async def test_detect_incomplete_tasks(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """Finished tasks should be marked as incomplete.
+
+    If a task finishes without completing all required outputs, then it should
+    be marked as incomplete.
+    """
+    incomplete_final_task_states = [
+        TASK_STATUS_FAILED,
+        TASK_STATUS_EXPIRED,
+        TASK_STATUS_SUBMIT_FAILED,
+    ]
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+        },
+        'scheduling': {
+            'graph': {
+                # a workflow with one task for each of the incomplete final
+                # task states
+                'R1': '\n'.join(incomplete_final_task_states)
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd) as log:
+        itasks = schd.pool.get_tasks()
+        for itask in itasks:
+            # spawn the output corresponding to the task
+            schd.pool.spawn_on_output(itask, itask.tdef.name)
+            # ensure that it is correctly identified as incomplete
+            assert itask.state.outputs.get_incomplete()
+            assert itask.state.outputs.is_incomplete()
+            assert log_filter(log, contains=f"[{itask}] did not complete required outputs:")
+            # the task should not have been removed
+            assert itask in schd.pool.get_tasks()

@@ -74,3 +74,26 @@ async def test_process_message_no_repeat(
             schd.task_events_mgr.FLAG_POLLED
             not in log.records[-1].message
         )
+
+
+async def test__reset_job_timers(
+    one_conf: Fixture, flow: Fixture, scheduler: Fixture,
+    start: Fixture, caplog: Fixture, mock_glbl_cfg: Fixture,
+):
+    """Integration test of pathway leading to
+    process_execution_polling_intervals.
+    """
+    schd = scheduler(flow(one_conf))
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        itask.state.status = 'running'
+        itask.platform['execution polling intervals'] = [25]
+        itask.platform['execution time limit polling intervals'] = [10]
+        itask.summary['execution_time_limit'] = 30
+        caplog.records.clear()
+        schd.task_events_mgr._reset_job_timers(itask)
+
+    assert (
+        'polling intervals=PT25S,PT15S,PT10S,...'
+        in caplog.records[0].msg
+    )

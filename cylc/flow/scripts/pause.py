@@ -20,16 +20,17 @@
 
 Pause a workflow.
 
-This suspends submission of tasks.
+This suspends submission of all tasks in a workflow.
 
 Examples:
-  # pause my_flow
-  $ cylc pause my_flow
+  # pause my_workflow
+  $ cylc pause my_workflow
 
-  # resume my_flow
-  $ cylc play my_flow
+  # resume my_workflow
+  $ cylc play my_workflow
 
-Not to be confused with `cylc hold`.
+(Not to be confused with `cylc hold` which suspends submission of individual
+tasks within a workflow).
 """
 
 from functools import partial
@@ -64,7 +65,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
-        multitask=True,
+        multitask=False,
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )

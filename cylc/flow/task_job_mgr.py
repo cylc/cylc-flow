@@ -1324,7 +1324,7 @@ class TaskJobManager:
             'workflow_name': workflow,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
-            'uuid_str': self.task_remote_mgr.uuid_str,
+            'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
             # this field is populated retrospectively for regular job subs
             'logfiles': [],
@@ -1357,7 +1357,7 @@ class TaskJobManager:
             'workflow_name': workflow,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
-            'uuid_str': self.task_remote_mgr.uuid_str,
+            'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': 'SIMULATION',
             # this field is populated retrospectively for regular job subs
             'logfiles': [],

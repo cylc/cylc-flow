@@ -70,9 +70,23 @@ class TaskOutputs:
         self._by_message = {}
         self._by_trigger = {}
         self._required = set()
+
         # Add outputs from task def.
         for trigger, (message, required) in tdef.outputs.items():
             self._add(message, trigger, required=required)
+
+        # Handle implicit submit requirement
+        if (
+            # "submitted" is not declared as optional/required
+            tdef.outputs[TASK_OUTPUT_SUBMITTED][1] is None
+            # and "submit-failed" is not declared as optional/required
+            and tdef.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is None
+        ):
+            self._add(
+                TASK_OUTPUT_SUBMITTED,
+                TASK_OUTPUT_SUBMITTED,
+                required=True,
+            )
 
     def _add(self, message, trigger, is_completed=False, required=False):
         """Add a new output message"""
@@ -197,7 +211,16 @@ class TaskOutputs:
         )
 
     def get_incomplete(self):
-        """Return a list of required outputs that are not complete."""
+        """Return a list of required outputs that are not complete.
+
+        A task is incomplete if:
+
+        * it finished executing without completing all required outputs
+        * or if job submission failed and the :submit output was not optional
+
+        https://github.com/cylc/cylc-admin/blob/master/docs/proposal-new-output-syntax.md#output-syntax
+
+        """
         return [
             trigger
             for trigger, (_, _, is_completed) in self._by_trigger.items()
