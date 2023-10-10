@@ -559,9 +559,9 @@ class CylcReviewDAO(object):
             " sum(" + states_stmt["fail"] + ") AS n_fail"
             " FROM task_states" +
             " GROUP BY cycle" +
-            " HAVING sum(" + states_stmt["active"] + ")>0" +
-            " OR sum(" + states_stmt["success"] + ")>0" +
-            " OR sum(" + states_stmt["fail"] + ")>0"
+            " HAVING n_active > 0" +
+            " OR n_success > 0" +
+            " OR n_fail >0"
         )
         if integer_mode:
             stmt += " ORDER BY cast(cycle as number)"
