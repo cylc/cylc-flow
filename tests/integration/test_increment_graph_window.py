@@ -94,6 +94,24 @@ def add_task(schd, task):
     schd.data_store_mgr.add_pool_node(task, IntegerPoint('1'))
 
 
+def get_graph_walk_cache(schd):
+    """Return the head task names of cached graph walks."""
+    # prune graph walk cache
+    schd.data_store_mgr.prune_data_store()
+    # fetch the cached walks
+    n_window_node_walks = sorted(
+        Tokens(task_id)['task']
+        for task_id in schd.data_store_mgr.n_window_node_walks
+    )
+    n_window_completed_walks = sorted(
+        Tokens(task_id)['task']
+        for task_id in schd.data_store_mgr.n_window_completed_walks
+    )
+    # the IDs in set and keys of dict are only the same at n<2 window.
+    assert n_window_node_walks == n_window_completed_walks
+    return n_window_completed_walks
+
+
 async def test_increment_graph_window_blink(flow, scheduler, start):
     """Test with a task which drifts in and out of the n-window.
 
@@ -306,3 +324,79 @@ async def test_window_resize_rewalk(flow, scheduler, start):
         assert set(await get_n_window(schd)) == {
             'b', 'c', 'd', 'e', 'f'
         }
+
+
+async def test_cache_pruning(flow, scheduler, start):
+    """It should remove graph walks from the cache when no longer needed.
+
+    The algorithm caches graph walks for efficiency. This test is designed to
+    ensure we don't introduce a memory leak by failing to clear cached walks
+    at the correct point.
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+        },
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    # a chain of tasks
+                    a => b1 & b2 => c => d1 & d2 => e => f
+                    # force "a" to drift into an out of the window
+                    a => c
+                    a => e
+                '''
+            }
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        schd.data_store_mgr.set_graph_window_extent(1)
+
+        # work through this workflow, step by step checking the cached items...
+
+        # active: a
+        add_task(schd, 'a')
+        increment_graph_window(schd, 'a')
+        assert get_graph_walk_cache(schd) == ['a']
+
+        # active: b1, b2
+        await complete_task(schd, 'a')
+        add_task(schd, 'b1')
+        add_task(schd, 'b2')
+        increment_graph_window(schd, 'b1')
+        increment_graph_window(schd, 'b2')
+        assert get_graph_walk_cache(schd) == ['a', 'b1', 'b2']
+
+        # active: c
+        await complete_task(schd, 'b1')
+        await complete_task(schd, 'b2')
+        add_task(schd, 'c')
+        increment_graph_window(schd, 'c')
+        assert get_graph_walk_cache(schd) == ['a', 'b1', 'b2', 'c']
+
+        # active: d1, d2
+        await complete_task(schd, 'c')
+        add_task(schd, 'd1')
+        add_task(schd, 'd2')
+        increment_graph_window(schd, 'd1')
+        increment_graph_window(schd, 'd2')
+        assert get_graph_walk_cache(schd) == ['c', 'd1', 'd2']
+
+        # active: e
+        await complete_task(schd, 'd1')
+        await complete_task(schd, 'd2')
+        add_task(schd, 'e')
+        increment_graph_window(schd, 'e')
+        assert get_graph_walk_cache(schd) == ['d1', 'd2', 'e']
+
+        # active: f
+        await complete_task(schd, 'e')
+        add_task(schd, 'f')
+        increment_graph_window(schd, 'f')
+        assert get_graph_walk_cache(schd) == ['e', 'f']
+
+        # active: None
+        await complete_task(schd, 'f')
+        increment_graph_window(schd, 'f')
+        assert get_graph_walk_cache(schd) == []
