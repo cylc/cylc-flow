@@ -327,7 +327,10 @@ def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
             Tokens('~u/w//c/t/2'),
             SimpleNamespace(
                 name='t', dependencies={}, sequential='',
-                external_triggers=[], xtrig_labels={}, outputs={},
+                external_triggers=[], xtrig_labels={},
+                outputs={
+                    'submitted': [None, None], 'submit-failed': [None, None]
+                },
                 graph_children={}, rtconfig={'platform': 'foo'}
 
             ),
