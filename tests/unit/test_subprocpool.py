@@ -25,9 +25,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from cylc.flow import LOG
+from cylc.flow.id import Tokens
+from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNCS, get_func
+from cylc.flow.task_proxy import TaskProxy
 
 
 class TestSubProcPool(unittest.TestCase):
@@ -309,6 +312,29 @@ def test__run_command_exit_add_to_badhosts(mock_ctx):
         callback=print,
         callback_args=['Welcome to Magrathea']
     )
+    assert badhosts == {'foo', 'bar', 'mouse'}
+
+
+def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
+    """It gets platform name from the callback args.
+    """
+    badhosts = {'foo', 'bar'}
+    SubProcPool._run_command_exit(
+        mock_ctx(cmd=['ssh']),
+        bad_hosts=badhosts,
+        callback=lambda x, t: print(str(x)),
+        callback_args=[TaskProxy(
+            Tokens('~u/w//c/t/2'),
+            SimpleNamespace(
+                name='t', dependencies={}, sequential='',
+                external_triggers=[], xtrig_labels={}, outputs={},
+                graph_children={}, rtconfig={'platform': 'foo'}
+
+            ),
+            ISO8601Point('1990')
+        )]
+    )
+    assert 'platform: foo' in caplog.records[0].message
     assert badhosts == {'foo', 'bar', 'mouse'}
 
 
