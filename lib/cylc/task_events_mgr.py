@@ -1068,12 +1068,12 @@ class TaskEventsManager(object):
 
         Returns: List of delays from start of task.
         """
-        # Remove excessive polling before time limit
-        while sum(delays) > time_limit:
-            del delays[-1]
-
-        # But fill up the gap before time limit
-        if delays:
+        if sum(delays) > time_limit:
+            # Remove excessive polling before time limit
+            while sum(delays) > time_limit:
+                del delays[-1]
+        elif delays:
+            # But fill up the gap before time limit
             size = int((time_limit - sum(delays)) / delays[-1])
             delays.extend([delays[-1]] * size)
 
