@@ -176,7 +176,7 @@ class TaskJobManager:
             self.poll_task_jobs(workflow, poll_tasks)
 
     def kill_task_jobs(self, workflow, itasks):
-        """Kill jobs of active tasks, and hold the tasks.
+        """Kill jobs of active tasks.
 
         If items is specified, kill active tasks matching given IDs.
 
@@ -184,8 +184,6 @@ class TaskJobManager:
         to_kill_tasks = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(is_held=True)
-                self.data_store_mgr.delta_task_held(itask)
                 to_kill_tasks.append(itask)
             else:
                 LOG.warning(f"[{itask}] not killable")
@@ -194,6 +192,7 @@ class TaskJobManager:
             self._kill_task_jobs_callback,
             self._kill_task_jobs_callback_255
         )
+        return to_kill_tasks
 
     def poll_task_jobs(self, workflow, itasks, msg=None):
         """Poll jobs of specified tasks.

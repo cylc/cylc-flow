@@ -1012,10 +1012,7 @@ class DataStoreMgr:
             id=tp_id,
             task=t_id,
             cycle_point=point_string,
-            is_held=(
-                (name, point)
-                in self.schd.pool.tasks_to_hold
-            ),
+            is_held=self.schd.pool.hold_mgr.is_held(name, point),
             depth=task_def.depth,
             name=name,
         )

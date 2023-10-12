@@ -42,6 +42,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
+from cylc.flow.flow_mgr import validate_flow_opt
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -57,11 +58,13 @@ if TYPE_CHECKING:
 RELEASE_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob]!
+  $tasks: [NamespaceIDGlob]!,
+  $flowNum: Int
 ) {
   release (
     workflows: $wFlows,
     tasks: $tasks,
+    flowNum: $flowNum
   ) {
     result
   }
@@ -97,6 +100,11 @@ def get_option_parser() -> COP:
             "if set."),
         action="store_true", dest="release_all")
 
+    parser.add_option(
+        "--flow",
+        help="Release tasks that belong to a specific flow.",
+        metavar="INT", action="store", dest="flow_num")
+
     return parser
 
 
@@ -110,6 +118,8 @@ def _validate(options: 'Values', *tokens_list: str) -> None:
             raise InputError(
                 "Must define Cycles/Tasks. See `cylc release --help`."
             )
+
+    validate_flow_opt(options.flow_num)
 
 
 async def run(options: 'Values', workflow_id, *tokens_list):
@@ -126,7 +136,8 @@ async def run(options: 'Values', workflow_id, *tokens_list):
             'tasks': [
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
-            ]
+            ],
+            'flowNum': options.flow_num
         }
 
     mutation_kwargs = {

@@ -77,6 +77,7 @@ class WorkflowDatabaseManager:
     KEY_UTC_MODE = 'UTC_mode'
     KEY_PAUSED = 'is_paused'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
+    KEY_HOLD_CYCLE_POINT_FLOW = 'holdcp_flow'
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
@@ -352,12 +353,17 @@ class WorkflowDatabaseManager:
         self.put_workflow_params_1(self.KEY_PAUSED, int(value))
 
     def put_workflow_hold_cycle_point(
-        self, value: Optional['PointBase']
+        self,
+        value: Optional['PointBase'],
+        flow_num: Optional[int] = None
     ) -> None:
         """Put workflow hold cycle point to workflow_params table."""
         self.put_workflow_params_1(
             self.KEY_HOLD_CYCLE_POINT,
             str(value) if value is not None else None
+        )
+        self.put_workflow_params_1(
+            self.KEY_HOLD_CYCLE_POINT_FLOW, flow_num
         )
 
     def put_workflow_stop_clock_time(self, value: Optional[str]) -> None:
@@ -519,7 +525,7 @@ class WorkflowDatabaseManager:
                 itask.state.time_updated = None
 
     def put_tasks_to_hold(
-        self, tasks: Set[Tuple[str, 'PointBase']]
+        self, tasks: Set[Tuple[str, 'PointBase', Optional[int]]]
     ) -> None:
         """Replace the tasks in the tasks_to_hold table."""
         # There isn't that much cost in calling this multiple times between
@@ -528,8 +534,8 @@ class WorkflowDatabaseManager:
         # whole table each time the queue is processed is a bit inefficient.
         self.db_deletes_map[self.TABLE_TASKS_TO_HOLD] = [{}]
         self.db_inserts_map[self.TABLE_TASKS_TO_HOLD] = [
-            {"name": name, "cycle": str(point)}
-            for name, point in tasks
+            {"name": name, "cycle": str(point), "flow": flow_num}
+            for name, point, flow_num in tasks
         ]
 
     def put_insert_task_events(self, itask, args):

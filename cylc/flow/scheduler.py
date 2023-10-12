@@ -905,7 +905,8 @@ class Scheduler:
     def queue_command(self, command: str, kwargs: dict) -> None:
         self.command_queue.put((
             command,
-            tuple(kwargs.values()), {}
+            (),
+            kwargs,
         ))
 
     async def process_command_queue(self) -> None:
@@ -1011,9 +1012,13 @@ class Scheduler:
         self.stop_mode = stop_mode
         self.update_data_store()
 
-    def command_release(self, task_globs: Iterable[str]) -> int:
+    def command_release(
+        self,
+        tasks: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Release held tasks."""
-        return self.pool.release_held_tasks(task_globs)
+        return self.pool.release_held_tasks(tasks, flow_num)
 
     def command_release_hold_point(self) -> None:
         """Release all held tasks and unset workflow hold after cycle point,
@@ -1025,31 +1030,42 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items: List[str]) -> int:
+    def command_poll_tasks(self, tasks: List[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return 0
-        itasks, _, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         return len(bad_items)
 
-    def command_kill_tasks(self, items: List[str]) -> int:
+    def command_kill_tasks(self, tasks: List[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
-        itasks, _, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         if self.config.run_mode('simulation'):
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state_reset(TASK_STATUS_FAILED)
                     self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
+        to_kill = self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
+        # Hold killed tasks to prevent automatic retry.
+        for itask in to_kill:
+            self.pool.hold_mgr.hold_active_task(itask)
         return len(bad_items)
 
-    def command_hold(self, task_globs: Iterable[str]) -> int:
+    def command_hold(
+        self,
+        tasks: Iterable[str],
+        flow_num: Optional[int] = None
+    ) -> int:
         """Hold specified tasks."""
-        return self.pool.hold_tasks(task_globs)
+        return self.pool.hold_tasks(tasks, flow_num)
 
-    def command_set_hold_point(self, point: str) -> None:
+    def command_set_hold_point(
+        self,
+        point: str,
+        flow_num: Optional[int] = None
+    ) -> None:
         """Hold all tasks after the specified cycle point."""
         cycle_point = TaskID.get_standardised_point(point)
         if cycle_point is None:
@@ -1057,25 +1073,25 @@ class Scheduler:
         LOG.info(
             f"Setting hold cycle point: {cycle_point}\n"
             "All tasks after this point will be held.")
-        self.pool.set_hold_point(cycle_point)
+        self.pool.set_hold_point(cycle_point, flow_num)
 
     def command_pause(self) -> None:
         """Pause the workflow."""
         self.pause_workflow()
 
     @staticmethod
-    def command_set_verbosity(lvl: Union[int, str]) -> None:
+    def command_set_verbosity(level: Union[int, str]) -> None:
         """Set workflow verbosity."""
         try:
-            lvl = int(lvl)
-            LOG.setLevel(lvl)
+            level = int(level)
+            LOG.setLevel(level)
         except (TypeError, ValueError) as exc:
             raise CommandFailedError(exc)
-        cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
+        cylc.flow.flags.verbosity = log_level_to_verbosity(level)
 
-    def command_remove_tasks(self, items) -> int:
+    def command_remove_tasks(self, tasks) -> int:
         """Remove tasks."""
-        return self.pool.remove_tasks(items)
+        return self.pool.remove_tasks(tasks)
 
     async def command_reload_workflow(self) -> None:
         """Reload workflow configuration."""
@@ -1329,6 +1345,8 @@ class Scheduler:
         * Original workflow run time zone.
         """
         LOG.info('LOADING workflow parameters')
+        self.options.holdcp_flow = None  # (not CLI but needed on restart)
+
         for key, value in params:
             if value is None:
                 continue
@@ -1370,6 +1388,12 @@ class Scheduler:
             ):
                 self.options.holdcp = value
                 LOG.info(f"+ hold point = {value}")
+            elif (
+                key == self.workflow_db_mgr.KEY_HOLD_CYCLE_POINT_FLOW
+                and self.options.holdcp_flow is None
+            ):
+                self.options.holdcp_flow = value
+                LOG.info(f"+ hold point flow = {value}")
             elif key == self.workflow_db_mgr.KEY_STOP_CLOCK_TIME:
                 int_val = int(value)
                 msg = f"stop clock time = {int_val} ({time2str(int_val)})"

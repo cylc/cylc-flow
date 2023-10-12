@@ -16,7 +16,15 @@
 
 from copy import deepcopy
 import logging
-from typing import AsyncGenerator, Callable, Iterable, List, Tuple, Union
+from typing import (
+    AsyncGenerator,
+    Callable,
+    Iterable,
+    List,
+    Tuple,
+    Union,
+    Optional
+)
 
 import pytest
 from pytest import param
@@ -83,11 +91,13 @@ EXAMPLE_FLOW_2_CFG = {
 
 
 def get_task_ids(
-    name_point_list: Iterable[Tuple[str, Union[PointBase, str, int]]]
+    name_point_list: Iterable[Tuple[str, Union[PointBase, str, int], int]]
 ) -> List[str]:
     """Helper function to return sorted task identities
-    from a list of  (name, point) tuples."""
-    return sorted(f'{point}/{name}' for name, point in name_point_list)
+    from a list of  (name, point, flow) tuples.
+    Ignore flow.
+    """
+    return sorted(f'{point}/{name}' for name, point, _ in name_point_list)
 
 
 def assert_expected_log(
@@ -361,32 +371,45 @@ async def test_match_taskdefs(
     task_pool = mod_example_flow.pool
 
     n_warnings, task_items = task_pool.match_taskdefs(items)
-    assert get_task_ids(task_items) == sorted(expected_task_ids)
+    assert get_task_ids(
+        [(m,n,1) for m, n in task_items]
+    ) == sorted(expected_task_ids)
 
     logged_warnings = assert_expected_log(caplog, expected_warnings)
     assert n_warnings == len(logged_warnings)
 
 
 @pytest.mark.parametrize(
-    'items, expected_tasks_to_hold_ids, expected_warnings',
+    'items, flow_num, expected_tasks_to_hold_ids, expected_warnings',
     [
         param(
-            ['1/foo', '3/asd'], ['1/foo', '3/asd'], [],
+            ['1/foo', '3/asd'], None, ['1/foo', '3/asd'], [],
             id="Active & future tasks"
         ),
         param(
-            ['1/*', '2/*', '3/*', '6/*'],
+            ['1/*', '2/*', '3/*', '6/*'], None,
             ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar'],
             ["No active tasks matching: 6/*"],
             id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
-            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
+            ['1/*', '2/*', '3/*', '6/*'], 1,
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar'],
+            ["No active tasks matching: 6/*"],
+            id="Flow match"
+        ),
+        param(
+            ['1/*', '2/*', '3/*', '6/*'], 2, [],
+            ["No active tasks matching: 6/*"],
+            id="No flow match"
+        ),
+        param(
+            ['1/FAM', '2/FAM', '6/FAM'], None, ['1/bar', '2/bar'],
             ["No active tasks in the family FAM matching: 6/FAM"],
             id="Family names hold active tasks only"
         ),
         param(
-            ['1/grogu', 'H/foo', '20/foo', '1/pub'], [],
+            ['1/grogu', 'H/foo', '20/foo', '1/pub'], None, [],
             ["No matching tasks found: grogu",
              "H/foo - invalid cycle point: H",
              "Invalid cycle point for task: foo, 20",
@@ -394,7 +417,7 @@ async def test_match_taskdefs(
             id="Non-existent task name or invalid cycle point"
         ),
         param(
-            ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
+            ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], None, ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
              "No active tasks matching: 6/bar:waiting"],
             id="Specifying task state works for active tasks, not future tasks"
@@ -403,6 +426,7 @@ async def test_match_taskdefs(
 )
 async def test_hold_tasks(
     items: List[str],
+    flow_num: Optional[int],
     expected_tasks_to_hold_ids: List[str],
     expected_warnings: List[str],
     example_flow: Scheduler, caplog: pytest.LogCaptureFixture,
@@ -416,19 +440,20 @@ async def test_hold_tasks(
     Params:
         items: Arg passed to hold_tasks().
         expected_tasks_to_hold_ids: Expected IDs of the tasks that get put in
-            the TaskPool.tasks_to_hold set, of the form "{point}/{name}"/
+            the TaskPool.hold_mgr._flatten() set, of the form "{point}/{name}"/
         expected_warnings: Expected to be logged.
     """
     expected_tasks_to_hold_ids = sorted(expected_tasks_to_hold_ids)
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = example_flow.pool
-    n_warnings = task_pool.hold_tasks(items)
+    n_warnings = task_pool.hold_tasks(items, flow_num)
 
     for itask in task_pool.get_all_tasks():
         hold_expected = itask.identity in expected_tasks_to_hold_ids
         assert itask.state.is_held is hold_expected
 
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    assert get_task_ids(
+        task_pool.hold_mgr._flatten()) == expected_tasks_to_hold_ids
 
     logged_warnings = assert_expected_log(caplog, expected_warnings)
     assert n_warnings == len(logged_warnings)
@@ -456,20 +481,28 @@ async def test_release_held_tasks(
     for itask in task_pool.get_all_tasks():
         hold_expected = itask.identity in expected_tasks_to_hold_ids
         assert itask.state.is_held is hold_expected
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    assert get_task_ids(task_pool.hold_mgr._flatten()) == expected_tasks_to_hold_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
     # Test
-    task_pool.release_held_tasks(['1/foo', '3/asd'])
+    task_pool.release_held_tasks(['1/foo', '3/asd'], 1)  # right flow, do release
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is (itask.identity == '1/bar')
 
-    expected_tasks_to_hold_ids = sorted(['1/bar'])
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    task_pool.release_held_tasks(['1/bar'], 2)  # wrong flow, don't release
+    for itask in task_pool.get_all_tasks():
+        assert itask.state.is_held is (itask.identity == '1/bar')
+
+    expected_tasks_to_hold_ids = ['1/bar']
+    assert get_task_ids(task_pool.hold_mgr._flatten()) == expected_tasks_to_hold_ids
 
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
+
+    task_pool.release_held_tasks(['1/bar'])  # any flow, do release
+    for itask in task_pool.get_all_tasks():
+        assert itask.state.is_held is False
 
 
 @pytest.mark.parametrize(
@@ -500,7 +533,7 @@ async def test_hold_point(
         hold_expected = itask.identity in expected_held_task_ids
         assert itask.state.is_held is hold_expected
 
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_held_task_ids
+    assert get_task_ids(task_pool.hold_mgr._flatten()) == expected_held_task_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_held_task_ids
 
@@ -514,7 +547,7 @@ async def test_hold_point(
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is False
 
-    assert task_pool.tasks_to_hold == set()
+    assert task_pool.hold_mgr._flatten() == set()
     assert db_select(example_flow, True, 'tasks_to_hold') == []
 
 

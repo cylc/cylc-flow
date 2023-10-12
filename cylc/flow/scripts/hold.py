@@ -59,6 +59,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
+from cylc.flow.flow_mgr import validate_flow_opt
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
@@ -67,6 +68,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.multi import call_multi
 
+
 if TYPE_CHECKING:
     from optparse import Values
 
@@ -74,11 +76,13 @@ if TYPE_CHECKING:
 HOLD_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob]!
+  $tasks: [NamespaceIDGlob]!,
+  $flowNum: Int
 ) {
   hold (
     workflows: $wFlows,
-    tasks: $tasks
+    tasks: $tasks,
+    flowNum: $flowNum
   ) {
     result
   }
@@ -88,11 +92,13 @@ mutation (
 SET_HOLD_POINT_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $point: CyclePoint!
+  $point: CyclePoint!,
+  $flowNum: Int
 ) {
   setHoldPoint (
     workflows: $wFlows,
-    point: $point
+    point: $point,
+    flowNum: $flowNum
   ) {
     result
   }
@@ -114,6 +120,11 @@ def get_option_parser() -> COP:
         help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="hold_point_string")
 
+    parser.add_option(
+        "--flow",
+        help="Hold tasks that belong to a specific flow.",
+        metavar="INT", action="store", dest="flow_num")
+
     return parser
 
 
@@ -123,11 +134,13 @@ def _validate(options: 'Values', *task_globs: str) -> None:
         if task_globs:
             raise InputError(
                 "Cannot combine --after with Cylc/Task IDs.\n"
-                "`cylc hold --after` holds all tasks after the given "
-                "cycle point.")
+                "`cylc hold --after` holds ALL tasks after the given "
+                "cycle point. Can be used with `--flow`.")
     elif not task_globs:
         raise InputError(
             "Must define Cycles/Tasks. See `cylc hold --help`.")
+
+    validate_flow_opt(options.flow_num)
 
 
 async def run(options, workflow_id, *tokens_list):
@@ -137,14 +150,18 @@ async def run(options, workflow_id, *tokens_list):
 
     if options.hold_point_string:
         mutation = SET_HOLD_POINT_MUTATION
-        args = {'point': options.hold_point_string}
+        args = {
+            'point': options.hold_point_string,
+            'flowNum': options.flow_num
+        }
     else:
         mutation = HOLD_MUTATION
         args = {
             'tasks': [
                 id_.relative_id_with_selectors
                 for id_ in tokens_list
-            ]
+            ],
+            'flowNum': options.flow_num
         }
 
     mutation_kwargs = {

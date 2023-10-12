@@ -100,7 +100,8 @@ def get_option_parser() -> COP:
         "--flow", action="append", dest="flow", metavar="FLOW",
         help=f"Assign the triggered task to all active flows ({FLOW_ALL});"
              f" no flow ({FLOW_NONE}); a new flow ({FLOW_NEW});"
-             f" or a specific flow (e.g. 2). The default is {FLOW_ALL}."
+             " or a specific integer flow (e.g. 2). The default is"
+             f" {FLOW_ALL}."
              " Reuse the option to assign multiple specific flows."
     )
 
