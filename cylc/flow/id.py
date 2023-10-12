@@ -163,6 +163,12 @@ class Tokens(dict):
             for key in self._KEYS
         )
 
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
+
     def __ne__(self, other):
         if not isinstance(other, self.__class__):
             return True

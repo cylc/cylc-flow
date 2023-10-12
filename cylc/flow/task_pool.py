@@ -689,6 +689,9 @@ class TaskPool:
                 EventKey(
                     handler,
                     event,
+                    # NOTE: the event "message" is not preserved in the DB so
+                    # we use the event as a placeholder
+                    event,
                     tokens.duplicate(job=submit_num),
                 ),
                 TaskActionTimer(

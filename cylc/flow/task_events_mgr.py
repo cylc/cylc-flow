@@ -126,6 +126,13 @@ class EventKey(NamedTuple):
     """The task event."""
     event: str
 
+    """The task event message.
+
+    Warning: This information is not currently preserved in the DB so will be
+    lost on restart.
+    """
+    message: str
+
     """The job tokens."""
     tokens: 'Tokens'
 
@@ -897,7 +904,7 @@ class TaskEventsManager():
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
-        self._setup_event_mail(itask, event)
+        self._setup_event_mail(itask, event, message)
         self._setup_custom_event_handlers(itask, event, message)
 
     def _custom_handler_callback(
@@ -951,14 +958,18 @@ class TaskEventsManager():
                 subject = "[%d task events] %s" % (
                     len(id_keys), schd.workflow)
         cmd = ["mail", "-s", subject]
+
         # From: and To:
         cmd.append("-r")
         cmd.append(ctx.mail_from)
         cmd.append(ctx.mail_to)
+
         # STDIN for mail, tasks
         stdin_str = ""
         for id_key in sorted(id_keys):
-            stdin_str += f'{id_key.event}: {id_key.tokens.relative_id}\n'
+            stdin_str += f'job: {id_key.tokens.relative_id}\n'
+            stdin_str += f'event: {id_key.event}\n'
+            stdin_str += f'message: {id_key.message}\n\n'
 
         # STDIN for mail, event info + workflow detail
         stdin_str += "\n"
@@ -1491,6 +1502,7 @@ class TaskEventsManager():
         id_key = EventKey(
             self.HANDLER_JOB_LOGS_RETRIEVE,
             event,
+            event,
             itask.tokens.duplicate(job=itask.submit_num),
         )
         if id_key in self._event_timers:
@@ -1514,7 +1526,12 @@ class TaskEventsManager():
             )
         )
 
-    def _setup_event_mail(self, itask: 'TaskProxy', event: str) -> None:
+    def _setup_event_mail(
+        self,
+        itask: 'TaskProxy',
+        event: str,
+        message: str,
+    ) -> None:
         """Set up task event notification, by email."""
         if event not in self._get_events_conf(itask, "mail events", []):
             # event does not need to be processed
@@ -1523,6 +1540,7 @@ class TaskEventsManager():
         id_key = EventKey(
             self.HANDLER_MAIL,
             get_event_id(event, itask),
+            message,
             itask.tokens.duplicate(job=itask.submit_num),
         )
         if id_key in self._event_timers:
@@ -1571,6 +1589,7 @@ class TaskEventsManager():
             id_key = EventKey(
                 f'{self.HANDLER_CUSTOM}-{i:02d}',
                 get_event_id(event, itask),
+                message,
                 itask.tokens.duplicate(job=itask.submit_num),
             )
 
