@@ -28,6 +28,9 @@ management and does not bundle Jinja2.
 execution time limit polling delay incrementing for every task where it is
 used.
 
+[#5747](https://github.com/cylc/cylc-flow/pull/5747) - Fix a bug where Cylc
+Review was not returning the correct number of entries in the Cycles page.
+
 ## __cylc-7.8.13 (2023-06-13)__
 
 [#5309](https://github.com/cylc/cylc-flow/pull/5309) - Cylc 8 compat for Cylc Review:
