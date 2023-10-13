@@ -56,6 +56,8 @@ from cylc.flow.workflow_status import (
 )
 
 
+# default workflow / task filters
+# (i.e. show everything)
 DEFAULT_FILTERS = get_default_filters()
 
 
@@ -126,8 +128,8 @@ class TuiWidget(urwid.TreeWidget):
         return key
 
     def get_indented_widget(self):
+        """Override the Urwid method to handle leaf nodes differently."""
         if self.is_leaf:
-
             self._innerwidget = urwid.Columns(
                 [
                     ('fixed', 1, self.unexpandable_icon),
@@ -193,7 +195,13 @@ class TuiNode(urwid.ParentNode):
 
 @contextmanager
 def updater_subproc(filters):
-    """Runs the Updater in its own process."""
+    """Runs the Updater in its own process.
+
+    The updater provides the data for Tui to render. Running the updater
+    in its own process removes its CPU load from the Tui app allowing
+    it to remain responsive whilst updates are being gathered as well as
+    decoupling the application update logic from the data update logic.
+    """
     # start the updater
     updater = Updater()
     p = Process(target=updater.start, args=(filters,))

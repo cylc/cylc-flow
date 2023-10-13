@@ -32,7 +32,6 @@ keys to navigage.
 from getpass import getuser
 from textwrap import indent
 from typing import TYPE_CHECKING, Optional
-from urwid import html_fragment
 
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
@@ -63,17 +62,6 @@ def get_option_parser() -> COP:
     )
 
     return parser
-
-
-def configure_screenshot(v_term_size):
-    screen = html_fragment.HtmlGenerator()
-    screen.set_terminal_properties(256)
-    screen.register_palette(TuiApp.palette)
-    html_fragment.screenshot_init(
-        [tuple(map(int, v_term_size.split(',')))],
-        []
-    )
-    return screen, html_fragment
 
 
 @cli_function(get_option_parser)

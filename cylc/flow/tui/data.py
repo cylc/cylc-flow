@@ -29,6 +29,8 @@ from cylc.flow.tui.util import (
 )
 
 
+# the GraphQL query which Tui runs against each of the workflows
+# is is subscribed to
 QUERY = '''
   query cli($taskStates: [String]){
     workflows {
@@ -88,6 +90,7 @@ QUERY = '''
   }
 '''
 
+# the list of mutations we can call on a running scheduler
 MUTATIONS = {
     'workflow': [
         'pause',
@@ -113,26 +116,12 @@ MUTATIONS = {
     ]
 }
 
+# mapping of Tui's node types (e.g. workflow) onto GraphQL argument types
+# (e.g. WorkflowID)
 ARGUMENT_TYPES = {
+    # <tui-node-type>: <graphql-argument-type>
     'workflow': '[WorkflowID]!',
     'task': '[NamespaceIDGlob]!',
-}
-
-MUTATION_TEMPLATES = {
-    'workflow': '''
-        mutation($workflow: [WorkflowID]!) {
-            pause (workflows: $workflow) {
-            result
-          }
-        }
-    ''',
-    'task': '''
-        mutation($workflow: [WorkflowID]!, $task: [NamespaceIDGlob]!) {
-          trigger (workflows: $workflow, tasks: $task) {
-            result
-          }
-        }
-    '''
 }
 
 
@@ -160,6 +149,7 @@ def cli_cmd(*cmd):
         raise ClientError(f'Error in command cylc {" ".join(cmd)}\n{err}')
 
 
+# the mutations we have to go through the CLI to perform
 OFFLINE_MUTATIONS = {
     'user': {
         'stop-all': partial(cli_cmd, 'stop', '*'),
@@ -173,6 +163,15 @@ OFFLINE_MUTATIONS = {
 
 
 def generate_mutation(mutation, arguments):
+    """Return a GraphQL mutation string.
+
+    Args:
+        mutation:
+            The mutation name.
+        Arguments:
+            The arguments to provide to it.
+
+    """
     arguments.pop('user')
     graphql_args = ', '.join([
         f'${argument}: {ARGUMENT_TYPES[argument]}'
@@ -252,6 +251,15 @@ def context_to_variables(context):
 
 
 def mutate(mutation, selection):
+    """Call a mutation.
+
+    Args:
+        mutation:
+            The mutation name (e.g. stop).
+        selection:
+            The Tui selection (i.e. the row(s) selected in Tui).
+
+    """
     if mutation in {
         _mutation
         for section in OFFLINE_MUTATIONS.values()

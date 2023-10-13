@@ -7,17 +7,40 @@ from time import sleep
 from uuid import uuid1
 
 import pytest
+from urwid import html_fragment
 
 from cylc.flow.id import Tokens
 from cylc.flow.tui.app import TuiApp
-from cylc.flow.scripts.tui import configure_screenshot
 from cylc.flow.tui.overlay import _get_display_id
 
 
 SCREENSHOT_DIR = Path(__file__).parent / 'screenshots'
 
 
+def configure_screenshot(v_term_size):
+    """Configure Urwid HTML screenshots."""
+    screen = html_fragment.HtmlGenerator()
+    screen.set_terminal_properties(256)
+    screen.register_palette(TuiApp.palette)
+    html_fragment.screenshot_init(
+        [tuple(map(int, v_term_size.split(',')))],
+        []
+    )
+    return screen, html_fragment
+
+
 def format_test_failure(expected, got, description):
+    """Return HTML to represent a screenshot test failure.
+
+    Args:
+        expected:
+            HTML fragment for the expected screenshot.
+        got:
+            HTML fragment for the test screenshot.
+        description:
+            Test description.
+
+    """
     diff = '\n'.join(unified_diff(
         expected.splitlines(),
         got.splitlines(),

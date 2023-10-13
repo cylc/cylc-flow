@@ -516,15 +516,6 @@ def render_node(node, data, type_):
     return RENDER_FUNCTIONS.get(type_, _render_unknown)(node, data)
 
 
-PARTS = [
-    'user',
-    'workflow',
-    'cycle',
-    'task',
-    'job'
-]
-
-
 def extract_context(selection):
     """Return a dictionary of all component types in the selection.
 
