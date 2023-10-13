@@ -1015,7 +1015,7 @@ class TaskEventsManager(object):
                 timeout = (time_limit + sum(time_limit_delays))
 
                 delays = self.process_execution_polling_delays(
-                    delays, time_limit_delays, time_limit
+                    delays, time_limit, time_limit_delays
                 )
 
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
@@ -1057,7 +1057,7 @@ class TaskEventsManager(object):
 
     @staticmethod
     def process_execution_polling_delays(
-        delays, time_limit_delays, time_limit
+        delays, time_limit, time_limit_delays
     ):
         """Create list of intervals after starting at which to poll a task.
 
@@ -1067,6 +1067,33 @@ class TaskEventsManager(object):
             time_limit: Execution Time Limit.
 
         Returns: List of delays from start of task.
+
+        Examples:
+
+            >>> this = TaskEventsManager.process_execution_polling_delays
+
+            # Basic example:
+            >>> this([40, 35], 100, [10])
+            [40, 35, 35, 10]
+
+            # Second 40 second delay gets lopped off the list because it's
+            # after the execution time limit:
+            >>> this([40, 40], 60, [10])
+            [40, 30, 10]
+
+            # Expand last item in exection polling intervals to fill the
+            # execution time limit:
+            >>> this([5, 20], 100, [10])
+            [5, 20, 20, 20, 20, 25, 10]
+
+            # There are no execution polling intervals set - polling starts
+            # at execution time limit:
+            >>> this([], 10, [5])
+            [15, 5]
+
+            # We have a list of execution time limit polling intervals,
+            >>> this([10], 25, [5, 6, 7, 8])
+            [10, 10, 10, 6, 7, 8]
         """
         if sum(delays) > time_limit:
             # Remove excessive polling before time limit
