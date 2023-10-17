@@ -28,6 +28,7 @@ This module provides logic to:
 """
 
 from collections import namedtuple
+import copy
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
 from pipes import quote
@@ -1013,7 +1014,7 @@ class TaskEventsManager(object):
                 # Total timeout after adding execution time limit polling
                 # intervals:
                 timeout = (time_limit + sum(time_limit_delays))
-
+                import pdb; pdb.set_trace()
                 delays = self.process_execution_polling_delays(
                     delays, time_limit, time_limit_delays
                 )
@@ -1093,7 +1094,17 @@ class TaskEventsManager(object):
             # We have a list of execution time limit polling intervals,
             >>> this([10], 25, [5, 6, 7, 8])
             [10, 10, 10, 6, 7, 8]
+
+            >>> time_limit_delays = [10]
+            >>> this([40, 40], 60, time_limit_delays)
+            [40, 30, 10]
+
+            >>> time_limit_delays
+            [10]
+
         """
+        # We do not want to modify time limit delays config in memory:
+        time_limit_delays = copy.copy(time_limit_delays)
         if sum(delays) > time_limit:
             # Remove excessive polling before time limit
             while sum(delays) > time_limit:
