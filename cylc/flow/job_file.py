@@ -25,7 +25,7 @@ from textwrap import dedent
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
-from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.log_level import verbosity_to_env
 from cylc.flow.config import interpolate_template, ParamExpandError
 
 # the maximum number of task dependencies which Cylc will list before

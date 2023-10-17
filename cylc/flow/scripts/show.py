@@ -38,9 +38,8 @@ workflow database.
 
 import asyncio
 import json
-from optparse import Values
 import sys
-from typing import Dict
+from typing import Dict, TYPE_CHECKING
 
 from ansimarkup import ansiprint
 
@@ -57,6 +56,10 @@ from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
 )
 from cylc.flow.terminal import cli_function
+
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 WORKFLOW_META_QUERY = '''
