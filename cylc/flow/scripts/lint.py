@@ -597,8 +597,8 @@ def get_url(check_meta: Dict) -> str:
         ''
         >>> get_url({'url': 'https://www.h2g2.com/'})
         'https://www.h2g2.com/'
-        >>> get_url({'url': 'foo'})
-        'https://cylc.github.io/cylc-doc/stable/html/7-to-8/foo'
+        >>> get_url({'url': 'cheat-sheet.html'})
+        'https://cylc.github.io/cylc-doc/stable/html/7-to-8/cheat-sheet.html'
     """
     url = check_meta.get('url', '')
     if url and not url.startswith('http'):
