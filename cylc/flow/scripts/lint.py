@@ -269,7 +269,6 @@ STYLE_GUIDE = (
     'https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/'
     'style-guide.html#'
 )
-URL_STUB = "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
 SECTION2 = r'\[\[\s*{}\s*\]\]'
 SECTION3 = r'\[\[\[\s*{}\s*\]\]\]'
 FILEGLOBS = ['*.rc', '*.cylc']
@@ -583,6 +582,31 @@ EXTRA_TOML_VALIDATION = {
     # consider checking that item is file?
     'exclude': {}
 }
+
+
+def get_url(check_meta: Dict) -> str:
+    """Get URL from check data.
+
+    If the URL doesn't start with http then prepend with address
+    of the 7-to-8 upgrade guide.
+
+    Examples:
+        >>> get_url({'no': 'url key'})
+        ''
+        >>> get_url({'url': ''})
+        ''
+        >>> get_url({'url': 'https://www.h2g2.com/'})
+        'https://www.h2g2.com/'
+        >>> get_url({'url': 'foo'})
+        'https://cylc.github.io/cylc-doc/stable/html/7-to-8/foo'
+    """
+    url = check_meta.get('url', '')
+    if url and not url.startswith('http'):
+        url = (
+            "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
+            + check_meta['url']
+        )
+    return url
 
 
 def validate_toml_items(tomldata):
@@ -950,10 +974,7 @@ def lint(
                 counter[check_meta['purpose']] += 1
                 if modify:
                     # insert a command to help the user
-                    if check_meta['url'].startswith('http'):
-                        url = check_meta['url']
-                    else:
-                        url = URL_STUB + check_meta['url']
+                    url = get_url(check_meta)
 
                     yield (
                         f'# [{get_index_str(check_meta, index)}]: '
@@ -1027,10 +1048,7 @@ def get_reference_rst(checks):
             template = (
                 '{check}\n^^^^\n{summary}\n\n'
             )
-            if meta.get('url', '').startswith('http'):
-                url = meta['url']
-            else:
-                url = URL_STUB + meta.get('url', '')
+            url = get_url(meta)
             summary = meta.get("rst", meta['short'])
             msg = template.format(
                 check=get_index_str(meta, index),
@@ -1071,10 +1089,7 @@ def get_reference_text(checks):
             template = (
                 '{check}:\n    {summary}\n\n'
             )
-            if meta.get('url', '').startswith('http'):
-                url = meta['url']
-            else:
-                url = URL_STUB + meta.get('url', '')
+            url = get_url(meta)
             msg = template.format(
                 title=index,
                 check=get_index_str(meta, index),

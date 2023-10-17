@@ -131,6 +131,7 @@ TEST_FILE = """
 
 # Shouldn't object to a comment, unlike the terrible indents below:
    [[bad indent]]
+   script = echo "bad indent"
         inherit = MyFaM
 
      [[remote]]
