@@ -22,6 +22,8 @@ Checks code style, deprecated syntax and other issues.
 # NOTE: docstring needed for `cylc help all` output
 # (if editing check this still comes out as expected)
 
+LINT_SECTIONS = ['cylc-lint', 'cylclint', 'cylc_lint']
+
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
 Check .cylc and .rc files for code style, deprecated syntax and other issues.
@@ -33,9 +35,19 @@ Commit to version control before using this, in case you want to back out.
 
 A non-zero return code will be returned if any issues are identified.
 This can be overridden by providing the "--exit-zero" flag.
+"""
 
-Configurations for Cylc lint can also be set in a pyproject.toml file.
+TOMLDOC = """
+Configurations for Cylc lint can also be set in a pyproject.toml file using
+the following parameters:
 
+{}
+
+   [cylc-lint]                     # any of {}
+       ignore = ['S001', 'S002]    # List of rules to ignore
+       exclude = ['etc/foo.cylc']  # List of files to ignore
+       rulesets = ['style', '728'] # Sets default rulesets to check
+       max-line-length = 130       # Max line length for linting
 """
 from colorama import Fore
 import functools
@@ -222,6 +234,35 @@ def check_for_obsolete_environment_variables(line: str) -> List[str]:
     return [i for i in OBSOLETE_ENV_VARS if i in line]
 
 
+def check_indentation(line: str) -> bool:
+    """The key value pair is not indented 4*X spaces
+
+    n.b. We test for trailing whitespace and incorrect section indenting
+    elsewhere
+
+    Examples:
+
+        >>> check_indentation('')
+        False
+        >>> check_indentation('   ')
+        False
+        >>> check_indentation('   [')
+        False
+        >>> check_indentation('baz')
+        False
+        >>> check_indentation('    qux')
+        False
+        >>> check_indentation('   foo')
+        True
+        >>> check_indentation('     bar')
+        True
+    """
+    match = re.findall(r'^(\s*)(.*)', line)[0]
+    if not match[0] or not match[1] or match[1].startswith('['):
+        return False
+    return bool(len(match[0]) % 4 != 0)
+
+
 FUNCTION = 'function'
 
 STYLE_GUIDE = (
@@ -268,7 +309,6 @@ LINE_LEN_NO = 'S012'
 # - short: A short description of the issue.
 # - url: A link to a fuller description.
 # - function: A function to use to run the check.
-# - fallback: A second function(The first function might want to call this?)
 # - kwargs: We want to pass a set of common kwargs to the check function.
 # - evaluate commented lines: Run this check on commented lines.
 # - rst: An rst description, for use in the Cylc docs.
@@ -398,6 +438,10 @@ STYLE_CHECKS = {
             check_if_jinja2,
             function=re.compile(r'(?<!{)#.*?{[{%]').findall
         )
+    },
+    'S013': {
+        'short': 'Items should be indented in 4 space blocks.',
+        FUNCTION: check_indentation
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
@@ -590,7 +634,7 @@ def get_pyproject_toml(dir_):
             raise CylcError(f'pyproject.toml did not load: {exc}')
 
         if any(
-            i in loadeddata for i in ['cylc-lint', 'cylclint', 'cylc_lint']
+            i in loadeddata for i in LINT_SECTIONS
         ):
             for key in keys:
                 tomldata[key] = loadeddata.get('cylc-lint').get(key, [])
@@ -983,10 +1027,10 @@ def get_reference_rst(checks):
             template = (
                 '{check}\n^^^^\n{summary}\n\n'
             )
-            if meta['url'].startswith('http'):
+            if meta.get('url', '').startswith('http'):
                 url = meta['url']
             else:
-                url = URL_STUB + meta['url']
+                url = URL_STUB + meta.get('url', '')
             summary = meta.get("rst", meta['short'])
             msg = template.format(
                 check=get_index_str(meta, index),
@@ -1027,10 +1071,10 @@ def get_reference_text(checks):
             template = (
                 '{check}:\n    {summary}\n\n'
             )
-            if meta['url'].startswith('http'):
+            if meta.get('url', '').startswith('http'):
                 url = meta['url']
             else:
-                url = URL_STUB + meta['url']
+                url = URL_STUB + meta.get('url', '')
             msg = template.format(
                 title=index,
                 check=get_index_str(meta, index),
@@ -1044,7 +1088,7 @@ def get_reference_text(checks):
 
 def get_option_parser() -> COP:
     parser = COP(
-        COP_DOC,
+        COP_DOC + TOMLDOC.format('', str(LINT_SECTIONS)),
         argdoc=[
             COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)
         ],
@@ -1204,4 +1248,6 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
 # NOTE: use += so that this works with __import__
 # (docstring needed for `cylc help all` output)
-__doc__ += get_reference_rst(parse_checks(['728', 'style'], reference=True))
+__doc__ += TOMLDOC.format(
+    '.. code-block:: toml', str(LINT_SECTIONS)) + get_reference_rst(
+    parse_checks(['728', 'style'], reference=True))
