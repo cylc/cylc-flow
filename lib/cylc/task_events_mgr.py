@@ -1105,11 +1105,9 @@ class TaskEventsManager(object):
 
         # After the last delay before the execution time limit add the
         # delay to get to the execution_time_limit
-        if len(time_limit_delays) > 1:
-            time_limit_delays[0] += time_limit - sum(delays)
-        else:
-            delays.append(
-                time_limit_delays[0] + time_limit - sum(delays))
+        if len(time_limit_delays) == 1:
+            time_limit_delays.append(time_limit_delays[0])
+        time_limit_delays[0] += time_limit - sum(delays)
 
         delays += time_limit_delays
         return delays
