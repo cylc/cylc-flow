@@ -110,7 +110,6 @@ class ExampleHandler():
        * ``job_file_path``
        * ``job_runner_command_template``
        * ``job_runner_name``
-       * ``logfiles``
        * ``namespace_hierarchy``
        * ``param_var``
        * ``platform``
