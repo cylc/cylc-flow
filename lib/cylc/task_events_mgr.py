@@ -1014,7 +1014,6 @@ class TaskEventsManager(object):
                 # Total timeout after adding execution time limit polling
                 # intervals:
                 timeout = (time_limit + sum(time_limit_delays))
-                import pdb; pdb.set_trace()
                 delays = self.process_execution_polling_delays(
                     delays, time_limit, time_limit_delays
                 )
@@ -1028,15 +1027,15 @@ class TaskEventsManager(object):
                 default=[900]))  # Default 15 minute intervals
         try:
             itask.timeout = timeref + float(timeout)
-            time_limit_str = intvl_as_str(time_limit)
+            timeout_str = intvl_as_str(timeout)
         except (TypeError, ValueError):
             itask.timeout = None
-            time_limit_str = None
+            timeout_str = None
 
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
 
         # Log timeout and polling schedule
-        message = 'health check settings: %s=%s' % (timeout_key, time_limit_str)
+        message = 'health check settings: %s=%s' % (timeout_key, timeout_str)
         # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
             items = []  # [(number of item - 1, item), ...]
