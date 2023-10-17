@@ -1035,8 +1035,7 @@ class TaskEventsManager(object):
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
 
         # Log timeout and polling schedule
-        message = 'health check settings: %s=%s' % (
-            timeout_key, time_limit_str)
+        message = 'health check settings: %s=%s' % (timeout_key, time_limit_str)
         # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
             items = []  # [(number of item - 1, item), ...]
