@@ -29,28 +29,14 @@ domains.
 # install cylc
 conda install cylc-flow
 
-# write your first workflow
-mkdir -p ~/cylc-src/example
-cat > ~/cylc-src/example/flow.cylc <<__CONFIG__
-[scheduling]
-    initial cycle point = 1
-    cycling mode = integer
-    [[graph]]
-        P1 = """
-            a => b => c & d
-            b[-P1] => b
-        """
-[runtime]
-    [[a, b, c, d]]
-        script = echo "Hello $CYLC_TASK_NAME"
-__CONFIG__
+# extract an example to run
+cylc get-resources examples/integer-cycling
 
 # install and run it
-cylc install example
-cylc play example
+cylc vip integer-cycling  # vip = validate, install and play
 
 # watch it run
-cylc tui example
+cylc tui integer-cycling
 ```
 
 ### The Cylc Ecosystem

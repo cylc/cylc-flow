@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -eu
+
+if [[ $# -lt 1 ]]; then
+    echo 'Usage ./trigger WORKFLOW_ID [KEY=VALUE ...]' >&2
+    echo
+    echo 'Trigger a new cycle in the target workflow.'
+    echo 'Any environment variable KEY=VALUE pairs will be broadcasted to'
+    echo 'all tasks in the cycle.'
+    exit 1
+fi
+
+# determine the workflow
+WORKFLOW_ID="$1"
+shift
+WORKFLOW_RUN_DIR="${HOME}/cylc-run/${WORKFLOW_ID}"
+EXT_TRIGGER_DIR="${WORKFLOW_RUN_DIR}/triggers"
+mkdir -p "$EXT_TRIGGER_DIR"
+
+# pick a trigger-id
+TRIGGER_ID="$(isodatetime --print-format CCYYMMDDThhmmss)"
+
+# write environment variables to a broadcast file
+TRIGGER_FILE="${EXT_TRIGGER_DIR}/${TRIGGER_ID}.cylc"
+echo '[environment]' >"$TRIGGER_FILE"
+for env in "$@"; do
+    echo "    $env" >> "$TRIGGER_FILE"
+done
+
+# issue the xtrigger
+cylc ext-trigger "$WORKFLOW_ID" 'trigger' "$TRIGGER_ID"
