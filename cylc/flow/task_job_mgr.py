@@ -1002,14 +1002,7 @@ class TaskJobManager:
             itask.submit_num += 1
             self._set_retry_timers(itask)
 
-            # We largely want a clean "platform" and not localhost,
-            # but we need to get the existing submission retry delays
-            # to stop _set_retry_delays missing it on retry.
-            itask.platform = {
-                'name': 'SIMULATION',
-                'submission retry delays':
-                    itask.platform['submission retry delays']
-            }
+            itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['simulation']['simulated run length']
