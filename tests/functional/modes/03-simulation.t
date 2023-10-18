@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test that simulation mode runs, and reruns a failed task successfully.
+# Test that simulation mode runs, and reruns a failed task successfully
+# when execution retry delays is configured.
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
