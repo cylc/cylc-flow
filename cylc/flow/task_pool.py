@@ -1402,7 +1402,7 @@ class TaskPool:
                   (C7 failed tasks don't count toward runahead limit)
         """
         if cylc.flow.flags.cylc7_back_compat:
-            if not itask.state(TASK_STATUS_FAILED):
+            if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
                 self.remove(itask, 'finished')
             if self.compute_runahead():
                 self.release_runahead_tasks()
