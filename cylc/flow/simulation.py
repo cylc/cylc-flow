@@ -17,14 +17,12 @@
 """
 
 from queue import Queue
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
-from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
-from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
@@ -33,6 +31,10 @@ from cylc.flow.task_state import (
 from cylc.flow.wallclock import get_current_time_string
 
 from metomi.isodatetime.parsers import DurationParser
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
+    from cylc.flow.task_proxy import TaskProxy
 
 
 def configure_sim_modes(taskdefs, sim_mode):
@@ -63,8 +65,6 @@ def configure_sim_modes(taskdefs, sim_mode):
             rtc, sleep_sec) if dummy_mode else ""
 
         disable_platforms(rtc)
-
-        rtc['platform'] = 'localhost'
 
         # Disable environment, in case it depends on env-script.
         rtc['environment'] = {}
@@ -133,7 +133,7 @@ def disable_platforms(
 
 def parse_fail_cycle_points(
     f_pts_orig: list
-) -> Union[None, List[PointBase]]:
+) -> 'Union[None, List[PointBase]]':
     """Parse `[simulation][fail cycle points]`.
 
     - None for "fail all points".
@@ -146,7 +146,7 @@ def parse_fail_cycle_points(
         >>> this([])
         []
     """
-    f_pts: Optional[List[PointBase]]
+    f_pts: 'Optional[List[PointBase]]'
     if 'all' in f_pts_orig:
         f_pts = None
     else:
@@ -157,7 +157,7 @@ def parse_fail_cycle_points(
 
 
 def sim_time_check(
-    message_queue: 'Queue[TaskMsg]', itasks: List[TaskProxy]
+    message_queue: 'Queue[TaskMsg]', itasks: 'List[TaskProxy]'
 ) -> bool:
     """Check if sim tasks have been "running" for as long as required.
 
@@ -204,7 +204,7 @@ def sim_time_check(
 
 def sim_task_failed(
         sim_conf: Dict[str, Any],
-        point: PointBase,
+        point: 'PointBase',
         try_num: int,
 ) -> bool:
     """Encapsulate logic for deciding whether a sim task has failed.
