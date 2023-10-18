@@ -68,7 +68,7 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.listify import listify
-from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.log_level import verbosity_to_env
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.parsec.exceptions import ItemNotFoundError

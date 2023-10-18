@@ -20,12 +20,11 @@ from functools import wraps
 import inspect
 import json
 import logging
-from optparse import OptionParser
 import os
 from subprocess import PIPE, Popen  # nosec
 import sys
 from textwrap import wrap
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -35,6 +34,9 @@ from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
+
+if TYPE_CHECKING:
+    from optparse import OptionParser
 
 
 # CLI exception message format
@@ -184,7 +186,7 @@ def parse_dirty_json(stdout):
 
 
 def cli_function(
-    parser_function: Optional[Callable[..., OptionParser]] = None,
+    parser_function: 'Optional[Callable[..., OptionParser]]' = None,
     **parser_kwargs: Any
 ):
     """Decorator for CLI entry points.

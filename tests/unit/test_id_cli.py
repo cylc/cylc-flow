@@ -570,7 +570,7 @@ def no_scan(monkeypatch):
         # something that looks like scan but doesn't do anything
         yield
 
-    monkeypatch.setattr('cylc.flow.id_cli.scan', _scan)
+    monkeypatch.setattr('cylc.flow.network.scan.scan', _scan)
 
 
 async def test_expand_workflow_tokens_impl_selector(no_scan):

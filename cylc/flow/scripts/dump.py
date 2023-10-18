@@ -75,7 +75,6 @@ fragment tProxy on TaskProxy {
     startedTime
     finishedTime
     jobLogDir
-    extraLogs
     platform
     executionTimeLimit
     jobRunnerName
