@@ -592,16 +592,6 @@ class TaskEventsManager():
                 itask, severity, message, event_time, flag, submit_num):
             return None
 
-        severity = cast(int, LOG_LEVELS.get(severity, INFO))
-        # Demote log level to DEBUG if this is a message that duplicates what
-        # gets logged by itask state change anyway (and not manual poll)
-        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
-            self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
-        }:
-            severity = DEBUG
-        LOG.log(severity, f"[{itask}] {flag}{message} at {event_time}")
-
         # always update the workflow state summary for latest message
         if flag == self.FLAG_POLLED:
             new_msg = f'{message} {self.FLAG_POLLED}'
@@ -819,6 +809,16 @@ class TaskEventsManager():
                     f"{self.FLAG_POLLED_IGNORED}{message}{timestamp}"
                 )
             return False
+
+        severity = cast('int', LOG_LEVELS.get(severity, INFO))
+        # Demote log level to DEBUG if this is a message that duplicates what
+        # gets logged by itask state change anyway (and not manual poll)
+        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
+            self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
+            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+        }:
+            severity = DEBUG
+        LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(self, itask, event, message):

@@ -67,15 +67,13 @@ def test_set_simulation_script(fail_one_time_only):
         }
     }
     result = build_dummy_script(rtc, 60)
-    expect = [
+    assert result.split('\n') == [
         'sleep 60',
         "cylc message '1'",
         "cylc message '2'",
         f"cylc__job__dummy_result {str(fail_one_time_only).lower()}"
         " 1 || exit 1"
     ]
-    for i, line in enumerate(result.split('\n')):
-        assert expect[i] == line
 
 
 @pytest.mark.parametrize(
@@ -92,22 +90,18 @@ def test_disable_platforms(rtc, expect):
     disable_platforms(rtc)
     assert rtc['platform'] == expect
     subdicts = [v for v in rtc.values() if isinstance(v, dict)]
-    for val in [
-        v for subdict in subdicts
-        for k, v in subdict.items()
-        if k != 'platform'
-    ]:
-        assert val is None
+    for subdict in subdicts:
+        for k, val in subdict.items():
+            if k != 'platform':
+                assert val is None
 
 
-def test_parse_fail_cycle_points(monkeypatch):
-    before = ['2']
-    monkeypatch.setattr(
-        'cylc.flow.cycling.loader.get_point_cls',
-        lambda cycling_type: IntegerPoint)
-    result = parse_fail_cycle_points(before)[0]
-    assert isinstance(result, IntegerPoint)
-    assert int(result) == 2
+def test_parse_fail_cycle_points(set_cycling_type):
+    before = ['2', '4']
+    set_cycling_type()
+    assert parse_fail_cycle_points(before) == [
+        IntegerPoint(i) for i in before
+    ]
 
 
 @pytest.mark.parametrize(

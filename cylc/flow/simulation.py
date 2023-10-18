@@ -16,7 +16,6 @@
 """Utilities supporting simulation and skip modes
 """
 
-from queue import Queue
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
@@ -33,6 +32,7 @@ from cylc.flow.wallclock import get_current_time_string
 from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
+    from queue import Queue
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_proxy import TaskProxy
 
@@ -132,7 +132,7 @@ def disable_platforms(
 
 
 def parse_fail_cycle_points(
-    f_pts_orig: list
+    f_pts_orig: List[str]
 ) -> 'Union[None, List[PointBase]]':
     """Parse `[simulation][fail cycle points]`.
 

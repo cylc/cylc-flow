@@ -1761,7 +1761,6 @@ def test_configure_sim_mode(caplog):
         'outputs': {},
     }
     rtconfig_2 = deepcopy(rtconfig_1)
-    rtconfig_2['job'] = job_section
     rtconfig_2['simulation']['default run length'] = 'PT2S'
 
     taskdefs = [
