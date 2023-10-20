@@ -48,13 +48,15 @@ def get_deltas(schd):
         schd.data_store_mgr.added,
         'added',
     )
+    # populate pruned deltas
+    schd.data_store_mgr.prune_data_store()
+    # Run depth finder
+    schd.data_store_mgr.window_depth_finder()
     # populate updated deltas
     schd.data_store_mgr.gather_delta_elements(
         schd.data_store_mgr.updated,
         'updated',
     )
-    # populate pruned deltas
-    schd.data_store_mgr.prune_data_store()
     return (
         {
             # added
@@ -65,6 +67,11 @@ def get_deltas(schd):
             # updated
             Tokens(tb_task_proxy.id)['task']: tb_task_proxy.graph_depth
             for tb_task_proxy in schd.data_store_mgr.deltas[TASK_PROXIES].updated
+            # only include those updated nodes whose depths have been set
+            if 'graph_depth' in {
+                sub_field.name
+                for sub_field, _ in tb_task_proxy.ListFields()
+            }
         },
         {
             # pruned
@@ -263,22 +270,23 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
                 # skip the first task as this is complicated by startup logic
                 assert added == {
                     key: value
-                    for key, value in _n_window.items()
+                    for key, value in n_window.items()
                     if key not in previous_n_window
                 }
-                # TODO: updated deltas don't seem to be coming through as expected
-                # assert {
-                #     key: value
-                #     for key, value in _n_window.items()
-                #     if previous_n_window.get(key, value) != value
-                # } == updated
+                # Skip added as depth isn't updated
+                # (the manager only updates those that need it)
+                assert updated == {
+                    key: value
+                    for key, value in n_window.items()
+                    if key not in added
+                }
                 assert pruned == {
                     key
                     for key in previous_n_window
-                    if key not in _n_window
+                    if key not in n_window
                 }
 
-            previous_n_window = _n_window
+            previous_n_window = n_window
 
 
 async def test_window_resize_rewalk(flow, scheduler, start):
