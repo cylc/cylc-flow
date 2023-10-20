@@ -574,13 +574,14 @@ def test_invalid_tomlfile(tmp_path):
     'ref, expect',
     [
         [True, 'line > ``<max_line_len>`` characters'],
-        [False, 'line > 130 characters']
+        [False, 'line > 42 characters']
     ]
 )
 def test_parse_checks_reference_mode(ref, expect):
-    result = parse_checks(['style'], reference=ref)
-    key = list(result.keys())[-1]
-    value = result[key]
+    """Add extra explanation of max line legth setting in reference mode.
+    """
+    result = parse_checks(['style'], reference=ref, max_line_len=42)
+    value = result['S012']
     assert expect in value['short']
 
 

@@ -438,6 +438,10 @@ STYLE_CHECKS = {
             function=re.compile(r'(?<!{)#.*?{[{%]').findall
         )
     },
+    'S012': {
+        'short': 'placeholder',
+        FUNCTION: lambda *args, **kwargs: True
+    },
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
         FUNCTION: check_indentation
@@ -1145,7 +1149,7 @@ def get_option_parser() -> COP:
         default=[],
         dest='ignores',
         metavar="CODE",
-        choices=tuple(STYLE_CHECKS)
+        choices=list(STYLE_CHECKS.keys()) + [LINE_LEN_NO]
     )
     parser.add_option(
         '--exit-zero',
