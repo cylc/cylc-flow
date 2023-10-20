@@ -37,12 +37,16 @@ workflow database.
 """
 
 import asyncio
+import re
 import json
 from optparse import Values
 import sys
 from typing import Dict
 
 from ansimarkup import ansiprint
+
+from metomi.isodatetime.data import (
+    get_timepoint_from_seconds_since_unix_epoch as seconds2point)
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
@@ -334,9 +338,19 @@ async def prereqs_and_outputs_query(
                             f'{ext_trig["label"]} ... {state}',
                             state)
                     for xtrig in t_proxy['xtriggers']:
+
+                        wallclock_trigger = re.findall(
+                            r'wall_clock\(trigger_time=(.*)\)', xtrig['id'])
+                        if wallclock_trigger:
+                            label = (
+                                'wall_clock(trigger_time='
+                                f'{str(seconds2point(wallclock_trigger[0]))}'
+                            )
+                        else:
+                            label = xtrig["id"]
                         state = xtrig['satisfied']
                         print_msg_state(
-                            f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
+                            f'xtrigger "{xtrig["label"]} = {label}"',
                             state)
     if not results['taskProxies']:
         ansiprint(
