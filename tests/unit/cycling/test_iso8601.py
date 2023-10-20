@@ -684,12 +684,14 @@ def test_simple(set_cycling_type):
         ('next(---10)', '20100810T0000Z'),
         ('next(---05T1200Z)', '20100905T1200Z'),
         ('next(--08-08)', '20100808T0000Z'),
+        ('next(T15)', '20100809T1500Z'),
+        ('next(T-41)', '20100808T1541Z'),
     ]
 )
 def test_next_simple(value: str, expected: str, set_cycling_type):
     """Test the generation of CP using 'next' from single input."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    my_now = "2010-08-08T15:40Z"
+    my_now = "2010-08-08T15:41Z"
     assert ingest_time(value, my_now) == expected
 
 
@@ -706,12 +708,14 @@ def test_next_simple(value: str, expected: str, set_cycling_type):
         ('previous(---10)', '20100710T0000Z'),
         ('previous(---05T1200Z)', '20100805T1200Z'),
         ('previous(--08-08)', '20090808T0000Z'),
+        ('previous(T15)', '20100808T1500Z'),
+        ('previous(T-41)', '20100808T1441Z'),
     ]
 )
 def test_previous_simple(value: str, expected: str, set_cycling_type):
     """Test the generation of CP using 'previous' from single input."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    my_now = "2010-08-08T15:40Z"
+    my_now = "2010-08-08T15:41Z"
     assert ingest_time(value, my_now) == expected
 
 
@@ -855,8 +859,11 @@ def test_weeks_days(set_cycling_type):
         ('previous(-365T12Z)', '20171231T1200Z'),
     ]
 )
-def test_cug(value: str, expected: str, set_cycling_type):
-    """Test the offset CP examples in the Cylc user guide"""
+def test_user_guide_examples(value: str, expected: str, set_cycling_type):
+    """Test the offset CP examples in the Cylc user guide.
+
+    https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/scheduling.html
+    """
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     my_now = "2018-03-14T15:12Z"
     assert ingest_time(value, my_now) == expected
