@@ -63,7 +63,9 @@ import json
 from time import time
 from typing import (
     Any,
+    Dict,
     Optional,
+    Set,
     TYPE_CHECKING,
     Tuple,
     Union,
@@ -481,7 +483,7 @@ class DataStoreMgr:
             state: deque(maxlen=LATEST_STATE_TASKS_QUEUE_SIZE)
             for state in TASK_STATUSES_ORDERED
         }
-        self.xtrigger_tasks = {}
+        self.xtrigger_tasks: Dict[str, Set[Tuple[str, str]]] = {}
         # Managed data types
         self.data = {
             self.workflow_id: deepcopy(DATA_TEMPLATE)
@@ -1315,7 +1317,7 @@ class DataStoreMgr:
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add(tproxy.id)
+            self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
 
         if tproxy.state in self.latest_state_tasks:
             tp_ref = itask.identity
@@ -1592,7 +1594,9 @@ class DataStoreMgr:
                 node_ids.remove(tp_id)
                 continue
             for sig in node.xtriggers:
-                self.xtrigger_tasks[sig].remove(tp_id)
+                self.xtrigger_tasks[sig].remove(
+                    (tp_id, node.xtriggers[sig].label)
+                )
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
 
@@ -2176,6 +2180,7 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
         ext_trigger = tp_delta.external_triggers[trig]
+        ext_trigger.id = tproxy.external_triggers[trig].id
         ext_trigger.message = message
         ext_trigger.satisfied = satisfied
         ext_trigger.time = update_time
@@ -2193,12 +2198,14 @@ class DataStoreMgr:
 
         """
         update_time = time()
-        for tp_id in self.xtrigger_tasks.get(sig, set()):
+        for tp_id, label in self.xtrigger_tasks.get(sig, set()):
             # update task instance
             tp_delta = self.updated[TASK_PROXIES].setdefault(
                 tp_id, PbTaskProxy(id=tp_id))
             tp_delta.stamp = f'{tp_id}@{update_time}'
             xtrigger = tp_delta.xtriggers[sig]
+            xtrigger.id = sig
+            xtrigger.label = label
             xtrigger.satisfied = satisfied
             xtrigger.time = update_time
             self.updates_pending = True
