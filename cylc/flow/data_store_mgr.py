@@ -531,21 +531,23 @@ class DataStoreMgr:
         self.generate_definition_elements()
 
         # Update workflow statuses and totals (assume needed)
-        self.update_workflow()
+        self.update_workflow(True)
 
         # Apply current deltas
         self.batch_deltas()
         self.apply_delta_batch()
+        # Clear deltas after application
+        self.clear_delta_store()
+        self.clear_delta_batch()
 
-        if not reloaded:
-            # Gather this batch of deltas for publish
-            self.apply_delta_checksum()
-            self.publish_deltas = self.get_publish_deltas()
+        # Gather the store as batch of deltas for publishing
+        self.batch_deltas(True)
+        self.apply_delta_checksum()
+        self.publish_deltas = self.get_publish_deltas()
 
         self.updates_pending = False
 
-        # Clear deltas after application and publishing
-        self.clear_delta_store()
+        # Clear second batch after publishing
         self.clear_delta_batch()
 
     def generate_definition_elements(self):
@@ -563,6 +565,8 @@ class DataStoreMgr:
         workflow.id = self.workflow_id
         workflow.last_updated = update_time
         workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
+        # Treat play/restart as hard reload of definition.
+        workflow.reloaded = True
 
         graph = workflow.edges
         graph.leaves[:] = config.leaves
@@ -1493,7 +1497,7 @@ class DataStoreMgr:
             tp_delta.jobs.append(j_id)
             self.updates_pending = True
 
-    def update_data_structure(self, reloaded=False):
+    def update_data_structure(self):
         """Workflow batch updates in the data structure."""
         # load database history for flagged nodes
         self.apply_task_proxy_db_history()
@@ -1520,11 +1524,7 @@ class DataStoreMgr:
             # Apply all deltas
             self.apply_delta_batch()
 
-        if reloaded:
-            self.clear_delta_batch()
-            self.batch_deltas(reloaded=True)
-
-        if self.updates_pending or reloaded:
+        if self.updates_pending:
             self.apply_delta_checksum()
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
@@ -1534,6 +1534,18 @@ class DataStoreMgr:
         # Clear deltas
         self.clear_delta_batch()
         self.clear_delta_store()
+
+    def update_workflow_states(self):
+        """Batch workflow state updates."""
+
+        # update the workflow state in the data store
+        self.update_workflow()
+
+        # push out update deltas
+        self.batch_deltas()
+        self.apply_delta_batch()
+        self.apply_delta_checksum()
+        self.publish_deltas = self.get_publish_deltas()
 
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
@@ -1807,7 +1819,7 @@ class DataStoreMgr:
         self.next_n_edge_distance = n_edge_distance
         self.updates_pending = True
 
-    def update_workflow(self):
+    def update_workflow(self, reloaded=False):
         """Update workflow element status and state totals."""
         # Create new message and copy existing message content
         data = self.data[self.workflow_id]
@@ -1862,6 +1874,9 @@ class DataStoreMgr:
             w_delta.status = status
             w_delta.status_msg = status_msg
             delta_set = True
+
+        if reloaded is not w_data.reloaded:
+            w_delta.reloaded = reloaded
 
         if self.schd.pool.main_pool:
             pool_points = set(self.schd.pool.main_pool)

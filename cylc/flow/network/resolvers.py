@@ -568,6 +568,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                                     workflow_id=w_id)
                                 delta_store[DELTA_ADDED] = (
                                     self.data_store_mgr.data[w_id])
+                                delta_store[DELTA_ADDED][
+                                    WORKFLOW
+                                ].reloaded = True
                                 deltas_queue.put(
                                     (w_id, 'initial_burst', delta_store))
                     elif w_id in self.delta_store[sub_id]:
