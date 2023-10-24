@@ -25,7 +25,7 @@ from shlex import quote
 import sys
 from typing import TYPE_CHECKING
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from cylc.flow import LOG, __version__
 from cylc.flow.exceptions import (
