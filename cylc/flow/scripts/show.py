@@ -37,12 +37,15 @@ workflow database.
 """
 
 import asyncio
+import re
 import json
-from optparse import Values
 import sys
-from typing import Dict
+from typing import Any, Dict, TYPE_CHECKING
 
 from ansimarkup import ansiprint
+
+from metomi.isodatetime.data import (
+    get_timepoint_from_seconds_since_unix_epoch as seconds2point)
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
@@ -57,6 +60,10 @@ from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
 )
 from cylc.flow.terminal import cli_function
+
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 WORKFLOW_META_QUERY = '''
@@ -334,9 +341,10 @@ async def prereqs_and_outputs_query(
                             f'{ext_trig["label"]} ... {state}',
                             state)
                     for xtrig in t_proxy['xtriggers']:
+                        label = get_wallclock_label(xtrig) or xtrig['id']
                         state = xtrig['satisfied']
                         print_msg_state(
-                            f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
+                            f'xtrigger "{xtrig["label"]} = {label}"',
                             state)
     if not results['taskProxies']:
         ansiprint(
@@ -344,6 +352,32 @@ async def prereqs_and_outputs_query(
             file=sys.stderr)
         return 1
     return 0
+
+
+def get_wallclock_label(xtrig: Dict[str, Any]) -> str:
+    """Return a label for an xtrigger if it is a wall_clock trigger.
+
+    Returns:
+        A label or False.
+
+    Examples:
+        >>> this = get_wallclock_label
+
+        >>> this({'id': 'wall_clock(trigger_time=0)'})
+        'wall_clock(trigger_time=1970-01-01T00:00:00Z)'
+
+        >>> this({'id': 'wall_clock(trigger_time=440143843)'})
+        'wall_clock(trigger_time=1983-12-13T06:10:43Z)'
+
+    """
+    wallclock_trigger = re.findall(
+        r'wall_clock\(trigger_time=(.*)\)', xtrig['id'])
+    if wallclock_trigger:
+        return (
+            'wall_clock(trigger_time='
+            f'{str(seconds2point(wallclock_trigger[0], True))})'
+        )
+    return ''
 
 
 async def task_meta_query(
