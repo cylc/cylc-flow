@@ -74,10 +74,10 @@ from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.id_cli import parse_id
+from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
-    verbosity_to_opts,
 )
 from cylc.flow.pathutil import (
     expand_path,

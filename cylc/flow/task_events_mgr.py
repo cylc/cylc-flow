@@ -581,7 +581,7 @@ class TaskEventsManager():
         if submit_num is None:
             submit_num = itask.submit_num
         if isinstance(severity, int):
-            severity = cast(str, getLevelName(severity))
+            severity = cast('str', getLevelName(severity))
         lseverity = str(severity).lower()
 
         # Any message represents activity.
@@ -811,7 +811,7 @@ class TaskEventsManager():
                 )
             return False
 
-        severity = cast(int, LOG_LEVELS.get(severity, INFO))
+        severity = cast('int', LOG_LEVELS.get(severity, INFO))
         # Demote log level to DEBUG if this is a message that duplicates what
         # gets logged by itask state change anyway (and not manual poll)
         if severity > DEBUG and flag != self.FLAG_POLLED and message in {

@@ -610,6 +610,26 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
+    with Conf('hub', desc='''
+        Configure the public URL of Jupyter Hub.
+
+        If configured, the ``cylc gui`` command will open a web browser at this
+        location rather than starting a standalone server when called.
+
+
+        .. seealso::
+
+           * The cylc hub :ref:`architecture-reference` for fuller details.
+           * :ref:`UI_Server_config` for practical details.
+
+    '''):
+        Conf('url', VDR.V_STRING, '', desc='''
+            .. versionadded:: 8.3.0
+
+            Where Jupyter Hub is used a url can be provided for routing on
+            execution of ``cylc gui`` command.
+        ''')
+
     with Conf('scheduler', desc=(
         default_for(SCHEDULER_DESCR, "[scheduler]", section=True)
     )):

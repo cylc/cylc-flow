@@ -75,7 +75,6 @@ fragment tProxy on TaskProxy {
     startedTime
     finishedTime
     jobLogDir
-    extraLogs
     platform
     executionTimeLimit
     jobRunnerName
@@ -184,7 +183,12 @@ def main(_, options: 'Values', workflow_id: str) -> None:
         workflow_id,
         constraint='workflows',
     )
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        # set the default timeout a bit higher for "cylc dump" as it can
+        # take a little while for Cylc to formulate the response
+        timeout=options.comms_timeout or 15,
+    )
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}
