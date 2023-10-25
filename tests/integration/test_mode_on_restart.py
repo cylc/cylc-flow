@@ -21,10 +21,10 @@ import pytest
 from cylc.flow.exceptions import InputError
 
 
-MODES = (('live'), ('simulation'), ('dummy'))
+MODES = [('live'), ('simulation'), ('dummy')]
 
 
-@pytest.mark.parametrize('mode_before', MODES)
+@pytest.mark.parametrize('mode_before', MODES + [None])
 @pytest.mark.parametrize('mode_after', MODES)
 async def test_restart_mode(
     flow, run, scheduler, start, one_conf,
@@ -38,11 +38,16 @@ async def test_restart_mode(
     id_ = flow(one_conf)
     schd = scheduler(id_, run_mode=mode_before)
     async with start(schd):
+        if not mode_before:
+            mode_before = 'live'
         assert schd.config.run_mode() == mode_before
 
     schd = scheduler(id_, run_mode=mode_after)
 
-    if mode_before == mode_after:
+    if (
+        mode_before == mode_after
+        or not mode_before and mode_after != 'live'
+    ):
         # Restarting in the same mode is fine.
         async with run(schd):
             assert schd.config.run_mode() == mode_before
