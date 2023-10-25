@@ -60,9 +60,10 @@ def test_get_clock_trigger_time(
     set_cycling_type(itask_point.TYPE)
     mock_itask = Mock(
         point=itask_point.standardise(),
-        clock_trigger_time=None
+        clock_trigger_times={}
     )
-    assert TaskProxy.get_clock_trigger_time(mock_itask, offset_str) == expected
+    assert TaskProxy.get_clock_trigger_time(
+        mock_itask, mock_itask.point, offset_str) == expected
 
 
 @pytest.mark.parametrize(

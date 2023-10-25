@@ -26,7 +26,6 @@ from typing import (
 from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
-from cylc.flow.id import Tokens
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
@@ -39,6 +38,7 @@ from cylc.flow.cycling.iso8601 import (
 )
 
 if TYPE_CHECKING:
+    from cylc.flow.id import Tokens
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
@@ -48,9 +48,9 @@ class TaskProxy:
     """Represent an instance of a cycling task in a running workflow.
 
     Attributes:
-        .clock_trigger_time:
-            Clock trigger time in seconds since epoch.
-            (Used for wall_clock xtrigger).
+        .clock_trigger_times:
+            Memoization of clock trigger times (Used for wall_clock xtrigger):
+            {offset string: seconds from epoch}
         .expire_time:
             Time in seconds since epoch when this task is considered expired.
         .identity:
@@ -154,7 +154,7 @@ class TaskProxy:
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        'clock_trigger_time',
+        'clock_trigger_times',
         'expire_time',
         'identity',
         'is_late',
@@ -247,7 +247,7 @@ class TaskProxy:
         self.try_timers: Dict[str, 'TaskActionTimer'] = {}
         self.non_unique_events = Counter()  # type: ignore # TODO: figure out
 
-        self.clock_trigger_time: Optional[float] = None
+        self.clock_trigger_times: Dict[str, int] = {}
         self.expire_time: Optional[float] = None
         self.late_time: Optional[float] = None
         self.is_late = is_late
@@ -355,25 +355,37 @@ class TaskProxy:
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
 
-    def get_clock_trigger_time(self, offset_str):
-        """Compute, cache, and return trigger time relative to cycle point.
+    def get_clock_trigger_time(
+        self,
+        point: 'PointBase', offset_str: Optional[str] = None
+    ) -> int:
+        """Compute, cache and return trigger time relative to cycle point.
 
         Args:
-            offset_str: ISO8601Interval string, e.g. "PT2M".
-                        Can be None for zero offset.
+            point:
+                String representing itask string.
+            offset_str:
+                ISO8601Interval string, e.g. "PT2M".
+                Can be None for zero offset.
         Returns:
             Absolute trigger time in seconds since Unix epoch.
 
         """
-        if self.clock_trigger_time is None:
-            if offset_str is None:
-                trigger_time = self.point
+        # None cannot be used as a dict key:
+        offset_str = offset_str if offset_str else 'no-offset'
+        if (
+            not self.clock_trigger_times
+            or offset_str not in self.clock_trigger_times
+        ):
+            if offset_str == 'P0Y':
+                trigger_time = point
             else:
-                trigger_time = self.point + ISO8601Interval(offset_str)
-            self.clock_trigger_time = int(
-                point_parse(str(trigger_time)).seconds_since_unix_epoch
-            )
-        return self.clock_trigger_time
+                trigger_time = point + ISO8601Interval(offset_str)
+
+            offset = int(
+                point_parse(str(trigger_time)).seconds_since_unix_epoch)
+            self.clock_trigger_times[offset_str] = offset
+        return self.clock_trigger_times[offset_str]
 
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""

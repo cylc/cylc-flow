@@ -388,6 +388,7 @@ class XtriggerManager:
                 # External (clock xtrigger): convert offset to trigger_time.
                 # Datetime cycling only.
                 kwargs["trigger_time"] = itask.get_clock_trigger_time(
+                    itask.point,
                     ctx.func_kwargs["offset"]
                 )
             else:
