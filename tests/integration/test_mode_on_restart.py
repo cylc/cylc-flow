@@ -14,34 +14,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """What happens to the mode on restart?
-
-+--------------------+--------+-------+-------+
-| ↓restart \ start → | live   | sim   | dummy |
-+====================+========+=======+=======+
-| live               | live   | sim * | ???   |
-| sim                | live * | sim   | ???   |
-| dummy              | ???    | ???   | dummy |
-+--------------------+--------+-------+-------+
-
-* A warning ought to be emitted, since the user doesn't otherwise know
-  what's happening.
 """
 
 import pytest
 
+from cylc.flow.exceptions import InputError
 
-@pytest.mark.parametrize('mode_before', (('live'), ('simulation')))
-@pytest.mark.parametrize('mode_after', (('live'), ('simulation')))
+
+MODES = (('live'), ('simulation'), ('dummy'))
+
+
+@pytest.mark.parametrize('mode_before', MODES)
+@pytest.mark.parametrize('mode_after', MODES)
 async def test_restart_mode(
-    flow, scheduler, start, one_conf, mode_before, mode_after
+    flow, run, scheduler, start, one_conf,
+    mode_before, mode_after
 ):
-    """Restarting a workflow in live mode leads to workflow in live mode
+    """Restarting a workflow in live mode leads to workflow in live mode.
+
+    N.B - we need use run becuase the check in question only happens
+    on start.
     """
     id_ = flow(one_conf)
     schd = scheduler(id_, run_mode=mode_before)
     async with start(schd):
         assert schd.config.run_mode() == mode_before
 
-    schd.options.run_mode = mode_after
-    async with start(schd):
-        assert schd.config.run_mode() == mode_before
+    schd = scheduler(id_, run_mode=mode_after)
+
+    if mode_before == mode_after:
+        # Restarting in the same mode is fine.
+        async with run(schd):
+            assert schd.config.run_mode() == mode_before
+    else:
+        # Restarting in a new mode is not:
+        errormsg = f'^This.*{mode_before} mode: Will.*{mode_after} mode.$'
+        with pytest.raises(InputError, match=errormsg):
+            async with run(schd):
+                pass
