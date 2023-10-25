@@ -1402,7 +1402,6 @@ class DataStoreMgr:
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
             self.schd.workflow, tproxy.cycle_point, tproxy.name, sub_num)
-        j_buf.extra_logs.extend(job_conf.get('logfiles', []))
 
         self.added[JOBS][j_id] = j_buf
         getattr(self.updated[WORKFLOW], JOBS).append(j_id)

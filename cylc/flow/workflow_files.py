@@ -60,10 +60,6 @@ from cylc.flow.pathutil import (
     get_workflow_run_dir,
     make_localhost_symlinks,
 )
-from cylc.flow.remote import (
-    construct_cylc_server_ssh_cmd,
-)
-from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
 
@@ -382,6 +378,9 @@ def _is_process_running(
         False
 
     """
+    from cylc.flow.remote import construct_cylc_server_ssh_cmd
+    from cylc.flow.terminal import parse_dirty_json
+
     # See if the process is still running or not.
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):

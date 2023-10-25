@@ -20,20 +20,23 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.xtriggers.wall_clock import wall_clock
+from cylc.flow.subprocpool import (
+    SubProcPool,
+    get_func,
+)
 
-from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.data_store_mgr import DataStoreMgr
-from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.subprocpool import get_func
+if TYPE_CHECKING:
+    from cylc.flow.broadcast_mgr import BroadcastMgr
+    from cylc.flow.data_store_mgr import DataStoreMgr
+    from cylc.flow.subprocctx import SubFuncContext
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class TemplateVariables(Enum):
@@ -195,15 +198,15 @@ class XtriggerManager:
     def __init__(
         self,
         workflow: str,
-        broadcast_mgr: BroadcastMgr,
-        data_store_mgr: DataStoreMgr,
+        broadcast_mgr: 'BroadcastMgr',
+        data_store_mgr: 'DataStoreMgr',
         proc_pool: SubProcPool,
         user: Optional[str] = None,
         workflow_run_dir: Optional[str] = None,
         workflow_share_dir: Optional[str] = None,
     ):
         # Workflow function and clock triggers by label.
-        self.functx_map: Dict[str, SubFuncContext] = {}
+        self.functx_map: 'Dict[str, SubFuncContext]' = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
@@ -234,7 +237,11 @@ class XtriggerManager:
         self.data_store_mgr = data_store_mgr
 
     @staticmethod
-    def validate_xtrigger(label: str, fctx: SubFuncContext, fdir: str) -> None:
+    def validate_xtrigger(
+        label: str,
+        fctx: 'SubFuncContext',
+        fdir: str,
+    ) -> None:
         """Validate an Xtrigger function.
 
         Args:
@@ -305,7 +312,7 @@ class XtriggerManager:
                 f' {", ".join(t.value for t in deprecated_variables)}'
             )
 
-    def add_trig(self, label: str, fctx: SubFuncContext, fdir: str) -> None:
+    def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
         """Add a new xtrigger function.
 
         Check the xtrigger function exists here (e.g. during validation).
@@ -334,7 +341,7 @@ class XtriggerManager:
         sig, results = row
         self.sat_xtrig[sig] = json.loads(results)
 
-    def _get_xtrigs(self, itask: TaskProxy, unsat_only: bool = False,
+    def _get_xtrigs(self, itask: 'TaskProxy', unsat_only: bool = False,
                     sigs_only: bool = False):
         """(Internal helper method.)
 
@@ -361,7 +368,11 @@ class XtriggerManager:
                 res.append((label, sig, ctx, satisfied))
         return res
 
-    def get_xtrig_ctx(self, itask: TaskProxy, label: str) -> SubFuncContext:
+    def get_xtrig_ctx(
+        self,
+        itask: 'TaskProxy',
+        label: str,
+    ) -> 'SubFuncContext':
         """Get a real function context from the template.
 
         Args:
@@ -411,7 +422,7 @@ class XtriggerManager:
         ctx.update_command(self.workflow_run_dir)
         return ctx
 
-    def call_xtriggers_async(self, itask: TaskProxy):
+    def call_xtriggers_async(self, itask: 'TaskProxy'):
         """Call itask's xtrigger functions via the process pool...
 
         ...if previous call not still in-process and retry period is up.
@@ -456,7 +467,7 @@ class XtriggerManager:
             self.active.append(sig)
             self.proc_pool.put_command(ctx, callback=self.callback)
 
-    def housekeep(self, itasks: List[TaskProxy]):
+    def housekeep(self, itasks: 'List[TaskProxy]'):
         """Delete satisfied xtriggers no longer needed by any task.
 
         Args:
@@ -469,7 +480,7 @@ class XtriggerManager:
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
 
-    def callback(self, ctx: SubFuncContext):
+    def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
 
         Record satisfaction status and function results dict.
@@ -494,7 +505,7 @@ class XtriggerManager:
 
     def check_xtriggers(
             self,
-            itask: TaskProxy,
+            itask: 'TaskProxy',
             db_update_func: Callable[[dict], None]) -> bool:
         """Check if all of itasks' xtriggers have become satisfied.
 

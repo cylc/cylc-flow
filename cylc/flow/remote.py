@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Tuple
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION, LOG
-from cylc.flow.option_parsers import verbosity_to_opts
+from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.util import format_cmd
 

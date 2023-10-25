@@ -18,10 +18,12 @@
 
 from collections import deque
 from contextlib import suppress
-from typing import List, Set, Dict, Counter, Any
+from typing import List, Set, Dict, Counter, Any, TYPE_CHECKING
 
-from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_queues import TaskQueueManagerBase
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class LimitedTaskQueue:
@@ -33,16 +35,16 @@ class LimitedTaskQueue:
         self.members = members  # member task names
         self.deque: deque = deque()
 
-    def push_task(self, itask: TaskProxy) -> None:
+    def push_task(self, itask: 'TaskProxy') -> None:
         """Queue task if in my membership list."""
         if itask.tdef.name in self.members:
             self.deque.appendleft(itask)
 
-    def release(self, active: Counter[str]) -> List[TaskProxy]:
+    def release(self, active: Counter[str]) -> 'List[TaskProxy]':
         """Release tasks if below the active limit."""
         # The "active" argument counts active tasks by name.
-        released: List[TaskProxy] = []
-        held: List[TaskProxy] = []
+        released: 'List[TaskProxy]' = []
+        held: 'List[TaskProxy]' = []
         n_active: int = 0
         for mem in self.members:
             n_active += active[mem]
@@ -62,7 +64,7 @@ class LimitedTaskQueue:
             self.deque.appendleft(itask)
         return released
 
-    def remove(self, itask: TaskProxy) -> bool:
+    def remove(self, itask: 'TaskProxy') -> bool:
         """Remove a single task from queue, return True if removed."""
         try:
             self.deque.remove(itask)
@@ -111,16 +113,16 @@ class IndepQueueManager(TaskQueueManagerBase):
                 config["limit"], config["members"]
             )
 
-        self.force_released: Set[TaskProxy] = set()
+        self.force_released: 'Set[TaskProxy]' = set()
 
-    def push_task(self, itask: TaskProxy) -> None:
+    def push_task(self, itask: 'TaskProxy') -> None:
         """Push a task to the appropriate queue."""
         for queue in self.queues.values():
             queue.push_task(itask)
 
-    def release_tasks(self, active: Counter[str]) -> List[TaskProxy]:
+    def release_tasks(self, active: Counter[str]) -> 'List[TaskProxy]':
         """Release tasks up to the queue limits."""
-        released: List[TaskProxy] = []
+        released: 'List[TaskProxy]' = []
         for queue in self.queues.values():
             released += queue.release(active)
         if self.force_released:
@@ -128,13 +130,13 @@ class IndepQueueManager(TaskQueueManagerBase):
             self.force_released = set()
         return released
 
-    def remove_task(self, itask: TaskProxy) -> None:
+    def remove_task(self, itask: 'TaskProxy') -> None:
         """Remove a task from whichever queue it belongs to."""
         for queue in self.queues.values():
             if queue.remove(itask):
                 break
 
-    def force_release_task(self, itask: TaskProxy) -> None:
+    def force_release_task(self, itask: 'TaskProxy') -> None:
         """Remove a task from whichever queue it belongs to.
 
         To be returned when release_tasks() is next called.
