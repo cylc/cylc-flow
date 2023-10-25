@@ -25,7 +25,7 @@ def pythonpath_manip():
 
     * Remove PYTHONPATH items from sys.path to prevent PYTHONPATH
       contaminating the Cylc Environment.
-    * Re-add items from CYLC_PYTHONPATH to sys.path.
+    * Add items from CYLC_PYTHONPATH to sys.path.
 
     See Also:
         https://github.com/cylc/cylc-flow/issues/5124
@@ -34,7 +34,7 @@ def pythonpath_manip():
         for item in os.environ['CYLC_PYTHONPATH'].split(os.pathsep):
             abspath = os.path.abspath(item)
             sys.path.insert(0, abspath)
-    elif 'PYTHONPATH' in os.environ:
+    if 'PYTHONPATH' in os.environ:
         for item in os.environ['PYTHONPATH'].split(os.pathsep):
             abspath = os.path.abspath(item)
             if abspath in sys.path:
