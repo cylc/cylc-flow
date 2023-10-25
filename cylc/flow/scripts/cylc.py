@@ -16,10 +16,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc main entry point"""
 
-import argparse
-from contextlib import contextmanager
 import os
 import sys
+
+
+def pythonpath_manip():
+    """Stop PYTHONPATH contaminating the Cylc Environment
+
+    * Remove PYTHONPATH items from sys.path to prevent PYTHONPATH
+      contaminating the Cylc Environment.
+    * Add items from CYLC_PYTHONPATH to sys.path.
+
+    See Also:
+        https://github.com/cylc/cylc-flow/issues/5124
+    """
+    if 'CYLC_PYTHONPATH' in os.environ:
+        for item in os.environ['CYLC_PYTHONPATH'].split(os.pathsep):
+            abspath = os.path.abspath(item)
+            sys.path.insert(0, abspath)
+    if 'PYTHONPATH' in os.environ:
+        for item in os.environ['PYTHONPATH'].split(os.pathsep):
+            abspath = os.path.abspath(item)
+            if abspath in sys.path:
+                sys.path.remove(abspath)
+
+
+pythonpath_manip()
+
+import argparse
+from contextlib import contextmanager
 from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
