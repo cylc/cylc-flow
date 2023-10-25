@@ -8,5 +8,4 @@
             # These environment variables ensure that tasks can
             # run in the same environment as the workflow:
             {% from "sys" import executable %}
-            PYTHONPATH = {{executable}}/../lib/python:$PYTHONPATH
             PATH = $(dirname {{executable}}):$PATH
