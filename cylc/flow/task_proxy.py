@@ -372,7 +372,7 @@ class TaskProxy:
 
         """
         # None cannot be used as a dict key:
-        offset_str = offset_str if offset_str else 'no-offset'
+        offset_str = offset_str if offset_str else 'P0Y'
         if (
             not self.clock_trigger_times
             or offset_str not in self.clock_trigger_times
