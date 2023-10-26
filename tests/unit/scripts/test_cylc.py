@@ -45,7 +45,7 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
             # an entry point with all dependencies installed:
             'good': SimpleNamespace(
                 name='good',
-                module_name='os.path',
+                module='os.path',
                 load=_resolve_ok,
                 extras=[],
                 dist=SimpleNamespace(name='a'),
@@ -53,7 +53,7 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
             # an entry point with optional dependencies missing:
             'missing': SimpleNamespace(
                 name='missing',
-                module_name='not.a.python.module',  # force an import error
+                module='not.a.python.module',  # force an import error
                 load=_load_fail,
                 extras=[],
                 dist=SimpleNamespace(name='foo'),
@@ -64,7 +64,7 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
             # missing:
             commands['bad'] = SimpleNamespace(
                 name='bad',
-                module_name='not.a.python.module',
+                module='not.a.python.module',
                 load=_load_fail,
                 require=_require_ok,
                 extras=[],
