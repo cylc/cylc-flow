@@ -28,6 +28,7 @@ This module provides logic to:
 """
 
 from collections import namedtuple
+import copy
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
 from pipes import quote
@@ -993,11 +994,15 @@ class TaskEventsManager(object):
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
+            # delays - All polling times after start
+            # timeout - Total time limit including all polling:
             delays = list(self.get_host_conf(
                 itask, 'execution polling intervals', skey='job',
                 default=[900]))  # Default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
+
+                # Get execution time limit polling intervals or set to default:
                 try:
                     host_conf = self.get_host_conf(itask, 'batch systems')
                     batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
@@ -1005,16 +1010,14 @@ class TaskEventsManager(object):
                     batch_sys_conf = {}
                 time_limit_delays = batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])
-                timeout = time_limit + sum(time_limit_delays)
-                # Remove excessive polling before time limit
-                while sum(delays) > time_limit:
-                    del delays[-1]
-                # But fill up the gap before time limit
-                if delays:
-                    size = int((time_limit - sum(delays)) / delays[-1])
-                    delays.extend([delays[-1]] * size)
-                time_limit_delays[0] += time_limit - sum(delays)
-                delays += time_limit_delays
+
+                # Total timeout after adding execution time limit polling
+                # intervals:
+                timeout = (time_limit + sum(time_limit_delays))
+                delays = self.process_execution_polling_delays(
+                    delays, time_limit, time_limit_delays
+                )
+
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
@@ -1028,7 +1031,9 @@ class TaskEventsManager(object):
         except (TypeError, ValueError):
             itask.timeout = None
             timeout_str = None
+
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
+
         # Log timeout and polling schedule
         message = 'health check settings: %s=%s' % (timeout_key, timeout_str)
         # Attempt to group identical consecutive delays as N*DELAY,...
@@ -1048,3 +1053,71 @@ class TaskEventsManager(object):
         LOG.info('[%s] -%s', itask, message)
         # Set next poll time
         self.check_poll_time(itask)
+
+    @staticmethod
+    def process_execution_polling_delays(
+        delays, time_limit, time_limit_delays
+    ):
+        """Create list of intervals after starting at which to poll a task.
+
+        Args:
+            delays: Input is Execution Polling intervals.
+            time_limit_delays: Execution Time Limit Polling Intervals.
+            time_limit: Execution Time Limit.
+
+        Returns: List of delays from start of task.
+
+        Examples:
+
+            >>> this = TaskEventsManager.process_execution_polling_delays
+
+            # Basic example:
+            >>> this([40, 35], 100, [10])
+            [40, 35, 35, 10]
+
+            # Second 40 second delay gets lopped off the list because it's
+            # after the execution time limit:
+            >>> this([40, 40], 60, [10])
+            [40, 30, 10]
+
+            # Expand last item in exection polling intervals to fill the
+            # execution time limit:
+            >>> this([5, 20], 100, [10])
+            [5, 20, 20, 20, 20, 25, 10]
+
+            # There are no execution polling intervals set - polling starts
+            # at execution time limit:
+            >>> this([], 10, [5])
+            [15, 5]
+
+            # We have a list of execution time limit polling intervals,
+            >>> this([10], 25, [5, 6, 7, 8])
+            [10, 10, 10, 6, 7, 8]
+
+            >>> time_limit_delays = [10]
+            >>> this([40, 40], 60, time_limit_delays)
+            [40, 30, 10]
+
+            >>> time_limit_delays
+            [10]
+
+        """
+        # We do not want to modify time limit delays config in memory:
+        time_limit_delays = copy.copy(time_limit_delays)
+        if sum(delays) > time_limit:
+            # Remove excessive polling before time limit
+            while sum(delays) > time_limit:
+                del delays[-1]
+        elif delays:
+            # But fill up the gap before time limit
+            size = int((time_limit - sum(delays)) / delays[-1])
+            delays.extend([delays[-1]] * size)
+
+        # After the last delay before the execution time limit add the
+        # delay to get to the execution_time_limit
+        if len(time_limit_delays) == 1:
+            time_limit_delays.append(time_limit_delays[0])
+        time_limit_delays[0] += time_limit - sum(delays)
+
+        delays += time_limit_delays
+        return delays

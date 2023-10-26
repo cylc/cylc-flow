@@ -262,7 +262,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         try:
             flines = inline(
                 flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
-        except IncludeFileNotFoundError, x:
+        except IncludeFileNotFoundError as x:
             raise FileParseError(str(x))
 
     # process with EmPy
