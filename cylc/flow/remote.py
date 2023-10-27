@@ -35,7 +35,6 @@ from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.option_parsers import verbosity_to_opts
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.util import format_cmd
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 def get_proc_ancestors():
@@ -300,9 +299,7 @@ def construct_ssh_cmd(
         'CYLC_COVERAGE',
         'CLIENT_COMMS_METH',
         'CYLC_ENV_NAME',
-        *(glbl_cfg().get(['scheduler'])
-            ['run hosts']
-            ['ssh forward environment variables']),
+        *platform['ssh forward environment variables'],
     ]:
         if envvar in os.environ:
             command.append(
