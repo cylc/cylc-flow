@@ -243,10 +243,18 @@ class TimingSummary:
         pass
 
     def _check_imports(self):
+        if sys.version_info > (3, 11):
+            raise CylcError(
+                'Cylc Report Timings is deprecated: It is incompatible'
+                ' with Python > 3.11'
+            )
         try:
             import pandas
         except ImportError:
-            raise CylcError('Cannot import pandas - summary unavailable.')
+            raise CylcError(
+                'Cannot import pandas - summary unavailable.'
+                ' try: pip install cylc-flow[report-timings]'
+            )
         else:
             del pandas
 
