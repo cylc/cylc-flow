@@ -1125,13 +1125,16 @@ class DataStoreMgr:
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
             del self.prune_trigger_nodes[tp_id]
-            self.updates_pending = True
         elif (
                 tp_id in self.n_window_nodes and
                 self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
         ):
             self.prune_flagged_nodes.add(tp_id)
-            self.updates_pending = True
+        elif tp_id in self.n_window_node_walks:
+            self.prune_flagged_nodes.update(
+                self.n_window_node_walks[tp_id]['walk_ids']
+            )
+        self.updates_pending = True
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
