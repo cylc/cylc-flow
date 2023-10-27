@@ -27,7 +27,6 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-# First run: task c shuts the scheduler down then fails.
 TEST_NAME="${TEST_NAME_BASE}-run"
 # 'a => b => c => d => e', 'a' sets window size to 2, 'c' uses cylc show on all.
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"

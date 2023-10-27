@@ -218,7 +218,7 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
         # the tasks we will run in order
         letters = 'abcdefghijklmnopqrs'
         # the graph-depth of the "blink" task at each stage of the workflow
-        blink_distances = [1] + (list((*range(2, 5), *range(3, 0, -1))) * 3)
+        blink_distances = [1] + [*range(2, 5), *range(3, 0, -1)] * 3
 
         for ind, blink_distance in zip(range(len(letters)), blink_distances):
             previous_task = letters[ind - 1] if ind > 0 else None
@@ -251,7 +251,7 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
         await schd.update_data_structure()
 
         previous_n_window = {}
-        for previous_task, active_task, n_window in advance():
+        for previous_task, active_task, expected_n_window in advance():
             # mark the previous task as completed
             await complete_task(schd, previous_task)
             # add the next task to the pool
@@ -262,28 +262,28 @@ async def test_increment_graph_window_blink(flow, scheduler, start):
             added, updated, pruned = get_deltas(schd)
 
             # compare the n-window in the store to what we were expecting
-            _n_window = await get_n_window(schd)
-            assert _n_window == n_window
+            n_window = await get_n_window(schd)
+            assert n_window == expected_n_window
 
-            # compate the deltas to what we were expecting
+            # compare the deltas to what we were expecting
             if active_task != 'a':
                 # skip the first task as this is complicated by startup logic
                 assert added == {
                     key: value
-                    for key, value in n_window.items()
+                    for key, value in expected_n_window.items()
                     if key not in previous_n_window
                 }
                 # Skip added as depth isn't updated
                 # (the manager only updates those that need it)
                 assert updated == {
                     key: value
-                    for key, value in n_window.items()
+                    for key, value in expected_n_window.items()
                     if key not in added
                 }
                 assert pruned == {
                     key
                     for key in previous_n_window
-                    if key not in n_window
+                    if key not in expected_n_window
                 }
 
             previous_n_window = n_window

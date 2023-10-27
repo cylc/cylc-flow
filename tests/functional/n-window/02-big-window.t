@@ -28,7 +28,6 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-# First run: task c shuts the scheduler down then fails.
 TEST_NAME="${TEST_NAME_BASE}-run"
 # 'a => b => . . . f => g => h', 'a' sets window size to 5,
 # 'b => i => j => f', 'c' finds 'a', 'j', 'h'

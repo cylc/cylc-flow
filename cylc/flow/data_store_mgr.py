@@ -801,7 +801,6 @@ class DataStoreMgr:
         # There may be short cuts for parent locs, however children will more
         # likely be incomplete walks with no 'done_locs' and using parent's
         # children will required sifting out cousin branches.
-        new_locs: List[str]
         working_locs: List[str] = []
         if self.n_edge_distance > 1:
             if c_tag in active_locs:
@@ -815,8 +814,8 @@ class DataStoreMgr:
                 # Most will be incomplete walks, however, we can check.
                 # i.e. parents of children may all exist.
                 if w_loc[:-1] in active_locs:
-                    for b_id in active_locs[w_loc[:-1]]:
-                        if b_id not in all_walks:
+                    for loc_id in active_locs[w_loc[:-1]]:
+                        if loc_id not in all_walks:
                             loc_done = False
                             break
                 else:
@@ -824,11 +823,11 @@ class DataStoreMgr:
                 # find child nodes of parent location,
                 # i.e. 'cpcc' = 'cpc' + 'c'
                 w_set = set().union(*(
-                    all_walks[b_id]['locations'][w_loc[-1]]
-                    for b_id in active_locs[w_loc[:-1]]
+                    all_walks[loc_id]['locations'][w_loc[-1]]
+                    for loc_id in active_locs[w_loc[:-1]]
                     if (
-                        b_id in all_walks
-                        and w_loc[-1] in all_walks[b_id]['locations']
+                        loc_id in all_walks
+                        and w_loc[-1] in all_walks[loc_id]['locations']
                     )
                 ))
                 w_set.difference_update(active_walk['walk_ids'])
@@ -846,11 +845,12 @@ class DataStoreMgr:
                         active_walk['done_ids'].update(
                             active_locs[w_loc[:-1]]
                         )
-            new_locs = []
-            for loc in working_locs:
-                if loc in active_locs and len(loc) < self.n_edge_distance:
-                    new_locs.extend((loc + c_tag, loc + p_tag))
-            working_locs = new_locs
+            working_locs = [
+                new_loc
+                for loc in working_locs
+                if loc in active_locs and len(loc) < self.n_edge_distance
+                for new_loc in (loc + c_tag, loc + p_tag)
+            ]
             n_depth += 1
 
         # Graph walk
@@ -1167,9 +1167,8 @@ class DataStoreMgr:
             n_depth (int): n-window graph edge distance.
 
         Returns:
-            (is_orphan, graph_children)
 
-        Orphan tasks with no children return (True, None) respectively.
+            None
 
         """
         tp_id = tokens.id
@@ -1182,10 +1181,6 @@ class DataStoreMgr:
         name = tokens['task']
         point_string = tokens['cycle']
         t_id = self.definition_id(name)
-
-        is_orphan = False
-        if name not in self.schd.config.taskdefs:
-            is_orphan = True
 
         if itask is None:
             itask = self.schd.pool.get_task(point_string, name)
@@ -1200,7 +1195,9 @@ class DataStoreMgr:
                 data_mode=True
             )
 
-        if is_orphan:
+        is_orphan = False
+        if name not in self.schd.config.taskdefs:
+            is_orphan = True
             self.generate_orphan_task(itask)
 
         # Most of the time the definition node will be in the store.
@@ -1791,18 +1788,19 @@ class DataStoreMgr:
                 if k in self.all_task_pool
             ))
         )
+        self.update_window_depths = True
 
     def window_depth_finder(self):
         """Recalculate window depths, creating depth deltas."""
         # Setup new window depths
-        n_window_depths: Dict(int, Set(str)) = {
-            0: set().union(self.all_task_pool)
+        n_window_depths: Dict[int, Set[str]] = {
+            0: self.all_task_pool.copy()
         }
 
         depth = 1
         # Since starting from smaller depth, exclude those whose depth has
         # already been found.
-        depth_found_tasks: Set(str) = set().union(self.all_task_pool)
+        depth_found_tasks: Set[str] = self.all_task_pool.copy()
         while depth <= self.n_edge_distance:
             n_window_depths[depth] = set().union(*(
                 self.n_window_node_walks[n_id]['depths'][depth]
@@ -1878,7 +1876,7 @@ class DataStoreMgr:
             else:
                 node_ids.remove(tp_id)
                 continue
-            self.n_window_edges.difference_update(set(node.edges))
+            self.n_window_edges.difference_update(node.edges)
             if tp_id in self.n_window_node_walks:
                 del self.n_window_node_walks[tp_id]
             if tp_id in self.n_window_completed_walks:
