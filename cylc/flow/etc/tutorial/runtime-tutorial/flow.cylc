@@ -3,12 +3,8 @@
     UTC mode = True
 
 [scheduling]
-    # Start the workflow 7 hours before now ignoring minutes and seconds
-    # * previous(T-00) takes the current time ignoring minutes and seconds.
-    # * - PT7H subtracts 7 hours from the time.
-    initial cycle point = previous(T-00) - PT7H
-    # Stop the workflow 6 hours after the initial cycle point.
-    final cycle point = +PT6H
+    # TODO: Set initial cycle point
+    # TODO: Set final cycle point
     [[graph]]
         # Repeat every three hours starting at the initial cycle point.
         PT3H = """
@@ -34,13 +30,5 @@
         """
 
 [runtime]
-    [[get_observations_camborne]]
-    [[get_observations_heathrow]]
-    [[get_observations_aldergrove]]
-    [[get_observations_shetland]]
-    [[consolidate_observations]]
-    [[forecast]]
-    [[get_rainfall]]
-    [[post_process_exeter]]
 
-{% include 'etc/python-job.settings' %}
+%include 'etc/python-job.settings'
