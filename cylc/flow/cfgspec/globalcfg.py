@@ -1652,6 +1652,14 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             ''')
+            Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
+                 desc='''
+                A list containing the names of the environment variables to
+                forward with SSH connections to the workflow host from
+                the host running 'cylc play'
+
+                .. versionadded:: 8.3.0
+            ''')
             with Conf('selection', desc='''
                 How to select a host from the list of platform hosts.
 

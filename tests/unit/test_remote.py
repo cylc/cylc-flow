@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test the cylc.flow.remote module."""
 
-from cylc.flow.remote import run_cmd, construct_rsync_over_ssh_cmd
+from cylc.flow.remote import run_cmd, construct_rsync_over_ssh_cmd, construct_ssh_cmd
+from unittest import mock
+import cylc.flow
 
 
 def test_run_cmd_stdin_str():
@@ -86,3 +88,28 @@ def test_construct_rsync_over_ssh_cmd():
         '/foo/',
         'miklegard:/bar/',
     ]
+
+
+def test_construct_ssh_cmd_forward_env():
+    """ Test for 'ssh forward environment variables'
+    """
+    import os
+
+    host = 'example.com'
+    config = {
+        'ssh command': 'ssh',
+        'use login shell': None,
+        'cylc path': None,
+        'ssh forward environment variables': ['FOO', 'BAZ'],
+        }
+
+    # Variable isn't set, no change to command
+    expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'cylc', 'play']
+    cmd = construct_ssh_cmd(['play'], config, host)
+    assert cmd == expect
+
+    # Variable is set, appears in `env` list
+    with mock.patch.dict(os.environ, {'FOO': 'BAR'}):
+        expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'FOO=BAR', 'cylc', 'play']
+        cmd = construct_ssh_cmd(['play'], config, host)
+        assert cmd == expect
