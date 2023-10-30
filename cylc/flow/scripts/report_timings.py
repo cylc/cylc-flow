@@ -125,7 +125,11 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         constraint='workflows',
     )
 
-    LOG.warning('Cylc report-timings is will be retired soon.')
+    LOG.warning(
+        "cylc report-timings is deprecated."
+        " The analysis view in the GUI provides"
+        " similar functionality."
+    )
 
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
