@@ -54,6 +54,8 @@ import io as StringIO
 import sys
 from typing import TYPE_CHECKING
 
+
+from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
@@ -122,6 +124,8 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         workflow_id,
         constraint='workflows',
     )
+
+    LOG.warning('Cylc report-timings is will be retired soon.')
 
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
@@ -243,11 +247,6 @@ class TimingSummary:
         pass
 
     def _check_imports(self):
-        if sys.version_info > (3, 11):
-            raise CylcError(
-                'Cylc Report Timings is deprecated: It is incompatible'
-                ' with Python > 3.11'
-            )
         try:
             import pandas
         except ImportError:
