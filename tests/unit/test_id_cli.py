@@ -35,9 +35,8 @@ from cylc.flow.workflow_files import WorkflowFiles
 
 
 @pytest.fixture
-def mock_exists(mocker):
-    mock_exists = mocker.patch('pathlib.Path.exists')
-    mock_exists.return_value = True
+def mock_exists(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('pathlib.Path.exists', lambda *a, **k: True)
 
 
 @pytest.fixture(scope='module')
