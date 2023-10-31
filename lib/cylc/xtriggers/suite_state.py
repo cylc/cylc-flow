@@ -30,10 +30,12 @@ from isodatetime.parsers import TimePointParser
 
 def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
-    """Connect to a suite DB and query the requested task state.
+    """Connect to a suite DB and check task states or outputs.
 
     Reports satisfied only if the remote suite state has been achieved.
     Returns all suite state args to pass on to triggering tasks.
+    The "message" argument must be the output message string, not the
+    output label used in the graph.
 
     """
     cylc_run_dir = os.path.expandvars(

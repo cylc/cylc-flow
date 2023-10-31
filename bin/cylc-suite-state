@@ -178,7 +178,8 @@ def main():
 
     parser.add_option(
         "-O", "--output", "-m", "--message",
-        help="Check custom task output by message string or trigger string.",
+        help="Check for a custom task output (by message string, "
+        "not the output trigger label used in the graph)",
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
