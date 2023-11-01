@@ -19,6 +19,7 @@ import json
 import os
 import sqlite3
 import sys
+from typing import Optional
 
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -67,6 +68,18 @@ class CylcWorkflowDBChecker:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
         self.conn = sqlite3.connect(db_path, timeout=10.0)
 
+        # Get workflow point format.
+        try:
+            self.point_fmt = self._get_pt_fmt()
+            self.back_compat_mode = False
+        except sqlite3.OperationalError as exc:
+            # BACK COMPAT: Cylc 7 DB (see method below).
+            try:
+                self.point_fmt = self._get_pt_fmt_compat()
+                self.back_compat_mode = True
+            except sqlite3.OperationalError:
+                raise exc  # original error
+
     @staticmethod
     def display_maps(res):
         if not res:
@@ -75,7 +88,7 @@ class CylcWorkflowDBChecker:
             for row in res:
                 sys.stdout.write((", ").join(row) + "\n")
 
-    def get_remote_point_format(self):
+    def _get_pt_fmt(self):
         """Query a workflow database for a 'cycle point format' entry"""
         for row in self.conn.execute(
             rf'''
@@ -90,11 +103,16 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
-    def get_remote_point_format_compat(self):
-        """Query a Cylc 7 suite database for a 'cycle point format' entry.
-
-        Back compat for Cylc 8 workflow state triggers targeting Cylc 7 DBs.
-        """
+    def _get_pt_fmt_compat(self):
+        """Query a Cylc 7 suite database for 'cycle point format'."""
+        # BACK COMPAT: Cylc 7 DB
+        # Workflows parameters table name change.
+        # from:
+        #    8.0.x
+        # to:
+        #    8.1.x
+        # remove at:
+        #    8.x
         for row in self.conn.execute(
             rf'''
                 SELECT
@@ -108,6 +126,10 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
+    def get_point_format(self):
+        """Return the cycle point format of this DB."""
+        return self.point_fmt
+
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:
@@ -116,19 +138,40 @@ class CylcWorkflowDBChecker:
             return [state]
 
     def workflow_state_query(
-            self, task, cycle, status=None, message=None, mask=None):
-        """run a query on the workflow database"""
+        self,
+        task: Optional[str] = None,
+        cycle: Optional[str] = None,
+        status: Optional[str] = None,
+        message: Optional[str] = None
+    ):
+        """Query task status or outputs in workflow database.
+
+        Returns a list of tasks with matching status or output message.
+
+        All args can be None - print the entire task_states table.
+
+        NOTE: the task_states table holds the latest state only, so querying
+        (e.g.) submitted will fail for a task that is running or finished.
+
+        Query cycle=2023, status=succeeded:
+           [[foo, 2023, succeeded], [bar, 2023, succeeded]]
+
+        Query task=foo, message="file ready":
+           [[foo, 2023, "file ready"], [foo, 2024, "file ready"]]
+
+        Query task=foo, point=2023, message="file ready":
+           [[foo, 2023, "file ready"]]
+
+        """
         stmt_args = []
         stmt_wheres = []
 
-        if mask is None:
-            mask = "name, cycle, status"
-
         if message:
             target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
-            mask = "outputs"
+            mask = "name, cycle, outputs"
         else:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
+            mask = "name, cycle, status"
 
         stmt = rf'''
             SELECT
@@ -138,10 +181,12 @@ class CylcWorkflowDBChecker:
         '''  # nosec
         # * mask is hardcoded
         # * target_table is a code constant
-        if task is not None:
+
+        if task:
             stmt_wheres.append("name==?")
             stmt_args.append(task)
-        if cycle is not None:
+
+        if cycle:
             stmt_wheres.append("cycle==?")
             stmt_args.append(cycle)
 
@@ -151,31 +196,52 @@ class CylcWorkflowDBChecker:
                 stmt_args.append(state)
                 stmt_frags.append("status==?")
             stmt_wheres.append("(" + (" OR ").join(stmt_frags) + ")")
+
         if stmt_wheres:
             stmt += " where " + (" AND ").join(stmt_wheres)
 
+        # Note we can't use "where outputs==message"; because the outputs
+        # table holds a serialized string of all received outputs.
+
         res = []
         for row in self.conn.execute(stmt, stmt_args):
-            if not all(v is None for v in row):
+            if row[-1] is not None:
+                # (final column - status - can be None in Cylc 7 DBs)
                 res.append(list(row))
 
+        if message:
+            # Replace res with a task-states like result,
+            # [[foo, 2032, message], [foo, 2033, message]]
+            if self.back_compat_mode:
+                # Cylc 7 DB: list of {label: message}
+                res = [
+                    [item[0], item[1], message]
+                    for item in res
+                    if message in json.loads(item[2]).values()
+                ]
+            else:
+                # Cylc 8 DB list of [message]
+                res = [
+                    [item[0], item[1], message]
+                    for item in res
+                    if message in json.loads(item[2])
+                ]
         return res
 
-    def task_state_getter(self, task, cycle):
-        """used to get the state of a particular task at a particular cycle"""
-        return self.workflow_state_query(task, cycle, mask="status")[0]
+    def task_state_met(
+        self,
+        task: str,
+        cycle: str,
+        status: Optional[str] = None,
+        message: Optional[str] = None
+    ):
+        """Return True if cycle/task has achieved status or output message.
 
-    def task_state_met(self, task, cycle, status=None, message=None):
-        """used to check if a task is in a particular state"""
-        res = self.workflow_state_query(task, cycle, status, message)
-        if status:
-            return bool(res)
-        elif message:
-            return any(
-                message == value
-                for outputs_str, in res
-                for value in json.loads(outputs_str)
-            )
+        Called when polling for a status or output message.
+        """
+        return bool(
+            self.workflow_state_query(task, cycle, status, message)
+        )
 
     @staticmethod
     def validate_mask(mask):

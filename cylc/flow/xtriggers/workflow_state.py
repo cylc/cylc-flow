@@ -31,7 +31,7 @@ def workflow_state(
     task: str,
     point: str,
     offset: Optional[str] = None,
-    status: str = 'succeeded',
+    status: Optional[str] = None,
     message: Optional[str] = None,
     cylc_run_dir: Optional[str] = None
 ) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
@@ -90,20 +90,20 @@ def workflow_state(
     except (OSError, sqlite3.Error):
         # Failed to connect to DB; target workflow may not be started.
         return (False, None)
-    try:
-        fmt = checker.get_remote_point_format()
-    except sqlite3.OperationalError as exc:
-        try:
-            fmt = checker.get_remote_point_format_compat()
-        except sqlite3.OperationalError:
-            raise exc  # original error
-    if fmt:
-        my_parser = TimePointParser()
-        point = str(my_parser.parse(point, dump_format=fmt))
-    if message is not None:
-        satisfied = checker.task_state_met(task, point, message=message)
-    else:
-        satisfied = checker.task_state_met(task, point, status=status)
+
+    point = str(
+        TimePointParser().parse(
+            point, dump_format=checker.get_point_format()
+        )
+    )
+
+    if not message and not status:
+        status = "succeeded"
+
+    satisfied = checker.task_state_met(
+        task, str(point), message=message, status=status
+    )
+
     results = {
         'workflow': workflow,
         'task': task,
