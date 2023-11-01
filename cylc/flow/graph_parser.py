@@ -85,10 +85,10 @@ class GraphParser:
     store dependencies for the whole workflow (call parse_graph multiple times
     and key results by graph section).
 
-    The general form of a dependency is "EXPRESSION => NODE", where:
-        * On the right, NODE is a task or family name
+    The general form of a dependency is "LHS => RHS", where:
         * On the left, an EXPRESSION of nodes involving parentheses, and
           logical operators '&' (AND), and '|' (OR).
+        * On the right, an EXPRESSION of nodes NOT involving '|'
         * Node names may be parameterized (any number of parameters):
             NODE<i,j,k>
             NODE<i=0,j,k>  # specific parameter value
@@ -517,15 +517,17 @@ class GraphParser:
                 "Suicide markers must be"
                 f" on the right of a trigger: {left}")
 
+        # Check that parentheses match.
+        mismatch_msg = 'Mismatched parentheses in: "{}"'
+        if left and left.count("(") != left.count(")"):
+            raise GraphParseError(mismatch_msg.format(left))
+        if right.count("(") != right.count(")"):
+            raise GraphParseError(mismatch_msg.format(right))
+
         # Ignore cycle point offsets on the right side.
         # (Note we can't ban this; all nodes get process as left and right.)
         if '[' in right:
             return
-
-        # Check that parentheses match.
-        if left and left.count("(") != left.count(")"):
-            raise GraphParseError(
-                "Mismatched parentheses in: \"" + left + "\"")
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
@@ -847,9 +849,14 @@ class GraphParser:
                 trigs += [f"{name}{offset}:{trigger}"]
 
         for right in rights:
+            right = right.strip('()')  # parentheses don't matter
             m = self.__class__.REC_RHS_NODE.match(right)
-            # This will match, bad nodes are detected earlier (type ignore):
-            suicide_char, name, output, opt_char = m.groups()  # type: ignore
+            if not m:
+                # Bad nodes should have been detected earlier; fail loudly
+                raise ValueError(  # pragma: no cover
+                    f"Unexpected graph expression: '{right}'"
+                )
+            suicide_char, name, output, opt_char = m.groups()
             suicide = (suicide_char == self.__class__.SUICIDE)
             optional = (opt_char == self.__class__.OPTIONAL)
             if output:

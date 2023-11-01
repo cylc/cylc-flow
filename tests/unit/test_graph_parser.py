@@ -16,6 +16,7 @@
 """Unit tests for the GraphParser."""
 
 import logging
+from typing import Dict, List
 import pytest
 from itertools import product
 from pytest import param
@@ -86,45 +87,59 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
 @pytest.mark.parametrize(
     'graph, expected_err',
     [
-        [
+        (
             "a b => c",
             "Bad graph node format"
-        ],
-        [
+        ),
+        (
+            "a => b c",
+            "Bad graph node format"
+        ),
+        (
             "!foo => bar",
             "Suicide markers must be on the right of a trigger:"
-        ],
-        [
+        ),
+        (
             "( foo & bar => baz",
-            "Mismatched parentheses in:"
-        ],
-        [
+            'Mismatched parentheses in: "(foo&bar"'
+        ),
+        (
+            "a => b & c)",
+            'Mismatched parentheses in: "b&c)"'
+        ),
+        (
+            "(a => b & c)",
+            'Mismatched parentheses in: "(a"'
+        ),
+        (
+            "(a => b[+P1]",
+            'Mismatched parentheses in: "(a"'
+        ),
+        (
             """(a | b & c) => d
                foo => bar
                (a | b & c) => !d""",
             "can't trigger both d and !d"
-        ],
-        [
+        ),
+        (
             "a => b | c",
             "Illegal OR on right side"
-        ],
-        [
+        ),
+        (
             "foo && bar => baz",
             "The graph AND operator is '&'"
-        ],
-        [
+        ),
+        (
             "foo || bar => baz",
             "The graph OR operator is '|'"
-        ],
+        ),
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
     """Test various graph syntax errors."""
     with pytest.raises(GraphParseError) as cm:
         GraphParser().parse_graph(graph)
-    assert (
-        expected_err in str(cm.value)
-    )
+    assert expected_err in str(cm.value)
 
 
 def test_parse_graph_simple():
@@ -845,3 +860,39 @@ def test_fail_family_triggers_on_tasks(ftrig):
                 "family trigger on non-family namespace"
             )
         )
+
+
+@pytest.mark.parametrize(
+    'graph, expected_triggers',
+    [
+        param(
+            'a => b & c',
+            {'a': [''], 'b': ['a:succeeded'], 'c': ['a:succeeded']},
+            id="simple"
+        ),
+        param(
+            'a => (b & c)',
+            {'a': [''], 'b': ['a:succeeded'], 'c': ['a:succeeded']},
+            id="simple w/ parentheses"
+        ),
+        param(
+            'a => (b & (c & d))',
+            {
+                'a': [''],
+                'b': ['a:succeeded'],
+                'c': ['a:succeeded'],
+                'd': ['a:succeeded'],
+            },
+            id="more parentheses"
+        ),
+    ]
+)
+def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
+    """Test '&' operator on right hand side of trigger expression."""
+    gp = GraphParser()
+    gp.parse_graph(graph)
+    triggers = {
+        task: list(trigs.keys())
+        for task, trigs in gp.triggers.items()
+    }
+    assert triggers == expected_triggers
