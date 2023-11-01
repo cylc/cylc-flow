@@ -23,7 +23,8 @@ from typing import (
     Dict,
     List,
     Tuple,
-    Optional
+    Optional,
+    Union
 )
 
 import cylc.flow.flags
@@ -535,16 +536,15 @@ class GraphParser:
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
 
+        lefts: Union[List[str], List[Optional[str]]]
         if not left or (self.__class__.OP_OR in left or '(' in left):
-            # Treat conditional or bracketed expressions as a single entity.
+            # Treat conditional or parenthesised expressions as a single entity
             # Can get [None] or [""] here
-            lefts: List[Optional[str]] = [left]
+            lefts = [left]
         else:
             # Split non-conditional left-side expressions on AND.
             # Can get [""] here too
-            # TODO figure out how to handle this wih mypy:
-            #   assign List[str] to List[Optional[str]]
-            lefts = left.split(self.__class__.OP_AND)  # type: ignore
+            lefts = left.split(self.__class__.OP_AND)
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
