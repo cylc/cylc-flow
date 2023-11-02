@@ -362,10 +362,8 @@ class TaskProxy:
         """Compute, cache and return trigger time relative to cycle point.
 
         Args:
-            point:
-                String representing itask string.
-            offset_str:
-                ISO8601Interval string, e.g. "PT2M".
+            point: Task's cycle point.
+            offset_str: ISO8601 interval string, e.g. "PT2M".
                 Can be None for zero offset.
         Returns:
             Absolute trigger time in seconds since Unix epoch.
@@ -373,10 +371,7 @@ class TaskProxy:
         """
         # None cannot be used as a dict key:
         offset_str = offset_str if offset_str else 'P0Y'
-        if (
-            not self.clock_trigger_times
-            or offset_str not in self.clock_trigger_times
-        ):
+        if offset_str not in self.clock_trigger_times:
             if offset_str == 'P0Y':
                 trigger_time = point
             else:
