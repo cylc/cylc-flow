@@ -373,7 +373,7 @@ def get_task_status_summary(flow):
     state_totals = flow['stateTotals']
     return [
         [
-            ('', ' '),
+            ' ',
             (f'job_{state}', str(state_totals[state])),
             (f'job_{state}', JOB_ICON)
         ]

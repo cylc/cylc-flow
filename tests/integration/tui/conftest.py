@@ -235,6 +235,21 @@ def raikura(test_dir, request, monkeypatch):
         testing.
 
     """
+    return _raikura(test_dir, request, monkeypatch)
+
+
+@pytest.fixture
+def mod_raikura(test_dir, request, monkeypatch):
+    """Same as raikura but configured to view module-scoped workflows.
+
+    Note: This is *not* a module-scoped fixture (no need, creating Tui sessions
+    is not especially slow), it is configured to display module-scoped
+    "scheduler" fixtures (which may be more expensive to create/destroy).
+    """
+    return _raikura(test_dir.parent, request, monkeypatch)
+
+
+def _raikura(test_dir, request, monkeypatch):
     # make the workflow and scan update intervals match (more reliable)
     # and speed things up a little whilst we're at it
     monkeypatch.setattr(

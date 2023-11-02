@@ -27,6 +27,15 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
 
+@pytest.fixture(scope='module')
+def mod_monkeypatch():
+    """A module-scoped version of the monkeypatch fixture."""
+    from _pytest.monkeypatch import MonkeyPatch
+    mpatch = MonkeyPatch()
+    yield mpatch
+    mpatch.undo()
+
+
 @pytest.fixture
 def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """A Pytest fixture for fiddling global config values.

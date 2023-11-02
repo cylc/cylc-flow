@@ -125,12 +125,14 @@ ARGUMENT_TYPES = {
 }
 
 
-def cli_cmd(*cmd):
+def cli_cmd(*cmd, ret=False):
     """Issue a CLI command.
 
     Args:
         cmd:
             The command without the 'cylc' prefix'.
+        ret:
+            If True, the stdout will be returned.
 
     Rasies:
         ClientError:
@@ -147,6 +149,89 @@ def cli_cmd(*cmd):
     _out, err = proc.communicate()
     if proc.returncode != 0:
         raise ClientError(f'Error in command cylc {" ".join(cmd)}\n{err}')
+    if ret:
+        return _out
+
+
+def _log(id_):
+    """Special mutation to open the log view."""
+    # dynamic import to avoid circular import issues
+    from cylc.flow.tui.overlay import log
+    return partial(
+        log,
+        id_=id_,
+        list_files=partial(_list_log_files, id_),
+        get_log=partial(_get_log, id_),
+    )
+
+
+def _parse_log_header(contents):
+    """Parse the cat-log header.
+
+    The "--prepend-path" option to "cat-log" adds a line containing the host
+    and path to the file being viewed in the form:
+
+        # <host>:<path>
+
+    Args:
+        contents:
+            The raw log file contents as returned by "cat-log".
+
+    Returns:
+        tuple - (host, path, text)
+
+        host:
+            The host where the file was retrieved from.
+        path:
+            The absolute path to the log file.
+        text:
+            The log file contents with the header removed.
+
+    """
+    contents, text = contents.split('\n', 1)
+    contents = contents.replace('# ', '')
+    host, path = contents.split(':')
+    return host, path, text
+
+
+def _get_log(id_, filename=None):
+    """Retrieve the contents of a log file.
+
+    Args:
+        id_:
+            The Cylc universal ID of the thing you want to fetch the log file
+            for.
+        filename:
+            The file name to retrieve (note name not path).
+            If "None", then the default log file will be retrieved.
+
+    """
+    cmd = [
+        'cat-log',
+        '--mode=cat',
+        '--prepend-path',
+    ]
+    if filename:
+        cmd.append(f'--file={filename}')
+    text = cli_cmd(
+        *cmd,
+        id_,
+        ret=True,
+    )
+    return _parse_log_header(text)
+
+
+def _list_log_files(id_):
+    """Return a list of available log files.
+
+    Args:
+        id_:
+            The Cylc universal ID of the thing you want to fetch the log file
+            for.
+
+    """
+    text = cli_cmd('cat-log', '--mode=list-dir', id_, ret=True)
+    return text.splitlines()
 
 
 # the mutations we have to go through the CLI to perform
@@ -158,7 +243,14 @@ OFFLINE_MUTATIONS = {
         'play': partial(cli_cmd, 'play'),
         'clean': partial(cli_cmd, 'clean', '--yes'),
         'reinstall-reload': partial(cli_cmd, 'vr', '--yes'),
-    }
+        'log': _log,
+    },
+    'task': {
+        'log': _log,
+    },
+    'job': {
+        'log': _log,
+    },
 }
 
 
@@ -217,8 +309,11 @@ def list_mutations(selection, is_running=True):
     return sorted(ret)
 
 
-def context_to_variables(context):
+def context_to_variables(context, jobs=False):
     """Derive multiple selection out of single selection.
+
+    Note, this interface exists with the aim of facilitating the addition of
+    multiple selection at a later date.
 
     Examples:
         >>> context_to_variables(extract_context(['~a/b//c/d']))
@@ -230,13 +325,31 @@ def context_to_variables(context):
         >>> context_to_variables(extract_context(['~a/b']))
         {'user': ['a'], 'workflow': ['b']}
 
+        # Note, jobs are omitted by default
+        >>> context_to_variables(extract_context(['~a/b//c/d/01']))
+        {'user': ['a'], 'workflow': ['b'], 'task': ['c/d']}
+
+        # This is because Cylc commands cannot generally operate on jobs only
+        # tasks.
+        # To let jobs slide through:
+        >>> context_to_variables(extract_context(['~a/b//c/d/01']), jobs=True)
+        {'user': ['a'], 'workflow': ['b'], 'job': ['c/d/01']}
+
     """
     # context_to_variables because it can only handle single-selection ATM
     variables = {'user': context['user']}
 
     if 'workflow' in context:
         variables['workflow'] = context['workflow']
-    if 'task' in context:
+    if jobs and 'job' in context:
+        variables['job'] = [
+            Tokens(
+                cycle=context['cycle'][0],
+                task=context['task'][0],
+                job=context['job'][0],
+            ).relative_id
+        ]
+    elif 'task' in context:
         variables['task'] = [
             Tokens(
                 cycle=context['cycle'][0],
@@ -265,9 +378,10 @@ def mutate(mutation, selection):
         for section in OFFLINE_MUTATIONS.values()
         for _mutation in section
     }:
-        offline_mutate(mutation, selection)
+        return offline_mutate(mutation, selection)
     else:
         online_mutate(mutation, selection)
+    return None
 
 
 def online_mutate(mutation, selection):
@@ -301,10 +415,21 @@ def online_mutate(mutation, selection):
 def offline_mutate(mutation, selection):
     """Issue a mutation over the CLI or other offline interface."""
     context = extract_context(selection)
-    variables = context_to_variables(context)
+    variables = context_to_variables(context, jobs=True)
+    if 'job' in variables:
+        for job in variables['job']:
+            id_ = Tokens(job, relative=True).duplicate(
+                workflow=variables['workflow'][0]
+            )
+            return OFFLINE_MUTATIONS['workflow'][mutation](id_.id)
+    if 'task' in variables:
+        for task in variables['task']:
+            id_ = Tokens(task, relative=True).duplicate(
+                workflow=variables['workflow'][0]
+            )
+            return OFFLINE_MUTATIONS['workflow'][mutation](id_.id)
     if 'workflow' in variables:
         for workflow in variables['workflow']:
-            # NOTE: this currently only supports workflow mutations
-            OFFLINE_MUTATIONS['workflow'][mutation](workflow)
+            return OFFLINE_MUTATIONS['workflow'][mutation](workflow)
     else:
-        OFFLINE_MUTATIONS['user'][mutation]()
+        return OFFLINE_MUTATIONS['user'][mutation]()

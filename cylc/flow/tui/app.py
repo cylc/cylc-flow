@@ -546,7 +546,7 @@ class TuiApp:
             fcn: A function which returns an urwid widget to overlay.
 
         """
-        self.create_overlay(*fcn(self))
+        self.create_overlay(*fcn(app=self))
 
     def create_overlay(self, widget, kwargs):
         """Open an overlay over the monitor.
