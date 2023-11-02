@@ -1260,10 +1260,17 @@ with Conf(
                     - ``all`` - all instance of the task will fail
                     - ``2017-08-12T06, 2017-08-12T18`` - these instances of
                       the task will fail
+
+                    If you set :cylc:conf:`[..][..]execution retry delays`
+                    the second attempt will succeed unless you set
+                    :cylc:conf:`[..]fail try 1 only = False`.
                 ''')
                 Conf('fail try 1 only', VDR.V_BOOLEAN, True, desc='''
                     If ``True`` only the first run of the task
                     instance will fail, otherwise retries will fail too.
+
+                    Task instances must be set to fail by
+                    :cylc:conf:`[..]fail cycle points`.
                 ''')
                 Conf('disable task event handlers', VDR.V_BOOLEAN, True,
                      desc='''

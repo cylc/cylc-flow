@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import pkg_resources
+import sys
 from types import SimpleNamespace
 from typing import Callable
 from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.scripts.cylc import iter_commands
+from cylc.flow.scripts.cylc import iter_commands, pythonpath_manip
 
 from ..conftest import MonkeyMock
 
@@ -136,3 +138,25 @@ def test_execute_cmd(
     # the "bad" entry point should raise an exception
     with pytest.raises(ModuleNotFoundError):
         execute_cmd('bad')
+
+
+def test_pythonpath_manip(monkeypatch):
+    """pythonpath_manip removes items in PYTHONPATH from sys.path
+
+    and adds items from CYLC_PYTHONPATH
+    """
+    # If PYTHONPATH is set...
+    monkeypatch.setenv('PYTHONPATH', '/remove-from-sys.path')
+    monkeypatch.setattr('sys.path', ['/leave-alone', '/remove-from-sys.path'])
+    pythonpath_manip()
+    # ... we don't change PYTHONPATH
+    assert os.environ['PYTHONPATH'] == '/remove-from-sys.path'
+    # ... but we do remove PYTHONPATH items from sys.path, and don't remove
+    # items there not in PYTHONPATH
+    assert sys.path == ['/leave-alone']
+
+    # If CYLC_PYTHONPATH is set we retrieve its contents and
+    # add them to the sys.path:
+    monkeypatch.setenv('CYLC_PYTHONPATH', '/add-to-sys.path')
+    pythonpath_manip()
+    assert sys.path == ['/add-to-sys.path', '/leave-alone']

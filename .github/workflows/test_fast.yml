@@ -28,7 +28,7 @@ jobs:
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure Python
         uses: actions/setup-python@v4
@@ -114,7 +114,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download coverage artifacts
         uses: actions/download-artifact@v3
