@@ -47,6 +47,7 @@ query {
     oldestActiveCyclePoint
     reloaded
     runMode
+    nEdgeDistance
     stateTotals
     workflowLogDir
     timeZoneInfo {
@@ -96,6 +97,7 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
             "oldestActiveCyclePoint": "20210101T0000Z",
             "reloaded": false,
             "runMode": "live",
+            "nEdgeDistance": 1,
             "stateTotals": {
                 "waiting": 1,
                 "expired": 0,

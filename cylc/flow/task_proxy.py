@@ -256,7 +256,10 @@ class TaskProxy:
         self.state = TaskState(tdef, self.point, status, is_held)
 
         # Determine graph children of this task (for spawning).
-        self.graph_children = generate_graph_children(tdef, self.point)
+        if data_mode:
+            self.graph_children = {}
+        else:
+            self.graph_children = generate_graph_children(tdef, self.point)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.tokens}'>"

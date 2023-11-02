@@ -49,14 +49,14 @@ query {
   workflows {
     name
     isHeldTotal
-    taskProxies(isHeld: true) {
+    taskProxies(isHeld: true, graphDepth: 1) {
       id
       jobs {
         submittedTime
         startedTime
       }
     }
-    familyProxies(exids: [\"*/root\"], isHeld: true) {
+    familyProxies(exids: [\"*/root\"], isHeld: true, graphDepth: 1) {
       id
     }
   }

@@ -267,6 +267,10 @@ def node_filter(node, node_type, args, state):
             args.get('maxdepth', -1) < 0
             or node.depth <= args['maxdepth']
         )
+        and (
+            args.get('graph_depth', -1) < 0
+            or node.graph_depth <= args['graph_depth']
+        )
         # Now filter node against id arg lists
         and (
             not args.get('ids')

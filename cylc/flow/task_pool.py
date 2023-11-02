@@ -842,13 +842,14 @@ class TaskPool:
 
         return point_itasks
 
-    def get_task(self, point, name):
+    def get_task(self, point, name) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
         rel_id = f'{point}/{name}'
         for pool in (self.main_pool, self.hidden_pool):
             tasks = pool.get(point)
             if tasks and rel_id in tasks:
                 return tasks[rel_id]
+        return None
 
     def _get_hidden_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return runahead pool task by ID if it exists, or None."""

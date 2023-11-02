@@ -20,6 +20,8 @@
             cylc stop --now --max-polls=10 --interval=1 $CYLC_WORKFLOW_ID
             false
          else
+            # Allow time for c submission => running
+            sleep 2
             cylc show "$CYLC_WORKFLOW_ID//1/b" >> $CYLC_WORKFLOW_RUN_DIR/show-b.txt
             cylc show "$CYLC_WORKFLOW_ID//1/c" >> $CYLC_WORKFLOW_RUN_DIR/show-c.txt
             cylc show "$CYLC_WORKFLOW_ID//1/d" >> $CYLC_WORKFLOW_RUN_DIR/show-d.txt

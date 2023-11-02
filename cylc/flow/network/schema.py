@@ -203,6 +203,7 @@ PROXY_ARGS = {
     'is_runahead': Boolean(),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
+    'graph_depth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
@@ -218,6 +219,7 @@ ALL_PROXY_ARGS = {
     'is_runahead': Boolean(),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
+    'graph_depth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
@@ -226,8 +228,6 @@ EDGE_ARGS = {
     'exids': graphene.List(ID, default_value=[]),
     'states': graphene.List(String, default_value=[]),
     'exstates': graphene.List(String, default_value=[]),
-    'mindepth': Int(default_value=-1),
-    'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
@@ -785,6 +785,12 @@ class Workflow(ObjectType):
         description='Any active workflow broadcasts.'
     )
     pruned = Boolean()  # TODO: what is this? write description
+    n_edge_distance = Int(
+        description=sstrip('''
+            The maximum graph distance (n) from an active node
+            of the data-store graph window.
+        '''),
+    )
 
 
 class RuntimeSetting(ObjectType):
@@ -1072,6 +1078,11 @@ class TaskProxy(ObjectType):
     depth = Int(
         description='The family inheritance depth',
     )
+    graph_depth = Int(
+        description=sstrip('''
+            The n-window graph edge depth from closet active task(s).
+        '''),
+    )
     job_submits = Int(
         description='The number of job submissions for this task instance.',
     )
@@ -1222,6 +1233,12 @@ class FamilyProxy(ObjectType):
     is_runahead = Boolean()
     is_runahead_total = Int()
     depth = Int()
+    graph_depth = Int(
+        description=sstrip('''
+            The n-window graph edge smallest child task/family depth
+            from closet active task(s).
+        '''),
+    )
     child_tasks = graphene.List(
         TaskProxy,
         description="""Descendant task proxies.""",
