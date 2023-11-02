@@ -369,7 +369,6 @@ class TaskProxy:
             Absolute trigger time in seconds since Unix epoch.
 
         """
-        # None cannot be used as a dict key:
         offset_str = offset_str if offset_str else 'P0Y'
         if offset_str not in self.clock_trigger_times:
             if offset_str == 'P0Y':
