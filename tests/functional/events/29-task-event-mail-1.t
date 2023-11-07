@@ -20,7 +20,7 @@
 if ! command -v mail 2>'/dev/null'; then
     skip_all '"mail" command not available'
 fi
-set_test_number 4
+set_test_number 5
 
 mock_smtpd_init
 create_test_global_config "
@@ -37,12 +37,15 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "$WORKFLOW_NAME"
 
-contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-b'retry: 1/t1/01'
-b'see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/'
-__LOG__
-run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[1/t1/01 retry\\].* ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
+grep_ok "retry: 1/t1/01" "${TEST_SMTPD_LOG}"
+grep_ok "see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/" "${TEST_SMTPD_LOG}"
+
+grep 'Subject:' "${TEST_SMTPD_LOG}" -A1 > selection.log
+
+cmp_ok selection.log <<__HERE__
+Subject: [1/t1/01 retry]
+ ${WORKFLOW_NAME}
+__HERE__
 
 purge
 mock_smtpd_kill
