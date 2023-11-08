@@ -94,6 +94,48 @@ def print_contents(contents, padding=5, char='.', indent=0):
             print(f'{indent}  {" " * title_width}{" " * padding}{line}')
 
 
+def format_grid(rows, gutter=2):
+    """Format gridded text.
+
+    This takes a 2D table of text and formats it to the maximum width of each
+    column and adds a bit of space between them.
+
+    Args:
+        rows:
+            2D list containing the text to format.
+        gutter:
+            The width of the gutter between columns.
+
+    Examples:
+        >>> format_grid([
+        ...     ['a', 'b', 'ccccc'],
+        ...     ['ddddd', 'e', 'f'],
+        ... ])
+        ['a      b  ccccc  ',
+         'ddddd  e  f      ']
+
+        >>> format_grid([])
+        []
+
+    """
+    if not rows:
+        return rows
+    templ = [
+        '{col:%d}' % (max(
+            len(row[ind])
+            for row in rows
+        ) + gutter)
+        for ind in range(len(rows[0]))
+    ]
+    lines = []
+    for row in rows:
+        ret = ''
+        for ind, col in enumerate(row):
+            ret += templ[ind].format(col=col)
+        lines.append(ret)
+    return lines
+
+
 def supports_color():
     """Determine if running in a terminal which supports color.
 

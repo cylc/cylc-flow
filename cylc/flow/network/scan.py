@@ -50,10 +50,8 @@ from pathlib import Path
 import re
 from typing import AsyncGenerator, Dict, Iterable, List, Optional, Tuple, Union
 
-from pkg_resources import (
-    parse_requirements,
-    parse_version
-)
+from packaging.version import parse as parse_version
+from packaging.specifiers import SpecifierSet
 
 from cylc.flow import LOG
 from cylc.flow.async_util import (
@@ -354,11 +352,7 @@ async def validate_contact_info(flow):
 
 def parse_requirement(requirement_string):
     """Parse a requirement from a requirement string."""
-    # we have to give the requirement a name but what we call it doesn't
-    # actually matter
-    for req in parse_requirements(f'x {requirement_string}'):
-        # there should only be one requirement
-        return (req,), {}
+    return (SpecifierSet(requirement_string),), {}
 
 
 @pipe(preproc=parse_requirement)
@@ -373,7 +367,7 @@ async def cylc_version(flow, requirement):
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
         requirement (str):
-            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
+            Requirement specifier in PEP 440 format e.g. ``> 8, < 9``
 
     """
     return parse_version(flow[ContactFileFields.VERSION]) in requirement
@@ -391,7 +385,7 @@ async def api_version(flow, requirement):
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
         requirement (str):
-            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
+            Requirement specifier in PEP 440 format e.g. ``> 8, < 9``
 
     """
     return parse_version(flow[ContactFileFields.API]) in requirement

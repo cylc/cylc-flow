@@ -277,7 +277,7 @@ def process_plugins(fpath, opts):
         try:
             # If you want it to work on sourcedirs you need to get the options
             # to here.
-            plugin_result = entry_point.resolve()(
+            plugin_result = entry_point.load()(
                 srcdir=fpath, opts=opts
             )
         except Exception as exc:

@@ -338,7 +338,7 @@ def pre_configure(opts: 'Values', src_dir: Path) -> None:
         'cylc.pre_configure'
     ):
         try:
-            entry_point.resolve()(srcdir=src_dir, opts=opts)
+            entry_point.load()(srcdir=src_dir, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -355,7 +355,7 @@ def post_install(opts: 'Values', src_dir: Path, run_dir: Path) -> None:
         'cylc.post_install'
     ):
         try:
-            entry_point.resolve()(
+            entry_point.load()(
                 srcdir=src_dir,
                 opts=opts,
                 rundir=str(run_dir)
