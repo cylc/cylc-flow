@@ -153,6 +153,16 @@ def cli_cmd(*cmd, ret=False):
         return _out
 
 
+def _show(id_):
+    """Special mutation to display cylc show output."""
+    # dynamic import to avoid circular import issues
+    from cylc.flow.tui.overlay import text_box
+    return partial(
+        text_box,
+        text=cli_cmd('show', id_, '--color=never', ret=True),
+    )
+
+
 def _log(id_):
     """Special mutation to open the log view."""
     # dynamic import to avoid circular import issues
@@ -247,6 +257,7 @@ OFFLINE_MUTATIONS = {
     },
     'task': {
         'log': _log,
+        'show': _show,
     },
     'job': {
         'log': _log,
@@ -421,13 +432,13 @@ def offline_mutate(mutation, selection):
             id_ = Tokens(job, relative=True).duplicate(
                 workflow=variables['workflow'][0]
             )
-            return OFFLINE_MUTATIONS['workflow'][mutation](id_.id)
+            return OFFLINE_MUTATIONS['job'][mutation](id_.id)
     if 'task' in variables:
         for task in variables['task']:
             id_ = Tokens(task, relative=True).duplicate(
                 workflow=variables['workflow'][0]
             )
-            return OFFLINE_MUTATIONS['workflow'][mutation](id_.id)
+            return OFFLINE_MUTATIONS['task'][mutation](id_.id)
     if 'workflow' in variables:
         for workflow in variables['workflow']:
             return OFFLINE_MUTATIONS['workflow'][mutation](workflow)

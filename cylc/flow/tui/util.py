@@ -21,6 +21,7 @@ from getpass import getuser
 from itertools import zip_longest
 import re
 from time import time
+from typing import Tuple
 
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
@@ -554,3 +555,24 @@ def extract_context(selection):
                 if value not in lst:
                     lst.append(value)
     return ret
+
+
+def get_text_dimensions(text: str) -> Tuple[int, int]:
+    """Return the monospace size of a block of multiline text.
+
+    Examples:
+        >>> get_text_dimensions('foo')
+        (3, 1)
+
+        >>> get_text_dimensions('''
+        ...     foo bar
+        ...     baz
+        ... ''')
+        (11, 3)
+
+        >>> get_text_dimensions('')
+        (0, 0)
+
+    """
+    lines = text.splitlines()
+    return max((0, *(len(line) for line in lines))), len(lines)

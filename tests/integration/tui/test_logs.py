@@ -181,7 +181,7 @@ async def workflow(mod_flow, mod_scheduler, mod_start, standarise_host_and_path)
         job_2_err = get_job_log(job_2, 'job.err')
         with open(job_2_err, 'w+') as log:
             log.write(f'job: {job_2.relative_id}\nthis is a job error\n')
-        
+
         # 1/a/NN -> 1/a/02
         (job_2_out.parent.parent / 'NN').symlink_to(
             (job_2_out.parent.parent / '02'),

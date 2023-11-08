@@ -59,6 +59,7 @@ from cylc.flow.tui.data import (
 )
 from cylc.flow.tui.util import (
     get_task_icon,
+    get_text_dimensions,
 )
 
 
@@ -455,4 +456,16 @@ def log(app, id_=None, list_files=None, get_log=None):
         ]),
         # open full screen
         {'width': 9999, 'height': 9999}
+    )
+
+
+def text_box(app, text=''):
+    """A simple text box overlay."""
+    width, height = get_text_dimensions(text)
+    return (
+        urwid.ListBox([
+            urwid.Text(text),
+        ]),
+        # NOTE: those fudge factors account for the overlay border & padding
+        {'width': width + 4, 'height': height + 6}
     )
