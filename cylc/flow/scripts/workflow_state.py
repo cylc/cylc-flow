@@ -56,9 +56,6 @@ Examples:
   # Print all tasks that generated the output message "file1 ready":
   $ cylc workflow-state --message="file1 ready" WORKFLOW_ID
 
-  # Print all tasks that generated the output message "file1 ready":
-  $ cylc workflow-state --message="file1 ready" WORKFLOW_ID
-
   # Print all tasks "foo" that generated the output message "file1 ready":
   $ cylc workflow-state --task=foo --message="file1 ready" WORKFLOW_ID
 
