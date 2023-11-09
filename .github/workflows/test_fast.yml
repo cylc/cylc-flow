@@ -51,6 +51,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sqlite3
 
+      - name: Patch DNS
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          # see https://github.com/actions/runner-images/issues/8649#issuecomment-1779548056
+          echo -e "$(ipconfig getifaddr en0) $(hostname -f) $(hostname -s)" | sudo tee -a /etc/hosts
+          dscacheutil -q host -a name $(hostname -f)
+
       - name: Install
         run: |
           pip install -e ."[all]"

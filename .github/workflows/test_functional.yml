@@ -103,6 +103,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Patch DNS
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          # see https://github.com/actions/runner-images/issues/8649#issuecomment-1779548056
+          echo -e "$(ipconfig getifaddr en0) $(hostname -f) $(hostname -s)" | sudo tee -a /etc/hosts
+          dscacheutil -q host -a name $(hostname -f)
+          CONF_PATH="$HOME/.cylc/flow/8"
+          mkdir -p "$CONF_PATH"
+          cat > "$CONF_PATH/global.cylc" <<__HERE__
+          [platforms]
+            [[localhost, $(hostname -f), $(hostname -s)]]
+              hosts = localhost
+              install target = localhost
+              ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
+          __HERE__
+          cp "$CONF_PATH/global.cylc" "$CONF_PATH/global-tests.cylc"
+          echo "# $CONF_PATH/global-tests.cylc"
+          cat "$CONF_PATH/global-tests.cylc"
+
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
