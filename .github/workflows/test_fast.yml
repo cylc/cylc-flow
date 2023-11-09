@@ -49,6 +49,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sqlite3
 
+      - name: Patch DNS
+        uses: cylc/release-actions/patch-dns@v1
+
       - name: Install
         run: |
           pip install -e ."[all]"

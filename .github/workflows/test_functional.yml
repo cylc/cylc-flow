@@ -103,6 +103,29 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create global config
+        run: |
+          CONF_PATH="$HOME/.cylc/flow/8"
+          mkdir -p "$CONF_PATH"
+          touch "$CONF_PATH/global.cylc"
+          ln -s "$CONF_PATH/global.cylc" "$CONF_PATH/global-tests.cylc"
+          echo "GLOBAL_CFG_PATH=${CONF_PATH}/global.cylc" >> "$GITHUB_ENV"
+
+      - name: Patch DNS
+        uses: cylc/release-actions/patch-dns@v1
+
+      - name: Add localhost entries to global config
+        if: startsWith(runner.os, 'macos')
+        run: |
+          cat >> "$GLOBAL_CFG_PATH" <<__HERE__
+          [platforms]
+            [[localhost, $(hostname -f), $(hostname -s)]]
+              hosts = localhost
+              install target = localhost
+              ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
+          __HERE__
+          cat "$GLOBAL_CFG_PATH"
+
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -146,16 +169,13 @@ jobs:
       - name: Configure Atrun
         if: contains(matrix.platform, '_local_at')
         run: |
-          PTH="$HOME/.cylc/flow/"
-          mkdir -p "${PTH}"
-          cat > "${PTH}/global.cylc" << __HERE__
+          cat >> "$GLOBAL_CFG_PATH" << __HERE__
             [platforms]
                 [[_local_at_indep_tcp]]
                     hosts = localhost
                     install target = localhost
                     job runner = at
           __HERE__
-          cp "${PTH}/global.cylc" "${PTH}/global-tests.cylc"
 
       - name: Swarm Configure
         run: |
