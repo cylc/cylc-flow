@@ -43,8 +43,6 @@ retry: 1/t1/01
 see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/
 __LOG__
 
-cat ${TEST_SMTPD_LOG} > ${HOME}/foo
-
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -qPizo "Subject: \[1/t1/01 retry\]\n ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
 
