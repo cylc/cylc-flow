@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 from datetime import datetime
+
+import pytest
+from pytest import param
 
 from cylc.flow.cycling.iso8601 import (
     ISO8601Interval,
@@ -671,74 +673,52 @@ def test_simple(set_cycling_type):
     assert not sequence.is_on_sequence(ISO8601Point("20100809T0005"))
 
 
-def test_next_simple(set_cycling_type):
+@pytest.mark.parametrize(
+    'value, expected', [
+        ('next(T2100Z)', '20100808T2100Z'),
+        ('next(T00)', '20100809T0000Z'),
+        ('next(T-15)', '20100808T1615Z'),
+        ('next(T-45)', '20100808T1545Z'),
+        ('next(-10)', '21100101T0000Z'),
+        ('next(-1008)', '21100801T0000Z'),
+        ('next(--10)', '20101001T0000Z'),
+        ('next(--0325)', '20110325T0000Z'),
+        ('next(---10)', '20100810T0000Z'),
+        ('next(---05T1200Z)', '20100905T1200Z'),
+        param('next(--08-08)', '20110808T0000Z', marks=pytest.mark.xfail),
+        ('next(T15)', '20100809T1500Z'),
+        ('next(T-41)', '20100808T1541Z'),
+    ]
+)
+def test_next_simple(value: str, expected: str, set_cycling_type):
     """Test the generation of CP using 'next' from single input."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    my_now = "20100808T1540Z"
-    sequence = (
-        "next(T2100Z)",  # 20100808T2100Z
-        "next(T00)",  # 20100809T0000Z
-        "next(T-15)",  # 20100808T1615Z
-        "next(T-45)",  # 20100808T1545Z
-        "next(-10)",  # 21100101T0000Z
-        "next(-1008)",  # 21100801T0000Z
-        "next(--10)",  # 20101001T0000Z
-        "next(--0325)",  # 20110325T0000Z
-        "next(---10)",  # 20100810T0000Z
-        "next(---05T1200Z)", # 20100905T1200Z
-    )
+    my_now = "2010-08-08T15:41Z"
+    assert ingest_time(value, my_now) == expected
 
-    output = []
 
-    for point in sequence:
-        output.append(ingest_time(point, my_now))
-    assert output == [
-        "20100808T2100Z",
-        "20100809T0000Z",
-        "20100808T1615Z",
-        "20100808T1545Z",
-        "21100101T0000Z",
-        "21100801T0000Z",
-        "20101001T0000Z",
-        "20110325T0000Z",
-        "20100810T0000Z",
-        "20100905T1200Z",
+@pytest.mark.parametrize(
+    'value, expected', [
+        ('previous(T2100Z)', '20100807T2100Z'),
+        ('previous(T00)', '20100808T0000Z'),
+        ('previous(T-15)', '20100808T1515Z'),
+        ('previous(T-45)', '20100808T1445Z'),
+        ('previous(-10)', '20100101T0000Z'),
+        ('previous(-1008)', '20100801T0000Z'),
+        ('previous(--10)', '20091001T0000Z'),
+        ('previous(--0325)', '20100325T0000Z'),
+        ('previous(---10)', '20100710T0000Z'),
+        ('previous(---05T1200Z)', '20100805T1200Z'),
+        param('previous(--08-08)', '20100808T0000Z', marks=pytest.mark.xfail),
+        ('previous(T15)', '20100808T1500Z'),
+        ('previous(T-41)', '20100808T1441Z'),
     ]
-
-
-def test_previous_simple(set_cycling_type):
+)
+def test_previous_simple(value: str, expected: str, set_cycling_type):
     """Test the generation of CP using 'previous' from single input."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    my_now = "20100808T1540Z"
-    sequence = (
-        "previous(T2100Z)",  # 20100807T2100Z
-        "previous(T00)",  # 20100808T0000Z
-        "previous(T-15)",  # 20100808T1515Z
-        "previous(T-45)",  # 20100808T1445Z
-        "previous(-10)",  # 20100101T0000Z
-        "previous(-1008)",  # 20100801T0000Z
-        "previous(--10)",  # 20091001T0000Z
-        "previous(--0325)",  # 20100325T0000Z
-        "previous(---10)",  # 20100710T0000Z
-        "previous(---05T1200Z)", # 20100805T1200Z
-    )
-
-    output = []
-
-    for point in sequence:
-        output.append(ingest_time(point, my_now))
-    assert output == [
-        "20100807T2100Z",
-        "20100808T0000Z",
-        "20100808T1515Z",
-        "20100808T1445Z",
-        "20100101T0000Z",
-        "20100801T0000Z",
-        "20091001T0000Z",
-        "20100325T0000Z",
-        "20100710T0000Z",
-        "20100805T1200Z",
-    ]
+    my_now = "2010-08-08T15:41Z"
+    assert ingest_time(value, my_now) == expected
 
 
 def test_sequence(set_cycling_type):
@@ -855,63 +835,40 @@ def test_weeks_days(set_cycling_type):
     ]
 
 
-def test_cug(set_cycling_type):
-    """Test the offset CP examples in the Cylc user guide"""
+@pytest.mark.parametrize(
+    'value, expected', [
+        ('next(T-00)', '20180314T1600Z'),
+        ('previous(T-00)', '20180314T1500Z'),
+        ('next(T-00; T-15; T-30; T-45)', '20180314T1515Z'),
+        ('previous(T-00; T-15; T-30; T-45)', '20180314T1500Z'),
+        ('next(T00)', '20180315T0000Z'),
+        ('previous(T00)', '20180314T0000Z'),
+        ('next(T06:30Z)', '20180315T0630Z'),
+        ('previous(T06:30) -P1D', '20180313T0630Z'),
+        ('next(T00; T06; T12; T18)', '20180314T1800Z'),
+        ('previous(T00; T06; T12; T18)', '20180314T1200Z'),
+        ('next(T00; T06; T12; T18)+P1W', '20180321T1800Z'),
+        ('PT1H', '20180314T1612Z'),
+        ('-P1M', '20180214T1512Z'),
+        ('next(-00)', '21000101T0000Z'),
+        ('previous(--01)', '20180101T0000Z'),
+        ('next(---01)', '20180401T0000Z'),
+        ('previous(--1225)', '20171225T0000Z'),
+        ('next(-2006)', '20200601T0000Z'),
+        ('previous(-W101)', '20180305T0000Z'),
+        ('next(-W-1; -W-3; -W-5)', '20180314T0000Z'),
+        ('next(-001; -091; -181; -271)', '20180401T0000Z'),
+        ('previous(-365T12Z)', '20171231T1200Z'),
+    ]
+)
+def test_user_guide_examples(value: str, expected: str, set_cycling_type):
+    """Test the offset CP examples in the Cylc user guide.
+
+    https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/scheduling.html
+    """
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     my_now = "2018-03-14T15:12Z"
-    sequence = (
-        "next(T-00)",                       # 20180314T1600Z
-        "previous(T-00)",                   # 20180314T1500Z
-        "next(T-00; T-15; T-30; T-45)",     # 20180314T1515Z
-        "previous(T-00; T-15; T-30; T-45)",  # 20180314T1500Z
-        "next(T00)",                        # 20180315T0000Z
-        "previous(T00)",                    # 20180314T0000Z
-        "next(T06:30Z)",                    # 20180315T0630Z
-        "previous(T06:30) -P1D",            # 20180313T0630Z
-        "next(T00; T06; T12; T18)",         # 20180314T1800Z
-        "previous(T00; T06; T12; T18)",     # 20180314T1200Z
-        "next(T00; T06; T12; T18)+P1W",     # 20180321T1800Z
-        "PT1H",                             # 20180314T1612Z
-        "-P1M",                             # 20180214T1512Z
-        "next(-00)",                        # 21000101T0000Z
-        "previous(--01)",                   # 20180101T0000Z
-        "next(---01)",                      # 20180401T0000Z
-        "previous(--1225)",                 # 20171225T0000Z
-        "next(-2006)",                      # 20200601T0000Z
-        "previous(-W101)",                  # 20180305T0000Z
-        "next(-W-1; -W-3; -W-5)",           # 20180314T0000Z
-        "next(-001; -091; -181; -271)",     # 20180401T0000Z
-        "previous(-365T12Z)",               # 20171231T1200Z
-    )
-
-    output = []
-
-    for point in sequence:
-        output.append(ingest_time(point, my_now))
-    assert output == [
-        "20180314T1600Z",
-        "20180314T1500Z",
-        "20180314T1515Z",
-        "20180314T1500Z",
-        "20180315T0000Z",
-        "20180314T0000Z",
-        "20180315T0630Z",
-        "20180313T0630Z",
-        "20180314T1800Z",
-        "20180314T1200Z",
-        "20180321T1800Z",
-        "20180314T1612Z",
-        "20180214T1512Z",
-        "21000101T0000Z",
-        "20180101T0000Z",
-        "20180401T0000Z",
-        "20171225T0000Z",
-        "20200601T0000Z",
-        "20180305T0000Z",
-        "20180314T0000Z",
-        "20180401T0000Z",
-        "20171231T1200Z",
-    ]
+    assert ingest_time(value, my_now) == expected
 
 
 def test_next_simple_no_now(set_cycling_type):
