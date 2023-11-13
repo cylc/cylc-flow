@@ -33,19 +33,17 @@ Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
 The cycle point nodes/edges (i.e. task/family proxies) generation is triggered
-individually on transition from staging to active task pool. Each active task
-is generated along with any children and parents recursively out to a
-specified maximum graph distance (n_edge_distance), that can be externally
-altered (via API). Collectively this forms the N-Distance-Window on the
-workflow graph.
+individually on transition to active task pool. Each active task is generated
+along with any children and parents via a graph walk out to a specified maximum
+graph distance (n_edge_distance), that can be externally altered (via API).
+Collectively this forms the N-Distance-Window on the workflow graph.
 
-Pruning of data-store elements is done using both the collection/set of nodes
-generated through the associated graph paths of the active nodes and the
-tracking of the boundary nodes (n_edge_distance+1) of those active nodes.
-Once active, these boundary nodes act as the prune trigger for their
-original/generator node(s). Set operations are used to do a diff between the
-nodes of active paths (paths whose node is in the active task pool) and the
-nodes of flagged paths (whose boundary node(s) have become active).
+Pruning of data-store elements is done using the collection/set of nodes
+generated at the boundary of an active node's graph walk and registering active
+node's parents against them. Once active, these boundary nodes act as the prune
+triggers for the associated parent nodes. Set operations are used to do a diff
+between the nodes of active paths (paths whose node is in the active task pool)
+and the nodes of flagged paths (whose boundary node(s) have become active).
 
 Updates are created by the event/task/job managers.
 
@@ -65,6 +63,7 @@ from typing import (
     Any,
     Dict,
     Optional,
+    List,
     Set,
     TYPE_CHECKING,
     Tuple,
@@ -73,6 +72,7 @@ from typing import (
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
+from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
@@ -506,8 +506,11 @@ class DataStoreMgr:
         self.all_task_pool = set()
         self.all_n_window_nodes = set()
         self.n_window_nodes = {}
-        self.n_window_edges = {}
-        self.n_window_boundary_nodes = {}
+        self.n_window_edges = set()
+        self.n_window_node_walks = {}
+        self.n_window_completed_walks = set()
+        self.n_window_depths = {}
+        self.update_window_depths = False
         self.db_load_task_proxies = {}
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
@@ -565,6 +568,7 @@ class DataStoreMgr:
         families = self.added[FAMILIES]
         workflow = self.added[WORKFLOW]
         workflow.id = self.workflow_id
+        workflow.n_edge_distance = self.n_edge_distance
         workflow.last_updated = update_time
         workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
         # Treat play/restart as hard reload of definition.
@@ -710,32 +714,25 @@ class DataStoreMgr:
         source_tokens: Tokens,
         point,
         flow_nums,
-        edge_distance=0,
-        active_id: Optional[str] = None,
-        descendant=False,
-        is_parent=False,
         is_manual_submit=False,
         itask=None
     ) -> None:
         """Generate graph window about active task proxy to n-edge-distance.
 
-        A recursive function, that creates a node then moves to children and
-        parents repeating this process out to one edge beyond the max window
-        size (in edges). Going out one edge further, we can trigger
-        pruning as new active tasks appear beyond this boundary.
-
+        Fills in graph walk from existing walks if possible, otherwise expands
+        the graph front from whereever hasn't been walked.
+        Walk nodes are grouped into locations which are tag according to
+        parent child path, i.e. 'cpc' would be children-parents-children away
+        from active/start task. Which not only provide a way to cheaply rewalk,
+        but also the edge distance from origin.
+        The futherest child boundary nodes are registered as prune triggers for
+        the origin's parents, so when they become active the parents are
+        assessed for pruning eligibility.
 
         Args:
             source_tokens (cylc.flow.id.Tokens)
             point (PointBase)
             flow_nums (set)
-            edge_distance (int):
-                Graph distance from active/origin node.
-            active_id (str):
-                Active/origin node id.
-            descendant (bool):
-                Is the current node a direct descendent of the active/origin.
-            is_parent (bool)
             is_manual_submit (bool)
             itask (cylc.flow.task_proxy.TaskProxy):
                 Active/Other task proxy, passed in with pool invocation.
@@ -744,146 +741,343 @@ class DataStoreMgr:
             None
 
         """
-        is_active = not (descendant or is_parent)
-        # ID passed through recursion as reference to original/active node.
-        if active_id is None:
-            source_tokens = self.id_.duplicate(source_tokens)
-            active_id = source_tokens.id
 
-        # flag manual triggers for pruning on deletion.
-        if is_manual_submit:
-            self.prune_trigger_nodes.setdefault(active_id, set()).add(
-                source_tokens.id
-            )
+        # common refrences
+        active_id = source_tokens.id
+        all_walks = self.n_window_node_walks
+        taskdefs = self.schd.config.taskdefs
+        final_point = self.schd.config.final_point
 
-        # Setup and check if active node is another's boundary node
-        # to flag its paths for pruning.
-        if is_active:
-            self.n_window_edges[active_id] = set()
-            self.n_window_boundary_nodes[active_id] = {}
-            self.n_window_nodes[active_id] = set()
-            if active_id in self.prune_trigger_nodes:
-                self.prune_flagged_nodes.update(
-                    self.prune_trigger_nodes[active_id])
-                del self.prune_trigger_nodes[active_id]
+        # walk keys/tags
+        # Children location tag
+        c_tag = 'c'
+        # Parents location tag
+        p_tag = 'p'
 
-        # This part is vital to constructing a set of boundary nodes
-        # associated with the current Active node.
-        if edge_distance > self.n_edge_distance:
-            if descendant and self.n_edge_distance > 0:
-                self.n_window_boundary_nodes[
-                    active_id
-                ].setdefault(edge_distance, set()).add(source_tokens.id)
-            return
+        # Setup walk fields:
+        # - locations (locs): i.e. 'cpc' children-parents-children from origin,
+        #   with their respective node ids.
+        # - orphans: task no longer exists in workflow.
+        # - done_locs: set of locactions that have been walked over.
+        # - done_ids: set of node ids that have been walked (from initial
+        #   walk filling, that may not have been the entire walk).
+        # If walk already completed, must have gone from non-active to active
+        # again.. So redo walk (as walk nodes may be pruned).
+        if (
+            active_id not in all_walks
+            or active_id in self.n_window_completed_walks
+        ):
+            all_walks[active_id] = {
+                'locations': {},
+                'orphans': set(),
+                'done_locs': set(),
+                'done_ids': set(),
+                'walk_ids': {active_id},
+                'depths': {
+                    depth: set()
+                    for depth in range(1, self.n_edge_distance + 1)
+                }
+            }
+            if active_id in self.n_window_completed_walks:
+                self.n_window_completed_walks.remove(active_id)
+        active_walk = all_walks[active_id]
+        active_locs = active_walk['locations']
+        if source_tokens['task'] not in taskdefs:
+            active_walk['orphans'].add(active_id)
 
         # Generate task proxy node
-        is_orphan, graph_children = self.generate_ghost_task(
+        self.n_window_nodes[active_id] = set()
+
+        self.generate_ghost_task(
             source_tokens,
             point,
             flow_nums,
-            is_parent,
+            False,
             itask
         )
 
-        self.n_window_nodes[active_id].add(source_tokens.id)
+        # Pre-populate from previous walks
+        # Will check all location permutations.
+        # There may be short cuts for parent locs, however children will more
+        # likely be incomplete walks with no 'done_locs' and using parent's
+        # children will required sifting out cousin branches.
+        working_locs: List[str] = []
+        if self.n_edge_distance > 1:
+            if c_tag in active_locs:
+                working_locs.extend(('cc', 'cp'))
+            if p_tag in active_locs:
+                working_locs.extend(('pp', 'pc'))
+            n_depth = 2
+        while working_locs:
+            for w_loc in working_locs:
+                loc_done = True
+                # Most will be incomplete walks, however, we can check.
+                # i.e. parents of children may all exist.
+                if w_loc[:-1] in active_locs:
+                    for loc_id in active_locs[w_loc[:-1]]:
+                        if loc_id not in all_walks:
+                            loc_done = False
+                            break
+                else:
+                    continue
+                # find child nodes of parent location,
+                # i.e. 'cpcc' = 'cpc' + 'c'
+                w_set = set().union(*(
+                    all_walks[loc_id]['locations'][w_loc[-1]]
+                    for loc_id in active_locs[w_loc[:-1]]
+                    if (
+                        loc_id in all_walks
+                        and w_loc[-1] in all_walks[loc_id]['locations']
+                    )
+                ))
+                w_set.difference_update(active_walk['walk_ids'])
+                if w_set:
+                    active_locs[w_loc] = w_set
+                    active_walk['walk_ids'].update(w_set)
+                    active_walk['depths'][n_depth].update(w_set)
+                    # If child/parent nodes have been pruned we will need
+                    # to regenerate them.
+                    if (
+                        loc_done
+                        and not w_set.difference(self.all_n_window_nodes)
+                    ):
+                        active_walk['done_locs'].add(w_loc[:-1])
+                        active_walk['done_ids'].update(
+                            active_locs[w_loc[:-1]]
+                        )
+            working_locs = [
+                new_loc
+                for loc in working_locs
+                if loc in active_locs and len(loc) < self.n_edge_distance
+                for new_loc in (loc + c_tag, loc + p_tag)
+            ]
+            n_depth += 1
 
-        edge_distance += 1
-
-        # Don't expand window about orphan task.
+        # Graph walk
+        node_tokens: Tokens
         child_tokens: Tokens
         parent_tokens: Tokens
-        if not is_orphan:
-            tdef = self.schd.config.taskdefs[source_tokens['task']]
-            # TODO: xtrigger is workflow_state edges too
-            # Reference set for workflow relations
-            final_point = self.schd.config.final_point
-            if descendant or is_active:
-                if graph_children is None:
-                    graph_children = generate_graph_children(tdef, point)
-                if not any(graph_children.values()):
-                    self.n_window_boundary_nodes[active_id].setdefault(
-                        edge_distance - 1,
-                        set()
-                    ).add(source_tokens.id)
+        walk_incomplete = True
+        while walk_incomplete:
+            walk_incomplete = False
+            # Only walk locations not fully explored
+            locations = [
+                loc
+                for loc in active_locs
+                if (
 
-                # Children/downstream nodes
-                for items in graph_children.values():
-                    for child_name, child_point, _ in items:
-                        if child_point > final_point:
+                    len(loc) < self.n_edge_distance
+                    and loc not in active_walk['done_locs']
+                )
+            ]
+            # Origin/Active usually first or isolate nodes
+            if (
+                not active_walk['done_ids']
+                and not locations
+                and active_id not in active_walk['orphans']
+                and self.n_edge_distance != 0
+            ):
+                locations = ['']
+            # Explore/walk locations
+            for location in locations:
+                walk_incomplete = True
+                if not location:
+                    loc_nodes = {active_id}
+                else:
+                    loc_nodes = active_locs[location]
+                    active_walk['done_locs'].add(location)
+                c_loc = location + c_tag
+                p_loc = location + p_tag
+                c_ids = set()
+                p_ids = set()
+                n_depth = len(location) + 1
+                # Exclude walked nodes at this location.
+                # This also helps avoid walking in a circle.
+                for node_id in loc_nodes.difference(active_walk['done_ids']):
+                    active_walk['done_ids'].add(node_id)
+                    node_tokens = Tokens(node_id)
+                    # Don't expand window about orphan task.
+                    try:
+                        tdef = taskdefs[node_tokens['task']]
+                    except KeyError:
+                        active_walk['orphans'].add(node_id)
+                        continue
+                    # Use existing children/parents from other walks.
+                    # (note: nodes/edges should already be generated)
+                    c_done = False
+                    p_done = False
+                    if node_id in all_walks and node_id is not active_id:
+                        with suppress(KeyError):
+                            # If children have been pruned, don't skip,
+                            # re-generate them (uncommon or impossible?).
+                            if not all_walks[node_id]['locations'][
+                                c_tag
+                            ].difference(self.all_n_window_nodes):
+                                c_ids.update(
+                                    all_walks[node_id]['locations'][c_tag]
+                                )
+                                c_done = True
+                        with suppress(KeyError):
+                            # If parent have been pruned, don't skip,
+                            # re-generate them (more common case).
+                            if not all_walks[node_id]['locations'][
+                                p_tag
+                            ].difference(self.all_n_window_nodes):
+                                p_ids.update(
+                                    all_walks[node_id]['locations'][p_tag]
+                                )
+                                p_done = True
+                        if p_done and c_done:
                             continue
-                        child_tokens = self.id_.duplicate(
-                            cycle=str(child_point),
-                            task=child_name,
-                        )
-                        # We still increment the graph one further to find
-                        # boundary nodes, but don't create elements.
-                        if edge_distance <= self.n_edge_distance:
-                            self.generate_edge(
-                                source_tokens,
-                                child_tokens,
-                                active_id
+
+                    # Children/downstream nodes
+                    # TODO: xtrigger is workflow_state edges too
+                    # see: https://github.com/cylc/cylc-flow/issues/4582
+                    # Reference set for workflow relations
+                    nc_ids = set()
+                    if not c_done:
+                        if itask is not None and n_depth == 1:
+                            graph_children = itask.graph_children
+                        else:
+                            graph_children = generate_graph_children(
+                                tdef,
+                                get_point(node_tokens['cycle'])
                             )
-                        if child_tokens.id in self.n_window_nodes[active_id]:
-                            continue
-                        self.increment_graph_window(
-                            child_tokens,
-                            child_point,
-                            flow_nums,
-                            edge_distance,
-                            active_id,
-                            True,
-                            False
-                        )
+                        for items in graph_children.values():
+                            for child_name, child_point, _ in items:
+                                if child_point > final_point:
+                                    continue
+                                child_tokens = self.id_.duplicate(
+                                    cycle=str(child_point),
+                                    task=child_name,
+                                )
+                                self.generate_ghost_task(
+                                    child_tokens,
+                                    child_point,
+                                    flow_nums,
+                                    False,
+                                    None,
+                                    n_depth
+                                )
+                                self.generate_edge(
+                                    node_tokens,
+                                    child_tokens,
+                                    active_id
+                                )
+                                nc_ids.add(child_tokens.id)
 
-            # Parents/upstream nodes
-            if is_parent or is_active:
-                for items in generate_graph_parents(
-                    tdef,
-                    point,
-                    self.schd.config.taskdefs
-                ).values():
-                    for parent_name, parent_point, _ in items:
-                        if parent_point > final_point:
-                            continue
-                        parent_tokens = self.id_.duplicate(
-                            cycle=str(parent_point),
-                            task=parent_name,
-                        )
-                        if edge_distance <= self.n_edge_distance:
-                            # reverse for parent
-                            self.generate_edge(
-                                parent_tokens,
-                                source_tokens,
-                                active_id
-                            )
-                        if parent_tokens.id in self.n_window_nodes[active_id]:
-                            continue
-                        self.increment_graph_window(
-                            parent_tokens,
-                            parent_point,
-                            flow_nums,
-                            edge_distance,
-                            active_id,
-                            False,
-                            True
-                        )
+                    # Parents/upstream nodes
+                    np_ids = set()
+                    if not p_done:
+                        for items in generate_graph_parents(
+                            tdef,
+                            get_point(node_tokens['cycle']),
+                            taskdefs
+                        ).values():
+                            for parent_name, parent_point, _ in items:
+                                if parent_point > final_point:
+                                    continue
+                                parent_tokens = self.id_.duplicate(
+                                    cycle=str(parent_point),
+                                    task=parent_name,
+                                )
+                                self.generate_ghost_task(
+                                    parent_tokens,
+                                    parent_point,
+                                    flow_nums,
+                                    True,
+                                    None,
+                                    n_depth
+                                )
+                                # reverse for parent
+                                self.generate_edge(
+                                    parent_tokens,
+                                    node_tokens,
+                                    active_id
+                                )
+                                np_ids.add(parent_tokens.id)
 
-        # If this is the active task (edge_distance has been incremented),
-        # then add the most distant child as a trigger to prune it.
-        if is_active:
-            levels = self.n_window_boundary_nodes[active_id].keys()
+                    # Register new walk
+                    if node_id not in all_walks:
+                        all_walks[node_id] = {
+                            'locations': {},
+                            'done_ids': set(),
+                            'done_locs': set(),
+                            'orphans': set(),
+                            'walk_ids': {node_id} | nc_ids | np_ids,
+                            'depths': {
+                                depth: set()
+                                for depth in range(1, self.n_edge_distance + 1)
+                            }
+                        }
+                    if nc_ids:
+                        all_walks[node_id]['locations'][c_tag] = nc_ids
+                        all_walks[node_id]['depths'][1].update(nc_ids)
+                        c_ids.update(nc_ids)
+                    if np_ids:
+                        all_walks[node_id]['locations'][p_tag] = np_ids
+                        all_walks[node_id]['depths'][1].update(np_ids)
+                        p_ids.update(np_ids)
+
+                # Create location association
+                c_ids.difference_update(active_walk['walk_ids'])
+                if c_ids:
+                    active_locs.setdefault(c_loc, set()).update(c_ids)
+                p_ids.difference_update(active_walk['walk_ids'])
+                if p_ids:
+                    active_locs.setdefault(p_loc, set()).update(p_ids)
+                active_walk['walk_ids'].update(c_ids, p_ids)
+                active_walk['depths'][n_depth].update(c_ids, p_ids)
+
+        self.n_window_completed_walks.add(active_id)
+        self.n_window_nodes[active_id].update(active_walk['walk_ids'])
+
+        # This part is vital to constructing a set of boundary nodes
+        # associated with the n=0 window of current active node.
+        # Only trigger pruning for furthest set of boundary nodes
+        boundary_nodes: Set[str] = set()
+        max_level: int = 0
+        with suppress(ValueError):
+            max_level = max(
+                len(loc)
+                for loc in active_locs
+                if p_tag not in loc
+            )
+            # add the most distant child as a trigger to prune it.
+            boundary_nodes.update(*(
+                active_locs[loc]
+                for loc in active_locs
+                if p_tag not in loc and len(loc) >= max_level
+            ))
+        if not boundary_nodes and not max_level:
             # Could be self-reference node foo:failed => foo
-            if not levels:
-                self.n_window_boundary_nodes[active_id][0] = {active_id}
-                levels = (0,)
-            # Only trigger pruning for furthest set of boundary nodes
-            for tp_id in self.n_window_boundary_nodes[active_id][max(levels)]:
-                self.prune_trigger_nodes.setdefault(
-                    tp_id, set()).add(active_id)
-            del self.n_window_boundary_nodes[active_id]
-            if self.n_window_edges[active_id]:
-                getattr(self.updated[WORKFLOW], EDGES).edges.extend(
-                    self.n_window_edges[active_id])
+            boundary_nodes = {active_id}
+        # associate
+        for tp_id in boundary_nodes:
+            try:
+                self.prune_trigger_nodes.setdefault(tp_id, set()).update(
+                    active_walk['walk_ids']
+                )
+                self.prune_trigger_nodes[tp_id].discard(tp_id)
+            except KeyError:
+                self.prune_trigger_nodes.setdefault(tp_id, set()).add(
+                    active_id
+                )
+        # flag manual triggers for pruning on deletion.
+        if is_manual_submit:
+            self.prune_trigger_nodes.setdefault(active_id, set()).add(
+                active_id
+            )
+        if active_walk['orphans']:
+            self.prune_trigger_nodes.setdefault(active_id, set()).union(
+                active_walk['orphans']
+            )
+        # Check if active node is another's boundary node
+        # to flag its paths for pruning.
+        if active_id in self.prune_trigger_nodes:
+            self.prune_flagged_nodes.update(
+                self.prune_trigger_nodes[active_id])
+            del self.prune_trigger_nodes[active_id]
 
     def generate_edge(
         self,
@@ -894,7 +1088,7 @@ class DataStoreMgr:
         """Construct edge of child and parent task proxy node."""
         # Initiate edge element.
         e_id = self.edge_id(parent_tokens, child_tokens)
-        if e_id in self.n_window_edges[active_id]:
+        if e_id in self.n_window_edges:
             return
         if (
             e_id not in self.data[self.workflow_id][EDGES]
@@ -912,7 +1106,8 @@ class DataStoreMgr:
             self.updated[TASK_PROXIES].setdefault(
                 parent_tokens.id,
                 PbTaskProxy(id=parent_tokens.id)).edges.append(e_id)
-            self.n_window_edges[active_id].add(e_id)
+            getattr(self.updated[WORKFLOW], EDGES).edges.append(e_id)
+            self.n_window_edges.add(e_id)
 
     def remove_pool_node(self, name, point):
         """Remove ID reference and flag isolate node/branch for pruning."""
@@ -930,13 +1125,16 @@ class DataStoreMgr:
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
             del self.prune_trigger_nodes[tp_id]
-            self.updates_pending = True
         elif (
                 tp_id in self.n_window_nodes and
                 self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
         ):
             self.prune_flagged_nodes.add(tp_id)
-            self.updates_pending = True
+        elif tp_id in self.n_window_node_walks:
+            self.prune_flagged_nodes.update(
+                self.n_window_node_walks[tp_id]['walk_ids']
+            )
+        self.updates_pending = True
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
@@ -945,6 +1143,7 @@ class DataStoreMgr:
             task=name,
         ).id
         self.all_task_pool.add(tp_id)
+        self.update_window_depths = True
 
     def generate_ghost_task(
         self,
@@ -952,8 +1151,9 @@ class DataStoreMgr:
         point,
         flow_nums,
         is_parent=False,
-        itask=None
-    ) -> Tuple[bool, Optional[dict]]:
+        itask=None,
+        n_depth=0,
+    ):
         """Create task-point element populated with static data.
 
         Args:
@@ -964,29 +1164,26 @@ class DataStoreMgr:
                 Used to determine whether to load DB state.
             itask (cylc.flow.task_proxy.TaskProxy):
                 Update task-node from corresponding task proxy object.
+            n_depth (int): n-window graph edge distance.
 
         Returns:
-            (is_orphan, graph_children)
 
-        Orphan tasks with no children return (True, None) respectively.
+            None
 
         """
+        tp_id = tokens.id
+        if (
+            tp_id in self.data[self.workflow_id][TASK_PROXIES]
+            or tp_id in self.added[TASK_PROXIES]
+        ):
+            return
+
         name = tokens['task']
         point_string = tokens['cycle']
         t_id = self.definition_id(name)
-        tp_id = tokens.id
-        task_proxies = self.data[self.workflow_id][TASK_PROXIES]
-
-        is_orphan = False
-        if name not in self.schd.config.taskdefs:
-            is_orphan = True
 
         if itask is None:
             itask = self.schd.pool.get_task(point_string, name)
-        if tp_id in task_proxies or tp_id in self.added[TASK_PROXIES]:
-            if itask is None:
-                return is_orphan, None
-            return is_orphan, itask.graph_children
 
         if itask is None:
             itask = TaskProxy(
@@ -998,7 +1195,9 @@ class DataStoreMgr:
                 data_mode=True
             )
 
-        if is_orphan:
+        is_orphan = False
+        if name not in self.schd.config.taskdefs:
+            is_orphan = True
             self.generate_orphan_task(itask)
 
         # Most of the time the definition node will be in the store.
@@ -1009,7 +1208,7 @@ class DataStoreMgr:
                 task_def = self.added[TASKS][t_id]
             except KeyError:
                 # Task removed from workflow definition.
-                return False, itask.graph_children
+                return
 
         update_time = time()
         tp_stamp = f'{tp_id}@{update_time}'
@@ -1023,8 +1222,11 @@ class DataStoreMgr:
                 in self.schd.pool.tasks_to_hold
             ),
             depth=task_def.depth,
+            graph_depth=n_depth,
             name=name,
         )
+        self.all_n_window_nodes.add(tp_id)
+        self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
 
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:
@@ -1077,7 +1279,7 @@ class DataStoreMgr:
 
         self.updates_pending = True
 
-        return is_orphan, itask.graph_children
+        return
 
     def generate_orphan_task(self, itask):
         """Generate orphan task definition."""
@@ -1196,7 +1398,6 @@ class DataStoreMgr:
 
     def apply_task_proxy_db_history(self):
         """Extract and apply DB history on given task proxies."""
-
         if not self.db_load_task_proxies:
             return
 
@@ -1501,16 +1702,23 @@ class DataStoreMgr:
 
     def update_data_structure(self):
         """Workflow batch updates in the data structure."""
-        # load database history for flagged nodes
-        self.apply_task_proxy_db_history()
 
         # Avoids changing window edge distance during edge/node creation
         if self.next_n_edge_distance is not None:
             self.n_edge_distance = self.next_n_edge_distance
+            self.window_resize_rewalk()
             self.next_n_edge_distance = None
+
+        # load database history for flagged nodes
+        self.apply_task_proxy_db_history()
 
         self.updates_pending_follow_on = False
         self.prune_data_store()
+
+        # Find depth changes and create deltas
+        if self.update_window_depths:
+            self.window_depth_finder()
+
         if self.updates_pending:
             # update
             self.update_family_proxies()
@@ -1549,6 +1757,83 @@ class DataStoreMgr:
         self.apply_delta_checksum()
         self.publish_deltas = self.get_publish_deltas()
 
+    def window_resize_rewalk(self):
+        """Re-create data-store n-window on resize."""
+        tokens: Tokens
+        # Gather pre-resize window nodes
+        if not self.all_n_window_nodes:
+            self.all_n_window_nodes = set().union(*(
+                v
+                for k, v in self.n_window_nodes.items()
+                if k in self.all_task_pool
+            ))
+
+        # Clear window walks, and walk from scratch.
+        self.prune_flagged_nodes.clear()
+        self.n_window_node_walks.clear()
+        for tp_id in self.all_task_pool:
+            tokens = Tokens(tp_id)
+            tp_id, tproxy = self.store_node_fetcher(tokens)
+            self.increment_graph_window(
+                tokens,
+                get_point(tokens['cycle']),
+                tproxy.flow_nums
+            )
+        # Flag difference between old and new window for pruning.
+        self.prune_flagged_nodes.update(
+            self.all_n_window_nodes.difference(*(
+                v
+                for k, v in self.n_window_nodes.items()
+                if k in self.all_task_pool
+            ))
+        )
+        self.update_window_depths = True
+
+    def window_depth_finder(self):
+        """Recalculate window depths, creating depth deltas."""
+        # Setup new window depths
+        n_window_depths: Dict[int, Set[str]] = {
+            0: self.all_task_pool.copy()
+        }
+
+        depth = 1
+        # Since starting from smaller depth, exclude those whose depth has
+        # already been found.
+        depth_found_tasks: Set[str] = self.all_task_pool.copy()
+        while depth <= self.n_edge_distance:
+            n_window_depths[depth] = set().union(*(
+                self.n_window_node_walks[n_id]['depths'][depth]
+                for n_id in self.all_task_pool
+                if (
+                    n_id in self.n_window_node_walks
+                    and depth in self.n_window_node_walks[n_id]['depths']
+                )
+            )).difference(depth_found_tasks)
+            depth_found_tasks.update(n_window_depths[depth])
+            # Calculate next depth parameters.
+            depth += 1
+
+        # Create deltas of those whose depth has changed, a node should only
+        # appear once across all depths.
+        # So the diff will only contain it at a single depth and if it didn't
+        # appear at the same depth previously.
+        update_time = time()
+        for depth, node_set in n_window_depths.items():
+            node_set_diff = node_set.difference(
+                self.n_window_depths.setdefault(depth, set())
+            )
+            if not self.updates_pending and node_set_diff:
+                self.updates_pending = True
+            for tp_id in node_set_diff:
+                tp_delta = self.updated[TASK_PROXIES].setdefault(
+                    tp_id, PbTaskProxy(id=tp_id)
+                )
+                tp_delta.stamp = f'{tp_id}@{update_time}'
+                tp_delta.graph_depth = depth
+        # Set old to new.
+        self.n_window_depths = n_window_depths
+        self.update_window_depths = False
+
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
 
@@ -1583,8 +1868,6 @@ class DataStoreMgr:
         for tp_id in list(node_ids):
             if tp_id in self.n_window_nodes:
                 del self.n_window_nodes[tp_id]
-            if tp_id in self.n_window_edges:
-                del self.n_window_edges[tp_id]
             if tp_id in tp_data:
                 node = tp_data[tp_id]
             elif tp_id in tp_added:
@@ -1592,6 +1875,11 @@ class DataStoreMgr:
             else:
                 node_ids.remove(tp_id)
                 continue
+            self.n_window_edges.difference_update(node.edges)
+            if tp_id in self.n_window_node_walks:
+                del self.n_window_node_walks[tp_id]
+            if tp_id in self.n_window_completed_walks:
+                self.n_window_completed_walks.remove(tp_id)
             for sig in node.xtriggers:
                 self.xtrigger_tasks[sig].remove(
                     (tp_id, node.xtriggers[sig].label)
@@ -1746,6 +2034,7 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            graph_depth = self.n_edge_distance
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
@@ -1753,6 +2042,8 @@ class DataStoreMgr:
                     is_queued_total += child_node.is_queued_total
                     is_runahead_total += child_node.is_runahead_total
                     state_counter += Counter(dict(child_node.state_totals))
+                    if child_node.graph_depth < graph_depth:
+                        graph_depth = child_node.graph_depth
             # Gather all child task states
             task_states = []
             for tp_id in fam_node.child_tasks:
@@ -1787,6 +2078,12 @@ class DataStoreMgr:
                 if tp_runahead.is_runahead:
                     is_runahead_total += 1
 
+                tp_depth = tp_delta
+                if tp_depth is None or not tp_depth.HasField('graph_depth'):
+                    tp_depth = tp_node
+                if tp_depth.graph_depth < graph_depth:
+                    graph_depth = tp_depth.graph_depth
+
             state_counter += Counter(task_states)
             # created delta data element
             fp_delta = PbFamilyProxy(
@@ -1798,7 +2095,8 @@ class DataStoreMgr:
                 is_queued=(is_queued_total > 0),
                 is_queued_total=is_queued_total,
                 is_runahead=(is_runahead_total > 0),
-                is_runahead_total=is_runahead_total
+                is_runahead_total=is_runahead_total,
+                graph_depth=graph_depth
             )
             fp_delta.states[:] = state_counter.keys()
             # Use all states to clean up pruned counts
@@ -1820,8 +2118,9 @@ class DataStoreMgr:
                 Maximum edge distance from active node.
 
         """
-        self.next_n_edge_distance = n_edge_distance
-        self.updates_pending = True
+        if n_edge_distance != self.n_edge_distance:
+            self.next_n_edge_distance = n_edge_distance
+            self.updates_pending = True
 
     def update_workflow(self, reloaded=False):
         """Update workflow element status and state totals."""
@@ -1881,6 +2180,10 @@ class DataStoreMgr:
 
         if reloaded is not w_data.reloaded:
             w_delta.reloaded = reloaded
+
+        if w_data.n_edge_distance != self.n_edge_distance:
+            w_delta.n_edge_distance = self.n_edge_distance
+            delta_set = True
 
         if self.schd.pool.main_pool:
             pool_points = set(self.schd.pool.main_pool)
