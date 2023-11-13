@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
-from packaging.version import parse as parse_version, Version
+from packaging.version import Version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -1866,7 +1866,7 @@ def get_version_hierarchy(version: str) -> List[str]:
         ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    smart_ver: Version = parse_version(version)
+    smart_ver = Version(version)
     base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
     hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]

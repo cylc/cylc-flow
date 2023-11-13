@@ -42,7 +42,6 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
-    from cylc.flow.id import Tokens
 
 
 class TaskProxy:
