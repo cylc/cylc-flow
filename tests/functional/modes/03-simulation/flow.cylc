@@ -1,0 +1,16 @@
+[scheduler]
+    [[events]]
+        workflow timeout = PT30S
+
+[scheduling]
+    initial cycle point = 2359
+    [[graph]]
+        R1 = get_observations
+
+[runtime]
+    [[get_observations]]
+        execution retry delays = PT2S
+        [[[simulation]]]
+            fail cycle points = all
+            fail try 1 only = True
+

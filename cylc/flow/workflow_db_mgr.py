@@ -25,13 +25,14 @@ This module provides the logic to:
 
 import json
 import os
-from pkg_resources import parse_version
 from shutil import copy, rmtree
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
     Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
 )
+
+from packaging.version import parse as parse_version
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter

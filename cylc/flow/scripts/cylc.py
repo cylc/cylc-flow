@@ -16,14 +16,55 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc main entry point"""
 
-import argparse
-from contextlib import contextmanager
 import os
 import sys
+
+
+def pythonpath_manip():
+    """Stop PYTHONPATH contaminating the Cylc Environment
+
+    * Remove PYTHONPATH items from sys.path to prevent PYTHONPATH
+      contaminating the Cylc Environment.
+    * Add items from CYLC_PYTHONPATH to sys.path.
+
+    See Also:
+        https://github.com/cylc/cylc-flow/issues/5124
+    """
+    if 'CYLC_PYTHONPATH' in os.environ:
+        for item in os.environ['CYLC_PYTHONPATH'].split(os.pathsep):
+            abspath = os.path.abspath(item)
+            sys.path.insert(0, abspath)
+    if 'PYTHONPATH' in os.environ:
+        for item in os.environ['PYTHONPATH'].split(os.pathsep):
+            abspath = os.path.abspath(item)
+            if abspath in sys.path:
+                sys.path.remove(abspath)
+
+
+pythonpath_manip()
+
+if sys.version_info[:2] > (3, 11):
+    from importlib.metadata import (
+        entry_points,
+        files,
+    )
+else:
+    # BACK COMPAT: importlib_metadata
+    #   importlib.metadata was added in Python 3.8. The required interfaces
+    #   were completed by 3.12. For lower versions we must use the
+    #   importlib_metadata backport.
+    # FROM: Python 3.7
+    # TO: Python: 3.12
+    from importlib_metadata import (
+        entry_points,
+        files,
+    )
+
+import argparse
+from contextlib import contextmanager
 from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
-import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow.option_parsers import (
@@ -281,9 +322,9 @@ def execute_cmd(cmd: str, *args: str) -> NoReturn:
         args: Command line arguments to pass to that command.
 
     """
-    entry_point: pkg_resources.EntryPoint = COMMANDS[cmd]
+    entry_point = COMMANDS[cmd]
     try:
-        entry_point.resolve()(*args)
+        entry_point.load()(*args)
     except ModuleNotFoundError as exc:
         msg = handle_missing_dependency(entry_point, exc)
         print(msg, file=sys.stderr)
@@ -376,7 +417,7 @@ def iter_commands() -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
     """
     for cmd, entry_point in sorted(COMMANDS.items()):
         try:
-            module = __import__(entry_point.module_name, fromlist=[''])
+            module = __import__(entry_point.module, fromlist=[''])
         except ModuleNotFoundError as exc:
             handle_missing_dependency(entry_point, exc)
             continue
@@ -392,18 +433,10 @@ def print_id_help():
 
 
 def print_license() -> None:
-    try:
-        from importlib.metadata import files
-    except ImportError:
-        # BACK COMPAT: importlib_metadata
-        #   importlib.metadata was added in Python 3.8
-        # FROM: Python 3.7
-        # TO: Python: 3.8
-        from importlib_metadata import files  # type: ignore[no-redef]
-    license_file = next(filter(
-        lambda f: f.name == 'COPYING', files('cylc-flow')
-    ))
-    print(license_file.read_text())
+    for file in files('cylc-flow') or []:
+        if file.name == 'COPYING':
+            print(file.read_text())
+            return
 
 
 def print_command_list(commands=None, indent=0):
@@ -442,54 +475,57 @@ def cli_version(long_fmt=False):
     """Wrapper for get_version."""
     print(get_version(long_fmt))
     if long_fmt:
-        print(list_plugins())
+        print(cparse(list_plugins()))
     sys.exit(0)
 
 
 def list_plugins():
-    entry_point_names = [
-        entry_point_name
-        for entry_point_name
-        in pkg_resources.get_entry_map('cylc-flow').keys()
-        if entry_point_name.startswith('cylc.')
-    ]
+    from cylc.flow.terminal import DIM, format_grid
+    # go through all Cylc entry points
+    _dists = set()
+    __entry_points = {}
+    for entry_point in entry_points():
+        if (
+            # all Cylc entry points are under the "cylc" namespace
+            entry_point.group.startswith('cylc.')
+            # don't list cylc-flow entry-points (i.e. built-ins)
+            and not entry_point.value.startswith('cylc.flow')
+        ):
+            _dists.add(entry_point.dist)
+            __entry_points.setdefault(
+                entry_point.group,
+                [],
+            ).append(entry_point)
 
-    entry_point_groups = {
-        entry_point_name: [
-            entry_point
-            for entry_point
-            in iter_entry_points(entry_point_name)
-            if not entry_point.module_name.startswith('cylc.flow')
-        ]
-        for entry_point_name in entry_point_names
-    }
+    # list all the distriutions which provide Cylc entry points
+    _plugins = []
+    for dist in _dists:
+        _plugins.append((
+            '',
+            f'<light-blue>{dist.name}</light-blue>',
+            dist.version,
+            f'<{DIM}>{dist.locate_file("__init__.py").parent}</{DIM}>',
+        ))
 
-    dists = {
-        entry_point.dist
-        for entry_points in entry_point_groups.values()
-        for entry_point in entry_points
-    }
+    # list all of the entry points by "group" (e.g. "cylc.command")
+    _entry_points = []
+    for group, points in sorted(__entry_points.items()):
+        _entry_points.append((f'  {group}:', '', ''))
+        for entry_point in points:
+            _entry_points.append((
+                f'    {entry_point.name}',
+                f'<light-blue>{entry_point.dist.name}</light-blue>',
+                f'<{DIM}>{entry_point.value}</{DIM}>',
+            ))
 
-    lines = []
-    if dists:
-        lines.append('\nPlugins:')
-        maxlen1 = max(len(dist.project_name) for dist in dists) + 2
-        maxlen2 = max(len(dist.version) for dist in dists) + 2
-        for dist in dists:
-            lines.append(
-                f'  {dist.project_name.ljust(maxlen1)}'
-                f' {dist.version.ljust(maxlen2)}'
-                f' {dist.module_path}'
-            )
-
-        lines.append('\nEntry Points:')
-        for entry_point_name, entry_points in entry_point_groups.items():
-            if entry_points:
-                lines.append(f'  {entry_point_name}:')
-                for entry_point in entry_points:
-                    lines.append(f'    {entry_point}')
-
-    return '\n'.join(lines)
+    return '\n'.join((
+        '\n<bold>Plugins:</bold>',
+        *format_grid(_plugins),
+        '\n<bold>Entry Points:</bold>',
+        *format_grid(
+            _entry_points
+        ),
+    ))
 
 
 @contextmanager
@@ -661,7 +697,7 @@ def main():
 
 
 def handle_missing_dependency(
-    entry_point: pkg_resources.EntryPoint,
+    entry_point,
     err: ModuleNotFoundError
 ) -> str:
     """Return a suitable error message for a missing optional dependency.
@@ -673,12 +709,8 @@ def handle_missing_dependency(
 
     Re-raises the given ModuleNotFoundError if it is unexpected.
     """
-    try:
-        # Check for missing optional dependencies
-        entry_point.require()
-    except pkg_resources.DistributionNotFound as exc:
-        # Confirmed missing optional dependencies
-        return f"cylc {entry_point.name}: {exc}"
-    else:
-        # Error not due to missing optional dependencies; this is unexpected
-        raise err
+    msg = f'"cylc {entry_point.name}" requires "{entry_point.dist.name}'
+    if entry_point.extras:
+        msg += f'[{",".join(entry_point.extras)}]'
+    msg += f'"\n\n{err.__class__.__name__}: {err}'
+    return msg

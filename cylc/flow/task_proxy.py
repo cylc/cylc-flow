@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
+    from cylc.flow.id import Tokens
 
 
 class TaskProxy:
@@ -100,8 +101,6 @@ class TaskProxy:
                 Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
-            logfiles (list):
-                List of names of (extra) known job log files.
             name (str):
                 Same as the .tdef.name attribute.
             started_time (float):
@@ -225,7 +224,6 @@ class TaskProxy:
             'started_time_string': None,
             'finished_time': None,
             'finished_time_string': None,
-            'logfiles': [],
             'platforms_used': {},
             'execution_time_limit': None,
             'job_runner_name': None,
