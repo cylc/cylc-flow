@@ -1222,6 +1222,9 @@ with Conf('global.cylc', desc='''
 
                    {PLATFORM_REPLACES.format("[job]batch system")}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[job]batch submit command template"
+            )
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
 
@@ -1230,9 +1233,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
 
-                   {PLATFORM_REPLACES.format(
-                       "[job]batch submit command template"
-                    )}
+                   {replaces}
             ''')
             Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
@@ -1465,6 +1466,8 @@ with Conf('global.cylc', desc='''
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    command``.
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs max size")
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs max size']}
 
@@ -1472,9 +1475,10 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    max size``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs max size")}
+                   {replaces}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs retry delays")
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
@@ -1483,8 +1487,7 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    retry delays``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs retry delays")}
+                   {replaces}
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
