@@ -119,7 +119,7 @@ jobs:
             "/usr/local/opt/gnu-sed/libexec/gnubin" \
             >> "${GITHUB_PATH}"
           echo \
-            "/usr/local/opt/grep/libexec/gnubin:$PATH" \
+            "/usr/local/opt/grep/libexec/gnubin" \
             >> "${GITHUB_PATH}"
 
           # add coreutils to the bashrc too (for jobs)
