@@ -55,10 +55,11 @@ succeeded: 1/t1/02
 see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/
 __LOG__
 
+
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -qPizo "Subject: \[1/t1/01 retry\]\n ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
+    grep -qPizo "Subject: \[1/t1/01 retry\]\n? ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -qPizo "Subject: \[1/t1/02 succeeded\]\n ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
+    grep -qPizo "Subject: \[1/t1/02 succeeded\]\n? ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
 
 purge
 mock_smtpd_kill

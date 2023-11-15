@@ -108,7 +108,7 @@ jobs:
         run: |
           # install system deps
           brew update
-          brew install bash coreutils gnu-sed
+          brew install bash coreutils gnu-sed grep
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)
@@ -117,6 +117,9 @@ jobs:
             >> "${GITHUB_PATH}"
           echo \
             "/usr/local/opt/gnu-sed/libexec/gnubin" \
+            >> "${GITHUB_PATH}"
+          echo \
+            "/usr/local/opt/grep/libexec/gnubin" \
             >> "${GITHUB_PATH}"
 
           # add coreutils to the bashrc too (for jobs)
