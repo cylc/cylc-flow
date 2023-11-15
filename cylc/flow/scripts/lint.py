@@ -51,7 +51,6 @@ the following parameters:
 """
 from colorama import Fore
 import functools
-from optparse import Values
 from pathlib import Path
 import re
 import sys
