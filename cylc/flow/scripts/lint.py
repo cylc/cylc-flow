@@ -38,11 +38,7 @@ This can be overridden by providing the "--exit-zero" flag.
 """
 
 TOMLDOC = """
-Configurations for Cylc lint can also be set in a pyproject.toml file using
-the following parameters:
-
-{}
-
+pyproject.toml configuration:{}
    [cylc-lint]                     # any of {}
        ignore = ['S001', 'S002]    # List of rules to ignore
        exclude = ['etc/foo.cylc']  # List of files to ignore
@@ -1273,5 +1269,5 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 # NOTE: use += so that this works with __import__
 # (docstring needed for `cylc help all` output)
 __doc__ += TOMLDOC.format(
-    '.. code-block:: toml', str(LINT_SECTIONS)) + get_reference_rst(
+    '\n\n.. code-block:: toml\n', str(LINT_SECTIONS)) + get_reference_rst(
     parse_checks(['728', 'style'], reference=True))
