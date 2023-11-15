@@ -234,6 +234,9 @@ def check_for_obsolete_environment_variables(line: str) -> List[str]:
     return [i for i in OBSOLETE_ENV_VARS if i in line]
 
 
+INDENTATION = re.compile(r'^(\s*)(.*)')
+
+
 def check_indentation(line: str) -> bool:
     """The key value pair is not indented 4*X spaces
 
@@ -257,7 +260,7 @@ def check_indentation(line: str) -> bool:
         >>> check_indentation('     bar')
         True
     """
-    match = re.findall(r'^(\s*)(.*)', line)[0]
+    match = INDENTATION.findall(line)[0]
     if not match[0] or not match[1] or match[1].startswith('['):
         return False
     return bool(len(match[0]) % 4 != 0)
@@ -439,8 +442,7 @@ STYLE_CHECKS = {
         )
     },
     'S012': {
-        'short': 'placeholder',
-        FUNCTION: lambda *args, **kwargs: True
+        'short': 'This number is reserved for line length checks',
     },
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
@@ -451,15 +453,19 @@ STYLE_CHECKS = {
 # upgrader.
 MANUAL_DEPRECATIONS = {
     "U001": {
-        'short': DEPENDENCY_SECTION_MSG['text'],
+        'short': (
+            DEPENDENCY_SECTION_MSG['text'] + ' (``[dependencies]`` detected)'
+        ),
         'url': '',
-        'rst': DEPENDENCY_SECTION_MSG['rst'],
+        'rst': (
+            DEPENDENCY_SECTION_MSG['rst'] + ' (``[dependencies]`` detected)'
+        ),
         FUNCTION: re.compile(SECTION2.format('dependencies')).findall,
     },
     "U002": {
-        'short': DEPENDENCY_SECTION_MSG['text'],
+        'short': DEPENDENCY_SECTION_MSG['text'] + ' (``graph =`` detected)',
         'url': '',
-        'rst': DEPENDENCY_SECTION_MSG['rst'],
+        'rst': DEPENDENCY_SECTION_MSG['rst'] + ' (``graph =`` detected)',
         FUNCTION: re.compile(r'graph\s*=\s*').findall,
     },
     "U003": {
