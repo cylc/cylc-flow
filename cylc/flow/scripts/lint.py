@@ -66,7 +66,7 @@ except ImportError:
         loads as toml_loads,
         TOMLDecodeError,
     )
-from typing import Callable, Dict, Iterator, List, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -79,6 +79,10 @@ from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 DEPRECATED_ENV_VARS = {
     'CYLC_SUITE_HOST': 'CYLC_WORKFLOW_HOST',
