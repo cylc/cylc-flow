@@ -63,6 +63,7 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.simulation import ModeSettings
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_action_timer import (
@@ -997,6 +998,10 @@ class TaskJobManager:
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
         for itask in itasks:
+            if not itask.mode_settings:
+                itask.mode_settings = ModeSettings()
+            if not itask.mode_settings.simulated_run_length:
+                itask.mode_settings.simulated_run_length = itask.tdef.rtconfig['simulation']['simulated run length']
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)

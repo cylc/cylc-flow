@@ -186,6 +186,7 @@ class TaskProxy:
         'tokens',
         'try_timers',
         'waiting_on_job_prep',
+        'mode_settings',
     ]
 
     def __init__(
@@ -265,6 +266,8 @@ class TaskProxy:
             self.graph_children = {}
         else:
             self.graph_children = generate_graph_children(tdef, self.point)
+
+        self.mode_settings = None
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.tokens}'>"

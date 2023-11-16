@@ -37,6 +37,19 @@ if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
 
 
+class ModeSettings:
+    """A store of state for simulation modes.
+
+    Used instead of modifying the runtime config.
+    """
+    __slots__ = [
+        'simulated_run_length'
+    ]
+
+    def __init__(self):
+        self.simulated_run_length: Optional[float] = None
+
+
 def configure_sim_modes(taskdefs, sim_mode):
     """Adjust task defs for simulation and dummy mode.
 
@@ -176,7 +189,7 @@ def sim_time_check(
             itask.summary['started_time'] = now
         timeout = (
             itask.summary['started_time'] +
-            itask.tdef.rtconfig['simulation']['simulated run length']
+            itask.mode_settings.simulated_run_length
         )
         if now > timeout:
             job_d = itask.tokens.duplicate(job=str(itask.submit_num))
