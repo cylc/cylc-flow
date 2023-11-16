@@ -142,7 +142,6 @@ TEST_FILE = """
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
-
 """
 
 
@@ -159,6 +158,9 @@ LINT_TEST_FILE = """
 # {{quix}}
 
 [runtime]
+    [[this_is_ok]]
+      script = echo "this is incorrectly indented"
+
           [[foo]]
         inherit = hello
      [[[job]]]
@@ -572,11 +574,45 @@ def test_invalid_tomlfile(tmp_path):
     'ref, expect',
     [
         [True, 'line > ``<max_line_len>`` characters'],
-        [False, 'line > 130 characters']
+        [False, 'line > 42 characters']
     ]
 )
 def test_parse_checks_reference_mode(ref, expect):
-    result = parse_checks(['style'], reference=ref)
-    key = list(result.keys())[-1]
-    value = result[key]
+    """Add extra explanation of max line legth setting in reference mode.
+    """
+    result = parse_checks(['style'], reference=ref, max_line_len=42)
+    value = result['S012']
     assert expect in value['short']
+
+
+@pytest.mark.parametrize(
+    'spaces, expect',
+    (
+        (0, 'S002'),
+        (1, 'S013'),
+        (2, 'S013'),
+        (3, 'S013'),
+        (4, None),
+        (5, 'S013'),
+        (6, 'S013'),
+        (7, 'S013'),
+        (8, None),
+        (9, 'S013')
+    )
+)
+def test_indents(spaces, expect):
+    """Test different wrong indentations
+
+    Parameterization deliberately over-obvious to avoid replicating
+    arithmetic logic from code. Dangerously close to re-testing ``%``
+    builtin.
+    """
+    result = lint_text(
+        f"{' ' * spaces}foo = 42",
+        ['style']
+    )
+    result = ''.join(result.messages)
+    if expect:
+        assert expect in result
+    else:
+        assert not result
