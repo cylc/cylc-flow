@@ -64,9 +64,7 @@ def pipe_poller(proc, *files, chunk_size=4096):
             if len(buffer) > 0:
                 _files[file] += buffer
 
-    while proc.returncode is None:
-        # poll the process (updates the returncode)
-        proc.poll()
+    while proc.poll() is None:
         # read from the buffers
         _read()
     # double check the buffers now that the process has finished
