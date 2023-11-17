@@ -1747,7 +1747,11 @@ class Scheduler:
             if (
                 self.pool.config.run_mode('simulation')
                 and sim_time_check(
-                    self.message_queue, self.pool.get_tasks())
+                    self.message_queue,
+                    self.pool.get_tasks(),
+                    self.task_events_mgr.broadcast_mgr,
+                    self.workflow_db_mgr,
+                )
             ):
                 # A simulated task state change occurred.
                 self.reset_inactivity_timer()

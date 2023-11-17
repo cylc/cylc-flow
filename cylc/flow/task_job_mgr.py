@@ -998,10 +998,8 @@ class TaskJobManager:
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
         for itask in itasks:
-            if not itask.mode_settings:
-                itask.mode_settings = ModeSettings()
-            if not itask.mode_settings.simulated_run_length:
-                itask.mode_settings.simulated_run_length = itask.tdef.rtconfig['simulation']['simulated run length']
+            itask.mode_settings = ModeSettings(
+                itask, self.task_events_mgr.broadcast_mgr)
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
@@ -1009,7 +1007,7 @@ class TaskJobManager:
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['simulation']['simulated run length']
+                itask.mode_settings.simulated_run_length
             )
             itask.jobs.append(
                 self.get_simulation_job_conf(itask, workflow)
@@ -1017,6 +1015,8 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
+            self.workflow_db_mgr.put_insert_task_jobs(
+                itask, {'time_submit': get_current_time_string()})
 
         return itasks
 

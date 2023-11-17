@@ -48,6 +48,7 @@ from cylc.flow.cycling.iso8601 import (
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
     from cylc.flow.cycling import PointBase
+    from cylc.flow.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
 
@@ -267,7 +268,7 @@ class TaskProxy:
         else:
             self.graph_children = generate_graph_children(tdef, self.point)
 
-        self.mode_settings = None
+        self.mode_settings: Optional['ModeSettings'] = None
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.tokens}'>"
@@ -298,6 +299,7 @@ class TaskProxy:
         reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
+        reload_successor.mode_settings = self.mode_settings
 
         # Prerequisites: the graph might have changed before reload, so
         # we need to use the new prerequisites but update them with the

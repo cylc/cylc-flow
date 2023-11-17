@@ -24,7 +24,7 @@ from cylc.flow.simulation import (
     parse_fail_cycle_points,
     build_dummy_script,
     disable_platforms,
-    get_simulated_run_len,
+    set_simulated_run_len,
     sim_task_failed,
 )
 
@@ -38,7 +38,7 @@ from cylc.flow.simulation import (
         param('P1D', 24, 'PT1M', id='speed-up-and-execution-tl'),
     )
 )
-def test_get_simulated_run_len(
+def test_set_simulated_run_len(
     execution_time_limit, speedup_factor, default_run_length
 ):
     """Test the logic of the presence or absence of config items.
@@ -49,10 +49,11 @@ def test_get_simulated_run_len(
         'execution time limit': execution_time_limit,
         'simulation': {
             'speedup factor': speedup_factor,
-            'default run length': default_run_length
+            'default run length': default_run_length,
+            'time limit buffer': 'PT0S',
         }
     }
-    assert get_simulated_run_len(rtc) == 3600
+    assert set_simulated_run_len(rtc) == 3600
 
 
 @pytest.mark.parametrize(
@@ -115,7 +116,7 @@ def test_parse_fail_cycle_points(set_cycling_type):
             id='defaults'
         ),
         param(
-            {'fail cycle points': None, 'fail try 1 only': True},
+            {'fail cycle points': None, 'fail try 1 only': False},
             ISO8601Point('1066'),
             1,
             True,
@@ -125,7 +126,7 @@ def test_parse_fail_cycle_points(set_cycling_type):
             {
                 'fail cycle points': [
                     ISO8601Point('1066'), ISO8601Point('1067')],
-                'fail try 1 only': True
+                'fail try 1 only': False
             },
             ISO8601Point('1067'),
             1,

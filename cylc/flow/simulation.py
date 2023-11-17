@@ -16,11 +16,16 @@
 """Utilities supporting simulation and skip modes
 """
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.network.resolvers import TaskMsg
+from cylc.flow.parsec.util import (
+    pdeepcopy,
+    poverride
+)
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
@@ -29,25 +34,39 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import get_current_time_string
 
-from metomi.isodatetime.parsers import DurationParser
+from metomi.isodatetime.parsers import DurationParser, TimePointParser
 
 if TYPE_CHECKING:
     from queue import Queue
+    from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
+@dataclass
 class ModeSettings:
     """A store of state for simulation modes.
 
     Used instead of modifying the runtime config.
     """
-    __slots__ = [
-        'simulated_run_length'
-    ]
+    simulated_run_length: float = 0.0
+    sim_task_fails: bool = False
 
-    def __init__(self):
-        self.simulated_run_length: Optional[float] = None
+    def __init__(self, itask: 'TaskProxy', broadcast_mgr: 'BroadcastMgr'):
+        overrides = broadcast_mgr.get_broadcast(itask.tokens)
+        if overrides:
+            rtconfig = pdeepcopy(itask.tdef.rtconfig)
+            poverride(rtconfig, overrides, prepend=True)
+        else:
+            rtconfig = itask.tdef.rtconfig
+        self.simulated_run_length = (
+            set_simulated_run_len(rtconfig))
+        self.sim_task_fails = sim_task_failed(
+            rtconfig['simulation'],
+            itask.point,
+            itask.submit_num
+        )
 
 
 def configure_sim_modes(taskdefs, sim_mode):
@@ -59,23 +78,17 @@ def configure_sim_modes(taskdefs, sim_mode):
     for tdef in taskdefs:
         # Compute simulated run time by scaling the execution limit.
         rtc = tdef.rtconfig
-        sleep_sec = get_simulated_run_len(rtc)
 
-        rtc['execution time limit'] = (
-            sleep_sec + DurationParser().parse(str(
-                rtc['simulation']['time limit buffer'])).get_seconds()
-        )
-
-        rtc['simulation']['simulated run length'] = sleep_sec
         rtc['submission retry delays'] = [1]
 
-        # Generate dummy scripting.
-        rtc['init-script'] = ""
-        rtc['env-script'] = ""
-        rtc['pre-script'] = ""
-        rtc['post-script'] = ""
-        rtc['script'] = build_dummy_script(
-            rtc, sleep_sec) if dummy_mode else ""
+        if dummy_mode:
+            # Generate dummy scripting.
+            rtc['init-script'] = ""
+            rtc['env-script'] = ""
+            rtc['pre-script'] = ""
+            rtc['post-script'] = ""
+            rtc['script'] = build_dummy_script(
+                rtc, set_simulated_run_len(rtc))
 
         disable_platforms(rtc)
 
@@ -89,13 +102,14 @@ def configure_sim_modes(taskdefs, sim_mode):
         )
 
 
-def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
-    """Get simulated run time.
+def set_simulated_run_len(rtc: Dict[str, Any]) -> int:
+    """Calculate simulation run time from a task's config.
 
     rtc = run time config
     """
     limit = rtc['execution time limit']
     speedup = rtc['simulation']['speedup factor']
+
     if limit and speedup:
         sleep_sec = (DurationParser().parse(
             str(limit)).get_seconds() / speedup)
@@ -170,7 +184,10 @@ def parse_fail_cycle_points(
 
 
 def sim_time_check(
-    message_queue: 'Queue[TaskMsg]', itasks: 'List[TaskProxy]'
+    message_queue: 'Queue[TaskMsg]',
+    itasks: 'List[TaskProxy]',
+    broadcast_mgr: 'BroadcastMgr',
+    db_mgr: 'WorkflowDatabaseManager',
 ) -> bool:
     """Check if sim tasks have been "running" for as long as required.
 
@@ -179,37 +196,50 @@ def sim_time_check(
     Returns:
         True if _any_ simulated task state has changed.
     """
-    sim_task_state_changed = False
-    now = time()
+    sim_task_state_changed: bool = False
     for itask in itasks:
-        if itask.state.status != TASK_STATUS_RUNNING:
+        if (
+            itask.state.status != TASK_STATUS_RUNNING
+            or itask.state.is_queued
+            or itask.state.is_held
+            or itask.state.is_runahead
+        ):
             continue
-        # Started time is not set on restart
-        if itask.summary['started_time'] is None:
-            itask.summary['started_time'] = now
-        timeout = (
-            itask.summary['started_time'] +
-            itask.mode_settings.simulated_run_length
-        )
-        if now > timeout:
+
+        # Started time and mode_settings are not set on restart:
+        started_time = itask.summary['started_time']
+        if started_time is None:
+            started_time = int(
+                TimePointParser()
+                .parse(
+                    db_mgr.pub_dao.select_task_job(
+                        *itask.tokens.relative_id.split("/")
+                    )["time_submit"]
+                )
+                .seconds_since_unix_epoch
+            )
+            itask.summary['started_time'] = started_time
+        if itask.mode_settings is None:
+            itask.mode_settings = ModeSettings(itask, broadcast_mgr)
+
+        timeout = started_time + itask.mode_settings.simulated_run_length
+        if time() > timeout:
             job_d = itask.tokens.duplicate(job=str(itask.submit_num))
             now_str = get_current_time_string()
-            if sim_task_failed(
-                itask.tdef.rtconfig['simulation'],
-                itask.point,
-                itask.get_try_num()
-            ):
+
+            if itask.mode_settings.sim_task_fails:
                 message_queue.put(
                     TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
                 )
             else:
-                # Simulate message outputs.
-                for msg in itask.tdef.rtconfig['outputs'].values():
-                    message_queue.put(
-                        TaskMsg(job_d, now_str, 'DEBUG', msg)
-                    )
                 message_queue.put(
                     TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
+                )
+
+            # Simulate message outputs.
+            for msg in itask.tdef.rtconfig['outputs'].values():
+                message_queue.put(
+                    TaskMsg(job_d, now_str, 'DEBUG', msg)
                 )
             sim_task_state_changed = True
     return sim_task_state_changed
@@ -218,7 +248,7 @@ def sim_time_check(
 def sim_task_failed(
         sim_conf: Dict[str, Any],
         point: 'PointBase',
-        try_num: int,
+        submit_num: int,
 ) -> bool:
     """Encapsulate logic for deciding whether a sim task has failed.
 
@@ -228,5 +258,5 @@ def sim_task_failed(
         sim_conf['fail cycle points'] is None  # i.e. "all"
         or point in sim_conf['fail cycle points']
     ) and (
-        try_num == 1 or not sim_conf['fail try 1 only']
+        submit_num == 0 or not sim_conf['fail try 1 only']
     )

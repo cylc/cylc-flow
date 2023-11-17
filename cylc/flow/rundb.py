@@ -251,6 +251,7 @@ class CylcWorkflowDAO:
             ["flow_nums"],
             ["is_manual_submit", {"datatype": "INTEGER"}],
             ["try_num", {"datatype": "INTEGER"}],
+            # This is used to store simulation task start time across restarts.
             ["time_submit"],
             ["time_submit_exit"],
             ["submit_status", {"datatype": "INTEGER"}],
