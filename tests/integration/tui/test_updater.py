@@ -147,7 +147,16 @@ async def test_filters(one_conf, flow, scheduler, run, updater):
             'graph': {
                 'R1': 'a & b & c',
             }
-        }
+        },
+        'runtime': {
+            # TODO: remove this runtime section in
+            # https://github.com/cylc/cylc-flow/pull/5721
+            'root': {
+                'simulation': {
+                    'default run length': 'PT1M',
+                },
+            },
+        },
     }, name='one'), paused_start=True)
     two = scheduler(flow(one_conf, name='two'))
     tre = scheduler(flow(one_conf, name='tre'))
