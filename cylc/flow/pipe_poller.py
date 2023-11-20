@@ -20,7 +20,7 @@ If you're reading files from Popen (i.e. to extract command output) where the
 command output has the potential to be long-ish, then you should use this
 function to protect against the buffer filling up.
 
-Note, these is a more advanced version of this baked into the subprocpool.
+Note, there is a more advanced version of this baked into the subprocpool.
 """
 
 from select import select
