@@ -31,7 +31,7 @@ class EntryPointWrapper:
         self.name = fcn.__name__
         self.fcn = fcn
 
-    def resolve(self):
+    def load(self):
         return self.fcn
 
 

@@ -15,7 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test the cylc.flow.remote module."""
 
-from cylc.flow.remote import run_cmd, construct_rsync_over_ssh_cmd
+import os
+from unittest import mock
+
+import pytest
+
+from cylc.flow.remote import (
+    run_cmd, construct_rsync_over_ssh_cmd, construct_ssh_cmd
+)
+import cylc.flow
 
 
 def test_run_cmd_stdin_str():
@@ -86,3 +94,31 @@ def test_construct_rsync_over_ssh_cmd():
         '/foo/',
         'miklegard:/bar/',
     ]
+
+
+def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
+    """ Test for 'ssh forward environment variables'
+    """
+    # Clear CYLC_* env vars as these will show up in the command
+    for env_var in os.environ:
+        if env_var.startswith('CYLC'):
+            monkeypatch.delenv(env_var)
+
+    host = 'example.com'
+    config = {
+        'ssh command': 'ssh',
+        'use login shell': None,
+        'cylc path': None,
+        'ssh forward environment variables': ['FOO', 'BAZ'],
+    }
+
+    # Variable isn't set, no change to command
+    expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'cylc', 'play']
+    cmd = construct_ssh_cmd(['play'], config, host)
+    assert cmd == expect
+
+    # Variable is set, appears in `env` list
+    monkeypatch.setenv('FOO', 'BAR')
+    expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'FOO=BAR', 'cylc', 'play']
+    cmd = construct_ssh_cmd(['play'], config, host)
+    assert cmd == expect

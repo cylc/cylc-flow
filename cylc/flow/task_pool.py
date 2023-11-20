@@ -40,7 +40,6 @@ from cylc.flow.exceptions import (
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
-from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -74,7 +73,6 @@ from cylc.flow.task_queues.independent import IndepQueueManager
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
 
 if TYPE_CHECKING:
-    from queue import Queue
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
@@ -1756,45 +1754,6 @@ class TaskPool:
                 self.task_queue_mgr.force_release_task(itask)
 
         return len(unmatched)
-
-    def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
-        """Simulation mode: simulate task run times and set states."""
-        if not self.config.run_mode('simulation'):
-            return False
-        sim_task_state_changed = False
-        now = time()
-        for itask in self.get_tasks():
-            if itask.state.status != TASK_STATUS_RUNNING:
-                continue
-            # Started time is not set on restart
-            if itask.summary['started_time'] is None:
-                itask.summary['started_time'] = now
-            timeout = (itask.summary['started_time'] +
-                       itask.tdef.rtconfig['job']['simulated run length'])
-            if now > timeout:
-                conf = itask.tdef.rtconfig['simulation']
-                job_d = itask.tokens.duplicate(job=str(itask.submit_num))
-                now_str = get_current_time_string()
-                if (
-                    conf['fail cycle points'] is None  # i.e. "all"
-                    or itask.point in conf['fail cycle points']
-                ) and (
-                    itask.get_try_num() == 1 or not conf['fail try 1 only']
-                ):
-                    message_queue.put(
-                        TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
-                    )
-                else:
-                    # Simulate message outputs.
-                    for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put(
-                            TaskMsg(job_d, now_str, 'DEBUG', msg)
-                        )
-                    message_queue.put(
-                        TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
-                    )
-                sim_task_state_changed = True
-        return sim_task_state_changed
 
     def set_expired_tasks(self):
         res = False

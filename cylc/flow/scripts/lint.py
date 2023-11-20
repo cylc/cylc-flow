@@ -83,7 +83,6 @@ from cylc.flow.terminal import cli_function
 if TYPE_CHECKING:
     from optparse import Values
 
-
 DEPRECATED_ENV_VARS = {
     'CYLC_SUITE_HOST': 'CYLC_WORKFLOW_HOST',
     'CYLC_SUITE_OWNER': 'CYLC_WORKFLOW_OWNER',

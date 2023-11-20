@@ -21,7 +21,7 @@ jobs:
         uses: cylc/release-actions/stage-1/sanitize-inputs@v1
 
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.BASE_REF }}
           fetch-depth: 0  # need to fetch all commits to check contributors

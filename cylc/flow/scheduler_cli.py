@@ -25,7 +25,7 @@ from shlex import quote
 import sys
 from typing import TYPE_CHECKING
 
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from cylc.flow import LOG, __version__
 from cylc.flow.exceptions import (
@@ -468,7 +468,7 @@ def _version_check(
     if not db_file.is_file():
         # not a restart
         return True
-    this_version = parse_version(__version__)
+    this_version = Version(__version__)
     last_run_version = WorkflowDatabaseManager.check_db_compatibility(db_file)
 
     for itt, (this, that) in enumerate(zip_longest(

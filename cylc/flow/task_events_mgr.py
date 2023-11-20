@@ -575,13 +575,14 @@ class TaskEventsManager():
             True: if polling is required to confirm a reversal of status.
 
         """
+
         # Log messages
         if event_time is None:
             event_time = get_current_time_string()
         if submit_num is None:
             submit_num = itask.submit_num
         if isinstance(severity, int):
-            severity = cast(str, getLevelName(severity))
+            severity = cast('str', getLevelName(severity))
         lseverity = str(severity).lower()
 
         # Any message represents activity.
@@ -617,7 +618,6 @@ class TaskEventsManager():
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
             self.spawn_func(itask, TASK_OUTPUT_STARTED)
-
         if message == self.EVENT_STARTED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -777,24 +777,23 @@ class TaskEventsManager():
             return False
 
         if (
-                itask.state(TASK_STATUS_WAITING)
-                and
+            itask.state(TASK_STATUS_WAITING)
+            and itask.tdef.run_mode == 'live'   # Polling in live mode only.
+            and (
                 (
-                    (
-                        # task has a submit-retry lined up
-                        TimerFlags.SUBMISSION_RETRY in itask.try_timers
-                        and itask.try_timers[
-                            TimerFlags.SUBMISSION_RETRY].num > 0
-                    )
-                    or
-                    (
-                        # task has an execution-retry lined up
-                        TimerFlags.EXECUTION_RETRY in itask.try_timers
-                        and itask.try_timers[
-                            TimerFlags.EXECUTION_RETRY].num > 0
-                    )
+                    # task has a submit-retry lined up
+                    TimerFlags.SUBMISSION_RETRY in itask.try_timers
+                    and itask.try_timers[
+                        TimerFlags.SUBMISSION_RETRY].num > 0
                 )
-
+                or
+                (
+                    # task has an execution-retry lined up
+                    TimerFlags.EXECUTION_RETRY in itask.try_timers
+                    and itask.try_timers[
+                        TimerFlags.EXECUTION_RETRY].num > 0
+                )
+            )
         ):
             # Ignore messages if task has a retry lined up
             # (caused by polling overlapping with task failure)
@@ -811,7 +810,7 @@ class TaskEventsManager():
                 )
             return False
 
-        severity = cast(int, LOG_LEVELS.get(severity, INFO))
+        severity = cast('int', LOG_LEVELS.get(severity, INFO))
         # Demote log level to DEBUG if this is a message that duplicates what
         # gets logged by itask state change anyway (and not manual poll)
         if severity > DEBUG and flag != self.FLAG_POLLED and message in {

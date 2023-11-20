@@ -34,6 +34,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.fileparse import (
     _prepend_old_templatevars,
     _get_fpath_for_source,
+    get_cylc_env_vars,
     addict,
     addsect,
     multiline,
@@ -737,6 +738,7 @@ def test_get_fpath_for_source(tmp_path):
     assert _get_fpath_for_source(
         rundir / 'flow.cylc', opts) == str(srcdir / 'flow.cylc')
 
+
 def test_user_has_no_cwd(tmp_path):
     """Test we can parse a config file even if cwd does not exist."""
     cwd = tmp_path/"cwd"
@@ -754,3 +756,24 @@ def test_user_has_no_cwd(tmp_path):
         tf.flush()
         # Should not raise FileNotFoundError from os.getcwd():
         parse(fpath=fpath, output_fname="")
+
+
+def test_get_cylc_env_vars(monkeypatch):
+    """It should return CYLC env vars but not CYLC_VERSION or CYLC_ENV_NAME."""
+    monkeypatch.setattr(
+        'os.environ',
+        {
+            "CYLC_VERSION": "betwixt",
+            "CYLC_ENV_NAME": "between",
+            "CYLC_QUESTION": "que?", 
+            "CYLC_ANSWER": "42", 
+            "FOO": "foo"
+        }
+    )
+    assert (
+        get_cylc_env_vars() == {
+            "CYLC_QUESTION": "que?", 
+            "CYLC_ANSWER": "42", 
+        }
+    )
+

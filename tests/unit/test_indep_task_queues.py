@@ -92,9 +92,10 @@ def test_queue_and_release(
     assert sorted([r.tdef.name for r in released]) == sorted(expected_released)
 
     # check released tasks change state to "preparing", and not is_queued
-    for r in released:
-        assert r.state.reset.called_with(TASK_STATUS_PREPARING)
-        assert r.state.reset.called_with(is_queued=False)
+    # Commented out pending https://github.com/cylc/cylc-flow/issues/5812
+    # for r in released:
+    #     assert r.state.reset.called_with(TASK_STATUS_PREPARING)
+    #     assert r.state.reset.called_with(is_queued=False)
 
     # check that adopted orphans end up in the default queue
     orphans = ["orphan1", "orphan2"]
