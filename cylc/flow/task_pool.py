@@ -51,13 +51,13 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_FINAL,
-    TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
@@ -362,20 +362,35 @@ class TaskPool:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
                 if (
-                    points  # got the limit already so this point too
-                    or any(
-                        not itask.state(
-                            TASK_STATUS_FAILED,
-                            TASK_STATUS_SUCCEEDED,
-                            TASK_STATUS_EXPIRED
-                        )
-                        or (
-                            # For Cylc 7 back-compat, ignore incomplete tasks.
-                            # (Success is required in back-compat mode, so
-                            # failedtasks end up as incomplete; and Cylc 7
-                            # ignores failed tasks in computing the limit).
-                            itask.state.outputs.is_incomplete()
-                            and not cylc.flow.flags.cylc7_back_compat
+                    any(
+                        # filter out runahead tasks
+                        itask.state(is_runahead=False)
+                        and (
+                            # waiting tasks
+                            # * tasks with partially satisfied prereqs
+                            # * tasks with incomplete xtriggers
+                            # * held tasks
+                            itask.state(TASK_STATUS_WAITING)
+
+                            # unfinished tasks (back-compat mode)
+                            # * Cylc 7 runahead logic considered a cycle to be
+                            #   active if it had "unfinished" tasks
+                            or (
+                                cylc.flow.flags.cylc7_back_compat
+                                and not itask.state(
+                                    TASK_STATUS_FAILED,
+                                    TASK_STATUS_SUCCEEDED,
+                                    TASK_STATUS_EXPIRED,
+                                )
+                            )
+
+                            # incomplete tasks (optional outputs)
+                            # * tasks with one or more required outputs
+                            #   incomplete
+                            or (
+                                not cylc.flow.flags.cylc7_back_compat
+                                and itask.state.outputs.is_incomplete()
+                            )
                         )
                         for itask in itasks
                     )
