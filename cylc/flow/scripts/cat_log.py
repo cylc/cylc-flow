@@ -402,6 +402,8 @@ def main(
     *ids,
     color: bool = False
 ):
+    """Wrapper around the main script for simpler testing.
+    """
     _main(parser, options, *ids, color=color)
 
 
@@ -494,7 +496,10 @@ def _main(
                 try:
                     log_file_path = Path(logs[rotation_number])
                 except IndexError:
-                    raise InputError("max rotation %d" % (len(logs) - 1))
+                    raise InputError(
+                        f"--rotation {rotation_number} invalid "
+                        f"(max value is {len(logs) - 1})"
+                    )
             else:
                 raise InputError('Log file not found.')
         else:

@@ -17,6 +17,9 @@
 """
 
 import pytest
+import re
+import shutil
+from types import SimpleNamespace
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
@@ -24,6 +27,17 @@ from cylc.flow.scripts.cat_log import (
     _main as cat_log,
     get_option_parser as cat_log_gop
 )
+
+
+BAD_NAME = "NONEXISTENTWORKFLOWNAME"
+
+
+@pytest.fixture
+def brokendir(run_dir):
+    brokendir = (run_dir / BAD_NAME)
+    brokendir.mkdir(exist_ok=True)
+    yield brokendir
+    shutil.rmtree(brokendir)
 
 
 def test_fail_no_file(flow):
@@ -49,5 +63,35 @@ def test_fail_rotation_out_of_range(flow):
     with pytest.raises(SystemExit):
         cat_log(parser, Options(parser)(rotation_num=0), id_)
 
-    with pytest.raises(InputError, match='max rotation 0'):
+    msg = r'--rotation 1 invalid \(max value is 0\)'
+
+    with pytest.raises(InputError, match=msg):
         cat_log(parser, Options(parser)(rotation_num=1), id_)
+
+
+def test_bad_workflow(run_dir):
+    """Test "cylc cat-log" with bad workflow name."""
+    parser = cat_log_gop()
+    msg = re.compile(
+        fr'^Workflow ID not found: {BAD_NAME}'
+        fr'\n\(Directory not found: {run_dir}/{BAD_NAME}\)$',
+        re.MULTILINE
+    )
+    with pytest.raises(InputError, match=msg):
+        cat_log(parser, Options(parser)(filename='l'), BAD_NAME)
+
+
+def test_bad_workflow2(run_dir, brokendir, capsys):
+    """Check a non existent file in a valid workflow results in error.
+    """
+    parser = cat_log_gop()
+    with pytest.raises(SystemExit, match='1'):
+        cat_log(
+            parser,
+            Options(parser)(filename='j'),
+            BAD_NAME
+        )
+    msg = (
+        f'file not found: {run_dir}'
+        '/NONEXISTENTWORKFLOWNAME/log/j\n')
+    assert capsys.readouterr().err == msg
