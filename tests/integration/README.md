@@ -64,3 +64,21 @@ These methods both shut down the workflow / clean up after themselves.
 
 It is necessary to shut down workflows correctly to clean up resorces and
 running tasks.
+
+## Module Scoped Fixtures
+
+There's a reasonable overhead to some text fixtures, especially the ones which
+involve writing files to disk or starting Cylc schedulers.
+
+To make tests run faster you can use module-scoped fixtures, these are test
+fixtures which are created once, then reused for all tests in the module.
+
+You'll find a bunch of module-scoped fixtues prefixed with `mod_`, e.g.
+`mod_start` is the module-scoped version of `start`. When using module-scoped
+fixtures, ensure that tests do not modify the fixture object as this will enable
+tests to interact.
+
+In order to get speedup from module-scoped fixtures when running with
+pytest-xdist, we configure pytest-xdist to run all of the tests in a module in
+series using the same pytest runner. This incentivises breaking up larger test
+modules.
