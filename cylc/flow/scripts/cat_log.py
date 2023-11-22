@@ -402,7 +402,7 @@ def main(
     *ids,
     color: bool = False
 ):
-    _main(parser, options, *ids, color)
+    _main(parser, options, *ids, color=color)
 
 
 def _main(
