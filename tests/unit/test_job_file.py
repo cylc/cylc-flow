@@ -31,7 +31,6 @@ from cylc.flow import (
 )
 from cylc.flow.job_file import (
     JobFileWriter,
-    MAX_CYLC_TASK_DEPENDENCIES_LEN,
 )
 from cylc.flow.platforms import platform_from_name
 
@@ -398,7 +397,6 @@ def test_write_task_environment():
                 'export CYLC_TASK_COMMS_METHOD=ssh\n    '
                 'export CYLC_TASK_JOB="1/moo/01"\n    export '
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
-                'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
                 'CYLC_TASK_FLOW_NUMBERS=1\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
