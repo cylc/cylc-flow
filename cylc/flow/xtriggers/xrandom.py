@@ -23,9 +23,10 @@ SIZES = ["tiny", "small", "medium", "large", "huge", "humongous"]
 
 
 def xrandom(percent, secs=0, _=None):
+    # NOTE: docstring must be valid rst as this is included in the docs
     """Random xtrigger, with configurable sleep and percent success.
 
-    Sleep for ``sec`` seconds, and report satisfied with ~``percent``
+    Sleep for ``sec`` seconds, and report satisfied with ~ ``percent``
     likelihood.
 
     The ``_`` argument is not used in the function code, but can be used to
@@ -43,28 +44,37 @@ def xrandom(percent, secs=0, _=None):
     Examples:
         If the percent is zero, it returns that the trigger condition was
         not satisfied, and an empty dictionary.
-        >>> xrandom(0, 0)
-        (False, {})
+
+        .. code-block:: python
+
+           >>> xrandom(0, 0)
+           (False, {})
 
         If the percent is not zero, but the random percent success is not met,
         then it also returns that the trigger condition was not satisfied,
         and an empty dictionary.
-        >>> import sys
-        >>> mocked_random = lambda: 0.3
-        >>> sys.modules[__name__].random = mocked_random
-        >>> xrandom(15.5, 0)
-        (False, {})
+
+        .. code-block:: python
+
+           >>> import sys
+           >>> mocked_random = lambda: 0.3
+           >>> sys.modules[__name__].random = mocked_random
+           >>> xrandom(15.5, 0)
+           (False, {})
 
         Finally, if the percent is not zero, and the random percent success is
         met, then it returns that the trigger condition was satisfied, and a
         dictionary containing random color and size as result.
-        >>> import sys
-        >>> mocked_random = lambda: 0.9
-        >>> sys.modules[__name__].random = mocked_random
-        >>> mocked_randint = lambda x, y: 1
-        >>> sys.modules[__name__].randint = mocked_randint
-        >>> xrandom(99.99, 0)
-        (True, {'COLOR': 'orange', 'SIZE': 'small'})
+
+        .. code-block:: python
+
+           >>> import sys
+           >>> mocked_random = lambda: 0.9
+           >>> sys.modules[__name__].random = mocked_random
+           >>> mocked_randint = lambda x, y: 1
+           >>> sys.modules[__name__].randint = mocked_randint
+           >>> xrandom(99.99, 0)
+           (True, {'COLOR': 'orange', 'SIZE': 'small'})
 
     Returns:
         tuple: (satisfied, results)

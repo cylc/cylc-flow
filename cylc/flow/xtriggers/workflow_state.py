@@ -35,6 +35,7 @@ def workflow_state(
     message: Optional[str] = None,
     cylc_run_dir: Optional[str] = None
 ) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
+    # NOTE: docstring must be valid rst as this is included in the docs
     """Connect to a workflow DB and query the requested task state.
 
     * Reports satisfied only if the remote workflow state has been achieved.
@@ -55,6 +56,7 @@ def workflow_state(
             The task status required for this xtrigger to be satisfied.
         message:
             The custom task output required for this xtrigger to be satisfied.
+
             .. note::
 
                This cannot be specified in conjunction with ``status``.
@@ -72,7 +74,7 @@ def workflow_state(
         tuple: (satisfied, results)
 
         satisfied:
-            True if ``satisfied`` else ``False``.
+            ``True`` if ``satisfied`` else ``False``.
         results:
             Dictionary containing the args / kwargs which were provided
             to this xtrigger.

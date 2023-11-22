@@ -19,11 +19,11 @@
 from time import time
 
 
-def wall_clock(trigger_time=None):
+def wall_clock(trigger_time: int) -> bool:
     """Return True after the desired wall clock time, False.
 
     Args:
-        trigger_time (int):
+        trigger_time:
             Trigger time as seconds since Unix epoch.
     """
     return time() > trigger_time
