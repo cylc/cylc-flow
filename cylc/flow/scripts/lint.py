@@ -1109,13 +1109,7 @@ def get_reference(linter, output_type):
             output += '\n* ' + summary
         else:
             template = issue_heading_template
-            url = meta.get('url', '')
-            if url and url.startswith('http'):
-                url = meta['url']
-            elif url:
-                url = (
-                    "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
-                    + url)
+            url = get_url(meta)
             msg = template.format(
                 title=index,
                 check=get_index_str(meta, index),
