@@ -569,7 +569,21 @@ MANUAL_DEPRECATIONS = {
             'job-script-vars/index.html'
         ),
         FUNCTION: check_for_obsolete_environment_variables,
-    }
+    },
+    'U014': {
+        'short': 'Use "isodatetime [ref]" instead of "rose date [-c]"',
+        'rst': (
+            'For datetime operations in task scripts:\n\n'
+            ' * Use ``isodatetime`` instead of ``rose date``\n'
+            ' * Use ``isodatetime ref`` instead of ``rose date -c`` for '
+            'the current cycle point\n'
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'cheat-sheet.html#datetime-operations'
+        ),
+        FUNCTION: re.compile(r'rose +date').findall,
+    },
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {

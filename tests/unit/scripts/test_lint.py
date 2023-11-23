@@ -103,6 +103,7 @@ TEST_FILE = """
         pre-script = "echo ${CYLC_SUITE_DEF_PATH}"
         script = {{HELLOWORLD}}
         post-script = "echo ${CYLC_SUITE_INITIAL_CYCLE_TIME}"
+        env-script = POINT=$(rose  date 2059 --offset P1M)
         [[[suite state polling]]]
             template = and
         [[[remote]]]
