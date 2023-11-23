@@ -63,12 +63,22 @@ import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
 from typing import (
-    Any, Dict, Iterable, List, Optional, TYPE_CHECKING, TextIO, Union, overload
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    TextIO,
+    Union,
+    overload,
 )
 
 from cylc.flow import LOG as _LOG, LoggerAdaptor
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
+from cylc.flow.pipe_poller import pipe_poller
+from cylc.flow.util import format_cmd
 from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
@@ -171,7 +181,7 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
             ):
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")
             elif cylc.flow.flags.verbosity > -1:
-                LOG.warning(f"$ {vcs} {' '.join(args)}\n{exc}")
+                LOG.warning(f"$ {vcs} {format_cmd(args)}\n{exc}")
             continue
 
         info['version control system'] = vcs
@@ -217,9 +227,7 @@ def _run_cmd(
         args: The args to pass to the version control command.
         cwd: Directory to run the command in.
         stdout: Where to redirect output (either PIPE or a
-            text stream/file object). Note: only use PIPE for
-            commands that will not generate a large output, otherwise
-            the pipe might get blocked.
+            text stream/file object).
 
     Returns:
         Stdout output if stdout=PIPE, else None as the output has been
@@ -231,6 +239,7 @@ def _run_cmd(
         OSError: Non-zero return code for VCS command.
     """
     cmd = [vcs, *args]
+    LOG.debug(f'$ {format_cmd(cmd)}')
     try:
         proc = Popen(  # nosec
             cmd,
@@ -245,13 +254,15 @@ def _run_cmd(
         # This will only be raised if the VCS command is not installed,
         # otherwise Popen() will succeed with a non-zero return code
         raise VCSNotInstalledError(vcs, exc)
-    ret_code = proc.wait()
-    out, err = proc.communicate()
-    if ret_code:
+    if stdout == PIPE:
+        out, err = pipe_poller(proc, proc.stdout, proc.stderr)
+    else:
+        out, err = proc.communicate()
+    if proc.returncode:
         if any(err.lower().startswith(msg) for msg in NO_BASE_ERRS[vcs]):
             # No base commit in repo
             raise VCSMissingBaseError(vcs, cwd)
-        raise OSError(ret_code, err)
+        raise OSError(proc.returncode, err)
     return out
 
 
