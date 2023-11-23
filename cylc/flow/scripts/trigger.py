@@ -140,7 +140,6 @@ def _validate(options):
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
-
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
@@ -165,7 +164,6 @@ def main(parser: COP, options: 'Values', *ids: str):
     if options.flow is None:
         options.flow = [FLOW_ALL]  # default to all active flows
     _validate(options)
-
     call_multi(
         partial(run, options),
         *ids,

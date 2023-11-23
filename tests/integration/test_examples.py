@@ -260,6 +260,7 @@ async def test_reflog(flow, scheduler, run, reflog, complete):
 
     async with run(schd):
         triggers = reflog(schd)  # Note: add flow_nums=True to capture flows
+        breakpoint()
         await complete(schd)
 
     assert triggers == {
