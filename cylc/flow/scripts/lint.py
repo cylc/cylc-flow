@@ -40,7 +40,7 @@ This can be overridden by providing the "--exit-zero" flag.
 TOMLDOC = """
 pyproject.toml configuration:{}
    [cylc-lint]                     # any of {}
-       ignore = ['S001', 'S002]    # List of rules to ignore
+       ignore = ['S001', 'S002']    # List of rules to ignore
        exclude = ['etc/foo.cylc']  # List of files to ignore
        rulesets = ['style', '728'] # Sets default rulesets to check
        max-line-length = 130       # Max line length for linting
@@ -1272,6 +1272,4 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
 # NOTE: use += so that this works with __import__
 # (docstring needed for `cylc help all` output)
-__doc__ += TOMLDOC.format(
-    '\n\n.. code-block:: toml\n', str(LINT_SECTIONS)) + get_reference_rst(
-    parse_checks(['728', 'style'], reference=True))
+__doc__ += get_reference_rst(parse_checks(['728', 'style'], reference=True))
