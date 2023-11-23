@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -610,6 +610,26 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
+    with Conf('hub', desc='''
+        Configure the public URL of Jupyter Hub.
+
+        If configured, the ``cylc gui`` command will open a web browser at this
+        location rather than starting a standalone server when called.
+
+
+        .. seealso::
+
+           * The cylc hub :ref:`architecture-reference` for fuller details.
+           * :ref:`UI_Server_config` for practical details.
+
+    '''):
+        Conf('url', VDR.V_STRING, '', desc='''
+            .. versionadded:: 8.3.0
+
+            Where Jupyter Hub is used a url can be provided for routing on
+            execution of ``cylc gui`` command.
+        ''')
+
     with Conf('scheduler', desc=(
         default_for(SCHEDULER_DESCR, "[scheduler]", section=True)
     )):
@@ -1202,6 +1222,9 @@ with Conf('global.cylc', desc='''
 
                    {PLATFORM_REPLACES.format("[job]batch system")}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[job]batch submit command template"
+            )
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
 
@@ -1210,9 +1233,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
 
-                   {PLATFORM_REPLACES.format(
-                       "[job]batch submit command template"
-                    )}
+                   {replaces}
             ''')
             Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
@@ -1445,6 +1466,8 @@ with Conf('global.cylc', desc='''
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    command``.
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs max size")
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs max size']}
 
@@ -1452,9 +1475,10 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    max size``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs max size")}
+                   {replaces}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs retry delays")
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
@@ -1463,8 +1487,7 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    retry delays``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs retry delays")}
+                   {replaces}
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
@@ -1631,6 +1654,14 @@ with Conf('global.cylc', desc='''
                 of job submissions which can be batched together.
 
                 .. versionadded:: 8.0.0
+            ''')
+            Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
+                 desc='''
+                A list containing the names of the environment variables to
+                forward with SSH connections to the workflow host from
+                the host running 'cylc play'
+
+                .. versionadded:: 8.3.0
             ''')
             with Conf('selection', desc='''
                 How to select a host from the list of platform hosts.
@@ -1838,8 +1869,7 @@ def get_version_hierarchy(version: str) -> List[str]:
         ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    smart_ver: Any = parse_version(version)
-    # (No type anno. yet for Version in pkg_resources.extern.packaging.version)
+    smart_ver = Version(version)
     base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
     hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]

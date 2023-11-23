@@ -16,8 +16,7 @@
 """Load custom variables for template processor."""
 
 from ast import literal_eval
-from optparse import Values
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
@@ -25,7 +24,9 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import WorkflowFiles
 
-from pathlib import Path
+if TYPE_CHECKING:
+    from optparse import Values
+    from pathlib import Path
 
 
 OVERWRITE_WARNING = (
@@ -111,7 +112,7 @@ def parse_string_list(stringlist: str) -> List:
 
 def load_template_vars(
     template_vars: Optional[List[str]] = None,
-    template_vars_file: Union[Path, str, None] = None,
+    template_vars_file: 'Union[Path, str, None]' = None,
     templatevars_lists: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """Load template variables from key=value strings."""
@@ -182,7 +183,7 @@ def load_template_vars(
     return res
 
 
-def get_template_vars(options: Values) -> Dict[str, Any]:
+def get_template_vars(options: 'Values') -> Dict[str, Any]:
     """Convienence wrapper for ``load_template_vars``.
 
     Args:

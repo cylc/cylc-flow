@@ -31,11 +31,6 @@ from cylc.flow.id import (
     upgrade_legacy_ids,
 )
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
-from cylc.flow.network.scan import (
-    filter_name,
-    is_active,
-    scan,
-)
 from cylc.flow.workflow_files import (
     check_flow_file,
     detect_both_flow_and_suite,
@@ -487,6 +482,12 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
             'currently supported.'
         )
 
+    # import only when needed to avoid slowing CLI unnecessarily
+    from cylc.flow.network.scan import (
+        filter_name,
+        is_active,
+        scan,
+    )
     # construct the pipe
     pipe = scan | filter_name(fnmatch.translate(tokens['workflow']))
     if match_active is not None:
