@@ -21,8 +21,8 @@ from unittest.mock import Mock
 
 import pytest
 
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_queues.independent import IndepQueueManager
-from cylc.flow.task_state import TASK_STATUS_PREPARING
 
 
 MEMBERS = {"a", "b", "c", "d", "e", "f"}
@@ -61,9 +61,7 @@ READY_TASK_NAMES = ["b3", "s4", "o2", "s3", "b4", "o3", "o4", "o5", "o6", "o7"]
 
 
 @pytest.mark.parametrize(
-    "active,"
-    "expected_released,"
-    "expected_foo_groups",
+    "active, expected_released, expected_foo_groups",
     [
         (
             Counter(["b1", "b2", "s1", "o1"]),
@@ -73,29 +71,24 @@ READY_TASK_NAMES = ["b3", "s4", "o2", "s3", "b4", "o3", "o4", "o5", "o6", "o7"]
     ]
 )
 def test_queue_and_release(
-        active,
-        expected_released,
-        expected_foo_groups):
+    active,
+    expected_released,
+    expected_foo_groups
+):
     """Test task queue and release."""
     # configure the queue
     queue_mgr = IndepQueueManager(QCONFIG, ALL_TASK_NAMES, DESCENDANTS)
 
     # add newly ready tasks to the queue
     for name in READY_TASK_NAMES:
-        itask = Mock()
+        itask = Mock(spec=TaskProxy)
         itask.tdef.name = name
         itask.state.is_held = False
         queue_mgr.push_task(itask)
 
     # release tasks, given current active task counter
     released = queue_mgr.release_tasks(active)
-    assert sorted([r.tdef.name for r in released]) == sorted(expected_released)
-
-    # check released tasks change state to "preparing", and not is_queued
-    # Commented out pending https://github.com/cylc/cylc-flow/issues/5812
-    # for r in released:
-    #     assert r.state.reset.called_with(TASK_STATUS_PREPARING)
-    #     assert r.state.reset.called_with(is_queued=False)
+    assert sorted(r.tdef.name for r in released) == sorted(expected_released)
 
     # check that adopted orphans end up in the default queue
     orphans = ["orphan1", "orphan2"]

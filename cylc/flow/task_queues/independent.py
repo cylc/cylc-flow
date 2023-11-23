@@ -18,7 +18,7 @@
 
 from collections import deque
 from contextlib import suppress
-from typing import List, Set, Dict, Counter, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Set, Dict, Counter, Any
 
 from cylc.flow.task_queues import TaskQueueManagerBase
 
@@ -40,11 +40,11 @@ class LimitedTaskQueue:
         if itask.tdef.name in self.members:
             self.deque.appendleft(itask)
 
-    def release(self, active: Counter[str]) -> 'List[TaskProxy]':
+    def release(self, active: Counter[str]) -> List['TaskProxy']:
         """Release tasks if below the active limit."""
         # The "active" argument counts active tasks by name.
-        released: 'List[TaskProxy]' = []
-        held: 'List[TaskProxy]' = []
+        released: List['TaskProxy'] = []
+        held: List['TaskProxy'] = []
         n_active: int = 0
         for mem in self.members:
             n_active += active[mem]
@@ -113,20 +113,20 @@ class IndepQueueManager(TaskQueueManagerBase):
                 config["limit"], config["members"]
             )
 
-        self.force_released: 'Set[TaskProxy]' = set()
+        self.force_released: Set['TaskProxy'] = set()
 
     def push_task(self, itask: 'TaskProxy') -> None:
         """Push a task to the appropriate queue."""
         for queue in self.queues.values():
             queue.push_task(itask)
 
-    def release_tasks(self, active: Counter[str]) -> 'List[TaskProxy]':
+    def release_tasks(self, active: Counter[str]) -> List['TaskProxy']:
         """Release tasks up to the queue limits."""
-        released: 'List[TaskProxy]' = []
+        released: List['TaskProxy'] = []
         for queue in self.queues.values():
             released += queue.release(active)
         if self.force_released:
-            released += list(self.force_released)
+            released.extend(self.force_released)
             self.force_released = set()
         return released
 
