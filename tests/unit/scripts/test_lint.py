@@ -334,6 +334,12 @@ def test_check_cylc_file_jinja2_comments():
     assert not any('S011' in msg for msg in lint.messages)
 
 
+def test_check_cylc_file_jinja2_comments_shell_arithmetic_not_warned():
+    """Jinja2 after a $((10#$variable)) should not warn"""
+    lint = lint_text('#!jinja2\na = b$((10#$foo+5)) {{ BAR }}', ['style'])
+    assert not any('S011' in msg for msg in lint.messages)
+
+
 @pytest.mark.parametrize(
     # 11 won't be tested because there is no jinja2 shebang
     'number', set(range(1, len(MANUAL_DEPRECATIONS) + 1)) - {11}
