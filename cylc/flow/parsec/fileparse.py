@@ -326,7 +326,7 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
                 f"{extra_vars[TEMPLATING_DETECTED]} and "
                 f"{templating_detected}"
             )
-        elif plugin_result.get(TEMPLATING_DETECTED, None) is not None:
+        else:
             extra_vars[TEMPLATING_DETECTED] = templating_detected
 
     return extra_vars
