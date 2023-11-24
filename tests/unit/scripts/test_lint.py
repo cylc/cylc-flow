@@ -102,6 +102,7 @@ TEST_FILE = """
         pre-script = "echo ${CYLC_SUITE_DEF_PATH}"
         script = {{HELLOWORLD}}
         post-script = "echo ${CYLC_SUITE_INITIAL_CYCLE_TIME}"
+        env-script = POINT=$(rose  date 2059 --offset P1M)
         [[[suite state polling]]]
             template = and
         [[[remote]]]
@@ -330,6 +331,12 @@ def test_check_exclusions(code):
 def test_check_cylc_file_jinja2_comments():
     """Jinja2 inside a Jinja2 comment should not warn"""
     lint = lint_text('#!jinja2\n{# {{ foo }} #}', ['style'])
+    assert not any('S011' in msg for msg in lint.messages)
+
+
+def test_check_cylc_file_jinja2_comments_shell_arithmetic_not_warned():
+    """Jinja2 after a $((10#$variable)) should not warn"""
+    lint = lint_text('#!jinja2\na = b$((10#$foo+5)) {{ BAR }}', ['style'])
     assert not any('S011' in msg for msg in lint.messages)
 
 

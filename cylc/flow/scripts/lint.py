@@ -40,7 +40,7 @@ This can be overridden by providing the "--exit-zero" flag.
 TOMLDOC = """
 pyproject.toml configuration:{}
    [cylc-lint]                     # any of {}
-       ignore = ['S001', 'S002]    # List of rules to ignore
+       ignore = ['S001', 'S002']    # List of rules to ignore
        exclude = ['etc/foo.cylc']  # List of files to ignore
        rulesets = ['style', '728'] # Sets default rulesets to check
        max-line-length = 130       # Max line length for linting
@@ -437,7 +437,7 @@ STYLE_CHECKS = {
         'evaluate commented lines': True,
         FUNCTION: functools.partial(
             check_if_jinja2,
-            function=re.compile(r'(?<!{)#.*?{[{%]').findall
+            function=re.compile(r'(?<!{)#[^$].*?{[{%]').findall
         )
     },
     'S012': {
@@ -569,7 +569,21 @@ MANUAL_DEPRECATIONS = {
             'job-script-vars/index.html'
         ),
         FUNCTION: check_for_obsolete_environment_variables,
-    }
+    },
+    'U014': {
+        'short': 'Use "isodatetime [ref]" instead of "rose date [-c]"',
+        'rst': (
+            'For datetime operations in task scripts:\n\n'
+            ' * Use ``isodatetime`` instead of ``rose date``\n'
+            ' * Use ``isodatetime ref`` instead of ``rose date -c`` for '
+            'the current cycle point\n'
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'cheat-sheet.html#datetime-operations'
+        ),
+        FUNCTION: re.compile(r'rose +date').findall,
+    },
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {
