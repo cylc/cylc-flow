@@ -12,7 +12,9 @@ $ pytest tests/i --dist=no -n0  # turn off xdist (allows --pdb etc)
 
 ## What Are Integration Tests
 
-These tests are intended to test the interaction of different modules.
+Integration tests aren't end-to-end tests. They focus on targeted interactions
+of multiple modules and may do a bit of monkeypatching to achieve that result.
+
 With Cylc this typically involves running workflows.
 
 The general approach is:
@@ -21,8 +23,34 @@ The general approach is:
 2) Put it in a funny state.
 3) Test how components interract to handle this state.
 
-Integration tests aren't end-to-end tests, they focus on targeted interactions
-and behaviour and may do a bit of monkeypatching to achieve that result.
+I.e., the integration test framework runs the scheduler. The only thing it's
+really cutting out is the CLI.
+
+You can do everything, up to and including reference tests with it if so
+inclined, although that would really be a functional test implemented in Python:
+
+async with run(schd) as log:
+    # run the workflow with a timeout of 60 seconds
+    await asyncio.sleep(60)
+assert reftest(log) == '''
+1/b triggered off [1/a]
+1/c triggered off [1/b]
+'''
+
+For a more integration'y approach to reftests we can do something like this
+which is essentially just another way of getting the "triggered off" information
+without having to run the main loop and bring race conditions into play:
+
+async with start(schd):
+    assert set(schd.pool.get_tasks()) == {'1/a'}
+
+    # setting a:succeeded should spawn b
+    schd.command_reset('1/a', 'succeeded')
+    assert set(schd.pool.get_tasks()) == {'1/b'}
+    
+    # setting b:x should spawn c
+    schd.command_reset('1/b', 'x')
+    assert set(schd.pool.get_tasks()) == {'1/b', '1/c'}
 
 ## Guidelines
 

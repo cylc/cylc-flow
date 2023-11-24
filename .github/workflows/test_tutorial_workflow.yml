@@ -21,7 +21,7 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: ['3.7', '3.11']
+        python-version: ['3.7', '3']
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

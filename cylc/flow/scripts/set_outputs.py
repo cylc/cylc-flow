@@ -48,7 +48,7 @@ Use --output multiple times to spawn off of several outputs at once.
 """
 
 from functools import partial
-from optparse import Values
+from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -57,6 +57,9 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 MUTATION = '''
 mutation (
