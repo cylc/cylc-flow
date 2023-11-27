@@ -16,10 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common utilities for Tui."""
 
+from contextlib import contextmanager
+from getpass import getuser
 from itertools import zip_longest
 import re
 from time import time
+from typing import Tuple
 
+from cylc.flow import LOG
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
@@ -31,6 +35,26 @@ from cylc.flow.tui import (
     TASK_MODIFIERS
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
+
+
+# the Tui user, note this is always the same as the workflow owner
+# (Tui doesn't do multi-user stuff)
+ME = getuser()
+
+
+@contextmanager
+def suppress_logging():
+    """Suppress Cylc logging.
+
+    Log goes to stdout/err which can pollute Urwid apps.
+    Patching sys.stdout/err is insufficient so we set the level to something
+    silly for the duration of this context manager then set it back again
+    afterwards.
+    """
+    level = LOG.getEffectiveLevel()
+    LOG.setLevel(99999)
+    yield
+    LOG.setLevel(level)
 
 
 def get_task_icon(
@@ -113,80 +137,90 @@ def idpop(id_):
     return tokens.id
 
 
-def compute_tree(flow):
-    """Digest GraphQL data to produce a tree.
+def compute_tree(data):
+    """Digest GraphQL data to produce a tree."""
+    root_node = add_node('root', 'root', {}, data={})
 
-    Arguments:
-        flow (dict):
-            A dictionary representing a single workflow.
+    for flow in data['workflows']:
+        nodes = {}
+        flow_node = add_node(
+            'workflow', flow['id'], nodes, data=flow)
+        root_node['children'].append(flow_node)
 
-    Returns:
-        dict - A top-level workflow node.
+        # populate cycle nodes
+        for cycle in flow.get('cyclePoints', []):
+            cycle['id'] = idpop(cycle['id'])  # strip the family off of the id
+            cycle_node = add_node('cycle', cycle['id'], nodes, data=cycle)
+            flow_node['children'].append(cycle_node)
 
-    """
-    nodes = {}
-    flow_node = add_node(
-        'workflow', flow['id'], nodes, data=flow)
+        # populate family nodes
+        for family in flow.get('familyProxies', []):
+            add_node('family', family['id'], nodes, data=family)
 
-    # populate cycle nodes
-    for cycle in flow['cyclePoints']:
-        cycle['id'] = idpop(cycle['id'])  # strip the family off of the id
-        cycle_node = add_node('cycle', cycle['id'], nodes, data=cycle)
-        flow_node['children'].append(cycle_node)
-
-    # populate family nodes
-    for family in flow['familyProxies']:
-        add_node('family', family['id'], nodes, data=family)
-
-    # create cycle/family tree
-    for family in flow['familyProxies']:
-        family_node = add_node(
-            'family', family['id'], nodes)
-        first_parent = family['firstParent']
-        if (
-            first_parent
-            and first_parent['name'] != 'root'
-        ):
-            parent_node = add_node(
-                'family', first_parent['id'], nodes)
-            parent_node['children'].append(family_node)
-        else:
-            add_node(
-                'cycle', idpop(family['id']), nodes
-            )['children'].append(family_node)
-
-    # add leaves
-    for task in flow['taskProxies']:
-        # If there's no first parent, the child will have been deleted
-        # during/after API query resolution. So ignore.
-        if not task['firstParent']:
-            continue
-        task_node = add_node(
-            'task', task['id'], nodes, data=task)
-        if task['firstParent']['name'] == 'root':
+        # create cycle/family tree
+        for family in flow.get('familyProxies', []):
             family_node = add_node(
-                'cycle', idpop(task['id']), nodes)
-        else:
-            family_node = add_node(
-                'family', task['firstParent']['id'], nodes)
-        family_node['children'].append(task_node)
-        for job in task['jobs']:
-            job_node = add_node(
-                'job', job['id'], nodes, data=job)
-            job_info_node = add_node(
-                'job_info', job['id'] + '_info', nodes, data=job)
-            job_node['children'] = [job_info_node]
-            task_node['children'].append(job_node)
+                'family', family['id'], nodes)
+            first_parent = family['firstParent']
+            if (
+                first_parent
+                and first_parent['name'] != 'root'
+            ):
+                parent_node = add_node(
+                    'family', first_parent['id'], nodes)
+                parent_node['children'].append(family_node)
+            else:
+                add_node(
+                    'cycle', idpop(family['id']), nodes
+                )['children'].append(family_node)
 
-    # sort
-    for (type_, _), node in nodes.items():
-        if type_ != 'task':
-            # NOTE: jobs are sorted by submit-num in the GraphQL query
-            node['children'].sort(
-                key=lambda x: NaturalSort(x['id_'])
+        # add leaves
+        for task in flow.get('taskProxies', []):
+            # If there's no first parent, the child will have been deleted
+            # during/after API query resolution. So ignore.
+            if not task['firstParent']:
+                continue
+            task_node = add_node(
+                'task', task['id'], nodes, data=task)
+            if task['firstParent']['name'] == 'root':
+                family_node = add_node(
+                    'cycle', idpop(task['id']), nodes)
+            else:
+                family_node = add_node(
+                    'family', task['firstParent']['id'], nodes)
+            family_node['children'].append(task_node)
+            for job in task['jobs']:
+                job_node = add_node(
+                    'job', job['id'], nodes, data=job)
+                job_info_node = add_node(
+                    'job_info', job['id'] + '_info', nodes, data=job)
+                job_node['children'] = [job_info_node]
+                task_node['children'].append(job_node)
+
+        # sort
+        for (type_, _), node in nodes.items():
+            if type_ != 'task':
+                # NOTE: jobs are sorted by submit-num in the GraphQL query
+                node['children'].sort(
+                    key=lambda x: NaturalSort(x['id_'])
+                )
+
+        # spring nodes
+        if 'port' not in flow:
+            # the "port" field is only available via GraphQL
+            # so we are not connected to this workflow yet
+            flow_node['children'].append(
+                add_node(
+                    '#spring',
+                    '#spring',
+                    nodes,
+                    data={
+                        'id': flow.get('_tui_data', 'Loading ...'),
+                    }
+                )
             )
 
-    return flow_node
+    return root_node
 
 
 class NaturalSort:
@@ -340,7 +374,7 @@ def get_task_status_summary(flow):
     state_totals = flow['stateTotals']
     return [
         [
-            ('', ' '),
+            ' ',
             (f'job_{state}', str(state_totals[state])),
             (f'job_{state}', JOB_ICON)
         ]
@@ -361,18 +395,111 @@ def get_workflow_status_str(flow):
         list - Text list for the urwid.Text widget.
 
     """
-    status = flow['status']
-    return [
-        (
-            'title',
-            flow['name'],
-        ),
-        ' - ',
-        (
-            f'workflow_{status}',
-            status
-        )
+
+
+def _render_user(node, data):
+    return f'~{ME}'
+
+
+def _render_job_info(node, data):
+    key_len = max(len(key) for key in data)
+    ret = [
+        f'{key} {" " * (key_len - len(key))} {value}\n'
+        for key, value in data.items()
     ]
+    ret[-1] = ret[-1][:-1]  # strip trailing newline
+    return ret
+
+
+def _render_job(node, data):
+    return [
+        f'#{data["submitNum"]:02d} ',
+        get_job_icon(data['state'])
+    ]
+
+
+def _render_task(node, data):
+    start_time = None
+    mean_time = None
+    try:
+        # due to sorting this is the most recent job
+        first_child = node.get_child_node(0)
+    except IndexError:
+        first_child = None
+
+    # progress information
+    if data['state'] == TASK_STATUS_RUNNING and first_child:
+        start_time = first_child.get_value()['data']['startedTime']
+        mean_time = data['task']['meanElapsedTime']
+
+    # the task icon
+    ret = get_task_icon(
+        data['state'],
+        is_held=data['isHeld'],
+        is_queued=data['isQueued'],
+        is_runahead=data['isRunahead'],
+        start_time=start_time,
+        mean_time=mean_time
+    )
+
+    # the most recent job status
+    ret.append(' ')
+    if first_child:
+        state = first_child.get_value()['data']['state']
+        ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
+
+    # the task name
+    ret.append(f'{data["name"]}')
+    return ret
+
+
+def _render_family(node, data):
+    return [
+        get_task_icon(
+            data['state'],
+            is_held=data['isHeld'],
+            is_queued=data['isQueued'],
+            is_runahead=data['isRunahead']
+        ),
+        ' ',
+        Tokens(data['id']).pop_token()[1]
+    ]
+
+
+def _render_unknown(node, data):
+    try:
+        state_totals = get_task_status_summary(data)
+        status = data['status']
+        status_msg = [
+            (
+                'title',
+                _display_workflow_id(data),
+            ),
+            ' - ',
+            (
+                f'workflow_{status}',
+                status
+            )
+        ]
+    except KeyError:
+        return Tokens(data['id']).pop_token()[1]
+
+    return [*status_msg, *state_totals]
+
+
+def _display_workflow_id(data):
+    return data['name']
+
+
+RENDER_FUNCTIONS = {
+    'user': _render_user,
+    'root': _render_user,
+    'job_info': _render_job_info,
+    'job': _render_job,
+    'task': _render_task,
+    'cycle': _render_family,
+    'family': _render_family,
+}
 
 
 def render_node(node, data, type_):
@@ -387,77 +514,7 @@ def render_node(node, data, type_):
             The node type (e.g. `task`, `job`, `family`).
 
     """
-    if type_ == 'job_info':
-        key_len = max(len(key) for key in data)
-        ret = [
-            f'{key} {" " * (key_len - len(key))} {value}\n'
-            for key, value in data.items()
-        ]
-        ret[-1] = ret[-1][:-1]  # strip trailing newline
-        return ret
-
-    if type_ == 'job':
-        return [
-            f'#{data["submitNum"]:02d} ',
-            get_job_icon(data['state'])
-        ]
-
-    if type_ == 'task':
-        start_time = None
-        mean_time = None
-        try:
-            # due to sorting this is the most recent job
-            first_child = node.get_child_node(0)
-        except IndexError:
-            first_child = None
-
-        # progress information
-        if data['state'] == TASK_STATUS_RUNNING and first_child:
-            start_time = first_child.get_value()['data']['startedTime']
-            mean_time = data['task']['meanElapsedTime']
-
-        # the task icon
-        ret = get_task_icon(
-            data['state'],
-            is_held=data['isHeld'],
-            is_queued=data['isQueued'],
-            is_runahead=data['isRunahead'],
-            start_time=start_time,
-            mean_time=mean_time
-        )
-
-        # the most recent job status
-        ret.append(' ')
-        if first_child:
-            state = first_child.get_value()['data']['state']
-            ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
-
-        # the task name
-        ret.append(f'{data["name"]}')
-        return ret
-
-    if type_ in ['family', 'cycle']:
-        return [
-            get_task_icon(
-                data['state'],
-                is_held=data['isHeld'],
-                is_queued=data['isQueued'],
-                is_runahead=data['isRunahead']
-            ),
-            ' ',
-            Tokens(data['id']).pop_token()[1]
-        ]
-
-    return Tokens(data['id']).pop_token()[1]
-
-
-PARTS = [
-    'user',
-    'workflow',
-    'cycle',
-    'task',
-    'job'
-]
+    return RENDER_FUNCTIONS.get(type_, _render_unknown)(node, data)
 
 
 def extract_context(selection):
@@ -476,9 +533,18 @@ def extract_context(selection):
         {'user': ['a'], 'workflow': ['b'], 'cycle': ['c'],
         'task': ['d'], 'job': ['e']}
 
+        >>> list(extract_context(['root']).keys())
+        ['user']
+
     """
     ret = {}
     for item in selection:
+        if item == 'root':
+            # special handling for the Tui "root" node
+            # (this represents the workflow owner which is always the same as
+            # user for Tui)
+            ret['user'] = ME
+            continue
         tokens = Tokens(item)
         for key, value in tokens.items():
             if (
@@ -489,3 +555,24 @@ def extract_context(selection):
                 if value not in lst:
                     lst.append(value)
     return ret
+
+
+def get_text_dimensions(text: str) -> Tuple[int, int]:
+    """Return the monospace size of a block of multiline text.
+
+    Examples:
+        >>> get_text_dimensions('foo')
+        (3, 1)
+
+        >>> get_text_dimensions('''
+        ...     foo bar
+        ...     baz
+        ... ''')
+        (11, 3)
+
+        >>> get_text_dimensions('')
+        (0, 0)
+
+    """
+    lines = text.splitlines()
+    return max((0, *(len(line) for line in lines))), len(lines)
