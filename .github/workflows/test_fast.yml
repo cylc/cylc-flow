@@ -29,7 +29,7 @@ jobs:
           # non-utc timezone test
           - os: 'ubuntu-latest'
             python-version: '3.9'  # not the oldest, not the most recent version
-            time-zone: ['XXX-09:35']
+            time-zone: 'XXX-09:35'
 
     env:
       # Use non-UTC time zone
