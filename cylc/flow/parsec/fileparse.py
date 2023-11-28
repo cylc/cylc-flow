@@ -111,7 +111,7 @@ TEMPLATING_DETECTED = 'templating_detected'
 EXTRA_VARS_TEMPLATE = {
     'env': {},
     'template_variables': {},
-    'templating_detected': None
+    TEMPLATING_DETECTED: None
 }
 
 
@@ -322,7 +322,7 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
         ):
             # Don't allow subsequent plugins with different templating_detected
             raise ParsecError(
-                "Can't merge templating languages"
+                "Can't merge templating languages "
                 f"{extra_vars[TEMPLATING_DETECTED]} and "
                 f"{templating_detected}"
             )
