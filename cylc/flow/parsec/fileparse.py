@@ -108,9 +108,10 @@ _UNCLOSED_MULTILINE = re.compile(
     r'(?<![\w>])\[.*\]'
 )
 TEMPLATING_DETECTED = 'templating_detected'
+TEMPLATE_VARIABLES = 'template_variables'
 EXTRA_VARS_TEMPLATE = {
     'env': {},
-    'template_variables': {},
+    TEMPLATE_VARIABLES: {},
     TEMPLATING_DETECTED: None
 }
 
@@ -261,14 +262,15 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
             or ``empy``.
 
     args:
-        fpath: Directory where the plugin will look for a config.
+        fpath: Path to a config file. Plugin will look at the parent
+            directory of this file.
         opts: Command line options to be passed to the plugin.
 
     Returns: Dictionary in the form:
         extra_vars = {
             'env': {},
             'template_variables': {},
-            'templating_detected': None
+            TEMPLATING_DETECTED: None
         }
     """
     fpath = Path(fpath)
@@ -300,7 +302,7 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
                 entry_point.name,
                 exc
             ) from None
-        for section in ['env', 'template_variables']:
+        for section in ['env', TEMPLATE_VARIABLES]:
             if section in plugin_result and plugin_result[section] is not None:
                 # Raise error if multiple plugins try to update the same keys.
                 section_update = plugin_result.get(section, {})
@@ -359,7 +361,7 @@ def merge_template_vars(
         {'FOO': 42, 'BAZ': 3.14159, 'BAR': 'Hello World'}
     """
     if plugin_result[TEMPLATING_DETECTED] is not None:
-        plugin_tvars = plugin_result['template_variables']
+        plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
         will_be_overwritten = (
             native_tvars.keys() &
             plugin_tvars.keys()
