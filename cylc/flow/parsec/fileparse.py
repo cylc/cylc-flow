@@ -52,7 +52,7 @@ from cylc.flow.workflow_files import (
 
 if t.TYPE_CHECKING:
     from optparse import Values
-    from typing import Dict, Union
+    from typing import Union
 
 
 # heading/sections can contain commas (namespace name lists) and any
