@@ -226,7 +226,8 @@ class TaskProxy:
         is_manual_submit: bool = False,
         flow_wait: bool = False,
         data_mode: bool = False,
-        transient: bool = False
+        transient: bool = False,
+        sequential_xtrigger_labels: Optional[Set[str]] = None,
     ) -> None:
 
         self.tdef = tdef
@@ -246,7 +247,6 @@ class TaskProxy:
             task=self.tdef.name,
         )
         self.identity = self.tokens.relative_id
-        self.is_xtrigger_sequential = False
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 
@@ -288,6 +288,18 @@ class TaskProxy:
         self.waiting_on_job_prep = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
+
+        # Set xtrigger checking type, which effects parentless spawning.
+        if (
+            sequential_xtrigger_labels
+            and self.tdef.is_parentless(start_point)
+            and set(self.state.xtriggers.keys()).intersection(
+                sequential_xtrigger_labels
+            )
+        ):
+            self.is_xtrigger_sequential = True
+        else:
+            self.is_xtrigger_sequential = False
 
         # Determine graph children of this task (for spawning).
         if data_mode:
