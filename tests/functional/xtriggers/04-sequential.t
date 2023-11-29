@@ -43,14 +43,14 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
         ):PT1S
     [[graph]]
         R1 = """
-@clock_1 => a
-b
-"""
+            @clock_1 => a
+            b
+        """
         +P1Y/P1Y = """
-@clock_2 => a
-@clock_2 => b
-@up_1 => c
-"""
+            @clock_2 => a
+            @clock_2 => b
+            @up_1 => c
+        """
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"

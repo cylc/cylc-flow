@@ -803,11 +803,12 @@ with Conf(
             ''')
 
         Conf('sequential xtriggers default', VDR.V_BOOLEAN, False, desc='''
-            Set to ``True``, this allows for sequential spawning of associated
-            parentless tasks on xtrigger satisfaction.
-            Instead of out to the runahead limit (default: ``False``).
+            When set to ``True``, parentless tasks that trigger off xtriggers
+            will only spawn sequentially, i.e. on the satisfaction of the
+            xtriggers in order. Otherwise, these tasks will all spawn at the
+            same time up to the runahead limit.
 
-            This workflow wide default can be overridden by a reserved
+            This workflow-wide default can be overridden by a reserved
             keyword argument in the xtrigger function declaration and/or
             function (``sequential=True/False``).
 

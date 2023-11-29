@@ -21,7 +21,14 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Set,
+    Tuple,
+    TYPE_CHECKING
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
@@ -244,15 +251,15 @@ class XtriggerManager:
         self.active: list = []
 
         # Clock labels, to avoid repeated string comparisons
-        self.wall_clock_labels: set = set()
+        self.wall_clock_labels: Set[str] = set()
 
         # Workflow wide default, used when not specified in xtrigger kwargs.
         self.sequential_xtriggers_default = False
         # Labels whose xtriggers are sequentially checked.
-        self.sequential_xtrigger_labels: set = set()
+        self.sequential_xtrigger_labels: Set[str] = set()
         # Gather parentless tasks whose xtrigger(s) have been satisfied
         # (these will be used to spawn the next occurance).
-        self.sequential_spawn_next: set = set()
+        self.sequential_spawn_next: Set[str] = set()
 
         self.workflow_run_dir = workflow_run_dir
 
@@ -299,7 +306,6 @@ class XtriggerManager:
             XtriggerConfigError:
                 * If the function module was not found.
                 * If the function was not found in the xtrigger module.
-                * If the function is not callable.
                 * If the function is not callable.
                 * If any string template in the function context
                   arguments are not present in the expected template values.

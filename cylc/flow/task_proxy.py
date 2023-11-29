@@ -290,16 +290,11 @@ class TaskProxy:
         self.state = TaskState(tdef, self.point, status, is_held)
 
         # Set xtrigger checking type, which effects parentless spawning.
-        if (
+        self.is_xtrigger_sequential = bool(
             sequential_xtrigger_labels
             and self.tdef.is_parentless(start_point)
-            and set(self.state.xtriggers.keys()).intersection(
-                sequential_xtrigger_labels
-            )
-        ):
-            self.is_xtrigger_sequential = True
-        else:
-            self.is_xtrigger_sequential = False
+            and sequential_xtrigger_labels.intersection(self.state.xtriggers)
+        )
 
         # Determine graph children of this task (for spawning).
         if data_mode:

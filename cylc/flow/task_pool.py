@@ -751,9 +751,10 @@ class TaskPool:
     def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
         """Spawn parentless task instances from point to runahead limit.
 
-        Sequentially checked xtriggers with spawn corresponding task out to the
-        next task with any xtrigger with the same behaviour, or to the runahead
-        limit (whichever occurs first).
+        Sequentially checked xtriggers will spawn the next occurrence of their
+        corresponding tasks. These tasks will keep spawning until they depend
+        on any unsatisfied xtrigger of the same sequential behavior, are no
+        longer parentless, and/or hit the runahead limit.
 
         """
         if not flow_nums or point is None:
@@ -812,10 +813,7 @@ class TaskPool:
             msg = f"removed ({reason})"
 
         if itask.is_xtrigger_sequential:
-            with suppress(ValueError):
-                self.xtrigger_mgr.sequential_spawn_next.remove(
-                    itask.identity
-                )
+            self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
 
         try:
             del self.active_tasks[itask.point][itask.identity]
@@ -1977,7 +1975,7 @@ class TaskPool:
         """Remove tasks from the pool (forced by command)."""
         itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            # Spawn next occurance of xtrigger sequential task.
+            # Spawn next occurrence of xtrigger sequential task.
             if itask.is_xtrigger_sequential:
                 self.spawn_to_rh_limit(
                     itask.tdef,
