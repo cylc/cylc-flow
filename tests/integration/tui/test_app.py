@@ -258,6 +258,9 @@ async def test_navigation(flow, scheduler, start, raikura):
         await schd.update_data_structure()
 
         with raikura(size='80,30') as rk:
+            # wait for the workflow to appear (collapsed)
+            rk.wait_until_loaded('#spring')
+
             rk.compare_screenshot(
                 'on-load',
                 'the workflow should be collapsed when Tui is loaded',
@@ -314,6 +317,8 @@ async def test_auto_expansion(flow, scheduler, start, raikura):
     with raikura(size='80,20') as rk:
         async with start(schd):
             await schd.update_data_structure()
+            # wait for the workflow to appear (collapsed)
+            rk.wait_until_loaded('#spring')
 
             # open the workflow
             rk.force_update()
@@ -351,12 +356,18 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, raikura):
         # 1- start the workflow
         async with start(schd):
             await schd.update_data_structure()
+            # wait for the workflow to appear (collapsed)
+            rk.wait_until_loaded('#spring')
+
+            # expand the workflow (subscribes to updates from it)
             rk.force_update()
             rk.user_input('down', 'right')
+
+            # wait for workflow to appear (expanded)
             rk.wait_until_loaded(schd.tokens.id)
             rk.compare_screenshot(
                 '1-workflow-running',
-                'the workflow should appear in tui and be expanded on load',
+                'the workflow should appear in tui and be expanded',
             )
 
         # 2 - stop the worlflow
@@ -371,7 +382,6 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, raikura):
         async with start(schd):
             await schd.update_data_structure()
             rk.wait_until_loaded(schd.tokens.id)
-            # rk.user_input('down', 'right')
             rk.compare_screenshot(
                 '3-workflow-restarted',
                 'the restarted workflow should be expanded',
