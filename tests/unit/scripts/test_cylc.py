@@ -143,6 +143,6 @@ def test_pythonpath_manip(monkeypatch):
     assert sys.path == ['/leave-alone']
     # If ROSE_PYTHONPATH is set we retrieve its contents and
     # add them to the sys.path:
-    monkeypatch.setenv('ROSE_PYTHONPATH', '/add1:/add2')
+    monkeypatch.setenv('CYLC_PYTHONPATH', '/add1:/add2')
     pythonpath_manip()
     assert sys.path == ['/add1', '/add2', '/leave-alone']
