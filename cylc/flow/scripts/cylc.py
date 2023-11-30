@@ -31,9 +31,12 @@ def pythonpath_manip():
         https://github.com/cylc/cylc-flow/issues/5124
     """
     if 'CYLC_PYTHONPATH' in os.environ:
-        for item in os.environ['CYLC_PYTHONPATH'].split(os.pathsep):
-            abspath = os.path.abspath(item)
-            sys.path.insert(0, abspath)
+        paths = [
+            os.path.abspath(item)
+            for item in os.environ['CYLC_PYTHONPATH'].split(os.pathsep)
+        ]
+        paths.extend(sys.path)
+        sys.path = paths
     if 'PYTHONPATH' in os.environ:
         for item in os.environ['PYTHONPATH'].split(os.pathsep):
             abspath = os.path.abspath(item)

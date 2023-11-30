@@ -133,18 +133,16 @@ def test_pythonpath_manip(monkeypatch):
 
     and adds items from CYLC_PYTHONPATH
     """
-    # If PYTHONPATH is set...
-    monkeypatch.setenv('PYTHONPATH', '/remove-from-sys.path')
-    monkeypatch.setattr('sys.path', ['/leave-alone', '/remove-from-sys.path'])
+    monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
+    monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
     pythonpath_manip()
     # ... we don't change PYTHONPATH
-    assert os.environ['PYTHONPATH'] == '/remove-from-sys.path'
+    assert os.environ['PYTHONPATH'] == '/remove1:/remove2'
     # ... but we do remove PYTHONPATH items from sys.path, and don't remove
     # items there not in PYTHONPATH
     assert sys.path == ['/leave-alone']
-
     # If CYLC_PYTHONPATH is set we retrieve its contents and
     # add them to the sys.path:
-    monkeypatch.setenv('CYLC_PYTHONPATH', '/add-to-sys.path')
+    monkeypatch.setenv('CYLC_PYTHONPATH', '/add1:/add2')
     pythonpath_manip()
-    assert sys.path == ['/add-to-sys.path', '/leave-alone']
+    assert sys.path == ['/add1', '/add2', '/leave-alone']
