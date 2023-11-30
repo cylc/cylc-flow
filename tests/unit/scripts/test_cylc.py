@@ -141,7 +141,7 @@ def test_pythonpath_manip(monkeypatch):
     # ... but we do remove PYTHONPATH items from sys.path, and don't remove
     # items there not in PYTHONPATH
     assert sys.path == ['/leave-alone']
-    # If ROSE_PYTHONPATH is set we retrieve its contents and
+    # If CYLC_PYTHONPATH is set we retrieve its contents and
     # add them to the sys.path:
     monkeypatch.setenv('CYLC_PYTHONPATH', '/add1:/add2')
     pythonpath_manip()
