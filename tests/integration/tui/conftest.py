@@ -198,17 +198,20 @@ class RaikuraSession:
 
         Note, this is a blocking wait with no timeout!
         """
-        ids = self.app.wait_until_loaded(*ids, retries=retries)
+        exc = None
+        try:
+            ids = self.app.wait_until_loaded(*ids, retries=retries)
+        except Exception as _exc:
+            exc = _exc
         if ids:
-            self.compare_screenshot(
-                f'fail-{uuid1()}',
-                (
-                    'Requested nodes did not appear in Tui after'
-                    f' {retries} retries: '
-                    + ', '.join(ids)
-                ),
-                1,
+            msg = (
+                'Requested nodes did not appear in Tui after'
+                f' {retries} retries: '
+                + ', '.join(ids)
             )
+            if exc:
+                msg += f'\n{exc}'
+            self.compare_screenshot(f'fail-{uuid1()}', msg, 1)
 
 
 @pytest.fixture

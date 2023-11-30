@@ -337,7 +337,7 @@ class TuiApp:
             # a custom workflow ID filter has been provided
             self.filters['workflows']['id'] = id_filter
 
-    def wait_until_loaded(self, *ids, retries=None):
+    def wait_until_loaded(self, *ids, retries=None, max_fails=50):
         """Wait for any requested nodes to be created.
 
         Warning:
@@ -352,21 +352,41 @@ class TuiApp:
             retries:
                 The maximum number of updates to perform whilst waiting
                 for the specified IDs to appear in the tree.
+            max_fails:
+                If there is no update received from the updater, then we call
+                it a failed attempt. This isn't necessarily an issue, the
+                updater might be running a little slow. But if there are a
+                large number of fails, it likely means the condition won't be
+                satisfied.
 
         Returns:
             A list of the IDs which NOT not appear in the store.
+
+        Raises:
+            Exception:
+                If the "max_fails" are exhausted.
 
         """
         from time import sleep
         ids = set(ids)
         self.expand_on_load.update(ids)
-        try_ = 0
+        successful_updates = 0
+        failed_updates = 0
         while ids & self.expand_on_load:
-            self.update()
-            sleep(0.1)  # blocking
-            try_ += 1
-            if retries is not None and try_ > retries:
-                return list(self.expand_on_load)
+            if self.update():
+                successful_updates += 1
+                if retries is not None and successful_updates > retries:
+                    return list(self.expand_on_load)
+            else:
+                failed_updates += 1
+                if failed_updates > max_fails:
+                    raise Exception(
+                        f'No update was received after {max_fails} attempts.'
+                        f'\nThere were {successful_updates} successful'
+                        ' updates.'
+                    )
+
+            sleep(0.15)  # blocking to Tui but not to the updater process
         return None
 
     def unhandled_input(self, key):

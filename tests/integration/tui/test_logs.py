@@ -201,6 +201,9 @@ async def test_scheduler_logs(
 ):
     """Test viewing the scheduler log files."""
     with mod_raikura(size='80,30') as rk:
+        # wait for the workflow to appear (collapsed)
+        rk.wait_until_loaded('#spring')
+
         # open the workflow in Tui
         rk.user_input('down', 'right')
         rk.wait_until_loaded(workflow.tokens.id)
@@ -244,6 +247,9 @@ async def test_task_logs(
     I.E. Test viewing job log files by opening the log view on a task.
     """
     with mod_raikura(size='80,30') as rk:
+        # wait for the workflow to appear (collapsed)
+        rk.wait_until_loaded('#spring')
+
         # open the workflow in Tui
         rk.user_input('down', 'right')
         rk.wait_until_loaded(workflow.tokens.id)
@@ -282,6 +288,9 @@ async def test_job_logs(
     I.E. Test viewing job log files by opening the log view on a job.
     """
     with mod_raikura(size='80,30') as rk:
+        # wait for the workflow to appear (collapsed)
+        rk.wait_until_loaded('#spring')
+
         # open the workflow in Tui
         rk.user_input('down', 'right')
         rk.wait_until_loaded(workflow.tokens.id)
@@ -331,6 +340,9 @@ async def test_errors(
     )
 
     with mod_raikura(size='80,30') as rk:
+        # wait for the workflow to appear (collapsed)
+        rk.wait_until_loaded('#spring')
+
         # open the log view on scheduler
         rk.user_input('down', 'enter', 'down', 'down', 'enter')
 
