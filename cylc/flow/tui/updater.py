@@ -155,7 +155,11 @@ class Updater():
         """
         with suppress_logging():
             self._update_filters(filters)
-            await self._update()
+            while True:
+                ret = await self._update()
+                if ret == self.SIGNAL_TERMINATE:
+                    break
+                self.update_queue.put(ret)
 
     def _subscribe(self, w_id):
         if w_id not in self._clients:
@@ -183,27 +187,30 @@ class Updater():
         self.filters = filters
 
     async def _update(self):
+        """Run one iteration of the updater.
+
+        Either returns the next update or "self.SIGNAL_TERMINATE".
+        """
         last_scan_time = 0
-        while True:
-            # process any pending commands
-            if not self._command_queue.empty():
-                (command, payload) = self._command_queue.get()
-                if command == self.SIGNAL_TERMINATE:
-                    break
-                getattr(self, command)(payload)
-                continue
+        # process any pending commands
+        while not self._command_queue.empty():
+            (command, payload) = self._command_queue.get()
+            if command == self.SIGNAL_TERMINATE:
+                return command
+            getattr(self, command)(payload)
 
-            # do a workflow scan if it's due
-            update_start_time = time()
-            if update_start_time - last_scan_time > self.BASE_SCAN_INTERVAL:
-                data = await self._scan()
+        # do a workflow scan if it's due
+        update_start_time = time()
+        if update_start_time - last_scan_time > self.BASE_SCAN_INTERVAL:
+            data = await self._scan()
 
-            # get the next snapshot from workflows we are subscribed to
-            self.update_queue.put(await self._run_update(data))
+        # get the next snapshot from workflows we are subscribed to
+        update = await self._run_update(data)
 
-            # schedule the next update
-            update_time = time() - update_start_time
-            await sleep(self.BASE_UPDATE_INTERVAL - update_time)
+        # schedule the next update
+        update_time = time() - update_start_time
+        await sleep(self.BASE_UPDATE_INTERVAL - update_time)
+        return update
 
     async def _run_update(self, data):
         # copy the scanned data so it can be reused for future updates
