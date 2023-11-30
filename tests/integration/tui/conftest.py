@@ -210,7 +210,7 @@ class RaikuraSession:
                 + ', '.join(ids)
             )
             if exc:
-                msg += f'\n{msg}'
+                msg += f'\n{exc}'
             self.compare_screenshot(f'fail-{uuid1()}', msg, 1)
 
 
