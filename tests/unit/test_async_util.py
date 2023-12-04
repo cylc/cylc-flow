@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+from inspect import signature
 import logging
 from pathlib import Path
 from random import random
@@ -209,14 +210,17 @@ def test_pipe_brackets():
 
 
 @pipe
-async def documented(x):
+async def documented(x: str, y: int = 0):
     """The docstring for the pipe function."""
     pass
 
 
 def test_documentation():
-    """It should preserve the docstring of pipe functions."""
+    """It should preserve the docstring, signature & annotations of
+    the wrapped function."""
     assert documented.__doc__ == 'The docstring for the pipe function.'
+    assert documented.__annotations__ == {'x': str, 'y': int}
+    assert str(signature(documented)) == '(x: str, y: int = 0)'
 
 
 def test_rewind():

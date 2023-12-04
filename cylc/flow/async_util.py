@@ -17,6 +17,7 @@
 
 import asyncio
 from functools import partial, wraps
+from inspect import signature
 import os
 from pathlib import Path
 from typing import List, Union
@@ -263,8 +264,20 @@ class _PipeFunction:
         return _AsyncPipe(self.func).__repr__()
 
     @property
+    def __name__(self):
+        return self.func.__name__
+
+    @property
     def __doc__(self):
         return self.func.__doc__
+
+    @property
+    def __signature__(self):
+        return signature(self.func)
+
+    @property
+    def __annotations__(self):
+        return self.func.__annotations__
 
 
 def pipe(func=None, preproc=None):
