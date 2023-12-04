@@ -414,9 +414,21 @@ async def graph_diff(
     graph_a: List[str] = []
     graph_b: List[str] = []
     graph_reference(
-        opts, workflow_a, start, stop, flow_file, write=graph_a.append),
+        opts,
+        workflow_a,
+        start,
+        stop,
+        flow_file,
+        write=graph_a.append,
+    )
     graph_reference(
-        opts, workflow_b, start, stop, flow_file_b, write=graph_b.append),
+        opts,
+        workflow_b,
+        start,
+        stop,
+        flow_file_b,
+        write=graph_b.append,
+    )
 
     # compare graphs
     diff_lines = list(
