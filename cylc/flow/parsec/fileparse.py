@@ -282,8 +282,6 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
     if fpath.name == 'global.cylc':
         return extra_vars
 
-    fpath = fpath.parent
-
     # Run entry point pre_configure items, trying to merge values with each.:
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
@@ -292,7 +290,7 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
             # If you want it to work on sourcedirs you need to get the options
             # to here.
             plugin_result = entry_point.load()(
-                srcdir=fpath, opts=opts
+                srcdir=fpath.parent, opts=opts
             )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
