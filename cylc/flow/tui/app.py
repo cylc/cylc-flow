@@ -22,7 +22,13 @@ from multiprocessing import Process
 import re
 
 import urwid
-from urwid.wimp import SelectableIcon
+try:
+    from urwid.widget import SelectableIcon
+except ImportError:
+    # BACK COMPAT: urwid.wimp
+    # From: urwid 2.0
+    # To: urwid 2.2
+    from urwid.wimp import SelectableIcon
 
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
