@@ -401,6 +401,17 @@ def main(
     options: 'Values',
     *ids,
     color: bool = False
+):
+    """Wrapper around the main script for simpler testing.
+    """
+    _main(parser, options, *ids, color=color)
+
+
+def _main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+    color: bool = False
 ) -> None:
     """Implement cylc cat-log CLI.
 
@@ -481,10 +492,16 @@ def main(
                 ),
                 reverse=True
             )
-            try:
-                log_file_path = Path(logs[rotation_number])
-            except IndexError:
-                raise InputError("max rotation %d" % (len(logs) - 1))
+            if logs:
+                try:
+                    log_file_path = Path(logs[rotation_number])
+                except IndexError:
+                    raise InputError(
+                        f"--rotation {rotation_number} invalid "
+                        f"(max value is {len(logs) - 1})"
+                    )
+            else:
+                raise InputError('Log file not found.')
         else:
             log_file_path = Path(log_dir, file_name)
 
