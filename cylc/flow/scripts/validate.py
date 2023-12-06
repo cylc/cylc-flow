@@ -133,14 +133,10 @@ ValidateOptions = Options(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    _main(parser, options, workflow_id)
+    asyncio.run(run(parser, options, workflow_id))
 
 
-def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    asyncio.run(wrapped_main(parser, options, workflow_id))
-
-
-async def wrapped_main(
+async def run(
     parser: COP, options: 'Values', workflow_id: str
 ) -> None:
     """cylc validate CLI."""

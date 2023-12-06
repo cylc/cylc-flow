@@ -465,14 +465,14 @@ def install(test_dir, run_dir):
     Returns:
         Workflow id, including run directory.
     """
-    def _inner(source, **kwargs):
+    async def _inner(source, **kwargs):
         opts = InstallOpts(**kwargs)
         # Note we append the source.name to the string rather than creating
         # a subfolder because the extra layer of directories would exceed
         # Cylc install's default limit.
         opts.workflow_name = (
             f'{str(test_dir.relative_to(run_dir))}.{source.name}')
-        workflow_id, _ = cylc_install(opts, str(source))
+        workflow_id, _ = await cylc_install(opts, str(source))
         workflow_id = infer_latest_run_from_id(workflow_id)
         return workflow_id
     yield _inner

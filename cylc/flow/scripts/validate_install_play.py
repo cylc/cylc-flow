@@ -28,15 +28,9 @@ This script is equivalent to:
 
 """
 
+import asyncio
 import sys
 
-from cylc.flow.scripts.validate import (
-    VALIDATE_OPTIONS,
-    _main as validate_main
-)
-from cylc.flow.scripts.install import (
-    INSTALL_OPTIONS, install_cli as cylc_install, get_source_location
-)
 from cylc.flow import LOG
 from cylc.flow.scheduler_cli import PLAY_OPTIONS
 from cylc.flow.loggingutil import set_timestamps
@@ -46,7 +40,16 @@ from cylc.flow.option_parsers import (
     cleanup_sysargv,
     log_subcommand,
 )
-from cylc.flow.scheduler_cli import _play
+from cylc.flow.scheduler_cli import scheduler_cli as cylc_play
+from cylc.flow.scripts.validate import (
+    VALIDATE_OPTIONS,
+    run as cylc_validate,
+)
+from cylc.flow.scripts.install import (
+    INSTALL_OPTIONS,
+    install_cli as cylc_install,
+    get_source_location,
+)
 from cylc.flow.terminal import cli_function
 
 from typing import TYPE_CHECKING, Optional
@@ -89,16 +92,20 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
+    asyncio.run(run(parser, options, workflow_id))
+
+
+async def run(parser: COP, options: 'Values', workflow_id: Optional[str]):
     """Run Cylc validate - install - play in sequence."""
     if not workflow_id:
         workflow_id = '.'
     orig_source = workflow_id
     source = get_source_location(workflow_id)
     log_subcommand('validate', source)
-    validate_main(parser, options, str(source))
+    await cylc_validate(parser, options, str(source))
 
     log_subcommand('install', source)
-    _, workflow_id = cylc_install(options, workflow_id)
+    _, workflow_id = await cylc_install(options, workflow_id)
 
     cleanup_sysargv(
         'play',
@@ -114,4 +121,4 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
 
     set_timestamps(LOG, options.log_timestamp)
     log_subcommand(*sys.argv[1:])
-    _play(parser, options, workflow_id)
+    await cylc_play(options, workflow_id)
