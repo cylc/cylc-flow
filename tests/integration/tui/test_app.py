@@ -46,37 +46,37 @@ def set_task_state(schd, task_states):
         )
 
 
-async def test_tui_basics(raikura):
+async def test_tui_basics(rakiura):
     """Test basic Tui interaction with no workflows."""
-    with raikura(size='80,40') as rk:
+    with rakiura(size='80,40') as rk:
         # the app should open
-        rk.compare_screenshot('test-raikura', 'the app should have loaded')
+        rk.compare_screenshot('test-rakiura', 'the app should have loaded')
 
         # "h" should bring up the onscreen help
         rk.user_input('h')
         rk.compare_screenshot(
-            'test-raikura-help',
+            'test-rakiura-help',
             'the help screen should be visible'
         )
 
         # "q" should close the popup
         rk.user_input('q')
         rk.compare_screenshot(
-            'test-raikura',
+            'test-rakiura',
             'the help screen should have closed',
         )
 
         # "enter" should bring up the context menu
         rk.user_input('enter')
         rk.compare_screenshot(
-            'test-raikura-enter',
+            'test-rakiura-enter',
             'the context menu should have opened',
         )
 
         # "enter" again should close it via the "cancel" button
         rk.user_input('enter')
         rk.compare_screenshot(
-            'test-raikura',
+            'test-rakiura',
             'the context menu should have closed',
         )
 
@@ -89,13 +89,13 @@ async def test_tui_basics(raikura):
             rk.user_input('q')
 
 
-async def test_subscribe_unsubscribe(one_conf, flow, scheduler, start, raikura):
+async def test_subscribe_unsubscribe(one_conf, flow, scheduler, start, rakiura):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
     async with start(schd):
         await schd.update_data_structure()
-        with raikura(size='80,15') as rk:
+        with rakiura(size='80,15') as rk:
             rk.compare_screenshot(
                 'unsubscribed',
                 'the workflow should be collapsed'
@@ -120,7 +120,7 @@ async def test_subscribe_unsubscribe(one_conf, flow, scheduler, start, raikura):
             )
 
 
-async def test_workflow_states(one_conf, flow, scheduler, start, raikura):
+async def test_workflow_states(one_conf, flow, scheduler, start, rakiura):
     """Test viewing multiple workflows in different states."""
     # one => stopping
     id_1 = flow(one_conf, name='one')
@@ -137,7 +137,7 @@ async def test_workflow_states(one_conf, flow, scheduler, start, raikura):
 
         async with start(schd_2):
             await schd_2.update_data_structure()
-            with raikura(size='80,15') as rk:
+            with rakiura(size='80,15') as rk:
                 rk.compare_screenshot(
                     'unfiltered',
                     'All workflows should be visible (one, two, tree)',
@@ -193,7 +193,7 @@ async def test_workflow_states(one_conf, flow, scheduler, start, raikura):
 # TODO: Task state filtering is currently broken
 # see: https://github.com/cylc/cylc-flow/issues/5716
 #
-# async def test_task_states(flow, scheduler, start, raikura):
+# async def test_task_states(flow, scheduler, start, rakiura):
 #     id_ = flow({
 #         'scheduler': {
 #             'allow implicit tasks': 'true',
@@ -224,7 +224,7 @@ async def test_workflow_states(one_conf, flow, scheduler, start, raikura):
 #         )
 #         await schd.update_data_structure()
 #
-#         with raikura(schd.tokens.id, size='80,20') as rk:
+#         with rakiura(schd.tokens.id, size='80,20') as rk:
 #             rk.compare_screenshot('unfiltered')
 #
 #             # filter out waiting tasks
@@ -232,7 +232,7 @@ async def test_workflow_states(one_conf, flow, scheduler, start, raikura):
 #             rk.compare_screenshot('filter-not-waiting')
 
 
-async def test_navigation(flow, scheduler, start, raikura):
+async def test_navigation(flow, scheduler, start, rakiura):
     """Test navigating with the arrow keys."""
     id_ = flow({
         'scheduling': {
@@ -257,7 +257,7 @@ async def test_navigation(flow, scheduler, start, raikura):
     async with start(schd):
         await schd.update_data_structure()
 
-        with raikura(size='80,30') as rk:
+        with rakiura(size='80,30') as rk:
             # wait for the workflow to appear (collapsed)
             rk.wait_until_loaded('#spring')
 
@@ -291,7 +291,7 @@ async def test_navigation(flow, scheduler, start, raikura):
             )
 
 
-async def test_auto_expansion(flow, scheduler, start, raikura):
+async def test_auto_expansion(flow, scheduler, start, rakiura):
     """It should automatically expand cycles and top-level families.
 
     When a workflow is expanded, Tui should auto expand cycles and top-level
@@ -314,7 +314,7 @@ async def test_auto_expansion(flow, scheduler, start, raikura):
         },
     }, name='one')
     schd = scheduler(id_)
-    with raikura(size='80,20') as rk:
+    with rakiura(size='80,20') as rk:
         async with start(schd):
             await schd.update_data_structure()
             # wait for the workflow to appear (collapsed)
@@ -342,7 +342,7 @@ async def test_auto_expansion(flow, scheduler, start, raikura):
             )
 
 
-async def test_restart_reconnect(one_conf, flow, scheduler, start, raikura):
+async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
     """It should handle workflow shutdown and restart.
 
     The Cylc client can raise exceptions e.g. WorkflowStopped. Any text written
@@ -350,7 +350,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, raikura):
     can handle shutdown / restart without any errors occuring and any spurious
     text appearing on the screen.
     """
-    with raikura(size='80,20') as rk:
+    with rakiura(size='80,20') as rk:
         schd = scheduler(flow(one_conf, name='one'))
 
         # 1- start the workflow

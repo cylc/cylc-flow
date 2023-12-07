@@ -68,8 +68,8 @@ def format_test_failure(expected, got, description):
     '''
 
 
-class RaikuraSession:
-    """Convenience class for accessing Raikura functionality."""
+class RakiuraSession:
+    """Convenience class for accessing Rakiura functionality."""
 
     def __init__(self, app, html_fragment, test_dir, test_name):
         self.app = app
@@ -177,7 +177,7 @@ class RaikuraSession:
         This is done automatically by compare_screenshot but you may want to
         call it in a test, e.g. before pressing navigation keys.
 
-        With Raikura, the Tui event loop is not running so the data is never
+        With Rakiura, the Tui event loop is not running so the data is never
         refreshed.
 
         You do NOT need to call this method for key presses, but you do need to
@@ -215,16 +215,16 @@ class RaikuraSession:
 
 
 @pytest.fixture
-def raikura(test_dir, request, monkeypatch):
+def rakiura(test_dir, request, monkeypatch):
     """Visual regression test framework for Urwid apps.
 
     Like Cypress but for Tui so named after a NZ island with lots of Tuis.
 
-    When called this yields a RaikuraSession object loaded with test
+    When called this yields a RakiuraSession object loaded with test
     utilities. All tests have default retries to avoid flaky tests.
 
     Similar to the "start" fixture, which starts a Scheduler without running
-    the main loop, raikura starts Tui without running the main loop.
+    the main loop, rakiura starts Tui without running the main loop.
 
     Arguments:
         workflow_id:
@@ -234,25 +234,25 @@ def raikura(test_dir, request, monkeypatch):
             separated string e.g. "80,50" for 80 cols wide by 50 rows tall.
 
     Returns:
-        A RaikuraSession context manager which provides useful utilities for
+        A RakiuraSession context manager which provides useful utilities for
         testing.
 
     """
-    return _raikura(test_dir, request, monkeypatch)
+    return _rakiura(test_dir, request, monkeypatch)
 
 
 @pytest.fixture
-def mod_raikura(test_dir, request, monkeypatch):
-    """Same as raikura but configured to view module-scoped workflows.
+def mod_rakiura(test_dir, request, monkeypatch):
+    """Same as rakiura but configured to view module-scoped workflows.
 
     Note: This is *not* a module-scoped fixture (no need, creating Tui sessions
     is not especially slow), it is configured to display module-scoped
     "scheduler" fixtures (which may be more expensive to create/destroy).
     """
-    return _raikura(test_dir.parent, request, monkeypatch)
+    return _rakiura(test_dir.parent, request, monkeypatch)
 
 
-def _raikura(test_dir, request, monkeypatch):
+def _rakiura(test_dir, request, monkeypatch):
     # make the workflow and scan update intervals match (more reliable)
     # and speed things up a little whilst we're at it
     monkeypatch.setattr(
@@ -289,7 +289,7 @@ def _raikura(test_dir, request, monkeypatch):
     workflow_filter = re.escape(id_base) + r'/.*'
 
     @contextmanager
-    def _raikura(workflow_id=None, size='80,50'):
+    def _rakiura(workflow_id=None, size='80,50'):
         screen, html_fragment = configure_screenshot(size)
         app = TuiApp(screen=screen)
         with app.main(
@@ -297,11 +297,11 @@ def _raikura(test_dir, request, monkeypatch):
             id_filter=workflow_filter,
             interactive=False,
         ):
-            yield RaikuraSession(
+            yield RakiuraSession(
                 app,
                 html_fragment,
                 test_dir,
                 request.function.__name__,
             )
 
-    return _raikura
+    return _rakiura

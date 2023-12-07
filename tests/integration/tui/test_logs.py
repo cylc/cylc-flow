@@ -196,11 +196,11 @@ async def workflow(mod_flow, mod_scheduler, mod_start, standarise_host_and_path)
 
 async def test_scheduler_logs(
     workflow,
-    mod_raikura,
+    mod_rakiura,
     wait_log_loaded,
 ):
     """Test viewing the scheduler log files."""
-    with mod_raikura(size='80,30') as rk:
+    with mod_rakiura(size='80,30') as rk:
         # wait for the workflow to appear (collapsed)
         rk.wait_until_loaded('#spring')
 
@@ -239,14 +239,14 @@ async def test_scheduler_logs(
 
 async def test_task_logs(
     workflow,
-    mod_raikura,
+    mod_rakiura,
     wait_log_loaded,
 ):
     """Test viewing task log files.
 
     I.E. Test viewing job log files by opening the log view on a task.
     """
-    with mod_raikura(size='80,30') as rk:
+    with mod_rakiura(size='80,30') as rk:
         # wait for the workflow to appear (collapsed)
         rk.wait_until_loaded('#spring')
 
@@ -280,14 +280,14 @@ async def test_task_logs(
 
 async def test_job_logs(
     workflow,
-    mod_raikura,
+    mod_rakiura,
     wait_log_loaded,
 ):
     """Test viewing the job log files.
 
     I.E. Test viewing job log files by opening the log view on a job.
     """
-    with mod_raikura(size='80,30') as rk:
+    with mod_rakiura(size='80,30') as rk:
         # wait for the workflow to appear (collapsed)
         rk.wait_until_loaded('#spring')
 
@@ -325,7 +325,7 @@ async def test_job_logs(
 
 async def test_errors(
     workflow,
-    mod_raikura,
+    mod_rakiura,
     wait_log_loaded,
     monkeypatch,
 ):
@@ -339,7 +339,7 @@ async def test_errors(
         cli_cmd_fail,
     )
 
-    with mod_raikura(size='80,30') as rk:
+    with mod_rakiura(size='80,30') as rk:
         # wait for the workflow to appear (collapsed)
         rk.wait_until_loaded('#spring')
 
