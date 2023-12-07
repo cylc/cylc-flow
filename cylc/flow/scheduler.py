@@ -434,6 +434,18 @@ class Scheduler:
             # Mark this exc as expected (see docstring for .schd_expected):
             exc.schd_expected = True
             raise exc
+
+        # Prevent changing mode on restart.
+        if self.is_restart:
+            # check run mode against db
+            og_run_mode = self.workflow_db_mgr.get_pri_dao(
+            ).select_workflow_params_run_mode() or 'live'
+            run_mode = self.config.run_mode()
+            if run_mode != og_run_mode:
+                raise InputError(
+                    f'This workflow was originally run in {og_run_mode} mode:'
+                    f' Will not restart in {run_mode} mode.')
+
         self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
