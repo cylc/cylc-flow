@@ -120,9 +120,11 @@ def get_option_parser():
 
     parser.add_option(
         '--timeout',
-        help=("The number of seconds to wait for cleaning to take place on "
-              r"remote hosts before cancelling. Default: %default."),
-        action='store', default='120', dest='remote_timeout'
+        help=(
+            "The length of time to wait for cleaning to take place on "
+            r"remote hosts before cancelling. Default: %default."
+        ),
+        action='store', default='PT5M', dest='remote_timeout'
     )
 
     parser.add_option(

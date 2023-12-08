@@ -19,6 +19,7 @@ import os
 import shutil
 from glob import iglob
 from pathlib import Path
+from subprocess import Popen
 from typing import (
     Any,
     Callable,
@@ -274,7 +275,8 @@ def test_init_clean__rm_dirs(
     init_clean(id_, opts=opts)
     mock_clean.assert_called_with(id_, run_dir, expected_clean)
     mock_remote_clean.assert_called_with(
-        id_, platforms, expected_remote_clean, opts.remote_timeout)
+        id_, platforms, opts.remote_timeout, expected_remote_clean
+    )
 
 
 @pytest.mark.parametrize(
@@ -920,7 +922,7 @@ def test_remote_clean(
     # Remove randomness:
     monkeymock('cylc.flow.clean.shuffle')
 
-    def mocked_remote_clean_cmd_side_effect(id_, platform, rm_dirs, timeout):
+    def mocked_remote_clean_cmd_side_effect(id_, platform, timeout, rm_dirs):
         proc_ret_code = 0
         if failed_platforms and platform['name'] in failed_platforms:
             proc_ret_code = failed_platforms[platform['name']]
@@ -942,11 +944,13 @@ def test_remote_clean(
     if exc_expected:
         with pytest.raises(CylcError) as exc:
             cylc_clean.remote_clean(
-                id_, platform_names, rm_dirs, timeout='irrelevant')
+                id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
+            )
         assert "Remote clean failed" in str(exc.value)
     else:
         cylc_clean.remote_clean(
-            id_, platform_names, rm_dirs, timeout='irrelevant')
+            id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
+        )
     for msg in expected_err_msgs:
         assert log_filter(caplog, level=logging.ERROR, contains=msg)
     if expected_platforms:
@@ -958,6 +962,33 @@ def test_remote_clean(
     if failed_platforms:
         for p_name in failed_platforms:
             assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    'timeout, expected',
+    [('100', '100'),
+     ('PT1M2S', '62.0')]
+)
+def test_remote_clean__timeout(
+    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
+    timeout: str, expected: str,
+):
+    """Test that remote_clean() accepts a timeout in ISO 8601 format or
+    number of seconds."""
+    mock_remote_clean_cmd = monkeymock(
+        'cylc.flow.clean._remote_clean_cmd',
+        spec=_remote_clean_cmd,
+        return_value=mock.Mock(
+            spec=Popen, poll=lambda: 0, communicate=lambda: ('', '')
+        )
+    )
+    monkeypatch.setattr(
+        'cylc.flow.clean.get_install_target_to_platforms_map',
+        lambda *a, **k: {'picard': [PLATFORMS['stargazer']]}
+    )
+
+    cylc_clean.remote_clean('blah', 'blah', timeout)
+    assert mock_remote_clean_cmd.call_args.kwargs['timeout'] == expected
 
 
 @pytest.mark.parametrize(

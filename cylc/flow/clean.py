@@ -44,6 +44,9 @@ from typing import (
     Union,
 )
 
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+from metomi.isodatetime.parsers import DurationParser
+
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
@@ -187,7 +190,7 @@ def init_clean(id_: str, opts: 'Values') -> None:
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
-                id_, platform_names, opts.rm_dirs, opts.remote_timeout
+                id_, platform_names, opts.remote_timeout, opts.rm_dirs
             )
 
     if not opts.remote_only:
@@ -338,8 +341,8 @@ def _clean_using_glob(
 def remote_clean(
     id_: str,
     platform_names: Iterable[str],
+    timeout: str,
     rm_dirs: Optional[List[str]] = None,
-    timeout: str = '120'
 ) -> None:
     """Run subprocesses to clean a workflow on its remote install targets
     (skip localhost), given a set of platform names to look up.
@@ -348,8 +351,9 @@ def remote_clean(
         id_: Workflow name.
         platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
+        timeout: ISO 8601 duration or number of seconds to wait before
+            cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
-        timeout: Number of seconds to wait before cancelling.
     """
     try:
         install_targets_map = (
@@ -358,6 +362,10 @@ def remote_clean(
         raise PlatformLookupError(
             f"Cannot clean {id_} on remote platforms as the workflow database "
             f"is out of date/inconsistent with the global config - {exc}")
+
+    with suppress(ISO8601SyntaxError):
+        timeout = str(DurationParser().parse(timeout).get_seconds())
+
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
