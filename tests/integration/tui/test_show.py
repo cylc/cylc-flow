@@ -19,7 +19,7 @@ from cylc.flow.exceptions import ClientError
 from cylc.flow.tui.data import _show
 
 
-async def test_show(flow, scheduler, start, raikura, monkeypatch):
+async def test_show(flow, scheduler, start, rakiura, monkeypatch):
     """Test "cylc show" support in Tui."""
     id_ = flow({
         'scheduling': {
@@ -40,7 +40,7 @@ async def test_show(flow, scheduler, start, raikura, monkeypatch):
     async with start(schd):
         await schd.update_data_structure()
 
-        with raikura(size='80,40') as rk:
+        with rakiura(size='80,40') as rk:
             rk.user_input('down', 'right')
             rk.wait_until_loaded(schd.tokens.id)
 

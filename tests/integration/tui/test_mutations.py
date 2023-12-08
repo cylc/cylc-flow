@@ -35,13 +35,13 @@ async def test_online_mutation(
     flow,
     scheduler,
     start,
-    raikura,
+    rakiura,
     monkeypatch,
 ):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
-    with raikura(size='80,15') as rk:
+    with rakiura(size='80,15') as rk:
         async with start(schd):
             await schd.update_data_structure()
             assert schd.command_queue.empty()
@@ -157,14 +157,14 @@ def capture_commands(monkeypatch):
 async def test_offline_mutation(
     one_conf,
     flow,
-    raikura,
+    rakiura,
     capture_commands,
     standardise_cli_cmds,
 ):
     id_ = flow(one_conf, name='one')
     commands, returncode = capture_commands
 
-    with raikura(size='80,15') as rk:
+    with rakiura(size='80,15') as rk:
         # run the stop-all mutation
         rk.wait_until_loaded('root')
         rk.user_input('enter', 'down')
