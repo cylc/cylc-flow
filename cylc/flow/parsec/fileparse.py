@@ -109,7 +109,7 @@ _UNCLOSED_MULTILINE = re.compile(
 )
 TEMPLATING_DETECTED = 'templating_detected'
 TEMPLATE_VARIABLES = 'template_variables'
-EXTRA_VARS_TEMPLATE = {
+EXTRA_VARS_TEMPLATE: t.Dict[str, t.Any] = {
     'env': {},
     TEMPLATE_VARIABLES: {},
     TEMPLATING_DETECTED: None
