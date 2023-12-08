@@ -384,7 +384,7 @@ def remote_clean(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: Dict[str, PlatformError] = {}
+    failed_targets: Dict[str, Union[PlatformError, str]] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -395,7 +395,12 @@ def remote_clean(
         out, err = item.proc.communicate()
         if out:
             LOG.info(f"[{item.install_target}]\n{out}")
-        if ret_code:
+        if ret_code == 124:
+            failed_targets[item.install_target] = (
+                f"cylc clean timed out after {timeout}s. You can increase "
+                "this timeout using the --timeout option."
+            )
+        elif ret_code:
             this_platform = item.platforms.pop(0)
             excp = PlatformError(
                 PlatformError.MSG_TIDY,
@@ -423,9 +428,9 @@ def remote_clean(
             LOG.debug(f"[{item.install_target}]\n{err}")
         sleep(0.2)
     if failed_targets:
-        for target, excp in failed_targets.items():
+        for target, info in failed_targets.items():
             LOG.error(
-                f"Could not clean {id_} on install target: {target}\n{excp}"
+                f"Could not clean {id_} on install target: {target}\n{info}"
             )
         raise CylcError(f"Remote clean failed for {id_}")
 

@@ -970,16 +970,23 @@ def test_remote_clean(
      ('PT1M2S', '62.0')]
 )
 def test_remote_clean__timeout(
-    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
-    timeout: str, expected: str,
+    monkeymock: MonkeyMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    timeout: str,
+    expected: str,
 ):
-    """Test that remote_clean() accepts a timeout in ISO 8601 format or
-    number of seconds."""
+    """Test remote_clean() timeout.
+
+    - It should accept ISO 8601 format or number of seconds.
+    - It should give a sensible error message for return code 124.
+    """
+    caplog.set_level(logging.ERROR, CYLC_LOG)
     mock_remote_clean_cmd = monkeymock(
         'cylc.flow.clean._remote_clean_cmd',
         spec=_remote_clean_cmd,
         return_value=mock.Mock(
-            spec=Popen, poll=lambda: 0, communicate=lambda: ('', '')
+            spec=Popen, poll=lambda: 124, communicate=lambda: ('', '')
         )
     )
     monkeypatch.setattr(
@@ -987,8 +994,11 @@ def test_remote_clean__timeout(
         lambda *a, **k: {'picard': [PLATFORMS['stargazer']]}
     )
 
-    cylc_clean.remote_clean('blah', 'blah', timeout)
-    assert mock_remote_clean_cmd.call_args.kwargs['timeout'] == expected
+    with pytest.raises(CylcError):
+        cylc_clean.remote_clean('blah', 'blah', timeout)
+    _, kwargs = mock_remote_clean_cmd.call_args
+    assert kwargs['timeout'] == expected
+    assert f"cylc clean timed out after {expected}s" in caplog.text
 
 
 @pytest.mark.parametrize(
