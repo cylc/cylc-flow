@@ -323,7 +323,7 @@ STYLE_CHECKS = {
         'short': 'Item not indented.',
         # Non-indented items should be sections:
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^[^\{\[|\s]').findall
+        FUNCTION: re.compile(r'^[^%\{\[|\s]').findall
     },
     "S003": {
         'short': 'Top level sections should not be indented.',

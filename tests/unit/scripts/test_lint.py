@@ -142,6 +142,8 @@ TEST_FILE = """
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
+%include foo.cylc
 """
 
 
