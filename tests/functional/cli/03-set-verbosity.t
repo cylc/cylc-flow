@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc set-verbosity"
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 4
 
 # Test illegal log level
 TEST_NAME="${TEST_NAME_BASE}-bad"
@@ -28,18 +28,32 @@ grep_ok 'InputError: Illegal logging level, duck' "${TEST_NAME}.stderr"
 TEST_NAME="${TEST_NAME_BASE}-good"
 init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
-    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
-        R1 = andor
+        R1 = setter => getter
+[runtime]
+    [[setter]]
+        script = """
+            echo "CYLC_VERBOSE: $CYLC_VERBOSE"
+            [[ "$CYLC_VERBOSE" != 'true' ]]
+            echo "CYLC_DEBUG: $CYLC_DEBUG"
+            [[ "$CYLC_DEBUG" != 'true' ]]
+
+            cylc set-verbosity DEBUG "$CYLC_WORKFLOW_ID"
+            cylc__job__poll_grep_workflow_log 'Command actioned: set_verbosity'
+        """
+    [[getter]]
+        script = """
+            echo "CYLC_VERBOSE: $CYLC_VERBOSE"
+            [[ "$CYLC_VERBOSE" == 'true' ]]
+            echo "CYLC_DEBUG: $CYLC_DEBUG"
+            [[ "$CYLC_DEBUG" == 'true' ]]
+        """
 __FLOW__
 
 run_ok "${TEST_NAME}-validate" cylc validate "$WORKFLOW_NAME"
-workflow_run_ok "${TEST_NAME}-run" cylc play --pause "$WORKFLOW_NAME"
-
-run_ok "$TEST_NAME" cylc set-verbosity DEBUG "$WORKFLOW_NAME"
-log_scan "${TEST_NAME}-grep" "${WORKFLOW_RUN_DIR}/log/scheduler/log" 5 1 \
-    'Command actioned: set_verbosity'
-
-cylc stop "$WORKFLOW_NAME"
+workflow_run_ok "${TEST_NAME}-run" cylc play --no-detach "$WORKFLOW_NAME"
 purge
