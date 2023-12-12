@@ -39,6 +39,13 @@ jobs:
       - name: install cylc-flow
         run: pip install .[all]
 
+      - name: lint tutorials
+        run: |
+          cylc get-resources tutorial
+          for f in $(find "${HOME}/cylc-src" -name flow*.cylc -exec dirname {} \;);
+            do cylc lint $f -r style
+          done
+
       - name: run tutorial workflow
         timeout-minutes: 6
         run: |
