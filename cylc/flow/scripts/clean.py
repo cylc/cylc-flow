@@ -64,6 +64,9 @@ from optparse import SUPPRESS_HELP
 import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+from metomi.isodatetime.parsers import DurationParser
+
 from cylc.flow import LOG
 from cylc.flow.clean import init_clean, get_contained_workflows
 from cylc.flow.exceptions import CylcError, InputError
@@ -138,6 +141,24 @@ def get_option_parser():
 
 
 CleanOptions = Options(get_option_parser())
+
+
+def parse_timeout(opts: 'Values') -> None:
+    """Parse timeout as ISO 8601 duration or number of seconds."""
+    if opts.remote_timeout:
+        try:
+            timeout = int(
+                DurationParser().parse(opts.remote_timeout).get_seconds()
+            )
+        except ISO8601SyntaxError:
+            try:
+                timeout = int(opts.remote_timeout)
+            except ValueError:
+                raise InputError(
+                    f"Invalid timeout: {opts.remote_timeout}. Must be "
+                    "an ISO 8601 duration or number of seconds."
+                )
+        opts.remote_timeout = str(timeout)
 
 
 def prompt(workflows: Iterable[str]) -> None:
@@ -220,7 +241,15 @@ async def run(*ids: str, opts: 'Values') -> None:
 
 
 @cli_function(get_option_parser)
-def main(_, opts: 'Values', *ids: str):
+def main(_parser, opts: 'Values', *ids: str):
+    _main(opts, *ids)
+
+
+def _main(opts: 'Values', *ids: str):
+    """Run the clean command.
+
+    This is a separate function for ease of testing.
+    """
     if cylc.flow.flags.verbosity < 2:
         set_timestamps(LOG, False)
 
@@ -228,5 +257,7 @@ def main(_, opts: 'Values', *ids: str):
         raise InputError(
             "--local and --remote options are mutually exclusive"
         )
+
+    parse_timeout(opts)
 
     asyncio.run(run(*ids, opts=opts))

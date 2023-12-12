@@ -44,9 +44,6 @@ from typing import (
     Union,
 )
 
-from metomi.isodatetime.exceptions import ISO8601SyntaxError
-from metomi.isodatetime.parsers import DurationParser
-
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
@@ -362,9 +359,6 @@ def remote_clean(
         raise PlatformLookupError(
             f"Cannot clean {id_} on remote platforms as the workflow database "
             f"is out of date/inconsistent with the global config - {exc}")
-
-    with suppress(ISO8601SyntaxError):
-        timeout = str(DurationParser().parse(timeout).get_seconds())
 
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(

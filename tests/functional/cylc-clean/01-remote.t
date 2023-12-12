@@ -25,7 +25,7 @@ SSH_CMD="$(cylc config -d -i "[platforms][${CYLC_TEST_PLATFORM}]ssh command") ${
 if ! $SSH_CMD command -v 'tree' > '/dev/null'; then
     skip_all "'tree' command not available on remote host ${CYLC_TEST_HOST}"
 fi
-set_test_number 12
+set_test_number 10
 
 # Generate random name for symlink dirs to avoid any clashes with other tests
 SYM_NAME="$(mktemp -u)"
@@ -108,14 +108,9 @@ __TREE__
 
 # -----------------------------------------------------------------------------
 
-TEST_NAME="cylc-clean-timeout"
-run_fail "$TEST_NAME" cylc clean --timeout 'PT0,1S' "$WORKFLOW_NAME"
-dump_std "$TEST_NAME"
-grep_ok 'cylc clean timed out after 0.1s' "${TEST_NAME}.stderr"
-
-
 TEST_NAME="cylc-clean-ok"
-run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
+run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME" --timeout PT2M
+# (timeout opt is covered by unit tests but no harm double-checking here)
 dump_std "$TEST_NAME"
 
 TEST_NAME="run-dir-not-exist-post-clean.local"

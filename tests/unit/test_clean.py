@@ -964,25 +964,15 @@ def test_remote_clean(
             assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
 
 
-@pytest.mark.parametrize(
-    'timeout, expected',
-    [('100', '100'),
-     ('PT1M2S', '62.0')]
-)
 def test_remote_clean__timeout(
     monkeymock: MonkeyMock,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    timeout: str,
-    expected: str,
 ):
-    """Test remote_clean() timeout.
-
-    - It should accept ISO 8601 format or number of seconds.
-    - It should give a sensible error message for return code 124.
+    """Test remote_clean() gives a sensible error message for return code 124.
     """
     caplog.set_level(logging.ERROR, CYLC_LOG)
-    mock_remote_clean_cmd = monkeymock(
+    monkeymock(
         'cylc.flow.clean._remote_clean_cmd',
         spec=_remote_clean_cmd,
         return_value=mock.Mock(
@@ -995,10 +985,13 @@ def test_remote_clean__timeout(
     )
 
     with pytest.raises(CylcError):
-        cylc_clean.remote_clean('blah', 'blah', timeout)
-    _, kwargs = mock_remote_clean_cmd.call_args
-    assert kwargs['timeout'] == expected
-    assert f"cylc clean timed out after {expected}s" in caplog.text
+        cylc_clean.remote_clean(
+            'blah', platform_names=['blah'], timeout='blah'
+        )
+    assert "cylc clean timed out" in caplog.text
+    # No need to log the remote clean cmd etc. for timeout
+    assert "ssh" not in caplog.text.lower()
+    assert "stderr" not in caplog.text.lower()
 
 
 @pytest.mark.parametrize(
