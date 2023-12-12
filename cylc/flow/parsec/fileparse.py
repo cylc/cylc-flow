@@ -30,6 +30,7 @@ parsec config file parsing:
       value type is known).
 """
 
+from copy import deepcopy
 import os
 from pathlib import Path
 import re
@@ -51,6 +52,7 @@ from cylc.flow.workflow_files import (
 
 if t.TYPE_CHECKING:
     from optparse import Values
+    from typing import Union
 
 
 # heading/sections can contain commas (namespace name lists) and any
@@ -105,6 +107,13 @@ _TRIPLE_QUOTE = {
 _UNCLOSED_MULTILINE = re.compile(
     r'(?<![\w>])\[.*\]'
 )
+TEMPLATING_DETECTED = 'templating_detected'
+TEMPLATE_VARIABLES = 'template_variables'
+EXTRA_VARS_TEMPLATE: t.Dict[str, t.Any] = {
+    'env': {},
+    TEMPLATE_VARIABLES: {},
+    TEMPLATING_DETECTED: None
+}
 
 
 def get_cylc_env_vars() -> t.Dict[str, str]:
@@ -242,7 +251,7 @@ def multiline(flines, value, index, maxline):
     return quot + newvalue + line, index
 
 
-def process_plugins(fpath, opts):
+def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
     """Run a Cylc pre-configuration plugin.
 
     Plugins should return a dictionary containing:
@@ -253,22 +262,25 @@ def process_plugins(fpath, opts):
             or ``empy``.
 
     args:
-        fpath: Directory where the plugin will look for a config.
+        fpath: Path to a config file. Plugin will look at the parent
+            directory of this file.
         opts: Command line options to be passed to the plugin.
 
     Returns: Dictionary in the form:
         extra_vars = {
             'env': {},
             'template_variables': {},
-            'templating_detected': None
+            TEMPLATING_DETECTED: None
         }
     """
+    fpath = Path(fpath)
+
     # Set out blank dictionary for return:
-    extra_vars = {
-        'env': {},
-        'template_variables': {},
-        'templating_detected': None
-    }
+    extra_vars = deepcopy(EXTRA_VARS_TEMPLATE)
+
+    # Don't run this on global configs:
+    if fpath.name == 'global.cylc':
+        return extra_vars
 
     # Run entry point pre_configure items, trying to merge values with each.:
     for entry_point in iter_entry_points(
@@ -278,7 +290,7 @@ def process_plugins(fpath, opts):
             # If you want it to work on sourcedirs you need to get the options
             # to here.
             plugin_result = entry_point.load()(
-                srcdir=fpath, opts=opts
+                srcdir=fpath.parent, opts=opts
             )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
@@ -288,7 +300,7 @@ def process_plugins(fpath, opts):
                 entry_point.name,
                 exc
             ) from None
-        for section in ['env', 'template_variables']:
+        for section in ['env', TEMPLATE_VARIABLES]:
             if section in plugin_result and plugin_result[section] is not None:
                 # Raise error if multiple plugins try to update the same keys.
                 section_update = plugin_result.get(section, {})
@@ -302,26 +314,20 @@ def process_plugins(fpath, opts):
                     )
                 extra_vars[section].update(section_update)
 
+        templating_detected = plugin_result.get(TEMPLATING_DETECTED, None)
         if (
-            'templating_detected' in plugin_result and
-            plugin_result['templating_detected'] is not None and
-            extra_vars['templating_detected'] is not None and
-            extra_vars['templating_detected'] !=
-                plugin_result['templating_detected']
+            templating_detected is not None
+            and extra_vars[TEMPLATING_DETECTED] is not None
+            and extra_vars[TEMPLATING_DETECTED] != templating_detected
         ):
             # Don't allow subsequent plugins with different templating_detected
             raise ParsecError(
                 "Can't merge templating languages "
-                f"{extra_vars['templating_detected']} and "
-                f"{plugin_result['templating_detected']}"
+                f"{extra_vars[TEMPLATING_DETECTED]} and "
+                f"{templating_detected}"
             )
-        elif (
-            'templating_detected' in plugin_result and
-            plugin_result['templating_detected'] is not None
-        ):
-            extra_vars['templating_detected'] = plugin_result[
-                'templating_detected'
-            ]
+        else:
+            extra_vars[TEMPLATING_DETECTED] = templating_detected
 
     return extra_vars
 
@@ -352,8 +358,8 @@ def merge_template_vars(
         >>> merge_template_vars(a, b)
         {'FOO': 42, 'BAZ': 3.14159, 'BAR': 'Hello World'}
     """
-    if plugin_result['templating_detected'] is not None:
-        plugin_tvars = plugin_result['template_variables']
+    if plugin_result[TEMPLATING_DETECTED] is not None:
+        plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
         will_be_overwritten = (
             native_tvars.keys() &
             plugin_tvars.keys()
@@ -456,7 +462,7 @@ def read_and_proc(
     do_jinja2 = True
     do_contin = True
 
-    extra_vars = process_plugins(Path(fpath).parent, opts)
+    extra_vars = process_plugins(fpath, opts)
 
     if not template_vars:
         template_vars = {}
@@ -483,12 +489,12 @@ def read_and_proc(
 
     # Fail if templating_detected ≠ hashbang
     process_with = hashbang_and_plugin_templating_clash(
-        extra_vars['templating_detected'], flines
+        extra_vars[TEMPLATING_DETECTED], flines
     )
     # process with EmPy
     if do_empy:
         if (
-            extra_vars['templating_detected'] == 'empy' and
+            extra_vars[TEMPLATING_DETECTED] == 'empy' and
             not process_with and
             process_with != 'empy'
         ):
@@ -508,7 +514,7 @@ def read_and_proc(
     # process with Jinja2
     if do_jinja2:
         if (
-            extra_vars['templating_detected'] == 'jinja2' and
+            extra_vars[TEMPLATING_DETECTED] == 'jinja2' and
             not process_with and
             process_with != 'jinja2'
         ):
