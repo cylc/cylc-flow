@@ -69,8 +69,11 @@ def _killpg(proc, signal):
 def get_func(func_name, src_dir):
     """Find and return an xtrigger function from a module of the same name.
 
-    Can be in <src_dir>/lib/python, in Python path, or defined via an
-    entry_point. Loctions checked are in this order.
+    These locations are checked in this order:
+    - <src_dir>/lib/python/
+    - `$CYLC_PYTHONPATH`
+    - defined via a `cylc.xtriggers` entry point for an
+      installed Python package.
 
     Workflow source directory passed in as this is executed in an independent
     process in the command pool and therefore doesn't know about the workflow.
