@@ -36,7 +36,6 @@ export CYLC_PYTHONPATH=${WORKFLOW_RUN_DIR}/dir:${CYLC_PYTHONPATH:-}
 # Validate the test workflow.
 run_ok "${TEST_NAME_BASE}-val" cylc validate --debug "${WORKFLOW_NAME}"
 
-# Run the first cycle, till auto shutdown by task.
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
