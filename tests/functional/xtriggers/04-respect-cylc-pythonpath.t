@@ -33,8 +33,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate --debug "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
-# Check the broadcast result of xtrigger.
-cylc cat-log "${WORKFLOW_NAME}" >'scheduler.log.out'
-grep_ok "echo overridden, args=('the_args',)" 'scheduler.log.out'
+# Check the result of xtrigger.
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "echo overridden, args=('the_args',)"
 
 purge
