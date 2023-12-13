@@ -1983,8 +1983,15 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     # Parsec upgrader cannot do this type of move
     with contextlib.suppress(KeyError):
         if 'dependencies' in cfg['scheduling']:
-            msg_old = '[scheduling][dependencies][X]graph'
-            msg_new = '[scheduling][graph]X'
+            if 'graph' in cfg['scheduling']['dependencies']:
+                msg_old = '[scheduling][dependencies]graph'
+                msg_new = '[scheduling][graph]R1'
+                list_cp = False
+            else:
+                msg_old = '[scheduling][dependencies][X]graph'
+                msg_new = '[scheduling][graph]X - for X in:'
+                list_cp = True
+
             if 'graph' in cfg['scheduling']:
                 raise UpgradeError(
                     f'Cannot upgrade deprecated item "{msg_old} -> {msg_new}" '
@@ -2005,12 +2012,14 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         graphdict[key] = value
                         keys.add(key)
                 if keys and not cylc.flow.flags.cylc7_back_compat:
-                    LOG.warning(
+                    msg = (
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'
-                        f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
-                        f"       {', '.join(sorted(keys))}"
+                        f' * (8.0.0) {msg_old} -> {msg_new}'
                     )
+                    if list_cp:
+                        msg += f"\n       {', '.join(sorted(keys))}"
+                    LOG.warning(msg)
 
 
 def upgrade_param_env_templates(cfg, descr):
