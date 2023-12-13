@@ -1,15 +1,8 @@
-[scheduler]
-    cycle point format = %Y
 [scheduling]
-    initial cycle point = 2010
-    final cycle point = 2011
     [[xtriggers]]
         x1 = echo("the_args")
     [[graph]]
-        R1 = "@x1 => foo => shutdown"
-        P1Y = "@x1 => foo"
+        R1 = @x1 => foo
 [runtime]
     [[foo]]
         script = true
-    [[shutdown]]
-        script = "cylc shutdown $CYLC_WORKFLOW_ID"
