@@ -16,14 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------------
 
-# Test persistence of xtrigger results across restart. A cycling task depends
-# on a non cycle-point dependent custom xtrigger called "faker". In the first
-# cycle point the xtrigger succeeds and returns a result, then a task shuts
-# the workflow down.  Then we replace the custom xtrigger function with one that
-# will fail if called again - which should not happen because the original
-# result should be remembered (as this xtrigger is not cycle point dependent).
-# Also test the correct result is broadcast to the dependent task before and
-# after workflow restart.
+# An xtrigger added to $CYLC_PYTHONPATH should take precedence
+# over a `cylc.xtriggers` entry point of the same name
 
 . "$(dirname "$0")/test_header"
 set_test_number 3
