@@ -25,6 +25,9 @@ async def test_fail(flow, scheduler, run, reflog, complete, validate):
             }
         },
         'runtime': {
+            'root': {
+                'simulation': {'default run length': 'PT0S'}
+            },
             'foo': {
                 'simulation': {'fail cycle points': 'all'}
             }
