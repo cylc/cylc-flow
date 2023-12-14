@@ -112,8 +112,10 @@ DEPRECATED_STRING_TEMPLATES = {
     'batch_sys_name': 'job_runner_name',
     'batch_sys_job_id': 'job_id',
     'user@host': 'platform_name',
-    'task_url': 'URL from task metadata',
-    'workflow_url': 'workflow_URL from workflow metadata',
+    'task_url': '``URL`` (if set in :cylc:conf:`[meta]URL`)',
+    'workflow_url': (
+        '``workflow_URL`` (if set in '
+        ':cylc:conf:`[runtime][<namespace>][meta]URL`)'),
 }
 
 
@@ -268,8 +270,8 @@ def check_for_deprecated_task_event_template_vars(
         {'list': '    * %(suite)s ⇒ %(workflow)s'}
 
         >>> expect = {'list': (
-        ...    '    * %(suite)s ⇒ %(workflow)s'
-        ...    '    * %(task_url)s - get URL from task metadata')}
+        ...     '    * %(suite)s ⇒ %(workflow)s    * %(task_url)s'
+        ... ' - get ``URL`` (if set in :cylc:conf:`[meta]URL`)')}
         >>> this('hello = "My name is %(suite)s, %(task_url)s"') == expect
         True
     """
@@ -639,12 +641,12 @@ MANUAL_DEPRECATIONS = {
     },
     'U015': {
         'short': (
-            'Deprecated template variables.\n{list}'),
+            'Deprecated template variables.'),
         'rst': (
             'The following template variables, mostly used in event handlers,'
             'are deprecated, and should be replaced:'
             + ''.join([
-                f'\n * ``{old}`` ⇒ ``{new}``'
+                f'\n * ``{old}`` ⇒ {new}'
                 for old, new in DEPRECATED_STRING_TEMPLATES.items()
             ])
         ),
@@ -1147,7 +1149,7 @@ REFERENCE_TEMPLATES = {
     'section heading': '\n{title}\n{underline}\n',
     'issue heading': {
         'text': '\n{check}:\n    {summary}\n    {url}\n\n',
-        'rst': '\n`{check} <{url}>`_\n{underline}\n{summary}\n\n',
+        'rst': '\n{url_block}_\n{underline}\n{summary}\n\n',
     },
     'auto gen message': (
         'U998 and U999 represent automatically generated'
@@ -1194,11 +1196,12 @@ def get_reference(linter, output_type):
         else:
             template = issue_heading_template
             url = get_url(meta)
+            check = get_index_str(meta, index)
             msg = template.format(
                 title=index,
-                check=get_index_str(meta, index),
+                check=check,
                 summary=summary,
-                url=url,
+                url_block=f'`{check} <{url}>`' if url else f'{check}',
                 underline=(
                     len(get_index_str(meta, index)) + len(url) + 6
                 ) * '^'
