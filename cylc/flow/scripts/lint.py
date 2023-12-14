@@ -644,7 +644,7 @@ MANUAL_DEPRECATIONS = {
             'The following template variables, mostly used in event handlers,'
             'are deprecated, and should be replaced:'
             + ''.join([
-                f'\n * ``{old} ⇒ {new}'
+                f'\n * ``{old}`` ⇒ ``{new}``'
                 for old, new in DEPRECATED_STRING_TEMPLATES.items()
             ])
         ),
