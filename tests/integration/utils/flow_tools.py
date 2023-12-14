@@ -53,7 +53,7 @@ def _make_src_flow(src_path, conf):
 def _make_flow(
     cylc_run_dir: Union[Path, str],
     test_dir: Path,
-    conf: Union[dict, str],
+    conf: dict,
     name: Optional[str] = None,
     id_: Optional[str] = None,
 ) -> str:
@@ -66,8 +66,19 @@ def _make_flow(
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
     id_ = str(flow_run_dir.relative_to(cylc_run_dir))
-    if isinstance(conf, dict):
-        conf = flow_config_str(conf)
+    conf = flow_config_str({
+        # override the default simulation runtime logic to make
+        # tasks execute instantly
+        # NOTE: this is prepended so it can be overwritten
+        'runtime': {
+            'root': {
+                'simulation': {
+                    'default run length': 'PT0S',
+                },
+            },
+        },
+        **conf,
+    })
     with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
         flow_file.write(conf)
     return id_

@@ -1400,9 +1400,11 @@ class TaskPool:
                 - retain and recompute runahead
                   (C7 failed tasks don't count toward runahead limit)
         """
+        ret = False
         if cylc.flow.flags.cylc7_back_compat:
             if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
                 self.remove(itask, 'finished')
+                ret = True
             if self.compute_runahead():
                 self.release_runahead_tasks()
         else:
@@ -1416,10 +1418,13 @@ class TaskPool:
             else:
                 # Remove as completed.
                 self.remove(itask, 'finished')
+                ret = True
                 if itask.identity == self.stop_task_id:
                     self.stop_task_finished = True
                 if self.compute_runahead():
                     self.release_runahead_tasks()
+
+        return ret
 
     def spawn_on_all_outputs(
         self, itask: TaskProxy, completed_only: bool = False
