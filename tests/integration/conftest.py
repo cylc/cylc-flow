@@ -479,7 +479,7 @@ def install(test_dir, run_dir):
 
 
 @pytest.fixture
-def reflog():
+def reflog(monkeypatch):
     """Integration test version of the --reflog CLI option.
 
     This returns a set which captures task triggers.
@@ -512,6 +512,8 @@ def reflog():
     """
 
     def _reflog(schd, flow_nums=False):
+        nonlocal monkeypatch
+
         submit_task_jobs = schd.task_job_mgr.submit_task_jobs
         triggers = set()
 
