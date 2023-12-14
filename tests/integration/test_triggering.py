@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 async def test_fail(flow, scheduler, run, reflog, complete, validate):
+    """Test triggering on :fail"""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'true'
@@ -25,6 +26,9 @@ async def test_fail(flow, scheduler, run, reflog, complete, validate):
             }
         },
         'runtime': {
+            'root': {
+                'simulation': {'default run length': 'PT0S'}
+            },
             'foo': {
                 'simulation': {'fail cycle points': 'all'}
             }
