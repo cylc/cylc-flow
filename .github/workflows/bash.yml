@@ -87,5 +87,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: Upload cylc-run artifact
+          name: 'cylc-run (bash-${{ matrix.bash-version }})'
           path: cylc-run
