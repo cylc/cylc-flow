@@ -1149,7 +1149,7 @@ REFERENCE_TEMPLATES = {
     'section heading': '\n{title}\n{underline}\n',
     'issue heading': {
         'text': '\n{check}:\n    {summary}\n    {url}\n\n',
-        'rst': '\n{url_block}_\n{underline}\n{summary}\n\n',
+        'rst': '\n{url}_\n{underline}\n{summary}\n\n',
     },
     'auto gen message': (
         'U998 and U999 represent automatically generated'
@@ -1194,17 +1194,17 @@ def get_reference(linter, output_type):
                 output += '\n'
             output += '\n* ' + summary
         else:
+            check = get_index_str(meta, index)
             template = issue_heading_template
             url = get_url(meta)
-            check = get_index_str(meta, index)
+            if output_type == 'rst':
+                url = f'`{check} <{url}>`' if url else f'{check}'
             msg = template.format(
                 title=index,
                 check=check,
                 summary=summary,
-                url_block=f'`{check} <{url}>`' if url else f'{check}',
-                underline=(
-                    len(get_index_str(meta, index)) + len(url) + 6
-                ) * '^'
+                url=url,
+                underline=(len(url) + 1) * '^'
             )
             output += msg
     output += '\n'
