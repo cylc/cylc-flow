@@ -73,9 +73,10 @@ def _make_flow(
         .setdefault('simulation', {})
         .setdefault('default run length', 'PT0S')
     )
-    conf = flow_config_str(conf)
+    # allow implicit tasks by default:
+    conf.setdefault('scheduler', {}).setdefault('allow implicit tasks', 'True')
     with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
-        flow_file.write(conf)
+        flow_file.write(flow_config_str(conf))
     return id_
 
 
