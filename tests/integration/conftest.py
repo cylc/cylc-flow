@@ -512,7 +512,6 @@ def reflog():
     """
 
     def _reflog(schd, flow_nums=False):
-
         submit_task_jobs = schd.task_job_mgr.submit_task_jobs
         triggers = set()
 
