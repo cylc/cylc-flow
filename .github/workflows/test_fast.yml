@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
@@ -81,7 +81,7 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
           path: coverage.xml
@@ -138,7 +138,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Codecov upload
         uses: codecov/codecov-action@v3
