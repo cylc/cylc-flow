@@ -536,6 +536,17 @@ def test_process_startcp(
             ISO8601_CYCLING_TYPE,
             {
                 'initial cycle point': '2017-02-11',
+                'final cycle point': '+P4D+PT3H-PT2H',
+            },
+            None,
+            '20170215T0100+0530',
+            None,
+            id="Relative fcp chained"
+        ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
+            {
+                'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
             },
             None,
