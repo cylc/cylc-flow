@@ -895,31 +895,23 @@ def get_dump_format():
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:
-        if len(re.split('\\+|-', offset_string)) > 2:
-            opperator = '+'
-            base_point_relative = base_point
-            for iso in re.split('(\\+|-)', offset_string):
-                if iso == '+' or iso == '-':
-                    opperator = iso
-                elif iso != '':
-                    if opperator == '-':
-                        base_point_relative = base_point_relative.add(
-                            ISO8601Interval(str(-1 * interval_parse(iso)))
-                        )
-                    elif opperator == '+':
-                        base_point_relative = base_point_relative.add(
-                            ISO8601Interval(str(interval_parse(iso)))
-                        )
-            return base_point_relative
-        else:
-            interval = ISO8601Interval(str(interval_parse(offset_string)))
+        operator = '+'
+        base_point_relative = base_point
+        for part in re.split(r'(\+|-)', offset_string):
+            if part == '+' or part == '-':
+                operator = part
+            elif part != '':
+                interval = interval_parse(part)
+                if operator == '-':
+                    interval *= -1
+                base_point_relative += ISO8601Interval(str(interval))
+        return base_point_relative
     except IsodatetimeError:
+        # It's a truncated time point rather than an interval
         return ISO8601Point(str(
             WorkflowSpecifics.abbrev_util.parse_timepoint(
                 offset_string, context_point=point_parse(base_point.value))
         ))
-    else:
-        return base_point + interval
 
 
 def interval_parse(interval_string):
