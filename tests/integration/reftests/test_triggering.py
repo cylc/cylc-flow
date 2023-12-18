@@ -14,21 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-async def test_fail(flow, scheduler, run, reflog, complete, validate):
+async def test_fail(flow, scheduler, reftest):
     """Test triggering on :fail"""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'true'
-        },
         'scheduling': {
             'graph': {
                 'R1': 'foo:failed => bar'
             }
         },
         'runtime': {
-            'root': {
-                'simulation': {'default run length': 'PT0S'}
-            },
             'foo': {
                 'simulation': {'fail cycle points': 'all'}
             }
@@ -36,11 +30,7 @@ async def test_fail(flow, scheduler, run, reflog, complete, validate):
     })
     schd = scheduler(id_, paused_start=False)
 
-    async with run(schd):
-        triggers = reflog(schd)
-        await complete(schd)
-
-    assert triggers == {
+    assert await reftest(schd) == {
         ('1/foo', None),
         ('1/bar', ('1/foo',)),
     }
