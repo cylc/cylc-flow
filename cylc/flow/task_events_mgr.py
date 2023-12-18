@@ -122,10 +122,14 @@ def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
         # directory. In this case, just send the information to the log.
         LOG.exception(exc)
         LOG.info(ctx_str)
-    if ctx.cmd and ctx.ret_code:
-        LOG.error(ctx_str)
-    elif ctx.cmd:
-        LOG.debug(ctx_str)
+    if ctx.cmd:
+        if ctx.ret_code:
+            LOG.error(ctx_str)
+        else:
+            LOG.info(
+                f'Event {point}/{name}/{submit_num:02d} "{ctx.cmd_key[0][1]}"'
+                f" {ctx.cmd_key[0][0]}: succeeded"
+            )
 
 
 class EventData(Enum):
@@ -465,8 +469,8 @@ class TaskEventsManager():
             if not timer.is_timeout_set():
                 if timer.next() is None:
                     LOG.warning(
-                        f"{point}/{name}/{submit_num:02d}"
-                        f" handler:{key1[0]} for task event:{key1[1]} failed"
+                        f'Event {point}/{name}/{submit_num:02d} "{key1[1]}"'
+                        f" {key1[0]}: failed"
                     )
                     self.remove_event_timer(id_key)
                     continue
@@ -499,6 +503,11 @@ class TaskEventsManager():
             timer.set_waiting()
             if timer.ctx.ctx_type == self.HANDLER_CUSTOM:
                 # Run custom event handlers on their own
+                LOG.info(
+                    f"Event {point}/{name}/{submit_num:02d}"
+                    f' "{timer.ctx.key[1]}" {timer.ctx.key[0]}:'
+                    f" {timer.ctx.cmd}"
+                )
                 self.proc_pool.put_command(
                     SubProcContext(
                         (key1, submit_num),
