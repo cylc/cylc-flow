@@ -88,6 +88,8 @@ TEST_FILE = """
     [[mail]]
         task event mail interval    = PT4M # deliberately added lots of spaces.
 
+CYLC_VERSION={{CYLC_VERSION}}
+
 [scheduling]
     max active cycle points = 5
     hold after point = 20220101T0000Z
@@ -151,7 +153,6 @@ LINT_TEST_FILE = """
  [scheduler]
 
 [[dependencies]]
-
 {% set   N = 009 %}
 {% foo %}
 {{foo}}

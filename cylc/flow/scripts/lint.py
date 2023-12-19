@@ -320,6 +320,10 @@ def check_indentation(line: str) -> bool:
     return bool(len(match[0]) % 4 != 0)
 
 
+CHECK_FOR_OLD_VARS = re.compile(
+    r'CYLC_VERSION\s*=\s*\{\{CYLC_VERSION\}\}|ROSE_VERSION\s*='
+    r'\s*\{\{ROSE_VERSION\}\}|FCM_VERSION\s*=\s*\{\{FCM_VERSION\}\}')
+
 FUNCTION = 'function'
 
 STYLE_GUIDE = (
@@ -655,7 +659,19 @@ MANUAL_DEPRECATIONS = {
             'writing-workflows/runtime.html#task-event-template-variables'
         ),
         FUNCTION: check_for_deprecated_task_event_template_vars,
-    }
+    },
+    'U016'
+        'short': 'Deprecated template vars: {vars}',
+        'rst': (
+            'agoigfva[or]'
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
+            'cheat-sheet.html#datetime-operations'
+        ),
+        FUNCTION: lambda line: {
+            'vars': '\n    * '.join(CHECK_FOR_OLD_VARS.findall(line))}
+    },
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {
