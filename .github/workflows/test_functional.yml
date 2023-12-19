@@ -106,17 +106,19 @@ jobs:
       - name: Patch DNS
         if: startsWith(matrix.os, 'macos')
         run: |
+          # patch over DNS issues
           # see https://github.com/actions/runner-images/issues/8649#issuecomment-1779548056
           echo -e "$(ipconfig getifaddr en0) $(hostname -f) $(hostname -s)" | sudo tee -a /etc/hosts
           dscacheutil -q host -a name $(hostname -f)
+
+          # configure host identification by IP
+          # (hostnames are unstable on the GH runners, but IP's seem ok)
           CONF_PATH="$HOME/.cylc/flow/8"
           mkdir -p "$CONF_PATH"
           cat > "$CONF_PATH/global.cylc" <<__HERE__
-          [platforms]
-            [[localhost, $(hostname -f), $(hostname -s)]]
-              hosts = localhost
-              install target = localhost
-              ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
+          [scheduler]
+              [[host self-identification]]
+                  method = address
           __HERE__
           cp "$CONF_PATH/global.cylc" "$CONF_PATH/global-tests.cylc"
           echo "# $CONF_PATH/global-tests.cylc"
