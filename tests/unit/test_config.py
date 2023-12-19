@@ -540,6 +540,17 @@ def test_process_startcp(
             ISO8601_CYCLING_TYPE,
             {
                 'initial cycle point': '2017-02-11',
+                'final cycle point': '+P4D+PT3H-PT2H',
+            },
+            None,
+            '20170215T0100+0530',
+            None,
+            id="Relative fcp chained"
+        ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
+            {
+                'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
             },
             None,
@@ -1504,11 +1515,7 @@ def test_zero_interval(
         ('1988-02-29', '+P1M+P1Y', '1989-03-29'),
         ('1910-08-14', '+P2D-PT6H', '1910-08-15T18:00'),
         ('1850-04-10', '+P1M-P1D+PT1H', '1850-05-09T01:00'),
-        pytest.param(
-            '1066-10-14', '+PT1H+PT1M', '1066-10-14T01:01',
-            marks=pytest.mark.xfail
-            # https://github.com/cylc/cylc-flow/issues/5047
-        ),
+        ('1066-10-14', '+PT1H+PT1M', '1066-10-14T01:01'),
     ]
 )
 def test_chain_expr(
