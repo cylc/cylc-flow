@@ -214,15 +214,18 @@ def filter_strings(items, contains):
 def assert_contains(items, contains, instances=None):
     """Pass if at least one item contains a given string."""
     filtered = filter_strings(items, contains)
-    if not filtered or (instances and len(filtered) != instances):
+    if not filtered:
         raise Exception(
             f'Could not find: "{contains}" in:\n'
-            + pformat(items)
-        )
+            + pformat(items))
+    elif instances and len(filtered) != instances:
+        raise Exception(
+            f'Expected "{contains}" to appear {instances} times'
+            f', got it {len(filtered)} times.')
 
 
 EXPECT_INSTANCES_OF_ERR = {
-    15: 3,
+    16: 3,
 }
 
 
