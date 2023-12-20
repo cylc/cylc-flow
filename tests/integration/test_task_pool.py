@@ -1285,3 +1285,92 @@ async def test_detect_incomplete_tasks(
             assert log_filter(log, contains=f"[{itask}] did not complete required outputs:")
             # the task should not have been removed
             assert itask in schd.pool.get_tasks()
+
+
+@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
+@pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
+async def test_compute_runahead(
+    cycling_mode,
+    compat_mode,
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+):
+    """Test the calculation of the runahead limit.
+
+    This test ensures that:
+    * Runahead tasks are excluded from computations
+      see https://github.com/cylc/cylc-flow/issues/5825
+    * Tasks are initiated with the correct is_runahead status on statup.
+    * Behaviour is the same in compat/regular modes.
+    * Behaviour is the same for integer/datetime cycling modes.
+
+    """
+    if cycling_mode == 'integer':
+        config = {
+            'scheduler': {
+                'allow implicit tasks': 'True',
+            },
+            'scheduling': {
+                'initial cycle point': '1',
+                'cycling mode': 'integer',
+                'runahead limit': 'P3',
+                'graph': {
+                    'P1': 'a'
+                },
+            }
+        }
+        point = lambda point: IntegerPoint(str(int(point)))
+    else:
+        config = {
+            'scheduler': {
+                'allow implicit tasks': 'True',
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '0001',
+                'runahead limit': 'P3Y',
+                'graph': {
+                    'P1Y': 'a'
+                },
+            }
+        }
+        point = ISO8601Point
+
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat',
+        compat_mode == 'compat-mode',
+    )
+
+    id_ = flow(config)
+    schd = scheduler(id_)
+    async with start(schd):
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4
+
+        # ensure task states are initiated with is_runahead status
+        assert schd.pool.get_task(point('0001'), 'a').state(is_runahead=False)
+        assert schd.pool.get_task(point('0005'), 'a').state(is_runahead=True)
+
+        # mark the first three cycles as running
+        for cycle in range(1, 4):
+            schd.pool.get_task(point(f'{cycle:04}'), 'a').state.reset(
+                TASK_STATUS_RUNNING
+            )
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+
+        # mark cycle 1 as incomplete (but finished)
+        schd.pool.get_task(point('0001'), 'a').state.reset(
+            TASK_STATUS_SUBMIT_FAILED
+        )
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+
+        # mark cycle 1 as complete
+        schd.pool.get_task(point('0001'), 'a').state.reset(
+            TASK_STATUS_SUCCEEDED
+        )
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 5  # +1
