@@ -46,9 +46,9 @@ jobs:
         # NOTE: includes must define ALL of the matrix values
         include:
           # latest python
-          - name: 'py-3.11'
+          - name: 'py-3-latest'
             os: 'ubuntu-latest'
-            python-version: '3.11'
+            python-version: '3'
             test-base: 'tests/f'
             chunk: '1/4'
             platform: '_local_background*'
@@ -96,10 +96,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -108,7 +108,7 @@ jobs:
         run: |
           # install system deps
           brew update
-          brew install bash coreutils gnu-sed
+          brew install bash coreutils gnu-sed grep
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)
@@ -117,6 +117,9 @@ jobs:
             >> "${GITHUB_PATH}"
           echo \
             "/usr/local/opt/gnu-sed/libexec/gnubin" \
+            >> "${GITHUB_PATH}"
+          echo \
+            "/usr/local/opt/grep/libexec/gnubin" \
             >> "${GITHUB_PATH}"
 
           # add coreutils to the bashrc too (for jobs)
@@ -248,6 +251,7 @@ jobs:
               -exec echo '====== {} ======' \; -exec cat '{}' \;
 
       - name: Set artifact upload name
+        if: always()
         id: uploadname
         run: |
           # artifact name cannot contain '/' characters
@@ -256,7 +260,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure() && steps.test.outcome == 'failure'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
           path: ~/cylc-run/
@@ -294,7 +298,7 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_${{ steps.uploadname.outputs.uploadname }}
           path: coverage.xml
@@ -306,10 +310,10 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Codecov upload
         uses: codecov/codecov-action@v3

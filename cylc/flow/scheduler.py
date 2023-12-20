@@ -18,7 +18,6 @@
 import asyncio
 from contextlib import suppress
 from collections import deque
-from optparse import Values
 import os
 import inspect
 from pathlib import Path
@@ -84,16 +83,15 @@ from cylc.flow.loggingutil import (
     patch_log_level
 )
 from cylc.flow.timer import Timer
-from cylc.flow.network import API
-from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.network.resolvers import TaskMsg
-from cylc.flow.network.schema import WorkflowStopMode
-from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.option_parsers import (
+from cylc.flow.log_level import (
     log_level_to_verbosity,
     verbosity_to_env,
     verbosity_to_opts,
 )
+from cylc.flow.network import API
+from cylc.flow.network.authentication import key_housekeeping
+from cylc.flow.network.schema import WorkflowStopMode
+from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
@@ -115,6 +113,7 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
+from cylc.flow.simulation import sim_time_check
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -155,6 +154,8 @@ if TYPE_CHECKING:
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
+    from optparse import Values
+    from cylc.flow.network.resolvers import TaskMsg
 
 
 class SchedulerStop(CylcError):
@@ -228,7 +229,7 @@ class Scheduler:
 
     # configuration
     config: WorkflowConfig  # flow config
-    options: Values
+    options: 'Values'
     cylc_config: DictTree  # [scheduler] config
     template_vars: Dict[str, Any]
 
@@ -271,7 +272,7 @@ class Scheduler:
 
     time_next_kill: Optional[float] = None
 
-    def __init__(self, id_: str, options: Values) -> None:
+    def __init__(self, id_: str, options: 'Values') -> None:
         # flow information
         self.workflow = id_
         self.workflow_name = get_workflow_name_from_id(self.workflow)
@@ -874,7 +875,7 @@ class Scheduler:
 
     def process_queued_task_messages(self) -> None:
         """Handle incoming task messages for each task proxy."""
-        messages: Dict[str, List[Tuple[Optional[int], TaskMsg]]] = {}
+        messages: 'Dict[str, List[Tuple[Optional[int], TaskMsg]]]' = {}
         while self.message_queue.qsize():
             try:
                 task_msg = self.message_queue.get(block=False)
@@ -1752,7 +1753,11 @@ class Scheduler:
             self.pool.set_expired_tasks()
             self.release_queued_tasks()
 
-            if self.pool.sim_time_check(self.message_queue):
+            if (
+                self.pool.config.run_mode('simulation')
+                and sim_time_check(
+                    self.message_queue, self.pool.get_tasks())
+            ):
                 # A simulated task state change occurred.
                 self.reset_inactivity_timer()
 

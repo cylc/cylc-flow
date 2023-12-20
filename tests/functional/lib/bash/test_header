@@ -807,10 +807,13 @@ mock_smtpd_init() {  # Logic borrowed from Rose
         local SMTPD_LOG="${TEST_DIR}/smtpd.log"
         local SMTPD_HOST="localhost:${SMTPD_PORT}"
         # Set up fake SMTP server to catch outgoing mail & redirect to log:
-        python3 -u -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+        python3 -u -m 'aiosmtpd' \
+            --class aiosmtpd.handlers.Debugging stdout \
+            --debug --nosetuid \
+            --listen "${SMTPD_HOST}" \
             1>"${SMTPD_LOG}" 2>&1 &  # Runs in background
         local SMTPD_PID="$!"
-        while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>'/dev/null'
+        while ! grep -q 'is listening' "${SMTPD_LOG}" 2>'/dev/null'
         do
             if ps "${SMTPD_PID}" 1>/dev/null 2>&1; then
                 sleep 1  # Still waiting for fake server to start

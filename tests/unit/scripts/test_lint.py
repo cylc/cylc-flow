@@ -28,11 +28,10 @@ from cylc.flow.scripts.lint import (
     MANUAL_DEPRECATIONS,
     get_cylc_files,
     get_pyproject_toml,
-    get_reference_rst,
-    get_reference_text,
+    get_reference,
     get_upgrader_info,
     lint,
-    merge_cli_with_tomldata,
+    _merge_cli_with_tomldata,
     parse_checks,
     validate_toml_items
 )
@@ -120,7 +119,7 @@ TEST_FILE = """
             submission failed handler = giaSEHFUIHJ
             failed handler = woo
             execution timeout handler = sdfghjkl
-            expired handler = dafuhj
+            expired handler = %(suite_uuid)s %(user@host)s
             late handler = dafuhj
             submitted handler = dafuhj
             started handler = dafuhj
@@ -368,35 +367,47 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
-MOCK_CHECKS = {
-    'U042': {
-        'short': 'section `[vizualization]` has been removed.',
-        'url': 'some url or other',
-        'purpose': 'U',
-        'rst': 'section ``[vizualization]`` has been removed.',
-        'function': re.compile('not a regex')
-    },
-}
+def mock_parse_checks(*args, **kwargs):
+    return {
+        'U042': {
+            'short': 'section `[vizualization]` has been removed.',
+            'url': 'some url or other',
+            'purpose': 'U',
+            'rst': 'section ``[vizualization]`` has been removed.',
+            'function': re.compile('not a regex')
+        },
+    }
 
 
-def test_get_reference_rst():
+def test_get_reference_rst(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_rst(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'rst')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
-        'U042\n^^^^\nsection ``[vizualization]`` has been '
+        '`U042 <https://cylc.github.io/cylc-doc/stable'
+        '/html/7-to-8/some url or other>`_'
+        f'\n{ "^" * 78 }'
+        '\nsection ``[vizualization]`` has been '
         'removed.\n\n\n'
     )
     assert ref == expect
 
 
-def test_get_reference_text():
+def test_get_reference_text(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_text(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'text')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
-        'removed.\n\n\n'
+        'removed.'
+        '\n    https://cylc.github.io/cylc-doc/stable/html/7-to-8/some'
+        ' url or other\n\n\n'
     )
     assert ref == expect
 
@@ -565,7 +576,7 @@ def test_validate_toml_items(input_, error):
 )
 def test_merge_cli_with_tomldata(clidata, tomldata, expect):
     """It merges each of the three sections correctly: see function.__doc__"""
-    assert merge_cli_with_tomldata(clidata, tomldata) == expect
+    assert _merge_cli_with_tomldata(clidata, tomldata) == expect
 
 
 def test_invalid_tomlfile(tmp_path):

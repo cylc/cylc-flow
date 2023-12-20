@@ -58,7 +58,6 @@ def job_config(schd):
         'directives': {},
         'environment': {},
         'param_var': {},
-        'logfiles': [],
         'platform': {'name': 'platform'},
     }
 

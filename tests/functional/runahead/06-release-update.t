@@ -35,7 +35,6 @@ sleep 10
 # (gratuitous use of --flows for test coverage)
 cylc dump --flows -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3 $7}' >'log'
 cmp_ok 'log' - <<__END__
-bar,$NEXT1,waiting,[1]
 foo,$NEXT1,waiting,[1]
 __END__
 

@@ -148,3 +148,13 @@ def test_source_dir_validation(
         assert "must be an absolute path" in str(excinfo.value)
     else:
         glblcfg.load()
+
+def test_platform_ssh_forward_variables(mock_global_config):
+
+    glblcfg: GlobalConfig = mock_global_config('''
+    [platforms]
+        [[foo]]
+            ssh forward environment variables = "FOO", "BAR"
+    ''')
+
+    assert glblcfg.get(['platforms','foo','ssh forward environment variables']) == ["FOO", "BAR"]
