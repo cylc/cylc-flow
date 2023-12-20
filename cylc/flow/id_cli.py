@@ -109,12 +109,14 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         >>> parse_back('//cycle')
         Traceback (most recent call last):
         InputError: Relative reference must follow an incomplete one.
-        E.G: workflow //cycle/task
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
         InputError: Relative reference must follow an incomplete one.
-        E.G: workflow //cycle/task
+
+        >>> parse_back('workflow///cycle/')
+        Traceback (most recent call last):
+        InputError: Invalid ID: workflow///cycle/
 
     """
     # upgrade legacy ids if required
@@ -130,7 +132,11 @@ def _parse_cli(*ids: str) -> List[Tokens]:
             if id_.endswith('/') and not id_.endswith('//'):  # noqa: SIM106
                 # tolerate IDs that end in a single slash on the CLI
                 # (e.g. CLI auto completion)
-                tokens = Tokens(id_[:-1])
+                try:
+                    # this ID is invalid with or without the trailing slash
+                    tokens = Tokens(id_[:-1])
+                except ValueError:
+                    raise InputError(f'Invalid ID: {id_}')
             else:
                 raise InputError(f'Invalid ID: {id_}')
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
