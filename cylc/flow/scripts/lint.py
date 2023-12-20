@@ -67,7 +67,7 @@ except ImportError:
         TOMLDecodeError,
     )
 from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Union)
+    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -103,6 +103,31 @@ DEPRECATED_ENV_VARS = {
 OBSOLETE_ENV_VARS = {
     'CYLC_SUITE_DEF_PATH',
     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'
+}
+
+
+DEPRECATED_STRING_TEMPLATES = {
+    'suite': 'workflow',
+    'suite_uuid': 'uuid',
+    'batch_sys_name': 'job_runner_name',
+    'batch_sys_job_id': 'job_id',
+    'user@host': 'platform_name',
+    'task_url': '``URL`` (if set in :cylc:conf:`[meta]URL`)',
+    'workflow_url': (
+        '``workflow_URL`` (if set in '
+        ':cylc:conf:`[runtime][<namespace>][meta]URL`)'),
+}
+
+
+LIST_ITEM = '    * '
+
+
+deprecated_string_templates = {
+    key: (
+        re.compile(r'%\(' + key + r'\)s'),
+        value
+    )
+    for key, value in DEPRECATED_STRING_TEMPLATES.items()
 }
 
 
@@ -231,6 +256,36 @@ def check_for_obsolete_environment_variables(line: str) -> List[str]:
         ['CYLC_SUITE_DEF_PATH']
     """
     return [i for i in OBSOLETE_ENV_VARS if i in line]
+
+
+def check_for_deprecated_task_event_template_vars(
+    line: str
+) -> Optional[Dict[str, str]]:
+    """Look for string variables which are no longer supported
+
+    Examples:
+        >>> this = check_for_deprecated_task_event_template_vars
+
+        >>> this('hello = "My name is %(suite)s"')
+        {'list': '    * %(suite)s ⇒ %(workflow)s'}
+
+        >>> expect = {'list': (
+        ...     '    * %(suite)s ⇒ %(workflow)s    * %(task_url)s'
+        ... ' - get ``URL`` (if set in :cylc:conf:`[meta]URL`)')}
+        >>> this('hello = "My name is %(suite)s, %(task_url)s"') == expect
+        True
+    """
+    result = []
+    for key, (regex, replacement) in deprecated_string_templates.items():
+        search_outcome = regex.findall(line)
+        if search_outcome and ' ' in replacement:
+            result.append(f'%({key})s - get {replacement}')
+        elif search_outcome:
+            result.append(f'%({key})s ⇒ %({replacement})s')
+
+    if result:
+        return {'list': LIST_ITEM + LIST_ITEM.join(result)}
+    return None
 
 
 INDENTATION = re.compile(r'^(\s*)(.*)')
@@ -584,6 +639,23 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: re.compile(r'rose +date').findall,
     },
+    'U015': {
+        'short': (
+            'Deprecated template variables.'),
+        'rst': (
+            'The following template variables, mostly used in event handlers,'
+            'are deprecated, and should be replaced:'
+            + ''.join([
+                f'\n * ``{old}`` ⇒ {new}'
+                for old, new in DEPRECATED_STRING_TEMPLATES.items()
+            ])
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/user-guide/'
+            'writing-workflows/runtime.html#task-event-template-variables'
+        ),
+        FUNCTION: check_for_deprecated_task_event_template_vars,
+    }
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {
@@ -1077,7 +1149,7 @@ REFERENCE_TEMPLATES = {
     'section heading': '\n{title}\n{underline}\n',
     'issue heading': {
         'text': '\n{check}:\n    {summary}\n    {url}\n\n',
-        'rst': '\n`{check} <{url}>`_\n{underline}\n{summary}\n\n',
+        'rst': '\n{url}_\n{underline}\n{summary}\n\n',
     },
     'auto gen message': (
         'U998 and U999 represent automatically generated'
@@ -1122,16 +1194,17 @@ def get_reference(linter, output_type):
                 output += '\n'
             output += '\n* ' + summary
         else:
+            check = get_index_str(meta, index)
             template = issue_heading_template
             url = get_url(meta)
+            if output_type == 'rst':
+                url = f'`{check} <{url}>`' if url else f'{check}'
             msg = template.format(
                 title=index,
-                check=get_index_str(meta, index),
+                check=check,
                 summary=summary,
                 url=url,
-                underline=(
-                    len(get_index_str(meta, index)) + len(url) + 6
-                ) * '^'
+                underline=(len(url) + 1) * '^'
             )
             output += msg
     output += '\n'
