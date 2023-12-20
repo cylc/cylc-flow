@@ -1008,7 +1008,8 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
 ):
     """It should obey the runahead limit.
 
-    Ensure the runahead limit is computed correctly for sequences before the start cycle
+    Ensure the runahead limit is computed correctly for sequences that begin
+    before the start cycle.
 
     See https://github.com/cylc/cylc-flow/issues/5603
     """
@@ -1026,6 +1027,44 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
     schd = scheduler(id_, startcp='2005')
     async with start(schd):
         assert str(schd.pool.runahead_limit_point) == '20070101T0000Z'
+
+
+@pytest.mark.parametrize(
+    'rhlimit', ['P2D', 'P2']
+)
+async def test_runahead_future_trigger(
+    flow,
+    scheduler,
+    start,
+    rhlimit
+):
+    """Equivalent time interval and cycle count runahead limits should yield
+    the same limit point, even if there is a future trigger.
+
+    See https://github.com/cylc/cylc-flow/pull/5893
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+            'cycle point format': 'CCYYMMDD'
+        },
+        'scheduling': {
+            'initial cycle point': '2001',
+            'runahead limit': rhlimit,
+            'graph': {
+                'P1D': 'a\na[+P1D] => b',
+            },
+        }
+    })
+    schd = scheduler(id_,)
+    async with start(schd):
+        assert str(schd.pool.runahead_limit_point) == '20010103'
+        schd.pool.release_runahead_tasks()
+        for itask in schd.pool.get_all_tasks():
+            schd.pool.spawn_on_output(itask, 'succeeded')
+        schd.pool.log_task_pool(logging.CRITICAL)
+        # future trigger raises the limit by one cycle point
+        assert str(schd.pool.runahead_limit_point) == '20010104'
 
 
 def list_pool_from_db(schd):

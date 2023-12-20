@@ -318,7 +318,7 @@ class TaskPool:
             ilimit = int(limit)  # type: ignore
             count_cycles = True
 
-        base_point: 'PointBase' = None
+        base_point: Optional['PointBase'] = None
 
         # First get the runahead base point.
         if not self.main_pool:
