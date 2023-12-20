@@ -686,7 +686,8 @@ MANUAL_DEPRECATIONS = {
             'https://cylc.github.io/cylc-doc/stable/html/plugins/'
             'cylc-rose.html#special-variables'
         ),
-        FUNCTION: functools.partial(list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+        FUNCTION: functools.partial(
+            list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
     },
 }
 RULESETS = ['728', 'style', 'all']
