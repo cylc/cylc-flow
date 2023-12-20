@@ -58,6 +58,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
+    TASK_STATUS_SUBMIT_FAILED,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
@@ -309,8 +310,8 @@ class TaskPool:
 
         With force=True we recompute the limit even if the base point has not
         changed (needed if max_future_offset changed, or on reload).
-        """
 
+        """
         limit = self.config.runahead_limit  # e.g. P2 or P2D
         count_cycles = False
         with suppress(TypeError):
@@ -332,25 +333,22 @@ class TaskPool:
                 if point is not None
             )
         else:
-            # Find the earliest point with unfinished tasks.
+            # Find the earliest point with incomplete tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
-                if any(
-                    not itask.state(
-                        TASK_STATUS_FAILED,
-                        TASK_STATUS_SUCCEEDED,
-                        TASK_STATUS_EXPIRED
-                    ) or (
-                        # For Cylc 7 back-compat, ignore incomplete tasks.
-                        # (Success is required in back-compat mode, so
-                        # failed tasks end up as incomplete; and Cylc 7
-                        # ignores failed tasks in computing the limit).
-                        itask.state.outputs.is_incomplete()
-                        and not cylc.flow.flags.cylc7_back_compat
+                # All n=0 tasks are incomplete but Cylc 7 ignores failed ones.
+                if (
+                    cylc.flow.flags.cylc7_back_compat and
+                    all(
+                        itask.state(
+                            TASK_STATUS_SUBMIT_FAILED,
+                            TASK_STATUS_FAILED
+                        )
+                        for itask in itasks
                     )
-                    for itask in itasks
                 ):
-                    base_point = point
-                    break
+                    continue
+                base_point = point
+                break
 
         if base_point is None:
             return False

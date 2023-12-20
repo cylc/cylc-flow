@@ -1029,44 +1029,6 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
         assert str(schd.pool.runahead_limit_point) == '20070101T0000Z'
 
 
-@pytest.mark.parametrize(
-    'rhlimit', ['P2D', 'P2']
-)
-async def test_runahead_future_trigger(
-    flow,
-    scheduler,
-    start,
-    rhlimit
-):
-    """Equivalent time interval and cycle count runahead limits should yield
-    the same limit point, even if there is a future trigger.
-
-    See https://github.com/cylc/cylc-flow/pull/5893
-    """
-    id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-            'cycle point format': 'CCYYMMDD'
-        },
-        'scheduling': {
-            'initial cycle point': '2001',
-            'runahead limit': rhlimit,
-            'graph': {
-                'P1D': 'a\na[+P1D] => b',
-            },
-        }
-    })
-    schd = scheduler(id_,)
-    async with start(schd):
-        assert str(schd.pool.runahead_limit_point) == '20010103'
-        schd.pool.release_runahead_tasks()
-        for itask in schd.pool.get_all_tasks():
-            schd.pool.spawn_on_output(itask, 'succeeded')
-        schd.pool.log_task_pool(logging.CRITICAL)
-        # future trigger raises the limit by one cycle point
-        assert str(schd.pool.runahead_limit_point) == '20010104'
-
-
 def list_pool_from_db(schd):
     """Returns the task pool table as a sorted list."""
     db_task_pool = []
@@ -1193,11 +1155,12 @@ async def test_no_flow_tasks_dont_spawn(
                 for itask in pool
             ] == pool
 
+
 async def test_task_proxy_remove_from_queues(
     flow, one_conf, scheduler, start,
 ):
     """TaskPool.remove should delete task proxies from queues.
-    
+
     See https://github.com/cylc/cylc-flow/pull/5573
     """
     # Set up a scheduler with a non-default queue:
@@ -1282,7 +1245,8 @@ async def test_detect_incomplete_tasks(
             # ensure that it is correctly identified as incomplete
             assert itask.state.outputs.get_incomplete()
             assert itask.state.outputs.is_incomplete()
-            assert log_filter(log, contains=f"[{itask}] did not complete required outputs:")
+            assert log_filter(
+                log, contains=f"[{itask}] did not complete required outputs:")
             # the task should not have been removed
             assert itask in schd.pool.get_tasks()
 
@@ -1303,7 +1267,7 @@ async def test_compute_runahead(
     * Runahead tasks are excluded from computations
       see https://github.com/cylc/cylc-flow/issues/5825
     * Tasks are initiated with the correct is_runahead status on statup.
-    * Behaviour is the same in compat/regular modes.
+    * Behaviour in compat/regular modes is same unless failed tasks are present
     * Behaviour is the same for integer/datetime cycling modes.
 
     """
@@ -1327,6 +1291,7 @@ async def test_compute_runahead(
             'scheduler': {
                 'allow implicit tasks': 'True',
                 'cycle point format': 'CCYY',
+                'cycle point time zone': 'Z'
             },
             'scheduling': {
                 'initial cycle point': '0001',
@@ -1358,6 +1323,7 @@ async def test_compute_runahead(
             schd.pool.get_task(point(f'{cycle:04}'), 'a').state.reset(
                 TASK_STATUS_RUNNING
             )
+
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
@@ -1365,12 +1331,59 @@ async def test_compute_runahead(
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_SUBMIT_FAILED
         )
+
         schd.pool.compute_runahead(force=True)
-        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+
+        if compat_mode == 'compat-mode':
+            # Cylc 7 does not count failed tasks in runahead computation.
+            assert int(str(schd.pool.runahead_limit_point)) == 5
+        else:
+            # Cylc 8 does count failed tasks in runahead computation.
+            assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
         # mark cycle 1 as complete
-        schd.pool.get_task(point('0001'), 'a').state.reset(
-            TASK_STATUS_SUCCEEDED
+        # (via task message so the task gets removed before runahead compute)
+        schd.task_events_mgr.process_message(
+            schd.pool.get_task(point('0001'), 'a'),
+            logging.INFO,
+            TASK_OUTPUT_SUCCEEDED
         )
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 5  # +1
+
+
+@pytest.mark.parametrize(
+    'rhlimit', ['P2D', 'P2']
+)
+async def test_runahead_future_trigger(
+    flow,
+    scheduler,
+    start,
+    rhlimit
+):
+    """Equivalent time interval and cycle count runahead limits should yield
+    the same limit point, even if there is a future trigger.
+
+    See https://github.com/cylc/cylc-flow/pull/5893
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+            'cycle point format': 'CCYYMMDD',
+        },
+        'scheduling': {
+            'initial cycle point': '2001',
+            'runahead limit': rhlimit,
+            'graph': {
+                'P1D': 'a\na[+P1D] => b',
+            },
+        }
+    })
+    schd = scheduler(id_,)
+    async with start(schd):
+        assert str(schd.pool.runahead_limit_point) == '20010103'
+        schd.pool.release_runahead_tasks()
+        for itask in schd.pool.get_all_tasks():
+            schd.pool.spawn_on_output(itask, 'succeeded')
+        # future trigger raises the limit by one cycle point
+        assert str(schd.pool.runahead_limit_point) == '20010104'
