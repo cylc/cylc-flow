@@ -26,10 +26,13 @@ from typing import (
     Tuple,
     Type,
     Union,
+    TYPE_CHECKING
 )
 
-from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.util import format_cmd
+
+if TYPE_CHECKING:
+    from cylc.flow.subprocctx import SubFuncContext
 
 
 class CylcError(Exception):
@@ -198,7 +201,7 @@ class PlatformError(CylcError):
         message: str,
         platform_name: str,
         *,
-        ctx: Optional[SubFuncContext] = None,
+        ctx: Optional['SubFuncContext'] = None,
         cmd: Optional[Union[str, Iterable]] = None,
         ret_code: Optional[int] = None,
         out: Optional[str] = None,

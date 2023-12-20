@@ -31,7 +31,6 @@ parsec config file parsing:
 """
 
 import os
-from optparse import Values
 from pathlib import Path
 import re
 import sys
@@ -49,6 +48,9 @@ from cylc.flow.parsec.util import itemstr
 from cylc.flow.templatevars import get_template_vars_from_db
 from cylc.flow.workflow_files import (
     get_workflow_source_dir, check_flow_file)
+
+if t.TYPE_CHECKING:
+    from optparse import Values
 
 
 # heading/sections can contain commas (namespace name lists) and any

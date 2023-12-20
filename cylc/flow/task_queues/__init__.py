@@ -16,10 +16,11 @@
 
 """Define the Cylc task queue management API."""
 
-from typing import List, Dict, Counter, Any
+from typing import List, Dict, Counter, Any, TYPE_CHECKING
 from abc import ABCMeta, abstractmethod
 
-from cylc.flow.task_proxy import TaskProxy
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class TaskQueueManagerBase(metaclass=ABCMeta):
@@ -42,22 +43,22 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def push_task(self, itask: TaskProxy) -> None:
+    def push_task(self, itask: 'TaskProxy') -> None:
         """Queue the given task."""
         pass
 
     @abstractmethod
-    def release_tasks(self, active: Counter[str]) -> List[TaskProxy]:
+    def release_tasks(self, active: Counter[str]) -> List['TaskProxy']:
         """Release tasks, given current active task counts."""
         pass
 
     @abstractmethod
-    def remove_task(self, itask: TaskProxy) -> None:
+    def remove_task(self, itask: 'TaskProxy') -> None:
         """Remove a task from the queueing system."""
         pass
 
     @abstractmethod
-    def force_release_task(self, itask: TaskProxy) -> None:
+    def force_release_task(self, itask: 'TaskProxy') -> None:
         """Remove a task from whichever queue it belongs to.
 
         To be returned when release_tasks() is next called.
