@@ -677,7 +677,7 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: check_for_deprecated_task_event_template_vars,
     },
-    'U016'
+    'U016': {
         'short': 'Deprecated template vars: {vars}',
         'rst': (
             'agoigfva[or]'
