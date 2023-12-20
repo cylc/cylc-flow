@@ -321,8 +321,25 @@ def check_indentation(line: str) -> bool:
 
 
 CHECK_FOR_OLD_VARS = re.compile(
-    r'CYLC_VERSION\s*=\s*\{\{CYLC_VERSION\}\}|ROSE_VERSION\s*='
-    r'\s*\{\{ROSE_VERSION\}\}|FCM_VERSION\s*=\s*\{\{FCM_VERSION\}\}')
+    r'CYLC_VERSION\s*=\s*\{\{\s*CYLC_VERSION\s*\}\}'
+    r'|ROSE_VERSION\s*=\s*\{\{\s*ROSE_VERSION\s*\}\}'
+    r'|FCM_VERSION\s*=\s*\{\{\s*FCM_VERSION\s*\}\}'
+)
+
+
+def list_wrapper(line: str, check: Callable) -> Optional[Dict[str, str]]:
+    """Take a line and a check function and return a Dict if there is a
+    result, None otherwise.
+
+    Returns
+
+        Dict, in for {'vars': Error string}
+    """
+    result = check(line)
+    if result:
+        return {'vars': '\n    * '.join(result)}
+    return None
+
 
 FUNCTION = 'function'
 
@@ -666,11 +683,10 @@ MANUAL_DEPRECATIONS = {
             'agoigfva[or]'
         ),
         'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
-            'cheat-sheet.html#datetime-operations'
+            'https://cylc.github.io/cylc-doc/stable/html/plugins/'
+            'cylc-rose.html#special-variables'
         ),
-        FUNCTION: lambda line: {
-            'vars': '\n    * '.join(CHECK_FOR_OLD_VARS.findall(line))}
+        FUNCTION: functools.partial(list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
     },
 }
 RULESETS = ['728', 'style', 'all']
