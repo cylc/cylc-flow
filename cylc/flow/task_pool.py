@@ -323,15 +323,14 @@ class TaskPool:
         # First get the runahead base point.
         if not self.main_pool:
             # Find the earliest sequence point beyond the workflow start point.
-            points = [
+            base_point = min(
                 point
                 for point in {
                     seq.get_first_point(self.config.start_point)
                     for seq in self.config.sequences
                 }
                 if point is not None
-            ]
-            base_point = min(points)
+            )
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
