@@ -1291,7 +1291,6 @@ async def test_compute_runahead(
             'scheduler': {
                 'allow implicit tasks': 'True',
                 'cycle point format': 'CCYY',
-                'cycle point time zone': 'Z'
             },
             'scheduling': {
                 'initial cycle point': '0001',
