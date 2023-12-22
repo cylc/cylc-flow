@@ -23,7 +23,7 @@ jobs:
         python-version: ['3.7', '3.8', '3.10', '3.11']
         include:
           # mac os test
-          - os: 'macos-latest'
+          - os: 'macos-11'
             python-version: '3.7'  # oldest supported version
           # non-utc timezone test
           - os: 'ubuntu-latest'

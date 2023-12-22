@@ -1374,12 +1374,15 @@ async def test_runahead_future_trigger(
             'initial cycle point': '2001',
             'runahead limit': rhlimit,
             'graph': {
-                'P1D': 'a\na[+P1D] => b',
+                'P1D': '''
+                    a
+                    a[+P1D] => b
+                ''',
             },
         }
     })
     schd = scheduler(id_,)
-    async with start(schd):
+    async with start(schd, level=logging.DEBUG):
         assert str(schd.pool.runahead_limit_point) == '20010103'
         schd.pool.release_runahead_tasks()
         for itask in schd.pool.get_all_tasks():
