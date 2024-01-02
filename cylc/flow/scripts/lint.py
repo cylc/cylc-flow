@@ -680,7 +680,8 @@ MANUAL_DEPRECATIONS = {
     'U016': {
         'short': 'Deprecated template vars: {vars}',
         'rst': (
-            'agoigfva[or]'
+            'Variables ``CYLC_VERSION``, ``ROSE_VERSION`` and ``FCM_VERSION``'
+            ' are deprecated.'
         ),
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/plugins/'
