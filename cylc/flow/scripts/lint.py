@@ -680,8 +680,8 @@ MANUAL_DEPRECATIONS = {
     'U016': {
         'short': 'Deprecated template vars: {vars}',
         'rst': (
-            'Variables ``CYLC_VERSION``, ``ROSE_VERSION`` and ``FCM_VERSION``'
-            ' are deprecated.'
+            'It is no longer necessary to configure the environment variables '
+            '``CYLC_VERSION``, ``ROSE_VERSION`` or ``FCM_VERSION``.'
         ),
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/plugins/'
