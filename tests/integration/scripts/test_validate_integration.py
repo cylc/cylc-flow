@@ -94,3 +94,18 @@ async def test_validate_against_source_gets_old_tvars(
         flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
     with pytest.raises(Jinja2Error):
         validate(src_dir)
+
+
+def test_validate_simple_graph(flow, validate, caplog):
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'dependencies': {'graph': 'foo'}}
+    })
+    validate(id_)
+    expect = (
+        'deprecated graph items were automatically upgraded '
+        'in "workflow definition":'
+        '\n * (8.0.0) [scheduling][dependencies][X]graph'
+        ' -> [scheduling][graph]X - for X in:\n       graph'
+    )
+    assert expect in caplog.messages
