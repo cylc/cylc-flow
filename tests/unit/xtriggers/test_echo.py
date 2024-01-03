@@ -14,34 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A Cylc xtrigger function."""
-
 from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.xtriggers.echo import validate
+import pytest
+from pytest import param
 
 
-def echo(*args, **kwargs):
-    """Print arguments to stdout, return kwargs['succeed'] and kwargs.
-
-    This may be a useful aid to understanding how xtriggers work.
-
-    Returns
-        tuple: (True/False, kwargs)
-
-    """
-    print("echo: ARGS:", args)
-    print("echo: KWARGS:", kwargs)
-
-    return kwargs["succeed"], kwargs
+def test_validate_good_path():
+    assert validate(
+        [], {'succeed': False, 'egg': 'fried', 'potato': 'baked'}, 'succeed'
+    ) is None
 
 
-def validate(f_args, f_kwargs, f_signature):
-    """
-    Validate the xtrigger function arguments parsed from the workflow config.
-
-    This is separate from the xtrigger to allow parse-time validation.
-
-    """
-    if "succeed" not in f_kwargs or not isinstance(f_kwargs["succeed"], bool):
-        raise WorkflowConfigError(
-            f"Requires 'succeed=True/False' arg: {f_signature}"
-        )
+@pytest.mark.parametrize(
+    'args, kwargs', (
+        param([False], {}, id='no-kwarg'),
+        param([], {'spud': 'mashed'}, id='no-succeed-kwarg'),
+    )
+)
+def test_validate_exceptions(args, kwargs):
+    with pytest.raises(WorkflowConfigError, match='^Requires'):
+        validate(args, kwargs, 'blah')

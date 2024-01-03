@@ -16,11 +16,17 @@
 
 from pathlib import Path
 import sqlite3
+from typing import TYPE_CHECKING
 import pytest
 
 from cylc.flow.exceptions import ServiceFileError, WorkflowConfigError
 from cylc.flow.parsec.exceptions import ListValueError
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
+
+if TYPE_CHECKING:
+    from types import Any
+
+    Fixture = Any
 
 
 @pytest.mark.parametrize(
@@ -341,3 +347,119 @@ def test_validate_incompatible_db(one_conf, flow, validate):
     finally:
         conn.close()
     assert tables == ['suite_params']
+
+
+def test_xtrig_validation_wall_clock(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate_config` it is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'wall_clock(offset=PT755MH)'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=r'Invalid offset: wall_clock\(offset=PT755MH\)'
+    ):
+        validate(id_)
+
+
+def test_xtrig_validation_echo(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate_config` it is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'echo()'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=r'Requires \'succeed=True/False\' arg: echo()'
+    ):
+        validate(id_)
+
+
+def test_xtrig_validation_xrandom(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate_config` it is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'xrandom()'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=r'Wrong number of args: xrandom\(\)'
+    ):
+        validate(id_)
+
+
+def test_xtrig_validation_custom(
+    flow: 'Fixture',
+    validate: 'Fixture',
+    monkeypatch: 'Fixture',
+):
+    """If an xtrigger module has a `validate_config`
+    an exception is raised if that validate function fails.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+
+    Rather than create our own xtrigger module on disk
+    and attempt to trigger a validation failure we
+    mock our own exception, xtrigger and xtrigger
+    validation functions and inject these into the
+    appropriate locations:
+    """
+    GreenExc = type('Green', (Exception,), {})
+
+    def kustom_mock(suite):
+        return True, {}
+
+    def kustom_validate(args, kwargs, sig):
+        raise GreenExc('This is only a test.')
+
+    monkeypatch.setattr(
+        'cylc.flow.xtrigger_mgr.get_xtrig_func',
+        lambda *args: kustom_mock,
+    )
+    monkeypatch.setattr(
+        'cylc.flow.config.get_xtrig_func',
+        lambda *args: kustom_validate if "validate" in args else ''
+    )
+
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'kustom_xt(feature=42)'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+
+    Path(id_)
+    with pytest.raises(GreenExc, match=r'This is only a test.'):
+        validate(id_)

@@ -17,6 +17,8 @@
 from random import random, randint
 from time import sleep
 
+from cylc.flow.exceptions import WorkflowConfigError
+
 
 COLORS = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
 SIZES = ["tiny", "small", "medium", "large", "huge", "humongous"]
@@ -89,3 +91,48 @@ def xrandom(percent, secs=0, _=None):
             'SIZE': SIZES[randint(0, len(SIZES) - 1)]  # nosec
         }
     return satisfied, results
+
+
+def validate(f_args, f_kwargs, f_signature):
+    """Validate and manipulate args parsed from the workflow config.
+
+    percent: - 0 ≤ x ≤ 100
+    secs: An int.
+
+    If f_args used, convert to f_kwargs for clarity.
+
+    """
+    n_args = len(f_args)
+    n_kwargs = len(f_kwargs)
+
+    if n_args + n_kwargs > 3:
+        raise WorkflowConfigError(f"Too many args: {f_signature}")
+
+    if n_args != 1:
+        raise WorkflowConfigError(f"Wrong number of args: {f_signature}")
+
+    if n_kwargs:
+        # kwargs must be "secs" and "_"
+        kw = next(iter(f_kwargs))
+        if kw not in ("secs", "_"):
+            raise WorkflowConfigError(f"Illegal arg '{kw}': {f_signature}")
+
+    # convert to kwarg
+    f_kwargs["percent"] = f_args[0]
+    del f_args[0]
+
+    try:
+        percent = f_kwargs['percent']
+        assert isinstance(percent, (float, int))
+        assert percent >= 0
+        assert percent <= 100
+    except AssertionError:
+        raise WorkflowConfigError(
+            f"'percent' should be a float between 0 and 100: {f_signature}")
+
+    try:
+        secs = f_kwargs['secs']
+        assert isinstance(secs, int)
+    except AssertionError:
+        raise WorkflowConfigError(
+            f"'secs' should be an integer: {f_signature}")
