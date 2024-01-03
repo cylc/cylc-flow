@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import suppress
 import logging
 from typing import Any as Fixture
 
@@ -128,3 +129,61 @@ async def test__run_job_cmd_logs_platform_lookup_fail(
         warning = caplog.records[-1]
         assert warning.levelname == 'ERROR'
         assert 'Unable to run command jobs-poll' in warning.msg
+
+
+async def test__prep_submit_task_job_impl_handles_execution_time_limit(
+    flow: Fixture,
+    scheduler: Fixture,
+    start: Fixture,
+    validate: Fixture,
+    pytestconfig: Fixture
+):
+    """Ensure that emptying the execution time limit unsets it.
+
+    Previously unsetting the etl by either broadcast or reload
+    would not unset a previous etl.
+
+    See https://github.com/cylc/cylc-flow/issues/5891
+    """
+    id_ = flow({
+        "scheduling": {
+            "cycling mode": "integer",
+            "graph": {"R1": "a"}
+        },
+        "runtime": {
+            "root": {},
+            "a": {
+                "script": "sleep 10",
+                "execution time limit": 'PT5S'
+            }
+        }
+    })
+    # Debugging only:
+    if pytestconfig.option.verbose > 2:
+        validate(id_)
+
+    # Run in live mode - function not called in sim mode.
+    schd = scheduler(id_, run_mode='live')
+    async with start(schd):
+        task_a = schd.pool.get_tasks()[0]
+        # We're not interested in the job file stuff, just
+        # in the summary state.
+        with suppress(FileExistsError):
+            schd.task_job_mgr._prep_submit_task_job_impl(
+                schd.workflow, task_a, task_a.tdef.rtconfig)
+            assert task_a.summary['execution_time_limit'] == 5.0
+
+            # If we delete the etl it gets deleted in the summary:
+            task_a.tdef.rtconfig['execution time limit'] = None
+            schd.task_job_mgr._prep_submit_task_job_impl(
+                schd.workflow, task_a, task_a.tdef.rtconfig)
+            assert not task_a.summary.get('execution_time_limit', '')
+
+            # put everything back and test broadcast too.
+            task_a.tdef.rtconfig['execution time limit'] = 5.0
+            task_a.summary['execution_time_limit'] = 5.0
+            schd.broadcast_mgr.broadcasts = {
+                '1': {'a': {'execution time limit': None}}}
+            schd.task_job_mgr._prep_submit_task_job_impl(
+                schd.workflow, task_a, task_a.tdef.rtconfig)
+            assert not task_a.summary.get('execution_time_limit', '')
