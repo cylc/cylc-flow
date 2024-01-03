@@ -135,8 +135,6 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
     flow: Fixture,
     scheduler: Fixture,
     start: Fixture,
-    validate: Fixture,
-    pytestconfig: Fixture
 ):
     """Ensure that emptying the execution time limit unsets it.
 
@@ -158,9 +156,6 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
             }
         }
     })
-    # Debugging only:
-    if pytestconfig.option.verbose > 2:
-        validate(id_)
 
     # Run in live mode - function not called in sim mode.
     schd = scheduler(id_, run_mode='live')
