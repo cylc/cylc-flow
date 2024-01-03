@@ -320,6 +320,27 @@ def check_indentation(line: str) -> bool:
     return bool(len(match[0]) % 4 != 0)
 
 
+CHECK_FOR_OLD_VARS = re.compile(
+    r'CYLC_VERSION\s*=\s*\{\{\s*CYLC_VERSION\s*\}\}'
+    r'|ROSE_VERSION\s*=\s*\{\{\s*ROSE_VERSION\s*\}\}'
+    r'|FCM_VERSION\s*=\s*\{\{\s*FCM_VERSION\s*\}\}'
+)
+
+
+def list_wrapper(line: str, check: Callable) -> Optional[Dict[str, str]]:
+    """Take a line and a check function and return a Dict if there is a
+    result, None otherwise.
+
+    Returns
+
+        Dict, in for {'vars': Error string}
+    """
+    result = check(line)
+    if result:
+        return {'vars': '\n    * '.join(result)}
+    return None
+
+
 FUNCTION = 'function'
 
 STYLE_GUIDE = (
@@ -655,7 +676,20 @@ MANUAL_DEPRECATIONS = {
             'writing-workflows/runtime.html#task-event-template-variables'
         ),
         FUNCTION: check_for_deprecated_task_event_template_vars,
-    }
+    },
+    'U016': {
+        'short': 'Deprecated template vars: {vars}',
+        'rst': (
+            'It is no longer necessary to configure the environment variables '
+            '``CYLC_VERSION``, ``ROSE_VERSION`` or ``FCM_VERSION``.'
+        ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/plugins/'
+            'cylc-rose.html#special-variables'
+        ),
+        FUNCTION: functools.partial(
+            list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+    },
 }
 RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {

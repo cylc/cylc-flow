@@ -96,6 +96,12 @@ TEST_FILE = """
             graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
+    [[root]]
+        [[[environment]]]
+            CYLC_VERSION={{CYLC_VERSION}}
+            ROSE_VERSION  = {{ROSE_VERSION     }}
+            FCM_VERSION = {{   FCM_VERSION   }}
+
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
@@ -151,7 +157,6 @@ LINT_TEST_FILE = """
  [scheduler]
 
 [[dependencies]]
-
 {% set   N = 009 %}
 {% foo %}
 {{foo}}
@@ -206,13 +211,22 @@ def filter_strings(items, contains):
     ]
 
 
-def assert_contains(items, contains):
+def assert_contains(items, contains, instances=None):
     """Pass if at least one item contains a given string."""
-    if not filter_strings(items, contains):
+    filtered = filter_strings(items, contains)
+    if not filtered:
         raise Exception(
             f'Could not find: "{contains}" in:\n'
-            + pformat(items)
-        )
+            + pformat(items))
+    elif instances and len(filtered) != instances:
+        raise Exception(
+            f'Expected "{contains}" to appear {instances} times'
+            f', got it {len(filtered)} times.')
+
+
+EXPECT_INSTANCES_OF_ERR = {
+    16: 3,
+}
 
 
 @pytest.mark.parametrize(
@@ -222,7 +236,8 @@ def assert_contains(items, contains):
 def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
-    assert_contains(lint.messages, f'[U{number:03d}]')
+    instances = EXPECT_INSTANCES_OF_ERR.get(number, None)
+    assert_contains(lint.messages, f'[U{number:03d}]', instances)
 
 
 def test_check_cylc_file_7to8_has_shebang():
