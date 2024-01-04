@@ -39,7 +39,7 @@ def log_level_to_verbosity(lvl: int) -> int:
         >>> log_level_to_verbosity(logging.NOTSET)
         2
         >>> log_level_to_verbosity(logging.DEBUG)
-        1
+        2
         >>> log_level_to_verbosity(logging.INFO)
         0
         >>> log_level_to_verbosity(logging.WARNING)
@@ -47,7 +47,7 @@ def log_level_to_verbosity(lvl: int) -> int:
         >>> log_level_to_verbosity(logging.ERROR)
         -1
     """
-    if lvl < logging.DEBUG:
+    if lvl <= logging.DEBUG:
         return 2
     if lvl < logging.INFO:
         return 1
