@@ -166,19 +166,23 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
         with suppress(FileExistsError):
             schd.task_job_mgr._prep_submit_task_job_impl(
                 schd.workflow, task_a, task_a.tdef.rtconfig)
-            assert task_a.summary['execution_time_limit'] == 5.0
+        assert task_a.summary['execution_time_limit'] == 5.0
 
-            # If we delete the etl it gets deleted in the summary:
-            task_a.tdef.rtconfig['execution time limit'] = None
+        # If we delete the etl it gets deleted in the summary:
+        task_a.tdef.rtconfig['execution time limit'] = None
+        with suppress(FileExistsError):
             schd.task_job_mgr._prep_submit_task_job_impl(
                 schd.workflow, task_a, task_a.tdef.rtconfig)
-            assert not task_a.summary.get('execution_time_limit', '')
+        assert not task_a.summary.get('execution_time_limit', '')
 
-            # put everything back and test broadcast too.
-            task_a.tdef.rtconfig['execution time limit'] = 5.0
-            task_a.summary['execution_time_limit'] = 5.0
-            schd.broadcast_mgr.broadcasts = {
-                '1': {'a': {'execution time limit': None}}}
-            schd.task_job_mgr._prep_submit_task_job_impl(
-                schd.workflow, task_a, task_a.tdef.rtconfig)
-            assert not task_a.summary.get('execution_time_limit', '')
+        # put everything back and test broadcast too.
+        task_a.tdef.rtconfig['execution time limit'] = 5.0
+        task_a.summary['execution_time_limit'] = 5.0
+        schd.broadcast_mgr.broadcasts = {
+            '1': {'a': {'execution time limit': None}}}
+        with suppress(FileExistsError):
+            # We run a higher level function here to ensure
+            # that the broadcast is applied.
+            schd.task_job_mgr._prep_submit_task_job(
+                schd.workflow, task_a)
+        assert not task_a.summary.get('execution_time_limit', '')
