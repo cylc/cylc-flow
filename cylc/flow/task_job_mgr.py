@@ -1305,11 +1305,9 @@ class TaskJobManager:
             >>> with raises(ValueError):
             ...     this("🇳🇿")
         """
-        execution_time_limit = None
-        if config_execution_time_limit is not None:
-            with suppress(TypeError):
-                execution_time_limit = float(config_execution_time_limit)
-        return execution_time_limit
+        with suppress(TypeError):
+            return float(config_execution_time_limit)
+        return None
 
     def get_job_conf(
         self,
