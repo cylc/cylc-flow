@@ -1253,9 +1253,11 @@ async def test_detect_incomplete_tasks(
 
 @pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 @pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
+@pytest.mark.parametrize('runahead_format', ['P3Y', 'P3'])
 async def test_compute_runahead(
     cycling_mode,
     compat_mode,
+    runahead_format,
     flow,
     scheduler,
     start,
@@ -1294,7 +1296,7 @@ async def test_compute_runahead(
             },
             'scheduling': {
                 'initial cycle point': '0001',
-                'runahead limit': 'P3Y',
+                'runahead limit': runahead_format,
                 'graph': {
                     'P1Y': 'a'
                 },
@@ -1351,41 +1353,70 @@ async def test_compute_runahead(
         assert int(str(schd.pool.runahead_limit_point)) == 5  # +1
 
 
-@pytest.mark.parametrize(
-    'rhlimit', ['P2D', 'P2']
-)
+@pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
+@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
+@pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
 async def test_runahead_future_trigger(
     flow,
     scheduler,
     start,
-    rhlimit
+    monkeypatch,
+    rhlimit,
+    compat_mode,
+    cycling_mode,
 ):
     """Equivalent time interval and cycle count runahead limits should yield
     the same limit point, even if there is a future trigger.
 
     See https://github.com/cylc/cylc-flow/pull/5893
     """
-    id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-            'cycle point format': 'CCYYMMDD',
-        },
-        'scheduling': {
-            'initial cycle point': '2001',
-            'runahead limit': rhlimit,
-            'graph': {
-                'P1D': '''
-                    a
-                    a[+P1D] => b
-                ''',
+    if cycling_mode == 'integer':
+        id_ = flow({
+            'scheduler': {
+                'allow implicit tasks': 'True',
             },
-        }
-    })
+            'scheduling': {
+                'initial cycle point': '1',
+                'cycling mode': 'integer',
+                'runahead limit': 'P2',
+                'graph': {
+                    'P1': '''
+                        a
+                        a[+P1] => b
+                    ''',
+                },
+            }
+        })
+        expect = ['3', '4']
+    else:
+        id_ = flow({
+            'scheduler': {
+                'allow implicit tasks': 'True',
+                'cycle point format': 'CCYYMMDD',
+            },
+            'scheduling': {
+                'initial cycle point': '2001',
+                'runahead limit': rhlimit,
+                'graph': {
+                    'P1D': '''
+                        a
+                        a[+P1D] => b
+                    ''',
+                },
+            }
+        })
+        expect = ['20010103', '20010104']
+
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat',
+        compat_mode == 'compat-mode',
+    )
+    validate(id_)
     schd = scheduler(id_,)
     async with start(schd, level=logging.DEBUG):
-        assert str(schd.pool.runahead_limit_point) == '20010103'
+        assert str(schd.pool.runahead_limit_point) == expect[0]
         schd.pool.release_runahead_tasks()
         for itask in schd.pool.get_all_tasks():
             schd.pool.spawn_on_output(itask, 'succeeded')
         # future trigger raises the limit by one cycle point
-        assert str(schd.pool.runahead_limit_point) == '20010104'
+        assert str(schd.pool.runahead_limit_point) == expect[1]
