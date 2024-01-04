@@ -497,7 +497,7 @@ UNIVERSAL_ID = re.compile(
             )?
             (?:
                 # cycle/task/job
-                { RELATIVE_PATTERN }
+                {RELATIVE_PATTERN}
             )?
           )?
         )?

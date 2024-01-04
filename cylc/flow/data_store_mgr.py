@@ -1587,7 +1587,7 @@ class DataStoreMgr:
             name=tproxy.name,
             cycle_point=tproxy.cycle_point,
             execution_time_limit=job_conf.get('execution_time_limit'),
-            platform=job_conf.get('platform')['name'],
+            platform=job_conf['platform']['name'],
             job_runner_name=job_conf.get('job_runner_name'),
         )
         # Not all fields are populated with some submit-failures,
@@ -1603,7 +1603,6 @@ class DataStoreMgr:
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
             self.schd.workflow, tproxy.cycle_point, tproxy.name, sub_num)
-        j_buf.extra_logs.extend(job_conf.get('logfiles', []))
 
         self.added[JOBS][j_id] = j_buf
         getattr(self.updated[WORKFLOW], JOBS).append(j_id)

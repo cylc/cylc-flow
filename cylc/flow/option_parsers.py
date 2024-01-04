@@ -33,7 +33,7 @@ from ansimarkup import (
 
 import sys
 from textwrap import dedent
-from typing import Any, Dict, Optional, List, Tuple, Union
+from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.terminal import supports_color, DIM
@@ -42,8 +42,13 @@ from cylc.flow.loggingutil import (
     CylcLogFormatter,
     setup_segregated_log_streams,
 )
+from cylc.flow.log_level import (
+    env_to_verbosity,
+    verbosity_to_log_level
+)
 
 WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
+OPT_WORKFLOW_ID_ARG_DOC = ('[WORKFLOW]', 'Workflow ID')
 WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
 WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
