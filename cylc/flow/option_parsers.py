@@ -33,7 +33,7 @@ from ansimarkup import (
 
 import sys
 from textwrap import dedent
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple, Union
 
 from cylc.flow import LOG
 from cylc.flow.terminal import supports_color, DIM
