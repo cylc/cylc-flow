@@ -233,7 +233,7 @@ class WorkflowDatabaseManager:
                     self.db_deletes_map.items()):
                 while db_deletes:
                     where_args = db_deletes.pop(0)
-                    LOG.debug(f"DB {table_name} DEL {where_args}")
+                    # LOG.debug(f"DB {table_name} DEL {where_args}")
                     self.pri_dao.add_delete_item(table_name, where_args)
                     self.pub_dao.add_delete_item(table_name, where_args)
         if any(self.db_inserts_map.values()):
@@ -241,7 +241,7 @@ class WorkflowDatabaseManager:
                     self.db_inserts_map.items()):
                 while db_inserts:
                     db_insert = db_inserts.pop(0)
-                    LOG.debug(f"DB {table_name} INS {db_insert}")
+                    # LOG.debug(f"DB {table_name} INS {db_insert}")
                     self.pri_dao.add_insert_item(table_name, db_insert)
                     self.pub_dao.add_insert_item(table_name, db_insert)
         if (hasattr(self, 'db_updates_map') and
@@ -250,8 +250,8 @@ class WorkflowDatabaseManager:
                     self.db_updates_map.items()):
                 while db_updates:
                     set_args, where_args = db_updates.pop(0)
-                    LOG.debug(
-                        f"DB {table_name} UPD {set_args} WHERE {where_args}")
+                    # LOG.debug(
+                    #     f"DB {table_name} UPD {set_args} WHERE {where_args}")
                     self.pri_dao.add_update_item(
                         table_name, set_args, where_args)
                     self.pub_dao.add_update_item(
