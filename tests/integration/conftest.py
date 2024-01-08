@@ -25,7 +25,6 @@ from typing import List, TYPE_CHECKING, Set, Tuple, Union
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import Options
-from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.validate import ValidateOptions
@@ -48,6 +47,7 @@ from .utils.flow_tools import (
 )
 
 if TYPE_CHECKING:
+    from cylc.flow.network.client import WorkflowRuntimeClient
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
 
@@ -326,7 +326,7 @@ def db_select():
 def gql_query():
     """Execute a GraphQL query given a workflow runtime client."""
     async def _gql_query(
-        client: WorkflowRuntimeClient, query_str: str
+        client: 'WorkflowRuntimeClient', query_str: str
     ) -> object:
         ret = await client.async_request(
             'graphql', {
@@ -511,7 +511,7 @@ def reflog():
 
     """
 
-    def _reflog(schd, flow_nums=False):
+    def _reflog(schd: 'Scheduler', flow_nums: bool = False) -> Set[tuple]:
         submit_task_jobs = schd.task_job_mgr.submit_task_jobs
         triggers = set()
 
@@ -613,3 +613,22 @@ def complete():
         schd._set_stop = set_stop
 
     return _complete
+
+
+@pytest.fixture
+def reftest(run, reflog, complete):
+    """Fixture that runs a simple reftest.
+
+    Combines the `reflog` and `complete` fixtures.
+    """
+    async def _reftest(
+        schd: 'Scheduler',
+        flow_nums: bool = False,
+    ) -> Set[tuple]:
+        async with run(schd):
+            triggers = reflog(schd, flow_nums)
+            await complete(schd)
+
+        return triggers
+
+    return _reftest

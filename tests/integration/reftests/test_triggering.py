@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,9 +13,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test intercycle dependencies.
-. "$(dirname "$0")/test_header"
-set_test_number 2
-reftest
-exit
+
+async def test_fail(flow, scheduler, reftest):
+    """Test triggering on :fail"""
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo:failed => bar'
+            }
+        },
+        'runtime': {
+            'foo': {
+                'simulation': {'fail cycle points': 'all'}
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+
+    assert await reftest(schd) == {
+        ('1/foo', None),
+        ('1/bar', ('1/foo',)),
+    }

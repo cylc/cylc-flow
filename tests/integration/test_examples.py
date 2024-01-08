@@ -240,9 +240,6 @@ async def test_reflog(flow, scheduler, run, reflog, complete):
     they can be compared with the expected outcome.
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '1',
             'final cycle point': '1',
@@ -270,4 +267,26 @@ async def test_reflog(flow, scheduler, run, reflog, complete):
         ('1/c', ('1/b',)),
         ('1/x', None),
         ('1/z', ('1/b',)),
+    }
+
+
+async def test_reftest(flow, scheduler, reftest):
+    """Test the triggering of tasks.
+
+    This uses the reftest fixture which combines the reflog and
+    complete fixtures. Suitable for use when you just want to do a simple
+    reftest.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b'
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+
+    assert await reftest(schd) == {
+        ('1/a', None),
+        ('1/b', ('1/a',)),
     }
