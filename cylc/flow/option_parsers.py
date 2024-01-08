@@ -33,7 +33,7 @@ from ansimarkup import (
 
 import sys
 from textwrap import dedent
-from typing import Any, Dict, Optional, List, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, List, Tuple, Union
 
 from cylc.flow import LOG
 from cylc.flow.terminal import supports_color, DIM
@@ -820,17 +820,33 @@ def combine_options(*args, modify=None):
 
 
 def cleanup_sysargv(
-    script_name,
-    workflow_id,
-    options,
-    compound_script_opts,
-    script_opts,
-    source,
-):
+    script_name: str,
+    workflow_id: str,
+    options: 'Values',
+    compound_script_opts: Iterable['OptionSettings'],
+    script_opts: Iterable['OptionSettings'],
+    source: str,
+) -> None:
     """Remove unwanted options from sys.argv
 
     Some cylc scripts (notably Cylc Play when it is re-invoked on a scheduler
-    server) require the correct content in sys.argv.
+    server) require the correct content in sys.argv: This function
+    subtracts the unwanted options from sys.argv.
+
+    Args:
+        script_name:
+            Name of the target script. For example if we are
+            using this for the play step of cylc vip then this
+            will be "play".
+        workflow_id:
+        options:
+            Actual options provided to the compound script.
+        compound_script_options:
+            Options available in compound script.
+        script_options:
+            Options available in target script.
+        source:
+            Source directory.
     """
     # Organize Options by dest.
     script_opts_by_dest = {
@@ -841,21 +857,31 @@ def cleanup_sysargv(
         x.kwargs.get('dest', x.args[0].strip(DOUBLEDASH)): x
         for x in compound_script_opts
     }
-    # Filter out non-cylc-play options.
-    args = [i.split('=')[0] for i in sys.argv]
-    for unwanted_opt in (set(options.__dict__)) - set(script_opts_by_dest):
-        for arg in compound_opts_by_dest[unwanted_opt].args:
-            if arg in sys.argv:
-                index = sys.argv.index(arg)
+
+    # Filter out non-cylc-play options:
+    # The set of options which we want to weed out:
+    for unwanted_dest in (set(options.__dict__)) - set(script_opts_by_dest):
+
+        # The possible ways this could be written - if the above
+        # were "workflow_name" this could be '-n' or '--workflow-name':
+        for unwanted_arg in compound_opts_by_dest[unwanted_dest].args:
+
+            # Check for args which are standalone or space separated
+            # `--workflow-name foo`:
+            if unwanted_arg in sys.argv:
+                index = sys.argv.index(unwanted_arg)
                 sys.argv.pop(index)
                 if (
-                    compound_opts_by_dest[unwanted_opt].kwargs['action']
+                    compound_opts_by_dest[unwanted_dest].kwargs['action']
                     not in ['store_true', 'store_false']
                 ):
                     sys.argv.pop(index)
-            elif arg in args:
-                index = args.index(arg)
-                sys.argv.pop(index)
+
+            # Check for `--workflow-name=foo`:
+            elif unwanted_arg in [a.split('=')[0] for a in sys.argv]:
+                for cli_arg in sys.argv:
+                    if cli_arg.startswith(unwanted_arg):
+                        sys.argv.remove(cli_arg)
 
     # replace compound script name:
     sys.argv[1] = script_name

@@ -410,6 +410,22 @@ def test_combine_options(inputs, expect):
             'play myworkflow'.split(),
             id='removes --key=value'
         ),
+        param(
+            # Test for https://github.com/cylc/cylc-flow/issues/5905
+            'vip ./myworkflow --no-run-name --workflow-name=hi'.split(),
+            {
+                'script_name': 'play',
+                'workflow_id': 'myworkflow',
+                'compound_script_opts': [
+                    OptionSettings(['--no-run-name'], action='store_true'),
+                    OptionSettings(['--workflow-name'], action='store')
+                ],
+                'script_opts': [],
+                'source': './myworkflow',
+            },
+            'play myworkflow'.split(),
+            id='equals-bug'
+        ),
     ]
 )
 def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
