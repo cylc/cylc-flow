@@ -841,34 +841,30 @@ def cleanup_sysargv(
         x.kwargs.get('dest', x.args[0].strip(DOUBLEDASH)): x
         for x in compound_script_opts
     }
-
-    # Create a copy of sys.argv (without "=" signs):
-    args = []
-    for arg in sys.argv:
-        args += arg.split('=')
-
-    # Filter out non-cylc-play options:
+    # Filter out non-cylc-play options.
+    args = [i.split('=')[0] for i in sys.argv]
     for unwanted_opt in (set(options.__dict__)) - set(script_opts_by_dest):
         for arg in compound_opts_by_dest[unwanted_opt].args:
-            if arg in args:
-                index = args.index(arg)
-                args.pop(index)
-                # If this is an arg with a value expected, pop a second arg.
+            if arg in sys.argv:
+                index = sys.argv.index(arg)
+                sys.argv.pop(index)
                 if (
                     compound_opts_by_dest[unwanted_opt].kwargs['action']
                     not in ['store_true', 'store_false']
                 ):
-                    args.pop(index)
+                    sys.argv.pop(index)
+            elif arg in args:
+                index = args.index(arg)
+                sys.argv.pop(index)
 
     # replace compound script name:
-    args[1] = script_name
+    sys.argv[1] = script_name
 
-    # replace source path with workflow ID:
-    if str(source) in args:
-        args.remove(str(source))
-    if workflow_id not in args:
-        args.append(workflow_id)
-    sys.argv = args
+    # replace source path with workflow ID.
+    if str(source) in sys.argv:
+        sys.argv.remove(str(source))
+    if workflow_id not in sys.argv:
+        sys.argv.append(workflow_id)
 
 
 def log_subcommand(*args):
