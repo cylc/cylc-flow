@@ -1269,7 +1269,7 @@ async def test_compute_runahead(
     This test ensures that:
     * Runahead tasks are excluded from computations
       see https://github.com/cylc/cylc-flow/issues/5825
-    * Tasks are initiated with the correct is_runahead status on statup.
+    * Tasks are initiated with the correct is_runahead status on startup.
     * Behaviour in compat/regular modes is same unless failed tasks are present
     * Behaviour is the same for integer/datetime cycling modes.
 
@@ -1329,18 +1329,23 @@ async def test_compute_runahead(
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
-        # mark cycle 1 as incomplete (but finished)
+        # In Cylc 8 all incomplete tasks hold back runahead.
+
+        # In Cylc 7, submit-failed tasks hold back runahead..
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_SUBMIT_FAILED
         )
-
         schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4
 
+        # ... but failed ones don't. Go figure.
+        schd.pool.get_task(point('0001'), 'a').state.reset(
+            TASK_STATUS_FAILED
+        )
+        schd.pool.compute_runahead(force=True)
         if compat_mode == 'compat-mode':
-            # Cylc 7 does not count failed tasks in runahead computation.
             assert int(str(schd.pool.runahead_limit_point)) == 5
         else:
-            # Cylc 8 does count failed tasks in runahead computation.
             assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
         # mark cycle 1 as complete

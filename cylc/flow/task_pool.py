@@ -58,7 +58,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUS_SUBMIT_FAILED,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
@@ -335,14 +334,12 @@ class TaskPool:
         else:
             # Find the earliest point with incomplete tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
-                # All n=0 tasks are incomplete but Cylc 7 ignores failed ones.
+                # All n=0 tasks are incomplete by definition, but Cylc 7
+                # ignores failed ones (it does not ignore submit-failed!).
                 if (
                     cylc.flow.flags.cylc7_back_compat and
                     all(
-                        itask.state(
-                            TASK_STATUS_SUBMIT_FAILED,
-                            TASK_STATUS_FAILED
-                        )
+                        itask.state(TASK_STATUS_FAILED)
                         for itask in itasks
                     )
                 ):
@@ -404,7 +401,7 @@ class TaskPool:
             self._prev_runahead_base_point = base_point
 
         if count_cycles:
-            # (len(list) may less than ilimit due to sequence end)
+            # (len(list) may be less than ilimit due to sequence end)
             limit_point = sorted(sequence_points)[:ilimit + 1][-1]
         else:
             limit_point = max(sequence_points)
