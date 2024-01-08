@@ -73,7 +73,7 @@ async def test_1_xtrigger_2_tasks(flow, start, scheduler, monkeypatch, mocker):
     If multiple tasks depend on the same satisfied xtrigger, the DB mgr method
     put_xtriggers should only be called once - when the xtrigger gets satisfied.
 
-    See GitHub #5908
+    See [GitHub #5908](https://github.com/cylc/cylc-flow/pull/5908)
 
     """
     task_point = 1588636800                # 2020-05-05
