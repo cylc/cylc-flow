@@ -16,6 +16,7 @@
 """Tests for the behaviour of xtrigger manager.
 """
 
+from pytest_mock import mocker
 
 async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
     """Test that if an itask has 2 wall_clock triggers with different
@@ -65,3 +66,56 @@ async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
             'clock_2': False,
             'clock_3': False,
         }
+
+
+async def test_1_xtrigger_2_tasks(flow, start, scheduler, monkeypatch, mocker):
+    """
+    If multiple tasks depend on the same satisfied xtrigger, the DB mgr method
+    put_xtriggers should only be called once - when the xtrigger gets satisfied.
+
+    See GitHub #5908
+
+    """
+    task_point = 1588636800                # 2020-05-05
+    ten_years_ahead = 1904169600           # 2030-05-05
+    monkeypatch.setattr(
+        'cylc.flow.xtriggers.wall_clock.time',
+        lambda: ten_years_ahead - 1
+    )
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'initial cycle point': '2020-05-05',
+            'xtriggers': {
+                'clock_1': 'wall_clock()',
+            },
+            'graph': {
+                'R1': '@clock_1 => foo & bar'
+            }
+        }
+    })
+
+    schd = scheduler(id_)
+    spy = mocker.spy(schd.workflow_db_mgr, 'put_xtriggers')
+
+    async with start(schd):
+
+        # Call the clock trigger via its dependent tasks, to get it satisfied.
+        for task in schd.pool.get_tasks():
+            # (For clock triggers this is synchronous)
+            schd.xtrigger_mgr.call_xtriggers_async(task)
+
+        # It should now be satisfied.
+        assert task.state.xtriggers == {'clock_1': True}
+
+        # Check one put_xtriggers call only, not two.
+        assert spy.call_count == 1
+
+        # Note on master prior to GH #5908 the call is made from the
+        # scheduler main loop when the two tasks become satisified,
+        # resulting in two calls to put_xtriggers. This test fails
+        # on master, but with call count 0 (not 2) because the main
+        # loop doesn't run in this test.
+        
