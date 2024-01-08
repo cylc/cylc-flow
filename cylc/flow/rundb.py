@@ -298,6 +298,8 @@ class CylcWorkflowDAO:
             ["prereq_output", {"is_primary_key": True}],
             ["satisfied"],
         ],
+        # The xtriggers table holds the function signature and result of
+        # already-satisfied (the scheduler no longer needs to call them).
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
             ["results"],
