@@ -27,10 +27,6 @@ async def test_basic(flow, scheduler, reftest):
     })
     schd = scheduler(wid, paused_start=False)
 
-    # 20100101T0000Z/b -triggered off []
-    # 20100102T0000Z/b -triggered off []
-    # 20100101T0000Z/a -triggered off ['20091231T0000Z/a', '20100101T0000Z/b']
-    # 20100102T0000Z/a -triggered off ['20100101T0000Z/a', '20100102T0000Z/b']
     assert await reftest(schd) == {
         ('20100101T0000Z/b', None),
         ('20100102T0000Z/b', None),
