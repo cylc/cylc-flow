@@ -858,39 +858,66 @@ def cleanup_sysargv(
         for x in compound_script_opts
     }
 
-    # Filter out non-cylc-play options:
-    # The set of options which we want to weed out:
+    # Get a list of unwanted args:
+    unwanted_compound: List[str] = []
+    unwanted_simple: List[str] = []
     for unwanted_dest in (set(options.__dict__)) - set(script_opts_by_dest):
-
-        # The possible ways this could be written - if the above
-        # were "workflow_name" this could be '-n' or '--workflow-name':
         for unwanted_arg in compound_opts_by_dest[unwanted_dest].args:
+            if (
+                compound_opts_by_dest[unwanted_dest].kwargs.get('action', None)
+                in ['store_true', 'store_false']
+            ):
+                unwanted_simple.append(unwanted_arg)
+            else:
+                unwanted_compound.append(unwanted_arg)
 
-            # Check for args which are standalone or space separated
-            # `--workflow-name foo`:
-            if unwanted_arg in sys.argv:
-                index = sys.argv.index(unwanted_arg)
-                sys.argv.pop(index)
-                if (
-                    compound_opts_by_dest[unwanted_dest].kwargs['action']
-                    not in ['store_true', 'store_false']
-                ):
-                    sys.argv.pop(index)
-
-            # Check for `--workflow-name=foo`:
-            elif unwanted_arg in [a.split('=')[0] for a in sys.argv]:
-                for cli_arg in sys.argv:
-                    if cli_arg.startswith(unwanted_arg):
-                        sys.argv.remove(cli_arg)
+    new_args = filter_sysargv(sys.argv, unwanted_simple, unwanted_compound)
 
     # replace compound script name:
-    sys.argv[1] = script_name
+    new_args[1] = script_name
 
     # replace source path with workflow ID.
     if str(source) in sys.argv:
-        sys.argv.remove(str(source))
+        new_args.remove(str(source))
     if workflow_id not in sys.argv:
-        sys.argv.append(workflow_id)
+        new_args.append(workflow_id)
+
+    sys.argv = new_args
+
+
+def filter_sysargv(
+    sysargs, unwanted_simple: List, unwanted_compound: List
+) -> List:
+    """Create a copy of sys.argv without unwanted arguments:
+
+    Cases:
+        >>> this = filter_sysargv
+        >>> this(['--foo', 'expects-a-value', '--bar'], [], ['--foo'])
+        ['--bar']
+        >>> this(['--foo=expects-a-value', '--bar'], [], ['--foo'])
+        ['--bar']
+        >>> this(['--foo', '--bar'], ['--foo'], [])
+        ['--bar']
+    """
+    pop_next: bool = False
+    new_args: List = []
+    for this_arg in sysargs:
+        parts = this_arg.split('=', 1)
+        if pop_next:
+            pop_next = False
+            continue
+        elif parts[0] in unwanted_compound:
+            # Case --foo=value or --foo value
+            if len(parts) == 1:
+                # --foo value
+                pop_next = True
+            continue
+        elif parts[0] in unwanted_simple:
+            # Case --foo does not expect a value:
+            continue
+        else:
+            new_args.append(this_arg)
+    return new_args
 
 
 def log_subcommand(*args):
