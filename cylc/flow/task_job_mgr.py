@@ -1288,24 +1288,21 @@ class TaskJobManager:
     ) -> Union[None, float]:
         """Get execution time limit from config and process it.
 
-        We are making no assumptions about what can be passed in,
-        but passing silently and returning None if the value is
-        not a type convertable to a float:
+        If the etl from the config is a Falsy then return None.
+        Otherwise try and parse value as float.
 
         Examples:
+            >>> from pytest import raises
             >>> this = TaskJobManager.get_execution_time_limit
+
             >>> this(None)
             >>> this("54")
             54.0
             >>> this({})
-
-        N.b.
-            This function does not save you from a value error:
-            >>> from pytest import raises
             >>> with raises(ValueError):
-            ...     this("🇳🇿")
+            ...     this('🇳🇿')
         """
-        with suppress(TypeError):
+        if config_execution_time_limit:
             return float(config_execution_time_limit)
         return None
 
