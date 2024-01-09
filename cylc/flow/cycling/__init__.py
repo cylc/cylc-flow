@@ -415,22 +415,6 @@ class SequenceBase(metaclass=ABCMeta):
         """Return the last point of this sequence, or None if unbounded."""
         pass
 
-    def get_first_n_points(self, n, point=None):
-        """Return a list of first n points of this sequence."""
-        if point is None:
-            p1 = self.get_start_point()
-        else:
-            p1 = self.get_first_point(point)
-        if p1 is None:
-            return []
-        result = [p1]
-        for _ in range(1, n):
-            p1 = self.get_next_point_on_sequence(p1)
-            if p1 is None:
-                break
-            result.append(p1)
-        return result
-
     @abstractmethod
     def __eq__(self, other) -> bool:
         # Return True if other (sequence) is equal to self.

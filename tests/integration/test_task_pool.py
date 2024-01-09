@@ -38,6 +38,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUSES_ALL,
 )
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
@@ -1008,7 +1009,8 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
 ):
     """It should obey the runahead limit.
 
-    Ensure the runahead limit is computed correctly for sequences before the start cycle
+    Ensure the runahead limit is computed correctly for sequences that begin
+    before the start cycle.
 
     See https://github.com/cylc/cylc-flow/issues/5603
     """
@@ -1154,11 +1156,12 @@ async def test_no_flow_tasks_dont_spawn(
                 for itask in pool
             ] == pool
 
+
 async def test_task_proxy_remove_from_queues(
     flow, one_conf, scheduler, start,
 ):
     """TaskPool.remove should delete task proxies from queues.
-    
+
     See https://github.com/cylc/cylc-flow/pull/5573
     """
     # Set up a scheduler with a non-default queue:
@@ -1243,6 +1246,218 @@ async def test_detect_incomplete_tasks(
             # ensure that it is correctly identified as incomplete
             assert itask.state.outputs.get_incomplete()
             assert itask.state.outputs.is_incomplete()
-            assert log_filter(log, contains=f"[{itask}] did not complete required outputs:")
+            assert log_filter(
+                log, contains=f"[{itask}] did not complete required outputs:")
             # the task should not have been removed
             assert itask in schd.pool.get_tasks()
+
+
+@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
+@pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
+@pytest.mark.parametrize('runahead_format', ['P3Y', 'P3'])
+async def test_compute_runahead(
+    cycling_mode,
+    compat_mode,
+    runahead_format,
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+):
+    """Test the calculation of the runahead limit.
+
+    This test ensures that:
+    * Runahead tasks are excluded from computations
+      see https://github.com/cylc/cylc-flow/issues/5825
+    * Tasks are initiated with the correct is_runahead status on startup.
+    * Behaviour in compat/regular modes is same unless failed tasks are present
+    * Behaviour is the same for integer/datetime cycling modes.
+
+    """
+    if cycling_mode == 'integer':
+        config = {
+            'scheduler': {
+                'allow implicit tasks': 'True',
+            },
+            'scheduling': {
+                'initial cycle point': '1',
+                'cycling mode': 'integer',
+                'runahead limit': 'P3',
+                'graph': {
+                    'P1': 'a'
+                },
+            }
+        }
+        point = lambda point: IntegerPoint(str(int(point)))
+    else:
+        config = {
+            'scheduler': {
+                'allow implicit tasks': 'True',
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '0001',
+                'runahead limit': runahead_format,
+                'graph': {
+                    'P1Y': 'a'
+                },
+            }
+        }
+        point = ISO8601Point
+
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat',
+        compat_mode == 'compat-mode',
+    )
+
+    id_ = flow(config)
+    schd = scheduler(id_)
+    async with start(schd):
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4
+
+        # ensure task states are initiated with is_runahead status
+        assert schd.pool.get_task(point('0001'), 'a').state(is_runahead=False)
+        assert schd.pool.get_task(point('0005'), 'a').state(is_runahead=True)
+
+        # mark the first three cycles as running
+        for cycle in range(1, 4):
+            schd.pool.get_task(point(f'{cycle:04}'), 'a').state.reset(
+                TASK_STATUS_RUNNING
+            )
+
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+
+        # In Cylc 8 all incomplete tasks hold back runahead.
+
+        # In Cylc 7, submit-failed tasks hold back runahead..
+        schd.pool.get_task(point('0001'), 'a').state.reset(
+            TASK_STATUS_SUBMIT_FAILED
+        )
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 4
+
+        # ... but failed ones don't. Go figure.
+        schd.pool.get_task(point('0001'), 'a').state.reset(
+            TASK_STATUS_FAILED
+        )
+        schd.pool.compute_runahead(force=True)
+        if compat_mode == 'compat-mode':
+            assert int(str(schd.pool.runahead_limit_point)) == 5
+        else:
+            assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+
+        # mark cycle 1 as complete
+        # (via task message so the task gets removed before runahead compute)
+        schd.task_events_mgr.process_message(
+            schd.pool.get_task(point('0001'), 'a'),
+            logging.INFO,
+            TASK_OUTPUT_SUCCEEDED
+        )
+        schd.pool.compute_runahead(force=True)
+        assert int(str(schd.pool.runahead_limit_point)) == 5  # +1
+
+
+@pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
+@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
+async def test_runahead_future_trigger(
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+    rhlimit,
+    compat_mode,
+):
+    """Equivalent time interval and cycle count runahead limits should yield
+    the same limit point, even if there is a future trigger.
+
+    See https://github.com/cylc/cylc-flow/pull/5893
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True',
+            'cycle point format': 'CCYYMMDD',
+        },
+        'scheduling': {
+            'initial cycle point': '2001',
+            'runahead limit': rhlimit,
+            'graph': {
+                'P1D': '''
+                    a
+                    a[+P1D] => b
+                ''',
+            },
+        }
+    })
+
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat',
+        compat_mode == 'compat-mode',
+    )
+    schd = scheduler(id_,)
+    async with start(schd, level=logging.DEBUG):
+        assert str(schd.pool.runahead_limit_point) == '20010103'
+        schd.pool.release_runahead_tasks()
+        for itask in schd.pool.get_all_tasks():
+            schd.pool.spawn_on_output(itask, 'succeeded')
+        # future trigger raises the limit by one cycle point
+        assert str(schd.pool.runahead_limit_point) == '20010104'
+
+
+async def test_compute_runahead_against_task_state(
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+):
+    """For each task status check whether changing the oldest task
+    to that status will cause compute_runahead to make a change.
+    """
+    states = [
+        # (Status, Are we expecting an update?)
+        (TASK_STATUS_WAITING, False),
+        (TASK_STATUS_EXPIRED, True),
+        (TASK_STATUS_PREPARING, False),
+        (TASK_STATUS_SUBMIT_FAILED, True),
+        (TASK_STATUS_SUBMITTED, False),
+        (TASK_STATUS_RUNNING, False),
+        (TASK_STATUS_FAILED, True),
+        (TASK_STATUS_SUCCEEDED, True)
+    ]
+    config = {
+        'scheduler': {
+            'allow implicit tasks': 'True',
+            'cycle point format': '%Y',
+        },
+        'scheduling': {
+            'initial cycle point': '0001',
+            'runahead limit': 'P1Y',
+            'graph': {
+                'P1Y': 'a'
+            },
+        }
+    }
+
+    def max_cycle(tasks):
+        return max([int(t.tokens.get("cycle")) for t in tasks])
+
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat',
+        True)
+    monkeypatch.setattr(
+        'cylc.flow.task_events_mgr.TaskEventsManager._insert_task_job',
+        lambda *_: True)
+
+    schd = scheduler(flow(config))
+    async with start(schd):
+        for task_status, new_runahead in states:
+            before = max_cycle(schd.pool.get_tasks())
+            itask = schd.pool.get_task(ISO8601Point(f'{before - 2:04}'), 'a')
+            schd.task_events_mgr.process_message(
+                itask,
+                logging.INFO,
+                task_status,
+            )
+            after = max_cycle(schd.pool.get_tasks())
+            assert bool(before != after) == new_runahead

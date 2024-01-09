@@ -32,7 +32,6 @@ jobs:
             time-zone: 'XXX-09:35'
 
     env:
-      # Use non-UTC time zone
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
 
