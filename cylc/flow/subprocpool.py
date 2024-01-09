@@ -28,7 +28,7 @@ from time import time
 from subprocess import DEVNULL, run  # nosec
 from typing import Any, Callable, List, Optional
 
-from cylc.flow import LOG
+from cylc.flow import LOG, iter_entry_points
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.exceptions import PlatformLookupError
@@ -69,29 +69,41 @@ def _killpg(proc, signal):
 def get_func(func_name, src_dir):
     """Find and return an xtrigger function from a module of the same name.
 
-    Can be in <src_dir>/lib/python, CYLC_MOD_LOC, or in Python path.
+    These locations are checked in this order:
+    - <src_dir>/lib/python/
+    - `$CYLC_PYTHONPATH`
+    - defined via a `cylc.xtriggers` entry point for an
+      installed Python package.
+
     Workflow source directory passed in as this is executed in an independent
     process in the command pool and therefore doesn't know about the workflow.
 
     """
     if func_name in _XTRIG_FUNCS:
         return _XTRIG_FUNCS[func_name]
+
     # First look in <src-dir>/lib/python.
     sys.path.insert(0, os.path.join(src_dir, 'lib', 'python'))
     mod_name = func_name
     try:
         mod_by_name = __import__(mod_name, fromlist=[mod_name])
     except ImportError:
-        # Then look in built-in xtriggers.
-        mod_name = "%s.%s" % ("cylc.flow.xtriggers", func_name)
-        try:
-            mod_by_name = __import__(mod_name, fromlist=[mod_name])
-        except ImportError:
-            raise
+        # Look for xtriggers via entry_points for external sources.
+        # Do this after the lib/python and PYTHONPATH approaches to allow
+        # users to override entry_point definitions with local/custom
+        # implementations.
+        for entry_point in iter_entry_points('cylc.xtriggers'):
+            if func_name == entry_point.name:
+                _XTRIG_FUNCS[func_name] = entry_point.load()
+                return _XTRIG_FUNCS[func_name]
+
+        # Still unable to find anything so abort
+        raise
+
     try:
         _XTRIG_FUNCS[func_name] = getattr(mod_by_name, func_name)
     except AttributeError:
-        # Module func_name has no function func_name.
+        # Module func_name has no function func_name, nor an entry_point entry.
         raise
     return _XTRIG_FUNCS[func_name]
 

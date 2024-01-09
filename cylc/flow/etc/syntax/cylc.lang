@@ -87,35 +87,37 @@
         -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <keyword>xtriggers</keyword>
+        <keyword>workflow timeout handlers</keyword>
+        <keyword>workflow timeout</keyword>
         <keyword>workflow state polling</keyword>
         <keyword>work sub-directory</keyword>
-        <keyword>warning handler</keyword>
+        <keyword>warning handlers</keyword>
         <keyword>verbose mode</keyword>
         <keyword>user</keyword>
         <keyword>to</keyword>
         <keyword>title</keyword>
-        <keyword>workflow timeout handler</keyword>
-        <keyword>workflow timeout</keyword>
         <keyword>time limit buffer</keyword>
         <keyword>templates</keyword>
         <keyword>task parameters</keyword>
         <keyword>task event batch interval</keyword>
-        <keyword>succeeded handler</keyword>
-        <keyword>submitted handler</keyword>
-        <keyword>submission timeout handler</keyword>
+        <keyword>succeeded handlers</keyword>
+        <keyword>submitted handlers</keyword>
+        <keyword>submission timeout handlers</keyword>
         <keyword>submission timeout</keyword>
-        <keyword>submission retry handler</keyword>
+        <keyword>submission retry handlers</keyword>
         <keyword>submission retry delays</keyword>
         <keyword>submission polling intervals</keyword>
-        <keyword>submission failed handler</keyword>
+        <keyword>submission failed handlers</keyword>
         <keyword>stop after cycle point</keyword>
-        <keyword>startup handler</keyword>
-        <keyword>started handler</keyword>
-        <keyword>stall handler</keyword>
+        <keyword>startup handlers</keyword>
+        <keyword>started handlers</keyword>
+        <keyword>stall timeout handlers</keyword>
+        <keyword>stall timeout</keyword>
+        <keyword>stall handlers</keyword>
         <keyword>speedup factor</keyword>
         <keyword>special tasks</keyword>
         <keyword>simulation</keyword>
-        <keyword>shutdown handler</keyword>
+        <keyword>shutdown handlers</keyword>
         <keyword>sequential</keyword>
         <keyword>script</keyword>
         <keyword>scheduling</keyword>
@@ -123,10 +125,11 @@
         <keyword>runtime</keyword>
         <keyword>runahead limit</keyword>
         <keyword>run-dir</keyword>
-        <keyword>retry handler</keyword>
+        <keyword>retry handlers</keyword>
         <keyword>retrieve job logs retry delays</keyword>
         <keyword>retrieve job logs max size</keyword>
         <keyword>retrieve job logs</keyword>
+        <keyword>restart timeout</keyword>
         <keyword>remote</keyword>
         <keyword>queues</keyword>
         <keyword>pre-script</keyword>
@@ -144,7 +147,7 @@
         <keyword>mail</keyword>
         <keyword>limit</keyword>
         <keyword>late offset</keyword>
-        <keyword>late handler</keyword>
+        <keyword>late handlers</keyword>
         <keyword>job</keyword>
         <keyword>interval</keyword>
         <keyword>install</keyword>
@@ -153,7 +156,7 @@
         <keyword>init-script</keyword>
         <keyword>inherit</keyword>
         <keyword>include</keyword>
-        <keyword>inactivity timeout handler</keyword>
+        <keyword>inactivity timeout handlers</keyword>
         <keyword>inactivity timeout</keyword>
         <keyword>host</keyword>
         <keyword>hold after cycle point</keyword>
@@ -166,14 +169,14 @@
         <keyword>flow.cylc</keyword>
         <keyword>final cycle point constraints</keyword>
         <keyword>final cycle point</keyword>
-        <keyword>failed handler</keyword>
+        <keyword>failed handlers</keyword>
         <keyword>fail try 1 only</keyword>
         <keyword>fail cycle points</keyword>
         <keyword>external-trigger</keyword>
-        <keyword>expired handler</keyword>
+        <keyword>expired handlers</keyword>
         <keyword>expected task failures</keyword>
         <keyword>exit-script</keyword>
-        <keyword>execution timeout handler</keyword>
+        <keyword>execution timeout handlers</keyword>
         <keyword>execution timeout</keyword>
         <keyword>execution time limit</keyword>
         <keyword>execution retry delays</keyword>
@@ -184,7 +187,6 @@
         <keyword>environment filter</keyword>
         <keyword>environment</keyword>
         <keyword>env-script</keyword>
-        <keyword>edge penwidth</keyword>
         <keyword>disable task event handlers</keyword>
         <keyword>directives</keyword>
         <keyword>description</keyword>
@@ -194,17 +196,17 @@
         <keyword>cycle point time zone</keyword>
         <keyword>cycle point num expanded year digits</keyword>
         <keyword>cycle point format</keyword>
-        <keyword>custom handler</keyword>
-        <keyword>critical handler</keyword>
+        <keyword>custom handlers</keyword>
+        <keyword>critical handlers</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>
         <keyword>batch submit command template</keyword>
         <keyword>allow implicit tasks</keyword>
-        <keyword>aborted handler</keyword>
         <keyword>abort on workflow timeout</keyword>
         <keyword>abort on stall timeout</keyword>
         <keyword>abort on inactivity timeout</keyword>
+        <keyword>abort handlers</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
         <!--END_TAG_FOR_AUTO_UPDATE-->

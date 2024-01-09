@@ -26,7 +26,7 @@ logged.
 """
 
 from functools import partial
-from optparse import Values
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.exceptions import InputError
@@ -37,6 +37,10 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 MUTATION = '''
 mutation (

@@ -143,6 +143,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
                 f'It has moved to {contact_host}:{contact_port}'
             )
 
+        if os.getenv('CYLC_TASK_COMMS_METHOD'):
+            # don't attempt to clean up old contact files in task messages
+            return
+
         # Cannot connect, perhaps workflow is no longer running and is leaving
         # behind a contact file?
         try:
@@ -299,7 +303,9 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
-                ' Check the workflow log.'
+                '\n* You might want to increase the timeout using the'
+                ' --comms-timeout option;'
+                '\n* or check the workflow log.'
             )
 
         if msg['command'] in PB_METHOD_MAP:
