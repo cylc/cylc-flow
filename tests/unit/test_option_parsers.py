@@ -26,7 +26,7 @@ from pytest import param
 import cylc.flow.flags
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP, Options, combine_options, combine_options_pair,
-    OptionSettings, cleanup_sysargv
+    OptionSettings, cleanup_sysargv, filter_sysargv
 )
 
 
@@ -322,20 +322,6 @@ def test_combine_options(inputs, expect):
     'argv_before, kwargs, expect',
     [
         param(
-            'vip myworkflow --foo something'.split(),
-            {
-                'script_name': 'play',
-                'workflow_id': 'myworkflow',
-                'compound_script_opts': [
-                    OptionSettings(['--foo', '-f']),
-                ],
-                'script_opts': [
-                    OptionSettings(['--foo', '-f'])]
-            },
-            'play myworkflow --foo something'.split(),
-            id='no opts to remove'
-        ),
-        param(
             'vip myworkflow -f something -b something_else --baz'.split(),
             {
                 'script_name': 'play',
@@ -397,19 +383,6 @@ def test_combine_options(inputs, expect):
             'play --foo something myworkflow'.split(),
             id='no path given'
         ),
-        param(
-            'vip --bar=something'.split(),
-            {
-                'script_name': 'play',
-                'workflow_id': 'myworkflow',
-                'compound_script_opts': [
-                    OptionSettings(['--bar', '-b'])],
-                'script_opts': [],
-                'source': './myworkflow',
-            },
-            'play myworkflow'.split(),
-            id='removes --key=value'
-        ),
     ]
 )
 def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
@@ -430,6 +403,53 @@ def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
     # Test the script:
     cleanup_sysargv(**kwargs)
     assert sys.argv == dummy_cylc_path + expect
+
+
+@pytest.mark.parametrize(
+    'sysargs, simple, compound, expect', (
+        param(
+            # Test for https://github.com/cylc/cylc-flow/issues/5905
+            '--no-run-name --workflow-name=name'.split(),
+            ['--no-run-name'],
+            ['--workflow-name'],
+            [],
+            id='--workflow-name=name'
+        ),
+        param(
+            '--foo something'.split(),
+            [], [], '--foo something'.split(),
+            id='no-opts-removed'
+        ),
+        param(
+            [], ['--foo'], ['--bar'], [],
+            id='Null-check'
+        ),
+        param(
+            '''--keep1 --keep2 42 --keep3=Hi
+            --throw1 --throw2 84 --throw3=There
+            '''.split(),
+            ['--throw1'],
+            '--throw2 --throw3'.split(),
+            '--keep1 --keep2 42 --keep3=Hi'.split(),
+            id='complex'
+        ),
+        param(
+            "--foo 'foo=42' --bar='foo=94'".split(),
+            [], ['--foo'],
+            ['--bar=\'foo=94\''],
+            id='--bar=\'foo=94\''
+        )
+    )
+)
+def test_filter_sysargv(
+    sysargs, simple, compound, expect
+):
+    """It returns the subset of sys.argv that we ask for.
+
+    n.b. The three most basic cases for this function are stored in
+    its own docstring.
+    """
+    assert filter_sysargv(sysargs, simple, compound) == expect
 
 
 class TestOptionSettings():
