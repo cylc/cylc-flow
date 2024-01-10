@@ -126,6 +126,27 @@ def uniq(iterable):
     return ret
 
 
+def iter_uniq(iterable):
+    """Iterate over an iterable omitting any duplicate entries.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Note:
+        More efficient than "uniq" for iteration use cases.
+
+    Examples:
+        >>> list(iter_uniq([1, 1, 2, 3, 5, 8, 1]))
+        [1, 2, 3, 5, 8]
+
+    """
+    cache = set()
+    for item in iterable:
+        if item not in cache:
+            cache.add(item)
+            yield item
+
+
 def workflow_ids_filter(workflow_tokens, items) -> bool:
     """Match id arguments with workflow attributes.
 
@@ -211,7 +232,7 @@ def node_ids_filter(tokens, state, items) -> bool:
                 or get_state_from_selectors(item) == state
             )
         )
-        for item in uniq(items)
+        for item in iter_uniq(items)
     )
 
 
@@ -292,7 +313,7 @@ def get_flow_data_from_ids(data_store, native_ids):
         )
     return [
         data_store[w_id]
-        for w_id in uniq(w_ids)
+        for w_id in iter_uniq(w_ids)
         if w_id in data_store
     ]
 
