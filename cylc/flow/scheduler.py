@@ -377,6 +377,7 @@ class Scheduler:
             self.workflow,
             user=self.owner,
             broadcast_mgr=self.broadcast_mgr,
+            workflow_db_mgr=self.workflow_db_mgr,
             data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,
             workflow_run_dir=self.workflow_run_dir,
@@ -1705,14 +1706,8 @@ class Scheduler:
             await self.process_command_queue()
             self.proc_pool.process()
 
-            # Tasks in the main pool that are waiting but not queued must be
-            # waiting on external dependencies, i.e. xtriggers or ext_triggers.
-            # For these tasks, call any unsatisfied xtrigger functions, and
-            # queue tasks that have become ready. (Tasks do not appear in the
-            # main pool at all until all other-task deps are satisfied, and are
-            # queued immediately on release from runahead limiting if they are
-            # not waiting on external deps).
-            housekeep_xtriggers = False
+            # Unqueued tasks with satisfied prerequisites must be waiting on
+            # xtriggers or ext_triggers. Check these and queue tasks if ready.
             for itask in self.pool.get_tasks():
                 if (
                     not itask.state(TASK_STATUS_WAITING)
@@ -1725,28 +1720,19 @@ class Scheduler:
                     itask.state.xtriggers
                     and not itask.state.xtriggers_all_satisfied()
                 ):
-                    # Call unsatisfied xtriggers if not already in-process.
-                    # Results are returned asynchronously.
                     self.xtrigger_mgr.call_xtriggers_async(itask)
-                    # Check for satisfied xtriggers, and queue if ready.
-                    if self.xtrigger_mgr.check_xtriggers(
-                            itask, self.workflow_db_mgr.put_xtriggers):
-                        housekeep_xtriggers = True
-                        if all(itask.is_ready_to_run()):
-                            self.pool.queue_task(itask)
 
-                # Check for satisfied ext_triggers, and queue if ready.
                 if (
                     itask.state.external_triggers
                     and not itask.state.external_triggers_all_satisfied()
-                    and self.broadcast_mgr.check_ext_triggers(
-                        itask, self.ext_trigger_queue)
-                    and all(itask.is_ready_to_run())
                 ):
+                    self.broadcast_mgr.check_ext_triggers(
+                        itask, self.ext_trigger_queue)
+
+                if all(itask.is_ready_to_run()):
                     self.pool.queue_task(itask)
 
-            if housekeep_xtriggers:
-                # (Could do this periodically?)
+            if self.xtrigger_mgr.do_housekeeping:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
             self.pool.set_expired_tasks()

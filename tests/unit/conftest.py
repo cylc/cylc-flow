@@ -199,6 +199,7 @@ def xtrigger_mgr() -> XtriggerManager:
         workflow=workflow_name,
         user=user,
         proc_pool=Mock(put_command=lambda *a, **k: True),
+        workflow_db_mgr=Mock(housekeep=lambda *a, **k: True),
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
         data_store_mgr=DataStoreMgr(
             create_autospec(Scheduler, workflow=workflow_name, owner=user)
