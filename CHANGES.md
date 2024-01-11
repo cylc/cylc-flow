@@ -21,7 +21,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 ### 🔧 Fixes
 
-[#5789](https://github.com/cylc/cylc-flow/pull/5789) - Stop users changing run modes on restart.
+[#5789](https://github.com/cylc/cylc-flow/pull/5789) - Prevent the run mode from being changed on restart.
 
 [#5801](https://github.com/cylc/cylc-flow/pull/5801) - Fix traceback when using parentheses on right hand side of graph trigger.
 
