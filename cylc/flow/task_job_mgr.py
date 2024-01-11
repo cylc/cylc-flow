@@ -36,7 +36,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Union, Optional
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -1262,10 +1262,11 @@ class TaskJobManager:
             itask.submit_num] = itask.platform['name']
 
         itask.summary['job_runner_name'] = itask.platform['job runner']
-        with suppress(TypeError):
-            itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
-                rtconfig['execution time limit']
-            )
+
+        # None is an allowed non-float number for Execution time limit.
+        itask.summary[
+            self.KEY_EXECUTE_TIME_LIMIT
+        ] = self.get_execution_time_limit(rtconfig['execution time limit'])
 
         # Location of job file, etc
         self._create_job_log_path(workflow, itask)
@@ -1280,6 +1281,30 @@ class TaskJobManager:
             job_file_path=job_file_path,
             job_d=job_d
         )
+
+    @staticmethod
+    def get_execution_time_limit(
+        config_execution_time_limit: Any
+    ) -> Union[None, float]:
+        """Get execution time limit from config and process it.
+
+        If the etl from the config is a Falsy then return None.
+        Otherwise try and parse value as float.
+
+        Examples:
+            >>> from pytest import raises
+            >>> this = TaskJobManager.get_execution_time_limit
+
+            >>> this(None)
+            >>> this("54")
+            54.0
+            >>> this({})
+            >>> with raises(ValueError):
+            ...     this('🇳🇿')
+        """
+        if config_execution_time_limit:
+            return float(config_execution_time_limit)
+        return None
 
     def get_job_conf(
         self,
