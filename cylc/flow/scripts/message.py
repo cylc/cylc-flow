@@ -117,13 +117,14 @@ def get_option_parser() -> COP:
         __doc__,
         comms=True,
         argdoc=[
-            COP.optional(WORKFLOW_ID_ARG_DOC),
+            WORKFLOW_ID_ARG_DOC,
+            ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM'),
             COP.optional(
-                ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM')
+                ('[SEVERITY:]MESSAGE ...', 'Severity Level:Message')
             ),
-            COP.optional(
-                ('[SEVERITY:]MESSAGE ...', 'Messages')
-            )
+            COP.LINEBREAK,
+            COP.optional(('[SEVERITY:]MESSAGE', 'Severity Level:Message')),
+            COP.optional(('[SEVERITY:]MESSAGE', 'Severity Level:Message')),
         ]
     )
 
