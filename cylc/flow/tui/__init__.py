@@ -106,12 +106,26 @@ JOB_COLOURS = {
 
 
 class Bindings:
+    """Represets key bindings for the Tui app."""
 
     def __init__(self):
         self.bindings = []
         self.groups = {}
 
     def bind(self, keys, group, desc, callback):
+        """Register a key binding.
+
+        Args:
+            keys:
+                The keys to bind.
+            group:
+                The group to which this binding should belong.
+            desc:
+                Description for this binding, used to generate help.
+            callback:
+                The thing to call when this binding is pressed.
+
+        """
         if group not in self.groups:
             raise ValueError(f'Group {group} not registered.')
         binding = {
@@ -124,6 +138,15 @@ class Bindings:
         self.groups[group]['bindings'].append(binding)
 
     def add_group(self, group, desc):
+        """Add a new binding group.
+
+        Args:
+            group:
+                The name of the group.
+            desc:
+                A description of the group, used to generate help.
+
+        """
         self.groups[group] = {
             'name': group,
             'desc': desc,
@@ -134,6 +157,12 @@ class Bindings:
         return iter(self.bindings)
 
     def list_groups(self):
+        """List groups and the bindings in them.
+
+        Yields:
+            (group_name, [binding, ...])
+
+        """
         for name, group in self.groups.items():
             yield (
                 group,
@@ -143,6 +172,3 @@ class Bindings:
                     if binding['group'] == name
                 ]
             )
-
-
-BINDINGS = Bindings()

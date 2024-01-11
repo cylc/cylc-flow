@@ -162,7 +162,7 @@ def test_install_gets_back_compat_mode_for_plugins(
     class failIfDeprecated:
         """A fake Cylc Plugin entry point"""
         @staticmethod
-        def resolve():
+        def load():
             return failIfDeprecated.raiser
 
         @staticmethod

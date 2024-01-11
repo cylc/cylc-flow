@@ -71,6 +71,7 @@ How to prevent reinstall deleting files:
 from pathlib import Path
 import sys
 from typing import Optional, TYPE_CHECKING, List, Callable
+from functools import partial
 
 from ansimarkup import parse as cparse
 
@@ -83,12 +84,13 @@ from cylc.flow.exceptions import (
 from cylc.flow.install import (
     reinstall_workflow,
 )
-from cylc.flow.id_cli import parse_id
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     OptionSettings,
-    WORKFLOW_ID_ARG_DOC,
+    ID_MULTI_ARG_DOC
 )
+
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
@@ -100,7 +102,6 @@ if TYPE_CHECKING:
     from optparse import Values
 
 _input = input  # to enable testing
-
 
 REINSTALL_CYLC_ROSE_OPTIONS = [
     OptionSettings(
@@ -127,7 +128,12 @@ REINSTALL_OPTIONS = [
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
+        __doc__,
+        comms=True,
+        multiworkflow=True,
+        argdoc=[
+            ID_MULTI_ARG_DOC,
+        ],
     )
 
     try:
@@ -149,27 +155,28 @@ def get_option_parser() -> COP:
 def main(
     _parser: COP,
     opts: 'Values',
-    args: Optional[str] = None
+    *ids: str
 ) -> None:
     """CLI wrapper."""
-    reinstall_cli(opts, args)
+    call_multi(
+        partial(reinstall_cli, opts),
+        *ids,
+        constraint='workflows',
+        report=lambda x: print('Done')
+    )
 
 
-def reinstall_cli(
+async def reinstall_cli(
     opts: 'Values',
-    args: Optional[str] = None,
-    print_reload_tip: bool = True,
+    workflow_id,
+    *tokens_list,
+    print_reload_tip: bool = True
 ) -> bool:
     """Implement cylc reinstall.
 
     This is the bit which contains all the CLI logic.
     """
     run_dir: Optional[Path]
-    workflow_id: str
-    workflow_id, *_ = parse_id(
-        args,
-        constraint='workflows',
-    )
     run_dir = Path(get_workflow_run_dir(workflow_id))
     if not run_dir.is_dir():
         raise WorkflowFilesError(
@@ -338,7 +345,7 @@ def pre_configure(opts: 'Values', src_dir: Path) -> None:
         'cylc.pre_configure'
     ):
         try:
-            entry_point.resolve()(srcdir=src_dir, opts=opts)
+            entry_point.load()(srcdir=src_dir, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -355,7 +362,7 @@ def post_install(opts: 'Values', src_dir: Path, run_dir: Path) -> None:
         'cylc.post_install'
     ):
         try:
-            entry_point.resolve()(
+            entry_point.load()(
                 srcdir=src_dir,
                 opts=opts,
                 rundir=str(run_dir)

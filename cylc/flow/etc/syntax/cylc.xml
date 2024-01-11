@@ -14,35 +14,37 @@
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <RegExpr attribute='Keyword' String=' xtriggers '/>
+        <RegExpr attribute='Keyword' String=' workflow timeout handlers '/>
+        <RegExpr attribute='Keyword' String=' workflow timeout '/>
         <RegExpr attribute='Keyword' String=' workflow state polling '/>
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
-        <RegExpr attribute='Keyword' String=' warning handler '/>
+        <RegExpr attribute='Keyword' String=' warning handlers '/>
         <RegExpr attribute='Keyword' String=' verbose mode '/>
         <RegExpr attribute='Keyword' String=' user '/>
         <RegExpr attribute='Keyword' String=' to '/>
         <RegExpr attribute='Keyword' String=' title '/>
-        <RegExpr attribute='Keyword' String=' workflow timeout handler '/>
-        <RegExpr attribute='Keyword' String=' workflow timeout '/>
         <RegExpr attribute='Keyword' String=' time limit buffer '/>
         <RegExpr attribute='Keyword' String=' templates '/>
         <RegExpr attribute='Keyword' String=' task parameters '/>
         <RegExpr attribute='Keyword' String=' task event batch interval '/>
-        <RegExpr attribute='Keyword' String=' succeeded handler '/>
-        <RegExpr attribute='Keyword' String=' submitted handler '/>
-        <RegExpr attribute='Keyword' String=' submission timeout handler '/>
+        <RegExpr attribute='Keyword' String=' succeeded handlers '/>
+        <RegExpr attribute='Keyword' String=' submitted handlers '/>
+        <RegExpr attribute='Keyword' String=' submission timeout handlers '/>
         <RegExpr attribute='Keyword' String=' submission timeout '/>
-        <RegExpr attribute='Keyword' String=' submission retry handler '/>
+        <RegExpr attribute='Keyword' String=' submission retry handlers '/>
         <RegExpr attribute='Keyword' String=' submission retry delays '/>
         <RegExpr attribute='Keyword' String=' submission polling intervals '/>
-        <RegExpr attribute='Keyword' String=' submission failed handler '/>
+        <RegExpr attribute='Keyword' String=' submission failed handlers '/>
         <RegExpr attribute='Keyword' String=' stop after cycle point '/>
-        <RegExpr attribute='Keyword' String=' startup handler '/>
-        <RegExpr attribute='Keyword' String=' started handler '/>
-        <RegExpr attribute='Keyword' String=' stall handler '/>
+        <RegExpr attribute='Keyword' String=' startup handlers '/>
+        <RegExpr attribute='Keyword' String=' started handlers '/>
+        <RegExpr attribute='Keyword' String=' stall timeout handlers '/>
+        <RegExpr attribute='Keyword' String=' stall timeout '/>
+        <RegExpr attribute='Keyword' String=' stall handlers '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' special tasks '/>
         <RegExpr attribute='Keyword' String=' simulation '/>
-        <RegExpr attribute='Keyword' String=' shutdown handler '/>
+        <RegExpr attribute='Keyword' String=' shutdown handlers '/>
         <RegExpr attribute='Keyword' String=' sequential '/>
         <RegExpr attribute='Keyword' String=' script '/>
         <RegExpr attribute='Keyword' String=' scheduling '/>
@@ -50,10 +52,11 @@
         <RegExpr attribute='Keyword' String=' runtime '/>
         <RegExpr attribute='Keyword' String=' runahead limit '/>
         <RegExpr attribute='Keyword' String=' run-dir '/>
-        <RegExpr attribute='Keyword' String=' retry handler '/>
+        <RegExpr attribute='Keyword' String=' retry handlers '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs retry delays '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs max size '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs '/>
+        <RegExpr attribute='Keyword' String=' restart timeout '/>
         <RegExpr attribute='Keyword' String=' remote '/>
         <RegExpr attribute='Keyword' String=' queues '/>
         <RegExpr attribute='Keyword' String=' pre-script '/>
@@ -71,7 +74,7 @@
         <RegExpr attribute='Keyword' String=' mail '/>
         <RegExpr attribute='Keyword' String=' limit '/>
         <RegExpr attribute='Keyword' String=' late offset '/>
-        <RegExpr attribute='Keyword' String=' late handler '/>
+        <RegExpr attribute='Keyword' String=' late handlers '/>
         <RegExpr attribute='Keyword' String=' job '/>
         <RegExpr attribute='Keyword' String=' interval '/>
         <RegExpr attribute='Keyword' String=' install '/>
@@ -80,8 +83,8 @@
         <RegExpr attribute='Keyword' String=' init-script '/>
         <RegExpr attribute='Keyword' String=' inherit '/>
         <RegExpr attribute='Keyword' String=' include '/>
-        <RegExpr attribute='Keyword' String=' inactivity timeout handler '/>
-        <RegExpr attribute='Keyword' String=' inactivity timeout'/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout handlers '/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout '/>
         <RegExpr attribute='Keyword' String=' host '/>
         <RegExpr attribute='Keyword' String=' hold after cycle point '/>
         <RegExpr attribute='Keyword' String=' handlers '/>
@@ -93,14 +96,14 @@
         <RegExpr attribute='Keyword' String=' flow.cylc '/>
         <RegExpr attribute='Keyword' String=' final cycle point constraints '/>
         <RegExpr attribute='Keyword' String=' final cycle point '/>
-        <RegExpr attribute='Keyword' String=' failed handler '/>
+        <RegExpr attribute='Keyword' String=' failed handlers '/>
         <RegExpr attribute='Keyword' String=' fail try 1 only '/>
         <RegExpr attribute='Keyword' String=' fail cycle points '/>
         <RegExpr attribute='Keyword' String=' external-trigger '/>
-        <RegExpr attribute='Keyword' String=' expired handler '/>
+        <RegExpr attribute='Keyword' String=' expired handlers '/>
         <RegExpr attribute='Keyword' String=' expected task failures '/>
         <RegExpr attribute='Keyword' String=' exit-script '/>
-        <RegExpr attribute='Keyword' String=' execution timeout handler '/>
+        <RegExpr attribute='Keyword' String=' execution timeout handlers '/>
         <RegExpr attribute='Keyword' String=' execution timeout '/>
         <RegExpr attribute='Keyword' String=' execution time limit '/>
         <RegExpr attribute='Keyword' String=' execution retry delays '/>
@@ -120,17 +123,17 @@
         <RegExpr attribute='Keyword' String=' cycle point time zone '/>
         <RegExpr attribute='Keyword' String=' cycle point num expanded year digits '/>
         <RegExpr attribute='Keyword' String=' cycle point format '/>
-        <RegExpr attribute='Keyword' String=' custom handler '/>
-        <RegExpr attribute='Keyword' String=' critical handler '/>
+        <RegExpr attribute='Keyword' String=' custom handlers '/>
+        <RegExpr attribute='Keyword' String=' critical handlers '/>
         <RegExpr attribute='Keyword' String=' clock-trigger '/>
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>
         <RegExpr attribute='Keyword' String=' batch submit command template '/>
         <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
-        <RegExpr attribute='Keyword' String=' aborted handler '/>
         <RegExpr attribute='Keyword' String=' abort on workflow timeout '/>
-        <RegExpr attribute='Keyword' String=' abort on stall timeout'/>
+        <RegExpr attribute='Keyword' String=' abort on stall timeout '/>
         <RegExpr attribute='Keyword' String=' abort on inactivity timeout '/>
+        <RegExpr attribute='Keyword' String=' abort handlers '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!--END_TAG_FOR_AUTO_UPDATE-->

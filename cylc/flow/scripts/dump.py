@@ -20,6 +20,9 @@
 
 Print information about a running workflow.
 
+This command can provide information about active tasks, e.g. running or queued
+tasks. For more detailed view of the workflow see `cylc tui` or `cylc gui`.
+
 For command line monitoring:
 * `cylc tui`
 * `watch cylc dump WORKFLOW_ID` works for small simple workflows
@@ -28,20 +31,21 @@ For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc show'.
 
 Examples:
-  # Display the state of all running tasks, sorted by cycle point:
+  # Display the state of all active tasks, sorted by cycle point:
   $ cylc dump --tasks --sort WORKFLOW_ID | grep running
 
-  # Display the state of all tasks in a particular cycle point:
+  # Display the state of all active in a particular cycle point:
   $ cylc dump -t WORKFLOW_ID | grep 2010082406
 """
 
-from graphene.utils.str_converters import to_snake_case
+import asyncio
 import json
-import sys
 from typing import TYPE_CHECKING
 
+from graphene.utils.str_converters import to_snake_case
+
 from cylc.flow.exceptions import CylcError
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -59,6 +63,7 @@ fragment tProxy on TaskProxy {
   name
   cyclePoint
   state
+  graphDepth
   isHeld
   isQueued
   isRunahead
@@ -75,7 +80,6 @@ fragment tProxy on TaskProxy {
     startedTime
     finishedTime
     jobLogDir
-    extraLogs
     platform
     executionTimeLimit
     jobRunnerName
@@ -180,16 +184,28 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str) -> None:
-    workflow_id, *_ = parse_id(
+    asyncio.run(dump(workflow_id, options))
+
+
+async def dump(workflow_id, options, write=print):
+    workflow_id, *_ = await parse_id_async(
         workflow_id,
         constraint='workflows',
     )
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    pclient = get_client(
+        workflow_id,
+        # set the default timeout a bit higher for "cylc dump" as it can
+        # take a little while for Cylc to formulate the response
+        timeout=options.comms_timeout or 15,
+    )
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}
     else:
         sort_args = {'keys': ['name', 'cyclePoint']}
+
+    # retrict to the n=0 window
+    graph_depth = 0
 
     if options.disp_form == "raw":
         query = f'''
@@ -199,10 +215,10 @@ def main(_, options: 'Values', workflow_id: str) -> None:
             query ($wFlows: [ID]!, $sortBy: SortArgs) {{
               workflows (ids: $wFlows, stripNull: false) {{
                 ...wFlow
-                taskProxies (sort: $sortBy) {{
+                taskProxies (sort: $sortBy, graphDepth: {graph_depth}) {{
                   ...tProxy
                 }}
-                familyProxies (sort: $sortBy) {{
+                familyProxies (sort: $sortBy, graphDepth: {graph_depth}) {{
                   ...fProxy
                 }}
               }}
@@ -220,7 +236,7 @@ def main(_, options: 'Values', workflow_id: str) -> None:
             {TASK_SUMMARY_FRAGMENT}
             query ($wFlows: [ID]!, $sortBy: SortArgs) {{
               workflows (ids: $wFlows, stripNull: false) {{
-                taskProxies (sort: $sortBy) {{
+                taskProxies (sort: $sortBy, graphDepth: {graph_depth}) {{
                   ...tProxy
                 }}
               }}
@@ -231,15 +247,15 @@ def main(_, options: 'Values', workflow_id: str) -> None:
         'variables': {'wFlows': [workflow_id], 'sortBy': sort_args}
     }
 
-    workflows = pclient('graphql', query_kwargs)
+    workflows = await pclient.async_request('graphql', query_kwargs)
 
     try:
         for summary in workflows['workflows']:
             if options.disp_form == "raw":
                 if options.pretty:
-                    sys.stdout.write(json.dumps(summary, indent=4) + '\n')
+                    write(json.dumps(summary, indent=4))
                 else:
-                    print(summary)
+                    write(summary)
             else:
                 if options.disp_form != "tasks":
                     node_urls = {
@@ -257,7 +273,7 @@ def main(_, options: 'Values', workflow_id: str) -> None:
                     del summary['families']
                     del summary['meta']
                     for key, value in sorted(summary.items()):
-                        print(
+                        write(
                             f'{to_snake_case(key).replace("_", " ")}={value}')
                 else:
                     for item in summary['taskProxies']:
@@ -278,7 +294,7 @@ def main(_, options: 'Values', workflow_id: str) -> None:
                                       else 'not-runahead')
                         if options.show_flows:
                             values.append(item['flowNums'])
-                        print(', '.join(values))
+                        write(', '.join(values))
     except Exception as exc:
         raise CylcError(
             json.dumps(workflows, indent=4) + '\n' + str(exc) + '\n')

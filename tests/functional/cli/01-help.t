@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number 26
+set_test_number 28
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -72,6 +72,10 @@ run_ok "${TEST_NAME_BASE}-version.stdout" \
     test -n "${TEST_NAME_BASE}-version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}---version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
+
+# Supplementary help
+run_ok "${TEST_NAME_BASE}-all" cylc help all
+run_ok "${TEST_NAME_BASE}-id" cylc help id
 
 # Check "cylc version --long" output is correct.
 cylc version --long | head -n 1 > long1

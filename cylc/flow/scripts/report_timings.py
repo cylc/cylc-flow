@@ -54,6 +54,8 @@ import io as StringIO
 import sys
 from typing import TYPE_CHECKING
 
+
+from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
@@ -121,6 +123,12 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
+    )
+
+    LOG.warning(
+        "cylc report-timings is deprecated."
+        " The analysis view in the GUI provides"
+        " similar functionality."
     )
 
     output_options = [
@@ -246,7 +254,10 @@ class TimingSummary:
         try:
             import pandas
         except ImportError:
-            raise CylcError('Cannot import pandas - summary unavailable.')
+            raise CylcError(
+                'Cannot import pandas - summary unavailable.'
+                ' try: pip install cylc-flow[report-timings]'
+            )
         else:
             del pandas
 

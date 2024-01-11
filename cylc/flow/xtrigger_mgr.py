@@ -20,7 +20,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, Optional, Tuple, Callable, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
@@ -207,7 +207,7 @@ class XtriggerManager:
         workflow_share_dir: Optional[str] = None,
     ):
         # Workflow function and clock triggers by label.
-        self.functx_map: Dict[str, SubFuncContext] = {}
+        self.functx_map: 'Dict[str, SubFuncContext]' = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
@@ -241,7 +241,9 @@ class XtriggerManager:
 
     @staticmethod
     def validate_xtrigger(
-        label: str, fctx: 'SubFuncContext', fdir: str
+        label: str,
+        fctx: 'SubFuncContext',
+        fdir: str,
     ) -> None:
         """Validate an Xtrigger function.
 
@@ -370,7 +372,9 @@ class XtriggerManager:
         return res
 
     def get_xtrig_ctx(
-        self, itask: 'TaskProxy', label: str
+        self,
+        itask: 'TaskProxy',
+        label: str,
     ) -> 'SubFuncContext':
         """Get a real function context from the template.
 
@@ -516,4 +520,20 @@ class XtriggerManager:
             self.workflow_db_mgr.put_xtriggers({sig: results})
             LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
             self.sat_xtrig[sig] = results
-            self.do_housekeeping = True
+
+    def check_xtriggers(
+            self,
+            itask: 'TaskProxy',
+            db_update_func: Callable[[dict], None]) -> bool:
+        """Check if all of itasks' xtriggers have become satisfied.
+
+        Return True if satisfied, else False
+
+        Args:
+            itasks: task proxies to check
+            db_update_func: method to update xtriggers in the DB
+        """
+        if itask.state.xtriggers_all_satisfied():
+            db_update_func(self.sat_xtrig)
+            return True
+        return False
