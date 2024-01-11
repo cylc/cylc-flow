@@ -30,10 +30,12 @@ from isodatetime.parsers import TimePointParser
 
 def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
-    """Connect to a suite DB and query the requested task state.
+    """Connect to a suite DB and check task states or outputs.
 
     Reports satisfied only if the remote suite state has been achieved.
     Returns all suite state args to pass on to triggering tasks.
+    The "message" argument must be the output message string, not the
+    output label used in the graph.
 
     """
     cylc_run_dir = os.path.expandvars(
@@ -46,7 +48,15 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
     except (OSError, sqlite3.Error):
         # Failed to connect to DB; target suite may not be started.
         return (False, None)
-    fmt = checker.get_remote_point_format()
+
+    try:
+        fmt = checker.get_remote_point_format()
+    except sqlite3.OperationalError as exc:
+        try:
+            fmt = checker.get_remote_point_format_forward_compat()
+        except sqlite3.OperationalError:
+            raise exc  # original error
+
     if fmt:
         my_parser = TimePointParser()
         point = str(my_parser.parse(point, dump_format=fmt))

@@ -105,7 +105,13 @@ class SuitePoller(Poller):
             sys.stdout.write('\n')
 
         if connected and self.args['cycle']:
-            fmt = self.checker.get_remote_point_format()
+            try:
+                fmt = self.checker.get_remote_point_format()
+            except sqlite3.OperationalError as exc:
+                try:
+                    fmt = self.checker.get_remote_point_format_forward_compat()
+                except sqlite3.OperationalError:
+                    raise exc  # original error
             if fmt:
                 my_parser = TimePointParser()
                 my_point = my_parser.parse(self.args['cycle'], dump_format=fmt)
@@ -172,7 +178,8 @@ def main():
 
     parser.add_option(
         "-O", "--output", "-m", "--message",
-        help="Check custom task output by message string or trigger string.",
+        help="Check for a custom task output (by message string, "
+        "not the output trigger label used in the graph)",
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
