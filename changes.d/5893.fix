@@ -1,1 +1,0 @@
-Fixed bug in computing a time interval-based runahead limit when future triggers are present.
