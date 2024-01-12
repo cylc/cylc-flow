@@ -20,23 +20,22 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, List, Optional, Tuple, Callable, TYPE_CHECKING
+from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
+from cylc.flow.subprocpool import get_func
 from cylc.flow.xtriggers.wall_clock import wall_clock
-from cylc.flow.subprocpool import (
-    SubProcPool,
-    get_func,
-)
 
 if TYPE_CHECKING:
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.subprocctx import SubFuncContext
+    from cylc.flow.subprocpool import SubProcPool
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 class TemplateVariables(Enum):
@@ -188,6 +187,7 @@ class XtriggerManager:
     Args:
         workflow: workflow name
         user: workflow owner
+        workflow_db_mgr: the DB Manager
         broadcast_mgr: the Broadcast Manager
         proc_pool: pool of Subprocesses
         workflow_run_dir: workflow run directory
@@ -199,8 +199,9 @@ class XtriggerManager:
         self,
         workflow: str,
         broadcast_mgr: 'BroadcastMgr',
+        workflow_db_mgr: 'WorkflowDatabaseManager',
         data_store_mgr: 'DataStoreMgr',
-        proc_pool: SubProcPool,
+        proc_pool: 'SubProcPool',
         user: Optional[str] = None,
         workflow_run_dir: Optional[str] = None,
         workflow_share_dir: Optional[str] = None,
@@ -233,8 +234,10 @@ class XtriggerManager:
         }
 
         self.proc_pool = proc_pool
+        self.workflow_db_mgr = workflow_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.data_store_mgr = data_store_mgr
+        self.do_housekeeping = False
 
     @staticmethod
     def validate_xtrigger(
@@ -432,16 +435,23 @@ class XtriggerManager:
             itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
+            # Special case: quick synchronous clock check:
             if sig.startswith("wall_clock"):
-                # Special case: quick synchronous clock check.
-                if wall_clock(*ctx.func_args, **ctx.func_kwargs):
+                if sig in self.sat_xtrig:
+                    # Already satisfied, just update the task
+                    itask.state.xtriggers[label] = True
+                elif wall_clock(*ctx.func_args, **ctx.func_kwargs):
+                    # Newly satisfied
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
+                    self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
+                    self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.
             if sig in self.sat_xtrig:
+                # Already satisfied, just update the task
                 if not itask.state.xtriggers[label]:
                     itask.state.xtriggers[label] = True
                     res = {}
@@ -456,6 +466,8 @@ class XtriggerManager:
                             xtrigger_env
                         )
                 continue
+
+            # Call the function to check the unsatisfied xtrigger.
             if sig in self.active:
                 # Already waiting on this result.
                 continue
@@ -468,8 +480,10 @@ class XtriggerManager:
             self.active.append(sig)
             self.proc_pool.put_command(ctx, callback=self.callback)
 
-    def housekeep(self, itasks: 'List[TaskProxy]'):
-        """Delete satisfied xtriggers no longer needed by any task.
+    def housekeep(self, itasks):
+        """Forget satisfied xtriggers no longer needed by any task.
+
+        Check self.do_housekeeping before calling this method.
 
         Args:
             itasks: list of all task proxies.
@@ -480,6 +494,7 @@ class XtriggerManager:
         for sig in list(self.sat_xtrig):
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
+        self.do_housekeeping = False
 
     def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
@@ -500,23 +515,9 @@ class XtriggerManager:
             return
         LOG.debug('%s: returned %s', sig, results)
         if satisfied:
+            # Newly satisfied
             self.data_store_mgr.delta_task_xtrigger(sig, True)
+            self.workflow_db_mgr.put_xtriggers({sig: results})
             LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
             self.sat_xtrig[sig] = results
-
-    def check_xtriggers(
-            self,
-            itask: 'TaskProxy',
-            db_update_func: Callable[[dict], None]) -> bool:
-        """Check if all of itasks' xtriggers have become satisfied.
-
-        Return True if satisfied, else False
-
-        Args:
-            itasks: task proxies to check
-            db_update_func: method to update xtriggers in the DB
-        """
-        if itask.state.xtriggers_all_satisfied():
-            db_update_func(self.sat_xtrig)
-            return True
-        return False
+            self.do_housekeeping = True

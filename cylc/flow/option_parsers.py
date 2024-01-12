@@ -33,7 +33,7 @@ from ansimarkup import (
 
 import sys
 from textwrap import dedent
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Iterable, Optional, List, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.terminal import supports_color, DIM
@@ -732,17 +732,33 @@ def combine_options(*args, modify=None):
 
 
 def cleanup_sysargv(
-    script_name,
-    workflow_id,
-    options,
-    compound_script_opts,
-    script_opts,
-    source,
-):
+    script_name: str,
+    workflow_id: str,
+    options: 'Values',
+    compound_script_opts: Iterable['OptionSettings'],
+    script_opts: Iterable['OptionSettings'],
+    source: str,
+) -> None:
     """Remove unwanted options from sys.argv
 
     Some cylc scripts (notably Cylc Play when it is re-invoked on a scheduler
-    server) require the correct content in sys.argv.
+    server) require the correct content in sys.argv: This function
+    subtracts the unwanted options from sys.argv.
+
+    Args:
+        script_name:
+            Name of the target script. For example if we are
+            using this for the play step of cylc vip then this
+            will be "play".
+        workflow_id:
+        options:
+            Actual options provided to the compound script.
+        compound_script_options:
+            Options available in compound script.
+        script_options:
+            Options available in target script.
+        source:
+            Source directory.
     """
     # Organize Options by dest.
     script_opts_by_dest = {
@@ -753,30 +769,67 @@ def cleanup_sysargv(
         x.kwargs.get('dest', x.args[0].strip(DOUBLEDASH)): x
         for x in compound_script_opts
     }
-    # Filter out non-cylc-play options.
-    args = [i.split('=')[0] for i in sys.argv]
-    for unwanted_opt in (set(options.__dict__)) - set(script_opts_by_dest):
-        for arg in compound_opts_by_dest[unwanted_opt].args:
-            if arg in sys.argv:
-                index = sys.argv.index(arg)
-                sys.argv.pop(index)
-                if (
-                    compound_opts_by_dest[unwanted_opt].kwargs['action']
-                    not in ['store_true', 'store_false']
-                ):
-                    sys.argv.pop(index)
-            elif arg in args:
-                index = args.index(arg)
-                sys.argv.pop(index)
+
+    # Get a list of unwanted args:
+    unwanted_compound: List[str] = []
+    unwanted_simple: List[str] = []
+    for unwanted_dest in (set(options.__dict__)) - set(script_opts_by_dest):
+        for unwanted_arg in compound_opts_by_dest[unwanted_dest].args:
+            if (
+                compound_opts_by_dest[unwanted_dest].kwargs.get('action', None)
+                in ['store_true', 'store_false']
+            ):
+                unwanted_simple.append(unwanted_arg)
+            else:
+                unwanted_compound.append(unwanted_arg)
+
+    new_args = filter_sysargv(sys.argv, unwanted_simple, unwanted_compound)
 
     # replace compound script name:
-    sys.argv[1] = script_name
+    new_args[1] = script_name
 
     # replace source path with workflow ID.
     if str(source) in sys.argv:
-        sys.argv.remove(str(source))
+        new_args.remove(str(source))
     if workflow_id not in sys.argv:
-        sys.argv.append(workflow_id)
+        new_args.append(workflow_id)
+
+    sys.argv = new_args
+
+
+def filter_sysargv(
+    sysargs, unwanted_simple: List, unwanted_compound: List
+) -> List:
+    """Create a copy of sys.argv without unwanted arguments:
+
+    Cases:
+        >>> this = filter_sysargv
+        >>> this(['--foo', 'expects-a-value', '--bar'], [], ['--foo'])
+        ['--bar']
+        >>> this(['--foo=expects-a-value', '--bar'], [], ['--foo'])
+        ['--bar']
+        >>> this(['--foo', '--bar'], ['--foo'], [])
+        ['--bar']
+    """
+    pop_next: bool = False
+    new_args: List = []
+    for this_arg in sysargs:
+        parts = this_arg.split('=', 1)
+        if pop_next:
+            pop_next = False
+            continue
+        elif parts[0] in unwanted_compound:
+            # Case --foo=value or --foo value
+            if len(parts) == 1:
+                # --foo value
+                pop_next = True
+            continue
+        elif parts[0] in unwanted_simple:
+            # Case --foo does not expect a value:
+            continue
+        else:
+            new_args.append(this_arg)
+    return new_args
 
 
 def log_subcommand(*args):
