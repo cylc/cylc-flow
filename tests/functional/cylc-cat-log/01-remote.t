@@ -30,7 +30,9 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --debug --no-detach \
+        -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out
 cylc cat-log -f o "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
@@ -56,7 +58,7 @@ grep_ok "jumped over the lazy dog" "${TEST_NAME}.out"
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-status
 cylc cat-log -f s "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
-grep_ok "CYLC_JOB_RUNNER_NAME=background" "${TEST_NAME}.out"
+grep_ok "CYLC_JOB_RUNNER_NAME=at" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=${TEST_NAME_BASE}-task-activity

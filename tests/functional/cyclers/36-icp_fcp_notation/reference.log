@@ -1,7 +1,0 @@
-Initial point: 20160101T0000Z
-Final point: 20160102T0000Z
-20160101T0000Z/foo -triggered off []
-20160101T0000Z/bar -triggered off []
-20160101T0100Z/baz -triggered off []
-20160101T2300Z/boo -triggered off []
-20160102T0000Z/bot -triggered off ['20160101T0000Z/bar', '20160101T0000Z/foo', '20160101T0100Z/baz', '20160101T2300Z/boo']

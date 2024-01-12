@@ -27,7 +27,6 @@ This module provides logic to:
 from contextlib import suppress
 import json
 import os
-from copy import deepcopy
 from logging import (
     CRITICAL,
     DEBUG,
@@ -261,12 +260,13 @@ class TaskJobManager:
 
         Return (list): list of tasks that attempted submission.
         """
-
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks, workflow)
+
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
+
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
@@ -1000,16 +1000,17 @@ class TaskJobManager:
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
+
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['job']['simulated run length']
+                itask.tdef.rtconfig['simulation']['simulated run length']
             )
             itask.jobs.append(
                 self.get_simulation_job_conf(itask, workflow)
             )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED
+                itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
 
         return itasks
@@ -1190,12 +1191,11 @@ class TaskJobManager:
                 self._set_retry_timers(itask, rtconfig)
 
         try:
-            job_conf = {
-                **self._prep_submit_task_job_impl(
-                    workflow, itask, rtconfig
-                ),
-                'logfiles': deepcopy(itask.summary['logfiles']),
-            }
+            job_conf = self._prep_submit_task_job_impl(
+                workflow,
+                itask,
+                rtconfig,
+            )
             itask.jobs.append(job_conf)
 
             local_job_file_path = get_task_job_job_log(
@@ -1351,8 +1351,6 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }
 
     def get_simulation_job_conf(self, itask, workflow):
@@ -1384,6 +1382,4 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': 'SIMULATION',
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }

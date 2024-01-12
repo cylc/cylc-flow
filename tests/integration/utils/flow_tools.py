@@ -53,7 +53,7 @@ def _make_src_flow(src_path, conf):
 def _make_flow(
     cylc_run_dir: Union[Path, str],
     test_dir: Path,
-    conf: Union[dict, str],
+    conf: dict,
     name: Optional[str] = None,
     id_: Optional[str] = None,
 ) -> str:
@@ -66,10 +66,17 @@ def _make_flow(
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
     id_ = str(flow_run_dir.relative_to(cylc_run_dir))
-    if isinstance(conf, dict):
-        conf = flow_config_str(conf)
+    # set the default simulation runtime to zero (can be overridden)
+    (
+        conf.setdefault('runtime', {})
+        .setdefault('root', {})
+        .setdefault('simulation', {})
+        .setdefault('default run length', 'PT0S')
+    )
+    # allow implicit tasks by default:
+    conf.setdefault('scheduler', {}).setdefault('allow implicit tasks', 'True')
     with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
-        flow_file.write(conf)
+        flow_file.write(flow_config_str(conf))
     return id_
 
 

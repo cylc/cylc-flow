@@ -16,11 +16,14 @@
 
 """Manage flow counter and flow metadata."""
 
-from typing import Dict, Set, Optional
+from typing import Dict, Set, Optional, TYPE_CHECKING
 import datetime
 
 from cylc.flow import LOG
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+
+
+if TYPE_CHECKING:
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 FlowNums = Set[int]

@@ -46,10 +46,8 @@ import select
 import sys
 import typing as t
 
-from pkg_resources import (
-    parse_requirements,
-    parse_version
-)
+from packaging.version import parse as parse_version
+from packaging.specifiers import SpecifierSet
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.id import tokenise, IDTokens, Tokens
@@ -74,7 +72,7 @@ INTERNAL = True
 # set the compatibility range for completion scripts with this server
 # I.E. if we change the server interface, change this compatibility range.
 # User's will be presented with an upgrade notice if this happens.
-REQUIRED_SCRIPT_VERSION = 'completion-script >=1.0.0, <2.0.0'
+REQUIRED_SCRIPT_VERSION = '>=1.0.0, <2.0.0'
 
 # register the psudo "help" and "version" commands
 COMMAND_LIST = list(COMMANDS) + ['help', 'version']
@@ -317,7 +315,7 @@ def list_options(command: str) -> t.List[str]:
     if command in COMMAND_OPTION_MAP:
         return COMMAND_OPTION_MAP[command]
     try:
-        entry_point = COMMANDS[command].resolve()
+        entry_point = COMMANDS[command].load()
     except KeyError:
         return []
     parser = entry_point.parser_function()
@@ -637,15 +635,13 @@ def check_completion_script_compatibility(
 
     # check that the installed completion script is compabile with this
     # completion server version
-    for requirement in parse_requirements(REQUIRED_SCRIPT_VERSION):
-        # NOTE: there's only one requirement but we have to iterate to get it
-        if installed_version not in requirement:
-            is_compatible = False
-            print(
-                f'The Cylc {completion_lang} script needs to be updated to'
-                ' work with this version of Cylc.',
-                file=sys.stderr,
-            )
+    if installed_version not in SpecifierSet(REQUIRED_SCRIPT_VERSION):
+        is_compatible = False
+        print(
+            f'The Cylc {completion_lang} script needs to be updated to'
+            ' work with this version of Cylc.',
+            file=sys.stderr,
+        )
 
     # check for completion script updates
     if installed_version < current_version:
