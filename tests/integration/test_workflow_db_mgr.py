@@ -161,8 +161,7 @@ async def test_record_only_non_clock_triggers(flow, run, scheduler):
         'runtime': {
             'foo': {
                 'execution retry delays': 'PT0S',
-                'script': (
-                    'test $CYLC_TASK_SUBMIT_NUMBER == 1 && exit 1 || exit 0')
+                'script': 'test $CYLC_TASK_SUBMIT_NUMBER != 1'
             }
         }
     })
@@ -172,9 +171,7 @@ async def test_record_only_non_clock_triggers(flow, run, scheduler):
         while 'Workflow shutting down - AUTOMATIC' not in log.messages:
             await asyncio.sleep(0.5)
 
-    # Get xtriggers db table:
-    info = schd.workflow_db_mgr.get_pri_dao().conn.execute(
-        'SELECT * FROM xtriggers').fetchall()
-
-    # All xtriggers are xrandom: None are wall_clock:
-    assert all(i[0].startswith('xrandom') for i in info)
+    assert db_select(schd, False, 'xtriggers', 'signature') == [
+        ('xrandom(100)',),
+        ('xrandom(100, _=Not a real wall clock trigger)',)
+    ]
