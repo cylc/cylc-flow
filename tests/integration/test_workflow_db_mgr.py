@@ -134,10 +134,17 @@ async def test_record_only_non_clock_triggers(flow, run, scheduler):
     """Database does not record wall_clock xtriggers.
 
     https://github.com/cylc/cylc-flow/issues/5911
+
+    Includes:
+        - Not in DB: A normal wall clock xtrigger (wall_clock).
+        - In DB: An xrandom mis-labelled as wall_clock trigger  DB).
+        - Not in DB: An execution retry xtrigger.
+
+    @TODO: Refactor to use simulation mode to speedup after Simulation
+    mode upgrade bugfixes: This should speed this test up considerably.
     """
     id_ = flow({
         "scheduler": {
-            "allow implicit tasks": True,
             'cycle point format': '%Y'
         },
         "scheduling": {
@@ -151,12 +158,19 @@ async def test_record_only_non_clock_triggers(flow, run, scheduler):
                 "R1": "@another & @wall_clock & @real_wall_clock => foo"
             }
         },
+        'runtime': {
+            'foo': {
+                'execution retry delays': 'PT0S',
+                'script': (
+                    'test $CYLC_TASK_SUBMIT_NUMBER == 1 && exit 1 || exit 0')
+            }
+        }
     })
     # Run workflow unto completion:
-    schd = scheduler(id_, paused_start=False)
+    schd = scheduler(id_, paused_start=False, run_mode='live')
     async with run(schd) as log:
         while 'Workflow shutting down - AUTOMATIC' not in log.messages:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
     # Get xtriggers db table:
     info = schd.workflow_db_mgr.get_pri_dao().conn.execute(
