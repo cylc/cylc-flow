@@ -22,7 +22,11 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
-## __cylc-7.8.14 (Upcoming)__
+
+## __cylc-7.8.15 (Upcoming)__
+
+
+## __cylc-7.8.14 (2023-01-15)__
 
 [#5751](https://github.com/cylc/cylc-flow/pull/5309) - prevent first
 execution time limit polling delay incrementing for every task where it is
