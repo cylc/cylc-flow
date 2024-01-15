@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import pytest
 import sqlite3
 
@@ -127,3 +128,39 @@ async def test_workflow_param_rapid_toggle(
 
         w_params = dict(schd.workflow_db_mgr.pri_dao.select_workflow_params())
         assert w_params['is_paused'] == '0'
+
+
+async def test_record_only_non_clock_triggers(flow, run, scheduler):
+    """Database does not record wall_clock xtriggers.
+
+    https://github.com/cylc/cylc-flow/issues/5911
+    """
+    id_ = flow({
+        "scheduler": {
+            "allow implicit tasks": True,
+            'cycle point format': '%Y'
+        },
+        "scheduling": {
+            "initial cycle point": "1348",
+            "xtriggers": {
+                "another": "xrandom(100)",
+                "wall_clock": "xrandom(100, _=Not a real wall clock trigger)",
+                "real_wall_clock": "wall_clock()"
+            },
+            "graph": {
+                "R1": "@another & @wall_clock & @real_wall_clock => foo"
+            }
+        },
+    })
+    # Run workflow unto completion:
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd) as log:
+        while 'Workflow shutting down - AUTOMATIC' not in log.messages:
+            await asyncio.sleep(1)
+
+    # Get xtriggers db table:
+    info = schd.workflow_db_mgr.get_pri_dao().conn.execute(
+        'SELECT * FROM xtriggers').fetchall()
+
+    # All xtriggers are xrandom: None are wall_clock:
+    assert all(i[0].startswith('xrandom') for i in info)
