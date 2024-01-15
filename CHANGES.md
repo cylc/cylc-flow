@@ -23,6 +23,9 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 
+## __cylc-7.9.10 (Upcoming)__
+
+
 ## __cylc-7.9.9 (2023-01-15)__
 
 **Requires Python 2.7**
@@ -38,6 +41,8 @@ This release is cylc-7.8.14 with Jinja2 upgraded to 2.11.1.
 
 ## __cylc-7.8.14 (2023-01-15)__
 
+### Fixes
+
 [#5751](https://github.com/cylc/cylc-flow/pull/5309) - prevent first
 execution time limit polling delay incrementing for every task where it is
 used.
@@ -49,8 +54,9 @@ Review was not returning the correct number of entries in the Cycles page.
 Cylc 8 forward-compat: allow suite-state xtriggers (and the `cylc suite-state`
 command) to read Cylc 8 databases.
 
-## __cylc-7.8.13 (Upcoming)__
+## __cylc-7.8.13 (2023-06-13)__
 
+### Fixes
 
 [#5309](https://github.com/cylc/cylc-flow/pull/5309) - Cylc 8 compat for Cylc Review:
   - Allow Cylc Review to see all jobs with different flow nums for Cylc 8.1 workflows
