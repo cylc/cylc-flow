@@ -139,7 +139,7 @@ def test_pre_cylc8(flow, validate, caplog):
                 'events': {'reset timer': 20}
             }
         }
-    })
+    }, defaults=False)
     validate(id_)
     for warning in (
         (
