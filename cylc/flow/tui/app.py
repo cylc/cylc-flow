@@ -200,7 +200,7 @@ class TuiNode(urwid.ParentNode):
 
 
 @contextmanager
-def updater_subproc(filters):
+def updater_subproc(filters, client_timeout):
     """Runs the Updater in its own process.
 
     The updater provides the data for Tui to render. Running the updater
@@ -209,7 +209,7 @@ def updater_subproc(filters):
     decoupling the application update logic from the data update logic.
     """
     # start the updater
-    updater = Updater()
+    updater = Updater(client_timeout=client_timeout)
     p = Process(target=updater.start, args=(filters,))
     try:
         p.start()
@@ -285,7 +285,13 @@ class TuiApp:
         self.filters = get_default_filters()
 
     @contextmanager
-    def main(self, w_id=None, id_filter=None, interactive=True):
+    def main(
+        self,
+        w_id=None,
+        id_filter=None,
+        interactive=True,
+        client_timeout=3,
+    ):
         """Start the Tui app.
 
         With interactive=False, this does not start the urwid event loop to
@@ -299,7 +305,7 @@ class TuiApp:
         """
         self.set_initial_filters(w_id, id_filter)
 
-        with updater_subproc(self.filters) as updater:
+        with updater_subproc(self.filters, client_timeout) as updater:
             self.updater = updater
 
             # pre-subscribe to the provided workflow if requested

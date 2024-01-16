@@ -61,6 +61,21 @@ def get_option_parser() -> COP:
         color=False
     )
 
+    parser.add_option(
+        '--comms-timeout',
+        metavar='SEC',
+        help=(
+            "Set a timeout for network connections"
+            " to the running workflow. The default is no timeout."
+            " For task messaging connections see"
+            " site/user config file documentation."
+        ),
+        action='store',
+        default=3,
+        dest='comms_timeout',
+        type=int,
+    )
+
     return parser
 
 
@@ -76,5 +91,9 @@ def main(_, options: 'Values', workflow_id: Optional[str] = None) -> None:
         workflow_id = tokens.duplicate(user=getuser()).id
 
     # start Tui
-    with suppress_logging(), TuiApp().main(workflow_id):
+    with suppress_logging(), TuiApp().main(
+        workflow_id,
+        client_timeout=options.comms_timeout,
+    ):
+        # tui stops according to user input
         pass
