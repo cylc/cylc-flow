@@ -1,0 +1,1 @@
+Fixed a bug preventing simulation of task retries if job submission unset.
