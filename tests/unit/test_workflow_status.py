@@ -89,7 +89,7 @@ def schd(
             WORKFLOW_STATUS_RUNNING_TO_STOP % 4
         ),
         (
-            {'stop_clock_time': int(STOP_TIME.seconds_since_unix_epoch)},
+            {'stop_clock_time': STOP_TIME.seconds_since_unix_epoch},
             WorkflowStatus.RUNNING,
             WORKFLOW_STATUS_RUNNING_TO_STOP % str(STOP_TIME)
         ),
