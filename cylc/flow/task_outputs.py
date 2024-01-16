@@ -274,51 +274,27 @@ class TaskOutputs:
         else:
             return self._by_message[message]
 
-    def get_incomplete_implied(self, output: str, forced=False) -> List[str]:
+    def get_incomplete_implied(self, output: str) -> List[str]:
         """Return an ordered list of incomplete implied outputs.
 
         Use to determined implied outputs to complete automatically.
 
-        For forced completion of outputs via `cylc set":
-           - complete all implied outputs automatically
-           - forced success implies all required outputs
-           - (forced failure does not)
+        Implied outputs are necessarily earlier outputs.
 
-        For natural completion of outputs via task messages:
-           - complete implied submitted and started outputs automatically
-               (runtime outputs cannot be generated without starting the job,
-               so missing these only implies e.g. network issues)
-           - do not complete other implied outputs automatically (doing so
-               would break error detection based on required outputs)
-
-        Note that submitted and started are *implied* by later outputs, but
-        submitted is not necessarily *required*.
+        - started implies submitted
+        - succeeded and failed imply started
+        - custom outputs and expired do not imply other outputs
 
         """
         implied: List[str] = []
 
-        if forced and output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
+        if output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
             # Finished, so it must have submitted and started.
             implied = [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]
-            if output == TASK_OUTPUT_SUCCEEDED:
-                # Even if success is optional we can assume required custom
-                # outputs are on the success path (not so for failure - that
-                # depends on when failure occurs during job execution).
-                implied += self._get_custom_triggers(required=True)
 
         elif output == TASK_OUTPUT_STARTED:
             # It must have submitted.
             implied = [TASK_OUTPUT_SUBMITTED]
-
-        elif (
-            output in self._get_custom_triggers() or
-            output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]
-        ):
-            # It must have submitted and started
-            implied = [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]
-
-        else:
-            pass
 
         return [out for out in implied if not self.is_completed(out)]
 

@@ -430,8 +430,9 @@ class WorkflowDatabaseManager:
             "cycle": str(itask.point),
             "name": itask.tdef.name,
             "flow_nums": serialise(itask.flow_nums),
-            "submit_num": itask.submit_num,
         }
+        # Note tasks_states table rows are for latest submit_num only
+        # (not one row per submit).
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
             (set_args, where_args))

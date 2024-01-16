@@ -904,6 +904,7 @@ class Scheduler:
             if message_items is None:
                 continue
             should_poll = False
+            del messages[itask.identity]
             for submit_num, tm in message_items:
                 if self.task_events_mgr.process_message(
                     itask, tm.severity, tm.message, tm.event_time,
@@ -912,8 +913,15 @@ class Scheduler:
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)
-        self.task_job_mgr.poll_task_jobs(
-            self.workflow, to_poll_tasks)
+        if to_poll_tasks:
+            self.task_job_mgr.poll_task_jobs(self.workflow, to_poll_tasks)
+        # Remaining messages don't have a receiving task in the pool.
+        # E.g., after manually setting a running task to finished.
+        for _id, tms in messages.items():
+            warn = "Undeliverable task messages received and ignored:\n"
+            for _, msg in tms:
+                warn += f'{msg.job_id}: {msg.severity} - "{msg.message}"'
+            LOG.warning(warn)
 
     def get_command_method(self, command_name: str) -> Callable:
         """Return a command processing method or raise AttributeError."""

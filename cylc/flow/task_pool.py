@@ -1498,14 +1498,14 @@ class TaskPool:
 
         flow_wait_done = False
         completed = False
-        orig_fnums = set()
+        # orig_fnums = set()
 
         if not force:
             for snum, f_wait, old_fnums, is_complete in info:
                 if set.intersection(flow_nums, old_fnums):
                     completed = is_complete
                     flow_wait_done = f_wait
-                    orig_fnums = old_fnums
+                    # orig_fnums = old_fnums
                     if not completed:
                         # There may be multiple entries with flow overlap due
                         # to merges (they'll have have same snum and f_wait);
@@ -1593,7 +1593,7 @@ class TaskPool:
         self.spawn_on_all_outputs(itask, completed_only=True)
         # update flow wait status in the DB
         itask.flow_wait = False
-        itask.flow_nums = orig_fnums
+        # itask.flow_nums = orig_fnums
         self.workflow_db_mgr.put_update_task_flow_wait(itask)
         return None
 
@@ -1661,9 +1661,9 @@ class TaskPool:
 
         Set outputs:
         - update task outputs in the DB
+        - (implied outputs are handled by the event manager)
         - spawn children of the outputs (if not spawned)
         - update the child prerequisites
-        - implied outputs are handled universally by the event manager
 
         Uses a transient task proxy to spawn children. (Even if parent was
         previously spawned in this flow its children might not have been).
@@ -1721,7 +1721,7 @@ class TaskPool:
         itask: 'TaskProxy',
         outputs: Optional[Iterable[str]],
     ) -> None:
-        """Set requested outputs on a task and spawn associated children."""
+        """Set requested outputs on a task proxy and spawn children."""
 
         # Default to required outputs.
         outputs = outputs or itask.tdef.get_required_outputs()
@@ -1743,7 +1743,6 @@ class TaskPool:
             LOG.info(f"{info} completed")
 
         if changed and itask.transient:
-            # (note tasks states table gets updated from the task pool)
             self.workflow_db_mgr.put_update_task_state(itask)
             self.workflow_db_mgr.put_update_task_outputs(itask)
 
@@ -1754,7 +1753,7 @@ class TaskPool:
         flow_nums: Set[int],
         flow_wait: bool
     ) -> None:
-        """Set prerequisites on a task in the pool.
+        """Set prerequisites on a task proxy.
 
         Prerequisite format: "cycle/task:message" or "all".
 
@@ -1771,7 +1770,9 @@ class TaskPool:
         self.data_store_mgr.delta_task_prerequisite(itask)
 
     def _set_prereqs_tdef(self, point, taskdef, prereqs, flow_nums, flow_wait):
-        """Spawn a future task and set specified prerequisites on it."""
+        """Spawn a future task and set prerequisites on it.
+
+        """
         itask = self.spawn_task(taskdef.name, point, flow_nums, flow_wait)
         if itask is None:
             return

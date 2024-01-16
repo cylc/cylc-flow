@@ -20,27 +20,25 @@
 
 Manually set task prerequisites or outputs in a running workflow.
 
-By default, set all required outputs (note that `succeeded` could be an
-optional output).
+Default: set all required outputs (note "succeeded" can be optional).
 
 Prerequitistes:
-  Setting prerequisites contributes to a task's readiness to run and promotes
-  it to the scheduler's active window where xtriggers will become active.
+  Setting prerequisites contributes to a task's readiness and promotes it
+  to the scheduler's active window, where clock and xtriggers become active.
 
 Outputs:
-  Setting outputs affects task completion and spawns downstream tasks that
-  depend on those outputs.
+  Setting outputs affects task completion and spawns dependent tasks.
 
-  Implied outputs are set automatically:
+  Some implied outputs may be set automatically:
     - started implies submitted
-    - custom outputs imply submitted and started
-    - succeeded implies submitted, started, and all required custom outputs
-    - failed implies submitted and started
-    - expired does not imply other outputs
+    - succeeded and failed imply started
+    - custom outputs and expired do not imply other outputs
+
+  Setting final outputs (succeeded, failed, expired) also sets task state.
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
-  specify the task in the command before attempting to complete these options.
+  specify the task in the command before attempting TAB-completion.
 
 Examples:
   # complete all required outputs of 3/bar:

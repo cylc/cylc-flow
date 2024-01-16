@@ -1,6 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -398,7 +398,9 @@ class TaskState:
         )
 
     def reset(
-            self, status=None, is_held=None, is_queued=None, is_runahead=None):
+        self, status=None, is_held=None, is_queued=None, is_runahead=None,
+        forced=False
+    ):
         """Change status.
 
         Args:
@@ -427,6 +429,14 @@ class TaskState:
         if current_status == requested_status:
             # no change - do nothing
             return False
+
+        if (
+            forced and
+            requested_status in [TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING]
+        ):
+            # For manual setting of task outputs: return True but don't action
+            # the state change (there's no real job associated with the task).
+            return True
 
         # perform the actual state change
         self.status, self.is_held, self.is_queued, self.is_runahead = (

@@ -30,7 +30,7 @@ poll_grep_workflow_log -E "1/foo.* \(internal\)submitted"
 
 cylc set -o failed "${WORKFLOW_NAME}//1/foo"
 
-poll_grep_workflow_log -E "1/foo.* \(internal\)failed"
+poll_grep_workflow_log -E "1/foo.* => failed"
 poll_grep_workflow_log -E "1/foo.* did not complete required outputs"
 
 cylc stop --now --now --interval=2 --max-polls=5 "${WORKFLOW_NAME}"

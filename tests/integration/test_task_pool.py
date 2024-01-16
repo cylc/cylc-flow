@@ -1374,7 +1374,7 @@ async def test_set_outputs_live(
     start,
     log_filter,
 ):
-    """Check manual set outputs in a live (spawned) task.
+    """Check manual set outputs in an active (spawned) task.
 
     """
     id_ = flow(
@@ -1384,7 +1384,11 @@ async def test_set_outputs_live(
             },
             'scheduling': {
                 'graph': {
-                    'R1': "foo:x => bar\nfoo => baz\nfoo:y"
+                    'R1': """
+                        foo:x => bar
+                        foo => baz
+                        foo:y
+                    """
                 }
             },
             'runtime': {
@@ -1404,26 +1408,36 @@ async def test_set_outputs_live(
         # it should start up with just 1/foo
         assert pool_get_task_ids(schd.pool) == ["1/foo"]
 
-        # fake submitted, running, failed
+        # fake failed
         foo = schd.pool.get_task(IntegerPoint("1"), "foo")
         foo.state_reset(is_queued=False)
         schd.pool.task_events_mgr.process_message(foo, 1, 'failed')
 
-        # setting foo:x should spawn bar but not baz
+        # set foo:x: it should spawn bar but not baz
         schd.pool.set(["1/foo"], ["x"], None, ['all'])
         assert (
             pool_get_task_ids(schd.pool) == ["1/bar", "1/foo"]
         )
 
-        # now spawn baz; and foo will be removed as complete.
+        # set foo:succeed: it should spawn baz but foo remains incomplete.
         schd.pool.set(["1/foo"], ["succeeded"], None, ['all'])
+        assert (
+            pool_get_task_ids(schd.pool) == ["1/bar", "1/baz", "1/foo"]
+        )
+
+        # it should complete implied outputs (submitted, started) too
+        assert log_filter(
+            log, contains="setting missed output: submitted")
+        assert log_filter(
+            log, contains="setting missed output: started")
+
+        # set foo (default: all required outputs): complete y.
+        schd.pool.set(["1/foo"], None, None, ['all'])
         assert (
             pool_get_task_ids(schd.pool) == ["1/bar", "1/baz"]
         )
-
-        # it should complete the implied output y too.
         assert log_filter(
-            log, contains="setting missed output: y")
+            log, contains="[1/foo/00:succeeded] completed")
 
 
 async def test_set_outputs_future(
@@ -1673,26 +1687,34 @@ async def test_runahead_future_trigger(
         assert str(schd.pool.runahead_limit_point) == '20010104'
 
 
-async def test_compute_runahead_against_task_state(
-    flow,
-    scheduler,
-    start,
-    monkeypatch,
-):
-    """For each task status check whether changing the oldest task
-    to that status will cause compute_runahead to make a change.
-    """
-    states = [
+@pytest.mark.parametrize(
+    'status, expected',
+    [
         # (Status, Are we expecting an update?)
         (TASK_STATUS_WAITING, False),
         (TASK_STATUS_EXPIRED, True),
         (TASK_STATUS_PREPARING, False),
-        (TASK_STATUS_SUBMIT_FAILED, True),
+        (TASK_STATUS_SUBMIT_FAILED, False),
         (TASK_STATUS_SUBMITTED, False),
         (TASK_STATUS_RUNNING, False),
         (TASK_STATUS_FAILED, True),
         (TASK_STATUS_SUCCEEDED, True)
     ]
+)
+async def test_runahead_c7_compat_task_state(
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+    status,
+    expected
+):
+    """For each task status check whether changing the oldest task
+    to that status will cause compute_runahead to make a change.
+
+    Compat mode: Cylc 7 ignored failed tasks but not submit-failed!
+
+    """
     config = {
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -1711,21 +1733,19 @@ async def test_compute_runahead_against_task_state(
         return max([int(t.tokens.get("cycle")) for t in tasks])
 
     monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        True)
+        'cylc.flow.flags.cylc7_back_compat', True)
     monkeypatch.setattr(
         'cylc.flow.task_events_mgr.TaskEventsManager._insert_task_job',
         lambda *_: True)
 
     schd = scheduler(flow(config))
     async with start(schd):
-        for task_status, new_runahead in states:
-            before = max_cycle(schd.pool.get_tasks())
-            itask = schd.pool.get_task(ISO8601Point(f'{before - 2:04}'), 'a')
-            schd.task_events_mgr.process_message(
-                itask,
-                logging.INFO,
-                task_status,
-            )
-            after = max_cycle(schd.pool.get_tasks())
-            assert bool(before != after) == new_runahead
+        before = max_cycle(schd.pool.get_tasks())
+        itask = schd.pool.get_task(ISO8601Point(f'{before - 2:04}'), 'a')
+        schd.task_events_mgr.process_message(
+            itask,
+            logging.DEBUG,
+            status,
+        )
+        after = max_cycle(schd.pool.get_tasks())
+        assert bool(before != after) == expected
