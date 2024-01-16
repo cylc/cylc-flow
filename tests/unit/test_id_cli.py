@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.async_util import pipe
 from cylc.flow.exceptions import InputError, WorkflowFilesError
 from cylc.flow.id import detokenise, tokenise, Tokens
@@ -537,7 +538,7 @@ def test_validate_workflow_ids_basic(tmp_run_dir):
 
 def test_validate_workflow_ids_warning(caplog):
     """It should warn when the run number is provided as a cycle point."""
-    caplog.set_level(logging.WARN)
+    caplog.set_level(logging.WARN, CYLC_LOG)
     _validate_workflow_ids(Tokens('workflow/run1//cycle/task'), src_path='')
     assert caplog.messages == []
 

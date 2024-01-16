@@ -22,6 +22,7 @@ import logging
 
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow import CYLC_LOG
 
 
 FAKE_NOW = datetime.datetime(2020, 12, 25, 17, 5, 55)
@@ -44,7 +45,7 @@ def test_all(
 ):
     db_mgr = WorkflowDatabaseManager()
     flow_mgr = FlowMgr(db_mgr)
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO, CYLC_LOG)
 
     count = 1
     meta = "the quick brown fox"
