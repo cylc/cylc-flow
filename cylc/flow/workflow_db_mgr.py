@@ -423,13 +423,34 @@ class WorkflowDatabaseManager:
             "time_updated": itask.state.time_updated,
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
-            "is_manual_submit": itask.is_manual_submit
+            "is_manual_submit": itask.is_manual_submit,
+            "is_complete": itask.is_complete()
         }
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
             "flow_nums": serialise(itask.flow_nums),
             "submit_num": itask.submit_num,
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
+        self.db_updates_map[self.TABLE_TASK_STATES].append(
+            (set_args, where_args))
+
+    def put_update_task_flow_wait(self, itask):
+        """Update flow_wait status of a task, in the task_states table.
+
+        NOTE the task_states table is normally updated along with the task pool
+        table. This method is only needed as a final update for a non-pool task
+        that just spawned its children after a flow wait.
+        """
+        set_args = {
+            "time_updated": itask.state.time_updated,
+            "flow_wait": itask.flow_wait,
+        }
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_nums": serialise(itask.flow_nums),
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -453,7 +474,7 @@ class WorkflowDatabaseManager:
         # This should already be done by self.put_task_event_timers above:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
-        for itask in pool.get_all_tasks():
+        for itask in pool.get_tasks():
             for prereq in itask.state.prerequisites:
                 for (p_cycle, p_name, p_output), satisfied_state in (
                     prereq.satisfied.items()
@@ -507,7 +528,9 @@ class WorkflowDatabaseManager:
                     "time_updated": itask.state.time_updated,
                     "submit_num": itask.submit_num,
                     "try_num": itask.get_try_num(),
-                    "status": itask.state.status
+                    "status": itask.state.status,
+                    "is_manual_submit": itask.is_manual_submit,
+                    "is_complete": itask.is_complete()
                 }
                 where_args = {
                     "cycle": str(itask.point),
@@ -737,6 +760,25 @@ class WorkflowDatabaseManager:
         conn.commit()
 
     @classmethod
+    def upgrade_pre_830(cls, pri_dao: CylcWorkflowDAO) -> None:
+        """Upgrade on restart from a pre-8.3.0 database.
+
+        Add "is_complete" column to the task states table.
+        """
+        conn = pri_dao.connect()
+        c_name = "is_complete"
+        LOG.info(
+            f"DB upgrade (pre-8.3.0): "
+            f"add {c_name} column to {cls.TABLE_TASK_STATES}"
+        )
+        conn.execute(
+            rf"ALTER TABLE {cls.TABLE_TASK_STATES} "
+            rf"ADD COLUMN {c_name} INTEGER "
+            r"DEFAULT 0 NOT NULL"
+        )
+        conn.commit()
+
+    @classmethod
     def upgrade(cls, db_file: Union['Path', str]) -> None:
         """Upgrade this database to this Cylc version.
         """
@@ -746,6 +788,8 @@ class WorkflowDatabaseManager:
                 cls.upgrade_pre_803(pri_dao)
             if last_run_ver < parse_version("8.1.0.dev"):
                 cls.upgrade_pre_810(pri_dao)
+            if last_run_ver < parse_version("8.3.0.dev"):
+                cls.upgrade_pre_830(pri_dao)
 
     @classmethod
     def check_db_compatibility(cls, db_file: Union['Path', str]) -> Version:

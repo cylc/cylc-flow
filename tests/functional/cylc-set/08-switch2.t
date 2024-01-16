@@ -16,8 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that "cylc set-outputs" works like it says on the tin.
+# "cylc set" proposal examples.
+# Set and complete a future switch task that is in the pool but runahead limite.
+
 . "$(dirname "$0")/test_header"
 set_test_number 2
+
 reftest
-exit
+
+purge

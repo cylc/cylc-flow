@@ -43,7 +43,6 @@ from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -1007,6 +1006,12 @@ class Output(ObjectType):
     message = String()
     satisfied = Boolean()
     time = Float()
+
+
+class OutputLabel(String):
+    class Meta:
+        description = """Task output label, as used in the graph."""
+    label = String()
 
 
 class XTrigger(ObjectType):
@@ -2101,27 +2106,33 @@ class Remove(Mutation, TaskMutation):
         resolver = partial(mutator, command='remove_tasks')
 
 
-class SetOutputs(Mutation, TaskMutation):
+class Set(Mutation, TaskMutation):
     class Meta:
-        description = sstrip('''
-            Artificially mark task outputs as completed.
+        description = sstrip("""
+            Set task prerequisites or outputs.
 
-            This allows you to manually intervene with Cylc's scheduling
-            algorithm by artificially satisfying outputs of tasks.
+            By default, set all required outputs for target task(s).
 
-            By default this makes tasks appear as if they succeeded.
+            Setting prerequisites contributes to the task's readiness to run.
 
-            Valid for: paused, running workflows.
-        ''')
-        resolver = partial(mutator, command='force_spawn_children')
+            Setting outputs contributes to the task's completion, sets the
+            corresponding prerequisites of child tasks, and sets any implied
+            outputs:
+             - started implies submitted
+             - succeeded and failed imply started
+             - custom outputs and expired do not imply any other outputs
+        """)
+        resolver = partial(mutator, command='set')
 
-    class Arguments(TaskMutation.Arguments):
+    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
         outputs = graphene.List(
-            String,
-            default_value=[TASK_OUTPUT_SUCCEEDED],
-            description='List of task outputs to satisfy.'
+            OutputLabel,
+            description='List of task outputs to set complete.'
         )
-        flow_num = Int()
+        prerequisites = graphene.List(
+            String,
+            description='List of task prerequisites to set satisfied.'
+        )
 
 
 class Trigger(Mutation, TaskMutation):
@@ -2181,7 +2192,7 @@ class Mutations(ObjectType):
     poll = _mut_field(Poll)
     release = _mut_field(Release)
     remove = _mut_field(Remove)
-    set_outputs = _mut_field(SetOutputs)
+    set = _mut_field(Set)  # noqa: A003
     trigger = _mut_field(Trigger)
 
     # job actions

@@ -22,7 +22,8 @@
         script = false
     [[bar]]
         script = """
-cylc set-outputs --flow=1 "${CYLC_WORKFLOW_ID}" "foo.${CYLC_TASK_CYCLE_POINT}"
+            cylc set --output=succeeded \
+                "${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/foo"
         """
     [[restart]]
         script = """

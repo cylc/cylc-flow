@@ -33,14 +33,14 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[holdrelease]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc__job__poll_grep_workflow_log -E '1/foo .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/bar .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/cheese .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/jam .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/cat1 .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/cat2 .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/dog1 .* spawned'
-            cylc__job__poll_grep_workflow_log -E '1/dog2 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/foo.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/bar.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/cheese.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/jam.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/cat1.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/cat2.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/dog1.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '1/dog2.* added to active task pool'
             cylc hold "${CYLC_WORKFLOW_ID}//1/*FF"  # inexact fam
             cylc hold "${CYLC_WORKFLOW_ID}//1/TOAST"  # exact fam
             cylc hold "${CYLC_WORKFLOW_ID}//1/cat*"  # inexact tasks

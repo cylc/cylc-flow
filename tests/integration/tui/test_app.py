@@ -19,6 +19,11 @@ import pytest
 import urwid
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED
+)
 from cylc.flow.task_state import (
 #     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
@@ -332,9 +337,10 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
 
             for task in ('a', 'b'):
                 itask = schd.pool.get_task(IntegerPoint('1'), task)
-                itask.state_reset(TASK_STATUS_SUCCEEDED)
-                schd.pool.spawn_on_output(itask, TASK_STATUS_SUCCEEDED)
+                schd.pool._set_outputs_itask(itask, [TASK_OUTPUT_SUCCEEDED])
+
             await schd.update_data_structure()
+            schd.update_data_store()
 
             rk.compare_screenshot(
                 'later-time',

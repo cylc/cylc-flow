@@ -223,7 +223,7 @@ class Scheduler:
     flow_mgr: FlowMgr
 
     # queues
-    command_queue: 'Queue[Tuple[str, tuple, dict]]'
+    command_queue: 'Queue[Tuple[str, str, list, dict]]'
     message_queue: 'Queue[TaskMsg]'
     ext_trigger_queue: Queue
 
@@ -523,7 +523,7 @@ class Scheduler:
                     timer.reset()
                 self.timers[event] = timer
 
-        if self.is_restart and not self.pool.get_all_tasks():
+        if self.is_restart and not self.pool.get_tasks():
             # This workflow completed before restart; wait for intervention.
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].reset()
@@ -604,6 +604,9 @@ class Scheduler:
             # Note that the following lines must be present at the top of
             # the workflow log file for use in reference test runs.
             LOG.info(
+                "Task log format: [CYCLE/TASK/JOB(FLOWS):STATUS] - LOG MESSAGE"
+            )
+            LOG.info(
                 f'Run mode: {self.config.run_mode()}',
                 extra=RotatingLogFileHandler.header_extra
             )
@@ -633,7 +636,7 @@ class Scheduler:
                 self.task_job_mgr.task_remote_mgr.is_restart = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
                     self.config.get_validated_rsync_includes())
-                if self.pool.get_all_tasks():
+                if self.pool.get_tasks():
                     # (If we're not restarting a finished workflow)
                     self.restart_remote_init()
                     self.command_poll_tasks(['*/*'])
@@ -916,11 +919,29 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
-    def queue_command(self, command: str, kwargs: dict) -> None:
-        self.command_queue.put((
-            command,
-            tuple(kwargs.values()), {}
-        ))
+    def queue_command(
+        self,
+        name: str,
+        args: list,
+        kwargs: dict,
+        log_lines: List[str],
+    ) -> str:
+        """Queue a command for action by the scheduler.
+
+        Return a unique command ID for provenance tracking.
+
+        """
+        uuid = str(uuid4())
+        LOG.info(f"{log_lines[0]} ID={uuid}\n{log_lines[1]}")
+        self.command_queue.put(
+            (
+                uuid,
+                name,
+                args,
+                kwargs,
+            )
+        )
+        return uuid
 
     async def process_command_queue(self) -> None:
         """Process queued commands."""
@@ -929,17 +950,15 @@ class Scheduler:
             return
         LOG.debug(f"Processing {qsize} queued command(s)")
         while True:
+            uuid: str
+            name: str
+            args: list
+            kwargs: dict
             try:
-                command = self.command_queue.get(False)
-                name, args, kwargs = command
+                uuid, name, args, kwargs = self.command_queue.get(False)
             except Empty:
                 break
-            args_string = ', '.join(str(a) for a in args)
-            kwargs_string = ', '.join(
-                f"{key}={value}" for key, value in kwargs.items()
-            )
-            sep = ', ' if kwargs_string and args_string else ''
-            cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
+            msg = f'Command "{name}" ' + '{result}' + f'. ID={uuid}'
             try:
                 fcn = self.get_command_method(name)
                 n_warnings: Optional[int]
@@ -954,16 +973,20 @@ class Scheduler:
                     not isinstance(exc, CommandFailedError)
                 ):
                     LOG.error(traceback.format_exc())
-                LOG.error(f"Command failed: {cmdstr}\n{exc}")
+                LOG.error(
+                    msg.format(result="failed") + f"\n{exc}"
+                )
             else:
                 if n_warnings:
                     LOG.info(
-                        f"Command actioned with {n_warnings} warning(s): "
-                        f"{cmdstr}"
+                        msg.format(
+                            result=f"actioned with {n_warnings} warnings"
+                        )
                     )
                 else:
-                    LOG.info(f"Command actioned: {cmdstr}")
+                    LOG.info(msg.format(result="actioned"))
                 self.is_updated = True
+
             self.command_queue.task_done()
 
     def info_get_graph_raw(self, cto, ctn, grouping=None):
@@ -1025,9 +1048,9 @@ class Scheduler:
         self.stop_mode = stop_mode
         self.update_data_store()
 
-    def command_release(self, task_globs: Iterable[str]) -> int:
+    def command_release(self, tasks: Iterable[str]) -> int:
         """Release held tasks."""
-        return self.pool.release_held_tasks(task_globs)
+        return self.pool.release_held_tasks(tasks)
 
     def command_release_hold_point(self) -> None:
         """Release all held tasks and unset workflow hold after cycle point,
@@ -1039,17 +1062,17 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items: List[str]) -> int:
+    def command_poll_tasks(self, tasks: Iterable[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return 0
-        itasks, _, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         return len(bad_items)
 
-    def command_kill_tasks(self, items: List[str]) -> int:
+    def command_kill_tasks(self, tasks: Iterable[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
-        itasks, _, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         if self.config.run_mode('simulation'):
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
@@ -1059,9 +1082,9 @@ class Scheduler:
         self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
         return len(bad_items)
 
-    def command_hold(self, task_globs: Iterable[str]) -> int:
+    def command_hold(self, tasks: Iterable[str]) -> int:
         """Hold specified tasks."""
-        return self.pool.hold_tasks(task_globs)
+        return self.pool.hold_tasks(tasks)
 
     def command_set_hold_point(self, point: str) -> None:
         """Hold all tasks after the specified cycle point."""
@@ -1078,18 +1101,18 @@ class Scheduler:
         self.pause_workflow()
 
     @staticmethod
-    def command_set_verbosity(lvl: Union[int, str]) -> None:
+    def command_set_verbosity(level: Union[int, str]) -> None:
         """Set workflow verbosity."""
         try:
-            lvl = int(lvl)
+            lvl = int(level)
             LOG.setLevel(lvl)
         except (TypeError, ValueError) as exc:
             raise CommandFailedError(exc)
         cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
 
-    def command_remove_tasks(self, items) -> int:
+    def command_remove_tasks(self, tasks: Iterable[str]) -> int:
         """Remove tasks."""
-        return self.pool.remove_tasks(items)
+        return self.pool.remove_tasks(tasks)
 
     async def command_reload_workflow(self) -> None:
         """Reload workflow configuration."""
@@ -1700,6 +1723,7 @@ class Scheduler:
             tinit = time()
 
             # Useful for debugging core scheduler issues:
+            # import logging
             # self.pool.log_task_pool(logging.CRITICAL)
             if self.incomplete_ri_map:
                 self.manage_remote_init()
@@ -1736,7 +1760,7 @@ class Scheduler:
             if self.xtrigger_mgr.do_housekeeping:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
-            self.pool.set_expired_tasks()
+            self.pool.clock_expire_tasks()
             self.release_queued_tasks()
 
             if (
@@ -2065,9 +2089,11 @@ class Scheduler:
                 if itask.state(
                     TASK_STATUS_PREPARING,
                     TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING
-                )
-                or (
+                    TASK_STATUS_RUNNING,
+                ) or (
+                    # This is because runahead limit gets truncated
+                    # to stop_point if there is one, so tasks spawned
+                    # beyond the stop_point must be runahead limited.
                     itask.state(TASK_STATUS_WAITING)
                     and not itask.state.is_runahead
                 )
@@ -2094,7 +2120,7 @@ class Scheduler:
         if self.is_paused:
             LOG.info("Workflow is already paused")
             return
-        _msg = "PAUSING the workflow now"
+        _msg = "Pausing the workflow"
         if msg:
             _msg += f': {msg}'
         LOG.info(_msg)
@@ -2124,18 +2150,33 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_paused(False)
         self.update_data_store()
 
-    def command_force_trigger_tasks(self, items, flow, flow_wait, flow_descr):
+    def command_force_trigger_tasks(
+        self,
+        tasks: Iterable[str],
+        flow: List[str],
+        flow_wait: bool = False,
+        flow_descr: Optional[str] = None
+    ):
         """Manual task trigger."""
         return self.pool.force_trigger_tasks(
-            items, flow, flow_wait, flow_descr)
+            tasks, flow, flow_wait, flow_descr)
 
-    def command_force_spawn_children(self, items, outputs, flow_num):
+    def command_set(
+        self,
+        tasks: List[str],
+        flow: List[str],
+        outputs: Optional[List[str]] = None,
+        prerequisites: Optional[List[str]] = None,
+        flow_wait: bool = False,
+        flow_descr: Optional[str] = None
+    ):
         """Force spawn task successors.
 
-        User-facing method name: set_outputs.
-
+        User-facing method name: reset.
         """
-        return self.pool.force_spawn_children(items, outputs, flow_num)
+        return self.pool.set(  # noqa: A003
+            tasks, outputs, prerequisites, flow, flow_wait, flow_descr
+        )
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""

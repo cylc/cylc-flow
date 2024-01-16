@@ -41,7 +41,7 @@ $SCP "${PWD}/bin/my-tailer.sh" \
 # Run detached.
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-poll_grep_workflow_log -E '1/foo preparing .* => submitted'
+poll_grep_workflow_log -E '1/foo/01:preparing.* => submitted'
 # cylc cat-log -m 't' tail-follows a file, so needs to be killed.
 # Send interrupt signal to tail command after 15 seconds.
 TEST_NAME="${TEST_NAME_BASE}-cat-log"

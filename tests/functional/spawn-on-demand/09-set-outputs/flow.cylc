@@ -1,7 +1,5 @@
-# Test that `cylc set-outputs` has the same effect as natural output
+# Test that `cylc set` has the same effect as natural output
 # completion: i.e. that downstream children are spawned as normal.
-
-# DEBUG mode required: we search for "task proxy removed" in the log.
 
 [scheduler]
     [[events]]
@@ -35,7 +33,7 @@
     [[foo]]
         # Hang about until setter is finished.
         script = """
-            cylc__job__poll_grep_workflow_log -E "1/setter .* => succeeded"
+            cylc__job__poll_grep_workflow_log -E "1/setter.* => succeeded"
         """
     [[bar]]
         script = true
@@ -43,11 +41,11 @@
         # (To the rescue).
         script = """
             # Set foo outputs while it still exists in the pool.
-            cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc set --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}//1/foo"
 
             # Set bar outputs after it is gone from the pool.
-            cylc__job__poll_grep_workflow_log -E "1/bar .*task proxy removed"
-            cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}//1/bar"
+            cylc__job__poll_grep_workflow_log -E "1/bar.* completed"
+            cylc set --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}//1/bar"
         """
     [[qux, quw, fux, fuw]]
         script = true

@@ -138,7 +138,7 @@ async def test_task_pool(one, start):
     async with start(one):
         # pump the scheduler's heart manually
         one.pool.release_runahead_tasks()
-        assert len(one.pool.main_pool) == 1
+        assert len(one.pool.active_tasks) == 1
 
 
 async def test_exception(one, run, log_filter):

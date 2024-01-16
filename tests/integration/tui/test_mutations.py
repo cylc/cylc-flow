@@ -27,7 +27,8 @@ async def gen_commands(schd):
     while True:
         await asyncio.sleep(0.1)
         if not schd.command_queue.empty():
-            yield schd.command_queue.get()
+            # (ignore first item: command UUID)
+            yield schd.command_queue.get()[1:]
 
 
 async def test_online_mutation(
@@ -76,7 +77,7 @@ async def test_online_mutation(
             command = None
             async for command in gen_commands(schd):
                 break
-            assert command == ('hold', (['1/one'],), {})
+            assert command == ('hold', [], {'tasks': ['1/one']})
 
         # close the dialogue and re-run the hold mutation
         rk.user_input('q', 'q', 'enter')

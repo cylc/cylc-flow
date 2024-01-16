@@ -110,6 +110,7 @@ MUTATIONS = {
         'kill',
         'trigger',
         'poll',
+        'set',
     ],
     'job': [
         'kill',

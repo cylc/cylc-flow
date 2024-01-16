@@ -171,14 +171,14 @@ async def test_delta_task_state(harness):
     w_id = schd.data_store_mgr.workflow_id
     schd.data_store_mgr.data[w_id] = data
     assert TASK_STATUS_FAILED not in set(collect_states(data, TASK_PROXIES))
-    for itask in schd.pool.get_all_tasks():
+    for itask in schd.pool.get_tasks():
         itask.state.reset(TASK_STATUS_FAILED)
         schd.data_store_mgr.delta_task_state(itask)
     assert TASK_STATUS_FAILED in set(collect_states(
         schd.data_store_mgr.updated, TASK_PROXIES))
 
     # put things back the way we found them
-    for itask in schd.pool.get_all_tasks():
+    for itask in schd.pool.get_tasks():
         itask.state.reset(TASK_STATUS_WAITING)
         schd.data_store_mgr.delta_task_state(itask)
     await schd.update_data_structure()
@@ -191,7 +191,7 @@ async def test_delta_task_held(harness):
     schd.pool.hold_tasks('*')
     await schd.update_data_structure()
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
-    for itask in schd.pool.get_all_tasks():
+    for itask in schd.pool.get_tasks():
         itask.state.reset(is_held=False)
         schd.data_store_mgr.delta_task_held(itask)
     assert True not in {
@@ -269,7 +269,7 @@ async def test_update_data_structure(harness):
     assert TASK_STATUS_FAILED not in set(collect_states(data, FAMILY_PROXIES))
     assert TASK_STATUS_FAILED not in data[WORKFLOW].state_totals
     assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
-    for itask in schd.pool.get_all_tasks():
+    for itask in schd.pool.get_tasks():
         itask.state.reset(TASK_STATUS_FAILED)
         schd.data_store_mgr.delta_task_state(itask)
     schd.data_store_mgr.update_data_structure()
@@ -288,15 +288,17 @@ async def test_update_data_structure(harness):
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
     schd, data = harness
-    schd.pool.force_spawn_children([
-        t.identity
-        for t in schd.pool.get_all_tasks()
-    ], (TASK_STATUS_SUCCEEDED,), "flow1")
+    schd.pool.set(
+        [t.identity for t in schd.pool.get_tasks()],
+        [(TASK_STATUS_SUCCEEDED,)],
+        [],
+        "all"
+    )
     assert all({
         p.satisfied
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
         for p in t.prerequisites})
-    for itask in schd.pool.get_all_tasks():
+    for itask in schd.pool.get_tasks():
         # set prereqs as not-satisfied
         for prereq in itask.state.prerequisites:
             prereq._all_satisfied = False

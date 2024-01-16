@@ -14,7 +14,7 @@
     [[a]]
        script = """
            if ((CYLC_TASK_FLOW_NUMBERS == 2)); then
-               cylc__job__poll_grep_workflow_log "\[1/c .* succeeded"
+               cylc__job__poll_grep_workflow_log -E "/c.* succeeded"
            fi
        """
     [[b, d]]
@@ -23,7 +23,7 @@
            if ((CYLC_TASK_FLOW_NUMBERS == 1)); then
                cylc trigger --flow=new --meta="cheese wizard" \
                    "$CYLC_WORKFLOW_ID//1/a"
-               cylc__job__poll_grep_workflow_log "\[1/a submitted job:02 flows:2\] => running"
+               cylc__job__poll_grep_workflow_log -E "\[1/a/02\(2\):submitted\] => running"
                cylc stop $CYLC_WORKFLOW_ID
            fi
        """

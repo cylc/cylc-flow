@@ -22,13 +22,14 @@ from typing import TYPE_CHECKING
 import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import (
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+    TASK_OUTPUT_FAILED,
+    SORT_ORDERS
 )
-from cylc.flow.task_outputs import SORT_ORDERS
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -190,6 +191,14 @@ class TaskDef:
         message, _ = self.outputs[output]
         self.outputs[output] = (message, required)
 
+    def get_required_outputs(self):
+        """Return list of required outputs."""
+        res = []
+        for out, (_msg, req) in self.outputs.items():
+            if req:
+                res.append(out)
+        return res
+
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
 
@@ -203,6 +212,9 @@ class TaskDef:
             and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
+
+        # Expired must be optional
+        self.set_required_output(TASK_OUTPUT_EXPIRED, False)
 
         # In Cylc 7 back compat mode, make all success outputs required.
         if cylc.flow.flags.cylc7_back_compat:

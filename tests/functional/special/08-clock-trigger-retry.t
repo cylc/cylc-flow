@@ -42,7 +42,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "$WORKFLOW_NAME"
 
 log_scan "${TEST_NAME_BASE}-log-scan" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 2 1 \
-    "\[20150101.*/foo .* job:01 .* retrying in PT5S" \
+    "\[20150101.*/foo/01.* retrying in PT5S" \
     "xtrigger satisfied: _cylc_retry_20150101"
 # (if task resubmits immediately instead of waiting PT5S, xtrigger msg will not appear)
 

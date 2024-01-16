@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc set-verbosity [OPTIONS] ARGS
+"""cylc verbosity [OPTIONS] ARGS
 
-Change the logging severity level of a running workflow.
+Set the logging severity level of a running scheduler.
 
-Only messages at or above the chosen severity level will be logged; for
-example, if you choose WARNING, only warnings and critical messages will be
-logged.
+Messages at or above the chosen level are logged. If you choose
+WARNING (say) only WARNING and CRITICAL messages will be logged.
 """
 
 from functools import partial

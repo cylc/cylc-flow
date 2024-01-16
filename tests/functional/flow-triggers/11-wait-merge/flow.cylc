@@ -16,7 +16,7 @@
    [[a]]
       script = """
          if ((CYLC_TASK_SUBMIT_NUMBER == 2)); then
-             cylc__job__poll_grep_workflow_log "1/d .*(received)started"
+             cylc__job__poll_grep_workflow_log "\[1/d/01(1,2):submitted] (received)started"
          fi
       """
    [[b]]
@@ -24,11 +24,12 @@
          if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
             cylc trigger --flow=new ${CYLC_WORKFLOW_ID}//1/a
             cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_ID}//1/c
-            cylc__job__poll_grep_workflow_log "1/c .*(received)x"
+            cylc__job__poll_grep_workflow_log "\[1/c/01(2):running] (received)x"
          fi
       """
    [[c]]
       script = """
+         cylc__job__wait_cylc_message_started
          cylc message x
          if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
              cylc__job__poll_grep_workflow_log "merged"
