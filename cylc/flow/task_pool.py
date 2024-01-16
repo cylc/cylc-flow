@@ -1733,6 +1733,7 @@ class TaskPool:
         """Simulation mode: simulate task run times and set states."""
         if not self.config.run_mode('simulation'):
             return False
+        breakpoint(header='start of sim_time_check')
         sim_task_state_changed = False
         now = time()
         for itask in self.get_tasks():
@@ -1753,11 +1754,14 @@ class TaskPool:
                 ) and (
                     itask.get_try_num() == 1 or not conf['fail try 1 only']
                 ):
+                    breakpoint(header='fail')
                     message_queue.put(
                         TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
                     )
                 else:
                     # Simulate message outputs.
+                    breakpoint(header='success')
+
                     for msg in itask.tdef.rtconfig['outputs'].values():
                         message_queue.put(
                             TaskMsg(job_d, now_str, 'DEBUG', msg)

@@ -130,7 +130,9 @@ async def test_workflow_param_rapid_toggle(
         assert w_params['is_paused'] == '0'
 
 
-async def test_record_only_non_clock_triggers(flow, run, scheduler):
+async def test_record_only_non_clock_triggers(
+    flow, run, scheduler, complete, db_select
+):
     """Database does not record wall_clock xtriggers.
 
     https://github.com/cylc/cylc-flow/issues/5911
@@ -155,21 +157,30 @@ async def test_record_only_non_clock_triggers(flow, run, scheduler):
                 "real_wall_clock": "wall_clock()"
             },
             "graph": {
-                "R1": "@another & @wall_clock & @real_wall_clock => foo"
+                "R1": """
+                    @another & @wall_clock & @real_wall_clock => foo
+                    @real_wall_clock => bar
+                """
             }
         },
         'runtime': {
             'foo': {
-                'execution retry delays': 'PT0S',
-                'script': 'test $CYLC_TASK_SUBMIT_NUMBER != 1'
+                'execution retry delays': 'PT1S',
+                'submission retry delays': 'PT0S',
+                'simulation': {
+                    'default run length': 'PT0S',
+                    'fail cycle points': '1348'
+                }
             }
         }
     })
     # Run workflow unto completion:
-    schd = scheduler(id_, paused_start=False, run_mode='live')
+    schd = scheduler(id_, paused_start=False, run_mode='simulation')
+    import asyncio
     async with run(schd) as log:
-        while 'Workflow shutting down - AUTOMATIC' not in log.messages:
-            await asyncio.sleep(0.5)
+        #schd.pool.get_tasks()[0].state.status = 'running'
+        await complete(schd, timeout=10)
+
 
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
