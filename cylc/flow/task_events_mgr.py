@@ -984,7 +984,11 @@ class TaskEventsManager():
         if self.mail_footer:
             stdin_str += process_mail_footer(
                 self.mail_footer,
-                get_workflow_template_variables(schd, id_keys[-1].event, ''),
+                get_workflow_template_variables(
+                    schd,
+                    id_keys[-1].event,
+                    id_keys[-1].message,
+                ),
             )
         self._send_mail(ctx, cmd, stdin_str, id_keys, schd)
 
