@@ -405,7 +405,7 @@ class WorkflowDatabaseManager:
     def put_xtriggers(self, sat_xtrig):
         """Put statements to update external triggers table."""
         for sig, res in sat_xtrig.items():
-            if not sig.startswith('wall_clock(trigger_time='):
+            if not sig.startswith('wall_clock('):
                 self.db_inserts_map[self.TABLE_XTRIGGERS].append({
                     "signature": sig,
                     "results": json.dumps(res)})
