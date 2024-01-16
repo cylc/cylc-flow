@@ -21,7 +21,7 @@ from functools import lru_cache
 import re
 from typing import List, Optional, TYPE_CHECKING, Tuple
 
-from metomi.isodatetime.data import Calendar, CALENDAR, Duration
+from metomi.isodatetime.data import Calendar, CALENDAR
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
@@ -699,14 +699,6 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
         now = get_current_time_string()
     now_point = parser.parse(now)
 
-    # correct for year in 'now' if year is the only date unit specified -
-    # https://github.com/cylc/cylc-flow/issues/4805#issuecomment-1103928604
-    if re.search(r"\(-\d{2}[);T]", value):
-        now_point += Duration(years=1)
-    # likewise correct for month if year and month are the only date units
-    elif re.search(r"\(-\d{4}[);T]", value):
-        now_point += Duration(months=1)
-
     # perform whatever transformation is required
     offset = None
     if is_prev_next:
@@ -798,28 +790,6 @@ def prev_next(
     my_diff = [abs(my_time - now) for my_time in timepoints]
 
     cycle_point = timepoints[my_diff.index(min(my_diff))]
-
-    # ensure truncated dates do not have time from 'now' included' -
-    # https://github.com/metomi/isodatetime/issues/212
-    if 'T' not in value.split(')')[0]:
-        # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
-        # in this way as they're meant to be immutable since
-        # https://github.com/metomi/isodatetime/pull/165, however it
-        # should be ok as long as the TimePoint is not used as a dict key and
-        # we don't call any of the TimePoint's cached methods until after we've
-        # finished mutating it.
-        cycle_point._hour_of_day = 0
-        cycle_point._minute_of_hour = 0
-        cycle_point._second_of_minute = 0
-    # likewise ensure month and day from 'now' are not included
-    # where they did not appear in the truncated datetime
-    if re.search(r"\(-\d{2}[);T]", value):
-        # case 1 - year only
-        cycle_point._month_of_year = 1
-        cycle_point._day_of_month = 1
-    elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-        # case 2 - month only or year and month
-        cycle_point._day_of_month = 1
 
     return cycle_point, offset
 
