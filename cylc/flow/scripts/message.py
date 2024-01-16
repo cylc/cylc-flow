@@ -110,10 +110,11 @@ def get_option_parser() -> COP:
             WORKFLOW_ID_ARG_DOC,
             ('JOB', 'Job ID - CYCLE/TASK_NAME/SUBMIT_NUM'),
             COP.optional(
-                ('[SEVERITY:]MESSAGE ...', 'Messages')
+                ('[SEVERITY:]MESSAGE ...', 'Severity Level:Message')
             ),
             COP.LINEBREAK,
-            COP.optional(('[SEVERITY:]MESSAGE ...', 'Messages')),
+            COP.optional(('[SEVERITY:]MESSAGE', 'Severity Level:Message')),
+            COP.optional(('[SEVERITY:]MESSAGE', 'Severity Level:Message')),
         ]
     )
 
