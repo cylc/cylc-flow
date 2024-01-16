@@ -778,6 +778,7 @@ class TaskEventsManager():
 
         if (
                 itask.state(TASK_STATUS_WAITING)
+                and itask.tdef.run_mode == 'live'
                 and
                 (
                     (

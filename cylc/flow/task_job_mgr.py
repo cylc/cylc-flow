@@ -1000,7 +1000,10 @@ class TaskJobManager:
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
             self._set_retry_timers(itask)
-            itask.platform = {'name': 'SIMULATION'}
+            itask.platform = {
+                'name': 'SIMULATION',
+                'submission retry delays': [1]
+            }
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length']
