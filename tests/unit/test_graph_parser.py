@@ -133,13 +133,33 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
             "foo || bar => baz",
             "The graph OR operator is '|'"
         ),
+        param(
+            # See https://github.com/cylc/cylc-flow/issues/5844
+            "foo => bar[1649]",
+            'illegal cycle point offset on the right',
+            id='no-cycle-point-RHS'
+        ),
+        param(
+            "foo => bar[1649] => baz",
+            '!illegal cycle point offset on the right',
+            id='ignore-not-exclusively-RHS-cycle-point'
+        ),
+        param(
+            "foo => bar[1649]\nbar[1649] => baz",
+            '!illegal cycle point offset on the right',
+            id='ignore-not-exclusively-RHS-cycle-point2'
+        ),
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
     """Test various graph syntax errors."""
-    with pytest.raises(GraphParseError) as cm:
+    if expected_err[0] == '!':
+        # Assert method doesn't fail:
         GraphParser().parse_graph(graph)
-    assert expected_err in str(cm.value)
+    else:
+        with pytest.raises(GraphParseError) as cm:
+            GraphParser().parse_graph(graph)
+        assert expected_err in str(cm.value)
 
 
 def test_parse_graph_simple():

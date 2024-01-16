@@ -462,8 +462,13 @@ class GraphParser:
             for i in range(0, len(chain) - 1):
                 pairs.add((chain[i], chain[i + 1]))
 
+        # Get a set of RH nodes which are not at the LH of another pair:
+        terminals = {
+            right for right in {right for _, right in pairs}
+            if right not in {left for left, _ in pairs}}
+
         for pair in pairs:
-            self._proc_dep_pair(pair)
+            self._proc_dep_pair(pair, terminals)
 
     @classmethod
     def _report_invalid_lines(cls, lines: List[str]) -> None:
@@ -493,19 +498,23 @@ class GraphParser:
 
     def _proc_dep_pair(
         self,
-        pair: Tuple[Optional[str], str]
+        pair: Tuple[Optional[str], str],
+        terminals: Set[str],
     ) -> None:
         """Process a single dependency pair 'left => right'.
 
-        'left' can be a logical expression of qualified node names.
-        'left' can be None, when triggering a left-side or lone node.
-        'left' can be "", if null task name in graph error (a => => b).
-        'right' can be one or more node names joined by AND.
-        'right' can't be None or "".
         A node is an xtrigger, or a task or a family name.
         A qualified name is NAME([CYCLE-POINT-OFFSET])(:QUALIFIER).
-        Trigger qualifiers, but not cycle offsets, are ignored on the right to
-        allow chaining.
+
+        Args:
+            pair:
+                'left' can be a logical expression of qualified node names.
+                'left' can be None, when triggering a left-side or lone node.
+                'left' can be "", if null task name in graph error (a => => b).
+                'right' can be one or more node names joined by AND.
+                'right' can't be None or "".
+            terminals:
+                Lits of nodes which are _only_ on the RH end of chains.
         """
         left, right = pair
         # Raise error for right-hand-side OR operators.
@@ -525,10 +534,15 @@ class GraphParser:
         if right.count("(") != right.count(")"):
             raise GraphParseError(mismatch_msg.format(right))
 
-        # Ignore cycle point offsets on the right side.
-        # (Note we can't ban this; all nodes get process as left and right.)
+        # Ignore/Error cycle point offsets on the right side:
+        # (Note we can only ban this for nodes at the end of chains)
         if '[' in right:
-            return
+            if right in terminals:
+                raise GraphParseError(
+                    'ERROR, illegal cycle point offset on the right:'
+                    f' {left} => {right}')
+            else:
+                return
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
