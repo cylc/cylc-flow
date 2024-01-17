@@ -43,8 +43,11 @@ from cylc.flow.id_match import filter_ids
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
-    CustomTaskEventHandlerContext, TaskEventMailContext,
-    TaskJobLogsRetrieveContext)
+    CustomTaskEventHandlerContext,
+    EventKey,
+    TaskEventMailContext,
+    TaskJobLogsRetrieveContext,
+)
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -589,16 +592,17 @@ class TaskPool:
             self.compute_runahead()
             self.release_runahead_tasks()
 
-    def load_db_task_action_timers(self, row_idx, row):
+    def load_db_task_action_timers(self, row_idx, row) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
             LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
-        id_ = Tokens(
+        tokens = Tokens(
             cycle=cycle,
             task=name,
-        ).relative_id
+        )
+        id_ = tokens.relative_id
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
@@ -652,14 +656,16 @@ class TaskPool:
             itask.try_timers[ctx_key[1]] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx:
-            key1, submit_num = ctx_key
-            # Convert key1 to type tuple - JSON restores as type list
-            # and this will not previously have been converted back
-            if isinstance(key1, list):
-                key1 = tuple(key1)
-            key = (key1, cycle, name, submit_num)
+            (handler, event), submit_num = ctx_key
             self.task_events_mgr.add_event_timer(
-                key,
+                EventKey(
+                    handler,
+                    event,
+                    # NOTE: the event "message" is not preserved in the DB so
+                    # we use the event as a placeholder
+                    event,
+                    tokens.duplicate(job=submit_num),
+                ),
                 TaskActionTimer(
                     ctx, delays, num, delay, timeout
                 )
@@ -1063,7 +1069,7 @@ class TaskPool:
             for itask in self.get_tasks()
         )
 
-    def warn_stop_orphans(self):
+    def warn_stop_orphans(self) -> None:
         """Log (warning) orphaned tasks on workflow stop."""
         orphans = []
         orphans_kill_failed = []
@@ -1090,11 +1096,12 @@ class TaskPool:
                 )
             )
 
-        for key1, point, name, submit_num in (
-                self.task_events_mgr._event_timers
-        ):
-            LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
-                point, name, submit_num, key1))
+        for id_key in self.task_events_mgr._event_timers:
+            LOG.warning(
+                f"{id_key.tokens.relative_id}:"
+                " incomplete task event handler"
+                f" {(id_key.handler, id_key.event)}"
+            )
 
     def log_incomplete_tasks(self) -> bool:
         """Log finished but incomplete tasks; return True if there any."""
@@ -1889,7 +1896,7 @@ class TaskPool:
                 # Glob or task state was not matched by active tasks
                 if not tokens['task']:
                     # make task globs explicit to make warnings clearer
-                    tokens['task'] = '*'
+                    tokens = tokens.duplicate(task='*')
                 LOG.warning(
                     'No active tasks matching:'
                     # preserve :selectors when logging the id
@@ -1957,7 +1964,7 @@ class TaskPool:
             point_str = tokens['cycle']
             if not tokens['task']:
                 # make task globs explicit to make warnings clearer
-                tokens['task'] = '*'
+                tokens = tokens.duplicate(task='*')
             name_str = tokens['task']
             try:
                 point_str = standardise_point_string(point_str)

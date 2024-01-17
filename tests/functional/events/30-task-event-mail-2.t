@@ -20,7 +20,7 @@
 if ! command -v mail 2>'/dev/null'; then
     skip_all '"mail" command not available'
 fi
-set_test_number 5
+set_test_number 20
 mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
@@ -49,22 +49,29 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach ${OPT_SET} "${WORKFLOW_NAME}"
 
+# 1 - retry
+run_ok "${TEST_NAME_BASE}-t1-01" grep -Pizo 'job: 1/t1/01.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t2-01" grep -Pizo 'job: 1/t2/01.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t3-01" grep -Pizo 'job: 1/t3/01.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t4-01" grep -Pizo 'job: 1/t4/01.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t5-01" grep -Pizo 'job: 1/t5/01.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+
+# 2 - retry
+run_ok "${TEST_NAME_BASE}-t1-02" grep -Pizo 'job: 1/t1/02.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t2-02" grep -Pizo 'job: 1/t2/02.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t3-02" grep -Pizo 'job: 1/t3/02.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t4-02" grep -Pizo 'job: 1/t4/02.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t5-02" grep -Pizo 'job: 1/t5/02.*\n.*event: retry' "${TEST_SMTPD_LOG}"
+
+# 3 - fail
+run_ok "${TEST_NAME_BASE}-t1-03" grep -Pizo 'job: 1/t1/03.*\n.*event: failed' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t2-03" grep -Pizo 'job: 1/t2/03.*\n.*event: failed' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t3-03" grep -Pizo 'job: 1/t3/03.*\n.*event: failed' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t4-03" grep -Pizo 'job: 1/t4/03.*\n.*event: failed' "${TEST_SMTPD_LOG}"
+run_ok "${TEST_NAME_BASE}-t5-03" grep -Pizo 'job: 1/t5/03.*\n.*event: failed' "${TEST_SMTPD_LOG}"
+
+
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-retry: 1/t1/01
-retry: 1/t2/01
-retry: 1/t3/01
-retry: 1/t4/01
-retry: 1/t5/01
-retry: 1/t1/02
-retry: 1/t2/02
-retry: 1/t3/02
-retry: 1/t4/02
-retry: 1/t5/02
-failed: 1/t1/03
-failed: 1/t2/03
-failed: 1/t3/03
-failed: 1/t4/03
-failed: 1/t5/03
 see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/
 __LOG__
 
@@ -73,6 +80,6 @@ run_ok "${TEST_NAME_BASE}-grep-log" \
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -qPizo "Subject: \[. tasks failed\]\n? ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
 
-    purge
+purge
 mock_smtpd_kill
 exit

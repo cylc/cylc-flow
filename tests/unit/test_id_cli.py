@@ -577,6 +577,6 @@ async def test_expand_workflow_tokens_impl_selector(no_scan):
     """It should reject filters it can't handle."""
     tokens = tokenise('~user/*')
     await _expand_workflow_tokens([tokens])
-    tokens['workflow_sel'] = 'stopped'
+    tokens = tokens.duplicate(workflow_sel='stopped')
     with pytest.raises(InputError):
         await _expand_workflow_tokens([tokens])
