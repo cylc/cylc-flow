@@ -99,7 +99,7 @@ async def test_reload_waits_for_pending_tasks(
             [
                 # the task should have entered the preparing state before the
                 # reload was requested
-                '[1/foo/00:waiting(queued)] => preparing(queued)',
+                '[1/foo/__:waiting(queued)] => preparing(queued)',
                 # the reload should have put the workflow into the paused state
                 'Pausing the workflow: Reloading workflow',
                 # reload should have waited for the task to submit

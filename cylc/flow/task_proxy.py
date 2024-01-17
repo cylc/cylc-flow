@@ -296,8 +296,14 @@ class TaskProxy:
 
         Format: "<point>/<name>/<job>{<flows>}:status".
         """
+        if self.state.status == TASK_STATUS_WAITING:
+            # Don't print pre-incremented submit number.
+            subnum= "__"
+        else:
+            subnum = f"{self.submit_num:02d}"
+
         return (
-            f"{self.identity}/{self.submit_num:02d}"
+            f"{self.identity}/{subnum}"
             f"{stringify_flow_nums(self.flow_nums)}:{self.state}"
         )
 
