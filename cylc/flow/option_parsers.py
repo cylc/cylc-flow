@@ -515,11 +515,14 @@ class CylcOptionParser(OptionParser):
         args = ""
         maxlen = max(len(arg) for arg, _ in argdoc)
         usage += "\n\nArguments:"
-        script_name, usage = usage.split('ARGS', 1)
+        if 'ARGS' in usage:
+            script_name, usage = usage.split('ARGS', 1)
+        else:
+            return usage
         used_args = [self.LINEBREAK]
         if self.LINEBREAK in argdoc:
             args += ' One of:\n'
-            args += script_name
+        args += script_name
         for arg, descr in argdoc:
             if arg.startswith('['):
                 self.n_optional_args += 1

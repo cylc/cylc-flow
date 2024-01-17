@@ -1,4 +1,6 @@
-Usage: cylc message [OPTIONS] -- [WORKFLOW] [JOB] [[SEVERITY:]MESSAGE ...] 
+Usage:  One of:
+cylc message [OPTIONS] -- WORKFLOW JOB [[SEVERITY:]MESSAGE ...] 
+cylc message [OPTIONS] -- [[SEVERITY:]MESSAGE] [[SEVERITY:]MESSAGE] 
 
 Record task messages.
 
@@ -66,9 +68,10 @@ identifier.
 
 
 Arguments:
-   [WORKFLOW]                             Workflow ID
-   [JOB]                                  Job ID - CYCLE/TASK_NAME/SUBMIT_NUM
-   [[SEVERITY:]MESSAGE ...]               Messages
+   WORKFLOW                               Workflow ID
+   JOB                                    Job ID - CYCLE/TASK_NAME/SUBMIT_NUM
+   [[SEVERITY:]MESSAGE ...]               Severity Level:Message
+   [[SEVERITY:]MESSAGE]                   Severity Level:Message
 
 Options:
   -h, --help            show this help message and exit

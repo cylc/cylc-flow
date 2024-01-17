@@ -1,4 +1,4 @@
-Usage: cylc tui WORKFLOW
+Usage: cylc tui WORKFLOW 
 
 View and control running workflows in the terminal.
 
