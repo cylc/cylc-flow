@@ -1,0 +1,70 @@
+Usage: cylc workflow-state [OPTIONS] WORKFLOW 
+
+Retrieve task states from the workflow database.
+
+Print task states retrieved from a workflow database; or (with --task,
+--point, and --status) poll until a given task reaches a given state; or (with
+--task, --point, and --message) poll until a task receives a given message.
+Polling is configurable with --interval and --max-polls; for a one-off
+check use --max-polls=1. The workflow database does not need to exist at
+the time polling commences but allocated polls are consumed waiting for
+it (consider max-polls*interval as an overall timeout).
+
+Note for non-cycling tasks --point=1 must be provided.
+
+For your own workflows the database location is determined by your
+site/user config. For other workflows, e.g. those owned by others, or
+mirrored workflow databases, use --run-dir=DIR to specify the location.
+
+Examples:
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS
+  # returns 0 if TASK.POINT reaches STATUS before the maximum number of
+  # polls, otherwise returns 1.
+
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS \
+  > --offset=PT6H
+  # adds 6 hours to the value of CYCLE for carrying out the polling operation.
+
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --status=STATUS --task-point
+  # uses CYLC_TASK_CYCLE_POINT environment variable as the value for the
+  # CYCLE to poll. This is useful when you want to use cylc workflow-state in a
+  # cylc task.
+
+
+Arguments:
+   WORKFLOW               Workflow ID
+
+Options:
+  -h, --help            show this help message and exit
+  -t TASK, --task=TASK  Specify a task to check the state of.
+  -p CYCLE, --point=CYCLE
+                        Specify the cycle point to check task states for.
+  -T, --task-point      Use the CYLC_TASK_CYCLE_POINT environment variable as
+                        the cycle point to check task states for. Shorthand
+                        for --point=$CYLC_TASK_CYCLE_POINT
+  -d DIR, --run-dir=DIR
+                        The top level cylc run directory if non-standard. The
+                        database should be DIR/WORKFLOW_ID/log/db. Use to
+                        interrogate workflows owned by others, etc.; see note
+                        above.
+  -s OFFSET, --offset=OFFSET
+                        Specify an offset to add to the targeted cycle point
+  -S STATUS, --status=STATUS
+                        Specify a particular status or triggering condition to
+                        check for. Valid triggering conditions to check for
+                        include: 'fail', 'finish', 'start', 'submit' and
+                        'succeed'. Valid states to check for include:
+                        'waiting', 'expired', 'preparing', 'submit-failed',
+                        'submitted', 'running', 'failed' and 'succeeded'.
+  -O MSG, -m MSG, --output=MSG, --message=MSG
+                        Check custom task output by message string or trigger
+                        string.
+  --max-polls=INT       Maximum number of polls (default: 10).
+  --interval=SECS       Polling interval in seconds (default: 60).
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.

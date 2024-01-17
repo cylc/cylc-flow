@@ -1,0 +1,152 @@
+Usage: cylc play [OPTIONS] WORKFLOW 
+
+Start, resume, or restart a workflow.
+
+The scheduler will run as a daemon unless you specify --no-detach.
+
+To avoid overwriting existing run directories, workflows that already ran can
+only be restarted from prior state. To start again, "cylc install" a new copy
+or "cylc clean" the existing run directory.
+
+By default, new runs begin at the start of the graph, determined by the initial
+cycle point. You can also begin at a later cycle point (--start-cycle-point),
+or at specified tasks (--start-task) within the graph.
+
+For convenience, any dependence on tasks prior to the start cycle point (or to
+the cycle point of the earliest task specified by --start-task) will be taken
+as satisfied.
+
+Examples:
+    # Start (at the initial cycle point), restart, or resume workflow WORKFLOW
+    $ cylc play WORKFLOW
+
+    # Start a new run from a cycle point after the initial cycle point
+    # (integer cycling)
+    $ cylc play --start-cycle-point=3 WORKFLOW
+    # (datetime cycling):
+    $ cylc play --start-cycle-point=20250101T0000Z WORKFLOW
+
+    # Start a new run from specified tasks in the graph
+    $ cylc play --start-task=3/foo WORKFLOW
+    $ cylc play -t 3/foo -t 3/bar WORKFLOW
+
+    # Start, restart or resume the second installed run of the workflow
+    # "dogs/fido"
+    $ cylc play dogs/fido/run2
+
+At restart, tasks recorded as submitted or running are polled to determine what
+happened to them while the workflow was down.
+
+
+Arguments:
+   WORKFLOW               Workflow ID
+
+Options:
+  -h, --help            show this help message and exit
+  -O OPT_CONF_KEYS, --opt-conf-key=OPT_CONF_KEYS
+                        Use optional Rose Config Setting (If Cylc-Rose is
+                        installed)
+  -D DEFINES, --define=DEFINES
+                        Each of these overrides the `[SECTION]KEY` setting in
+                        a `rose-suite.conf` file. Can be used to disable a
+                        setting using the syntax `--define=[SECTION]!KEY` or
+                        even `--define=[!SECTION]`.
+  -S ROSE_TEMPLATE_VARS, --rose-template-variable=ROSE_TEMPLATE_VARS, --define-suite=ROSE_TEMPLATE_VARS
+                        As `--define`, but with an implicit `[SECTION]` for
+                        workflow variables.
+  -N, --no-detach, --non-daemon
+                        Do not daemonize the scheduler (infers --format=plain)
+  --profile             Output profiling (performance) information
+  --start-cycle-point=CYCLE_POINT, --startcp=CYCLE_POINT
+                        Set the start cycle point, which may be after the
+                        initial cycle point. If the specified start point is
+                        not in the sequence, the next on-sequence point will
+                        be used. (Not to be confused with the initial cycle
+                        point)
+  --final-cycle-point=CYCLE_POINT, --fcp=CYCLE_POINT
+                        Set the final cycle point. This command line option
+                        overrides the workflow config option
+                        '[scheduling]final cycle point'.
+  --stop-cycle-point=CYCLE_POINT, --stopcp=CYCLE_POINT
+                        Set the stop cycle point. Shut down after all have
+                        PASSED this cycle point. (Not to be confused the final
+                        cycle point.) This command line option overrides the
+                        workflow config option '[scheduling]stop after cycle
+                        point'.
+  -t TASK_ID, --start-task=TASK_ID, --starttask=TASK_ID
+                        Start from this task instance, given by
+                        '<cycle>/<name>'. This can be used multiple times to
+                        start from multiple tasks at once. Dependence on tasks
+                        with cycle points earlier than the earliest start-task
+                        will be ignored. A sub-graph of the workflow will run
+                        if selected tasks do not lead on to the full graph.
+  --pause               Pause the workflow immediately on start up.
+  --hold-after=CYCLE_POINT, --hold-cycle-point=CYCLE_POINT, --holdcp=CYCLE_POINT
+                        Hold all tasks after this cycle point.
+  --reference-log       Generate a reference log for use in reference
+  --reference-test      Do a test run against a previously generated
+                        reference.
+  --host=HOST           Specify the host on which to start-up the workflow. If
+                        not specified, a host will be selected using the
+                        '[scheduler]run hosts' global config.
+  --format=FORMAT       The format of the output: 'plain'=human readable,
+                        'json'
+  --main-loop=PLUGIN_NAME
+                        Specify an additional plugin to run in the main These
+                        are used in combination with those specified
+                        [scheduler][main loop]plugins. Can be used multiple
+                        times.
+  --abort-if-any-task-fails
+                        If set workflow will abort with status 1 if any task
+                        fails.
+  --initial-cycle-point=CYCLE_POINT or OFFSET, --icp=CYCLE_POINT or OFFSET
+                        Set the initial cycle point. Required if not defined
+                        in flow.cylc. May be either an absolute point or an
+                        offset: See https://bit.ly/3MYHqVh (Cylc documentation
+                        link).
+  -m STRING, --mode=STRING
+                        Run mode: live, dummy, simulation (default live).
+  --downgrade           Allow the workflow to be restarted with an older
+                        version of Cylc, NOT RECOMMENDED. By default Cylc
+                        prevents you from restarting a workflow with an older
+                        version of Cylc than it was previously run with. Use
+                        this flag to disable this check.
+  --upgrade             Allow the workflow to be restarted with a newer
+                        version of Cylc.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.
+  -s NAME=VALUE, --set=NAME=VALUE
+                        Set the value of a Jinja2 template variable in the
+                        workflow definition. Values should be valid Python
+                        literals so strings must be quoted e.g.
+                        'STR="string"', INT=43, BOOL=True. This option can be
+                        used multiple times on the command line. NOTE: these
+                        settings persist across workflow restarts, but can be
+                        set again on the "cylc play" command line if they need
+                        to be overridden.
+  -z NAME=VALUE1,VALUE2,..., --set-list=NAME=VALUE1,VALUE2,..., --template-list=NAME=VALUE1,VALUE2,...
+                        Set the value of a Jinja2 template variable in the
+                        workflow definition as a comma separated list of
+                        Python strings. Values containing commas must be
+                        quoted. e.g. '+s STR=a,b,c' => ['a', 'b', 'c'] or '+ s
+                        STR=a,"b,c"' => ['a', 'b,c'] This option can be used
+                        multiple times on the command line. NOTE: these
+                        settings persist across workflow restarts, but can be
+                        set again on the "cylc play" command line if they need
+                        to be overridden.
+  --set-file=FILE       Set the value of Jinja2 template variables in the
+                        workflow definition from a file containing NAME=VALUE
+                        pairs (one per line). As with --set values should be
+                        valid Python literals  so strings must be quoted e.g.
+                        STR='string'. NOTE: these settings persist across
+                        workflow restarts, but can be set again on the "cylc
+                        play" command line if they need to be overridden.

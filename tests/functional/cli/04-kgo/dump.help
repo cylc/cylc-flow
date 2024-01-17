@@ -1,0 +1,43 @@
+Usage: cylc dump [OPTIONS] WORKFLOW 
+
+Print information about a running workflow.
+
+For command line monitoring:
+* `cylc tui`
+* `watch cylc dump WORKFLOW_ID` works for small simple workflows
+
+For more information about a specific task, such as the current state of
+its prerequisites and outputs, see 'cylc show'.
+
+Examples:
+  # Display the state of all running tasks, sorted by cycle point:
+  $ cylc dump --tasks --sort WORKFLOW_ID | grep running
+
+  # Display the state of all tasks in a particular cycle point:
+  $ cylc dump -t WORKFLOW_ID | grep 2010082406
+
+
+Arguments:
+   WORKFLOW               Workflow ID
+
+Options:
+  -h, --help            show this help message and exit
+  -g, --global          Global information only.
+  -t, --tasks           Task states only.
+  -f, --flows           Print flow numbers with tasks.
+  -r, --raw, --raw-format
+                        Display raw format.
+  -p, --pretty, --pretty-print
+                        Display raw format with indents and newlines.
+  -s, --sort            Task states only; sort by cycle point instead of name.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

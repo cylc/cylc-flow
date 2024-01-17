@@ -1,0 +1,87 @@
+Usage: cylc stop [OPTIONS] ID ... 
+
+Tell a workflow to shut down.
+
+Examples:
+  # wait for active tasks to finish, then shut down
+  $ cylc stop my_workflow
+
+  # kill active tasks, then shut down
+  $ cylc stop my_workflow --kill
+
+  # shut down immediately, leave active tasks alone
+  $ cylc stop my_workflow --now
+
+  # shut down all workflows
+  $ cylc stop '*'
+
+  # shut down after the cycle 1234 has been passed
+  $ cylc stop my_workflow//1234
+
+  # shut down after the task foo in cycle 1234 has succeeded
+  $ cylc stop my_workflow//1234/foo
+
+By default stopping workflows wait for submitted and running tasks to complete
+before shutting down. You can change this behaviour with the --mode option.
+
+There are several shutdown methods:
+
+  1. (default) stop after current active tasks finish
+  2. (--now) stop immediately, orphaning current active tasks
+  3. (--kill) stop after killing current active tasks
+  4. (if ID specifies a cycle point) stop after the cycle point
+  5. (if ID specifies a task ID) stop after the task has succeeded
+  6. (--wall-clock=T) stop after time T (an ISO 8601 date-time format e.g.
+     CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
+
+Tasks that become ready after the shutdown is ordered will be submitted
+immediately if the workflow is restarted.  Remaining task event handlers and
+job poll and kill commands, however, will be executed prior to shutdown, unless
+--now is used.
+
+This command exits immediately unless --max-polls is greater than zero, in
+which case it polls to wait for workflow shutdown.
+
+This command can operate on multiple workflows, globs may also be used:
+    Multiple Workflows:
+        [2m# Operate on two workflows[0m
+        workflow-1 workflow-2
+
+    Globs (note: globs should be quoted):
+        [2m# Match all workflows[0m
+        '*'
+
+        [2m# Match the workflows foo-1, foo-2[0m
+        'foo-[12]'
+
+    See `cylc help id` for more details.
+
+
+Arguments:
+   ID ...               Workflow/Cycle/Family/Task ID(s)
+
+Options:
+  -h, --help            show this help message and exit
+  -k, --kill            Shut down after killing currently active tasks.
+  --flow=INT            Stop flow number INT from spawning more tasks. The
+                        scheduler will shut down if it is the only flow.
+  -n, --now             Shut down without waiting for active tasks to
+                        complete. If this option is specified once, wait for
+                        task event handler, job poll/kill to complete. If this
+                        option is specified more than once, tell the workflow
+                        to terminate immediately.
+  -w STOP, --wall-clock=STOP
+                        Shut down after time STOP (ISO 8601 formatted)
+  --max-polls=INT       Maximum number of polls (default: 0).
+  --interval=SECS       Polling interval in seconds (default: 60).
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

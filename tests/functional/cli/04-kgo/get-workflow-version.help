@@ -1,0 +1,37 @@
+Usage: cylc get-workflow-version [OPTIONS] WORKFLOW ... 
+
+Find out what version of Cylc a running workflow is using.
+
+To find the version you've invoked at the command line see "cylc version".
+
+This command can operate on multiple workflows, globs may also be used:
+    Multiple Workflows:
+        [2m# Operate on two workflows[0m
+        workflow-1 workflow-2
+
+    Globs (note: globs should be quoted):
+        [2m# Match all workflows[0m
+        '*'
+
+        [2m# Match the workflows foo-1, foo-2[0m
+        'foo-[12]'
+
+    See `cylc help id` for more details.
+
+
+Arguments:
+   WORKFLOW ...               Workflow ID(s)
+
+Options:
+  -h, --help            show this help message and exit
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

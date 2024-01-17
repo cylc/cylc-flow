@@ -1,0 +1,52 @@
+Usage: cylc tui WORKFLOW
+
+View and control running workflows in the terminal.
+
+(Tui = Terminal User Interface)
+
+WARNING: Tui is experimental and may break with large flows.
+An upcoming change to the way Tui receives data from the scheduler will make it
+much more efficient in the future.
+
+                                      _,@@@@@@.
+                                    <=@@@, `@@@@@.
+                                       `-@@@@@@@@@@@'
+                                          :@@@@@@@@@@.
+                                         (.@@@@@@@@@@@
+                                        ( '@@@@@@@@@@@@.
+                                       ;.@@@@@@@@@@@@@@@
+                                     '@@@@@@@@@@@@@@@@@@,
+                                   ,@@@@@@@@@@@@@@@@@@@@'
+                                 :.@@@@@@@@@@@@@@@@@@@@@.
+                               .@@@@@@@@@@@@@@@@@@@@@@@@.
+                             '@@@@@@@@@@@@@@@@@@@@@@@@@.
+                           ;@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                          .@@@@@@@@@@@@@@@@@@@@@@@@@@.
+                         .@@@@@@@@@@@@@@@@@@@@@@@@@@,
+                        .@@@@@@@@@@@@@@@@@@@@@@@@@'
+                       .@@@@@@@@@@@@@@@@@@@@@@@@'     ,
+                     :@@@@@@@@@@@@@@@@@@@@@..''';,,,;::-
+                    '@@@@@@@@@@@@@@@@@@@.        `.   `
+                   .@@@@@@.: ,.@@@@@@@.            `
+                 :@@@@@@@,         ;.@,
+                '@@@@@@.              `@'
+               .@@@@@@;                ;-,
+             ;@@@@@@.                   ...,
+           ,,; ,;;                      ; ; ;
+
+
+Arguments:
+   WORKFLOW               Workflow ID
+
+Options:
+  -h, --help            show this help message and exit
+  --display=DISPLAY     Specify the display technology to use. "raw" for
+                        interactive in-terminal display. "html" for non-
+                        interactive html output.
+  --v-term-size=V_TERM_SIZE
+                        The virtual terminal size for non-interactive--display
+                        options.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.

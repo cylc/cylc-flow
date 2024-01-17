@@ -1,0 +1,98 @@
+Usage: cylc graph [OPTIONS] WORKFLOW | PATH [START] [STOP] 
+
+Produces graphical and textual representations of workflow dependencies.
+
+Examples:
+    # generate a graphical representation of workflow dependencies
+    # (requires graphviz to be installed in the Cylc environment)
+    $ cylc graph one
+
+    # print a textual representation of the graph of the flow one
+    $ cylc graph one --reference
+
+    # display the difference between the flows one and two
+    $ cylc graph one --diff two
+
+    # render the graph to a svg file
+    $ cylc graph one -o 'one.svg'
+
+
+Arguments:
+   WORKFLOW | PATH               Workflow ID or path
+   [START]                       Graph start; defaults to initial cycle point
+   [STOP]                        Graph stop point or interval; defaults to 3 points from START
+
+Options:
+  -h, --help            show this help message and exit
+  -g GROUPING, --group=GROUPING
+                        task family to group. Can be used multiple times. Use
+                        '<all>' to specify all families above root.
+  -c, --cycles          Group tasks by cycle point.
+  -t, --transpose       Transpose graph.
+  -o OUTPUT             Output the graph to a file. The file extension
+                        determines the format. E.G. "graph.png", "graph.svg",
+                        "graph.dot".
+  -n, --namespaces      Plot the workflow namespace inheritance hierarchy
+                        (task run time properties).
+  -r, --reference       Output in a sorted plain text format for comparison
+                        purposes. If not given, assume --output-file=-.
+  --show-suicide        Show suicide triggers. Not shown by default.
+  --initial-cycle-point=CYCLE_POINT or OFFSET, --icp=CYCLE_POINT or OFFSET
+                        Set the initial cycle point. Required if not defined
+                        in flow.cylc. May be either an absolute point or an
+                        offset: See https://bit.ly/3MYHqVh (Cylc documentation
+                        link).
+  --diff=DIFF           Show the difference between two workflows (implies
+                        --reference)
+  --against-source      Load the workflow configuration from the source
+                        directory it was installed from using any options
+                        (e.g. template variables) which have been set in the
+                        installation. This is useful if you want to see how
+                        changes made to the workflow source would affect the
+                        installation if reinstalled. Note if this option is
+                        used the provided workflow must have been installed by
+                        `cylc install`.
+  -O OPT_CONF_KEYS, --opt-conf-key=OPT_CONF_KEYS
+                        Use optional Rose Config Setting (If Cylc-Rose is
+                        installed)
+  -D DEFINES, --define=DEFINES
+                        Each of these overrides the `[SECTION]KEY` setting in
+                        a `rose-suite.conf` file. Can be used to disable a
+                        setting using the syntax `--define=[SECTION]!KEY` or
+                        even `--define=[!SECTION]`.
+  -S ROSE_TEMPLATE_VARS, --rose-template-variable=ROSE_TEMPLATE_VARS, --define-suite=ROSE_TEMPLATE_VARS
+                        As `--define`, but with an implicit `[SECTION]` for
+                        workflow variables.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  -s NAME=VALUE, --set=NAME=VALUE
+                        Set the value of a Jinja2 template variable in the
+                        workflow definition. Values should be valid Python
+                        literals so strings must be quoted e.g.
+                        'STR="string"', INT=43, BOOL=True. This option can be
+                        used multiple times on the command line. NOTE: these
+                        settings persist across workflow restarts, but can be
+                        set again on the "cylc play" command line if they need
+                        to be overridden.
+  -z NAME=VALUE1,VALUE2,..., --set-list=NAME=VALUE1,VALUE2,..., --template-list=NAME=VALUE1,VALUE2,...
+                        Set the value of a Jinja2 template variable in the
+                        workflow definition as a comma separated list of
+                        Python strings. Values containing commas must be
+                        quoted. e.g. '+s STR=a,b,c' => ['a', 'b', 'c'] or '+ s
+                        STR=a,"b,c"' => ['a', 'b,c'] This option can be used
+                        multiple times on the command line. NOTE: these
+                        settings persist across workflow restarts, but can be
+                        set again on the "cylc play" command line if they need
+                        to be overridden.
+  --set-file=FILE       Set the value of Jinja2 template variables in the
+                        workflow definition from a file containing NAME=VALUE
+                        pairs (one per line). As with --set values should be
+                        valid Python literals  so strings must be quoted e.g.
+                        STR='string'. NOTE: these settings persist across
+                        workflow restarts, but can be set again on the "cylc
+                        play" command line if they need to be overridden.

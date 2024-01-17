@@ -1,0 +1,83 @@
+Usage: cylc set-outputs [OPTIONS] ID ... 
+
+Artificially satisfy task outputs.
+
+Mark task outputs as completed and spawn downstream tasks that depend on those
+outputs. By default it marks tasks as succeeded.
+
+This allows you to manually intervene with Cylc's scheduling algorithm by
+artificially satisfying outputs of tasks.
+
+If a flow number is given, the child tasks will start (or continue) that flow.
+
+Examples:
+  # For example, for the following dependency graph:
+  R1 = '''
+     a => b & c => d
+     foo:x => bar => baz
+  '''
+
+  # spawn 1/b and 1/c, but 1/d will not subsequently run
+  $ cylc set-outputs my_workflow//1/a
+
+  # spawn 1/b and 1/c as flow 2, followed by 1/d
+  $ cylc set-outputs --flow=2 my_workflow//1/a
+
+  # spawn 1/bar as flow 3, followed by 1/baz
+  $ cylc set-outputs --flow=3 --output=x my_workflow//1/foo
+
+Use --output multiple times to spawn off of several outputs at once.
+
+This command can operate on multiple workflows, globs may also be used:
+    Multiple Workflows:
+        [2m# Operate on two workflows[0m
+        workflow-1 workflow-2
+
+    Globs (note: globs should be quoted):
+        [2m# Match all workflows[0m
+        '*'
+
+        [2m# Match the workflows foo-1, foo-2[0m
+        'foo-[12]'
+
+    See `cylc help id` for more details.
+
+This command can operate on multiple tasks, globs and selectors may
+be used:
+    Multiple Tasks:
+        [2m# Operate on two tasks[0m
+        workflow //cycle-1/task-1 //cycle-2/task-2
+
+    Globs (note: globs should be quoted and only match active tasks):
+        [2m# Match any the active task "foo" in all cycles[0m
+        '//*/foo'
+
+        [2m# Match the tasks "foo-1" and "foo-2"[0m
+        '//*/foo-[12]'
+
+    Selectors (note: selectors only match active tasks):
+        [2m# match all failed tasks in cycle "1"[0m
+        //1:failed
+
+    See `cylc help id` for more details.
+
+
+Arguments:
+   ID ...               Cycle/Family/Task ID(s)
+
+Options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output=OUTPUT
+                        Set OUTPUT (default "succeeded") completed.
+  -f FLOW, --flow=FLOW  Number of the flow to attribute the outputs.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

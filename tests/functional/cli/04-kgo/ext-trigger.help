@@ -1,0 +1,40 @@
+Usage: cylc ext-trigger [OPTIONS] WORKFLOW MSG TRIGGER_ID 
+
+Report an external event message to a scheduler.
+
+External triggers allow any program to send a message to the Cylc scheduler.
+Cylc can use this message as a signal that an external prerequisite has been
+satisfied and trigger the task accordingly.
+
+The WORKFLOW argument should be unique to each external trigger event. When
+an incoming message satisfies a task's external trigger the message TRIGGER_ID
+is broadcast to all downstream tasks in the cycle point as
+``$CYLC_EXT_TRIGGER_ID``.  Tasks can use ``$CYLC_EXT_TRIGGER_ID``, for example,
+to identify a new data file that the external triggering system is responding
+to.
+
+Use the retry options in case the target workflow is down or out of contact.
+
+Note: to manually trigger a task use 'cylc trigger', not this command.
+
+
+Arguments:
+   WORKFLOW                 Workflow ID
+   MSG                      External trigger message
+   TRIGGER_ID               Unique trigger ID
+
+Options:
+  -h, --help            show this help message and exit
+  --max-tries=INT       Maximum number of send attempts (default: 5).
+  --retry-interval=SEC  Delay in seconds before retrying (default: 10.0).
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

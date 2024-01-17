@@ -1,0 +1,29 @@
+Usage: cylc subscribe [OPTIONS] WORKFLOW 
+
+(This command is for internal use.)
+
+Invoke workflow subscriber to receive published workflow output.
+
+
+Arguments:
+   WORKFLOW               Workflow ID
+
+Options:
+  -h, --help            show this help message and exit
+  -T TOPICS, --topics=TOPICS
+                        Specify a comma delimited list of subscription topics.
+                        Directly published data-store topics include: 'edges',
+                        'families', 'family_proxies', 'jobs', 'tasks',
+                        'task_proxies', 'workflow' and 'all'.
+  -o, --once            Show a single publish then exit.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

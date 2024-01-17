@@ -1,0 +1,28 @@
+Usage: cylc jobs-submit [OPTIONS] JOB-LOG-ROOT [JOB-LOG-DIR ...] 
+
+(This command is for internal use.)
+
+Submit jobs to relevant job runners.
+On a remote job host, this command reads the job files from STDIN.
+
+
+Arguments:
+   JOB-LOG-ROOT                    The log/job sub-directory for the workflow
+   [JOB-LOG-DIR ...]               A point/name/submit_num sub-directory
+
+Options:
+  -h, --help            show this help message and exit
+  --remote-mode         Is this being run on a remote job host?
+  --utc-mode            (for remote mode) is the workflow running in UTC mode?
+  --clean-env           Clean job submission environment.
+  --env=VAR=VALUE       Variable to pass from parent environment to job submit
+                        environment. This option can be used multiple times.
+  --path=PATH           Executable location to pass to job submit environment.
+                        This option can be used multiple times.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.

@@ -1,0 +1,125 @@
+Usage: cylc broadcast [OPTIONS] WORKFLOW ... 
+
+Override "[runtime]" configurations in a running workflow.
+
+Uses for broadcast include making temporary changes to task behaviour, and
+task-to-downstream-task communication via environment variables.
+
+See also "cylc reload" which reads in the flow.cylc (or suite.rc) file.
+
+A broadcast can set/override any "[runtime]" configuration for all cycles or
+for a specific cycle. If a task is affected by specific-cycle and all-cycle
+broadcasts at the same time, the specific takes precedence.
+
+Broadcasts can also target all tasks, specific tasks or families of tasks. If a
+task is affected by broadcasts to multiple ancestor namespaces (tasks it
+inherits from), the result is determined by normal "[runtime]" inheritance.
+
+Broadcasts are applied at the time of job submission.
+
+Broadcasts persist, even across restarts. Broadcasts made to specific cycle
+points will expire when the cycle point is older than the oldest active cycle
+point in the workflow.
+
+Active broadcasts can be revoked using the "clear" mode. Any broadcasts
+matching the specified cycle points and namespaces will be revoked.
+
+Note: a "clear" broadcast for a specific cycle or namespace does *not* clear
+all-cycle or all-namespace broadcasts.
+
+Examples:
+  # To broadcast a variable to all tasks (quote items with internal spaces):
+  $ cylc broadcast -s "[environment]VERSE = the quick brown fox" WORKFLOW
+
+  # To do the same with a file:
+  $ cat >'broadcast.cylc' <<'__FLOW__'
+  > [environment]
+  >     VERSE = the quick brown fox
+  > __FLOW__
+  $ cylc broadcast -F 'broadcast.cylc' WORKFLOW_ID
+
+  # view active broadcasts
+  $ cylc broadcast --display WORKFLOW_ID
+
+  # To cancel the same broadcast:
+  $ cylc broadcast --cancel "[environment]VERSE" WORKFLOW_ID
+
+  # If -F FILE was used, the same file can be used to cancel the broadcast:
+  $ cylc broadcast -G 'broadcast.cylc' WORKFLOW_ID
+
+  # Use broadcast with multiple workflows
+  $ cylc broadcast [options] WORKFLOW_ID_1// WORKFLOW_ID_2//
+
+Use -d/--display to see active broadcasts. Multiple --cancel options or
+multiple --set and --set-file options can be used on the same command line.
+Multiple --set and --set-file options are cumulative.
+
+The --set-file=FILE option can be used when broadcasting multiple values, or
+when the value contains newline or other metacharacters. If FILE is "-", read
+from standard input.
+
+Broadcast cannot change [runtime] inheritance.
+
+This command can operate on multiple workflows, globs may also be used:
+    Multiple Workflows:
+        [2m# Operate on two workflows[0m
+        workflow-1 workflow-2
+
+    Globs (note: globs should be quoted):
+        [2m# Match all workflows[0m
+        '*'
+
+        [2m# Match the workflows foo-1, foo-2[0m
+        'foo-[12]'
+
+    See `cylc help id` for more details.
+
+
+Arguments:
+   WORKFLOW ...               Workflow ID(s)
+
+Options:
+  -h, --help            show this help message and exit
+  -p CYCLE_POINT, --point=CYCLE_POINT
+                        Target cycle point. More than one can be added.
+                        Defaults to '*' with --set and --cancel, and nothing
+                        with --clear.
+  -n NAME, --namespace=NAME
+                        Target namespace. Defaults to 'root' with --set and
+                        --cancel, and nothing with --clear.
+  -s [SEC]ITEM=VALUE, --set=[SEC]ITEM=VALUE
+                        A [runtime] config item and value to broadcast.
+  -F FILE, --set-file=FILE, --file=FILE
+                        File with config to broadcast. Can be used multiple
+                        times.
+  -c [SEC]ITEM, --cancel=[SEC]ITEM
+                        An item-specific broadcast to cancel.
+  -G FILE, --cancel-file=FILE
+                        File with broadcasts to cancel. Can be used multiple
+                        times.
+  -C, --clear           Cancel all broadcasts, or with -p/--point,
+                        -n/--namespace, cancel all broadcasts to targeted
+                        namespaces and/or cycle points. Use "-C -p '*'" to
+                        cancel all all-cycle broadcasts without canceling all
+                        specific-cycle broadcasts.
+  -e CYCLE_POINT, --expire=CYCLE_POINT
+                        Cancel any broadcasts that target cycle points earlier
+                        than, but not inclusive of, CYCLE_POINT.
+  -d, --display         Display active broadcasts.
+  -k TASK_ID_GLOB, --display-task=TASK_ID_GLOB
+                        Print active broadcasts for a given task (in the
+                        format cycle/task).
+  -b, --box             Use unicode box characters with -d, -k.
+  -r, --raw             With -d/--display or -k/--display-task, write out the
+                        broadcast config structure in raw Python form.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

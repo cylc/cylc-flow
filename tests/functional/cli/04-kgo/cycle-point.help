@@ -1,0 +1,63 @@
+Usage: cylc cycle-point [OPTIONS] [POINT] 
+
+Utility for simple date-time cycle point arithmetic.
+
+For more generic date-time manipulations see the "isodatetime" command.
+
+Filename templating replaces elements of a template string with corresponding
+elements of the current or given cycle point.
+
+Use ISO 8601 or posix date-time format elements:
+  $ cylc cycle-point 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
+  foo-2010-08-08-T00.nc
+  $ cylc cycle-point 2010080T00 --template foo-%Y-%m-%d-T%H.nc
+  foo-2010-08-08-T00.nc
+
+Other examples:
+  # print offset from an explicit cycle point:
+  $ cylc cycle-point --offset-hours=6 20100823T1800Z
+  20100824T0000Z
+
+  # print offset from $CYLC_TASK_CYCLE_POINT (as in workflow tasks):
+  $ export CYLC_TASK_CYCLE_POINT=20100823T1800Z
+  $ cylc cycle-point --offset-hours=-6
+  20100823T1200Z
+
+  # cycle point filename templating, explicit template:
+  $ export CYLC_TASK_CYCLE_POINT=2010-08
+  $ cylc cycle-point --offset-years=2 --template=foo-CCYY-MM.nc
+  foo-2012-08.nc
+
+  # cycle point filename templating, template in a variable:
+  $ export CYLC_TASK_CYCLE_POINT=2010-08
+  $ export MYTEMPLATE=foo-CCYY-MM.nc
+  $ cylc cycle-point --offset-years=2 --template=MYTEMPLATE
+  foo-2012-08.nc
+
+
+Arguments:
+   [POINT]               ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT
+
+Options:
+  -h, --help            show this help message and exit
+  --offset-hours=HOURS  Add N hours to CYCLE (may be negative)
+  --offset-days=DAYS    Add N days to CYCLE (N may be negative)
+  --offset-months=MONTHS
+                        Add N months to CYCLE (N may be negative)
+  --offset-years=YEARS  Add N years to CYCLE (N may be negative)
+  --offset=ISO_OFFSET   Add an ISO 8601-based interval representation to CYCLE
+  --equal=POINT2        Succeed if POINT2 is equal to POINT (format agnostic).
+  --template=TEMPLATE   Filename template string or variable
+  --time-zone=TEMPLATE  Control the formatting of the result's timezone (e.g.
+                        Z, +13:00, -hh)
+  --num-expanded-year-digits=NUMBER
+                        Specify a number of expanded year digits to print in
+                        the result
+  --print-year          Print only CCYY of result
+  --print-month         Print only MM of result
+  --print-day           Print only DD of result
+  --print-hour          Print only hh of result
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.

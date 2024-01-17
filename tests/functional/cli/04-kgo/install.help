@@ -1,0 +1,108 @@
+Usage: cylc install [OPTIONS] [SOURCE_NAME | PATH] 
+
+Install a workflow into ~/cylc-run.
+
+The workflow can then be started, stopped, and targeted by name.
+
+Normal installation creates a numbered run directory
+"~/cylc-run/<workflow-name>/run<number>".
+
+If a SOURCE_NAME is supplied, Cylc will search for the workflow source in the
+list of directories given by "global.cylc[install]source dirs", and install
+the first match. The installed workflow ID will start with SOURCE_NAME,
+unless --workflow-name is used.
+
+If a PATH is supplied, Cylc will install the workflow from the source directory
+given by the path. Relative paths must start with "./" to avoid ambiguity with
+SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
+"./foo/bar" will be interpreted as a path). The installed workflow ID will
+start with the basename of the path, unless --workflow-name is used.
+
+If no argument is supplied, Cylc will install the workflow from the source
+in the current working directory.
+
+A "_cylc-install/source" symlink to the source directory will be created in
+"~/cylc-run/<workflow-name>". Any files or directories (excluding .git, .svn)
+from the source directory are copied to the new run directory. A ".service"
+directory will also be created in the run directory; this is used for server
+authentication files at runtime.
+
+Examples:
+  # Install workflow "dogs/fido" from the first match in
+  # `global.cylc[install]source dirs`, e.g. ~/cylc-src/dogs/fido/flow.cylc,
+  # with run directory ~/cylc-run/dogs/fido/run1 (if "run1" already exists,
+  # this will increment)
+  $ cylc install dogs/fido
+
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # run directory ~/cylc-run/rabbit/run1
+  $ cylc install
+
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # run directory ~/cylc-run/rabbit (note: no "run1" sub-directory)
+  $ cylc install --no-run-name
+
+  # Install $PWD as "fido", regardless of what $PWD is called, with
+  # run directory ~/cylc-run/fido/run1
+  $ cylc install --workflow-name=fido
+
+  # Install $PWD/bunny/rabbit/ as "rabbit", with run directory
+  # ~/cylc-run/rabbit/run1
+  $ cylc install ./bunny/rabbit
+
+  # Install /home/somewhere/badger as "badger", with run directory
+  # ~/cylc-run/badger/run1
+  $ cylc install /home/somewhere/badger
+
+  # Install $PWD as "cats", if $PWD is ~/cats, with run directory
+  # ~/cylc-run/cats/paws
+  $ cylc install --run-name=paws
+
+The same workflow can be installed with multiple names; this results in
+multiple workflow run directories that link to the same workflow definition.
+
+
+Arguments:
+   [SOURCE_NAME | PATH]               Workflow source name or path to source directory
+
+Options:
+  -h, --help            show this help message and exit
+  -O OPT_CONF_KEYS, --opt-conf-key=OPT_CONF_KEYS
+                        Use optional Rose Config Setting (If Cylc-Rose is
+                        installed)
+  -D DEFINES, --define=DEFINES
+                        Each of these overrides the `[SECTION]KEY` setting in
+                        a `rose-suite.conf` file. Can be used to disable a
+                        setting using the syntax `--define=[SECTION]!KEY` or
+                        even `--define=[!SECTION]`.
+  -S ROSE_TEMPLATE_VARS, --rose-template-variable=ROSE_TEMPLATE_VARS, --define-suite=ROSE_TEMPLATE_VARS
+                        As `--define`, but with an implicit `[SECTION]` for
+                        workflow variables.
+  -n WORKFLOW_NAME, --workflow-name=WORKFLOW_NAME
+                        Install into ~/cylc-run/<WORKFLOW_NAME>/runN
+  --symlink-dirs=SYMLINK_DIRS
+                        Enter a comma-delimited list, in the form
+                        'log=path/to/store, share = $HOME/some/path, ...'. Use
+                        this option to override the global.cylc configuration
+                        for local symlinks for the run, log, work, share and
+                        share/cycle directories. Enter an empty list '' to
+                        skip making localhost symlink dirs.
+  -r RUN_NAME, --run-name=RUN_NAME
+                        Give the run a custom name instead of automatically
+                        numbering it.
+  --no-run-name         Install the workflow directly into ~/cylc-
+                        run/<workflow_name>, without an automatic run number
+                        or custom run name.
+  --no-ping             When scanning for active instances of the workflow, do
+                        not attempt to contact the schedulers to get status.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

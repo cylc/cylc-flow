@@ -1,0 +1,22 @@
+Usage: cylc remote-tidy [OPTIONS] INSTALL_TARGET RUND 
+
+(This command is for internal use.)
+
+Remove ".service/contact" from a task remote (i.e. a [owner@]host).
+Remove ".service" directory on the remote if emptied.
+Remove authentication keys.
+
+
+Arguments:
+   INSTALL_TARGET               target platform to be tidied
+   RUND                         The run directory of the workflow
+
+Options:
+  -h, --help            show this help message and exit
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.

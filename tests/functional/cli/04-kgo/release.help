@@ -1,0 +1,73 @@
+Usage: cylc release [OPTIONS] ID ... 
+
+Release held tasks in a workflow.
+
+Examples:
+  # Release mytask at cycle 1234 in my_workflow
+  $ cylc release my_workflow//1234/mytask
+
+  # Release all active tasks at cycle 1234 in my_workflow
+  $ cylc release 'my_workflow//1234/*'
+
+  # Release all active instances of mytask in my_workflow
+  $ cylc release 'my_workflow//*/mytask'
+
+  # Release all held tasks and remove the hold point
+  $ cylc release my_workflow --all
+
+Held tasks do not submit their jobs even if ready to run.
+
+See also 'cylc hold'.
+
+This command can operate on multiple workflows, globs may also be used:
+    Multiple Workflows:
+        [2m# Operate on two workflows[0m
+        workflow-1 workflow-2
+
+    Globs (note: globs should be quoted):
+        [2m# Match all workflows[0m
+        '*'
+
+        [2m# Match the workflows foo-1, foo-2[0m
+        'foo-[12]'
+
+    See `cylc help id` for more details.
+
+This command can operate on multiple tasks, globs and selectors may
+be used:
+    Multiple Tasks:
+        [2m# Operate on two tasks[0m
+        workflow //cycle-1/task-1 //cycle-2/task-2
+
+    Globs (note: globs should be quoted and only match active tasks):
+        [2m# Match any the active task "foo" in all cycles[0m
+        '//*/foo'
+
+        [2m# Match the tasks "foo-1" and "foo-2"[0m
+        '//*/foo-[12]'
+
+    Selectors (note: selectors only match active tasks):
+        [2m# match all failed tasks in cycle "1"[0m
+        //1:failed
+
+    See `cylc help id` for more details.
+
+
+Arguments:
+   ID ...               Cycle/Family/Task ID(s)
+
+Options:
+  -h, --help            show this help message and exit
+  --all                 Release all held tasks and remove the 'hold after
+                        cycle point', if set.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

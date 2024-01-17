@@ -1,0 +1,40 @@
+Usage: cylc lint [OPTIONS] [WORKFLOW | PATH] 
+
+Check .cylc and .rc files for code style, deprecated syntax and other issues.
+
+By default, suggestions are written to stdout.
+
+In-place mode ("-i, --inplace") writes suggestions into the file as comments.
+Commit to version control before using this, in case you want to back out.
+
+A non-zero return code will be returned if any issues are identified.
+This can be overridden by providing the "--exit-zero" flag.
+
+pyproject.toml configuration:
+   [cylc-lint]                     # any of ['cylc-lint', 'cylclint', 'cylc_lint']
+       ignore = ['S001', 'S002']    # List of rules to ignore
+       exclude = ['etc/foo.cylc']  # List of files to ignore
+       rulesets = ['style', '728'] # Sets default rulesets to check
+       max-line-length = 130       # Max line length for linting
+
+
+Arguments:
+   [WORKFLOW | PATH]               Workflow ID or path
+
+Options:
+  -h, --help            show this help message and exit
+  -i, --inplace         Modify files in place, adding comments to files. If
+                        not set, the script will work as a linter
+  -r LINTER, --ruleset=LINTER
+                        Set of rules to use: ("728", "style", "all")
+  --list-codes          List all linter codes.
+  -n CODE, --ignore=CODE
+                        Ignore this check number.
+  --exit-zero           Exit with status code "0" even if there are issues.
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
