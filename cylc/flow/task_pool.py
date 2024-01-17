@@ -1500,6 +1500,7 @@ class TaskPool:
         completed = False
         # orig_fnums = set()
 
+        # Don't spawn if already completed in this flow, unless forced.
         if not force:
             for snum, f_wait, old_fnums, is_complete in info:
                 if set.intersection(flow_nums, old_fnums):
@@ -1523,8 +1524,10 @@ class TaskPool:
             return None
 
         if force:
+            # spawn into the task pool
             transient = False
         else:
+            # spawn into the pool only if not completed in this flow
             transient = completed
 
         itask = self._get_task_proxy(
@@ -1842,26 +1845,22 @@ class TaskPool:
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
-        """Manual task triggering.
-
-        Don't get a new flow number for existing n=0 tasks (e.g. incomplete
-        tasks). These can carry on in the original flow if retriggered.
-
-        Queue the task if not queued, otherwise release it to run.
+        """Force a task to trigger (user command).
 
         """
+        # Get flow numbers for the tasks to be triggered.
         flow_nums = self._get_flow_nums(flow, flow_descr)
         if flow_nums is None:
             return
 
-        # n_warnings, task_items = self.match_taskdefs(items)
+        # Get matching tasks proxies, and matching future task IDs.
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
             future=True,
             warn=False,
         )
 
-        # Spawn future tasks.
+        # Spawn future task proxies and add to the list.
         for name, point in future_tasks:
             # (Flow values already validated by the trigger client).
             itask = self.spawn_task(

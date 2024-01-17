@@ -661,4 +661,4 @@ def _play(parser: COP, options: 'Values', id_: str):
             *options.starttask,
             relative=True,
         )
-    return asyncio.run(scheduler_cli(options, id_))
+    import colorama, pudb; colorama.deinit(); pudb.set_trace(); colorama.init(); return asyncio.run(scheduler_cli(options, id_))
