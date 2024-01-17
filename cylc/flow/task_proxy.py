@@ -298,7 +298,7 @@ class TaskProxy:
         """
         if self.state.status == TASK_STATUS_WAITING:
             # Don't print pre-incremented submit number.
-            subnum= "__"
+            subnum = "__"
         else:
             subnum = f"{self.submit_num:02d}"
 
