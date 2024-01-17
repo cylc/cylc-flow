@@ -778,7 +778,6 @@ class TaskEventsManager():
 
         if (
                 itask.state(TASK_STATUS_WAITING)
-                and itask.tdef.run_mode == 'live'
                 and
                 (
                     (
@@ -804,13 +803,13 @@ class TaskEventsManager():
                     f"[{itask}] "
                     f"{self.FLAG_RECEIVED_IGNORED}{message}{timestamp}"
                 )
-
-            else:
+                return False
+            elif flag == self.FLAG_POLLED_IGNORED:
                 LOG.warning(
                     f"[{itask}] "
                     f"{self.FLAG_POLLED_IGNORED}{message}{timestamp}"
                 )
-            return False
+                return False
 
         severity = cast(int, LOG_LEVELS.get(severity, INFO))
         # Demote log level to DEBUG if this is a message that duplicates what

@@ -1,1 +1,1 @@
-Fixed a bug preventing simulation of task retries if job submission unset.
+Fixed a bug preventing simulation of task retries if `submission retry delays` unset.
