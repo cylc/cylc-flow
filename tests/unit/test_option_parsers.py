@@ -575,7 +575,7 @@ class TestOptionSettings():
             param(
                 [('WORKFLOW', 'Workflow ID')],
                 'cylc play [OPTIONS] ARGS\n\nStart, resume...',
-                enumerate(('WORKFLOW',)),
+                enumerate(('cylc play [OPTIONS] WORKFLOW',)),
                 id='basic'
             ),
             param(
@@ -595,7 +595,7 @@ class TestOptionSettings():
             param(
                 [('[TASK]', 'Task ID')],
                 'cylc infinite-improbability [OPTIONS] ARGS\n\nEvery point...',
-                enumerate(['[TASK]',]),
+                enumerate(['cylc infinite-improbability [OPTIONS] [TASK]',]),
                 id='startswith-sq-bracket',
             ),
             param(
