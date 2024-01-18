@@ -61,7 +61,7 @@ class ModeSettings:
         else:
             rtconfig = itask.tdef.rtconfig
         self.simulated_run_length = (
-            set_simulated_run_len(rtconfig))
+            get_simulated_run_len(rtconfig))
         self.sim_task_fails = sim_task_failed(
             rtconfig['simulation'],
             itask.point,
@@ -88,7 +88,7 @@ def configure_sim_modes(taskdefs, sim_mode):
             rtc['pre-script'] = ""
             rtc['post-script'] = ""
             rtc['script'] = build_dummy_script(
-                rtc, set_simulated_run_len(rtc))
+                rtc, get_simulated_run_len(rtc))
 
         disable_platforms(rtc)
 
@@ -102,7 +102,7 @@ def configure_sim_modes(taskdefs, sim_mode):
         )
 
 
-def set_simulated_run_len(rtc: Dict[str, Any]) -> int:
+def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
     """Calculate simulation run time from a task's config.
 
     rtc = run time config
@@ -196,6 +196,7 @@ def sim_time_check(
     Returns:
         True if _any_ simulated task state has changed.
     """
+    now = time()
     sim_task_state_changed: bool = False
     for itask in itasks:
         if (
@@ -223,7 +224,7 @@ def sim_time_check(
             itask.mode_settings = ModeSettings(itask, broadcast_mgr)
 
         timeout = started_time + itask.mode_settings.simulated_run_length
-        if time() > timeout:
+        if now > timeout:
             job_d = itask.tokens.duplicate(job=str(itask.submit_num))
             now_str = get_current_time_string()
 

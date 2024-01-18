@@ -24,7 +24,7 @@ from cylc.flow.simulation import (
     parse_fail_cycle_points,
     build_dummy_script,
     disable_platforms,
-    set_simulated_run_len,
+    get_simulated_run_len,
     sim_task_failed,
 )
 
@@ -38,7 +38,7 @@ from cylc.flow.simulation import (
         param('P1D', 24, 'PT1M', id='speed-up-and-execution-tl'),
     )
 )
-def test_set_simulated_run_len(
+def test_get_simulated_run_len(
     execution_time_limit, speedup_factor, default_run_length
 ):
     """Test the logic of the presence or absence of config items.
@@ -53,7 +53,7 @@ def test_set_simulated_run_len(
             'time limit buffer': 'PT0S',
         }
     }
-    assert set_simulated_run_len(rtc) == 3600
+    assert get_simulated_run_len(rtc) == 3600
 
 
 @pytest.mark.parametrize(
