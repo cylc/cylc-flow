@@ -373,7 +373,7 @@ class ParsecValidator:
         return Range((int(min_), int(max_)))
 
     @classmethod
-    def coerce_str(cls, value, keys):
+    def coerce_str(cls, value, keys) -> str:
         """Coerce value to a string.
 
         Examples:
@@ -385,7 +385,7 @@ class ParsecValidator:
         """
         if isinstance(value, list):
             # handle graph string merging
-            vraw = []
+            vraw: List[str] = []
             vals = [value]
             while vals:
                 val = vals.pop()
@@ -512,16 +512,16 @@ class ParsecValidator:
             return None
 
     @classmethod
-    def strip_and_unquote(cls, keys, value):
+    def strip_and_unquote(cls, keys: List[str], value: str) -> str:
         """Remove leading and trailing spaces and unquote value.
 
         Args:
-            keys (list):
+            keys:
                 Keys in nested dict that represents the raw configuration.
-            value (str):
+            value:
                 String value in raw configuration.
 
-        Return (str):
+        Return:
             Processed value.
 
         Examples:
@@ -529,18 +529,19 @@ class ParsecValidator:
             'foo'
 
         """
-        for substr, rec in [
-                ["'''", cls._REC_MULTI_LINE_SINGLE],
-                ['"""', cls._REC_MULTI_LINE_DOUBLE],
-                ['"', cls._REC_DQ_VALUE],
-                ["'", cls._REC_SQ_VALUE]]:
+        for substr, rec in (
+            ("'''", cls._REC_MULTI_LINE_SINGLE),
+            ('"""', cls._REC_MULTI_LINE_DOUBLE),
+            ('"', cls._REC_DQ_VALUE),
+            ("'", cls._REC_SQ_VALUE)
+        ):
             if value.startswith(substr):
                 match = rec.match(value)
                 if not match:
                     raise IllegalValueError("string", keys, value)
                 value = match.groups()[0]
                 break
-        else:
+        else:  # no break
             # unquoted
             value = value.split(r'#', 1)[0]
 
@@ -1136,22 +1137,24 @@ class CylcConfigValidator(ParsecValidator):
         return val
 
 
-# BACK COMPAT: BroadcastConfigValidator
-# The DB at 8.0.x stores Interval values as neither ISO8601 duration
-# string or DurationFloat. This has been fixed at 8.1.0, and
-# the following class acts as a bridge between fixed and broken.
-# url:
-#     https://github.com/cylc/cylc-flow/pull/5138
-# from:
-#    8.0.x
-# to:
-#    8.1.x
-# remove at:
-#    8.x
 class BroadcastConfigValidator(CylcConfigValidator):
     """Validate and Coerce DB loaded broadcast config to internal objects."""
     def __init__(self):
         CylcConfigValidator.__init__(self)
+
+    @classmethod
+    def coerce_str(cls, value, keys) -> str:
+        """Coerce value to a string.
+
+        Examples:
+            >>> BroadcastConfigValidator.coerce_str('abc#def', None)
+            'abc#def'
+        """
+        # Prevent ParsecValidator from assuming '#' means comments;
+        # '#' has valid uses in shell script such as parameter substitution
+        if isinstance(value, str) and '#' in value:
+            value = f'"{value}"'
+        return ParsecValidator.coerce_str(value, keys)
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
@@ -1177,6 +1180,18 @@ class BroadcastConfigValidator(CylcConfigValidator):
             value = value.lstrip('[').rstrip(']')
         return ParsecValidator.strip_and_unquote_list(keys, value)
 
+    # BACK COMPAT: BroadcastConfigValidator.coerce_interval
+    # The DB at 8.0.x stores Interval values as neither ISO8601 duration
+    # string or DurationFloat. This has been fixed at 8.1.0, and
+    # the following class acts as a bridge between fixed and broken.
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/5138
+    # from:
+    #    8.0.x
+    # to:
+    #    8.1.x
+    # remove at:
+    #    8.x
     @classmethod
     def coerce_interval(cls, value, keys):
         """Coerce an ISO 8601 interval into seconds.

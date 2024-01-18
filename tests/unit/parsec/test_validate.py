@@ -456,11 +456,9 @@ def test_coerce_int_list():
             validator.coerce_int_list(value, ['whatever'])
 
 
-def test_coerce_str():
-    """Test coerce_str."""
-    validator = ParsecValidator()
-    # The good
-    for value, result in [
+@pytest.mark.parametrize(
+    'value, expected',
+    [
         ('', ''),
         ('Hello World!', 'Hello World!'),
         ('"Hello World!"', 'Hello World!'),
@@ -474,9 +472,15 @@ def test_coerce_str():
          'Hello:\n    foo\nGreet\n    baz'),
         ('False', 'False'),
         ('None', 'None'),
-        (['a', 'b'], 'a\nb')
-    ]:
-        assert validator.coerce_str(value, ['whatever']) == result
+        (['a', 'b'], 'a\nb'),
+        ('abc#def', 'abc'),
+    ]
+)
+def test_coerce_str(value: str, expected: str):
+    """Test coerce_str."""
+    validator = ParsecValidator()
+    # The good
+    assert validator.coerce_str(value, ['whatever']) == expected
 
 
 def test_coerce_str_list():

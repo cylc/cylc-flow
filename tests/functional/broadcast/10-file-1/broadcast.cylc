@@ -1,6 +1,8 @@
 script="""
 printenv CYLC_FOOBAR
 
+# (This hash char should not cause the rest of the script to be stripped out)
+
 if (($CYLC_TASK_TRY_NUMBER < 2 )); then
     false
 fi
