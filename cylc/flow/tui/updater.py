@@ -93,9 +93,6 @@ class Updater():
 
     """
 
-    # the maximum time to wait for a workflow update
-    CLIENT_TIMEOUT = 2
-
     # the interval between workflow listing scans
     BASE_SCAN_INTERVAL = 20
 
@@ -105,7 +102,7 @@ class Updater():
     # the command signal used to tell the updater to shut down
     SIGNAL_TERMINATE = 'terminate'
 
-    def __init__(self):
+    def __init__(self, client_timeout=3):
         # Cylc comms clients for each workflow we're connected to
         self._clients = {}
 
@@ -123,6 +120,9 @@ class Updater():
         )
         # queue for commands to the updater
         self._command_queue = Queue()
+
+        # the maximum time to wait for a workflow update
+        self.client_timeout = client_timeout
 
     def subscribe(self, w_id):
         """Subscribe to updates from a workflow."""
@@ -269,10 +269,17 @@ class Updater():
                     'id': w_id,
                     'status': 'stopped',
                 })
-        except (CylcError, ZMQError):
+        except (CylcError, ZMQError) as exc:
             # something went wrong :(
             # remove the client on any error, we'll reconnect next time
             self._clients[w_id] = None
+            for workflow in data['workflows']:
+                if workflow['id'] == w_id:
+                    workflow['_tui_data'] = (
+                        f'Error - {str(exc).splitlines()[0]}'
+                    )
+                    break
+
         else:
             # the data arrived, add it to the update
             workflow_data = workflow_update['workflows'][0]
@@ -288,7 +295,7 @@ class Updater():
                 try:
                     self._clients[w_id] = get_client(
                         Tokens(w_id)['workflow'],
-                        timeout=self.CLIENT_TIMEOUT
+                        timeout=self.client_timeout,
                     )
                 except WorkflowStopped:
                     for workflow in data['workflows']:
@@ -297,7 +304,9 @@ class Updater():
                 except (ZMQError, ClientError, ClientTimeout) as exc:
                     for workflow in data['workflows']:
                         if workflow['id'] == w_id:
-                            workflow['_tui_data'] = f'Error: {exc}'
+                            workflow['_tui_data'] = (
+                                f'Error - {str(exc).splitlines()[0]}'
+                            )
                             break
 
     async def _scan(self):
