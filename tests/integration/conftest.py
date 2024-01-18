@@ -24,6 +24,7 @@ from time import time
 from typing import List, TYPE_CHECKING, Set, Tuple, Union
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.id import Tokens
 from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -544,7 +545,9 @@ def complete():
             The scheduler to await.
         tokens_list:
             If specified, this will wait for the tasks represented by these
-            tokens to be marked as completed by the task pool.
+            tokens to be marked as completed by the task pool. Can use
+            relative task ids as strings (e.g. '1/a') rather than tokens for
+            convenience.
         stop_mode:
             If tokens_list is not provided, this will wait for the scheduler
             to be shutdown with the specified mode (default = AUTO, i.e.
@@ -561,20 +564,26 @@ def complete():
     """
     async def _complete(
         schd,
-        *tokens_list,
+        *tokens_list: Union[Tokens, str],
         stop_mode=StopMode.AUTO,
-        timeout=60,
-    ):
+        timeout: int = 60,
+    ) -> None:
         start_time = time()
-        tokens_list = [tokens.task for tokens in tokens_list]
+
+        _tokens_list: List[Tokens] = []
+        for tokens in tokens_list:
+            if isinstance(tokens, str):
+                tokens = Tokens(tokens, relative=True)
+            _tokens_list.append(tokens.task)
 
         # capture task completion
         remove_if_complete = schd.pool.remove_if_complete
 
         def _remove_if_complete(itask):
+            nonlocal _tokens_list
             ret = remove_if_complete(itask)
-            if ret and itask.tokens.task in tokens_list:
-                tokens_list.remove(itask.tokens.task)
+            if ret and itask.tokens.task in _tokens_list:
+                _tokens_list.remove(itask.tokens.task)
             return ret
 
         schd.pool.remove_if_complete = _remove_if_complete
@@ -595,8 +604,8 @@ def complete():
         schd._set_stop = _set_stop
 
         # determine the completion condition
-        if tokens_list:
-            condition = lambda: bool(tokens_list)
+        if _tokens_list:
+            condition = lambda: bool(_tokens_list)
         else:
             condition = lambda: bool(not has_shutdown)
 
@@ -604,9 +613,9 @@ def complete():
         while condition():
             # allow the main loop to advance
             await asyncio.sleep(0)
-            if time() - start_time > timeout:
+            if (time() - start_time) > timeout:
                 raise Exception(
-                    f'Timeout waiting for {", ".join(map(str, tokens_list))}'
+                    f'Timeout waiting for {", ".join(map(str, _tokens_list))}'
                 )
 
         # restore regular shutdown logic

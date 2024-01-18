@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# Set incomplete failed tasks to succeeded.
+# "cylc set" proposal examples: 1 - Carry on as if a failed task had succeeded
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#1-carry-on-as-if-a-failed-task-had-succeeded
 
 . "$(dirname "$0")/test_header"
 set_test_number 6

@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# check that we can direct future optional branching a certain way
+# "cylc set" proposal examples: 5 - Set and complete a future switch task with the "--wait" flag
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#5-set-switch-tasks-at-an-optional-branch-point-to-direct-the-future-flow
 
 . "$(dirname "$0")/test_header"
 set_test_number 5

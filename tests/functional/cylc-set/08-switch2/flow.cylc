@@ -9,7 +9,7 @@
 
 [scheduling]
     initial cycle point = 1
-    final cycle point = 3
+    final cycle point = 4
     cycling mode = integer
     runahead limit = P0
     [[graph]]
@@ -30,7 +30,12 @@
     [[z]]
         script = """
             if (( CYLC_TASK_CYCLE_POINT == 1 )); then
-                # set future y-path in point 2
+                # mark 2/a as succeeded with output y
+                # (task will be skipped)
                 cylc set "${CYLC_WORKFLOW_ID}//2/a" --out=y,succeeded
+            elif (( CYLC_TASK_CYCLE_POINT == 2 )); then
+                # mark 2/a as having generated output y
+                # (task will re-run and generate output x in the prociess)
+                cylc set "${CYLC_WORKFLOW_ID}//3/a" --out=y
             fi
          """

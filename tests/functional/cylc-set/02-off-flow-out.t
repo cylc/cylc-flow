@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# Set off-flow outputs to prevent a new flow from stalling.
+# "cylc set" proposal examples: 2 - Set off-flow outputs to prevent a new flow from stalling.
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#2-set-off-flow-prerequisites-to-prep-for-a-new-flow
 
 . "$(dirname "$0")/test_header"
 set_test_number 11
@@ -29,16 +29,16 @@ reftest_run
 #  - all the required outputs of a_cold
 #  - the requested and implied outputs of b_cold and c_cold
 
-grep_workflow_log_ok grep-a1 '1/a_cold.* setting missed output: submitted'
-grep_workflow_log_ok grep-a2 '1/a_cold.* setting missed output: started'
-grep_workflow_log_ok grep-a3 'output 1/a_cold:succeeded completed'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a1" '1/a_cold.* setting missed output: submitted'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a2" '1/a_cold.* setting missed output: started'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a3" 'output 1/a_cold:succeeded completed'
 
-grep_workflow_log_ok grep-a1 '1/b_cold.* setting missed output: submitted'
-grep_workflow_log_ok grep-a2 '1/b_cold.* setting missed output: started'
-grep_workflow_log_ok grep-b3 'output 1/b_cold:succeeded completed'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a1" '1/b_cold.* setting missed output: submitted'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a2" '1/b_cold.* setting missed output: started'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-b3" 'output 1/b_cold:succeeded completed'
 
-grep_workflow_log_ok grep-a1 '1/c_cold.* setting missed output: submitted'
-grep_workflow_log_ok grep-a2 '1/c_cold.* setting missed output: started'
-grep_workflow_log_ok grep-c3 'output 1/c_cold:succeeded completed'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a1" '1/c_cold.* setting missed output: submitted'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-a2" '1/c_cold.* setting missed output: started'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-c3" 'output 1/c_cold:succeeded completed'
 
 purge
