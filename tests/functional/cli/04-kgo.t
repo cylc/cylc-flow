@@ -17,21 +17,20 @@
 #-------------------------------------------------------------------------------
 # Test "cylc set-verbosity"
 . "$(dirname "$0")/test_header"
-set_test_number 47
+set_test_number 3
 
 KGO="/net/home/h02/tpilling/metomi/cylc-flow/tests/functional/cli/04-kgo/"
 
-# Get scripts described by cylc.flow entrypoints.
-SCRIPTS=$(python -c "import cylc.flow as cf; print(' '.join(i.name for i in cf.iter_entry_points('cylc.command') if i.module_name.startswith('cylc.flow')))")
+# List of sample scripts to test help documentation.
+# broadcast - we want to keep this script consistent.
+# message - we want to keep this script consistent. This script has two
+#           valid arg groups.
+# tui - slightly non-standard script.
+SCRIPTS="broadcast message tui"
 
 for script in $SCRIPTS; do
     # Generate KGO
     # cylc $script --help > $KGO/$script.help 2>&1
-
-    # These three scripts can change the order of items printed:
-    if [[ $script != "vip" && $script != "scan" && $script != "vr" ]]; then
-        cylc "$script" --help > "$script.help" 2>&1
-        cmp_ok "$script.help" "$KGO/$script.help"
-    fi
-
+    cylc "$script" --help > "$script.help" 2>&1
+    cmp_ok "$script.help" "$KGO/$script.help"
 done
