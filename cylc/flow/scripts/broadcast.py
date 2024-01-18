@@ -82,6 +82,7 @@ Broadcast cannot change [runtime] inheritance.
 from ansimarkup import parse as cparse
 from copy import deepcopy
 from functools import partial
+import os.path
 import re
 import sys
 from tempfile import NamedTemporaryFile
@@ -203,7 +204,7 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
                 handle.seek(0, 0)
                 cfg.loadcfg(handle.name)
         else:
-            cfg.loadcfg(setting_file)
+            cfg.loadcfg(os.path.abspath(setting_file))
     stack = [([], cfg.get(sparse=True))]
     while stack:
         keys, item = stack.pop()
