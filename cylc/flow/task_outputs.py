@@ -32,7 +32,8 @@ SORT_ORDERS = (
     TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED)
+    TASK_OUTPUT_FAILED
+)
 
 TASK_OUTPUTS = (
     TASK_OUTPUT_EXPIRED,
@@ -65,12 +66,13 @@ class TaskOutputs:
     """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["_by_message", "_by_trigger", "_required"]
+    __slots__ = ["_by_message", "_by_trigger", "_required", "_expire_ok"]
 
     def __init__(self, tdef):
         self._by_message = {}
         self._by_trigger = {}
         self._required = {}  # trigger: message
+        self._expire_ok = True
 
         # Add outputs from task def.
         for trigger, (message, required) in tdef.outputs.items():
@@ -90,9 +92,20 @@ class TaskOutputs:
             )
 
     def _add(self, message, trigger, is_completed=False, required=False):
-        """Add a new output message"""
+        """Add a new output message
+
+        required:
+         - True: is required
+         - False: is optional
+         - None: not set
+
+        """
         self._by_message[message] = [trigger, message, is_completed]
         self._by_trigger[trigger] = self._by_message[message]
+
+        if (trigger == TASK_OUTPUT_EXPIRED and required is None):
+            self._expire_ok = False
+
         if required:
             self._required[trigger] = message
 
@@ -100,11 +113,14 @@ class TaskOutputs:
         """For flow trigger --wait: set completed outputs from the DB."""
         for trig, msg, _ in self._by_trigger.values():
             if message == msg:
-                self._add(message, trig, True, trig in self._required)
+                self._add(
+                    message, trig, True,
+                    required=(trig in self._required)
+                )
                 break
 
     def all_completed(self):
-        """Return True if all all outputs completed."""
+        """Return True if all outputs completed."""
         return all(val[_IS_COMPLETED] for val in self._by_message.values())
 
     def exists(self, message=None, trigger=None):
@@ -225,7 +241,6 @@ class TaskOutputs:
         """Return a list of required outputs that are not complete.
 
         A task is incomplete if:
-
         * it finished executing without completing all required outputs
         * or if job submission failed and the :submit output was not optional
 
@@ -288,7 +303,7 @@ class TaskOutputs:
 
     @staticmethod
     def is_valid_std_name(name):
-        """Check name is a valid standard output name."""
+        """Check name is a valid standard output (including 'expired')."""
         return name in SORT_ORDERS
 
     @staticmethod

@@ -114,13 +114,13 @@ class TaskPool:
         flow_mgr: 'FlowMgr'
     ) -> None:
         self.tokens = tokens
-        self.config: 'WorkflowConfig' = config
+        self.config = config
         self.stop_point = config.stop_point or config.final_point
-        self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
-        self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
+        self.workflow_db_mgr = workflow_db_mgr
+        self.task_events_mgr = task_events_mgr
         self.task_events_mgr.spawn_func = self.spawn_on_output
-        self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
-        self.flow_mgr: 'FlowMgr' = flow_mgr
+        self.data_store_mgr = data_store_mgr
+        self.flow_mgr = flow_mgr
 
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
@@ -1379,25 +1379,19 @@ class TaskPool:
                 self.release_runahead_tasks()
             return ret
 
-        if itask.state(TASK_STATUS_EXPIRED):
-            self.remove(itask, "expired")
-            if self.compute_runahead():
-                self.release_runahead_tasks()
-            return True
+        if not itask.is_complete():
+            # (Includes non-optional expired)
+            incomplete = itask.state.outputs.get_incomplete()
+            if incomplete:
+                # Keep incomplete tasks in the pool.
+                if output in TASK_STATUSES_FINAL:
+                    LOG.warning(
+                        f"[{itask}] did not complete required outputs:"
+                        f" {incomplete}"
+                    )
+                return False
 
-        incomplete = itask.state.outputs.get_incomplete()
-        if incomplete:
-            # Keep incomplete tasks in the pool.
-            if output in TASK_STATUSES_FINAL:
-                # Log based on the output, not the state, to avoid warnings
-                # due to use of "cylc set" to set internal outputs on an
-                # already-finished task.
-                LOG.warning(
-                    f"[{itask}] did not complete required outputs:"
-                    f" {incomplete}"
-                )
-            return False
-
+        # Remove as complete
         self.remove(itask)
         if self.compute_runahead():
             self.release_runahead_tasks()
@@ -1761,7 +1755,6 @@ class TaskPool:
         - future tasks must be specified individually
         - family names are not expanded to members
 
-
         Uses a transient task proxy to spawn children. (Even if parent was
         previously spawned in this flow its children might not have been).
 
@@ -1831,9 +1824,15 @@ class TaskPool:
 
         outputs = sorted(outputs, key=itask.state.outputs.output_sort_key)
         for output in outputs:
-            if itask.state.outputs.is_completed(output):
-                LOG.info(f"output {itask.identity}:{output} completed already")
-                continue
+            if output == TASK_OUTPUT_EXPIRED:
+                if itask.state(*TASK_STATUSES_ACTIVE):
+                    LOG.warning(f"Can't expire active {itask}")
+                    continue
+                elif itask.state.outputs.is_completed(output):
+                    LOG.info(f"output {itask.identity}:{output}"
+                             " completed already")
+                    continue
+
             self.task_events_mgr.process_message(
                 itask, logging.INFO, output, forced=True)
 
@@ -1919,9 +1918,9 @@ class TaskPool:
         return len(bad_items)
 
     def _get_flow_nums(
-            self,
-            flow: List[str],
-            meta: Optional[str] = None,
+        self,
+        flow: List[str],
+        meta: Optional[str] = None,
     ) -> Optional[Set[int]]:
         """Get correct flow numbers given user command options."""
         if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):

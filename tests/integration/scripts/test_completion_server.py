@@ -88,7 +88,6 @@ async def test_list_prereqs_and_outputs(flow, scheduler, start):
         # list outputs (b1)
         assert await _complete_cylc('cylc', 'set', b1.id, '--out', '') == {
             # regular task outputs
-            'expired',
             'failed',
             'started',
             'submit-failed',

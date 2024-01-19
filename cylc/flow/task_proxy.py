@@ -571,10 +571,13 @@ class TaskProxy:
         )
 
     def is_complete(self) -> bool:
-        """Return True if complete or expired."""
+        """Return True if task is complete."""
         return (
-            self.state(TASK_STATUS_EXPIRED)
-            or not self.state.outputs.is_incomplete()
+            not self.state.outputs.is_incomplete()
+            or (
+                self.state(TASK_OUTPUT_EXPIRED)
+                and self.state.outputs._expire_ok
+            )
         )
 
     def set_state_by_outputs(self) -> None:

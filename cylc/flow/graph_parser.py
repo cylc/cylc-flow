@@ -61,6 +61,7 @@ from cylc.flow.task_qualifiers import (
 
 class Replacement:
     """A class to remember match group information in re.sub() calls"""
+
     def __init__(self, replacement):
         self.replacement = replacement
         self.substitutions = []
@@ -747,7 +748,8 @@ class GraphParser:
 
         if output == TASK_OUTPUT_EXPIRED and not optional:
             raise GraphParseError(
-                f"Expired-output {name}:{output} must be optional")
+                f"{output} must be an optional output:"
+                f" {name}:{output}?")
 
         if output == TASK_OUTPUT_FINISHED:
             # Interpret :finish pseudo-output

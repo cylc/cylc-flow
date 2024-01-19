@@ -270,6 +270,13 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
         with pytest.raises(WorkflowConfigError) as exc_ctx:
             config = validate(id_)
         assert 'external triggers must be used only once' in str(exc_ctx.value)
+
+    elif section == 'clock-expire':
+        with pytest.raises(WorkflowConfigError) as exc_ctx:
+            config = validate(id_)
+        assert (
+            'Clock-expire must be visible in the graph' in str(exc_ctx.value)
+        )
     else:
         config = validate(id_)
         assert set(config.cfg['scheduling']['special tasks'][section]) == {

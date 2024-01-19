@@ -235,6 +235,8 @@ class TaskJobManager:
                 # state transition message reflects the correct submit_num
                 itask.submit_num += 1
                 itask.state_reset(TASK_STATUS_PREPARING)
+                # Avoid clock-expiring an active task:
+                itask.expire_time = None
                 self.data_store_mgr.delta_task_state(itask)
             prep_task = self._prep_submit_task_job(
                 workflow, itask, check_syntax=check_syntax)
