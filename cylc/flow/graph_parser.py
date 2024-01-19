@@ -745,10 +745,6 @@ class GraphParser:
         if suicide:
             return
 
-        if output == TASK_OUTPUT_EXPIRED and not optional:
-            raise GraphParseError(
-                f"Expired-output {name}:{output} must be optional")
-
         if output == TASK_OUTPUT_FINISHED:
             # Interpret :finish pseudo-output
             if optional:

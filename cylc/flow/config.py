@@ -88,7 +88,7 @@ from cylc.flow.task_events_mgr import (
 )
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_EXPIRED,
     TaskOutputs
 )
 from cylc.flow.task_trigger import TaskTrigger, Dependency
@@ -1649,7 +1649,7 @@ class WorkflowConfig:
              offset_is_irregular, offset_is_absolute) = (
                 GraphNodeParser.get_inst().parse(left))
 
-            # Qualifier.
+            # Qualifier. Note ":succeeded" made explicit by the graph parser.
             outputs = self.cfg['runtime'][name]['outputs']
             if outputs and (output in outputs):
                 # Qualifier is a custom task message.
@@ -1660,9 +1660,6 @@ class WorkflowConfig:
                         f"Undefined custom output: {name}:{output}"
                     )
                 qualifier = output
-            else:
-                # No qualifier specified => use "succeeded".
-                qualifier = TASK_OUTPUT_SUCCEEDED
 
             # Generate TaskTrigger if not already done.
             key = (name, offset, qualifier,
@@ -2131,7 +2128,11 @@ class WorkflowConfig:
 
         Args:
             task_output_opt: {(task, output): (is-optional, default, is_set)}
+
         """
+        # task_output_opt: outputs parsed from graph triggers
+        # taskdef.outputs: outputs listed under runtime
+
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
@@ -2140,6 +2141,30 @@ class WorkflowConfig:
                     # Output not used in graph.
                     continue
                 taskdef.set_required_output(output, not optional)
+
+        # Expire is dangerous, it must be visible and optional in the graph
+        bad_exp = set()
+        good_exp = set()
+        for (task, output), (opt, _, _) in task_output_opt.items():
+            if output == TASK_OUTPUT_EXPIRED:
+                if not opt:
+                    bad_exp.add(task)
+                    continue
+                good_exp.add(task)
+                self.taskdefs[task].add_output(
+                    TASK_OUTPUT_EXPIRED, TASK_OUTPUT_EXPIRED
+                )
+
+        # likewise clock-expiry is only legal if flagged in the graph
+        for task in self.expiration_offsets:
+            if task not in good_exp:
+                bad_exp.add(task)
+
+        if bad_exp:
+            msg = '\n   '.join([t + ":expired?" for t in bad_exp])
+            raise WorkflowConfigError(
+                f"Expiring tasks must be optional in the graph as:\n   {msg}"
+            )
 
     def find_taskdefs(self, name: str) -> Set[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".

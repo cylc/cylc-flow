@@ -32,7 +32,8 @@ SORT_ORDERS = (
     TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED)
+    TASK_OUTPUT_FAILED
+)
 
 TASK_OUTPUTS = (
     TASK_OUTPUT_EXPIRED,
@@ -42,6 +43,14 @@ TASK_OUTPUTS = (
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
+)
+
+STANDARD_OUTPUTS = (  # omits expired: requires graph trigger
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED
 )
 
 _TRIGGER = 0
@@ -300,7 +309,7 @@ class TaskOutputs:
 
     @staticmethod
     def is_valid_std_name(name):
-        """Check name is a valid standard output name."""
+        """Check name is a valid standard output (including 'expired')."""
         return name in SORT_ORDERS
 
     @staticmethod
