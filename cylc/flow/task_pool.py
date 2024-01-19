@@ -86,6 +86,7 @@ if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.taskdef import TaskDef
     from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
 
@@ -107,17 +108,18 @@ class TaskPool:
         workflow_db_mgr: 'WorkflowDatabaseManager',
         task_events_mgr: 'TaskEventsManager',
         data_store_mgr: 'DataStoreMgr',
-        flow_mgr: 'FlowMgr'
+        flow_mgr: 'FlowMgr',
+        task_job_mgr: 'TaskJobManager'
     ) -> None:
         self.tokens = tokens
-        self.config: 'WorkflowConfig' = config
+        self.config = config
         self.stop_point = config.stop_point or config.final_point
-        self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
-        self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
-        # TODO this is ugly:
+        self.workflow_db_mgr = workflow_db_mgr
+        self.task_events_mgr = task_events_mgr
         self.task_events_mgr.spawn_func = self.spawn_on_output
-        self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
-        self.flow_mgr: 'FlowMgr' = flow_mgr
+        self.data_store_mgr = data_store_mgr
+        self.flow_mgr = flow_mgr
+        self.task_job_mgr = task_job_mgr
 
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
@@ -1745,6 +1747,13 @@ class TaskPool:
         if self.compute_runahead():
             self.release_runahead_tasks()
 
+    def kill_expire_job(self, itask):
+        if self.config.run_mode('simulation'):
+            itask.state_reset(TASK_STATUS_EXPIRED)
+            self.data_store_mgr.delta_task_state(itask)
+        else:
+            self.task_job_mgr.kill_task_jobs([itask], expire=True)
+
     def _set_outputs_itask(
         self,
         itask: 'TaskProxy',
@@ -1757,6 +1766,15 @@ class TaskPool:
 
         changed = False
         for output in outputs:
+            if (
+                output == TASK_OUTPUT_EXPIRED
+                and itask.state(*TASK_STATUSES_ACTIVE)
+            ):
+                LOG.warning(f"killing expired active task {itask}")
+                # To expire an active task, kill the job first.
+                self.kill_expire_job(itask)
+                continue
+
             # convert trigger label to output message
             msg = itask.state.outputs.get_msg(output)
             info = f'set: output {itask.identity}:{output}'

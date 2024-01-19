@@ -25,6 +25,7 @@ This module provides logic to:
 """
 
 from contextlib import suppress
+from functools import partial
 import json
 import os
 from logging import (
@@ -85,7 +86,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_EXPIRED
 )
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
@@ -102,6 +104,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
+    TASK_STATUS_EXPIRED,
     TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
@@ -174,12 +177,25 @@ class TaskJobManager:
         if poll_tasks:
             self.poll_task_jobs(workflow, poll_tasks)
 
-    def kill_task_jobs(self, workflow, itasks):
+    def kill_task_jobs(self, itasks, expire=False):
         """Kill jobs of active tasks, and hold the tasks.
 
-        If items is specified, kill active tasks matching given IDs.
+        if expire: expire tasks (in the callback) after killing them.
 
         """
+        if expire:
+            # Check these tasks are allowed to expire.
+            ok = True
+            output = TASK_OUTPUT_EXPIRED
+            for itask in itasks:
+                msg = itask.state.outputs.get_msg(output)
+                info = f'set: output {itask.identity}:{output}'
+                if msg is None:
+                    LOG.warning(f"{info} not found")
+                    ok = False
+        if not ok:
+            return
+
         to_kill_tasks = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
@@ -188,9 +204,10 @@ class TaskJobManager:
                 to_kill_tasks.append(itask)
             else:
                 LOG.warning(f"[{itask}] not killable")
+        callback = partial(self._kill_task_jobs_callback, expire=expire)
         self._run_job_cmd(
-            self.JOBS_KILL, workflow, to_kill_tasks,
-            self._kill_task_jobs_callback,
+            self.JOBS_KILL, self.workflow, to_kill_tasks,
+            callback,
             self._kill_task_jobs_callback_255
         )
 
@@ -640,8 +657,12 @@ class TaskJobManager:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning(f"[{itask}] {host}{line}")
 
-    def _kill_task_jobs_callback(self, ctx, workflow, itasks):
-        """Callback when kill tasks command exits."""
+    def _kill_task_jobs_callback(self, ctx, workflow, itasks, expire=False):
+        """Callback when kill tasks command exits.
+
+        If expire: expire the killed tasks.
+
+        """
         self._manip_task_jobs_callback(
             ctx,
             workflow,
@@ -650,6 +671,12 @@ class TaskJobManager:
             {self.job_runner_mgr.OUT_PREFIX_COMMAND:
                 self._job_cmd_out_callback}
         )
+        if expire:
+            for itask in itasks:
+                self.task_events_mgr.process_message(
+                    itask, INFO, TASK_OUTPUT_EXPIRED, forced=True)
+                info = f'set: output {itask.identity}:{TASK_OUTPUT_EXPIRED}'
+                LOG.info(f"{info} completed")
 
     def _kill_task_jobs_callback_255(self, ctx, workflow, itasks):
         """Callback when kill tasks command exits."""
@@ -670,7 +697,7 @@ class TaskJobManager:
                 itask.platform,
                 bad_hosts=self.task_remote_mgr.bad_hosts
             )
-            self.kill_task_jobs(workflow, [itask])
+            self.kill_task_jobs([itask])
 
     def _kill_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""

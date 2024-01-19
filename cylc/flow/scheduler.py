@@ -482,7 +482,8 @@ class Scheduler:
             self.workflow_db_mgr,
             self.task_events_mgr,
             self.data_store_mgr,
-            self.flow_mgr
+            self.flow_mgr,
+            self.task_job_mgr
         )
 
         self.data_store_mgr.initiate_data_model()
@@ -1087,7 +1088,7 @@ class Scheduler:
                     itask.state_reset(TASK_STATUS_FAILED)
                     self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
+        self.task_job_mgr.kill_task_jobs(itasks)
         return len(bad_items)
 
     def command_hold(self, tasks: Iterable[str]) -> int:

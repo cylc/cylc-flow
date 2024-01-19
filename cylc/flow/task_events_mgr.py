@@ -1291,7 +1291,6 @@ class TaskEventsManager():
 
         Return True if no retries (hence go to the failed state).
         """
-        LOG.critical(f"{itask} ... {forced}")
         no_retries = False
         if event_time is None:
             event_time = get_current_time_string()
