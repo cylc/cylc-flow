@@ -28,6 +28,15 @@ def get_msg_queue_item(queue, id_):
             return item
 
 
+@pytest.fixture
+def monkeytime(monkeypatch):
+    """Convenience function monkeypatching time."""
+    def _inner(time_: int):
+        monkeypatch.setattr('cylc.flow.task_job_mgr.time', lambda: time_)
+        monkeypatch.setattr('cylc.flow.simulation.time', lambda: time_)
+    return _inner
+
+
 @pytest.fixture(scope='module')
 async def sim_time_check_setup(
     mod_flow, mod_scheduler, mod_start, mod_one_conf,
@@ -134,11 +143,13 @@ def test_sim_time_check_sets_started_time(
     """
     schd, _, msg_q = sim_time_check_setup
     one_1066 = schd.pool.get_task(ISO8601Point('1066'), 'one')
+    # Add info to databse as if it's be started before shutdown:
     schd.task_job_mgr._simulation_submit_task_jobs(
         [one_1066], schd.workflow)
     schd.workflow_db_mgr.process_queued_ops()
     one_1066.summary['started_time'] = None
     one_1066.state.is_queued = False
+    one_1066.mode_settings = None
     assert one_1066.summary['started_time'] is None
     assert sim_time_check(
         msg_q, [one_1066], schd.task_events_mgr.broadcast_mgr,
@@ -147,7 +158,7 @@ def test_sim_time_check_sets_started_time(
     assert one_1066.summary['started_time'] is not None
 
 
-def test_task_finishes(sim_time_check_setup, monkeypatch):
+def test_task_finishes(sim_time_check_setup, monkeytime):
     """...and an appropriate message sent.
 
     Checks that failed and bar are output if a task is set to fail.
@@ -156,7 +167,7 @@ def test_task_finishes(sim_time_check_setup, monkeypatch):
     in unit tests.
     """
     schd, _, msg_q = sim_time_check_setup
-    monkeypatch.setattr('cylc.flow.simulation.time', lambda: 0)
+    monkeytime(0)
 
     # Setup a task to fail, submit it.
     fail_all_1066 = schd.pool.get_task(ISO8601Point('1066'), 'fail_all')
@@ -175,7 +186,7 @@ def test_task_finishes(sim_time_check_setup, monkeypatch):
     ) is False
 
     # Time's up...
-    monkeypatch.setattr('cylc.flow.simulation.time', lambda: 12)
+    monkeytime(12)
 
     # After simulation time is up it Fails and records custom outputs:
     assert sim_time_check(
@@ -184,35 +195,34 @@ def test_task_finishes(sim_time_check_setup, monkeypatch):
     assert sorted(i.message for i in msg_q.queue) == ['bar', 'failed']
 
 
-def test_task_sped_up(sim_time_check_setup, monkeypatch):
+def test_task_sped_up(sim_time_check_setup, monkeytime):
     """Task will speed up by a factor set in config."""
+
     schd, _, msg_q = sim_time_check_setup
     fast_forward_1066 = schd.pool.get_task(
         ISO8601Point('1066'), 'fast_forward')
+
+    # Run the job submission method:
+    monkeytime(0)
     schd.task_job_mgr._simulation_submit_task_jobs(
         [fast_forward_1066], schd.workflow)
-
-    # For the purpose of the test delete the started time set but
-    # _simulation_submit_task_jobs.
-    fast_forward_1066.summary['started_time'] = 0
     fast_forward_1066.state.is_queued = False
 
-    monkeypatch.setattr('cylc.flow.simulation.time', lambda: 0)
     assert sim_time_check(
         msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
     ) is False
-    monkeypatch.setattr('cylc.flow.simulation.time', lambda: 29)
+    monkeytime(29)
     assert sim_time_check(
         msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
     ) is False
-    monkeypatch.setattr('cylc.flow.simulation.time', lambda: 31)
+    monkeytime(31)
     assert sim_time_check(
         msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
     ) is True
 
 
 async def test_simulation_mode_settings_restart(
-    monkeypatch, flow, scheduler, run, start
+    monkeytime, flow, scheduler, run, start
 ):
     """Check that simulation mode settings are correctly restored
     upon restart.
@@ -250,7 +260,7 @@ async def test_simulation_mode_settings_restart(
         # Submit it, then mock the wallclock and assert that it's not finshed.
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
-        monkeypatch.setattr('cylc.flow.simulation.time', lambda: 0)
+        monkeytime(0)
 
         assert sim_time_check(
             msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
@@ -262,7 +272,7 @@ async def test_simulation_mode_settings_restart(
     async with start(schd):
         # Get our tasks and fix wallclock:
         itask = schd.pool.get_tasks()[0]
-        monkeypatch.setattr('cylc.flow.simulation.time', lambda: 12)
+        monkeytime(12)
         itask.state.status = 'running'
 
         # Check that we haven't got started time back
@@ -275,14 +285,14 @@ async def test_simulation_mode_settings_restart(
         schd.workflow_db_mgr.process_queued_ops()
 
         # Set the current time:
-        monkeypatch.setattr('cylc.flow.simulation.time', lambda: 12)
+        monkeytime(12)
         assert sim_time_check(
             msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
             schd.workflow_db_mgr
         ) is False
 
         # Set the current time > timeout
-        monkeypatch.setattr('cylc.flow.simulation.time', lambda: 61)
+        monkeytime(61)
         assert sim_time_check(
             msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
             schd.workflow_db_mgr

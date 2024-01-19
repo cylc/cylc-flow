@@ -53,7 +53,12 @@ class ModeSettings:
     simulated_run_length: float = 0.0
     sim_task_fails: bool = False
 
-    def __init__(self, itask: 'TaskProxy', broadcast_mgr: 'BroadcastMgr'):
+    def __init__(
+        self,
+        itask: 'TaskProxy',
+        broadcast_mgr: 'BroadcastMgr',
+        db_mgr: 'WorkflowDatabaseManager' = None
+    ):
         overrides = broadcast_mgr.get_broadcast(itask.tokens)
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
@@ -68,6 +73,22 @@ class ModeSettings:
             itask.submit_num
         )
 
+        # itask.summary['started_time'] and mode_settings.timeout need
+        # repopulating from the DB on workflow restart:
+        started_time = itask.summary['started_time']
+        if started_time is None:
+            started_time = int(
+                TimePointParser()
+                .parse(
+                    db_mgr.pub_dao.select_task_job(
+                        *itask.tokens.relative_id.split("/")
+                    )["time_submit"]
+                )
+                .seconds_since_unix_epoch
+            )
+            itask.summary['started_time'] = started_time
+
+        self.timeout = started_time + self.simulated_run_length
 
 def configure_sim_modes(taskdefs, sim_mode):
     """Adjust task defs for simulation and dummy mode.
@@ -207,24 +228,12 @@ def sim_time_check(
         ):
             continue
 
-        # Started time and mode_settings are not set on restart:
-        started_time = itask.summary['started_time']
-        if started_time is None:
-            started_time = int(
-                TimePointParser()
-                .parse(
-                    db_mgr.pub_dao.select_task_job(
-                        *itask.tokens.relative_id.split("/")
-                    )["time_submit"]
-                )
-                .seconds_since_unix_epoch
-            )
-            itask.summary['started_time'] = started_time
-        if itask.mode_settings is None:
-            itask.mode_settings = ModeSettings(itask, broadcast_mgr)
 
-        timeout = started_time + itask.mode_settings.simulated_run_length
-        if now > timeout:
+
+        if itask.mode_settings is None:
+            itask.mode_settings = ModeSettings(itask, broadcast_mgr, db_mgr)
+
+        if now > itask.mode_settings.timeout:
             job_d = itask.tokens.duplicate(job=str(itask.submit_num))
             now_str = get_current_time_string()
 

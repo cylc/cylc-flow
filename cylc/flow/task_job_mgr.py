@@ -997,7 +997,9 @@ class TaskJobManager:
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
+        now = time()
         for itask in itasks:
+            itask.summary['started_time'] = now
             itask.mode_settings = ModeSettings(
                 itask, self.task_events_mgr.broadcast_mgr)
             itask.waiting_on_job_prep = False
