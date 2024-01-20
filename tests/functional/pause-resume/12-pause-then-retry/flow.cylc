@@ -36,10 +36,10 @@
             cylc play "${CYLC_WORKFLOW_ID}"
 
             cylc__job__poll_grep_workflow_log -E \
-                '1/t-retry-able/__:waiting.* => waiting\(queued\)'
+                '1/t-retry-able:waiting.* => waiting\(queued\)'
 
             cylc__job__poll_grep_workflow_log -E \
-                '1/t-submit-retry-able/__:waiting.* => waiting\(queued\)'
+                '1/t-submit-retry-able:waiting.* => waiting\(queued\)'
         """
     [[t-retry-able]]
         script = """

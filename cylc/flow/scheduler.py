@@ -604,7 +604,7 @@ class Scheduler:
             # Note that the following lines must be present at the top of
             # the workflow log file for use in reference test runs.
             LOG.info(
-                "Task log format: [CYCLE/TASK/JOB(FLOWS):STATUS] - LOG MESSAGE"
+                "Task log prefix: CYCLE/TASK[/JOB][(FLOWS)]:STATUS"
             )
             LOG.info(
                 f'Run mode: {self.config.run_mode()}',

@@ -296,15 +296,12 @@ class TaskProxy:
 
         Format: "<point>/<name>/<job>{<flows>}:status".
         """
-        if self.state.status == TASK_STATUS_WAITING:
-            # Don't print pre-incremented submit number.
-            subnum = "__"
-        else:
-            subnum = f"{self.submit_num:02d}"
+        id_ = self.identity
+        if self.state.status != TASK_STATUS_WAITING:
+            id_ += f"/{self.submit_num:02d}"
 
         return (
-            f"{self.identity}/{subnum}"
-            f"{stringify_flow_nums(self.flow_nums)}:{self.state}"
+            f"{id_}{stringify_flow_nums(self.flow_nums)}:{self.state}"
         )
 
     def copy_to_reload_successor(self, reload_successor, check_output):
