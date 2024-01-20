@@ -36,6 +36,12 @@ Outputs:
 
   Setting final outputs (succeeded, failed, expired) also sets task state.
 
+  WARNING: setting a task's "expired" output, like clock-expire, means the
+  workflow can successfully complete without running the task and any
+  (non-expire) sub-graph that depends onit. This is dangerous, so potential
+  expiry must be flagged in the graph with "<task>:expire?", for visibility.
+  If you expire an active task its job will be killed.
+
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
   specify the task in the command before attempting TAB-completion.
