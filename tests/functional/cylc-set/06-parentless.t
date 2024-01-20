@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# Check spawning a parentless task without ignoring xtriggers.
+# "cylc set" proposal examples: 7 - Check spawning a parentless task without ignoring xtriggers.
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#7-spawning-parentless-tasks
 
 . "$(dirname "$0")/test_header"
 set_test_number 3
@@ -25,6 +25,6 @@ set_test_number 3
 install_and_validate
 REFTEST_OPTS="--start-task=1800/a" reftest_run
 
-grep_workflow_log_ok clock "xtrigger satisfied: wall_clock"
+grep_workflow_log_ok "${TEST_NAME_BASE}-clock" "xtrigger satisfied: wall_clock"
 
 purge

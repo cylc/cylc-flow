@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# check that we can set a dead orphaned job to failed.
+# "cylc set" proposal examples: 4 -check that we can set a dead orphaned job to failed.
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#4-set-jobs-to-failed-when-a-job-platform-is-known-to-be-down
 
 . "$(dirname "$0")/test_header"
 set_test_number 4
@@ -39,7 +39,7 @@ cylc stop --now --now --interval=2 --max-polls=5 "${WORKFLOW_NAME}"
 # - set completion message
 # - implied outputs reported as already completed
 
-grep_workflow_log_ok grep-3 'set: output 1/foo:failed completed'
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep-3" 'set: output 1/foo:failed completed'
 
 # Check the DB records all the outputs.
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \

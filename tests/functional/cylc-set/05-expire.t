@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# "cylc set" proposal examples.
-# check that forced task expiry works
+# "cylc set" proposal examples: 6 - check that forced task expiry works
+# https://cylc.github.io/cylc-admin/proposal-cylc-set.html#6-expire-a-task
 
 . "$(dirname "$0")/test_header"
 set_test_number 4
