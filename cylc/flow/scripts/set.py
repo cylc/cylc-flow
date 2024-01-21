@@ -74,7 +74,7 @@ Examples:
 """
 
 from functools import partial
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Set, List
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
@@ -84,6 +84,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.task_outputs import TASK_OUTPUT_EXPIRED
 from cylc.flow.terminal import cli_function
 from cylc.flow.flow_mgr import (
     add_flow_opts,
@@ -184,52 +185,52 @@ def validate_prereq(prereq: str) -> bool:
     return True
 
 
-def split_opts(options: List[str]):
-    """Return list from multi-use and comma-separated single-use options.
+def split_opts(options: List[str]) -> Set[str]:
+    """Split comma-separated single-use options.
 
     Examples:
         # --out='a,b,c'
-        >>> split_opts(['a,b,c'])
+        >>> sorted(split_opts(['a,b,c']))
         ['a', 'b', 'c']
 
         # --out='a' --out='a,b'
-        >>> split_opts(['a', 'b,c'])
+        >>> sorted(split_opts(['a', 'b,c']))
         ['a', 'b', 'c']
 
         # --out='a' --out='a,b'
-        >>> split_opts(['a', 'a,b'])
+        >>> sorted(split_opts(['a', 'a,b']))
         ['a', 'b']
 
     """
     if options is None:
         return []
-    splat = []  # (past tense of split)
+    splat: Set[str] = set()  # (past tense of split)
     for p in options:
-        splat += p.split(',')
-    return sorted(set(splat))
+        splat.update(p.split(','))
+    return splat
 
 
-def get_prerequisite_opts(prereq_options: List[str]):
-    """Validate prerequisite inputs and return them as a flat list.
+def get_prereq_opts(prereq_options: List[str]) -> Set[str]:
+    """Validate prerequisite inputs and return them as a flat set.
 
     Examples:
-        >>> get_prerequisite_opts(['1/foo:bar', '2/foo:baz,3/foo:qux'])
+        >>> sorted(get_prereq_opts(['1/foo:bar', '2/foo:baz,3/foo:qux']))
         ['1/foo:bar', '2/foo:baz', '3/foo:qux']
 
-        >>> get_prerequisite_opts(['all'])
-        ['all']
+        >>> get_prereq_opts(['all'])
+        {'all'}
 
-        >>> get_prerequisite_opts(['fish'])
+        >>> get_prereq_opts(['fish'])
         Traceback (most recent call last):
         ...
         InputError:
 
-        >>> get_prerequisite_opts(['all', '2/foo:baz'])
+        >>> get_prereq_opts(['all', '2/foo:baz'])
         Traceback (most recent call last):
         ...
         InputError:
 
-        >>> get_prerequisite_opts(['1/foo::bar'])
+        >>> get_prereq_opts(['1/foo::bar'])
         Traceback (most recent call last):
         ...
         InputError:
@@ -237,7 +238,7 @@ def get_prerequisite_opts(prereq_options: List[str]):
      """
     prereqs = split_opts(prereq_options)
     if not prereqs:
-        return []
+        return prereqs
 
     msg = '\n'.join(
         [
@@ -255,16 +256,25 @@ def get_prerequisite_opts(prereq_options: List[str]):
     return prereqs
 
 
-def get_output_opts(output_options: List[str]):
-    """Convert outputs options to a single list, and validate.
+def get_output_opts(output_options: List[str]) -> Set[str]:
+    """Convert outputs options to a single set, and validate.
 
     Examples:
-        >>> get_output_opts(['a', 'b,c'])
+        >>> sorted(get_output_opts(['a', 'b,c']))
         ['a', 'b', 'c']
 
+        >>> get_output_opts(['expire', 'expired'])
+        {'expired'}
+
     """
-    # (No current validation)
-    return split_opts(output_options)
+    outputs = set()
+    for output in split_opts(output_options):
+        if output == "expire":
+            # should be "expired"; and "expire" is not a legal output.
+            outputs.add(TASK_OUTPUT_EXPIRED)
+        else:
+            outputs.add(output)
+    return outputs
 
 
 async def run(
@@ -283,8 +293,8 @@ async def run(
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ],
-            'outputs': get_output_opts(options.outputs),
-            'prerequisites': get_prerequisite_opts(options.prerequisites),
+            'outputs': list(get_output_opts(options.outputs)),
+            'prerequisites': list(get_prereq_opts(options.prerequisites)),
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr
