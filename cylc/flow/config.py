@@ -2142,28 +2142,26 @@ class WorkflowConfig:
                     continue
                 taskdef.set_required_output(output, not optional)
 
-        # Expire is dangerous, it must be visible and optional in the graph
-        bad_exp = set()
-        good_exp = set()
-        for (task, output), (opt, _, _) in task_output_opt.items():
+        # Add expired outputs to taskdefs if flagged in the graph.
+        graph_exp = set()
+        for (task, output) in task_output_opt.keys():
             if output == TASK_OUTPUT_EXPIRED:
-                if not opt:
-                    bad_exp.add(task)
-                    continue
-                good_exp.add(task)
+                graph_exp.add(task)
                 self.taskdefs[task].add_output(
                     TASK_OUTPUT_EXPIRED, TASK_OUTPUT_EXPIRED
                 )
 
-        # likewise clock-expiry is only legal if flagged in the graph
+        # clock-expire must be flagged in the graph for visibility
+        bad_exp = set()
         for task in self.expiration_offsets:
-            if task not in good_exp:
+            if task not in graph_exp:
                 bad_exp.add(task)
 
         if bad_exp:
-            msg = '\n   '.join([t + ":expired?" for t in bad_exp])
+            msg = '\n   '.join(
+                [t + f":{TASK_OUTPUT_EXPIRED}?" for t in bad_exp])
             raise WorkflowConfigError(
-                f"Expiring tasks must be optional in the graph as:\n   {msg}"
+                f"Clock-expire must be visible in the graph:\n  {msg}"
             )
 
     def find_taskdefs(self, name: str) -> Set[TaskDef]:

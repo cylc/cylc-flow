@@ -99,7 +99,6 @@ async def test_run_job_cmd_no_hosts_error(
 
         # killing the task should not result in an error...
         schd.task_job_mgr.kill_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks()
         )
 

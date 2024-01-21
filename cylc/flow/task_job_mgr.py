@@ -104,7 +104,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
-    TASK_STATUS_EXPIRED,
     TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
@@ -183,9 +182,9 @@ class TaskJobManager:
         if expire: expire tasks (in the callback) after killing them.
 
         """
+        ok = True
         if expire:
             # Check these tasks are allowed to expire.
-            ok = True
             output = TASK_OUTPUT_EXPIRED
             for itask in itasks:
                 msg = itask.state.outputs.get_msg(output)
