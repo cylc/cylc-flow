@@ -37,6 +37,16 @@ def monkeytime(monkeypatch):
     return _inner
 
 
+@pytest.fixture
+def q_clean():
+    """Clear message queue to revent test interference.
+    """
+    def _inner(msg_q):
+        if not msg_q.empty():
+            msg_q.get()
+    return _inner
+
+
 @pytest.fixture(scope='module')
 async def sim_time_check_setup(
     mod_flow, mod_scheduler, mod_start, mod_one_conf,
@@ -84,8 +94,12 @@ async def sim_time_check_setup(
         yield schd, itasks, msg_q
 
 
-def test_false_if_not_running(sim_time_check_setup, monkeypatch):
+def test_false_if_not_running(
+    sim_time_check_setup, monkeypatch, q_clean
+):
     schd, itasks, msg_q = sim_time_check_setup
+
+    itasks = [i for i in itasks if i.state.status != 'running']
 
     # False if task status not running:
     assert sim_time_check(
@@ -158,7 +172,7 @@ def test_sim_time_check_sets_started_time(
     assert one_1066.summary['started_time'] is not None
 
 
-def test_task_finishes(sim_time_check_setup, monkeytime):
+def test_task_finishes(sim_time_check_setup, monkeytime, q_clean):
     """...and an appropriate message sent.
 
     Checks that failed and bar are output if a task is set to fail.
@@ -167,6 +181,9 @@ def test_task_finishes(sim_time_check_setup, monkeytime):
     in unit tests.
     """
     schd, _, msg_q = sim_time_check_setup
+
+    q_clean(msg_q)
+
     monkeytime(0)
 
     # Setup a task to fail, submit it.
