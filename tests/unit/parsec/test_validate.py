@@ -18,12 +18,13 @@
 from typing import List
 
 import pytest
-from pytest import approx
+from pytest import approx, param
 
 from cylc.flow.parsec.config import ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.exceptions import IllegalValueError
 from cylc.flow.parsec.validate import (
+    BroadcastConfigValidator,
     CylcConfigValidator as VDR,
     DurationFloat,
     ListValueError,
@@ -502,9 +503,51 @@ def test_coerce_str_list():
         assert validator.coerce_str_list(value, ['whatever']) == results
 
 
-def test_strip_and_unquote():
+@pytest.mark.parametrize('value, expected', [
+    param(
+        "'a'",
+        'a',
+        id="single quotes"
+    ),
+    param(
+        '"\'a\'"',
+        "'a'",
+        id="single quotes inside double quotes"
+    ),
+    param(
+        '" a b" # comment',
+        ' a b',
+        id="comment outside"
+    ),
+    param(
+        '"""bene\ngesserit"""',
+        'bene\ngesserit',
+        id="multiline double quotes"
+    ),
+    param(
+        "'''kwisatz\n  haderach'''",
+        'kwisatz\n  haderach',
+        id="multiline single quotes"
+    ),
+    param(
+        '"""a\nb"""  # comment',
+        'a\nb',
+        id="multiline with comment outside"
+    ),
+])
+def test_unquote(value: str, expected: str):
+    """Test strip_and_unquote."""
+    assert ParsecValidator._unquote(['a'], value) == expected
+
+
+@pytest.mark.parametrize('value', [
+    '"""',
+    "'''",
+    "'don't do this'",
+])
+def test_strip_and_unquote__bad(value: str):
     with pytest.raises(IllegalValueError):
-        ParsecValidator.strip_and_unquote(['a'], '"""')
+        ParsecValidator.strip_and_unquote(['a'], value)
 
 
 def test_strip_and_unquote_list_parsec():
@@ -696,3 +739,23 @@ def test_type_help_examples():
                 except Exception:
                     raise Exception(
                         f'Example "{example}" failed for type "{vdr}"')
+
+
+@pytest.mark.parametrize('value, expected', [
+    param(
+        """
+        a="don't have a cow"
+        a=${a#*have}
+        echo "$a" # let's see what happens
+        """,
+        "a=\"don't have a cow\"\na=${a#*have}\necho \"$a\" # let's see what happens",
+        id="multiline"
+    ),
+    param(
+        '"sleep 30 # ja!"  ',
+        'sleep 30 # ja!',
+        id="quoted"
+    ),
+])
+def test_broadcast_coerce_str(value: str, expected: str):
+    assert BroadcastConfigValidator.coerce_str(value, ['whatever']) == expected

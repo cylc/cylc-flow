@@ -26,7 +26,7 @@ import re
 import shlex
 from collections import deque
 from textwrap import dedent
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Optional, Tuple
 
 from metomi.isodatetime.data import Duration, TimePoint
 from metomi.isodatetime.dumpers import TimePointDumper
@@ -512,6 +512,22 @@ class ParsecValidator:
             return None
 
     @classmethod
+    def _unquote(cls, keys: List[str], value: str) -> Optional[str]:
+        """Unquote value."""
+        for substr, rec in (
+            ("'''", cls._REC_MULTI_LINE_SINGLE),
+            ('"""', cls._REC_MULTI_LINE_DOUBLE),
+            ('"', cls._REC_DQ_VALUE),
+            ("'", cls._REC_SQ_VALUE)
+        ):
+            if value.startswith(substr):
+                match = rec.match(value)
+                if not match:
+                    raise IllegalValueError("string", keys, value)
+                return match[1]
+        return None
+
+    @classmethod
     def strip_and_unquote(cls, keys: List[str], value: str) -> str:
         """Remove leading and trailing spaces and unquote value.
 
@@ -529,25 +545,13 @@ class ParsecValidator:
             'foo'
 
         """
-        for substr, rec in (
-            ("'''", cls._REC_MULTI_LINE_SINGLE),
-            ('"""', cls._REC_MULTI_LINE_DOUBLE),
-            ('"', cls._REC_DQ_VALUE),
-            ("'", cls._REC_SQ_VALUE)
-        ):
-            if value.startswith(substr):
-                match = rec.match(value)
-                if not match:
-                    raise IllegalValueError("string", keys, value)
-                value = match.groups()[0]
-                break
-        else:  # no break
-            # unquoted
-            value = value.split(r'#', 1)[0]
+        val = cls._unquote(keys, value)
+        if val is None:
+            val = value.split(r'#', 1)[0]
 
         # Note strip() removes leading and trailing whitespace, including
         # initial newlines on a multiline string:
-        return dedent(value).strip()
+        return dedent(val).strip()
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
@@ -1144,17 +1148,17 @@ class BroadcastConfigValidator(CylcConfigValidator):
 
     @classmethod
     def coerce_str(cls, value, keys) -> str:
-        """Coerce value to a string.
+        """Coerce value to a string. Unquotes & strips lead/trail whitespace.
+
+        Prevents ParsecValidator from assuming '#' means comments;
+        '#' has valid uses in shell script such as parameter substitution.
 
         Examples:
-            >>> BroadcastConfigValidator.coerce_str('abc#def', None)
-            'abc#def'
+            >>> BroadcastConfigValidator.coerce_str('echo "${FOO#*bar}"', None)
+            'echo "${FOO#*bar}"'
         """
-        # Prevent ParsecValidator from assuming '#' means comments;
-        # '#' has valid uses in shell script such as parameter substitution
-        if isinstance(value, str) and '#' in value:
-            value = f'"{value}"'
-        return ParsecValidator.coerce_str(value, keys)
+        val = ParsecValidator._unquote(keys, value) or value
+        return dedent(val).strip()
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
@@ -1183,7 +1187,7 @@ class BroadcastConfigValidator(CylcConfigValidator):
     # BACK COMPAT: BroadcastConfigValidator.coerce_interval
     # The DB at 8.0.x stores Interval values as neither ISO8601 duration
     # string or DurationFloat. This has been fixed at 8.1.0, and
-    # the following class acts as a bridge between fixed and broken.
+    # the following method acts as a bridge between fixed and broken.
     # url:
     #     https://github.com/cylc/cylc-flow/pull/5138
     # from:
