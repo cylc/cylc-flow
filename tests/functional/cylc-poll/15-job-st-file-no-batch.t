@@ -31,4 +31,3 @@ run_ok "${TEST_NAME_BASE}-log-2" \
     grep -E '1/t1 running .*\(polled\)failed' "${LOG}"
 
 purge
-exit

@@ -165,7 +165,7 @@ class TaskJobManager:
         now = time()
         poll_tasks = set()
         for itask in task_pool.get_tasks():
-            if self.task_events_mgr.check_job_time(itask, now):
+            if self.task_events_mgr.check_job_time(itask, now, False):
                 poll_tasks.add(itask)
                 if itask.poll_timer.delay is not None:
                     LOG.info(
@@ -1009,7 +1009,7 @@ class TaskJobManager:
                 self.get_simulation_job_conf(itask, workflow)
             )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED
+                itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
 
         return itasks
