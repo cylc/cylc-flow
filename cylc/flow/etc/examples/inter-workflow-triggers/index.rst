@@ -24,5 +24,5 @@ Inter-Workflow Triggering
    This pattern is useful where you have workflows that you want to keep decoupled
    from one another, but still need to exchange data. E.G. in operational
    meteorology we might have a global model (covering the whole Earth) and a
-   regional model (just covering a little bit of of) where the regional model
+   regional model (just covering a little bit of it) where the regional model
    obtains its boundary condition from the global model.
