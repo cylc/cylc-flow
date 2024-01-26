@@ -17,8 +17,12 @@
 import asyncio
 import pytest
 import sqlite3
+from typing import TYPE_CHECKING
 
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.cycling.iso8601 import ISO8601Point
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
 
 async def test_restart_number(
@@ -30,7 +34,7 @@ async def test_restart_number(
     async def test(expected_restart_num: int, do_reload: bool = False):
         """(Re)start the workflow and check the restart number is as expected.
         """
-        schd: Scheduler = scheduler(id_, paused_start=True)
+        schd: 'Scheduler' = scheduler(id_, paused_start=True)
         async with start(schd) as log:
             if do_reload:
                 schd.command_reload_workflow()
@@ -53,7 +57,7 @@ async def test_restart_number(
     await test(expected_restart_num=3)
 
 
-def db_remove_column(schd: Scheduler, table: str, column: str) -> None:
+def db_remove_column(schd: 'Scheduler', table: str, column: str) -> None:
     """Remove a column from a scheduler DB table.
 
     ALTER TABLE DROP COLUMN is not supported by sqlite yet, so we have to copy
@@ -83,7 +87,7 @@ async def test_db_upgrade_pre_803(
     id_ = flow(one_conf)
 
     # Run a scheduler to create a DB.
-    schd: Scheduler = scheduler(id_, paused_start=True)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
     async with start(schd):
         assert ('n_restart', '0') in db_select(schd, False, 'workflow_params')
 
@@ -91,7 +95,7 @@ async def test_db_upgrade_pre_803(
     db_remove_column(schd, "task_states", "is_manual_submit")
     db_remove_column(schd, "task_jobs", "flow_nums")
 
-    schd: Scheduler = scheduler(id_, paused_start=True)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
 
     # Restart should fail due to the missing column.
     with pytest.raises(sqlite3.OperationalError):
@@ -99,7 +103,7 @@ async def test_db_upgrade_pre_803(
             pass
     assert ('n_restart', '1') in db_select(schd, False, 'workflow_params')
 
-    schd: Scheduler = scheduler(id_, paused_start=True)
+    schd: 'Scheduler' = scheduler(id_, paused_start=True)
 
     # Run the DB upgrader for version 8.0.2
     # (8.0.2 requires upgrade)
@@ -118,7 +122,7 @@ async def test_workflow_param_rapid_toggle(
 
     https://github.com/cylc/cylc-flow/issues/5593
     """
-    schd: Scheduler = scheduler(flow(one_conf), paused_start=False)
+    schd: 'Scheduler' = scheduler(flow(one_conf), paused_start=False)
     async with run(schd):
         assert schd.is_paused is False
         schd.pause_workflow()
@@ -145,12 +149,14 @@ async def test_record_only_non_clock_triggers(
     @TODO: Refactor to use simulation mode to speedup after Simulation
     mode upgrade bugfixes: This should speed this test up considerably.
     """
+    rawpoint = '1348'
     id_ = flow({
         "scheduler": {
-            'cycle point format': '%Y'
+            'cycle point format': '%Y',
+            'allow implicit tasks': True
         },
         "scheduling": {
-            "initial cycle point": "1348",
+            "initial cycle point": rawpoint,
             "xtriggers": {
                 "another": "xrandom(100)",
                 "wall_clock": "xrandom(100, _=Not a real wall clock trigger)",
@@ -163,26 +169,17 @@ async def test_record_only_non_clock_triggers(
                 """
             }
         },
-        'runtime': {
-            'foo': {
-                'execution retry delays': 'PT1S',
-                'submission retry delays': 'PT0S',
-                'simulation': {
-                    'default run length': 'PT0S',
-                    'fail cycle points': '1348'
-                }
-            }
-        }
     })
-    # Run workflow unto completion:
     schd = scheduler(id_, paused_start=False, run_mode='simulation')
-    import asyncio
-    async with run(schd) as log:
-        #schd.pool.get_tasks()[0].state.status = 'running'
-        await complete(schd, timeout=10)
 
+    async with run(schd):
+        foo = schd.pool.get_task(ISO8601Point(rawpoint), 'foo')
 
+        # Wait until all xtriggers for foo are satisfied:
+        while not all(foo.state.xtriggers.values()):
+            await asyncio.sleep(1)
+
+    # Assert that (only) the real clock trigger is not in the db:
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
-        ('xrandom(100, _=Not a real wall clock trigger)',)
-    ]
+        ('xrandom(100, _=Not a real wall clock trigger)',)]
