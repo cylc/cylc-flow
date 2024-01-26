@@ -37,6 +37,12 @@ A non-zero return code will be returned if any issues are identified.
 This can be overridden by providing the "--exit-zero" flag.
 """
 
+NOQA = """
+Individual errors can be ignored using the ``# noqa`` line comment.
+It is good practice to specify specific errors you wish to ignore using
+``# noqa: S002 S007 U999``
+"""
+
 TOMLDOC = """
 pyproject.toml configuration:{}
    [cylc-lint]                     # any of {}
@@ -399,7 +405,7 @@ STYLE_CHECKS = {
         'short': 'Item not indented.',
         # Non-indented items should be sections:
         'url': STYLE_GUIDE + 'indentation',
-        FUNCTION: re.compile(r'^[^\{\[|\s]').findall
+        FUNCTION: re.compile(r'^[^%\{\[|\s]').findall
     },
     "S003": {
         'short': 'Top level sections should not be indented.',
@@ -1066,6 +1072,33 @@ def check_cylc_file(
                 pass
 
 
+def no_qa(line: str, index: str):
+    """This line has a no-qa comment.
+
+    Examples:
+        # No comment, no exception:
+        >>> no_qa('foo = bar', 'S001')
+        False
+
+        # Comment, no error codes, no checking:
+        >>> no_qa('foo = bar # noqa', 'S001')
+        True
+
+        # Comment, no relevent error codes, no checking:
+        >>> no_qa('foo = bar # noqa: S999, 997', 'S001')
+        False
+
+        # Comment, relevent error codes, checking:
+        >>> no_qa('foo = bar # noqa: S001 S003', 'S001')
+        True
+    """
+    NOQA = re.compile(r'.*#\s*[Nn][Oo][Qq][Aa]:?(.*)')
+    noqa = NOQA.findall(line)
+    if noqa and (noqa[0] == '' or index in noqa[0]):
+        return True
+    return False
+
+
 def lint(
     file_rel: Path,
     lines: Iterator[str],
@@ -1105,9 +1138,13 @@ def lint(
         # run lint checks against the current line
         for index, check_meta in checks.items():
             # Skip commented line unless check says not to.
+            index_str = get_index_str(check_meta, index)
             if (
-                line.strip().startswith('#')
-                and not check_meta.get('evaluate commented lines', False)
+                (
+                    line.strip().startswith('#')
+                    and not check_meta.get('evaluate commented lines', False)
+                )
+                or no_qa(line, index_str)
             ):
                 continue
 
@@ -1139,7 +1176,7 @@ def lint(
                     url = get_url(check_meta)
 
                     yield (
-                        f'# [{get_index_str(check_meta, index)}]: '
+                        f'# [{index_str}]: '
                         f'{msg}\n'
                         f'# - see {url}\n'
                     )
@@ -1147,7 +1184,7 @@ def lint(
                     # write a message to inform the user
                     write(
                         Fore.YELLOW +
-                        f'[{get_index_str(check_meta, index)}]'
+                        f'[{index_str}]'
                         f' {file_rel}:{line_no}: {msg}'
                     )
         if modify:
@@ -1278,7 +1315,11 @@ def target_version_check(
 
 def get_option_parser() -> COP:
     parser = COP(
-        COP_DOC + TOMLDOC.format('', str(LINT_SECTIONS)),
+        (
+            COP_DOC
+            + NOQA.replace('``', '"')
+            + TOMLDOC.format('', str(LINT_SECTIONS))
+        ),
         argdoc=[
             COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)
         ],
@@ -1403,4 +1444,5 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
 # NOTE: use += so that this works with __import__
 # (docstring needed for `cylc help all` output)
+__doc__ += NOQA
 __doc__ += get_reference('all', 'rst')

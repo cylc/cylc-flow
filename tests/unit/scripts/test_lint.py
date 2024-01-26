@@ -148,6 +148,8 @@ TEST_FILE = """
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
+%include foo.cylc
 """
 
 
@@ -649,3 +651,18 @@ def test_indents(spaces, expect):
         assert expect in result
     else:
         assert not result
+
+
+def test_noqa():
+    """Comments turn of checks.
+
+    """
+    output = lint_text(
+        'foo = bar#noqa\n'
+        'qux = baz # noqa: S002\n'
+        'buzz = food # noqa: S007\n'
+        'quixotic = foolish # noqa: S007, S992 S002\n',
+        ['style']
+    )
+    assert len(output.messages) == 1
+    assert 'flow.cylc:3' in output.messages[0]
