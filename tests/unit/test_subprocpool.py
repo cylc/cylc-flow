@@ -29,7 +29,7 @@ from cylc.flow.id import Tokens
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNCS, get_func
+from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNC_CACHE, _XTRIG_MOD_CACHE, get_xtrig_func
 from cylc.flow.task_proxy import TaskProxy
 
 
@@ -156,7 +156,7 @@ class TestSubProcPool(unittest.TestCase):
                 f.write("""the_answer = lambda: 42""")
                 f.flush()
                 f_name = "the_answer"
-            fn = get_func(f_name, f_name, temp_dir)
+            fn = get_xtrig_func(f_name, f_name, temp_dir)
             result = fn()
             self.assertEqual(42, result)
 
@@ -170,15 +170,15 @@ class TestSubProcPool(unittest.TestCase):
                 f.write("""choco = lambda: 'chocolate'""")
                 f.flush()
             m_name = "amandita"  # module
-            f_name =  "choco"  # function
-            fn = get_func(m_name, f_name, temp_dir)
+            f_name = "choco"  # function
+            fn = get_xtrig_func(m_name, f_name, temp_dir)
             result = fn()
             self.assertEqual('chocolate', result)
 
             # is in the cache
-            self.assertTrue((m_name, f_name) in _XTRIG_FUNCS)
+            self.assertTrue((m_name, f_name) in _XTRIG_FUNC_CACHE)
             # returned from cache
-            self.assertEqual(fn, get_func(m_name, f_name, temp_dir))
+            self.assertEqual(fn, get_xtrig_func(m_name, f_name, temp_dir))
 
     def test_xfunction_import_error(self):
         """Test for error on importing a xtrigger function.
@@ -189,7 +189,7 @@ class TestSubProcPool(unittest.TestCase):
         """
         with TemporaryDirectory() as temp_dir:
             with self.assertRaises(ModuleNotFoundError):
-                get_func("invalid-module-name", "func-name", temp_dir)
+                get_xtrig_func("invalid-module-name", "func-name", temp_dir)
 
     def test_xfunction_attribute_error(self):
         """Test for error on looking for an attribute in a xtrigger script."""
@@ -202,7 +202,7 @@ class TestSubProcPool(unittest.TestCase):
                 f.flush()
             f_name = "the_sword"
             with self.assertRaises(AttributeError):
-                get_func(f_name, f_name, temp_dir)
+                get_xtrig_func(f_name, f_name, temp_dir)
 
 
 @pytest.fixture

@@ -31,7 +31,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
    final cycle point = +P1Y
    [[xtriggers]]
        e1 = echo(name='bob', succeed=True)
-       e2 = echo(name='alice')
+       e2 = echo(name='alice', succeed=False)
    [[dependencies]]
       [[[R1]]]
           graph = "start"
@@ -55,7 +55,7 @@ cylc show "${WORKFLOW_NAME}//2026/foo" | grep -E '^  - xtrigger' > 2026.foo.log
 
 # 2026/foo should get only xtrigger e2.
 cmp_ok 2026.foo.log - <<__END__
-  - xtrigger "e2 = echo(name=alice)"
+  - xtrigger "e2 = echo(name=alice, succeed=False)"
 __END__
 
 cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"

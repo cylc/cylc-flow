@@ -83,7 +83,7 @@ from cylc.flow.pathutil import (
 from cylc.flow.print_tree import print_tree
 from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import get_func
+from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.task_events_mgr import (
     EventData,
     get_event_handler_data
@@ -1716,31 +1716,28 @@ class WorkflowConfig:
                     # Allow "@wall_clock" in graph as implicit zero-offset.
                     xtrig = SubFuncContext('wall_clock', 'wall_clock', [], {})
 
-            if xtrig.func_name == 'wall_clock':
-                if self.cycling_type == INTEGER_CYCLING_TYPE:
-                    raise WorkflowConfigError(
-                        "Clock xtriggers require datetime cycling:"
-                        f" {label} = {xtrig.get_signature()}"
-                    )
-                else:
-                    # Convert offset arg to kwarg for certainty later.
-                    if "offset" not in xtrig.func_kwargs:
-                        xtrig.func_kwargs["offset"] = None
-                        with suppress(IndexError):
-                            xtrig.func_kwargs["offset"] = xtrig.func_args[0]
+            if (
+                xtrig.func_name == 'wall_clock'
+                and self.cycling_type == INTEGER_CYCLING_TYPE
+            ):
+                raise WorkflowConfigError(
+                    "Clock xtriggers require datetime cycling:"
+                    f" {label} = {xtrig.get_signature()}"
+                )
 
-            # Call the xtrigger's validate_config function if it has one.
+            # Generic xtrigger validation.
+            XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
+
+            # Specific xtrigger.validate(), if available.
             with suppress(AttributeError, ImportError):
-                get_func(xtrig.func_name, "validate_config", self.fdir)(
+                get_xtrig_func(xtrig.func_name, "validate", self.fdir)(
                     xtrig.func_args,
                     xtrig.func_kwargs,
                     xtrig.get_signature()
                 )
 
-            if self.xtrigger_mgr is None:
-                # Validation only.
-                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
-            else:
+            if self.xtrigger_mgr:
+                # (not available during validation)
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
 
             self.taskdefs[right].add_xtrig_label(label, seq)
@@ -2433,7 +2430,7 @@ class WorkflowConfig:
             xtrig = SubFuncContext(label, 'wall_clock', [], {})
             xtrig.func_kwargs["offset"] = offset
             if self.xtrigger_mgr is None:
-                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
+                XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
             else:
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             # Add it to the task, for each sequence that the task appears in.

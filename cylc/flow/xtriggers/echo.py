@@ -16,12 +16,11 @@
 
 """A Cylc xtrigger function."""
 
-from contextlib import suppress
+from cylc.flow.exceptions import WorkflowConfigError
 
 
 def echo(*args, **kwargs):
-    """Prints args to stdout and return success only if kwargs['succeed']
-    is True.
+    """Print arguments to stdout, return kwargs['succeed'] and kwargs.
 
     This may be a useful aid to understanding how xtriggers work.
 
@@ -31,7 +30,14 @@ def echo(*args, **kwargs):
     """
     print("echo: ARGS:", args)
     print("echo: KWARGS:", kwargs)
-    result = False
-    with suppress(KeyError):
-        result = kwargs["succeed"] is True
-    return result, kwargs
+
+    return kwargs["succeed"], kwargs
+
+
+def validate(f_args, f_kwargs, f_signature):
+    try:
+        assert type(f_kwargs["succeed"]) is bool
+    except (KeyError, AssertionError):
+        raise WorkflowConfigError(
+            f"xtrigger requires 'succeed=True/False': {f_signature}"
+        )

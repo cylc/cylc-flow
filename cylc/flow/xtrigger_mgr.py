@@ -26,7 +26,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
-from cylc.flow.subprocpool import get_func
+from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.xtriggers.wall_clock import wall_clock
 
 if TYPE_CHECKING:
@@ -240,12 +240,14 @@ class XtriggerManager:
         self.do_housekeeping = False
 
     @staticmethod
-    def validate_xtrigger(
+    def check_xtrigger(
         label: str,
         fctx: 'SubFuncContext',
         fdir: str,
     ) -> None:
-        """Validate an Xtrigger function.
+        """Generic xtrigger validation: check existence and string templates.
+
+        Xtrigger modules may also supply a specific "validate" function.
 
         Args:
             label: xtrigger label
@@ -264,7 +266,7 @@ class XtriggerManager:
         fname: str = fctx.func_name
 
         try:
-            func = get_func(fname, fname, fdir)
+            func = get_xtrig_func(fname, fname, fdir)
         except ImportError:
             raise XtriggerConfigError(
                 label,
@@ -319,13 +321,14 @@ class XtriggerManager:
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
         """Add a new xtrigger function.
 
-        Check the xtrigger function exists here (e.g. during validation).
+        Call check_xtrigger before this, during validation.
+
         Args:
             label: xtrigger label
             fctx: function context
             fdir: function module directory
+
         """
-        self.validate_xtrigger(label, fctx, fdir)
         self.functx_map[label] = fctx
 
     def mutate_trig(self, label, kwargs):

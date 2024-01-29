@@ -31,10 +31,10 @@ def wall_clock(trigger_time=None):
     return time() > trigger_time
 
 
-def validate_config(f_args, f_kwargs, f_signature):
+def validate(f_args, f_kwargs, f_signature):
     """Validate and manipulate args parsed from the workflow config.
 
-    wall_clock()  # zero offset
+    wall_clock()  # infer zero interval
     wall_clock(PT1H)
     wall_clock(offset=PT1H)
 
@@ -43,18 +43,30 @@ def validate_config(f_args, f_kwargs, f_signature):
     If f_args used, convert to f_kwargs for clarity.
 
     """
+
     n_args = len(f_args)
     n_kwargs = len(f_kwargs)
 
     if n_args + n_kwargs > 1:
-        raise WorkflowConfigError(f"xtrigger: too many args: {f_signature}")
+        raise WorkflowConfigError(f"Too many args: {f_signature}")
 
-    if n_args:
+    if n_kwargs:
+        # sole kwarg must be "offset"
+        kw = next(iter(f_kwargs))
+        if kw != "offset":
+            raise WorkflowConfigError(f"Illegal arg '{kw}': {f_signature}")
+
+    elif n_args:
+        # convert to kwarg
         f_kwargs["offset"] = f_args[0]
-    elif not n_kwargs:
+        del f_args[0]
+
+    else:
+        # no args, infer zero interval
         f_kwargs["offset"] = "P0Y"
 
+    # must be a valid interval
     try:
         interval_parse(f_kwargs["offset"])
     except ValueError:
-        raise WorkflowConfigError(f"xtrigger: invalid offset: {f_signature}")
+        raise WorkflowConfigError(f": Invalid offset: {f_signature}")
