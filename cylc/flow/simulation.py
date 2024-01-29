@@ -90,6 +90,7 @@ class ModeSettings:
 
         self.timeout = started_time + self.simulated_run_length
 
+
 def configure_sim_modes(taskdefs, sim_mode):
     """Adjust task defs for simulation and dummy mode.
 
@@ -219,6 +220,7 @@ def sim_time_check(
     """
     now = time()
     sim_task_state_changed: bool = False
+
     for itask in itasks:
         if (
             itask.state.status != TASK_STATUS_RUNNING
@@ -227,8 +229,6 @@ def sim_time_check(
             or itask.state.is_runahead
         ):
             continue
-
-
 
         if itask.mode_settings is None:
             itask.mode_settings = ModeSettings(itask, broadcast_mgr, db_mgr)
@@ -251,7 +251,11 @@ def sim_time_check(
                 message_queue.put(
                     TaskMsg(job_d, now_str, 'DEBUG', msg)
                 )
+
+            # We've finished this psuedojob, so delete all the mode settings.
+            itask.mode_settings = None
             sim_task_state_changed = True
+            itask.mode_settings = None
     return sim_task_state_changed
 
 
