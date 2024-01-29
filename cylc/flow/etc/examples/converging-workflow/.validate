@@ -15,17 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+set -eux
 
-set -eu
-cd "$(dirname "$0")/../../"
+ID="$(< /dev/urandom tr -dc A-Za-z | head -c6)"
 
-for DIR in tutorial examples; do
-    echo "# Running tests for: $DIR"
-    for FILE in $(echo "cylc/flow/etc/$DIR/"*/.validate); do
-        echo "## Running test: $FILE"
-        (
-            cd "$(dirname "$FILE")"
-            ./.validate
-        )
-    done
-done
+# start the workflow
+cylc vip --check-circular --no-run-name --no-detach --workflow-name "$ID"
+
+# it should have reached the forth cycle
+test -d "${HOME}/cylc-run/${ID}/log/job/4"
+test ! -d "${HOME}/cylc-run/${ID}/log/job/5"
+
+# lint
+cylc lint "$ID"
+
+# clean up
+cylc clean "$ID"
