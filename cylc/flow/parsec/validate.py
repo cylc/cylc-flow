@@ -657,6 +657,7 @@ class CylcConfigValidator(ParsecValidator):
     V_CYCLE_POINT = 'V_CYCLE_POINT'
     V_CYCLE_POINT_FORMAT = 'V_CYCLE_POINT_FORMAT'
     V_CYCLE_POINT_TIME_ZONE = 'V_CYCLE_POINT_TIME_ZONE'
+    V_CYCLE_POINT_WITH_OFFSETS = 'V_CYCLE_POINT_WITH_OFFSETS'
     V_INTERVAL = 'V_INTERVAL'
     V_INTERVAL_LIST = 'V_INTERVAL_LIST'
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
@@ -697,6 +698,30 @@ class CylcConfigValidator(ParsecValidator):
                 'Z': 'UTC / GMT.',
                 '+13': 'UTC plus 13 hours.',
                 '-0830': 'UTC minus 8 hours and 30 minutes.'
+            }
+        ),
+        V_CYCLE_POINT_WITH_OFFSETS: (
+            'cycle point with support for offsets',
+            'An integer of date-time cycle point.',
+            {
+                '1': 'An integer cycle point.',
+                '1 +P5': (
+                    'An integer cycle point with offsets.',
+                    ' (this evaluates as ``6``)'
+                ),
+                '+P5': (
+                    'An integer cycle point offset.'
+                    ' This offset is added to the initial cycle point'
+                ),
+                '2000-01-01T00:00Z': 'A date-time cycle point.',
+                '2000-01-01T00:00Z +P1D +P1M': (
+                    'A date-time cycle point with offsets.'
+                    ' (this evaluates as ``2000-02-02T00:00Z``'
+                ),
+                '2000-01-01T00:00Z +P1D': (
+                    'A date-time offset.'
+                    ' This offset is added to the initial cycle point'
+                ),
             }
         ),
         V_INTERVAL: (
@@ -751,6 +776,9 @@ class CylcConfigValidator(ParsecValidator):
             self.V_CYCLE_POINT: self.coerce_cycle_point,
             self.V_CYCLE_POINT_FORMAT: self.coerce_cycle_point_format,
             self.V_CYCLE_POINT_TIME_ZONE: self.coerce_cycle_point_time_zone,
+            # NOTE: This type exists for documentation reasons
+            # it doesn't actually process offsets, that happens later
+            self.V_CYCLE_POINT_WITH_OFFSETS: self.coerce_str,
             self.V_INTERVAL: self.coerce_interval,
             self.V_INTERVAL_LIST: self.coerce_interval_list,
             self.V_PARAMETER_LIST: self.coerce_parameter_list,

@@ -851,9 +851,16 @@ class WorkflowConfig:
         if stopcp_str is None:
             stopcp_str = self.cfg['scheduling']['stop after cycle point']
 
-        if stopcp_str is not None:
-            self.stop_point = get_point(stopcp_str).standardise()
-            if self.final_point and (self.stop_point > self.final_point):
+        if stopcp_str:
+            self.stop_point = get_point_relative(
+                stopcp_str,
+                self.initial_point,
+            ).standardise()
+            if (
+                self.final_point is not None
+                and self.stop_point is not None
+                and self.stop_point > self.final_point
+            ):
                 LOG.warning(
                     f"Stop cycle point '{self.stop_point}' will have no "
                     "effect as it is after the final cycle "
