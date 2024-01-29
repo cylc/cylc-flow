@@ -22,21 +22,25 @@ See also:
 
 """
 
+from enum import Enum
+import errno
 import os
+from pathlib import Path
 import re
 import shutil
-from enum import Enum
-from pathlib import Path
 from subprocess import (
     PIPE,
     Popen,
     TimeoutExpired,
 )
 from typing import (
+    Callable,
     Dict,
     Optional,
     Tuple,
     Union,
+    NoReturn,
+    Type,
 )
 
 import cylc.flow.flags
@@ -48,7 +52,7 @@ from cylc.flow.exceptions import (
     InputError,
     ServiceFileError,
     WorkflowFilesError,
-    handle_rmtree_err,
+    FileRemovalError,
 )
 from cylc.flow.hostuserutil import (
     get_user,
@@ -62,6 +66,19 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
+
+
+def handle_rmtree_err(
+    function: Callable,
+    path: str,
+    excinfo: Tuple[Type[Exception], Exception, object]
+) -> NoReturn:
+    """Error handler for shutil.rmtree."""
+    exc = excinfo[1]
+    if isinstance(exc, OSError) and exc.errno == errno.ENOTEMPTY:
+        # "Directory not empty", likely due to filesystem lag
+        raise FileRemovalError(exc)
+    raise exc
 
 
 class KeyType(Enum):

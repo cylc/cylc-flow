@@ -195,15 +195,15 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
             the contact file.
 
     Attributes:
-        host (str):
+        host:
             Workflow host name.
-        port (int):
+        port:
             Workflow host port.
-        timeout_handler (function):
+        timeout_handler:
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
             the event of a communication timeout.
-        header (dict):
+        header:
             Request "header" data to attach to each request.
 
     Usage:
