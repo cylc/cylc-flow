@@ -1,0 +1,56 @@
+#!Jinja2
+
+{#
+    The default is "2010", this can be overridden on the command line
+    e.g. "cylc play -s stop_cycle=2020"
+#}
+{% set stop_cycle = stop_cycle | default('2010') %}
+
+[meta]
+    title = "Advanced extendable workflow"
+    description = """
+        Use the "stop_cycle" Jinja2 variable to control the workflow end point.
+
+        To extend the workflow further at a later date, restart it with a new
+        "stop_cycle".
+    """
+
+[scheduler]
+    # use the year for the cycle point
+    # (strip off the month, day, hour and minute)
+    cycle point format = CCYY
+    allow implicit tasks = True
+
+[scheduling]
+    initial cycle point = 2000
+    stop after cycle point = {{ stop_cycle }}
+    [[graph]]
+        # first cycle only
+        R1 = """
+            build => install => run_model
+        """
+
+        # first three cycles only
+        R3/2000/P1Y = """
+            initial_conditions => run_model
+        """
+
+        # every cycle
+        P1Y = """
+            run_model[-P1Y] => run_model
+        """
+
+        # last three cycles
+        R1/{{ stop_cycle }}-P2Y = """
+            # add the first process task
+            run_model => process
+        """
+        R2/P1Y/{{ stop_cycle }} = """
+            process[-P1Y] => process
+            run_model => process
+        """
+
+        # last cycle
+        R1/{{ stop_cycle }} = """
+            process => analyse => plot
+        """
