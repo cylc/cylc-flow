@@ -35,6 +35,12 @@ def echo(*args, **kwargs):
 
 
 def validate(f_args, f_kwargs, f_signature):
+    """
+    Validate the xtrigger function arguments parsed from the workflow config.
+
+    This is separate from the xtrigger to allow parse-time validation.
+
+    """
     try:
         assert type(f_kwargs["succeed"]) is bool
     except (KeyError, AssertionError):
