@@ -27,10 +27,49 @@ if not cylc.flow.flags.cylc7_back_compat:
 
 def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
-    '''The suite_state xtrigger was renamed to workflow_state,
-    this breaks Cylc 7-8 interoperability.
-    This suite_state xtrigger replicates
-    workflow_state - ensuring back-support'''
+    """Suite state xtrigger, required for interoperability with Cylc 7.
+
+    * The suite_state xtrigger was renamed to workflow_state, this breaks Cylc 7-8 interoperability.
+    * This suite_state xtrigger replicates workflow_state - ensuring back-support.
+
+    Arguments:
+        suite:
+            The workflow to interrogate.
+        task:
+            The name of the task to query.
+        point:
+            The cycle point.
+        offset:
+            The offset between the cycle this xtrigger is used in and the one
+            it is querying for as an ISO8601 time duration.
+            e.g. PT1H (one hour).
+        status:
+            The task status required for this xtrigger to be satisfied.
+        message:
+            The custom task output required for this xtrigger to be satisfied.
+            .. note::
+
+               This cannot be specified in conjunction with ``status``.
+
+        cylc_run_dir:
+            The directory in which the workflow to interrogate.
+
+            .. note::
+
+               This only needs to be supplied if the workflow is running in a
+               different location to what is specified in the global
+               configuration (usually ``~/cylc-run``).
+
+    Returns:
+        tuple: (satisfied, results)
+
+        satisfied:
+            True if ``satisfied`` else ``False``.
+        results:
+            Dictionary containing the args / kwargs which were provided
+            to this xtrigger.
+
+    """
     return workflow_state(
         workflow=suite,
         task=task,
