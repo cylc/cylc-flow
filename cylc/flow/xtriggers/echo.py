@@ -41,9 +41,7 @@ def validate(f_args, f_kwargs, f_signature):
     This is separate from the xtrigger to allow parse-time validation.
 
     """
-    try:
-        assert type(f_kwargs["succeed"]) is bool
-    except (KeyError, AssertionError):
+    if "succeed" not in f_kwargs or not type(f_kwargs["succeed"]) is bool:
         raise WorkflowConfigError(
-            f"xtrigger requires 'succeed=True/False': {f_signature}"
+            f"Requires 'succeed=True/False' arg: {f_signature}"
         )

@@ -69,4 +69,4 @@ def validate(f_args, f_kwargs, f_signature):
     try:
         interval_parse(f_kwargs["offset"])
     except ValueError:
-        raise WorkflowConfigError(f": Invalid offset: {f_signature}")
+        raise WorkflowConfigError(f"Invalid offset: {f_signature}")
