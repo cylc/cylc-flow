@@ -57,7 +57,7 @@ class ModeSettings:
         self,
         itask: 'TaskProxy',
         broadcast_mgr: 'BroadcastMgr',
-        db_mgr: 'WorkflowDatabaseManager' = None
+        db_mgr: 'Optional[WorkflowDatabaseManager]' = None
     ):
         overrides = broadcast_mgr.get_broadcast(itask.tokens)
         if overrides:
@@ -76,7 +76,7 @@ class ModeSettings:
         # itask.summary['started_time'] and mode_settings.timeout need
         # repopulating from the DB on workflow restart:
         started_time = itask.summary['started_time']
-        if started_time is None:
+        if started_time is None and db_mgr:
             started_time = int(
                 TimePointParser()
                 .parse(

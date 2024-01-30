@@ -16,7 +16,7 @@
 
 from pathlib import Path
 import pytest
-from pytest import param
+from pytest import UsageError, param
 from queue import Queue
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -45,6 +45,47 @@ def q_clean():
     def _inner(msg_q):
         if not msg_q.empty():
             msg_q.get()
+    return _inner
+
+
+@pytest.fixture
+def run_simjob(monkeytime):
+    """Run a simulated job to completion.
+
+    Returns the output status.
+    """
+    def _inner(schd, point=None, task=None):
+        # Get the only task proxy, submit the psuedo job:
+        if task and point:
+            itask = schd.pool.get_task(point, task)
+        elif task or point:
+            raise UsageError(
+                'run_simjob requires either a task and point, or neither.')
+        else:
+            itasks = schd.pool.get_tasks()
+            if len(itasks) != 1:
+                raise UsageError(
+                    'run_simjob cannot needs a task and point if more '
+                    'than one task is in the task pool.')
+            else:
+                itask, = itasks
+
+        itask.state.is_queued = False
+        monkeytime(0)
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        monkeytime(itask.mode_settings.timeout + 1)
+
+        # Run Time Check
+        assert sim_time_check(
+            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.workflow_db_mgr
+        ) is True
+
+        # Capture result process queue.
+        out = schd.message_queue.queue[0].message
+        schd.process_queued_task_messages()
+        return out
     return _inner
 
 
@@ -146,31 +187,6 @@ def test_fail_once(sim_time_check_setup, itask, point, results):
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is result
-
-
-def test_sim_time_check_sets_started_time(
-    scheduler, sim_time_check_setup
-):
-    """But sim_time_check still returns False
-
-    This only occurs in reality if we've restarted from database and
-    not retrieved the started time from itask.summary.
-    """
-    schd, _, msg_q = sim_time_check_setup
-    one_1066 = schd.pool.get_task(ISO8601Point('1066'), 'one')
-    # Add info to databse as if it's be started before shutdown:
-    schd.task_job_mgr._simulation_submit_task_jobs(
-        [one_1066], schd.workflow)
-    schd.workflow_db_mgr.process_queued_ops()
-    one_1066.summary['started_time'] = None
-    one_1066.state.is_queued = False
-    one_1066.mode_settings = None
-    assert one_1066.summary['started_time'] is None
-    assert sim_time_check(
-        msg_q, [one_1066], schd.task_events_mgr.broadcast_mgr,
-        schd.workflow_db_mgr
-    ) is False
-    assert one_1066.summary['started_time'] is not None
 
 
 def test_task_finishes(sim_time_check_setup, monkeytime, q_clean):
@@ -347,34 +363,12 @@ async def test_simulation_mode_settings_restart(
 
 
 async def test_simulation_mode_settings_reload(
-    monkeytime, flow, scheduler, start
+    flow, scheduler, start, run_simjob
 ):
     """Check that simulation mode settings are changed for future
     pseudo jobs on reload.
 
     """
-    def sim_run(schd):
-        """Submit and run a psuedo-job.
-        """
-        # Get the only task proxy, submit the psuedo job:
-        itask = schd.pool.get_tasks()[0]
-        itask.state.is_queued = False
-        monkeytime(0)
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
-        monkeytime(61)
-
-        # Run Time Check
-        assert sim_time_check(
-            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
-            schd.workflow_db_mgr
-        ) is True
-
-        # Capture result process queue.
-        out = schd.message_queue.queue[0].message
-        schd.process_queued_task_messages()
-        return out
-
     id_ = flow({
         'scheduler': {'cycle point format': '%Y'},
         'scheduling': {
@@ -398,7 +392,7 @@ async def test_simulation_mode_settings_reload(
     schd = scheduler(id_)
     async with start(schd):
         # Submit first psuedo-job and "run" to failure:
-        assert sim_run(schd) == 'failed'
+        assert run_simjob(schd) == 'failed'
 
         # Modify config as if reinstall had taken place:
         conf_file = Path(schd.workflow_run_dir) / 'flow.cylc'
@@ -409,4 +403,4 @@ async def test_simulation_mode_settings_reload(
         await schd.command_reload_workflow()
 
         # Submit second psuedo-job and "run" to success:
-        assert sim_run(schd) == 'succeeded'
+        assert run_simjob(schd) == 'succeeded'
