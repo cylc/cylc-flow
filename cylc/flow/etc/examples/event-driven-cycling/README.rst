@@ -8,7 +8,7 @@ Cylc is good at orchestrating tasks to a schedule, e.g:
 But sometimes the things you want to run don't have a schedule.
 
 This example uses ``cylc ext-trigger`` to establish a pattern where Cylc waits
-for an external signal and starts a new cycle every time a signal is recieved.
+for an external signal and starts a new cycle every time a signal is received.
 
 The signal can carry data using the ext-trigger ID, this example sets the ID
 as a file path containing some data that we want to make available to the tasks
