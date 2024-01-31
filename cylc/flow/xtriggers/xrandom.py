@@ -121,19 +121,32 @@ def validate(f_args, f_kwargs, f_signature):
     f_kwargs["percent"] = f_args[0]
     del f_args[0]
 
+    should_raise = False
+
     try:
         percent = f_kwargs['percent']
         percent = float(percent)
-        assert isinstance(percent, (float, int))
-        assert percent >= 0
-        assert percent <= 100
-    except (AssertionError, ValueError):
+    except ValueError:
+        should_raise = True
+    else:
+        if (
+            not isinstance(percent, (float, int))
+            or percent < 0
+            or percent > 100
+        ):
+            should_raise = True
+    if should_raise:
         raise WorkflowConfigError(
             f"'percent' should be a float between 0 and 100: {f_signature}")
 
     try:
         secs = f_kwargs.get('secs', 0)
-        assert isinstance(secs, int)
-    except (AssertionError, ValueError):
+    except ValueError:
+        should_raise = True
+    else:
+        if not isinstance(secs, int):
+            should_raise = True
+
+    if should_raise:
         raise WorkflowConfigError(
             f"'secs' should be an integer: {f_signature}")
