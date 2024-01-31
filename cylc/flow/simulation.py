@@ -70,7 +70,7 @@ class ModeSettings:
         self.sim_task_fails = sim_task_failed(
             rtconfig['simulation'],
             itask.point,
-            itask.submit_num
+            itask.get_try_num()
         )
 
         # itask.summary['started_time'] and mode_settings.timeout need
@@ -234,7 +234,7 @@ def sim_time_check(
             itask.mode_settings = ModeSettings(itask, broadcast_mgr, db_mgr)
 
         if now > itask.mode_settings.timeout:
-            job_d = itask.tokens.duplicate(job=str(itask.submit_num))
+            job_d = itask.tokens.duplicate(job=str(itask.get_try_num()))
             now_str = get_current_time_string()
 
             if itask.mode_settings.sim_task_fails:
@@ -262,7 +262,7 @@ def sim_time_check(
 def sim_task_failed(
         sim_conf: Dict[str, Any],
         point: 'PointBase',
-        submit_num: int,
+        try_num: int,
 ) -> bool:
     """Encapsulate logic for deciding whether a sim task has failed.
 
@@ -272,5 +272,5 @@ def sim_task_failed(
         sim_conf['fail cycle points'] is None  # i.e. "all"
         or point in sim_conf['fail cycle points']
     ) and (
-        submit_num == 0 or not sim_conf['fail try 1 only']
+        try_num == 0 or not sim_conf['fail try 1 only']
     )
