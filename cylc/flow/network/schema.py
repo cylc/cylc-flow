@@ -349,8 +349,6 @@ async def get_nodes_all(root, info, **args):
 
     _, field_ids = process_resolver_info(root, info, args)
 
-    if hasattr(args, 'id'):
-        args['ids'] = [args.get('id')]
     if field_ids:
         if isinstance(field_ids, str):
             field_ids = [field_ids]
@@ -377,10 +375,8 @@ async def get_nodes_all(root, info, **args):
         else:
             # live objects can be represented by a universal ID
             args[arg] = [Tokens(n_id, relative=True) for n_id in args[arg]]
-    args['workflows'] = [
-        Tokens(w_id) for w_id in args['workflows']]
-    args['exworkflows'] = [
-        Tokens(w_id) for w_id in args['exworkflows']]
+    for arg in ('workflows', 'exworkflows'):
+        args[arg] = [Tokens(w_id) for w_id in args[arg]]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_nodes_all(node_type, args)
 
