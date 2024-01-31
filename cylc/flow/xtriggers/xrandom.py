@@ -108,7 +108,7 @@ def validate(f_args, f_kwargs, f_signature):
     if n_args + n_kwargs > 3:
         raise WorkflowConfigError(f"Too many args: {f_signature}")
 
-    if n_args != 1:
+    if n_args + n_kwargs < 1:
         raise WorkflowConfigError(f"Wrong number of args: {f_signature}")
 
     if n_kwargs:
@@ -123,16 +123,17 @@ def validate(f_args, f_kwargs, f_signature):
 
     try:
         percent = f_kwargs['percent']
+        percent = float(percent)
         assert isinstance(percent, (float, int))
         assert percent >= 0
         assert percent <= 100
-    except AssertionError:
+    except (AssertionError, ValueError):
         raise WorkflowConfigError(
             f"'percent' should be a float between 0 and 100: {f_signature}")
 
     try:
-        secs = f_kwargs['secs']
+        secs = f_kwargs.get('secs', 0)
         assert isinstance(secs, int)
-    except AssertionError:
+    except (AssertionError, ValueError):
         raise WorkflowConfigError(
             f"'secs' should be an integer: {f_signature}")
