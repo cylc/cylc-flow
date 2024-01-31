@@ -552,7 +552,7 @@ with Conf(
 
             - ``2000`` - Shorthand for ``2000-01-01T00:00``.
             - ``+P1D`` - The initial cycle point plus one day.
-            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one year and one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -622,7 +622,7 @@ with Conf(
 
             - ``2000`` - Shorthand for ``2000-01-01T00:00``.
             - ``+P1D`` - The initial cycle point plus one day.
-            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one year and one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
 
             .. versionadded:: 8.0.0
 

@@ -114,7 +114,7 @@ class TestWorkflowConfig:
         """
         flow_file.write_text(flow_config)
         workflow_config = WorkflowConfig(
-            workflow="name_a_tree", fpath=flow_file, options=SimpleNamespace(spec=[]),
+            workflow="name_a_tree", fpath=flow_file, options=SimpleNamespace(),
             xtrigger_mgr=xtrigger_mgr
         )
         assert 'tree' in workflow_config.xtrigger_mgr.functx_map

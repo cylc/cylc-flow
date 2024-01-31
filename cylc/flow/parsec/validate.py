@@ -702,25 +702,21 @@ class CylcConfigValidator(ParsecValidator):
         ),
         V_CYCLE_POINT_WITH_OFFSETS: (
             'cycle point with support for offsets',
-            'An integer of date-time cycle point.',
+            'An integer or date-time cycle point, with optional offset(s).',
             {
                 '1': 'An integer cycle point.',
                 '1 +P5': (
-                    'An integer cycle point with offsets.',
-                    ' (this evaluates as ``6``)'
+                    'An integer cycle point with an offset'
+                    ' (this evaluates as ``6``).'
                 ),
                 '+P5': (
                     'An integer cycle point offset.'
                     ' This offset is added to the initial cycle point'
                 ),
                 '2000-01-01T00:00Z': 'A date-time cycle point.',
-                '2000-01-01T00:00Z +P1D +P1M': (
-                    'A date-time cycle point with offsets.'
-                    ' (this evaluates as ``2000-02-02T00:00Z``'
-                ),
-                '2000-01-01T00:00Z +P1D': (
-                    'A date-time offset.'
-                    ' This offset is added to the initial cycle point'
+                '2000-02-29T00:00Z +P1D +P1M': (
+                    'A date-time cycle point with offsets'
+                    ' (this evaluates as ``2000-04-01T00:00Z``).'
                 ),
             }
         ),
