@@ -173,11 +173,7 @@ async def test_record_only_non_clock_triggers(
     schd = scheduler(id_, paused_start=False, run_mode='simulation')
 
     async with run(schd):
-        foo = schd.pool.get_task(ISO8601Point(rawpoint), 'foo')
-
-        # Wait until all xtriggers for foo are satisfied:
-        while not all(foo.state.xtriggers.values()):
-            await asyncio.sleep(1)
+        await complete(schd, timeout=20)
 
     # Assert that (only) the real clock trigger is not in the db:
     assert db_select(schd, False, 'xtriggers', 'signature') == [

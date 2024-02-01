@@ -555,5 +555,3 @@ def complete():
         schd._set_stop = set_stop
 
     return _complete
-
-
