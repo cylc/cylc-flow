@@ -107,6 +107,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
+    get_time_string_from_unix_time,
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
@@ -998,6 +999,7 @@ class TaskJobManager:
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
         now = time()
+        now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
             itask.summary['started_time'] = now
             itask.mode_settings = ModeSettings(
@@ -1018,7 +1020,7 @@ class TaskJobManager:
                 itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
             self.workflow_db_mgr.put_insert_task_jobs(
-                itask, {'time_submit': get_current_time_string()})
+                itask, {'time_submit': now_str})
 
         return itasks
 

@@ -174,7 +174,7 @@ def test_false_if_not_running(
             id='fail-no-submits'),
     )
 )
-def test_fail_once(sim_time_check_setup, itask, point, results):
+def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
     """A task with a fail cycle point only fails
     at that cycle point, and then only on the first submission.
     """
@@ -183,7 +183,8 @@ def test_fail_once(sim_time_check_setup, itask, point, results):
     itask = schd.pool.get_task(
         ISO8601Point(point), itask)
 
-    for result in results:
+    for i, result in enumerate(results):
+        itask.try_timers['execution-retry'].num = i - 1
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is result
@@ -319,7 +320,7 @@ async def test_simulation_mode_settings_restart(
         # Set the start time in the database to 0 to make the
         # test simpler:
         schd.workflow_db_mgr.put_insert_task_jobs(
-            itask, {'time_submit': '19700101T0000Z'})
+            itask, {'time_submit': '1970-01-01T00:00:00Z'})
         schd.workflow_db_mgr.process_queued_ops()
 
         # Set the current time:

@@ -32,9 +32,10 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
 )
-from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.wallclock import (
+    get_current_time_string, get_unix_time_from_time_string)
 
-from metomi.isodatetime.parsers import DurationParser, TimePointParser
+from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
     from queue import Queue
@@ -77,17 +78,11 @@ class ModeSettings:
         # repopulating from the DB on workflow restart:
         started_time = itask.summary['started_time']
         if started_time is None and db_mgr:
-            started_time = int(
-                TimePointParser()
-                .parse(
-                    db_mgr.pub_dao.select_task_job(
-                        *itask.tokens.relative_id.split("/")
-                    )["time_submit"]
-                )
-                .seconds_since_unix_epoch
-            )
+            started_time_str = db_mgr.pub_dao.select_task_job(
+                *itask.tokens.relative_id.split("/"))["time_submit"]
+            started_time = get_unix_time_from_time_string(
+                started_time_str)
             itask.summary['started_time'] = started_time
-
         self.timeout = started_time + self.simulated_run_length
 
 
