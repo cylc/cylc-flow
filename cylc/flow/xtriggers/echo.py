@@ -18,14 +18,26 @@
 
 from cylc.flow.exceptions import WorkflowConfigError
 
+from typing import Tuple
 
-def echo(*args, **kwargs):
+
+def echo(*args, **kwargs) -> Tuple:
     """Print arguments to stdout, return kwargs['succeed'] and kwargs.
 
     This may be a useful aid to understanding how xtriggers work.
 
+    Args:
+        succeed: Set the succeess of failure of this xtrigger.
+        *args: Print to stdout.
+        **kwargs: Print to stdout, and return as output.
+
+    Examples:
+
+        >>> echo('Breakfast Time', succeed=True, egg='poached')
+        True, {'succeed': True, 'egg': 'poached'}
+
     Returns
-        tuple: (True/False, kwargs)
+        (True/False, kwargs)
 
     """
     print("echo: ARGS:", args)
@@ -35,6 +47,7 @@ def echo(*args, **kwargs):
 
 
 def validate(f_args, f_kwargs, f_signature):
+
     """
     Validate the xtrigger function arguments parsed from the workflow config.
 

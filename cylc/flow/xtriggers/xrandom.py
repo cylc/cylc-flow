@@ -16,41 +16,50 @@
 
 from random import random, randint
 from time import sleep
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import WorkflowConfigError
+
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Tuple
 
 
 COLORS = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
 SIZES = ["tiny", "small", "medium", "large", "huge", "humongous"]
 
 
-def xrandom(percent, secs=0, _=None):
+def xrandom(
+    percent: float, secs: int = 0, _: 'Any' = None
+) -> 'Tuple[bool, Dict]':
     """Random xtrigger, with configurable sleep and percent success.
 
-    Sleep for ``sec`` seconds, and report satisfied with ~``percent``
+    Sleep for ``sec`` seconds, and report satisfied with ``percent``
     likelihood.
 
     The ``_`` argument is not used in the function code, but can be used to
     specialize the function signature to cycle point or task.
 
     Args:
-        percent (float):
+        percent:
             Percent likelihood of passing.
-        secs (int):
+        secs:
             Seconds to sleep before starting the trigger.
-        _ (object):
+        _:
             Used to allow users to specialize the trigger with extra
             parameters.
 
     Examples:
         If the percent is zero, it returns that the trigger condition was
         not satisfied, and an empty dictionary.
+
         >>> xrandom(0, 0)
         (False, {})
 
         If the percent is not zero, but the random percent success is not met,
         then it also returns that the trigger condition was not satisfied,
         and an empty dictionary.
+
         >>> import sys
         >>> mocked_random = lambda: 0.3
         >>> sys.modules[__name__].random = mocked_random
@@ -60,6 +69,7 @@ def xrandom(percent, secs=0, _=None):
         Finally, if the percent is not zero, and the random percent success is
         met, then it returns that the trigger condition was satisfied, and a
         dictionary containing random color and size as result.
+
         >>> import sys
         >>> mocked_random = lambda: 0.9
         >>> sys.modules[__name__].random = mocked_random
@@ -69,17 +79,17 @@ def xrandom(percent, secs=0, _=None):
         (True, {'COLOR': 'orange', 'SIZE': 'small'})
 
     Returns:
-        tuple: (satisfied, results)
+        Tuple, containing:
 
-        satisfied (bool):
+        satisfied:
             True if ``satisfied`` else ``False``.
-        results (dict):
+        results:
             A dictionary containing the following keys:
 
             ``COLOR``
-                A random color (e.g. red, orange, ...)
+                A random color (e.g. red, orange, ...).
             ``SIZE``
-                A random size (e.g. small, medium, ...) as the result.
+                A random size (e.g. small, medium, ...).
 
     """
     sleep(float(secs))
