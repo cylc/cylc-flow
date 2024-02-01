@@ -34,7 +34,9 @@ def echo(*args, **kwargs) -> Tuple:
     Examples:
 
         >>> echo('Breakfast Time', succeed=True, egg='poached')
-        True, {'succeed': True, 'egg': 'poached'}
+        echo: ARGS: ('Breakfast Time',)
+        echo: KWARGS: {'succeed': True, 'egg': 'poached'}
+        (True, {'succeed': True, 'egg': 'poached'})
 
     Returns
         (True/False, kwargs)
