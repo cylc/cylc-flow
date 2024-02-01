@@ -22,8 +22,6 @@ Checks code style, deprecated syntax and other issues.
 # NOTE: docstring needed for `cylc help all` output
 # (if editing check this still comes out as expected)
 
-LINT_SECTIONS = ['cylc-lint', 'cylclint', 'cylc_lint']
-
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
 Check .cylc and .rc files for code style, deprecated syntax and other issues.
@@ -44,12 +42,12 @@ It is good practice to specify specific errors you wish to ignore using
 """
 
 TOMLDOC = """
-pyproject.toml configuration:{}
-   [cylc-lint]                     # any of {}
-       ignore = ['S001', 'S002']    # List of rules to ignore
-       exclude = ['etc/foo.cylc']  # List of files to ignore
-       rulesets = ['style', '728'] # Sets default rulesets to check
-       max-line-length = 130       # Max line length for linting
+pyproject.toml configuration:
+   [tool.cylc.lint]
+   ignore = ['S001', 'S002']    # List of rules to ignore
+   exclude = ['etc/foo.cylc']   # List of files to ignore
+   rulesets = ['style', '728']  # Sets default rulesets to check
+   max-line-length = 130        # Max line length for linting
 """
 from colorama import Fore
 import functools
@@ -77,6 +75,8 @@ from typing import (
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
+import cylc.flow.flags
+from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     WORKFLOW_ID_OR_PATH_ARG_DOC
@@ -89,6 +89,20 @@ from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
+
+LINT_TABLE = ['tool', 'cylc', 'lint']
+LINT_SECTION = '.'.join(LINT_TABLE)
+
+# BACK COMPAT: DEPR_LINT_SECTION
+# url:
+#     https://github.com/cylc/cylc-flow/issues/5811
+# from:
+#    8.1.0
+# to:
+#    8.3.0
+# remove at:
+#    8.4.0 ?
+DEPR_LINT_SECTION = 'cylc-lint'
 
 DEPRECATED_ENV_VARS = {
     'CYLC_SUITE_HOST': 'CYLC_WORKFLOW_HOST',
@@ -758,7 +772,7 @@ def validate_toml_items(tomldata):
         if key not in EXTRA_TOML_VALIDATION.keys():
             raise CylcError(
                 f'Only {[*EXTRA_TOML_VALIDATION.keys()]} '
-                f'allowed as toml sections but you used {key}'
+                f'allowed as toml sections but you used "{key}"'
             )
         if key != 'max-line-length':
             # Item should be a list...
@@ -780,26 +794,35 @@ def validate_toml_items(tomldata):
     return True
 
 
-def get_pyproject_toml(dir_):
+def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
     """if a pyproject.toml file is present open it and return settings.
     """
-    keys = ['rulesets', 'ignore', 'exclude', 'max-line-length']
-    tomlfile = Path(dir_ / 'pyproject.toml')
-    tomldata = {}
+    tomlfile = dir_ / 'pyproject.toml'
+    tomldata = {
+        'rulesets': [],
+        'ignore': [],
+        'exclude': [],
+        'max-line-length': None,
+    }
     if tomlfile.is_file():
         try:
             loadeddata = toml_loads(tomlfile.read_text())
         except TOMLDecodeError as exc:
             raise CylcError(f'pyproject.toml did not load: {exc}')
 
-        if any(
-            i in loadeddata for i in LINT_SECTIONS
-        ):
-            for key in keys:
-                tomldata[key] = loadeddata.get('cylc-lint').get(key, [])
-            validate_toml_items(tomldata)
-    if not tomldata:
-        tomldata = {key: [] for key in keys}
+        _tool, _cylc, _lint = LINT_TABLE
+        try:
+            data = loadeddata[_tool][_cylc][_lint]
+        except KeyError:
+            if DEPR_LINT_SECTION in loadeddata:
+                LOG.warning(
+                    f"The [{DEPR_LINT_SECTION}] section in pyproject.toml is "
+                    f"deprecated. Use [{LINT_SECTION}] instead."
+                )
+            data = loadeddata.get(DEPR_LINT_SECTION, {})
+        tomldata.update(data)
+        validate_toml_items(tomldata)
+
     return tomldata
 
 
@@ -1318,7 +1341,7 @@ def get_option_parser() -> COP:
         (
             COP_DOC
             + NOQA.replace('``', '"')
-            + TOMLDOC.format('', str(LINT_SECTIONS))
+            + TOMLDOC
         ),
         argdoc=[
             COP.optional(WORKFLOW_ID_OR_PATH_ARG_DOC)
