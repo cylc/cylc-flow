@@ -19,7 +19,7 @@
 Checks code style, deprecated syntax and other issues.
 
 """
-# NOTE: docstring needed for `cylc help all` output
+# NOTE: docstring needed for `cylc help all` output and docs
 # (if editing check this still comes out as expected)
 
 COP_DOC = """cylc lint [OPTIONS] ARGS
@@ -88,6 +88,10 @@ from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
     from optparse import Values
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
@@ -103,6 +107,11 @@ LINT_SECTION = '.'.join(LINT_TABLE)
 # remove at:
 #    8.4.0 ?
 DEPR_LINT_SECTION = 'cylc-lint'
+
+IGNORE = 'ignore'
+EXCLUDE = 'exclude'
+RULESETS = 'rulesets'
+MAX_LINE_LENGTH = 'max-line-length'
 
 DEPRECATED_ENV_VARS = {
     'CYLC_SUITE_HOST': 'CYLC_WORKFLOW_HOST',
@@ -602,7 +611,9 @@ MANUAL_DEPRECATIONS = {
     },
     'U008': {
         'short': 'Suicide triggers are not required at Cylc 8.',
-        'url': '',
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/7-to-8'
+            '/major-changes/suicide-triggers.html'),
         'kwargs': True,
         FUNCTION: functools.partial(
             check_for_suicide_triggers,
@@ -616,9 +627,7 @@ MANUAL_DEPRECATIONS = {
     },
     'U010': {
         'short': 'rose suite-hook is deprecated at Rose 2,',
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8'
-            '/major-changes/suicide-triggers.html'),
+        'url': '',
         FUNCTION: lambda line: 'rose suite-hook' in line,
     },
     'U011': {
@@ -711,26 +720,32 @@ MANUAL_DEPRECATIONS = {
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
     },
 }
-RULESETS = ['728', 'style', 'all']
+ALL_RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {
-    'ignore': {
+    IGNORE: {
         lambda x: re.match(r'[A-Z]\d\d\d', x):
             '{item} not valid: Ignore codes should be in the form X001',
         lambda x: x in parse_checks(['728', 'style']):
             '{item} is a not a known linter code.'
     },
-    'rulesets': {
-        lambda item: item in RULESETS:
+    RULESETS: {
+        lambda item: item in ALL_RULESETS:
             '{item} not valid: Rulesets can be '
             '\'728\', \'style\' or \'all\'.'
     },
-    'max-line-length': {
+    MAX_LINE_LENGTH: {
         lambda x: isinstance(x, int):
             'max-line-length must be an integer.'
     },
     # consider checking that item is file?
-    'exclude': {}
+    EXCLUDE: {}
 }
+
+
+def parse_ruleset_option(ruleset: str) -> List[str]:
+    if ruleset in {'all', ''}:
+        return ['728', 'style']
+    return [ruleset]
 
 
 def get_url(check_meta: Dict) -> str:
@@ -774,7 +789,7 @@ def validate_toml_items(tomldata):
                 f'Only {[*EXTRA_TOML_VALIDATION.keys()]} '
                 f'allowed as toml sections but you used "{key}"'
             )
-        if key != 'max-line-length':
+        if key != MAX_LINE_LENGTH:
             # Item should be a list...
             if not isinstance(items, list):
                 raise CylcError(
@@ -798,11 +813,11 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
     """if a pyproject.toml file is present open it and return settings.
     """
     tomlfile = dir_ / 'pyproject.toml'
-    tomldata = {
-        'rulesets': [],
-        'ignore': [],
-        'exclude': [],
-        'max-line-length': None,
+    tomldata: Dict[str, Union[List[str], int, None]] = {
+        RULESETS: [],
+        IGNORE: [],
+        EXCLUDE: [],
+        MAX_LINE_LENGTH: None,
     }
     if tomlfile.is_file():
         try:
@@ -838,20 +853,14 @@ def merge_cli_with_tomldata(target: Path, options: 'Values') -> Dict[str, Any]:
     _merge_cli_with_tomldata to keep the testing of file-system touching
     and pure logic separate.
     """
-    ruleset_default = False
-    if options.linter == 'all':
-        options.linter = ['728', 'style']
-    elif options.linter == '':
-        options.linter = ['728', 'style']
-        ruleset_default = True
-    else:
-        options.linter = [options.linter]
+    ruleset_default = (options.ruleset == '')
+    options.ruleset = parse_ruleset_option(options.ruleset)
     tomlopts = get_pyproject_toml(target)
     return _merge_cli_with_tomldata(
         {
-            'exclude': [],
-            'ignore': options.ignores,
-            'rulesets': options.linter
+            EXCLUDE: [],
+            IGNORE: options.ignores,
+            RULESETS: options.ruleset
         },
         tomlopts,
         ruleset_default
@@ -886,30 +895,30 @@ def _merge_cli_with_tomldata(
     >>> result['exclude']
     ['*.bk']
     """
-    if isinstance(clidata['rulesets'][0], list):
-        clidata['rulesets'] = clidata['rulesets'][0]
+    if isinstance(clidata[RULESETS][0], list):
+        clidata[RULESETS] = clidata[RULESETS][0]
 
     output = {}
 
     # Combine 'ignore' sections:
-    output['ignore'] = sorted(set(clidata['ignore'] + tomldata['ignore']))
+    output[IGNORE] = sorted(set(clidata[IGNORE] + tomldata[IGNORE]))
 
-    # Replace 'rulesets from toml with those from CLI if they exist:
+    # Replace 'rulesets' from toml with those from CLI if they exist:
 
     if override_cli_default_rules:
-        output['rulesets'] = (
-            tomldata['rulesets'] if tomldata['rulesets']
-            else clidata['rulesets']
+        output[RULESETS] = (
+            tomldata[RULESETS] if tomldata[RULESETS]
+            else clidata[RULESETS]
         )
     else:
-        output['rulesets'] = (
-            clidata['rulesets'] if clidata['rulesets']
-            else tomldata['rulesets']
+        output[RULESETS] = (
+            clidata[RULESETS] if clidata[RULESETS]
+            else tomldata[RULESETS]
         )
 
     # Return 'exclude' and 'max-line-length' for the tomldata:
-    output['exclude'] = tomldata['exclude']
-    output['max-line-length'] = tomldata.get('max-line-length', None)
+    output[EXCLUDE] = tomldata[EXCLUDE]
+    output[MAX_LINE_LENGTH] = tomldata.get(MAX_LINE_LENGTH, None)
 
     return output
 
@@ -1239,29 +1248,18 @@ def get_cylc_files(
                 yield path
 
 
-REFERENCE_TEMPLATES = {
-    'section heading': '\n{title}\n{underline}\n',
-    'issue heading': {
-        'text': '\n{check}:\n    {summary}\n    {url}\n\n',
-        'rst': '\n{url}_\n{underline}\n{summary}\n\n',
-    },
-    'auto gen message': (
-        'U998 and U999 represent automatically generated'
-        ' sets of deprecations and upgrades.'
-    ),
-}
-
-
-def get_reference(linter, output_type):
+def get_reference(ruleset: str, output_type: 'Literal["text", "rst"]') -> str:
     """Fill out a template with all the issues Cylc Lint looks for.
     """
-    if linter in {'all', ''}:
-        rulesets = ['728', 'style']
-    else:
-        rulesets = [linter]
-    checks = parse_checks(rulesets, reference=True)
+    checks = parse_checks(
+        parse_ruleset_option(ruleset),
+        reference=True
+    )
 
-    issue_heading_template = REFERENCE_TEMPLATES['issue heading'][output_type]
+    issue_heading_template = (
+        '\n{url}_\n{underline}\n{summary}\n\n' if output_type == 'rst' else
+        '\n{check}:\n    {summary}\n    {url}\n\n'
+    )
     output = ''
     current_checkset = ''
     for index, meta in checks.items():
@@ -1270,11 +1268,15 @@ def get_reference(linter, output_type):
         if meta['purpose'] != current_checkset:
             current_checkset = meta['purpose']
             title = CHECKS_DESC[meta["purpose"]]
-            output += REFERENCE_TEMPLATES['section heading'].format(
-                title=title, underline="-" * len(title))
+            output += '\n{title}\n{underline}\n'.format(
+                title=title, underline="-" * len(title)
+            )
 
             if current_checkset == 'A':
-                output += REFERENCE_TEMPLATES['auto gen message']
+                output += (
+                    'U998 and U999 represent automatically generated'
+                    ' sets of deprecations and upgrades.'
+                )
 
         # Fill a template with info about the issue.
         if output_type == 'rst':
@@ -1321,18 +1323,18 @@ def target_version_check(
     disabled thatr with --exit-zero.
     """
     cylc8 = (target / 'flow.cylc').exists()
-    if not cylc8 and mergedopts['rulesets'] == ['728']:
+    if not cylc8 and mergedopts[RULESETS] == ['728']:
         LOG.error(
             f'{target} not a Cylc 8 workflow: '
             'Lint after renaming '
             '"suite.rc" to "flow.cylc"'
         )
         sys.exit(not quiet)
-    elif not cylc8 and '728' in mergedopts['rulesets']:
-        check_names = mergedopts['rulesets']
+    elif not cylc8 and '728' in mergedopts[RULESETS]:
+        check_names = mergedopts[RULESETS]
         check_names.remove('728')
     else:
-        check_names = mergedopts['rulesets']
+        check_names = mergedopts[RULESETS]
     return check_names
 
 
@@ -1364,7 +1366,7 @@ def get_option_parser() -> COP:
         ),
         default='',
         choices=["728", "style", "all", ''],
-        dest='linter'
+        dest='ruleset'
     )
     parser.add_option(
         '--list-codes',
@@ -1399,8 +1401,11 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', target=None) -> None:
+    if cylc.flow.flags.verbosity < 2:
+        set_timestamps(LOG, False)
+
     if options.ref_mode:
-        print(get_reference(options.linter, 'text'))
+        print(get_reference(options.ruleset, 'text'))
         sys.exit(0)
 
     # If target not given assume we are looking at PWD:
@@ -1426,13 +1431,13 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     # Get the checks object.
     checks = parse_checks(
         check_names,
-        ignores=mergedopts['ignore'],
-        max_line_len=mergedopts['max-line-length']
+        ignores=mergedopts[IGNORE],
+        max_line_len=mergedopts[MAX_LINE_LENGTH]
     )
 
     # Check each file matching a pattern:
     counter: Dict[str, int] = {}
-    for file in get_cylc_files(target, mergedopts['exclude']):
+    for file in get_cylc_files(target, mergedopts[EXCLUDE]):
         LOG.debug(f'Checking {file}')
         check_cylc_file(
             file,
