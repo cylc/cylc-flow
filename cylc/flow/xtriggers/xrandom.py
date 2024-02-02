@@ -68,7 +68,7 @@ def xrandom(
 
         Finally, if the percent is not zero, and the random percent success is
         met, then it returns that the trigger condition was satisfied, and a
-        dictionary containing random color and size as result.
+        dictionary containing random colour and size as result.
 
         >>> import sys
         >>> mocked_random = lambda: 0.9
@@ -87,7 +87,7 @@ def xrandom(
             A dictionary containing the following keys:
 
             ``COLOR``
-                A random color (e.g. red, orange, ...).
+                A random colour (e.g. red, orange, ...).
             ``SIZE``
                 A random size (e.g. small, medium, ...).
 

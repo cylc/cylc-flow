@@ -27,7 +27,7 @@ def echo(*args, **kwargs) -> Tuple:
     This may be a useful aid to understanding how xtriggers work.
 
     Args:
-        succeed: Set the succeess of failure of this xtrigger.
+        succeed: Set the success of failure of this xtrigger.
         *args: Print to stdout.
         **kwargs: Print to stdout, and return as output.
 
