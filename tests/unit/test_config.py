@@ -148,7 +148,7 @@ class TestWorkflowConfig:
             WorkflowConfig(
                 workflow="caiman_workflow",
                 fpath=flow_file,
-                options=SimpleNamespace(spec=[])
+                options=SimpleNamespace()
             )
         assert "not found" in str(excinfo.value)
 
@@ -179,7 +179,7 @@ class TestWorkflowConfig:
         flow_file.write_text(flow_config)
         with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
-                           options=SimpleNamespace(spec=[]))
+                           options=SimpleNamespace()
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
@@ -211,7 +211,7 @@ class TestWorkflowConfig:
             WorkflowConfig(
                 workflow="workflow_with_not_callable",
                 fpath=flow_file,
-                options=SimpleNamespace(spec=[])
+                options=SimpleNamespace()
             )
         assert "callable" in str(excinfo.value)
 
@@ -1185,7 +1185,7 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
     # ----- Setup -----
     caplog.set_level(logging.WARNING, CYLC_LOG)
 
-    options = SimpleNamespace(spec=[], is_validate=True)
+    options = SimpleNamespace(is_validate=True)
     if opt:
         setattr(options, opt, True)
 
@@ -1754,7 +1754,7 @@ def test_cylc_env_at_parsing(
 
     # Parse the workflow config then check the environment.
     WorkflowConfig(
-        workflow="name", fpath=flow_file, options=SimpleNamespace(spec=[]),
+        workflow="name", fpath=flow_file, options=SimpleNamespace(),
         run_dir=run_dir
     )
 
