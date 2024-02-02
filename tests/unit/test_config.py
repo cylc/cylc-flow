@@ -179,7 +179,7 @@ class TestWorkflowConfig:
         flow_file.write_text(flow_config)
         with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
-                           options=SimpleNamespace()
+                           options=SimpleNamespace())
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
