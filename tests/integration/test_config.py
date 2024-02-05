@@ -16,17 +16,18 @@
 
 from pathlib import Path
 import sqlite3
-from typing import TYPE_CHECKING
+from typing import Any
 import pytest
 
-from cylc.flow.exceptions import ServiceFileError, WorkflowConfigError
+from cylc.flow.exceptions import (
+    ServiceFileError,
+    WorkflowConfigError,
+    XtriggerConfigError,
+)
 from cylc.flow.parsec.exceptions import ListValueError
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
-if TYPE_CHECKING:
-    from types import Any
-
-    Fixture = Any
+Fixture = Any
 
 
 @pytest.mark.parametrize(
@@ -353,7 +354,7 @@ def test_xtrig_validation_wall_clock(
     flow: 'Fixture',
     validate: 'Fixture',
 ):
-    """If an xtrigger module has a `validate_config` it is called.
+    """If an xtrigger module has a `validate()` function is called.
 
     https://github.com/cylc/cylc-flow/issues/5448
     """
@@ -376,14 +377,13 @@ def test_xtrig_validation_echo(
     flow: 'Fixture',
     validate: 'Fixture',
 ):
-    """If an xtrigger module has a `validate_config` it is called.
+    """If an xtrigger module has a `validate()` function is called.
 
     https://github.com/cylc/cylc-flow/issues/5448
     """
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
         'scheduling': {
-            'initial cycle point': '1012',
             'xtriggers': {'myxt': 'echo()'},
             'graph': {'R1': '@myxt => foo'},
         }
@@ -399,21 +399,20 @@ def test_xtrig_validation_xrandom(
     flow: 'Fixture',
     validate: 'Fixture',
 ):
-    """If an xtrigger module has a `validate_config` it is called.
+    """If an xtrigger module has a `validate()` function it is called.
 
     https://github.com/cylc/cylc-flow/issues/5448
     """
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
         'scheduling': {
-            'initial cycle point': '1012',
-            'xtriggers': {'myxt': 'xrandom()'},
+            'xtriggers': {'myxt': 'xrandom(200)'},
             'graph': {'R1': '@myxt => foo'},
         }
     })
     with pytest.raises(
         WorkflowConfigError,
-        match=r'Wrong number of args: xrandom\(\)'
+        match=r"'percent' should be a float between 0 and 100:"
     ):
         validate(id_)
 
@@ -423,29 +422,30 @@ def test_xtrig_validation_custom(
     validate: 'Fixture',
     monkeypatch: 'Fixture',
 ):
-    """If an xtrigger module has a `validate_config`
+    """If an xtrigger module has a `validate()` function
     an exception is raised if that validate function fails.
 
     https://github.com/cylc/cylc-flow/issues/5448
-
-    Rather than create our own xtrigger module on disk
-    and attempt to trigger a validation failure we
-    mock our own exception, xtrigger and xtrigger
-    validation functions and inject these into the
-    appropriate locations:
     """
+    # Rather than create our own xtrigger module on disk
+    # and attempt to trigger a validation failure we
+    # mock our own exception, xtrigger and xtrigger
+    # validation functions and inject these into the
+    # appropriate locations:
     GreenExc = type('Green', (Exception,), {})
 
-    def kustom_mock(suite):
+    def kustom_xt(feature):
         return True, {}
 
     def kustom_validate(args, kwargs, sig):
         raise GreenExc('This is only a test.')
 
+    # Patch xtrigger func
     monkeypatch.setattr(
         'cylc.flow.xtrigger_mgr.get_xtrig_func',
-        lambda *args: kustom_mock,
+        lambda *args: kustom_xt,
     )
+    # Patch xtrigger's validate func
     monkeypatch.setattr(
         'cylc.flow.config.get_xtrig_func',
         lambda *args: kustom_validate if "validate" in args else ''
@@ -462,4 +462,23 @@ def test_xtrig_validation_custom(
 
     Path(id_)
     with pytest.raises(GreenExc, match=r'This is only a test.'):
+        validate(id_)
+
+
+def test_xtrig_signature_validation(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """Test automatic xtrigger function signature validation."""
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'xtriggers': {'myxt': 'xrandom()'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        XtriggerConfigError,
+        match=r"xrandom\(\): missing a required argument: 'percent'"
+    ):
         validate(id_)

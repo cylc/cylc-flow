@@ -112,21 +112,6 @@ def validate(f_args, f_kwargs, f_signature):
     If f_args used, convert to f_kwargs for clarity.
 
     """
-    n_args = len(f_args)
-    n_kwargs = len(f_kwargs)
-
-    if n_args + n_kwargs > 3:
-        raise WorkflowConfigError(f"Too many args: {f_signature}")
-
-    if n_args + n_kwargs < 1:
-        raise WorkflowConfigError(f"Wrong number of args: {f_signature}")
-
-    if n_kwargs:
-        # kwargs must be "secs" and "_"
-        kw = next(iter(f_kwargs))
-        if kw not in ("secs", "_"):
-            raise WorkflowConfigError(f"Illegal arg '{kw}': {f_signature}")
-
     # convert to kwarg
     f_kwargs["percent"] = f_args[0]
     del f_args[0]

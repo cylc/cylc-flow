@@ -27,13 +27,10 @@ def test_validate_good_path():
 
 @pytest.mark.parametrize(
     'args, kwargs, err', (
-        param([100], {'f': 1.1, 'b': 1, 'x': 2}, 'Too', id='too-many-args'),
-        param([], {}, 'Wrong number', id='too-few-args'),
-        param(['foo'], {}, '\'percent', id='percent-not-numeric'),
-        param([101], {}, '\'percent', id='percent>100'),
-        param([-1], {}, '\'percent', id='percent<0'),
-        param([100], {'egg': 1}, 'Illegal', id='invalid-kwarg'),
-        param([100], {'secs': 1.1}, "'secs'", id='secs-not-int'),
+        param(['foo'], {}, r"'percent", id='percent-not-numeric'),
+        param([101], {}, r"'percent", id='percent>100'),
+        param([-1], {}, r"'percent", id='percent<0'),
+        param([100], {'secs': 1.1}, r"'secs'", id='secs-not-int'),
     )
 )
 def test_validate_exceptions(args, kwargs, err):

@@ -16,6 +16,7 @@
 
 from contextlib import suppress
 from enum import Enum
+from inspect import signature
 import json
 import re
 from copy import deepcopy
@@ -279,12 +280,22 @@ class XtriggerManager:
                 fname,
                 f"'{fname}' not found in xtrigger module '{fname}'",
             )
+
         if not callable(func):
             raise XtriggerConfigError(
                 label,
                 fname,
                 f"'{fname}' not callable in xtrigger module '{fname}'",
             )
+        if func is not wall_clock:
+            # Validate args and kwargs against the function signature
+            # (but not for wall_clock because it's a special case).
+            try:
+                signature(func).bind(*fctx.func_args, **fctx.func_kwargs)
+            except TypeError as exc:
+                raise XtriggerConfigError(
+                    label, fname, f"{fctx.get_signature()}: {exc}"
+                )
 
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).

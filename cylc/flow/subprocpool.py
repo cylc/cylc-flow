@@ -116,10 +116,7 @@ def get_xtrig_func(mod_name, func_name, src_dir):
 
     mod = get_xtrig_mod(mod_name, src_dir)
 
-    try:
-        _XTRIG_FUNC_CACHE[(mod_name, func_name)] = getattr(mod, func_name)
-    except AttributeError:
-        raise
+    _XTRIG_FUNC_CACHE[(mod_name, func_name)] = getattr(mod, func_name)
 
     return _XTRIG_FUNC_CACHE[(mod_name, func_name)]
 
