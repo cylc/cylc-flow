@@ -16,13 +16,9 @@
 
 from random import random, randint
 from time import sleep
-from typing import TYPE_CHECKING
+from typing import Any, Dict, List, Tuple
 
-from cylc.flow.exceptions import WorkflowConfigError
-
-
-if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
+from cylc.flow.exceptions import WorkflowConfigError 
 
 
 COLORS = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
@@ -103,16 +99,14 @@ def xrandom(
     return satisfied, results
 
 
-def validate(f_args, f_kwargs, f_signature):
+def validate(f_args: List[str], f_kwargs: Dict[str, Any], f_signature: str):
     """Validate and manipulate args parsed from the workflow config.
 
-    percent: - 0 ≤ x ≤ 100
-    secs: An int.
-
-    If f_args used, convert to f_kwargs for clarity.
-
+    The rules for args are:
+    * percent: Must be 0 ≤ x ≤ 100
+    * secs: Must be an integer.
     """
-    # convert to kwarg
+    # convert to kwarg for clarity
     f_kwargs["percent"] = f_args[0]
     del f_args[0]
 
