@@ -20,11 +20,11 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
+from time import time
 from typing import List, TYPE_CHECKING, Set, Tuple, Union
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import Options
-from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.validate import ValidateOptions
@@ -34,6 +34,7 @@ from cylc.flow.scripts.install import (
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
+from cylc.flow.workflow_status import StopMode
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
@@ -47,6 +48,7 @@ from .utils.flow_tools import (
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.network.client import WorkflowRuntimeClient
 
 
 InstallOpts = Options(install_gop())
@@ -323,7 +325,7 @@ def db_select():
 def gql_query():
     """Execute a GraphQL query given a workflow runtime client."""
     async def _gql_query(
-        client: WorkflowRuntimeClient, query_str: str
+        client: 'WorkflowRuntimeClient', query_str: str
     ) -> object:
         ret = await client.async_request(
             'graphql', {
@@ -473,3 +475,83 @@ def install(test_dir, run_dir):
         workflow_id = infer_latest_run_from_id(workflow_id)
         return workflow_id
     yield _inner
+
+
+@pytest.fixture
+def complete():
+    """Wait for the workflow, or tasks within it to complete.
+
+    Args:
+        schd:
+            The scheduler to await.
+        tokens_list:
+            If specified, this will wait for the tasks represented by these
+            tokens to be marked as completed by the task pool.
+        stop_mode:
+            If tokens_list is not provided, this will wait for the scheduler
+            to be shutdown with the specified mode (default = AUTO, i.e.
+            workflow completed normally).
+        timeout:
+            Max time to wait for the condition to be met.
+
+            Note, if you need to increase this, you might want to rethink your
+            test.
+
+            Note, use this timeout rather than wrapping the complete call with
+            async_timeout (handles shutdown logic more cleanly).
+
+    """
+    async def _complete(
+        schd,
+        *tokens_list,
+        stop_mode=StopMode.AUTO,
+        timeout=60,
+    ):
+        start_time = time()
+        tokens_list = [tokens.task for tokens in tokens_list]
+
+        # capture task completion
+        remove_if_complete = schd.pool.remove_if_complete
+
+        def _remove_if_complete(itask):
+            ret = remove_if_complete(itask)
+            if ret and itask.tokens.task in tokens_list:
+                tokens_list.remove(itask.tokens.task)
+            return ret
+
+        schd.pool.remove_if_complete = _remove_if_complete
+
+        # capture workflow shutdown
+        set_stop = schd._set_stop
+        has_shutdown = False
+
+        def _set_stop(mode=None):
+            nonlocal has_shutdown, stop_mode
+            if mode == stop_mode:
+                has_shutdown = True
+                return set_stop(mode)
+            else:
+                set_stop(mode)
+                raise Exception(f'Workflow bailed with stop mode = {mode}')
+
+        schd._set_stop = _set_stop
+
+        # determine the completion condition
+        if tokens_list:
+            condition = lambda: bool(tokens_list)
+        else:
+            condition = lambda: bool(not has_shutdown)
+
+        # wait for the condition to be met
+        while condition():
+            # allow the main loop to advance
+            await asyncio.sleep(0)
+            if time() - start_time > timeout:
+                raise Exception(
+                    f'Timeout waiting for {", ".join(map(str, tokens_list))}'
+                )
+
+        # restore regular shutdown logic
+        schd._set_stop = set_stop
+
+    return _complete
