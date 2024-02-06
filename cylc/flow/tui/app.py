@@ -16,32 +16,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """The application control logic for Tui."""
 
-import sys
+from copy import deepcopy
+from contextlib import contextmanager
+from multiprocessing import Process
+import re
 
 import urwid
-from urwid import html_fragment
-from urwid.wimp import SelectableIcon
-from pathlib import Path
+try:
+    from urwid.widget import SelectableIcon
+except ImportError:
+    # BACK COMPAT: urwid.wimp
+    # From: urwid 2.0
+    # To: urwid 2.2
+    from urwid.wimp import SelectableIcon
 
-from cylc.flow.network.client_factory import get_client
-from cylc.flow.exceptions import (
-    ClientError,
-    ClientTimeout,
-    WorkflowStopped
-)
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
-    TASK_STATUSES_ORDERED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
 )
-from cylc.flow.tui.data import (
-    QUERY
-)
 import cylc.flow.tui.overlay as overlay
 from cylc.flow.tui import (
-    BINDINGS,
+    Bindings,
     FORE,
     BACK,
     JOB_COLOURS,
@@ -49,32 +46,38 @@ from cylc.flow.tui import (
 )
 from cylc.flow.tui.tree import (
     find_closest_focus,
-    translate_collapsing
+    translate_collapsing,
+    expand_tree,
+)
+from cylc.flow.tui.updater import (
+    Updater,
+    get_default_filters,
 )
 from cylc.flow.tui.util import (
-    compute_tree,
     dummy_flow,
-    get_task_status_summary,
-    get_workflow_status_str,
     render_node
 )
-from cylc.flow.workflow_files import WorkflowFiles
+from cylc.flow.workflow_status import (
+    WorkflowStatus,
+)
+
+
+# default workflow / task filters
+# (i.e. show everything)
+DEFAULT_FILTERS = get_default_filters()
 
 
 urwid.set_encoding('utf8')  # required for unicode task icons
-
-TREE_EXPAND_DEPTH = [2]
 
 
 class TuiWidget(urwid.TreeWidget):
     """Display widget for tree nodes.
 
     Arguments:
+        app (TuiApp):
+            Reference to the application.
         node (TuiNode):
             The root tree node.
-        max_depth (int):
-            Determines which nodes are unfolded by default.
-            The maximum tree depth to unfold.
 
     """
 
@@ -82,16 +85,12 @@ class TuiWidget(urwid.TreeWidget):
     # will skip rows when the user navigates
     unexpandable_icon = SelectableIcon(' ', 0)
 
-    def __init__(self, node, max_depth=None):
-        if not max_depth:
-            max_depth = TREE_EXPAND_DEPTH[0]
+    def __init__(self, app, node):
+        self.app = app
         self._node = node
         self._innerwidget = None
         self.is_leaf = not node.get_child_keys()
-        if max_depth > 0:
-            self.expanded = node.get_depth() < max_depth
-        else:
-            self.expanded = True
+        self.expanded = False
         widget = self.get_indented_widget()
         urwid.WidgetWrap.__init__(self, widget)
 
@@ -102,18 +101,6 @@ class TuiWidget(urwid.TreeWidget):
 
         """
         return self.get_node().get_value()['type_'] != 'job_info'
-
-    def _is_leaf(self):
-        """Return True if this node has no children
-
-        Note: the `is_leaf` attribute doesn't seem to give the right
-              answer.
-
-        """
-        return (
-            not hasattr(self, 'git_first_child')
-            or not self.get_first_child()
-        )
 
     def get_display_text(self):
         """Compute the text to display for a given node.
@@ -147,8 +134,8 @@ class TuiWidget(urwid.TreeWidget):
         return key
 
     def get_indented_widget(self):
+        """Override the Urwid method to handle leaf nodes differently."""
         if self.is_leaf:
-
             self._innerwidget = urwid.Columns(
                 [
                     ('fixed', 1, self.unexpandable_icon),
@@ -158,38 +145,78 @@ class TuiWidget(urwid.TreeWidget):
             )
         return self.__super.get_indented_widget()
 
+    def update_expanded_icon(self, subscribe=True):
+        """Update the +/- icon.
 
-class TuiNode(urwid.TreeNode):
-    """Data storage object for leaf nodes."""
+        This method overrides the built-in urwid update_expanded_icon method
+        in order to add logic for subscribing and unsubscribing to workflows.
+
+        Args:
+            subscribe:
+                If True, then we will [un]subscribe to workflows when workflow
+                nodes are expanded/collapsed. If False, then these events will
+                be ignored. Note we set subscribe=False when we are translating
+                the expand/collapse status when rebuilding the tree after an
+                update.
+
+        """
+        if subscribe:
+            node = self.get_node()
+            value = node.get_value()
+            data = value['data']
+            type_ = value['type_']
+            if type_ == 'workflow':
+                if self.expanded:
+                    self.app.updater.subscribe(data['id'])
+                    self.app.expand_on_load.add(data['id'])
+                else:
+                    self.app.updater.unsubscribe(data['id'])
+        return urwid.TreeWidget.update_expanded_icon(self)
+
+
+class TuiNode(urwid.ParentNode):
+    """Data storage object for Tui tree nodes."""
+
+    def __init__(self, app, *args, **kwargs):
+        self.app = app
+        urwid.ParentNode.__init__(self, *args, **kwargs)
 
     def load_widget(self):
-        return TuiWidget(self)
-
-
-class TuiParentNode(urwid.ParentNode):
-    """Data storage object for interior/parent nodes."""
-
-    def load_widget(self):
-        return TuiWidget(self)
+        return TuiWidget(self.app, self)
 
     def load_child_keys(self):
         # Note: keys are really indices.
-        data = self.get_value()
-        return range(len(data['children']))
+        return range(len(self.get_value()['children']))
 
     def load_child_node(self, key):
-        """Return either an TuiNode or TuiParentNode"""
-        childdata = self.get_value()['children'][key]
-        if 'children' in childdata:
-            childclass = TuiParentNode
-        else:
-            childclass = TuiNode
-        return childclass(
-            childdata,
+        """Return a TuiNode instance for child "key"."""
+        return TuiNode(
+            self.app,
+            self.get_value()['children'][key],
             parent=self,
             key=key,
             depth=self.get_depth() + 1
         )
+
+
+@contextmanager
+def updater_subproc(filters, client_timeout):
+    """Runs the Updater in its own process.
+
+    The updater provides the data for Tui to render. Running the updater
+    in its own process removes its CPU load from the Tui app allowing
+    it to remain responsive whilst updates are being gathered as well as
+    decoupling the application update logic from the data update logic.
+    """
+    # start the updater
+    updater = Updater(client_timeout=client_timeout)
+    p = Process(target=updater.start, args=(filters,))
+    try:
+        p.start()
+        yield updater
+    finally:
+        updater.terminate()
+        p.join()
 
 
 class TuiApp:
@@ -206,16 +233,25 @@ class TuiApp:
 
     """
 
-    UPDATE_INTERVAL = 1
-    CLIENT_TIMEOUT = 1
+    # the UI update interval
+    # NOTE: this is different from the data update interval
+    UPDATE_INTERVAL = 0.1
 
+    # colours to be used throughout the application
     palette = [
         ('head', FORE, BACK),
         ('body', FORE, BACK),
         ('foot', 'white', 'dark blue'),
         ('key', 'light cyan', 'dark blue'),
-        ('title', FORE, BACK, 'bold'),
+        ('title', 'default, bold', BACK),
+        ('header', 'dark gray', BACK),
+        ('header_key', 'dark gray, bold', BACK),
         ('overlay', 'black', 'light gray'),
+        # cylc logo colours
+        ('R', 'light red, bold', BACK),
+        ('Y', 'yellow, bold', BACK),
+        ('G', 'light green, bold', BACK),
+        ('B', 'light blue, bold', BACK),
     ] + [  # job colours
         (f'job_{status}', colour, BACK)
         for status, colour in JOB_COLOURS.items()
@@ -227,49 +263,143 @@ class TuiApp:
         for status, spec in WORKFLOW_COLOURS.items()
     ]
 
-    def __init__(self, id_, screen=None):
-        self.id_ = id_
-        self.client = None
+    def __init__(self, screen=None):
         self.loop = None
-        self.screen = None
+        self.screen = screen
         self.stack = 0
         self.tree_walker = None
 
+        # store a reference to the bindings on the app to avoid cicular import
+        self.bindings = BINDINGS
+
         # create the template
-        topnode = TuiParentNode(dummy_flow({'id': 'Loading...'}))
+        topnode = TuiNode(self, dummy_flow({'id': 'Loading...'}))
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
         header = urwid.Text('\n')
-        footer = urwid.AttrWrap(
-            # urwid.Text(self.FOOTER_TEXT),
-            urwid.Text(list_bindings()),
-            'foot'
-        )
+        footer = urwid.AttrWrap(urwid.Text(list_bindings()), 'foot')
         self.view = urwid.Frame(
             urwid.AttrWrap(self.listbox, 'body'),
             header=urwid.AttrWrap(header, 'head'),
             footer=footer
         )
-        self.filter_states = {
-            state: True
-            for state in TASK_STATUSES_ORDERED
-        }
-        if isinstance(screen, html_fragment.HtmlGenerator):
-            # the HtmlGenerator only captures one frame
-            # so we need to pre-populate the GUI before
-            # starting the event loop
-            self.update()
+        self.filters = get_default_filters()
 
-    def main(self):
-        """Start the event loop."""
-        self.loop = urwid.MainLoop(
-            self.view,
-            self.palette,
-            unhandled_input=self.unhandled_input,
-            screen=self.screen
-        )
-        # schedule the first update
-        self.loop.set_alarm_in(0, self._update)
-        self.loop.run()
+    @contextmanager
+    def main(
+        self,
+        w_id=None,
+        id_filter=None,
+        interactive=True,
+        client_timeout=3,
+    ):
+        """Start the Tui app.
+
+        With interactive=False, this does not start the urwid event loop to
+        make testing more deterministic. If you want Tui to update (i.e.
+        display the latest data), you must call the update method manually.
+
+        Note, we still run the updater asynchronously in a subprocess so that
+        we can test the interactions between the Tui application and the
+        updater processes.
+
+        """
+        self.set_initial_filters(w_id, id_filter)
+
+        with updater_subproc(self.filters, client_timeout) as updater:
+            self.updater = updater
+
+            # pre-subscribe to the provided workflow if requested
+            self.expand_on_load = {w_id or 'root'}
+            if w_id:
+                self.updater.subscribe(w_id)
+
+            # configure the urwid main loop
+            self.loop = urwid.MainLoop(
+                self.view,
+                self.palette,
+                unhandled_input=self.unhandled_input,
+                screen=self.screen
+            )
+
+            if interactive:
+                # Tui is being run normally as an interactive application
+                # schedule the first update
+                self.loop.set_alarm_in(0, self.update)
+
+                # start the urwid main loop
+                try:
+                    self.loop.run()
+                except KeyboardInterrupt:
+                    yield
+                    return
+            else:
+                # wait for the first full update
+                self.wait_until_loaded(w_id or 'root')
+
+            yield self
+
+    def set_initial_filters(self, w_id, id_filter):
+        """Set the default workflow/task filters on startup."""
+        if w_id:
+            # Tui has been configured to look at a single workflow
+            # => filter everything else out
+            workflow = str(Tokens(w_id)['workflow'])
+            self.filters['workflows']['id'] = rf'^{re.escape(workflow)}$'
+        elif id_filter:
+            # a custom workflow ID filter has been provided
+            self.filters['workflows']['id'] = id_filter
+
+    def wait_until_loaded(self, *ids, retries=None, max_fails=50):
+        """Wait for any requested nodes to be created.
+
+        Warning:
+            This method is blocking! It's for HTML / testing purposes only!
+
+        Args:
+            ids:
+                Iterable containing the node IDs you want to wait for.
+                Note, these should be full IDs i.e. they should include the
+                user.
+                To wait for the root node to load, use "root".
+            retries:
+                The maximum number of updates to perform whilst waiting
+                for the specified IDs to appear in the tree.
+            max_fails:
+                If there is no update received from the updater, then we call
+                it a failed attempt. This isn't necessarily an issue, the
+                updater might be running a little slow. But if there are a
+                large number of fails, it likely means the condition won't be
+                satisfied.
+
+        Returns:
+            A list of the IDs which NOT not appear in the store.
+
+        Raises:
+            Exception:
+                If the "max_fails" are exhausted.
+
+        """
+        from time import sleep
+        ids = set(ids)
+        self.expand_on_load.update(ids)
+        successful_updates = 0
+        failed_updates = 0
+        while ids & self.expand_on_load:
+            if self.update():
+                successful_updates += 1
+                if retries is not None and successful_updates > retries:
+                    return list(self.expand_on_load)
+            else:
+                failed_updates += 1
+                if failed_updates > max_fails:
+                    raise Exception(
+                        f'No update was received after {max_fails} attempts.'
+                        f'\nThere were {successful_updates} successful'
+                        ' updates.'
+                    )
+
+            sleep(0.15)  # blocking to Tui but not to the updater process
+        return None
 
     def unhandled_input(self, key):
         """Catch key presses, uncaught events are passed down the chain."""
@@ -285,74 +415,6 @@ class TuiApp:
                 meth(self, *args)
                 return
 
-    def get_snapshot(self):
-        """Contact the workflow, return a tree structure
-
-        In the event of error contacting the workflow the
-        message is written to this Widget's header.
-
-        Returns:
-            dict if successful, else False
-
-        """
-        try:
-            if not self.client:
-                self.client = get_client(self.id_, timeout=self.CLIENT_TIMEOUT)
-            data = self.client(
-                'graphql',
-                {
-                    'request_string': QUERY,
-                    'variables': {
-                        # list of task states we want to see
-                        'taskStates': [
-                            state
-                            for state, is_on in self.filter_states.items()
-                            if is_on
-                        ]
-                    }
-                }
-            )
-        except WorkflowStopped:
-            # Distinguish stopped flow from non-existent flow.
-            self.client = None
-            full_path = Path(get_workflow_run_dir(self.id_))
-            if (
-                (full_path / WorkflowFiles.SUITE_RC).is_file()
-                or (full_path / WorkflowFiles.FLOW_FILE).is_file()
-            ):
-                message = "stopped"
-            else:
-                message = (
-                    f"No {WorkflowFiles.SUITE_RC} or {WorkflowFiles.FLOW_FILE}"
-                    f"found in {self.id_}."
-                )
-
-            return dummy_flow({
-                'name': self.id_,
-                'id': self.id_,
-                'status': message,
-                'stateTotals': {}
-            })
-        except (ClientError, ClientTimeout) as exc:
-            # catch network / client errors
-            self.set_header([('workflow_error', str(exc))])
-            return False
-
-        if isinstance(data, list):
-            # catch GraphQL errors
-            try:
-                message = data[0]['error']['message']
-            except (IndexError, KeyError):
-                message = str(data)
-            self.set_header([('workflow_error', message)])
-            return False
-
-        if len(data['workflows']) != 1:
-            # multiple workflows in returned data - shouldn't happen
-            raise ValueError()
-
-        return compute_tree(data['workflows'][0])
-
     @staticmethod
     def get_node_id(node):
         """Return a unique identifier for a node.
@@ -366,62 +428,82 @@ class TuiApp:
         """
         return node.get_value()['id_']
 
-    def set_header(self, message: list):
-        """Set the header message for this widget.
+    def update_header(self):
+        """Update the application header."""
+        header = [
+            # the Cylc Tui logo
+            ('R', 'C'),
+            ('Y', 'y'),
+            ('G', 'l'),
+            ('B', 'c'),
+            ('title', ' Tui')
+        ]
+        if self.filters['tasks'] != DEFAULT_FILTERS['tasks']:
+            # if task filters are active, display short help
+            header.extend([
+                ('header', '   tasks filtered ('),
+                ('header_key', 'F'),
+                ('header', ' - edit, '),
+                ('header_key', 'R'),
+                ('header', ' - reset)'),
+            ])
+        if self.filters['workflows'] != DEFAULT_FILTERS['workflows']:
+            # if workflow filters are active, display short help
+            header.extend([
+                ('header', '   workflows filtered ('),
+                ('header_key', 'W'),
+                ('header', ' - edit, '),
+                ('header_key', 'E'),
+                ('header', ' - reset)'),
+            ])
+        elif self.filters == DEFAULT_FILTERS:
+            # if not filters are available show application help
+            header.extend([
+                ('header', '   '),
+                ('header_key', 'h'),
+                ('header', ' to show help, '),
+                ('header_key', 'q'),
+                ('header', ' to quit'),
+            ])
 
-        Arguments:
-            message (object):
-                Text content for the urwid.Text widget,
-                may be a string, tuple or list, see urwid docs.
-
-        """
         # put in a one line gap
-        message.append('\n')
+        header.append('\n')
 
-        # TODO: remove once Tui is delta-driven
-        # https://github.com/cylc/cylc-flow/issues/3527
-        message.extend([
-            (
-                'workflow_error',
-                'TUI is experimental and may break with large flows'
-            ),
-            '\n'
-        ])
+        # replace the previous header
+        self.view.header = urwid.Text(header)
 
-        self.view.header = urwid.Text(message)
+    def get_update(self):
+        """Fetch the most recent update.
 
-    def _update(self, *_):
-        try:
-            self.update()
-        except Exception as exc:
-            sys.exit(exc)
+        Returns the update, or False if there is no update queued.
+        """
+        update = False
+        while not self.updater.update_queue.empty():
+            # fetch the most recent update
+            update = self.updater.update_queue.get()
+        return update
 
-    def update(self):
+    def update(self, *_):
         """Refresh the data and redraw this widget.
 
         Preserves the current focus and collapse/expand state.
 
         """
-        # update the data store
-        # TODO: this can be done incrementally using deltas
-        #       once this interface is available
-        snapshot = self.get_snapshot()
-        if snapshot is False:
+        # attempt to fetch an update
+        update = self.get_update()
+        if update is False:
+            # there was no update, try again later
+            if self.loop:
+                self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
             return False
 
-        # update the workflow status message
-        header = [get_workflow_status_str(snapshot['data'])]
-        status_summary = get_task_status_summary(snapshot['data'])
-        if status_summary:
-            header.extend([' ('] + status_summary + [' )'])
-        if not all(self.filter_states.values()):
-            header.extend([' ', '*filtered* "R" to reset', ' '])
-        self.set_header(header)
+        # update the application header
+        self.update_header()
 
         # global update - the nuclear option - slow but simple
         # TODO: this can be done incrementally by adding and
         #       removing nodes from the existing tree
-        topnode = TuiParentNode(snapshot)
+        topnode = TuiNode(self, update)
 
         # NOTE: because we are nuking the tree we need to manually
         # preserve the focus and collapse status of tree nodes
@@ -443,9 +525,15 @@ class TuiApp:
         #  preserve the collapse/expand status of all nodes
         translate_collapsing(self, old_node, new_node)
 
+        # expand any nodes which have been requested
+        for id_ in list(self.expand_on_load):
+            depth = 1 if id_ == 'root' else None
+            if expand_tree(self, new_node, id_, depth):
+                self.expand_on_load.remove(id_)
+
         # schedule the next run of this update method
         if self.loop:
-            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self._update)
+            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
 
         return True
 
@@ -457,14 +545,40 @@ class TuiApp:
                 A task state to filter by or None.
 
         """
-        self.filter_states = {
+        self.filters['tasks'] = {
             state: (state == filtered_state) or not filtered_state
-            for state in self.filter_states
+            for state in self.filters['tasks']
         }
-        return
+        self.updater.update_filters(self.filters)
+
+    def reset_workflow_filters(self):
+        """Reset workflow state/id filters."""
+        self.filters['workflows'] = deepcopy(DEFAULT_FILTERS['workflows'])
+        self.updater.update_filters(self.filters)
+
+    def filter_by_workflow_state(self, *filtered_states):
+        """Filter workflows.
+
+        Args:
+            filtered_state (str):
+                A task state to filter by or None.
+
+        """
+        for state in self.filters['workflows']:
+            if state != 'id':
+                self.filters['workflows'][state] = (
+                    (state in filtered_states) or not filtered_states
+                )
+        self.updater.update_filters(self.filters)
 
     def open_overlay(self, fcn):
-        self.create_overlay(*fcn(self))
+        """Open an overlay over the application.
+
+        Args:
+            fcn: A function which returns an urwid widget to overlay.
+
+        """
+        self.create_overlay(*fcn(app=self))
 
     def create_overlay(self, widget, kwargs):
         """Open an overlay over the monitor.
@@ -521,6 +635,10 @@ class TuiApp:
         self.stack -= 1
 
 
+# register key bindings
+# * all bindings must belong to a group
+# * all keys are auto-documented in the help screen and application footer
+BINDINGS = Bindings()
 BINDINGS.add_group(
     '',
     'Application Controls'
@@ -603,38 +721,66 @@ BINDINGS.bind(
 )
 
 BINDINGS.add_group(
-    'filter',
+    'filter tasks',
     'Filter by task state'
 )
 BINDINGS.bind(
-    ('F',),
-    'filter',
+    ('T',),
+    'filter tasks',
     'Select task states to filter by',
     (TuiApp.open_overlay, overlay.filter_task_state)
 )
 BINDINGS.bind(
     ('f',),
-    'filter',
+    'filter tasks',
     'Show only failed tasks',
     (TuiApp.filter_by_task_state, TASK_STATUS_FAILED)
 )
 BINDINGS.bind(
     ('s',),
-    'filter',
+    'filter tasks',
     'Show only submitted tasks',
     (TuiApp.filter_by_task_state, TASK_STATUS_SUBMITTED)
 )
 BINDINGS.bind(
     ('r',),
-    'filter',
+    'filter tasks',
     'Show only running tasks',
     (TuiApp.filter_by_task_state, TASK_STATUS_RUNNING)
 )
 BINDINGS.bind(
     ('R',),
-    'filter',
+    'filter tasks',
     'Reset task state filtering',
     (TuiApp.filter_by_task_state,)
+)
+
+BINDINGS.add_group(
+    'filter workflows',
+    'Filter by workflow state'
+)
+BINDINGS.bind(
+    ('W',),
+    'filter workflows',
+    'Select workflow states to filter by',
+    (TuiApp.open_overlay, overlay.filter_workflow_state)
+)
+BINDINGS.bind(
+    ('E',),
+    'filter workflows',
+    'Reset workflow filtering',
+    (TuiApp.reset_workflow_filters,)
+)
+BINDINGS.bind(
+    ('p',),
+    'filter workflows',
+    'Show only running workflows',
+    (
+        TuiApp.filter_by_workflow_state,
+        WorkflowStatus.RUNNING.value,
+        WorkflowStatus.PAUSED.value,
+        WorkflowStatus.STOPPING.value
+    )
 )
 
 

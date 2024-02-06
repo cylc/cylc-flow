@@ -19,6 +19,7 @@ import os
 import shutil
 from glob import iglob
 from pathlib import Path
+from subprocess import Popen
 from typing import (
     Any,
     Callable,
@@ -274,7 +275,8 @@ def test_init_clean__rm_dirs(
     init_clean(id_, opts=opts)
     mock_clean.assert_called_with(id_, run_dir, expected_clean)
     mock_remote_clean.assert_called_with(
-        id_, platforms, expected_remote_clean, opts.remote_timeout)
+        id_, platforms, opts.remote_timeout, expected_remote_clean
+    )
 
 
 @pytest.mark.parametrize(
@@ -920,7 +922,7 @@ def test_remote_clean(
     # Remove randomness:
     monkeymock('cylc.flow.clean.shuffle')
 
-    def mocked_remote_clean_cmd_side_effect(id_, platform, rm_dirs, timeout):
+    def mocked_remote_clean_cmd_side_effect(id_, platform, timeout, rm_dirs):
         proc_ret_code = 0
         if failed_platforms and platform['name'] in failed_platforms:
             proc_ret_code = failed_platforms[platform['name']]
@@ -942,11 +944,13 @@ def test_remote_clean(
     if exc_expected:
         with pytest.raises(CylcError) as exc:
             cylc_clean.remote_clean(
-                id_, platform_names, rm_dirs, timeout='irrelevant')
+                id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
+            )
         assert "Remote clean failed" in str(exc.value)
     else:
         cylc_clean.remote_clean(
-            id_, platform_names, rm_dirs, timeout='irrelevant')
+            id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
+        )
     for msg in expected_err_msgs:
         assert log_filter(caplog, level=logging.ERROR, contains=msg)
     if expected_platforms:
@@ -958,6 +962,36 @@ def test_remote_clean(
     if failed_platforms:
         for p_name in failed_platforms:
             assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
+
+
+def test_remote_clean__timeout(
+    monkeymock: MonkeyMock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test remote_clean() gives a sensible error message for return code 124.
+    """
+    caplog.set_level(logging.ERROR, CYLC_LOG)
+    monkeymock(
+        'cylc.flow.clean._remote_clean_cmd',
+        spec=_remote_clean_cmd,
+        return_value=mock.Mock(
+            spec=Popen, poll=lambda: 124, communicate=lambda: ('', '')
+        )
+    )
+    monkeypatch.setattr(
+        'cylc.flow.clean.get_install_target_to_platforms_map',
+        lambda *a, **k: {'picard': [PLATFORMS['stargazer']]}
+    )
+
+    with pytest.raises(CylcError):
+        cylc_clean.remote_clean(
+            'blah', platform_names=['blah'], timeout='blah'
+        )
+    assert "cylc clean timed out" in caplog.text
+    # No need to log the remote clean cmd etc. for timeout
+    assert "ssh" not in caplog.text.lower()
+    assert "stderr" not in caplog.text.lower()
 
 
 @pytest.mark.parametrize(

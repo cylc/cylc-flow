@@ -32,6 +32,7 @@ from cylc.flow.scripts.install import (
     install as cylc_install,
     get_option_parser as install_gop
 )
+from cylc.flow.util import serialise
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
 from cylc.flow.workflow_status import StopMode
@@ -46,9 +47,9 @@ from .utils.flow_tools import (
 )
 
 if TYPE_CHECKING:
+    from cylc.flow.network.client import WorkflowRuntimeClient
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.network.client import WorkflowRuntimeClient
 
 
 InstallOpts = Options(install_gop())
@@ -478,6 +479,63 @@ def install(test_dir, run_dir):
 
 
 @pytest.fixture
+def reflog():
+    """Integration test version of the --reflog CLI option.
+
+    This returns a set which captures task triggers.
+
+    Note, you'll need to call this on the scheduler *after* you have started
+    it.
+
+    Args:
+        schd:
+            The scheduler to capture triggering information for.
+        flow_nums:
+            If True, the flow numbers of the task being triggered will be added
+            to the end of each entry.
+
+    Returns:
+        tuple
+
+        (task, triggers):
+            If flow_nums == False
+        (task, flow_nums, triggers):
+            If flow_nums == True
+
+        task:
+            The [relative] task ID e.g. "1/a".
+        flow_nums:
+            The serialised flow nums e.g. ["1"].
+        triggers:
+            Sorted tuple of the trigger IDs, e.g. ("1/a", "2/b").
+
+    """
+
+    def _reflog(schd: 'Scheduler', flow_nums: bool = False) -> Set[tuple]:
+        submit_task_jobs = schd.task_job_mgr.submit_task_jobs
+        triggers = set()
+
+        def _submit_task_jobs(*args, **kwargs):
+            nonlocal submit_task_jobs, triggers, flow_nums
+            itasks = submit_task_jobs(*args, **kwargs)
+            for itask in itasks:
+                deps = tuple(sorted(itask.state.get_resolved_dependencies()))
+                if flow_nums:
+                    triggers.add(
+                        (itask.identity, serialise(itask.flow_nums), deps or None)
+                    )
+                else:
+                    triggers.add((itask.identity, deps or None))
+            return itasks
+
+        schd.task_job_mgr.submit_task_jobs = _submit_task_jobs
+
+        return triggers
+
+    return _reflog
+
+
+@pytest.fixture
 def complete():
     """Wait for the workflow, or tasks within it to complete.
 
@@ -555,3 +613,22 @@ def complete():
         schd._set_stop = set_stop
 
     return _complete
+
+
+@pytest.fixture
+def reftest(run, reflog, complete):
+    """Fixture that runs a simple reftest.
+
+    Combines the `reflog` and `complete` fixtures.
+    """
+    async def _reftest(
+        schd: 'Scheduler',
+        flow_nums: bool = False,
+    ) -> Set[tuple]:
+        async with run(schd):
+            triggers = reflog(schd, flow_nums)
+            await complete(schd)
+
+        return triggers
+
+    return _reftest

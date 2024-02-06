@@ -40,12 +40,14 @@ from cylc.flow.exceptions import (
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
-from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
-    CustomTaskEventHandlerContext, TaskEventMailContext,
-    TaskJobLogsRetrieveContext)
+    CustomTaskEventHandlerContext,
+    EventKey,
+    TaskEventMailContext,
+    TaskJobLogsRetrieveContext,
+)
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -74,7 +76,6 @@ from cylc.flow.task_queues.independent import IndepQueueManager
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
 
 if TYPE_CHECKING:
-    from queue import Queue
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
@@ -591,16 +592,17 @@ class TaskPool:
             self.compute_runahead()
             self.release_runahead_tasks()
 
-    def load_db_task_action_timers(self, row_idx, row):
+    def load_db_task_action_timers(self, row_idx, row) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
             LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
-        id_ = Tokens(
+        tokens = Tokens(
             cycle=cycle,
             task=name,
-        ).relative_id
+        )
+        id_ = tokens.relative_id
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
@@ -654,14 +656,16 @@ class TaskPool:
             itask.try_timers[ctx_key[1]] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx:
-            key1, submit_num = ctx_key
-            # Convert key1 to type tuple - JSON restores as type list
-            # and this will not previously have been converted back
-            if isinstance(key1, list):
-                key1 = tuple(key1)
-            key = (key1, cycle, name, submit_num)
+            (handler, event), submit_num = ctx_key
             self.task_events_mgr.add_event_timer(
-                key,
+                EventKey(
+                    handler,
+                    event,
+                    # NOTE: the event "message" is not preserved in the DB so
+                    # we use the event as a placeholder
+                    event,
+                    tokens.duplicate(job=submit_num),
+                ),
                 TaskActionTimer(
                     ctx, delays, num, delay, timeout
                 )
@@ -1065,7 +1069,7 @@ class TaskPool:
             for itask in self.get_tasks()
         )
 
-    def warn_stop_orphans(self):
+    def warn_stop_orphans(self) -> None:
         """Log (warning) orphaned tasks on workflow stop."""
         orphans = []
         orphans_kill_failed = []
@@ -1092,11 +1096,12 @@ class TaskPool:
                 )
             )
 
-        for key1, point, name, submit_num in (
-                self.task_events_mgr._event_timers
-        ):
-            LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
-                point, name, submit_num, key1))
+        for id_key in self.task_events_mgr._event_timers:
+            LOG.warning(
+                f"{id_key.tokens.relative_id}:"
+                " incomplete task event handler"
+                f" {(id_key.handler, id_key.event)}"
+            )
 
     def log_incomplete_tasks(self) -> bool:
         """Log finished but incomplete tasks; return True if there any."""
@@ -1374,9 +1379,11 @@ class TaskPool:
                 - retain and recompute runahead
                   (C7 failed tasks don't count toward runahead limit)
         """
+        ret = False
         if cylc.flow.flags.cylc7_back_compat:
             if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
                 self.remove(itask, 'finished')
+                ret = True
             if self.compute_runahead():
                 self.release_runahead_tasks()
         else:
@@ -1390,10 +1397,13 @@ class TaskPool:
             else:
                 # Remove as completed.
                 self.remove(itask, 'finished')
+                ret = True
                 if itask.identity == self.stop_task_id:
                     self.stop_task_finished = True
                 if self.compute_runahead():
                     self.release_runahead_tasks()
+
+        return ret
 
     def spawn_on_all_outputs(
         self, itask: TaskProxy, completed_only: bool = False
@@ -1729,45 +1739,6 @@ class TaskPool:
 
         return len(unmatched)
 
-    def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
-        """Simulation mode: simulate task run times and set states."""
-        if not self.config.run_mode('simulation'):
-            return False
-        sim_task_state_changed = False
-        now = time()
-        for itask in self.get_tasks():
-            if itask.state.status != TASK_STATUS_RUNNING:
-                continue
-            # Started time is not set on restart
-            if itask.summary['started_time'] is None:
-                itask.summary['started_time'] = now
-            timeout = (itask.summary['started_time'] +
-                       itask.tdef.rtconfig['job']['simulated run length'])
-            if now > timeout:
-                conf = itask.tdef.rtconfig['simulation']
-                job_d = itask.tokens.duplicate(job=str(itask.submit_num))
-                now_str = get_current_time_string()
-                if (
-                    conf['fail cycle points'] is None  # i.e. "all"
-                    or itask.point in conf['fail cycle points']
-                ) and (
-                    itask.get_try_num() == 1 or not conf['fail try 1 only']
-                ):
-                    message_queue.put(
-                        TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
-                    )
-                else:
-                    # Simulate message outputs.
-                    for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put(
-                            TaskMsg(job_d, now_str, 'DEBUG', msg)
-                        )
-                    message_queue.put(
-                        TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
-                    )
-                sim_task_state_changed = True
-        return sim_task_state_changed
-
     def set_expired_tasks(self):
         res = False
         for itask in self.get_tasks():
@@ -1925,7 +1896,7 @@ class TaskPool:
                 # Glob or task state was not matched by active tasks
                 if not tokens['task']:
                     # make task globs explicit to make warnings clearer
-                    tokens['task'] = '*'
+                    tokens = tokens.duplicate(task='*')
                 LOG.warning(
                     'No active tasks matching:'
                     # preserve :selectors when logging the id
@@ -1993,7 +1964,7 @@ class TaskPool:
             point_str = tokens['cycle']
             if not tokens['task']:
                 # make task globs explicit to make warnings clearer
-                tokens['task'] = '*'
+                tokens = tokens.duplicate(task='*')
             name_str = tokens['task']
             try:
                 point_str = standardise_point_string(point_str)

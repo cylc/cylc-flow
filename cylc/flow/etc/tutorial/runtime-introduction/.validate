@@ -18,6 +18,7 @@
 set -eux
 FLOW_NAME="$(< /dev/urandom tr -dc A-Za-z | head -c6)"
 SRC=$(cylc get-resources tutorial 2>&1 | head -n1 | awk '{print $NF}')
+cylc lint .
 cylc install "${SRC}/runtime-introduction" --workflow-name "$FLOW_NAME" --no-run-name
 cylc validate --check-circular --icp=2000 "$FLOW_NAME"
 cylc play --no-detach --abort-if-any-task-fails "$FLOW_NAME"

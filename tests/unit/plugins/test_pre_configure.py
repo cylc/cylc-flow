@@ -31,7 +31,7 @@ class EntryPointWrapper:
         self.name = fcn.__name__
         self.fcn = fcn
 
-    def resolve(self):
+    def load(self):
         return self.fcn
 
 
@@ -68,7 +68,7 @@ def test_pre_configure(monkeypatch):
         'cylc.flow.parsec.fileparse.iter_entry_points',
         lambda x: [pre_configure_basic]
     )
-    extra_vars = process_plugins(None, None)
+    extra_vars = process_plugins('/', None)
     assert extra_vars == {
         'env': {
             'ANSWER': '42'
@@ -90,7 +90,7 @@ def test_pre_configure_duplicate(monkeypatch):
         ]
     )
     with pytest.raises(ParsecError):
-        process_plugins(None, None)
+        process_plugins('/', None)
 
 
 def test_pre_configure_templating_detected(monkeypatch):
@@ -103,7 +103,7 @@ def test_pre_configure_templating_detected(monkeypatch):
         ]
     )
     with pytest.raises(ParsecError):
-        process_plugins(None, None)
+        process_plugins('/', None)
 
 
 def test_pre_configure_exception(monkeypatch):
@@ -113,7 +113,7 @@ def test_pre_configure_exception(monkeypatch):
         lambda x: [pre_configure_error]
     )
     with pytest.raises(PluginError) as exc_ctx:
-        process_plugins(None, None)
+        process_plugins('/', None)
     # the context of the original error should be preserved in the raised
     # exception
     assert exc_ctx.value.entry_point == 'cylc.pre_configure'

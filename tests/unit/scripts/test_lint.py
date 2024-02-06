@@ -28,11 +28,10 @@ from cylc.flow.scripts.lint import (
     MANUAL_DEPRECATIONS,
     get_cylc_files,
     get_pyproject_toml,
-    get_reference_rst,
-    get_reference_text,
+    get_reference,
     get_upgrader_info,
     lint,
-    merge_cli_with_tomldata,
+    _merge_cli_with_tomldata,
     parse_checks,
     validate_toml_items
 )
@@ -97,6 +96,12 @@ TEST_FILE = """
             graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
+    [[root]]
+        [[[environment]]]
+            CYLC_VERSION={{CYLC_VERSION}}
+            ROSE_VERSION  = {{ROSE_VERSION     }}
+            FCM_VERSION = {{   FCM_VERSION   }}
+
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
@@ -120,7 +125,7 @@ TEST_FILE = """
             submission failed handler = giaSEHFUIHJ
             failed handler = woo
             execution timeout handler = sdfghjkl
-            expired handler = dafuhj
+            expired handler = %(suite_uuid)s %(user@host)s
             late handler = dafuhj
             submitted handler = dafuhj
             started handler = dafuhj
@@ -143,6 +148,8 @@ TEST_FILE = """
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
+%include foo.cylc
 """
 
 
@@ -152,7 +159,6 @@ LINT_TEST_FILE = """
  [scheduler]
 
 [[dependencies]]
-
 {% set   N = 009 %}
 {% foo %}
 {{foo}}
@@ -207,13 +213,22 @@ def filter_strings(items, contains):
     ]
 
 
-def assert_contains(items, contains):
+def assert_contains(items, contains, instances=None):
     """Pass if at least one item contains a given string."""
-    if not filter_strings(items, contains):
+    filtered = filter_strings(items, contains)
+    if not filtered:
         raise Exception(
             f'Could not find: "{contains}" in:\n'
-            + pformat(items)
-        )
+            + pformat(items))
+    elif instances and len(filtered) != instances:
+        raise Exception(
+            f'Expected "{contains}" to appear {instances} times'
+            f', got it {len(filtered)} times.')
+
+
+EXPECT_INSTANCES_OF_ERR = {
+    16: 3,
+}
 
 
 @pytest.mark.parametrize(
@@ -223,7 +238,8 @@ def assert_contains(items, contains):
 def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
-    assert_contains(lint.messages, f'[U{number:03d}]')
+    instances = EXPECT_INSTANCES_OF_ERR.get(number, None)
+    assert_contains(lint.messages, f'[U{number:03d}]', instances)
 
 
 def test_check_cylc_file_7to8_has_shebang():
@@ -368,35 +384,47 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
-MOCK_CHECKS = {
-    'U042': {
-        'short': 'section `[vizualization]` has been removed.',
-        'url': 'some url or other',
-        'purpose': 'U',
-        'rst': 'section ``[vizualization]`` has been removed.',
-        'function': re.compile('not a regex')
-    },
-}
+def mock_parse_checks(*args, **kwargs):
+    return {
+        'U042': {
+            'short': 'section `[vizualization]` has been removed.',
+            'url': 'some url or other',
+            'purpose': 'U',
+            'rst': 'section ``[vizualization]`` has been removed.',
+            'function': re.compile('not a regex')
+        },
+    }
 
 
-def test_get_reference_rst():
+def test_get_reference_rst(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_rst(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'rst')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
-        'U042\n^^^^\nsection ``[vizualization]`` has been '
+        '`U042 <https://cylc.github.io/cylc-doc/stable'
+        '/html/7-to-8/some url or other>`_'
+        f'\n{ "^" * 78 }'
+        '\nsection ``[vizualization]`` has been '
         'removed.\n\n\n'
     )
     assert ref == expect
 
 
-def test_get_reference_text():
+def test_get_reference_text(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_text(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'text')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
-        'removed.\n\n\n'
+        'removed.'
+        '\n    https://cylc.github.io/cylc-doc/stable/html/7-to-8/some'
+        ' url or other\n\n\n'
     )
     assert ref == expect
 
@@ -565,7 +593,7 @@ def test_validate_toml_items(input_, error):
 )
 def test_merge_cli_with_tomldata(clidata, tomldata, expect):
     """It merges each of the three sections correctly: see function.__doc__"""
-    assert merge_cli_with_tomldata(clidata, tomldata) == expect
+    assert _merge_cli_with_tomldata(clidata, tomldata) == expect
 
 
 def test_invalid_tomlfile(tmp_path):
@@ -623,3 +651,18 @@ def test_indents(spaces, expect):
         assert expect in result
     else:
         assert not result
+
+
+def test_noqa():
+    """Comments turn of checks.
+
+    """
+    output = lint_text(
+        'foo = bar#noqa\n'
+        'qux = baz # noqa: S002\n'
+        'buzz = food # noqa: S007\n'
+        'quixotic = foolish # noqa: S007, S992 S002\n',
+        ['style']
+    )
+    assert len(output.messages) == 1
+    assert 'flow.cylc:3' in output.messages[0]

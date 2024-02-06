@@ -1,0 +1,25 @@
+[meta]
+    title = Downstream Workflow
+    description = """
+        This workflow uses the data provided by the upstream workflow.
+    """
+
+[scheduling]
+    # start two hours before the current hour
+    initial cycle point = previous(T-00) - PT2H
+    [[xtriggers]]
+        # this is an "xtrigger" - it will wait for the task "b" in the same
+        # cycle from the workflow "upstream"
+        upstream = workflow_state(workflow="inter-workflow-triggers/upstream", task="b", point="%(point)s")
+    [[graph]]
+        PT1H = """
+            @upstream => process
+        """
+
+[runtime]
+    [[process]]
+        script = echo "The random number is: $(cat "$file")"
+        [[[environment]]]
+            # this is where the data should be written to in the upstream workflow
+            # Note: "runN" will point to the most recent run of a workflow
+            file = $HOME/cylc-run/upstream/runN/share/$CYLC_TASK_CYCLE_POINT

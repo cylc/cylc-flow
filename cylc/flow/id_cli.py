@@ -31,11 +31,6 @@ from cylc.flow.id import (
     upgrade_legacy_ids,
 )
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
-from cylc.flow.network.scan import (
-    filter_name,
-    is_active,
-    scan,
-)
 from cylc.flow.workflow_files import (
     check_flow_file,
     detect_both_flow_and_suite,
@@ -299,7 +294,7 @@ async def parse_ids_async(
 
     # infer the run number if not specified the ID (and if possible)
     if infer_latest_runs:
-        _infer_latest_runs(*tokens_list, src_path=src_path)
+        _infer_latest_runs(tokens_list, src_path=src_path)
 
     _validate_number(
         *tokens_list,
@@ -414,12 +409,14 @@ def _validate_workflow_ids(*tokens_list, src_path):
         detect_both_flow_and_suite(src_path)
 
 
-def _infer_latest_runs(*tokens_list, src_path):
+def _infer_latest_runs(tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if ind == 0 and src_path:
             # source workflow passed in as a path
             continue
-        tokens['workflow'] = infer_latest_run_from_id(tokens['workflow'])
+        tokens_list[ind] = tokens.duplicate(
+            workflow=infer_latest_run_from_id(tokens['workflow'])
+        )
         pass
 
 
@@ -493,6 +490,12 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
             'currently supported.'
         )
 
+    # import only when needed to avoid slowing CLI unnecessarily
+    from cylc.flow.network.scan import (
+        filter_name,
+        is_active,
+        scan,
+    )
     # construct the pipe
     pipe = scan | filter_name(fnmatch.translate(tokens['workflow']))
     if match_active is not None:

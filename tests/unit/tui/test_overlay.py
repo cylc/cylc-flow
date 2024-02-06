@@ -21,7 +21,9 @@ from unittest.mock import Mock
 import pytest
 import urwid
 
+from cylc.flow.tui.app import BINDINGS
 import cylc.flow.tui.overlay
+from cylc.flow.workflow_status import WorkflowStatus
 
 
 @pytest.fixture
@@ -39,6 +41,7 @@ def overlay_functions():
         getattr(cylc.flow.tui.overlay, obj.name)
         for obj in tree.body
         if isinstance(obj, ast.FunctionDef)
+        and not obj.name.startswith('_')
     ]
 
 
@@ -47,14 +50,21 @@ def test_interface(overlay_functions):
     for function in overlay_functions:
         # mock up an app object to keep things working
         app = Mock(
-            filter_states={},
+            filters={'tasks': {}, 'workflows': {'id': '.*'}},
+            bindings=BINDINGS,
             tree_walker=Mock(
                 get_focus=Mock(
                     return_value=[
                         Mock(
                             get_node=Mock(
                                 return_value=Mock(
-                                    get_value=lambda: {'id_': 'a'}
+                                    get_value=lambda: {
+                                        'id_': '~u/a',
+                                        'type_': 'workflow',
+                                        'data': {
+                                            'status': WorkflowStatus.RUNNING,
+                                        },
+                                    }
                                 )
                             )
                         )
