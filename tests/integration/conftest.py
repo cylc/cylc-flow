@@ -50,7 +50,6 @@ if TYPE_CHECKING:
     from cylc.flow.network.client import WorkflowRuntimeClient
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.network.client import WorkflowRuntimeClient
 
 
 InstallOpts = Options(install_gop())
@@ -479,6 +478,7 @@ def install(test_dir, run_dir):
     yield _inner
 
 
+@pytest.fixture
 def reflog():
     """Integration test version of the --reflog CLI option.
 
@@ -535,6 +535,7 @@ def reflog():
     return _reflog
 
 
+@pytest.fixture
 def complete():
     """Wait for the workflow, or tasks within it to complete.
 
