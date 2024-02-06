@@ -207,7 +207,7 @@ class XtriggerManager:
         workflow_share_dir: Optional[str] = None,
     ):
         # Workflow function and clock triggers by label.
-        self.functx_map: Dict[str, SubFuncContext] = {}
+        self.functx_map: 'Dict[str, SubFuncContext]' = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
@@ -241,7 +241,9 @@ class XtriggerManager:
 
     @staticmethod
     def validate_xtrigger(
-        label: str, fctx: 'SubFuncContext', fdir: str
+        label: str,
+        fctx: 'SubFuncContext',
+        fdir: str,
     ) -> None:
         """Validate an Xtrigger function.
 
@@ -370,7 +372,9 @@ class XtriggerManager:
         return res
 
     def get_xtrig_ctx(
-        self, itask: 'TaskProxy', label: str
+        self,
+        itask: 'TaskProxy',
+        label: str,
     ) -> 'SubFuncContext':
         """Get a real function context from the template.
 

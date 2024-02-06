@@ -20,7 +20,15 @@ from collections import Counter
 from copy import copy
 from fnmatch import fnmatchcase
 from typing import (
-    Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+    Any,
+    Callable,
+    Counter as TypingCounter,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -100,8 +108,6 @@ class TaskProxy:
                 Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
-            logfiles (list):
-                List of names of (extra) known job log files.
             name (str):
                 Same as the .tdef.name attribute.
             started_time (float):
@@ -225,7 +231,6 @@ class TaskProxy:
             'started_time_string': None,
             'finished_time': None,
             'finished_time_string': None,
-            'logfiles': [],
             'platforms_used': {},
             'execution_time_limit': None,
             'job_runner_name': None,
@@ -245,7 +250,7 @@ class TaskProxy:
         self.poll_timer: Optional['TaskActionTimer'] = None
         self.timeout: Optional[float] = None
         self.try_timers: Dict[str, 'TaskActionTimer'] = {}
-        self.non_unique_events = Counter()  # type: ignore # TODO: figure out
+        self.non_unique_events: TypingCounter[str] = Counter()
 
         self.clock_trigger_times: Dict[str, int] = {}
         self.expire_time: Optional[float] = None

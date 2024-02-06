@@ -94,3 +94,66 @@ async def test_validate_against_source_gets_old_tvars(
         flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
     with pytest.raises(Jinja2Error):
         validate(src_dir)
+
+
+def test_validate_simple_graph(flow, validate, caplog):
+    """Test deprecation notice for Cylc 7 simple graph (no recurrence section)
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'dependencies': {'graph': 'foo'}}
+    })
+    validate(id_)
+    expect = (
+        'deprecated graph items were automatically upgraded '
+        'in "workflow definition":'
+        '\n * (8.0.0) [scheduling][dependencies][X]graph'
+        ' -> [scheduling][graph]X - for X in:\n       graph'
+    )
+    assert expect in caplog.messages
+
+
+def test_pre_cylc8(flow, validate, caplog):
+    """Test all current non-silent workflow obsoletions and deprecations.
+    """
+    id_ = flow({
+        'cylc': {
+            'events': {
+                'reset timer': 10,
+                'reset inactivity timer': 15,
+            }
+        },
+        "scheduling": {
+            "initial cycle point": "20150808T00",
+            "final cycle point": "20150808T00",
+            "graph": {
+                "P1D": "foo => cat & dog"
+            },
+            "special tasks": {
+                "external-trigger": 'cat("meow available")'
+            }
+        },
+        'runtime': {
+            'foo, cat, dog': {
+                'suite state polling': {'template': ''},
+                'events': {'reset timer': 20}
+            }
+        }
+    }, defaults=False)
+    validate(id_)
+    for warning in (
+        (
+            ' * (7.8.0) [runtime][foo, cat, dog][suite state polling]template'
+            ' - DELETED (OBSOLETE)'),
+        ' * (7.8.1) [cylc][events]reset timer - DELETED (OBSOLETE)',
+        ' * (7.8.1) [cylc][events]reset inactivity timer - DELETED (OBSOLETE)',
+        (
+            ' * (7.8.1) [runtime][foo, cat, dog][events]reset timer'
+            ' - DELETED (OBSOLETE)'),
+        (
+            ' * (8.0.0) [runtime][foo, cat, dog][suite state polling]'
+            ' -> [runtime][foo, cat, dog][workflow state polling]'
+            ' - value unchanged'),
+        ' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
+    ):
+        assert warning in caplog.messages

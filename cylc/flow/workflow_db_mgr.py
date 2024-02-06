@@ -25,13 +25,14 @@ This module provides the logic to:
 
 import json
 import os
-from pkg_resources import parse_version
 from shutil import copy, rmtree
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
     Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
 )
+
+from packaging.version import parse as parse_version
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
+    from cylc.flow.task_events_mgr import EventKey
 
 Version = Any
 # TODO: narrow down Any (should be str | int) after implementing type
@@ -384,16 +386,17 @@ class WorkflowDatabaseManager:
             for key, value in template_vars.items()
         )
 
-    def put_task_event_timers(self, task_events_mgr):
+    def put_task_event_timers(self, task_events_mgr) -> None:
         """Put statements to update the task_action_timers table."""
         if task_events_mgr.event_timers_updated:
             self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-            for key, timer in task_events_mgr._event_timers.items():
-                key1, point, name, submit_num = key
+            id_key: 'EventKey'
+            for id_key, timer in task_events_mgr._event_timers.items():
+                key1 = (id_key.handler, id_key.event)
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                    "name": name,
-                    "cycle": point,
-                    "ctx_key": json.dumps((key1, submit_num,)),
+                    "name": id_key.tokens['task'],
+                    "cycle": id_key.tokens['cycle'],
+                    "ctx_key": json.dumps((key1, id_key.tokens['job'],)),
                     "ctx": self._namedtuple2json(timer.ctx),
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
