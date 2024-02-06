@@ -95,8 +95,6 @@ class ModeSettings:
             itask.point,
             try_num or itask.get_try_num()
         )
-        from cylc.flow import LOG
-        LOG.critical(try_num or itask.get_try_num())
         self.timeout = started_time + self.simulated_run_length
 
 
