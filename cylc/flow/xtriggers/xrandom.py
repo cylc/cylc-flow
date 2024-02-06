@@ -18,7 +18,7 @@ from random import random, randint
 from time import sleep
 from typing import Any, Dict, List, Tuple
 
-from cylc.flow.exceptions import WorkflowConfigError 
+from cylc.flow.exceptions import WorkflowConfigError
 
 
 COLORS = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
