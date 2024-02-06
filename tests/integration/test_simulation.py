@@ -184,7 +184,7 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
         ISO8601Point(point), itask)
 
     for i, result in enumerate(results):
-        itask.try_timers['execution-retry'].num = i - 1
+        itask.try_timers['execution-retry'].num = i
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is result
@@ -256,7 +256,7 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
     ) is True
 
 
-async def test_simulation_mode_settings_restart(
+async def test_settings_restart(
     monkeytime, flow, scheduler, start
 ):
     """Check that simulation mode settings are correctly restored
@@ -286,22 +286,19 @@ async def test_simulation_mode_settings_restart(
         }
     })
     schd = scheduler(id_)
-    msg_q = Queue()
 
     # Start the workflow:
     async with start(schd):
-        # Pick the task proxy, Mock its start time, set state to running:
         itask = schd.pool.get_tasks()[0]
-        itask.summary['started_time'] = 0
-        itask.state.status = 'running'
-
-        # Submit it, then mock the wallclock and assert that it's not finshed.
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
-        monkeytime(0)
 
+        og_timeout = itask.mode_settings.timeout
+
+        # Mock wallclock < sim end timeout
+        monkeytime(itask.mode_settings.timeout - 1)
         assert sim_time_check(
-            msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
             schd.workflow_db_mgr
         ) is False
 
@@ -310,60 +307,27 @@ async def test_simulation_mode_settings_restart(
     async with start(schd):
         # Get our tasks and fix wallclock:
         itask = schd.pool.get_tasks()[0]
-        monkeytime(12)
-        itask.state.status = 'running'
 
         # Check that we haven't got started time & mode settings back:
         assert itask.summary['started_time'] is None
         assert itask.mode_settings is None
 
-        # Set the start time in the database to 0 to make the
-        # test simpler:
-        schd.workflow_db_mgr.put_insert_task_jobs(
-            itask, {'time_submit': '1970-01-01T00:00:00Z'})
-        schd.workflow_db_mgr.process_queued_ops()
-
         # Set the current time:
-        monkeytime(12)
+        monkeytime(og_timeout - 1)
         assert sim_time_check(
-            msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
             schd.workflow_db_mgr
         ) is False
 
         # Check that the itask.mode_settings is now re-created
         assert itask.mode_settings.__dict__ == {
             'simulated_run_length': 60.0,
-            'sim_task_fails': False,
-            'timeout': 60.0
-        }
-
-        # Set the current time > timeout
-        monkeytime(61)
-        assert sim_time_check(
-            msg_q, [itask], schd.task_events_mgr.broadcast_mgr,
-            schd.workflow_db_mgr
-        ) is True
-
-        assert itask.mode_settings is None
-
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
-            ['1066'], ['one'], [{
-                'execution time limit': 'PT1S'}])
-
-        assert itask.mode_settings is None
-
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
-
-        assert itask.submit_num == 2
-        assert itask.mode_settings.__dict__ == {
-            'simulated_run_length': 1.0,
-            'sim_task_fails': False,
-            'timeout': 62.0
+            'sim_task_fails': True,
+            'timeout': float(int(og_timeout))
         }
 
 
-async def test_simulation_mode_settings_reload(
+async def test_settings_reload(
     flow, scheduler, start, run_simjob
 ):
     """Check that simulation mode settings are changed for future
@@ -374,9 +338,7 @@ async def test_simulation_mode_settings_reload(
         'scheduler': {'cycle point format': '%Y'},
         'scheduling': {
             'initial cycle point': '1066',
-            'graph': {
-                'R1': 'one'
-            }
+            'graph': {'R1': 'one'}
         },
         'runtime': {
             'one': {
@@ -405,3 +367,57 @@ async def test_simulation_mode_settings_reload(
 
         # Submit second psuedo-job and "run" to success:
         assert run_simjob(schd) == 'succeeded'
+
+
+async def test_settings_broadcast(
+    flow, scheduler, start, complete, monkeytime
+):
+    """Assert that broadcasting a change in the settings for a task
+    affects subsequent psuedo-submissions.
+    """
+    id_ = flow({
+        'scheduler': {'cycle point format': '%Y'},
+        'scheduling': {
+            'initial cycle point': '1066',
+            'graph': {'R1': 'one'}
+        },
+        'runtime': {
+            'one': {
+                'execution time limit': 'PT1S',
+                'simulation': {
+                    'speedup factor': 1,
+                    'fail cycle points': '1066',
+                }
+            },
+        }
+    }, defaults=False)
+    schd = scheduler(id_, paused_start=False, run_mode='simulation')
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        itask.state.is_queued = False
+
+        # Submit the first - the sim task will fail:
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert itask.mode_settings.sim_task_fails is True
+
+        # Let task finish.
+        monkeytime(itask.mode_settings.timeout + 1)
+        assert sim_time_check(
+            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.workflow_db_mgr
+        ) is True
+
+        # The mode_settings object has been cleared:
+        assert itask.mode_settings is None
+
+        # Change a setting using broadcast:
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': ''}
+            }])
+
+        # Submit again - result is different:
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert itask.mode_settings.sim_task_fails is False

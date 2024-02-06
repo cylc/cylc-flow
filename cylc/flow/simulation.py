@@ -53,6 +53,7 @@ class ModeSettings:
     """
     simulated_run_length: float = 0.0
     sim_task_fails: bool = False
+    timeout: float = 0.0
 
     def __init__(
         self,
@@ -60,29 +61,42 @@ class ModeSettings:
         broadcast_mgr: 'BroadcastMgr',
         db_mgr: 'Optional[WorkflowDatabaseManager]' = None
     ):
+
+        # itask.summary['started_time'] and mode_settings.timeout need
+        # repopulating from the DB on workflow restart:
+        started_time = itask.summary['started_time']
+        try_num = None
+        if started_time is None and db_mgr:
+            # Get DB info
+            db_info = db_mgr.pub_dao.select_task_job(
+                *itask.tokens.relative_id.split("/"))
+
+            # Get the started time:
+            started_time = get_unix_time_from_time_string(
+                db_info["time_submit"])
+            itask.summary['started_time'] = started_time
+
+            # Get the try number:
+            try_num = db_info["try_num"]
+
+        # Update anything changed by broadcast:
         overrides = broadcast_mgr.get_broadcast(itask.tokens)
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
             poverride(rtconfig, overrides, prepend=True)
         else:
             rtconfig = itask.tdef.rtconfig
+
+        # Calculate simulation info:
         self.simulated_run_length = (
             get_simulated_run_len(rtconfig))
         self.sim_task_fails = sim_task_failed(
             rtconfig['simulation'],
             itask.point,
-            itask.get_try_num()
+            try_num or itask.get_try_num()
         )
-
-        # itask.summary['started_time'] and mode_settings.timeout need
-        # repopulating from the DB on workflow restart:
-        started_time = itask.summary['started_time']
-        if started_time is None and db_mgr:
-            started_time_str = db_mgr.pub_dao.select_task_job(
-                *itask.tokens.relative_id.split("/"))["time_submit"]
-            started_time = get_unix_time_from_time_string(
-                started_time_str)
-            itask.summary['started_time'] = started_time
+        from cylc.flow import LOG
+        LOG.critical(try_num or itask.get_try_num())
         self.timeout = started_time + self.simulated_run_length
 
 
@@ -217,12 +231,7 @@ def sim_time_check(
     sim_task_state_changed: bool = False
 
     for itask in itasks:
-        if (
-            itask.state.status != TASK_STATUS_RUNNING
-            or itask.state.is_queued
-            or itask.state.is_held
-            or itask.state.is_runahead
-        ):
+        if itask.state.status != TASK_STATUS_RUNNING:
             continue
 
         if itask.mode_settings is None:
@@ -250,7 +259,6 @@ def sim_time_check(
             # We've finished this psuedojob, so delete all the mode settings.
             itask.mode_settings = None
             sim_task_state_changed = True
-            itask.mode_settings = None
     return sim_task_state_changed
 
 
@@ -267,5 +275,5 @@ def sim_task_failed(
         sim_conf['fail cycle points'] is None  # i.e. "all"
         or point in sim_conf['fail cycle points']
     ) and (
-        try_num == 0 or not sim_conf['fail try 1 only']
+        try_num == 1 or not sim_conf['fail try 1 only']
     )

@@ -1002,11 +1002,11 @@ class TaskJobManager:
         now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
             itask.summary['started_time'] = now
+            self._set_retry_timers(itask, itask.tdef.rtconfig)
             itask.mode_settings = ModeSettings(
                 itask, self.task_events_mgr.broadcast_mgr)
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
-            self._set_retry_timers(itask)
 
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
@@ -1020,8 +1020,12 @@ class TaskJobManager:
                 itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
             self.workflow_db_mgr.put_insert_task_jobs(
-                itask, {'time_submit': now_str})
-
+                itask, {
+                    'time_submit': now_str,
+                    'try_num': itask.get_try_num(),
+                }
+            )
+        self.workflow_db_mgr.process_queued_ops()
         return itasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
