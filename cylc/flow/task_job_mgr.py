@@ -1025,7 +1025,6 @@ class TaskJobManager:
                     'try_num': itask.get_try_num(),
                 }
             )
-        self.workflow_db_mgr.process_queued_ops()
         return itasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
