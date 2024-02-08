@@ -29,8 +29,10 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
     """Suite state xtrigger, required for interoperability with Cylc 7.
 
-    * The suite_state xtrigger was renamed to workflow_state, this breaks Cylc 7-8 interoperability.
-    * This suite_state xtrigger replicates workflow_state - ensuring back-support.
+    * The suite_state xtrigger was renamed to workflow_state -
+        this breaks Cylc 7-8 interoperability.
+    * This suite_state xtrigger replicates workflow_state -
+        ensuring back-support.
 
     Arguments:
         suite:
