@@ -1002,7 +1002,7 @@ class TaskJobManager:
         now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
             itask.summary['started_time'] = now
-            self._set_retry_timers(itask, itask.tdef.rtconfig)
+            self._set_retry_timers(itask)
             itask.mode_settings = ModeSettings(
                 itask, self.task_events_mgr.broadcast_mgr)
             itask.waiting_on_job_prep = False
