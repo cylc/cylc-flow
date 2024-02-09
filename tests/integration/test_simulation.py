@@ -54,22 +54,8 @@ def run_simjob(monkeytime):
 
     Returns the output status.
     """
-    def _inner(schd, point=None, task=None):
-        # Get the only task proxy, submit the psuedo job:
-        if task and point:
-            itask = schd.pool.get_task(point, task)
-        elif task or point:
-            raise UsageError(
-                'run_simjob requires either a task and point, or neither.')
-        else:
-            itasks = schd.pool.get_tasks()
-            if len(itasks) != 1:
-                raise UsageError(
-                    'run_simjob cannot needs a task and point if more '
-                    'than one task is in the task pool.')
-            else:
-                itask, = itasks
-
+    def _run_simjob(schd, point, task):
+        itask = schd.pool.get_task(point, task)
         itask.state.is_queued = False
         monkeytime(0)
         schd.task_job_mgr._simulation_submit_task_jobs(
@@ -86,7 +72,7 @@ def run_simjob(monkeytime):
         out = schd.message_queue.queue[0].message
         schd.process_queued_task_messages()
         return out
-    return _inner
+    return _run_simjob
 
 
 @pytest.fixture(scope='module')
@@ -355,7 +341,8 @@ async def test_settings_reload(
     schd = scheduler(id_)
     async with start(schd):
         # Submit first psuedo-job and "run" to failure:
-        assert run_simjob(schd) == 'failed'
+        one_1066 = schd.pool.get_tasks()[0]
+        assert run_simjob(schd, one_1066.point, 'one') == 'failed'
 
         # Modify config as if reinstall had taken place:
         conf_file = Path(schd.workflow_run_dir) / 'flow.cylc'
@@ -366,7 +353,8 @@ async def test_settings_reload(
         await schd.command_reload_workflow()
 
         # Submit second psuedo-job and "run" to success:
-        assert run_simjob(schd) == 'succeeded'
+        assert run_simjob(
+            schd, one_1066.point, 'one') == 'succeeded'
 
 
 async def test_settings_broadcast(

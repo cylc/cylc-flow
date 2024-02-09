@@ -34,11 +34,15 @@ run_ok "second-task-broadcast-too-long" \
         -n second_task \
         -s 'execution time limit = P1D'
 
+poll_grep 'Broadcast set:' "${SCHD_LOG}"
+
 # Test cancelling broadcast changes the task config back.
 run_ok "cancel-second-task-broadcast" \
     cylc broadcast "${WORKFLOW_NAME}" \
         -n second_task\
         --clear
+
+poll_grep 'Broadcast cancelled:' "${SCHD_LOG}"
 
 # If we speed up the simulated first_task task we
 # can make it finish before workflow timeout
