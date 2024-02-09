@@ -993,6 +993,7 @@ class Scheduler:
             point = TaskID.get_standardised_point(cycle_point)
             if point is not None and self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
+                self.config.stop_point = point
                 self.workflow_db_mgr.put_workflow_stop_cycle_point(
                     self.options.stopcp)
         elif clock_time is not None:
