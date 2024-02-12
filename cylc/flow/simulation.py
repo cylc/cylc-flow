@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
@@ -38,7 +37,6 @@ from cylc.flow.wallclock import (
 from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
-    from queue import Queue
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.cycling import PointBase
     from cylc.flow.task_proxy import TaskProxy
@@ -213,9 +211,8 @@ def parse_fail_cycle_points(
 
 
 def sim_time_check(
-    message_queue: 'Queue[TaskMsg]',
+    task_events_manager,  #: 'TaskEventsMgr',
     itasks: 'List[TaskProxy]',
-    broadcast_mgr: 'BroadcastMgr',
     db_mgr: 'WorkflowDatabaseManager',
 ) -> bool:
     """Check if sim tasks have been "running" for as long as required.
@@ -227,31 +224,27 @@ def sim_time_check(
     """
     now = time()
     sim_task_state_changed: bool = False
-
     for itask in itasks:
         if itask.state.status != TASK_STATUS_RUNNING:
             continue
 
         if itask.mode_settings is None:
-            itask.mode_settings = ModeSettings(itask, broadcast_mgr, db_mgr)
+            itask.mode_settings = ModeSettings(
+                itask, task_events_manager.broadcast_mgr, db_mgr)
 
         if now > itask.mode_settings.timeout:
-            job_d = itask.tokens.duplicate(job=str(itask.get_try_num()))
-            now_str = get_current_time_string()
-
             if itask.mode_settings.sim_task_fails:
-                message_queue.put(
-                    TaskMsg(job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED)
+                task_events_manager.process_message(
+                    itask, 'CRITICAL', TASK_STATUS_FAILED
                 )
             else:
-                message_queue.put(
-                    TaskMsg(job_d, now_str, 'DEBUG', TASK_STATUS_SUCCEEDED)
+                task_events_manager.process_message(
+                    itask, 'DEBUG', TASK_STATUS_SUCCEEDED
                 )
-
             # Simulate message outputs.
             for msg in itask.tdef.rtconfig['outputs'].values():
-                message_queue.put(
-                    TaskMsg(job_d, now_str, 'DEBUG', msg)
+                task_events_manager.process_message(
+                    itask, 'DEBUG', msg
                 )
 
             # We've finished this psuedojob, so delete all the mode settings.

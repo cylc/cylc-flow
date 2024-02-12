@@ -16,8 +16,7 @@
 
 from pathlib import Path
 import pytest
-from pytest import UsageError, param
-from queue import Queue
+from pytest import param
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.simulation import sim_time_check
@@ -64,14 +63,12 @@ def run_simjob(monkeytime):
 
         # Run Time Check
         assert sim_time_check(
-            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.task_events_mgr, [itask],
             schd.workflow_db_mgr
         ) is True
 
         # Capture result process queue.
-        out = schd.message_queue.queue[0].message
-        schd.process_queued_task_messages()
-        return out
+        return itask
     return _run_simjob
 
 
@@ -115,24 +112,21 @@ async def sim_time_check_setup(
             }
         }
     }))
-    msg_q = Queue()
     async with mod_start(schd):
         itasks = schd.pool.get_tasks()
         [schd.task_job_mgr._set_retry_timers(i) for i in itasks]
-        yield schd, itasks, msg_q
+        yield schd, itasks
 
 
 def test_false_if_not_running(
     sim_time_check_setup, monkeypatch, q_clean
 ):
-    schd, itasks, msg_q = sim_time_check_setup
+    schd, itasks = sim_time_check_setup
 
     itasks = [i for i in itasks if i.state.status != 'running']
 
     # False if task status not running:
-    assert sim_time_check(
-        msg_q, itasks, schd.task_events_mgr.broadcast_mgr, ''
-    ) is False
+    assert sim_time_check(schd.task_events_mgr, itasks, '') is False
 
 
 @pytest.mark.parametrize(
@@ -164,7 +158,7 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
     """A task with a fail cycle point only fails
     at that cycle point, and then only on the first submission.
     """
-    schd, _, msg_q = sim_time_check_setup
+    schd, _ = sim_time_check_setup
 
     itask = schd.pool.get_task(
         ISO8601Point(point), itask)
@@ -176,7 +170,7 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
         assert itask.mode_settings.sim_task_fails is result
 
 
-def test_task_finishes(sim_time_check_setup, monkeytime, q_clean):
+def test_task_finishes(sim_time_check_setup, monkeytime, caplog):
     """...and an appropriate message sent.
 
     Checks that failed and bar are output if a task is set to fail.
@@ -184,10 +178,7 @@ def test_task_finishes(sim_time_check_setup, monkeytime, q_clean):
     Does NOT check every possible cause of an outcome - this is done
     in unit tests.
     """
-    schd, _, msg_q = sim_time_check_setup
-
-    q_clean(msg_q)
-
+    schd, _ = sim_time_check_setup
     monkeytime(0)
 
     # Setup a task to fail, submit it.
@@ -202,24 +193,24 @@ def test_task_finishes(sim_time_check_setup, monkeytime, q_clean):
     fail_all_1066.summary['started_time'] = 0
 
     # Before simulation time is up:
-    assert sim_time_check(
-        msg_q, [fail_all_1066], schd.task_events_mgr.broadcast_mgr, ''
-    ) is False
+    assert sim_time_check(schd.task_events_mgr, [fail_all_1066], '') is False
 
     # Time's up...
     monkeytime(12)
 
     # After simulation time is up it Fails and records custom outputs:
-    assert sim_time_check(
-        msg_q, [fail_all_1066], schd.task_events_mgr.broadcast_mgr, ''
-    ) is True
-    assert sorted(i.message for i in msg_q.queue) == ['bar', 'failed']
+    assert sim_time_check(schd.task_events_mgr, [fail_all_1066], '') is True
+    outputs = {
+        o[0]: (o[1], o[2]) for o in fail_all_1066.state.outputs.get_all()}
+    assert outputs['succeeded'] == ('succeeded', False)
+    assert outputs['foo'] == ('bar', True)
+    assert outputs['failed'] == ('failed', True)
 
 
 def test_task_sped_up(sim_time_check_setup, monkeytime):
     """Task will speed up by a factor set in config."""
 
-    schd, _, msg_q = sim_time_check_setup
+    schd, _ = sim_time_check_setup
     fast_forward_1066 = schd.pool.get_task(
         ISO8601Point('1066'), 'fast_forward')
 
@@ -229,17 +220,14 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
         [fast_forward_1066], schd.workflow)
     fast_forward_1066.state.is_queued = False
 
-    assert sim_time_check(
-        msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
-    ) is False
+    result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
+    assert result is False
     monkeytime(29)
-    assert sim_time_check(
-        msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
-    ) is False
+    result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
+    assert result is False
     monkeytime(31)
-    assert sim_time_check(
-        msg_q, [fast_forward_1066], schd.task_events_mgr.broadcast_mgr, ''
-    ) is True
+    result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
+    assert result is True
 
 
 async def test_settings_restart(
@@ -284,8 +272,7 @@ async def test_settings_restart(
         # Mock wallclock < sim end timeout
         monkeytime(itask.mode_settings.timeout - 1)
         assert sim_time_check(
-            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
-            schd.workflow_db_mgr
+            schd.task_events_mgr, [itask], schd.workflow_db_mgr
         ) is False
 
     # Stop and restart the scheduler:
@@ -301,8 +288,7 @@ async def test_settings_restart(
         # Set the current time:
         monkeytime(og_timeout - 1)
         assert sim_time_check(
-            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
-            schd.workflow_db_mgr
+            schd.task_events_mgr, [itask], schd.workflow_db_mgr
         ) is False
 
         # Check that the itask.mode_settings is now re-created
@@ -342,7 +328,9 @@ async def test_settings_reload(
     async with start(schd):
         # Submit first psuedo-job and "run" to failure:
         one_1066 = schd.pool.get_tasks()[0]
-        assert run_simjob(schd, one_1066.point, 'one') == 'failed'
+
+        itask = run_simjob(schd, one_1066.point, 'one')
+        assert ['failed', 'failed', False] in itask.state.outputs.get_all()
 
         # Modify config as if reinstall had taken place:
         conf_file = Path(schd.workflow_run_dir) / 'flow.cylc'
@@ -353,8 +341,9 @@ async def test_settings_reload(
         await schd.command_reload_workflow()
 
         # Submit second psuedo-job and "run" to success:
-        assert run_simjob(
-            schd, one_1066.point, 'one') == 'succeeded'
+        itask = run_simjob(schd, one_1066.point, 'one')
+        assert [
+            'succeeded', 'succeeded', True] in itask.state.outputs.get_all()
 
 
 async def test_settings_broadcast(
@@ -392,7 +381,7 @@ async def test_settings_broadcast(
         # Let task finish.
         monkeytime(itask.mode_settings.timeout + 1)
         assert sim_time_check(
-            schd.message_queue, [itask], schd.task_events_mgr.broadcast_mgr,
+            schd.task_events_mgr, [itask],
             schd.workflow_db_mgr
         ) is True
 
