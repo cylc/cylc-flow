@@ -534,12 +534,6 @@ class GraphParser:
         if right.count("(") != right.count(")"):
             raise GraphParseError(mismatch_msg.format(right))
 
-        # Split right side on AND.
-        rights = right.split(self.__class__.OP_AND)
-        if '' in rights or right and not all(rights):
-            raise GraphParseError(
-                f"Null task name in graph: {left} => {right}")
-
         # Ignore/Error cycle point offsets on the right side:
         # (Note we can only ban this for nodes at the end of chains)
         if '[' in right:
@@ -551,6 +545,12 @@ class GraphParser:
             else:
                 # This right hand side is a left elsewhere:
                 return
+
+        # Split right side on AND.
+        rights = right.split(self.__class__.OP_AND)
+        if '' in rights or right and not all(rights):
+            raise GraphParseError(
+                f"Null task name in graph: {left} => {right}")
 
         lefts: Union[List[str], List[Optional[str]]]
         if not left or (self.__class__.OP_OR in left or '(' in left):

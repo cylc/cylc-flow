@@ -925,8 +925,6 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
         param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'illegal cycle point offset'),
         # No error if offset in NON-terminal RHS:
         param((('a', 'b[-P42M]'), {}), None),
-        # Null task name in graph warns before cycle point offsets:
-        param((('a', 'b[-P42M] &'), {}), '^Null task name'),
         # Don't check the left hand side if this has a non-terminal RHS:
         param((('a &', 'b[-P42M]'), {}), None),
     )
