@@ -534,21 +534,23 @@ class GraphParser:
         if right.count("(") != right.count(")"):
             raise GraphParseError(mismatch_msg.format(right))
 
-        # Ignore/Error cycle point offsets on the right side:
-        # (Note we can only ban this for nodes at the end of chains)
-        if '[' in right:
-            if right in terminals:
-                raise GraphParseError(
-                    'ERROR, illegal cycle point offset on the right:'
-                    f' {left} => {right}')
-            else:
-                return
-
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
         if '' in rights or right and not all(rights):
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
+
+        # Ignore/Error cycle point offsets on the right side:
+        # (Note we can only ban this for nodes at the end of chains)
+        if '[' in right:
+            if left and right in terminals:
+                # This right hand side is at the end of a chain:
+                raise GraphParseError(
+                    'ERROR, illegal cycle point offset on the right:'
+                    f' {left} => {right}')
+            else:
+                # This right hand side is a left elsewhere:
+                return
 
         lefts: Union[List[str], List[Optional[str]]]
         if not left or (self.__class__.OP_OR in left or '(' in left):

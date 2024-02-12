@@ -916,3 +916,28 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
         for task, trigs in gp.triggers.items()
     }
     assert triggers == expected_triggers
+
+
+@pytest.mark.parametrize(
+    'args, err',
+    (
+        # Error if offset in terminal RHS:
+        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'illegal cycle point offset'),
+        # No error if offset in NON-terminal RHS:
+        param((('a', 'b[-P42M]'), {}), None),
+        # Null task name in graph warns before cycle point offsets:
+        param((('a', 'b[-P42M] &'), {}), '^Null task name'),
+        # Don't check the left hand side if this has a non-terminal RHS:
+        param((('a &', 'b[-P42M]'), {}), None),
+    )
+)
+def test_proc_dep_pair(args, err):
+    """
+    Unit tests for _proc_dep_pair.
+    """
+    gp = GraphParser()
+    if err:
+        with pytest.raises(GraphParseError, match=err):
+            gp._proc_dep_pair(*args)
+    else:
+        assert gp._proc_dep_pair(*args) is None
