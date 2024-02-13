@@ -1288,6 +1288,12 @@ with Conf(
 
                     Task instances must be set to fail by
                     :cylc:conf:`[..]fail cycle points`.
+
+                    .. warning::
+
+                       This setting is designed for use with automatic
+                       retries. Subsequent manual submissions will not
+                       change the outcome of the task.
                 ''')
                 Conf('disable task event handlers', VDR.V_BOOLEAN, True,
                      desc='''
