@@ -260,6 +260,7 @@ class XtriggerManager:
         # Gather parentless tasks whose xtrigger(s) have been satisfied
         # (these will be used to spawn the next occurance).
         self.sequential_spawn_next: Set[str] = set()
+        self.sequential_has_spawned_next: Set[str] = set()
 
         self.workflow_run_dir = workflow_run_dir
 
