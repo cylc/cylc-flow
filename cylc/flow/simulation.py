@@ -211,7 +211,7 @@ def parse_fail_cycle_points(
 
 
 def sim_time_check(
-    task_events_manager,  #: 'TaskEventsMgr',
+    task_events_manager: 'TaskEventsMgr',
     itasks: 'List[TaskProxy]',
     db_mgr: 'WorkflowDatabaseManager',
 ) -> bool:
