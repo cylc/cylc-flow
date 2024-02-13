@@ -22,28 +22,12 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.simulation import sim_time_check
 
 
-def get_msg_queue_item(queue, id_):
-    for item in queue.queue:
-        if id_ in str(item.job_id):
-            return item
-
-
 @pytest.fixture
 def monkeytime(monkeypatch):
     """Convenience function monkeypatching time."""
     def _inner(time_: int):
         monkeypatch.setattr('cylc.flow.task_job_mgr.time', lambda: time_)
         monkeypatch.setattr('cylc.flow.simulation.time', lambda: time_)
-    return _inner
-
-
-@pytest.fixture
-def q_clean():
-    """Clear message queue to revent test interference.
-    """
-    def _inner(msg_q):
-        if not msg_q.empty():
-            msg_q.get()
     return _inner
 
 
@@ -119,7 +103,7 @@ async def sim_time_check_setup(
 
 
 def test_false_if_not_running(
-    sim_time_check_setup, monkeypatch, q_clean
+    sim_time_check_setup, monkeypatch
 ):
     schd, itasks = sim_time_check_setup
 
@@ -347,7 +331,7 @@ async def test_settings_reload(
 
 
 async def test_settings_broadcast(
-    flow, scheduler, start, complete, monkeytime
+    flow, scheduler, start, monkeytime
 ):
     """Assert that broadcasting a change in the settings for a task
     affects subsequent psuedo-submissions.
