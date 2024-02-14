@@ -247,7 +247,7 @@ class TaskRemoteMgr:
         dirs_to_symlink = get_dirs_to_symlink(install_target, self.workflow)
         for key, value in dirs_to_symlink.items():
             if value is not None:
-                cmd.append(f"{key}={quote(value)} ")
+                cmd.append(f"{key}={quote(value)}")
         # Create the ssh command
         try:
             host = get_host_from_platform(
