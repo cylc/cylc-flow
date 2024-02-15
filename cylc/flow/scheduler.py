@@ -1750,7 +1750,6 @@ class Scheduler:
                     self.pool.queue_task(itask)
 
             if self.xtrigger_mgr.sequential_spawn_next:
-                # Spawn parentless tasks with sequentially checked xtrigger(s).
                 self.pool.spawn_parentless_sequential_xtriggers()
 
             if self.xtrigger_mgr.do_housekeeping:

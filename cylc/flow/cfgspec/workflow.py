@@ -802,18 +802,18 @@ with Conf(
                     :ref:`SequentialTasks`.
             ''')
 
-        Conf('sequential xtriggers default', VDR.V_BOOLEAN, False, desc='''
-            When set to ``True``, parentless tasks that trigger off xtriggers
-            will only spawn sequentially, i.e. on the satisfaction of the
-            xtriggers in order. Otherwise, these tasks will all spawn at the
-            same time up to the runahead limit.
+        Conf('spawn from xtriggers sequentially', VDR.V_BOOLEAN, False,
+             desc='''
+            If ``True``, tasks that only depend on xtriggers will not spawn
+            until their previous (cycle point) instance is satisfied.
+            Otherwise, they will all spawn at once out to the runahead limit.
 
-            This workflow-wide default can be overridden by a reserved
-            keyword argument in the xtrigger function declaration and/or
-            function (``sequential=True/False``).
+            This setting can be overridden by a reserved keyword argument in
+            individual xtrigger declarations, or in xtrigger function
+            definitions.
 
-            The presence of one sequential xtrigger on a parentless task with
-            multiple xtriggers will cause sequential behavior.
+            One sequential xtrigger on a parentless task with multiple
+            xtriggers will cause sequential behavior.
         ''')
         with Conf('xtriggers', desc='''
             This section is for *External Trigger* function declarations -

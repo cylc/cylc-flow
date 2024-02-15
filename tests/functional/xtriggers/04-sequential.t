@@ -30,7 +30,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = 3000
     runahead limit = P5
-    sequential xtriggers default = True
+    spawn from xtriggers sequentially = True
     [[xtriggers]]
         clock_1 = wall_clock(offset=P2Y, sequential=False)
         clock_2 = wall_clock()

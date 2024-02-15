@@ -715,8 +715,8 @@ class TaskPool:
             is_in_pool:
                 Was the task found in a pool.
             is_xtrig_sequential:
-                Is the next task occurance spawned on xtrigger satisfaction,
-                or do all occurances spawn out to the runahead limit.
+                Is the next task occurrence spawned on xtrigger satisfaction,
+                or do all occurrence spawn out to the runahead limit.
 
         It does not add a spawned task proxy to the pool.
         """

@@ -132,7 +132,7 @@ async def test_reload(sequential, start):
 # TODO: test setting the sequential argument in [scheduling][xtrigger] items
 # changes the behaviour
 
-# TODO: test the interaction between "sequential xtriggers default" and the
+# TODO: test the interaction between "spawn from xtriggers sequentially" and the
 # sequential argument to [scheduling][xtrigger]
 # * Should we be able to override the default by setting sequential=False?
 # * Or should that result in a validation error?
