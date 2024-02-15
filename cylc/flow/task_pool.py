@@ -1026,7 +1026,7 @@ class TaskPool:
             LOG.info(f"Stop point unchanged: {stop_point}")
             return False
 
-        LOG.info("Setting stop point: {stop_point}")
+        LOG.info(f"Setting stop point: {stop_point}")
         self.stop_point = stop_point
 
         if (

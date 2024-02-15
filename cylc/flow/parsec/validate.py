@@ -26,7 +26,7 @@ import re
 import shlex
 from collections import deque
 from textwrap import dedent
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Optional, Tuple
 
 from metomi.isodatetime.data import Duration, TimePoint
 from metomi.isodatetime.dumpers import TimePointDumper
@@ -373,7 +373,7 @@ class ParsecValidator:
         return Range((int(min_), int(max_)))
 
     @classmethod
-    def coerce_str(cls, value, keys):
+    def coerce_str(cls, value, keys) -> str:
         """Coerce value to a string.
 
         Examples:
@@ -385,7 +385,7 @@ class ParsecValidator:
         """
         if isinstance(value, list):
             # handle graph string merging
-            vraw = []
+            vraw: List[str] = []
             vals = [value]
             while vals:
                 val = vals.pop()
@@ -512,16 +512,32 @@ class ParsecValidator:
             return None
 
     @classmethod
-    def strip_and_unquote(cls, keys, value):
+    def _unquote(cls, keys: List[str], value: str) -> Optional[str]:
+        """Unquote value."""
+        for substr, rec in (
+            ("'''", cls._REC_MULTI_LINE_SINGLE),
+            ('"""', cls._REC_MULTI_LINE_DOUBLE),
+            ('"', cls._REC_DQ_VALUE),
+            ("'", cls._REC_SQ_VALUE)
+        ):
+            if value.startswith(substr):
+                match = rec.match(value)
+                if not match:
+                    raise IllegalValueError("string", keys, value)
+                return match[1]
+        return None
+
+    @classmethod
+    def strip_and_unquote(cls, keys: List[str], value: str) -> str:
         """Remove leading and trailing spaces and unquote value.
 
         Args:
-            keys (list):
+            keys:
                 Keys in nested dict that represents the raw configuration.
-            value (str):
+            value:
                 String value in raw configuration.
 
-        Return (str):
+        Return:
             Processed value.
 
         Examples:
@@ -529,24 +545,13 @@ class ParsecValidator:
             'foo'
 
         """
-        for substr, rec in [
-                ["'''", cls._REC_MULTI_LINE_SINGLE],
-                ['"""', cls._REC_MULTI_LINE_DOUBLE],
-                ['"', cls._REC_DQ_VALUE],
-                ["'", cls._REC_SQ_VALUE]]:
-            if value.startswith(substr):
-                match = rec.match(value)
-                if not match:
-                    raise IllegalValueError("string", keys, value)
-                value = match.groups()[0]
-                break
-        else:
-            # unquoted
-            value = value.split(r'#', 1)[0]
+        val = cls._unquote(keys, value)
+        if val is None:
+            val = value.split(r'#', 1)[0]
 
         # Note strip() removes leading and trailing whitespace, including
         # initial newlines on a multiline string:
-        return dedent(value).strip()
+        return dedent(val).strip()
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
@@ -657,6 +662,7 @@ class CylcConfigValidator(ParsecValidator):
     V_CYCLE_POINT = 'V_CYCLE_POINT'
     V_CYCLE_POINT_FORMAT = 'V_CYCLE_POINT_FORMAT'
     V_CYCLE_POINT_TIME_ZONE = 'V_CYCLE_POINT_TIME_ZONE'
+    V_CYCLE_POINT_WITH_OFFSETS = 'V_CYCLE_POINT_WITH_OFFSETS'
     V_INTERVAL = 'V_INTERVAL'
     V_INTERVAL_LIST = 'V_INTERVAL_LIST'
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
@@ -697,6 +703,26 @@ class CylcConfigValidator(ParsecValidator):
                 'Z': 'UTC / GMT.',
                 '+13': 'UTC plus 13 hours.',
                 '-0830': 'UTC minus 8 hours and 30 minutes.'
+            }
+        ),
+        V_CYCLE_POINT_WITH_OFFSETS: (
+            'cycle point with support for offsets',
+            'An integer or date-time cycle point, with optional offset(s).',
+            {
+                '1': 'An integer cycle point.',
+                '1 +P5': (
+                    'An integer cycle point with an offset'
+                    ' (this evaluates as ``6``).'
+                ),
+                '+P5': (
+                    'An integer cycle point offset.'
+                    ' This offset is added to the initial cycle point'
+                ),
+                '2000-01-01T00:00Z': 'A date-time cycle point.',
+                '2000-02-29T00:00Z +P1D +P1M': (
+                    'A date-time cycle point with offsets'
+                    ' (this evaluates as ``2000-04-01T00:00Z``).'
+                ),
             }
         ),
         V_INTERVAL: (
@@ -751,6 +777,9 @@ class CylcConfigValidator(ParsecValidator):
             self.V_CYCLE_POINT: self.coerce_cycle_point,
             self.V_CYCLE_POINT_FORMAT: self.coerce_cycle_point_format,
             self.V_CYCLE_POINT_TIME_ZONE: self.coerce_cycle_point_time_zone,
+            # NOTE: This type exists for documentation reasons
+            # it doesn't actually process offsets, that happens later
+            self.V_CYCLE_POINT_WITH_OFFSETS: self.coerce_str,
             self.V_INTERVAL: self.coerce_interval,
             self.V_INTERVAL_LIST: self.coerce_interval_list,
             self.V_PARAMETER_LIST: self.coerce_parameter_list,
@@ -1136,22 +1165,24 @@ class CylcConfigValidator(ParsecValidator):
         return val
 
 
-# BACK COMPAT: BroadcastConfigValidator
-# The DB at 8.0.x stores Interval values as neither ISO8601 duration
-# string or DurationFloat. This has been fixed at 8.1.0, and
-# the following class acts as a bridge between fixed and broken.
-# url:
-#     https://github.com/cylc/cylc-flow/pull/5138
-# from:
-#    8.0.x
-# to:
-#    8.1.x
-# remove at:
-#    8.x
 class BroadcastConfigValidator(CylcConfigValidator):
     """Validate and Coerce DB loaded broadcast config to internal objects."""
     def __init__(self):
         CylcConfigValidator.__init__(self)
+
+    @classmethod
+    def coerce_str(cls, value, keys) -> str:
+        """Coerce value to a string. Unquotes & strips lead/trail whitespace.
+
+        Prevents ParsecValidator from assuming '#' means comments;
+        '#' has valid uses in shell script such as parameter substitution.
+
+        Examples:
+            >>> BroadcastConfigValidator.coerce_str('echo "${FOO#*bar}"', None)
+            'echo "${FOO#*bar}"'
+        """
+        val = ParsecValidator._unquote(keys, value) or value
+        return dedent(val).strip()
 
     @classmethod
     def strip_and_unquote_list(cls, keys, value):
@@ -1177,6 +1208,18 @@ class BroadcastConfigValidator(CylcConfigValidator):
             value = value.lstrip('[').rstrip(']')
         return ParsecValidator.strip_and_unquote_list(keys, value)
 
+    # BACK COMPAT: BroadcastConfigValidator.coerce_interval
+    # The DB at 8.0.x stores Interval values as neither ISO8601 duration
+    # string or DurationFloat. This has been fixed at 8.1.0, and
+    # the following method acts as a bridge between fixed and broken.
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/5138
+    # from:
+    #    8.0.x
+    # to:
+    #    8.1.x
+    # remove at:
+    #    8.x
     @classmethod
     def coerce_interval(cls, value, keys):
         """Coerce an ISO 8601 interval into seconds.

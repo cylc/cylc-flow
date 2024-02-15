@@ -37,7 +37,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_fail "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" --no-detach --stopcp='potato'
 
-grep_ok "ERROR - Workflow shutting down .* potato" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "ERROR - Workflow shutting down .*potato" "${TEST_NAME_BASE}-run.stderr"
 
 # Check that we haven't got a database
 exists_ok "${WORKFLOW_RUN_DIR}/.service"

@@ -165,9 +165,17 @@ EVENTS_SETTINGS = {  # workflow events
 
         Template variables can be used to configure handlers. For a full list
         of supported variables see :ref:`workflow_event_template_variables`.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
     ''',
     'handler events': '''
         Specify the events for which workflow event handlers should be invoked.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
     ''',
     'mail events': '''
         Specify the workflow events for which notification emails should
@@ -176,12 +184,20 @@ EVENTS_SETTINGS = {  # workflow events
     'startup handlers': f'''
         Handlers to run at scheduler startup.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``startup handler``.
     ''',
     'shutdown handlers': f'''
         Handlers to run at scheduler shutdown.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -191,6 +207,10 @@ EVENTS_SETTINGS = {  # workflow events
         Handlers to run if the scheduler shuts down with error status due to
         a configured timeout or a fatal error condition.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``aborted handler``.
@@ -199,10 +219,18 @@ EVENTS_SETTINGS = {  # workflow events
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionadded:: 8.0.0
     ''',
     'workflow timeout handlers': '''
         Handlers to run if the workflow timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionadded:: 8.0.0
     ''',
@@ -210,10 +238,18 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the workflow timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionadded:: 8.0.0
     ''',
     'stall handlers': f'''
         Handlers to run if the scheduler stalls.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -222,12 +258,20 @@ EVENTS_SETTINGS = {  # workflow events
     'stall timeout': f'''
         The length of a timer which starts if the scheduler stalls.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``timeout``.
     ''',
     'stall timeout handlers': f'''
         Handlers to run if the stall timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -237,6 +281,10 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the stall timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on timeout``.
@@ -245,12 +293,20 @@ EVENTS_SETTINGS = {  # workflow events
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES} ``inactivity``.
     ''',
     'inactivity timeout handlers': f'''
         Handlers to run if the inactivity timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -260,6 +316,10 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the inactivity timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on inactivity``.
@@ -267,6 +327,10 @@ EVENTS_SETTINGS = {  # workflow events
     'restart timeout': '''
         How long to wait for intervention on restarting a completed workflow.
         The timer stops if any task is triggered.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionadded:: 8.2.0
 

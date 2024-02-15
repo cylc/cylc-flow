@@ -15,16 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Exceptions for "expected" errors."""
 
-import errno
+
 from textwrap import wrap
 from typing import (
-    Callable,
     Dict,
     Iterable,
-    NoReturn,
     Optional,
-    Tuple,
-    Type,
     Union,
     TYPE_CHECKING,
 )
@@ -42,7 +38,6 @@ class CylcError(Exception):
     message to the user is more appropriate than traceback.
 
     CLI commands will catch this exception and exit with str(exception).
-
     """
 
 
@@ -50,10 +45,14 @@ class PluginError(CylcError):
     """Represents an error arising from a Cylc plugin.
 
     Args:
-        entry_point: The plugin entry point as defined in setup.cfg
+        entry_point:
+            The plugin entry point as defined in setup.cfg
             (e.g. 'cylc.main_loop')
-        plugin_name: Name of the plugin
-        exc: Original exception caught when trying to run the plugin
+        plugin_name:
+            Name of the plugin
+        exc:
+            Original exception caught when trying to run the plugin
+
     """
 
     def __init__(self, entry_point: str, plugin_name: str, exc: Exception):
@@ -78,12 +77,8 @@ class InputError(CylcError):
 
 
 class CylcConfigError(CylcError):
-    """Generic exception to handle an error in a Cylc configuration file.
-
-    TODO:
-        * reference the configuration element causing the problem
-
-    """
+    """Generic exception to handle an error in a Cylc configuration file."""
+    # TODO: reference the configuration element causing the problem
 
 
 class WorkflowConfigError(CylcConfigError):
@@ -140,19 +135,6 @@ class WorkflowFilesError(CylcError):
 
 class ContactFileExists(CylcError):
     """Workflow contact file exists."""
-
-
-def handle_rmtree_err(
-    function: Callable,
-    path: str,
-    excinfo: Tuple[Type[Exception], Exception, object]
-) -> NoReturn:
-    """Error handler for shutil.rmtree."""
-    exc = excinfo[1]
-    if isinstance(exc, OSError) and exc.errno == errno.ENOTEMPTY:
-        # "Directory not empty", likely due to filesystem lag
-        raise FileRemovalError(exc)
-    raise exc
 
 
 class FileRemovalError(CylcError):
@@ -269,6 +251,18 @@ class XtriggerConfigError(WorkflowConfigError):
 
 
 class ClientError(CylcError):
+    """Base class for errors raised by Cylc client instances.
+
+    For example, the workflow you are trying to connect to is stopped.
+
+    Attributes:
+        message:
+            The exception message.
+        traceback:
+            The underlying exception instance if available.
+        workflow:
+            The workflow ID if available.
+    """
 
     def __init__(
         self,
@@ -291,7 +285,7 @@ class ClientError(CylcError):
 
 
 class WorkflowStopped(ClientError):
-    """Special case of ClientError for a stopped workflow."""
+    """The Cylc scheduler you attempted to connect to is stopped."""
 
     def __init__(self, workflow):
         self.workflow = workflow
@@ -301,6 +295,16 @@ class WorkflowStopped(ClientError):
 
 
 class ClientTimeout(CylcError):
+    """The scheduler did not respond within the timeout.
+
+    This could be due to:
+    * Network issues.
+    * Scheduler issues.
+    * Insufficient timeout.
+
+    To increase the timeout, use the ``--comms-timeout`` option.
+
+    """
 
     def __init__(self, message: str, workflow: Optional[str] = None):
         self.message = message
@@ -311,7 +315,7 @@ class ClientTimeout(CylcError):
 
 
 class CyclingError(CylcError):
-    pass
+    """Base class for errors in cycling configuration."""
 
 
 class CyclerTypeError(CyclingError):
@@ -446,10 +450,14 @@ class NoPlatformsError(PlatformLookupError):
     """None of the platforms of a given set were reachable.
 
     Args:
-        identity: The name of the platform group or install target
-        set_type: Whether the set of platforms is a platform group or an
-            install target
-        place: Where the attempt to get the platform failed.
+        identity:
+            The name of the platform group or install target.
+        set_type:
+            Whether the set of platforms is a platform group or an install
+            target.
+        place:
+            Where the attempt to get the platform failed.
+
     """
     def __init__(
         self, identity: str, set_type: str = 'group', place: str = ''

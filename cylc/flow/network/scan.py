@@ -48,7 +48,16 @@ e.g. :py:func:`contact_info`.
 import asyncio
 from pathlib import Path
 import re
-from typing import AsyncGenerator, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    AsyncGenerator,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from packaging.version import parse as parse_version
 from packaging.specifiers import SpecifierSet
@@ -422,7 +431,7 @@ def format_query(fields, filters=None):
 
 
 @pipe(preproc=format_query)
-async def graphql_query(flow, fields, filters=None):
+async def graphql_query(flow: dict, fields: Iterable, filters=None):
     """Obtain information from a GraphQL request to the flow.
 
     Requires:
@@ -430,9 +439,9 @@ async def graphql_query(flow, fields, filters=None):
         * contact_info
 
     Args:
-        flow (dict):
+        flow:
             Flow information dictionary, provided by scan through the pipe.
-        fields (iterable):
+        fields:
             Iterable containing the fields to request e.g::
 
                ['id', 'name']
@@ -464,12 +473,15 @@ async def graphql_query(flow, fields, filters=None):
         LOG.warning(f'Workflow not running: {flow["name"]}')
         return False
     try:
-        ret = await client.async_request(
-            'graphql',
-            {
-                'request_string': query,
-                'variables': {}
-            }
+        ret = cast(
+            'dict',
+            await client.async_request(
+                'graphql',
+                {
+                    'request_string': query,
+                    'variables': {}
+                }
+            )
         )
     except WorkflowStopped:
         LOG.warning(f'Workflow not running: {flow["name"]}')
