@@ -333,12 +333,13 @@ class CylcOptionParser(OptionParser):
             ['-z', '--set-list', '--template-list'],
             metavar='NAME=VALUE1,VALUE2,...',
             help=(
-                'Set the value of a Jinja2 template variable in the'
-                ' workflow definition as a comma separated'
-                ' list of Python strings.'
-                ' Values containing commas must be quoted.'
-                " e.g. '+s STR=a,b,c' => ['a', 'b', 'c']"
-                " or '+ s STR=a,\"b,c\"' => ['a', 'b,c']"
+                'A more convenient alternative to --set for defining a list'
+                ' of strings. E.G.'
+                ' "-z FOO=a,b,c" is shorthand for'
+                ' "-s FOO=[\'a\',\'b\',\'c\']".'
+                ' Commas can be present in values if quoted, e.g.'
+                ' "-z FOO=a,\'b,c\'" is shorthand for'
+                ' "-s FOO=[\'a\',\'b,c\']".'
                 + CAN_BE_USED_MULTIPLE
                 + NOTE_PERSIST_ACROSS_RESTARTS
             ),
