@@ -73,6 +73,10 @@ cylc__job__main() {
     export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/scheduler"
     export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_RUN_DIR}/share"
     export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_RUN_DIR}/work"
+    # Make sure the 'raw' version of SHARE and WORK are defined.
+    # Default to the ones defined above.
+    export CYLC_WORKFLOW_SHARE_DIR_RAW="${CYLC_WORKFLOW_SHARE_DIR_RAW:-"${CYLC_WORKFLOW_SHARE_DIR}"}"
+    export CYLC_WORKFLOW_WORK_DIR_RAW="${CYLC_WORKFLOW_WORK_DIR_RAW:-"${CYLC_WORKFLOW_WORK_DIR}"}"
     export CYLC_TASK_CYCLE_POINT="${CYLC_TASK_JOB%%/*}"
     export CYLC_TASK_NAME="${CYLC_TASK_JOB#*/}"
     CYLC_TASK_NAME="${CYLC_TASK_NAME%/*}"
@@ -95,6 +99,7 @@ cylc__job__main() {
         CYLC_TASK_WORK_DIR_BASE="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     fi
     export CYLC_TASK_WORK_DIR="${CYLC_WORKFLOW_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
+    export CYLC_TASK_WORK_DIR_RAW="${CYLC_WORKFLOW_WORK_DIR_RAW}/${CYLC_TASK_WORK_DIR_BASE}"
     typeset contact="${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
     if [[ -f "${contact}" ]]; then
         # (contact file not present for polled platforms)
@@ -134,9 +139,8 @@ cylc__job__main() {
     export PATH="${CYLC_WORKFLOW_RUN_DIR}/share/bin:${CYLC_WORKFLOW_RUN_DIR}/bin:${PATH}"
     export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
-    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}" || true
-    mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
-    mkdir -p "${CYLC_TASK_WORK_DIR}"
+    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR_RAW}" || true
+    mkdir -p "${CYLC_TASK_WORK_DIR_RAW}"
     cd "${CYLC_TASK_WORK_DIR}"
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
     # Run user scripts in subshell to protect cylc job script from interference.

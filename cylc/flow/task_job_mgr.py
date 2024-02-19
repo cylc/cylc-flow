@@ -55,7 +55,10 @@ from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
 )
-from cylc.flow.pathutil import get_remote_workflow_run_job_dir
+from cylc.flow.pathutil import (
+    get_dirs_to_symlink,
+    get_remote_workflow_run_job_dir,
+)
 from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform,
@@ -1345,6 +1348,9 @@ class TaskJobManager:
             'pre-script': rtconfig['pre-script'],
             'script': rtconfig['script'],
             'submit_num': itask.submit_num,
+            'symlink_dirs': get_dirs_to_symlink(
+                itask.platform['install target'], workflow
+            ),
             'flow_nums': itask.flow_nums,
             'workflow_name': workflow,
             'task_id': itask.identity,
