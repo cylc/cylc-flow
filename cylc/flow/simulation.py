@@ -31,14 +31,14 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
 )
-from cylc.flow.wallclock import (
-    get_current_time_string, get_unix_time_from_time_string)
+from cylc.flow.wallclock import get_unix_time_from_time_string
 
 from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.cycling import PointBase
+    from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
@@ -211,7 +211,7 @@ def parse_fail_cycle_points(
 
 
 def sim_time_check(
-    task_events_manager: 'TaskEventsMgr',
+    task_events_manager: 'TaskEventsManager',
     itasks: 'List[TaskProxy]',
     db_mgr: 'WorkflowDatabaseManager',
 ) -> bool:
