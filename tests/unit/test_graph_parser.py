@@ -139,27 +139,13 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
             'illegal cycle point offset on the right',
             id='no-cycle-point-RHS'
         ),
-        param(
-            "foo => bar[1649] => baz",
-            '!illegal cycle point offset on the right',
-            id='ignore-not-exclusively-RHS-cycle-point'
-        ),
-        param(
-            "foo => bar[1649]\nbar[1649] => baz",
-            '!illegal cycle point offset on the right',
-            id='ignore-not-exclusively-RHS-cycle-point2'
-        ),
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
     """Test various graph syntax errors."""
-    if expected_err[0] == '!':
-        # Assert method doesn't fail:
+    with pytest.raises(GraphParseError) as cm:
         GraphParser().parse_graph(graph)
-    else:
-        with pytest.raises(GraphParseError) as cm:
-            GraphParser().parse_graph(graph)
-        assert expected_err in str(cm.value)
+    assert expected_err in str(cm.value)
 
 
 def test_parse_graph_simple():
@@ -397,7 +383,16 @@ b => c"""
             foo => bar
             bar:succeed => baz
             """
-        ]
+        ],
+        [
+            """
+            foo => bar[1649] => baz
+            """,
+            """
+            foo => bar[1649]
+            bar[1649] => baz
+            """
+        ],
     ]
 )
 def test_trigger_equivalence(graph1, graph2):

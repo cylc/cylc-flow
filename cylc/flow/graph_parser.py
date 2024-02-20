@@ -463,9 +463,8 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         # Get a set of RH nodes which are not at the LH of another pair:
-        terminals = {
-            right for right in {right for _, right in pairs}
-            if right not in {left for left, _ in pairs}}
+        pairs_dict = dict(pairs)
+        terminals = set(pairs_dict.values()).difference(pairs_dict.keys())
 
         for pair in pairs:
             self._proc_dep_pair(pair, terminals)
@@ -514,7 +513,7 @@ class GraphParser:
                 'right' can be one or more node names joined by AND.
                 'right' can't be None or "".
             terminals:
-                Lits of nodes which are _only_ on the RH end of chains.
+                Nodes which are _only_ on the RH end of chains.
         """
         left, right = pair
         # Raise error for right-hand-side OR operators.
@@ -534,16 +533,15 @@ class GraphParser:
         if right.count("(") != right.count(")"):
             raise GraphParseError(mismatch_msg.format(right))
 
-        # Ignore/Error cycle point offsets on the right side:
-        # (Note we can only ban this for nodes at the end of chains)
+        # Raise error for cycle point offsets at the end of chains
         if '[' in right:
-            if left and right in terminals:
+            if left and (right in terminals):
                 # This right hand side is at the end of a chain:
                 raise GraphParseError(
                     'ERROR, illegal cycle point offset on the right:'
                     f' {left} => {right}')
             else:
-                # This right hand side is a left elsewhere:
+                # This RHS is also a LHS in a chain:
                 return
 
         # Split right side on AND.
