@@ -808,9 +808,8 @@ with Conf(
             until their previous (cycle point) instance is satisfied.
             Otherwise, they will all spawn at once out to the runahead limit.
 
-            This setting can be overridden by a reserved keyword argument in
-            individual xtrigger declarations, or in xtrigger function
-            definitions.
+            This setting can be overridden by the reserved keyword argument
+            ``sequential`` in individual xtrigger declarations.
 
             One sequential xtrigger on a parentless task with multiple
             xtriggers will cause sequential behavior.
