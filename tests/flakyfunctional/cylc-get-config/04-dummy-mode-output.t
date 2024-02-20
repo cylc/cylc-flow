@@ -50,5 +50,5 @@ LOG="$(cylc log -m p "$WORKFLOW_NAME")"
 count_ok '(internal)meet' "${LOG}" 1
 count_ok '(internal)greet' "${LOG}" 1
 
-# purge
+purge
 exit
