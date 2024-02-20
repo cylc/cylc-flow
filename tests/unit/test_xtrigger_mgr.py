@@ -44,7 +44,7 @@ def test_extract_templates():
     )
 
 
-def test_check_xtrigger(xtrigger_mgr):
+def test_add_xtrigger(xtrigger_mgr):
     """Test for adding an xtrigger."""
     xtrig = SubFuncContext(
         label="echo",
@@ -84,9 +84,12 @@ def test_check_xtrigger_with_unknown_params(xtrigger_mgr):
         label="echo",
         func_name="echo",
         func_args=[1, "name", "%(what_is_this)s"],
-        func_kwargs={"location": "soweto"}
+        func_kwargs={"succeed": True}
     )
-    with pytest.raises(XtriggerConfigError):
+    with pytest.raises(
+        XtriggerConfigError,
+        match="Illegal template in xtrigger: what_is_this"
+    ):
         xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
 
 
@@ -96,7 +99,7 @@ def test_check_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
         label="echo",
         func_name="echo",
         func_args=[1, "name", "%(suite_name)s"],
-        func_kwargs={"location": "soweto"}
+        func_kwargs={"succeed": True}
     )
     caplog.set_level(logging.WARNING, CYLC_LOG)
     xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
@@ -139,7 +142,6 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
 def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
-    xtrigger_mgr.check_xtrigger = lambda *a, **k: True  # Ignore validation
     xtrig = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -171,7 +173,6 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
 
 def test__call_xtriggers_async(xtrigger_mgr):
     """Test _call_xtriggers_async"""
-    xtrigger_mgr.check_xtrigger = lambda *a, **k: True  # Ignore validation
     # the echo1 xtrig (not satisfied)
     echo1_xtrig = SubFuncContext(
         label="echo1",

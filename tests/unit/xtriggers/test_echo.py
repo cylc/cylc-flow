@@ -20,18 +20,19 @@ import pytest
 from pytest import param
 
 
-def test_validate_good_path():
-    assert validate(
-        [], {'succeed': False, 'egg': 'fried', 'potato': 'baked'}, 'succeed'
-    ) is None
+def test_validate_good():
+    validate({
+        'args': (),
+        'kwargs': {'succeed': False, 'egg': 'fried', 'potato': 'baked'}
+    })
 
 
 @pytest.mark.parametrize(
-    'args, kwargs', (
-        param([False], {}, id='no-kwarg'),
-        param([], {'spud': 'mashed'}, id='no-succeed-kwarg'),
+    'all_args', (
+        param({'args': (False,), 'kwargs': {}}, id='no-kwarg'),
+        param({'args': (), 'kwargs': {'spud': 'mashed'}}, id='no-succeed-kwarg'),
     )
 )
-def test_validate_exceptions(args, kwargs):
+def test_validate_exceptions(all_args):
     with pytest.raises(WorkflowConfigError, match='^Requires'):
-        validate(args, kwargs, 'blah')
+        validate(all_args)

@@ -83,7 +83,6 @@ from cylc.flow.pathutil import (
 from cylc.flow.print_tree import print_tree
 from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.task_events_mgr import (
     EventData,
     get_event_handler_data
@@ -1735,14 +1734,6 @@ class WorkflowConfig:
             # Generic xtrigger validation.
             XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
 
-            # Specific xtrigger.validate(), if available.
-            with suppress(AttributeError, ImportError):
-                get_xtrig_func(xtrig.func_name, "validate", self.fdir)(
-                    xtrig.func_args,
-                    xtrig.func_kwargs,
-                    xtrig.get_signature()
-                )
-
             if self.xtrigger_mgr:
                 # (not available during validation)
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
@@ -2434,8 +2425,8 @@ class WorkflowConfig:
             # Derive an xtrigger label.
             label = '_'.join(('_cylc', 'wall_clock', task_name))
             # Define the xtrigger function.
-            xtrig = SubFuncContext(label, 'wall_clock', [], {})
-            xtrig.func_kwargs["offset"] = offset
+            args = [] if offset is None else [offset]
+            xtrig = SubFuncContext(label, 'wall_clock', args, {})
             if self.xtrigger_mgr is None:
                 XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
             else:

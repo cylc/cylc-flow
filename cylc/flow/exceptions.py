@@ -241,13 +241,12 @@ class XtriggerConfigError(WorkflowConfigError):
 
     """
 
-    def __init__(self, label: str, trigger: str, message: str):
+    def __init__(self, label: str, message: str):
         self.label: str = label
-        self.trigger: str = trigger
         self.message: str = message
 
-    def __str__(self):
-        return f'[{self.label}] {self.message}'
+    def __str__(self) -> str:
+        return f'[@{self.label}] {self.message}'
 
 
 class ClientError(CylcError):

@@ -16,9 +16,8 @@
 
 """A Cylc xtrigger function."""
 
+from typing import Any, Dict, Tuple
 from cylc.flow.exceptions import WorkflowConfigError
-
-from typing import Tuple
 
 
 def echo(*args, **kwargs) -> Tuple:
@@ -48,15 +47,18 @@ def echo(*args, **kwargs) -> Tuple:
     return kwargs["succeed"], kwargs
 
 
-def validate(f_args, f_kwargs, f_signature):
-
+def validate(all_args: Dict[str, Any]):
     """
     Validate the xtrigger function arguments parsed from the workflow config.
 
     This is separate from the xtrigger to allow parse-time validation.
 
     """
-    if "succeed" not in f_kwargs or not isinstance(f_kwargs["succeed"], bool):
-        raise WorkflowConfigError(
-            f"Requires 'succeed=True/False' arg: {f_signature}"
-        )
+    # NOTE: with (*args, **kwargs) pattern, all_args looks like:
+    # {
+    #     'args': (arg1, arg2, ...),
+    #     'kwargs': {kwarg1: val, kwarg2: val, ...}
+    # }
+    succeed = all_args['kwargs'].get("succeed")
+    if not isinstance(succeed, bool):
+        raise WorkflowConfigError("Requires 'succeed=True/False' arg")

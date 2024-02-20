@@ -21,19 +21,19 @@ from cylc.flow.xtriggers.xrandom import validate
 from cylc.flow.exceptions import WorkflowConfigError
 
 
-def test_validate_good_path():
-    assert validate([1], {'secs': 0, '_': 'HelloWorld'}, 'good_path') is None
+def test_validate_good():
+    validate({'percent': 1, 'secs': 0, '_': 'HelloWorld'})
 
 
 @pytest.mark.parametrize(
-    'args, kwargs, err', (
-        param(['foo'], {}, r"'percent", id='percent-not-numeric'),
-        param([101], {}, r"'percent", id='percent>100'),
-        param([-1], {}, r"'percent", id='percent<0'),
-        param([100], {'secs': 1.1}, r"'secs'", id='secs-not-int'),
+    'args, err', (
+        param({'percent': 'foo'}, r"'percent", id='percent-not-numeric'),
+        param({'percent': 101}, r"'percent", id='percent>100'),
+        param({'percent': -1}, r"'percent", id='percent<0'),
+        param({'percent': 100, 'secs': 1.1}, r"'secs'", id='secs-not-int'),
     )
 )
-def test_validate_exceptions(args, kwargs, err):
+def test_validate_exceptions(args, err):
     """Illegal args and kwargs cause a WorkflowConfigError raised."""
     with pytest.raises(WorkflowConfigError, match=f'^{err}'):
-        validate(args, kwargs, 'blah')
+        validate(args)

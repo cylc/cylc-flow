@@ -16,7 +16,7 @@
 
 from random import random, randint
 from time import sleep
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 from cylc.flow.exceptions import WorkflowConfigError
 
@@ -26,8 +26,8 @@ SIZES = ["tiny", "small", "medium", "large", "huge", "humongous"]
 
 
 def xrandom(
-    percent: float, secs: int = 0, _: 'Any' = None
-) -> 'Tuple[bool, Dict]':
+    percent: float, secs: int = 0, _: Any = None
+) -> Tuple[bool, Dict[str, str]]:
     """Random xtrigger, with configurable sleep and percent success.
 
     Sleep for ``sec`` seconds, and report satisfied with ``percent``
@@ -75,7 +75,7 @@ def xrandom(
         (True, {'COLOR': 'orange', 'SIZE': 'small'})
 
     Returns:
-        Tuple, containing:
+        tuple: (satisfied, results)
 
         satisfied:
             True if ``satisfied`` else ``False``.
@@ -90,52 +90,31 @@ def xrandom(
     """
     sleep(float(secs))
     results = {}
-    satisfied = random() < float(percent) / 100  # nosec
+    satisfied = random() < float(percent) / 100  # nosec: B311
     if satisfied:
         results = {
-            'COLOR': COLORS[randint(0, len(COLORS) - 1)],  # nosec
-            'SIZE': SIZES[randint(0, len(SIZES) - 1)]  # nosec
+            'COLOR': COLORS[randint(0, len(COLORS) - 1)],  # nosec: B311
+            'SIZE': SIZES[randint(0, len(SIZES) - 1)]  # nosec: B311
         }
     return satisfied, results
 
 
-def validate(f_args: List[str], f_kwargs: Dict[str, Any], f_signature: str):
+def validate(args: Dict[str, Any]):
     """Validate and manipulate args parsed from the workflow config.
 
     The rules for args are:
     * percent: Must be 0 ≤ x ≤ 100
     * secs: Must be an integer.
     """
-    # convert to kwarg for clarity
-    f_kwargs["percent"] = f_args[0]
-    del f_args[0]
-
-    should_raise = False
-
-    try:
-        percent = f_kwargs['percent']
-        percent = float(percent)
-    except ValueError:
-        should_raise = True
-    else:
-        if (
-            not isinstance(percent, (float, int))
-            or percent < 0
-            or percent > 100
-        ):
-            should_raise = True
-    if should_raise:
+    percent = args['percent']
+    if (
+        not isinstance(percent, (float, int))
+        or not (0 <= percent <= 100)
+    ):
         raise WorkflowConfigError(
-            f"'percent' should be a float between 0 and 100: {f_signature}")
+            "'percent' should be a float between 0 and 100"
+        )
 
-    try:
-        secs = f_kwargs.get('secs', 0)
-    except ValueError:
-        should_raise = True
-    else:
-        if not isinstance(secs, int):
-            should_raise = True
-
-    if should_raise:
-        raise WorkflowConfigError(
-            f"'secs' should be an integer: {f_signature}")
+    secs = args['secs']
+    if not isinstance(secs, int):
+        raise WorkflowConfigError("'secs' should be an integer")

@@ -362,15 +362,29 @@ def test_xtrig_validation_wall_clock(
         'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'initial cycle point': '1012',
-            'xtriggers': {'myxt': 'wall_clock(offset=PT755MH)'},
+            'xtriggers': {'myxt': 'wall_clock(offset=PT7MH)'},
             'graph': {'R1': '@myxt => foo'},
         }
     })
-    with pytest.raises(
-        WorkflowConfigError,
-        match=r'Invalid offset: wall_clock\(offset=PT755MH\)'
-    ):
+    with pytest.raises(WorkflowConfigError, match=(
+        r'\[@myxt\] wall_clock\(offset=PT7MH\) validation failed: '
+        r'Invalid offset: PT7MH'
+    )):
         validate(id_)
+
+
+def test_xtrig_implicit_wall_clock(flow: Fixture, validate: Fixture):
+    """Test @wall_clock is allowed in graph without explicit
+    xtrigger definition.
+    """
+    wid = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '2024',
+            'graph': {'R1': '@wall_clock => foo'},
+        }
+    })
+    validate(wid)
 
 
 def test_xtrig_validation_echo(
@@ -390,7 +404,7 @@ def test_xtrig_validation_echo(
     })
     with pytest.raises(
         WorkflowConfigError,
-        match=r'Requires \'succeed=True/False\' arg: echo()'
+        match=r'echo.* Requires \'succeed=True/False\' arg'
     ):
         validate(id_)
 
@@ -411,8 +425,8 @@ def test_xtrig_validation_xrandom(
         }
     })
     with pytest.raises(
-        WorkflowConfigError,
-        match=r"'percent' should be a float between 0 and 100:"
+        XtriggerConfigError,
+        match=r"'percent' should be a float between 0 and 100"
     ):
         validate(id_)
 
@@ -432,23 +446,16 @@ def test_xtrig_validation_custom(
     # mock our own exception, xtrigger and xtrigger
     # validation functions and inject these into the
     # appropriate locations:
-    GreenExc = type('Green', (Exception,), {})
-
     def kustom_xt(feature):
         return True, {}
 
-    def kustom_validate(args, kwargs, sig):
-        raise GreenExc('This is only a test.')
+    def kustom_validate(args):
+        raise Exception('This is only a test.')
 
-    # Patch xtrigger func
+    # Patch xtrigger func & its validate func
     monkeypatch.setattr(
         'cylc.flow.xtrigger_mgr.get_xtrig_func',
-        lambda *args: kustom_xt,
-    )
-    # Patch xtrigger's validate func
-    monkeypatch.setattr(
-        'cylc.flow.config.get_xtrig_func',
-        lambda *args: kustom_validate if "validate" in args else ''
+        lambda *args: kustom_validate if "validate" in args else kustom_xt
     )
 
     id_ = flow({
@@ -461,24 +468,53 @@ def test_xtrig_validation_custom(
     })
 
     Path(id_)
-    with pytest.raises(GreenExc, match=r'This is only a test.'):
+    with pytest.raises(XtriggerConfigError, match=r'This is only a test.'):
         validate(id_)
 
 
+@pytest.mark.parametrize('xtrig_call, expected_msg', [
+    pytest.param(
+        'xrandom()',
+        r"xrandom.* missing a required argument: 'percent'",
+        id="missing-arg"
+    ),
+    pytest.param(
+        'wall_clock(alan_grant=1)',
+        r"wall_clock.* unexpected keyword argument 'alan_grant'",
+        id="unexpected-arg"
+    ),
+])
 def test_xtrig_signature_validation(
-    flow: 'Fixture',
-    validate: 'Fixture',
+    flow: 'Fixture', validate: 'Fixture',
+    xtrig_call: str, expected_msg: str
 ):
     """Test automatic xtrigger function signature validation."""
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
         'scheduling': {
-            'xtriggers': {'myxt': 'xrandom()'},
+            'initial cycle point': '2024',
+            'xtriggers': {'myxt': xtrig_call},
             'graph': {'R1': '@myxt => foo'},
         }
     })
-    with pytest.raises(
-        XtriggerConfigError,
-        match=r"xrandom\(\): missing a required argument: 'percent'"
-    ):
+    with pytest.raises(XtriggerConfigError, match=expected_msg):
         validate(id_)
+
+
+def test_special_task_non_word_names(flow: Fixture, validate: Fixture):
+    """Test validation of special tasks names with non-word characters"""
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '2020',
+            'special tasks': {
+                'clock-trigger': 't-1, t+1, t%1, t@1',
+            },
+            'graph': {
+                'P1D': 't-1 & t+1 & t%1 & t@1',
+            },
+        },
+        'runtime': {
+            't-1, t+1, t%1, t@1': {'script': True},
+        },
+    })
+    validate(wid)
