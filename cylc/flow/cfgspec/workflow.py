@@ -1289,7 +1289,7 @@ with Conf(
                     Task instances must be set to fail by
                     :cylc:conf:`[..]fail cycle points`.
 
-                    .. warning::
+                    .. note::
 
                        This setting is designed for use with automatic
                        retries. Subsequent manual submissions will not
