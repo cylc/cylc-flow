@@ -419,6 +419,14 @@ class ExampleHandler():
         Returns:
             (ret_code, out, err)
 
+            ret_code:
+                Subprocess return code.
+            out:
+                Subprocess standard output, note this should be newline
+                terminated.
+            err:
+                Subprocess standard error.
+
         """
         raise NotImplementedError()
 
