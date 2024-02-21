@@ -650,7 +650,8 @@ class Scheduler:
             # Non-async sleep - yield to other threads rather than event loop
             sleep(0)
             self.profiler.start()
-            await self.main_loop()
+            while True:  # MAIN LOOP
+                await self._main_loop()
 
         except SchedulerStop as exc:
             # deliberate stop
@@ -1692,11 +1693,6 @@ class Scheduler:
             self.profiler.log_memory("scheduler.py: loop #%d: %s" % (
                 self.count, get_current_time_string()))
         self.count += 1
-
-    async def main_loop(self) -> None:
-        """The scheduler main loop."""
-        while True:  # MAIN LOOP
-            await self._main_loop()
 
     async def _main_loop(self) -> None:
         """A single iteration of the main loop."""
