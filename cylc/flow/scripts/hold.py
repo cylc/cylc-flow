@@ -20,7 +20,13 @@
 
 Hold task(s) in a workflow.
 
-Held tasks do not submit their jobs even if ready to run.
+Held tasks do not submit jobs even if ready.
+
+Any task can be held.
+
+Note: a held running task will not submit more jobs itself (e.g. by retries)
+until released, but the running job may still complete outputs that cause
+non-held downstream tasks to trigger.
 
 To pause an entire workflow use "cylc pause".
 
