@@ -92,20 +92,19 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
-    asyncio.run(run(parser, options, workflow_id))
-
-
-async def run(parser: COP, options: 'Values', workflow_id: Optional[str]):
     """Run Cylc validate - install - play in sequence."""
+    # NOTE: We call each of the stages in its own event loop because there is a
+    # strange interaction whereby the cylc.flow.network.scan coroutine pipe can
+    # cause sys.exit to hang on the original process post-daemonization
     if not workflow_id:
         workflow_id = '.'
     orig_source = workflow_id
     source = get_source_location(workflow_id)
     log_subcommand('validate', source)
-    await cylc_validate(parser, options, str(source))
+    asyncio.run(cylc_validate(parser, options, str(source)))
 
     log_subcommand('install', source)
-    _, workflow_id = await cylc_install(options, workflow_id)
+    _, workflow_id = asyncio.run(cylc_install(options, workflow_id))
 
     cleanup_sysargv(
         'play',
@@ -121,4 +120,4 @@ async def run(parser: COP, options: 'Values', workflow_id: Optional[str]):
 
     set_timestamps(LOG, options.log_timestamp)
     log_subcommand(*sys.argv[1:])
-    await cylc_play(options, workflow_id)
+    asyncio.run(cylc_play(options, workflow_id))
