@@ -557,7 +557,7 @@ class XtriggerManager:
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
-                    if itask.is_xtrigger_sequential:
+                    if self.all_task_seq_xtriggers_satisfied(itask):
                         self.sequential_spawn_next.add(itask.identity)
                     self.do_housekeeping = True
                 continue
@@ -577,7 +577,7 @@ class XtriggerManager:
                             [itask.tdef.name],
                             xtrigger_env
                         )
-                    if itask.is_xtrigger_sequential:
+                    if self.all_task_seq_xtriggers_satisfied(itask):
                         self.sequential_spawn_next.add(itask.identity)
                 continue
 
@@ -609,6 +609,14 @@ class XtriggerManager:
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
         self.do_housekeeping = False
+
+    def all_task_seq_xtriggers_satisfied(self, itask: 'TaskProxy') -> bool:
+        """Check if all sequential xtriggers are satisfied for a task."""
+        return itask.is_xtrigger_sequential and all(
+            itask.state.xtriggers[label]
+            for label in itask.state.xtriggers
+            if label in self.sequential_xtrigger_labels
+        )
 
     def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
