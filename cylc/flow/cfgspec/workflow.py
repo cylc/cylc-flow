@@ -1982,12 +1982,17 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     `[scheduling][graph]X`."""
     # Parsec upgrader cannot do this type of move
     with contextlib.suppress(KeyError):
+        note = ''
         if 'dependencies' in cfg['scheduling']:
-            if 'graph' in cfg['scheduling']['dependencies']:
+            if ['graph'] == cfg['scheduling']['dependencies'].keys():
                 msg_old = '[scheduling][dependencies]graph'
                 msg_new = '[scheduling][graph]R1'
                 list_cp = False
             else:
+                note = (
+                    '\n   ([scheduling][dependencies]graph moves to'
+                    ' [scheduling][graph]R1)'
+                    if 'graph' in cfg['scheduling']['dependencies'] else '')
                 msg_old = '[scheduling][dependencies][X]graph'
                 msg_new = '[scheduling][graph]X - for X in:'
                 list_cp = True
@@ -2019,7 +2024,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     )
                     if list_cp:
                         msg += f"\n       {', '.join(sorted(keys))}"
-                    LOG.warning(msg)
+                    LOG.warning(msg + note)
 
 
 def upgrade_param_env_templates(cfg, descr):

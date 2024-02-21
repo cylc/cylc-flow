@@ -156,3 +156,60 @@ def test_pre_cylc8(flow, validate, caplog):
         ' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
     ):
         assert warning in caplog.messages
+
+
+def test_graph_upgrade_msg_default(flow, validate, caplog):
+    """It lists Cycling definitions which need upgrading."""
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': 1042,
+            'dependencies': {
+                'R1': {'graph': 'foo'},
+                'P1Y': {'graph': 'bar & baz'}
+            }
+        },
+    })
+    validate(id_)
+    assert '[scheduling][dependencies][X]graph' in caplog.messages[0]
+    assert 'for X in:\n       P1Y, R1' in caplog.messages[0]
+
+
+def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
+    """It gives a more useful message in special case where graph is
+    key rather than section:
+
+    [scheduling]
+        [[dependencies]]
+            graph = foo => bar
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'dependencies': {'graph': 'foo => bar'}},
+    })
+    validate(id_)
+    expect = ('[scheduling][dependencies]graph -> [scheduling][graph]R1')
+    assert expect in caplog.messages[0]
+
+
+def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
+    """Both an implicit R1 and explict reccurance exist:
+    It appends a note.
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1000',
+            'dependencies': {
+                'graph': 'foo => bar', 'P1Y': {'graph': 'a => b'}}},
+    })
+    validate(id_)
+    expect = (
+        'deprecated graph items were automatically upgraded in'
+        ' "workflow definition":'
+        '\n * (8.0.0) [scheduling][dependencies][X]graph'
+        ' -> [scheduling][graph]X - for X in:'
+        '\n       P1Y, graph'
+        '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
+    )
+    assert expect in caplog.messages[0]
