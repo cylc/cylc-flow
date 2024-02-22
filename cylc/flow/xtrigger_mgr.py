@@ -16,7 +16,7 @@
 
 from contextlib import suppress
 from enum import Enum
-from inspect import getfullargspec, signature
+from inspect import signature
 import json
 import re
 from copy import deepcopy
@@ -34,6 +34,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
+from cylc.flow.subprocctx import add_kwarg_to_sig
 from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.xtriggers.wall_clock import _wall_clock
 
@@ -330,32 +331,33 @@ class XtriggerManager:
             raise XtriggerConfigError(
                 label, f"'{fname}' not callable in xtrigger module '{fname}'",
             )
-        x_argspec = getfullargspec(func)
-        if 'sequential' in x_argspec.args:
-            if (
-                x_argspec.defaults is None
-                or not isinstance(
-                    x_argspec.defaults[x_argspec.args.index('sequential')],
-                    bool
-                )
-            ):
+
+        sig = signature(func)
+        sig_str = fctx.get_signature()
+
+        # Handle reserved 'sequential' kwarg:
+        sequential_param = sig.parameters.get('sequential', None)
+        if sequential_param:
+            if not isinstance(sequential_param.default, bool):
                 raise XtriggerConfigError(
                     label,
-                    fname,
                     (
-                        f"xtrigger module '{fname}' contains reserved argument"
-                        " name 'sequential' that has no boolean default"
-                    ),
+                        f"xtrigger '{fname}' function definition contains "
+                        "reserved argument 'sequential' that has no "
+                        "boolean default"
+                    )
                 )
-            elif 'sequential' not in fctx.func_kwargs:
-                fctx.func_kwargs['sequential'] = x_argspec.defaults[
-                    x_argspec.args.index('sequential')
-                ]
+            fctx.func_kwargs.setdefault('sequential', sequential_param.default)
+        elif 'sequential' in fctx.func_kwargs:
+            # xtrig call marked as sequential; add 'sequential' arg to
+            # signature for validation
+            sig = add_kwarg_to_sig(
+                sig, 'sequential', fctx.func_kwargs['sequential']
+            )
 
         # Validate args and kwargs against the function signature
-        sig_str = fctx.get_signature()
         try:
-            bound_args = signature(func).bind(
+            bound_args = sig.bind(
                 *fctx.func_args, **fctx.func_kwargs
             )
         except TypeError as exc:

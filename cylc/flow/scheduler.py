@@ -2151,7 +2151,7 @@ class Scheduler:
     def command_force_trigger_tasks(
         self,
         tasks: Iterable[str],
-        flow: List[str],
+        flow: List[Union[str, int]],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
@@ -2162,7 +2162,7 @@ class Scheduler:
     def command_set(
         self,
         tasks: List[str],
-        flow: List[str],
+        flow: List[Union[str, int]],
         outputs: Optional[List[str]] = None,
         prerequisites: Optional[List[str]] = None,
         flow_wait: bool = False,

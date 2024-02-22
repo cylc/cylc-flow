@@ -14,18 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# mypy: disable-error-code=union-attr
+
 """Test interactions with sequential xtriggers."""
 
+from unittest.mock import patch
 import pytest
+from cylc.flow.cycling.integer import IntegerPoint
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.exceptions import XtriggerConfigError
+from cylc.flow.scheduler import Scheduler
+
+
+def list_cycles(schd: Scheduler):
+    """List the task instance cycle points present in the pool."""
+    return sorted(itask.tokens['cycle'] for itask in schd.pool.get_tasks())
 
 
 @pytest.fixture()
 def sequential(flow, scheduler):
     id_ = flow({
         'scheduler': {
-            'allow implicit tasks': 'True',
             'cycle point format': 'CCYY',
         },
         'scheduling': {
@@ -36,17 +46,7 @@ def sequential(flow, scheduler):
             }
         }
     })
-
-    sequential = scheduler(id_)
-
-    def list_tasks():
-        """List the task instance cycle points present in the pool."""
-        nonlocal sequential
-        return sorted(itask.tokens['cycle'] for itask in sequential.pool.get_all_tasks())
-
-    sequential.list_tasks = list_tasks
-
-    return sequential
+    return scheduler(id_)
 
 
 async def test_remove(sequential, start):
@@ -57,7 +57,7 @@ async def test_remove(sequential, start):
     """
     async with start(sequential):
         # the scheduler starts with one task in the pool
-        assert sequential.list_tasks() == ['2000']
+        assert list_cycles(sequential) == ['2000']
 
         # it sequentially spawns out to the runahead limit
         for year in range(2000, 2010):
@@ -66,7 +66,7 @@ async def test_remove(sequential, start):
                 break
             sequential.xtrigger_mgr.call_xtriggers_async(foo)
             sequential.pool.spawn_parentless_sequential_xtriggers()
-        assert sequential.list_tasks() == [
+        assert list_cycles(sequential) == [
             '2000',
             '2001',
             '2002',
@@ -77,7 +77,7 @@ async def test_remove(sequential, start):
         sequential.pool.remove_tasks(['*'])
 
         # the next cycle should be automatically spawned
-        assert sequential.list_tasks() == ['2004']
+        assert list_cycles(sequential) == ['2004']
 
         # NOTE: You won't spot this issue in a functional test because the
         # re-spawned tasks are detected as completed and automatically removed.
@@ -94,14 +94,14 @@ async def test_trigger(sequential, start):
     doesn't cancel it's future instances.
     """
     async with start(sequential):
-        assert sequential.list_tasks() == ['2000']
+        assert list_cycles(sequential) == ['2000']
 
         foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
         sequential.pool.force_trigger_tasks([foo.identity], {1})
         foo.state_reset('succeeded')
         sequential.pool.spawn_on_output(foo, 'succeeded')
 
-        assert sequential.list_tasks() == ['2001']
+        assert list_cycles(sequential) == ['2000', '2001']
 
 
 async def test_reload(sequential, start):
@@ -126,13 +126,125 @@ async def test_reload(sequential, start):
         assert post_reload.is_xtrigger_sequential is True
 
 
-# TODO: test that a task is marked as sequential if any of its xtriggers are
-# sequential (as opposed to all)?
+@pytest.mark.parametrize('is_sequential', [True, False])
+@pytest.mark.parametrize('xtrig_def', [
+    'wall_clock(sequential={})',
+    'wall_clock(PT1H, sequential={})',
+    'xrandom(1, 1, sequential={})',
+])
+async def test_sequential_arg_ok(
+    flow, scheduler, start, xtrig_def: str, is_sequential: bool
+):
+    """Test passing the sequential argument to xtriggers."""
+    wid = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': '2000',
+            'runahead limit': 'P1',
+            'xtriggers': {
+                'myxt': xtrig_def.format(is_sequential),
+            },
+            'graph': {
+                'P1Y': '@myxt => foo',
+            }
+        }
+    })
+    schd: Scheduler = scheduler(wid)
+    expected_num_cycles = 1 if is_sequential else 3
+    async with start(schd):
+        itask = schd.pool.get_task(ISO8601Point('2000'), 'foo')
+        assert itask.is_xtrigger_sequential is is_sequential
+        assert len(list_cycles(schd)) == expected_num_cycles
 
-# TODO: test setting the sequential argument in [scheduling][xtrigger] items
-# changes the behaviour
 
-# TODO: test the interaction between "spawn from xtriggers sequentially" and the
-# sequential argument to [scheduling][xtrigger]
-# * Should we be able to override the default by setting sequential=False?
-# * Or should that result in a validation error?
+def test_sequential_arg_bad(
+    flow, validate
+):
+    """Test validation of 'sequential' arg for custom xtriggers"""
+    wid = flow({
+        'scheduling': {
+            'xtriggers': {
+                'myxt': 'custom_xt(42)'
+            },
+            'graph': {
+                'R1': '@myxt => foo'
+            }
+        }
+    })
+
+    def xtrig1(x, sequential):
+        """This uses 'sequential' without a default value"""
+        return True
+
+    def xtrig2(x, sequential='True'):
+        """This uses 'sequential' with a default of wrong type"""
+        return True
+
+    for xtrig in (xtrig1, xtrig2):
+        with patch(
+            'cylc.flow.xtrigger_mgr.get_xtrig_func',
+            return_value=xtrig
+        ):
+            with pytest.raises(XtriggerConfigError) as excinfo:
+                validate(wid)
+            assert (
+                "reserved argument 'sequential' that has no boolean default"
+            ) in str(excinfo.value)
+
+
+@pytest.mark.parametrize('is_sequential', [True, False])
+async def test_any_sequential(flow, scheduler, start, is_sequential: bool):
+    """Test that a task is marked as sequential if any of its xtriggers are."""
+    wid = flow({
+        'scheduling': {
+            'xtriggers': {
+                'xt1': 'custom_xt()',
+                'xt2': f'custom_xt(sequential={is_sequential})',
+                'xt3': 'custom_xt(sequential=False)',
+            },
+            'graph': {
+                'R1': '@xt1 & @xt2 & @xt3 => foo',
+            }
+        }
+    })
+
+    with patch(
+        'cylc.flow.xtrigger_mgr.get_xtrig_func',
+        return_value=lambda *a, **k: True
+    ):
+        schd: Scheduler = scheduler(wid)
+        async with start(schd):
+            itask = schd.pool.get_task(IntegerPoint('1'), 'foo')
+            assert itask.is_xtrigger_sequential is is_sequential
+
+
+async def test_override(flow, scheduler, start):
+    """Test that the 'sequential=False' arg can override a default of True."""
+    wid = flow({
+        'scheduling': {
+            'spawn from xtriggers sequentially': True,
+            'xtriggers': {
+                'xt1': 'custom_xt()',
+                'xt2': 'custom_xt(sequential=False)',
+            },
+            'graph': {
+                'R1': '''
+                    @xt1 => foo
+                    @xt2 => bar
+                ''',
+            }
+        }
+    })
+
+    with patch(
+        'cylc.flow.xtrigger_mgr.get_xtrig_func',
+        return_value=lambda *a, **k: True
+    ):
+        schd: Scheduler = scheduler(wid)
+        async with start(schd):
+            foo = schd.pool.get_task(IntegerPoint('1'), 'foo')
+            assert foo.is_xtrigger_sequential is True
+            bar = schd.pool.get_task(IntegerPoint('1'), 'bar')
+            assert bar.is_xtrigger_sequential is False

@@ -858,7 +858,7 @@ class TaskPool:
             point_itasks[point] = list(itask_id_map.values())
         return point_itasks
 
-    def get_task(self, point, name) -> Optional[TaskProxy]:
+    def get_task(self, point: 'PointBase', name: str) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
         rel_id = f'{point}/{name}'
         tasks = self.active_tasks.get(point)
@@ -1803,7 +1803,7 @@ class TaskPool:
         items: Iterable[str],
         outputs: List[str],
         prereqs: List[str],
-        flow: List[str],
+        flow: List[Union[str, int]],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
@@ -2001,7 +2001,7 @@ class TaskPool:
 
     def _get_flow_nums(
             self,
-            flow: List[str],
+            flow: List[Union[str, int]],
             meta: Optional[str] = None,
     ) -> Optional[Set[int]]:
         """Get correct flow numbers given user command options."""
@@ -2073,7 +2073,7 @@ class TaskPool:
 
     def force_trigger_tasks(
         self, items: Iterable[str],
-        flow: List[str],
+        flow: List[Union[str, int]],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
