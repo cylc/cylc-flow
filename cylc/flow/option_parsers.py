@@ -328,14 +328,14 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = cparse(dedent('''
-        This command can operate on multiple tasks, globs and selectors may
-        be used:
+        This command can operate on multiple tasks. Globs and selectors may
+        be used to match active tasks:
             Multiple Tasks:
                 <dim># Operate on two tasks</dim>
                 workflow //cycle-1/task-1 //cycle-2/task-2
 
             Globs (note: globs should be quoted and only match active tasks):
-                <dim># Match any the active task "foo" in all cycles</dim>
+                <dim># Match any active task "foo" in all cycles</dim>
                 '//*/foo'
 
                 <dim># Match the tasks "foo-1" and "foo-2"</dim>
@@ -348,7 +348,7 @@ class CylcOptionParser(OptionParser):
             See `cylc help id` for more details.
     '''))
     MULTIWORKFLOW_USAGE = cparse(dedent('''
-        This command can operate on multiple workflows, globs may also be used:
+        This command can operate on multiple workflows. Globs may be used:
             Multiple Workflows:
                 <dim># Operate on two workflows</dim>
                 workflow-1 workflow-2
