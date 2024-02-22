@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,18 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test that undeclared zero-offset clock xtriggers are allowed.
-. "$(dirname "$0")/test_header"
+import pytest
+from pytest import param
 
-set_test_number 1
+from cylc.flow.xtriggers.xrandom import validate
+from cylc.flow.exceptions import WorkflowConfigError
 
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduler]
-    allow implicit tasks = True
-[scheduling]
-    initial cycle point = now
-    [[graph]]
-        T00 = "@wall_clock => foo"
-__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate .
+def test_validate_good():
+    validate({'percent': 1, 'secs': 0, '_': 'HelloWorld'})
+
+
+@pytest.mark.parametrize(
+    'args, err', (
+        param({'percent': 'foo'}, r"'percent", id='percent-not-numeric'),
+        param({'percent': 101}, r"'percent", id='percent>100'),
+        param({'percent': -1}, r"'percent", id='percent<0'),
+        param({'percent': 100, 'secs': 1.1}, r"'secs'", id='secs-not-int'),
+    )
+)
+def test_validate_exceptions(args, err):
+    """Illegal args and kwargs cause a WorkflowConfigError raised."""
+    with pytest.raises(WorkflowConfigError, match=f'^{err}'):
+        validate(args)

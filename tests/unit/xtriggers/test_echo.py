@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,27 +13,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test validation of special tasks names with non-word characters
-. "$(dirname "$0")/test_header"
-set_test_number 1
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduling]
-    initial cycle point = 20200202
-    final cycle point = 20300303
-    [[special tasks]]
-        clock-trigger = t-1, t+1, t%1, t@1
-    [[graph]]
-        P1D = """
-            t-1
-            t+1
-            t%1
-            t@1
-        """
 
-[runtime]
-    [[t-1, t+1, t%1, t@1]]
-        script = true
-__FLOW_CONFIG__
-run_ok "${TEST_NAME_BASE}" cylc validate "${PWD}"
-exit
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.xtriggers.echo import validate
+import pytest
+from pytest import param
+
+
+def test_validate_good():
+    validate({
+        'args': (),
+        'kwargs': {'succeed': False, 'egg': 'fried', 'potato': 'baked'}
+    })
+
+
+@pytest.mark.parametrize(
+    'all_args', (
+        param({'args': (False,), 'kwargs': {}}, id='no-kwarg'),
+        param({'args': (), 'kwargs': {'spud': 'mashed'}}, id='no-succeed-kwarg'),
+    )
+)
+def test_validate_exceptions(all_args):
+    with pytest.raises(WorkflowConfigError, match='^Requires'):
+        validate(all_args)

@@ -68,7 +68,7 @@ def test_add_xtrigger_with_params(xtrigger_mgr):
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
-def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
+def test_check_xtrigger_with_unknown_params(xtrigger_mgr):
     """Test for adding an xtrigger with an unknown parameter.
 
     The XTriggerManager contains a list of specific parameters that are
@@ -84,22 +84,25 @@ def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
         label="echo",
         func_name="echo",
         func_args=[1, "name", "%(what_is_this)s"],
-        func_kwargs={"location": "soweto"}
+        func_kwargs={"succeed": True}
     )
-    with pytest.raises(XtriggerConfigError):
-        xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
+    with pytest.raises(
+        XtriggerConfigError,
+        match="Illegal template in xtrigger: what_is_this"
+    ):
+        xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
 
 
-def test_add_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
+def test_check_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
     """It should flag deprecated template variables."""
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
         func_args=[1, "name", "%(suite_name)s"],
-        func_kwargs={"location": "soweto"}
+        func_kwargs={"succeed": True}
     )
     caplog.set_level(logging.WARNING, CYLC_LOG)
-    xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
+    xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
     assert caplog.messages == [
         'Xtrigger "xtrig" uses deprecated template variables: suite_name'
     ]
@@ -139,7 +142,6 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
 def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
-    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
     xtrig = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -171,7 +173,6 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
 
 def test__call_xtriggers_async(xtrigger_mgr):
     """Test _call_xtriggers_async"""
-    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
     # the echo1 xtrig (not satisfied)
     echo1_xtrig = SubFuncContext(
         label="echo1",

@@ -57,6 +57,7 @@ from cylc.flow.cycling.loader import (
 from cylc.flow.id import Tokens
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
+
 from cylc.flow.exceptions import (
     CylcError,
     InputError,
@@ -1718,28 +1719,25 @@ class WorkflowConfig:
                 if label != 'wall_clock':
                     raise WorkflowConfigError(f"xtrigger not defined: {label}")
                 else:
-                    # Allow "@wall_clock" in the graph as an undeclared
-                    # zero-offset clock xtrigger.
-                    xtrig = SubFuncContext(
-                        'wall_clock', 'wall_clock', [], {})
+                    # Allow "@wall_clock" in graph as implicit zero-offset.
+                    xtrig = SubFuncContext('wall_clock', 'wall_clock', [], {})
 
-            if xtrig.func_name == 'wall_clock':
-                if self.cycling_type == INTEGER_CYCLING_TYPE:
-                    raise WorkflowConfigError(
-                        "Clock xtriggers require datetime cycling:"
-                        f" {label} = {xtrig.get_signature()}"
-                    )
-                else:
-                    # Convert offset arg to kwarg for certainty later.
-                    if "offset" not in xtrig.func_kwargs:
-                        xtrig.func_kwargs["offset"] = None
-                        with suppress(IndexError):
-                            xtrig.func_kwargs["offset"] = xtrig.func_args[0]
+            if (
+                xtrig.func_name == 'wall_clock'
+                and self.cycling_type == INTEGER_CYCLING_TYPE
+            ):
+                raise WorkflowConfigError(
+                    "Clock xtriggers require datetime cycling:"
+                    f" {label} = {xtrig.get_signature()}"
+                )
 
-            if self.xtrigger_mgr is None:
-                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
-            else:
+            # Generic xtrigger validation.
+            XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
+
+            if self.xtrigger_mgr:
+                # (not available during validation)
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
@@ -2427,10 +2425,10 @@ class WorkflowConfig:
             # Derive an xtrigger label.
             label = '_'.join(('_cylc', 'wall_clock', task_name))
             # Define the xtrigger function.
-            xtrig = SubFuncContext(label, 'wall_clock', [], {})
-            xtrig.func_kwargs["offset"] = offset
+            args = [] if offset is None else [offset]
+            xtrig = SubFuncContext(label, 'wall_clock', args, {})
             if self.xtrigger_mgr is None:
-                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
+                XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
             else:
                 self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             # Add it to the task, for each sequence that the task appears in.
