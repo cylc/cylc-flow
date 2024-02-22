@@ -37,14 +37,14 @@ import re
 import sys
 import typing as t
 
-from cylc.flow import __version__, iter_entry_points
+from cylc.flow import __version__
 from cylc.flow import LOG
-from cylc.flow.exceptions import PluginError
 from cylc.flow.parsec.exceptions import (
     FileParseError, ParsecError, TemplateVarLanguageClash
 )
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.plugins import run_plugins
 from cylc.flow.parsec.util import itemstr
 from cylc.flow.templatevars import get_template_vars_from_db
 from cylc.flow.workflow_files import (
@@ -283,23 +283,11 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
         return extra_vars
 
     # Run entry point pre_configure items, trying to merge values with each.:
-    for entry_point in iter_entry_points(
-        'cylc.pre_configure'
+    for entry_point, plugin_result in run_plugins(
+        'cylc.pre_configure',
+        srcdir=fpath.parent,
+        opts=opts,
     ):
-        try:
-            # If you want it to work on sourcedirs you need to get the options
-            # to here.
-            plugin_result = entry_point.load()(
-                srcdir=fpath.parent, opts=opts
-            )
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.pre_configure',
-                entry_point.name,
-                exc
-            ) from None
         for section in ['env', TEMPLATE_VARIABLES]:
             if section in plugin_result and plugin_result[section] is not None:
                 # Raise error if multiple plugins try to update the same keys.

@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid1
-from functools import partial
 
 import pytest
 
@@ -34,11 +35,11 @@ from cylc.flow.scripts.reinstall import (
     get_option_parser as reinstall_gop,
     reinstall_cli,
 )
-from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import (
     WorkflowFiles,
 )
-from cylc.flow.network.multi import call_multi
+
+from .utils.entry_points import EntryPointWrapper
 
 ReInstallOptions = Options(reinstall_gop())
 
@@ -299,3 +300,89 @@ async def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'An error occurred reinstalling' in str(exc_ctx.value)
+
+
+@pytest.fixture
+def my_install_plugin(monkeypatch):
+    """This configures a single post_install plugin.
+
+    The plugin starts an async task, then returns.
+    """
+    progress = []
+
+    @EntryPointWrapper
+    def post_install_basic(*_, **__):
+        """Simple plugin that returns one env var and one template var."""
+        nonlocal progress
+
+        async def my_async():
+            # the async task
+            nonlocal progress
+            await asyncio.sleep(2)
+            progress.append('end')
+
+        # start the async task
+        progress.append('start')
+        asyncio.get_event_loop().create_task(my_async())
+        progress.append('return')
+
+        # return a blank result
+        return {
+            'env': {},
+            'template_variables': {},
+        }
+
+    monkeypatch.setattr(
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [post_install_basic] if namespace == 'cylc.post_install' else []
+        )
+    )
+
+    return progress
+
+
+async def test_async_block(
+    one_src,
+    one_run,
+    my_install_plugin,
+    monkeypatch,
+):
+    """Ensure async tasks created by post_install plugins are awaited.
+
+    The cylc-rose plugin may create asyncio tasks when run but cannot await
+    them (because it isn't async itself). To get around this we have
+    "cylc reinstall" use "async_block" which detects tasks created in the
+    background and awaits them.
+
+    This test ensures that the async_block mechanism is correctly plugged in
+    to "cylc reinstall".
+
+    See https://github.com/cylc/cylc-rose/issues/274
+    """
+    # this is what it should do
+    (one_src.path / 'a').touch()  # give it something to install
+    assert my_install_plugin == []
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    # the presence of "end" means that the task was awaited
+    assert my_install_plugin == ['start', 'return', 'end']
+
+    # substitute the "async_block" (which waits for asyncio tasks started in
+    # the background) for a fake implementation (which doesn't)
+
+    @asynccontextmanager
+    async def async_block():
+        yield
+
+    monkeypatch.setattr(
+        'cylc.flow.plugins._async_block',
+        async_block,
+    )
+
+    # this is what it would have done without async block
+    (one_src.path / 'b').touch()  # give it something else to install
+    my_install_plugin.clear()
+    assert my_install_plugin == []
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    # the absence of "end" means that the task was not awaited
+    assert my_install_plugin == ['start', 'return']

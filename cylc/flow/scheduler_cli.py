@@ -369,6 +369,12 @@ async def scheduler_cli(
     functionality.
 
     """
+    if options.starttask:
+        options.starttask = upgrade_legacy_ids(
+            *options.starttask,
+            relative=True,
+        )
+
     # Parse workflow name but delay Cylc 7 suite.rc deprecation warning
     # until after the start-up splash is printed.
     # TODO: singleton
@@ -651,14 +657,4 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser: COP, options: 'Values', id_: str):
     """Implement cylc play."""
-    return _play(parser, options, id_)
-
-
-def _play(parser: COP, options: 'Values', id_: str):
-    """Allows compound scripts to import play, but supply their own COP."""
-    if options.starttask:
-        options.starttask = upgrade_legacy_ids(
-            *options.starttask,
-            relative=True,
-        )
     return asyncio.run(scheduler_cli(options, id_))

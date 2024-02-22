@@ -86,14 +86,8 @@ from optparse import Values
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from cylc.flow.scripts.scan import (
-    get_pipe,
-    _format_plain,
-    FLOW_STATE_SYMBOLS,
-    FLOW_STATE_CMAP
-)
-from cylc.flow import LOG, iter_entry_points
-from cylc.flow.exceptions import PluginError, InputError
+from cylc.flow import LOG
+from cylc.flow.exceptions import InputError
 from cylc.flow.loggingutil import CylcLogFormatter, set_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -105,11 +99,18 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir
 )
+from cylc.flow.plugins import run_plugins_async
 from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
     search_install_source_dirs,
     check_deprecation,
+)
+from cylc.flow.scripts.scan import (
+    get_pipe,
+    _format_plain,
+    FLOW_STATE_SYMBOLS,
+    FLOW_STATE_CMAP
 )
 from cylc.flow.terminal import cli_function
 
@@ -268,22 +269,20 @@ def main(
     id_: Optional[str] = None
 ) -> None:
     """CLI wrapper."""
-    install_cli(opts, id_)
+    asyncio.run(install_cli(opts, id_))
 
 
-def install_cli(
+async def install_cli(
     opts: 'Values',
     id_: Optional[str] = None
 ) -> Tuple[str, str]:
     """Install workflow and scan for already-running instances."""
-    wf_name, wf_id = install(opts, id_)
-    asyncio.run(
-        scan(wf_name, not opts.no_ping)
-    )
+    wf_name, wf_id = await install(opts, id_)
+    await scan(wf_name, not opts.no_ping)
     return wf_name, wf_id
 
 
-def install(
+async def install(
     opts: 'Values', id_: Optional[str] = None
 ) -> Tuple[str, str]:
     set_timestamps(LOG, opts.log_timestamp and opts.verbosity > 1)
@@ -297,19 +296,12 @@ def install(
     # for compatibility mode:
     check_deprecation(source)
 
-    for entry_point in iter_entry_points(
-        'cylc.pre_configure'
+    async for _entry_point, _plugin_result in run_plugins_async(
+        'cylc.pre_configure',
+        srcdir=source,
+        opts=opts,
     ):
-        try:
-            entry_point.load()(srcdir=source, opts=opts)
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.pre_configure',
-                entry_point.name,
-                exc
-            ) from None
+        pass
 
     cli_symdirs: Optional[Dict[str, Dict[str, Any]]] = None
     if opts.symlink_dirs == '':
@@ -325,23 +317,14 @@ def install(
         cli_symlink_dirs=cli_symdirs
     )
 
-    for entry_point in iter_entry_points(
-        'cylc.post_install'
+    async for _entry_point, _plugin_result in run_plugins_async(
+        'cylc.post_install',
+        srcdir=source_dir,
+        opts=opts,
+        rundir=str(rundir),
+        async_block=True,
     ):
-        try:
-            entry_point.load()(
-                srcdir=source_dir,
-                opts=opts,
-                rundir=str(rundir)
-            )
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.post_install',
-                entry_point.name,
-                exc
-            ) from None
+        pass
 
     print(f'INSTALLED {workflow_id} from {source_dir}')
 

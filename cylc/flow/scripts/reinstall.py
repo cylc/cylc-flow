@@ -75,9 +75,7 @@ from functools import partial
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import (
-    PluginError,
     ServiceFileError,
     WorkflowFilesError,
 )
@@ -90,8 +88,8 @@ from cylc.flow.option_parsers import (
     OptionSettings,
     ID_MULTI_ARG_DOC
 )
-
 from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.plugins import run_plugins_async
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     load_contact_file,
@@ -198,7 +196,7 @@ async def reinstall_cli(
         if is_terminal() and not opts.skip_interactive:
             # interactive mode - perform dry-run and prompt
             # dry-mode reinstall
-            if not reinstall(
+            if not await reinstall(
                 opts,
                 workflow_id,
                 source,
@@ -231,7 +229,7 @@ async def reinstall_cli(
 
     if usr == 'y':
         # reinstall for real
-        reinstall(opts, workflow_id, source, run_dir, dry_run=False)
+        await reinstall(opts, workflow_id, source, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
         if print_reload_tip:
             display_cylc_reload_tip(workflow_id)
@@ -245,7 +243,7 @@ async def reinstall_cli(
         return False
 
 
-def reinstall(
+async def reinstall(
     opts: 'Values',
     workflow_id: str,
     src_dir: Path,
@@ -273,7 +271,12 @@ def reinstall(
     # run pre_configure plugins
     if not dry_run:
         # don't run plugins in dry-mode
-        pre_configure(opts, src_dir)
+        async for _entry_point, _plugin_result in run_plugins_async(
+            'cylc.pre_configure',
+            srcdir=src_dir,
+            opts=opts,
+        ):
+            pass
 
     # reinstall from src_dir (will raise WorkflowFilesError on error)
     stdout: str = reinstall_workflow(
@@ -295,7 +298,14 @@ def reinstall(
     # run post_install plugins
     if not dry_run:
         # don't run plugins in dry-mode
-        post_install(opts, src_dir, run_dir)
+        async for _entry_point, _plugin_result in run_plugins_async(
+            'cylc.post_install',
+            srcdir=src_dir,
+            opts=opts,
+            rundir=str(run_dir),
+            async_block=True,
+        ):
+            pass
 
     return True
 
@@ -336,45 +346,6 @@ def format_rsync_out(out: str) -> List[str]:
             # other uncategorised log line
             lines.append(line)
     return lines
-
-
-def pre_configure(opts: 'Values', src_dir: Path) -> None:
-    """Run pre_configure plugins."""
-    # don't run plugins in dry-mode
-    for entry_point in iter_entry_points(
-        'cylc.pre_configure'
-    ):
-        try:
-            entry_point.load()(srcdir=src_dir, opts=opts)
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.pre_configure',
-                entry_point.name,
-                exc
-            ) from None
-
-
-def post_install(opts: 'Values', src_dir: Path, run_dir: Path) -> None:
-    """Run post_install plugins."""
-    for entry_point in iter_entry_points(
-        'cylc.post_install'
-    ):
-        try:
-            entry_point.load()(
-                srcdir=src_dir,
-                opts=opts,
-                rundir=str(run_dir)
-            )
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.post_install',
-                entry_point.name,
-                exc
-            ) from None
 
 
 def display_rose_warning(src_dir: Path) -> None:

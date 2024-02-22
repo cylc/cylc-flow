@@ -62,7 +62,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
-    wrapped_main as cylc_validate
+    run as cylc_validate,
 )
 from cylc.flow.scripts.reinstall import (
     REINSTALL_CYLC_ROSE_OPTIONS,

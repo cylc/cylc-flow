@@ -18,8 +18,7 @@
 
 import pytest
 from pathlib import Path
-
-from .test_scan import init_flows
+from typing import Callable, Tuple
 
 from cylc.flow.async_util import pipe
 from cylc.flow.scripts import scan
@@ -29,7 +28,8 @@ from cylc.flow.scripts.install import (
     install_cli
 )
 
-from typing import Callable, Tuple
+from .test_scan import init_flows
+from .utils.entry_points import EntryPointWrapper
 
 SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
@@ -97,8 +97,8 @@ def src_run_dirs(
     return tmp_src_path, tmp_run_path
 
 
-def test_install_scan_no_ping(
-    src_run_dirs: Callable,
+async def test_install_scan_no_ping(
+    src_run_dirs: Tuple[Path, Path],
     capsys: pytest.CaptureFixture,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -110,21 +110,21 @@ def test_install_scan_no_ping(
     opts = InstallOptions()
     opts.no_ping = True
 
-    install_cli(opts, id_='w1')
+    await install_cli(opts, id_='w1')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w1/run2') in out
     assert WF_ACTIVE_MSG.format(wf='w1') in out
     # Empty contact file faked with "touch":
     assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
-    install_cli(opts, id_='w2')
+    await install_cli(opts, id_='w2')
     out = capsys.readouterr().out
     assert WF_ACTIVE_MSG.format(wf='w2') not in out
     assert INSTALLED_MSG.format(wfrun='w2/run1') in out
 
 
-def test_install_scan_ping(
-    src_run_dirs: Callable,
+async def test_install_scan_ping(
+    src_run_dirs: Tuple[Path, Path],
     capsys: pytest.CaptureFixture,
     caplog: pytest.LogCaptureFixture,
     patch_graphql_query: Callable
@@ -136,7 +136,7 @@ def test_install_scan_ping(
     opts = InstallOptions()
     opts.no_ping = False
 
-    install_cli(opts, id_='w1')
+    await install_cli(opts, id_='w1')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w1/run2') in out
     assert WF_ACTIVE_MSG.format(wf='w1') in out
@@ -144,47 +144,52 @@ def test_install_scan_ping(
     # Empty contact file faked with "touch":
     assert f"{BAD_CONTACT_MSG} w1/run1" in caplog.text
 
-    install_cli(opts, id_='w2')
+    await install_cli(opts, id_='w2')
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w2/run1') in out
     assert WF_ACTIVE_MSG.format(wf='w2') not in out
 
 
-def test_install_gets_back_compat_mode_for_plugins(
-    src_run_dirs: Callable,
+async def test_install_gets_back_compat_mode_for_plugins(
+    src_run_dirs: Tuple[Path, Path],
     monkeypatch: pytest.MonkeyPatch,
+    capcall,
     capsys: pytest.CaptureFixture,
 ):
-    """Assert that pre cylc install will detect whether a workflow
+    """Assert that cylc install will detect whether a workflow
     should use back compat mode _before_ running pre_configure plugins
     so that those plugins can use that information.
     """
-    class failIfDeprecated:
-        """A fake Cylc Plugin entry point"""
-        @staticmethod
-        def load():
-            return failIfDeprecated.raiser
+    # track calls of the check_deprecation method
+    # (this is the thing that sets cylc.flow.flags.back_compat)
+    check_deprecation_calls = capcall(
+        'cylc.flow.scripts.install.check_deprecation'
+    )
 
-        @staticmethod
-        def raiser(*_, **__):
-            import cylc.flow.flags
-            if cylc.flow.flags.cylc7_back_compat:
-                print('Plugin:True')
-                return True
-            print('Plugin:False')
-            return False
+    @EntryPointWrapper
+    def failIfDeprecated(*args, **kwargs):
+        """A fake Cylc Plugin entry point"""
+        nonlocal check_deprecation_calls
+        # print the number of times the check_deprecation method has been
+        # called
+        print(f'CALLS={len(check_deprecation_calls)}')
+        # return a blank result
+        return {
+            'env': {},
+            'template_variables': {},
+        }
 
     # Monkeypatch our fake entry point into iter_entry_points:
     monkeypatch.setattr(
-        'cylc.flow.scripts.install.iter_entry_points',
-        lambda x: [failIfDeprecated]
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [failIfDeprecated] if namespace == 'cylc.pre_configure' else []
+        )
     )
+
+    # install the workflow
     opts = InstallOptions()
+    await install_cli(opts, id_='w1')
 
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', False)
-    install_cli(opts, id_='w1')
-    assert capsys.readouterr()[0].split('\n')[0] == 'Plugin:False'
-
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    install_cli(opts, id_='w1')
-    assert capsys.readouterr()[0].split('\n')[0] == 'Plugin:True'
+    # ensure the check_deprecation method was called before the plugin was run
+    assert 'CALLS=1' in capsys.readouterr()[0]

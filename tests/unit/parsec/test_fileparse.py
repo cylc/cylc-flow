@@ -799,7 +799,7 @@ def pre_configure_basic(*_, **__):
 
 def test_plugins_not_called_on_global_config(monkeypatch):
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.iter_entry_points',
+        'cylc.flow.plugins.iter_entry_points',
         lambda x: [pre_configure_basic]
     )
     result = process_plugins('/pennine/way/flow.cylc', {})

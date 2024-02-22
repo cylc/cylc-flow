@@ -29,7 +29,7 @@ async def test_validate_against_source_checks_source(
     """Validation fails if validating against source with broken config.
     """
     src_dir = workflow_source(one_conf)
-    workflow_id = install(src_dir)
+    workflow_id = await install(src_dir)
 
     # Check that the original installation validates OK:
     validate(workflow_id, against_source=True)
@@ -67,7 +67,7 @@ async def test_validate_against_source_gets_old_tvars(
         }
     })
 
-    wf_id = install(src_dir)
+    wf_id = await install(src_dir)
     installed_dir = run_dir / wf_id
 
     # Check that the original installation validates OK:
