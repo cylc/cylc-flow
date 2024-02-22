@@ -1,0 +1,44 @@
+[meta]
+    title = Datetime Cycling
+    description = """
+        A basic cycling workflow which runs the same set of tasks over
+        and over. Each cycle will be given a datetime identifier.
+
+        The task "a" will wait until the real-world (or wallclock) time passes
+        the cycle time.
+
+        Try changing the "initial cycle point" to "previous(00T00) - P1D" to
+        see how this works.
+    """
+
+[scheduling]
+    # set the start of the graph to 00:00 this morning
+    initial cycle point = previous(T00)
+
+    [[graph]]
+        # repeat this with a "P"eriod of "1" "D"ay -> P1D
+        P1D = """
+            # this is the workflow we want to repeat:
+            a => b => c & d
+
+            # this is an "inter-cycle dependency", it makes the task "b"
+            # wait until its previous instance has successfully completed:
+            b[-P1D] => b
+
+            # this makes the task "a" wait until its cycle point matches
+            # the real world time - i.e. it prevents the workflow from getting
+            # ahead of the clock. If the workflow is running behind (e.g. after
+            # a delay, or from an earlier initial cycle point) it will catch
+            # until the clock-trigger constrains it again. To run entirely in
+            # "simulated time" remove this line:
+            @wall_clock => a
+        """
+
+[runtime]
+    [[root]]
+        # all tasks will "inherit" the configuration in the "root" section
+        script = echo "Hello, I'm task $CYLC_TASK_NAME in cycle $CYLC_TASK_CYCLE_POINT!"
+    [[a]]
+    [[b]]
+    [[c]]
+    [[d]]

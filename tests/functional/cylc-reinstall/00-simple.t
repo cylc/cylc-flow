@@ -48,6 +48,7 @@ run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 cmp_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
 REINSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 Successfully reinstalled.
+Done
 __OUT__
 popd || exit 1
 purge_rnd_workflow

@@ -217,7 +217,8 @@ async def test_filter_task_proxies(
     expected_bad_items: List[str],
     expected_warnings: List[str],
     mod_example_flow: Scheduler,
-    caplog: pytest.LogCaptureFixture
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch,
 ) -> None:
     """Test TaskPool.filter_task_proxies().
 
@@ -257,7 +258,8 @@ async def test_filter_task_proxies_hidden(
     expected_bad_items: List[str],
     expected_warnings: List[str],
     mod_example_flow: Scheduler,
-    caplog: pytest.LogCaptureFixture
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch,
 ) -> None:
     """Test TaskPool.filter_task_proxies().
 
@@ -278,6 +280,13 @@ async def test_filter_task_proxies_hidden(
         expected_bad_items: Expected to be returned.
         expected_warnings: Expected to be logged.
     """
+    monkeypatch.setattr(
+        # make Tokens objects mutable to allow deepcopy to work on TaskProxy
+        # objects
+        'cylc.flow.id.Tokens.__setitem__',
+        lambda self, key, value: dict.__setitem__(self, key, value),
+    )
+
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = mod_example_flow.pool
 

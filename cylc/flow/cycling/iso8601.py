@@ -88,7 +88,9 @@ class ISO8601Point(PointBase):
 
     def add(self, other):
         """Add an Interval to self."""
-        return ISO8601Point(self._iso_point_add(self.value, other.value))
+        return ISO8601Point(self._iso_point_add(
+            self.value, other.value, CALENDAR.mode
+        ))
 
     def standardise(self):
         """Reformat self.value into a standard representation."""
@@ -106,25 +108,27 @@ class ISO8601Point(PointBase):
     def sub(self, other):
         """Subtract a Point or Interval from self."""
         if isinstance(other, ISO8601Point):
-            return ISO8601Interval(
-                self._iso_point_sub_point(self.value, other.value))
-        return ISO8601Point(
-            self._iso_point_sub_interval(self.value, other.value))
+            return ISO8601Interval(self._iso_point_sub_point(
+                self.value, other.value, CALENDAR.mode
+            ))
+        return ISO8601Point(self._iso_point_sub_interval(
+            self.value, other.value, CALENDAR.mode
+        ))
 
     @staticmethod
     @lru_cache(10000)
-    def _iso_point_add(point_string, interval_string):
+    def _iso_point_add(point_string, interval_string, _calendar_mode):
         """Add the parsed point_string to the parsed interval_string."""
         point = point_parse(point_string)
         interval = interval_parse(interval_string)
         return str(point + interval)
 
     def _cmp(self, other: 'ISO8601Point') -> int:
-        return self._iso_point_cmp(self.value, other.value)
+        return self._iso_point_cmp(self.value, other.value, CALENDAR.mode)
 
     @staticmethod
     @lru_cache(10000)
-    def _iso_point_cmp(point_string, other_point_string):
+    def _iso_point_cmp(point_string, other_point_string, _calendar_mode):
         """Compare the parsed point_string to the other one."""
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)
@@ -132,7 +136,7 @@ class ISO8601Point(PointBase):
 
     @staticmethod
     @lru_cache(10000)
-    def _iso_point_sub_interval(point_string, interval_string):
+    def _iso_point_sub_interval(point_string, interval_string, _calendar_mode):
         """Return the parsed point_string minus the parsed interval_string."""
         point = point_parse(point_string)
         interval = interval_parse(interval_string)
@@ -140,7 +144,7 @@ class ISO8601Point(PointBase):
 
     @staticmethod
     @lru_cache(10000)
-    def _iso_point_sub_point(point_string, other_point_string):
+    def _iso_point_sub_point(point_string, other_point_string, _calendar_mode):
         """Return the difference between the two parsed point strings."""
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)

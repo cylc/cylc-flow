@@ -25,7 +25,6 @@ This module provides logic to:
 from collections import deque
 from contextlib import suppress
 from pathlib import Path
-from cylc.flow.option_parsers import verbosity_to_opts
 import os
 from shlex import quote
 import re
@@ -33,8 +32,15 @@ from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import sleep, time
 from typing import (
-    Any, Deque, Dict, TYPE_CHECKING, List,
-    NamedTuple, Optional, Set, Tuple
+    Any,
+    Deque,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
 )
 
 from cylc.flow import LOG
@@ -42,6 +48,9 @@ from cylc.flow.exceptions import (
     PlatformError, PlatformLookupError, NoHostsError, NoPlatformsError
 )
 import cylc.flow.flags
+from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.log_level import verbosity_to_opts
+from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
     get_dirs_to_symlink,
@@ -69,9 +78,6 @@ from cylc.flow.workflow_files import (
     get_contact_file_path,
     get_workflow_srv_dir,
 )
-
-from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
-from cylc.flow.hostuserutil import is_remote_host
 
 if TYPE_CHECKING:
     from zmq.auth.thread import ThreadAuthenticator

@@ -1,0 +1,8 @@
+[scheduling]
+    [[xtriggers]]
+        x1 = echo("the_args")
+    [[graph]]
+        R1 = @x1 => foo
+[runtime]
+    [[foo]]
+        script = true

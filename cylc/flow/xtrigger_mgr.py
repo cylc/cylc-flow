@@ -16,6 +16,7 @@
 
 from contextlib import suppress
 from enum import Enum
+from inspect import signature
 import json
 import re
 from copy import deepcopy
@@ -26,10 +27,11 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
-from cylc.flow.subprocpool import get_func
-from cylc.flow.xtriggers.wall_clock import wall_clock
+from cylc.flow.subprocpool import get_xtrig_func
+from cylc.flow.xtriggers.wall_clock import _wall_clock
 
 if TYPE_CHECKING:
+    from inspect import BoundArguments
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.subprocctx import SubFuncContext
@@ -207,7 +209,7 @@ class XtriggerManager:
         workflow_share_dir: Optional[str] = None,
     ):
         # Workflow function and clock triggers by label.
-        self.functx_map: Dict[str, SubFuncContext] = {}
+        self.functx_map: 'Dict[str, SubFuncContext]' = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
@@ -240,10 +242,16 @@ class XtriggerManager:
         self.do_housekeeping = False
 
     @staticmethod
-    def validate_xtrigger(
-        label: str, fctx: 'SubFuncContext', fdir: str
+    def check_xtrigger(
+        label: str,
+        fctx: 'SubFuncContext',
+        fdir: str,
     ) -> None:
-        """Validate an Xtrigger function.
+        """Generic xtrigger validation: check existence, string templates and
+        function signature.
+
+        Xtrigger modules may also supply a specific `validate` function
+        which will be run here.
 
         Args:
             label: xtrigger label
@@ -257,29 +265,39 @@ class XtriggerManager:
                 * If the function is not callable.
                 * If any string template in the function context
                   arguments are not present in the expected template values.
+                * If the arguments do not match the function signature.
 
         """
         fname: str = fctx.func_name
+
         try:
-            func = get_func(fname, fdir)
+            func = get_xtrig_func(fname, fname, fdir)
         except ImportError:
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"xtrigger module '{fname}' not found",
+                label, f"xtrigger module '{fname}' not found",
             )
         except AttributeError:
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"'{fname}' not found in xtrigger module '{fname}'",
+                label, f"'{fname}' not found in xtrigger module '{fname}'",
             )
+
         if not callable(func):
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"'{fname}' not callable in xtrigger module '{fname}'",
+                label, f"'{fname}' not callable in xtrigger module '{fname}'",
             )
+
+        # Validate args and kwargs against the function signature
+        sig_str = fctx.get_signature()
+        try:
+            bound_args = signature(func).bind(
+                *fctx.func_args, **fctx.func_kwargs
+            )
+        except TypeError as exc:
+            raise XtriggerConfigError(label, f"{sig_str}: {exc}")
+        # Specific xtrigger.validate(), if available.
+        XtriggerManager.try_xtrig_validate_func(
+            label, fname, fdir, bound_args, sig_str
+        )
 
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -295,9 +313,7 @@ class XtriggerManager:
                     template_vars.add(TemplateVariables(match))
                 except ValueError:
                     raise XtriggerConfigError(
-                        label,
-                        fname,
-                        f"Illegal template in xtrigger: {match}",
+                        label, f"Illegal template in xtrigger: {match}",
                     )
 
         # check for deprecated template variables
@@ -313,16 +329,41 @@ class XtriggerManager:
                 f' {", ".join(t.value for t in deprecated_variables)}'
             )
 
+    @staticmethod
+    def try_xtrig_validate_func(
+        label: str,
+        fname: str,
+        fdir: str,
+        bound_args: 'BoundArguments',
+        signature_str: str,
+    ):
+        """Call an xtrigger's `validate()` function if it is implemented.
+
+        Raise XtriggerConfigError if validation fails.
+        """
+        try:
+            xtrig_validate_func = get_xtrig_func(fname, 'validate', fdir)
+        except (AttributeError, ImportError):
+            return
+        bound_args.apply_defaults()
+        try:
+            xtrig_validate_func(bound_args.arguments)
+        except Exception as exc:  # Note: catch all errors
+            raise XtriggerConfigError(
+                label, f"{signature_str} validation failed: {exc}"
+            )
+
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
         """Add a new xtrigger function.
 
-        Check the xtrigger function exists here (e.g. during validation).
+        Call check_xtrigger before this, during validation.
+
         Args:
             label: xtrigger label
             fctx: function context
             fdir: function module directory
+
         """
-        self.validate_xtrigger(label, fctx, fdir)
         self.functx_map[label] = fctx
 
     def mutate_trig(self, label, kwargs):
@@ -370,7 +411,9 @@ class XtriggerManager:
         return res
 
     def get_xtrig_ctx(
-        self, itask: 'TaskProxy', label: str
+        self,
+        itask: 'TaskProxy',
+        label: str,
     ) -> 'SubFuncContext':
         """Get a real function context from the template.
 
@@ -391,20 +434,18 @@ class XtriggerManager:
         args = []
         kwargs = {}
         if ctx.func_name == "wall_clock":
-            if "trigger_time" in ctx.func_kwargs:
+            if "trigger_time" in ctx.func_kwargs:  # noqa: SIM401 (readabilty)
                 # Internal (retry timer): trigger_time already set.
                 kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
-            elif "offset" in ctx.func_kwargs:  # noqa: SIM106
+            else:
                 # External (clock xtrigger): convert offset to trigger_time.
                 # Datetime cycling only.
                 kwargs["trigger_time"] = itask.get_clock_trigger_time(
                     itask.point,
-                    ctx.func_kwargs["offset"]
-                )
-            else:
-                # Should not happen!
-                raise ValueError(
-                    "wall_clock function kwargs needs trigger time or offset"
+                    ctx.func_kwargs.get(
+                        "offset",
+                        ctx.func_args[0] if ctx.func_args else None
+                    )
                 )
         else:
             # Other xtrig functions: substitute template values.
@@ -436,7 +477,7 @@ class XtriggerManager:
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
-                elif wall_clock(*ctx.func_args, **ctx.func_kwargs):
+                elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}

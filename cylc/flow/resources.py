@@ -16,6 +16,7 @@
 
 """Extract named resources from the cylc.flow package."""
 
+from contextlib import suppress
 from pathlib import Path
 from random import shuffle
 import shutil
@@ -31,6 +32,7 @@ from cylc.flow.wallclock import get_current_time_string
 
 RESOURCE_DIR = Path(cylc.flow.__file__).parent / 'etc'
 TUTORIAL_DIR = RESOURCE_DIR / 'tutorial'
+EXAMPLE_DIR = RESOURCE_DIR / 'examples'
 
 
 # {resource: brief description}
@@ -52,6 +54,11 @@ def list_resources(write=print, headers=True):
         for path in TUTORIAL_DIR.iterdir()
         if path.is_dir()
     ]
+    examples = [
+        path.relative_to(RESOURCE_DIR)
+        for path in EXAMPLE_DIR.iterdir()
+        if path.is_dir()
+    ]
     if headers:
         write('Resources:')
     max_len = max(len(res) for res in RESOURCE_NAMES)
@@ -62,15 +69,21 @@ def list_resources(write=print, headers=True):
     for tutorial in tutorials:
         write(f'  {tutorial}')
     write(f'  {API_KEY}')
+    if headers:
+        write('\nExamples:')
+    for example in examples:
+        write(f'  {example}')
 
 
-def path_is_tutorial(src: Path) -> bool:
-    """Returns True if the src path is in the tutorial directory."""
-    try:
+def path_is_source_workflow(src: Path) -> bool:
+    """Returns True if the src path is a Cylc workflow."""
+    with suppress(ValueError):
         src.relative_to(TUTORIAL_DIR)
-    except ValueError:
-        return False
-    return True
+        return True
+    with suppress(ValueError):
+        src.relative_to(EXAMPLE_DIR)
+        return True
+    return False
 
 
 def get_resources(resource: str, tgt_dir: Optional[str]):
@@ -95,11 +108,11 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
             '\nRun `cylc get-resources --list` for resource names.'
         )
 
-    is_tutorial = path_is_tutorial(src)
+    is_source_workflow = path_is_source_workflow(src)
 
     # get the target path
     if not tgt_dir:
-        if is_tutorial:
+        if is_source_workflow:
             # this is a tutorial => use the primary source dir
             _tgt_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
         else:
@@ -113,8 +126,8 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     tgt = tgt.resolve()
 
     # extract resources
-    extract_resource(src, tgt, is_tutorial)
-    if is_tutorial:
+    extract_resource(src, tgt, is_source_workflow)
+    if is_source_workflow:
         set_api_key(tgt)
 
 
@@ -131,15 +144,31 @@ def _backup(tgt: Path) -> None:
     shutil.move(str(tgt), str(backup))
 
 
-def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
+def extract_resource(
+    src: Path,
+    tgt: Path,
+    is_source_workflow: bool = False,
+) -> None:
     """Extract src into tgt.
 
     NOTE: src can be a dir or a file.
     """
     LOG.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
-    if is_tutorial and tgt.exists():
+    if is_source_workflow and tgt.exists():
         # target exists, back up the old copy
         _backup(tgt)
+
+    # files to exclude
+    if is_source_workflow:
+        excludes = [
+            # test files
+            '.validate',
+            'reftest',
+            # documentation files
+            'index.rst',
+        ]
+    else:
+        excludes = []
 
     # create the target directory
     try:
@@ -151,6 +180,10 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
             shutil.copytree(str(src), str(tgt))
         else:
             shutil.copyfile(str(src), str(tgt))
+        for exclude in excludes:
+            path = tgt / exclude
+            if path.exists():
+                path.unlink()
     except IsADirectoryError as exc:
         LOG.error(
             f'Cannot extract file {exc.filename} as there is an '
