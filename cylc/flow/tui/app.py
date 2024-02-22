@@ -124,7 +124,7 @@ class TuiWidget(urwid.TreeWidget):
         but which we think should be used for collapsing.
 
         """
-        ret = self.__super.keypress(size, key)
+        ret = super().keypress(size, key)
         if ret in ('left',):
             self.expanded = False
             self.update_expanded_icon()
@@ -143,7 +143,7 @@ class TuiWidget(urwid.TreeWidget):
                 ],
                 dividechars=1
             )
-        return self.__super.get_indented_widget()
+        return super().get_indented_widget()
 
     def update_expanded_icon(self, subscribe=True):
         """Update the +/- icon.
@@ -276,10 +276,10 @@ class TuiApp:
         topnode = TuiNode(self, dummy_flow({'id': 'Loading...'}))
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
         header = urwid.Text('\n')
-        footer = urwid.AttrWrap(urwid.Text(list_bindings()), 'foot')
+        footer = urwid.AttrMap(urwid.Text(list_bindings()), 'foot')
         self.view = urwid.Frame(
-            urwid.AttrWrap(self.listbox, 'body'),
-            header=urwid.AttrWrap(header, 'head'),
+            urwid.AttrMap(self.listbox, 'body'),
+            header=urwid.AttrMap(header, 'head'),
             footer=footer
         )
         self.filters = get_default_filters()
@@ -509,18 +509,18 @@ class TuiApp:
         # preserve the focus and collapse status of tree nodes
 
         # record the old focus
-        _, old_node = self.listbox._body.get_focus()
+        _, old_node = self.listbox.body.get_focus()
 
         # nuke the tree
         self.tree_walker = urwid.TreeWalker(topnode)
-        self.listbox._set_body(self.tree_walker)
+        self.listbox.body = self.tree_walker
 
         # get the new focus
-        _, new_node = self.listbox._body.get_focus()
+        _, new_node = self.listbox.body.get_focus()
 
         # preserve the focus or walk to the nearest parent
         closest_focus = find_closest_focus(self, old_node, new_node)
-        self.listbox._body.set_focus(closest_focus)
+        self.listbox.body.set_focus(closest_focus)
 
         #  preserve the collapse/expand status of all nodes
         translate_collapsing(self, old_node, new_node)
