@@ -1267,6 +1267,8 @@ class Scheduler:
     def load_flow_file(self, is_reload=False):
         """Load, and log the workflow definition."""
         # Local workflow environment set therein.
+        self.options.rose_template_vars = []
+        self.options.defines = []
         return WorkflowConfig(
             self.workflow,
             self.flow_file,
