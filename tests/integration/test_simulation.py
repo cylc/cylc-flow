@@ -222,17 +222,22 @@ async def test_settings_restart(
 
     In the case of start time this is collected from the database
     from task_jobs.start_time.
+
+    tasks:
+        one: Runs straighforwardly.
+        two: Test case where database is missing started_time
+            because it was upgraded from an earlier version of Cylc.
     """
     id_ = flow({
         'scheduler': {'cycle point format': '%Y'},
         'scheduling': {
             'initial cycle point': '1066',
             'graph': {
-                'R1': 'one'
+                'R1': 'one & two'
             }
         },
         'runtime': {
-            'one': {
+            'root': {
                 'execution time limit': 'PT1M',
                 'execution retry delays': 'P0Y',
                 'simulation': {
@@ -247,11 +252,12 @@ async def test_settings_restart(
 
     # Start the workflow:
     async with start(schd):
-        itask = schd.pool.get_tasks()[0]
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        og_timeouts = {}
+        for itask in schd.pool.get_tasks():
+            schd.task_job_mgr._simulation_submit_task_jobs(
+                [itask], schd.workflow)
 
-        og_timeout = itask.mode_settings.timeout
+            og_timeouts[itask.identity] = itask.mode_settings.timeout
 
         # Mock wallclock < sim end timeout
         monkeytime(itask.mode_settings.timeout - 1)
@@ -263,24 +269,38 @@ async def test_settings_restart(
     schd = scheduler(id_)
     async with start(schd):
         # Get our tasks and fix wallclock:
-        itask = schd.pool.get_tasks()[0]
+        itasks = schd.pool.get_tasks()
+        for itask in itasks:
 
-        # Check that we haven't got started time & mode settings back:
-        assert itask.summary['started_time'] is None
-        assert itask.mode_settings is None
+            # Check that we haven't got started time & mode settings back:
+            assert itask.summary['started_time'] is None
+            assert itask.mode_settings is None
 
-        # Set the current time:
-        monkeytime(og_timeout - 1)
-        assert sim_time_check(
-            schd.task_events_mgr, [itask], schd.workflow_db_mgr
-        ) is False
+            if itask.identity == '1066/two':
+                # Delete the database entry for `two`: Ensure that
+                # we don't break sim mode on upgrade to this version of Cylc.
+                schd.workflow_db_mgr.pub_dao.connect().execute(
+                    'UPDATE task_jobs'
+                    '\n SET time_submit = NULL'
+                    '\n WHERE (name == \'two\')'
+                )
+                schd.workflow_db_mgr.process_queued_ops()
+                monkeytime(42)
+                expected_timeout = 102.0
+            else:
+                monkeytime(og_timeouts[itask.identity] - 1)
+                expected_timeout = float(int(og_timeouts[itask.identity]))
 
-        # Check that the itask.mode_settings is now re-created
-        assert itask.mode_settings.__dict__ == {
-            'simulated_run_length': 60.0,
-            'sim_task_fails': True,
-            'timeout': float(int(og_timeout))
-        }
+            assert sim_time_check(
+                schd.task_events_mgr, [itask], schd.workflow_db_mgr
+            ) is False
+
+            # Check that the itask.mode_settings is now re-created
+            assert itask.mode_settings.__dict__ == {
+                'simulated_run_length': 60.0,
+                'sim_task_fails': True,
+                'timeout': expected_timeout
+            }
 
 
 async def test_settings_reload(

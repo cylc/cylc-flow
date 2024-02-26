@@ -48,7 +48,7 @@ class ModeSettings:
     """A store of state for simulation modes.
 
     Used instead of modifying the runtime config.
-    
+
     Args:
         itask:
             The task proxy this submission relates to.
@@ -59,7 +59,7 @@ class ModeSettings:
             The database manager must be provided for simulated jobs
             that are being resumed after workflow restart. It is used to extract
             the original scheduled finish time for the job.
-    
+
     Attrs:
         simulated_run_length:
             The length of time this simulated job will take to run in seconds.
@@ -94,9 +94,12 @@ class ModeSettings:
             )
 
             # Get the started time:
-            started_time = get_unix_time_from_time_string(
-                db_info["time_submit"])
-            itask.summary['started_time'] = started_time
+            if db_info['time_submit']:
+                started_time = get_unix_time_from_time_string(
+                    db_info["time_submit"])
+                itask.summary['started_time'] = started_time
+            else:
+                started_time = time()
 
             # Get the try number:
             try_num = db_info["try_num"]
@@ -254,7 +257,10 @@ def sim_time_check(
 
         if itask.mode_settings is None:
             itask.mode_settings = ModeSettings(
-                itask, task_events_manager.broadcast_mgr, db_mgr)
+                itask,
+                task_events_manager.broadcast_mgr,
+                db_mgr,
+            )
 
         if now > itask.mode_settings.timeout:
             if itask.mode_settings.sim_task_fails:
