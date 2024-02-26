@@ -48,6 +48,27 @@ class ModeSettings:
     """A store of state for simulation modes.
 
     Used instead of modifying the runtime config.
+    
+    Args:
+        itask:
+            The task proxy this submission relates to.
+        broadcast_mgr:
+            The broadcast manager is used to apply any runtime alterations
+            pre simulated submission.
+        db_mgr:
+            The database manager must be provided for simulated jobs
+            that are being resumed after workflow restart. It is used to extract
+            the original scheduled finish time for the job.
+    
+    Attrs:
+        simulated_run_length:
+            The length of time this simulated job will take to run in seconds.
+        timeout:
+            The wall-clock time at which this simulated job will finish as
+            a Unix epoch time.
+        sim_task_fails:
+            True, if this job is intended to fail when it finishes, else False.
+
     """
     simulated_run_length: float = 0.0
     sim_task_fails: bool = False
@@ -67,7 +88,10 @@ class ModeSettings:
         if started_time is None and db_mgr:
             # Get DB info
             db_info = db_mgr.pub_dao.select_task_job(
-                *itask.tokens.relative_id.split("/"))
+                itask.tokens['cycle'],
+                itask.tokens['task'],
+                itask.tokens['job'],
+            )
 
             # Get the started time:
             started_time = get_unix_time_from_time_string(
