@@ -265,9 +265,23 @@ class BroadcastMgr:
         modified_settings = []
         bad_point_strings = []
         bad_namespaces = []
-
+        bad_fail_points = []
         with self.lock:
             for setting in settings:
+                fail_cycle_points = setting.get(
+                    'simulation', {'fail cycle points': None}).get(
+                        'fail cycle points', None)
+                if fail_cycle_points:
+                    from cylc.flow.simulation import parse_fail_cycle_points
+                    try:
+                        parse_fail_cycle_points(
+                            [i.strip() for i in fail_cycle_points.split(',')])
+                    except PointParsingError as exc:
+                        exc_msg = ':'.join(exc.args[0].split(':')[:-2])
+                        bad_fail_points.append(
+                            f'{fail_cycle_points} : {exc_msg}')
+                        continue
+
                 for point_string in point_strings:
                     # Standardise the point and check its validity.
                     bad_point = False
@@ -303,13 +317,16 @@ class BroadcastMgr:
 
         # Log the broadcast
         self.workflow_db_mgr.put_broadcast(modified_settings)
-        LOG.info(get_broadcast_change_report(modified_settings))
+        if modified_settings:
+            LOG.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
         if bad_point_strings:
             bad_options["point_strings"] = bad_point_strings
         if bad_namespaces:
             bad_options["namespaces"] = bad_namespaces
+        if bad_fail_points:
+            bad_options['fail_cycle_points'] = bad_fail_points
         if modified_settings:
             self.data_store_mgr.delta_broadcast()
         return modified_settings, bad_options
@@ -322,7 +339,13 @@ class BroadcastMgr:
 
     @classmethod
     def _get_bad_options(
-            cls, prunes, point_strings, namespaces, cancel_keys_list):
+            cls,
+            prunes,
+            point_strings,
+            namespaces,
+            fail_points,
+            cancel_keys_list
+    ):
         """Return unpruned namespaces and/or point_strings options."""
         cancel_keys_list = [
             tuple(cancel_keys) for cancel_keys in cancel_keys_list]
@@ -334,6 +357,7 @@ class BroadcastMgr:
         for opt_name, opt_list, opt_test in [
                 ("point_strings", point_strings, cls._point_string_in_prunes),
                 ("namespaces", namespaces, cls._namespace_in_prunes),
+                ('fail_points', fail_points, cls._fail_points_in_prunes),
                 ("cancel", cancel_keys_list, cls._cancel_keys_in_prunes)]:
             if opt_list:
                 bad_options[opt_name] = set(opt_list)
@@ -358,6 +382,11 @@ class BroadcastMgr:
     def _point_string_in_prunes(prunes, point_string):
         """Is point_string pruned?"""
         return point_string in [prune[0] for prune in prunes]
+
+    @staticmethod
+    def _fail_points_in_prunes(prunes, fail_points):
+        """Is point_string pruned?"""
+        return fail_points in [prune[0] for prune in prunes]
 
     def _prune(self):
         """Remove empty leaves left by unsetting broadcast values.

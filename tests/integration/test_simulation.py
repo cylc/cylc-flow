@@ -398,6 +398,19 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': ''}
             }])
 
+        # Assert that list of broadcasts doesn't change if we submit
+        # Invalid fail cycle points to broadcast.
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
+            }])
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': '1'}
+            }])
+        assert {'fail cycle points': []} == (
+            schd.broadcast_mgr.broadcasts['1066']['one']['simulation'])
+
         # Submit again - result is different:
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
@@ -413,3 +426,4 @@ async def test_settings_broadcast(
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is True
+
