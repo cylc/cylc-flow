@@ -33,7 +33,7 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
     mock_db_checker = monkeymock(
         'cylc.flow.xtriggers.workflow_state.CylcWorkflowDBChecker',
         return_value=Mock(
-            get_remote_point_format=lambda: 'CCYY',
+            get_point_format=lambda: 'CCYY',
         )
     )
 

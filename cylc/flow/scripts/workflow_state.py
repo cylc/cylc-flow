@@ -18,35 +18,52 @@
 
 r"""cylc workflow-state [OPTIONS] ARGS
 
-Retrieve task states from the workflow database.
+Print or poll for task states or outputs in a workflow database.
 
-Print task states retrieved from a workflow database; or (with --task,
---point, and --status) poll until a given task reaches a given state; or (with
---task, --point, and --message) poll until a task receives a given message.
-Polling is configurable with --interval and --max-polls; for a one-off
-check use --max-polls=1. The workflow database does not need to exist at
-the time polling commences but allocated polls are consumed waiting for
-it (consider max-polls*interval as an overall timeout).
+For specific cycle/task instances poll until the given status or output is
+achieved (command success) or the max number of polls is reached (failure).
 
-Note for non-cycling tasks --point=1 must be provided.
+For less specific queries, immediate results are printed (no polling is done).
 
-For your own workflows the database location is determined by your
-site/user config. For other workflows, e.g. those owned by others, or
-mirrored workflow databases, use --run-dir=DIR to specify the location.
+Override default polling parameters with --max-polls and --interval.
+
+If the database does not exist at first, polls are consumed waiting for it.
+
+For task outputs, give the task message, not the output label.
+
+For non-cycling workflows, provide --point=1 for specific queries.
+
+This command can be used to make polling tasks that trigger off of tasks in
+other workflows - but see also the built-in workflow_state xtrigger for that.
+
+NOTE: the DB only records the latest task statuses, so for transient states
+like "submitted" it may be safer to poll for the associated standard output.
 
 Examples:
-  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS
-  # returns 0 if TASK.POINT reaches STATUS before the maximum number of
-  # polls, otherwise returns 1.
 
-  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS \
-  > --offset=PT6H
-  # adds 6 hours to the value of CYCLE for carrying out the polling operation.
+  # Print the current or latest status of all tasks:
+  $ cylc workflow-state WORKFLOW_ID
 
-  $ cylc workflow-state WORKFLOW_ID --task=TASK --status=STATUS --task-point
-  # uses CYLC_TASK_CYCLE_POINT environment variable as the value for the
-  # CYCLE to poll. This is useful when you want to use cylc workflow-state in a
-  # cylc task.
+  # Print the current or latest status of all tasks named "foo":
+  $ cylc workflow-state --task=foo WORKFLOW_ID
+
+  # Print the current or latest status of all tasks in point 2033:
+  $ cylc workflow-state --point=2033 WORKFLOW_ID
+
+  # Print all tasks with the current or latest status "succeeded":
+  $ cylc workflow-state --status=succeeded CYLC_WORKFLOW_ID
+
+  # Print all tasks that generated the output message "file1 ready":
+  $ cylc workflow-state --message="file1 ready" WORKFLOW_ID
+
+  # Print all tasks "foo" that generated the output message "file1 ready":
+  $ cylc workflow-state --task=foo --message="file1 ready" WORKFLOW_ID
+
+  # POLL UNTIL task 2033/foo succeeds:
+  $ cylc workflow-state --task=foo --point=2033 --status=succeeded WORKFLOW_ID
+
+  # POLL UNTIL task 2033/foo generates output message "hello":
+  $ cylc workflow-state --task=foo --point=2033 --message="hello" WORKFLOW_ID
 """
 
 import asyncio
@@ -115,17 +132,14 @@ class WorkflowPoller(Poller):
             sys.stderr.write('\n')
 
         if connected and self.args['cycle']:
-            try:
-                fmt = self.checker.get_remote_point_format()
-            except sqlite3.OperationalError as exc:
-                try:
-                    fmt = self.checker.get_remote_point_format_compat()
-                except sqlite3.OperationalError:
-                    raise exc  # original error
+            fmt = self.checker.get_point_format()
             if fmt:
-                my_parser = TimePointParser()
-                my_point = my_parser.parse(self.args['cycle'], dump_format=fmt)
-                self.args['cycle'] = str(my_point)
+                # convert cycle point to DB format
+                self.args['cycle'] = str(
+                    TimePointParser().parse(
+                        self.args['cycle'], fmt
+                    )
+                )
         return connected, self.args['cycle']
 
     async def check(self):
@@ -142,51 +156,40 @@ def get_option_parser() -> COP:
     )
 
     parser.add_option(
-        "-t", "--task", help="Specify a task to check the state of.",
-        action="store", dest="task", default=None)
+        "-t", "--task", help="Task name to query.",
+        metavar="NAME", action="store", dest="task", default=None)
 
     parser.add_option(
-        "-p", "--point",
-        help="Specify the cycle point to check task states for.",
+        "-p", "--point", metavar="POINT",
+        help="Cycle point to query.",
         action="store", dest="cycle", default=None)
 
     parser.add_option(
         "-T", "--task-point",
-        help="Use the CYLC_TASK_CYCLE_POINT environment variable as the "
-             "cycle point to check task states for. "
-             "Shorthand for --point=$CYLC_TASK_CYCLE_POINT",
+        help="Short for --point=$CYLC_TASK_CYCLE_POINT, in job environments.",
         action="store_true", dest="use_task_point", default=False)
 
     parser.add_option(
         "-d", "--run-dir",
-        help="The top level cylc run directory if non-standard. The "
-             "database should be DIR/WORKFLOW_ID/log/db. Use to interrogate "
-             "workflows owned by others, etc.; see note above.",
+        help="cylc-run directory location, for workflows owned by others."
+             " The database location will be DIR/WORKFLOW_ID/log/db.",
         metavar="DIR", action="store", dest="run_dir", default=None)
 
     parser.add_option(
         "-s", "--offset",
-        help="Specify an offset to add to the targeted cycle point",
-        action="store", dest="offset", default=None)
-
-    conds = ("Valid triggering conditions to check for include: '" +
-             ("', '").join(
-                 sorted(CylcWorkflowDBChecker.STATE_ALIASES.keys())[:-1]) +
-             "' and '" + sorted(
-                 CylcWorkflowDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
-    states = ("Valid states to check for include: '" +
-              ("', '").join(TASK_STATUSES_ORDERED[:-1]) +
-              "' and '" + TASK_STATUSES_ORDERED[-1] + "'.")
+        help="Specify an offset from the target cycle point. Can be useful"
+        " along with --task-point when polling one workflow from another.",
+        action="store", dest="offset", metavar="OFFSET", default=None)
 
     parser.add_option(
-        "-S", "--status",
-        help="Specify a particular status or triggering condition to "
-             f"check for. {conds}{states}",
+        "-S", "--status", metavar="STATUS",
+        help=f"Task status: {', '.join(TASK_STATUSES_ORDERED)};"
+        " plus: started, finished.",
         action="store", dest="status", default=None)
 
     parser.add_option(
-        "-O", "--output", "-m", "--message",
-        help="Check custom task output by message string or trigger string.",
+        "-O", "--output", "-m", "--message", metavar="MESSAGE",
+        help="Task output message (not the label used in the graph).",
         action="store", dest="msg", default=None)
 
     WorkflowPoller.add_to_cmd_options(parser)
@@ -222,9 +225,6 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     if options.status and options.msg:
         raise InputError("cannot poll both status and custom output")
 
-    if options.msg and not options.task and not options.cycle:
-        raise InputError("need a taskname and cyclepoint")
-
     # Exit if an invalid status is requested
     if (options.status and
             options.status not in TASK_STATUSES_ORDERED and
@@ -259,12 +259,12 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         raise CylcError("cannot connect to the workflow_id DB")
 
     if options.status and options.task and options.cycle:
-        # check a task status
+        # poll for a task status
         spoller.condition = options.status
         if not asyncio.run(spoller.poll()):
             sys.exit(1)
-    elif options.msg:
-        # Check for a custom task output
+    elif options.msg and options.task and options.cycle:
+        # poll for a custom task output
         spoller.condition = "output: %s" % options.msg
         if not asyncio.run(spoller.poll()):
             sys.exit(1)
@@ -274,4 +274,6 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
             spoller.checker.workflow_state_query(
                 task=options.task,
                 cycle=formatted_pt,
-                status=options.status))
+                status=options.status,
+                message=options.msg,
+            ))
