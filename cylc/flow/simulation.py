@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
-from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.parsec.util import (
     pdeepcopy,
@@ -41,6 +40,7 @@ if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+    from cylc.flow.cycling import PointBase
 
 
 @dataclass
@@ -78,14 +78,14 @@ class ModeSettings:
         self,
         itask: 'TaskProxy',
         broadcast_mgr: 'BroadcastMgr',
-        db_mgr: 'Optional[WorkflowDatabaseManager]' = None
+        db_mgr: 'Optional[WorkflowDatabaseManager]',
     ):
 
         # itask.summary['started_time'] and mode_settings.timeout need
         # repopulating from the DB on workflow restart:
         started_time = itask.summary['started_time']
         try_num = None
-        if started_time is None and db_mgr:
+        if started_time is None:
             # Get DB info
             db_info = db_mgr.pub_dao.select_task_job(
                 itask.tokens['cycle'],
@@ -260,6 +260,7 @@ def sim_time_check(
         if itask.state.status != TASK_STATUS_RUNNING:
             continue
 
+        # This occurs if the workflow has been restarted.
         if itask.mode_settings is None:
             itask.mode_settings = ModeSettings(
                 itask,

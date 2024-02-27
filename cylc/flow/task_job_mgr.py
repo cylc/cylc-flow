@@ -1004,7 +1004,10 @@ class TaskJobManager:
             itask.summary['started_time'] = now
             self._set_retry_timers(itask)
             itask.mode_settings = ModeSettings(
-                itask, self.task_events_mgr.broadcast_mgr)
+                itask,
+                self.task_events_mgr.broadcast_mgr,
+                self.workflow_db_mgr
+            )
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
 
