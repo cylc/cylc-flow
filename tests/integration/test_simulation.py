@@ -402,3 +402,14 @@ async def test_settings_broadcast(
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is False
+
+        # Broadcast tasks will reparse correctly:
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': '1945, 1977, 1066'}
+            }])
+
+        # Submit again - result is different:
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert itask.mode_settings.sim_task_fails is True

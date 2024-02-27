@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
+from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.parsec.util import (
     pdeepcopy,
@@ -37,7 +38,6 @@ from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
     from cylc.flow.broadcast_mgr import BroadcastMgr
-    from cylc.flow.cycling import PointBase
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -57,8 +57,8 @@ class ModeSettings:
             pre simulated submission.
         db_mgr:
             The database manager must be provided for simulated jobs
-            that are being resumed after workflow restart. It is used to extract
-            the original scheduled finish time for the job.
+            that are being resumed after workflow restart. It is used to
+            extract the original scheduled finish time for the job.
 
     Attrs:
         simulated_run_length:
@@ -109,6 +109,11 @@ class ModeSettings:
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
             poverride(rtconfig, overrides, prepend=True)
+            rtconfig["simulation"][
+                "fail cycle points"
+            ] = parse_fail_cycle_points(
+                rtconfig["simulation"]["fail cycle points"]
+            )
         else:
             rtconfig = itask.tdef.rtconfig
 
