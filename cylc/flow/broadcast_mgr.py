@@ -83,7 +83,12 @@ class BroadcastMgr:
         return self._match_ext_trigger(itask)
 
     def clear_broadcast(
-            self, point_strings=None, namespaces=None, cancel_settings=None):
+        self,
+        point_strings=None,
+        namespaces=None,
+        fail_points=None,
+        cancel_settings=None
+    ):
         """Clear broadcasts globally, or for listed namespaces and/or points.
 
         Return a tuple (modified_settings, bad_options), where:
@@ -132,7 +137,11 @@ class BroadcastMgr:
 
         # Prune any empty branches
         bad_options = self._get_bad_options(
-            self._prune(), point_strings, namespaces, cancel_keys_list)
+            self._prune(),
+            point_strings,
+            namespaces,
+            fail_points,
+            cancel_keys_list)
 
         # Log the broadcast
         self.workflow_db_mgr.put_broadcast(modified_settings, is_cancel=True)
@@ -326,7 +335,7 @@ class BroadcastMgr:
         if bad_namespaces:
             bad_options["namespaces"] = bad_namespaces
         if bad_fail_points:
-            bad_options['fail_cycle_points'] = bad_fail_points
+            bad_options['bad_fail_points'] = bad_fail_points
         if modified_settings:
             self.data_store_mgr.delta_broadcast()
         return modified_settings, bad_options
@@ -357,7 +366,7 @@ class BroadcastMgr:
         for opt_name, opt_list, opt_test in [
                 ("point_strings", point_strings, cls._point_string_in_prunes),
                 ("namespaces", namespaces, cls._namespace_in_prunes),
-                ('fail_points', fail_points, cls._fail_points_in_prunes),
+                ('bad_fail_points', fail_points, cls._fail_points_in_prunes),
                 ("cancel", cancel_keys_list, cls._cancel_keys_in_prunes)]:
             if opt_list:
                 bad_options[opt_name] = set(opt_list)

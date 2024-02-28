@@ -78,7 +78,7 @@ class ModeSettings:
         self,
         itask: 'TaskProxy',
         broadcast_mgr: 'BroadcastMgr',
-        db_mgr: 'Optional[WorkflowDatabaseManager]',
+        db_mgr: 'WorkflowDatabaseManager',
     ):
 
         # itask.summary['started_time'] and mode_settings.timeout need

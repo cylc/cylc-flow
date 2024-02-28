@@ -767,7 +767,9 @@ class Resolvers(BaseResolvers):
                 cycle_points, namespaces, settings)
         if mode == 'clear_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
-                cycle_points, namespaces, settings)
+                point_strings=cycle_points,
+                namespaces=namespaces, 
+                cancel_settings=settings)
         if mode == 'expire_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                 cutoff)
