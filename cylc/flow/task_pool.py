@@ -24,10 +24,12 @@ from typing import (
     Dict,
     Iterable,
     List,
+    NamedTuple,
     Optional,
     Set,
     TYPE_CHECKING,
     Tuple,
+    Type,
     Union,
 )
 import logging
@@ -592,7 +594,7 @@ class TaskPool:
             self.compute_runahead()
             self.release_runahead_tasks()
 
-    def load_db_task_action_timers(self, row_idx, row) -> None:
+    def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
             LOG.info("LOADING task action timers")
@@ -607,14 +609,22 @@ class TaskPool:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
             ctx_data = json.loads(str(ctx_raw))
-            for known_cls in [
-                    CustomTaskEventHandlerContext,
-                    TaskEventMailContext,
-                    TaskJobLogsRetrieveContext]:
+            known_cls: Type[NamedTuple]
+            for known_cls in (
+                CustomTaskEventHandlerContext,
+                TaskEventMailContext,
+                TaskJobLogsRetrieveContext
+            ):
                 if ctx_data and ctx_data[0] == known_cls.__name__:
-                    ctx = known_cls(*ctx_data[1])
+                    ctx_args: list = ctx_data[1]
+                    if len(ctx_args) > len(known_cls._fields):
+                        # BACK COMPAT: no-longer used ctx_type arg
+                        # from: Cylc 7
+                        # to: 8.3.0
+                        ctx_args.pop(1)
+                    ctx: tuple = known_cls(*ctx_args)
                     break
-            else:
+            else:  # no break
                 ctx = ctx_data
                 if ctx is not None:
                     ctx = tuple(ctx)

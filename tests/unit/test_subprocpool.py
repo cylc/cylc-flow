@@ -253,7 +253,7 @@ def _test_callback_255(ctx, foo=''):
         pytest.param(
             'platform: localhost - Could not connect to mouse.',
             255,
-            TaskJobLogsRetrieveContext(['ssh', 'something'], None, None, None),
+            TaskJobLogsRetrieveContext(['ssh', 'something'], None, None),
             id="return 255 (log-ret)"
         )
     ]
@@ -280,7 +280,6 @@ def test__run_command_exit_no_255_callback(caplog, mock_ctx):
 def test__run_command_exit_no_gettable_platform(caplog, mock_ctx):
     """It logs being unable to select a platform"""
     ret_ctx = TaskJobLogsRetrieveContext(
-        ctx_type='raa',
         platform_name='rhenas',
         max_size=256,
         key='rhenas'
