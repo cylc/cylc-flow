@@ -87,7 +87,7 @@ class ModeSettings:
         try_num = None
         if started_time is None:
             # Get DB info
-            db_info = db_mgr.pub_dao.select_task_job(
+            db_info = db_mgr.pri_dao.select_task_job(
                 itask.tokens['cycle'],
                 itask.tokens['task'],
                 itask.tokens['job'],
