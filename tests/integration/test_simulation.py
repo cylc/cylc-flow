@@ -279,7 +279,7 @@ async def test_settings_restart(
             if itask.identity == '1066/two':
                 # Delete the database entry for `two`: Ensure that
                 # we don't break sim mode on upgrade to this version of Cylc.
-                schd.workflow_db_mgr.pub_dao.connect().execute(
+                schd.workflow_db_mgr.pri_dao.connect().execute(
                     'UPDATE task_jobs'
                     '\n SET time_submit = NULL'
                     '\n WHERE (name == \'two\')'
