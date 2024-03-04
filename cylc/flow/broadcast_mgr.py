@@ -278,8 +278,7 @@ class BroadcastMgr:
         with self.lock:
             for setting in settings:
                 fail_cycle_points = setting.get(
-                    'simulation', {'fail cycle points': None}).get(
-                        'fail cycle points', None)
+                    'simulation', {}).get('fail cycle points', None)
                 if fail_cycle_points:
                     from cylc.flow.simulation import parse_fail_cycle_points
                     try:
@@ -394,7 +393,7 @@ class BroadcastMgr:
 
     @staticmethod
     def _fail_points_in_prunes(prunes, fail_points):
-        """Is point_string pruned?"""
+        """Is fail cycle points pruned?"""
         return fail_points in [prune[0] for prune in prunes]
 
     def _prune(self):

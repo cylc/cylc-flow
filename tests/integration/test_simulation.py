@@ -408,8 +408,9 @@ async def test_settings_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1'}
             }])
-        assert {'fail cycle points': []} == (
-            schd.broadcast_mgr.broadcasts['1066']['one']['simulation'])
+        assert schd.broadcast_mgr.broadcasts['1066']['one'][
+            'simulation'
+        ] == {'fail cycle points': []}
 
         # Submit again - result is different:
         schd.task_job_mgr._simulation_submit_task_jobs(
