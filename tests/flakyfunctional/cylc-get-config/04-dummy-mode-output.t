@@ -47,8 +47,8 @@ delete_db
 workflow_run_ok "${TEST_NAME_BASE}-run-simulation" \
     cylc play -m 'simulation' --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 LOG="$(cylc log -m p "$WORKFLOW_NAME")"
-count_ok '(internal)meet' "${LOG}" 1
-count_ok '(internal)greet' "${LOG}" 1
+count_ok '(received)meet' "${LOG}" 1
+count_ok '(received)greet' "${LOG}" 1
 
 purge
 exit

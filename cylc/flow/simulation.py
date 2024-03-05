@@ -271,16 +271,19 @@ def sim_time_check(
         if now > itask.mode_settings.timeout:
             if itask.mode_settings.sim_task_fails:
                 task_events_manager.process_message(
-                    itask, 'CRITICAL', TASK_STATUS_FAILED
+                    itask, 'CRITICAL', TASK_STATUS_FAILED,
+                    flag=task_events_manager.FLAG_RECEIVED
                 )
             else:
                 task_events_manager.process_message(
-                    itask, 'DEBUG', TASK_STATUS_SUCCEEDED
+                    itask, 'DEBUG', TASK_STATUS_SUCCEEDED,
+                    flag=task_events_manager.FLAG_RECEIVED
                 )
             # Simulate message outputs.
             for msg in itask.tdef.rtconfig['outputs'].values():
                 task_events_manager.process_message(
-                    itask, 'DEBUG', msg
+                    itask, 'DEBUG', msg,
+                    flag=task_events_manager.FLAG_RECEIVED
                 )
 
             # We've finished this psuedojob, so delete all the mode settings.
