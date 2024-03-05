@@ -373,7 +373,7 @@ async def test_settings_broadcast(
         }
     }, defaults=False)
     schd = scheduler(id_, paused_start=False, run_mode='simulation')
-    async with start(schd):
+    async with start(schd) as log:
         itask = schd.pool.get_tasks()[0]
         itask.state.is_queued = False
 
@@ -391,39 +391,44 @@ async def test_settings_broadcast(
 
         # The mode_settings object has been cleared:
         assert itask.mode_settings is None
-
         # Change a setting using broadcast:
         schd.task_events_mgr.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': ''}
             }])
-
-        # Assert that list of broadcasts doesn't change if we submit
-        # Invalid fail cycle points to broadcast.
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
-            ['1066'], ['one'], [{
-                'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
-            }])
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
-            ['1066'], ['one'], [{
-                'simulation': {'fail cycle points': '1'}
-            }])
-        assert schd.broadcast_mgr.broadcasts['1066']['one'][
-            'simulation'
-        ] == {'fail cycle points': []}
-
         # Submit again - result is different:
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is False
+
+        # Assert that list of broadcasts doesn't change if we submit
+        # Invalid fail cycle points to broadcast.
+        itask.mode_settings = None
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
+            }])
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert (
+            'Invalid ISO 8601 date representation: higadfuhasgiurguj'
+            in log.messages[-1])
+
+        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'simulation': {'fail cycle points': '1'}
+            }])
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert (
+            'Invalid ISO 8601 date representation: 1'
+            in log.messages[-1])
 
         # Broadcast tasks will reparse correctly:
         schd.task_events_mgr.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1945, 1977, 1066'}
             }])
-
-        # Submit again - result is different:
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is True

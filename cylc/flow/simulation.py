@@ -20,7 +20,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
+from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point
+from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
@@ -109,11 +111,22 @@ class ModeSettings:
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
             poverride(rtconfig, overrides, prepend=True)
-            rtconfig["simulation"][
-                "fail cycle points"
-            ] = parse_fail_cycle_points(
-                rtconfig["simulation"]["fail cycle points"]
-            )
+
+            try:
+                rtconfig["simulation"][
+                    "fail cycle points"
+                ] = parse_fail_cycle_points(
+                    rtconfig["simulation"]["fail cycle points"]
+                )
+            except PointParsingError as exc:
+                # Broadcast Fail CP didn't parse
+                LOG.error(
+                    'Broadcast fail cycle point was invalid:\n'
+                    f'    {exc.args[0]}'
+                )
+                rtconfig['simulation'][
+                    'fail cycle points'
+                ] = itask.tdef.rtconfig['simulation']['fail cycle points']
         else:
             rtconfig = itask.tdef.rtconfig
 
