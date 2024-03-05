@@ -19,6 +19,7 @@
 from contextlib import suppress
 from collections import Counter
 import json
+from textwrap import indent
 from typing import (
     Dict,
     Iterable,
@@ -526,7 +527,7 @@ class TaskPool:
                     TASK_STATUS_SUCCEEDED
             ):
                 for message in json.loads(outputs_str):
-                    itask.state.outputs.set_completion(message, True)
+                    itask.state.outputs.set_message_complete(message)
                     self.data_store_mgr.delta_task_output(itask, message)
 
             if platform_name and status != TASK_STATUS_WAITING:
@@ -1146,15 +1147,22 @@ class TaskPool:
         for itask in self.get_tasks():
             if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            outputs = itask.state.outputs.get_incomplete()
-            if outputs:
-                incomplete.append((itask.identity, outputs))
+            if not itask.state.outputs.is_complete():
+                incomplete.append(
+                    (
+                        itask.identity,
+                        itask.state.outputs.format_completion_status(
+                            ansimarkup=1
+                        ),
+                    )
+                )
 
         if incomplete:
             LOG.error(
                 "Incomplete tasks:\n"
                 + "\n".join(
-                    f"  * {id_} did not complete required outputs: {outputs}"
+                    f"* {id_} did not complete the required outputs:"
+                    f"\n{indent(outputs, '  ')}"
                     for id_, outputs in incomplete
                 )
             )
@@ -1441,22 +1449,17 @@ class TaskPool:
                 self.release_runahead_tasks()
             return ret
 
-        if itask.state(TASK_STATUS_EXPIRED):
-            self.remove(itask, "expired")
-            if self.compute_runahead():
-                self.release_runahead_tasks()
-            return True
-
-        incomplete = itask.state.outputs.get_incomplete()
-        if incomplete:
+        if not itask.state.outputs.is_complete():
             # Keep incomplete tasks in the pool.
             if output in TASK_STATUSES_FINAL:
                 # Log based on the output, not the state, to avoid warnings
                 # due to use of "cylc set" to set internal outputs on an
                 # already-finished task.
                 LOG.warning(
-                    f"[{itask}] did not complete required outputs:"
-                    f" {incomplete}"
+                    f"[{itask}] did not complete the required outputs:\n"
+                    + itask.state.outputs.format_completion_status(
+                        ansimarkup=1
+                    )
                 )
             return False
 
@@ -1482,14 +1485,12 @@ class TaskPool:
         """
         if not itask.flow_nums:
             return
-        if completed_only:
-            outputs = itask.state.outputs.get_completed()
-        else:
-            outputs = itask.state.outputs._by_message
 
-        for output in outputs:
+        for _trigger, message, is_completed in itask.state.outputs:
+            if completed_only and not is_completed:
+                continue
             try:
-                children = itask.graph_children[output]
+                children = itask.graph_children[message]
             except KeyError:
                 continue
 
@@ -1509,7 +1510,7 @@ class TaskPool:
                     continue
                 if completed_only:
                     c_task.satisfy_me(
-                        [itask.tokens.duplicate(task_sel=output)]
+                        [itask.tokens.duplicate(task_sel=message)]
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
@@ -1595,7 +1596,7 @@ class TaskPool:
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
                     for msg in json.loads(outputs_str):
-                        itask.state.outputs.set_completed_by_msg(msg)
+                        itask.state.outputs.set_message_complete(msg)
 
     def spawn_task(
         self,
@@ -1744,7 +1745,7 @@ class TaskPool:
         for outputs_str, fnums in info.items():
             if flow_nums.intersection(fnums):
                 for msg in json.loads(outputs_str):
-                    itask.state.outputs.set_completed_by_msg(msg)
+                    itask.state.outputs.set_message_complete(msg)
         return itask
 
     def _standardise_prereqs(
@@ -1887,16 +1888,15 @@ class TaskPool:
         outputs: List[str],
     ) -> None:
         """Set requested outputs on a task proxy and spawn children."""
-
         if not outputs:
-            outputs = itask.tdef.get_required_output_messages()
+            outputs = list(itask.state.outputs.iter_required_messages())
         else:
             outputs = self._standardise_outputs(
-                itask.point, itask.tdef, outputs)
+                itask.point, itask.tdef, outputs
+            )
 
-        outputs = sorted(outputs, key=itask.state.outputs.output_sort_key)
-        for output in outputs:
-            if itask.state.outputs.is_completed(output):
+        for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
+            if itask.state.outputs.is_message_complete(output):
                 LOG.info(f"output {itask.identity}:{output} completed already")
                 continue
             self.task_events_mgr.process_message(
@@ -2410,7 +2410,7 @@ class TaskPool:
 
         if (
             itask.state(*TASK_STATUSES_FINAL)
-            and itask.state.outputs.get_incomplete()
+            and not itask.state.outputs.is_complete()
         ):
             # Re-queue incomplete task to run again in the merged flow.
             LOG.info(f"[{itask}] incomplete task absorbed by new flow.")

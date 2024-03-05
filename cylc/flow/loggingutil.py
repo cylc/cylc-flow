@@ -33,7 +33,7 @@ import sys
 import textwrap
 from typing import List, Optional, Union
 
-from ansimarkup import parse as cparse
+from ansimarkup import parse as cparse, strip as cstrip
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import get_time_string_from_unix_time
@@ -53,10 +53,10 @@ class CylcLogFormatter(logging.Formatter):
     """
 
     COLORS = {
-        'CRITICAL': cparse('<red><bold>{0}</bold></red>'),
-        'ERROR': cparse('<red>{0}</red>'),
-        'WARNING': cparse('<yellow>{0}</yellow>'),
-        'DEBUG': cparse('<fg #888888>{0}</fg #888888>')
+        'CRITICAL': '<red><bold>{0}</bold></red>',
+        'ERROR': '<red>{0}</red>',
+        'WARNING': '<yellow>{0}</yellow>',
+        'DEBUG': '<fg #888888>{0}</fg #888888>'
     }
 
     # default hard-coded max width for log entries
@@ -99,7 +99,9 @@ class CylcLogFormatter(logging.Formatter):
         if not self.timestamp:
             _, text = text.split(' ', 1)  # ISO8601 time points have no spaces
         if self.color and record.levelname in self.COLORS:
-            text = self.COLORS[record.levelname].format(text)
+            text = cparse(self.COLORS[record.levelname].format(text))
+        elif not self.color:
+            text = cstrip(text)
         if self.max_width:
             return '\n'.join(
                 line
@@ -329,7 +331,7 @@ LOG_LEVEL_REGEXES = [
 def re_formatter(log_string):
     """Read in an uncoloured log_string file and apply colour formatting."""
     for sub, repl in LOG_LEVEL_REGEXES:
-        log_string = sub.sub(repl, log_string)
+        log_string = cparse(sub.sub(repl, log_string))
     return log_string
 
 

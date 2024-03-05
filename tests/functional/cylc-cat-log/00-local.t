@@ -24,7 +24,8 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --no-detach "${WORKFLOW_NAME}" --reference-test
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-workflow-log-log
 run_ok "${TEST_NAME}" cylc cat-log "${WORKFLOW_NAME}"
@@ -58,6 +59,7 @@ install/01-install.log
 scheduler/01-start-01.log
 scheduler/02-restart-02.log
 scheduler/03-restart-02.log
+scheduler/reftest.log
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out

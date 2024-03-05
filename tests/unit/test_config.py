@@ -1318,28 +1318,6 @@ def test_implicit_success_required(tmp_flow_config, graph):
 
 
 @pytest.mark.parametrize(
-    'graph',
-    [
-        "foo:submit? => bar",
-        "foo:submit-fail? => bar",
-    ]
-)
-def test_success_after_optional_submit(tmp_flow_config, graph):
-    """Check foo:succeed is not required if foo:submit is optional."""
-    id_ = 'blargh'
-    flow_file = tmp_flow_config(id_, f"""
-    [scheduling]
-        [[graph]]
-            R1 = {graph}
-    [runtime]
-        [[bar]]
-        [[foo]]
-    """)
-    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
-    assert not cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
-
-
-@pytest.mark.parametrize(
     'allow_implicit_tasks',
     [
         pytest.param(True, id="allow implicit tasks = True"),

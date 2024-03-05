@@ -20,7 +20,6 @@ from copy import deepcopy
 from functools import partial
 import json
 from operator import attrgetter
-from textwrap import dedent
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -39,6 +38,10 @@ from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.data_store_mgr import (
+    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
+    DELTA_ADDED, DELTA_UPDATED
+)
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
@@ -54,32 +57,12 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED
 )
-from cylc.flow.data_store_mgr import (
-    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
-    DELTA_ADDED, DELTA_UPDATED
-)
+from cylc.flow.util import sstrip
 from cylc.flow.workflow_status import StopMode
 
 if TYPE_CHECKING:
     from graphql import ResolveInfo
     from cylc.flow.network.resolvers import BaseResolvers
-
-
-def sstrip(text):
-    """Simple function to dedent and strip text.
-
-    Examples:
-        >>> print(sstrip('''
-        ...     foo
-        ...       bar
-        ...     baz
-        ... '''))
-        foo
-          bar
-        baz
-
-    """
-    return dedent(text).strip()
 
 
 def sort_elements(elements, args):
@@ -807,6 +790,7 @@ class Runtime(ObjectType):
         """)
     platform = String(default_value=None)
     script = String(default_value=None)
+    completion = String(default_value=None)
     init_script = String(default_value=None)
     env_script = String(default_value=None)
     err_script = String(default_value=None)

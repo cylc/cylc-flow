@@ -247,6 +247,7 @@ def runtime_from_config(rtconfig):
     return PbRuntime(
         platform=platform,
         script=rtconfig['script'],
+        completion=rtconfig['completion'],
         init_script=rtconfig['init-script'],
         env_script=rtconfig['env-script'],
         err_script=rtconfig['err-script'],
@@ -1440,7 +1441,7 @@ class DataStoreMgr:
                     )
             ):
                 for message in json.loads(outputs_str):
-                    itask.state.outputs.set_completion(message, True)
+                    itask.state.outputs.set_message_complete(message)
             # Gather tasks with flow id.
             prereq_ids.add(f'{relative_id}/{flow_nums_str}')
 
@@ -1502,7 +1503,7 @@ class DataStoreMgr:
         del tproxy.prerequisites[:]
         tproxy.prerequisites.extend(prereq_list)
 
-        for label, message, satisfied in itask.state.outputs.get_all():
+        for label, message, satisfied in itask.state.outputs:
             output = tproxy.outputs[label]
             output.label = label
             output.message = message
@@ -2393,10 +2394,8 @@ class DataStoreMgr:
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
-        item = itask.state.outputs.get_item(message)
-        if item is None:
-            return
-        label, _, satisfied = item
+        outputs = itask.state.outputs
+        label = outputs.get_trigger(message)
         # update task instance
         update_time = time()
         tp_delta = self.updated[TASK_PROXIES].setdefault(
@@ -2405,7 +2404,7 @@ class DataStoreMgr:
         output = tp_delta.outputs[label]
         output.label = label
         output.message = message
-        output.satisfied = satisfied
+        output.satisfied = outputs.is_message_complete(message)
         output.time = update_time
         self.updates_pending = True
 
@@ -2425,9 +2424,10 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for label, _, satisfied in itask.state.outputs.get_all():
-            output = tp_delta.outputs[label]
-            output.label = label
+        for trigger, message, satisfied in itask.state.outputs:
+            output = tp_delta.outputs[trigger]
+            output.label = trigger
+            output.message = message
             output.satisfied = satisfied
             output.time = update_time
 

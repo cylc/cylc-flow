@@ -54,6 +54,7 @@ grep_workflow_log_ok \
     '\[1/a/01:running\] => succeeded'
 grep_workflow_log_ok \
     "${TEST_NAME_BASE}-b-incomplete" \
-    "1/b did not complete required outputs: \['submitted', 'succeeded'\]"
+    '1/b did not complete the required outputs:\n.*\n.*submitted.*\n.*succeeded\n' \
+    -Pizoq
 
 purge

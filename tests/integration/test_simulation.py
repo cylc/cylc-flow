@@ -184,11 +184,10 @@ def test_task_finishes(sim_time_check_setup, monkeytime, caplog):
 
     # After simulation time is up it Fails and records custom outputs:
     assert sim_time_check(schd.task_events_mgr, [fail_all_1066], '') is True
-    outputs = {
-        o[0]: (o[1], o[2]) for o in fail_all_1066.state.outputs.get_all()}
-    assert outputs['succeeded'] == ('succeeded', False)
-    assert outputs['foo'] == ('bar', True)
-    assert outputs['failed'] == ('failed', True)
+    outputs = fail_all_1066.state.outputs
+    assert outputs.is_message_complete('succeeded') is False
+    assert outputs.is_message_complete('bar') is True
+    assert outputs.is_message_complete('failed') is True
 
 
 def test_task_sped_up(sim_time_check_setup, monkeytime):
@@ -334,7 +333,7 @@ async def test_settings_reload(
         one_1066 = schd.pool.get_tasks()[0]
 
         itask = run_simjob(schd, one_1066.point, 'one')
-        assert ['failed', 'failed', False] in itask.state.outputs.get_all()
+        assert itask.state.outputs.is_message_complete('failed') is False
 
         # Modify config as if reinstall had taken place:
         conf_file = Path(schd.workflow_run_dir) / 'flow.cylc'
@@ -346,8 +345,7 @@ async def test_settings_reload(
 
         # Submit second psuedo-job and "run" to success:
         itask = run_simjob(schd, one_1066.point, 'one')
-        assert [
-            'succeeded', 'succeeded', True] in itask.state.outputs.get_all()
+        assert itask.state.outputs.is_message_complete('succeeded') is True
 
 
 async def test_settings_broadcast(

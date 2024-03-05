@@ -4,7 +4,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = """t1:submit-fail => t2"""
+        R1 = t1:submit-fail? => t2
 
 [runtime]
     [[t1]]

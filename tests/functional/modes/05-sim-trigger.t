@@ -38,7 +38,7 @@ grep_ok '\[1/fail_fail_fail/01:running\] => failed' "${SCHD_LOG}"
 cylc trigger "${WORKFLOW_NAME}//1/fail_fail_fail"
 
 poll_grep_workflow_log -E \
-    '1/fail_fail_fail/02.* did not complete required outputs'
+    '1/fail_fail_fail/02.* did not complete the required outputs'
 
 grep_ok '\[1/fail_fail_fail/02:running\] => failed' "${SCHD_LOG}"
 

@@ -487,3 +487,16 @@ class CylcVersionError(CylcError):
             )
         else:
             return "Installed workflow is not compatible with Cylc 8."
+
+
+class InvalidCompletionExpression(CylcError):
+    """For the [runtime][<namespace>]completion configuration.
+
+    Raised when non-whitelisted syntax is present.
+    """
+    def __init__(self, message, expr=None):
+        self.message = message
+        self.expr = expr
+
+    def __str__(self):
+        return self.message

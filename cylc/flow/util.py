@@ -20,15 +20,41 @@ from contextlib import suppress
 from functools import partial
 import json
 import re
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
+    Dict,
     List,
     Sequence,
+    Tuple,
 )
 
+BOOL_SYMBOLS: Dict[bool, str] = {
+    # U+2A2F (vector cross product)
+    False: '⨯',
+    # U+2713 (check)
+    True: '✓'
+}
 
 _NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
+
+
+def sstrip(text):
+    """Simple function to dedent and strip text.
+
+    Examples:
+        >>> print(sstrip('''
+        ...     foo
+        ...       bar
+        ...     baz
+        ... '''))
+        foo
+          bar
+        baz
+
+    """
+    return dedent(text).strip()
 
 
 def natural_sort_key(key: str, fcns=(int, str)) -> List[Any]:
@@ -212,13 +238,13 @@ def restricted_evaluator(
         But will fail if a non-whitelisted node type is present:
         >>> evaluator('1 - 1')
         Traceback (most recent call last):
-        RestrictedSyntaxError: <class 'ast.Sub'>
+        flow.util.RestrictedSyntaxError: <class ...Sub'>
         >>> evaluator('my_function()')
         Traceback (most recent call last):
-        RestrictedSyntaxError: <class 'ast.Call'>
+        flow.util.RestrictedSyntaxError: <class ...Call'>
         >>> evaluator('__import__("os")')
         Traceback (most recent call last):
-        RestrictedSyntaxError: <class 'ast.Call'>
+        flow.util.RestrictedSyntaxError: <class ...Call'>
 
         The evaluator cannot see the containing scope:
         >>> a = b = 1
@@ -336,3 +362,35 @@ def _get_exception(
     }
 
     return error_class(message, **context)
+
+
+class NameWalker(ast.NodeVisitor):
+    """AST node visitor which records all variable names in an expression.
+
+    Examples:
+        >>> tree = ast.parse('(foo and bar) or baz or qux')
+        >>> walker = NameWalker()
+        >>> walker.visit(tree)
+        >>> sorted(walker.names)
+        ['bar', 'baz', 'foo', 'qux']
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._names = set()
+
+    def visit(self, node):
+        if isinstance(node, ast.Name):
+            self._names.add(node.id)
+        return super().visit(node)
+
+    @property
+    def names(self):
+        return self._names
+
+
+def get_variable_names(expression):
+    walker = NameWalker()
+    walker.visit(ast.parse(expression))
+    return walker.names

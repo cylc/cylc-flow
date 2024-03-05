@@ -630,11 +630,10 @@ class WorkflowDatabaseManager:
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        outputs = []
-        for _, message in itask.state.outputs.get_completed_all():
-            outputs.append(message)
         set_args = {
-            "outputs": json.dumps(outputs)
+            "outputs": json.dumps(
+                list(itask.state.outputs.iter_completed_messages())
+            )
         }
         where_args = {
             "cycle": str(itask.point),

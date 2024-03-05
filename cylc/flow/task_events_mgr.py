@@ -661,6 +661,7 @@ class TaskEventsManager():
             True: if polling is required to confirm a reversal of status.
 
         """
+
         # Log messages
         if event_time is None:
             event_time = get_current_time_string()
@@ -696,10 +697,9 @@ class TaskEventsManager():
         if message.startswith(ABORT_MESSAGE_PREFIX):
             msg0 = TASK_OUTPUT_FAILED
 
-        completed_output = None
+        completed_output: Optional[bool] = False
         if msg0 not in [TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_FAILED]:
-            completed_output = itask.state.outputs.set_msg_trg_completion(
-                message=msg0, is_completed=True)
+            completed_output = itask.state.outputs.set_message_complete(msg0)
             if completed_output:
                 self.data_store_mgr.delta_task_output(itask, msg0)
 
@@ -832,8 +832,9 @@ class TaskEventsManager():
             # Message of a custom task output.
             # No state change.
             # Log completion of o      (not needed for standard outputs)
-            LOG.info(f"[{itask}] completed output {completed_output}")
-            self.setup_event_handlers(itask, completed_output, message)
+            trigger = itask.state.outputs.get_trigger(message)
+            LOG.info(f"[{itask}] completed output {trigger}")
+            self.setup_event_handlers(itask, trigger, message)
             self.spawn_children(itask, msg0)
 
         else:
@@ -1315,8 +1316,7 @@ class TaskEventsManager():
             if itask.state_reset(TASK_STATUS_FAILED, forced=forced):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
                 self.data_store_mgr.delta_task_state(itask)
-                itask.state.outputs.set_msg_trg_completion(
-                    message=TASK_OUTPUT_FAILED, is_completed=True)
+                itask.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
@@ -1417,8 +1417,9 @@ class TaskEventsManager():
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
                     f'job {self.EVENT_SUBMIT_FAILED}')
-                itask.state.outputs.set_msg_trg_completion(
-                    message=TASK_OUTPUT_SUBMIT_FAILED, is_completed=True)
+                itask.state.outputs.set_message_complete(
+                    TASK_OUTPUT_SUBMIT_FAILED
+                )
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_SUBMIT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
@@ -1462,7 +1463,7 @@ class TaskEventsManager():
             itask.set_summary_time('started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
                 self.data_store_mgr.delta_task_state(itask)
-            itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
+            itask.state.outputs.set_message_complete(TASK_OUTPUT_STARTED)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
 
         else:

@@ -32,7 +32,6 @@ from cylc.flow.unicode_rules import TaskOutputValidator, TaskMessageValidator
                 'foo',
                 'foo-bar',
                 'foo_bar',
-                'foo.bar',
                 '0foo0',
                 '123',
             ],
@@ -152,7 +151,7 @@ def test_messages(messages, valid, flow, validate):
         'runtime': {
             'foo': {
                 'outputs': {
-                    str(random()): message
+                    str(random())[2:]: message
                     for message in messages
                 }
             }
@@ -164,3 +163,120 @@ def test_messages(messages, valid, flow, validate):
     else:
         with pytest.raises(WorkflowConfigError):
             val()
+
+
+@pytest.mark.parametrize(
+    'graph, expression, message', [
+        pytest.param(
+            'foo:x',
+            'succeeded and (x or y)',
+            r'foo:x is required in the graph.*'
+            r' but optional in the completion expression',
+            id='required-in-graph-optional-in-completion',
+        ),
+        pytest.param(
+            'foo:x?',
+            'succeeded and x',
+            r'foo:x is optional in the graph.*'
+            r' but required in the completion expression',
+            id='optional-in-graph-required-in-completion',
+        ),
+        pytest.param(
+            'foo:x',
+            'succeeded',
+            'foo:x is required in the graph.*'
+            'but not referenced in the completion expression',
+            id='required-in-graph-not-referenced-in-completion',
+        ),
+        pytest.param(
+            # tests proposal point 4:
+            # https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+            'foo:expired',
+            'succeeded',
+            'foo:expired must be optional',
+            id='expire-required-in-graph',
+        ),
+        pytest.param(
+            'foo:expired?',
+            'succeeded',
+            'foo:expired is permitted in the graph.*'
+            '\nTry: completion = "succeeded or expired"',
+            id='expire-optional-in-graph-but-not-used-in-completion'
+        ),
+        pytest.param(
+            # tests part of proposal point 5:
+            # https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+            'foo',
+            'finished and x',
+            '"finished" output cannot be used in completion expressions',
+            id='finished-output-used-in-completion-expression',
+        ),
+        pytest.param(
+            # https://github.com/cylc/cylc-flow/pull/6046#issuecomment-2059266086
+            'foo?',
+            'x and failed',
+            'foo:failed is optional in the graph.*'
+            'but required in the completion expression',
+            id='failed-implicitly-optional-in-graph-required-in-completion',
+        ),
+    ]
+)
+def test_completion_expression_invalid(
+    flow,
+    validate,
+    graph,
+    expression,
+    message,
+):
+    """It should ensure the completion is logically consistent with the graph.
+
+    Tests proposal point 5:
+    https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': graph},
+        },
+        'runtime': {
+            'foo': {
+                'completion': expression,
+                'outputs': {
+                    'x': 'xxx',
+                    'y': 'yyy',
+                },
+            },
+        },
+    })
+    with pytest.raises(WorkflowConfigError, match=message):
+        validate(id_)
+
+
+@pytest.mark.parametrize(
+    'graph, expression', [
+        ('foo', 'succeeded and (x or y or z)'),
+        ('foo?', 'succeeded and (x or y or z) or failed or expired'),
+        ('foo', '(succeeded and x) or (expired and y)'),
+    ]
+)
+def test_completion_expression_valid(
+    flow,
+    validate,
+    graph,
+    expression,
+):
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': graph},
+        },
+        'runtime': {
+            'foo': {
+                'completion': expression,
+                'outputs': {
+                    'x': 'xxx',
+                    'y': 'yyy',
+                    'z': 'zzz',
+                },
+            },
+        },
+    })
+    validate(id_)

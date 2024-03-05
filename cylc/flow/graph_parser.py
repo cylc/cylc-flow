@@ -760,9 +760,14 @@ class GraphParser:
         if suicide:
             return
 
-        if output == TASK_OUTPUT_EXPIRED and not optional:
-            raise GraphParseError(
-                f"Expired-output {name}:{output} must be optional")
+        if (
+            output in {TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED}
+            and not optional
+        ):
+            # ":expire" and ":submit-fail" cannot be required
+            # proposal point 4:
+            # https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+            raise GraphParseError(f"{name}:{output} must be optional")
 
         if output == TASK_OUTPUT_FINISHED:
             # Interpret :finish pseudo-output
