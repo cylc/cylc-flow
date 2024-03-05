@@ -29,22 +29,24 @@ from cylc.flow.workflow_events import (
 
 
 @pytest.mark.parametrize(
-    'key, expected, scheduler_mail_defined',
+    'key, workflow_cfg, glbl_cfg, expected',
     [
-        ('handlers', ['stall'], True),
-        ('hotel', None, True),
-        ('from', 'highway@mixture', True),
-        ('abort on workflow timeout', True, True),
-        ('handlers', ['stall'], False),
-        ('hotel', None, False),
-        ('abort on workflow timeout', True, False),
+        ('handlers', True, True, ['stall']),
+        ('handlers', False, True, None),
+        ('handlers', False, False, None),
+        ('from', True, True, 'docklands@railway'),
+        ('from', False, True, 'highway@mixture'),
+        ('from', False, False, None),
+        ('abort on workflow timeout', True, True, True),
+        ('abort on workflow timeout', False, True, True),
+        ('abort on workflow timeout', False, False, False),
     ]
 )
 def test_get_events_handler(
-    mock_glbl_cfg, key, expected, scheduler_mail_defined
+    mock_glbl_cfg, key, workflow_cfg, glbl_cfg, expected
 ):
-    # It checks that method returns sensible answers.
-    if scheduler_mail_defined is True:
+    """Test order of precedence for getting event handler configuration."""
+    if glbl_cfg:
         mock_glbl_cfg(
             'cylc.flow.workflow_events.glbl_cfg',
             '''
@@ -55,23 +57,13 @@ def test_get_events_handler(
                     abort on workflow timeout = True
             '''
         )
-    else:
-        mock_glbl_cfg(
-            'cylc.flow.workflow_events.glbl_cfg',
-            '''
-            [scheduler]
-                [[events]]
-                    abort on workflow timeout = True
-            '''
-        )
 
     config = SimpleNamespace()
     config.cfg = {
         'scheduler': {
-            'events': {
-                'handlers': ['stall']
-            },
-        }
+            'events': {'handlers': ['stall']},
+            'mail': {'from': 'docklands@railway'},
+        } if workflow_cfg else {'events': {}}
     }
     assert WorkflowEventHandler.get_events_conf(config, key) == expected
 

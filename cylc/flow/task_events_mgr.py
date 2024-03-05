@@ -429,23 +429,23 @@ class TaskEventsManager():
         EVENT_SUCCEEDED
     }
 
+    workflow_cfg: Dict[str, Any]
+    uuid_str: str
+    mail_interval: float = 0
+    mail_smtp: Optional[str] = None
+    mail_footer: Optional[str] = None
+
     def __init__(
         self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
         xtrigger_mgr, data_store_mgr, timestamp, bad_hosts,
         reset_inactivity_timer_func
     ):
         self.workflow = workflow
-        self.workflow_url = None
-        self.workflow_cfg = {}
-        self.uuid_str = None
         self.proc_pool = proc_pool
         self.workflow_db_mgr = workflow_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.xtrigger_mgr = xtrigger_mgr
         self.data_store_mgr = data_store_mgr
-        self.mail_interval = 0.0
-        self.mail_smtp = None
-        self.mail_footer = None
         self.next_mail_time = None
         self.reset_inactivity_timer_func = reset_inactivity_timer_func
         # NOTE: do not mutate directly
@@ -1045,6 +1045,7 @@ class TaskEventsManager():
             self.broadcast_mgr.get_broadcast(itask.tokens).get("events"),
             itask.tdef.rtconfig["mail"],
             itask.tdef.rtconfig["events"],
+            self.workflow_cfg.get("scheduler", {}).get("mail", {}),
             glbl_cfg().get(["scheduler", "mail"]),
             glbl_cfg().get()["task events"],
         ):

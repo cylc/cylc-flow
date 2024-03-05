@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
 
-from cylc.flow.task_events_mgr import TaskEventsManager
+from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.subprocctx import SubProcContext
+from cylc.flow.task_events_mgr import TaskEventsManager
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.taskdef import TaskDef
 
 
 @patch("cylc.flow.task_events_mgr.LOG")
@@ -134,3 +138,60 @@ def test_get_workflow_platforms_conf(broadcast, workflow, platforms, expected):
         task_events_mgr._get_workflow_platforms_conf(itask, KEY) ==
         expected
     )
+
+
+@pytest.mark.parametrize(
+    'rt_val, schd_val, glbl_val, expected',
+    [
+        ('rt', 'schd', 'glbl', 'rt'),
+        (None, 'schd', 'glbl', 'schd'),
+        (None, None, 'glbl', 'glbl'),
+        (None, None, None, 'default'),
+    ]
+)
+def test_get_events_conf__mail_to_from(
+    mock_glbl_cfg,
+    rt_val: Optional[str],
+    schd_val: Optional[str],
+    glbl_val: Optional[str],
+    expected: str
+):
+    """Test order of precedence for [mail]to/from."""
+    if glbl_val:
+        mock_glbl_cfg(
+            'cylc.flow.task_events_mgr.glbl_cfg',
+            f'''
+            [scheduler]
+                [[mail]]
+                    from = {glbl_val}
+                    to = {glbl_val}
+            '''
+        )
+
+    mock_task = Mock(
+        spec=TaskProxy,
+        tdef=Mock(
+            spec=TaskDef,
+            rtconfig={
+                'events': {},
+                'mail': {'to': rt_val, 'from': rt_val} if rt_val else {},
+            },
+        ),
+    )
+    mock_task_events_mgr = Mock(
+        spec=TaskEventsManager,
+        workflow_cfg={
+            'scheduler': {
+                'mail': {'to': schd_val, 'from': schd_val},
+            },
+        } if schd_val else {},
+        broadcast_mgr=Mock(
+            spec_set=BroadcastMgr,
+            get_broadcast=lambda *a, **k: {},
+        ),
+    )
+
+    for key in ('to', 'from'):
+        assert TaskEventsManager._get_events_conf(
+            mock_task_events_mgr, itask=mock_task, key=key, default='default'
+        ) == expected
