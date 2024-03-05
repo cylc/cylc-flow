@@ -301,9 +301,11 @@ def sim_task_failed(
 
     Allows Unit testing.
     """
-    return (
+    x = (
         sim_conf['fail cycle points'] is None  # i.e. "all"
         or point in sim_conf['fail cycle points']
     ) and (
         try_num == 1 or not sim_conf['fail try 1 only']
     )
+    # breakpoint(header=f'{x},{sim_conf}, {point}, {try_num}')
+    return x
