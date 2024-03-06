@@ -244,8 +244,8 @@ def parse_fail_cycle_points(
         True
         >>> this([])
         []
-        >>> this(None)
-        None
+        >>> this(None) is None
+        True
     """
     f_pts: 'Optional[List[PointBase]]' = []
     if (
