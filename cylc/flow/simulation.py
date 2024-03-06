@@ -245,10 +245,13 @@ def parse_fail_cycle_points(
         >>> this([])
         []
         >>> this(None)
-        []
+        None
     """
     f_pts: 'Optional[List[PointBase]]' = []
-    if f_pts_orig and 'all' in f_pts_orig:
+    if (
+        f_pts_orig is None
+        or f_pts_orig and 'all' in f_pts_orig
+    ):
         f_pts = None
     elif f_pts_orig:
         f_pts = []
@@ -316,11 +319,9 @@ def sim_task_failed(
 
     Allows Unit testing.
     """
-    x = (
+    return (
         sim_conf['fail cycle points'] is None  # i.e. "all"
         or point in sim_conf['fail cycle points']
     ) and (
         try_num == 1 or not sim_conf['fail try 1 only']
     )
-    # breakpoint(header=f'{x},{sim_conf}, {point}, {try_num}')
-    return x
