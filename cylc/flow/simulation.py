@@ -244,11 +244,13 @@ def parse_fail_cycle_points(
         True
         >>> this([])
         []
+        >>> this(None)
+        []
     """
-    f_pts: 'Optional[List[PointBase]]'
-    if 'all' in f_pts_orig:
+    f_pts: 'Optional[List[PointBase]]' = []
+    if f_pts_orig and 'all' in f_pts_orig:
         f_pts = None
-    else:
+    elif f_pts_orig:
         f_pts = []
         for point_str in f_pts_orig:
             f_pts.append(get_point(point_str).standardise())
