@@ -120,7 +120,7 @@ class ModeSettings:
                 )
             except PointParsingError as exc:
                 # Broadcast Fail CP didn't parse
-                LOG.error(
+                LOG.warning(
                     'Broadcast fail cycle point was invalid:\n'
                     f'    {exc.args[0]}'
                 )
