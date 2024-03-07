@@ -346,11 +346,11 @@ class TaskOutputValidator(UnicodeRuleChecker):
 
     RULES = [
         # restrict outputs to sensible characters
-        allowed_characters(r'\w', r'\d', r'\-', r'\.'),
+        allowed_characters(r'\w', r'\d', r'\-'),
         # blacklist the _cylc prefix
         not_starts_with('_cylc'),
         # blacklist keywords
-        not_equals('required', 'optional', 'all'),
+        not_equals('required', 'optional', 'all', 'and', 'or'),
         # blacklist built-in task qualifiers and statuses (e.g. "waiting")
         not_equals(*sorted({*TASK_QUALIFIERS, *TASK_STATUSES_ORDERED})),
     ]
