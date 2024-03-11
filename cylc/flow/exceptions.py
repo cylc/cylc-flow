@@ -19,8 +19,8 @@
 from textwrap import wrap
 from typing import (
     Dict,
-    Iterable,
     Optional,
+    Sequence,
     Union,
     TYPE_CHECKING,
 )
@@ -184,7 +184,7 @@ class PlatformError(CylcError):
         platform_name: str,
         *,
         ctx: 'Optional[SubFuncContext]' = None,
-        cmd: Optional[Union[str, Iterable]] = None,
+        cmd: Union[str, Sequence[str], None] = None,
         ret_code: Optional[int] = None,
         out: Optional[str] = None,
         err: Optional[str] = None
@@ -419,13 +419,12 @@ class HostSelectException(CylcError):
             )
         ):
             # likely an issue with the ranking expression
-            ranking = "\n".join(
-                wrap(
-                    self.data.get("ranking"),
-                    initial_indent='    ',
-                    subsequent_indent='    ',
-                )
+            lines = wrap(
+                self.data.get("ranking"),
+                initial_indent='    ',
+                subsequent_indent='    ',
             )
+            ranking = "\n".join(lines)
             return (
                 'This is likely an error in the ranking expression:'
                 f'\n{ranking}'
