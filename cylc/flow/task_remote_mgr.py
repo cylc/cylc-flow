@@ -41,6 +41,7 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -434,7 +435,7 @@ class TaskRemoteMgr:
                     PlatformError(
                         PlatformError.MSG_TIDY,
                         item.platform['name'],
-                        cmd=item.proc.args,
+                        cmd=cast('List[str]', item.proc.args),
                         ret_code=item.proc.returncode,
                         out=out,
                         err=err
@@ -451,7 +452,7 @@ class TaskRemoteMgr:
                     PlatformError(
                         PlatformError.MSG_TIDY,
                         item.platform['name'],
-                        cmd=item.proc.args,
+                        cmd=cast('List[str]', item.proc.args),
                         ret_code=item.proc.returncode,
                         out=out,
                         err=err,
@@ -508,10 +509,8 @@ class TaskRemoteMgr:
                 install_target=install_target
             )
             old_umask = os.umask(0o177)
-            with open(
-                    public_key.full_key_path,
-                    'w', encoding='utf8') as text_file:
-                text_file.write(key)
+            with open(public_key.full_key_path, 'w', encoding='utf8') as f:
+                f.write(key)
             os.umask(old_umask)
             # configure_curve must be called every time certificates are
             # added or removed, in order to update the Authenticator's

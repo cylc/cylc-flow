@@ -42,6 +42,7 @@ from typing import (
     Optional,
     Set,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -399,7 +400,7 @@ def remote_clean(
             excp = PlatformError(
                 PlatformError.MSG_TIDY,
                 this_platform['name'],
-                cmd=item.proc.args,
+                cmd=cast('List[str]', item.proc.args),
                 ret_code=ret_code,
                 out=out,
                 err=err,
