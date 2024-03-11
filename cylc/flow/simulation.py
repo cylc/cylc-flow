@@ -101,7 +101,7 @@ class ModeSettings:
             # Get the try number:
             try_num = db_info["try_num"]
 
-        # Update anything changed by broadcast:
+        # Parse fail cycle points:
         if rtconfig != itask.tdef.rtconfig:
             try:
                 rtconfig["simulation"][
