@@ -1006,7 +1006,7 @@ class TaskJobManager:
                 itask)
 
             itask.summary['started_time'] = now
-            self._set_retry_timers(itask)
+            self._set_retry_timers(itask, rtconfig)
             itask.mode_settings = ModeSettings(
                 itask,
                 self.workflow_db_mgr,
