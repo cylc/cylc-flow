@@ -467,7 +467,6 @@ class Scheduler:
             "task event batch interval"]
         self.task_events_mgr.mail_smtp = self._get_events_conf("smtp")
         self.task_events_mgr.mail_footer = self._get_events_conf("footer")
-        self.task_events_mgr.workflow_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.workflow_cfg = self.config.cfg
         if self.options.genref:
             LOG.addHandler(ReferenceLogFileHandler(
