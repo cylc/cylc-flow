@@ -394,7 +394,7 @@ async def test_settings_broadcast(
         # The mode_settings object has been cleared:
         assert itask.mode_settings is None
         # Change a setting using broadcast:
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+        schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': ''}
             }])
@@ -403,10 +403,16 @@ async def test_settings_broadcast(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is False
 
+        # Assert Clearing the broadcast works
+        schd.broadcast_mgr.clear_broadcast()
+        schd.task_job_mgr._simulation_submit_task_jobs(
+            [itask], schd.workflow)
+        assert itask.mode_settings.sim_task_fails is True
+
         # Assert that list of broadcasts doesn't change if we submit
         # Invalid fail cycle points to broadcast.
         itask.mode_settings = None
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+        schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
             }])
@@ -416,7 +422,7 @@ async def test_settings_broadcast(
             'Invalid ISO 8601 date representation: higadfuhasgiurguj'
             in log.messages[-1])
 
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+        schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1'}
             }])
@@ -427,7 +433,7 @@ async def test_settings_broadcast(
             in log.messages[-1])
 
         # Broadcast tasks will reparse correctly:
-        schd.task_events_mgr.broadcast_mgr.put_broadcast(
+        schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1945, 1977, 1066'},
                 'execution retry delays': '5*PT2S'
