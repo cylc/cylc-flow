@@ -365,9 +365,11 @@ async def test_settings_broadcast(
         'runtime': {
             'one': {
                 'execution time limit': 'PT1S',
+                'execution retry delays': '2*PT5S',
                 'simulation': {
                     'speedup factor': 1,
                     'fail cycle points': '1066',
+                    'fail try 1 only': False
                 }
             },
         }
@@ -427,9 +429,10 @@ async def test_settings_broadcast(
         # Broadcast tasks will reparse correctly:
         schd.task_events_mgr.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
-                'simulation': {'fail cycle points': '1945, 1977, 1066'}
+                'simulation': {'fail cycle points': '1945, 1977, 1066'},
+                'execution retry delays': '5*PT2S'
             }])
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is True
-
+        assert itask.tdef.rtconfig['execution retry delays'] == [5.0, 5.0]

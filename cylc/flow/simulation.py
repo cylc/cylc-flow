@@ -23,10 +23,6 @@ from time import time
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.parsec.util import (
-    pdeepcopy,
-    poverride
-)
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
@@ -38,7 +34,6 @@ from cylc.flow.wallclock import get_unix_time_from_time_string
 from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
-    from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -79,8 +74,8 @@ class ModeSettings:
     def __init__(
         self,
         itask: 'TaskProxy',
-        broadcast_mgr: 'BroadcastMgr',
         db_mgr: 'WorkflowDatabaseManager',
+        rtconfig
     ):
 
         # itask.summary['started_time'] and mode_settings.timeout need
@@ -107,11 +102,7 @@ class ModeSettings:
             try_num = db_info["try_num"]
 
         # Update anything changed by broadcast:
-        overrides = broadcast_mgr.get_broadcast(itask.tokens)
-        if overrides:
-            rtconfig = pdeepcopy(itask.tdef.rtconfig)
-            poverride(rtconfig, overrides, prepend=True)
-
+        if rtconfig != itask.tdef.rtconfig:
             try:
                 rtconfig["simulation"][
                     "fail cycle points"
@@ -127,8 +118,6 @@ class ModeSettings:
                 rtconfig['simulation'][
                     'fail cycle points'
                 ] = itask.tdef.rtconfig['simulation']['fail cycle points']
-        else:
-            rtconfig = itask.tdef.rtconfig
 
         # Calculate simulation info:
         self.simulated_run_length = (
@@ -280,10 +269,12 @@ def sim_time_check(
 
         # This occurs if the workflow has been restarted.
         if itask.mode_settings is None:
+            rtconfig = task_events_manager.broadcast_mgr.get_updated_rtconfig(
+                itask)
             itask.mode_settings = ModeSettings(
                 itask,
-                task_events_manager.broadcast_mgr,
                 db_mgr,
+                rtconfig
             )
 
         if now > itask.mode_settings.timeout:

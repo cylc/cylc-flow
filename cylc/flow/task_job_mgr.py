@@ -1001,13 +1001,18 @@ class TaskJobManager:
         now = time()
         now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
+            # Handle broadcasts
+            rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+                itask)
+
             itask.summary['started_time'] = now
             self._set_retry_timers(itask)
             itask.mode_settings = ModeSettings(
                 itask,
-                self.task_events_mgr.broadcast_mgr,
-                self.workflow_db_mgr
+                self.workflow_db_mgr,
+                rtconfig
             )
+
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
 
