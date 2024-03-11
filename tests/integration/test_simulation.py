@@ -441,4 +441,4 @@ async def test_settings_broadcast(
         schd.task_job_mgr._simulation_submit_task_jobs(
             [itask], schd.workflow)
         assert itask.mode_settings.sim_task_fails is True
-        assert itask.tdef.rtconfig['execution retry delays'] == [5.0, 5.0]
+        assert itask.tdef.rtconfig['execution retry delays'] == [2, 2, 2, 2, 2]
