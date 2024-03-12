@@ -16,7 +16,7 @@
         script = """
             # Ensure that 1,2/bar are spawned by 1,2/foo and not by 2/start
             # (so the scheduler must update their prereqs when 2/start finishes).
-            cylc__job__poll_grep_workflow_log -E "2/bar .* spawned"
+            cylc__job__poll_grep_workflow_log -E "2/bar.* added to active task pool"
         """
     [[foo]]
     [[bar]]

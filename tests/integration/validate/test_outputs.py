@@ -50,6 +50,7 @@ from cylc.flow.unicode_rules import TaskOutputValidator, TaskMessageValidator
                 'foo+bar',
                 # keywords
                 'required',
+                'optional',
                 'all',
                 # built-in qualifiers
                 'succeeded',

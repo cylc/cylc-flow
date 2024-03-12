@@ -15,6 +15,6 @@
         script = true
     [[stopper]]
         script = """
-            cylc__job__poll_grep_workflow_log "\[1/holdee .* holding \(as requested earlier\)" -E
+            cylc__job__poll_grep_workflow_log "\[1/holdee.* holding \(as requested earlier\)" -E
             cylc stop $CYLC_WORKFLOW_ID
         """

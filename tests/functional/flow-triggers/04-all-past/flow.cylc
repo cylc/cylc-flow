@@ -41,6 +41,6 @@
         script = """
             if (( $CYLC_TASK_SUBMIT_NUMBER == 1 )); then
                 cylc trigger {{OPT}} ${CYLC_WORKFLOW_ID}//1/a
-                cylc__job__poll_grep_workflow_log -E '1/a running job:02 .*succeeded'
+                cylc__job__poll_grep_workflow_log -E '1/a/02:running.*succeeded'
             fi
         """

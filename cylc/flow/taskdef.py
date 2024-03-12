@@ -22,13 +22,14 @@ from typing import TYPE_CHECKING
 import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import (
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+    TASK_OUTPUT_FAILED,
+    SORT_ORDERS
 )
-from cylc.flow.task_outputs import SORT_ORDERS
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -178,6 +179,13 @@ class TaskDef:
         # optional/required is None until defined by the graph
         self.outputs[output] = (message, None)
 
+    def get_output(self, message):
+        """Return output name corresponding to task message."""
+        for name, (msg, _) in self.outputs.items():
+            if msg == message:
+                return name
+        raise KeyError(f"Unknown task output message: {message}")
+
     def _add_std_outputs(self):
         """Add the standard outputs."""
         # optional/required is None until defined by the graph
@@ -186,9 +194,13 @@ class TaskDef:
 
     def set_required_output(self, output, required):
         """Set outputs to required or optional."""
-        # (Note outputs and associated messages already defined.)
+        # (Note outputs and associated messages are already defined.)
         message, _ = self.outputs[output]
         self.outputs[output] = (message, required)
+
+    def get_required_output_messages(self):
+        """Return list of required outputs (as task messages)."""
+        return [msg for (msg, req) in self.outputs.values() if req]
 
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
@@ -203,6 +215,9 @@ class TaskDef:
             and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
+
+        # Expired must be optional
+        self.set_required_output(TASK_OUTPUT_EXPIRED, False)
 
         # In Cylc 7 back compat mode, make all success outputs required.
         if cylc.flow.flags.cylc7_back_compat:

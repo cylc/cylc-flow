@@ -17,8 +17,8 @@
 [runtime]
     [[remover]]
         script = """
-            cylc__job__poll_grep_workflow_log -E '2020/bar running .* \(received\)failed'
-            cylc__job__poll_grep_workflow_log -E '2021/baz running .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '2020/bar/01:running.* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '2021/baz/01:running.* \(received\)failed'
             # Remove the two unhandled failed tasks.
             cylc remove "$CYLC_WORKFLOW_ID//*/ba*:failed"
             # Remove the two unsatisfied waiting tasks.
