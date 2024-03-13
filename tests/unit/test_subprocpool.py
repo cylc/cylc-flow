@@ -328,6 +328,7 @@ def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
             SimpleNamespace(
                 name='t', dependencies={}, sequential='',
                 external_triggers=[], xtrig_labels={},
+                expiration_offset=None,
                 outputs={
                     'submitted': [None, None], 'submit-failed': [None, None]
                 },

@@ -23,6 +23,7 @@ from cylc.flow.task_id import (
     _TASK_NAME_PREFIX,
 )
 from cylc.flow.task_qualifiers import TASK_QUALIFIERS
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
@@ -350,8 +351,8 @@ class TaskOutputValidator(UnicodeRuleChecker):
         not_starts_with('_cylc'),
         # blacklist keywords
         not_equals('required', 'optional', 'all'),
-        # blacklist built-in task qualifiers
-        not_equals(*TASK_QUALIFIERS),
+        # blacklist built-in task qualifiers and statuses (e.g. "waiting")
+        not_equals(*sorted({*TASK_QUALIFIERS, *TASK_STATUSES_ORDERED})),
     ]
 
 

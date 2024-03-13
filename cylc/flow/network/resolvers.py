@@ -26,7 +26,6 @@ from time import time
 from typing import (
     Any,
     Dict,
-    Iterable,
     List,
     NamedTuple,
     Optional,
@@ -58,7 +57,6 @@ if TYPE_CHECKING:
     from graphql import ResolveInfo
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
-    from cylc.flow.workflow_status import StopMode
 
 
 class TaskMsg(NamedTuple):
@@ -706,32 +704,39 @@ class Resolvers(BaseResolvers):
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, kwargs, meta)
-        if result is None:
-            result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
-
-    def _log_command(self, command: str, user: str) -> None:
-        """Log receipt of command, with user name if not owner."""
-        is_owner = user == self.schd.owner
-        if command == 'put_messages' and is_owner:
-            # Logging put_messages is overkill.
-            return
-        log_msg = f"[command] {command}"
-        if not is_owner:
-            log_msg += (f" (issued by {user})")
-        LOG.info(log_msg)
 
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
-    ) -> Optional[Tuple[bool, str]]:
-        """Map between GraphQL resolvers and internal command interface."""
+    ) -> Tuple[bool, str]:
+        """Map to internal command interface.
 
-        self._log_command(
-            command,
-            meta.get('auth_user', self.schd.owner)
+        Some direct methods are in this module.
+        Others go to the scheduler command queue.
+
+        """
+        user = meta.get('auth_user', self.schd.owner)
+        if user == self.schd.owner:
+            log_user = ""  # don't log user name if owner
+        else:
+            log_user = f" from {user}"
+
+        log1 = f'Command "{command}" received{log_user}.'
+        log2 = (
+            f"{command}("
+            + ", ".join(
+                f"{key}={value}" for key, value in kwargs.items())
+            + ")"
         )
+
         method = getattr(self, command, None)
         if method is not None:
+            if (
+                command != "put_messages"
+                or user != self.schd.owner
+            ):
+                # Logging task messages as commands is overkill.
+                LOG.info(f"{log1}\n{log2}")
             return method(**kwargs)
 
         try:
@@ -739,11 +744,18 @@ class Resolvers(BaseResolvers):
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
 
-        self.schd.queue_command(
-            command,
-            kwargs
+        # Queue the command to the scheduler, with a unique command ID
+        cmd_uuid = str(uuid4())
+        LOG.info(f"{log1} ID={cmd_uuid}\n{log2}")
+        self.schd.command_queue.put(
+            (
+                cmd_uuid,
+                command,
+                [],
+                kwargs,
+            )
         )
-        return None
+        return (True, cmd_uuid)
 
     def broadcast(
         self,
@@ -846,107 +858,3 @@ class Resolvers(BaseResolvers):
             return (True, f'Maximum edge distance set to {n_edge_distance}')
         else:
             return (False, 'Edge distance cannot be negative')
-
-    def force_spawn_children(
-        self,
-        tasks: Iterable[str],
-        outputs: Optional[Iterable[str]] = None,
-        flow_num: Optional[int] = None
-    ) -> Tuple[bool, str]:
-        """Spawn children of given task outputs.
-
-        User-facing method name: set_outputs.
-
-        Args:
-            tasks: List of identifiers or task globs.
-            outputs: List of outputs to spawn on.
-            flow_num: Flow number to attribute the outputs.
-        """
-        self.schd.command_queue.put(
-            (
-                "force_spawn_children",
-                (tasks,),
-                {
-                    "outputs": outputs,
-                    "flow_num": flow_num
-                },
-            )
-        )
-        return (True, 'Command queued')
-
-    def stop(
-        self,
-        mode: Union[str, 'StopMode'],
-        cycle_point: Optional[str] = None,
-        clock_time: Optional[str] = None,
-        task: Optional[str] = None,
-        flow_num: Optional[int] = None,
-    ) -> Tuple[bool, str]:
-        """Stop the workflow or specific flow from spawning any further.
-
-        Args:
-            mode: Stop mode to set
-            cycle_point: Cycle point after which to stop.
-            clock_time: Wallclock time after which to stop.
-            task: Stop after this task succeeds.
-            flow_num: The flow to stop.
-    ):
-
-        Returns:
-            outcome: True if command successfully queued.
-            message: Information about outcome.
-
-        """
-        self.schd.command_queue.put((
-            "stop",
-            (),
-            filter_none({
-                'mode': mode,
-                'cycle_point': cycle_point,
-                'clock_time': clock_time,
-                'task': task,
-                'flow_num': flow_num,
-            }),
-        )
-        )
-        return (True, 'Command queued')
-
-    def force_trigger_tasks(
-        self,
-        tasks: Iterable[str],
-        flow: Iterable[str],
-        flow_wait: bool,
-        flow_descr: Optional[str] = None,
-    ):
-        """Trigger submission of task jobs where possible.
-
-        Args:
-            tasks (list):
-                List of identifiers or task globs.
-            flow (list):
-                Flow ownership of triggered tasks.
-            flow_wait (bool):
-                Wait for flows before continuing
-            flow_descr (str):
-                Description of new flow.
-
-        Returns:
-            tuple: (outcome, message)
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(
-            (
-                "force_trigger_tasks",
-                (tasks or [],),
-                {
-                    "flow": flow,
-                    "flow_wait": flow_wait,
-                    "flow_descr": flow_descr
-                }
-            ),
-        )
-        return (True, 'Command queued')

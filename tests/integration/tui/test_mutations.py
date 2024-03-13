@@ -27,7 +27,32 @@ async def gen_commands(schd):
     while True:
         await asyncio.sleep(0.1)
         if not schd.command_queue.empty():
-            yield schd.command_queue.get()
+            # (ignore first item: command UUID)
+            yield schd.command_queue.get()[1:]
+
+
+async def process_command(schd, tries=10, interval=0.1):
+    """Wait for command(s) to be queued and run.
+
+    Waits for at least one command to be queued and for all queued commands to
+    be run.
+    """
+    # wait for the command to be queued
+    for _try in range(tries):
+        await asyncio.sleep(interval)
+        if not schd.command_queue.empty():
+            break
+    else:
+        raise Exception(f'No command was queued after {tries * interval}s')
+
+    # run the command
+    await schd.process_command_queue()
+
+    # push out updates
+    await schd.update_data_structure()
+
+    # make sure it ran
+    assert schd.command_queue.empty(), 'command queue has not emptied'
 
 
 async def test_online_mutation(
@@ -76,7 +101,7 @@ async def test_online_mutation(
             command = None
             async for command in gen_commands(schd):
                 break
-            assert command == ('hold', (['1/one'],), {})
+            assert command == ('hold', [], {'tasks': ['1/one']})
 
         # close the dialogue and re-run the hold mutation
         rk.user_input('q', 'q', 'enter')
@@ -214,3 +239,55 @@ async def test_offline_mutation(
             'there should be a box displaying the error containing the stderr'
             ' returned by the command',
         )
+
+
+async def test_set_mutation(
+    flow,
+    scheduler,
+    start,
+    rakiura,
+):
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => z'
+            },
+        },
+    }, name='one')
+    schd = scheduler(id_)
+    async with start(schd):
+        await schd.update_data_structure()
+        with rakiura(schd.tokens.id, size='80,15') as rk:
+            # open the context menu on 1/a
+            rk.user_input('down', 'down', 'down', 'enter')
+            rk.force_update()
+
+            # select the "set" mutation
+            rk.user_input(*(('down',) * 6))  # 6th command down
+
+            rk.compare_screenshot(
+                # take a screenshot to ensure we have focused on the mutation
+                # successfully
+                'set-command-selected',
+                'The command menu should be open for the task 1/a with the'
+                ' set command selected.'
+            )
+
+            # issue the "set" mutation
+            rk.user_input('enter')
+
+            # wait for the command to be received and run it
+            await process_command(schd)
+
+            # close the error dialogue
+            # NOTE: This hides an asyncio error that does not occur outside of
+            #       the tests
+            rk.user_input('q', 'q', 'q')
+
+            rk.compare_screenshot(
+                # take a screenshot to ensure we have focused on the mutation
+                # successfully
+                'task-state-updated',
+                '1/a should now show as succeeded,'
+                ' there should be no associated job.'
+            )

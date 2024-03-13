@@ -20,8 +20,8 @@
                 echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
                 echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
             } >>"${CYLC_TASK_LOG_ROOT}.status"
-            cylc__job__poll_grep_workflow_log -E '1/speaker1 running .* \(polled\)hello1'
-            cylc__job__poll_grep_workflow_log -E '1/speaker1 running .* \(polled\)hello2'
+            cylc__job__poll_grep_workflow_log -E '1/speaker1/01:running.* \(polled\)hello1'
+            cylc__job__poll_grep_workflow_log -E '1/speaker1/01:running.* \(polled\)hello2'
             """
             [[[outputs]]]
                 hello1 = "hello1"
@@ -34,7 +34,7 @@
             # get sent back to the workflow
             echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet" \
                 >>"${CYLC_TASK_LOG_ROOT}.status"
-            cylc__job__poll_grep_workflow_log -E '1/speaker2 running .* \(polled\)greet'
+            cylc__job__poll_grep_workflow_log -E '1/speaker2/01:running.* \(polled\)greet'
         """
         [[[outputs]]]
             greet = "greet"
