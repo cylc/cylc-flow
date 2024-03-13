@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from optparse import OptionParser
+from optparse import OptionParser, Values
 
 import pytest
 
@@ -23,6 +23,7 @@ from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.terminal import (
     cli_function,
     prompt,
+    should_use_color,
 )
 
 
@@ -202,3 +203,19 @@ def test_prompt(stdinput):
     # test a prompt with an input pre-process method thinggy
     stdinput('YES')
     assert prompt('yes yes yes no', ['yes', 'no'], process=str.lower) == 'yes'
+
+
+@pytest.mark.parametrize('opts, supported, expected', [
+    ({}, True, False),
+    ({'color': 'never'}, True, False),
+    ({'color': 'auto'}, True, True),
+    ({'color': 'auto'}, False, False),
+    ({'color': 'always'}, False, True),
+])
+def test_should_use_color(
+    opts: dict, expected: bool, supported: bool,
+    monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr('cylc.flow.terminal.supports_color', lambda: supported)
+    options = Values(opts)
+    assert should_use_color(options) == expected
