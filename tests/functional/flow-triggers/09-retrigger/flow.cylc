@@ -1,7 +1,5 @@
-# Check if a task gets triggered multiple times with --wait, only the outputs
-# from the last run in the flow are spawned when the flow catches up.
-
-# baz should run twice in flow 1, then y should trigger off of the second baz.
+# If a task gets triggered twice with --wait, the outputs from both runs should be
+# spawned when the flow catches up.
 
 [scheduling]
    [[graph]]
@@ -15,9 +13,9 @@
    [[foo]]
       script = """
          cylc trigger --wait ${CYLC_WORKFLOW_ID}//1/baz
-         cylc__job__poll_grep_workflow_log "1/baz running job:01 .* succeeded"
+         cylc__job__poll_grep_workflow_log "1/baz/01:running.*succeeded"
          cylc trigger --wait ${CYLC_WORKFLOW_ID}//1/baz
-         cylc__job__poll_grep_workflow_log "1/baz running job:02 .* succeeded"
+         cylc__job__poll_grep_workflow_log "1/baz/02:running.*succeeded"
       """
    [[baz]]
       script = """

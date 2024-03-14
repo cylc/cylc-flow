@@ -1,5 +1,5 @@
-# Test that `cylc set-outputs` does not cause reflow by default
-# Task setter should cause bar to run, but not subsequently baz.
+# Test that `cylc set` continues the active flow by default
+# Task "setter" should cause bar to run, then subsequently baz.
 
 [scheduler]
     [[events]]
@@ -21,5 +21,5 @@
         script = true
     [[setter]]
         script = """
-            cylc set-outputs "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc set --output=succeeded "${CYLC_WORKFLOW_ID}//1/foo"
         """

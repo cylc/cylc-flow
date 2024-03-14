@@ -47,13 +47,13 @@ poll_grep_workflow_log "INFO - DONE"
 
 # NOTE: execution timeout polling is delayed by PT1M to let things settle
 # PT10M = (3*PT3S + PT9M30S) - PT1M
-grep_workflow_log_ok grep-limit10M "\[1/limit10M running job:01 flows:1\] health: execution timeout=None, polling intervals=3\*PT30S,PT9M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-limit10M "\[1/limit10M/01:running\] health: execution timeout=None, polling intervals=3\*PT30S,PT9M30S,PT2M,PT7M,..."
 # PT60M = (3*PT3S + PT10M + PT49M30S) - PT1M
-grep_workflow_log_ok grep-limit1H "\[1/limit1H running job:01 flows:1\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT49M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-limit1H "\[1/limit1H/01:running\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT49M30S,PT2M,PT7M,..."
 # PT70S = (2*PT30S + PT1M10S) - PT1M
-grep_workflow_log_ok grep-limit70S "\[1/limit70S running job:01 flows:1\] health: execution timeout=None, polling intervals=2\*PT30S,PT1M10S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-limit70S "\[1/limit70S/01:running\] health: execution timeout=None, polling intervals=2\*PT30S,PT1M10S,PT2M,PT7M,..."
 # PT95M = (3*PT3S + PT10M + PT1H + PT24M30S) - PT1M
-grep_workflow_log_ok grep-limit95M "\[1/limit95M running job:01 flows:1\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT1H,PT24M30S,PT2M,PT7M,..."
-grep_workflow_log_ok grep-no-limit "\[1/nolimit running job:01 flows:1\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT1H,..."
+grep_workflow_log_ok grep-limit95M "\[1/limit95M/01:running\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT1H,PT24M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-no-limit "\[1/nolimit/01:running\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT1H,..."
 
 purge

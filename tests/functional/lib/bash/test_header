@@ -90,6 +90,7 @@
 #         tries grepping for each PATTERN in turn. Tests will only pass if the
 #         PATTERNs appear in FILE in the correct order. Runs one test per
 #         pattern, each prefixed by TEST_NAME.
+#         set LOG_SCAN_GREP_OPTS in the environment, e.g. "-E" for "grep -E"
 #     make_rnd_workflow
 #         Create a randomly-named workflow source directory.
 #     mock_smtpd_init
@@ -579,6 +580,7 @@ log_scan () {
     local FILE="$2"
     local REPS=$3
     local DELAY=$4
+    local OPTS=${LOG_SCAN_GREP_OPTS:-}
     if ${CYLC_TEST_DEBUG:-false}; then
         local ERR=2
     else
@@ -595,7 +597,8 @@ log_scan () {
         echo -n "scanning for '${pattern:0:30}'" >& $ERR
         for _ in $(seq 1 "${REPS}"); do
             echo -n '.' >& $ERR
-            newposition=$(grep -n "$pattern" "$FILE" | \
+            # shellcheck disable=SC2086
+            newposition=$(grep -n $OPTS "$pattern" "$FILE" | \
                 tail -n 1 | cut -d ':' -f 1)
             if (( newposition > position )); then
                 position=$newposition

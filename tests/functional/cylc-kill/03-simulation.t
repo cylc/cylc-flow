@@ -28,7 +28,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 cylc play --debug -m simulation "${WORKFLOW_NAME}" >/dev/null 2>&1
 
 # wait for simulated job start
-poll_grep_workflow_log "1/foo .* running" -E
+poll_grep_workflow_log "1/foo.* running" -E
 
 # kill it
 run_ok killer cylc kill "${WORKFLOW_NAME}//1/foo"
@@ -37,6 +37,6 @@ run_ok killer cylc kill "${WORKFLOW_NAME}//1/foo"
 poll_grep_workflow_log "INFO - DONE"
 
 # check the sim job was kiled
-grep_workflow_log_ok killed "1/foo .* failed" -E
+grep_workflow_log_ok killed "1/foo.* failed" -E
 
 purge

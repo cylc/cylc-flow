@@ -1,0 +1,4 @@
+Start task: ['1800/a']
+18000101T0000Z/a -triggered off [] in flow 1
+18000101T0000Z/x -triggered off [] in flow 1
+18000101T0000Z/b -triggered off ['18000101T0000Z/a', '18000101T0000Z/x'] in flow 1

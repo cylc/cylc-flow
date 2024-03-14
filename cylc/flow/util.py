@@ -22,8 +22,7 @@ import re
 from typing import (
     Any,
     List,
-    Tuple,
-    Union,
+    Sequence,
 )
 
 
@@ -77,7 +76,7 @@ def natural_sort(items: List[str], fcns=(int, str)) -> None:
     items.sort(key=partial(natural_sort_key, fcns=fcns))
 
 
-def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
+def format_cmd(cmd: Sequence[str], maxlen: int = 60) -> str:
     r"""Convert a shell command list to a user-friendly representation.
 
     Examples:

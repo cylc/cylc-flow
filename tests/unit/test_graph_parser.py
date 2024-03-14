@@ -778,6 +778,10 @@ def test_family_optional_outputs(qual, task_output):
             "FAM => foo",  # bare family on LHS
             "Illegal family trigger"
         ],
+        [
+            "FAM:expire-all => foo",
+            "must be optional"
+        ],
     ]
 )
 def test_family_trigger_errors(graph, error):
@@ -818,6 +822,10 @@ def test_family_trigger_errors(graph, error):
         [
             "a:finish? => b",
             "Pseudo-output a:finished can't be optional",
+        ],
+        [
+            "a:expire => b",
+            "must be optional",
         ],
     ]
 )

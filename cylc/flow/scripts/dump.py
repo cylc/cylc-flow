@@ -18,23 +18,22 @@
 
 """cylc dump [OPTIONS] ARGS
 
-Print information about a running workflow.
+Print state of a running workflow including tasks in the active (n=0) window.
 
-This command can provide information about active tasks, e.g. running or queued
-tasks. For more detailed view of the workflow see `cylc tui` or `cylc gui`.
-
-For command line monitoring:
-* `cylc tui`
-* `watch cylc dump WORKFLOW_ID` works for small simple workflows
+For a more detailed view of the workflow see `cylc tui` or `cylc gui`.
 
 For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc show'.
+
+For command line monitoring:
+* `cylc tui`
+* `watch cylc dump -t WORKFLOW_ID` works for small simple workflows
 
 Examples:
   # Display the state of all active tasks, sorted by cycle point:
   $ cylc dump --tasks --sort WORKFLOW_ID | grep running
 
-  # Display the state of all active in a particular cycle point:
+  # Display the state of all active tasks in a particular cycle point:
   $ cylc dump -t WORKFLOW_ID | grep 2010082406
 """
 

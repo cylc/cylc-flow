@@ -1,0 +1,5 @@
+1/setter -triggered off [] in flow 1
+1/foo -triggered off [] in flow 1
+1/bar -triggered off [] in flow 1
+1/post_m1 -triggered off ['1/bar', '1/foo'] in flow 1
+1/post_m2 -triggered off ['1/bar', '1/foo'] in flow 1

@@ -18,7 +18,7 @@
       """
    [[triggerer]]
       script = """
-         cylc__job__poll_grep_workflow_log -E '1/oops running .* \(received\)failed'
+         cylc__job__poll_grep_workflow_log -E '1/oops/01:running.* \(received\)failed'
          cylc trigger "${CYLC_WORKFLOW_ID}//1/oops"
        """
    [[foo, bar]]

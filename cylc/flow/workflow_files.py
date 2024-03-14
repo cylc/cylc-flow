@@ -110,15 +110,21 @@ class KeyInfo():  # noqa: SIM119 (not really relevant here)
 
     """
 
-    def __init__(self, key_type, key_owner, full_key_path=None,
-                 workflow_srv_dir=None, install_target=None, server_held=True):
+    def __init__(
+        self,
+        key_type: KeyType,
+        key_owner: KeyOwner,
+        full_key_path: Optional[str] = None,
+        workflow_srv_dir: Optional[str] = None,
+        install_target: Optional[str] = None,
+        server_held: bool = True
+    ):
         self.key_type = key_type
         self.key_owner = key_owner
-        self.full_key_path = full_key_path
         self.workflow_srv_dir = workflow_srv_dir
         self.install_target = install_target
-        if self.full_key_path is not None:
-            self.key_path, self.file_name = os.path.split(self.full_key_path)
+        if full_key_path is not None:
+            self.key_path, self.file_name = os.path.split(full_key_path)
         elif self.workflow_srv_dir is not None:  # noqa: SIM106
             # Build key filename
             file_name = key_owner.value
@@ -129,7 +135,7 @@ class KeyInfo():  # noqa: SIM119 (not really relevant here)
                     and self.install_target is not None):
                 file_name = f"{file_name}_{self.install_target}"
 
-            if key_type == KeyType.PRIVATE:
+            if key_type is KeyType.PRIVATE:
                 file_extension = WorkflowFiles.Service.PRIVATE_FILE_EXTENSION
             else:
                 file_extension = WorkflowFiles.Service.PUBLIC_FILE_EXTENSION

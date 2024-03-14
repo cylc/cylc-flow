@@ -300,7 +300,7 @@ class CylcOptionParser(OptionParser):
             action='store_false', dest='log_timestamp',
             default=True, useif='all'),
         OptionSettings(
-            ['--color', '--color'], metavar='WHEN', action='store',
+            ['--color', '--colour'], metavar='WHEN', action='store',
             default='auto', choices=['never', 'auto', 'always'],
             help=(
                 "When to use color/bold text in terminal output."

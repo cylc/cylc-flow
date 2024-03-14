@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tests for worklfow_db_manager
-"""
+"""Compatibility tests for handling old workflow databases."""
 
+from functools import partial
+from unittest.mock import Mock
 import pytest
 import sqlite3
 
 from cylc.flow.exceptions import CylcError, ServiceFileError
+from cylc.flow.task_pool import TaskPool
 from cylc.flow.workflow_db_mgr import (
     CylcWorkflowDAO,
     WorkflowDatabaseManager,
@@ -136,3 +137,41 @@ def test_cylc_7_db_wflow_params_table(_setup_db):
         checker.get_remote_point_format()
 
     assert checker.get_remote_point_format_compat() == ptformat
+
+
+def test_pre_830_task_action_timers(_setup_db):
+    """Test back compat for task_action_timers table.
+
+    Before 8.3.0, TaskEventMailContext had an extra field "ctx_type" at
+    index 1. TaskPool.load_db_task_action_timers() should be able to
+    discard this field.
+    """
+    values = [
+        r'''
+            CREATE TABLE task_action_timers(
+                cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT,
+                num INTEGER, delay TEXT, timeout TEXT,
+                PRIMARY KEY(cycle, name, ctx_key)
+            );
+        ''',
+        r'''
+            INSERT INTO task_action_timers VALUES(
+                '1','foo','[["event-mail", "failed"], 9]',
+                '["TaskEventMailContext", ["event-mail", "event-mail", "notifications@fbc.gov", "jfaden"]]',
+                '[0.0]',1,'0.0','1709229449.61275'
+            );
+        ''',
+        r'''
+            INSERT INTO task_action_timers VALUES(
+                '1','foo','["try_timers", "execution-retry"]', null,
+                '[94608000.0]',1,NULL,NULL
+            );
+        ''',
+    ]
+    db_file = _setup_db(values)
+    mock_pool = Mock()
+    load_db_task_action_timers = partial(
+        TaskPool.load_db_task_action_timers, mock_pool
+    )
+    with CylcWorkflowDAO(db_file, create_tables=True) as dao:
+        dao.select_task_action_timers(load_db_task_action_timers)
