@@ -295,7 +295,7 @@ def sim_time_check(
                     flag=task_events_manager.FLAG_RECEIVED
                 )
 
-            # We've finished this psuedojob, so delete all the mode settings.
+            # We've finished this pseudo job, so delete all the mode settings.
             itask.mode_settings = None
             sim_task_state_changed = True
     return sim_task_state_changed
