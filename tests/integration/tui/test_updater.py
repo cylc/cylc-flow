@@ -19,6 +19,7 @@ from copy import deepcopy
 from pathlib import Path
 from queue import Queue
 import re
+from time import time
 
 from async_timeout import timeout
 import pytest
@@ -165,6 +166,7 @@ async def test_filters(one_conf, flow, scheduler, run, updater):
     async with run(one):
         # mark "1/a" as running and "1/b" as succeeded
         one_a = one.pool.get_task(IntegerPoint('1'), 'a')
+        one_a.summary['started_time'] = time()
         one_a.state_reset('running')
         one.data_store_mgr.delta_task_state(one_a)
         one.pool.get_task(IntegerPoint('1'), 'b').state_reset('succeeded')

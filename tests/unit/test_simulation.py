@@ -49,7 +49,8 @@ def test_get_simulated_run_len(
         'execution time limit': execution_time_limit,
         'simulation': {
             'speedup factor': speedup_factor,
-            'default run length': default_run_length
+            'default run length': default_run_length,
+            'time limit buffer': 'PT0S',
         }
     }
     assert get_simulated_run_len(rtc) == 3600
@@ -115,7 +116,7 @@ def test_parse_fail_cycle_points(set_cycling_type):
             id='defaults'
         ),
         param(
-            {'fail cycle points': None, 'fail try 1 only': True},
+            {'fail cycle points': None, 'fail try 1 only': False},
             ISO8601Point('1066'),
             1,
             True,
@@ -125,7 +126,7 @@ def test_parse_fail_cycle_points(set_cycling_type):
             {
                 'fail cycle points': [
                     ISO8601Point('1066'), ISO8601Point('1067')],
-                'fail try 1 only': True
+                'fail try 1 only': False
             },
             ISO8601Point('1067'),
             1,

@@ -63,6 +63,7 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.simulation import ModeSettings
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_action_timer import (
@@ -106,6 +107,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
+    get_time_string_from_unix_time,
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
@@ -996,15 +998,28 @@ class TaskJobManager:
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
+        now = time()
+        now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
+            # Handle broadcasts
+            rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+                itask)
+
+            itask.summary['started_time'] = now
+            self._set_retry_timers(itask, rtconfig)
+            itask.mode_settings = ModeSettings(
+                itask,
+                self.workflow_db_mgr,
+                rtconfig
+            )
+
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
-            self._set_retry_timers(itask)
 
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['simulation']['simulated run length']
+                itask.mode_settings.simulated_run_length
             )
             itask.jobs.append(
                 self.get_simulation_job_conf(itask, workflow)
@@ -1012,7 +1027,12 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
-
+            self.workflow_db_mgr.put_insert_task_jobs(
+                itask, {
+                    'time_submit': now_str,
+                    'try_num': itask.get_try_num(),
+                }
+            )
         return itasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):

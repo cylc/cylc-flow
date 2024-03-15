@@ -1765,31 +1765,3 @@ def test_cylc_env_at_parsing(
             assert var in cylc_env
         else:
             assert var not in cylc_env
-
-
-def test_configure_sim_mode(caplog):
-    job_section = {}
-    sim_section = {
-        'speedup factor': '',
-        'default run length': 'PT10S',
-        'time limit buffer': 'PT0S',
-        'fail try 1 only': False,
-        'fail cycle points': '',
-    }
-    rtconfig_1 = {
-        'execution time limit': '',
-        'simulation': sim_section,
-        'job': job_section,
-        'outputs': {},
-    }
-    rtconfig_2 = deepcopy(rtconfig_1)
-    rtconfig_2['simulation']['default run length'] = 'PT2S'
-
-    taskdefs = [
-        SimpleNamespace(rtconfig=rtconfig_1),
-        SimpleNamespace(rtconfig=rtconfig_2),
-    ]
-    configure_sim_modes(taskdefs, 'simulation')
-    results = [
-        i.rtconfig['simulation']['simulated run length'] for i in taskdefs]
-    assert results == [10.0, 2.0]
