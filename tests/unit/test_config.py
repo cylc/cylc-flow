@@ -39,7 +39,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.parsec.exceptions import Jinja2Error, EmPyError
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
-from cylc.flow.simulation import configure_sim_modes
+from cylc.flow.run_modes.simulation import configure_sim_modes
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager

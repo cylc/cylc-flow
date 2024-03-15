@@ -1161,6 +1161,14 @@ with Conf(
                     "[platforms][<platform name>]submission retry delays"
                 )
             )
+            Conf(
+                'run mode', VDR.V_STRING,
+                options=['workflow', 'simulation', 'dummy', 'live', 'skip'],
+                default='workflow',
+                desc='''
+                    Set an individual task's run mode. By default this
+                    will pick up the run mode from the workflow.
+            ''')
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 

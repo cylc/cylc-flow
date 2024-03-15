@@ -1,0 +1,12 @@
+[scheduling]
+    [[graph]]
+        R1 = fail_fail_fail => bar
+
+[runtime]
+    [[root, bar]]
+        [[[simulation]]]
+            default run length = PT0S
+    [[fail_fail_fail]]
+        [[[simulation]]]
+            fail cycle points = all
+

@@ -1,0 +1,12 @@
+[scheduler]
+    [[events]]
+        expected task failures = 1/a, 1/b, 1/c
+[scheduling]
+    [[graph]]
+        R1 = """a:fail? => b?
+            b:fail? => c?
+            c:fail? => !a & !b & !c"""
+[runtime]
+    [[a, b, c]]
+        [[[simulation]]]
+            fail cycle points = all

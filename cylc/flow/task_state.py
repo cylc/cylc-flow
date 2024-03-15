@@ -153,6 +153,13 @@ TASK_STATUSES_TRIGGERABLE = {
     TASK_STATUS_FAILED,
 }
 
+MODE_LIVE = 'live'
+MODE_SIMULATION = 'simulation'
+MODE_DUMMY = 'dummy'
+MODE_SKIP = 'skip'
+MODES_LIVE = {MODE_LIVE, MODE_DUMMY}
+MODES_GHOST = {MODE_SKIP, MODE_SIMULATION}
+
 
 def status_leq(status_a, status_b):
     """"Return True if status_a <= status_b"""
