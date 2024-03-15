@@ -25,6 +25,7 @@ import queue
 from time import time
 from typing import (
     Any,
+    AsyncGenerator,
     Dict,
     List,
     NamedTuple,
@@ -32,6 +33,7 @@ from typing import (
     Tuple,
     TYPE_CHECKING,
     Union,
+    cast,
 )
 from uuid import uuid4
 
@@ -57,6 +59,8 @@ if TYPE_CHECKING:
     from graphql import ResolveInfo
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
+
+    DeltaQueue = queue.Queue[Tuple[str, str, dict]]
 
 
 class TaskMsg(NamedTuple):
@@ -395,7 +399,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             [
                 node
                 for flow in await self.get_workflows_data(args)
-                for node in flow.get(node_type).values()
+                for node in flow[node_type].values()
                 if node_filter(
                     node,
                     node_type,
@@ -538,7 +542,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
 
-    async def subscribe_delta(self, root, info, args):
+    async def subscribe_delta(
+        self, root, info: 'ResolveInfo', args
+    ) -> AsyncGenerator[Any, None]:
         """Delta subscription async generator.
 
         Async generator mapping the incoming protobuf deltas to
@@ -553,19 +559,19 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         self.delta_store[sub_id] = {}
 
         op_id = root
-        if 'ops_queue' not in info.context:
-            info.context['ops_queue'] = {}
-        info.context['ops_queue'][op_id] = queue.Queue()
-        op_queue = info.context['ops_queue'][op_id]
+        op_queue: queue.Queue[Tuple[UUID, str]] = queue.Queue()
+        cast('dict', info.context).setdefault(
+            'ops_queue', {}
+        )[op_id] = op_queue
         self.delta_processing_flows[sub_id] = set()
         delta_processing_flows = self.delta_processing_flows[sub_id]
 
         delta_queues = self.data_store_mgr.delta_queues
-        deltas_queue = queue.Queue()
+        deltas_queue: DeltaQueue = queue.Queue()
 
-        counters = {}
-        delta_yield_queue = queue.Queue()
-        flow_delta_queues = {}
+        counters: Dict[str, int] = {}
+        delta_yield_queue: DeltaQueue = queue.Queue()
+        flow_delta_queues: Dict[str, queue.Queue[Tuple[str, dict]]] = {}
         try:
             # Iterate over the queue yielding deltas
             w_ids = workflow_ids

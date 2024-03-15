@@ -25,8 +25,12 @@ from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
     Any,
+    Dict,
     List,
     Optional,
+    Tuple,
+    Union,
+    cast,
 )
 
 import graphene
@@ -36,6 +40,7 @@ from graphene import (
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
+from graphql.type.definition import get_named_type
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
@@ -62,6 +67,11 @@ from cylc.flow.workflow_status import StopMode
 
 if TYPE_CHECKING:
     from graphql import ResolveInfo
+    from graphql.type.definition import (
+        GraphQLNamedType,
+        GraphQLList,
+        GraphQLNonNull,
+    )
     from cylc.flow.network.resolvers import BaseResolvers
 
 
@@ -106,7 +116,7 @@ def sort_elements(elements, args):
 
 PROXY_NODES = 'proxy_nodes'
 
-
+# Mapping of GraphQL types to field names:
 NODE_MAP = {
     'Task': TASKS,
     'TaskProxy': TASK_PROXIES,
@@ -115,22 +125,6 @@ NODE_MAP = {
     'Job': JOBS,
     'Node': PROXY_NODES,
 }
-
-CYCLING_TYPES = [
-    'family_proxies',
-    'family_proxy',
-    'jobs',
-    'job',
-    'task_proxies',
-    'task_proxy',
-]
-
-PROXY_TYPES = [
-    'family_proxies',
-    'family_proxy',
-    'task_proxies',
-    'task_proxy',
-]
 
 DEF_TYPES = [
     'families',
@@ -283,22 +277,35 @@ NODES_EDGES_ARGS_ALL = {
 
 # Resolvers:
 
-def get_type_str(obj_type):
-    """Iterate through the objects of_type to find the inner-most type."""
-    pointer = obj_type
-    while hasattr(pointer, 'of_type'):
-        pointer = pointer.of_type
-    return str(pointer).replace('!', '')
+def field_name_from_type(
+    obj_type: 'Union[GraphQLNamedType, GraphQLList, GraphQLNonNull]'
+) -> str:
+    """Return the field name for given a GraphQL type.
+
+    If the type is a list or non-null, the base field is extracted.
+    """
+    named_type = cast('GraphQLNamedType', get_named_type(obj_type))
+    try:
+        return NODE_MAP[named_type.name]
+    except KeyError:
+        raise ValueError(f"'{named_type.name}' is not a node type")
 
 
-def process_resolver_info(root, info, args):
+def get_resolvers(info: 'ResolveInfo') -> 'BaseResolvers':
+    """Return the resolvers from the context."""
+    return cast('dict', info.context)['resolvers']
+
+
+def process_resolver_info(
+    root: Optional[Any], info: 'ResolveInfo', args: Dict[str, Any]
+) -> Tuple[str, Optional[Any]]:
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
     # to know which delta-store to use."""
     if 'backend_sub_id' in info.variable_values:
         args['sub_id'] = info.variable_values['backend_sub_id']
 
-    field_name = to_snake_case(info.field_name)
+    field_name: str = to_snake_case(info.field_name)
     # root is the parent data object.
     # i.e. PbWorkflow or list of IDs graphene.List(String)
     if isinstance(root, dict):
@@ -318,7 +325,7 @@ def get_native_ids(field_ids):
     return field_ids
 
 
-async def get_workflows(root, info, **args):
+async def get_workflows(root, info: 'ResolveInfo', **args):
     """Get filtered workflows."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -327,11 +334,11 @@ async def get_workflows(root, info, **args):
 
     args['workflows'] = [Tokens(w_id) for w_id in args['ids']]
     args['exworkflows'] = [Tokens(w_id) for w_id in args['exids']]
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     return await resolvers.get_workflows(args)
 
 
-async def get_workflow_by_id(root, info, **args):
+async def get_workflow_by_id(root, info: 'ResolveInfo', **args):
     """Return single workflow element."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -339,11 +346,13 @@ async def get_workflow_by_id(root, info, **args):
         args['id'] = workflow.id
 
     args['workflow'] = args['id']
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     return await resolvers.get_workflow_by_id(args)
 
 
-async def get_nodes_all(root, info, **args):
+async def get_nodes_all(
+    root: Optional[Any], info: 'ResolveInfo', **args
+):
     """Resolver for returning job, task, family nodes"""
 
     _, field_ids = process_resolver_info(root, info, args)
@@ -357,10 +366,10 @@ async def get_nodes_all(root, info, **args):
     elif field_ids == []:
         return []
 
-    node_type = NODE_MAP[get_type_str(info.return_type)]
+    node_field_name = field_name_from_type(info.return_type)
 
     for arg in ('ids', 'exids'):
-        if node_type in DEF_TYPES:
+        if node_field_name in DEF_TYPES:
             # namespace nodes don't fit into the universal ID scheme so must
             # be tokenised manually
             args[arg] = [
@@ -376,15 +385,17 @@ async def get_nodes_all(root, info, **args):
             args[arg] = [Tokens(n_id, relative=True) for n_id in args[arg]]
     for arg in ('workflows', 'exworkflows'):
         args[arg] = [Tokens(w_id) for w_id in args[arg]]
-    resolvers = info.context.get('resolvers')
-    return await resolvers.get_nodes_all(node_type, args)
+    resolvers = get_resolvers(info)
+    return await resolvers.get_nodes_all(node_field_name, args)
 
 
-async def get_nodes_by_ids(root, info, **args):
+async def get_nodes_by_ids(
+    root: Optional[Any], info: 'ResolveInfo', **args
+):
     """Resolver for returning job, task, family node"""
     field_name, field_ids = process_resolver_info(root, info, args)
 
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     if field_ids == []:
         parent_id = getattr(root, 'id', None)
         # Find node ids from parent
@@ -393,10 +404,13 @@ async def get_nodes_by_ids(root, info, **args):
             parent_args.update(
                 {'id': parent_id, 'delta_store': False}
             )
-            parent_type = get_type_str(info.parent_type)
-            if parent_type in NODE_MAP:
+            parent_type = cast(
+                'GraphQLNamedType', get_named_type(info.parent_type)
+            )
+            if parent_type.name in NODE_MAP:
                 parent = await resolvers.get_node_by_id(
-                    NODE_MAP[parent_type], parent_args)
+                    NODE_MAP[parent_type.name], parent_args
+                )
             else:
                 parent = await resolvers.get_workflow_by_id(parent_args)
             field_ids = getattr(parent, field_name, None)
@@ -405,14 +419,16 @@ async def get_nodes_by_ids(root, info, **args):
     if field_ids:
         args['native_ids'] = get_native_ids(field_ids)
 
-    node_type = NODE_MAP[get_type_str(info.return_type)]
+    node_field_name = field_name_from_type(info.return_type)
 
     args['ids'] = [Tokens(n_id, relative=True) for n_id in args['ids']]
     args['exids'] = [Tokens(n_id, relative=True) for n_id in args['exids']]
-    return await resolvers.get_nodes_by_ids(node_type, args)
+    return await resolvers.get_nodes_by_ids(node_field_name, args)
 
 
-async def get_node_by_id(root, info, **args):
+async def get_node_by_id(
+    root: Optional[Any], info: 'ResolveInfo', **args
+):
     """Resolver for returning job, task, family node"""
 
     field_name, field_id = process_resolver_info(root, info, args)
@@ -422,7 +438,7 @@ async def get_node_by_id(root, info, **args):
     elif field_name == 'target_node':
         field_name = 'target'
 
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     if args.get('id') is None:
         field_id = getattr(root, field_name, None)
         # Find node id from parent
@@ -435,7 +451,7 @@ async def get_node_by_id(root, info, **args):
                 )
                 args['id'] = parent_id
                 parent = await resolvers.get_node_by_id(
-                    NODE_MAP[get_type_str(info.parent_type)],
+                    field_name_from_type(info.parent_type),
                     parent_args
                 )
                 field_id = getattr(parent, field_name, None)
@@ -445,11 +461,11 @@ async def get_node_by_id(root, info, **args):
             return None
 
     return await resolvers.get_node_by_id(
-        NODE_MAP[get_type_str(info.return_type)],
-        args)
+        field_name_from_type(info.return_type), args
+    )
 
 
-async def get_edges_all(root, info, **args):
+async def get_edges_all(root, info: 'ResolveInfo', **args):
     """Get all edges from the store filtered by args."""
 
     process_resolver_info(root, info, args)
@@ -460,11 +476,11 @@ async def get_edges_all(root, info, **args):
     args['exworkflows'] = [
         Tokens(w_id) for w_id in args['exworkflows']
     ]
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     return await resolvers.get_edges_all(args)
 
 
-async def get_edges_by_ids(root, info, **args):
+async def get_edges_by_ids(root, info: 'ResolveInfo', **args):
     """Get all edges from the store by id lookup filtered by args."""
 
     _, field_ids = process_resolver_info(root, info, args)
@@ -474,11 +490,11 @@ async def get_edges_by_ids(root, info, **args):
     elif field_ids == []:
         return []
 
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
     return await resolvers.get_edges_by_ids(args)
 
 
-async def get_nodes_edges(root, info, **args):
+async def get_nodes_edges(root, info: 'ResolveInfo', **args):
     """Resolver for returning job, task, family nodes"""
 
     process_resolver_info(root, info, args)
@@ -494,12 +510,11 @@ async def get_nodes_edges(root, info, **args):
             Tokens(w_id) for w_id in args['exworkflows']
         ]
 
-    node_type = NODE_MAP['TaskProxy']
     args['ids'] = [Tokens(n_id) for n_id in args['ids']]
     args['exids'] = [Tokens(n_id) for n_id in args['exids']]
 
-    resolvers = info.context.get('resolvers')
-    root_nodes = await resolvers.get_nodes_all(node_type, args)
+    resolvers = get_resolvers(info)
+    root_nodes = await resolvers.get_nodes_all(TASK_PROXIES, args)
     return await resolvers.get_nodes_edges(root_nodes, args)
 
 
@@ -519,18 +534,18 @@ def resolve_state_tasks(root, info, **args):
         if state in data}
 
 
-async def resolve_broadcasts(root, info, **args):
+async def resolve_broadcasts(root, info: 'ResolveInfo', **args):
     """Resolve and parse broadcasts from JSON."""
     broadcasts = json.loads(
         getattr(root, to_snake_case(info.field_name), '{}'))
-    resolvers = info.context.get('resolvers')
+    resolvers = get_resolvers(info)
 
     if not args['ids']:
         return broadcasts
 
-    result = {}
+    result: Dict[str, dict] = {}
     t_type = NODE_MAP['Task']
-    t_args = {'workflows': [Tokens(root.id)]}
+    t_args: Dict[str, list] = {'workflows': [Tokens(root.id)]}
     for n_id in args['ids']:
         tokens = Tokens(n_id)
         point_string = tokens['cycle']
@@ -1470,9 +1485,7 @@ async def mutator(
     if kwargs.get('args', False):
         kwargs.update(kwargs.get('args', {}))
         kwargs.pop('args')
-    resolvers: 'BaseResolvers' = (
-        info.context.get('resolvers')  # type: ignore[union-attr]
-    )
+    resolvers = get_resolvers(info)
     meta = info.context.get('meta')  # type: ignore[union-attr]
     res = await resolvers.mutator(info, command, w_args, kwargs, meta)
     return GenericResponse(result=res)
@@ -2218,9 +2231,9 @@ SUB_RESOLVERS = {
 }
 
 
-def delta_subs(root, info, **args) -> AsyncGenerator[Any, None]:
+def delta_subs(root, info: 'ResolveInfo', **args) -> AsyncGenerator[Any, None]:
     """Generates the root data from the async gen resolver."""
-    return info.context.get('resolvers').subscribe_delta(root, info, args)
+    return get_resolvers(info).subscribe_delta(root, info, args)
 
 
 class Pruned(ObjectType):
