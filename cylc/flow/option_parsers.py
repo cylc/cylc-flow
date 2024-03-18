@@ -790,9 +790,9 @@ def cleanup_sysargv(
     new_args[1] = script_name
 
     # replace source path with workflow ID.
-    if str(source) in sys.argv:
+    if str(source) in new_args:
         new_args.remove(str(source))
-    if workflow_id not in sys.argv:
+    if workflow_id not in new_args:
         new_args.append(workflow_id)
 
     sys.argv = new_args

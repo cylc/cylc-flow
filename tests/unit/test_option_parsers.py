@@ -383,6 +383,22 @@ def test_combine_options(inputs, expect):
             'play --foo something myworkflow'.split(),
             id='no path given'
         ),
+        param(
+            'vip -n myworkflow --no-run-name'.split(),
+            {
+                'script_name': 'play',
+                'workflow_id': 'myworkflow',
+                'compound_script_opts': [
+                    OptionSettings(['--workflow-name', '-n']),
+                    OptionSettings(['--no-run-name']),
+                ],
+                'script_opts': [
+                    OptionSettings(['--not-used']),
+                ]
+            },
+            'play myworkflow'.split(),
+            id='workflow-id-added'
+        ),
     ]
 )
 def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
