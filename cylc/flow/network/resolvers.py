@@ -839,24 +839,25 @@ class Resolvers(BaseResolvers):
             )
         return (True, f'Messages queued: {len(messages)}')
 
-    def set_graph_window_extent(self, n_edge_distance):
+    def set_graph_window_extent(
+        self, n_edge_distance: int
+    ) -> Tuple[bool, str]:
         """Set data-store graph window to new max edge distance.
 
         Args:
-            n_edge_distance (int):
+            n_edge_distance:
                 Max edge distance 0..n from active node.
 
         Returns:
             tuple: (outcome, message)
 
-            outcome (bool)
+            outcome
                 True if command successfully queued.
-            message (str)
+            message
                 Information about outcome.
 
         """
         if n_edge_distance >= 0:
             self.schd.data_store_mgr.set_graph_window_extent(n_edge_distance)
             return (True, f'Maximum edge distance set to {n_edge_distance}')
-        else:
-            return (False, 'Edge distance cannot be negative')
+        return (False, 'Edge distance cannot be negative')
