@@ -787,7 +787,7 @@ class CylcWorkflowDAO:
 
     def select_prev_instances(
         self, name: str, point: str
-    ) -> List[Tuple[int, bool, Set[int], int]]:
+    ) -> List[Tuple[int, bool, Set[int], str]]:
         """Select task_states table info about previous instances of a task.
 
         Flow merge results in multiple entries for the same submit number.
@@ -799,19 +799,17 @@ class CylcWorkflowDAO:
             r"SELECT flow_nums,submit_num,flow_wait,status FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
-        ret = []
-        for flow_nums_str, submit_num, flow_wait, status in (
-            self.connect().execute(stmt, (name, point,))
-        ):
-            ret.append(
-                (
-                    submit_num,
-                    flow_wait == 1,
-                    deserialise(flow_nums_str),
-                    status
-                )
+        return [
+            (
+                submit_num,
+                flow_wait == 1,
+                deserialise(flow_nums_str),
+                status
             )
-        return ret
+            for flow_nums_str, submit_num, flow_wait, status in (
+                self.connect().execute(stmt, (name, point,))
+            )
+        ]
 
     def select_latest_flow_nums(self):
         """Return a list of the most recent previous flow numbers."""
