@@ -1505,7 +1505,7 @@ class TaskPool:
             # never spawned before in any flow
             submit_num = 0
 
-        prev_status = TASK_STATUS_WAITING
+        prev_status: str = TASK_STATUS_WAITING
         prev_flow_wait = False
 
         for _snum, f_wait, old_fnums, status in info:
