@@ -463,7 +463,7 @@ class DataStoreMgr:
     ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
-    def __init__(self, schd):
+    def __init__(self, schd, n_edge_distance=1):
         self.schd = schd
         self.id_ = Tokens(
             user=self.schd.owner,
@@ -477,7 +477,7 @@ class DataStoreMgr:
         self.updated_state_families = set()
         # Update workflow state totals once more post delta application.
         self.state_update_follow_on = False
-        self.n_edge_distance = 1
+        self.n_edge_distance = n_edge_distance
         self.next_n_edge_distance = None
         self.latest_state_tasks = {
             state: deque(maxlen=LATEST_STATE_TASKS_QUEUE_SIZE)
@@ -530,7 +530,7 @@ class DataStoreMgr:
         """
         # Reset attributes/data-store on reload:
         if reloaded:
-            self.__init__(self.schd)
+            self.__init__(self.schd, self.n_edge_distance)
 
         # Static elements
         self.generate_definition_elements()
@@ -2110,11 +2110,11 @@ class DataStoreMgr:
                 self.state_update_families.add(fam_node.first_parent)
             self.state_update_families.remove(fp_id)
 
-    def set_graph_window_extent(self, n_edge_distance):
+    def set_graph_window_extent(self, n_edge_distance: int) -> None:
         """Set what the max edge distance will change to.
 
         Args:
-            n_edge_distance (int):
+            n_edge_distance:
                 Maximum edge distance from active node.
 
         """
