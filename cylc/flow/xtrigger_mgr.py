@@ -204,20 +204,18 @@ class XtriggerManager:
 
     # Example:
     [scheduling]
-        sequential xtrigger default = True
+        sequential xtriggers = True
         [[xtriggers]]
-            clock_0 = wall_clock()  # offset PT0H
-            clock_1 = wall_clock(offset=PT1H)
-                 # or wall_clock(PT1H)
+            # "sequential=False" here overrides workflow and function default.
+            clock_0 = wall_clock(sequential=False)
             workflow_x = workflow_state(
                 workflow=other,
                 point=%(task_cycle_point)s,
-                sequential=False
             ):PT30S
         [[graph]]
             PT1H = '''
-                @clock_1 & @workflow_x => foo & bar
-                @wall_clock = baz  # pre-defined zero-offset clock
+                @workflow_x => foo & bar  # spawned on workflow_x satisfaction
+                @clock_0 => baz  # baz spawned out to RH
             '''
 
     Args:
@@ -259,7 +257,7 @@ class XtriggerManager:
         # Labels whose xtriggers are sequentially checked.
         self.sequential_xtrigger_labels: Set[str] = set()
         # Gather parentless tasks whose xtrigger(s) have been satisfied
-        # (these will be used to spawn the next occurance).
+        # (these will be used to spawn the next occurrence).
         self.sequential_spawn_next: Set[str] = set()
         self.sequential_has_spawned_next: Set[str] = set()
 

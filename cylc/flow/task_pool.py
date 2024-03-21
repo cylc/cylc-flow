@@ -1803,7 +1803,7 @@ class TaskPool:
         items: Iterable[str],
         outputs: List[str],
         prereqs: List[str],
-        flow: List[Union[str, int]],
+        flow: List[str],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
@@ -2001,7 +2001,7 @@ class TaskPool:
 
     def _get_flow_nums(
             self,
-            flow: List[Union[str, int]],
+            flow: List[str],
             meta: Optional[str] = None,
     ) -> Optional[Set[int]]:
         """Get correct flow numbers given user command options."""
@@ -2073,7 +2073,7 @@ class TaskPool:
 
     def force_trigger_tasks(
         self, items: Iterable[str],
-        flow: List[Union[str, int]],
+        flow: List[str],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):

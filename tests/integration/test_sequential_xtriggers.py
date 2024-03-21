@@ -224,7 +224,7 @@ async def test_override(flow, scheduler, start):
     """Test that the 'sequential=False' arg can override a default of True."""
     wid = flow({
         'scheduling': {
-            'spawn from xtriggers sequentially': True,
+            'sequential xtriggers': True,
             'xtriggers': {
                 'xt1': 'custom_xt()',
                 'xt2': 'custom_xt(sequential=False)',

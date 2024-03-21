@@ -6,7 +6,7 @@ hold after cycle point =
 stop after cycle point = 
 cycling mode = integer
 runahead limit = P4
-spawn from xtriggers sequentially = False
+sequential xtriggers = False
 [[queues]]
     [[[default]]]
         limit = 100

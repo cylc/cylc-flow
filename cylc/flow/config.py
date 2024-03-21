@@ -1715,7 +1715,7 @@ class WorkflowConfig:
 
         if self.xtrigger_mgr is not None:
             self.xtrigger_mgr.sequential_xtriggers_default = (
-                self.cfg['scheduling']['spawn from xtriggers sequentially']
+                self.cfg['scheduling']['sequential xtriggers']
             )
         for label in xtrig_labels:
             try:
