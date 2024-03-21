@@ -813,6 +813,8 @@ with Conf(
 
             One sequential xtrigger on a parentless task with multiple
             xtriggers will cause sequential spawning.
+
+            .. versionadded:: 8.3.0
         ''')
         with Conf('xtriggers', desc='''
             This section is for *External Trigger* function declarations -
