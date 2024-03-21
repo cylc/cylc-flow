@@ -840,9 +840,14 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
             raise WorkflowFilesError(err_msg.format('run<number>'))
 
 
-def infer_latest_run_from_id(workflow_id: str) -> str:
-    run_dir = Path(get_workflow_run_dir(workflow_id))
-    _, id_ = infer_latest_run(run_dir)
+def infer_latest_run_from_id(
+    workflow_id: str, alt_run_dir: Optional[str] = None
+) -> str:
+    if alt_run_dir is not None:
+        run_dir = Path(alt_run_dir) / Path(workflow_id)
+    else:
+        run_dir = Path(get_workflow_run_dir(workflow_id))
+    _, id_ = infer_latest_run(run_dir, alt_run_dir=alt_run_dir)
     return id_
 
 
@@ -850,6 +855,7 @@ def infer_latest_run(
     path: Path,
     implicit_runN: bool = True,
     warn_runN: bool = True,
+    alt_run_dir: Optional[str] = None,
 ) -> Tuple[Path, str]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
@@ -868,15 +874,17 @@ def infer_latest_run(
         - WorkflowFilesError if the runN symlink is not valid.
         - InputError if the path does not exist.
     """
-    cylc_run_dir = get_cylc_run_dir()
+    cylc_run_dir = alt_run_dir or get_cylc_run_dir()
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
+
     if not path.exists():
         raise InputError(
             f'Workflow ID not found: {id_}\n(Directory not found: {path})'
         )
+
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
         if warn_runN:

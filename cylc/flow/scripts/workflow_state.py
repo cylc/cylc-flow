@@ -162,7 +162,7 @@ def get_option_parser() -> COP:
         help="The top level cylc run directory if non-standard. The "
              "database should be DIR/WORKFLOW_ID/log/db. Use to interrogate "
              "workflows owned by others, etc.; see note above.",
-        metavar="DIR", action="store", dest="run_dir", default=None)
+        metavar="DIR", action="store", dest="alt_run_dir", default=None)
 
     parser.add_option(
         "-s", "--offset",
@@ -196,10 +196,6 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, *_ = parse_id(
-        workflow_id,
-        constraint='workflows',
-    )
 
     if options.use_task_point and options.cycle:
         raise InputError(
@@ -232,10 +228,17 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         raise InputError(f"invalid status '{options.status}'")
 
     # this only runs locally
-    if options.run_dir:
-        run_dir = expand_path(options.run_dir)
+    if options.alt_run_dir:
+        run_dir = alt_run_dir = expand_path(options.alt_run_dir)
     else:
         run_dir = get_cylc_run_dir()
+        alt_run_dir = None
+
+    workflow_id, *_ = parse_id(
+        workflow_id,
+        constraint='workflows',
+        alt_run_dir=alt_run_dir
+    )
 
     pollargs = {
         'workflow_id': workflow_id,
