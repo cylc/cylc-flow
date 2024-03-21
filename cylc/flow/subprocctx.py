@@ -18,10 +18,38 @@
 Coerce more value type from string (to time point, duration, xtriggers, etc.).
 """
 
+from inspect import Parameter
 import json
 from shlex import quote
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from cylc.flow.wallclock import get_current_time_string
+
+if TYPE_CHECKING:
+    from inspect import Signature
+
+
+def add_kwarg_to_sig(
+    sig: 'Signature', arg_name: str, default: Any
+) -> 'Signature':
+    """Return a new signature with a kwarg added."""
+    # Note: added kwarg has to be before **kwargs ("variadic") in the signature
+    positional_or_keyword: List[Parameter] = []
+    variadic: List[Parameter] = []
+    for param in sig.parameters.values():
+        if param.kind == Parameter.VAR_KEYWORD:
+            variadic.append(param)
+        else:
+            positional_or_keyword.append(param)
+    return sig.replace(parameters=[
+        *positional_or_keyword,
+        Parameter(
+            arg_name,
+            kind=Parameter.KEYWORD_ONLY,
+            default=default,
+        ),
+        *variadic,
+    ])
 
 
 class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
@@ -115,23 +143,31 @@ class SubFuncContext(SubProcContext):
 
     Attributes:
         # See also parent class attributes.
-        .label (str):
+        .label:
             function label under [xtriggers] in flow.cylc
-        .func_name (str):
+        .func_name:
             function name
-        .func_args (list):
+        .func_args:
             function positional args
-        .func_kwargs (dict):
+        .func_kwargs:
             function keyword args
-        .intvl (float - seconds):
-            function call interval (how often to check the external trigger)
-        .ret_val (bool, dict)
+        .intvl:
+            function call interval in secs (how often to check the
+            external trigger)
+        .ret_val
             function return: (satisfied?, result to pass to trigger tasks)
     """
 
     DEFAULT_INTVL = 10.0
 
-    def __init__(self, label, func_name, func_args, func_kwargs, intvl=None):
+    def __init__(
+        self,
+        label: str,
+        func_name: str,
+        func_args: List[Any],
+        func_kwargs: Dict[str, Any],
+        intvl: Union[float, str] = DEFAULT_INTVL
+    ):
         """Initialize a function context."""
         self.label = label
         self.func_name = func_name
@@ -141,9 +177,12 @@ class SubFuncContext(SubProcContext):
             self.intvl = float(intvl)
         except (TypeError, ValueError):
             self.intvl = self.DEFAULT_INTVL
-        self.ret_val = (False, None)  # (satisfied, broadcast)
+        self.ret_val: Tuple[
+            bool, Optional[dict]
+        ] = (False, None)  # (satisfied, broadcast)
         super(SubFuncContext, self).__init__(
-            'xtrigger-func', cmd=[], shell=False)
+            'xtrigger-func', cmd=[], shell=False
+        )
 
     def update_command(self, workflow_run_dir):
         """Update the function wrap command after changes."""

@@ -1192,7 +1192,10 @@ class DataStoreMgr:
                 point,
                 flow_nums,
                 submit_num=0,
-                data_mode=True
+                data_mode=True,
+                sequential_xtrigger_labels=(
+                    self.schd.xtrigger_mgr.sequential_xtrigger_labels
+                ),
             )
 
         is_orphan = False

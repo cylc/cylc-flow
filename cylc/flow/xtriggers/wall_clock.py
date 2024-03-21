@@ -22,7 +22,7 @@ from cylc.flow.cycling.iso8601 import interval_parse
 from cylc.flow.exceptions import WorkflowConfigError
 
 
-def wall_clock(offset: str = 'PT0S'):
+def wall_clock(offset: str = 'PT0S', sequential: bool = True):
     """Trigger at a specific real "wall clock" time relative to the cycle point
     in the graph.
 
@@ -48,6 +48,8 @@ def _wall_clock(trigger_time: int) -> bool:
     Args:
         trigger_time:
             Trigger time as seconds since Unix epoch.
+        sequential (bool):
+            Used by the workflow to flag corresponding xtriggers as sequential.
     """
     return time() > trigger_time
 

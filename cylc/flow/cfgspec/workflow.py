@@ -802,9 +802,21 @@ with Conf(
                     :ref:`SequentialTasks`.
             ''')
 
+        Conf('sequential xtriggers', VDR.V_BOOLEAN, False,
+             desc='''
+            If ``True``, tasks that only depend on xtriggers will not spawn
+            until the xtrigger of previous (cycle point) instance is satisfied.
+            Otherwise, they will all spawn at once out to the runahead limit.
+
+            This setting can be overridden by the reserved keyword argument
+            ``sequential`` in individual xtrigger declarations.
+
+            One sequential xtrigger on a parentless task with multiple
+            xtriggers will cause sequential spawning.
+        ''')
         with Conf('xtriggers', desc='''
-                This section is for *External Trigger* function declarations -
-                see :ref:`Section External Triggers`.
+            This section is for *External Trigger* function declarations -
+            see :ref:`Section External Triggers`.
         '''):
             Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
                 Any user-defined event trigger function declarations and

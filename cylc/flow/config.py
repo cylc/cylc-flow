@@ -1705,16 +1705,21 @@ class WorkflowConfig:
             self.taskdefs[right].add_dependency(dependency, seq)
 
         validator = XtriggerNameValidator.validate
-        for label in self.cfg['scheduling']['xtriggers']:
+        xtrigs = self.cfg['scheduling']['xtriggers']
+        for label in xtrigs:
             valid, msg = validator(label)
             if not valid:
                 raise WorkflowConfigError(
                     f'Invalid xtrigger name "{label}" - {msg}'
                 )
 
+        if self.xtrigger_mgr is not None:
+            self.xtrigger_mgr.sequential_xtriggers_default = (
+                self.cfg['scheduling']['sequential xtriggers']
+            )
         for label in xtrig_labels:
             try:
-                xtrig = self.cfg['scheduling']['xtriggers'][label]
+                xtrig = xtrigs[label]
             except KeyError:
                 if label != 'wall_clock':
                     raise WorkflowConfigError(f"xtrigger not defined: {label}")

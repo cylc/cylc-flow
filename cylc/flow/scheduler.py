@@ -481,6 +481,7 @@ class Scheduler:
             self.config,
             self.workflow_db_mgr,
             self.task_events_mgr,
+            self.xtrigger_mgr,
             self.data_store_mgr,
             self.flow_mgr
         )
@@ -1747,6 +1748,9 @@ class Scheduler:
 
                 if all(itask.is_ready_to_run()):
                     self.pool.queue_task(itask)
+
+            if self.xtrigger_mgr.sequential_spawn_next:
+                self.pool.spawn_parentless_sequential_xtriggers()
 
             if self.xtrigger_mgr.do_housekeeping:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
