@@ -44,6 +44,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE,
 )
 
 if TYPE_CHECKING:
@@ -378,3 +379,65 @@ async def test_clock_expire_partially_satisfied_task(
 
         # the task should now be in the expired state
         assert e.state(TASK_STATUS_EXPIRED)
+
+
+async def test_clock_expiry(
+    flow,
+    scheduler,
+    start,
+):
+    """Waiting tasks should be considered for clock-expiry.
+
+    Tests two things:
+
+    * Manually triggered tasks should not be considered for clock-expiry.
+
+      Tests proposal point 10:
+      https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+
+    * Active tasks should not be considered for clock-expiry.
+
+      Closes https://github.com/cylc/cylc-flow/issues/6025
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '2000',
+            'runahead limit': 'P1',
+            'special tasks': {
+                'clock-expire': 'x'
+            },
+            'graph': {
+                'P1Y': 'x'
+            },
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # the first task (waiting)
+        one = schd.pool.get_task(ISO8601Point('20000101T0000Z'), 'x')
+        assert one
+
+        # the second task (preparing)
+        two = schd.pool.get_task(ISO8601Point('20010101T0000Z'), 'x')
+        assert two
+        two.state_reset(TASK_STATUS_PREPARING)
+
+        # the third task (force-triggered)
+        schd.pool.force_trigger_tasks(['20100101T0000Z/x'], ['1'])
+        three = schd.pool.get_task(ISO8601Point('20100101T0000Z'), 'x')
+        assert three
+
+        # check for expiry
+        schd.pool.clock_expire_tasks()
+
+        # the first task should be expired (it was waiting)
+        assert one.state(TASK_STATUS_EXPIRED)
+        assert one.state.outputs.is_message_complete(TASK_OUTPUT_EXPIRED)
+
+        # the second task should *not* be expired (it was active)
+        assert not two.state(TASK_STATUS_EXPIRED)
+        assert not two.state.outputs.is_message_complete(TASK_OUTPUT_EXPIRED)
+
+        # the third task should *not* be expired (it was a manual submit)
+        assert not three.state(TASK_STATUS_EXPIRED)
+        assert not three.state.outputs.is_message_complete(TASK_OUTPUT_EXPIRED)

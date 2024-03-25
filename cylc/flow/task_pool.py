@@ -2161,10 +2161,25 @@ class TaskPool:
     def clock_expire_tasks(self):
         """Expire any tasks past their clock-expiry time."""
         for itask in self.get_tasks():
-            if not itask.clock_expire():
-                continue
-            self.task_events_mgr.process_message(
-                itask, logging.WARNING, TASK_OUTPUT_EXPIRED)
+            if (
+                # force triggered tasks can not clock-expire
+                # see proposal point 10:
+                # https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+                not itask.is_manual_submit
+
+                # only waiting tasks can clock-expire
+                # see https://github.com/cylc/cylc-flow/issues/6025
+                # (note retrying tasks will be in the waiting state)
+                and itask.state(TASK_STATUS_WAITING)
+
+                # check if this task is clock expired
+                and itask.clock_expire()
+            ):
+                self.task_events_mgr.process_message(
+                    itask,
+                    logging.WARNING,
+                    TASK_OUTPUT_EXPIRED,
+                )
 
     def task_succeeded(self, id_):
         """Return True if task with id_ is in the succeeded state."""
