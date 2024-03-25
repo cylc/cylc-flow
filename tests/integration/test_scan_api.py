@@ -80,14 +80,14 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
                 }
             },
             'runtime': {
-                'one': {
-                    'execution time limit': 'PT10S'
+                'foo': {
+                    'simulation': {'default run length': 'PT10S'}
                 }
             }
         },
         name='-running-'
     )
-    schd2 = mod_scheduler(reg2, run_mode='simulation', paused_start=False)
+    schd2 = mod_scheduler(reg2, paused_start=False)
 
     # run cylc run
     async with mod_run(schd1):

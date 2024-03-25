@@ -37,7 +37,7 @@ async def test_trigger_invalid(mod_one, start, log_filter, flow_strs):
     """Ensure invalid flow values are rejected."""
     async with start(mod_one) as log:
         log.clear()
-        assert mod_one.pool.force_trigger_tasks(['*'], flow_strs) == 0
+        assert mod_one.pool.force_trigger_tasks(['*'], flow_strs) is None
         assert len(log_filter(log, level=logging.WARN)) == 1
 
 

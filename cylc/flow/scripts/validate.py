@@ -28,8 +28,8 @@ use 'cylc view -i,--inline WORKFLOW' for comparison.
 import asyncio
 from ansimarkup import parse as cparse
 from copy import deepcopy
-from optparse import Values
 import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
@@ -55,6 +55,9 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.scheduler_cli import RUN_MODE
+
+if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Values
 
 
 VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
@@ -130,14 +133,10 @@ ValidateOptions = Options(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    _main(parser, options, workflow_id)
+    asyncio.run(run(parser, options, workflow_id))
 
 
-def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    asyncio.run(wrapped_main(parser, options, workflow_id))
-
-
-async def wrapped_main(
+async def run(
     parser: COP, options: 'Values', workflow_id: str
 ) -> None:
     """cylc validate CLI."""

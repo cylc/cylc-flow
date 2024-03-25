@@ -42,6 +42,7 @@ from typing import (
     Optional,
     Set,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -187,7 +188,7 @@ def init_clean(id_: str, opts: 'Values') -> None:
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
-                id_, platform_names, opts.rm_dirs, opts.remote_timeout
+                id_, platform_names, opts.remote_timeout, opts.rm_dirs
             )
 
     if not opts.remote_only:
@@ -338,8 +339,8 @@ def _clean_using_glob(
 def remote_clean(
     id_: str,
     platform_names: Iterable[str],
+    timeout: str,
     rm_dirs: Optional[List[str]] = None,
-    timeout: str = '120'
 ) -> None:
     """Run subprocesses to clean a workflow on its remote install targets
     (skip localhost), given a set of platform names to look up.
@@ -348,8 +349,9 @@ def remote_clean(
         id_: Workflow name.
         platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
+        timeout: ISO 8601 duration or number of seconds to wait before
+            cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
-        timeout: Number of seconds to wait before cancelling.
     """
     try:
         install_targets_map = (
@@ -358,6 +360,7 @@ def remote_clean(
         raise PlatformLookupError(
             f"Cannot clean {id_} on remote platforms as the workflow database "
             f"is out of date/inconsistent with the global config - {exc}")
+
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
@@ -376,7 +379,7 @@ def remote_clean(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: Dict[str, PlatformError] = {}
+    failed_targets: Dict[str, Union[PlatformError, str]] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -387,12 +390,17 @@ def remote_clean(
         out, err = item.proc.communicate()
         if out:
             LOG.info(f"[{item.install_target}]\n{out}")
-        if ret_code:
+        if ret_code == 124:
+            failed_targets[item.install_target] = (
+                f"cylc clean timed out after {timeout}s. You can increase "
+                "this timeout using the --timeout option."
+            )
+        elif ret_code:
             this_platform = item.platforms.pop(0)
             excp = PlatformError(
                 PlatformError.MSG_TIDY,
                 this_platform['name'],
-                cmd=item.proc.args,
+                cmd=cast('List[str]', item.proc.args),
                 ret_code=ret_code,
                 out=out,
                 err=err,
@@ -415,9 +423,9 @@ def remote_clean(
             LOG.debug(f"[{item.install_target}]\n{err}")
         sleep(0.2)
     if failed_targets:
-        for target, excp in failed_targets.items():
+        for target, info in failed_targets.items():
             LOG.error(
-                f"Could not clean {id_} on install target: {target}\n{excp}"
+                f"Could not clean {id_} on install target: {target}\n{info}"
             )
         raise CylcError(f"Remote clean failed for {id_}")
 

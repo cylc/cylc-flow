@@ -189,77 +189,87 @@ def test_compute_tree():
 
     """
     tree = compute_tree({
-        'id': 'workflow id',
-        'cyclePoints': [
-            {
-                'id': '1/family-suffix',
-                'cyclePoint': '1'
-            }
-        ],
-        'familyProxies': [
-            {  # top level family
-                'name': 'FOO',
-                'id': '1/FOO',
-                'cyclePoint': '1',
-                'firstParent': {'name': 'root', 'id': '1/root'}
-            },
-            {  # nested family
-                'name': 'FOOT',
-                'id': '1/FOOT',
-                'cyclePoint': '1',
-                'firstParent': {'name': 'FOO', 'id': '1/FOO'}
-            },
-        ],
-        'taskProxies': [
-            {  # top level task
-                'name': 'pub',
-                'id': '1/pub',
-                'firstParent': {'name': 'root', 'id': '1/root'},
-                'cyclePoint': '1',
-                'jobs': []
-            },
-            {  # child task (belongs to family)
-                'name': 'fan',
-                'id': '1/fan',
-                'firstParent': {'name': 'fan', 'id': '1/fan'},
-                'cyclePoint': '1',
-                'jobs': []
-            },
-            {  # nested child task (belongs to incestuous family)
-                'name': 'fool',
-                'id': '1/fool',
-                'firstParent': {'name': 'FOOT', 'id': '1/FOOT'},
-                'cyclePoint': '1',
-                'jobs': []
-            },
-            {  # a task which has jobs
-                'name': 'worker',
-                'id': '1/worker',
-                'firstParent': {'name': 'root', 'id': '1/root'},
-                'cyclePoint': '1',
-                'jobs': [
-                    {'id': '1/worker/03', 'submitNum': '3'},
-                    {'id': '1/worker/02', 'submitNum': '2'},
-                    {'id': '1/worker/01', 'submitNum': '1'}
-                ]
-            }
-        ]
+        'workflows': [{
+            'id': 'workflow id',
+            'port': 1234,
+            'cyclePoints': [
+                {
+                    'id': '1/family-suffix',
+                    'cyclePoint': '1'
+                }
+            ],
+            'familyProxies': [
+                {  # top level family
+                    'name': 'FOO',
+                    'id': '1/FOO',
+                    'cyclePoint': '1',
+                    'firstParent': {'name': 'root', 'id': '1/root'}
+                },
+                {  # nested family
+                    'name': 'FOOT',
+                    'id': '1/FOOT',
+                    'cyclePoint': '1',
+                    'firstParent': {'name': 'FOO', 'id': '1/FOO'}
+                },
+            ],
+            'taskProxies': [
+                {  # top level task
+                    'name': 'pub',
+                    'id': '1/pub',
+                    'firstParent': {'name': 'root', 'id': '1/root'},
+                    'cyclePoint': '1',
+                    'jobs': []
+                },
+                {  # child task (belongs to family)
+                    'name': 'fan',
+                    'id': '1/fan',
+                    'firstParent': {'name': 'fan', 'id': '1/fan'},
+                    'cyclePoint': '1',
+                    'jobs': []
+                },
+                {  # nested child task (belongs to incestuous family)
+                    'name': 'fool',
+                    'id': '1/fool',
+                    'firstParent': {'name': 'FOOT', 'id': '1/FOOT'},
+                    'cyclePoint': '1',
+                    'jobs': []
+                },
+                {  # a task which has jobs
+                    'name': 'worker',
+                    'id': '1/worker',
+                    'firstParent': {'name': 'root', 'id': '1/root'},
+                    'cyclePoint': '1',
+                    'jobs': [
+                        {'id': '1/worker/03', 'submitNum': '3'},
+                        {'id': '1/worker/02', 'submitNum': '2'},
+                        {'id': '1/worker/01', 'submitNum': '1'}
+                    ]
+                }
+            ]
+        }]
     })
 
-    # the workflow node
-    assert tree['type_'] == 'workflow'
-    assert tree['id_'] == 'workflow id'
-    assert list(tree['data']) == [
-        # whatever if present on the node should end up in data
-        'id',
-        'cyclePoints',
-        'familyProxies',
-        'taskProxies'
-    ]
+    # the root node
+    assert tree['type_'] == 'root'
+    assert tree['id_'] == 'root'
     assert len(tree['children']) == 1
 
+    # the workflow node
+    workflow = tree['children'][0]
+    assert workflow['type_'] == 'workflow'
+    assert workflow['id_'] == 'workflow id'
+    assert set(workflow['data']) == {
+        # whatever if present on the node should end up in data
+        'cyclePoints',
+        'familyProxies',
+        'id',
+        'port',
+        'taskProxies'
+    }
+    assert len(workflow['children']) == 1
+
     # the cycle point node
-    cycle = tree['children'][0]
+    cycle = workflow['children'][0]
     assert cycle['type_'] == 'cycle'
     assert cycle['id_'] == '//1'
     assert list(cycle['data']) == [

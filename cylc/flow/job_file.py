@@ -25,15 +25,8 @@ from textwrap import dedent
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
-from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.log_level import verbosity_to_env
 from cylc.flow.config import interpolate_template, ParamExpandError
-
-# the maximum number of task dependencies which Cylc will list before
-# omitting the CYLC_TASK_DEPENDENCIES environment variable
-# see: https://github.com/cylc/cylc-flow/issues/5551
-# NOTE: please update `src/reference/job-script-vars/var-list.txt`
-#       in cylc-doc if changing this value
-MAX_CYLC_TASK_DEPENDENCIES_LEN = 50
 
 
 class JobFileWriter:
@@ -227,18 +220,6 @@ class JobFileWriter:
         handle.write(
             '\n    export CYLC_TASK_NAMESPACE_HIERARCHY="%s"' %
             ' '.join(job_conf['namespace_hierarchy']))
-        if len(job_conf['dependencies']) <= MAX_CYLC_TASK_DEPENDENCIES_LEN:
-            handle.write(
-                '\n    export CYLC_TASK_DEPENDENCIES="%s"' %
-                ' '.join(job_conf['dependencies']))
-        else:
-            # redact the CYLC_TASK_DEPENDENCIES variable but leave a note
-            # explaining why
-            # see: https://github.com/cylc/cylc-flow/issues/5551
-            handle.write(
-                '\n    # CYLC_TASK_DEPENDENCIES=disabled'
-                f' (more than {MAX_CYLC_TASK_DEPENDENCIES_LEN} dependencies)'
-            )
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         handle.write(

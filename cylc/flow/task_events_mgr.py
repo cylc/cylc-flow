@@ -26,14 +26,23 @@ This module provides logic to:
 """
 
 from contextlib import suppress
-from collections import namedtuple
 from enum import Enum
 from logging import DEBUG, INFO, getLevelName
 import os
 from shlex import quote
 import shlex
 from time import time
-from typing import TYPE_CHECKING, List, Optional, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -67,41 +76,108 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
+    TASK_STATUS_EXPIRED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING
 )
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED)
+    TASK_OUTPUT_EXPIRED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUBMIT_FAILED
+)
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
 )
 from cylc.flow.workflow_events import (
     EventData as WorkflowEventData,
+    construct_mail_cmd,
     get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
 
 
 if TYPE_CHECKING:
+    from cylc.flow.id import Tokens
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.scheduler import Scheduler
 
 
-CustomTaskEventHandlerContext = namedtuple(
-    "CustomTaskEventHandlerContext",
-    ["key", "ctx_type", "cmd"])
+class CustomTaskEventHandlerContext(NamedTuple):
+    key: Union[str, Sequence[str]]
+    cmd: str
 
 
-TaskEventMailContext = namedtuple(
-    "TaskEventMailContext",
-    ["key", "ctx_type", "mail_from", "mail_to"])
+class TaskEventMailContext(NamedTuple):
+    key: str
+    mail_from: str
+    mail_to: str
 
 
-TaskJobLogsRetrieveContext = namedtuple(
-    "TaskJobLogsRetrieveContext",
-    ["key", "ctx_type", "platform_name", "max_size"])
+class TaskJobLogsRetrieveContext(NamedTuple):
+    key: Union[str, Sequence[str]]
+    platform_name: Optional[str]
+    max_size: Optional[int]
+
+
+class EventKey(NamedTuple):
+    """Unique identifier for a task event.
+
+    This contains event context information for event handlers.
+    """
+
+    """The event handler name."""
+    handler: str
+
+    """The task event."""
+    event: str
+
+    """The task event message.
+
+    Warning: This information is not currently preserved in the DB so will be
+    lost on restart.
+    """
+    message: str
+
+    """The job tokens."""
+    tokens: 'Tokens'
+
+
+def get_event_id(event: str, itask: 'TaskProxy') -> str:
+    """Return a unique event identifier.
+
+    Some events are not unique e.g. task "started" is unique in that it can
+    only happen once per-job, "warning", however, is not unique as this is a
+    message severity level which could be associated with any number of
+    custom task messages.
+
+    To handle this tasks track non-unique-events and number them to ensure
+    their EventKey's remain unique for ease of event tracking.
+
+    Examples:
+        >>> from types import SimpleNamespace
+
+        # regular events are passed straight through:
+        >>> get_event_id('whatever', SimpleNamespace())
+        'whatever'
+
+        # non-unique events get an integer added to the end:
+        >>> get_event_id('warning', SimpleNamespace(non_unique_events={
+        ...     'warning': None,
+        ... }))
+        'warning-1'
+        >>> get_event_id('warning', SimpleNamespace(non_unique_events={
+        ...     'warning': 2,
+        ... }))
+        'warning-2'
+
+    """
+    if event in TaskEventsManager.NON_UNIQUE_EVENTS:
+        event = f'{event}-{itask.non_unique_events[event] or 1:d}'
+    return event
 
 
 def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
@@ -116,11 +192,11 @@ def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
     try:
         with open(os.path.expandvars(job_activity_log), "ab") as handle:
             handle.write((ctx_str + '\n').encode())
-    except IOError as exc:
-        # This happens when there is no job directory, e.g. if job host
-        # selection command causes an submission failure, there will be no job
-        # directory. In this case, just send the information to the log.
-        LOG.exception(exc)
+    except IOError:
+        # This happens when there is no job directory. E.g., if a job host
+        # selection command causes a submission failure, or if a waiting task
+        # expires before a job log directory is otherwise needed.
+        # (Don't log the exception content, it looks like a bug).
         LOG.info(ctx_str)
     if ctx.cmd and ctx.ret_code:
         LOG.error(ctx_str)
@@ -337,6 +413,7 @@ class TaskEventsManager():
     EVENT_RETRY = "retry"
     EVENT_STARTED = TASK_OUTPUT_STARTED
     EVENT_SUBMITTED = TASK_OUTPUT_SUBMITTED
+    EVENT_EXPIRED = TASK_OUTPUT_EXPIRED
     EVENT_SUBMIT_FAILED = "submission failed"
     EVENT_SUBMIT_RETRY = "submission retry"
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
@@ -353,6 +430,17 @@ class TaskEventsManager():
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
     JOB_SUBMIT_SUCCESS_FLAG = 0
     JOB_SUBMIT_FAIL_FLAG = 1
+    JOB_LOGS_RETRIEVAL_EVENTS = {
+        EVENT_FAILED,
+        EVENT_RETRY,
+        EVENT_SUCCEEDED
+    }
+
+    workflow_cfg: Dict[str, Any]
+    uuid_str: str
+    mail_interval: float = 0
+    mail_smtp: Optional[str] = None
+    mail_footer: Optional[str] = None
 
     def __init__(
         self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
@@ -360,22 +448,16 @@ class TaskEventsManager():
         reset_inactivity_timer_func
     ):
         self.workflow = workflow
-        self.workflow_url = None
-        self.workflow_cfg = {}
-        self.uuid_str = None
         self.proc_pool = proc_pool
         self.workflow_db_mgr = workflow_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.xtrigger_mgr = xtrigger_mgr
         self.data_store_mgr = data_store_mgr
-        self.mail_interval = 0.0
-        self.mail_smtp = None
-        self.mail_footer = None
         self.next_mail_time = None
         self.reset_inactivity_timer_func = reset_inactivity_timer_func
         # NOTE: do not mutate directly
         # use the {add,remove,unset_waiting}_event_timers methods
-        self._event_timers = {}
+        self._event_timers: Dict[EventKey, Any] = {}
         # NOTE: flag for DB use
         self.event_timers_updated = True
         # To be set by the task pool:
@@ -458,15 +540,15 @@ class TaskEventsManager():
         ctx_groups: dict = {}
         now = time()
         for id_key, timer in self._event_timers.copy().items():
-            key1, point, name, submit_num = id_key
             if timer.is_waiting:
                 continue
             # Set timer if timeout is None.
             if not timer.is_timeout_set():
                 if timer.next() is None:
                     LOG.warning(
-                        f"{point}/{name}/{submit_num:02d}"
-                        f" handler:{key1[0]} for task event:{key1[1]} failed"
+                        f"{id_key.tokens.relative_id}"
+                        f" handler:{id_key.handler}"
+                        f" for task event:{id_key.event} failed"
                     )
                     self.remove_event_timer(id_key)
                     continue
@@ -474,22 +556,24 @@ class TaskEventsManager():
                 msg = None
                 if timer.num > 1:
                     msg = (
-                        f"handler:{key1[0]} for task event:{key1[1]} failed,"
+                        f"handler:{id_key.handler}"
+                        f" for task event:{id_key.event} failed,"
                         f" retrying in {timer.delay_timeout_as_str()}"
                     )
                 elif timer.delay:
                     msg = (
-                        f"handler:{key1[0]} for task event:{key1[1]} will"
+                        f"handler:{id_key.handler}"
+                        f" for task event:{id_key.event} will"
                         f" run after {timer.delay_timeout_as_str()}"
                     )
                 if msg:
-                    LOG.debug(f"{point}/{name}/{submit_num:02d} {msg}")
+                    LOG.debug("%s %s", id_key.tokens.relative_id, msg)
             # Ready to run?
             if not timer.is_delay_done() or (
                 # Avoid flooding user's mail box with mail notification.
                 # Group together as many notifications as possible within a
                 # given interval.
-                timer.ctx.ctx_type == self.HANDLER_MAIL and
+                isinstance(timer.ctx, TaskEventMailContext) and
                 not schd.stop_mode and
                 self.next_mail_time is not None and
                 self.next_mail_time > now
@@ -497,11 +581,11 @@ class TaskEventsManager():
                 continue
 
             timer.set_waiting()
-            if timer.ctx.ctx_type == self.HANDLER_CUSTOM:
+            if isinstance(timer.ctx, CustomTaskEventHandlerContext):
                 # Run custom event handlers on their own
                 self.proc_pool.put_command(
                     SubProcContext(
-                        (key1, submit_num),
+                        ((id_key.handler, id_key.event), id_key.tokens['job']),
                         timer.ctx.cmd,
                         env=os.environ,
                         shell=True,  # nosec
@@ -517,11 +601,11 @@ class TaskEventsManager():
 
         next_mail_time = now + self.mail_interval
         for ctx, id_keys in ctx_groups.items():
-            if ctx.ctx_type == self.HANDLER_MAIL:
+            if isinstance(ctx, TaskEventMailContext):
                 # Set next_mail_time if any mail sent
                 self.next_mail_time = next_mail_time
                 self._process_event_email(schd, ctx, id_keys)
-            elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
+            elif isinstance(ctx, TaskJobLogsRetrieveContext):
                 self._process_job_logs_retrieval(schd, ctx, id_keys)
 
     def process_message(
@@ -532,6 +616,7 @@ class TaskEventsManager():
         event_time: Optional[str] = None,
         flag: str = FLAG_INTERNAL,
         submit_num: Optional[int] = None,
+        forced: bool = False
     ) -> Optional[bool]:
         """Parse a task message and update task state.
 
@@ -569,6 +654,8 @@ class TaskEventsManager():
             submit_num:
                 The submit number of the task relevant for the message.
                 If not specified, use latest submit number.
+            forced:
+                If this message is due to manual completion or not (cylc set)
 
         Return:
             None: in normal circumstances.
@@ -581,14 +668,15 @@ class TaskEventsManager():
         if submit_num is None:
             submit_num = itask.submit_num
         if isinstance(severity, int):
-            severity = cast(str, getLevelName(severity))
+            severity = cast('str', getLevelName(severity))
         lseverity = str(severity).lower()
 
         # Any message represents activity.
         self.reset_inactivity_timer_func()
 
         if not self._process_message_check(
-                itask, severity, message, event_time, flag, submit_num):
+            itask, severity, message, event_time, flag, submit_num, forced
+        ):
             return None
 
         # always update the workflow state summary for latest message
@@ -604,76 +692,80 @@ class TaskEventsManager():
         # Satisfy my output, if possible, and spawn children.
         # (first remove signal: failed/EXIT -> failed)
 
+        # Complete the corresponding task output, if there is one.
         msg0 = message.split('/')[0]
-        completed_trigger = itask.state.outputs.set_msg_trg_completion(
-            message=msg0, is_completed=True)
-        self.data_store_mgr.delta_task_output(itask, msg0)
+        if message.startswith(ABORT_MESSAGE_PREFIX):
+            msg0 = TASK_OUTPUT_FAILED
 
-        # Check the `started` event has not been missed e.g. due to
-        # polling delay
-        if (message not in [self.EVENT_SUBMITTED, self.EVENT_SUBMIT_FAILED,
-                            self.EVENT_STARTED]
-                and not itask.state.outputs.is_completed(TASK_OUTPUT_STARTED)):
-            self.setup_event_handlers(
-                itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
-            self.spawn_func(itask, TASK_OUTPUT_STARTED)
+        completed_output = None
+        if msg0 not in [TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_FAILED]:
+            completed_output = itask.state.outputs.set_msg_trg_completion(
+                message=msg0, is_completed=True)
+            if completed_output:
+                self.data_store_mgr.delta_task_output(itask, msg0)
+
+        for implied in (
+            itask.state.outputs.get_incomplete_implied(msg0)
+        ):
+            # Set submitted and/or started first, if skipped.
+            # (whether by forced set, or missed message).
+            LOG.info(f"[{itask}] setting implied output: {implied}")
+            self.process_message(
+                itask, INFO, implied, event_time,
+                self.FLAG_INTERNAL, submit_num, forced
+            )
 
         if message == self.EVENT_STARTED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_RUNNING)
             ):
+                # Already running.
                 return True
-            if itask.state.status == TASK_STATUS_PREPARING:
-                # The started message must have arrived before the submitted
-                # one, so assume that a successful submission occurred and act
-                # accordingly. Note the submitted message is internal, whereas
-                # the started message comes in on the network.
-                self._process_message_submitted(itask, event_time)
-                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
-
-            self._process_message_started(itask, event_time)
-            self.spawn_func(itask, TASK_OUTPUT_STARTED)
+            self._process_message_started(itask, event_time, forced)
+            self.spawn_children(itask, TASK_OUTPUT_STARTED)
 
         elif message == self.EVENT_SUCCEEDED:
-            self._process_message_succeeded(itask, event_time)
-            self.spawn_func(itask, TASK_OUTPUT_SUCCEEDED)
+            self._process_message_succeeded(itask, event_time, forced)
+            self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED)
+
+        elif message == self.EVENT_EXPIRED:
+            self._process_message_expired(itask, event_time, forced)
+            self.spawn_children(itask, TASK_OUTPUT_EXPIRED)
+
         elif message == self.EVENT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
+                # Already failed.
                 return True
             if self._process_message_failed(
-                    itask, event_time, self.JOB_FAILED):
-                self.spawn_func(itask, TASK_OUTPUT_FAILED)
+                itask, event_time, self.JOB_FAILED, forced
+            ):
+                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_SUBMIT_FAILED)
             ):
+                # Already submit-failed
                 return True
             if self._process_message_submit_failed(
-                itask,
-                event_time,
-                submit_num
+                itask, event_time, submit_num, forced
             ):
-                self.spawn_func(itask, TASK_OUTPUT_SUBMIT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED)
+
         elif message == self.EVENT_SUBMITTED:
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state.is_gt(TASK_STATUS_SUBMITTED)
+                    and itask.state.is_gte(TASK_STATUS_SUBMITTED)
             ):
+                # Already submitted.
                 return True
-            if (
-                itask.state.status == TASK_STATUS_PREPARING
-                or itask.tdef.run_mode == 'simulation'
-            ):
-                # If not in the preparing state we already assumed and handled
-                # job submission under the started event above...
-                # (sim mode does not have the job prep state)
-                self._process_message_submitted(itask, event_time)
-                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+            self._process_message_submitted(itask, event_time, forced)
+            self.spawn_children(itask, TASK_OUTPUT_SUBMITTED)
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
@@ -690,27 +782,34 @@ class TaskEventsManager():
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
+                # Already failed.
                 return True
             signal = message[len(FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
             self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
             if self._process_message_failed(
-                    itask, event_time, self.JOB_FAILED):
-                self.spawn_func(itask, TASK_OUTPUT_FAILED)
+                itask, event_time, self.JOB_FAILED, forced
+            ):
+                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
+                # Already failed.
                 return True
             aborted_with = message[len(ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
             self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            if self._process_message_failed(itask, event_time, aborted_with):
-                self.spawn_func(itask, TASK_OUTPUT_FAILED)
+            if self._process_message_failed(
+                itask, event_time, aborted_with, forced
+            ):
+                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
@@ -719,8 +818,8 @@ class TaskEventsManager():
                 itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
-            if itask.state_reset(TASK_STATUS_SUBMITTED):
-                itask.state_reset(is_queued=False)
+            if itask.state_reset(TASK_STATUS_SUBMITTED, forced=forced):
+                itask.state_reset(is_queued=False, forced=forced)
                 self.data_store_mgr.delta_task_state(itask)
                 self.data_store_mgr.delta_task_queued(itask)
             self._reset_job_timers(itask)
@@ -729,11 +828,15 @@ class TaskEventsManager():
             # system, we should probably aim to remove support for job vacation
             # instead. Otherwise, we should have:
             # self.setup_event_handlers(itask, 'vacated', message)
-        elif completed_trigger:
-            # Message of an as-yet unreported custom task output.
+
+        elif completed_output:
+            # Message of a custom task output.
             # No state change.
-            self.setup_event_handlers(itask, completed_trigger, message)
-            self.spawn_func(itask, msg0)
+            # Log completion of o      (not needed for standard outputs)
+            LOG.info(f"[{itask}] completed output {completed_output}")
+            self.setup_event_handlers(itask, completed_output, message)
+            self.spawn_children(itask, msg0)
+
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -743,9 +846,11 @@ class TaskEventsManager():
             LOG.debug(f"[{itask}] unhandled: {message}")
             self._db_events_insert(
                 itask, (f"message {lseverity}"), message)
+
         if lseverity in self.NON_UNIQUE_EVENTS:
             itask.non_unique_events.update({lseverity: 1})
             self.setup_event_handlers(itask, lseverity, message)
+
         return None
 
     def _process_message_check(
@@ -756,13 +861,17 @@ class TaskEventsManager():
         event_time: str,
         flag: str,
         submit_num: int,
+        forced: bool = False
     ) -> bool:
         """Helper for `.process_message`.
 
         See `.process_message` for argument list
         Check whether to process/skip message.
-        Return True if `.process_message` should contine, False otherwise.
+        Return True if `.process_message` should continue, False otherwise.
         """
+        if itask.transient or forced:
+            return True
+
         if self.timestamp:
             timestamp = f" at {event_time}"
         else:
@@ -777,24 +886,23 @@ class TaskEventsManager():
             return False
 
         if (
-                itask.state(TASK_STATUS_WAITING)
-                and
+            itask.state(TASK_STATUS_WAITING)
+            and itask.tdef.run_mode == 'live'   # Polling in live mode only.
+            and (
                 (
-                    (
-                        # task has a submit-retry lined up
-                        TimerFlags.SUBMISSION_RETRY in itask.try_timers
-                        and itask.try_timers[
-                            TimerFlags.SUBMISSION_RETRY].num > 0
-                    )
-                    or
-                    (
-                        # task has an execution-retry lined up
-                        TimerFlags.EXECUTION_RETRY in itask.try_timers
-                        and itask.try_timers[
-                            TimerFlags.EXECUTION_RETRY].num > 0
-                    )
+                    # task has a submit-retry lined up
+                    TimerFlags.SUBMISSION_RETRY in itask.try_timers
+                    and itask.try_timers[
+                        TimerFlags.SUBMISSION_RETRY].num > 0
                 )
-
+                or
+                (
+                    # task has an execution-retry lined up
+                    TimerFlags.EXECUTION_RETRY in itask.try_timers
+                    and itask.try_timers[
+                        TimerFlags.EXECUTION_RETRY].num > 0
+                )
+            )
         ):
             # Ignore messages if task has a retry lined up
             # (caused by polling overlapping with task failure)
@@ -811,15 +919,15 @@ class TaskEventsManager():
                 )
             return False
 
-        severity = cast(int, LOG_LEVELS.get(severity, INFO))
+        severity_lvl: int = LOG_LEVELS.get(severity, INFO)
         # Demote log level to DEBUG if this is a message that duplicates what
         # gets logged by itask state change anyway (and not manual poll)
-        if severity > DEBUG and flag != self.FLAG_POLLED and message in {
+        if severity_lvl > DEBUG and flag != self.FLAG_POLLED and message in {
             self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
             self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
         }:
-            severity = DEBUG
-        LOG.log(severity, f"[{itask}] {flag}{message}{timestamp}")
+            severity_lvl = DEBUG
+        LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
     def setup_event_handlers(self, itask, event, message):
@@ -831,13 +939,24 @@ class TaskEventsManager():
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
-        self._setup_event_mail(itask, event)
+        self._setup_event_mail(itask, event, message)
         self._setup_custom_event_handlers(itask, event, message)
 
-    def _custom_handler_callback(self, ctx, schd, id_key):
+    def _custom_handler_callback(
+        self,
+        ctx,
+        schd: 'Scheduler',
+        id_key: EventKey,
+    ) -> None:
         """Callback when a custom event handler is done."""
-        _, point, name, submit_num = id_key
-        log_task_job_activity(ctx, schd.workflow, point, name, submit_num)
+        tokens = id_key.tokens
+        log_task_job_activity(
+            ctx,
+            schd.workflow,
+            tokens['cycle'],
+            tokens['task'],
+            tokens['job'],
+        )
         if ctx.ret_code == 0:
             self.remove_event_timer(id_key)
         else:
@@ -850,15 +969,21 @@ class TaskEventsManager():
             "event": event,
             "message": message})
 
-    def _process_event_email(self, schd: 'Scheduler', ctx, id_keys) -> None:
+    def _process_event_email(
+        self,
+        schd: 'Scheduler',
+        ctx: TaskEventMailContext,
+        id_keys: List[EventKey],
+    ) -> None:
         """Process event notification, by email."""
         if len(id_keys) == 1:
-            # 1 event from 1 task
-            (_, event), point, name, submit_num = id_keys[0]
-            subject = "[%s/%s/%02d %s] %s" % (
-                point, name, submit_num, event, schd.workflow)
+            id_key = id_keys[0]
+            subject = (
+                f'[{id_key.tokens.relative_id} {id_key.event}]'
+                f' {schd.workflow}'
+            )
         else:
-            event_set = {id_key[0][1] for id_key in id_keys}
+            event_set = {id_key.event for id_key in id_keys}
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (
@@ -867,36 +992,46 @@ class TaskEventsManager():
                 # n events from n tasks
                 subject = "[%d task events] %s" % (
                     len(id_keys), schd.workflow)
-        cmd = ["mail", "-s", subject]
-        # From: and To:
-        cmd.append("-r")
-        cmd.append(ctx.mail_from)
-        cmd.append(ctx.mail_to)
+
         # STDIN for mail, tasks
         stdin_str = ""
         for id_key in sorted(id_keys):
-            (_, event), point, name, submit_num = id_key
-            stdin_str += "%s: %s/%s/%02d\n" % (event, point, name, submit_num)
+            stdin_str += f'job: {id_key.tokens.relative_id}\n'
+            stdin_str += f'event: {id_key.event}\n'
+            stdin_str += f'message: {id_key.message}\n\n'
+
         # STDIN for mail, event info + workflow detail
         stdin_str += "\n"
-        for key in (
-            WorkflowEventData.Workflow.value,
-            WorkflowEventData.Host.value,
-            WorkflowEventData.Port.value,
-            WorkflowEventData.Owner.value,
+        for key, value in (
+            (WorkflowEventData.Workflow.value, schd.workflow),
+            (WorkflowEventData.Host.value, schd.host),
+            (WorkflowEventData.Port.value, schd.server.port),
+            (WorkflowEventData.Owner.value, schd.owner),
         ):
-            value = getattr(schd, key, None)
-            if value:
-                stdin_str += '%s: %s\n' % (key, value)
+            stdin_str += '%s: %s\n' % (key, value)
 
         if self.mail_footer:
             stdin_str += process_mail_footer(
                 self.mail_footer,
-                get_workflow_template_variables(schd, event, ''),
+                get_workflow_template_variables(
+                    schd,
+                    id_keys[-1].event,
+                    id_keys[-1].message,
+                ),
             )
-        self._send_mail(ctx, cmd, stdin_str, id_keys, schd)
+        self._send_mail(ctx, subject, stdin_str, id_keys, schd)
 
-    def _send_mail(self, ctx, cmd, stdin_str, id_keys, schd):
+    def _send_mail(
+        self,
+        ctx: TaskEventMailContext,
+        subject: str,
+        stdin_str: str,
+        id_keys: List[EventKey],
+        schd: 'Scheduler',
+    ) -> None:
+        cmd = construct_mail_cmd(
+            subject, from_address=ctx.mail_from, to_address=ctx.mail_to
+        )
         # SMTP server
         env = dict(os.environ)
         if self.mail_smtp:
@@ -907,31 +1042,45 @@ class TaskEventsManager():
             ),
             callback=self._event_email_callback, callback_args=[schd])
 
-    def _event_email_callback(self, proc_ctx, schd):
+    def _event_email_callback(self, proc_ctx, schd) -> None:
         """Call back when email notification command exits."""
+        id_key: EventKey
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
-            key1, point, name, submit_num = id_key
             try:
                 if proc_ctx.ret_code == 0:
                     self.remove_event_timer(id_key)
-                    log_ctx = SubProcContext((key1, submit_num), None)
+                    log_ctx = SubProcContext(
+                        (
+                            (id_key.handler, id_key.event),
+                            id_key.tokens['job']
+                        ),
+                        None,
+                    )
                     log_ctx.ret_code = 0
                     log_task_job_activity(
-                        log_ctx, schd.workflow, point, name, submit_num)
+                        log_ctx,
+                        schd.workflow,
+                        id_key.tokens['cycle'],
+                        id_key.tokens['task'],
+                        id_key.tokens['job'],
+                    )
                 else:
                     self.unset_waiting_event_timer(id_key)
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _get_events_conf(self, itask, key, default=None):
+    def _get_events_conf(
+        self, itask: 'TaskProxy', key: str, default: Any = None
+    ) -> Any:
         """Return an events setting from workflow then global configuration."""
-        for getter in [
-                self.broadcast_mgr.get_broadcast(itask.tokens).get("events"),
-                itask.tdef.rtconfig["mail"],
-                itask.tdef.rtconfig["events"],
-                glbl_cfg().get(["scheduler", "mail"]),
-                glbl_cfg().get()["task events"],
-        ]:
+        for getter in (
+            self.broadcast_mgr.get_broadcast(itask.tokens).get("events"),
+            itask.tdef.rtconfig["mail"],
+            itask.tdef.rtconfig["events"],
+            self.workflow_cfg.get("scheduler", {}).get("mail", {}),
+            glbl_cfg().get(["scheduler", "mail"]),
+            glbl_cfg().get()["task events"],
+        ):
             try:
                 value = getter.get(key)
             except (AttributeError, ItemNotFoundError, KeyError):
@@ -941,7 +1090,12 @@ class TaskEventsManager():
                     return value
         return default
 
-    def _process_job_logs_retrieval(self, schd, ctx, id_keys):
+    def _process_job_logs_retrieval(
+        self,
+        schd: 'Scheduler',
+        ctx: TaskJobLogsRetrieveContext,
+        id_keys: List[EventKey],
+    ) -> None:
         """Process retrieval of task job logs from remote user@host."""
         # get a host to run retrieval on
         try:
@@ -982,12 +1136,29 @@ class TaskEventsManager():
             cmd.append("--max-size=%s" % (ctx.max_size,))
         # Includes and excludes
         includes = set()
-        for _, point, name, submit_num in id_keys:
+        for id_key in id_keys:
             # Include relevant directories, all levels needed
-            includes.add("/%s" % (point))
-            includes.add("/%s/%s" % (point, name))
-            includes.add("/%s/%s/%02d" % (point, name, submit_num))
-            includes.add("/%s/%s/%02d/**" % (point, name, submit_num))
+            includes.add("/%s" % (id_key.tokens['cycle']))
+            includes.add(
+                "/%s/%s" % (
+                    id_key.tokens['cycle'],
+                    id_key.tokens['task']
+                )
+            )
+            includes.add(
+                "/%s/%s/%02d" % (
+                    id_key.tokens['cycle'],
+                    id_key.tokens['task'],
+                    id_key.tokens['job'],
+                )
+            )
+            includes.add(
+                "/%s/%s/%02d/**" % (
+                    id_key.tokens['cycle'],
+                    id_key.tokens['task'],
+                    id_key.tokens['job'],
+                )
+            )
         cmd += ["--include=%s" % (include) for include in sorted(includes)]
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
@@ -1010,16 +1181,15 @@ class TaskEventsManager():
             callback_255=self._job_logs_retrieval_callback_255
         )
 
-    def _job_logs_retrieval_callback_255(self, proc_ctx, schd):
+    def _job_logs_retrieval_callback_255(self, proc_ctx, schd) -> None:
         """Call back when log job retrieval fails with a 255 error."""
         self.bad_hosts.add(proc_ctx.host)
-        for id_key in proc_ctx.cmd_kwargs["id_keys"]:
-            key1, point, name, submit_num = id_key
+        for _ in proc_ctx.cmd_kwargs["id_keys"]:
             for key in proc_ctx.cmd_kwargs['id_keys']:
                 timer = self._event_timers[key]
                 timer.reset()
 
-    def _job_logs_retrieval_callback(self, proc_ctx, schd):
+    def _job_logs_retrieval_callback(self, proc_ctx, schd) -> None:
         """Call back when log job retrieval completes."""
         if (
             (proc_ctx.ret_code and LOG.isEnabledFor(DEBUG))
@@ -1028,20 +1198,31 @@ class TaskEventsManager():
             LOG.error(proc_ctx)
         else:
             LOG.debug(proc_ctx)
+        id_key: EventKey
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
-            key1, point, name, submit_num = id_key
             try:
                 # All completed jobs are expected to have a "job.out".
                 fnames = [JOB_LOG_OUT]
                 with suppress(TypeError):
-                    if key1[1] not in 'succeeded':
+                    if id_key.event not in 'succeeded':
                         fnames.append(JOB_LOG_ERR)
                 fname_oks = {}
                 for fname in fnames:
                     fname_oks[fname] = os.path.exists(get_task_job_log(
-                        schd.workflow, point, name, submit_num, fname))
+                        schd.workflow,
+                        id_key.tokens['cycle'],
+                        id_key.tokens['task'],
+                        id_key.tokens['job'],
+                        fname,
+                    ))
                 # All expected paths must exist to record a good attempt
-                log_ctx = SubProcContext((key1, submit_num), None)
+                log_ctx = SubProcContext(
+                    (
+                        (id_key.handler, id_key.event),
+                        id_key.tokens['job']
+                    ),
+                    None,
+                )
                 if all(fname_oks.values()):
                     log_ctx.ret_code = 0
                     self.remove_event_timer(id_key)
@@ -1053,7 +1234,12 @@ class TaskEventsManager():
                             log_ctx.err += " %s" % fname
                     self.unset_waiting_event_timer(id_key)
                 log_task_job_activity(
-                    log_ctx, schd.workflow, point, name, submit_num)
+                    log_ctx,
+                    schd.workflow,
+                    id_key.tokens['cycle'],
+                    id_key.tokens['task'],
+                    id_key.tokens['job'],
+                )
             except KeyError as exc:
                 LOG.exception(exc)
 
@@ -1099,10 +1285,11 @@ class TaskEventsManager():
                 os.getenv("CYLC_WORKFLOW_RUN_DIR")
             )
             itask.state.add_xtrigger(label)
+
         if itask.state_reset(TASK_STATUS_WAITING):
             self.data_store_mgr.delta_task_state(itask)
 
-    def _process_message_failed(self, itask, event_time, message):
+    def _process_message_failed(self, itask, event_time, message, forced):
         """Helper for process_message, handle a failed message.
 
         Return True if no retries (hence go to the failed state).
@@ -1119,14 +1306,20 @@ class TaskEventsManager():
             "time_run_exit": event_time,
         })
         if (
-                TimerFlags.EXECUTION_RETRY not in itask.try_timers
+                forced
+                or TimerFlags.EXECUTION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.EXECUTION_RETRY].next() is None
         ):
             # No retry lined up: definitive failure.
-            if itask.state_reset(TASK_STATUS_FAILED):
+            no_retries = True
+            if itask.state_reset(TASK_STATUS_FAILED, forced=forced):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
                 self.data_store_mgr.delta_task_state(itask)
-            no_retries = True
+                itask.state.outputs.set_msg_trg_completion(
+                    message=TASK_OUTPUT_FAILED, is_completed=True)
+                self.data_store_mgr.delta_task_output(
+                    itask, TASK_OUTPUT_FAILED)
+                self.data_store_mgr.delta_task_state(itask)
         else:
             # There is an execution retry lined up.
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
@@ -1138,7 +1331,7 @@ class TaskEventsManager():
         self._reset_job_timers(itask)
         return no_retries
 
-    def _process_message_started(self, itask, event_time):
+    def _process_message_started(self, itask, event_time, forced):
         """Helper for process_message, handle a started message."""
         if itask.job_vacated:
             itask.job_vacated = False
@@ -1149,7 +1342,7 @@ class TaskEventsManager():
         itask.set_summary_time('started', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
-        if itask.state_reset(TASK_STATUS_RUNNING):
+        if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
             self.data_store_mgr.delta_task_state(itask)
@@ -1159,8 +1352,23 @@ class TaskEventsManager():
         if TimerFlags.SUBMISSION_RETRY in itask.try_timers:
             itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
 
-    def _process_message_succeeded(self, itask, event_time):
-        """Helper for process_message, handle a succeeded message."""
+    def _process_message_expired(self, itask, event_time, forced):
+        """Helper for process_message, handle task expiry."""
+        if not itask.state_reset(TASK_STATUS_EXPIRED, forced=forced):
+            return
+        self.data_store_mgr.delta_task_state(itask)
+        self.data_store_mgr.delta_task_queued(itask)
+        self.setup_event_handlers(
+            itask,
+            self.EVENT_EXPIRED,
+            "Task expired: will not submit job."
+        )
+
+    def _process_message_succeeded(self, itask, event_time, forced):
+        """Helper for process_message, handle a succeeded message.
+
+        Ignore forced.
+        """
 
         job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
@@ -1175,13 +1383,15 @@ class TaskEventsManager():
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
-        if itask.state_reset(TASK_STATUS_SUCCEEDED):
+        if itask.state_reset(TASK_STATUS_SUCCEEDED, forced=forced):
             self.setup_event_handlers(
                 itask, self.EVENT_SUCCEEDED, f"job {self.EVENT_SUCCEEDED}")
             self.data_store_mgr.delta_task_state(itask)
         self._reset_job_timers(itask)
 
-    def _process_message_submit_failed(self, itask, event_time, submit_num):
+    def _process_message_submit_failed(
+        self, itask, event_time, submit_num, forced
+    ):
         """Helper for process_message, handle a submit-failed message.
 
         Return True if no retries (hence go to the submit-failed state).
@@ -1196,16 +1406,21 @@ class TaskEventsManager():
         })
         itask.summary['submit_method_id'] = None
         if (
-                TimerFlags.SUBMISSION_RETRY not in itask.try_timers
+                forced
+                or TimerFlags.SUBMISSION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.SUBMISSION_RETRY].next() is None
         ):
             # No submission retry lined up: definitive failure.
             # See github #476.
             no_retries = True
-            if itask.state_reset(TASK_STATUS_SUBMIT_FAILED):
+            if itask.state_reset(TASK_STATUS_SUBMIT_FAILED, forced=forced):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
                     f'job {self.EVENT_SUBMIT_FAILED}')
+                itask.state.outputs.set_msg_trg_completion(
+                    message=TASK_OUTPUT_SUBMIT_FAILED, is_completed=True)
+                self.data_store_mgr.delta_task_output(
+                    itask, TASK_OUTPUT_SUBMIT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
         else:
             # There is a submission retry lined up.
@@ -1218,18 +1433,18 @@ class TaskEventsManager():
 
         # Register newly submit-failed job with the database and datastore.
         job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
+        self._insert_task_job(
+            itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
         self.data_store_mgr.delta_job_state(
             job_tokens,
             TASK_STATUS_SUBMIT_FAILED
         )
-
         self._reset_job_timers(itask)
 
         return no_retries
 
     def _process_message_submitted(
-        self, itask: 'TaskProxy', event_time: str
+        self, itask: 'TaskProxy', event_time: str, forced: bool
     ) -> None:
         """Helper for process_message, handle a submit-succeeded message."""
         with suppress(KeyError):
@@ -1245,10 +1460,11 @@ class TaskEventsManager():
         if itask.tdef.run_mode == 'simulation':
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
-            if itask.state_reset(TASK_STATUS_RUNNING):
+            if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
                 self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
+
         else:
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
@@ -1257,8 +1473,8 @@ class TaskEventsManager():
                 # The job started message can (rarely) come in before the
                 # submit command returns - in which case do not go back to
                 # 'submitted'.
-                if itask.state_reset(TASK_STATUS_SUBMITTED):
-                    itask.state_reset(is_queued=False)
+                if itask.state_reset(TASK_STATUS_SUBMITTED, forced=forced):
+                    itask.state_reset(is_queued=False, forced=forced)
                     self.setup_event_handlers(
                         itask,
                         self.EVENT_SUBMITTED,
@@ -1270,7 +1486,8 @@ class TaskEventsManager():
 
         # Register the newly submitted job with the database and datastore.
         # Do after itask has changed state
-        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
+        self._insert_task_job(
+            itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced)
         job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self.data_store_mgr.delta_job_time(
             job_tokens,
@@ -1294,7 +1511,8 @@ class TaskEventsManager():
         self,
         itask: 'TaskProxy',
         event_time: str,
-        submit_status: int
+        submit_status: int,
+        forced: bool = False
     ):
         """Insert a new job proxy into the datastore.
 
@@ -1307,7 +1525,12 @@ class TaskEventsManager():
         # itask.jobs appends for automatic retries (which reuse the same task
         # proxy) but a retriggered task that was not already in the pool will
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
-        job_conf = itask.jobs[-1]
+        # And transient tasks, used for setting outputs and spawning children,
+        # do not submit jobs.
+        if itask.tdef.run_mode == "simulation" or forced:
+            job_conf = {"submit_num": 0}
+        else:
+            job_conf = itask.jobs[-1]
 
         # insert job into data store
         self.data_store_mgr.insert_job(
@@ -1338,23 +1561,30 @@ class TaskEventsManager():
             }
         )
 
-    def _setup_job_logs_retrieval(self, itask, event):
+    def _setup_job_logs_retrieval(self, itask, event) -> None:
         """Set up remote job logs retrieval.
 
         For a task with a job completion event, i.e. succeeded, failed,
         (execution) retry.
         """
-        id_key = (
-            (self.HANDLER_JOB_LOGS_RETRIEVE, event),
-            str(itask.point), itask.tdef.name, itask.submit_num)
-        events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (
-            event not in events or
-            not is_remote_platform(itask.platform) or
-            not self._get_remote_conf(itask, "retrieve job logs") or
-            id_key in self._event_timers
+            event not in self.JOB_LOGS_RETRIEVAL_EVENTS
+            or not is_remote_platform(itask.platform)
+            or not self._get_remote_conf(itask, "retrieve job logs")
         ):
+            # event does not need to be processed
             return
+
+        id_key = EventKey(
+            self.HANDLER_JOB_LOGS_RETRIEVE,
+            event,
+            event,
+            itask.tokens.duplicate(job=itask.submit_num),
+        )
+        if id_key in self._event_timers:
+            # event already being processed
+            return
+
         retry_delays = self._get_remote_conf(
             itask, "retrieve job logs retry delays")
         if not retry_delays:
@@ -1363,50 +1593,62 @@ class TaskEventsManager():
             id_key,
             TaskActionTimer(
                 TaskJobLogsRetrieveContext(
-                    self.HANDLER_JOB_LOGS_RETRIEVE,  # key
-                    self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
-                    itask.platform['name'],
-                    self._get_remote_conf(itask, "retrieve job logs max size"),
+                    key=self.HANDLER_JOB_LOGS_RETRIEVE,
+                    platform_name=itask.platform['name'],
+                    max_size=self._get_remote_conf(
+                        itask, "retrieve job logs max size"
+                    ),
                 ),
                 retry_delays
             )
         )
 
-    def _setup_event_mail(self, itask, event):
+    def _setup_event_mail(
+        self,
+        itask: 'TaskProxy',
+        event: str,
+        message: str,
+    ) -> None:
         """Set up task event notification, by email."""
-        if event in self.NON_UNIQUE_EVENTS:
-            key1 = (
-                self.HANDLER_MAIL,
-                '%s-%d' % (event, itask.non_unique_events[event] or 1)
-            )
-        else:
-            key1 = (self.HANDLER_MAIL, event)
-        id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
-        if (id_key in self._event_timers or
-                event not in self._get_events_conf(itask, "mail events", [])):
+        if event not in self._get_events_conf(itask, "mail events", []):
+            # event does not need to be processed
+            return
+
+        id_key = EventKey(
+            self.HANDLER_MAIL,
+            get_event_id(event, itask),
+            message,
+            itask.tokens.duplicate(job=itask.submit_num),
+        )
+        if id_key in self._event_timers:
+            # event already being processed
             return
 
         self.add_event_timer(
             id_key,
             TaskActionTimer(
                 TaskEventMailContext(
-                    self.HANDLER_MAIL,  # key
-                    self.HANDLER_MAIL,  # ctx_type
-                    self._get_events_conf(  # mail_from
-                        itask,
-                        "from",
-                        "notifications@" + get_host(),
+                    key=self.HANDLER_MAIL,
+                    mail_from=self._get_events_conf(
+                        itask, "from", f"notifications@{get_host()}"
                     ),
-                    self._get_events_conf(itask, "to", get_user())  # mail_to
+                    mail_to=self._get_events_conf(itask, "to", get_user())
                 )
             )
         )
 
-    def _setup_custom_event_handlers(self, itask, event, message):
+    def _setup_custom_event_handlers(
+        self,
+        itask: 'TaskProxy',
+        event: str,
+        message: str,
+    ) -> None:
         """Set up custom task event handlers."""
         handlers = self._get_events_conf(itask, f'{event} handlers')
-        if (handlers is None and
-                event in self._get_events_conf(itask, 'handler events', [])):
+        if (
+            handlers is None
+            and event in self._get_events_conf(itask, 'handler events', [])
+        ):
             handlers = self._get_events_conf(itask, 'handlers')
         if handlers is None:
             return
@@ -1418,15 +1660,13 @@ class TaskEventsManager():
             retry_delays = [0]
         # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
-            if event in self.NON_UNIQUE_EVENTS:
-                key1 = (
-                    f'{self.HANDLER_CUSTOM}-{i:02d}',
-                    f'{event}-{itask.non_unique_events[event] or 1:d}'
-                )
-            else:
-                key1 = (f'{self.HANDLER_CUSTOM}-{i:02d}', event)
-            id_key = (
-                key1, str(itask.point), itask.tdef.name, itask.submit_num)
+            id_key = EventKey(
+                f'{self.HANDLER_CUSTOM}-{i:02d}',
+                get_event_id(event, itask),
+                message,
+                itask.tokens.duplicate(job=itask.submit_num),
+            )
+
             if id_key in self._event_timers:
                 continue
             # Note: user@host may not always be set for a submit number, e.g.
@@ -1445,12 +1685,13 @@ class TaskEventsManager():
                 message,
                 platform_name,
             )
+            key1 = (id_key.handler, id_key.event)
             try:
                 cmd = handler % template_variables
             except KeyError as exc:
                 LOG.error(
-                    f"{itask.point}/{itask.tdef.name}/{itask.submit_num:02d} "
-                    f"{key1} bad template: {exc}")
+                    f'{id_key.tokens.relative_id}'
+                    f" {key1} bad template: {exc}")
                 continue
 
             if cmd == handler:
@@ -1461,11 +1702,7 @@ class TaskEventsManager():
             self.add_event_timer(
                 id_key,
                 TaskActionTimer(
-                    CustomTaskEventHandlerContext(
-                        key1,
-                        self.HANDLER_CUSTOM,
-                        cmd,
-                    ),
+                    CustomTaskEventHandlerContext(key=key1, cmd=cmd),
                     retry_delays
                 )
             )
@@ -1542,6 +1779,10 @@ class TaskEventsManager():
 
     def _reset_job_timers(self, itask):
         """Set up poll timer and timeout for task."""
+
+        if itask.transient:
+            return
+
         if not itask.state(*TASK_STATUSES_ACTIVE):
             # Reset, task not active
             itask.timeout = None
@@ -1672,7 +1913,7 @@ class TaskEventsManager():
         delays += time_limit_polling_intervals
         return delays
 
-    def add_event_timer(self, id_key, event_timer):
+    def add_event_timer(self, id_key: EventKey, event_timer) -> None:
         """Add a new event timer.
 
         Args:
@@ -1683,7 +1924,7 @@ class TaskEventsManager():
         self._event_timers[id_key] = event_timer
         self.event_timers_updated = True
 
-    def remove_event_timer(self, id_key):
+    def remove_event_timer(self, id_key: EventKey) -> None:
         """Remove an event timer.
 
         Args:
@@ -1693,13 +1934,8 @@ class TaskEventsManager():
         del self._event_timers[id_key]
         self.event_timers_updated = True
 
-    def unset_waiting_event_timer(self, id_key):
-        """Invoke unset_waiting on an event timer.
-
-        Args:
-            key (str)
-
-        """
+    def unset_waiting_event_timer(self, id_key: EventKey) -> None:
+        """Invoke unset_waiting on an event timer."""
         self._event_timers[id_key].unset_waiting()
         self.event_timers_updated = True
 
@@ -1712,3 +1948,9 @@ class TaskEventsManager():
                 f'{self.bad_hosts}'
             )
             self.bad_hosts.clear()
+
+    def spawn_children(self, itask, output):
+        # update DB task outputs
+        self.workflow_db_mgr.put_update_task_outputs(itask)
+        # spawn child-tasks
+        self.spawn_func(itask, output)

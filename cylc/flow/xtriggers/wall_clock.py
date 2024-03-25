@@ -17,13 +17,55 @@
 """xtrigger function to trigger off of a wall clock time."""
 
 from time import time
+from typing import Any, Dict
+from cylc.flow.cycling.iso8601 import interval_parse
+from cylc.flow.exceptions import WorkflowConfigError
 
 
-def wall_clock(trigger_time=None):
-    """Return True after the desired wall clock time, False.
+def wall_clock(offset: str = 'PT0S', sequential: bool = True):
+    """Trigger at a specific real "wall clock" time relative to the cycle point
+    in the graph.
+
+    Clock triggers, unlike other trigger functions, are executed synchronously
+    in the main process.
 
     Args:
-        trigger_time (int):
+        offset:
+            ISO 8601 interval to wait after the cycle point is reached in real
+            time before triggering. May be negative, in which case it will
+            trigger before the real time reaches the cycle point.
+    """
+    # NOTE: This is just a placeholder for the actual implementation.
+    # This is only used for validating the signature and for autodocs.
+    ...
+
+
+def _wall_clock(trigger_time: int) -> bool:
+    """Actual implementation of wall_clock.
+
+    Return True after the desired wall clock time, or False before.
+
+    Args:
+        trigger_time:
             Trigger time as seconds since Unix epoch.
+        sequential (bool):
+            Used by the workflow to flag corresponding xtriggers as sequential.
     """
     return time() > trigger_time
+
+
+def validate(args: Dict[str, Any]):
+    """Validate and manipulate args parsed from the workflow config.
+
+    NOTE: the xtrigger signature is different to the function signature above
+
+    wall_clock()  # infer zero interval
+    wall_clock(PT1H)
+    wall_clock(offset=PT1H)
+
+    The offset must be a valid ISO 8601 interval.
+    """
+    try:
+        interval_parse(args["offset"])
+    except (ValueError, AttributeError):
+        raise WorkflowConfigError(f"Invalid offset: {args['offset']}")

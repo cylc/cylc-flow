@@ -43,6 +43,7 @@ def task_pool(set_cycling_type: Callable):
         hier.append('root')
         tdef = create_autospec(TaskDef, namespace_hierarchy=hier)
         tdef.name = tokens['task']
+        tdef.expiration_offset = None
         return TaskProxy(
             Tokens('~user/workflow'),
             tdef,
@@ -127,7 +128,7 @@ def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids([pool], ids)
+    _matched, _not_matched = filter_ids(pool, ids)
     assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
 
@@ -188,21 +189,21 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids([pool], ids, out=IDTokens.Cycle)
+    _matched, _not_matched = filter_ids(pool, ids, out=IDTokens.Cycle)
     assert _matched == [IntegerPoint(i) for i in matched]
     assert _not_matched == not_matched
 
 
 def test_filter_ids_invalid(caplog):
     """Ensure invalid IDs are handled elegantly."""
-    matched, not_matched = filter_ids([{}], ['#'])
+    matched, not_matched = filter_ids({}, ['#'])
     assert matched == []
     assert not_matched == ['#']
     assert caplog.record_tuples == [
         ('cylc', 30, 'No active tasks matching: #'),
     ]
     caplog.clear()
-    matched, not_matched = filter_ids([{}], ['#'], warn=False)
+    matched, not_matched = filter_ids({}, ['#'], warn=False)
     assert caplog.record_tuples == []
 
 
@@ -216,7 +217,7 @@ def test_filter_ids_pattern_match_off(task_pool):
     )
 
     _matched, _not_matched = filter_ids(
-        [pool],
+        pool,
         ['1/a'],
         out=IDTokens.Task,
         pattern_match=False,
@@ -238,7 +239,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
 
     # ensure pattern matching works
     _matched, _not_matched = filter_ids(
-        [pool],
+        pool,
         ids,
         out=IDTokens.Task,
         pattern_match=True,
@@ -249,7 +250,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     # ensure pattern matching can be disabled
     caplog.clear()
     _matched, _not_matched = filter_ids(
-        [pool],
+        pool,
         ids,
         out=IDTokens.Task,
         pattern_match=False,
@@ -285,7 +286,7 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
     )
 
     _matched, _not_matched = filter_ids(
-        [pool],
+        pool,
         ids,
         pattern_match=False,
     )

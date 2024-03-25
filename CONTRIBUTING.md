@@ -64,7 +64,7 @@ requests_).
  - Prasanna Challuri
  - David Matthews
  - Tim Whitcomb
- - (Scott Wales)
+ - Scott Wales
  - Tomek Trzeciak
  - Thomas Coleman
  - Bruno Kinoshita

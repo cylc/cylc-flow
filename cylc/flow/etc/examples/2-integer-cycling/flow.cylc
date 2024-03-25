@@ -1,0 +1,28 @@
+[meta]
+    title = Integer Cycling
+    description = """
+        A basic cycling workflow which runs the same set of tasks over
+        and over. Each cycle will be given an integer number.
+    """
+
+[scheduling]
+    # tell Cylc to count cycles as numbers starting from the number 1
+    cycling mode = integer
+    initial cycle point = 1
+    [[graph]]
+        P1 = """
+            # this is the workflow we want to repeat:
+            a => b => c & d
+            # this is an "inter-cycle dependency", it makes the task "b"
+            # wait until its previous instance has completed:
+            b[-P1] => b
+        """
+
+[runtime]
+    [[root]]
+        # all tasks will "inherit" the configuration in the "root" section
+        script = echo "Hello, I'm task $CYLC_TASK_NAME in cycle $CYLC_TASK_CYCLE_POINT!"
+    [[a]]
+    [[b]]
+    [[c]]
+    [[d]]

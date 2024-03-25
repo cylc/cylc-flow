@@ -1,0 +1,17 @@
+# 1/a runs naturally and generates the output "x"
+1/a -triggered off [] in flow 1
+1/x -triggered off ['1/a'] in flow 1
+1/z -triggered off ['1/x'] in flow 1
+# 1/a is artificially completed with the output "y"
+2/y -triggered off ['2/a'] in flow 1
+2/z -triggered off ['2/y'] in flow 1
+# 1/a has the output "y" is artificially set but is not completed
+# (so 1/a will re-run and generate the output "x" naturally)
+3/a -triggered off [] in flow 1
+3/x -triggered off ['3/a'] in flow 1
+3/y -triggered off ['3/a'] in flow 1
+3/z -triggered off ['3/y'] in flow 1
+# 1/a runs naturally and generates the output "x"
+4/a -triggered off [] in flow 1
+4/x -triggered off ['4/a'] in flow 1
+4/z -triggered off ['4/x'] in flow 1

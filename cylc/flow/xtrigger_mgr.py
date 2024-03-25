@@ -16,20 +16,30 @@
 
 from contextlib import suppress
 from enum import Enum
+from inspect import signature
 import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Set,
+    Tuple,
+    TYPE_CHECKING
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
-from cylc.flow.subprocpool import get_func
-from cylc.flow.xtriggers.wall_clock import wall_clock
+from cylc.flow.subprocctx import add_kwarg_to_sig
+from cylc.flow.subprocpool import get_xtrig_func
+from cylc.flow.xtriggers.wall_clock import _wall_clock
 
 if TYPE_CHECKING:
+    from inspect import BoundArguments
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.subprocctx import SubFuncContext
@@ -184,6 +194,30 @@ class XtriggerManager:
     managed uniquely - i.e. many tasks depending on the same clock trigger
     (with same offset from cycle point) get satisfied by the same call.
 
+    Parentless tasks with xtrigger(s) are, by default, spawned out to the
+    runahead limit. This results in non-sequential, and potentially
+    unnecessary, checking out to this limit (and may introduce clutter to
+    user interfaces). An option to make this sequential is now available,
+    by changing the default for all xtriggers in a workflow, and a way to
+    override this default with a (reserved) keyword function argument
+    (i.e. "sequential=True/False"):
+
+    # Example:
+    [scheduling]
+        sequential xtriggers = True
+        [[xtriggers]]
+            # "sequential=False" here overrides workflow and function default.
+            clock_0 = wall_clock(sequential=False)
+            workflow_x = workflow_state(
+                workflow=other,
+                point=%(task_cycle_point)s,
+            ):PT30S
+        [[graph]]
+            PT1H = '''
+                @workflow_x => foo & bar  # spawned on workflow_x satisfaction
+                @clock_0 => baz  # baz spawned out to RH
+            '''
+
     Args:
         workflow: workflow name
         user: workflow owner
@@ -207,13 +241,25 @@ class XtriggerManager:
         workflow_share_dir: Optional[str] = None,
     ):
         # Workflow function and clock triggers by label.
-        self.functx_map: Dict[str, SubFuncContext] = {}
+        self.functx_map: 'Dict[str, SubFuncContext]' = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
         self.sat_xtrig: dict = {}
         # Signatures of active functions (waiting on callback).
         self.active: list = []
+
+        # Clock labels, to avoid repeated string comparisons
+        self.wall_clock_labels: Set[str] = set()
+
+        # Workflow wide default, used when not specified in xtrigger kwargs.
+        self.sequential_xtriggers_default = False
+        # Labels whose xtriggers are sequentially checked.
+        self.sequential_xtrigger_labels: Set[str] = set()
+        # Gather parentless tasks whose xtrigger(s) have been satisfied
+        # (these will be used to spawn the next occurrence).
+        self.sequential_spawn_next: Set[str] = set()
+        self.sequential_has_spawned_next: Set[str] = set()
 
         self.workflow_run_dir = workflow_run_dir
 
@@ -240,10 +286,16 @@ class XtriggerManager:
         self.do_housekeeping = False
 
     @staticmethod
-    def validate_xtrigger(
-        label: str, fctx: 'SubFuncContext', fdir: str
+    def check_xtrigger(
+        label: str,
+        fctx: 'SubFuncContext',
+        fdir: str,
     ) -> None:
-        """Validate an Xtrigger function.
+        """Generic xtrigger validation: check existence, string templates and
+        function signature.
+
+        Xtrigger modules may also supply a specific `validate` function
+        which will be run here.
 
         Args:
             label: xtrigger label
@@ -257,29 +309,61 @@ class XtriggerManager:
                 * If the function is not callable.
                 * If any string template in the function context
                   arguments are not present in the expected template values.
+                * If the arguments do not match the function signature.
 
         """
         fname: str = fctx.func_name
+
         try:
-            func = get_func(fname, fdir)
+            func = get_xtrig_func(fname, fname, fdir)
         except ImportError:
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"xtrigger module '{fname}' not found",
+                label, f"xtrigger module '{fname}' not found",
             )
         except AttributeError:
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"'{fname}' not found in xtrigger module '{fname}'",
+                label, f"'{fname}' not found in xtrigger module '{fname}'",
             )
+
         if not callable(func):
             raise XtriggerConfigError(
-                label,
-                fname,
-                f"'{fname}' not callable in xtrigger module '{fname}'",
+                label, f"'{fname}' not callable in xtrigger module '{fname}'",
             )
+
+        sig = signature(func)
+        sig_str = fctx.get_signature()
+
+        # Handle reserved 'sequential' kwarg:
+        sequential_param = sig.parameters.get('sequential', None)
+        if sequential_param:
+            if not isinstance(sequential_param.default, bool):
+                raise XtriggerConfigError(
+                    label,
+                    (
+                        f"xtrigger '{fname}' function definition contains "
+                        "reserved argument 'sequential' that has no "
+                        "boolean default"
+                    )
+                )
+            fctx.func_kwargs.setdefault('sequential', sequential_param.default)
+        elif 'sequential' in fctx.func_kwargs:
+            # xtrig call marked as sequential; add 'sequential' arg to
+            # signature for validation
+            sig = add_kwarg_to_sig(
+                sig, 'sequential', fctx.func_kwargs['sequential']
+            )
+
+        # Validate args and kwargs against the function signature
+        try:
+            bound_args = sig.bind(
+                *fctx.func_args, **fctx.func_kwargs
+            )
+        except TypeError as exc:
+            raise XtriggerConfigError(label, f"{sig_str}: {exc}")
+        # Specific xtrigger.validate(), if available.
+        XtriggerManager.try_xtrig_validate_func(
+            label, fname, fdir, bound_args, sig_str
+        )
 
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -295,9 +379,7 @@ class XtriggerManager:
                     template_vars.add(TemplateVariables(match))
                 except ValueError:
                     raise XtriggerConfigError(
-                        label,
-                        fname,
-                        f"Illegal template in xtrigger: {match}",
+                        label, f"Illegal template in xtrigger: {match}",
                     )
 
         # check for deprecated template variables
@@ -313,17 +395,49 @@ class XtriggerManager:
                 f' {", ".join(t.value for t in deprecated_variables)}'
             )
 
+    @staticmethod
+    def try_xtrig_validate_func(
+        label: str,
+        fname: str,
+        fdir: str,
+        bound_args: 'BoundArguments',
+        signature_str: str,
+    ):
+        """Call an xtrigger's `validate()` function if it is implemented.
+
+        Raise XtriggerConfigError if validation fails.
+        """
+        try:
+            xtrig_validate_func = get_xtrig_func(fname, 'validate', fdir)
+        except (AttributeError, ImportError):
+            return
+        bound_args.apply_defaults()
+        try:
+            xtrig_validate_func(bound_args.arguments)
+        except Exception as exc:  # Note: catch all errors
+            raise XtriggerConfigError(
+                label, f"{signature_str} validation failed: {exc}"
+            )
+
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
         """Add a new xtrigger function.
 
-        Check the xtrigger function exists here (e.g. during validation).
+        Call check_xtrigger before this, during validation.
+
         Args:
             label: xtrigger label
             fctx: function context
             fdir: function module directory
+
         """
-        self.validate_xtrigger(label, fctx, fdir)
         self.functx_map[label] = fctx
+        if fctx.func_kwargs.pop(
+            'sequential',
+            self.sequential_xtriggers_default
+        ):
+            self.sequential_xtrigger_labels.add(label)
+        if fctx.func_name == "wall_clock":
+            self.wall_clock_labels.add(label)
 
     def mutate_trig(self, label, kwargs):
         self.functx_map[label].func_kwargs.update(kwargs)
@@ -370,7 +484,9 @@ class XtriggerManager:
         return res
 
     def get_xtrig_ctx(
-        self, itask: 'TaskProxy', label: str
+        self,
+        itask: 'TaskProxy',
+        label: str,
     ) -> 'SubFuncContext':
         """Get a real function context from the template.
 
@@ -390,21 +506,19 @@ class XtriggerManager:
 
         args = []
         kwargs = {}
-        if ctx.func_name == "wall_clock":
-            if "trigger_time" in ctx.func_kwargs:
+        if label in self.wall_clock_labels:
+            if "trigger_time" in ctx.func_kwargs:  # noqa: SIM401 (readabilty)
                 # Internal (retry timer): trigger_time already set.
                 kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
-            elif "offset" in ctx.func_kwargs:  # noqa: SIM106
+            else:
                 # External (clock xtrigger): convert offset to trigger_time.
                 # Datetime cycling only.
                 kwargs["trigger_time"] = itask.get_clock_trigger_time(
                     itask.point,
-                    ctx.func_kwargs["offset"]
-                )
-            else:
-                # Should not happen!
-                raise ValueError(
-                    "wall_clock function kwargs needs trigger time or offset"
+                    ctx.func_kwargs.get(
+                        "offset",
+                        ctx.func_args[0] if ctx.func_args else None
+                    )
                 )
         else:
             # Other xtrig functions: substitute template values.
@@ -431,18 +545,20 @@ class XtriggerManager:
             itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
-            # Special case: quick synchronous clock check:
-            if sig.startswith("wall_clock"):
+            if label in self.wall_clock_labels:
+                # Special case: quick synchronous clock check.
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
-                elif wall_clock(*ctx.func_args, **ctx.func_kwargs):
+                elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_task_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
+                    if self.all_task_seq_xtriggers_satisfied(itask):
+                        self.sequential_spawn_next.add(itask.identity)
                     self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.
@@ -461,6 +577,8 @@ class XtriggerManager:
                             [itask.tdef.name],
                             xtrigger_env
                         )
+                    if self.all_task_seq_xtriggers_satisfied(itask):
+                        self.sequential_spawn_next.add(itask.identity)
                 continue
 
             # Call the function to check the unsatisfied xtrigger.
@@ -491,6 +609,14 @@ class XtriggerManager:
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
         self.do_housekeeping = False
+
+    def all_task_seq_xtriggers_satisfied(self, itask: 'TaskProxy') -> bool:
+        """Check if all sequential xtriggers are satisfied for a task."""
+        return itask.is_xtrigger_sequential and all(
+            itask.state.xtriggers[label]
+            for label in itask.state.xtriggers
+            if label in self.sequential_xtrigger_labels
+        )
 
     def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.

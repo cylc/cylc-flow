@@ -16,7 +16,7 @@
         script = true
     [[holder]]
         script = """
-            cylc__job__poll_grep_workflow_log -E '1/t1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/t1.* added to active task pool'
             cylc hold "${CYLC_WORKFLOW_ID}//1/t1"
         """
     [[releaser]]
