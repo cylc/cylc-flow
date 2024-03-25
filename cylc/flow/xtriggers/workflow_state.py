@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 import sqlite3
 from typing import Dict, Optional, Tuple
 
@@ -23,7 +22,7 @@ from metomi.isodatetime.parsers import TimePointParser
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
-from cylc.flow.workflow_files import infer_latest_run
+from cylc.flow.id_cli import parse_id
 
 
 def workflow_state(
@@ -58,9 +57,8 @@ def workflow_state(
             .. note::
 
                This cannot be specified in conjunction with ``status``.
-
         cylc_run_dir:
-            The directory in which the workflow to interrogate.
+            Alternate cylc-run directory, e.g. for another user.
 
             .. note::
 
@@ -79,12 +77,21 @@ def workflow_state(
 
     """
     if cylc_run_dir:
-        cylc_run_dir = expand_path(cylc_run_dir)
+        run_dir = cylc_run_dir = expand_path(cylc_run_dir)
     else:
         cylc_run_dir = get_cylc_run_dir()
+        run_dir = None
+
+    # This infers the latest run number.
+    workflow, *_ = parse_id(
+        workflow,
+        constraint='workflows',
+        alt_run_dir=run_dir
+    )
+
     if offset is not None:
         point = str(add_offset(point, offset))
-    _, workflow = infer_latest_run(Path(cylc_run_dir, workflow))
+
     try:
         checker = CylcWorkflowDBChecker(cylc_run_dir, workflow)
     except (OSError, sqlite3.Error):
