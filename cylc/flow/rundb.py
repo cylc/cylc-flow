@@ -608,19 +608,6 @@ class CylcWorkflowDAO:
         result = self.connect().execute(stmt).fetchone()
         return int(result[0]) if result else 0
 
-    def select_workflow_params_run_mode(self):
-        """Return original run_mode for workflow_params."""
-        stmt = rf"""
-            SELECT
-                value
-            FROM
-                {self.TABLE_WORKFLOW_PARAMS}
-            WHERE
-                key == 'run_mode'
-        """  # nosec (table name is code constant)
-        result = self.connect().execute(stmt).fetchone()
-        return result[0] if result else None
-
     def select_workflow_template_vars(self, callback):
         """Select from workflow_template_vars.
 

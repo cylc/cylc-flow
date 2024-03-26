@@ -1731,7 +1731,7 @@ class TaskPool:
 
     def sim_time_check(self, message_queue: 'Queue[TaskMsg]') -> bool:
         """Simulation mode: simulate task run times and set states."""
-        if not self.config.run_mode('simulation'):
+        if self.config.run_mode() != 'simulation':
             return False
         sim_task_state_changed = False
         now = time()
