@@ -155,7 +155,7 @@ async def test_exception(one, run, log_filter):
     def killer():
         raise MyException('mess')
 
-    one.main_loop = killer
+    one._main_loop = killer
 
     # make sure that this error causes the flow to shutdown
     with pytest.raises(MyException):
