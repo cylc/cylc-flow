@@ -49,6 +49,7 @@ from cylc.flow.task_events_mgr import (
     TaskEventMailContext,
     TaskJobLogsRetrieveContext,
 )
+from cylc.flow.task_hold_mgr import TaskHoldMgr
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -150,7 +151,11 @@ class TaskPool:
             self.task_name_list,
             self.config.runtime['descendants']
         )
-        self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
+        self.task_hold_mgr = TaskHoldMgr(
+            self.workflow_db_mgr,
+            self.data_store_mgr,
+            self.config.runtime['linearized ancestors']
+        )
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -677,14 +682,6 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
 
-    def load_db_tasks_to_hold(self):
-        """Update the tasks_to_hold set with the tasks stored in the
-        database."""
-        self.tasks_to_hold.update(
-            (name, get_point(cycle)) for name, cycle in
-            self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
-        )
-
     def rh_release_and_queue(self, itask) -> None:
         """Release a task from runahead limiting, and queue it if ready.
 
@@ -796,7 +793,7 @@ class TaskPool:
                 self.add_to_pool(ntask)
 
     def remove(self, itask, reason=None):
-        """Remove a task from the pool."""
+        """Remove a task from the pool (e.g. after a reload)."""
 
         if itask.state.is_runahead and itask.flow_nums:
             # If removing a parentless runahead-limited task
@@ -828,6 +825,7 @@ class TaskPool:
             if not self.active_tasks[itask.point]:
                 del self.active_tasks[itask.point]
             self.task_queue_mgr.remove_task(itask)
+            self.task_hold_mgr.remove_active_task(itask)
             if itask.tdef.max_future_prereq_offset is not None:
                 self.set_max_future_offset()
 
@@ -1221,71 +1219,59 @@ class TaskPool:
         unsatisfied = self.log_unsatisfied_prereqs()
         return (incomplete or unsatisfied)
 
-    def hold_active_task(self, itask: TaskProxy) -> None:
-        if itask.state_reset(is_held=True):
-            self.data_store_mgr.delta_task_held(itask)
-        self.tasks_to_hold.add((itask.tdef.name, itask.point))
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-
-    def release_held_active_task(self, itask: TaskProxy) -> None:
-        if itask.state_reset(is_held=False):
-            self.data_store_mgr.delta_task_held(itask)
-            if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
-                self.queue_task(itask)
-        self.tasks_to_hold.discard((itask.tdef.name, itask.point))
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-
     def set_hold_point(self, point: 'PointBase') -> None:
         """Set the point after which all tasks must be held."""
         self.hold_point = point
         for itask in self.get_tasks():
             if itask.point > point:
-                self.hold_active_task(itask)
+                self.task_hold_mgr.hold_active_tasks([itask])
         self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
 
     def hold_tasks(self, items: Iterable[str]) -> int:
         """Hold tasks with IDs matching the specified items."""
-        # Hold active tasks:
+
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
             warn=False,
             future=True,
         )
-        for itask in itasks:
-            self.hold_active_task(itask)
-        # Set future tasks to be held:
-        for name, cycle in future_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, True))
-        self.tasks_to_hold.update(future_tasks)
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
+        self.task_hold_mgr.hold_active_tasks(itasks)
+        self.task_hold_mgr.hold_future_tasks(future_tasks)
+        self.task_hold_mgr.log()
         return len(unmatched)
 
     def release_held_tasks(self, items: Iterable[str]) -> int:
-        """Release held tasks with IDs matching any specified items."""
-        # Release active tasks:
-        itasks, future_tasks, unmatched = self.filter_task_proxies(
+        """Release held tasks that match specified task IDs or globs.
+
+        """
+        # First match in the task pool to allow use of state selectors.
+        itasks, unmatched_active = filter_ids(
+            self.active_tasks,
             items,
-            warn=False,
-            future=True,
+            warn=False
         )
-        for itask in itasks:
-            self.release_held_active_task(itask)
-        # Unhold future tasks:
-        for name, cycle in future_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, False))
-        self.tasks_to_hold.difference_update(future_tasks)
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
+        self.task_hold_mgr.release_active_tasks(itasks, self.queue_task)
+
+        # Release matching future tasks (only 'waiting' selector is valid).
+        # future_matched: 'Set[Tuple[str, PointBase]]' = set()
+        future_matched, unmatched_future = filter_ids(
+            self.task_hold_mgr.get_as_pool(), items, warn=False
+        )
+        self.task_hold_mgr.release_future_tasks(future_matched)
+        self.task_hold_mgr.log()
+
+        # Warn for args that didn't match anything.
+        unmatched = set(unmatched_active) & set(unmatched_future)
+        for unm in unmatched:
+            LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(unm))
         return len(unmatched)
 
     def release_hold_point(self) -> None:
         """Unset the workflow hold point and release all held active tasks."""
         self.hold_point = None
-        for itask in self.get_tasks():
-            self.release_held_active_task(itask)
-        self.tasks_to_hold.clear()
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
+        self.task_hold_mgr.release_active_tasks(
+            self.get_tasks(), self.queue_task)
+        self.task_hold_mgr.clear()
         self.workflow_db_mgr.put_workflow_hold_cycle_point(None)
 
     def check_abort_on_task_fails(self):
@@ -1656,16 +1642,16 @@ class TaskPool:
         # (else not previously finishedr, so run it)
 
         if not itask.transient:
-            if (name, point) in self.tasks_to_hold:
+            if self.task_hold_mgr.is_held(name, point):
                 LOG.info(f"[{itask}] holding (as requested earlier)")
-                self.hold_active_task(itask)
+                self.task_hold_mgr.hold_active_tasks([itask])
             elif self.hold_point and itask.point > self.hold_point:
                 # Hold if beyond the workflow hold point
                 LOG.info(
                     f"[{itask}] holding (beyond workflow "
                     f"hold point: {self.hold_point})"
                 )
-                self.hold_active_task(itask)
+                self.task_hold_mgr.hold_active_tasks([itask])
 
             # Don't add to pool if it depends on a task beyond the stop point.
             #   "foo; foo[+P1] & bar => baz"
@@ -2212,7 +2198,7 @@ class TaskPool:
         self,
         ids: Iterable[str],
         warn: bool = True,
-        future: bool = False,
+        future: bool = False
     ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
         """Return task proxies that match names, points, states in items.
 
@@ -2244,7 +2230,6 @@ class TaskPool:
             future_matched, unmatched = self.match_future_tasks(
                 unmatched
             )
-
         return matched, future_matched, unmatched
 
     def match_future_tasks(
@@ -2295,6 +2280,7 @@ class TaskPool:
             if name_str not in self.config.taskdefs:
                 if self.config.find_taskdefs(name_str):
                     # It's a family name; was not matched by active tasks
+                    # TODO EXPAND FAMILY NAMES
                     LOG.warning(
                         f"No active tasks in the family {name_str}"
                         f' matching: {id_}'

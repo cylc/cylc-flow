@@ -22,9 +22,7 @@ from typing import (
     Iterable,
     List,
     TYPE_CHECKING,
-    # Tuple,
-    # Union,
-    # overload,
+    Union
 )
 
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
@@ -35,54 +33,18 @@ from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.cycling.loader import get_point
 
 if TYPE_CHECKING:
-    # from typing_extensions import Literal
-
     from cylc.flow.task_pool import Pool
-    from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.task_hold_mgr import PseudoTaskProxy
     from cylc.flow.cycling import PointBase
 
 
-# @overload
-# def filter_ids(
-#     pool: 'Pool',
-#     ids: 'Iterable[str]',
-#     *,
-#     warn: 'bool' = True,
-#     out: 'Literal[IDTokens.Task]' = IDTokens.Task,
-#     pattern_match: 'bool' = True,
-# ) -> 'Tuple[List[TaskProxy], List[str]]':
-#     ...
-#
-#
-# @overload
-# def filter_ids(
-#     pool: 'Pool',
-#     ids: 'Iterable[str]',
-#     *,
-#     warn: 'bool' = True,
-#     out: 'Literal[IDTokens.Cycle]' = IDTokens.Cycle,
-#     pattern_match: 'bool' = True,
-# ) -> 'Tuple[List[PointBase], List[str]]':
-#     ...
-
-
-# _RET = (
-#     'Union['
-#     'Tuple[List[TaskProxy], List[str]]'
-#     ', '
-#     'Tuple[List[PointBase], List[str]]'
-#     ']'
-# )
-
-
 def filter_ids(
-    pool: 'Pool',
+    pool: Union['Pool', Dict['PointBase', Dict[str, 'PseudoTaskProxy']]],
     ids: 'Iterable[str]',
     *,
     warn: 'bool' = True,
     out: 'IDTokens' = IDTokens.Task,
     pattern_match: 'bool' = True,
-    # ) -> _RET:
 ):
     """Filter IDs against a pool of tasks.
 
@@ -108,9 +70,9 @@ def filter_ids(
     if out not in {IDTokens.Cycle, IDTokens.Task}:
         raise ValueError(f'Invalid output format: {out}')
 
-    _cycles: 'List[PointBase]' = []
-    _tasks: 'List[TaskProxy]' = []
-    _not_matched: 'List[str]' = []
+    _cycles = []
+    _tasks = []
+    _not_matched = []
 
     # enable / disable pattern matching
     match: Callable[[Any, Any], bool]
@@ -188,8 +150,14 @@ def filter_ids(
                             )
                             or match(itask.state.status, cycle_sel)
                         )
-                        # check namespace name
-                        and itask.name_match(task, match_func=match)
+                        # check namespace name (task or parent family)
+                        and (
+                            fnmatchcase(task, itask.tdef.name) or
+                            any(
+                                match(ns, task)
+                                for ns in itask.tdef.namespace_hierarchy
+                            )
+                        )
                         # check task selector
                         and (
                             (
