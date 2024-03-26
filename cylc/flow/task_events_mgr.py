@@ -1528,7 +1528,7 @@ class TaskEventsManager():
         # And transient tasks, used for setting outputs and spawning children,
         # do not submit jobs.
         if itask.tdef.run_mode == "simulation" or forced:
-            job_conf = {"submit_num": 0}
+            job_conf = {"submit_num": itask.submit_num}
         else:
             job_conf = itask.jobs[-1]
 

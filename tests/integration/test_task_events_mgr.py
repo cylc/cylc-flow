@@ -64,3 +64,38 @@ async def test__reset_job_timers(
         'polling intervals=PT25S,PT15S,PT10S,...'
         in caplog.records[0].msg
     )
+
+
+async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
+    """Simulation mode tasks are inserted into the Data Store,
+    with correct submit number.
+    """
+    conf = {
+        'scheduling': {'graph': {'R1': 'rhenas'}},
+        'runtime': {'rhenas': {'simulation': {
+            'fail cycle points': '1',
+            'fail try 1 only': False,
+    }}}}
+    id_ = flow(conf)
+    schd = scheduler(id_)
+    async with start(schd):
+        # Set task to running:
+        itask =  schd.pool.get_tasks()[0]
+        itask.state.status = 'running'
+        itask.submit_num += 1
+
+        # Not run _insert_task_job yet:
+        assert not schd.data_store_mgr.added['jobs'].keys()
+
+        # Insert task (twice):
+        schd.task_events_mgr._insert_task_job(itask, 'now', 1)
+        itask.submit_num += 1
+        schd.task_events_mgr._insert_task_job(itask, 'now', 1)
+
+        # Check that there are two entries with correct submit
+        # numbers waiting for data-store insertion:
+        assert len(schd.data_store_mgr.added['jobs'].keys()) == 2
+        assert [
+            i.submit_num for i
+            in schd.data_store_mgr.added['jobs'].values()
+        ] == [1, 2]
