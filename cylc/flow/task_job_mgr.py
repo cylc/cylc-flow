@@ -720,8 +720,6 @@ class TaskJobManager:
             or (ctx.ret_code and ctx.ret_code != 255)
         ):
             LOG.error(ctx)
-        else:
-            LOG.debug(ctx)
         # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
         #
         # Note for "reload": A TaskProxy instance may be replaced on reload, so
@@ -891,7 +889,7 @@ class TaskJobManager:
         log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
     def _run_job_cmd(
-        self, cmd_key, workflow, itasks, callback, callback_255=None
+        self, cmd_key, workflow, itasks, callback, callback_255
     ):
         """Run job commands, e.g. poll, kill, etc.
 
@@ -948,6 +946,7 @@ class TaskJobManager:
                     )
                 except NoHostsError:
                     ctx.err = f'No available hosts for {platform["name"]}'
+                    LOG.debug(ctx)
                     callback_255(ctx, workflow, itasks)
                     continue
                 else:

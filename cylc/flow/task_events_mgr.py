@@ -124,8 +124,6 @@ def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
         LOG.info(ctx_str)
     if ctx.cmd and ctx.ret_code:
         LOG.error(ctx_str)
-    elif ctx.cmd:
-        LOG.debug(ctx_str)
 
 
 class EventData(Enum):
