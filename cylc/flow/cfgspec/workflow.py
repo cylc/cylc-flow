@@ -811,7 +811,7 @@ with Conf(
             This setting can be overridden by the reserved keyword argument
             ``sequential`` in individual xtrigger declarations.
 
-            One sequential xtrigger on a parentless task with multiple
+            One sequential xtrigger on a parent-less task with multiple
             xtriggers will cause sequential spawning.
 
             .. versionadded:: 8.3.0
