@@ -20,10 +20,9 @@ GraphQL Middleware defined here also.
 """
 
 from functools import partial
+from inspect import isclass, iscoroutinefunction
 import logging
 from typing import TYPE_CHECKING, Any, Tuple, Union
-
-from inspect import isclass, iscoroutinefunction
 
 from graphene.utils.str_converters import to_snake_case
 from graphql.execution.utils import (
@@ -35,16 +34,16 @@ from graphql.language import ast
 from graphql.backend.base import GraphQLBackend, GraphQLDocument
 from graphql.backend.core import execute_and_validate
 from graphql.utils.base import type_from_ast
-from graphql.type import get_named_type
+from graphql.type.definition import get_named_type
 from promise import Promise
 from rx import Observable
 
-from cylc.flow.network.schema import NODE_MAP, get_type_str
+from cylc.flow.network.schema import NODE_MAP
 
 if TYPE_CHECKING:
     from graphql.execution import ExecutionResult
     from graphql.language.ast import Document
-    from graphql.type import GraphQLSchema
+    from graphql.type.schema import GraphQLSchema
 
 
 logger = logging.getLogger(__name__)
@@ -376,18 +375,18 @@ class IgnoreFieldMiddleware:
 
                 # Avoid using the protobuf default if field isn't set.
                 if (
-                        hasattr(root, 'ListFields')
-                        and hasattr(root, field_name)
-                        and get_type_str(info.return_type) not in NODE_MAP
+                    hasattr(root, 'ListFields')
+                    and hasattr(root, field_name)
+                    and get_named_type(info.return_type).name not in NODE_MAP
                 ):
 
                     # Gather fields set in root
                     parent_path_string = f'{info.path[:-1:]}'
                     stamp = getattr(root, 'stamp', '')
                     if (
-                            parent_path_string not in self.field_sets
-                            or self.field_sets[
-                                parent_path_string]['stamp'] != stamp
+                        parent_path_string not in self.field_sets
+                        or self.field_sets[
+                            parent_path_string]['stamp'] != stamp
                     ):
                         self.field_sets[parent_path_string] = {
                             'stamp': stamp,
@@ -398,36 +397,33 @@ class IgnoreFieldMiddleware:
                         }
 
                     if (
-                            parent_path_string in self.field_sets
-                            and field_name not in self.field_sets[
-                                parent_path_string]['fields']
+                        parent_path_string in self.field_sets
+                        and field_name not in self.field_sets[
+                            parent_path_string]['fields']
                     ):
                         return None
                 # Do not resolve subfields of an empty type
                 # by setting as null in parent/root.
-                elif (
-                        isinstance(root, dict)
-                        and field_name in root
-                ):
+                elif isinstance(root, dict) and field_name in root:
                     field_value = root[field_name]
                     if (
-                            field_value in EMPTY_VALUES
-                            or (
-                                hasattr(field_value, 'ListFields')
-                                and not field_value.ListFields()
-                            )
+                        field_value in EMPTY_VALUES
+                        or (
+                            hasattr(field_value, 'ListFields')
+                            and not field_value.ListFields()
+                        )
                     ):
                         return None
                 if (
-                        info.operation.operation in self.ASYNC_OPS
-                        or iscoroutinefunction(next_)
+                    info.operation.operation in self.ASYNC_OPS
+                    or iscoroutinefunction(next_)
                 ):
                     return self.async_null_setter(next_, root, info, **args)
                 return null_setter(next_(root, info, **args))
 
         if (
-                info.operation.operation in self.ASYNC_OPS
-                or iscoroutinefunction(next_)
+            info.operation.operation in self.ASYNC_OPS
+            or iscoroutinefunction(next_)
         ):
             return self.async_resolve(next_, root, info, **args)
         return next_(root, info, **args)
