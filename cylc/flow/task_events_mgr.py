@@ -82,6 +82,7 @@ from cylc.flow.workflow_events import (
     get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
+from cylc.flow.workflow_status import RunMode
 
 
 if TYPE_CHECKING:
@@ -667,7 +668,7 @@ class TaskEventsManager():
                 return True
             if (
                 itask.state.status == TASK_STATUS_PREPARING
-                or itask.tdef.run_mode == 'simulation'
+                or itask.tdef.run_mode == RunMode.SIMULATION
             ):
                 # If not in the preparing state we already assumed and handled
                 # job submission under the started event above...
@@ -677,7 +678,7 @@ class TaskEventsManager():
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
-            if itask.tdef.run_mode != 'simulation':
+            if itask.tdef.run_mode != RunMode.SIMULATION:
                 job_tokens = itask.tokens.duplicate(
                     job=str(itask.submit_num)
                 )
@@ -824,7 +825,7 @@ class TaskEventsManager():
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
-        if itask.tdef.run_mode != 'live':
+        if itask.tdef.run_mode != RunMode.LIVE:
             return
         msg = ""
         if message != f"job {event}":
@@ -1242,7 +1243,7 @@ class TaskEventsManager():
             )
 
         itask.set_summary_time('submitted', event_time)
-        if itask.tdef.run_mode == 'simulation':
+        if itask.tdef.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING):
@@ -1277,7 +1278,7 @@ class TaskEventsManager():
             'submitted',
             event_time,
         )
-        if itask.tdef.run_mode == 'simulation':
+        if itask.tdef.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             self.data_store_mgr.delta_job_time(
                 job_tokens,

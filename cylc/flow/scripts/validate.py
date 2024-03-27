@@ -55,6 +55,7 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.scheduler_cli import RUN_MODE
+from cylc.flow.workflow_status import RunMode
 
 
 VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
@@ -123,7 +124,7 @@ ValidateOptions = Options(
     {
         'check_circular': False,
         'profile_mode': False,
-        'run_mode': 'live'
+        'run_mode': RunMode.LIVE
     }
 )
 

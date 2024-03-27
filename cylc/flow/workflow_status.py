@@ -21,6 +21,7 @@ from typing import Tuple, TYPE_CHECKING
 from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 
 if TYPE_CHECKING:
+    from optparse import Values
     from cylc.flow.scheduler import Scheduler
 
 # Keys for identify API call
@@ -198,3 +199,21 @@ def get_workflow_status(schd: 'Scheduler') -> Tuple[str, str]:
         status_msg = 'running'
 
     return (status.value, status_msg)
+
+
+class RunMode:
+    """The possible run modes of a workflow."""
+
+    LIVE = 'live'
+    """Workflow will run normally."""
+
+    SIMULATION = 'simulation'
+    """Workflow will run in simulation mode."""
+
+    DUMMY = 'dummy'
+    """Workflow will run in dummy mode."""
+
+    @staticmethod
+    def get(options: 'Values') -> str:
+        """Return the run mode from the options."""
+        return getattr(options, 'run_mode', None) or RunMode.LIVE
