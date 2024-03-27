@@ -94,7 +94,6 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
 
         # Check that there are two entries with correct submit
         # numbers waiting for data-store insertion:
-        assert len(schd.data_store_mgr.added['jobs'].keys()) == 2
         assert [
             i.submit_num for i
             in schd.data_store_mgr.added['jobs'].values()
