@@ -14,7 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Callable
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    List,
+    Set,
+    Tuple
+)
 from unittest.mock import create_autospec
 
 import pytest
