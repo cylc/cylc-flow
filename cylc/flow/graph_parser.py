@@ -538,7 +538,7 @@ class GraphParser:
             if left and (right in terminals):
                 # This right hand side is at the end of a chain:
                 raise GraphParseError(
-                    'ERROR, illegal cycle point offset on the right:'
+                    'Invalid cycle point offsets only on right hand side of a dependency (must be on left hand side):'
                     f' {left} => {right}')
             else:
                 # This RHS is also a LHS in a chain:
