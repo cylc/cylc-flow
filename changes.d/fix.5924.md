@@ -1,1 +1,1 @@
-Ensure that graphs with dependency offsets on the right hand side are flagged to users.
+Validation: a cycle offset can only appear on the right of a dependency if the task's cycling is defined elsewhere with no offset.
