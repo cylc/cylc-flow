@@ -10,5 +10,5 @@
     [[bar]]
          script = """
              cylc stop --flow=1 ${CYLC_WORKFLOW_ID}
-             cylc__job__poll_grep_workflow_log 'Command actioned: stop'
+             cylc__job__poll_grep_workflow_log 'Command "stop" actioned'
          """

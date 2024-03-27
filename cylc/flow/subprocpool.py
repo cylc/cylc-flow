@@ -28,7 +28,7 @@ from time import time
 from subprocess import DEVNULL, run  # nosec
 from typing import Any, Callable, List, Optional
 
-from cylc.flow import LOG
+from cylc.flow import LOG, iter_entry_points
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.exceptions import PlatformLookupError
@@ -41,7 +41,8 @@ from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.wallclock import get_current_time_string
 
-_XTRIG_FUNCS: dict = {}
+_XTRIG_MOD_CACHE: dict = {}
+_XTRIG_FUNC_CACHE: dict = {}
 
 
 def _killpg(proc, signal):
@@ -66,40 +67,66 @@ def _killpg(proc, signal):
     return True
 
 
-def get_func(func_name, src_dir):
-    """Find and return an xtrigger function from a module of the same name.
+def get_xtrig_mod(mod_name, src_dir):
+    """Find, cache, and return a named xtrigger module.
 
-    Can be in <src_dir>/lib/python, CYLC_MOD_LOC, or in Python path.
-    Workflow source directory passed in as this is executed in an independent
-    process in the command pool and therefore doesn't know about the workflow.
+    Locations checked in this order:
+    - <src_dir>/lib/python (prepend to sys.path)
+    - $CYLC_PYTHONPATH (already in sys.path)
+    - `cylc.xtriggers` entry point
+
+    (Check entry point last so users can override with local implementations).
+
+    Workflow source dir passed in - this executes in an independent subprocess.
+
+    Raises:
+        ImportError, if the module is not found
 
     """
-    if func_name in _XTRIG_FUNCS:
-        return _XTRIG_FUNCS[func_name]
+    if mod_name in _XTRIG_MOD_CACHE:
+        # Found and cached already.
+        return _XTRIG_MOD_CACHE[mod_name]
+
     # First look in <src-dir>/lib/python.
     sys.path.insert(0, os.path.join(src_dir, 'lib', 'python'))
-    mod_name = func_name
     try:
-        mod_by_name = __import__(mod_name, fromlist=[mod_name])
+        _XTRIG_MOD_CACHE[mod_name] = __import__(mod_name, fromlist=[mod_name])
     except ImportError:
-        # Then look in built-in xtriggers.
-        mod_name = "%s.%s" % ("cylc.flow.xtriggers", func_name)
-        try:
-            mod_by_name = __import__(mod_name, fromlist=[mod_name])
-        except ImportError:
-            raise
-    try:
-        _XTRIG_FUNCS[func_name] = getattr(mod_by_name, func_name)
-    except AttributeError:
-        # Module func_name has no function func_name.
+        # Then entry point.
+        for entry_point in iter_entry_points('cylc.xtriggers'):
+            if mod_name == entry_point.name:
+                _XTRIG_MOD_CACHE[mod_name] = entry_point.load()
+                return _XTRIG_MOD_CACHE[mod_name]
+        # Still unable to find anything so abort
         raise
-    return _XTRIG_FUNCS[func_name]
+
+    return _XTRIG_MOD_CACHE[mod_name]
+
+
+def get_xtrig_func(mod_name, func_name, src_dir):
+    """Find, cache, and return a function from an xtrigger module.
+
+    Raises:
+        ImportError, if the module is not found
+        AttributeError, if the function is not found in the module
+
+    """
+    if (mod_name, func_name) in _XTRIG_FUNC_CACHE:
+        return _XTRIG_FUNC_CACHE[(mod_name, func_name)]
+
+    mod = get_xtrig_mod(mod_name, src_dir)
+
+    _XTRIG_FUNC_CACHE[(mod_name, func_name)] = getattr(mod, func_name)
+
+    return _XTRIG_FUNC_CACHE[(mod_name, func_name)]
 
 
 def run_function(func_name, json_args, json_kwargs, src_dir):
     """Run a Python function in the process pool.
 
     func_name(*func_args, **func_kwargs)
+
+    The function is presumed to be in a module of the same name.
 
     Redirect any function stdout to stderr (and workflow log in debug mode).
     Return value printed to stdout as a JSON string - allows use of the
@@ -108,14 +135,18 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     """
     func_args = json.loads(json_args)
     func_kwargs = json.loads(json_kwargs)
+
     # Find and import then function.
-    func = get_func(func_name, src_dir)
+    func = get_xtrig_func(func_name, func_name, src_dir)
+
     # Redirect stdout to stderr.
     orig_stdout = sys.stdout
     sys.stdout = sys.stderr
     res = func(*func_args, **func_kwargs)
+
     # Restore stdout.
     sys.stdout = orig_stdout
+
     # Write function return value as JSON to stdout.
     sys.stdout.write(json.dumps(res))
 

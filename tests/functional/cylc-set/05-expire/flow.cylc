@@ -1,0 +1,24 @@
+# Expire a future task, so it won't run.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+        stall timeout = PT0S
+        abort on stall timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            # bar and baz should not run if bar expires
+            expirer => foo => bar? => baz
+            bar:expired?
+        """
+[runtime]
+    [[expirer]]
+        script = """
+           cylc set --output=expired ${CYLC_WORKFLOW_ID}//1/bar
+        """
+    [[foo]]
+    [[bar, baz]]
+        script = false

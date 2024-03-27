@@ -44,7 +44,6 @@ Examples:
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -52,18 +51,14 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import FLOW_NONE, FLOW_NEW, FLOW_ALL
+from cylc.flow.flow_mgr import (
+    add_flow_opts,
+    validate_flow_opts
+)
+
 
 if TYPE_CHECKING:
     from optparse import Values
-
-
-ERR_OPT_FLOW_VAL = "Flow values must be integer, 'all', 'new', or 'none'"
-ERR_OPT_FLOW_INT = "Multiple flow options must all be integer valued"
-ERR_OPT_FLOW_META = "Metadata is only for new flows"
-ERR_OPT_FLOW_WAIT = (
-    f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
-)
 
 
 MUTATION = '''
@@ -95,47 +90,8 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
-
-    parser.add_option(
-        "--flow", action="append", dest="flow", metavar="FLOW",
-        help=f"Assign the triggered task to all active flows ({FLOW_ALL});"
-             f" no flow ({FLOW_NONE}); a new flow ({FLOW_NEW});"
-             f" or a specific flow (e.g. 2). The default is {FLOW_ALL}."
-             " Reuse the option to assign multiple specific flows."
-    )
-
-    parser.add_option(
-        "--meta", metavar="DESCRIPTION", action="store",
-        dest="flow_descr", default=None,
-        help=f"description of triggered flow (with --flow={FLOW_NEW})."
-    )
-
-    parser.add_option(
-        "--wait", action="store_true", default=False, dest="flow_wait",
-        help="Wait for merge with current active flows before flowing on."
-    )
-
+    add_flow_opts(parser)
     return parser
-
-
-def _validate(options):
-    """Check validity of flow-related options."""
-    for val in options.flow:
-        val = val.strip()
-        if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
-            if len(options.flow) != 1:
-                raise InputError(ERR_OPT_FLOW_INT)
-        else:
-            try:
-                int(val)
-            except ValueError:
-                raise InputError(ERR_OPT_FLOW_VAL.format(val))
-
-    if options.flow_descr and options.flow != [FLOW_NEW]:
-        raise InputError(ERR_OPT_FLOW_META)
-
-    if options.flow_wait and options.flow[0] in [FLOW_NEW, FLOW_NONE]:
-        raise InputError(ERR_OPT_FLOW_WAIT)
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
@@ -154,18 +110,13 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flowDescr': options.flow_descr,
         }
     }
-
     await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-
-    if options.flow is None:
-        options.flow = [FLOW_ALL]  # default to all active flows
-    _validate(options)
-
+    validate_flow_opts(options)
     call_multi(
         partial(run, options),
         *ids,

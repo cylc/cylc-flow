@@ -40,18 +40,19 @@ See `cylc get-resources` for available completion scripts using this server.
 #   Which provide possible values to the completion functions.
 
 import asyncio
+from contextlib import suppress
+import inspect
 import os
 from pathlib import Path
 import select
 import sys
 import typing as t
 
-from pkg_resources import (
-    parse_requirements,
-    parse_version
-)
+from packaging.version import parse as parse_version
+from packaging.specifiers import SpecifierSet
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import CylcError
 from cylc.flow.id import tokenise, IDTokens, Tokens
 from cylc.flow.network.scan import scan
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -74,7 +75,7 @@ INTERNAL = True
 # set the compatibility range for completion scripts with this server
 # I.E. if we change the server interface, change this compatibility range.
 # User's will be presented with an upgrade notice if this happens.
-REQUIRED_SCRIPT_VERSION = 'completion-script >=1.0.0, <2.0.0'
+REQUIRED_SCRIPT_VERSION = '>=1.0.0, <2.0.0'
 
 # register the psudo "help" and "version" commands
 COMMAND_LIST = list(COMMANDS) + ['help', 'version']
@@ -195,7 +196,12 @@ async def complete_cylc(_root: str, *items: str) -> t.List[str]:
         if ret is not None:
             return ret
     if previous and previous.startswith('-'):
-        ret = await complete_option_value(command, previous, partial)
+        ret = await complete_option_value(
+            command,
+            previous,
+            partial,
+            items=items,
+        )
         if ret is not None:
             return ret
 
@@ -258,10 +264,11 @@ async def complete_option(
 async def complete_option_value(
     command: str,
     option: str,
-    partial: t.Optional[str] = None
+    partial: t.Optional[str] = None,
+    items: t.Optional[t.Iterable[str]] = None,
 ) -> t.Optional[t.List[str]]:
     """Complete values for --options."""
-    vals = await list_option_values(command, option, partial)
+    vals = await list_option_values(command, option, partial, items=items)
     if vals is not None:
         return complete(partial, vals)
     return None
@@ -317,7 +324,7 @@ def list_options(command: str) -> t.List[str]:
     if command in COMMAND_OPTION_MAP:
         return COMMAND_OPTION_MAP[command]
     try:
-        entry_point = COMMANDS[command].resolve()
+        entry_point = COMMANDS[command].load()
     except KeyError:
         return []
     parser = entry_point.parser_function()
@@ -333,8 +340,20 @@ async def list_option_values(
     command: str,
     option: str,
     partial: t.Optional[str] = '',
+    items: t.Optional[t.Iterable[str]] = None,
 ) -> t.Optional[t.List[str]]:
     """List values for an option in a Cylc command.
+
+    Args:
+        command:
+            The Cylc sub-command.
+        option:
+            The --option to list possible values for.
+        partial:
+            The part of the command the user is completing.
+        items:
+            The CLI context, i.e. everything that has been typed on the CLI
+            before the partial.
 
     E.G. --flow ['all', 'new', 'none']
     """
@@ -343,7 +362,22 @@ async def list_option_values(
         if not list_option:
             # do not perform completion for this option
             return []
-        return await list_option(None, partial)
+        kwargs = {}
+        if 'tokens_list' in inspect.getfullargspec(list_option).args:
+            # the function requires information about tokens already specified
+            # on the CLI
+            # (e.g. the workflow//cycle/task the command is operating on)
+            tokens_list = []
+            for item in items or []:
+                # pull out things from the command which look like IDs
+                if '//' in item:
+                    with suppress(ValueError):
+                        tokens_list.append(Tokens(item))
+                        continue
+                    with suppress(ValueError):
+                        tokens_list.append(Tokens(item, relative=True))
+            kwargs['tokens_list'] = tokens_list
+        return await list_option(partial, **kwargs)
     return None
 
 
@@ -392,7 +426,6 @@ async def list_in_workflow(tokens: Tokens, infer_run=True) -> t.List[str]:
             # list possible IDs
             cli_detokenise(
                 tokens.duplicate(
-                    tokens=None,
                     # use the workflow ID provided on the CLI to allow
                     # run name inference
                     workflow=input_workflow,
@@ -415,7 +448,6 @@ async def list_resources(_partial: str) -> t.List[str]:
 
 
 async def list_dir(
-    _workflow: t.Optional[str],
     partial: t.Optional[str]
 ) -> t.List[str]:
     """List an arbitrary dir on the filesystem.
@@ -462,7 +494,6 @@ def list_rel_dir(path: Path, base: Path) -> t.List[str]:
 
 
 async def list_flows(
-    _workflow: t.Optional[str],
     _partial: t.Optional[str]
 ) -> t.List[str]:
     """List values for the --flow option."""
@@ -470,11 +501,94 @@ async def list_flows(
 
 
 async def list_colours(
-    _workflow: t.Optional[str],
     _partial: t.Optional[str]
 ) -> t.List[str]:
     """List values for the --color option."""
     return ['never', 'auto', 'always']
+
+
+async def list_outputs(
+    _partial: t.Optional[str],
+    tokens_list: t.Optional[t.List[Tokens]],
+):
+    """List task outputs."""
+    return (await _list_prereqs_and_outputs(tokens_list))[1]
+
+
+async def list_prereqs(
+    _partial: t.Optional[str],
+    tokens_list: t.Optional[t.List[Tokens]],
+):
+    """List task prerequisites."""
+    return (await _list_prereqs_and_outputs(tokens_list))[0] + ['all']
+
+
+async def _list_prereqs_and_outputs(
+    tokens_list: t.Optional[t.List[Tokens]],
+) -> t.Tuple[t.List[str], t.List[str]]:
+    """List task prerequisites and outputs.
+
+    Returns:
+        tuple - (prereqs, outputs)
+
+    """
+    if not tokens_list:
+        # no context information available on the CLI
+        # we can't list prereqs/outputs
+        return ([], [])
+
+    # dynamic import for this relatively unlikely case to avoid slowing down
+    # server startup unnecessarily
+    from cylc.flow.network.client_factory import get_client
+    from cylc.flow.scripts.show import prereqs_and_outputs_query
+    from types import SimpleNamespace
+
+    workflows: t.Dict[str, t.List[Tokens]] = {}
+    current_workflow = None
+    for tokens in tokens_list:
+        workflow = tokens['workflow']
+        task = tokens['task']
+        if workflow:
+            workflows.setdefault(workflow, [])
+            current_workflow = workflow
+        if current_workflow and task:
+            workflows[current_workflow].append(tokens.task)
+
+    clients = {}
+    for workflow in workflows:
+        with suppress(CylcError):
+            clients[workflow] = get_client(workflow)
+
+    if not workflows:
+        return ([], [])
+
+    json: dict = {}
+    await asyncio.gather(*(
+        prereqs_and_outputs_query(
+            workflow,
+            workflows[workflow],
+            pclient,
+            SimpleNamespace(json=True),
+            json,
+        )
+        for workflow, pclient in clients.items()
+    ))
+
+    if not json:
+        return ([], [])
+    return (
+        [
+            f"{cond['taskId']}:{cond['reqState']}"
+            for value in json.values()
+            for prerequisite in value['prerequisites']
+            for cond in prerequisite['conditions']
+        ],
+        [
+            output['label']
+            for value in json.values()
+            for output in value['outputs']
+        ],
+    )
 
 
 # non-exhaustive list of Cylc commands which take non-workflow arguments
@@ -515,6 +629,8 @@ OPTION_MAP: t.Dict[str, t.Optional[t.Callable]] = {
     '--flow': list_flows,
     '--colour': list_colours,
     '--color': list_colours,
+    '--out': list_outputs,
+    '--pre': list_prereqs,
     # options for which we should not attempt to complete values for
     '--rm': None,
     '--run-name': None,
@@ -530,7 +646,7 @@ OPTION_MAP: t.Dict[str, t.Optional[t.Callable]] = {
 }
 
 
-def cli_detokenise(tokens: Tokens) -> str:
+def cli_detokenise(tokens: Tokens, relative=False) -> str:
     """Format tokens for use on the command line.
 
     I.E. add the trailing slash[es] onto the end.
@@ -538,9 +654,13 @@ def cli_detokenise(tokens: Tokens) -> str:
     if tokens.is_null:
         # shouldn't happen but prevents possible error
         return ''
+    if relative:
+        id_ = tokens.relative_id
+    else:
+        id_ = tokens.id
     if tokens.lowest_token == IDTokens.Workflow.value:
-        return f'{tokens.id}//'
-    return f'{tokens.id}/'
+        return f'{id_}//'
+    return f'{id_}/'
 
 
 def next_token(tokens: Tokens) -> t.Optional[str]:
@@ -637,15 +757,13 @@ def check_completion_script_compatibility(
 
     # check that the installed completion script is compabile with this
     # completion server version
-    for requirement in parse_requirements(REQUIRED_SCRIPT_VERSION):
-        # NOTE: there's only one requirement but we have to iterate to get it
-        if installed_version not in requirement:
-            is_compatible = False
-            print(
-                f'The Cylc {completion_lang} script needs to be updated to'
-                ' work with this version of Cylc.',
-                file=sys.stderr,
-            )
+    if installed_version not in SpecifierSet(REQUIRED_SCRIPT_VERSION):
+        is_compatible = False
+        print(
+            f'The Cylc {completion_lang} script needs to be updated to'
+            ' work with this version of Cylc.',
+            file=sys.stderr,
+        )
 
     # check for completion script updates
     if installed_version < current_version:

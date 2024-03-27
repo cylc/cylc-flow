@@ -138,7 +138,7 @@ async def test_task_pool(one, start):
     async with start(one):
         # pump the scheduler's heart manually
         one.pool.release_runahead_tasks()
-        assert len(one.pool.main_pool) == 1
+        assert len(one.pool.active_tasks) == 1
 
 
 async def test_exception(one, run, log_filter):
@@ -229,3 +229,64 @@ async def test_db_select(one, start, db_select):
     results = db_select(
         schd, False, 'task_states', name='one', status='waiting')
     assert len(results) == 1
+
+
+async def test_reflog(flow, scheduler, run, reflog, complete):
+    """Test the triggering of tasks.
+
+    This is the integration test version of "reftest" in the funtional tests.
+
+    It works by capturing the triggers which caused each submission so that
+    they can be compared with the expected outcome.
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '1',
+            'final cycle point': '1',
+            'cycling mode': 'integer',
+            'graph': {
+                'P1': '''
+                    a => b => c
+                    x => b => z
+                    b[-P1] => b
+                '''
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+
+    async with run(schd):
+        triggers = reflog(schd)  # Note: add flow_nums=True to capture flows
+        await complete(schd)
+
+    assert triggers == {
+        # 1/a was triggered by nothing (i.e. it's parentless)
+        ('1/a', None),
+        # 1/b was triggered by three tasks (note the pre-initial dependency)
+        ('1/b', ('0/b', '1/a', '1/x')),
+        ('1/c', ('1/b',)),
+        ('1/x', None),
+        ('1/z', ('1/b',)),
+    }
+
+
+async def test_reftest(flow, scheduler, reftest):
+    """Test the triggering of tasks.
+
+    This uses the reftest fixture which combines the reflog and
+    complete fixtures. Suitable for use when you just want to do a simple
+    reftest.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b'
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+
+    assert await reftest(schd) == {
+        ('1/a', None),
+        ('1/b', ('1/a',)),
+    }

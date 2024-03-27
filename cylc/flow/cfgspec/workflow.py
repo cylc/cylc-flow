@@ -401,7 +401,7 @@ with Conf(
                     # differentiate between not set vs set to empty
                     default = None
                 elif item.endswith("handlers"):
-                    desc = desc + '\n\n' + dedent(rf'''
+                    desc = desc + '\n\n' + dedent(f'''
                         Examples:
 
                         .. code-block:: cylc
@@ -413,9 +413,9 @@ with Conf(
                            {item} = echo %(workflow)s
 
                            # configure multiple event handlers
-                           {item} = \
-                               'echo %(workflow)s, %(event)s', \
-                               'my_exe %(event)s %(message)s' \
+                           {item} = \\
+                               'echo %(workflow)s, %(event)s', \\
+                               'my_exe %(event)s %(message)s' \\
                                'curl -X PUT -d event=%(event)s host:port'
                     ''')
                 elif item.startswith("abort on"):
@@ -539,7 +539,7 @@ with Conf(
         ''')
         # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
         # such as '+P1Y' (relative to initial cycle point)
-        Conf('final cycle point', VDR.V_STRING, desc='''
+        Conf('final cycle point', VDR.V_CYCLE_POINT_WITH_OFFSETS, desc='''
             The (optional) last cycle point at which tasks are run.
 
             Once all tasks have reached this cycle point, the
@@ -547,6 +547,12 @@ with Conf(
 
             This item can be overridden on the command line using
             ``cylc play --final-cycle-point`` or ``--fcp``.
+
+            Examples:
+
+            - ``2000`` - Shorthand for ``2000-01-01T00:00``.
+            - ``+P1D`` - The initial cycle point plus one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -599,7 +605,7 @@ with Conf(
 
                {REPLACES}``[scheduling]hold after point``.
         ''')
-        Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
+        Conf('stop after cycle point', VDR.V_CYCLE_POINT_WITH_OFFSETS, desc='''
             Shut down the workflow after all tasks pass this cycle point.
 
             The stop cycle point can be overridden on the command line using
@@ -612,7 +618,18 @@ with Conf(
                choosing not to run that part of the graph. You can play
                the workflow and continue.
 
+            Examples:
+
+            - ``2000`` - Shorthand for ``2000-01-01T00:00``.
+            - ``+P1D`` - The initial cycle point plus one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
+
             .. versionadded:: 8.0.0
+
+            .. versionchanged:: 8.3.0
+
+               This now supports offsets (e.g. ``+P1D``) in the same way the
+               :cylc:conf:`[..]final cycle point` does.
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -785,9 +802,23 @@ with Conf(
                     :ref:`SequentialTasks`.
             ''')
 
+        Conf('sequential xtriggers', VDR.V_BOOLEAN, False,
+             desc='''
+            If ``True``, tasks that only depend on xtriggers will not spawn
+            until the xtrigger of previous (cycle point) instance is satisfied.
+            Otherwise, they will all spawn at once out to the runahead limit.
+
+            This setting can be overridden by the reserved keyword argument
+            ``sequential`` in individual xtrigger declarations.
+
+            One sequential xtrigger on a parentless task with multiple
+            xtriggers will cause sequential spawning.
+
+            .. versionadded:: 8.3.0
+        ''')
         with Conf('xtriggers', desc='''
-                This section is for *External Trigger* function declarations -
-                see :ref:`Section External Triggers`.
+            This section is for *External Trigger* function declarations -
+            see :ref:`Section External Triggers`.
         '''):
             Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
                 Any user-defined event trigger function declarations and
@@ -1260,10 +1291,23 @@ with Conf(
                     - ``all`` - all instance of the task will fail
                     - ``2017-08-12T06, 2017-08-12T18`` - these instances of
                       the task will fail
+
+                    If you set :cylc:conf:`[..][..]execution retry delays`
+                    the second attempt will succeed unless you set
+                    :cylc:conf:`[..]fail try 1 only = False`.
                 ''')
                 Conf('fail try 1 only', VDR.V_BOOLEAN, True, desc='''
                     If ``True`` only the first run of the task
                     instance will fail, otherwise retries will fail too.
+
+                    Task instances must be set to fail by
+                    :cylc:conf:`[..]fail cycle points`.
+
+                    .. note::
+
+                       This setting is designed for use with automatic
+                       retries. Subsequent manual submissions will not
+                       change the outcome of the task.
                 ''')
                 Conf('disable task event handlers', VDR.V_BOOLEAN, True,
                      desc='''
@@ -1849,7 +1893,7 @@ def upg(cfg, descr):
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
         cvtr=converter(
-            lambda x: f'P{int(x)-1}' if x != '' else '',
+            lambda x: f'P{int(x) - 1}' if x != '' else '',
             '"{old}" -> "{new}"'
         ),
         silent=cylc.flow.flags.cylc7_back_compat,
@@ -1958,9 +2002,21 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     `[scheduling][graph]X`."""
     # Parsec upgrader cannot do this type of move
     with contextlib.suppress(KeyError):
+        note = ''
         if 'dependencies' in cfg['scheduling']:
-            msg_old = '[scheduling][dependencies][X]graph'
-            msg_new = '[scheduling][graph]X'
+            if ['graph'] == cfg['scheduling']['dependencies'].keys():
+                msg_old = '[scheduling][dependencies]graph'
+                msg_new = '[scheduling][graph]R1'
+                list_cp = False
+            else:
+                note = (
+                    '\n   ([scheduling][dependencies]graph moves to'
+                    ' [scheduling][graph]R1)'
+                    if 'graph' in cfg['scheduling']['dependencies'] else '')
+                msg_old = '[scheduling][dependencies][X]graph'
+                msg_new = '[scheduling][graph]X - for X in:'
+                list_cp = True
+
             if 'graph' in cfg['scheduling']:
                 raise UpgradeError(
                     f'Cannot upgrade deprecated item "{msg_old} -> {msg_new}" '
@@ -1981,12 +2037,14 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         graphdict[key] = value
                         keys.add(key)
                 if keys and not cylc.flow.flags.cylc7_back_compat:
-                    LOG.warning(
+                    msg = (
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'
-                        f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
-                        f"       {', '.join(sorted(keys))}"
+                        f' * (8.0.0) {msg_old} -> {msg_new}'
                     )
+                    if list_cp:
+                        msg += f"\n       {', '.join(sorted(keys))}"
+                    LOG.warning(msg + note)
 
 
 def upgrade_param_env_templates(cfg, descr):

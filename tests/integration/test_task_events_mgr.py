@@ -27,7 +27,6 @@ async def test_process_job_logs_retrieval_warns_no_platform(
     """Job log retrieval handles `NoHostsError`"""
 
     ctx = TaskJobLogsRetrieveContext(
-        ctx_type='raa',
         platform_name='skarloey',
         max_size=256,
         key='skarloey'

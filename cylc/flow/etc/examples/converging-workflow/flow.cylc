@@ -1,0 +1,35 @@
+[meta]
+    title = Converging Workflow
+    description = """
+        A workflow which runs a pattern of tasks over and over until a
+        convergence condition has been met.
+    """
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[graph]]
+        P1 = """
+            # run "increment" then check the convergence condition
+            check_convergence[-P1]:not_converged? => increment => check_convergence
+
+            # if the workflow has converged, then do nothing
+            check_convergence:converged?
+        """
+
+[runtime]
+    [[increment]]
+        # a task which evolves the data
+    [[check_convergence]]
+        # a task which checks whether the convergence condition has been met
+        script = """
+            if (( CYLC_TASK_CYCLE_POINT == 4 )); then
+                # for the purpose of example, assume convergence at cycle point 4
+                cylc message -- 'convergence condition met'
+            else
+                cylc message -- 'convergence condition not met'
+            fi
+        """
+        [[[outputs]]]
+            converged = 'convergence condition met'
+            not_converged = 'convergence condition not met'

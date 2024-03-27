@@ -1,6 +1,6 @@
 [scheduler]
     [[events]]
-        stall handlers = "cylc set-outputs --flow=1 %(workflow)s//1/bar"
+        stall handlers = "cylc set %(workflow)s//1/bar"
         stall timeout = PT0S
         abort on stall timeout = False
         expected task failures = 1/bar

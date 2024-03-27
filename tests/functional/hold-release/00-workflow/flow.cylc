@@ -23,7 +23,7 @@
         script = """
             cylc__job__wait_cylc_message_started
             cylc hold --after=1900 "${CYLC_WORKFLOW_ID}"
-            cylc__job__poll_grep_workflow_log -F 'INFO - Command actioned: set_hold_point'
+            cylc__job__poll_grep_workflow_log 'Command "set_hold_point" actioned'
             cylc release --all "${CYLC_WORKFLOW_ID}"
         """
     [[foo,bar]]

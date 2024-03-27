@@ -22,11 +22,11 @@
 [runtime]
     [[a]]
         script = """
-            cylc__job__poll_grep_workflow_log "1/b .*failed"
-            cylc__job__poll_grep_workflow_log "1/c .*failed"
+            cylc__job__poll_grep_workflow_log "1/b.*failed"
+            cylc__job__poll_grep_workflow_log "1/c.*failed"
             cylc stop --now $CYLC_WORKFLOW_ID
-            cylc__job__poll_grep_workflow_log "1/a .*(polled)started"
-            cylc__job__poll_grep_workflow_log "1/b .*(polled)failed"
+            cylc__job__poll_grep_workflow_log "1/a.*(polled)started"
+            cylc__job__poll_grep_workflow_log "1/b.*(polled)failed"
         """
     [[b, c]]
        script = "false"

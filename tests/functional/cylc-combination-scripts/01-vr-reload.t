@@ -51,6 +51,6 @@ named_grep_ok "${TEST_NAME_BASE}-it-logged-reload" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Clean Up.
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
+run_ok "${TEST_NAME_BASE}-stop" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -165,9 +165,17 @@ EVENTS_SETTINGS = {  # workflow events
 
         Template variables can be used to configure handlers. For a full list
         of supported variables see :ref:`workflow_event_template_variables`.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
     ''',
     'handler events': '''
         Specify the events for which workflow event handlers should be invoked.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
     ''',
     'mail events': '''
         Specify the workflow events for which notification emails should
@@ -176,12 +184,20 @@ EVENTS_SETTINGS = {  # workflow events
     'startup handlers': f'''
         Handlers to run at scheduler startup.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``startup handler``.
     ''',
     'shutdown handlers': f'''
         Handlers to run at scheduler shutdown.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -191,6 +207,10 @@ EVENTS_SETTINGS = {  # workflow events
         Handlers to run if the scheduler shuts down with error status due to
         a configured timeout or a fatal error condition.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``aborted handler``.
@@ -199,10 +219,18 @@ EVENTS_SETTINGS = {  # workflow events
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionadded:: 8.0.0
     ''',
     'workflow timeout handlers': '''
         Handlers to run if the workflow timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionadded:: 8.0.0
     ''',
@@ -210,10 +238,18 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the workflow timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionadded:: 8.0.0
     ''',
     'stall handlers': f'''
         Handlers to run if the scheduler stalls.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -222,12 +258,20 @@ EVENTS_SETTINGS = {  # workflow events
     'stall timeout': f'''
         The length of a timer which starts if the scheduler stalls.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``timeout``.
     ''',
     'stall timeout handlers': f'''
         Handlers to run if the stall timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -237,6 +281,10 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the stall timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on timeout``.
@@ -245,12 +293,20 @@ EVENTS_SETTINGS = {  # workflow events
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES} ``inactivity``.
     ''',
     'inactivity timeout handlers': f'''
         Handlers to run if the inactivity timer times out.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionchanged:: 8.0.0
 
@@ -260,6 +316,10 @@ EVENTS_SETTINGS = {  # workflow events
         Whether the scheduler should shut down immediately with error status if
         the inactivity timer times out.
 
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
+
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on inactivity``.
@@ -267,6 +327,10 @@ EVENTS_SETTINGS = {  # workflow events
     'restart timeout': '''
         How long to wait for intervention on restarting a completed workflow.
         The timer stops if any task is triggered.
+
+        .. seealso::
+
+           :ref:`user_guide.scheduler.workflow_events`
 
         .. versionadded:: 8.2.0
 
@@ -610,6 +674,26 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
+    with Conf('hub', desc='''
+        Configure the public URL of Jupyter Hub.
+
+        If configured, the ``cylc gui`` command will open a web browser at this
+        location rather than starting a standalone server when called.
+
+
+        .. seealso::
+
+           * The cylc hub :ref:`architecture-reference` for fuller details.
+           * :ref:`UI_Server_config` for practical details.
+
+    '''):
+        Conf('url', VDR.V_STRING, '', desc='''
+            .. versionadded:: 8.3.0
+
+            Where Jupyter Hub is used a url can be provided for routing on
+            execution of ``cylc gui`` command.
+        ''')
+
     with Conf('scheduler', desc=(
         default_for(SCHEDULER_DESCR, "[scheduler]", section=True)
     )):
@@ -1202,6 +1286,9 @@ with Conf('global.cylc', desc='''
 
                    {PLATFORM_REPLACES.format("[job]batch system")}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[job]batch submit command template"
+            )
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
 
@@ -1210,9 +1297,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
 
-                   {PLATFORM_REPLACES.format(
-                       "[job]batch submit command template"
-                    )}
+                   {replaces}
             ''')
             Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
@@ -1445,6 +1530,8 @@ with Conf('global.cylc', desc='''
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    command``.
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs max size")
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs max size']}
 
@@ -1452,9 +1539,10 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    max size``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs max size")}
+                   {replaces}
             ''')
+            replaces = PLATFORM_REPLACES.format(
+                "[remote]retrieve job logs retry delays")
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
                 {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
@@ -1463,8 +1551,7 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
                    retry delays``.
-                   {PLATFORM_REPLACES.format(
-                       "[remote]retrieve job logs retry delays")}
+                   {replaces}
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
@@ -1631,6 +1718,14 @@ with Conf('global.cylc', desc='''
                 of job submissions which can be batched together.
 
                 .. versionadded:: 8.0.0
+            ''')
+            Conf('ssh forward environment variables', VDR.V_STRING_LIST, '',
+                 desc='''
+                A list containing the names of the environment variables to
+                forward with SSH connections to the workflow host from
+                the host running 'cylc play'
+
+                .. versionadded:: 8.3.0
             ''')
             with Conf('selection', desc='''
                 How to select a host from the list of platform hosts.
@@ -1838,8 +1933,7 @@ def get_version_hierarchy(version: str) -> List[str]:
         ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    smart_ver: Any = parse_version(version)
-    # (No type anno. yet for Version in pkg_resources.extern.packaging.version)
+    smart_ver = Version(version)
     base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
     hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]
