@@ -107,6 +107,7 @@ from cylc.flow.workflow_files import (
     WorkflowFiles,
     check_deprecation,
 )
+from cylc.flow.workflow_status import RunMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -521,9 +522,9 @@ class WorkflowConfig:
 
         self.process_runahead_limit()
 
-        if self.run_mode('simulation', 'dummy'):
-            configure_sim_modes(
-                self.taskdefs.values(), self.run_mode())
+        run_mode = self.run_mode()
+        if run_mode in {RunMode.SIMULATION, RunMode.DUMMY}:
+            configure_sim_modes(self.taskdefs.values(), run_mode)
 
         self.configure_workflow_state_polling_tasks()
 
@@ -1494,20 +1495,9 @@ class WorkflowConfig:
         os.environ['PATH'] = os.pathsep.join([
             os.path.join(self.fdir, 'bin'), os.environ['PATH']])
 
-    def run_mode(self, *reqmodes):
-        """Return the run mode.
-
-        Combine command line option with configuration setting.
-        If "reqmodes" is specified, return the boolean (mode in reqmodes).
-        Otherwise, return the mode as a str.
-        """
-        mode = getattr(self.options, 'run_mode', None)
-        if not mode:
-            mode = 'live'
-        if reqmodes:
-            return mode in reqmodes
-        else:
-            return mode
+    def run_mode(self) -> str:
+        """Return the run mode."""
+        return RunMode.get(self.options)
 
     def _check_task_event_handlers(self):
         """Check custom event handler templates can be expanded.

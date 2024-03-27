@@ -19,13 +19,14 @@
 import pytest
 
 from cylc.flow.exceptions import InputError
+from cylc.flow.scheduler import Scheduler
 
 
 MODES = [('live'), ('simulation'), ('dummy')]
 
 
-@pytest.mark.parametrize('mode_before', MODES + [None])
 @pytest.mark.parametrize('mode_after', MODES)
+@pytest.mark.parametrize('mode_before', MODES + [None])
 async def test_restart_mode(
     flow, run, scheduler, start, one_conf,
     mode_before, mode_after
@@ -35,12 +36,13 @@ async def test_restart_mode(
     N.B - we need use run becuase the check in question only happens
     on start.
     """
+    schd: Scheduler
     id_ = flow(one_conf)
     schd = scheduler(id_, run_mode=mode_before)
     async with start(schd):
         if not mode_before:
             mode_before = 'live'
-        assert schd.config.run_mode() == mode_before
+        assert schd.get_run_mode() == mode_before
 
     schd = scheduler(id_, run_mode=mode_after)
 
@@ -50,7 +52,7 @@ async def test_restart_mode(
     ):
         # Restarting in the same mode is fine.
         async with run(schd):
-            assert schd.config.run_mode() == mode_before
+            assert schd.get_run_mode() == mode_before
     else:
         # Restarting in a new mode is not:
         errormsg = f'^This.*{mode_before} mode: Will.*{mode_after} mode.$'

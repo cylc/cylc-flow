@@ -118,7 +118,7 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import StopMode, AutoRestartMode
+from cylc.flow.workflow_status import RunMode, StopMode, AutoRestartMode
 from cylc.flow import workflow_files
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -425,7 +425,14 @@ class Scheduler:
         self._check_startup_opts()
 
         if self.is_restart:
+            run_mode = self.get_run_mode()
             self._set_workflow_params(params)
+            # Prevent changing run mode on restart:
+            og_run_mode = self.get_run_mode()
+            if run_mode != og_run_mode:
+                raise InputError(
+                    f'This workflow was originally run in {og_run_mode} mode:'
+                    f' Will not restart in {run_mode} mode.')
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -435,18 +442,6 @@ class Scheduler:
             # Mark this exc as expected (see docstring for .schd_expected):
             exc.schd_expected = True
             raise exc
-
-        # Prevent changing mode on restart.
-        if self.is_restart:
-            # check run mode against db
-            og_run_mode = self.workflow_db_mgr.get_pri_dao(
-            ).select_workflow_params_run_mode() or 'live'
-            run_mode = self.config.run_mode()
-            if run_mode != og_run_mode:
-                raise InputError(
-                    f'This workflow was originally run in {og_run_mode} mode:'
-                    f' Will not restart in {run_mode} mode.')
-
         self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
@@ -605,7 +600,7 @@ class Scheduler:
             # Note that the following lines must be present at the top of
             # the workflow log file for use in reference test runs.
             LOG.info(
-                f'Run mode: {self.config.run_mode()}',
+                f'Run mode: {self.get_run_mode()}',
                 extra=RotatingLogFileHandler.header_extra
             )
             LOG.info(
@@ -1053,7 +1048,7 @@ class Scheduler:
 
     def command_poll_tasks(self, tasks: Iterable[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
-        if self.config.run_mode('simulation'):
+        if self.get_run_mode() == RunMode.SIMULATION:
             return 0
         itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
@@ -1062,7 +1057,7 @@ class Scheduler:
     def command_kill_tasks(self, tasks: Iterable[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
         itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
-        if self.config.run_mode('simulation'):
+        if self.get_run_mode() == RunMode.SIMULATION:
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state_reset(TASK_STATUS_FAILED)
@@ -1360,6 +1355,9 @@ class Scheduler:
         """
         LOG.info('LOADING workflow parameters')
         for key, value in params:
+            if key == self.workflow_db_mgr.KEY_RUN_MODE:
+                self.options.run_mode = value or RunMode.LIVE
+                LOG.info(f"+ run mode = {value}")
             if value is None:
                 continue
             if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
@@ -1380,12 +1378,6 @@ class Scheduler:
                 elif self.options.stopcp is None:
                     self.options.stopcp = value
                     LOG.info(f"+ stop point = {value}")
-            elif (
-                key == self.workflow_db_mgr.KEY_RUN_MODE
-                and self.options.run_mode is None
-            ):
-                self.options.run_mode = value
-                LOG.info(f"+ run mode = {value}")
             elif key == self.workflow_db_mgr.KEY_UUID_STR:
                 self.uuid_str = value
                 LOG.info(f"+ workflow UUID = {value}")
@@ -1431,12 +1423,8 @@ class Scheduler:
 
         Run workflow events in simulation and dummy mode ONLY if enabled.
         """
-        conf = self.config
-        with suppress(KeyError):
-            if (
-                conf.run_mode('simulation', 'dummy')
-            ):
-                return
+        if self.get_run_mode() in {RunMode.SIMULATION, RunMode.DUMMY}:
+            return
         self.workflow_event_handler.handle(self, event, str(reason))
 
     def release_queued_tasks(self) -> bool:
@@ -1509,7 +1497,7 @@ class Scheduler:
             pre_prep_tasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
-            is_simulation=self.config.run_mode('simulation')
+            is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
         ):
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
@@ -1560,7 +1548,7 @@ class Scheduler:
         """Check workflow and task timers."""
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
-        if not self.config.run_mode('simulation'):
+        if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
 
     async def workflow_shutdown(self):
@@ -1759,7 +1747,7 @@ class Scheduler:
         self.release_queued_tasks()
 
         if (
-            self.pool.config.run_mode('simulation')
+            self.get_run_mode() == RunMode.SIMULATION
             and sim_time_check(
                 self.task_events_mgr,
                 self.pool.get_tasks(),
@@ -2251,6 +2239,9 @@ class Scheduler:
                     raise InputError(
                         f"option --{opt}=reload is only valid for restart"
                     )
+
+    def get_run_mode(self) -> str:
+        return RunMode.get(self.options)
 
     async def handle_exception(self, exc: BaseException) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
