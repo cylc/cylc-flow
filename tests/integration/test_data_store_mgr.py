@@ -157,10 +157,17 @@ def test_increment_graph_window(harness):
 
 def test_initiate_data_model(harness):
     """Test method that generates all data elements in order."""
+    schd: Scheduler
     schd, data = harness
     assert len(data[WORKFLOW].task_proxies) == 2
     schd.data_store_mgr.initiate_data_model(reloaded=True)
     assert len(data[WORKFLOW].task_proxies) == 2
+    # Check n-window preserved on reload:
+    schd.data_store_mgr.set_graph_window_extent(2)
+    schd.data_store_mgr.update_data_structure()
+    assert schd.data_store_mgr.n_edge_distance == 2
+    schd.data_store_mgr.initiate_data_model(reloaded=True)
+    assert schd.data_store_mgr.n_edge_distance == 2
 
 
 async def test_delta_task_state(harness):

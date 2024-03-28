@@ -164,6 +164,9 @@ class TaskProxy:
         .transient:
             This is a transient proxy - not to be added to the task pool, but
             used e.g. to spawn children, or to get task-specific information.
+        .is_xtrigger_sequential:
+            A flag used to determine whether this task needs to wait for
+            xtrigger satisfaction to spawn.
 
     Args:
         tdef: The definition object of this task.
@@ -206,7 +209,8 @@ class TaskProxy:
         'try_timers',
         'waiting_on_job_prep',
         'mode_settings',
-        'transient'
+        'transient',
+        'is_xtrigger_sequential',
     ]
 
     def __init__(
@@ -222,7 +226,8 @@ class TaskProxy:
         is_manual_submit: bool = False,
         flow_wait: bool = False,
         data_mode: bool = False,
-        transient: bool = False
+        transient: bool = False,
+        sequential_xtrigger_labels: Optional[Set[str]] = None,
     ) -> None:
 
         self.tdef = tdef
@@ -283,6 +288,13 @@ class TaskProxy:
         self.waiting_on_job_prep = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
+
+        # Set xtrigger checking type, which effects parentless spawning.
+        self.is_xtrigger_sequential = bool(
+            sequential_xtrigger_labels
+            and self.tdef.is_parentless(start_point)
+            and sequential_xtrigger_labels.intersection(self.state.xtriggers)
+        )
 
         # Determine graph children of this task (for spawning).
         if data_mode:

@@ -90,9 +90,6 @@ def test_validate_implicit_task_name(
     are blacklisted get caught and raise errors.
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True'
-        },
         'scheduling': {
             'graph': {
                 'R1': task_name
@@ -189,9 +186,6 @@ def test_no_graph(flow, validate):
 def test_parse_special_tasks_invalid(flow, validate, section):
     """It should fail for invalid "special tasks"."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': 'now',
             'special tasks': {
@@ -211,9 +205,6 @@ def test_parse_special_tasks_invalid(flow, validate, section):
 def test_parse_special_tasks_interval(flow, validate):
     """It should fail for invalid durations in clock-triggers."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': 'now',
             'special tasks': {
@@ -359,7 +350,6 @@ def test_xtrig_validation_wall_clock(
     https://github.com/cylc/cylc-flow/issues/5448
     """
     id_ = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'initial cycle point': '1012',
             'xtriggers': {'myxt': 'wall_clock(offset=PT7MH)'},
@@ -378,7 +368,6 @@ def test_xtrig_implicit_wall_clock(flow: Fixture, validate: Fixture):
     xtrigger definition.
     """
     wid = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'initial cycle point': '2024',
             'graph': {'R1': '@wall_clock => foo'},
@@ -396,7 +385,6 @@ def test_xtrig_validation_echo(
     https://github.com/cylc/cylc-flow/issues/5448
     """
     id_ = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'xtriggers': {'myxt': 'echo()'},
             'graph': {'R1': '@myxt => foo'},
@@ -418,7 +406,6 @@ def test_xtrig_validation_xrandom(
     https://github.com/cylc/cylc-flow/issues/5448
     """
     id_ = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'xtriggers': {'myxt': 'xrandom(200)'},
             'graph': {'R1': '@myxt => foo'},
@@ -459,7 +446,6 @@ def test_xtrig_validation_custom(
     )
 
     id_ = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'initial cycle point': '1012',
             'xtriggers': {'myxt': 'kustom_xt(feature=42)'},
@@ -490,7 +476,6 @@ def test_xtrig_signature_validation(
 ):
     """Test automatic xtrigger function signature validation."""
     id_ = flow({
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {
             'initial cycle point': '2024',
             'xtriggers': {'myxt': xtrig_call},

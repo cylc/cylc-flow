@@ -24,7 +24,7 @@ from cylc.flow.id import Tokens
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
-from cylc.flow.xtrigger_mgr import RE_STR_TMPL
+from cylc.flow.xtrigger_mgr import RE_STR_TMPL, XtriggerManager
 
 
 def test_constructor(xtrigger_mgr):
@@ -68,7 +68,7 @@ def test_add_xtrigger_with_params(xtrigger_mgr):
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
-def test_check_xtrigger_with_unknown_params(xtrigger_mgr):
+def test_check_xtrigger_with_unknown_params():
     """Test for adding an xtrigger with an unknown parameter.
 
     The XTriggerManager contains a list of specific parameters that are
@@ -90,10 +90,12 @@ def test_check_xtrigger_with_unknown_params(xtrigger_mgr):
         XtriggerConfigError,
         match="Illegal template in xtrigger: what_is_this"
     ):
-        xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
+        XtriggerManager.check_xtrigger("xtrig", xtrig, 'fdir')
 
 
-def test_check_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
+def test_check_xtrigger_with_deprecated_params(
+    caplog: pytest.LogCaptureFixture
+):
     """It should flag deprecated template variables."""
     xtrig = SubFuncContext(
         label="echo",
@@ -102,7 +104,7 @@ def test_check_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
         func_kwargs={"succeed": True}
     )
     caplog.set_level(logging.WARNING, CYLC_LOG)
-    xtrigger_mgr.check_xtrigger("xtrig", xtrig, 'fdir')
+    XtriggerManager.check_xtrigger("xtrig", xtrig, 'fdir')
     assert caplog.messages == [
         'Xtrigger "xtrig" uses deprecated template variables: suite_name'
     ]

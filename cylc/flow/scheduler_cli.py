@@ -65,6 +65,7 @@ from cylc.flow.terminal import (
     is_terminal,
     prompt,
 )
+from cylc.flow.workflow_status import RunMode
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -130,7 +131,7 @@ RUN_MODE = OptionSettings(
     ["-m", "--mode"],
     help="Run mode: live, dummy, simulation (default live).",
     metavar="STRING", action='store', dest="run_mode",
-    choices=['live', 'dummy', 'simulation'],
+    choices=[RunMode.LIVE, RunMode.DUMMY, RunMode.SIMULATION],
 )
 
 PLAY_RUN_MODE = deepcopy(RUN_MODE)

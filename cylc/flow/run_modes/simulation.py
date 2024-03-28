@@ -22,6 +22,8 @@ from typing import (
     TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union)
 from time import time
 
+from metomi.isodatetime.parsers import DurationParser
+
 from cylc.flow import LOG
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
@@ -35,7 +37,6 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
-from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
