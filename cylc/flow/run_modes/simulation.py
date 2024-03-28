@@ -292,7 +292,10 @@ def sim_time_check(
     now = time()
     sim_task_state_changed: bool = False
     for itask in itasks:
-        if itask.state.status != TASK_STATUS_RUNNING:
+        if (
+            itask.state.status != TASK_STATUS_RUNNING
+            or itask.tdef.run_mode != 'simulation'
+        ):
             continue
 
         # This occurs if the workflow has been restarted.

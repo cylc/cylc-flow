@@ -1755,17 +1755,6 @@ class Scheduler:
         self.pool.clock_expire_tasks()
         self.release_queued_tasks()
 
-        if (
-            self.get_run_mode() == RunMode.SIMULATION
-            and sim_time_check(
-                self.task_events_mgr,
-                self.pool.get_tasks(),
-                self.workflow_db_mgr,
-            )
-        ):
-            # A simulated task state change occurred.
-            self.reset_inactivity_timer()
-
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.late_tasks_check()
 
