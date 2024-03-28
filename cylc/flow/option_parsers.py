@@ -26,17 +26,17 @@ from optparse import (
 )
 import os
 import re
+import sys
+from textwrap import dedent
+from typing import Any, Dict, Iterable, Optional, List, Tuple
+
 from ansimarkup import (
     parse as cparse,
     strip as cstrip
 )
 
-import sys
-from textwrap import dedent
-from typing import Any, Dict, Iterable, Optional, List, Tuple
-
 from cylc.flow import LOG
-from cylc.flow.terminal import supports_color, DIM
+from cylc.flow.terminal import should_use_color, DIM
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
@@ -196,7 +196,7 @@ class CylcOption(Option):
 
 
 class CylcHelpFormatter(IndentedHelpFormatter):
-    def _format(self, text):
+    def _format(self, text: str) -> str:
         """Format help (usage) text on the fly to handle coloring.
 
         Help is printed to the terminal before color initialization for general
@@ -208,16 +208,7 @@ class CylcHelpFormatter(IndentedHelpFormatter):
           - Strip any hardwired color tags
 
         """
-        if (
-            hasattr(self.parser.values, 'color')
-            and (
-                self.parser.values.color == "always"
-                or (
-                    self.parser.values.color == "auto"
-                    and supports_color()
-                )
-            )
-        ):
+        if should_use_color(self.parser.values):
             # Add color formatting to examples text.
             text = format_shell_examples(
                 format_help_headings(text)
@@ -239,41 +230,41 @@ class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
-    MULTITASK_USAGE = cparse(dedent('''
+    MULTITASK_USAGE = dedent('''
         This command can operate on multiple tasks. Globs and selectors may
         be used to match active tasks:
             Multiple Tasks:
-                <dim># Operate on two tasks</dim>
+                # Operate on two tasks
                 workflow //cycle-1/task-1 //cycle-2/task-2
 
             Globs (note: globs should be quoted and only match active tasks):
-                <dim># Match any active task "foo" in all cycles</dim>
+                # Match any active task "foo" in all cycles
                 '//*/foo'
 
-                <dim># Match the tasks "foo-1" and "foo-2"</dim>
+                # Match the tasks "foo-1" and "foo-2"
                 '//*/foo-[12]'
 
             Selectors (note: selectors only match active tasks):
-                <dim># match all failed tasks in cycle "1"</dim>
+                # match all failed tasks in cycle "1"
                 //1:failed
 
             See `cylc help id` for more details.
-    '''))
-    MULTIWORKFLOW_USAGE = cparse(dedent('''
+    ''')
+    MULTIWORKFLOW_USAGE = dedent('''
         This command can operate on multiple workflows. Globs may be used:
             Multiple Workflows:
-                <dim># Operate on two workflows</dim>
+                # Operate on two workflows
                 workflow-1 workflow-2
 
             Globs (note: globs should be quoted):
-                <dim># Match all workflows</dim>
+                # Match all workflows
                 '*'
 
-                <dim># Match the workflows foo-1, foo-2</dim>
+                # Match the workflows foo-1, foo-2
                 'foo-[12]'
 
             See `cylc help id` for more details.
-    '''))
+    ''')
 
     CAN_BE_USED_MULTIPLE = (
         " This option can be used multiple times on the command line.")
@@ -332,6 +323,7 @@ class CylcOptionParser(OptionParser):
         OptionSettings(
             ['-z', '--set-list', '--template-list'],
             metavar='NAME=VALUE1,VALUE2,...',
+            # NOTE: deliberate non-breaking spaces in help text:
             help=(
                 'A more convenient alternative to --set for defining a list'
                 ' of strings. E.G.'
@@ -704,6 +696,7 @@ def add_sources_to_helps(options, modify=None):
             cylc rose options apply to.
     """
     modify = {} if modify is None else modify
+    cformat = cparse if should_use_color(options) else cstrip
     for option in options:
         if hasattr(option, 'sources'):
             sources = list(option.sources)
@@ -712,9 +705,10 @@ def add_sources_to_helps(options, modify=None):
                     sources.append(sub)
                     sources.remove(match)
 
-            option.kwargs['help'] = cparse(
+            option.kwargs['help'] = cformat(
                 f'<cyan>[{", ".join(sources)}]</cyan>'
-                f' {option.kwargs["help"]}')
+                f' {option.kwargs["help"]}'
+            )
     return options
 
 
@@ -843,4 +837,5 @@ def log_subcommand(*args):
     # Args might be posixpath or similar.
     args = [str(a) for a in args]
     print(cparse(
-        f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'))
+        f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'
+    ))

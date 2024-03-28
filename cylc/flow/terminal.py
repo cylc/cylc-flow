@@ -36,7 +36,7 @@ from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
 
 if TYPE_CHECKING:
-    from optparse import OptionParser
+    from optparse import OptionParser, Values
 
 
 # CLI exception message format
@@ -136,7 +136,7 @@ def format_grid(rows, gutter=2):
     return lines
 
 
-def supports_color():
+def supports_color() -> bool:
     """Determine if running in a terminal which supports color.
 
     See equivalent code in Django:
@@ -144,11 +144,19 @@ def supports_color():
     """
     if not is_terminal():
         return False
-    if sys.platform in ['Pocket PC', 'win32']:
+    if sys.platform in {'Pocket PC', 'win32'}:
         return False
     if 'ANSICON' in os.environ:
         return False
     return True
+
+
+def should_use_color(opts: 'Optional[Values]') -> bool:
+    """Determine whether to use color based on the options supplied."""
+    return opts is not None and hasattr(opts, 'color') and (
+        opts.color == 'always'
+        or (opts.color == 'auto' and supports_color())
+    )
 
 
 def ansi_log(name=CYLC_LOG, stream='stderr'):
@@ -257,17 +265,13 @@ def cli_function(
                         list(api_args),
                         **parser_kwargs
                     )
-                    if hasattr(opts, 'color'):
-                        use_color = (
-                            opts.color == 'always'
-                            or (opts.color == 'auto' and supports_color())
-                        )
+                    use_color = should_use_color(opts)
                     wrapped_args = [parser, opts, *args]
                 if 'color' in inspect.signature(wrapped_function).parameters:
                     wrapped_kwargs['color'] = use_color
 
                 # configure Cylc to use colour
-                color_init(autoreset=True, strip=not use_color)
+                color_init(autoreset=False, strip=not use_color)
                 if use_color:
                     ansi_log()
 

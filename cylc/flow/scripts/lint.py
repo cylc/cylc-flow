@@ -49,7 +49,6 @@ pyproject.toml configuration:
    rulesets = ['style', '728']  # Sets default rulesets to check
    max-line-length = 130        # Max line length for linting
 """
-from colorama import Fore
 import functools
 from pathlib import Path
 import re
@@ -71,7 +70,10 @@ except ImportError:
         TOMLDecodeError,
     )
 from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union)
+    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union
+)
+
+from ansimarkup import parse as cparse
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -1214,11 +1216,11 @@ def lint(
                     )
                 else:
                     # write a message to inform the user
-                    write(
-                        Fore.YELLOW +
-                        f'[{index_str}]'
-                        f' {file_rel}:{line_no}: {msg}'
-                    )
+                    write(cparse(
+                        '<yellow>'
+                        f'[{index_str}] {file_rel}:{line_no}: {msg}'
+                        '</yellow>'
+                    ))
         if modify:
             yield line
 
@@ -1449,17 +1451,19 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
     if counter:
         total_lint_hits = sum(counter.values())
-        msg = (
-            f'\n{Fore.YELLOW}'
+        msg = cparse(
+            '\n<yellow>'
             f'Checked {target} against {check_names} '
             f'rules and found {total_lint_hits} issue'
             f'{"s" if total_lint_hits > 1 else ""}.'
+            '</yellow>'
         )
     else:
-        msg = (
-            f'{Fore.GREEN}'
+        msg = cparse(
+            '<green>'
             f'Checked {target} against {check_names} rules and '
             'found no issues.'
+            '</green>'
         )
 
     print(msg)
