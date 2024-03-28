@@ -136,7 +136,7 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
         param(
             # See https://github.com/cylc/cylc-flow/issues/5844
             "foo => bar[1649]",
-            'illegal cycle point offset on the right',
+            'Invalid cycle point offsets only on right',
             id='no-cycle-point-RHS'
         ),
     ]
@@ -917,7 +917,7 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
     'args, err',
     (
         # Error if offset in terminal RHS:
-        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'illegal cycle point offset'),
+        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
         # No error if offset in NON-terminal RHS:
         param((('a', 'b[-P42M]'), {}), None),
         # Don't check the left hand side if this has a non-terminal RHS:
