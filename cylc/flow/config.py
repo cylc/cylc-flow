@@ -521,10 +521,6 @@ class WorkflowConfig:
 
         self.process_runahead_limit()
 
-        run_mode = self.run_mode()
-        if run_mode in {RunMode.SIMULATION, RunMode.DUMMY}:
-            configure_sim_modes(self.taskdefs.values(), run_mode)
-
         self.configure_workflow_state_polling_tasks()
 
         self._check_task_event_handlers()
