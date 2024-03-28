@@ -21,8 +21,8 @@ from typing import (
     TYPE_CHECKING, Any, Dict, Tuple)
 
 from cylc.flow.platforms import get_platform
-from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
-from cylc.flow.task_state import MODE_SKIP
+from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUCCEEDED
+from cylc.flow.task_state import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.task_job_mgr import TaskJobManager
@@ -49,9 +49,9 @@ def submit_task_job(
     itask.submit_num += 1
 
     itask.platform = get_platform()
-    itask.platform['name'] = MODE_SKIP
-    itask.summary['job_runner_name'] = MODE_SKIP
-    itask.tdef.run_mode = MODE_SKIP
+    itask.platform['name'] = RunMode.SKIP
+    itask.summary['job_runner_name'] = RunMode.SKIP
+    itask.tdef.run_mode = RunMode.SKIP
     task_job_mgr.task_events_mgr.process_message(
         itask, INFO, TASK_OUTPUT_SUBMITTED,
     )
@@ -60,5 +60,8 @@ def submit_task_job(
             'time_submit': now[1],
             'try_num': itask.get_try_num(),
         }
+    )
+    task_job_mgr.task_events_mgr.process_message(
+        itask, INFO, TASK_OUTPUT_SUCCEEDED,
     )
     return True

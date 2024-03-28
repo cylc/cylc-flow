@@ -65,7 +65,7 @@ from cylc.flow.terminal import (
     is_terminal,
     prompt,
 )
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.task_state import RunMode
 
 if TYPE_CHECKING:
     from optparse import Values

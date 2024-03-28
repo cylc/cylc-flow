@@ -1,12 +1,12 @@
 [[root]]
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -14,6 +14,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[meta]]]
         title = 
         description = 
@@ -90,6 +91,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[meta]]]
         title = 
         description = 
@@ -166,6 +168,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[meta]]]
         title = 
         description = 
@@ -229,12 +232,12 @@
 [[SERIAL]]
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -242,6 +245,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -306,12 +310,12 @@
 [[PARALLEL]]
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -319,6 +323,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -396,6 +401,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -473,6 +479,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -550,6 +557,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -627,6 +635,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -704,6 +713,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -781,6 +791,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -858,6 +869,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -935,6 +947,7 @@
     execution time limit = 
     submission polling intervals = 
     submission retry delays = 
+    run mode = workflow
     [[[directives]]]
         job_type = parallel
     [[[meta]]]

@@ -106,7 +106,7 @@ from cylc.flow.workflow_files import (
     WorkflowFiles,
     check_deprecation,
 )
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.task_state import RunMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:

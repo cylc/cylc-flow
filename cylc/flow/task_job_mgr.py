@@ -109,9 +109,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
-    MODE_SKIP,
-    MODE_SIMULATION,
-    MODE_DUMMY
+    RunMode
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -1038,20 +1036,20 @@ class TaskJobManager:
                         f'[{itask.identity}] run mode set by task settings'
                         f' to: {rtconfig["run mode"]} mode.')
                 run_mode = rtconfig['run mode']
+            itask.tdef.run_mode = run_mode
 
             # Submit ghost tasks, or add live-like tasks to list
             # of tasks to put through live submission pipeline:
             is_done = False
-            if run_mode == MODE_DUMMY:
+            if run_mode == RunMode.DUMMY:
                 is_done = dummy_submit_task_job(
                     self, itask, rtconfig, workflow, now)
-            elif run_mode == MODE_SIMULATION:
+            elif run_mode == RunMode.SIMULATION:
                 is_done = simulation_submit_task_job(
                     self, itask, rtconfig, workflow, now)
-            elif run_mode == MODE_SKIP:
+            elif run_mode == RunMode.SKIP:
                 is_done = skip_submit_task_job(
                     self, itask, rtconfig, workflow, now)
-
             # Assign task to list:
             if is_done:
                 ghost_tasks.append(itask)

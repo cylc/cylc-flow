@@ -118,7 +118,7 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import RunMode, StopMode, AutoRestartMode
+from cylc.flow.workflow_status import StopMode, AutoRestartMode
 from cylc.flow import workflow_files
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -140,7 +140,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
-    TASK_STATUS_FAILED)
+    TASK_STATUS_FAILED,
+    RunMode)
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (

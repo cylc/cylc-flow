@@ -36,6 +36,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
+from cylc.flow.task_state import RunMode
 
 
 if TYPE_CHECKING:
@@ -294,7 +295,7 @@ def sim_time_check(
     for itask in itasks:
         if (
             itask.state.status != TASK_STATUS_RUNNING
-            or itask.tdef.run_mode != 'simulation'
+            or itask.tdef.run_mode != RunMode.SIMULATION
         ):
             continue
 
