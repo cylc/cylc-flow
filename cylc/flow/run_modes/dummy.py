@@ -32,7 +32,7 @@ from cylc.flow.platforms import get_platform
 if TYPE_CHECKING:
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
-    from typing import bool_value
+    from typing_extensions import Literal
 
 
 def submit_task_job(
@@ -41,7 +41,7 @@ def submit_task_job(
     rtconfig: Dict[str, Any],
     workflow: str,
     now: Tuple[float, str]
-) -> 'bool_value[False]':
+) -> 'Literal[False]':
     """Submit a task in simulation mode.
     """
     configure_dummy_mode(rtconfig)

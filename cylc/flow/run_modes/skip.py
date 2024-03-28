@@ -27,6 +27,7 @@ from cylc.flow.task_state import MODE_SKIP
 if TYPE_CHECKING:
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
+    from typing_extensions import Literal
 
 
 def submit_task_job(
@@ -35,7 +36,7 @@ def submit_task_job(
     rtconfig: Dict[str, Any],
     workflow: str,
     now: Tuple[float, str]
-) -> 'bool':
+) -> 'Literal[True]':
     """Submit a task in simulation mode.
     """
     itask.summary['started_time'] = now[0]
