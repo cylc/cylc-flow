@@ -37,7 +37,10 @@ def submit_task_job(
     workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
-    """Submit a task in simulation mode.
+    """Submit a task in skip mode.
+
+    Returns:
+        True - indicating that TaskJobManager need take no further action.
     """
     itask.summary['started_time'] = now[0]
     # TODO - do we need this? I don't thing so?

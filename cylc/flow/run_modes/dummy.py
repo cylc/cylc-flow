@@ -26,6 +26,7 @@ from cylc.flow.run_modes.simulation import (
     get_simulated_run_len,
     parse_fail_cycle_points
 )
+from cylc.flow.task_states import MODE_DUMMY
 from cylc.flow.platforms import get_platform
 
 
@@ -42,7 +43,11 @@ def submit_task_job(
     workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[False]':
-    """Submit a task in simulation mode.
+    """Submit a task in dummy mode.
+
+    Returns:
+        False - indicating that TaskJobManager needs to continue running the
+        live mode path.
     """
     configure_dummy_mode(rtconfig)
 
@@ -58,8 +63,8 @@ def submit_task_job(
     itask.submit_num += 1
 
     itask.platform = get_platform()
-    itask.platform['name'] = 'DUMMY'
-    itask.summary['job_runner_name'] = 'DUMMY'
+    itask.platform['name'] = MODE_DUMMY
+    itask.summary['job_runner_name'] = MODE_DUMMY
     itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (
         itask.mode_settings.simulated_run_length)
     itask.jobs.append(

@@ -54,6 +54,9 @@ def submit_task_job(
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in simulation mode.
+
+    Returns:
+        True - indicating that TaskJobManager need take no further action.
     """
     configure_sim_mode(rtconfig)
     itask.summary['started_time'] = now[0]
