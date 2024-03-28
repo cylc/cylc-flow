@@ -101,7 +101,6 @@ from cylc.flow.workflow_events import (
     get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
-from cylc.flow.workflow_status import RunMode
 
 
 if TYPE_CHECKING:
