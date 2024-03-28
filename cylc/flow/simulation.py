@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from time import time
 
+from metomi.isodatetime.parsers import DurationParser
+
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
@@ -30,8 +32,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
+from cylc.flow.workflow_status import RunMode
 
-from metomi.isodatetime.parsers import DurationParser
 
 if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
@@ -134,7 +136,7 @@ def configure_sim_modes(taskdefs, sim_mode):
     """Adjust task defs for simulation and dummy mode.
 
     """
-    dummy_mode = bool(sim_mode == 'dummy')
+    dummy_mode = (sim_mode == RunMode.DUMMY)
 
     for tdef in taskdefs:
         # Compute simulated run time by scaling the execution limit.

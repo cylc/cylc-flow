@@ -236,6 +236,7 @@ class SubProcPool:
             if ctx.err is None:
                 ctx.err = ''
             ctx.err += err + err_xtra
+        LOG.debug(ctx)
         self._run_command_exit(
             ctx, bad_hosts=bad_hosts,
             callback=callback, callback_args=callback_args,

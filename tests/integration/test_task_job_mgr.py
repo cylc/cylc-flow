@@ -67,7 +67,7 @@ async def test_run_job_cmd_no_hosts_error(
     })
 
     # start the workflow
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd) as log:
         # set logging to debug level
         log.set_level(logging.DEBUG, CYLC_LOG)
@@ -124,6 +124,7 @@ async def test__run_job_cmd_logs_platform_lookup_fail(
             schd.task_job_mgr.JOBS_POLL,
             'foo',
             [SimpleNamespace(platform={'name': 'culdee fell summit'})],
+            None,
             None
         )
         warning = caplog.records[-1]

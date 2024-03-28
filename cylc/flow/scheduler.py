@@ -118,7 +118,7 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import StopMode, AutoRestartMode
+from cylc.flow.workflow_status import RunMode, StopMode, AutoRestartMode
 from cylc.flow import workflow_files
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -425,7 +425,14 @@ class Scheduler:
         self._check_startup_opts()
 
         if self.is_restart:
+            run_mode = self.get_run_mode()
             self._set_workflow_params(params)
+            # Prevent changing run mode on restart:
+            og_run_mode = self.get_run_mode()
+            if run_mode != og_run_mode:
+                raise InputError(
+                    f'This workflow was originally run in {og_run_mode} mode:'
+                    f' Will not restart in {run_mode} mode.')
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -435,18 +442,6 @@ class Scheduler:
             # Mark this exc as expected (see docstring for .schd_expected):
             exc.schd_expected = True
             raise exc
-
-        # Prevent changing mode on restart.
-        if self.is_restart:
-            # check run mode against db
-            og_run_mode = self.workflow_db_mgr.get_pri_dao(
-            ).select_workflow_params_run_mode() or 'live'
-            run_mode = self.config.run_mode()
-            if run_mode != og_run_mode:
-                raise InputError(
-                    f'This workflow was originally run in {og_run_mode} mode:'
-                    f' Will not restart in {run_mode} mode.')
-
         self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
@@ -605,7 +600,7 @@ class Scheduler:
             # Note that the following lines must be present at the top of
             # the workflow log file for use in reference test runs.
             LOG.info(
-                f'Run mode: {self.config.run_mode()}',
+                f'Run mode: {self.get_run_mode()}',
                 extra=RotatingLogFileHandler.header_extra
             )
             LOG.info(
@@ -652,7 +647,8 @@ class Scheduler:
             # Non-async sleep - yield to other threads rather than event loop
             sleep(0)
             self.profiler.start()
-            await self.main_loop()
+            while True:  # MAIN LOOP
+                await self._main_loop()
 
         except SchedulerStop as exc:
             # deliberate stop
@@ -1052,7 +1048,7 @@ class Scheduler:
 
     def command_poll_tasks(self, tasks: Iterable[str]) -> int:
         """Poll pollable tasks or a task or family if options are provided."""
-        if self.config.run_mode('simulation'):
+        if self.get_run_mode() == RunMode.SIMULATION:
             return 0
         itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
@@ -1061,7 +1057,7 @@ class Scheduler:
     def command_kill_tasks(self, tasks: Iterable[str]) -> int:
         """Kill all tasks or a task/family if options are provided."""
         itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
-        if self.config.run_mode('simulation'):
+        if self.get_run_mode() == RunMode.SIMULATION:
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state_reset(TASK_STATUS_FAILED)
@@ -1359,6 +1355,9 @@ class Scheduler:
         """
         LOG.info('LOADING workflow parameters')
         for key, value in params:
+            if key == self.workflow_db_mgr.KEY_RUN_MODE:
+                self.options.run_mode = value or RunMode.LIVE
+                LOG.info(f"+ run mode = {value}")
             if value is None:
                 continue
             if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
@@ -1379,12 +1378,6 @@ class Scheduler:
                 elif self.options.stopcp is None:
                     self.options.stopcp = value
                     LOG.info(f"+ stop point = {value}")
-            elif (
-                key == self.workflow_db_mgr.KEY_RUN_MODE
-                and self.options.run_mode is None
-            ):
-                self.options.run_mode = value
-                LOG.info(f"+ run mode = {value}")
             elif key == self.workflow_db_mgr.KEY_UUID_STR:
                 self.uuid_str = value
                 LOG.info(f"+ workflow UUID = {value}")
@@ -1430,12 +1423,8 @@ class Scheduler:
 
         Run workflow events in simulation and dummy mode ONLY if enabled.
         """
-        conf = self.config
-        with suppress(KeyError):
-            if (
-                conf.run_mode('simulation', 'dummy')
-            ):
-                return
+        if self.get_run_mode() in {RunMode.SIMULATION, RunMode.DUMMY}:
+            return
         self.workflow_event_handler.handle(self, event, str(reason))
 
     def release_queued_tasks(self) -> bool:
@@ -1508,7 +1497,7 @@ class Scheduler:
             pre_prep_tasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
-            is_simulation=self.config.run_mode('simulation')
+            is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
         ):
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
@@ -1559,7 +1548,7 @@ class Scheduler:
         """Check workflow and task timers."""
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
-        if not self.config.run_mode('simulation'):
+        if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
 
     async def workflow_shutdown(self):
@@ -1709,153 +1698,152 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    async def main_loop(self) -> None:
-        """The scheduler main loop."""
-        while True:  # MAIN LOOP
-            tinit = time()
+    async def _main_loop(self) -> None:
+        """A single iteration of the main loop."""
+        tinit = time()
 
-            # Useful for debugging core scheduler issues:
-            # import logging
-            # self.pool.log_task_pool(logging.CRITICAL)
-            if self.incomplete_ri_map:
-                self.manage_remote_init()
+        # Useful for debugging core scheduler issues:
+        # import logging
+        # self.pool.log_task_pool(logging.CRITICAL)
+        if self.incomplete_ri_map:
+            self.manage_remote_init()
 
-            await self.process_command_queue()
-            self.proc_pool.process()
+        await self.process_command_queue()
+        self.proc_pool.process()
 
-            # Unqueued tasks with satisfied prerequisites must be waiting on
-            # xtriggers or ext_triggers. Check these and queue tasks if ready.
-            for itask in self.pool.get_tasks():
-                if (
-                    not itask.state(TASK_STATUS_WAITING)
-                    or itask.state.is_queued
-                    or itask.state.is_runahead
-                ):
-                    continue
-
-                if (
-                    itask.state.xtriggers
-                    and not itask.state.xtriggers_all_satisfied()
-                ):
-                    self.xtrigger_mgr.call_xtriggers_async(itask)
-
-                if (
-                    itask.state.external_triggers
-                    and not itask.state.external_triggers_all_satisfied()
-                ):
-                    self.broadcast_mgr.check_ext_triggers(
-                        itask, self.ext_trigger_queue)
-
-                if all(itask.is_ready_to_run()):
-                    self.pool.queue_task(itask)
-
-            if self.xtrigger_mgr.sequential_spawn_next:
-                self.pool.spawn_parentless_sequential_xtriggers()
-
-            if self.xtrigger_mgr.do_housekeeping:
-                self.xtrigger_mgr.housekeep(self.pool.get_tasks())
-
-            self.pool.clock_expire_tasks()
-            self.release_queued_tasks()
+        # Unqueued tasks with satisfied prerequisites must be waiting on
+        # xtriggers or ext_triggers. Check these and queue tasks if ready.
+        for itask in self.pool.get_tasks():
+            if (
+                not itask.state(TASK_STATUS_WAITING)
+                or itask.state.is_queued
+                or itask.state.is_runahead
+            ):
+                continue
 
             if (
-                self.pool.config.run_mode('simulation')
-                and sim_time_check(
-                    self.task_events_mgr,
-                    self.pool.get_tasks(),
-                    self.workflow_db_mgr,
-                )
+                itask.state.xtriggers
+                and not itask.state.xtriggers_all_satisfied()
             ):
-                # A simulated task state change occurred.
-                self.reset_inactivity_timer()
+                self.xtrigger_mgr.call_xtriggers_async(itask)
 
-            self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
-            self.late_tasks_check()
+            if (
+                itask.state.external_triggers
+                and not itask.state.external_triggers_all_satisfied()
+            ):
+                self.broadcast_mgr.check_ext_triggers(
+                    itask, self.ext_trigger_queue)
 
-            self.process_queued_task_messages()
-            await self.process_command_queue()
-            self.task_events_mgr.process_events(self)
+            if all(itask.is_ready_to_run()):
+                self.pool.queue_task(itask)
 
-            # Update state summary, database, and uifeed
-            self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
+        if self.xtrigger_mgr.sequential_spawn_next:
+            self.pool.spawn_parentless_sequential_xtriggers()
 
-            # List of task whose states have changed.
-            updated_task_list = [
-                t for t in self.pool.get_tasks() if t.state.is_updated]
-            has_updated = updated_task_list or self.is_updated
+        if self.xtrigger_mgr.do_housekeeping:
+            self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
-            if updated_task_list and self.is_restart_timeout_wait:
-                # Stop restart timeout if action has been triggered.
-                with suppress(KeyError):
-                    self.timers[self.EVENT_RESTART_TIMEOUT].stop()
-                    self.is_restart_timeout_wait = False
+        self.pool.clock_expire_tasks()
+        self.release_queued_tasks()
 
-            if has_updated or self.data_store_mgr.updates_pending:
-                # Update the datastore.
-                await self.update_data_structure()
-
-            if has_updated:
-                if not self.is_reloaded:
-                    # (A reload cannot un-stall workflow by itself)
-                    self.is_stalled = False
-                self.is_reloaded = False
-
-                # Reset workflow and task updated flags.
-                self.is_updated = False
-                for itask in updated_task_list:
-                    itask.state.is_updated = False
-
-                if not self.is_stalled:
-                    # Stop the stalled timer.
-                    with suppress(KeyError):
-                        self.timers[self.EVENT_STALL_TIMEOUT].stop()
-
-            self.process_workflow_db_queue()
-
-            # If public database is stuck, blast it away by copying the content
-            # of the private database into it.
-            self.database_health_check()
-
-            # Shutdown workflow if timeouts have occurred
-            self.timeout_check()
-
-            # Does the workflow need to shutdown on task failure?
-            await self.workflow_shutdown()
-
-            if self.options.profile_mode:
-                self.update_profiler_logs(tinit)
-
-            # Run plugin functions
-            await asyncio.gather(
-                *main_loop.get_runners(
-                    self.main_loop_plugins,
-                    main_loop.CoroTypes.Periodic,
-                    self
-                )
+        if (
+            self.get_run_mode() == RunMode.SIMULATION
+            and sim_time_check(
+                self.task_events_mgr,
+                self.pool.get_tasks(),
+                self.workflow_db_mgr,
             )
+        ):
+            # A simulated task state change occurred.
+            self.reset_inactivity_timer()
 
-            if not has_updated and not self.stop_mode:
-                # Has the workflow stalled?
-                self.check_workflow_stalled()
+        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
+        self.late_tasks_check()
 
-            # Sleep a bit for things to catch up.
-            # Quick sleep if there are items pending in process pool.
-            # (Should probably use quick sleep logic for other queues?)
-            elapsed = time() - tinit
-            quick_mode = self.proc_pool.is_not_done()
-            if (elapsed >= self.INTERVAL_MAIN_LOOP or
-                    quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
-                # Main loop has taken quite a bit to get through
-                # Still yield control to other threads by sleep(0.0)
-                duration: float = 0
-            elif quick_mode:
-                duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
-            else:
-                duration = self.INTERVAL_MAIN_LOOP - elapsed
-            await asyncio.sleep(duration)
-            # Record latest main loop interval
-            self.main_loop_intervals.append(time() - tinit)
-            # END MAIN LOOP
+        self.process_queued_task_messages()
+        await self.process_command_queue()
+        self.task_events_mgr.process_events(self)
+
+        # Update state summary, database, and uifeed
+        self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
+
+        # List of task whose states have changed.
+        updated_task_list = [
+            t for t in self.pool.get_tasks() if t.state.is_updated]
+        has_updated = updated_task_list or self.is_updated
+
+        if updated_task_list and self.is_restart_timeout_wait:
+            # Stop restart timeout if action has been triggered.
+            with suppress(KeyError):
+                self.timers[self.EVENT_RESTART_TIMEOUT].stop()
+                self.is_restart_timeout_wait = False
+
+        if has_updated or self.data_store_mgr.updates_pending:
+            # Update the datastore.
+            await self.update_data_structure()
+
+        if has_updated:
+            if not self.is_reloaded:
+                # (A reload cannot un-stall workflow by itself)
+                self.is_stalled = False
+            self.is_reloaded = False
+
+            # Reset workflow and task updated flags.
+            self.is_updated = False
+            for itask in updated_task_list:
+                itask.state.is_updated = False
+
+            if not self.is_stalled:
+                # Stop the stalled timer.
+                with suppress(KeyError):
+                    self.timers[self.EVENT_STALL_TIMEOUT].stop()
+
+        self.process_workflow_db_queue()
+
+        # If public database is stuck, blast it away by copying the content
+        # of the private database into it.
+        self.database_health_check()
+
+        # Shutdown workflow if timeouts have occurred
+        self.timeout_check()
+
+        # Does the workflow need to shutdown on task failure?
+        await self.workflow_shutdown()
+
+        if self.options.profile_mode:
+            self.update_profiler_logs(tinit)
+
+        # Run plugin functions
+        await asyncio.gather(
+            *main_loop.get_runners(
+                self.main_loop_plugins,
+                main_loop.CoroTypes.Periodic,
+                self
+            )
+        )
+
+        if not has_updated and not self.stop_mode:
+            # Has the workflow stalled?
+            self.check_workflow_stalled()
+
+        # Sleep a bit for things to catch up.
+        # Quick sleep if there are items pending in process pool.
+        # (Should probably use quick sleep logic for other queues?)
+        elapsed = time() - tinit
+        quick_mode = self.proc_pool.is_not_done()
+        if (elapsed >= self.INTERVAL_MAIN_LOOP or
+                quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
+            # Main loop has taken quite a bit to get through
+            # Still yield control to other threads by sleep(0.0)
+            duration: float = 0
+        elif quick_mode:
+            duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
+        else:
+            duration = self.INTERVAL_MAIN_LOOP - elapsed
+        await asyncio.sleep(duration)
+        # Record latest main loop interval
+        self.main_loop_intervals.append(time() - tinit)
+        # END MAIN LOOP
 
     def _update_workflow_state(self):
         """Update workflow state in the data store and push out any deltas.
@@ -1894,12 +1882,11 @@ class Scheduler:
         for event, timer in self.timers.items():
             if not timer.timed_out():
                 continue
+            self.run_event_handlers(event)
             abort_conf = f"abort on {event}"
             if self._get_events_conf(abort_conf):
                 # "cylc play" needs to exit with error status here.
                 raise SchedulerError(f'"{abort_conf}" is set')
-            if self._get_events_conf(f"{event} handlers") is not None:
-                self.run_event_handlers(event)
             if event == self.EVENT_RESTART_TIMEOUT:
                 # Unset wait flag to allow normal shutdown.
                 self.is_restart_timeout_wait = False
@@ -2252,6 +2239,9 @@ class Scheduler:
                     raise InputError(
                         f"option --{opt}=reload is only valid for restart"
                     )
+
+    def get_run_mode(self) -> str:
+        return RunMode.get(self.options)
 
     async def handle_exception(self, exc: BaseException) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
