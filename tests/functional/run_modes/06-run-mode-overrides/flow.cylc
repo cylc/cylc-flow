@@ -1,0 +1,29 @@
+[scheduler]
+    cycle point format = %Y
+
+[scheduling]
+    initial cycle point = 1000
+    final cycle point = 1000
+    [[graph]]
+        P1Y = """
+            default_
+            live_
+            dummy_
+            simulation_
+            skip_
+        """
+
+[runtime]
+    [[root]]
+        script = echo "=== this task ran in live mode ==="
+        [[[simulation]]]
+            default run length = PT0S
+    [[default_]]
+    [[live_]]
+        run mode = live
+    [[dummy_]]
+        run mode = dummy
+    [[simulation_]]
+        run mode = simulation
+    [[skip_]]
+        run mode = skip

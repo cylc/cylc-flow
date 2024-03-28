@@ -17,29 +17,79 @@
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from logging import INFO
+from typing import (
+    TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union)
 from time import time
 
 from metomi.isodatetime.parsers import DurationParser
 
 from cylc.flow import LOG
+from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
+from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM, get_platform
+from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.task_state import RunMode
 
 
 if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-    from cylc.flow.cycling import PointBase
+    from typing_extensions import Literal
+
+
+def submit_task_job(
+    task_job_mgr: 'TaskJobManager',
+    itask: 'TaskProxy',
+    rtconfig: Dict[str, Any],
+    workflow: str,
+    now: Tuple[float, str]
+) -> 'Literal[True]':
+    """Submit a task in simulation mode.
+
+    Returns:
+        True - indicating that TaskJobManager need take no further action.
+    """
+    configure_sim_mode(rtconfig)
+    itask.summary['started_time'] = now[0]
+    task_job_mgr._set_retry_timers(itask, rtconfig)
+    itask.mode_settings = ModeSettings(
+        itask,
+        task_job_mgr.workflow_db_mgr,
+        rtconfig
+    )
+    itask.waiting_on_job_prep = False
+    itask.submit_num += 1
+
+    itask.platform = get_platform()
+    itask.platform['name'] = 'SIMULATION'
+    itask.summary['job_runner_name'] = 'SIMULATION'
+    itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (
+        itask.mode_settings.simulated_run_length
+    )
+    itask.jobs.append(
+        task_job_mgr.get_simulation_job_conf(itask, workflow)
+    )
+    task_job_mgr.task_events_mgr.process_message(
+        itask, INFO, TASK_OUTPUT_SUBMITTED,
+    )
+    task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
+        itask, {
+            'time_submit': now[1],
+            'try_num': itask.get_try_num(),
+        }
+    )
+    itask.state.status = TASK_STATUS_RUNNING
+    return True
 
 
 @dataclass
@@ -79,7 +129,6 @@ class ModeSettings:
         db_mgr: 'WorkflowDatabaseManager',
         rtconfig: Dict[str, Any]
     ):
-
         # itask.summary['started_time'] and mode_settings.timeout need
         # repopulating from the DB on workflow restart:
         started_time = itask.summary['started_time']
@@ -104,7 +153,9 @@ class ModeSettings:
             try_num = db_info["try_num"]
 
         # Parse fail cycle points:
-        if rtconfig != itask.tdef.rtconfig:
+        if not rtconfig:
+            rtconfig = itask.tdef.rtconfig
+        if rtconfig and rtconfig != itask.tdef.rtconfig:
             try:
                 rtconfig["simulation"][
                     "fail cycle points"
@@ -132,37 +183,22 @@ class ModeSettings:
         self.timeout = started_time + self.simulated_run_length
 
 
-def configure_sim_modes(taskdefs, sim_mode):
+def configure_sim_mode(rtc):
     """Adjust task defs for simulation and dummy mode.
 
     """
-    dummy_mode = (sim_mode == RunMode.DUMMY)
+    rtc['submission retry delays'] = [1]
 
-    for tdef in taskdefs:
-        # Compute simulated run time by scaling the execution limit.
-        rtc = tdef.rtconfig
+    disable_platforms(rtc)
 
-        rtc['submission retry delays'] = [1]
+    # Disable environment, in case it depends on env-script.
+    rtc['environment'] = {}
 
-        if dummy_mode:
-            # Generate dummy scripting.
-            rtc['init-script'] = ""
-            rtc['env-script'] = ""
-            rtc['pre-script'] = ""
-            rtc['post-script'] = ""
-            rtc['script'] = build_dummy_script(
-                rtc, get_simulated_run_len(rtc))
-
-        disable_platforms(rtc)
-
-        # Disable environment, in case it depends on env-script.
-        rtc['environment'] = {}
-
-        rtc["simulation"][
-            "fail cycle points"
-        ] = parse_fail_cycle_points(
-            rtc["simulation"]["fail cycle points"]
-        )
+    rtc["simulation"][
+        "fail cycle points"
+    ] = parse_fail_cycle_points(
+        rtc["simulation"]["fail cycle points"]
+    )
 
 
 def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
@@ -182,24 +218,6 @@ def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
         ).get_seconds()
 
     return sleep_sec
-
-
-def build_dummy_script(rtc: Dict[str, Any], sleep_sec: int) -> str:
-    """Create fake scripting for dummy mode.
-
-    This is for Dummy mode only.
-    """
-    script = "sleep %d" % sleep_sec
-    # Dummy message outputs.
-    for msg in rtc['outputs'].values():
-        script += "\ncylc message '%s'" % msg
-    if rtc['simulation']['fail try 1 only']:
-        arg1 = "true"
-    else:
-        arg1 = "false"
-    arg2 = " ".join(rtc['simulation']['fail cycle points'])
-    script += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
-    return script
 
 
 def disable_platforms(
@@ -245,9 +263,18 @@ def parse_fail_cycle_points(
     ):
         f_pts = None
     elif f_pts_orig:
+
         f_pts = []
         for point_str in f_pts_orig:
-            f_pts.append(get_point(point_str).standardise())
+            if isinstance(point_str, PointBase):
+                f_pts.append(point_str)
+            else:
+                try:
+                    f_pts.append(get_point(point_str).standardise())
+                except PointParsingError:
+                    LOG.warning(
+                        f'Invalid ISO 8601 date representation: {point_str}'
+                    )
     return f_pts
 
 
@@ -266,13 +293,17 @@ def sim_time_check(
     now = time()
     sim_task_state_changed: bool = False
     for itask in itasks:
-        if itask.state.status != TASK_STATUS_RUNNING:
+        if (
+            itask.state.status != TASK_STATUS_RUNNING
+            or itask.tdef.run_mode != RunMode.SIMULATION
+        ):
             continue
 
         # This occurs if the workflow has been restarted.
         if itask.mode_settings is None:
             rtconfig = task_events_manager.broadcast_mgr.get_updated_rtconfig(
                 itask)
+            rtconfig = configure_sim_mode(rtconfig)
             itask.mode_settings = ModeSettings(
                 itask,
                 db_mgr,

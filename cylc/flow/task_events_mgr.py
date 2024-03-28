@@ -78,7 +78,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING
+    TASK_STATUS_WAITING,
+    RunMode,
 )
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
@@ -98,7 +99,6 @@ from cylc.flow.workflow_events import (
     get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
-from cylc.flow.workflow_status import RunMode
 
 
 if TYPE_CHECKING:
@@ -768,7 +768,7 @@ class TaskEventsManager():
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
-            if itask.tdef.run_mode != RunMode.SIMULATION:
+            if RunMode.is_ghostly(itask.tdef.run_mode):
                 job_tokens = itask.tokens.duplicate(
                     job=str(itask.submit_num)
                 )
@@ -886,7 +886,7 @@ class TaskEventsManager():
 
         if (
             itask.state(TASK_STATUS_WAITING)
-            # Polling in live mode only:
+            # Polling in live mode only.
             and itask.tdef.run_mode == RunMode.LIVE
             and (
                 (
@@ -932,7 +932,7 @@ class TaskEventsManager():
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
-        if itask.tdef.run_mode != RunMode.LIVE:
+        if RunMode.is_lively(itask.tdef.run_mode):
             return
         msg = ""
         if message != f"job {event}":
@@ -1457,7 +1457,7 @@ class TaskEventsManager():
             )
 
         itask.set_summary_time('submitted', event_time)
-        if itask.tdef.run_mode == RunMode.SIMULATION:
+        if RunMode.is_ghostly(itask.tdef.run_mode):
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
@@ -1494,7 +1494,7 @@ class TaskEventsManager():
             'submitted',
             event_time,
         )
-        if itask.tdef.run_mode == RunMode.SIMULATION:
+        if RunMode.is_ghostly(itask.tdef.run_mode):
             # Simulate job started as well.
             self.data_store_mgr.delta_job_time(
                 job_tokens,
@@ -1527,7 +1527,7 @@ class TaskEventsManager():
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
         # And transient tasks, used for setting outputs and spawning children,
         # do not submit jobs.
-        if (itask.tdef.run_mode == RunMode.SIMULATION) or forced:
+        if RunMode.is_ghostly(itask.tdef.run_mode) or forced:
             job_conf = {"submit_num": itask.submit_num}
         else:
             job_conf = itask.jobs[-1]

@@ -23,6 +23,7 @@ from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Values
     from cylc.flow.id import Tokens
 
 
@@ -152,6 +153,40 @@ TASK_STATUSES_TRIGGERABLE = {
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
 }
+
+
+class RunMode:
+    """The possible run modes of a task/workflow."""
+
+    LIVE = 'live'
+    """Task will run normally."""
+
+    SIMULATION = 'simulation'
+    """Task will run in simulation mode."""
+
+    DUMMY = 'dummy'
+    """Task will run in dummy mode."""
+
+    SKIP = 'skip'
+    """Task will run in skip mode."""
+
+    @staticmethod
+    def get(options: 'Values') -> str:
+        """Return the run mode from the options."""
+        return getattr(options, 'run_mode', None) or RunMode.LIVE
+
+    @staticmethod
+    def is_lively(mode: str) -> bool:
+        """Task should be treated as live, mode setting mess with scripts only.
+        """
+        return bool(mode in {RunMode.LIVE, RunMode.DUMMY})
+
+    @staticmethod
+    def is_ghostly(mode: str) -> bool:
+        """Task has no reality outside the scheduler and needs no further
+        processing after run_mode.submit_task_job method finishes.
+        """
+        return bool(mode in {RunMode.SKIP, RunMode.SIMULATION})
 
 
 def status_leq(status_a, status_b):

@@ -81,7 +81,6 @@ from cylc.flow.pathutil import (
     is_relative_to,
 )
 from cylc.flow.print_tree import print_tree
-from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
@@ -107,7 +106,7 @@ from cylc.flow.workflow_files import (
     WorkflowFiles,
     check_deprecation,
 )
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.task_state import RunMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -521,10 +520,6 @@ class WorkflowConfig:
         self.mem_log("config.py: after load_graph()")
 
         self.process_runahead_limit()
-
-        run_mode = self.run_mode()
-        if run_mode in {RunMode.SIMULATION, RunMode.DUMMY}:
-            configure_sim_modes(self.taskdefs.values(), run_mode)
 
         self.configure_workflow_state_polling_tasks()
 
