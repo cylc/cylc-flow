@@ -1,0 +1,39 @@
+[meta]
+    title = "Checks task state of alternate run dir"
+[scheduler]
+    UTC mode = True
+   [[events]]
+      inactivity timeout = PT1M
+      abort on inactivity timeout = True
+[scheduling]
+    initial cycle point = 20240101T00
+    [[xtriggers]]
+        up_dir_foo = workflow_state(\
+            workflow=other-run-dir, \
+            task=foo, \
+            point=20240101T0000Z, \
+            cylc_run_dir=~/cylc-run-other-test \
+        ):PT10S
+    [[graph]]
+        R1 = """
+foo
+@up_dir_foo => bar
+"""
+[runtime]
+    [[foo]]
+        script = """
+mkdir -pv ~/cylc-run-other-test
+cd ~/cylc-run-other-test
+echo 'Current directory:'
+pwd
+echo 'Creating link to original run dir:'
+ln -sfv ${CYLC_RUN_DIR}/${CYLC_WORKFLOW_NAME} other-run-dir
+"""
+    [[bar]]
+        script = """
+cylc workflow-state --debug other-run-dir \
+    --run-dir=~/cylc-run-other-test \
+    --task=foo \
+    --point=20240101T0000Z
+rm -rfv ~/cylc-run-other-test
+"""
