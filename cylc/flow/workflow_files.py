@@ -862,9 +862,17 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
             raise WorkflowFilesError(err_msg.format('run<number>'))
 
 
-def infer_latest_run_from_id(workflow_id: str) -> str:
-    run_dir = Path(get_workflow_run_dir(workflow_id))
-    _, id_ = infer_latest_run(run_dir)
+def infer_latest_run_from_id(
+    workflow_id: str,
+    cylc_run_dir: Optional[str] = None,
+) -> str:
+    run_dir = Path(
+        get_workflow_run_dir(
+            workflow_id,
+            cylc_run_dir=cylc_run_dir,
+        )
+    )
+    _, id_ = infer_latest_run(run_dir, cylc_run_dir=cylc_run_dir)
     return id_
 
 
@@ -872,6 +880,7 @@ def infer_latest_run(
     path: Path,
     implicit_runN: bool = True,
     warn_runN: bool = True,
+    cylc_run_dir: Optional[str] = None,
 ) -> Tuple[Path, str]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
@@ -890,7 +899,7 @@ def infer_latest_run(
         - WorkflowFilesError if the runN symlink is not valid.
         - InputError if the path does not exist.
     """
-    cylc_run_dir = get_cylc_run_dir()
+    cylc_run_dir = get_cylc_run_dir(cylc_run_dir=cylc_run_dir)
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
