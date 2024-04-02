@@ -11,7 +11,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
-## __cylc-8.2.5 (Released 2024-03-28)__
+## __cylc-8.2.5 (Released 2024-04-02)__
 
 ### 🔧 Fixes
 
