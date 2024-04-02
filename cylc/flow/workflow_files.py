@@ -844,7 +844,7 @@ def infer_latest_run_from_id(
     workflow_id: str, alt_run_dir: Optional[str] = None
 ) -> str:
     if alt_run_dir is not None:
-        run_dir = Path(alt_run_dir) / Path(workflow_id)
+        run_dir = Path(alt_run_dir, workflow_id)
     else:
         run_dir = Path(get_workflow_run_dir(workflow_id))
     _, id_ = infer_latest_run(run_dir, alt_run_dir=alt_run_dir)
