@@ -238,6 +238,8 @@ async def parse_ids_async(
         max_tasks:
             Specify the maximum number of tasks permitted to be specified
             in the ids.
+        alt_run_dir:
+            Specify a non-standard cylc-run location, e.g. for another user.
 
     Returns:
         With src=True":
