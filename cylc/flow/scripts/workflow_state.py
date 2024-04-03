@@ -228,11 +228,10 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         raise InputError(f"invalid status '{options.status}'")
 
     workflow_id = infer_latest_run_from_id(workflow_id, options.alt_run_dir)
-    run_dir = expand_path(options.alt_run_dir or get_cylc_run_dir())
 
     pollargs = {
         'workflow_id': workflow_id,
-        'run_dir': run_dir,
+        'run_dir': expand_path(options.alt_run_dir or get_cylc_run_dir()),
         'task': options.task,
         'cycle': options.cycle,
         'status': options.status,
@@ -249,7 +248,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     connected, formatted_pt = spoller.connect()
 
     if not connected:
-        raise CylcError("cannot connect to the workflow_id DB")
+        raise CylcError(f"Cannot connect to the {workflow_id} DB")
 
     if options.status and options.task and options.cycle:
         # check a task status
