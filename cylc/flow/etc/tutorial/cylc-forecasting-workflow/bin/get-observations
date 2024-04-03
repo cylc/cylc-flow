@@ -37,6 +37,7 @@ from datetime import datetime
 import json
 import os
 import re
+import time
 
 import requests
 
@@ -215,5 +216,6 @@ def main(site_id, api_key=None):
 
 
 if __name__ == '__main__':
+    time.sleep(2)  # make the tutorial run a little slower
     main(os.environ['SITE_ID'],
          os.environ.get('API_KEY'))

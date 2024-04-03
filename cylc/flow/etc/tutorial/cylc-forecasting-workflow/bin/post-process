@@ -38,6 +38,7 @@ Environment Variables:
 from datetime import datetime, timedelta
 import os
 import sys
+import time
 
 import util
 
@@ -101,6 +102,7 @@ def main(site_name, time):
 
 
 if __name__ == '__main__':
+    time.sleep(2)  # make the tutorial run a little slower
     try:
         args = (sys.argv[1].lower(), int(sys.argv[2]))
     except IndexError:
