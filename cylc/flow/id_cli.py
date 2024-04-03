@@ -99,19 +99,21 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # errors:
         >>> _parse_cli('////')
         Traceback (most recent call last):
-        InputError: Invalid ID: ////
+        cylc.flow.exceptions.InputError: Invalid ID: ////
 
         >>> parse_back('//cycle')
         Traceback (most recent call last):
-        InputError: Relative reference must follow an incomplete one.
+        cylc.flow.exceptions.InputError: Relative reference must follow an
+        incomplete one...
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
-        InputError: Relative reference must follow an incomplete one.
+        cylc.flow.exceptions.InputError: Relative reference must follow an
+        incomplete one...
 
         >>> parse_back('workflow///cycle/')
         Traceback (most recent call last):
-        InputError: Invalid ID: workflow///cycle/
+        cylc.flow.exceptions.InputError: Invalid ID: workflow///cycle/
 
     """
     # upgrade legacy ids if required

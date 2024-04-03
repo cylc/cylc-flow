@@ -276,7 +276,7 @@ class Tokens(dict):
             <id: >
             >>> tokens.pop_token()
             Traceback (most recent call last):
-            KeyError: No defined tokens.
+            KeyError: 'No defined tokens.'
 
         """
         for token in reversed(IDTokens):
