@@ -133,6 +133,12 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
             "foo || bar => baz",
             "The graph OR operator is '|'"
         ),
+        param(
+            # See https://github.com/cylc/cylc-flow/issues/5844
+            "foo => bar[1649]",
+            'Invalid cycle point offsets only on right',
+            id='no-cycle-point-RHS'
+        ),
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
@@ -377,7 +383,16 @@ b => c"""
             foo => bar
             bar:succeed => baz
             """
-        ]
+        ],
+        [
+            """
+            foo => bar[1649] => baz
+            """,
+            """
+            foo => bar[1649]
+            bar[1649] => baz
+            """
+        ],
     ]
 )
 def test_trigger_equivalence(graph1, graph2):
@@ -904,3 +919,26 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
         for task, trigs in gp.triggers.items()
     }
     assert triggers == expected_triggers
+
+
+@pytest.mark.parametrize(
+    'args, err',
+    (
+        # Error if offset in terminal RHS:
+        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
+        # No error if offset in NON-terminal RHS:
+        param((('a', 'b[-P42M]'), {}), None),
+        # Don't check the left hand side if this has a non-terminal RHS:
+        param((('a &', 'b[-P42M]'), {}), None),
+    )
+)
+def test_proc_dep_pair(args, err):
+    """
+    Unit tests for _proc_dep_pair.
+    """
+    gp = GraphParser()
+    if err:
+        with pytest.raises(GraphParseError, match=err):
+            gp._proc_dep_pair(*args)
+    else:
+        assert gp._proc_dep_pair(*args) is None

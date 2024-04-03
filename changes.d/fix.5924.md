@@ -1,0 +1,1 @@
+Validation: a cycle offset can only appear on the right of a dependency if the task's cycling is defined elsewhere with no offset.
