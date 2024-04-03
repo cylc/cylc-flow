@@ -864,6 +864,7 @@ def infer_latest_run(
         implicit_runN: If True, add runN on the end of the path if the path
             doesn't include it.
         warn_runN: If True, warn that explicit use of runN is unnecessary.
+        alt_run_dir: Path to alternate cylc-run location (e.g. for other user).
 
     Returns:
         path: Absolute path of the numbered run dir if applicable, otherwise

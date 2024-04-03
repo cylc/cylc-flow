@@ -58,7 +58,6 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -69,12 +68,12 @@ from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
+from cylc.flow.workflow_files import infer_latest_run_from_id
 
 from metomi.isodatetime.parsers import TimePointParser
 
 if TYPE_CHECKING:
     from optparse import Values
-    from typing import Tuple, Optional
 
 
 class WorkflowPoller(Poller):
@@ -195,21 +194,6 @@ def get_option_parser() -> COP:
     return parser
 
 
-def get_workflow(
-    w_id: str, alt_run_dir: Optional[str] = None
-) -> Tuple[str, str]:
-    """Infer run number for a workflow ID, for alternate run dir if nec."""
-    if alt_run_dir:
-        run_dir = alt_run_dir = expand_path(alt_run_dir)
-    else:
-        run_dir = get_cylc_run_dir()
-        alt_run_dir = None
-    workflow_id, *_ = parse_id(
-        w_id, constraint='workflows', alt_run_dir=alt_run_dir
-    )
-    return workflow_id, run_dir
-
-
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
 
@@ -243,8 +227,8 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
             options.status not in CylcWorkflowDBChecker.STATE_ALIASES):
         raise InputError(f"invalid status '{options.status}'")
 
-    # Infer workflow run number if necessary.
-    workflow_id, run_dir = get_workflow(workflow_id, options.alt_run_dir)
+    workflow_id = infer_latest_run_from_id(workflow_id, options.alt_run_dir)
+    run_dir = expand_path(options.alt_run_dir or get_cylc_run_dir())
 
     pollargs = {
         'workflow_id': workflow_id,

@@ -22,7 +22,7 @@ from metomi.isodatetime.parsers import TimePointParser
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
-from cylc.flow.id_cli import parse_id
+from cylc.flow.workflow_files import infer_latest_run_from_id
 
 
 def workflow_state(
@@ -76,18 +76,8 @@ def workflow_state(
             to this xtrigger.
 
     """
-    if cylc_run_dir:
-        run_dir = cylc_run_dir = expand_path(cylc_run_dir)
-    else:
-        cylc_run_dir = get_cylc_run_dir()
-        run_dir = None
-
-    # This infers the latest run number.
-    workflow, *_ = parse_id(
-        workflow,
-        constraint='workflows',
-        alt_run_dir=run_dir
-    )
+    workflow = infer_latest_run_from_id(workflow, cylc_run_dir)
+    cylc_run_dir = expand_path(cylc_run_dir or get_cylc_run_dir())
 
     if offset is not None:
         point = str(add_offset(point, offset))
