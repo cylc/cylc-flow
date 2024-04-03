@@ -340,18 +340,18 @@ class ParsecValidator:
             (1, 3)
             >>> ParsecValidator.coerce_range('1..3, 5', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
+            cylc.flow.parsec.exceptions.ListValueError:
             (type=list) k = 1..3, 5 - (Only one min..max pair is permitted)
-            >>> ParsecValidator.coerce_range('1..z', None)
+            >>> ParsecValidator.coerce_range('1..z', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
-            (type=list) k = 1..3, 5 - \
-            (Integer range must be in the format min..max)
+            cylc.flow.parsec.exceptions.ListValueError:
+            (type=list) k = 1..z - (Integer range must be in the
+            format min..max)
             >>> ParsecValidator.coerce_range('1', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
-            (type=list) k = 1..3, 5 - \
-            (Integer range must be in the format min..max)
+            cylc.flow.parsec.exceptions.ListValueError:
+            (type=list) k = 1 - (Integer range must be in the
+            format min..max)
 
         """
         items = cls.strip_and_unquote_list(keys, value)

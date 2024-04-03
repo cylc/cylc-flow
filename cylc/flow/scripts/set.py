@@ -264,20 +264,17 @@ def get_prereq_opts(prereq_options: List[str]):
         # Error: invalid format:
         >>> get_prereq_opts(["fish"])
         Traceback (most recent call last):
-        ...
-        InputError:
+        cylc.flow.exceptions.InputError: ...
 
         # Error: invalid format:
         >>> get_prereq_opts(["1/foo::bar"])
         Traceback (most recent call last):
-        ...
-        InputError:
+        cylc.flow.exceptions.InputError: ...
 
         # Error: "all" must be used alone:
         >>> get_prereq_opts(["all", "2/foo:baz"])
         Traceback (most recent call last):
-        ...
-        InputError:
+        cylc.flow.exceptions.InputError: ...
 
      """
     prereqs = split_opts(prereq_options)
@@ -318,11 +315,10 @@ def get_output_opts(output_options: List[str]):
         Bad:
         >>> get_output_opts(["required", "a"])  # "required" must be used alone
         Traceback (most recent call last):
-        InputError:
-        # Error: "required" must be used alone
+        cylc.flow.exceptions.InputError: --out=required must be used alone
         >>> get_output_opts(["waiting"])  # cannot "reset" to waiting
         Traceback (most recent call last):
-        InputError:
+        cylc.flow.exceptions.InputError: Tasks cannot be set to waiting...
 
     """
     outputs = split_opts(output_options)
@@ -335,7 +331,7 @@ def get_output_opts(output_options: List[str]):
         raise InputError("--out=required must be used alone")
     if "waiting" in outputs:
         raise InputError(
-            "Tasks can not be set to waiting, use a new flow to re-run"
+            "Tasks cannot be set to waiting, use a new flow to re-run"
         )
 
     return outputs
@@ -351,8 +347,7 @@ def validate_opts(output_opt: List[str], prereq_opt: List[str]):
 
         >>> validate_opts(["a"], ["1/a:failed"])
         Traceback (most recent call last):
-        ...
-        InputError:
+        cylc.flow.exceptions.InputError: ...
 
     """
     if output_opt and prereq_opt:
@@ -372,10 +367,10 @@ def validate_tokens(tokens_list):
         Bad:
         >>> validate_tokens([Tokens('w//c:s')])
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError
+        cylc.flow.exceptions.InputError: ...
         >>> validate_tokens([Tokens('w//c/t:s')])
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError
+        cylc.flow.exceptions.InputError: ...
 
     """
     for tokens in tokens_list:
