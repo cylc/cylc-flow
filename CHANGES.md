@@ -11,6 +11,18 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.2.5 (Released 2024-04-04)__
+
+### 🔧 Fixes
+
+[#5933](https://github.com/cylc/cylc-flow/pull/5933) - Fixed bug in `cylc broadcast` (and the GUI Edit Runtime command) where everything after a `#` character in a setting would be stripped out.
+
+[#5959](https://github.com/cylc/cylc-flow/pull/5959) - Fix an issue where workflow "timeout" events were not fired in all situations when they should have been.
+
+[#6011](https://github.com/cylc/cylc-flow/pull/6011) - Fixed a `cylc vip` bug causing remote re-invocation to fail if using `--workflow-name` option.
+
+[#6031](https://github.com/cylc/cylc-flow/pull/6031) - Fixed workflow-state command and xtrigger for alternate cylc-run directory.
+
 ## __cylc-8.2.4 (Released 2024-01-11)__
 
 ### 🚀 Enhancements
