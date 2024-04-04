@@ -40,6 +40,8 @@ import re
 
 import requests
 
+import util
+
 
 BASE_URL = ('http://datapoint.metoffice.gov.uk/public/data/'
             'val/wxobs/all/json/{site_id}'
@@ -215,5 +217,6 @@ def main(site_id, api_key=None):
 
 
 if __name__ == '__main__':
+    util.sleep()
     main(os.environ['SITE_ID'],
          os.environ.get('API_KEY'))
