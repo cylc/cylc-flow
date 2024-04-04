@@ -21,9 +21,11 @@
 from copy import copy
 from contextlib import suppress
 import math
-import jinja2
+import os
 import sys
+import time
 
+import jinja2
 
 R_0 = 6371.  # Radius of the Earth (km).
 
@@ -301,3 +303,12 @@ def generate_html_map(filename, template_file, data, domain, resolution):
                 lat2=domain['lat2'],
                 data=data
             ))
+
+
+def sleep(secs=4):
+    """Make the tutorials run a little slower so users can follow along.
+
+    (Only if not running in CI).
+    """
+    if 'CI' not in os.environ:
+        time.sleep(secs)

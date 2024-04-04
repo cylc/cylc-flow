@@ -43,7 +43,6 @@ Environment Variables:
 import os
 from subprocess import Popen, PIPE
 import sys
-import time
 
 import util
 
@@ -243,7 +242,7 @@ def main(forecast_interval, forecast_iterations):
 
 
 if __name__ == '__main__':
-    time.sleep(4)  # make the tutorial run a little slower
+    util.sleep()
     try:
         args = [int(sys.argv[1]), int(sys.argv[2])]
     except IndexError:
