@@ -68,11 +68,11 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that badhosttask has submit failed, but not good or mixed
 named_grep_ok "badhost task submit failed" \
-    "1/badhosttask .* submit-failed" "${LOGFILE}"
+    "1/badhosttask.* submit-failed" "${LOGFILE}"
 named_grep_ok "goodhost suceeded" \
-    "1/mixedhosttask .* succeeded" "${LOGFILE}"
+    "1/mixedhosttask.* succeeded" "${LOGFILE}"
 named_grep_ok "mixedhost task suceeded" \
-    "1/goodhosttask .* succeeded" "${LOGFILE}"
+    "1/goodhosttask.* succeeded" "${LOGFILE}"
 
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.

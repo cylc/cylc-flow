@@ -597,13 +597,13 @@ def no_scan(monkeypatch):
         # something that looks like scan but doesn't do anything
         yield
 
-    monkeypatch.setattr('cylc.flow.id_cli.scan', _scan)
+    monkeypatch.setattr('cylc.flow.network.scan.scan', _scan)
 
 
 async def test_expand_workflow_tokens_impl_selector(no_scan):
     """It should reject filters it can't handle."""
     tokens = tokenise('~user/*')
     await _expand_workflow_tokens([tokens])
-    tokens['workflow_sel'] = 'stopped'
+    tokens = tokens.duplicate(workflow_sel='stopped')
     with pytest.raises(InputError):
         await _expand_workflow_tokens([tokens])

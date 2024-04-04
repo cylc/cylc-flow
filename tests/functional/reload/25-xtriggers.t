@@ -42,8 +42,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[reload]]
         script = """
             # wait for "broken" to fail
-            cylc__job__poll_grep_workflow_log \
-                '1/broken .* (received)failed/ERR'
+            cylc__job__poll_grep_workflow_log -E '1/broken/01.* \(received\)failed/ERR'
             # fix "broken" to allow it to pass
             sed -i 's/false/true/' "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
             # reload the workflow
@@ -60,12 +59,20 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 # 3. the retry xtrigger for "1/broken" becomes satisfied (after the reload)
 #    (thus proving that the xtrigger survived the reload)
 # 4. "1/broken" succeeds
+
 log_scan "${TEST_NAME_BASE}-scan" \
     "$(cylc cat-log -m p "${WORKFLOW_NAME}")" \
     1 1 \
-    '1/broken .* (received)failed/ERR' \
-    'Command actioned: reload_workflow()' \
+    '1/broken.* (received)failed/ERR'
+
+log_scan "${TEST_NAME_BASE}-scan" \
+    "$(cylc cat-log -m p "${WORKFLOW_NAME}")" 1 1 \
+    'Command "reload_workflow" actioned' \
+
+log_scan "${TEST_NAME_BASE}-scan" \
+    "$(cylc cat-log -m p "${WORKFLOW_NAME}")" \
+    1 1 \
     'xtrigger satisfied: _cylc_retry_1/broken' \
-    '\[1/broken .* => succeeded'
+    '1/broken.* => succeeded'
 
 purge

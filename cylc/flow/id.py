@@ -74,7 +74,7 @@ class Tokens(dict):
         <id: w//c>
         >>> Tokens(workflow='w', cycle='c')['job']
 
-        # Make a copy (note Tokens are mutable):
+        # Make a copy (note Tokens are immutable):
         >>> tokens.duplicate()
         <id: ~u/w//c/t/01>
         >>> tokens.duplicate(job='02')  # make changes at the same time
@@ -118,9 +118,10 @@ class Tokens(dict):
         dict.__init__(self, **kwargs)
 
     def __setitem__(self, key, value):
-        if key not in self._KEYS:
-            raise ValueError(f'Invalid token: {key}')
-        dict.__setitem__(self, key, value)
+        raise Exception('Tokens objects are not mutable')
+
+    def update(self, other):
+        raise Exception('Tokens objects are not mutable')
 
     def __getitem__(self, key):
         try:
@@ -151,6 +152,9 @@ class Tokens(dict):
             id_ = self.id
         return f'<id: {id_}>'
 
+    def __hash__(self):
+        return hash(tuple(self.values()))
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -158,6 +162,12 @@ class Tokens(dict):
             self[key] == other[key]
             for key in self._KEYS
         )
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
 
     def __ne__(self, other):
         if not isinstance(other, self.__class__):
@@ -266,7 +276,7 @@ class Tokens(dict):
             <id: >
             >>> tokens.pop_token()
             Traceback (most recent call last):
-            KeyError: No defined tokens.
+            KeyError: 'No defined tokens.'
 
         """
         for token in reversed(IDTokens):
@@ -336,11 +346,9 @@ class Tokens(dict):
             >>> tokens = Tokens()
             >>> tokens.is_null
             True
-            >>> tokens['job_sel'] = 'x'
-            >>> tokens.is_null
+            >>> tokens.duplicate(job_sel='x').is_null
             True
-            >>> tokens['job'] = '01'
-            >>> tokens.is_null
+            >>> tokens.duplicate(job='01').is_null
             False
 
         """
@@ -348,50 +356,10 @@ class Tokens(dict):
             self[key] for key in self._REGULAR_KEYS
         )
 
-    def update_tokens(
-        self,
-        tokens: 'Optional[Tokens]' = None,
-        **kwargs
-    ) -> None:
-        """Update the tokens dictionary.
-
-        Similar to dict.update but with an optional Tokens argument.
-
-        Examples:
-            >>> tokens = Tokens('x')
-            >>> tokens.update_tokens(workflow='y')
-            >>> tokens
-            <id: y>
-            >>> tokens.update_tokens(Tokens('z'))
-            >>> tokens
-            <id: z>
-            >>> tokens.update_tokens(Tokens('a'), cycle='b')
-            >>> tokens
-            <id: a//b>
-
-        """
-        if tokens:
-            for key, value in tokens.items():
-                self[key] = value
-        for key, value in kwargs.items():
-            self[key] = value
-
-    def update(self, other):
-        """dict.update.
-
-        Example:
-            >>> tokens = Tokens(workflow='w')
-            >>> tokens.update({'cycle': 'c'})
-            >>> tokens.id
-            'w//c'
-
-        """
-        return self.update_tokens(**other)
-
     def duplicate(
         self,
-        tokens: 'Optional[Tokens]' = None,
-        **kwargs
+        *tokens_list,
+        **kwargs,
     ) -> 'Tokens':
         """Duplicate a tokens object.
 
@@ -408,17 +376,28 @@ class Tokens(dict):
             >>> id(tokens1) == id(tokens2)
             False
 
-            Make a copy and modify it:
+            Make a copy with a modification:
             >>> tokens1.duplicate(cycle='1').id
             '~u/w//1'
 
-            Original not changed
+            The Original is not changed:
             >>> tokens1.id
             '~u/w'
+
+            Arguments override in definition order:
+            >>> Tokens.duplicate(
+            ...     tokens1,
+            ...     Tokens(cycle='c', task='a', job='01'),
+            ...     task='b'
+            ... ).id
+            '~u/w//c/b/01'
+
         """
-        ret = Tokens(self)
-        ret.update_tokens(tokens, **kwargs)
-        return ret
+        _kwargs = {}
+        for tokens in (self, *tokens_list):
+            _kwargs.update(tokens)
+        _kwargs.update(kwargs)
+        return Tokens(**_kwargs)
 
 
 # //cycle[:sel][/task[:sel][/job[:sel]]]
@@ -497,7 +476,7 @@ UNIVERSAL_ID = re.compile(
             )?
             (?:
                 # cycle/task/job
-                { RELATIVE_PATTERN }
+                {RELATIVE_PATTERN}
             )?
           )?
         )?

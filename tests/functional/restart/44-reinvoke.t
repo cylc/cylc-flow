@@ -53,7 +53,7 @@ run_ok "${TEST_NAME_BASE}-cmd" \
 sed -n -i 's/CYLC_WORKFLOW_COMMAND=.*cylc //p' "${TEST_NAME_BASE}-cmd.stdout"
 
 # ensure the whole workflow ID is present in the command (including the run number)
-CMD="^play --pause ${WORKFLOW_NAME}/run1 --host=localhost$"
+CMD="^play --pause ${WORKFLOW_NAME}/run1 --host=localhost --color=never$"
 if grep "${CMD}" "${TEST_NAME_BASE}-cmd.stdout"; then
     ok "${TEST_NAME_BASE}-re-invoked-id"
 else

@@ -18,7 +18,7 @@
     [[timeout]]
         script = """
             cylc__job__poll_grep_workflow_log -E \
-                "${CYLC_TASK_ID} .* execution timeout after PT1S"
+                "${CYLC_TASK_ID}.* execution timeout after PT1S"
         """
         [[[events]]]
             execution timeout = PT1M

@@ -55,5 +55,5 @@
     [[c]]
         script = """
           cylc trigger --flow=new ${CYLC_WORKFLOW_ID}//1/a
-          cylc__job__poll_grep_workflow_log -E '1/a submitted job:02 .*started'
+          cylc__job__poll_grep_workflow_log -E '1/a/02\(flows=2\):submitted.*started'
         """

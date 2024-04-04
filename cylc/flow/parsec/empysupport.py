@@ -24,6 +24,7 @@ import os
 import typing as t
 
 from cylc.flow.parsec.exceptions import EmPyError
+from cylc.flow.parsec.fileparse import get_cylc_env_vars
 
 
 def empyprocess(
@@ -52,6 +53,12 @@ def empyprocess(
     ftempl = StringIO('\n'.join(flines))
     xtempl = StringIO()
     interpreter = em.Interpreter(output=em.UncloseableFile(xtempl))
+
+    # Add `CYLC_` environment variables to the global namespace.
+    interpreter.updateGlobals(
+        get_cylc_env_vars()
+    )
+
     try:
         interpreter.file(ftempl, '<template>', template_vars)
     except Exception as exc:

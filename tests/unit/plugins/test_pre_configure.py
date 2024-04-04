@@ -31,7 +31,7 @@ class EntryPointWrapper:
         self.name = fcn.__name__
         self.fcn = fcn
 
-    def resolve(self):
+    def load(self):
         return self.fcn
 
 
@@ -65,10 +65,12 @@ def pre_configure_error(*_, **__):
 def test_pre_configure(monkeypatch):
     """It should call the plugin."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.iter_entry_points',
-        lambda x: [pre_configure_basic]
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [pre_configure_basic] if namespace == 'cylc.pre_configure' else []
+        )
     )
-    extra_vars = process_plugins(None, None)
+    extra_vars = process_plugins('/', None)
     assert extra_vars == {
         'env': {
             'ANSWER': '42'
@@ -83,37 +85,45 @@ def test_pre_configure(monkeypatch):
 def test_pre_configure_duplicate(monkeypatch):
     """It should error when plugins clash."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.iter_entry_points',
-        lambda x: [
-            pre_configure_basic,
-            pre_configure_basic
-        ]
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [
+                pre_configure_basic,
+                pre_configure_basic,
+            ] if namespace == 'cylc.pre_configure' else []
+        )
     )
     with pytest.raises(ParsecError):
-        process_plugins(None, None)
+        process_plugins('/', None)
 
 
 def test_pre_configure_templating_detected(monkeypatch):
     """It should error when plugins clash (for templating)."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.iter_entry_points',
-        lambda x: [
-            pre_configure_templating_detected,
-            pre_configure_templating_detected
-        ]
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [
+                pre_configure_templating_detected,
+                pre_configure_templating_detected,
+            ] if namespace == 'cylc.pre_configure' else []
+        )
     )
     with pytest.raises(ParsecError):
-        process_plugins(None, None)
+        process_plugins('/', None)
 
 
 def test_pre_configure_exception(monkeypatch):
     """It should wrap plugin errors."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.iter_entry_points',
-        lambda x: [pre_configure_error]
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [
+                pre_configure_error,
+            ] if namespace == 'cylc.pre_configure' else []
+        )
     )
     with pytest.raises(PluginError) as exc_ctx:
-        process_plugins(None, None)
+        process_plugins('/', None)
     # the context of the original error should be preserved in the raised
     # exception
     assert exc_ctx.value.entry_point == 'cylc.pre_configure'

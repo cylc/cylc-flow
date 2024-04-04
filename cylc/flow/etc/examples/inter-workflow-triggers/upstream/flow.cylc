@@ -1,0 +1,27 @@
+[meta]
+    title = Upstream Workflow
+    description = """
+        This is the workflow which is providing the data that the downstream
+        workflow wants to use.
+    """
+
+[scheduling]
+    # start two hours before the current time on the whole hour
+    initial cycle point = previous(T-00) - PT2H
+    [[graph]]
+        PT1H = """
+            # wait for the "real world" time before running "a":
+            @wall_clock => a
+
+            # then run task "b"
+            a => b
+        """
+
+[runtime]
+    [[a]]
+    [[b]]
+        # write a random number to ~/cylc-run/<workflow-id>/share/<cycle>
+        # for the downstream workflow to use
+        script = echo "$RANDOM" > "$file"
+        [[[environment]]]
+            file = ${CYLC_WORKFLOW_SHARE_DIR}/${CYLC_TASK_CYCLE_POINT}
