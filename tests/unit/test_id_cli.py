@@ -18,6 +18,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
+from shutil import copytree, rmtree
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.async_util import pipe
@@ -247,6 +248,32 @@ async def test_parse_ids_infer_run_name(tmp_run_dir):
         infer_latest_runs=False,
     )
     assert list(workflows) == ['bar']
+
+    # Now test we can see workflows in alternate cylc-run directories
+    # e.g. for `cylc workflow-state` or xtriggers targetting another user.
+    cylc_run_dir = get_cylc_run_dir()
+    alt_cylc_run_dir = cylc_run_dir + "_alt"
+
+    # copy the cylc-run dir to alt location and delete the original.
+    copytree(cylc_run_dir, alt_cylc_run_dir, symlinks=True)
+    rmtree(cylc_run_dir)
+
+    # It can no longer parse IDs in the original cylc-run location.
+    with pytest.raises(InputError):
+        workflows, *_ = await parse_ids_async(
+            'bar//',
+            constraint='workflows',
+            infer_latest_runs=True,
+        )
+
+    # But it can if we specify the alternate location.
+    workflows, *_ = await parse_ids_async(
+        'bar//',
+        constraint='workflows',
+        infer_latest_runs=True,
+        alt_run_dir=alt_cylc_run_dir
+    )
+    assert list(workflows) == ['bar/run2']
 
 
 @pytest.fixture

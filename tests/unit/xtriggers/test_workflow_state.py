@@ -15,10 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import pytest
 import sqlite3
 from typing import Callable
 from unittest.mock import Mock
+from shutil import copytree, rmtree
 
+from cylc.flow.exceptions import InputError
+from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtriggers.workflow_state import workflow_state
 from ..conftest import MonkeyMock
@@ -39,6 +43,26 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
 
     _, results = workflow_state(id_, task='precious', point='3000')
     mock_db_checker.assert_called_once_with(cylc_run_dir, expected_workflow_id)
+    assert results['workflow'] == expected_workflow_id
+
+    # Now test we can see workflows in alternate cylc-run directories
+    # e.g. for `cylc workflow-state` or xtriggers targetting another user.
+    alt_cylc_run_dir = cylc_run_dir + "_alt"
+
+    # copy the cylc-run dir to alt location and delete the original.
+    copytree(cylc_run_dir, alt_cylc_run_dir, symlinks=True)
+    rmtree(cylc_run_dir)
+
+    # It can no longer parse IDs in the original cylc-run location.
+    with pytest.raises(InputError):
+        _, results = workflow_state(id_, task='precious', point='3000')
+
+    # But it can via an explicit alternate run directory.
+    mock_db_checker.reset_mock()
+    _, results = workflow_state(
+        id_, task='precious', point='3000', cylc_run_dir=alt_cylc_run_dir)
+    mock_db_checker.assert_called_once_with(
+        alt_cylc_run_dir, expected_workflow_id)
     assert results['workflow'] == expected_workflow_id
 
 

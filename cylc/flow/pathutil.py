@@ -71,17 +71,30 @@ def get_remote_workflow_run_job_dir(
     return get_remote_workflow_run_dir(workflow_id, 'log', 'job', *args)
 
 
-def get_cylc_run_dir() -> str:
-    """Return the cylc-run dir path with vars/user expanded."""
-    return expand_path(_CYLC_RUN_DIR)
+def get_cylc_run_dir(alt_run_dir: Optional[str] = None) -> str:
+    """Return the cylc-run dir, or alt path, with vars/user expanded."""
+    return expand_path(alt_run_dir or _CYLC_RUN_DIR)
+
+
+def get_alt_workflow_run_dir(
+    alt_run_dir: Union[Path, str],
+    workflow_id: Union[Path, str],
+    *args: Union[Path, str]
+) -> str:
+    """Return alternate workflow run directory.
+
+    Join any extra args, and expand vars and user.
+    Does not check that the directory exists.
+    """
+    return expand_path(alt_run_dir, workflow_id, *args)
 
 
 def get_workflow_run_dir(
     workflow_id: Union[Path, str], *args: Union[Path, str]
 ) -> str:
-    """Return local workflow run directory, joining any extra args, and
-    expanding vars and user.
+    """Return local workflow run directory.
 
+    Join any extra args, and expand vars and user.
     Does not check that the directory exists.
     """
     return expand_path(_CYLC_RUN_DIR, workflow_id, *args)

@@ -58,7 +58,6 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -68,7 +67,8 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path, get_cylc_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir
+from cylc.flow.workflow_files import infer_latest_run_from_id
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -162,7 +162,7 @@ def get_option_parser() -> COP:
         help="The top level cylc run directory if non-standard. The "
              "database should be DIR/WORKFLOW_ID/log/db. Use to interrogate "
              "workflows owned by others, etc.; see note above.",
-        metavar="DIR", action="store", dest="run_dir", default=None)
+        metavar="DIR", action="store", dest="alt_run_dir", default=None)
 
     parser.add_option(
         "-s", "--offset",
@@ -196,10 +196,6 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, *_ = parse_id(
-        workflow_id,
-        constraint='workflows',
-    )
 
     if options.use_task_point and options.cycle:
         raise InputError(
@@ -231,15 +227,11 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
             options.status not in CylcWorkflowDBChecker.STATE_ALIASES):
         raise InputError(f"invalid status '{options.status}'")
 
-    # this only runs locally
-    if options.run_dir:
-        run_dir = expand_path(options.run_dir)
-    else:
-        run_dir = get_cylc_run_dir()
+    workflow_id = infer_latest_run_from_id(workflow_id, options.alt_run_dir)
 
     pollargs = {
         'workflow_id': workflow_id,
-        'run_dir': run_dir,
+        'run_dir': get_cylc_run_dir(alt_run_dir=options.alt_run_dir),
         'task': options.task,
         'cycle': options.cycle,
         'status': options.status,
@@ -256,7 +248,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     connected, formatted_pt = spoller.connect()
 
     if not connected:
-        raise CylcError("cannot connect to the workflow_id DB")
+        raise CylcError(f"Cannot connect to the {workflow_id} DB")
 
     if options.status and options.task and options.cycle:
         # check a task status

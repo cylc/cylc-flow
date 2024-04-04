@@ -203,6 +203,7 @@ async def parse_ids_async(
     constraint: str = 'tasks',
     max_workflows: Optional[int] = None,
     max_tasks: Optional[int] = None,
+    alt_run_dir: Optional[str] = None,
 ) -> Tuple[Dict[str, List[Tokens]], Any]:
     """Parse IDs from the command line.
 
@@ -237,6 +238,8 @@ async def parse_ids_async(
         max_tasks:
             Specify the maximum number of tasks permitted to be specified
             in the ids.
+        alt_run_dir:
+            Specify a non-standard cylc-run location, e.g. for another user.
 
     Returns:
         With src=True":
@@ -299,7 +302,8 @@ async def parse_ids_async(
 
     # infer the run number if not specified the ID (and if possible)
     if infer_latest_runs:
-        _infer_latest_runs(*tokens_list, src_path=src_path)
+        _infer_latest_runs(
+            *tokens_list, src_path=src_path, alt_run_dir=alt_run_dir)
 
     _validate_number(
         *tokens_list,
@@ -414,12 +418,13 @@ def _validate_workflow_ids(*tokens_list, src_path):
         detect_both_flow_and_suite(src_path)
 
 
-def _infer_latest_runs(*tokens_list, src_path):
+def _infer_latest_runs(*tokens_list, src_path, alt_run_dir=None):
     for ind, tokens in enumerate(tokens_list):
         if ind == 0 and src_path:
             # source workflow passed in as a path
             continue
-        tokens['workflow'] = infer_latest_run_from_id(tokens['workflow'])
+        tokens['workflow'] = infer_latest_run_from_id(
+            tokens['workflow'], alt_run_dir)
         pass
 
 
