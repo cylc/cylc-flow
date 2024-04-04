@@ -1,0 +1,4 @@
+19990101T0000Z/bar2 -triggered off [] in flow 1
+19990101T0000Z/baz -triggered off ['19990101T0000Z/foo1', '19990101T0000Z/foo2'] in flow 1
+19990101T0000Z/qux -triggered off ['19990101T0000Z/bar1'] in flow 1
+19990101T0000Z/y -triggered off ['19990101T0000Z/x'] in flow 1

@@ -17,16 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 r"""cylc message [OPTIONS] -- ARGS
 
-Record task messages.
+Command to record and send messages from task jobs back to the scheduler.
 
-Send messages to:
-- The job stdout/stderr.
-- The job status file, if there is one.
-- The scheduler, if communication is possible.
+Messages are sent to:
+- job stdout/stderr
+- the job status file, if there is one
+- the scheduler, if communication is possible
 
-Jobs use this command to record and report status such as success and
-failure. Applications run by jobs can use this command to report messages
-and to report registered task outputs.
+Jobs automatically use this command to record and report job status: started
+(running) and success or failure.
+
+Applications run by jobs can use this command to report custom messages and
+and registered task output messages.
+
+For custom outputs, use the task message not the associated output name:
+[runtime]
+  [[my-task]]
+    # ...
+    [[[outputs]]]
+      # <output-name> = <task-message>
+      x = "file x completed and archived"
 
 Messages can be specified as arguments. A '-' indicates that the command should
 read messages from STDIN. When reading from STDIN, multiple messages are

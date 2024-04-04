@@ -1,0 +1,41 @@
+# 1. foo and bar fail incomplete.
+# 2. setter sets foo and bar to succeeded.
+# 3. foo and bar are completed, post<m> runs, scheduler shuts down.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
+        expected task failures = 1/foo, 1/bar
+
+[task parameters]
+    m = 1..2
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            foo & bar => post<m>
+            setter
+        """
+[runtime]
+    [[post<m>]]
+    [[foo, bar]]
+         script = false
+    [[setter]]
+         script = """
+             # wait for foo and bar to fail.
+             for TASK in foo bar
+             do
+                 cylc workflow-state \
+                    --max-polls=10 \
+                    --interval=1 \
+                    --task=$TASK \
+                    --point=${CYLC_TASK_CYCLE_POINT} \
+                    --status=failed \
+                    $CYLC_WORKFLOW_ID
+             done
+             # set foo succeeded (via --output)
+             cylc set -o succeeded $CYLC_WORKFLOW_ID//$CYLC_TASK_CYCLE_POINT/foo
+             # set bar succeeded (via default)
+             cylc set $CYLC_WORKFLOW_ID//$CYLC_TASK_CYCLE_POINT/bar
+         """

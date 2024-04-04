@@ -15,10 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Filter for formatting ISO8601 datetime strings."""
 
+from typing import Optional
+
 from metomi.isodatetime.parsers import TimePointParser
 
 
-def strftime(iso8601_datetime, strftime_str, strptime_str=None):
+def strftime(
+    iso8601_datetime: str,
+    strftime_str: str,
+    strptime_str: Optional[str] = None,
+):
     """Format an :term:`ISO8601 datetime` string using an strftime string.
 
     .. code-block:: cylc
@@ -29,11 +35,11 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
     strptime string as the second argument.
 
     Args:
-        iso8601_datetime (str):
+        iso8601_datetime:
             Any valid ISO8601 datetime as a string.
-        strftime_str (str):
+        strftime_str:
             A valid strftime string to format the output datetime.
-        strptime_str (str - optional):
+        strptime_str:
             A valid strptime string defining the format of the provided
             iso8601_datetime.
 

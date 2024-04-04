@@ -44,6 +44,6 @@ named_grep_ok "${TEST_NAME_BASE}-it-installed" "$ cylc reinstall" "VIPOUT.txt"
 named_grep_ok "${TEST_NAME_BASE}-it-played" "cylc play" "VIPOUT.txt"
 
 # Clean Up.
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
+run_ok "${TEST_NAME_BASE}-stop" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

@@ -27,7 +27,6 @@ This module provides logic to:
 from contextlib import suppress
 import json
 import os
-from copy import deepcopy
 from logging import (
     CRITICAL,
     DEBUG,
@@ -64,6 +63,7 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.simulation import ModeSettings
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_action_timer import (
@@ -107,6 +107,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
+    get_time_string_from_unix_time,
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
@@ -261,12 +262,13 @@ class TaskJobManager:
 
         Return (list): list of tasks that attempted submission.
         """
-
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks, workflow)
+
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
+
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
@@ -720,8 +722,6 @@ class TaskJobManager:
             or (ctx.ret_code and ctx.ret_code != 255)
         ):
             LOG.error(ctx)
-        else:
-            LOG.debug(ctx)
         # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
         #
         # Note for "reload": A TaskProxy instance may be replaced on reload, so
@@ -891,7 +891,7 @@ class TaskJobManager:
         log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
     def _run_job_cmd(
-        self, cmd_key, workflow, itasks, callback, callback_255=None
+        self, cmd_key, workflow, itasks, callback, callback_255
     ):
         """Run job commands, e.g. poll, kill, etc.
 
@@ -948,6 +948,7 @@ class TaskJobManager:
                     )
                 except NoHostsError:
                     ctx.err = f'No available hosts for {platform["name"]}'
+                    LOG.debug(ctx)
                     callback_255(ctx, workflow, itasks)
                     continue
                 else:
@@ -996,22 +997,41 @@ class TaskJobManager:
 
     def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
+        now = time()
+        now_str = get_time_string_from_unix_time(now)
         for itask in itasks:
+            # Handle broadcasts
+            rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+                itask)
+
+            itask.summary['started_time'] = now
+            self._set_retry_timers(itask, rtconfig)
+            itask.mode_settings = ModeSettings(
+                itask,
+                self.workflow_db_mgr,
+                rtconfig
+            )
+
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
-            self._set_retry_timers(itask)
+
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['job']['simulated run length']
+                itask.mode_settings.simulated_run_length
             )
             itask.jobs.append(
                 self.get_simulation_job_conf(itask, workflow)
             )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED
+                itask, INFO, TASK_OUTPUT_SUBMITTED,
             )
-
+            self.workflow_db_mgr.put_insert_task_jobs(
+                itask, {
+                    'time_submit': now_str,
+                    'try_num': itask.get_try_num(),
+                }
+            )
         return itasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
@@ -1190,12 +1210,11 @@ class TaskJobManager:
                 self._set_retry_timers(itask, rtconfig)
 
         try:
-            job_conf = {
-                **self._prep_submit_task_job_impl(
-                    workflow, itask, rtconfig
-                ),
-                'logfiles': deepcopy(itask.summary['logfiles']),
-            }
+            job_conf = self._prep_submit_task_job_impl(
+                workflow,
+                itask,
+                rtconfig,
+            )
             itask.jobs.append(job_conf)
 
             local_job_file_path = get_task_job_job_log(
@@ -1351,8 +1370,6 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }
 
     def get_simulation_job_conf(self, itask, workflow):
@@ -1384,6 +1401,4 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_events_mgr.uuid_str,
             'work_d': 'SIMULATION',
-            # this field is populated retrospectively for regular job subs
-            'logfiles': [],
         }

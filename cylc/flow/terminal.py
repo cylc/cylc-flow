@@ -20,12 +20,11 @@ from functools import wraps
 import inspect
 import json
 import logging
-from optparse import OptionParser
 import os
 from subprocess import PIPE, Popen  # nosec
 import sys
 from textwrap import wrap
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -35,6 +34,9 @@ from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
+
+if TYPE_CHECKING:
+    from optparse import OptionParser
 
 
 # CLI exception message format
@@ -90,6 +92,48 @@ def print_contents(contents, padding=5, char='.', indent=0):
         )
         for line in desc_lines[1:]:
             print(f'{indent}  {" " * title_width}{" " * padding}{line}')
+
+
+def format_grid(rows, gutter=2):
+    """Format gridded text.
+
+    This takes a 2D table of text and formats it to the maximum width of each
+    column and adds a bit of space between them.
+
+    Args:
+        rows:
+            2D list containing the text to format.
+        gutter:
+            The width of the gutter between columns.
+
+    Examples:
+        >>> format_grid([
+        ...     ['a', 'b', 'ccccc'],
+        ...     ['ddddd', 'e', 'f'],
+        ... ])
+        ['a      b  ccccc  ',
+         'ddddd  e  f      ']
+
+        >>> format_grid([])
+        []
+
+    """
+    if not rows:
+        return rows
+    templ = [
+        '{col:%d}' % (max(
+            len(row[ind])
+            for row in rows
+        ) + gutter)
+        for ind in range(len(rows[0]))
+    ]
+    lines = []
+    for row in rows:
+        ret = ''
+        for ind, col in enumerate(row):
+            ret += templ[ind].format(col=col)
+        lines.append(ret)
+    return lines
 
 
 def supports_color():
@@ -184,7 +228,7 @@ def parse_dirty_json(stdout):
 
 
 def cli_function(
-    parser_function: Optional[Callable[..., OptionParser]] = None,
+    parser_function: 'Optional[Callable[..., OptionParser]]' = None,
     **parser_kwargs: Any
 ):
     """Decorator for CLI entry points.

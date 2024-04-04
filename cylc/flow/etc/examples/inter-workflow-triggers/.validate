@@ -1,0 +1,57 @@
+#!/bin/bash
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -eux
+
+UPID=inter-workflow-triggers/upstream
+DOID=inter-workflow-triggers/downstream
+
+ICP="$(isodatetime now --format=CCYYMMDDThh --offset=-PT2H)"
+
+# run the workflows
+cylc vip \
+    --check-circular \
+    --no-run-name \
+    --final-cycle-point="$ICP" \
+    --workflow-name "$UPID" \
+    ./upstream
+cylc vip \
+    --check-circular \
+    --no-run-name \
+    --final-cycle-point="$ICP" \
+    --workflow-name "$DOID" \
+    ./downstream
+
+# wait for the first task in the downstream to succeed
+cylc workflow-state "$DOID" \
+    --task=process \
+    --point="$ICP" \
+    --status=succeeded \
+    --max-polls=60 \
+    --interval=1
+
+# stop the workflows
+cylc stop --kill --max-polls=10 --interval=2 "$UPID"
+cylc stop --kill --max-polls=10 --interval=2 "$DOID"
+
+# lint'em
+cylc lint "$UPID"
+cylc lint "$DOID"
+
+# clean up
+cylc clean "$UPID"
+cylc clean "$DOID"

@@ -22,12 +22,15 @@
 set_test_number 3
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[scheduler]
+    [[events]]
+        inactivity timeout = PT30S
 [scheduling]
-   [[graph]]
-      R1 = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
-        script=true
+        script = true
         [[[events]]]
             started handlers = echo %(workflow)s, echo %(name)s, echo %(start_time)s
 __FLOW_CONFIG__

@@ -23,7 +23,7 @@
                 cylc trigger --flow=none $CYLC_WORKFLOW_ID//3/foo
             elif ((CYLC_TASK_CYCLE_POINT == 3)); then
                 # Run until I get merged.
-                cylc__job__poll_grep_workflow_log -E "3/foo .* merged in flow\(s\) 1"
+                cylc__job__poll_grep_workflow_log -E "3/foo.* merged in flow\(s\) 1"
             fi
          """
     [[bar]]

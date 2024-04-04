@@ -1,6 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -17,13 +17,13 @@
 """Task state related logic."""
 
 
-from typing import List
+from typing import List, Iterable, Set, TYPE_CHECKING
 from cylc.flow.prerequisite import Prerequisite
-from cylc.flow.task_outputs import (
-    TaskOutputs,
-    TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.wallclock import get_current_time_string
+
+if TYPE_CHECKING:
+    from cylc.flow.id import Tokens
 
 
 # Task status names and meanings.
@@ -197,8 +197,10 @@ class TaskState:
             xtriggers as {trigger (str): satisfied (boolean), ...}.
         ._is_satisfied (boolean):
             Are prerequisites satisfied?
+            Reset None to force re-evaluation when a prereq gets satisfied.
         ._suicide_is_satisfied (boolean):
             Are prerequisites to trigger suicide satisfied?
+            Reset None to force re-evaluation when a prereq gets satisfied.
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -308,13 +310,23 @@ class TaskState:
             )
         )
 
-    def satisfy_me(self, all_task_outputs):
-        """Attempt to get my prerequisites satisfied."""
-        for prereqs in [self.prerequisites, self.suicide_prerequisites]:
-            for prereq in prereqs:
-                if prereq.satisfy_me(all_task_outputs):
-                    self._is_satisfied = None
-                    self._suicide_is_satisfied = None
+    def satisfy_me(
+        self,
+        outputs: Iterable['Tokens']
+    ) -> Set['Tokens']:
+        """Try to satisfy my prerequisites with given outputs.
+
+        Return which outputs I actually depend on.
+        """
+        valid: Set[Tokens] = set()
+        for prereq in (*self.prerequisites, *self.suicide_prerequisites):
+            yep = prereq.satisfy_me(outputs)
+            if yep:
+                valid = valid.union(yep)
+                continue
+            self._is_satisfied = None
+            self._suicide_is_satisfied = None
+        return valid
 
     def xtriggers_all_satisfied(self):
         """Return True if all xtriggers are satisfied."""
@@ -323,6 +335,12 @@ class TaskState:
     def external_triggers_all_satisfied(self):
         """Return True if all external triggers are satisfied."""
         return all(self.external_triggers.values())
+
+    def set_all_satisfied(self):
+        """Set all my prerequisites satisfied."""
+        for p in self.prerequisites:
+            p.set_satisfied()
+        self._is_satisfied = True
 
     def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
@@ -380,12 +398,10 @@ class TaskState:
         )
 
     def reset(
-            self, status=None, is_held=None, is_queued=None, is_runahead=None):
-        """Change status, and manipulate outputs and prerequisites accordingly.
-
-        Outputs are manipulated on manual state reset to reflect the new task
-        status. Since spawn-on-demand implementation, state reset is only used
-        for internal state changes.
+        self, status=None, is_held=None, is_queued=None, is_runahead=None,
+        forced=False
+    ):
+        """Change status.
 
         Args:
             status (str):
@@ -393,11 +409,19 @@ class TaskState:
             is_held (bool):
                 Set the task to be held or not, or None to leave this property
                 unchanged.
+            forced (bool):
+                If called as a result of a forced change (via "cylc set")
 
         Returns:
-            returns: whether state change or not (bool)
+            Whether state changed or not (bool)
 
         """
+        req = status
+
+        if forced and req in [TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING]:
+            # Can't force change to an active state because there's no job.
+            return False
+
         current_status = (
             self.status,
             self.is_held,
@@ -414,45 +438,29 @@ class TaskState:
             # no change - do nothing
             return False
 
-        # perform the actual state change
+        # perform the state change
         self.status, self.is_held, self.is_queued, self.is_runahead = (
             requested_status
         )
 
         self.time_updated = get_current_time_string()
         self.is_updated = True
-
-        if is_held:
-            # only reset task outputs if not setting task to held
-            # https://github.com/cylc/cylc-flow/pull/2116
-            return True
-
         self.kill_failed = False
 
-        # Set standard outputs in accordance with task state.
         if status is None:
             # NOTE: status is None if the task is being released
             status = self.status
-        if status_leq(status, TASK_STATUS_SUBMITTED):
-            self.outputs.set_all_incomplete()
-        self.outputs.set_completion(
-            TASK_OUTPUT_EXPIRED, status == TASK_STATUS_EXPIRED)
-        self.outputs.set_completion(
-            TASK_OUTPUT_SUBMITTED, status_geq(status, TASK_STATUS_SUBMITTED))
-        self.outputs.set_completion(
-            TASK_OUTPUT_STARTED, status_geq(status, TASK_STATUS_RUNNING))
-        self.outputs.set_completion(
-            TASK_OUTPUT_SUBMIT_FAILED, status == TASK_STATUS_SUBMIT_FAILED)
-        self.outputs.set_completion(
-            TASK_OUTPUT_SUCCEEDED, status == TASK_STATUS_SUCCEEDED)
-        self.outputs.set_completion(
-            TASK_OUTPUT_FAILED, status == TASK_STATUS_FAILED)
 
         return True
 
     def is_gt(self, status):
         """"Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >
+                TASK_STATUSES_ORDERED.index(status))
+
+    def is_gte(self, status):
+        """"Return True if self.status >= status."""
+        return (TASK_STATUSES_ORDERED.index(self.status) >=
                 TASK_STATUSES_ORDERED.index(status))
 
     def _add_prerequisites(self, point, tdef):
