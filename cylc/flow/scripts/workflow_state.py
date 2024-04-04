@@ -67,7 +67,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path, get_cylc_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.workflow_files import infer_latest_run_from_id
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -231,7 +231,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
 
     pollargs = {
         'workflow_id': workflow_id,
-        'run_dir': expand_path(options.alt_run_dir or get_cylc_run_dir()),
+        'run_dir': get_cylc_run_dir(alt_run_dir=options.alt_run_dir),
         'task': options.task,
         'cycle': options.cycle,
         'status': options.status,

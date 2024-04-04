@@ -58,6 +58,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
+    get_alt_workflow_run_dir,
     make_localhost_symlinks,
 )
 from cylc.flow.remote import (
@@ -843,8 +844,9 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
 def infer_latest_run_from_id(
     workflow_id: str, alt_run_dir: Optional[str] = None
 ) -> str:
+    """Wrapper to make the workflow run-dir absolute."""
     if alt_run_dir is not None:
-        run_dir = Path(alt_run_dir, workflow_id)
+        run_dir = Path(get_alt_workflow_run_dir(alt_run_dir, workflow_id))
     else:
         run_dir = Path(get_workflow_run_dir(workflow_id))
     _, id_ = infer_latest_run(run_dir, alt_run_dir=alt_run_dir)
@@ -875,7 +877,7 @@ def infer_latest_run(
         - WorkflowFilesError if the runN symlink is not valid.
         - InputError if the path does not exist.
     """
-    cylc_run_dir = alt_run_dir or get_cylc_run_dir()
+    cylc_run_dir = get_cylc_run_dir(alt_run_dir)
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
