@@ -60,7 +60,7 @@ class TemplateVariables(Enum):
        [scheduling]
            initial cycle point = now
            [[xtriggers]]
-               my_xtrigger = my_xtrigger_fcn('%(workflow)', '%(point)')
+               my_xtrigger = my_xtrigger_fcn('%(workflow)s', '%(point)s')
 
     For an explanation of the substitution syntax, see
     `String Formatting Operations in the Python documentation
