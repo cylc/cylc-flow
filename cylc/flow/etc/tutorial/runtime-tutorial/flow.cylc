@@ -1,6 +1,7 @@
 #!jinja2
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True  # TODO: remove at end of exercise
 
 [scheduling]
     # TODO: Set initial cycle point
