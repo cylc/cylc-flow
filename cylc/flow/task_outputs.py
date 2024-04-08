@@ -256,6 +256,21 @@ def get_optional_outputs(
     }
 
 
+# a completion expression that considers the outputs complete if any final task
+# output is received
+FINAL_OUTPUT_COMPLETION = ' or '.join(
+    map(
+        trigger_to_completion_variable,
+        [
+            TASK_OUTPUT_SUCCEEDED,
+            TASK_OUTPUT_FAILED,
+            TASK_OUTPUT_SUBMIT_FAILED,
+            TASK_OUTPUT_EXPIRED,
+        ],
+    )
+)
+
+
 class TaskOutputs:
     """Represents a collection of outputs for a task.
 
@@ -396,8 +411,14 @@ class TaskOutputs:
 
     def is_complete(self) -> bool:
         """Return True if the outputs are complete."""
+        # NOTE: If a task has been removed from the workflow via restart /
+        # reload, then it is possible for the completion expression to be blank
+        # (empty string). In this case, we consider the task outputs to be
+        # complete when any final output has been generated.
+        # See https://github.com/cylc/cylc-flow/pull/5067
+        expr = self._completion_expression or FINAL_OUTPUT_COMPLETION
         return CompletionEvaluator(
-            self._completion_expression,
+            expr,
             **{
                 self._message_to_compvar[message]: completed
                 for message, completed in self._completed.items()
