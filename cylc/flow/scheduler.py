@@ -1263,10 +1263,15 @@ class Scheduler:
     def load_flow_file(self, is_reload=False):
         """Load, and log the workflow definition."""
         # Local workflow environment set therein.
-        # Allow -S and -D to take effect in Cylc VR.
+        # Allow -S and -D and -O to take effect in Cylc VR.
         # https://github.com/cylc/cylc-flow/issues/5968
+        # & https://github.com/cylc/cylc-flow/issues/6058
+        # TODO delete after 8.3.0 when this change will be included in
+        # Cylc Rose
         self.options.rose_template_vars = []
         self.options.defines = []
+        self.options.opt_conf_keys = []
+
         return WorkflowConfig(
             self.workflow,
             self.flow_file,
