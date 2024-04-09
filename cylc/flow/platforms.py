@@ -64,6 +64,9 @@ HOST_SELECTION_METHODS = {
 }
 
 
+CLEAN_COMMA_LIST = re.compile(r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*')
+
+
 def log_platform_event(
     event: str,
     platform: dict,
@@ -200,21 +203,27 @@ def platform_from_name(
     Raises:
         NoPlatformsError: Platform group has no platforms with usable hosts.
     """
+    if platform_name is None:
+        # Avoid the rest of all this logic:
+        platform_data = glbl_cfg().get(['platforms', 'localhost'])
+        platform_data['name'] = 'localhost'
+        return platform_data
+
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])
     platform_groups = glbl_cfg().get(['platform groups'])
 
-    if platform_name is None:
-        platform_name = 'localhost'
-
     # The list is reversed to allow user-set platform groups (which are
     # appended to site set platform groups) to be matched first and override
     # site defined platform groups.
-    for platform_name_re in reversed(list(platform_groups)):
+    group_regexes = [
+        (i, re.compile(i)) for i in reversed(list(platform_groups))]
+    for group_regex_name, group_regex in group_regexes:
         # Platform is member of a group.
-        if re.fullmatch(platform_name_re, platform_name):
+        if group_regex.fullmatch(platform_name):
             platform_name = get_platform_from_group(
-                platform_groups[platform_name_re], group_name=platform_name,
+                platform_groups[group_regex_name],
+                group_name=platform_name,
                 bad_hosts=bad_hosts
             )
             break
@@ -234,20 +243,20 @@ def platform_from_name(
     # The list is reversed to allow user-set platforms (which are appended to
     # than site set platforms) to be matched first and override site defined
     # platforms.
-    for platform_name_re in reversed(list(platforms)):
+    platform_regexes = [
+        (i, re.compile(CLEAN_COMMA_LIST.sub('|', i)))
+        for i in reversed(list(platforms))
+    ]
+    for platform_name_raw, platform_name_re in platform_regexes:
         # We substitute commas with or without spaces to
         # allow lists of platforms
-        if re.fullmatch(
-            re.sub(
-                r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*',
-                '|',
-                platform_name_re
-            ),
+        if platform_name_re.fullmatch(
+            # this had hardly any effect, but nvm.
             platform_name
         ):
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
-            platform_data = deepcopy(platforms[platform_name_re])
+            platform_data = deepcopy(platforms[platform_name_raw])
 
             # If hosts are not filled in make remote
             # hosts the platform name.
@@ -500,8 +509,8 @@ def generic_items_match(
         # Get a set of items actually set in both platform and task_section.
         shared_items = set(task_section).intersection(set(platform_spec))
         # If any set items do not match, we can't use this platform.
-        if not all(
-            platform_spec[item] == task_section[item]
+        if any(
+            platform_spec[item] != task_section[item]
             for item in shared_items
         ):
             return False

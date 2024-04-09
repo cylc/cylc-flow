@@ -149,15 +149,6 @@ PLATFORMS_INVALID = {
                 "name": "sugar"
             },
         ),
-        (
-            PLATFORMS,
-            None,
-            {
-                "hosts": "localhost",
-                "name": "localhost",
-                "job runner": "background"
-            },
-        ),
         (PLATFORMS, "laptop22", {
             "job runner": "background",
             "name": "laptop22",
@@ -183,6 +174,13 @@ def test_basic(PLATFORMS, platform, expected):
         assert platform == expected
     else:
         assert platform["hosts"] == expected
+
+
+def test_basic_localhost():
+    platform = get_platform()
+    assert platform['hosts'] == ['localhost']
+    assert platform['name'] == 'localhost'
+    assert platform['job runner'] == 'background'
 
 
 def test_platform_not_there():
