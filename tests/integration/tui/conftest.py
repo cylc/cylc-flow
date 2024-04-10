@@ -7,7 +7,7 @@ from time import sleep
 from uuid import uuid1
 
 import pytest
-from urwid import html_fragment
+from urwid.display import html_fragment
 
 from cylc.flow.id import Tokens
 from cylc.flow.tui.app import TuiApp
