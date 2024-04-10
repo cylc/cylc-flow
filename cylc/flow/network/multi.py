@@ -19,6 +19,30 @@ from functools import partial
 
 from cylc.flow.async_util import unordered_map
 from cylc.flow.id_cli import parse_ids_async
+from cylc.flow.exceptions import InputError
+
+
+def print_response(multi_results):
+    """Print server mutation response to stdout.
+
+    The response will be either:
+        - (False, argument-validation-error)
+        - (True, ID-of-queued-command)
+
+    Raise InputError if validation failed.
+
+    """
+    for multi_result in multi_results:
+        for _cmd, results in multi_result.items():
+            for result in results.values():
+                for wf_res in result:
+                    wf_id = wf_res["id"]
+                    response = wf_res["response"]
+                    if not response[0]:
+                        # Validation failure
+                        raise InputError(response[1])
+                    else:
+                        print(f"{wf_id}: command {response[1]} queued")
 
 
 def call_multi(*args, **kwargs):
@@ -107,4 +131,4 @@ def _report_single(report, workflow, result):
 
 
 def _report(_):
-    print('Command submitted; the scheduler will log any problems.')
+    pass

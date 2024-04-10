@@ -53,6 +53,7 @@ from cylc.flow import (
 )
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow import command_validation
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
@@ -2146,6 +2147,7 @@ class Scheduler:
         return self.pool.force_trigger_tasks(
             tasks, flow, flow_wait, flow_descr)
 
+    @command_validation.validate
     def command_set(
         self,
         tasks: List[str],
