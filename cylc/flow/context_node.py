@@ -15,7 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Self
+    # FROM: Python 3.7
+    # TO: Python 3.11
+    from typing_extensions import Self
 
 
 class ContextNode():
@@ -93,7 +99,7 @@ class ContextNode():
         self._children = None
         self.DATA[self] = set(self.DATA)
 
-    def __enter__(self):
+    def __enter__(self) -> 'Self':
         return self
 
     def __exit__(self, *args):
@@ -129,24 +135,36 @@ class ContextNode():
     def __contains__(self, name: str) -> bool:
         return name in self._children  # type: ignore[operator]  # TODO
 
-    def __getitem__(self, name: str):
+    def __getitem__(self, name: str) -> 'Self':
         if self._children:
             return self._children.__getitem__(name)
         raise TypeError('This is not a leaf node')
 
-    def get(self, *names: str):
+    def get(self, *names: str) -> 'Self':
         """Retrieve the node given by the list of names.
 
         Example:
             >>> with ContextNode('a') as a:
-            ...     with ContextNode('b') as b:
+            ...     with ContextNode('b'):
             ...          c = ContextNode('c')
             >>> a.get('b', 'c')
             a/b/c
+
+            >>> with ContextNode('a') as a:
+            ...     with ContextNode('b'):
+            ...         with ContextNode('__MANY__'):
+            ...             c = ContextNode('c')
+            >>> a.get('b', 'foo', 'c')
+            a/b/__MANY__/c
         """
         node = self
         for name in names:
-            node = node[name]
+            try:
+                node = node[name]
+            except KeyError as exc:
+                if '__MANY__' not in node:
+                    raise exc
+                node = node['__MANY__']
         return node
 
     def __str__(self) -> str:
