@@ -24,7 +24,7 @@ import os
 from subprocess import PIPE, Popen  # nosec
 import sys
 from textwrap import wrap
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -379,3 +379,35 @@ def prompt(message, options, default=None, process=None):
     if isinstance(options, dict):
         return options[usr]
     return usr
+
+
+def flatten_cli_lists(lsts: List[str]) -> List[str]:
+    """Return a sorted flat list for multi-use CLI command options.
+
+    Examples:
+        # --out='a,b,c'
+        >>> flatten_cli_lists(['a,b,c'])
+        ['a', 'b', 'c']
+
+        # --out='a' --out='a,b'
+        >>> flatten_cli_lists(['a', 'b,c'])
+        ['a', 'b', 'c']
+
+        # --out='a' --out='a,b'
+        >>> flatten_cli_lists(['a', 'a,b'])
+        ['a', 'b']
+
+        # --out='  a '
+        >>> flatten_cli_lists(['  a  '])
+        ['a']
+
+        # --out='a, b, c , d'
+        >>> flatten_cli_lists(['a, b, c , d'])
+        ['a', 'b', 'c', 'd']
+
+    """
+    return sorted({
+        item.strip()
+        for lst in (lsts or [])
+        for item in lst.strip().split(',')
+    })

@@ -20,7 +20,6 @@ from typing import Dict, Set, Optional, TYPE_CHECKING
 import datetime
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import InputError
 
 
 if TYPE_CHECKING:
@@ -31,13 +30,6 @@ FlowNums = Set[int]
 FLOW_ALL = "all"
 FLOW_NEW = "new"
 FLOW_NONE = "none"
-
-# For flow-related CLI options:
-ERR_OPT_FLOW_VAL = "Flow values must be an integer, or 'all', 'new', or 'none'"
-ERR_OPT_FLOW_INT = "Multiple flow options must all be integer valued"
-ERR_OPT_FLOW_WAIT = (
-    f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
-)
 
 
 def add_flow_opts(parser):
@@ -61,27 +53,6 @@ def add_flow_opts(parser):
         help="Wait for merge with current active flows before flowing on."
              " Note you can use 'cylc set --pre=all' to unset a flow-wait."
     )
-
-
-def validate_flow_opts(options):
-    """Check validity of flow-related CLI options."""
-    if options.flow is None:
-        # Default to all active flows
-        options.flow = [FLOW_ALL]
-
-    for val in options.flow:
-        val = val.strip()
-        if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
-            if len(options.flow) != 1:
-                raise InputError(ERR_OPT_FLOW_INT)
-        else:
-            try:
-                int(val)
-            except ValueError:
-                raise InputError(ERR_OPT_FLOW_VAL.format(val))
-
-    if options.flow_wait and options.flow[0] in [FLOW_NEW, FLOW_NONE]:
-        raise InputError(ERR_OPT_FLOW_WAIT)
 
 
 def stringify_flow_nums(flow_nums: Set[int], full: bool = False) -> str:

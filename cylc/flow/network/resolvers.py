@@ -44,6 +44,7 @@ from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
 )
+from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
@@ -746,9 +747,18 @@ class Resolvers(BaseResolvers):
             return method(**kwargs)
 
         try:
-            self.schd.get_command_method(command)
+            meth = self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
+
+        # If meth has a command validation function, call it.
+        try:
+            # TODO: properly handle "Callable has no attribute validate"?
+            meth.validate(**kwargs)  # type: ignore
+        except AttributeError:
+            LOG.debug(f"No command validation for {command}")
+        except InputError as exc:
+            return (False, str(exc))
 
         # Queue the command to the scheduler, with a unique command ID
         cmd_uuid = str(uuid4())
