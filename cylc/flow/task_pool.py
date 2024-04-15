@@ -1645,7 +1645,11 @@ class TaskPool:
             self._get_task_history(name, point, flow_nums)
         )
 
-        if not never_spawned and submit_num == 0:
+        if (
+            not never_spawned and
+            not prev_flow_wait and
+            submit_num == 0
+        ):
             # Previous spawn suicided before completing any outputs.
             LOG.debug(f"{point}/{name} already spawned in this flow")
             return None
