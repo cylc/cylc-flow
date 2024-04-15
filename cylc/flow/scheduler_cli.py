@@ -309,7 +309,7 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
-    options = parser.get_cylc_rose_options() + PLAY_OPTIONS
+    options = PLAY_OPTIONS
     for option in options:
         if isinstance(option, OptionSettings):
             parser.add_option(*option.args, **option.kwargs)
