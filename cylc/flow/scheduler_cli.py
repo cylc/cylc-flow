@@ -309,12 +309,8 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
-    options = PLAY_OPTIONS
-    for option in options:
-        if isinstance(option, OptionSettings):
-            parser.add_option(*option.args, **option.kwargs)
-        else:
-            parser.add_option(*option['args'], **option['kwargs'])
+    for option in PLAY_OPTIONS:
+        parser.add_option(*option.args, **option.kwargs)
 
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
