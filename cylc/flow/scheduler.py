@@ -1262,11 +1262,6 @@ class Scheduler:
 
     def load_flow_file(self, is_reload=False):
         """Load, and log the workflow definition."""
-        # Local workflow environment set therein.
-        # Allow -S and -D to take effect in Cylc VR.
-        # https://github.com/cylc/cylc-flow/issues/5968
-        self.options.rose_template_vars = []
-        self.options.defines = []
         return WorkflowConfig(
             self.workflow,
             self.flow_file,
