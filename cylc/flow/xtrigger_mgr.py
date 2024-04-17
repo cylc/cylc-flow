@@ -502,7 +502,7 @@ class XtriggerManager:
         Raises:
             ValueError: if the context given is not active
         """
-        LOG.debug(ctx)
+        LOG.debug(ctx.dump())
         sig = ctx.get_signature()
         self.active.remove(sig)
         try:

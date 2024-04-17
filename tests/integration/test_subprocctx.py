@@ -17,6 +17,7 @@
 """
 
 from logging import DEBUG
+from textwrap import dedent
 
 
 async def test_log_xtrigger_stdout(
@@ -37,13 +38,14 @@ async def test_log_xtrigger_stdout(
     # Create an xtrigger:
     xt_lib = run_dir / id_ / 'lib/python/myxtrigger.py'
     xt_lib.parent.mkdir(parents=True, exist_ok=True)
-    xt_lib.write_text(
-        "from sys import stderr\n\n\n"
-        "def myxtrigger():\n"
-        "    print('Hello World')\n"
-        "    print('Hello Hades', file=stderr)\n"
-        "    return True, {}"
-    )
+    xt_lib.write_text(dedent(r"""
+        from sys import stderr
+
+        def myxtrigger():
+            print('Hello World')
+            print('Hello Hades', file=stderr)
+            return True, {}
+    """))
     schd = scheduler(id_)
     async with start(schd, level=DEBUG) as log:
         # Set off check for x-trigger:
