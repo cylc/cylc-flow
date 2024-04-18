@@ -103,7 +103,7 @@ class TaskPool:
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
-    SUICIDE_MSG = "suicide"
+    SUICIDE_MSG = "suicide trigger"
 
     def __init__(
         self,
@@ -837,7 +837,17 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            LOG.info(f"[{itask}] {msg}")
+
+            level = logging.INFO
+            if itask.state(
+                TASK_STATUS_PREPARING,
+                TASK_STATUS_SUBMITTED,
+                TASK_STATUS_RUNNING,
+            ):
+                level = logging.WARNING
+                msg += " - active job orphaned"
+
+            LOG.log(level, f"[{itask}] {msg}")
             del itask
 
     def get_tasks(self) -> List[TaskProxy]:
@@ -1392,18 +1402,10 @@ class TaskPool:
                         suicide.append(t)
 
         for c_task in suicide:
-            msg = self.__class__.SUICIDE_MSG
-            if c_task.state(
-                    TASK_STATUS_PREPARING,
-                    TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING,
-                    is_held=False):
-                msg += " suiciding while active"
-            self.remove(c_task, msg)
+            self.remove(c_task, self.__class__.SUICIDE_MSG)
 
         if suicide:
-            # Update the DB immediately to ensure a record exists in case of
-            # very quick removal and respawn, due to suicide triggers.
+            # Update DB now in case of very quick respawn attempt.
             # See https://github.com/cylc/cylc-flow/issues/6066
             self.workflow_db_mgr.process_queued_ops()
 
@@ -1650,8 +1652,8 @@ class TaskPool:
             not prev_flow_wait and
             submit_num == 0
         ):
-            # Previous spawn suicided before completing any outputs.
-            LOG.debug(f"{point}/{name} already spawned in this flow")
+            # Previous instance removed before completing any outputs.
+            LOG.info(f"Not spawning {point}/{name}: already used in this flow")
             return None
 
         itask = self._get_task_proxy_db_outputs(

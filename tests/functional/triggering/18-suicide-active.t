@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Test warning for "suiciding while active"
+# Test for suicide while active warning.
 
 . "$(dirname "$0")/test_header"
 
@@ -29,6 +29,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "suiciding while active"
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "(suicide trigger) - active job orphaned"
 
 purge
