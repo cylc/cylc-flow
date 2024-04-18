@@ -1,0 +1,30 @@
+# How to use this file:
+# cylc get-resources cylc.nanorc ~/.config/nano/cylc.nanorc
+# Add the following to ~/.nanorc
+# include ~/.config/nano/cylc.nanorc
+
+# Supports `.cylc` files
+syntax "Cylc" "\.cylc$"
+
+## Multiline
+color yellow start="\"\"\"" end="\"\"\""
+color yellow start="'''" end="'''"
+color yellow start="\[" end="\]"
+
+## Values
+color yellow "=(.*)$"
+color green "=[^>]"
+color brightmagenta "=>|&|\|\\"
+
+## Valid headings
+color green "^\s*\[.*\]"
+color green "^\s*\[\[.*\]\]"
+color green "^\s*\[\[\[.*\]\]\]"
+
+## Comments (keep at the end of this file!)
+color cyan "#.*$"
+
+## Jinja2
+icolor brightcyan "^#!Jinja2"
+color brightcyan "\{%.*%\}"
+color brightcyan "\{\{.*\}\}"
