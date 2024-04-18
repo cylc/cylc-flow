@@ -17,9 +17,9 @@ color green "=[^>]"
 color brightmagenta "=>|&|\|\\"
 
 ## Valid headings
-color green "^\[.*\]$"
-color green "^\s{4}\[\[.*\]\]+$"
-color green "^\s{8}\[\[\[.*\]\]\]+$"
+color green "^\s*\[.*\]"
+color green "^\s*\[\[.*\]\]"
+color green "^\s*\[\[\[.*\]\]\]"
 
 ## Comments (keep at the end of this file!)
 color cyan "#.*$"
