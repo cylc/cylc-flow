@@ -29,6 +29,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "(suicide trigger) - active job orphaned"
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "suicide trigger - active job orphaned"
 
 purge
