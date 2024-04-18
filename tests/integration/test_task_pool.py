@@ -35,7 +35,8 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED
 )
 
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
@@ -1890,7 +1891,6 @@ async def test_fast_respawn(
 
     # find task 1/foo in the pool
     foo = task_pool.get_task(IntegerPoint("1"), "foo")
-    assert foo in task_pool.get_tasks()
 
     # remove it from the pool
     task_pool.remove(foo)
@@ -1900,3 +1900,54 @@ async def test_fast_respawn(
     itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
     assert itask is None
     assert "Not spawning 1/foo: already used in this flow" in caplog.text
+
+
+async def test_remove_active_task(
+    example_flow: 'Scheduler',
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test warning on removing an active task."""
+
+    task_pool = example_flow.pool
+
+    # find task 1/foo in the pool
+    foo = task_pool.get_task(IntegerPoint("1"), "foo")
+
+    foo.state_reset(TASK_STATUS_RUNNING)
+    task_pool.remove(foo, "request")
+    assert foo not in task_pool.get_tasks()
+
+    assert (
+        "removed from active task pool: request - active job orphaned"
+        in caplog.text
+    )
+
+
+async def test_remove_by_suicide(
+    flow,
+    scheduler,
+    start,
+    log_filter
+):
+    """Test task removal by suicide trigger."""
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': 'a? & b\n a:failed? => !b'
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd) as log:
+        # it should start up with 1/a and 1/b
+        assert pool_get_task_ids(schd.pool) == ["1/a", "1/b"]
+
+        a = schd.pool.get_task(IntegerPoint("1"), "a")
+
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
+        assert log_filter(
+            log,
+            contains="removed from active task pool: suicide trigger"
+        )
+        assert pool_get_task_ids(schd.pool) == ["1/a"]
