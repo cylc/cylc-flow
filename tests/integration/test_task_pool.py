@@ -168,7 +168,7 @@ async def example_flow(
     caplog.set_level(logging.INFO, CYLC_LOG)
     id_ = flow(EXAMPLE_FLOW_CFG)
     schd: 'Scheduler' = scheduler(id_)
-    async with start(schd):
+    async with start(schd, level=logging.DEBUG):
         yield schd
 
 
@@ -1212,7 +1212,7 @@ async def test_detect_incomplete_tasks(
             if itask.tdef.name == TASK_STATUS_EXPIRED:
                 assert log_filter(
                     log,
-                    contains=f"[{itask}] removed (expired)"
+                    contains=f"[{itask}] removed from active task pool: expired"
                 )
                 # the task should have been removed
                 assert itask not in schd.pool.get_tasks()
@@ -1294,7 +1294,7 @@ async def test_set_failed_complete(
         schd.pool.set_prereqs_and_outputs([one.identity], None, None, ['all'])
 
         assert log_filter(
-            log, contains=f'[{one}] task completed')
+            log, contains=f'[{one}] removed from active task pool: completed')
 
         db_outputs = db_select(
             schd, True, 'task_outputs', 'outputs',
@@ -1874,3 +1874,29 @@ async def test_runahead_c7_compat_task_state(
     mod_blah.pool.compute_runahead()
     after = mod_blah.pool.runahead_limit_point
     assert bool(before != after) == expected
+
+
+async def test_fast_respawn(
+    example_flow: 'Scheduler',
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Immediate re-spawn of removed tasks is not allowed.
+
+    An immediate DB update is required to stop the respawn.
+    https://github.com/cylc/cylc-flow/pull/6067
+
+    """
+    task_pool = example_flow.pool
+
+    # find task 1/foo in the pool
+    foo = task_pool.get_task(IntegerPoint("1"), "foo")
+    assert foo in task_pool.get_tasks()
+
+    # remove it from the pool
+    task_pool.remove(foo)
+    assert foo not in task_pool.get_tasks()
+
+    # attempt to spawn it again
+    itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
+    assert itask is None
+    assert "Not spawning 1/foo: already used in this flow" in caplog.text
