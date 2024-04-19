@@ -307,6 +307,13 @@ class Scheduler:
             pub_d=os.path.join(self.workflow_run_dir, 'log')
         )
         self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+        if (
+            not self.is_restart
+            and Path(self.workflow_db_mgr.pub_path).is_file()
+        ):
+            # Delete pub DB if pri DB doesn't exist, as we don't want to
+            # load anything (e.g. template variables) from it
+            os.unlink(self.workflow_db_mgr.pub_path)
 
         # Map used to track incomplete remote inits for restart
         # {install_target: platform}
