@@ -14,17 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import os
 from pathlib import Path
-from types import SimpleNamespace
+from textwrap import dedent
 from typing import Any, Optional, List
-from cylc.flow.exceptions import InputError
 
 import pytest
-from pytest import param
 
-from cylc.flow.scripts.config import get_config_file_hierarchy
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
+from cylc.flow.option_parsers import Options
+from cylc.flow.scripts.config import (
+    _main,
+    get_config_file_hierarchy,
+    get_option_parser,
+)
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 Fixture = Any
@@ -200,3 +205,38 @@ def test_cylc_site_conf_path_env_var(
     GlobalConfig.get_inst()
 
     assert capload == files
+
+
+def test_cylc_config_xtriggers(tmp_run_dir, capsys: pytest.CaptureFixture):
+    """Test `cylc config` outputs any xtriggers properly"""
+    run_dir: Path = tmp_run_dir('constellation')
+    flow_file = run_dir / WorkflowFiles.FLOW_FILE
+    flow_file.write_text(dedent("""
+    [scheduler]
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 2020-05-05
+        [[xtriggers]]
+            clock_1 = wall_clock(offset=PT1H):PT4S
+            rotund = xrandom(90, 2)
+        [[graph]]
+            R1 = @rotund => foo
+    """))
+    option_parser = get_option_parser()
+
+    asyncio.run(
+        _main(option_parser, Options(option_parser)(), 'constellation')
+    )
+    assert capsys.readouterr().out == dedent("""\
+    [scheduler]
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 2020-05-05
+        [[xtriggers]]
+            clock_1 = wall_clock(offset=PT1H):4.0
+            rotund = xrandom(90, 2):10.0
+        [[graph]]
+            R1 = @rotund => foo
+    [runtime]
+        [[root]]
+    """)

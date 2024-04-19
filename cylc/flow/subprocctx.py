@@ -197,3 +197,17 @@ class SubFuncContext(SubProcContext):
         args = self.func_args + [
             "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
         return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
+
+    def dump(self) -> str:
+        """Output for logging."""
+        return SubProcContext.__str__(self)
+
+    def __str__(self) -> str:
+        """
+        >>> str(SubFuncContext('label', 'my_func', [1, 2], {'a': 3}))
+        'my_func(1, 2, a=3):10.0'
+        """
+        return f"{self.get_signature()}:{self.intvl}"
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self}>"

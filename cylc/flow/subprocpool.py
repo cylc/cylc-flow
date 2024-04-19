@@ -26,7 +26,7 @@ from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
 from subprocess import DEVNULL, run  # nosec
-from typing import Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
 
 from cylc.flow import LOG, iter_entry_points
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -37,9 +37,14 @@ from cylc.flow.platforms import (
     log_platform_event,
     get_platform,
 )
+from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.wallclock import get_current_time_string
+
+if TYPE_CHECKING:
+    from subprocess import Popen
+    from cylc.flow.subprocctx import SubProcContext
 
 _XTRIG_MOD_CACHE: dict = {}
 _XTRIG_FUNC_CACHE: dict = {}
@@ -221,9 +226,15 @@ class SubProcPool:
             return self.stopping
 
     def _proc_exit(
-        self, proc, err_xtra, ctx,
-        callback, callback_args, bad_hosts=None,
-        callback_255=None, callback_255_args=None
+        self,
+        proc: 'Popen[bytes]',
+        err_xtra: str,
+        ctx: 'SubProcContext',
+        callback: Callable,
+        callback_args: list,
+        bad_hosts: Optional[Set[str]] = None,
+        callback_255: Optional[Callable] = None,
+        callback_255_args: Optional[list] = None,
     ):
         """Get ret_code, out, err of exited command, and call its callback."""
         ctx.ret_code = proc.wait()
@@ -236,7 +247,9 @@ class SubProcPool:
             if ctx.err is None:
                 ctx.err = ''
             ctx.err += err + err_xtra
-        LOG.debug(ctx)
+        LOG.debug(
+            ctx.dump() if isinstance(ctx, SubFuncContext) else ctx
+        )
         self._run_command_exit(
             ctx, bad_hosts=bad_hosts,
             callback=callback, callback_args=callback_args,
@@ -487,7 +500,9 @@ class SubProcPool:
 
     @classmethod
     def _run_command_exit(
-        cls, ctx, bad_hosts=None,
+        cls,
+        ctx: 'SubProcContext',
+        bad_hosts: Optional[Set[str]] = None,
         callback: Optional[Callable] = None,
         callback_args: Optional[List[Any]] = None,
         callback_255: Optional[Callable] = None,
