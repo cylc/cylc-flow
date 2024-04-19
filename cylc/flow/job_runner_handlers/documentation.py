@@ -22,12 +22,15 @@ Note the class contained here is just for documentation purposes and is
 not intended to be subclassed.
 """
 
-import re
 from typing import (
     Iterable,
     List,
     Tuple,
+    TYPE_CHECKING,
 )
+
+if TYPE_CHECKING:
+    import re
 
 
 class ExampleHandler():
@@ -110,7 +113,6 @@ class ExampleHandler():
        * ``job_file_path``
        * ``job_runner_command_template``
        * ``job_runner_name``
-       * ``logfiles``
        * ``namespace_hierarchy``
        * ``param_var``
        * ``platform``
@@ -258,7 +260,7 @@ class ExampleHandler():
 
     """
 
-    REC_ID_FROM_SUBMIT_OUT: re.Pattern
+    REC_ID_FROM_SUBMIT_OUT: 're.Pattern'
     """Regular expression to extract job IDs from submission stderr.
 
     A regular expression (compiled) to extract the job "id" from the standard
@@ -266,7 +268,7 @@ class ExampleHandler():
 
     """
 
-    REC_ID_FROM_SUBMIT_ERR: re.Pattern
+    REC_ID_FROM_SUBMIT_ERR: 're.Pattern'
     """Regular expression to extract job IDs from submission stderr.
 
     See :py:attr:`ExampleHandler.REC_ID_FROM_SUBMIT_OUT`.

@@ -41,7 +41,7 @@ for INDEX in 1 2; do
             POLL_INT='2\*PT1S,10\*PT6S,'
         fi
         POST_MSG=".*, polling intervals=${POLL_INT}..."
-        grep_ok "1/t${INDEX} .* ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}" -E
+        grep_ok "1/t${INDEX}.*${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}" -E
     done
 done
 #-------------------------------------------------------------------------------

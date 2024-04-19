@@ -20,6 +20,7 @@ from cylc.flow.async_util import pipe
 from cylc.flow.id import Tokens
 from cylc.flow.network.scan import scan
 from cylc.flow.scripts.completion_server import (
+    _list_prereqs_and_outputs,
     server,
     complete_cylc,
     complete_command,
@@ -398,18 +399,17 @@ def test_list_options(monkeypatch):
     assert list_options('zz9+za') == []
 
     # patch the logic to turn off the auto_add behaviour of CylcOptionParser
-    def _resolve():
-        def _parser_function():
-            parser = get_option_parser()
-            del parser.auto_add
-            return parser
-
-        return SimpleNamespace(parser_function=_parser_function)
-
-    monkeypatch.setattr(
-        COMMANDS['trigger'],
-        'resolve',
-        _resolve
+    class EntryPoint:
+        def load(self):
+            def _parser_function():
+                parser = get_option_parser()
+                del parser.auto_add
+                return parser
+            return SimpleNamespace(parser_function=_parser_function)
+    monkeypatch.setitem(
+        COMMANDS,
+        'trigger',
+        EntryPoint(),
     )
 
     # with auto_add turned off the --color option should be absent
@@ -541,7 +541,7 @@ async def test_list_dir(tmp_path, monkeypatch):
     # => list $PWD
     assert {
         str(path)
-        for path in await _list_dir(None, None)
+        for path in await _list_dir(None)
     } == {'x/'}
 
     # no trailing `/` at the end of the path
@@ -549,7 +549,7 @@ async def test_list_dir(tmp_path, monkeypatch):
     # => list the parent
     assert {
         str(path)
-        for path in await _list_dir(None, 'x')
+        for path in await _list_dir('x')
     } == {'x/'}
 
     # # trailing `/` at the end of the path
@@ -557,14 +557,14 @@ async def test_list_dir(tmp_path, monkeypatch):
     # # => list dir path
     assert {
         str(path)
-        for path in await _list_dir(None, 'x/')
+        for path in await _list_dir('x/')
     } == {'x/y/', 'x/z'}  # "y" is a dir, "z" is a file
 
     # listing a file
     # => noting to list, just return the file
     assert {
         str(path)
-        for path in await _list_dir(None, 'x/z/')
+        for path in await _list_dir('x/z/')
     } == {'x/z'}
 
     # --- absolute paths ---
@@ -575,7 +575,7 @@ async def test_list_dir(tmp_path, monkeypatch):
     assert {
         # '/'.join(path.rsplit('/', 2)[-2:])
         path.replace(str(tmp_path), '')
-        for path in await _list_dir(None, str(tmp_path / 'x'))
+        for path in await _list_dir(str(tmp_path / 'x'))
     } == {'/x/'}
 
     # trailing `/` at the end of the path
@@ -583,14 +583,14 @@ async def test_list_dir(tmp_path, monkeypatch):
     # => list dir path
     assert {
         path.replace(str(tmp_path), '')
-        for path in await _list_dir(None, str(tmp_path / 'x') + '/')
+        for path in await _list_dir(str(tmp_path / 'x') + '/')
     } == {'/x/y/', '/x/z'}  # "y" is a dir, "z" is a file
 
     # listing a file
     # => noting to list, just return the file
     assert {
         path.replace(str(tmp_path), '')
-        for path in await _list_dir(None, str(tmp_path / 'x' / 'z') + '/')
+        for path in await _list_dir(str(tmp_path / 'x' / 'z') + '/')
     } == {'/x/z'}
 
 
@@ -600,12 +600,12 @@ async def test_list_flows():
     Currently this only provides the textural options i.e. it doesn't list
     "flows" running in a workflow, yet...
     """
-    assert 'all' in await list_flows(None, None)
+    assert 'all' in await list_flows(None)
 
 
 async def test_list_colours():
     """Test listing values for the --color option."""
-    assert 'always' in await list_colours(None, None)
+    assert 'always' in await list_colours(None)
 
 
 async def test_cli_detokenise():
@@ -674,7 +674,7 @@ def test_check_completion_script_compatibility(monkeypatch, capsys):
     # set the completion script compatibility range to >=1.0.0, <2.0.0
     monkeypatch.setattr(
         'cylc.flow.scripts.completion_server.REQUIRED_SCRIPT_VERSION',
-        'completion-script >=1.0.0, <2.0.0',
+        '>=1.0.0, <2.0.0',
     )
     monkeypatch.setattr(
         'cylc.flow.scripts.completion_server'
@@ -716,3 +716,18 @@ def test_check_completion_script_compatibility(monkeypatch, capsys):
     out, err = capsys.readouterr()
     assert not out  # never write to stdout
     assert not err
+
+
+async def test_prereqs_and_outputs():
+    """Test the error cases for listing task prereqs/outputs.
+
+    The succeess cases are tested in an integration test (requires a running
+    scheduler).
+    """
+    # if no tokens are provided, no prereqs or outputs are returned
+    assert await _list_prereqs_and_outputs([]) == ([], [])
+
+    # if an invalid workflow is provided, we can't list anything
+    assert await _list_prereqs_and_outputs(
+        [Tokens(workflow='no-such-workflow')]
+    ) == ([], [])

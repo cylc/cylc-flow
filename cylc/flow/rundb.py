@@ -21,7 +21,15 @@ from os.path import expandvars
 from pprint import pformat
 import sqlite3
 import traceback
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    List,
+    Set,
+    Tuple,
+    Optional,
+    Union
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformLookupError
@@ -251,6 +259,7 @@ class CylcWorkflowDAO:
             ["flow_nums"],
             ["is_manual_submit", {"datatype": "INTEGER"}],
             ["try_num", {"datatype": "INTEGER"}],
+            # This is used to store simulation task start time across restarts.
             ["time_submit"],
             ["time_submit_exit"],
             ["submit_status", {"datatype": "INTEGER"}],
@@ -763,30 +772,31 @@ class CylcWorkflowDAO:
         '''  # nosec (table name is code constant)
         return {i[0] for i in self.connect().execute(stmt)}
 
-    def select_submit_nums(self, name, point):
-        """Select submit_num and flow_nums from task_states table.
+    def select_prev_instances(
+        self, name: str, point: str
+    ) -> List[Tuple[int, bool, Set[int], str]]:
+        """Select task_states table info about previous instances of a task.
 
-        Fetch submit number and flow_nums for spawning tasks.
-
-        Return: {submit_num: (flow_wait, flow_nums)}
-
-        Args:
-            name: task name
-            point: task cycle point (str)
-
+        Flow merge results in multiple entries for the same submit number.
         """
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT flow_nums,submit_num,flow_wait FROM %(name)s"
+            r"SELECT flow_nums,submit_num,flow_wait,status FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
-        ret = {}
-        for flow_nums_str, submit_num, flow_wait in self.connect().execute(
-                stmt, (name, point,)):
-            ret[submit_num] = (flow_wait == 1, deserialise(flow_nums_str))
-        return ret
+        return [
+            (
+                submit_num,
+                flow_wait == 1,
+                deserialise(flow_nums_str),
+                status
+            )
+            for flow_nums_str, submit_num, flow_wait, status in (
+                self.connect().execute(stmt, (name, point,))
+            )
+        ]
 
     def select_latest_flow_nums(self):
         """Return a list of the most recent previous flow numbers."""

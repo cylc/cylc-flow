@@ -40,7 +40,7 @@ reftest_run
 for number in 1 2 3; do
     grep_workflow_log_ok \
         "${TEST_NAME_BASE}-a${number}" \
-        "${number}/a${number} .* did not complete required outputs: \['submitted'\]"
+        "${number}/a${number}.* did not complete required outputs: \['submitted'\]"
 done
 
 purge

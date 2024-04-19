@@ -27,6 +27,15 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
 
+@pytest.fixture(scope='module')
+def mod_monkeypatch():
+    """A module-scoped version of the monkeypatch fixture."""
+    from _pytest.monkeypatch import MonkeyPatch
+    mpatch = MonkeyPatch()
+    yield mpatch
+    mpatch.undo()
+
+
 @pytest.fixture
 def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """A Pytest fixture for fiddling global config values.
@@ -103,7 +112,7 @@ def log_filter():
             if (name is None or name == log_name)
             and (level is None or level == log_level)
             and (contains is None or contains in log_message)
-            and (regex is None or re.match(regex, log_message))
+            and (regex is None or re.search(regex, log_message))
             and (exact_match is None or exact_match == log_message)
         ]
     return _log_filter

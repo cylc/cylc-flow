@@ -24,7 +24,6 @@ from typing import Any, Callable
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
-from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -212,7 +211,7 @@ async def test_no_poll_waiting_tasks(
     log: pytest.LogCaptureFixture
     async with start(one) as log:
         # Test assumes start up with a waiting task.
-        task = (one.pool.get_all_tasks())[0]
+        task = (one.pool.get_tasks())[0]
         assert task.state.status == TASK_STATUS_WAITING
 
         polled_tasks = capture_polling(one)
@@ -325,7 +324,7 @@ async def test_uuid_unchanged_on_restart(
         cf_uuid = uuid_re.findall(contact_file.read_text())
         assert cf_uuid == [schd.uuid_str]
 
-        
+
 async def test_restart_timeout(
     flow,
     one_conf,
@@ -348,11 +347,15 @@ async def test_restart_timeout(
     id_ = flow(one_conf)
 
     # run the workflow to completion
-    schd = scheduler(id_)
-    async with start(schd):
-        for itask in schd.pool.get_all_tasks():
-            itask.state_reset(TASK_OUTPUT_SUCCEEDED)
-            schd.pool.spawn_on_output(itask, TASK_OUTPUT_SUCCEEDED)
+    # (by setting the only task to completed)
+    schd = scheduler(id_, paused_start=False)
+    async with start(schd) as log:
+        for itask in schd.pool.get_tasks():
+            # (needed for job config in sim mode:)
+            schd.task_job_mgr.submit_task_jobs(
+                schd.workflow, [itask], None, None)
+            schd.pool.set_prereqs_and_outputs(
+                [itask.identity], None, None, ['all'])
 
     # restart the completed workflow
     schd = scheduler(id_)

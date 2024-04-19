@@ -39,7 +39,7 @@ PRE_MSG='health:'
 POST_MSG='.*, polling intervals=10\*PT6S...'
 for INDEX in 1 2; do
     for STAGE in 'submission' 'execution'; do
-        grep_ok "1/t${INDEX} .* ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}" -E
+        grep_ok "1/t${INDEX}.* ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}" -E
     done
 done
 #-------------------------------------------------------------------------------

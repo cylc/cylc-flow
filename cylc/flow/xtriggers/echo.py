@@ -16,22 +16,49 @@
 
 """A Cylc xtrigger function."""
 
-from contextlib import suppress
+from typing import Any, Dict, Tuple
+from cylc.flow.exceptions import WorkflowConfigError
 
 
-def echo(*args, **kwargs):
-    """Prints args to stdout and return success only if kwargs['succeed']
-    is True.
+def echo(*args, **kwargs) -> Tuple:
+    """Print arguments to stdout, return kwargs['succeed'] and kwargs.
 
     This may be a useful aid to understanding how xtriggers work.
 
+    Args:
+        succeed: Set the success of failure of this xtrigger.
+        *args: Print to stdout.
+        **kwargs: Print to stdout, and return as output.
+
+    Examples:
+
+        >>> echo('Breakfast Time', succeed=True, egg='poached')
+        echo: ARGS: ('Breakfast Time',)
+        echo: KWARGS: {'succeed': True, 'egg': 'poached'}
+        (True, {'succeed': True, 'egg': 'poached'})
+
     Returns
-        tuple: (True/False, kwargs)
+        (True/False, kwargs)
 
     """
     print("echo: ARGS:", args)
     print("echo: KWARGS:", kwargs)
-    result = False
-    with suppress(KeyError):
-        result = kwargs["succeed"] is True
-    return result, kwargs
+
+    return kwargs["succeed"], kwargs
+
+
+def validate(all_args: Dict[str, Any]):
+    """
+    Validate the xtrigger function arguments parsed from the workflow config.
+
+    This is separate from the xtrigger to allow parse-time validation.
+
+    """
+    # NOTE: with (*args, **kwargs) pattern, all_args looks like:
+    # {
+    #     'args': (arg1, arg2, ...),
+    #     'kwargs': {kwarg1: val, kwarg2: val, ...}
+    # }
+    succeed = all_args['kwargs'].get("succeed")
+    if not isinstance(succeed, bool):
+        raise WorkflowConfigError("Requires 'succeed=True/False' arg")

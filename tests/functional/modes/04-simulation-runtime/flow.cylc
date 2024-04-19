@@ -1,0 +1,20 @@
+[scheduler]
+    [[events]]
+        workflow timeout = PT30S
+
+[scheduling]
+    initial cycle point = 2359
+    [[graph]]
+        R1 = first_task & second_task
+
+[runtime]
+    [[first_task]]
+        execution time limit = P2D
+        execution retry delays = PT10M
+        [[[simulation]]]
+            speedup factor = 1
+
+    [[second_task]]
+        execution time limit = PT1S
+        [[[simulation]]]
+            speedup factor = 1

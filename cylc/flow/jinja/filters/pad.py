@@ -15,18 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Filter for padding strings to a set number of chars."""
 
+from typing import Union
 
-def pad(value, length, fillchar=' '):
+
+def pad(value: str, length: Union[int, str], fillchar: str = ' '):
     """Pads a string to some length with a fill character
 
     Useful for generating task names and related values in ensemble workflows.
 
     Args:
-        value (str):
+        value:
             The string to pad.
-        length (int/str):
+        length:
             The length for the returned string.
-        fillchar (str - optional):
+        fillchar:
             The character to fill in surplus space (space by default).
 
     Returns:

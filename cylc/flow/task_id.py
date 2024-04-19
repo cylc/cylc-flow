@@ -17,12 +17,14 @@
 
 
 import re
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.id import Tokens
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 _TASK_NAME_PREFIX = r'\w'
@@ -94,7 +96,10 @@ class TaskID:
         return point_string
 
     @classmethod
-    def get_standardised_point(cls, point_string: str) -> Optional[PointBase]:
+    def get_standardised_point(
+        cls,
+        point_string: str,
+    ) -> 'Optional[PointBase]':
         """Return a standardised point."""
         return get_point(cls.get_standardised_point_string(point_string))
 
@@ -102,5 +107,6 @@ class TaskID:
     def get_standardised_taskid(cls, task_id):
         """Return task ID with standardised cycle point."""
         tokens = Tokens(task_id, relative=True)
-        tokens['cycle'] = cls.get_standardised_point_string(tokens['cycle'])
-        return tokens.relative_id
+        return tokens.duplicate(
+            cycle=cls.get_standardised_point_string(tokens['cycle'])
+        ).relative_id

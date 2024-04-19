@@ -18,4 +18,5 @@
 
 set -eux
 
+cylc lint .
 cylc validate --check-circular . --icp=2000

@@ -17,7 +17,7 @@
     [[t1]]
         script = """
             if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-                cylc__job__poll_grep_workflow_log -E '2016/t2 .* spawned'
+                cylc__job__poll_grep_workflow_log -E '2016/t2.* added to active task pool'
                 cylc hold "${CYLC_WORKFLOW_ID}//" //2016/t2 //2017/t2
                 cylc stop "${CYLC_WORKFLOW_ID}"
             else
