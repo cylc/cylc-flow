@@ -221,7 +221,7 @@ class TaskPool:
         self.active_tasks.setdefault(itask.point, {})
         self.active_tasks[itask.point][itask.identity] = itask
         self.active_tasks_changed = True
-        LOG.info(f"[{itask}] added to active task pool")
+        LOG.debug(f"[{itask}] added to active task pool")
 
         self.create_data_store_elements(itask)
 
@@ -839,7 +839,7 @@ class TaskPool:
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
 
-            level = logging.INFO
+            level = logging.DEBUG
             if itask.state(
                 TASK_STATUS_PREPARING,
                 TASK_STATUS_SUBMITTED,
@@ -1654,7 +1654,7 @@ class TaskPool:
             submit_num == 0
         ):
             # Previous instance removed before completing any outputs.
-            LOG.info(f"Flow stopping at {point}/{name} - task previously removed")
+            LOG.debug(f"Not spawning {point}/{name} - task removed")
             return None
 
         itask = self._get_task_proxy_db_outputs(

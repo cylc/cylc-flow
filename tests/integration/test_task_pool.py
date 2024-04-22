@@ -148,7 +148,7 @@ async def mod_example_flow(
     """
     id_ = mod_flow(EXAMPLE_FLOW_CFG)
     schd: 'Scheduler' = mod_scheduler(id_, paused_start=True)
-    async with mod_run(schd):
+    async with mod_run(schd, level=logging.DEBUG):
         yield schd
 
 
@@ -1198,7 +1198,7 @@ async def test_detect_incomplete_tasks(
         }
     })
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         itasks = schd.pool.get_tasks()
         for itask in itasks:
             itask.state_reset(is_queued=False)
@@ -1279,7 +1279,7 @@ async def test_set_failed_complete(
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         one = schd.pool.get_tasks()[0]
         one.state_reset(is_queued=False)
 
@@ -1899,12 +1899,13 @@ async def test_fast_respawn(
     # attempt to spawn it again
     itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
     assert itask is None
-    assert "Not spawning 1/foo: already used in this flow" in caplog.text
+    assert "Not spawning 1/foo - task removed" in caplog.text
 
 
 async def test_remove_active_task(
     example_flow: 'Scheduler',
     caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
 ) -> None:
     """Test warning on removing an active task."""
 
@@ -1917,9 +1918,13 @@ async def test_remove_active_task(
     task_pool.remove(foo, "request")
     assert foo not in task_pool.get_tasks()
 
-    assert (
-        "removed from active task pool: request - active job orphaned"
-        in caplog.text
+    assert log_filter(
+        caplog,
+        regex=(
+            "1/foo.*removed from active task pool:"
+            " request - active job orphaned"
+        ),
+        level=logging.WARNING
     )
 
 
@@ -1947,7 +1952,7 @@ async def test_remove_by_suicide(
         }
     })
     schd: 'Scheduler' = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         # it should start up with 1/a and 1/b
         assert pool_get_task_ids(schd.pool) == ["1/a", "1/b"]
         a = schd.pool.get_task(IntegerPoint("1"), "a")
@@ -1998,7 +2003,7 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         },
     })
     schd: 'Scheduler' = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         a1 = schd.pool.get_task(IntegerPoint("1"), "a")
         b1 = schd.pool.get_task(IntegerPoint("1"), "b")
         assert a1, '1/a should have been spawned on startup'
@@ -2020,7 +2025,7 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         # respawned as a result
         schd.pool.spawn_on_output(b1, TASK_OUTPUT_SUCCEEDED)
         assert log_filter(
-            log, contains='Not spawning 1/z: already used in this flow'
+            log, contains='Not spawning 1/z - task removed'
         )
         z1 = schd.pool.get_task(IntegerPoint("1"), "z")
         assert (

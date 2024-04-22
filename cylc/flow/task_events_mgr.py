@@ -1788,6 +1788,7 @@ class TaskEventsManager():
             itask.timeout = None
             itask.poll_timer = None
             return
+
         ctx = (itask.submit_num, itask.state.status)
         if itask.poll_timer and itask.poll_timer.ctx == ctx:
             return
@@ -1844,7 +1845,7 @@ class TaskEventsManager():
                     message += '%d*' % (num + 1)
                 message += '%s,' % intvl_as_str(item)
             message += '...'
-        LOG.info(f"[{itask}] {message}")
+        LOG.debug(f"[{itask}] {message}")
         # Set next poll time
         self.check_poll_time(itask)
 
