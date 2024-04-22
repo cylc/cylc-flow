@@ -1654,7 +1654,7 @@ class TaskPool:
             submit_num == 0
         ):
             # Previous instance removed before completing any outputs.
-            LOG.info(f"Not spawning {point}/{name}: already used in this flow")
+            LOG.info(f"Flow stopping at {point}/{name} - task previously removed")
             return None
 
         itask = self._get_task_proxy_db_outputs(
