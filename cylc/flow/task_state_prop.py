@@ -26,36 +26,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED
 )
 
-from colorama import Style, Fore, Back
-
-
-_STATUS_MAP = {
-    TASK_STATUS_WAITING: {
-        "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
-    },
-    TASK_STATUS_PREPARING: {
-        "ascii_ctrl": Style.BRIGHT + Fore.GREEN + Back.RESET
-    },
-    TASK_STATUS_EXPIRED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLACK
-    },
-    TASK_STATUS_SUBMITTED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.YELLOW + Back.RESET
-    },
-    TASK_STATUS_SUBMIT_FAILED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
-    },
-    TASK_STATUS_RUNNING: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.GREEN
-    },
-    TASK_STATUS_SUCCEEDED: {
-        "ascii_ctrl": Style.NORMAL + Fore.BLACK + Back.RESET
-    },
-    TASK_STATUS_FAILED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.RED
-    },
-}
-
 
 def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
@@ -84,13 +54,3 @@ def extract_group_state(child_states, is_stopped=False):
         if state in child_states:
             return state
     return None
-
-
-def get_status_prop(status, key, subst=None):
-    """Return property for a task status."""
-    if key == "ascii_ctrl" and subst is not None:
-        return "%s%s\033[0m" % (_STATUS_MAP[status][key], subst)
-    elif key == "ascii_ctrl":
-        return "%s%s\033[0m" % (_STATUS_MAP[status][key], status)
-    else:
-        return _STATUS_MAP[status][key]
