@@ -1939,7 +1939,10 @@ async def test_remove_by_suicide(
         'scheduler': {'allow implicit tasks': 'True'},
         'scheduling': {
             'graph': {
-                'R1': 'a? & b\n a:failed? => !b'
+                'R1': '''
+                    a? & b
+                    a:failed? => !b
+                '''
             },
         }
     })
