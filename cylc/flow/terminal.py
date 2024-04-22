@@ -271,6 +271,8 @@ def cli_function(
                     wrapped_kwargs['color'] = use_color
 
                 # configure Cylc to use colour
+                # TODO: re-enable autoreset
+                # (https://github.com/cylc/cylc-flow/issues/6076)
                 color_init(autoreset=False, strip=not use_color)
                 if use_color:
                     ansi_log()
