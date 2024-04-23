@@ -81,6 +81,7 @@ from cylc.flow.pathutil import (
     is_relative_to,
 )
 from cylc.flow.print_tree import print_tree
+from cylc.flow.task_qualifiers import ALT_QUALIFIERS
 from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
@@ -96,6 +97,7 @@ from cylc.flow.task_outputs import (
     get_completion_expression,
     get_optional_outputs,
     get_trigger_completion_variable_maps,
+    trigger_to_completion_variable,
 )
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
@@ -1096,14 +1098,14 @@ class WorkflowConfig:
             return
 
         (
-            trigger_to_completion_variable,
-            completion_variable_to_trigger,
+            _trigger_to_completion_variable,
+            _completion_variable_to_trigger,
         ) = get_trigger_completion_variable_maps(outputs.keys())
 
         # get the optional/required outputs defined in the graph
         graph_optionals = {
             # completion_variable: is_optional
-            trigger_to_completion_variable[trigger]: (
+            _trigger_to_completion_variable[trigger]: (
                 None if is_required is None else not is_required
             )
             for trigger, (_, is_required)
@@ -1135,6 +1137,17 @@ class WorkflowConfig:
                     '\nThe "finished" output cannot be used in completion'
                     ' expressions, use "succeeded or failed".'
                 )
+
+            for alt_qualifier, qualifier in ALT_QUALIFIERS.items():
+                _alt_compvar = trigger_to_completion_variable(alt_qualifier)
+                _compvar = trigger_to_completion_variable(qualifier)
+                if re.search(rf'\b{_alt_compvar}\b', error):
+                    raise WorkflowConfigError(
+                        f'Error in [runtime][{task_name}]completion:'
+                        f'\n  {expr}'
+                        f'\nUse "{_compvar}" not "{_alt_compvar}" '
+                        'in completion expressions.'
+                    )
 
             raise WorkflowConfigError(
                 # NOTE: str(exc) == "name 'x' is not defined" tested in
@@ -1179,7 +1192,7 @@ class WorkflowConfig:
 
             # [1] applies only to "submit-failed" and "expired"
 
-            trigger = completion_variable_to_trigger[compvar]
+            trigger = _completion_variable_to_trigger[compvar]
 
             if graph_opt is True and expr_opt is False:
                 raise WorkflowConfigError(

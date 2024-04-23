@@ -219,6 +219,18 @@ def test_messages(messages, valid, flow, validate):
             'but required in the completion expression',
             id='failed-implicitly-optional-in-graph-required-in-completion',
         ),
+        pytest.param(
+            'foo',
+            '(succeed and x) or failed',
+            'Use "succeeded" not "succeed" in completion expressions',
+            id='alt-compvar1',
+        ),
+        pytest.param(
+            'foo? & foo:submitted?',
+            'submit_fail or succeeded',
+            'Use "submit_failed" not "submit_fail" in completion expressions',
+            id='alt-compvar2',
+        ),
     ]
 )
 def test_completion_expression_invalid(
