@@ -48,6 +48,6 @@ named_grep_ok "${TEST_NAME_BASE}-it-failed" \
 
 
 # Clean Up:
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
+run_ok "${TEST_NAME_BASE}-stop" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

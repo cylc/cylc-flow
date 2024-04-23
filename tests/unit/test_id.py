@@ -316,9 +316,9 @@ def test_tokens():
     with pytest.raises(ValueError):
         Tokens(foo='a')
 
-    Tokens()['cycle'] = 'a'
+    Tokens().duplicate(cycle='a')
     with pytest.raises(ValueError):
-        Tokens()['foo'] = 'a'
+        Tokens(foo='a')
 
     # test equality
     assert Tokens('a') == Tokens('a')
@@ -335,10 +335,24 @@ def test_tokens():
     assert not Tokens('a') == 1
 
     tokens = Tokens('a//b')
-    tokens.update({'cycle': 'c', 'task': 'd'})
-    assert tokens == Tokens('a//c/d')
-    with pytest.raises(ValueError):
+    new_tokens = tokens.duplicate(cycle='c', task='d')
+    assert new_tokens == Tokens('a//c/d')
+    with pytest.raises(Exception):
         tokens.update({'foo': 'c'})
+    with pytest.raises(Exception):
+        tokens['cycle'] = 'a'
+
+    # test gt/lt
+    assert sorted(
+        tokens.id
+        for tokens in [
+            Tokens('~u/c'),
+            Tokens('~u/b//1'),
+            Tokens('~u/a'),
+            Tokens('~u/b'),
+            Tokens('~u/b//2'),
+        ]
+    ) == ['~u/a', '~u/b', '~u/b//1', '~u/b//2', '~u/c']
 
 
 def test_no_look_behind():

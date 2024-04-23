@@ -1,0 +1,2 @@
+1/expirer -triggered off [] in flow 1
+1/foo -triggered off ['1/expirer'] in flow 1

@@ -64,7 +64,7 @@ requests_).
  - Prasanna Challuri
  - David Matthews
  - Tim Whitcomb
- - (Scott Wales)
+ - Scott Wales
  - Tomek Trzeciak
  - Thomas Coleman
  - Bruno Kinoshita
@@ -93,6 +93,7 @@ requests_).
  - (Andrew Huang)
  - Cheng Da
  - Mark Dawson
+ - Diquan Jabbour
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

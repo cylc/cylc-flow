@@ -39,13 +39,13 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 export TZ=BST-1
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --pause
-poll_workflow_running
+poll_grep_workflow_log "Paused on start up"
 
 # Simulate DST change
 export TZ=UTC
 
 run_ok "${TEST_NAME_BASE}-reload" cylc reload "${WORKFLOW_NAME}"
-poll_workflow_running
+poll_grep_workflow_log "Reload completed"
 
 cylc stop --now --now "${WORKFLOW_NAME}"
 

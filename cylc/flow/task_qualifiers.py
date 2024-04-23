@@ -44,6 +44,8 @@ QUAL_FAM_SUBMIT_ALL = "submit-all"
 QUAL_FAM_SUBMIT_ANY = "submit-any"
 QUAL_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
 QUAL_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
+QUAL_FAM_EXPIRE_ALL = "expire-all"
+QUAL_FAM_EXPIRE_ANY = "expire-any"
 
 # alternative (shorthand) qualifiers
 ALT_QUALIFIERS = {

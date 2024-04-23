@@ -108,8 +108,9 @@ __TREE__
 
 # -----------------------------------------------------------------------------
 
-TEST_NAME="cylc-clean"
-run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
+TEST_NAME="cylc-clean-ok"
+run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME" --timeout PT2M
+# (timeout opt is covered by unit tests but no harm double-checking here)
 dump_std "$TEST_NAME"
 
 TEST_NAME="run-dir-not-exist-post-clean.local"

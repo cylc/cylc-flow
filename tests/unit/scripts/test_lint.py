@@ -16,24 +16,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
+import logging
 from pathlib import Path
 from pprint import pformat
 import re
+from textwrap import dedent
 from types import SimpleNamespace
 
 import pytest
 from pytest import param
 
 from cylc.flow.scripts.lint import (
+    LINT_SECTION,
     MANUAL_DEPRECATIONS,
     check_lowercase_family_names,
     get_cylc_files,
     get_pyproject_toml,
-    get_reference_rst,
-    get_reference_text,
+    get_reference,
     get_upgrader_info,
     lint,
-    merge_cli_with_tomldata,
+    _merge_cli_with_tomldata,
     parse_checks,
     validate_toml_items
 )
@@ -98,6 +100,12 @@ TEST_FILE = """
             graph = MyFaM:finish-all => remote => !mash_theme
 
 [runtime]
+    [[root]]
+        [[[environment]]]
+            CYLC_VERSION={{CYLC_VERSION}}
+            ROSE_VERSION  = {{ROSE_VERSION     }}
+            FCM_VERSION = {{   FCM_VERSION   }}
+
     [[MyFaM]]
         extra log files = True
         {% from 'cylc.flow' import LOG %}
@@ -121,7 +129,7 @@ TEST_FILE = """
             submission failed handler = giaSEHFUIHJ
             failed handler = woo
             execution timeout handler = sdfghjkl
-            expired handler = dafuhj
+            expired handler = %(suite_uuid)s %(user@host)s
             late handler = dafuhj
             submitted handler = dafuhj
             started handler = dafuhj
@@ -144,6 +152,8 @@ TEST_FILE = """
     [[and_another_thing]]
         [[[remote]]]
             host = `rose host-select thingy`
+
+%include foo.cylc
 """
 
 
@@ -153,7 +163,6 @@ LINT_TEST_FILE = """
  [scheduler]
 
 [[dependencies]]
-
 {% set   N = 009 %}
 {% foo %}
 {{foo}}
@@ -208,14 +217,22 @@ def filter_strings(items, contains):
     ]
 
 
-def assert_contains(items, contains):
+def assert_contains(items, contains, instances=None):
     """Pass if at least one item contains a given string."""
-    if not filter_strings(items, contains):
+    filtered = filter_strings(items, contains)
+    if not filtered:
         raise Exception(
             f'Could not find: "{contains}" in:\n'
-            + pformat(items)
-        )
+            + pformat(items))
+    elif instances and len(filtered) != instances:
+        raise Exception(
+            f'Expected "{contains}" to appear {instances} times'
+            f', got it {len(filtered)} times.')
 
+
+EXPECT_INSTANCES_OF_ERR = {
+    16: 3,
+}
 
 @pytest.mark.parametrize(
     # 11 won't be tested because there is no jinja2 shebang
@@ -224,7 +241,8 @@ def assert_contains(items, contains):
 def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
-    assert_contains(lint.messages, f'[U{number:03d}]')
+    instances = EXPECT_INSTANCES_OF_ERR.get(number, None)
+    assert_contains(lint.messages, f'[U{number:03d}]', instances)
 
 
 def test_check_cylc_file_7to8_has_shebang():
@@ -373,35 +391,47 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert sorted(result) == sorted(expect)
 
 
-MOCK_CHECKS = {
-    'U042': {
-        'short': 'section `[vizualization]` has been removed.',
-        'url': 'some url or other',
-        'purpose': 'U',
-        'rst': 'section ``[vizualization]`` has been removed.',
-        'function': re.compile('not a regex')
-    },
-}
+def mock_parse_checks(*args, **kwargs):
+    return {
+        'U042': {
+            'short': 'section `[vizualization]` has been removed.',
+            'url': 'some url or other',
+            'purpose': 'U',
+            'rst': 'section ``[vizualization]`` has been removed.',
+            'function': re.compile('not a regex')
+        },
+    }
 
 
-def test_get_reference_rst():
+def test_get_reference_rst(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_rst(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'rst')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
-        'U042\n^^^^\nsection ``[vizualization]`` has been '
+        '`U042 <https://cylc.github.io/cylc-doc/stable'
+        '/html/7-to-8/some url or other>`_'
+        f'\n{ "^" * 78 }'
+        '\nsection ``[vizualization]`` has been '
         'removed.\n\n\n'
     )
     assert ref == expect
 
 
-def test_get_reference_text():
+def test_get_reference_text(monkeypatch):
     """It produces a reference file for our linting."""
-    ref = get_reference_text(MOCK_CHECKS)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.lint.parse_checks', mock_parse_checks
+    )
+    ref = get_reference('all', 'text')
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
-        'removed.\n\n\n'
+        'removed.'
+        '\n    https://cylc.github.io/cylc-doc/stable/html/7-to-8/some'
+        ' url or other\n\n\n'
     )
     assert ref == expect
 
@@ -450,50 +480,83 @@ def test_get_upg_info(fixture_get_deprecations, findme):
 
 
 @pytest.mark.parametrize(
-    'expect',
+    'settings, expected',
     [
-        param({
-            'rulesets': ['style'],
-            'ignore': ['S004'],
-            'exclude': ['sites/*.cylc']},
-            id="it returns what we want"
+        param(
+            """
+            rulesets = ['style']
+            ignore = ['S004']
+            exclude = ['sites/*.cylc']
+            """,
+            {
+                'rulesets': ['style'],
+                'ignore': ['S004'],
+                'exclude': ['sites/*.cylc'],
+                'max-line-length': None,
+            },
+            id="returns what we want"
         ),
-        param({
-            'northgate': ['sites/*.cylc'],
-            'mons-meg': 42},
-            id="it only returns requested sections"
+        param(
+            """
+            northgate = ['sites/*.cylc']
+            mons-meg = 42
+            """,
+            (CylcError, ".*northgate"),
+            id="invalid settings fail validation"
         ),
-        param({
-            'max-line-length': 22},
-            id='it sets max line length'
+        param(
+            "max-line-length = 22",
+            {
+                'exclude': [],
+                'ignore': [],
+                'rulesets': [],
+                'max-line-length': 22,
+            },
+            id='sets max line length'
         )
     ]
 )
-def test_get_pyproject_toml(tmp_path, expect):
+def test_get_pyproject_toml(tmp_path, settings, expected):
     """It returns only the lists we want from the toml file."""
-    tomlcontent = "[cylc-lint]"
-    permitted_keys = ['rulesets', 'ignore', 'exclude', 'max-line-length']
-
-    for section, value in expect.items():
-        tomlcontent += f'\n{section} = {value}'
+    tomlcontent = "[tool.cylc.lint]\n" + dedent(settings)
     (tmp_path / 'pyproject.toml').write_text(tomlcontent)
-    tomldata = get_pyproject_toml(tmp_path)
 
-    control = {}
-    for key in permitted_keys:
-        control[key] = expect.get(key, [])
-    assert tomldata == control
+    if isinstance(expected, tuple):
+        exc, match = expected
+        with pytest.raises(exc, match=match):
+            get_pyproject_toml(tmp_path)
+    else:
+        assert get_pyproject_toml(tmp_path) == expected
 
 
-@pytest.mark.parametrize('tomlfile', [None, '', '[cylc-lint]'])
+@pytest.mark.parametrize(
+    'tomlfile',
+    [None, '', '[tool.cylc.lint]', '[cylc-lint]']
+)
 def test_get_pyproject_toml_returns_blank(tomlfile, tmp_path):
     if tomlfile is not None:
         tfile = (tmp_path / 'pyproject.toml')
         tfile.write_text(tomlfile)
-    expect = {k: [] for k in {
-        'exclude', 'ignore', 'max-line-length', 'rulesets'
-    }}
+    expect = {
+        'exclude': [], 'ignore': [], 'max-line-length': None, 'rulesets': []
+    }
     assert get_pyproject_toml(tmp_path) == expect
+
+
+def test_get_pyproject_toml__depr(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    """It warns if the section is deprecated."""
+    file = tmp_path / 'pyproject.toml'
+    caplog.set_level(logging.WARNING)
+
+    file.write_text(f'[{LINT_SECTION}]\nmax-line-length=14')
+    assert get_pyproject_toml(tmp_path)['max-line-length'] == 14
+    assert not caplog.text
+
+    file.write_text('[cylc-lint]\nmax-line-length=17')
+    assert get_pyproject_toml(tmp_path)['max-line-length'] == 17
+    assert "[cylc-lint] section in pyproject.toml is deprecated" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -570,7 +633,7 @@ def test_validate_toml_items(input_, error):
 )
 def test_merge_cli_with_tomldata(clidata, tomldata, expect):
     """It merges each of the three sections correctly: see function.__doc__"""
-    assert merge_cli_with_tomldata(clidata, tomldata) == expect
+    assert _merge_cli_with_tomldata(clidata, tomldata) == expect
 
 
 def test_invalid_tomlfile(tmp_path):
@@ -628,3 +691,18 @@ def test_indents(spaces, expect):
         assert expect in result
     else:
         assert not result
+
+
+def test_noqa():
+    """Comments turn of checks.
+
+    """
+    output = lint_text(
+        'foo = bar#noqa\n'
+        'qux = baz # noqa: S002\n'
+        'buzz = food # noqa: S007\n'
+        'quixotic = foolish # noqa: S007, S992 S002\n',
+        ['style']
+    )
+    assert len(output.messages) == 1
+    assert 'flow.cylc:3' in output.messages[0]

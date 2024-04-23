@@ -29,7 +29,7 @@ async def test_validate_against_source_checks_source(
     """Validation fails if validating against source with broken config.
     """
     src_dir = workflow_source(one_conf)
-    workflow_id = install(src_dir)
+    workflow_id = await install(src_dir)
 
     # Check that the original installation validates OK:
     validate(workflow_id, against_source=True)
@@ -67,7 +67,7 @@ async def test_validate_against_source_gets_old_tvars(
         }
     })
 
-    wf_id = install(src_dir)
+    wf_id = await install(src_dir)
     installed_dir = run_dir / wf_id
 
     # Check that the original installation validates OK:
@@ -94,3 +94,122 @@ async def test_validate_against_source_gets_old_tvars(
         flow_file.read_text().replace('P1Y = foo', 'P1Y = {{FOO}}'))
     with pytest.raises(Jinja2Error):
         validate(src_dir)
+
+
+def test_validate_simple_graph(flow, validate, caplog):
+    """Test deprecation notice for Cylc 7 simple graph (no recurrence section)
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'dependencies': {'graph': 'foo'}}
+    })
+    validate(id_)
+    expect = (
+        'deprecated graph items were automatically upgraded'
+        ' in "workflow definition":'
+        '\n * (8.0.0) [scheduling][dependencies]graph -> [scheduling][graph]R1'
+    )
+    assert expect in caplog.messages
+
+
+def test_pre_cylc8(flow, validate, caplog):
+    """Test all current non-silent workflow obsoletions and deprecations.
+    """
+    id_ = flow({
+        'cylc': {
+            'events': {
+                'reset timer': 10,
+                'reset inactivity timer': 15,
+            }
+        },
+        "scheduling": {
+            "initial cycle point": "20150808T00",
+            "final cycle point": "20150808T00",
+            "graph": {
+                "P1D": "foo => cat & dog"
+            },
+            "special tasks": {
+                "external-trigger": 'cat("meow available")'
+            }
+        },
+        'runtime': {
+            'foo, cat, dog': {
+                'suite state polling': {'template': ''},
+                'events': {'reset timer': 20}
+            }
+        }
+    }, defaults=False)
+    validate(id_)
+    for warning in (
+        (
+            ' * (7.8.0) [runtime][foo, cat, dog][suite state polling]template'
+            ' - DELETED (OBSOLETE)'),
+        ' * (7.8.1) [cylc][events]reset timer - DELETED (OBSOLETE)',
+        ' * (7.8.1) [cylc][events]reset inactivity timer - DELETED (OBSOLETE)',
+        (
+            ' * (7.8.1) [runtime][foo, cat, dog][events]reset timer'
+            ' - DELETED (OBSOLETE)'),
+        (
+            ' * (8.0.0) [runtime][foo, cat, dog][suite state polling]'
+            ' -> [runtime][foo, cat, dog][workflow state polling]'
+            ' - value unchanged'),
+        ' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
+    ):
+        assert warning in caplog.messages
+
+
+def test_graph_upgrade_msg_default(flow, validate, caplog):
+    """It lists Cycling definitions which need upgrading."""
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': 1042,
+            'dependencies': {
+                'R1': {'graph': 'foo'},
+                'P1Y': {'graph': 'bar & baz'}
+            }
+        },
+    })
+    validate(id_)
+    assert '[scheduling][dependencies][X]graph' in caplog.messages[0]
+    assert 'for X in:\n       P1Y, R1' in caplog.messages[0]
+
+
+def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
+    """It gives a more useful message in special case where graph is
+    key rather than section:
+
+    [scheduling]
+        [[dependencies]]
+            graph = foo => bar
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'dependencies': {'graph': 'foo => bar'}},
+    })
+    validate(id_)
+    expect = ('[scheduling][dependencies]graph -> [scheduling][graph]R1')
+    assert expect in caplog.messages[0]
+
+
+def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
+    """Both an implicit R1 and explict reccurance exist:
+    It appends a note.
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {
+            'initial cycle point': '1000',
+            'dependencies': {
+                'graph': 'foo => bar', 'P1Y': {'graph': 'a => b'}}},
+    })
+    validate(id_)
+    expect = (
+        'deprecated graph items were automatically upgraded in'
+        ' "workflow definition":'
+        '\n * (8.0.0) [scheduling][dependencies][X]graph'
+        ' -> [scheduling][graph]X - for X in:'
+        '\n       P1Y, graph'
+        '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
+    )
+    assert expect in caplog.messages[0]

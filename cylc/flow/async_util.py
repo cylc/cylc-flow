@@ -16,6 +16,7 @@
 """Utilities for use with asynchronous code."""
 
 import asyncio
+from contextlib import asynccontextmanager
 from functools import partial, wraps
 from inspect import signature
 import os
@@ -478,3 +479,48 @@ def make_async(fcn):
 
 
 async_listdir = make_async(os.listdir)
+
+
+@asynccontextmanager
+async def async_block():
+    """Ensure all tasks started within the context are awaited when it closes.
+
+    Normally, you would await a task e.g:
+
+    await three()
+
+    If it's possible to await the task, do that, however, this isn't always an
+    option. This interface exists is to help patch over issues where async code
+    (one) calls sync code (two) which calls async code (three) e.g:
+
+    async def one():
+        two()
+
+    def two():
+        # this breaks - event loop is already running
+        asyncio.get_event_loop().run_until_complete(three())
+
+    async def three():
+        await asyncio.sleep(1)
+
+    This code will error because you can't nest asyncio (without nest-asyncio)
+    which means you can schedule tasks the tasks in "two", but you can't await
+    them.
+
+    def two():
+        # this works, but it doesn't wait for three() to complete
+        asyncio.create_task(three())
+
+    This interface allows you to await the tasks
+
+    async def one()
+        async with async_block():
+            two()
+        # any tasks two() started will have been awaited by now
+    """
+    # make a list of all tasks running before we enter the context manager
+    tasks_before = asyncio.all_tasks()
+    # run the user code
+    yield
+    # await any new tasks
+    await asyncio.gather(*(asyncio.all_tasks() - tasks_before))

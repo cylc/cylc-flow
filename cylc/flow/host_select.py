@@ -385,7 +385,7 @@ def _simple_eval(expr, **variables):
         If you try to get it to do something you're not allowed to:
         >>> _simple_eval('open("foo")')
         Traceback (most recent call last):
-        ValueError: <class '_ast.Call'>
+        ValueError: <class '...Call'>
         >>> _simple_eval('import sys')
         Traceback (most recent call last):
         SyntaxError: ...
@@ -394,12 +394,12 @@ def _simple_eval(expr, **variables):
         >>> answer = 42  # only variables explicitly passed in should work
         >>> _simple_eval('answer')
         Traceback (most recent call last):
-        NameError: name 'a' is not defined
+        NameError: name 'answer' is not defined
 
         If you try to do something which doesn't make sense:
         >>> _simple_eval('a.b.c')  # no value "a.b.c"
         Traceback (most recent call last):
-        NameError: name 'answer' is not defined
+        NameError: name 'a' is not defined
 
     """
     node = ast.parse(expr.strip(), mode='eval')

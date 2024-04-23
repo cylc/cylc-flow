@@ -27,7 +27,7 @@ run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 poll_grep_workflow_log "Workflow stalled"
 
 run_ok "${TEST_NAME_BASE}-trigger" cylc trigger --flow=none "${WORKFLOW_NAME}//1/a"
-poll_grep_workflow_log -E "1/a running job:02 flows:none.*=> succeeded"
+poll_grep_workflow_log -E "1/a/02\(flows=none\):running.*=> succeeded"
 
 cylc stop --now --now --max-polls=5 --interval=2 "$WORKFLOW_NAME"
 
