@@ -29,6 +29,7 @@ from pytest import param
 from cylc.flow.scripts.lint import (
     LINT_SECTION,
     MANUAL_DEPRECATIONS,
+    check_lowercase_family_names,
     get_cylc_files,
     get_pyproject_toml,
     get_reference,
@@ -258,77 +259,81 @@ def test_check_cylc_file_line_no():
 
 
 @pytest.mark.parametrize(
-    'inherit_line',
-    (
-        param(item, id=str(ind))
-        for ind, item in enumerate([
-            # lowercase family names are not permitted
-            'inherit = g',
-            'inherit = foo, b, a, r',
-            'inherit = FOO, bar',
-            'inherit = None, bar',
-            'inherit = A, b, C',
-            'inherit = "A", "b"',
-            "inherit = 'A', 'b'",
-            # parameters, jinja2 and empy should be ignored
-            # but any lowercase chars before or after should not
-            'inherit = a<x>z',
-            'inherit = a{{ x }}z',
-            'inherit = a@( x )z',
-        ])
-    )
+    'line',
+    [
+        # lowercase family names are not permitted
+        'inherit = g',
+        'inherit = FOO, bar',
+        'inherit = None, bar',
+        'inherit = A, b, C',
+        'inherit = "A", "b"',
+        "inherit = 'A', 'b'",
+        'inherit = FOO_BAr',
+        # whitespace & trailing commas
+        '  inherit  =  a  ,  ',
+        # parameters, jinja2 and empy should be ignored
+        # but any lowercase chars before or after should not
+        'inherit = A<x>z',
+        'inherit = A{{ x }}z',
+        'inherit = N{# #}one',
+        'inherit = A@( x )z',
+    ]
 )
-def test_inherit_lowercase_matches(inherit_line):
-    lint = lint_text(inherit_line, ['style'])
-    assert any('S007' in msg for msg in lint.messages)
+def test_check_lowercase_family_names__true(line):
+    assert check_lowercase_family_names(line) is True
 
 
 @pytest.mark.parametrize(
-    'inherit_line',
-    (
-        param(item, id=str(ind))
-        for ind, item in enumerate([
-            # undefined values are ok
-            'inherit =',
-            'inherit =  ',
-            # none, None and root are ok
-            'inherit = none',
-            'inherit = None',
-            'inherit = root',
-            # trailing commas and whitespace are ok
-            'inherit = None,',
-            'inherit = None, ',
-            'inherit = None , ',
-            # uppercase family names are ok
-            'inherit = None, FOO, BAR',
-            'inherit = FOO',
-            'inherit = BAZ',
-            'inherit = root',
-            'inherit = FOO_BAR_0',
-            # parameters should be ignored
-            'inherit = A<a>Z',
-            'inherit = <a=1, b-1, c+1>',
-            # jinja2 should be ignored
+    'line',
+    [
+        # undefined values are ok
+        'inherit =',
+        'inherit =  ',
+        # none, None and root are ok
+        'inherit = none',
+        'inherit = None',
+        'inherit = root',
+        # whitespace & trailing commas
+        'inherit = None,',
+        'inherit = None, ',
+        '  inherit  =  None  ,  ',
+        # uppercase family names are ok
+        'inherit = None, FOO, BAR',
+        'inherit = FOO',
+        'inherit = FOO_BAR_0',
+        # parameters should be ignored
+        'inherit = A<a>Z',
+        'inherit = <a=1, b-1, c+1>',
+        # jinja2 should be ignored
+        param(
             'inherit = A{{ a }}Z, {% for x in range(5) %}'
             'A{{ x }}, {% endfor %}',
-            # empy should be ignored
-            'inherit = A@( a )Z',
-            # trailing comments should be ignored
-            'inherit = A, B # no, comment',
-            'inherit = # a',
-            # quotes are ok
-            'inherit = "A", "B"',
-            "inherit = 'A', 'B'",
-            'inherit = "None", B',
-            'inherit = <a = 1, b - 1>',
-            # one really awkward, but valid example
+            id='jinja2-long'
+        ),
+        # empy should be ignored
+        'inherit = A@( a )Z',
+        # trailing comments should be ignored
+        'inherit = A, B # no, comment',
+        'inherit = # a',
+        # quotes are ok
+        'inherit = "A", "B"',
+        "inherit = 'A', 'B'",
+        'inherit = "None", B',
+        'inherit = <a = 1, b - 1>',
+        # one really awkward, but valid example
+        param(
             'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
-        ])
-    )
+            id='awkward'
+        ),
+    ]
 )
-def test_inherit_lowercase_not_match_none(inherit_line):
-    lint = lint_text(inherit_line, ['style'])
-    assert not any('S007' in msg for msg in lint.messages)
+def test_check_lowercase_family_names__false(line):
+    assert check_lowercase_family_names(line) is False
+
+
+def test_inherit_lowercase_matches():
+    lint = lint_text('inherit = a', ['style'])
+    assert any('S007' in msg for msg in lint.messages)
 
 
 @pytest.mark.parametrize(

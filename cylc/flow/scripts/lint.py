@@ -351,6 +351,38 @@ def check_indentation(line: str) -> bool:
     return bool(len(match[0]) % 4 != 0)
 
 
+INHERIT_REGEX = re.compile(r'\s*inherit\s*=\s*(.*)')
+FAM_NAME_IGNORE_REGEX = re.compile(
+    # Stuff we want to ignore when checking for lowercase in family names
+    r'''
+        # comments
+        (?<!{)\#.*
+        # or Cylc parameters
+        | <[^>]+>
+        # or Jinja2
+        | {{.*?}} | {%.*?%} | {\#.*?\#}
+        # or EmPy
+        | (@[\[{\(]).*([\]\}\)])
+    ''',
+    re.X
+)
+LOWERCASE_REGEX = re.compile(r'[a-z]')
+
+
+def check_lowercase_family_names(line: str) -> bool:
+    """Check for lowercase in family names."""
+    match = INHERIT_REGEX.match(line)
+    if not match:
+        return False
+    # Replace stuff we want to ignore with a neutral char (tilde will do):
+    content = FAM_NAME_IGNORE_REGEX.sub('~', match.group(1))
+    return any(
+        LOWERCASE_REGEX.search(i)
+        for i in content.split(',')
+        if i.strip(' \'"') not in {'None', 'none', 'root'}
+    )
+
+
 CHECK_FOR_OLD_VARS = re.compile(
     r'CYLC_VERSION\s*=\s*\{\{\s*CYLC_VERSION\s*\}\}'
     r'|ROSE_VERSION\s*=\s*\{\{\s*ROSE_VERSION\s*\}\}'
@@ -458,62 +490,10 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'trailing-whitespace',
         FUNCTION: re.compile(r'[ \t]$').findall
     },
-    # Look for families both from inherit=FAMILY and FAMILY:trigger-all/any.
-    # Do not match inherit lines with `None` at the start.
     "S007": {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions',
-        FUNCTION: re.compile(
-            r'''
-            # match all inherit statements
-            ^\s*inherit\s*=
-            # filtering out those which match only valid family names
-            (?!
-                \s*
-                # none, None and root are valid family names
-                # and `inherit =` or `inherit = # x` are valid too
-                (['"]?(none|None|root|\#.*|$)['"]?|
-                (
-                    # as are families named with capital letters
-                    [A-Z0-9_-]+
-                    # and optional quotes
-                    | [\'\"]
-                    # which may include Cylc parameters
-                    | (<[^>]+>)
-                    # or Jinja2
-                    | ({[{%].*[%}]})
-                    # or EmPy
-                    | (@[\[{\(]).*([\]\}\)])
-                )+
-                )
-                # this can be a comma separated list
-                (
-                \s*,\s*
-                # none, None and root are valid family names
-                (['"]?(none|None|root)['"]?|
-                    (
-                    # as are families named with capital letters
-                    [A-Z0-9_-]+
-                    # and optional quotes
-                    | [\'\"]
-                    # which may include Cylc parameters
-                    | (<[^>]+>)
-                    # or Jinja2
-                    | ({[{%].*[%}]})
-                    # or EmPy
-                    | (@[\[{\(]).*([\]\}\)])
-                    )+
-                )
-                )*
-                # allow trailing commas and whitespace
-                \s*,?\s*
-                # allow trailing comments
-                (\#.*)?
-                $
-            )
-            ''',
-            re.X
-        ).findall,
+        FUNCTION: check_lowercase_family_names,
     },
     "S008": {
         'short': JINJA2_FOUND_WITHOUT_SHEBANG,
