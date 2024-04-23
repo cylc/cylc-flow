@@ -96,6 +96,7 @@ requests_).
  - Diquan Jabbour
  - Shixian Sheng
  - Utheri Wagura
+ - Maxime Rio
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
