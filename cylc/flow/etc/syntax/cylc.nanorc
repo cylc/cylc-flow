@@ -1,5 +1,5 @@
 # How to use this file:
-# cylc get-resources cylc.nanorc ~/.config/nano/cylc.nanorc
+# cylc get-resources syntax/cylc.nanorc ~/.config/nano
 # Add the following to ~/.nanorc
 # include ~/.config/nano/cylc.nanorc
 
