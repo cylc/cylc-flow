@@ -34,6 +34,10 @@ def wall_clock(offset: str = 'PT0S', sequential: bool = True):
             ISO 8601 interval to wait after the cycle point is reached in real
             time before triggering. May be negative, in which case it will
             trigger before the real time reaches the cycle point.
+        sequential:
+            Wall-clock xtriggers are run sequentially by default.
+            See :ref:`Sequential Xtriggers` for more details.
+
     """
     # NOTE: This is just a placeholder for the actual implementation.
     # This is only used for validating the signature and for autodocs.
