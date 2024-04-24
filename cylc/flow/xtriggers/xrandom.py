@@ -45,6 +45,19 @@ def xrandom(
             Used to allow users to specialize the trigger with extra
             parameters.
 
+    Returns:
+        tuple: (satisfied, results)
+
+        satisfied:
+            True if ``satisfied`` else ``False``.
+        results:
+            A dictionary containing the following keys:
+
+            ``COLOR``
+                A random colour (e.g. red, orange, ...).
+            ``SIZE``
+                A random size (e.g. small, medium, ...).
+
     Examples:
         If the percent is zero, it returns that the trigger condition was
         not satisfied, and an empty dictionary.
@@ -73,19 +86,6 @@ def xrandom(
         >>> sys.modules[__name__].randint = mocked_randint
         >>> xrandom(99.99, 0)
         (True, {'COLOR': 'orange', 'SIZE': 'small'})
-
-    Returns:
-        tuple: (satisfied, results)
-
-        satisfied:
-            True if ``satisfied`` else ``False``.
-        results:
-            A dictionary containing the following keys:
-
-            ``COLOR``
-                A random colour (e.g. red, orange, ...).
-            ``SIZE``
-                A random size (e.g. small, medium, ...).
 
     """
     sleep(float(secs))

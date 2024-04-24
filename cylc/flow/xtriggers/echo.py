@@ -30,15 +30,15 @@ def echo(*args, **kwargs) -> Tuple:
         *args: Print to stdout.
         **kwargs: Print to stdout, and return as output.
 
+    Returns:
+        (True/False, kwargs)
+
     Examples:
 
         >>> echo('Breakfast Time', succeed=True, egg='poached')
         echo: ARGS: ('Breakfast Time',)
         echo: KWARGS: {'succeed': True, 'egg': 'poached'}
         (True, {'succeed': True, 'egg': 'poached'})
-
-    Returns
-        (True/False, kwargs)
 
     """
     print("echo: ARGS:", args)
