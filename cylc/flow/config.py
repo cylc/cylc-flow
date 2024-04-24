@@ -74,7 +74,7 @@ from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.parsec.exceptions import ItemNotFoundError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.util import replicate
+from cylc.flow.parsec.util import dequote, replicate
 from cylc.flow.pathutil import (
     get_workflow_name_from_id,
     get_cylc_run_dir,
@@ -197,29 +197,6 @@ def interpolate_template(tmpl, params_dict):
         raise ParamExpandError('wrong data type for parameter')
     except ValueError:
         raise ParamExpandError('bad template syntax')
-
-
-def dequote(string):
-    """Strip quotes off a string.
-
-    Examples:
-        >>> dequote('"foo"')
-        'foo'
-        >>> dequote("'foo'")
-        'foo'
-        >>> dequote('foo')
-        'foo'
-        >>> dequote('"f')
-        '"f'
-        >>> dequote('f')
-        'f'
-
-    """
-    if len(string) < 2:
-        return string
-    if (string[0] == string[-1]) and string.startswith(("'", '"')):
-        return string[1:-1]
-    return string
 
 
 class WorkflowConfig:

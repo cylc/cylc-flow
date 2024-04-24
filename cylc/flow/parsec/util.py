@@ -406,16 +406,7 @@ def expand_many_section(config):
     """
     ret = {}
     for section_name, section in config.items():
-        expanded_names = [
-            dequote(name.strip()).strip()
-            for name in SECTION_EXPAND_PATTERN.findall(section_name)
-        ]
-        for name in expanded_names:
-            if name in ret:
-                # already defined -> merge
-                replicate(ret[name], section)
-
-            else:
-                ret[name] = {}
-                replicate(ret[name], section)
+        for name in SECTION_EXPAND_PATTERN.findall(section_name):
+            name = dequote(name.strip()).strip()
+            replicate(ret.setdefault(name, {}), section)
     return ret

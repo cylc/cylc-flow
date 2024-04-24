@@ -156,7 +156,7 @@ def test_validate():
     :return:
     """
 
-    with Conf('myconf') as spec:  # noqa: SIM117
+    with Conf('myconf') as spec:
         with Conf('section'):
             Conf('name', VDR.V_STRING)
             Conf('address', VDR.V_STRING)
@@ -192,6 +192,10 @@ def parsec_config_2(tmp_path: Path):
             Conf('address', VDR.V_INTEGER_LIST)
         with Conf('allow_many'):
             Conf('<user defined>', VDR.V_STRING, '')
+        with Conf('so_many'):
+            with Conf('<thing>'):
+                Conf('color', VDR.V_STRING)
+                Conf('horsepower', VDR.V_INTEGER)
     parsec_config = ParsecConfig(spec, validator=cylc_config_validate)
     conf_file = tmp_path / 'myconf'
     conf_file.write_text("""
@@ -199,6 +203,9 @@ def parsec_config_2(tmp_path: Path):
     name = test
     [allow_many]
     anything = yup
+    [so_many]
+    [[legs]]
+    horsepower = 123
     """)
     parsec_config.loadcfg(conf_file, "1.0")
     return parsec_config
@@ -213,25 +220,32 @@ def test_expand(parsec_config_2: ParsecConfig):
 
 def test_get(parsec_config_2: ParsecConfig):
     cfg = parsec_config_2.get(keys=None, sparse=False)
-    assert parsec_config_2.dense == cfg
+    assert cfg == parsec_config_2.dense
 
     cfg = parsec_config_2.get(keys=None, sparse=True)
-    assert parsec_config_2.sparse == cfg
+    assert cfg == parsec_config_2.sparse
 
     cfg = parsec_config_2.get(keys=['section'], sparse=True)
-    assert parsec_config_2.sparse['section'] == cfg
+    assert cfg == parsec_config_2.sparse['section']
 
-    with pytest.raises(InvalidConfigError):
-        parsec_config_2.get(keys=['alloy_many', 'a'], sparse=True)
 
-    cfg = parsec_config_2.get(keys=['section', 'name'], sparse=True)
-    assert cfg == 'test'
-
-    with pytest.raises(InvalidConfigError):
-        parsec_config_2.get(keys=['section', 'a'], sparse=True)
-
-    with pytest.raises(ItemNotFoundError):
-        parsec_config_2.get(keys=['allow_many', 'a'], sparse=True)
+@pytest.mark.parametrize('keys, expected', [
+    (['section', 'name'], 'test'),
+    (['section', 'a'], InvalidConfigError),
+    (['alloy_many', 'anything'], InvalidConfigError),
+    (['allow_many', 'anything'], 'yup'),
+    (['allow_many', 'a'], ItemNotFoundError),
+    (['so_many', 'legs', 'horsepower'], 123),
+    (['so_many', 'legs', 'color'], ItemNotFoundError),
+    (['so_many', 'legs', 'a'], InvalidConfigError),
+    (['so_many', 'teeth', 'horsepower'], ItemNotFoundError),
+])
+def test_get__sparse(parsec_config_2: ParsecConfig, keys, expected):
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            parsec_config_2.get(keys, sparse=True)
+    else:
+        assert parsec_config_2.get(keys, sparse=True) == expected
 
 
 def test_mdump_none(config, sample_spec, capsys):
@@ -288,12 +302,17 @@ def test_get_none(config, sample_spec):
 
 def test__get_namespace_parents():
     """It returns a list of parents and nothing else"""
-    with Conf('myconfig') as myconf:
-        with Conf('some_parent'):  # noqa: SIM117
-            with Conf('manythings'):
-                Conf('<thing>')
-        with Conf('other_parent'):
-            Conf('other_thing')
+    with Conf('myconfig.cylc') as myconf:
+        with Conf('a'):
+            with Conf('b'):
+                with Conf('<c>'):
+                    with Conf('d'):
+                        Conf('<e>')
+        with Conf('x'):
+            Conf('y')
 
     cfg = ParsecConfig(myconf)
-    assert cfg.manyparents == [['some_parent', 'manythings']]
+    assert cfg.manyparents == [
+        ['a', 'b'],
+        ['a', 'b', '__MANY__', 'd'],
+    ]
