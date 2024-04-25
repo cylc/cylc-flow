@@ -1222,7 +1222,7 @@ class DataStoreMgr:
             cycle_point=point_string,
             is_held=(
                 (name, point)
-                in self.schd.pool.tasks_to_hold
+                in self.schd.pool.task_hold_mgr.store
             ),
             depth=task_def.depth,
             graph_depth=n_depth,

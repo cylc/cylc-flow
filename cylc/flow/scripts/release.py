@@ -18,16 +18,18 @@
 
 """cylc release [OPTIONS] ARGS
 
-Release held tasks in a workflow.
+Release tasks from hold, and remove tasks from the future-hold list.
+
+Glob patterns can be used to match both active and future tasks.
 
 Examples:
-  # Release mytask at cycle 1234 in my_workflow
+  # Release held task "mytask" at cycle 1234 in my_workflow
   $ cylc release my_workflow//1234/mytask
 
-  # Release all active tasks at cycle 1234 in my_workflow
+  # Release all held tasks at cycle 1234 in my_workflow
   $ cylc release 'my_workflow//1234/*'
 
-  # Release all active instances of mytask in my_workflow
+  # Release all held instances of mytask in my_workflow
   $ cylc release 'my_workflow//*/mytask'
 
   # Release all held tasks and remove the hold point

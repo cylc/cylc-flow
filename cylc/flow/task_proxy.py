@@ -18,11 +18,9 @@
 
 from collections import Counter
 from copy import copy
-from fnmatch import fnmatchcase
 from time import time
 from typing import (
     Any,
-    Callable,
     Counter as TypingCounter,
     Dict,
     List,
@@ -510,17 +508,6 @@ class TaskProxy:
         None/an empty string is treated as a match.
         """
         return (not status) or self.state.status == status
-
-    def name_match(
-        self,
-        value: str,
-        match_func: Callable[[Any, Any], bool] = fnmatchcase
-    ) -> bool:
-        """Return whether a string/pattern matches the task's name or any of
-        its parent family names."""
-        return match_func(self.tdef.name, value) or any(
-            match_func(ns, value) for ns in self.tdef.namespace_hierarchy
-        )
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""

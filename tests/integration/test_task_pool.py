@@ -384,7 +384,7 @@ async def test_hold_tasks(
     Params:
         items: Arg passed to hold_tasks().
         expected_tasks_to_hold_ids: Expected IDs of the tasks that get put in
-            the TaskPool.tasks_to_hold set, of the form "{point}/{name}"/
+            the tasks_to_hold set, of the form "{point}/{name}"/
         expected_warnings: Expected to be logged.
     """
     expected_tasks_to_hold_ids = sorted(expected_tasks_to_hold_ids)
@@ -396,7 +396,7 @@ async def test_hold_tasks(
         hold_expected = itask.identity in expected_tasks_to_hold_ids
         assert itask.state.is_held is hold_expected
 
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    assert get_task_ids(task_pool.task_hold_mgr.store) == expected_tasks_to_hold_ids
 
     logged_warnings = assert_expected_log(caplog, expected_warnings)
     assert n_warnings == len(logged_warnings)
@@ -424,7 +424,7 @@ async def test_release_held_tasks(
     for itask in task_pool.get_tasks():
         hold_expected = itask.identity in expected_tasks_to_hold_ids
         assert itask.state.is_held is hold_expected
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    assert get_task_ids(task_pool.task_hold_mgr.store) == expected_tasks_to_hold_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
@@ -434,7 +434,7 @@ async def test_release_held_tasks(
         assert itask.state.is_held is (itask.identity == '1/bar')
 
     expected_tasks_to_hold_ids = sorted(['1/bar'])
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    assert get_task_ids(task_pool.task_hold_mgr.store) == expected_tasks_to_hold_ids
 
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
@@ -468,7 +468,7 @@ async def test_hold_point(
         hold_expected = itask.identity in expected_held_task_ids
         assert itask.state.is_held is hold_expected
 
-    assert get_task_ids(task_pool.tasks_to_hold) == expected_held_task_ids
+    assert get_task_ids(task_pool.task_hold_mgr.store) == expected_held_task_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_held_task_ids
 
@@ -482,7 +482,7 @@ async def test_hold_point(
     for itask in task_pool.get_tasks():
         assert itask.state.is_held is False
 
-    assert task_pool.tasks_to_hold == set()
+    assert task_pool.task_hold_mgr.store == set()
     assert db_select(example_flow, True, 'tasks_to_hold') == []
 
 
@@ -1874,3 +1874,50 @@ async def test_runahead_c7_compat_task_state(
     mod_blah.pool.compute_runahead()
     after = mod_blah.pool.runahead_limit_point
     assert bool(before != after) == expected
+
+
+async def test_task_hold(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """
+    """
+    id_ = flow(
+        {
+            'scheduler': {'allow implicit tasks': 'True'},
+            'scheduling': {
+                'graph': {
+                    'R1': """
+                        foo => bar => baz
+                    """
+                }
+            }
+        }
+    )
+    schd = scheduler(id_)
+
+    async with start(schd) as log:
+
+        # Hold active tasks by glob.
+        schd.pool.hold_tasks(["1/*"])
+        assert schd.pool.task_hold_mgr.store == {
+            ("foo", IntegerPoint(1))
+        }
+
+        # Hold future tasks explicitly.
+        schd.pool.hold_tasks(["1/baz"])
+        assert schd.pool.task_hold_mgr.store == {
+            ("foo", IntegerPoint(1)),
+            ("baz", IntegerPoint(1))
+        }
+
+        # Release all held tasks by glob.
+        schd.pool.release_held_tasks(["1/*"])
+        assert not schd.pool.task_hold_mgr.store
+
+        #assert not log_filter(
+        #    log,
+        #    contains="did not complete required outputs: ['a', 'b']"
+        #)

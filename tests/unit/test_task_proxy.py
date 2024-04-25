@@ -67,27 +67,6 @@ def test_get_clock_trigger_time(
 
 
 @pytest.mark.parametrize(
-    'name_str, expected',
-    [('beer', True),
-     ('FAM', True),
-     ('root', True),
-     ('horse', False),
-     ('F*', True),
-     ('*', True)]
-)
-def test_name_match(name_str: str, expected: bool):
-    """Test TaskProxy.name_match().
-
-    For a task named "beer" in family "FAM".
-    """
-    mock_tdef = Mock(namespace_hierarchy=['root', 'FAM', 'beer'])
-    mock_tdef.name = 'beer'
-    mock_itask = Mock(tdef=mock_tdef)
-
-    assert TaskProxy.name_match(mock_itask, name_str) is expected
-
-
-@pytest.mark.parametrize(
     'status_str, expected',
     [param('waiting', True, id="Basic"),
      param('w*', False, id="Globs don't work"),
