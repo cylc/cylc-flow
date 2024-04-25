@@ -1083,18 +1083,20 @@ with Conf(
                       foo:x? => x
 
                    In these cases succeess is presumed to be required unless
-                   explicitly stated otherwise, either in the graph:
+                   explicitly stated otherwise, either in the graph e.g:
 
                    .. code-block:: cylc-graph
 
                       foo?
                       foo:x? => x
 
-                   Or in the completion expression:
+                   Or in the completion expression e.g:
 
                    .. code-block:: cylc
 
-                      completion = x  # no reference to succeeded here
+                      completion = x  # no reference to succeeded
+                      # or
+                      completion = succeeded or failed  # success is optional
 
 
                 .. hint::
@@ -1102,19 +1104,25 @@ with Conf(
                    If task outputs are optional in the graph they must also
                    be optional in the completion condition and vice versa.
 
+                   For example this graph conflicts with the completion
+                   statement:
+
+                   .. code-block:: cylc-graph
+
+                      # "a" must succeed
+                      a => b
+
                    .. code-block:: cylc
 
-                      [scheduling]
-                          [[graph]]
-                              R1 = """
-                                  # ERROR: this should be "a? => b"
-                                  a => b
-                              """
-                      [runtime]
-                          [[a]]
-                              # this completion condition implies that the
-                              # succeeded output is optional
-                              completion = succeeded or failed
+                      # "a" may either succeed or fail
+                      completion = succeeded or failed
+
+                   Which could be fixed by ammending the graph like so:
+
+                   .. code-block:: cylc-graph
+
+                      # "a" may either succeed or fail
+                      a? => b
 
                 .. rubric:: Examples
 
