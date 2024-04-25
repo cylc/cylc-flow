@@ -194,6 +194,7 @@ def get_completion_expression(tdef: 'TaskDef') -> str:
 def get_optional_outputs(
     expression: str,
     outputs: Iterable[str],
+    force_optional: "Optional[str]" = None
 ) -> Dict[str, Optional[bool]]:
     """Determine which outputs in an expression are optional.
 
@@ -202,6 +203,8 @@ def get_optional_outputs(
             The completion expression.
         outputs:
             All outputs that apply to this task.
+        force_optional:
+            Don't have the CompletionEvaluator consider this output.
 
     Returns:
         dict: compvar: is_optional
@@ -229,12 +232,23 @@ def get_optional_outputs(
         [('expired', True), ('failed', None), ('succeeded', False),
          ('x', False), ('y', False)]
 
+        >>> sorted(get_optional_outputs(
+        ...     '(succeeded and towel) or (failed and bugblatter)',
+        ...     {'succeeded', 'towel', 'failed', 'bugblatter'},
+        ...     'failed'
+        ... ).items())
+        [('bugblatter', True), ('failed', True),
+         ('succeeded', False), ('towel', False)]
+
     """
     # determine which triggers are used in the expression
     used_compvars = get_variable_names(expression)
 
     # all completion variables which could appear in the expression
     all_compvars = {trigger_to_completion_variable(out) for out in outputs}
+
+    # Allows exclusion of additional outcomes:
+    extra_excludes = {force_optional: False} if force_optional else {}
 
     return {  # output: is_optional
         # the outputs that are used in the expression
@@ -247,6 +261,7 @@ def get_optional_outputs(
                     # (pre-conditions are considered separately)
                     'expired': False,
                     'submit_failed': False,
+                    **extra_excludes
                 },
             )
             for output in used_compvars
@@ -609,16 +624,25 @@ class TaskOutputs:
         else:
             raise KeyError(compvar)
 
-    def iter_required_messages(self) -> Iterator[str]:
+    def iter_required_messages(
+        self,
+        exclude=None
+    ) -> Iterator[str]:
         """Yield task messages that are required for this task to be complete.
 
         Note, in some cases tasks might not have any required messages,
         e.g. "completion = succeeded or failed".
+
+        Args:
+            exclude: Exclude one possible required messages, allowing
+            specification of all required outputs if succeeded or failed.
         """
         for compvar, is_optional in get_optional_outputs(
             self._completion_expression,
             set(self._message_to_compvar.values()),
+            force_optional=exclude
         ).items():
+            # breakpoint(header=f"=== {compvar=}, {is_optional=} ===")
             if is_optional is False:
                 for message, _compvar in self._message_to_compvar.items():
                     if _compvar == compvar:

@@ -72,6 +72,8 @@ class PrereqMessage(NamedTuple):
 SatisfiedState = Literal[
     'satisfied naturally',
     'satisfied from database',
+    'satisfied by skip mode',
+    'satisfied by simulation mode',
     'force satisfied',
     False
 ]
@@ -100,6 +102,12 @@ class Prerequisite:
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self._satisfied[("%s", "%s", "%s")])'
     MESSAGE_TEMPLATE = r'%s/%s %s'
+
+    DEP_STATE_SATISFIED: SatisfiedState = 'satisfied naturally'
+    DEP_STATE_SATISFIED_BY = 'satisfied by {} mode'
+    DEP_STATE_OVERRIDDEN = 'force satisfied'
+    DEP_STATE_UNSATISFIED = False
+    SATISFIED_MODE_RE = re.compile(r'satisfied by .* mode')
 
     def __init__(self, point: 'PointBase'):
         # The cycle point to which this prerequisite belongs.
@@ -253,13 +261,22 @@ class Prerequisite:
             ) from None
         return res
 
-    def satisfy_me(self, outputs: Iterable['Tokens']) -> 'Set[Tokens]':
+    def satisfy_me(
+        self, outputs: Iterable['Tokens'],
+        mode: Literal['skip', 'live', 'simulation', 'skip'] = 'live'
+    ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
         Updates cache with the result.
         Return outputs that match.
 
         """
+        satisfied_message: SatisfiedState
+        if mode != 'live':
+            satisfied_message = self.DEP_STATE_SATISFIED_BY.format(
+                mode)   # type: ignore
+        else:
+            satisfied_message = self.DEP_STATE_SATISFIED
         valid = set()
         for output in outputs:
             prereq = PrereqMessage(
@@ -268,7 +285,7 @@ class Prerequisite:
             if prereq not in self._satisfied:
                 continue
             valid.add(output)
-            self[prereq] = 'satisfied naturally'
+            self[prereq] = satisfied_message
         return valid
 
     def api_dump(self) -> Optional[PbPrerequisite]:

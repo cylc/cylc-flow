@@ -53,6 +53,7 @@ from cylc.flow.task_events_mgr import (
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
+    RunMode,
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_FINAL,
     TASK_STATUS_WAITING,
@@ -70,6 +71,8 @@ from cylc.flow.util import (
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
+from cylc.flow.run_modes.skip import (
+    process_outputs as get_skip_mode_outputs)
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_EXPIRED,
@@ -1430,7 +1433,10 @@ class TaskPool:
                     tasks = [c_task]
 
                 for t in tasks:
-                    t.satisfy_me([itask.tokens.duplicate(task_sel=output)])
+                    t.satisfy_me(
+                        [itask.tokens.duplicate(task_sel=output)],
+                        getattr(itask.tdef, 'run_mode', RunMode.LIVE.value)
+                    )
                     self.data_store_mgr.delta_task_prerequisite(t)
                     if not in_pool:
                         self.add_to_pool(t)
@@ -1557,7 +1563,8 @@ class TaskPool:
                     continue
                 if completed_only:
                     c_task.satisfy_me(
-                        [itask.tokens.duplicate(task_sel=message)]
+                        [itask.tokens.duplicate(task_sel=message)],
+                        itask.run_mode
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
@@ -1875,7 +1882,8 @@ class TaskPool:
             try:
                 msg = tdef.outputs[output][0]
             except KeyError:
-                LOG.warning(f"output {point}/{tdef.name}:{output} not found")
+                LOG.warning(
+                    f"output {point}/{tdef.name}:{output} not found")
                 continue
             _outputs.append(msg)
         return _outputs
@@ -1978,9 +1986,19 @@ class TaskPool:
         if not outputs:
             outputs = list(itask.state.outputs.iter_required_messages())
         else:
+            # --out=skip is a shortcut to setting all the outputs that
+            # skip mode would.
+            skips = []
+            if RunMode.SKIP.value in outputs:
+                # Check for broadcasts to task:
+                bc_mgr = self.task_events_mgr.broadcast_mgr
+                rtconfig = bc_mgr.get_updated_rtconfig(itask)
+                outputs.remove(RunMode.SKIP.value)
+                skips = get_skip_mode_outputs(itask, rtconfig)
+                itask.run_mode = RunMode.SKIP.value
             outputs = self._standardise_outputs(
-                itask.point, itask.tdef, outputs
-            )
+                itask.point, itask.tdef, outputs)
+            outputs = list(set(outputs + skips))
 
         for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
             if itask.state.outputs.is_message_complete(output):

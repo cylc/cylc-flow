@@ -152,7 +152,7 @@ async def test__always_insert_task_job(
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir,
-            is_simulation=False
+            run_mode='live'
         )
 
         # Both tasks are in a waiting state:

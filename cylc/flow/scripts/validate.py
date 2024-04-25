@@ -54,15 +54,12 @@ from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.scheduler_cli import RUN_MODE
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.task_state import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Values
 
 
-VALIDATE_RUN_MODE = deepcopy(RUN_MODE)
-VALIDATE_RUN_MODE.sources = {'validate'}
 VALIDATE_ICP_OPTION = deepcopy(ICP_OPTION)
 VALIDATE_ICP_OPTION.sources = {'validate'}
 VALIDATE_AGAINST_SOURCE_OPTION = deepcopy(AGAINST_SOURCE_OPTION)
@@ -98,7 +95,6 @@ VALIDATE_OPTIONS = [
         dest="profile_mode",
         sources={'validate'}
     ),
-    VALIDATE_RUN_MODE,
     VALIDATE_ICP_OPTION,
 ]
 
@@ -128,7 +124,7 @@ ValidateOptions = Options(
     {
         'check_circular': False,
         'profile_mode': False,
-        'run_mode': RunMode.LIVE
+        'run_mode': RunMode.LIVE.value
     }
 )
 

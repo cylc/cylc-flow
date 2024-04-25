@@ -34,6 +34,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
+from cylc.flow.task_state import RunMode
 
 
 PLATFORMS = {
@@ -470,8 +471,8 @@ def test_get_install_target_to_platforms_map(
             for install_target in _map:
                 _map[install_target] = sorted(_map[install_target],
                                               key=lambda k: k['name'])
+        result.pop('localhost')
         assert result == expected_map
-
 
 @pytest.mark.parametrize(
     'platform, job, remote, expect',

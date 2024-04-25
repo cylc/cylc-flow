@@ -65,6 +65,9 @@ Examples:
   # complete the succeeded output of 3/bar:
   $ cylc set --out=succeeded my_workflow//3/bar
 
+  # complete the outputs defined in [runtime][task][skip]
+  $ cylc set --out=skip my_workflow//3/bar
+
   # satisfy the 3/foo:succeeded prerequisite of 3/bar:
   $ cylc set --pre=3/foo my_workflow//3/bar
   #   or:
@@ -154,8 +157,10 @@ def get_option_parser() -> COP:
         "-o", "--out", "--output", metavar="OUTPUT(s)",
         help=(
             "Complete task outputs. For multiple outputs re-use the"
-            " option, or give a comma-separated list of outputs, or"
-            ' use "--out=required" to complete all required outputs.'
+            " option, or give a comma-separated list of outputs."
+            ' Use "--out=required" to complete all required outputs.'
+            ' Use "--out=skip" to complete outputs defined in the tasks.'
+            ' [skip] configuration.'
             " OUTPUT format: trigger names as used in the graph."
         ),
         action="append", default=None, dest="outputs"

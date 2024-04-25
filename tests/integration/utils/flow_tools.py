@@ -116,6 +116,10 @@ def _make_scheduler():
         schd.workflow_db_mgr.on_workflow_shutdown()
 
 
+def caplogprinter(caplog):
+    _ = [print(i) for i in caplog.messages]
+
+
 @asynccontextmanager
 async def _start_flow(
     caplog: Optional[pytest.LogCaptureFixture],
@@ -125,6 +129,8 @@ async def _start_flow(
     """Start a scheduler but don't set the main loop running."""
     if caplog:
         caplog.set_level(level, CYLC_LOG)
+        # Debug functionality
+        caplog.print = lambda: caplogprinter(caplog)
 
     await schd.install()
 
@@ -155,6 +161,8 @@ async def _run_flow(
     """Start a scheduler and set the main loop running."""
     if caplog:
         caplog.set_level(level, CYLC_LOG)
+        # Debug functionality
+        caplog.print = lambda: caplogprinter(caplog)
 
     await schd.install()
 

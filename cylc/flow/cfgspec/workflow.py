@@ -57,6 +57,8 @@ from cylc.flow.platforms import (
     fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
     is_platform_definition_subshell)
 from cylc.flow.task_events_mgr import EventData
+from cylc.flow.task_state import RunMode
+
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1334,6 +1336,27 @@ with Conf(
                     "[platforms][<platform name>]submission retry delays"
                 )
             )
+            Conf(
+                'run mode', VDR.V_STRING,
+                options=list(RunMode.OVERRIDING_MODES.value) + [''],
+                default='',
+                desc=f'''
+                    For a workflow run in live mode run this task in skip
+                    mode.
+
+                    {RunMode.LIVE.value}:
+                        {RunMode.LIVE.describe()}
+                    {RunMode.SKIP.value}:
+                        {RunMode.SKIP.describe()}
+
+
+                    .. seealso::
+
+                       :ref:`task-run-modes`
+
+                    .. versionadded:: 8.4.0
+
+            ''')
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
@@ -1406,7 +1429,43 @@ with Conf(
                     determine how an event handler responds to task failure
                     events.
                 ''')
+            with Conf('skip', desc='''
+                Task configuration for task :ref:`task-run-modes.skip`.
 
+                For a full description of skip run mode see
+                :ref:`task-run-modes.skip`.
+
+                .. versionadded:: 8.4.0
+            '''):
+                Conf(
+                    'outputs',
+                    VDR.V_STRING_LIST,
+                    desc='''
+                        Outputs to be emitted by a task in skip mode.
+
+                        * By default, all required outputs will be generated
+                          plus succeeded if success is optional.
+                        * If skip-mode outputs is specified and does not
+                          include either succeeded or failed then succeeded
+                          will be produced.
+                        * The outputs submitted and started are always
+                          produced and do not need to be defined in outputs.
+
+                        .. versionadded:: 8.4.0
+                    '''
+                )
+                Conf(
+                    'disable task event handlers',
+                    VDR.V_BOOLEAN,
+                    default=True,
+                    desc='''
+                        Task event handlers are turned off by default for
+                        skip mode tasks. Changing this setting to ``False``
+                        will re-enable task event handlers.
+
+                        .. versionadded:: 8.4.0
+                    '''
+                )
             with Conf('simulation', desc='''
                 Task configuration for workflow *simulation* and *dummy* run
                 modes.

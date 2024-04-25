@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from types import SimpleNamespace
 
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
 from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
+    RunMode,
     TaskState,
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -118,3 +120,31 @@ def test_task_state_order():
     assert tstate.is_gte(TASK_STATUS_SUBMITTED)
     assert not tstate.is_gt(TASK_STATUS_RUNNING)
     assert not tstate.is_gte(TASK_STATUS_RUNNING)
+
+
+@pytest.mark.parametrize(
+    'itask_run_mode, disable_handlers, expect',
+    (
+        ('live', True, False),
+        ('live', False, False),
+        ('dummy', True, False),
+        ('dummy', False, False),
+        ('simulation', True, True),
+        ('simulation', False, True),
+        ('skip', True, True),
+        ('skip', False, False),
+    )
+)
+def test_disable_task_event_handlers(itask_run_mode, disable_handlers, expect):
+    """Conditions under which task event handlers should not be used.
+    """
+    # Construct a fake itask object:
+    itask = SimpleNamespace(
+        run_mode=itask_run_mode,
+        platform={'disable task event handlers': disable_handlers},
+        tdef=SimpleNamespace(
+            rtconfig={
+                'skip': {'disable task event handlers': disable_handlers}})
+    )
+    # Check method:
+    assert RunMode.disable_task_event_handlers(itask) is expect
