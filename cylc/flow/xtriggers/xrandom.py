@@ -100,9 +100,12 @@ def xrandom(
 
 
 def validate(args: Dict[str, Any]):
-    """Validate and manipulate args parsed from the workflow config.
+    """Validate the args that xrandom is called with.
 
-    The rules for args are:
+    Cylc calls this function automatically when parsing the workflow.
+
+    Here we specify the rules for args are:
+
     * percent: Must be 0 ≤ x ≤ 100
     * secs: Must be an integer.
     """
