@@ -231,7 +231,28 @@ def test_messages(messages, valid, flow, validate):
             'Use "submit_failed" not "submit_fail" in completion expressions',
             id='alt-compvar2',
         ),
-    ]
+        pytest.param(
+            'foo? & foo:submitted?',
+            'submit-failed or succeeded',
+            'Use "submit_failed" rather than "submit-failed"'
+            ' in completion expressions.',
+            id='submit-failed used in completion expression',
+        ),
+        pytest.param(
+            'foo:file-1',
+            'succeeded or file-1',
+            'Replace hyphens with underscores in task outputs when'
+            ' used in completion expressions.',
+            id='Hyphen used in completion expression',
+        ),
+        pytest.param(
+            'foo:x',
+            'not succeeded or x',
+            'Error in .*'
+            '\nInvalid expression',
+            id='Non-whitelisted syntax used in completion expression',
+        ),
+      ]
 )
 def test_completion_expression_invalid(
     flow,
@@ -292,3 +313,29 @@ def test_completion_expression_valid(
         },
     })
     validate(id_)
+
+
+def test_completion_expression_cylc7_compat(
+    flow,
+    validate,
+    monkeypatch
+):
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': 'foo'},
+        },
+        'runtime': {
+            'foo': {
+                'completion': 'succeeded and x',
+                'outputs': {
+                    'x': 'xxx',
+                },
+            },
+        },
+    })
+    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
+    with pytest.raises(
+        WorkflowConfigError,
+        match="completion cannot be used in Cylc 7 compatibility mode."
+    ):
+        validate(id_)
