@@ -46,7 +46,9 @@ def test_compute_sizes():
     }
     test_object = Mock(**keys)
     # no fields should be larger than 10kb
-    assert _compute_sizes(test_object, 10000) == {}
+    sizes = _compute_sizes(test_object, 10000)
+    sizes.pop('total')
+    assert sizes == {}
     # all fields should be larger than 0kb
     ret = _compute_sizes(test_object, 0)
     assert {
@@ -54,7 +56,7 @@ def test_compute_sizes():
         for key, value in ret.items()
         # filter out mock fields
         if not key.startswith('_')
-        and key != 'method_calls'
+        and key not in ('method_calls', 'total')
     } == set(keys)
 
 

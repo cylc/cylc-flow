@@ -54,7 +54,6 @@ They are searched from the bottom up, until the first match is found.
 Platforms
 ---------
 
-
 Platform Groups
 --------------
 __HEREDOC__

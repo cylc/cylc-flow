@@ -2088,21 +2088,23 @@ class GlobalConfig(ParsecConfig):
         """Print informations about platforms currently defined.
         """
         if print_platform_names:
-            with suppress(ItemNotFoundError):
-                self.dump_platform_names(self)
+            self.dump_platform_names(self)
         if print_platforms:
-            with suppress(ItemNotFoundError):
-                self.dump_platform_details(self)
+            self.dump_platform_details(self)
 
     @staticmethod
     def dump_platform_names(cfg) -> None:
         """Print a list of defined platforms and groups.
         """
+        # [platforms] is always defined with at least localhost
         platforms = '\n'.join(cfg.get(['platforms']).keys())
-        platform_groups = '\n'.join(cfg.get(['platform groups']).keys())
         print(f'{PLATFORM_REGEX_TEXT}\n\nPlatforms\n---------', file=stderr)
         print(platforms)
-        print('\n\nPlatform Groups\n--------------', file=stderr)
+        try:
+            platform_groups = '\n'.join(cfg.get(['platform groups']).keys())
+        except ItemNotFoundError:
+            return
+        print('\nPlatform Groups\n--------------', file=stderr)
         print(platform_groups)
 
     @staticmethod
@@ -2110,4 +2112,5 @@ class GlobalConfig(ParsecConfig):
         """Print platform and platform group configs.
         """
         for config in ['platforms', 'platform groups']:
-            printcfg({config: cfg.get([config], sparse=True)})
+            with suppress(ItemNotFoundError):
+                printcfg({config: cfg.get([config], sparse=True)})
