@@ -17,6 +17,7 @@
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 
+import logging
 from typing import Any as Fixture
 
 
@@ -51,7 +52,7 @@ async def test__reset_job_timers(
     process_execution_polling_intervals.
     """
     schd = scheduler(flow(one_conf))
-    async with start(schd):
+    async with start(schd, level=logging.DEBUG):
         itask = schd.pool.get_tasks()[0]
         itask.state.status = 'running'
         itask.platform['execution polling intervals'] = [25]

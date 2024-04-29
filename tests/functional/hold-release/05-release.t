@@ -65,7 +65,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         inherit = STOP
         script = """
             cylc__job__poll_grep_workflow_log -E \
-               '1/dog1/01:succeeded.* task completed'
+               '1/dog1/01:succeeded.* completed'
             cylc stop "${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__

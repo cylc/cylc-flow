@@ -35,7 +35,8 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED
 )
 
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
@@ -147,7 +148,7 @@ async def mod_example_flow(
     """
     id_ = mod_flow(EXAMPLE_FLOW_CFG)
     schd: 'Scheduler' = mod_scheduler(id_, paused_start=True)
-    async with mod_run(schd):
+    async with mod_run(schd, level=logging.DEBUG):
         yield schd
 
 
@@ -168,7 +169,7 @@ async def example_flow(
     caplog.set_level(logging.INFO, CYLC_LOG)
     id_ = flow(EXAMPLE_FLOW_CFG)
     schd: 'Scheduler' = scheduler(id_)
-    async with start(schd):
+    async with start(schd, level=logging.DEBUG):
         yield schd
 
 
@@ -1197,7 +1198,7 @@ async def test_detect_incomplete_tasks(
         }
     })
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         itasks = schd.pool.get_tasks()
         for itask in itasks:
             itask.state_reset(is_queued=False)
@@ -1212,7 +1213,7 @@ async def test_detect_incomplete_tasks(
             if itask.tdef.name == TASK_STATUS_EXPIRED:
                 assert log_filter(
                     log,
-                    contains=f"[{itask}] removed (expired)"
+                    contains=f"[{itask}] removed from active task pool: expired"
                 )
                 # the task should have been removed
                 assert itask not in schd.pool.get_tasks()
@@ -1278,7 +1279,7 @@ async def test_set_failed_complete(
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd, level=logging.DEBUG) as log:
         one = schd.pool.get_tasks()[0]
         one.state_reset(is_queued=False)
 
@@ -1294,7 +1295,7 @@ async def test_set_failed_complete(
         schd.pool.set_prereqs_and_outputs([one.identity], None, None, ['all'])
 
         assert log_filter(
-            log, contains=f'[{one}] task completed')
+            log, contains=f'[{one}] removed from active task pool: completed')
 
         db_outputs = db_select(
             schd, True, 'task_outputs', 'outputs',
@@ -1874,3 +1875,159 @@ async def test_runahead_c7_compat_task_state(
     mod_blah.pool.compute_runahead()
     after = mod_blah.pool.runahead_limit_point
     assert bool(before != after) == expected
+
+
+async def test_fast_respawn(
+    example_flow: 'Scheduler',
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Immediate re-spawn of removed tasks is not allowed.
+
+    An immediate DB update is required to stop the respawn.
+    https://github.com/cylc/cylc-flow/pull/6067
+
+    """
+    task_pool = example_flow.pool
+
+    # find task 1/foo in the pool
+    foo = task_pool.get_task(IntegerPoint("1"), "foo")
+
+    # remove it from the pool
+    task_pool.remove(foo)
+    assert foo not in task_pool.get_tasks()
+
+    # attempt to spawn it again
+    itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
+    assert itask is None
+    assert "Not spawning 1/foo - task removed" in caplog.text
+
+
+async def test_remove_active_task(
+    example_flow: 'Scheduler',
+    caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
+) -> None:
+    """Test warning on removing an active task."""
+
+    task_pool = example_flow.pool
+
+    # find task 1/foo in the pool
+    foo = task_pool.get_task(IntegerPoint("1"), "foo")
+
+    foo.state_reset(TASK_STATUS_RUNNING)
+    task_pool.remove(foo, "request")
+    assert foo not in task_pool.get_tasks()
+
+    assert log_filter(
+        caplog,
+        regex=(
+            "1/foo.*removed from active task pool:"
+            " request - active job orphaned"
+        ),
+        level=logging.WARNING
+    )
+
+
+async def test_remove_by_suicide(
+    flow,
+    scheduler,
+    start,
+    log_filter
+):
+    """Test task removal by suicide trigger.
+
+    * Suicide triggers should remove tasks from the pool.
+    * It should be possible to bring them back by manually triggering them.
+    * Removing a task manually (cylc remove) should work the same.
+    """
+    id_ = flow({
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    a? & b
+                    a:failed? => !b
+                '''
+            },
+        }
+    })
+    schd: 'Scheduler' = scheduler(id_)
+    async with start(schd, level=logging.DEBUG) as log:
+        # it should start up with 1/a and 1/b
+        assert pool_get_task_ids(schd.pool) == ["1/a", "1/b"]
+        a = schd.pool.get_task(IntegerPoint("1"), "a")
+
+        # mark 1/a as failed and ensure 1/b is removed by suicide trigger
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
+        assert log_filter(
+            log,
+            regex="1/b.*removed from active task pool: suicide trigger"
+        )
+        assert pool_get_task_ids(schd.pool) == ["1/a"]
+
+        # ensure that we are able to bring 1/b back by triggering it
+        log.clear()
+        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        assert log_filter(
+            log,
+            regex='1/b.*added to active task pool',
+        )
+
+        # remove 1/b by request (cylc remove)
+        schd.command_remove_tasks(['1/b'])
+        assert log_filter(
+            log,
+            regex='1/b.*removed from active task pool: request',
+        )
+
+        # ensure that we are able to bring 1/b back by triggering it
+        log.clear()
+        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        assert log_filter(
+            log,
+            regex='1/b.*added to active task pool',
+        )
+
+
+async def test_remove_no_respawn(flow, scheduler, start, log_filter):
+    """Ensure that removed tasks stay removed.
+
+    If a task is removed by suicide trigger or "cylc remove", then it should
+    not be automatically spawned at a later time.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b => z',
+            },
+        },
+    })
+    schd: 'Scheduler' = scheduler(id_)
+    async with start(schd, level=logging.DEBUG) as log:
+        a1 = schd.pool.get_task(IntegerPoint("1"), "a")
+        b1 = schd.pool.get_task(IntegerPoint("1"), "b")
+        assert a1, '1/a should have been spawned on startup'
+        assert b1, '1/b should have been spawned on startup'
+
+        # mark one of the upstream tasks as succeeded, 1/z should spawn
+        schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
+        schd.workflow_db_mgr.process_queued_ops()
+        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
+        assert z1, '1/z should have been spawned after 1/a succeeded'
+
+        # manually remove 1/z, it should be removed from the pool
+        schd.command_remove_tasks(['1/z'])
+        schd.workflow_db_mgr.process_queued_ops()
+        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
+        assert z1 is None, '1/z should have been removed (by request)'
+
+        # mark the other upstream task as succeeded, 1/z should not be
+        # respawned as a result
+        schd.pool.spawn_on_output(b1, TASK_OUTPUT_SUCCEEDED)
+        assert log_filter(
+            log, contains='Not spawning 1/z - task removed'
+        )
+        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
+        assert (
+            z1 is None
+        ), '1/z should have stayed removed (but has been added back into the pool'

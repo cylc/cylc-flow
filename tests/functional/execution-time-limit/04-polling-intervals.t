@@ -41,7 +41,7 @@ __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-cylc play "${WORKFLOW_NAME}"
+cylc play --debug "${WORKFLOW_NAME}"
 
 poll_grep_workflow_log "INFO - DONE"
 
