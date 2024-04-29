@@ -1126,7 +1126,7 @@ class WorkflowConfig:
                 # NOTE: str(exc) == "name 'x' is not defined" tested in
                 # tests/integration/test_optional_outputs.py
                 f'Error in [runtime][{task_name}]completion:'
-                f'\nInput {error}'
+                f'\n{error}'
             )
         except Exception as exc:  # includes InvalidCompletionExpression
             # expression contains non-whitelisted syntax or any other error in
