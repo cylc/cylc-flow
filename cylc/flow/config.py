@@ -1012,10 +1012,6 @@ class WorkflowConfig:
                 # derive a completion expression for this taskdef
                 expr = get_completion_expression(taskdef)
 
-            if name not in self.taskdefs:
-                # this is a family -> nothing more to do here
-                continue
-
             # update both the sparse and dense configs to make these values
             # visible to "cylc config" to make the completion expression more
             # transparent to users.
