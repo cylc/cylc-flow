@@ -42,7 +42,6 @@ from cylc.flow.task_state import (
     TaskState,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
-    TASK_STATUSES_FINAL,
 )
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
@@ -567,10 +566,6 @@ class TaskProxy:
         ):
             return False
         return True
-
-    def is_finished(self) -> bool:
-        """Return True if a final state achieved."""
-        return self.state(*TASK_STATUSES_FINAL)
 
     def is_complete(self) -> bool:
         """Return True if complete or expired."""
