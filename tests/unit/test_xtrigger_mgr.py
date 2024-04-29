@@ -154,10 +154,10 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     xtrig.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={'completion': None},
         run_mode="live",
         start_point=1,
-        initial_point=1
+        initial_point=1,
     )
     init()
     sequence = ISO8601Sequence('P1D', '2019')
@@ -197,7 +197,7 @@ def test__call_xtriggers_async(xtrigger_mgr):
     # create a task
     tdef = TaskDef(
         name="foo",
-        rtcfg=None,
+        rtcfg={'completion': None},
         run_mode="live",
         start_point=1,
         initial_point=1

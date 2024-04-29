@@ -1,12 +1,13 @@
 [[root]]
+    completion = 
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -76,6 +77,7 @@
     [[[parameter environment templates]]]
 [[OPS]]
     script = echo "RUN: run-ops.sh"
+    completion = 
     platform = 
     inherit = 
     init-script = 
@@ -152,6 +154,7 @@
     [[[parameter environment templates]]]
 [[VAR]]
     script = echo "RUN: run-var.sh"
+    completion = 
     platform = 
     inherit = 
     init-script = 
@@ -227,14 +230,15 @@
     [[[outputs]]]
     [[[parameter environment templates]]]
 [[SERIAL]]
+    completion = 
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -304,14 +308,15 @@
     [[[outputs]]]
     [[[parameter environment templates]]]
 [[PARALLEL]]
+    completion = 
     platform = 
     inherit = 
+    script = 
     init-script = 
     env-script = 
     err-script = 
     exit-script = 
     pre-script = 
-    script = 
     post-script = 
     work sub-directory = 
     execution polling intervals = 
@@ -383,6 +388,7 @@
 [[ops_s1]]
     script = echo "RUN: run-ops.sh"
     inherit = OPS, SERIAL
+    completion = succeeded or failed
     platform = 
     init-script = 
     env-script = 
@@ -460,6 +466,7 @@
 [[ops_s2]]
     script = echo "RUN: run-ops.sh"
     inherit = OPS, SERIAL
+    completion = succeeded or failed
     platform = 
     init-script = 
     env-script = 
@@ -537,6 +544,7 @@
 [[ops_p1]]
     script = echo "RUN: run-ops.sh"
     inherit = OPS, PARALLEL
+    completion = succeeded or failed
     platform = 
     init-script = 
     env-script = 
@@ -614,6 +622,7 @@
 [[ops_p2]]
     script = echo "RUN: run-ops.sh"
     inherit = OPS, PARALLEL
+    completion = succeeded or failed
     platform = 
     init-script = 
     env-script = 
@@ -691,6 +700,7 @@
 [[var_s1]]
     script = echo "RUN: run-var.sh"
     inherit = VAR, SERIAL
+    completion = succeeded
     platform = 
     init-script = 
     env-script = 
@@ -768,6 +778,7 @@
 [[var_s2]]
     script = echo "RUN: run-var.sh"
     inherit = VAR, SERIAL
+    completion = succeeded
     platform = 
     init-script = 
     env-script = 
@@ -845,6 +856,7 @@
 [[var_p1]]
     script = echo "RUN: run-var.sh"
     inherit = VAR, PARALLEL
+    completion = succeeded
     platform = 
     init-script = 
     env-script = 
@@ -922,6 +934,7 @@
 [[var_p2]]
     script = echo "RUN: run-var.sh"
     inherit = VAR, PARALLEL
+    completion = succeeded
     platform = 
     init-script = 
     env-script = 

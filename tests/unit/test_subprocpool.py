@@ -30,6 +30,13 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNC_CACHE, _XTRIG_MOD_CACHE, get_xtrig_func
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_EXPIRED,
+)
 from cylc.flow.task_proxy import TaskProxy
 
 
@@ -316,8 +323,7 @@ def test__run_command_exit_add_to_badhosts(mock_ctx):
 
 
 def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
-    """It gets platform name from the callback args.
-    """
+    """It gets platform name from the callback args."""
     badhosts = {'foo', 'bar'}
     SubProcPool._run_command_exit(
         mock_ctx(cmd=['ssh']),
@@ -330,7 +336,11 @@ def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
                 external_triggers=[], xtrig_labels={},
                 expiration_offset=None,
                 outputs={
-                    'submitted': [None, None], 'submit-failed': [None, None]
+                    TASK_OUTPUT_SUBMITTED: [None, None],
+                    TASK_OUTPUT_SUBMIT_FAILED: [None, None],
+                    TASK_OUTPUT_SUCCEEDED: [None, None],
+                    TASK_OUTPUT_FAILED: [None, None],
+                    TASK_OUTPUT_EXPIRED: [None, None],
                 },
                 graph_children={}, rtconfig={'platform': 'foo'}
 

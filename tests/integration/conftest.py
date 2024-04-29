@@ -360,6 +360,28 @@ def validate(run_dir):
     return _validate
 
 
+@pytest.fixture(scope='module')
+def mod_validate(run_dir):
+    """Provides a function for validating workflow configurations.
+
+    Attempts to load the configuration, will raise exceptions if there are
+    errors.
+
+    Args:
+        id_ - The flow to validate
+        kwargs - Arguments to pass to ValidateOptions
+    """
+    def _validate(id_: Union[str, Path], **kwargs) -> WorkflowConfig:
+        id_ = str(id_)
+        return WorkflowConfig(
+            id_,
+            str(Path(run_dir, id_, 'flow.cylc')),
+            ValidateOptions(**kwargs)
+        )
+
+    return _validate
+
+
 @pytest.fixture
 def capture_submission():
     """Suppress job submission and capture submitted tasks.

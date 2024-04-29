@@ -390,10 +390,12 @@ cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
     [[root]]
     [[c++]]
         script = true
+        completion = succeeded
         [[[environment]]]
             CC = gcc
     [[fortran-2008]]
         script = true
+        completion = succeeded
         [[[environment]]]
             FC = gfortran
 __FLOW_CONFIG__

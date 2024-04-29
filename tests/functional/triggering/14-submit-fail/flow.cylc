@@ -5,7 +5,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            foo:submit-fail => bar
+            foo:submit-fail? => bar
             bar => !foo
         """
 [runtime]

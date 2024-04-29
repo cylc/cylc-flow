@@ -14,7 +14,53 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Functionality for selecting a host from pre-defined list."""
+"""Functionality for selecting a host from pre-defined list.
+
+Ranking/filtering hosts can be achieved using Python expressions which work
+with the `psutil` interfaces.
+
+These expressions are used-defined, buy run a restricted evluation environment
+where only certain whitelisted operations are permitted.
+
+Examples:
+    >>> RankingExpressionEvaluator('1 + 1')
+    2
+    >>> RankingExpressionEvaluator('1 * -1')
+    -1
+    >>> RankingExpressionEvaluator('1 < a', a=2)
+    True
+    >>> RankingExpressionEvaluator('1 in (1, 2, 3)')
+    True
+    >>> import psutil
+    >>> RankingExpressionEvaluator(
+    ...     'a.available > 0',
+    ...     a=psutil.virtual_memory()
+    ... )
+    True
+
+    If you try to get it to do something you're not allowed to:
+    >>> RankingExpressionEvaluator('open("foo")')
+    Traceback (most recent call last):
+    ValueError: Invalid expression: open("foo")
+    "Call" not permitted
+
+    >>> RankingExpressionEvaluator('import sys')
+    Traceback (most recent call last):
+    ValueError: invalid syntax: import sys
+
+    If you try to get hold of something you aren't supposed to:
+    >>> answer = 42  # only variables explicitly passed in should work
+    >>> RankingExpressionEvaluator('answer')
+    Traceback (most recent call last):
+    NameError: name 'answer' is not defined
+
+    If you try to do something which doesn't make sense:
+    >>> RankingExpressionEvaluator('a.b.c')  # no value "a.b.c"
+    Traceback (most recent call last):
+    NameError: name 'a' is not defined
+
+"""
+
 import ast
 from collections import namedtuple
 from functools import lru_cache
@@ -35,6 +81,22 @@ from cylc.flow.exceptions import (
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import run_cmd, cylc_server_cmd
 from cylc.flow.terminal import parse_dirty_json
+from cylc.flow.util import restricted_evaluator
+
+
+# evaluates ranking expressions
+# (see module docstring for examples)
+RankingExpressionEvaluator = restricted_evaluator(
+    ast.Expression,
+    # variables
+    ast.Name, ast.Load, ast.Attribute, ast.Subscript, ast.Index,
+    # opers
+    ast.BinOp, ast.operator, ast.UnaryOp, ast.unaryop,
+    # types
+    ast.Num, ast.Str,
+    # comparisons
+    ast.Compare, ast.cmpop, ast.List, ast.Tuple,
+)
 
 
 GLBL_CFG_STR = 'global.cylc[scheduler][run hosts]ranking'
@@ -301,7 +363,10 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
         for key, expression in rankings:
             item = _reformat_expr(key, expression)
             try:
-                result = _simple_eval(expression, RESULT=results[host][key])
+                result = RankingExpressionEvaluator(
+                    expression,
+                    RESULT=results[host][key],
+                )
             except Exception as exc:
                 raise GlobalConfigError(
                     'Invalid host ranking expression'
@@ -331,84 +396,6 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
         [host for _, host in good],
         # data
         data
-    )
-
-
-class SimpleVisitor(ast.NodeVisitor):
-    """Abstract syntax tree node visitor for simple safe operations."""
-
-    def visit(self, node):
-        if not isinstance(node, self.whitelist):
-            # permit only whitelisted operations
-            raise ValueError(type(node))
-        return super().visit(node)
-
-    whitelist = (
-        ast.Expression,
-        # variables
-        ast.Name, ast.Load, ast.Attribute, ast.Subscript, ast.Index,
-        # opers
-        ast.BinOp, ast.operator, ast.UnaryOp, ast.unaryop,
-        # types
-        ast.Num, ast.Str,
-        # comparisons
-        ast.Compare, ast.cmpop, ast.List, ast.Tuple,
-    )
-
-
-def _simple_eval(expr, **variables):
-    """Safely evaluates simple python expressions.
-
-    Supports a minimal subset of Python operators:
-    * Binary operations
-    * Simple comparisons
-
-    Supports a minimal subset of Python data types:
-    * Numbers
-    * Strings
-    * Tuples
-    * Lists
-
-    Examples:
-        >>> _simple_eval('1 + 1')
-        2
-        >>> _simple_eval('1 * -1')
-        -1
-        >>> _simple_eval('1 < a', a=2)
-        True
-        >>> _simple_eval('1 in (1, 2, 3)')
-        True
-        >>> import psutil
-        >>> _simple_eval('a.available > 0', a=psutil.virtual_memory())
-        True
-
-        If you try to get it to do something you're not allowed to:
-        >>> _simple_eval('open("foo")')
-        Traceback (most recent call last):
-        ValueError: <class '...Call'>
-        >>> _simple_eval('import sys')
-        Traceback (most recent call last):
-        SyntaxError: ...
-
-        If you try to get hold of something you aren't supposed to:
-        >>> answer = 42  # only variables explicitly passed in should work
-        >>> _simple_eval('answer')
-        Traceback (most recent call last):
-        NameError: name 'answer' is not defined
-
-        If you try to do something which doesn't make sense:
-        >>> _simple_eval('a.b.c')  # no value "a.b.c"
-        Traceback (most recent call last):
-        NameError: name 'a' is not defined
-
-    """
-    node = ast.parse(expr.strip(), mode='eval')
-    SimpleVisitor().visit(node)
-    # acceptable use of eval due to restricted language features
-    return eval(  # nosec
-        compile(node, '<string>', 'eval'),
-        {'__builtins__': {}},
-        variables
     )
 
 

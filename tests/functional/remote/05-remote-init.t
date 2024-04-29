@@ -21,7 +21,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 5
 create_test_global_config "" "
 [platforms]
     [[belle]]
@@ -53,8 +53,7 @@ g|0|0|localhost
 __SELECT__
 
 grep_ok "ERROR - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
-grep_ok "1/a did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
-grep_ok "1/b did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "1/a did not complete the required outputs" "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit

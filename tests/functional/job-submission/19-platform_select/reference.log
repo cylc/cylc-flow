@@ -1,0 +1,8 @@
+1/platform_no_subshell -triggered off [] in flow 1
+1/host_no_subshell -triggered off [] in flow 1
+1/platform_subshell -triggered off [] in flow 1
+1/host_subshell -triggered off [] in flow 1
+1/host_subshell_backticks -triggered off [] in flow 1
+1/localhost_subshell -triggered off [] in flow 1
+1/fin_platform -triggered off ['1/platform_no_subshell', '1/platform_subshell'] in flow 1
+1/fin_host -triggered off ['1/host_subshell', '1/host_subshell_backticks'] in flow 1

@@ -22,8 +22,7 @@ set_test_number 6
 install_workflow "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+reftest_run
 
 logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 

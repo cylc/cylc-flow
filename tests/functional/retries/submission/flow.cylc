@@ -7,7 +7,7 @@
         expected task failures = 1/foo
 [scheduling]
     [[graph]]
-        R1 = "foo:submit-fail => !foo"
+        R1 = "foo:submit-fail? => !foo"
 [runtime]
     [[foo]]
         script = true

@@ -31,13 +31,13 @@ workflow_run_ok "${TEST_NAME}" \
     cylc play --debug --no-detach --set="SHOW_OUT='$SHOW_OUT'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 contains_ok "$SHOW_OUT" <<'__SHOW_DUMP__'
-  + (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
-  + 	0 = 1/foo1 failed
-  - 	1 = 1/foo1 succeeded
-  + 	2 = 1/foo2 failed
-  - 	3 = 1/foo2 succeeded
-  + 	4 = 1/foo3 failed
-  - 	5 = 1/foo3 succeeded
+  ✓ (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
+  ✓ 	0 = 1/foo1 failed
+  ⨯ 	1 = 1/foo1 succeeded
+  ✓ 	2 = 1/foo2 failed
+  ⨯ 	3 = 1/foo2 succeeded
+  ✓ 	4 = 1/foo3 failed
+  ⨯ 	5 = 1/foo3 succeeded
 __SHOW_DUMP__
 #-------------------------------------------------------------------------------
 purge

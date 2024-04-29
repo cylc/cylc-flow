@@ -34,45 +34,51 @@ title: (not given)
 description: (not given)
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 2015/t1 started
-outputs: ('-': not completed)
-  - 2016/t1 expired
-  + 2016/t1 submitted
-  - 2016/t1 submit-failed
-  + 2016/t1 started
-  - 2016/t1 succeeded
-  - 2016/t1 failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 2015/t1 started
+outputs: ('⨯': not completed)
+  ⨯ 2016/t1 expired
+  ✓ 2016/t1 submitted
+  ⨯ 2016/t1 submit-failed
+  ✓ 2016/t1 started
+  ⨯ 2016/t1 succeeded
+  ⨯ 2016/t1 failed
+output completion: incomplete
+  ⨯ ⦙  succeeded
 
 Task ID: 2017/t1
 title: (not given)
 description: (not given)
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 2016/t1 started
-outputs: ('-': not completed)
-  - 2017/t1 expired
-  + 2017/t1 submitted
-  - 2017/t1 submit-failed
-  + 2017/t1 started
-  - 2017/t1 succeeded
-  - 2017/t1 failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 2016/t1 started
+outputs: ('⨯': not completed)
+  ⨯ 2017/t1 expired
+  ✓ 2017/t1 submitted
+  ⨯ 2017/t1 submit-failed
+  ✓ 2017/t1 started
+  ⨯ 2017/t1 succeeded
+  ⨯ 2017/t1 failed
+output completion: incomplete
+  ⨯ ⦙  succeeded
 
 Task ID: 2018/t1
 title: (not given)
 description: (not given)
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 2017/t1 started
-outputs: ('-': not completed)
-  - 2018/t1 expired
-  + 2018/t1 submitted
-  - 2018/t1 submit-failed
-  + 2018/t1 started
-  - 2018/t1 succeeded
-  - 2018/t1 failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 2017/t1 started
+outputs: ('⨯': not completed)
+  ⨯ 2018/t1 expired
+  ✓ 2018/t1 submitted
+  ⨯ 2018/t1 submit-failed
+  ✓ 2018/t1 started
+  ⨯ 2018/t1 succeeded
+  ⨯ 2018/t1 failed
+output completion: incomplete
+  ⨯ ⦙  succeeded
 __TXT__
 
 contains_ok "${RUND}/show2.txt" <<'__TXT__'

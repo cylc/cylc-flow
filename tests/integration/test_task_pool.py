@@ -1179,9 +1179,10 @@ async def test_detect_incomplete_tasks(
     start,
     log_filter,
 ):
-    """Finished but incomplete tasks should be retains as incomplete."""
-
-    final_task_states = {
+    """Finished but incomplete tasks should be retained as incomplete."""
+    incomplete_final_task_states = {
+        # final task states that would leave a task with
+        # completion=succeeded incomplete
         TASK_STATUS_FAILED: TaskEventsManager.EVENT_FAILED,
         TASK_STATUS_EXPIRED: TaskEventsManager.EVENT_EXPIRED,
         TASK_STATUS_SUBMIT_FAILED: TaskEventsManager.EVENT_SUBMIT_FAILED
@@ -1193,7 +1194,7 @@ async def test_detect_incomplete_tasks(
         'scheduling': {
             'graph': {
                 # a workflow with one task for each of the final task states
-                'R1': '\n'.join(final_task_states.keys())
+                'R1': '\n'.join(incomplete_final_task_states.keys())
             }
         }
     })
@@ -1205,30 +1206,20 @@ async def test_detect_incomplete_tasks(
             # spawn the output corresponding to the task
             schd.pool.task_events_mgr.process_message(
                 itask, 1,
-                final_task_states[itask.tdef.name]
+                incomplete_final_task_states[itask.tdef.name]
             )
             # ensure that it is correctly identified as incomplete
-            assert itask.state.outputs.get_incomplete()
-            assert itask.state.outputs.is_incomplete()
-            if itask.tdef.name == TASK_STATUS_EXPIRED:
-                assert log_filter(
-                    log,
-                    contains=f"[{itask}] removed from active task pool: expired"
-                )
-                # the task should have been removed
-                assert itask not in schd.pool.get_tasks()
-            else:
-                assert log_filter(
-                    log,
-                    contains=(
-                        f"[{itask}] did not complete "
-                        "required outputs:"
-                    )
-                )
-                # the task should not have been removed
-                assert itask in schd.pool.get_tasks()
+            assert not itask.state.outputs.is_complete()
+            assert log_filter(
+                log,
+                contains=(
+                    f"[{itask}] did not complete the required outputs:"
+                ),
+            )
+            # the task should not have been removed
+            assert itask in schd.pool.get_tasks()
 
-
+            
 async def test_future_trigger_final_point(
     flow,
     scheduler,
@@ -1289,7 +1280,7 @@ async def test_set_failed_complete(
         assert log_filter(
             log, regex="1/one.* setting implied output: started")
         assert log_filter(
-            log, regex="failed.* did not complete required outputs")
+            log, regex="failed.* did not complete the required outputs")
 
         # Set failed task complete via default "set" args.
         schd.pool.set_prereqs_and_outputs([one.identity], None, None, ['all'])

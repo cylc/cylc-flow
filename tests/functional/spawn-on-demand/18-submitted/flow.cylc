@@ -12,6 +12,7 @@
     cycling mode = integer
     runahead limit = P10
     [[graph]]
+        # tasks will finish with *in*complete outputs
         R/1 = """
             # a1 should be incomplete (submission is implicitly required)
             a1? => b
@@ -25,6 +26,8 @@
             a3? => b
             a3:submitted => s
         """
+
+        # tasks will finish with complete outputs
         R/4 = """
             # a4 should be complete (submission is explicitly optional)
             a4? => b

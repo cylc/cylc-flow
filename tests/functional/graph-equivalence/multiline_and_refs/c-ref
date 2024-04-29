@@ -1,5 +1,5 @@
-prerequisites: ('-': not satisfied)
-  - 1/a succeeded
-  - 1/b succeeded
-outputs: ('-': not completed)
+prerequisites: ('⨯': not satisfied)
+  ⨯ 1/a succeeded
+  ⨯ 1/b succeeded
+outputs: ('⨯': not completed)
   (None)

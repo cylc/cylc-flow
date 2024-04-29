@@ -735,7 +735,6 @@ def test_task_optional_outputs():
         ('succeed', TASK_OUTPUT_SUCCEEDED),
         ('fail', TASK_OUTPUT_FAILED),
         ('submit', TASK_OUTPUT_SUBMITTED),
-        ('submit-fail', TASK_OUTPUT_SUBMIT_FAILED),
     ]
 )
 def test_family_optional_outputs(qual, task_output):
@@ -764,6 +763,26 @@ def test_family_optional_outputs(qual, task_output):
     optional = False
     for member in ['b1', 'b2']:
         assert gp.task_output_opt[(member, task_output)][0] == optional
+
+
+def test_cannot_be_required():
+    """Is should not allow :expired or :submit-failed to be required.
+
+    See proposal point 4:
+    https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#proposal
+    """
+    gp = GraphParser({})
+
+    # outputs can be optional
+    gp.parse_graph('a:expired? => b')
+    gp.parse_graph('a:submit-failed? => b')
+
+    # but cannot be required
+    with pytest.raises(GraphParseError, match='must be optional'):
+        gp.parse_graph('a:expired => b')
+    with pytest.raises(GraphParseError, match='must be optional'):
+        gp.parse_graph('a:submit-failed => b')
+
 
 
 @pytest.mark.parametrize(

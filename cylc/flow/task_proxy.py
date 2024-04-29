@@ -38,19 +38,10 @@ from cylc.flow import LOG
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
-from cylc.flow.task_outputs import (
-    TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_EXPIRED,
-    TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_SUBMIT_FAILED
-)
 from cylc.flow.task_state import (
     TaskState,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_FAILED
 )
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
@@ -576,34 +567,6 @@ class TaskProxy:
             return False
         return True
 
-    def is_finished(self) -> bool:
-        """Return True if a final state achieved."""
-        return (
-            self.state(
-                TASK_STATUS_EXPIRED,
-                TASK_STATUS_SUBMIT_FAILED,
-                TASK_STATUS_FAILED,
-                TASK_STATUS_SUCCEEDED
-            )
-        )
-
     def is_complete(self) -> bool:
         """Return True if complete or expired."""
-        return (
-            self.state(TASK_STATUS_EXPIRED)
-            or not self.state.outputs.is_incomplete()
-        )
-
-    def set_state_by_outputs(self) -> None:
-        """Set state according to which final output is completed."""
-        for output in (
-            TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED,
-            TASK_OUTPUT_FAILED, TASK_OUTPUT_SUCCEEDED
-        ):
-            if self.state.outputs.is_completed(output, output):
-                # This assumes status and output strings are the same:
-                self.state_reset(
-                    status=output,
-                    silent=True, is_queued=False, is_runahead=False
-                )
-                break
+        return self.state.outputs.is_complete()

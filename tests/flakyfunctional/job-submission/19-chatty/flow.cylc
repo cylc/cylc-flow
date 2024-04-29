@@ -22,7 +22,7 @@
         R1 = "starter:start => NOHOPE"
         R1 = "starter => HOPEFUL"
         R1 = HOPEFUL:succeed-all
-        R1 = "NOHOPE:submit-fail-all => stopper"
+        R1 = "NOHOPE:submit-fail-all? => stopper"
 
 [runtime]
     [[starter]]

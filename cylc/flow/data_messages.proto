@@ -127,6 +127,7 @@ message PbRuntime {
     optional string directives = 15;
     optional string environment = 16;
     optional string outputs = 17;
+    optional string completion = 18;
 }
 
 
