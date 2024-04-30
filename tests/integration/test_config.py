@@ -16,11 +16,18 @@
 
 from pathlib import Path
 import sqlite3
+from typing import Any
 import pytest
 
-from cylc.flow.exceptions import ServiceFileError, WorkflowConfigError
+from cylc.flow.exceptions import (
+    ServiceFileError,
+    WorkflowConfigError,
+    XtriggerConfigError,
+)
 from cylc.flow.parsec.exceptions import ListValueError
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
+
+Fixture = Any
 
 
 @pytest.mark.parametrize(
@@ -83,9 +90,6 @@ def test_validate_implicit_task_name(
     are blacklisted get caught and raise errors.
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True'
-        },
         'scheduling': {
             'graph': {
                 'R1': task_name
@@ -182,9 +186,6 @@ def test_no_graph(flow, validate):
 def test_parse_special_tasks_invalid(flow, validate, section):
     """It should fail for invalid "special tasks"."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': 'now',
             'special tasks': {
@@ -204,9 +205,6 @@ def test_parse_special_tasks_invalid(flow, validate, section):
 def test_parse_special_tasks_interval(flow, validate):
     """It should fail for invalid durations in clock-triggers."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': 'now',
             'special tasks': {
@@ -341,3 +339,167 @@ def test_validate_incompatible_db(one_conf, flow, validate):
     finally:
         conn.close()
     assert tables == ['suite_params']
+
+
+def test_xtrig_validation_wall_clock(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate()` function is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'wall_clock(offset=PT7MH)'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(WorkflowConfigError, match=(
+        r'\[@myxt\] wall_clock\(offset=PT7MH\) validation failed: '
+        r'Invalid offset: PT7MH'
+    )):
+        validate(id_)
+
+
+def test_xtrig_implicit_wall_clock(flow: Fixture, validate: Fixture):
+    """Test @wall_clock is allowed in graph without explicit
+    xtrigger definition.
+    """
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '2024',
+            'graph': {'R1': '@wall_clock => foo'},
+        }
+    })
+    validate(wid)
+
+
+def test_xtrig_validation_echo(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate()` function is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduling': {
+            'xtriggers': {'myxt': 'echo()'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=r'echo.* Requires \'succeed=True/False\' arg'
+    ):
+        validate(id_)
+
+
+def test_xtrig_validation_xrandom(
+    flow: 'Fixture',
+    validate: 'Fixture',
+):
+    """If an xtrigger module has a `validate()` function it is called.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    id_ = flow({
+        'scheduling': {
+            'xtriggers': {'myxt': 'xrandom(200)'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(
+        XtriggerConfigError,
+        match=r"'percent' should be a float between 0 and 100"
+    ):
+        validate(id_)
+
+
+def test_xtrig_validation_custom(
+    flow: 'Fixture',
+    validate: 'Fixture',
+    monkeypatch: 'Fixture',
+):
+    """If an xtrigger module has a `validate()` function
+    an exception is raised if that validate function fails.
+
+    https://github.com/cylc/cylc-flow/issues/5448
+    """
+    # Rather than create our own xtrigger module on disk
+    # and attempt to trigger a validation failure we
+    # mock our own exception, xtrigger and xtrigger
+    # validation functions and inject these into the
+    # appropriate locations:
+    def kustom_xt(feature):
+        return True, {}
+
+    def kustom_validate(args):
+        raise Exception('This is only a test.')
+
+    # Patch xtrigger func & its validate func
+    monkeypatch.setattr(
+        'cylc.flow.xtrigger_mgr.get_xtrig_func',
+        lambda *args: kustom_validate if "validate" in args else kustom_xt
+    )
+
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '1012',
+            'xtriggers': {'myxt': 'kustom_xt(feature=42)'},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+
+    Path(id_)
+    with pytest.raises(XtriggerConfigError, match=r'This is only a test.'):
+        validate(id_)
+
+
+@pytest.mark.parametrize('xtrig_call, expected_msg', [
+    pytest.param(
+        'xrandom()',
+        r"xrandom.* missing a required argument: 'percent'",
+        id="missing-arg"
+    ),
+    pytest.param(
+        'wall_clock(alan_grant=1)',
+        r"wall_clock.* unexpected keyword argument 'alan_grant'",
+        id="unexpected-arg"
+    ),
+])
+def test_xtrig_signature_validation(
+    flow: 'Fixture', validate: 'Fixture',
+    xtrig_call: str, expected_msg: str
+):
+    """Test automatic xtrigger function signature validation."""
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '2024',
+            'xtriggers': {'myxt': xtrig_call},
+            'graph': {'R1': '@myxt => foo'},
+        }
+    })
+    with pytest.raises(XtriggerConfigError, match=expected_msg):
+        validate(id_)
+
+
+def test_special_task_non_word_names(flow: Fixture, validate: Fixture):
+    """Test validation of special tasks names with non-word characters"""
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '2020',
+            'special tasks': {
+                'clock-trigger': 't-1, t+1, t%1, t@1',
+            },
+            'graph': {
+                'P1D': 't-1 & t+1 & t%1 & t@1',
+            },
+        },
+        'runtime': {
+            't-1, t+1, t%1, t@1': {'script': True},
+        },
+    })
+    validate(wid)

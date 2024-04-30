@@ -56,6 +56,78 @@ def find_closest_focus(app, old_node, new_node):
     )
 
 
+def expand_tree(app, tree_node, id_, depth=5, node_types=None):
+    """Expand the Tui tree to the desired level.
+
+    Arguments:
+        app:
+            The Tui application instance.
+        tree_node:
+            The Tui widget representing the tree view.
+        id_:
+            If specified, we will look within the tree for a node matching
+            this ID and the tree below this node will be expanded.
+        depth:
+            The max depth to expand nodes too.
+        node_types:
+            Whitelist of node types to expand, note "task", "job" and "spring"
+            nodes are excluded by default.
+
+    Returns:
+        True, if the node was found in the tree, is loaded and has been
+        expanded.
+
+    Examples:
+        # expand the top three levels of the tree
+        compute_tree(app, node, None, 3)
+
+        # expand the "root" node AND the top five levels of the tree under
+        # ~user/workflow
+        compute_tree(app, node, '~user/workflow')
+
+    """
+    if not node_types:
+        # don't auto-expand job nodes by default
+        node_types = {'root', 'workflow', 'cycle', 'family'}
+
+    root_node = tree_node.get_root()
+    requested_node = root_node
+
+    # locate the "id_" within the tree if specified
+    if id_:
+        for node in walk_tree(root_node):
+            key = app.get_node_id(node)
+            if key == id_:
+                requested_node = node
+                child_keys = node.get_child_keys()
+                if (
+                    # if the node only has one child
+                    len(child_keys) == 1
+                    # and that child is a "#spring" node (i.e. a loading node)
+                    and (
+                        node.get_child_node(0).get_value()['type_']
+                    ) == '#spring'
+                ):
+                    # then the content hasn't loaded yet so the node cannot be
+                    # expanded
+                    return False
+                break
+        else:
+            # the requested node does not exist yet
+            # it might still be loading
+            return False
+
+    # expand the specified nodes
+    for node in (*walk_tree(requested_node, depth), root_node):
+        if node.get_value()['type_'] not in node_types:
+            continue
+        widget = node.get_widget()
+        widget.expanded = True
+        widget.update_expanded_icon(False)
+
+    return True
+
+
 def translate_collapsing(app, old_node, new_node):
     """Transfer the collapse state from one tree to another.
 
@@ -81,29 +153,46 @@ def translate_collapsing(app, old_node, new_node):
     for node in walk_tree(new_root):
         key = app.get_node_id(node)
         if key in old_tree:
+            # this node was present before
+            # => translate its expansion to the new tree
             expanded = old_tree.get(key)
             widget = node.get_widget()
             if widget.expanded != expanded:
                 widget.expanded = expanded
-                widget.update_expanded_icon()
+                widget.update_expanded_icon(False)
+        else:
+            # this node was not present before
+            # => apply the standard expansion logic
+            expand_tree(
+                app,
+                node,
+                key,
+                3,
+                # don't auto-expand workflows, only cycles/families
+                # and the root node to help expand the tree on startup
+                node_types={'root', 'cycle', 'family'}
+            )
 
 
-def walk_tree(node):
+def walk_tree(node, depth=None):
     """Yield nodes in order.
 
     Arguments:
         node (urwid.TreeNode):
             Yield this node and all nodes beneath it.
+        depth:
+            The maximum depth to walk to or None to walk all children.
 
     Yields:
         urwid.TreeNode
 
     """
-    stack = [node]
+    stack = [(node, 1)]
     while stack:
-        node = stack.pop()
+        node, _depth = stack.pop()
         yield node
-        stack.extend([
-            node.get_child_node(index)
-            for index in node.get_child_keys()
-        ])
+        if depth is None or _depth < depth:
+            stack.extend([
+                (node.get_child_node(index), _depth + 1)
+                for index in node.get_child_keys()
+            ])

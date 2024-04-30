@@ -247,6 +247,7 @@ def runtime_from_config(rtconfig):
     return PbRuntime(
         platform=platform,
         script=rtconfig['script'],
+        completion=rtconfig['completion'],
         init_script=rtconfig['init-script'],
         env_script=rtconfig['env-script'],
         err_script=rtconfig['err-script'],
@@ -463,7 +464,7 @@ class DataStoreMgr:
     ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
-    def __init__(self, schd):
+    def __init__(self, schd, n_edge_distance=1):
         self.schd = schd
         self.id_ = Tokens(
             user=self.schd.owner,
@@ -477,7 +478,7 @@ class DataStoreMgr:
         self.updated_state_families = set()
         # Update workflow state totals once more post delta application.
         self.state_update_follow_on = False
-        self.n_edge_distance = 1
+        self.n_edge_distance = n_edge_distance
         self.next_n_edge_distance = None
         self.latest_state_tasks = {
             state: deque(maxlen=LATEST_STATE_TASKS_QUEUE_SIZE)
@@ -530,7 +531,7 @@ class DataStoreMgr:
         """
         # Reset attributes/data-store on reload:
         if reloaded:
-            self.__init__(self.schd)
+            self.__init__(self.schd, self.n_edge_distance)
 
         # Static elements
         self.generate_definition_elements()
@@ -1192,7 +1193,10 @@ class DataStoreMgr:
                 point,
                 flow_nums,
                 submit_num=0,
-                data_mode=True
+                data_mode=True,
+                sequential_xtrigger_labels=(
+                    self.schd.xtrigger_mgr.sequential_xtrigger_labels
+                ),
             )
 
         is_orphan = False
@@ -1437,7 +1441,7 @@ class DataStoreMgr:
                     )
             ):
                 for message in json.loads(outputs_str):
-                    itask.state.outputs.set_completion(message, True)
+                    itask.state.outputs.set_message_complete(message)
             # Gather tasks with flow id.
             prereq_ids.add(f'{relative_id}/{flow_nums_str}')
 
@@ -1499,7 +1503,7 @@ class DataStoreMgr:
         del tproxy.prerequisites[:]
         tproxy.prerequisites.extend(prereq_list)
 
-        for label, message, satisfied in itask.state.outputs.get_all():
+        for label, message, satisfied in itask.state.outputs:
             output = tproxy.outputs[label]
             output.label = label
             output.message = message
@@ -1587,7 +1591,7 @@ class DataStoreMgr:
             name=tproxy.name,
             cycle_point=tproxy.cycle_point,
             execution_time_limit=job_conf.get('execution_time_limit'),
-            platform=job_conf.get('platform')['name'],
+            platform=job_conf['platform']['name'],
             job_runner_name=job_conf.get('job_runner_name'),
         )
         # Not all fields are populated with some submit-failures,
@@ -1603,7 +1607,6 @@ class DataStoreMgr:
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
             self.schd.workflow, tproxy.cycle_point, tproxy.name, sub_num)
-        j_buf.extra_logs.extend(job_conf.get('logfiles', []))
 
         self.added[JOBS][j_id] = j_buf
         getattr(self.updated[WORKFLOW], JOBS).append(j_id)
@@ -2111,11 +2114,11 @@ class DataStoreMgr:
                 self.state_update_families.add(fam_node.first_parent)
             self.state_update_families.remove(fp_id)
 
-    def set_graph_window_extent(self, n_edge_distance):
+    def set_graph_window_extent(self, n_edge_distance: int) -> None:
         """Set what the max edge distance will change to.
 
         Args:
-            n_edge_distance (int):
+            n_edge_distance:
                 Maximum edge distance from active node.
 
         """
@@ -2186,8 +2189,9 @@ class DataStoreMgr:
             w_delta.n_edge_distance = self.n_edge_distance
             delta_set = True
 
-        if self.schd.pool.main_pool:
-            pool_points = set(self.schd.pool.main_pool)
+        if self.schd.pool.active_tasks:
+            pool_points = set(self.schd.pool.active_tasks)
+
             oldest_point = str(min(pool_points))
             if w_data.oldest_active_cycle_point != oldest_point:
                 w_delta.oldest_active_cycle_point = oldest_point
@@ -2390,10 +2394,8 @@ class DataStoreMgr:
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
-        item = itask.state.outputs.get_item(message)
-        if item is None:
-            return
-        label, _, satisfied = item
+        outputs = itask.state.outputs
+        label = outputs.get_trigger(message)
         # update task instance
         update_time = time()
         tp_delta = self.updated[TASK_PROXIES].setdefault(
@@ -2402,7 +2404,7 @@ class DataStoreMgr:
         output = tp_delta.outputs[label]
         output.label = label
         output.message = message
-        output.satisfied = satisfied
+        output.satisfied = outputs.is_message_complete(message)
         output.time = update_time
         self.updates_pending = True
 
@@ -2422,9 +2424,10 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for label, _, satisfied in itask.state.outputs.get_all():
-            output = tp_delta.outputs[label]
-            output.label = label
+        for trigger, message, satisfied in itask.state.outputs:
+            output = tp_delta.outputs[trigger]
+            output.label = trigger
+            output.message = message
             output.satisfied = satisfied
             output.time = update_time
 

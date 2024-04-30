@@ -1,3 +1,3 @@
-prerequisites: ('-': not satisfied)
-  + 1/a succeeded
-outputs: ('-': not completed)
+prerequisites: ('⨯': not satisfied)
+  ✓ 1/a succeeded
+outputs: ('⨯': not completed)

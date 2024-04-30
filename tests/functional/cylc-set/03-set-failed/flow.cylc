@@ -1,0 +1,18 @@
+# A single task that dies silently, requiring set to failed
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[foo]]
+        init-script = cylc__job__disable_fail_signals
+        script = """
+            cylc__job__wait_cylc_message_started
+            exit 1
+        """

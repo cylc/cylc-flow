@@ -17,27 +17,29 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
-      fail-fast: false # Don't let a failed MacOS run stop the Ubuntu runs
+      fail-fast: false # don't stop on first failure
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.7', '3.8', '3.10', '3.11']
+        python-version: ['3.7', '3.8', '3.10', '3.11', '3']
         include:
           # mac os test
           - os: 'macos-11'
-            python-version: '3.8'  # oldest supported version
+            python-version: '3.7'  # oldest supported version
           # non-utc timezone test
           - os: 'ubuntu-latest'
             python-version: '3.9'  # not the oldest, not the most recent version
             time-zone: 'XXX-09:35'
+
     env:
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -45,7 +47,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck sqlite3
+          sudo apt-get install -y sqlite3
 
       - name: Install
         run: |
@@ -54,37 +56,10 @@ jobs:
       - name: Configure git  # Needed by the odd test
         uses: cylc/release-actions/configure-git@v1
 
-      - name: Check changelog
-        if: startsWith(matrix.os, 'ubuntu')
-        run: towncrier build --draft
-
-      - name: Style
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          flake8
-          etc/bin/shellchecker
-
-      # note: exclude python 3.10+ from mypy checks as these produce false
-      # positives in installed libraries for python 3.7
-      - name: Typing
-        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.python-version, 3.9)
-        run: mypy
-
-      - name: Doctests
-        timeout-minutes: 4
-        run: |
-          pytest cylc/flow
-
       - name: Unit Tests
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: |
-          pytest tests/unit
-
-      - name: Bandit
-        if: ${{ matrix.python-version == '3.7' }}
-        # https://github.com/PyCQA/bandit/issues/658
-        run: |
-          bandit -r --ini .bandit cylc/flow
+          pytest cylc/flow tests/unit
 
       - name: Integration Tests
         timeout-minutes: 6
@@ -93,7 +68,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
@@ -104,15 +79,53 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
           path: coverage.xml
           retention-days: 7
 
+  lint:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    steps:
+      - name: Apt-Get Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # note: exclude python 3.10+ from mypy checks as these produce false
+      # positives in installed libraries for python 3.7
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Install
+        run: |
+          pip install -e ."[tests]"
+
+      - name: Flake8
+        run: flake8
+
+      - name: Bandit
+        run: |
+          bandit -r --ini .bandit cylc/flow
+
+      - name: Shellchecker
+        run: etc/bin/shellchecker
+
+      - name: MyPy
+        run: mypy
+
+      - name: Towncrier
+        run: towncrier build --draft
+
       - name: Linkcheck
-        if: startsWith(matrix.python-version, '3.10')
-        run: pytest -m linkcheck --dist=load tests/unit
+        run: pytest -m linkcheck --dist=load --color=yes -n 10 tests/unit/test_links.py
 
   codecov:
     needs: test
@@ -120,13 +133,13 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           name: ${{ github.workflow }}
           flags: fast-tests

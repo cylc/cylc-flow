@@ -14,13 +14,13 @@
          script = """
 if (( CYLC_TASK_SUBMIT_NUMBER == 2 )); then
    cylc stop --flow=1 ${CYLC_WORKFLOW_ID}
-   cylc__job__poll_grep_workflow_log "Command actioned: stop"
+   cylc__job__poll_grep_workflow_log 'Command "stop" actioned'
 fi
          """
     [[baz]]
          script = """
 if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
    cylc trigger --flow=new --meta=other "${CYLC_WORKFLOW_ID}//1/foo"
-   cylc__job__poll_grep_workflow_log -E "1/bar running job:02.* => succeeded"
+   cylc__job__poll_grep_workflow_log -E "1/bar/02\(flows=2\):running.* => succeeded"
 fi
          """

@@ -66,7 +66,7 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
     assert results['workflow'] == expected_workflow_id
 
 
-def test_back_compat(tmp_run_dir):
+def test_back_compat(tmp_run_dir, caplog):
     """Test workflow_state xtrigger backwards compatibility with Cylc 7
     database."""
     id_ = 'celebrimbor'
@@ -104,7 +104,15 @@ def test_back_compat(tmp_run_dir):
     finally:
         conn.close()
 
+    # Test workflow_state function
     satisfied, _ = workflow_state(id_, task='mithril', point='2012')
     assert satisfied
     satisfied, _ = workflow_state(id_, task='arkenstone', point='2012')
+    assert not satisfied
+
+    # Test back-compat (old suite_state function)
+    from cylc.flow.xtriggers.suite_state import suite_state
+    satisfied, _ = suite_state(suite=id_, task='mithril', point='2012')
+    assert satisfied
+    satisfied, _ = suite_state(suite=id_, task='arkenstone', point='2012')
     assert not satisfied

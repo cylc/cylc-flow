@@ -51,9 +51,10 @@ grep_workflow_log_ok \
     'Backward compatibility mode ON'
 grep_workflow_log_ok \
     "${TEST_NAME_BASE}-a-complete" \
-    '\[1/a running job:01 flows:1\] => succeeded'
+    '\[1/a/01:running\] => succeeded'
 grep_workflow_log_ok \
     "${TEST_NAME_BASE}-b-incomplete" \
-    "1/b did not complete required outputs: \['submitted', 'succeeded'\]"
+    '1/b did not complete the required outputs:\n.*\n.*submitted.*\n.*succeeded\n' \
+    -Pizoq
 
 purge

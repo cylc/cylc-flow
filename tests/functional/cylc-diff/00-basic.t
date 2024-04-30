@@ -51,17 +51,21 @@ Workflow definitions ${WORKFLOW_NAME1} and ${WORKFLOW_NAME2} differ
 
    [runtime] [[foo]]
  <   script = true
+ <   completion = succeeded
 
    [runtime] [[bar]]
  <   script = true
+ <   completion = succeeded
 
 2 items only in ${WORKFLOW_NAME2} (>)
 
    [runtime] [[food]]
  >   script = true
+ >   completion = succeeded
 
    [runtime] [[barley]]
  >   script = true
+ >   completion = succeeded
 
 1 common items differ ${WORKFLOW_NAME1}(<) ${WORKFLOW_NAME2}(>)
 

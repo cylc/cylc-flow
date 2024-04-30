@@ -1,0 +1,32 @@
+# start a new flow after setting off-flow outputs to avoid stall.
+
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            # the tasks we want the flow to run
+            a => b => c => reflow
+            # the off-flow prerequisites
+            a_cold => a
+            b_cold => b
+            c_cold => c
+        """
+[runtime]
+    [[a, b, c]]
+    [[a_cold, b_cold, c_cold]]
+    [[reflow]]
+        script = """
+            if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+                # set off-flow outputs of x_cold
+                cylc set --flow=new \
+                    ${CYLC_WORKFLOW_ID}//1/a_cold \
+                    ${CYLC_WORKFLOW_ID}//1/b_cold \
+                    ${CYLC_WORKFLOW_ID}//1/c_cold
+            fi
+        """

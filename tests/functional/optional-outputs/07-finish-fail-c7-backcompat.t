@@ -37,7 +37,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" cylc play --no-detach --debug "${WORKF
 
 grep_workflow_log_ok grep-0 "Workflow stalled"
 grep_workflow_log_ok grep-1 "ERROR - Incomplete tasks:"
-grep_workflow_log_ok grep-2 "1/foo did not complete required outputs"
-grep_workflow_log_ok grep-3 "2/foo did not complete required outputs"
+grep_workflow_log_ok grep-2 "1/foo did not complete the required outputs"
+grep_workflow_log_ok grep-3 "2/foo did not complete the required outputs"
 
 purge

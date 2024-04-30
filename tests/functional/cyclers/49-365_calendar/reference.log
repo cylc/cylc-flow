@@ -1,4 +1,0 @@
-Initial point: 20120228T00
-Final point: 20120301T00
-20120228T0000Z/foo -triggered off ['20120227T0000Z/foo']
-20120301T0000Z/foo -triggered off ['20120228T0000Z/foo']

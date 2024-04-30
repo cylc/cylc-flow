@@ -42,15 +42,15 @@ __END__
 TEST_NAME="${TEST_NAME_BASE}-show-j.parallel"
 contains_ok "${WORKFLOW_RUN_DIR}/show-j.txt" <<__END__
 state: waiting
-prerequisites: ('-': not satisfied)
-  - 1/i succeeded
+prerequisites: ('⨯': not satisfied)
+  ⨯ 1/i succeeded
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}-show-h.future"
 contains_ok "${WORKFLOW_RUN_DIR}/show-h.txt" <<__END__
 state: waiting
-prerequisites: ('-': not satisfied)
-  - 1/g succeeded
+prerequisites: ('⨯': not satisfied)
+  ⨯ 1/g succeeded
 __END__
 
 purge

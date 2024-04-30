@@ -78,8 +78,6 @@ class FileParseError(ParsecError):
             Classification of error (e.g. Jinja2Error).
         help_lines:
             Additional info to include in the exception.
-
-    Args (ways of providing exception context - TODO rationalise this!):
         lines:
             (preferred) Dictionary in the format
             {filename: [context_line, ..., error_line]}
@@ -140,7 +138,7 @@ class FileParseError(ParsecError):
 
 
 class TemplateVarLanguageClash(FileParseError):
-    ...
+    """Multiple workflow configuration templating engines configured."""
 
 
 class EmPyError(FileParseError):

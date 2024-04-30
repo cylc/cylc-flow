@@ -18,6 +18,7 @@ import pytest
 
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE, get_point
 from cylc.flow.prerequisite import Prerequisite
+from cylc.flow.id import Tokens
 
 
 @pytest.fixture
@@ -61,10 +62,10 @@ def test_satisfied(prereq):
         ('2001', 'd', 'custom'): False,
     }
     # mark two prerequisites as satisfied
-    prereq.satisfy_me({
-        ('2000', 'b', 'succeeded'),
-        ('2000', 'c', 'succeeded'),
-    })
+    prereq.satisfy_me([
+        Tokens('2000/b:succeeded', relative=True),
+        Tokens('2000/c:succeeded', relative=True),
+    ])
     assert prereq.satisfied == {
         # the pre-initial dependency should be marked as satisfied
         ('1999', 'a', 'succeeded'): 'satisfied naturally',
