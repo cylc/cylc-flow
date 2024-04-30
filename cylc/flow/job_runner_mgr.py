@@ -306,8 +306,8 @@ class JobRunnerManager():
                 if value is None or not value.strip():
                     continue
                 for line in value.splitlines(True):
-                    if not value.endswith("\n"):
-                        value += "\n"
+                    if not line.endswith("\n"):
+                        line += "\n"
                     sys.stdout.write("%s%s|%s|[%s] %s" % (
                         self.OUT_PREFIX_COMMAND, now, job_log_dir, key, line))
 
