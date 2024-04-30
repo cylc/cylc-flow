@@ -644,7 +644,7 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
             The runahead limit prevents a workflow from getting too far ahead
-            of the oldest :term:`active cycle`.
+            of the oldest cycle with :term:`active tasks <active task>`.
 
             A cycle is considered to be active if it contains any
             :term:`active` tasks.
@@ -686,7 +686,8 @@ with Conf(
             Configuration of internal queues of tasks.
 
             This section will allow you to limit the number of simultaneously
-            active tasks (submitted or running) by assigning tasks to queues.
+            :term:`active tasks <active task>` (submitted or running) by
+            assigning tasks to queues.
 
             By default, a single queue called ``default`` is defined,
             with all tasks assigned to it and no limit to the number of those
@@ -712,8 +713,8 @@ with Conf(
                 Section heading for configuration of a single queue.
             ''') as Queue:
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    The maximum number of active tasks allowed at any one
-                    time, for this queue.
+                    The maximum number of :term:`active tasks <active task>`
+                    allowed at any one time, for this queue.
 
                     If set to 0 this queue is not limited.
                 ''')
@@ -728,8 +729,8 @@ with Conf(
                 The default queue for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 100, desc='''
-                    Controls the total number of active tasks in the default
-                    queue.
+                    Controls the total number of
+                    :term:`active tasks <active task>` in the default queue.
 
                     .. seealso::
 
