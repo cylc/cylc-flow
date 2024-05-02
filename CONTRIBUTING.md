@@ -94,6 +94,7 @@ requests_).
  - Cheng Da
  - Mark Dawson
  - Diquan Jabbour
+ - Shixian Sheng
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
