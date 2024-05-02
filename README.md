@@ -102,7 +102,7 @@ Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 Contributions welcome:
 
-* Read the [contributing](CONTRIBUTING.md) page.
+* Read the [contributing](https://github.com/cylc/cylc-flow/blob/master/CONTRIBUTING.md) page.
 * Development setup instructions are in the
   [developer docs](https://cylc.github.io/cylc-admin/#cylc-8-developer-docs).
 * Involved change proposals can be found in the
