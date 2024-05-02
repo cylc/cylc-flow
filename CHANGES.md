@@ -11,6 +11,22 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.2.6 (Released 2024-05-02)__
+
+### ⚠ Breaking Changes
+
+[#6068](https://github.com/cylc/cylc-flow/pull/6068) - Removed the Rose Options (`-S`, `-O`, `-D`) from `cylc play`. If you need these use them with `cylc install`.
+
+### 🚀 Enhancements
+
+[#6072](https://github.com/cylc/cylc-flow/pull/6072) - Nano Syntax Highlighting now available.
+
+### 🔧 Fixes
+
+[#6071](https://github.com/cylc/cylc-flow/pull/6071) - `cylc config` now shows xtrigger function signatures.
+
+[#6078](https://github.com/cylc/cylc-flow/pull/6078) - Fixed bug where `cylc lint` could hang when checking `inherit` settings in `flow.cylc`.
+
 ## __cylc-8.2.5 (Released 2024-04-04)__
 
 ### 🔧 Fixes
