@@ -14,7 +14,9 @@
     final cycle point   = 20130923T00
     [[graph]]
         R1 = """
-            submit_failed_task:submit-fail => shutdown
+            submit_failed_task:submit-fail? => shutdown
+            submit_failed_task:submitted? => error
+
             shutdown => output_states
             output_states => remove => finish
         """
@@ -29,7 +31,12 @@
             description = "Submit-failed task (runs before restart)"
     [[remove]]
         script = """
-            cylc remove ${CYLC_WORKFLOW_ID} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
+            cylc remove "${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/submit_failed_task"
+        """
+    [[error]]
+        script = """
+            cylc message -- "ERROR:this-task-should-have-submit-failed"
+            exit 1
         """
 
 {% include 'flow-runtime-restart.cylc' %}

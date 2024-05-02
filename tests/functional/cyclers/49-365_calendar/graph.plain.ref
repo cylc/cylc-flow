@@ -1,5 +1,0 @@
-edge "20120228T00/foo" "20120330T00/foo"
-graph
-node "20120228T00/foo" "foo\n20120228T00"
-node "20120301T00/foo" "foo\n20120301T00"
-stop

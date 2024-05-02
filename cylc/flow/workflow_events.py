@@ -18,7 +18,7 @@
 from enum import Enum
 import os
 from shlex import quote
-from typing import Dict, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Union, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -27,6 +27,7 @@ from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.subprocctx import SubProcContext
 
 if TYPE_CHECKING:
+    from cylc.flow.config import WorkflowConfig
     from cylc.flow.scheduler import Scheduler
 
 
@@ -126,6 +127,18 @@ class EventData(Enum):
     """
 
 
+def construct_mail_cmd(
+    subject: str, from_address: str, to_address: str
+) -> List[str]:
+    """Construct a mail command."""
+    return [
+        'mail',
+        '-s', subject,
+        '-r', from_address,
+        to_address
+    ]
+
+
 def get_template_variables(
     schd: 'Scheduler',
     event: str,
@@ -211,26 +224,17 @@ class WorkflowEventHandler():
         self.proc_pool = proc_pool
 
     @staticmethod
-    def get_events_conf(config, key, default=None):
+    def get_events_conf(
+        config: 'WorkflowConfig', key: str, default: Any = None
+    ) -> Any:
         """Return a named [scheduler][[events]] configuration."""
-        # Mail doesn't have any defaults in workflow.py
-        if 'mail' in config.cfg['scheduler']:
-            getters = [
-                config.cfg['scheduler']['events'],
-                config.cfg['scheduler']['mail'],
-                glbl_cfg().get(['scheduler', 'events']),
-                glbl_cfg().get(['scheduler', 'mail'])
-            ]
-        else:
-            getters = [
-                config.cfg['scheduler']['events'],
-                glbl_cfg().get(['scheduler', 'events']),
-                glbl_cfg().get(['scheduler', 'mail'])
-            ]
-        value = None
-        for getter in getters:
-            if key in getter:
-                value = getter.get(key)
+        for getter in (
+            config.cfg['scheduler']['events'],
+            config.cfg['scheduler'].get('mail', {}),
+            glbl_cfg().get(['scheduler', 'events']),
+            glbl_cfg().get(['scheduler', 'mail'])
+        ):
+            value = getter.get(key)
             if value is not None and value != []:
                 return value
         return default
@@ -277,19 +281,26 @@ class WorkflowEventHandler():
                 )
             self._send_mail(event, subject, stdin_str, schd, env)
 
-    def _send_mail(self, event, subject, message, schd, env):
+    def _send_mail(
+        self,
+        event: str,
+        subject: str,
+        message: str,
+        schd: 'Scheduler',
+        env: Dict[str, str]
+    ) -> None:
         proc_ctx = SubProcContext(
             (self.WORKFLOW_EVENT_HANDLER, event),
-            [
-                'mail',
-                '-s', subject,
-                '-r', self.get_events_conf(
-                    schd.config,
-                    'from', 'notifications@' + get_host()),
-                self.get_events_conf(schd.config, 'to', get_user()),
-            ],
+            construct_mail_cmd(
+                subject,
+                from_address=self.get_events_conf(
+                    schd.config, 'from', f'notifications@{get_host()}'
+                ),
+                to_address=self.get_events_conf(schd.config, 'to', get_user())
+            ),
             env=env,
-            stdin_str=message)
+            stdin_str=message
+        )
         if self.proc_pool.closed:
             # Run command in foreground if process pool is closed
             self.proc_pool.run_command(proc_ctx)

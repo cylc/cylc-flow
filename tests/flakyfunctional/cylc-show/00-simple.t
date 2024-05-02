@@ -54,15 +54,20 @@ description: jumped over the lazy dog
 baz: pub
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 20141106T0900Z/bar succeeded
-outputs: ('-': not completed)
-  - 20141106T0900Z/foo expired
-  + 20141106T0900Z/foo submitted
-  - 20141106T0900Z/foo submit-failed
-  + 20141106T0900Z/foo started
-  - 20141106T0900Z/foo succeeded
-  - 20141106T0900Z/foo failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 20141106T0900Z/bar succeeded
+outputs: ('⨯': not completed)
+  ⨯ 20141106T0900Z/foo expired
+  ✓ 20141106T0900Z/foo submitted
+  ⨯ 20141106T0900Z/foo submit-failed
+  ✓ 20141106T0900Z/foo started
+  ⨯ 20141106T0900Z/foo succeeded
+  ⨯ 20141106T0900Z/foo failed
+output completion: incomplete
+    ⦙  (
+  ✓ ⦙    started
+  ⨯ ⦙    and succeeded
+    ⦙  )
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"
@@ -104,6 +109,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 }
             }
         },
+        "runtime": {"completion": "(started and succeeded)"},
         "prerequisites": [
             {
                 "expression": "c0",

@@ -32,7 +32,7 @@ TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB="$RUN_DIR/${WORKFLOW_NAME}/log/db"
 TASKS=$(sqlite3 "${DB}" 'select count(*) from task_states where status=="failed"')
 # manual comparison for the test
-if ((TASKS==4)); then
+if ((TASKS==2)); then
     ok "${TEST_NAME}"
 else
     fail "${TEST_NAME}"

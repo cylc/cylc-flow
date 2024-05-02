@@ -1,0 +1,2 @@
+1/switcher -triggered off [] in flow 1
+1/a -triggered off ['1/foo'] in flow 1

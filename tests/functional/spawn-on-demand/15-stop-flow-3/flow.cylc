@@ -12,11 +12,11 @@
         abort on inactivity timeout = True
 [scheduling]
     [[xtriggers]]
-        x = xrandom("0", "10")  # never succeeds
+        x = xrandom(0, 10)  # never succeeds
     [[graph]]
         R1 = """
                @x => never
-               c => never_again 
+               c => never_again
              """
 [runtime]
     [[c]]

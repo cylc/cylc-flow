@@ -401,7 +401,7 @@ with Conf(
                     # differentiate between not set vs set to empty
                     default = None
                 elif item.endswith("handlers"):
-                    desc = desc + '\n\n' + dedent(rf'''
+                    desc = desc + '\n\n' + dedent(f'''
                         Examples:
 
                         .. code-block:: cylc
@@ -413,9 +413,9 @@ with Conf(
                            {item} = echo %(workflow)s
 
                            # configure multiple event handlers
-                           {item} = \
-                               'echo %(workflow)s, %(event)s', \
-                               'my_exe %(event)s %(message)s' \
+                           {item} = \\
+                               'echo %(workflow)s, %(event)s', \\
+                               'my_exe %(event)s %(message)s' \\
                                'curl -X PUT -d event=%(event)s host:port'
                     ''')
                 elif item.startswith("abort on"):
@@ -539,7 +539,7 @@ with Conf(
         ''')
         # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
         # such as '+P1Y' (relative to initial cycle point)
-        Conf('final cycle point', VDR.V_STRING, desc='''
+        Conf('final cycle point', VDR.V_CYCLE_POINT_WITH_OFFSETS, desc='''
             The (optional) last cycle point at which tasks are run.
 
             Once all tasks have reached this cycle point, the
@@ -547,6 +547,12 @@ with Conf(
 
             This item can be overridden on the command line using
             ``cylc play --final-cycle-point`` or ``--fcp``.
+
+            Examples:
+
+            - ``2000`` - Shorthand for ``2000-01-01T00:00``.
+            - ``+P1D`` - The initial cycle point plus one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -599,7 +605,7 @@ with Conf(
 
                {REPLACES}``[scheduling]hold after point``.
         ''')
-        Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
+        Conf('stop after cycle point', VDR.V_CYCLE_POINT_WITH_OFFSETS, desc='''
             Shut down the workflow after all tasks pass this cycle point.
 
             The stop cycle point can be overridden on the command line using
@@ -612,7 +618,18 @@ with Conf(
                choosing not to run that part of the graph. You can play
                the workflow and continue.
 
+            Examples:
+
+            - ``2000`` - Shorthand for ``2000-01-01T00:00``.
+            - ``+P1D`` - The initial cycle point plus one day.
+            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
+
             .. versionadded:: 8.0.0
+
+            .. versionchanged:: 8.3.0
+
+               This now supports offsets (e.g. ``+P1D``) in the same way the
+               :cylc:conf:`[..]final cycle point` does.
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -626,20 +643,32 @@ with Conf(
             365 day (never a leap year) and 366 day (always a leap year).
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
-            The scheduler runahead limit determines how many consecutive cycle
-            points can be active at once. The base point of the runahead
-            calculation is the lowest-valued point with :term:`active` or
-            :term:`incomplete` tasks present.
+            The runahead limit prevents a workflow from getting too far ahead
+            of the oldest cycle with :term:`active tasks <active task>`.
 
-            An integer interval value of ``Pn`` allows up to ``n+1`` cycle
-            points (including the base point) to be active at once.
+            A cycle is considered to be active if it contains any
+            :term:`active` tasks.
 
-            The default runahead limit is ``P4``, i.e. 5 active points
-            including the base point.
+            An integer interval value of ``Pn`` allows up to ``n+1`` cycles
+            to be active at once.
+
+            The default runahead limit is ``P4``, which means there may be up
+            to 5 active cycles.
 
             Datetime cycling workflows can optionally use a datetime interval
-            value instead, in which case the number of active cycle points
+            value instead, in which case the number of cycles
             within the interval depends on the cycling intervals present.
+
+            Examples:
+
+            ``P0``
+                Only one cycle can be active at a time.
+            ``P2``
+                The scheduler will run up to two cycles ahead of the oldest
+                active cycle.
+            ``P3D``
+                The scheduler will run cycles up to three days of cycles ahead
+                of the oldest active cycle.
 
             .. seealso::
 
@@ -657,7 +686,8 @@ with Conf(
             Configuration of internal queues of tasks.
 
             This section will allow you to limit the number of simultaneously
-            active tasks (submitted or running) by assigning tasks to queues.
+            :term:`active tasks <active task>` (submitted or running) by
+            assigning tasks to queues.
 
             By default, a single queue called ``default`` is defined,
             with all tasks assigned to it and no limit to the number of those
@@ -683,8 +713,8 @@ with Conf(
                 Section heading for configuration of a single queue.
             ''') as Queue:
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    The maximum number of active tasks allowed at any one
-                    time, for this queue.
+                    The maximum number of :term:`active tasks <active task>`
+                    allowed at any one time, for this queue.
 
                     If set to 0 this queue is not limited.
                 ''')
@@ -699,8 +729,8 @@ with Conf(
                 The default queue for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 100, desc='''
-                    Controls the total number of active tasks in the default
-                    queue.
+                    Controls the total number of
+                    :term:`active tasks <active task>` in the default queue.
 
                     .. seealso::
 
@@ -785,9 +815,23 @@ with Conf(
                     :ref:`SequentialTasks`.
             ''')
 
+        Conf('sequential xtriggers', VDR.V_BOOLEAN, False,
+             desc='''
+            If ``True``, tasks that only depend on xtriggers will not spawn
+            until the xtrigger of previous (cycle point) instance is satisfied.
+            Otherwise, they will all spawn at once out to the runahead limit.
+
+            This setting can be overridden by the reserved keyword argument
+            ``sequential`` in individual xtrigger declarations.
+
+            One sequential xtrigger on a parentless task with multiple
+            xtriggers will cause sequential spawning.
+
+            .. versionadded:: 8.3.0
+        ''')
         with Conf('xtriggers', desc='''
-                This section is for *External Trigger* function declarations -
-                see :ref:`Section External Triggers`.
+            This section is for *External Trigger* function declarations -
+            see :ref:`Section External Triggers`.
         '''):
             Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
                 Any user-defined event trigger function declarations and
@@ -965,6 +1009,150 @@ with Conf(
             can be explicitly configured to provide or override default
             settings for all tasks in the workflow.
         '''):
+            Conf('completion', VDR.V_STRING, desc='''
+                Define the condition for task output completion.
+
+                The completion condition is evaluated when a task reaches
+                a final state - i.e. once it finished executing (``succeeded``
+                or ``failed``) or it ``submit-failed``, or ``expired``.
+                It is a validation check which confirms that the
+                task has generated the outputs it was expected to.
+
+                If the task fails this check its outputs are considered
+                :term:`incomplete` and a warning will be raised alerting you
+                that something has gone wrong which requires investigation.
+
+                .. note::
+
+                   An event hook for this warning will follow in a future
+                   release of Cylc.
+
+                By default, the completion condition ensures that all required
+                outputs, i.e. outputs which appear in the graph but are not
+                marked as optional with the ``?`` character, are completed.
+
+                E.g., in this example, the task ``foo`` must generate the
+                required outputs ``succeeded`` and ``x`` and it may or may not
+                generate the optional output ``y``:
+
+                .. code-block:: cylc-graph
+
+                   foo => bar
+                   foo:x => x
+                   foo:y? => y
+
+                The default completion condition would be this:
+
+                .. code-block:: python
+
+                   # the task must succeed and generate the custom output "x"
+                   succeeded and x
+
+                You can override this default to suit your needs. E.g., in this
+                example, the task ``foo`` has three optional outputs, ``x``,
+                ``y`` and ``z``:
+
+                .. code-block:: cylc-graph
+
+                   foo:x? => x
+                   foo:y? => y
+                   foo:z? => z
+                   x | y | z => bar
+
+                Because all three of these outputs are optional, if none of
+                them are generated, the task's outputs will still be
+                considered complete.
+
+                If you wanted to require that at least one of these outputs is
+                generated you can configure the completion condition like so:
+
+                .. code-block:: python
+
+                   # the task must succeed and generate at least one of the
+                   # outputs "x" or "y" or "z":
+                   succeeded and (x or y or z)
+
+                .. note::
+
+                   For the completion expression, hyphens in task outputs
+                   must be replaced with underscores to allow evaluation by
+                   Python, e.g.:
+
+                   .. code-block:: cylc
+
+                      [runtime]
+                          [[foo]]
+                              completion = succeeded and my_output # underscore
+                              [[[outputs]]]
+                                  my-output = 'my custom task output' # hyphen
+
+                .. note::
+
+                   In some cases the ``succeeded`` output might not explicitly
+                   appear in the graph, e.g:
+
+                   .. code-block:: cylc-graph
+
+                      foo:x? => x
+
+                   In these cases succeess is presumed to be required unless
+                   explicitly stated otherwise, either in the graph e.g:
+
+                   .. code-block:: cylc-graph
+
+                      foo?
+                      foo:x? => x
+
+                   Or in the completion expression e.g:
+
+                   .. code-block:: cylc
+
+                      completion = x  # no reference to succeeded
+                      # or
+                      completion = succeeded or failed  # success is optional
+
+
+                .. hint::
+
+                   If task outputs are optional in the graph they must also
+                   be optional in the completion condition and vice versa.
+
+                   For example this graph conflicts with the completion
+                   statement:
+
+                   .. code-block:: cylc-graph
+
+                      # "a" must succeed
+                      a => b
+
+                   .. code-block:: cylc
+
+                      # "a" may either succeed or fail
+                      completion = succeeded or failed
+
+                   Which could be fixed by ammending the graph like so:
+
+                   .. code-block:: cylc-graph
+
+                      # "a" may either succeed or fail
+                      a? => b
+
+                .. rubric:: Examples
+
+                ``succeeded``
+                   The task must succeed.
+                ``succeeded or (failed and my_error)``
+                   The task can fail, but only if it also yields the custom
+                   output ``my_error``.
+                ``succeeded and (x or y or z)``
+                   The task must succeed and yield at least one of the
+                   custom outputs, x, y or z.
+                ``(a and b) or (c and d)``
+                   One pair of these outputs must be yielded for the task
+                   to be complete.
+
+                .. versionadded:: 8.3.0
+            ''')
             Conf('platform', VDR.V_STRING, desc='''
                 The name of a compute resource defined in
                 :cylc:conf:`global.cylc[platforms]` or
@@ -1260,10 +1448,23 @@ with Conf(
                     - ``all`` - all instance of the task will fail
                     - ``2017-08-12T06, 2017-08-12T18`` - these instances of
                       the task will fail
+
+                    If you set :cylc:conf:`[..][..]execution retry delays`
+                    the second attempt will succeed unless you set
+                    :cylc:conf:`[..]fail try 1 only = False`.
                 ''')
                 Conf('fail try 1 only', VDR.V_BOOLEAN, True, desc='''
                     If ``True`` only the first run of the task
                     instance will fail, otherwise retries will fail too.
+
+                    Task instances must be set to fail by
+                    :cylc:conf:`[..]fail cycle points`.
+
+                    .. note::
+
+                       This setting is designed for use with automatic
+                       retries. Subsequent manual submissions will not
+                       change the outcome of the task.
                 ''')
                 Conf('disable task event handlers', VDR.V_BOOLEAN, True,
                      desc='''
@@ -1849,7 +2050,7 @@ def upg(cfg, descr):
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
         cvtr=converter(
-            lambda x: f'P{int(x)-1}' if x != '' else '',
+            lambda x: f'P{int(x) - 1}' if x != '' else '',
             '"{old}" -> "{new}"'
         ),
         silent=cylc.flow.flags.cylc7_back_compat,
@@ -1958,9 +2159,21 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     `[scheduling][graph]X`."""
     # Parsec upgrader cannot do this type of move
     with contextlib.suppress(KeyError):
+        note = ''
         if 'dependencies' in cfg['scheduling']:
-            msg_old = '[scheduling][dependencies][X]graph'
-            msg_new = '[scheduling][graph]X'
+            if ['graph'] == cfg['scheduling']['dependencies'].keys():
+                msg_old = '[scheduling][dependencies]graph'
+                msg_new = '[scheduling][graph]R1'
+                list_cp = False
+            else:
+                note = (
+                    '\n   ([scheduling][dependencies]graph moves to'
+                    ' [scheduling][graph]R1)'
+                    if 'graph' in cfg['scheduling']['dependencies'] else '')
+                msg_old = '[scheduling][dependencies][X]graph'
+                msg_new = '[scheduling][graph]X - for X in:'
+                list_cp = True
+
             if 'graph' in cfg['scheduling']:
                 raise UpgradeError(
                     f'Cannot upgrade deprecated item "{msg_old} -> {msg_new}" '
@@ -1981,12 +2194,14 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         graphdict[key] = value
                         keys.add(key)
                 if keys and not cylc.flow.flags.cylc7_back_compat:
-                    LOG.warning(
+                    msg = (
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'
-                        f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
-                        f"       {', '.join(sorted(keys))}"
+                        f' * (8.0.0) {msg_old} -> {msg_new}'
                     )
+                    if list_cp:
+                        msg += f"\n       {', '.join(sorted(keys))}"
+                    LOG.warning(msg + note)
 
 
 def upgrade_param_env_templates(cfg, descr):

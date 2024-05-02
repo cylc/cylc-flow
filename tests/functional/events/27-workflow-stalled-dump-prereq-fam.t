@@ -31,8 +31,9 @@ grep_ok '"abort on stall timeout" is set' "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "ERROR - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "1/foo did not complete required outputs: \['succeeded'\]" \
-    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "1/foo did not complete the required outputs:\n.*succeeded" \
+    "${TEST_NAME_BASE}-run.stderr" \
+    -Pizo
 
 grep_ok "WARNING - Partially satisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"

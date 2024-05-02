@@ -58,21 +58,20 @@ named_grep_ok "it returns a 728 upgrade code" "^\[U" "${TESTOUT}"
 
 # Add a pyproject.toml file
 cat > pyproject.toml <<__HERE__
-[cylc-lint]
-    # Check against these rules
-    rulesets = [
-        "style"
-    ]
-    #  do not check for these errors
-    ignore = [
-        "S004"
-    ]
-    # do not lint files matching
-    # these globs:
-    exclude = [
-        "sites/*.cylc",
-    ]
-
+[tool.cylc.lint]
+# Check against these rules
+rulesets = [
+    "style"
+]
+#  do not check for these errors
+ignore = [
+    "S004"
+]
+# do not lint files matching
+# these globs:
+exclude = [
+    "sites/*.cylc",
+]
 __HERE__
 
 # Test that results are different:
@@ -102,19 +101,19 @@ named_grep_ok "${TEST_NAME}-line-too-long-message" \
 
 TEST_NAME="it_does_not_fail_if_max-line-length_set_but_ignored"
 cat > pyproject.toml <<__HERE__
-[cylc-lint]
-    # Check against these rules
-    rulesets = [
-        "style"
-    ]
-    #  do not check for these errors
-    ignore = [
-        "${LINE_LEN_NO}"
-    ]
-    exclude = [
-        "sites/*.cylc",
-    ]
-    max-line-length = 1
+[tool.cylc.lint]
+# Check against these rules
+rulesets = [
+    "style"
+]
+#  do not check for these errors
+ignore = [
+    "${LINE_LEN_NO}"
+]
+exclude = [
+    "sites/*.cylc",
+]
+max-line-length = 1
 __HERE__
 run_ok "${TEST_NAME}" cylc lint
 grep_ok "rules and found no issues" "${TEST_NAME}.stdout"

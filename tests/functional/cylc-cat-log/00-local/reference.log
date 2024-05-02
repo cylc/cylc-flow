@@ -1,0 +1,2 @@
+1/submit-failed -triggered off [] in flow 1
+1/a-task -triggered off ['1/submit-failed'] in flow 1

@@ -41,7 +41,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-workflow-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" --reference-test
 
 # Logged killed jobs-submit command
 cylc cat-log "${WORKFLOW_NAME}" | sed -n '
@@ -70,20 +70,20 @@ done
 # Task pool in database contains the correct states
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
 DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
-QUERY='SELECT cycle, name, status, is_held FROM task_pool'
+QUERY='SELECT cycle, name, status FROM task_states WHERE name LIKE "nh%"'
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 sort "${TEST_NAME}.stdout" > "${TEST_NAME}.stdout.sorted"
 cmp_ok "${TEST_NAME}.stdout.sorted" << '__OUT__'
-1|nh0|submit-failed|0
-1|nh1|submit-failed|0
-1|nh2|submit-failed|0
-1|nh3|submit-failed|0
-1|nh4|submit-failed|0
-1|nh5|submit-failed|0
-1|nh6|submit-failed|0
-1|nh7|submit-failed|0
-1|nh8|submit-failed|0
-1|nh9|submit-failed|0
+1|nh0|submit-failed
+1|nh1|submit-failed
+1|nh2|submit-failed
+1|nh3|submit-failed
+1|nh4|submit-failed
+1|nh5|submit-failed
+1|nh6|submit-failed
+1|nh7|submit-failed
+1|nh8|submit-failed
+1|nh9|submit-failed
 __OUT__
 
 purge

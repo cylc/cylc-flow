@@ -17,7 +17,7 @@
             cylc reload "${CYLC_WORKFLOW_ID}"
             cylc__job__poll_grep_workflow_log -F 'Reload completed'
             cylc kill "${CYLC_WORKFLOW_ID}//1/foo"
-            cylc__job__poll_grep_workflow_log -E '1/foo failed\(held\) job:01.* job killed'
+            cylc__job__poll_grep_workflow_log -E '1/foo/01:failed\(held\).* job killed'
         """
         [[[job]]]
             execution time limit = PT1M

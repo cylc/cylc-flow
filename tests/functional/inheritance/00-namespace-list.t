@@ -33,14 +33,17 @@ cmp_ok runtime.out <<'__DONE__'
 [[FAMILY]]
 [[m1]]
     inherit = FAMILY
+    completion = succeeded
     [[[environment]]]
         FOO = foo
 [[m2]]
     inherit = FAMILY
+    completion = succeeded
     [[[environment]]]
         FOO = bar
 [[m3]]
     inherit = FAMILY
+    completion = succeeded
     [[[environment]]]
         FOO = foo
 __DONE__

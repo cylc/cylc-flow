@@ -30,7 +30,7 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 cylc play --no-detach "${WORKFLOW_NAME}" > /dev/null 2>&1
 # Restart with a failed task and a succeeded task.
 cylc play "${WORKFLOW_NAME}"
-poll_grep_workflow_log -E '1/foo .* \(polled\)failed'
+poll_grep_workflow_log -E '1/foo.* \(polled\)failed'
 cylc dump "${WORKFLOW_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not just say "Initializing..."

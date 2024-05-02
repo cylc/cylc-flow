@@ -20,7 +20,6 @@ from copy import deepcopy
 from functools import partial
 import json
 from operator import attrgetter
-from textwrap import dedent
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -39,11 +38,14 @@ from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.data_store_mgr import (
+    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
+    DELTA_ADDED, DELTA_UPDATED
+)
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -55,32 +57,12 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED
 )
-from cylc.flow.data_store_mgr import (
-    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
-    DELTA_ADDED, DELTA_UPDATED
-)
+from cylc.flow.util import sstrip
 from cylc.flow.workflow_status import StopMode
 
 if TYPE_CHECKING:
     from graphql import ResolveInfo
     from cylc.flow.network.resolvers import BaseResolvers
-
-
-def sstrip(text):
-    """Simple function to dedent and strip text.
-
-    Examples:
-        >>> print(sstrip('''
-        ...     foo
-        ...       bar
-        ...     baz
-        ... '''))
-        foo
-          bar
-        baz
-
-    """
-    return dedent(text).strip()
 
 
 def sort_elements(elements, args):
@@ -349,8 +331,6 @@ async def get_nodes_all(root, info, **args):
 
     _, field_ids = process_resolver_info(root, info, args)
 
-    if hasattr(args, 'id'):
-        args['ids'] = [args.get('id')]
     if field_ids:
         if isinstance(field_ids, str):
             field_ids = [field_ids]
@@ -377,10 +357,8 @@ async def get_nodes_all(root, info, **args):
         else:
             # live objects can be represented by a universal ID
             args[arg] = [Tokens(n_id, relative=True) for n_id in args[arg]]
-    args['workflows'] = [
-        Tokens(w_id) for w_id in args['workflows']]
-    args['exworkflows'] = [
-        Tokens(w_id) for w_id in args['exworkflows']]
+    for arg in ('workflows', 'exworkflows'):
+        args[arg] = [Tokens(w_id) for w_id in args[arg]]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_nodes_all(node_type, args)
 
@@ -812,6 +790,7 @@ class Runtime(ObjectType):
         """)
     platform = String(default_value=None)
     script = String(default_value=None)
+    completion = String(default_value=None)
     init_script = String(default_value=None)
     env_script = String(default_value=None)
     err_script = String(default_value=None)
@@ -892,11 +871,6 @@ class Job(ObjectType):
     )
     job_log_dir = String(
         description="The path to the job's log directory.",
-    )
-    extra_logs = graphene.List(
-        # TODO: remove. see https://github.com/cylc/cylc-flow/issues/5610
-        String,
-        description='Obsolete, do not use.',
     )
     messages = graphene.List(
         String,
@@ -1012,6 +986,14 @@ class Output(ObjectType):
     message = String()
     satisfied = Boolean()
     time = Float()
+
+
+class OutputLabel(String):
+    """Task output, e.g. "succeeded"."""
+
+
+class PrerequisiteString(String):
+    """A task prerequisite, e.g. "2040/foo:succeeded"."""
 
 
 class XTrigger(ObjectType):
@@ -2106,27 +2088,33 @@ class Remove(Mutation, TaskMutation):
         resolver = partial(mutator, command='remove_tasks')
 
 
-class SetOutputs(Mutation, TaskMutation):
+class SetPrereqsAndOutputs(Mutation, TaskMutation):
     class Meta:
-        description = sstrip('''
-            Artificially mark task outputs as completed.
+        description = sstrip("""
+            Set task prerequisites or outputs.
 
-            This allows you to manually intervene with Cylc's scheduling
-            algorithm by artificially satisfying outputs of tasks.
+            By default, set all required outputs for target task(s).
 
-            By default this makes tasks appear as if they succeeded.
+            Setting prerequisites contributes to the task's readiness to run.
 
-            Valid for: paused, running workflows.
-        ''')
-        resolver = partial(mutator, command='force_spawn_children')
+            Setting outputs contributes to the task's completion, sets the
+            corresponding prerequisites of child tasks, and sets any implied
+            outputs:
+             - ``started`` implies ``submitted``.
+             - ``succeeded`` and ``failed`` imply ``started``.
+             - custom outputs and ``expired`` do not imply any other outputs.
+        """)
+        resolver = partial(mutator, command='set')
 
-    class Arguments(TaskMutation.Arguments):
+    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
         outputs = graphene.List(
-            String,
-            default_value=[TASK_OUTPUT_SUCCEEDED],
-            description='List of task outputs to satisfy.'
+            OutputLabel,
+            description='List of task outputs to set complete.'
         )
-        flow_num = Int()
+        prerequisites = graphene.List(
+            PrerequisiteString,
+            description='List of task prerequisites to set satisfied.'
+        )
 
 
 class Trigger(Mutation, TaskMutation):
@@ -2186,7 +2174,7 @@ class Mutations(ObjectType):
     poll = _mut_field(Poll)
     release = _mut_field(Release)
     remove = _mut_field(Remove)
-    set_outputs = _mut_field(SetOutputs)
+    set = _mut_field(SetPrereqsAndOutputs)  # noqa A003
     trigger = _mut_field(Trigger)
 
     # job actions

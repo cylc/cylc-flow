@@ -17,13 +17,15 @@
 
 
 set -eu
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../../"
 
-for FILE in $(echo ../../cylc/flow/etc/tutorial/*/.validate) ; do
-    echo "running $FILE"
-    (
-        cd "$(dirname "$FILE")"
-        ./.validate
-    )
+for DIR in tutorial examples; do
+    echo "# Running tests for: $DIR"
+    for FILE in $(echo "cylc/flow/etc/$DIR/"*/.validate); do
+        echo "## Running test: $FILE"
+        (
+            cd "$(dirname "$FILE")"
+            ./.validate
+        )
+    done
 done
-
