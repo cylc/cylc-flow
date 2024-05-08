@@ -2103,6 +2103,8 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
              - ``started`` implies ``submitted``.
              - ``succeeded`` and ``failed`` imply ``started``.
              - custom outputs and ``expired`` do not imply any other outputs.
+
+            Valid for: paused, running, stopping workflows.
         """)
         resolver = partial(mutator, command='set')
 
