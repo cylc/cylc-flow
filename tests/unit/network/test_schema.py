@@ -16,16 +16,20 @@
 
 from dataclasses import dataclass
 from inspect import isclass
+import re
 
+import graphene
 import pytest
 
 from cylc.flow.cfgspec.workflow import SPEC as WORKFLOW_SPEC
 from cylc.flow.network.schema import (
     RUNTIME_FIELD_TO_CFG_MAP,
+    Mutations,
     Runtime,
     sort_elements,
     SortArgs,
 )
+from cylc.flow.workflow_status import WorkflowStatus
 
 
 @dataclass
@@ -99,3 +103,23 @@ def test_runtime_field_to_cfg_map(field_name: str):
     cfg_name = RUNTIME_FIELD_TO_CFG_MAP[field_name]
     assert field_name in Runtime.__dict__
     assert WORKFLOW_SPEC.get('runtime', '__MANY__', cfg_name)
+
+
+@pytest.mark.parametrize('mutation', (
+    pytest.param(attr, id=name)
+    for name, attr in Mutations.__dict__.items()
+    if isinstance(attr, graphene.Field)
+))
+def test_mutations_valid_for(mutation):
+    """Check that all mutations have a "Valid for" in their description.
+
+    This is needed by the UI to disable mutations that are not valid for the
+    workflow state.
+    """
+    match = re.search(
+        r'Valid for:\s(.*)\sworkflows.', mutation.description
+    )
+    assert match
+    valid_states = set(match.group(1).split(', '))
+    assert valid_states
+    assert not valid_states.difference(i.value for i in WorkflowStatus)
