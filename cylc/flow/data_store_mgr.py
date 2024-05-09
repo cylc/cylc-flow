@@ -1972,10 +1972,13 @@ class DataStoreMgr:
                     node = tp_added[tp_id]
                 else:
                     continue
-                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
+                update_node = tp_updated[tp_id]
+                for j_id in list(node.jobs) + list(update_node.jobs):
                     if j_id in j_updated:
                         del j_updated[j_id]
-                del tp_updated[tp_id]
+                self.n_window_edges.difference_update(update_node.edges)
+                self.deltas[EDGES].pruned.extend(update_node.edges)
+                del update_node
         self.pruned_task_proxies.clear()
 
     def update_family_proxies(self):
