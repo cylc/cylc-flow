@@ -1978,7 +1978,6 @@ class DataStoreMgr:
                         del j_updated[j_id]
                 self.n_window_edges.difference_update(update_node.edges)
                 self.deltas[EDGES].pruned.extend(update_node.edges)
-                del update_node
         self.pruned_task_proxies.clear()
 
     def update_family_proxies(self):
