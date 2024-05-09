@@ -1972,7 +1972,7 @@ class DataStoreMgr:
                     node = tp_added[tp_id]
                 else:
                     continue
-                update_node = tp_updated[tp_id]
+                update_node = tp_updated.pop(tp_id)
                 for j_id in list(node.jobs) + list(update_node.jobs):
                     if j_id in j_updated:
                         del j_updated[j_id]
