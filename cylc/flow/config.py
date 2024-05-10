@@ -217,7 +217,8 @@ class WorkflowConfig:
         run_dir: Optional[str] = None,
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
-        share_dir: Optional[str] = None
+        share_dir: Optional[str] = None,
+        force_compat_mode: Optional[bool] = False,
     ) -> None:
         """
         Initialize the workflow config object.
@@ -226,8 +227,11 @@ class WorkflowConfig:
             workflow: workflow ID
             fpath: workflow config file path
             options: CLI options
+            force_compat_mode:
+                Override compatibility mode checks.
+                https://github.com/cylc/cylc-rose/issues/319
         """
-        check_deprecation(Path(fpath))
+        check_deprecation(Path(fpath), force_compat_mode=force_compat_mode)
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
@@ -876,7 +880,7 @@ class WorkflowConfig:
             )
         # Allow implicit tasks in back-compat mode unless rose-suite.conf
         # present (to maintain compat with Rose 2019)
-        elif not (self.fpath.parent / "rose-suite.conf").is_file():
+        elif not (self.fdir / "rose-suite.conf").is_file():
             LOG.debug(msg)
             return
 

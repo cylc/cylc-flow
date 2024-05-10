@@ -779,7 +779,7 @@ def get_workflow_title(id_):
     return title
 
 
-def check_deprecation(path, warn=True):
+def check_deprecation(path, warn=True, force_compat_mode=False):
     """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
 
     Path can point to config file or parent directory (i.e. workflow name).
@@ -790,6 +790,7 @@ def check_deprecation(path, warn=True):
         and (
             path.resolve().name == WorkflowFiles.SUITE_RC
             or (path / WorkflowFiles.SUITE_RC).is_file()
+            or force_compat_mode
         )
     ):
         cylc.flow.flags.cylc7_back_compat = True
