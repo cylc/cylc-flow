@@ -783,6 +783,15 @@ def check_deprecation(path, warn=True, force_compat_mode=False):
     """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
 
     Path can point to config file or parent directory (i.e. workflow name).
+
+    Args:
+        warn:
+            If True, then a warning will be logged when compatibility
+            mode is activated.
+        force_compat_mode:
+            If True, forces Cylc to use compatibility mode
+            overriding compatibility mode checks.
+            See https://github.com/cylc/cylc-rose/issues/319
     """
     if (
         # Don't want to log if it's already been set True.

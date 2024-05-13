@@ -228,8 +228,10 @@ class WorkflowConfig:
             fpath: workflow config file path
             options: CLI options
             force_compat_mode:
-                Override compatibility mode checks.
-                https://github.com/cylc/cylc-rose/issues/319
+                If True, forces Cylc to use compatibility mode
+                overriding compatibility mode checks.
+                See https://github.com/cylc/cylc-rose/issues/319
+
         """
         check_deprecation(Path(fpath), force_compat_mode=force_compat_mode)
         self.mem_log = mem_log_func
