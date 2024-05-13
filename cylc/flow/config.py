@@ -218,7 +218,7 @@ class WorkflowConfig:
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None,
-        force_compat_mode: Optional[bool] = False,
+        force_compat_mode: bool = False,
     ) -> None:
         """
         Initialize the workflow config object.
