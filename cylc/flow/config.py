@@ -880,7 +880,7 @@ class WorkflowConfig:
             )
         # Allow implicit tasks in back-compat mode unless rose-suite.conf
         # present (to maintain compat with Rose 2019)
-        elif not (self.fdir / "rose-suite.conf").is_file():
+        elif not (self.fpath.parent / "rose-suite.conf").is_file():
             LOG.debug(msg)
             return
 
