@@ -31,6 +31,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 from cylc.flow.exceptions import (
+    GraphParseError,
     PointParsingError,
     InputError,
     WorkflowConfigError,
@@ -1743,3 +1744,20 @@ def test_cylc_env_at_parsing(
             assert var in cylc_env
         else:
             assert var not in cylc_env
+
+
+def test_force_workflow_compat_mode(tmp_path):
+    fpath = (tmp_path / 'flow.cylc')
+    from textwrap import dedent
+    fpath.write_text(dedent("""
+        [scheduler]
+            allow implicit tasks = true
+        [scheduling]
+            [[graph]]
+                R1 = a:succeeded | a:failed => b
+    """))
+    # It fails without compat mode:
+    with pytest.raises(GraphParseError, match='Opposite outputs'):
+        WorkflowConfig('foo', str(fpath), {})
+    # It succeeds with compat mode:
+    WorkflowConfig('foo', str(fpath), {}, force_compat_mode=True)

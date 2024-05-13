@@ -225,7 +225,8 @@ class WorkflowConfig:
         run_dir: Optional[str] = None,
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
-        share_dir: Optional[str] = None
+        share_dir: Optional[str] = None,
+        force_compat_mode: bool = False,
     ) -> None:
         """
         Initialize the workflow config object.
@@ -234,8 +235,13 @@ class WorkflowConfig:
             workflow: workflow ID
             fpath: workflow config file path
             options: CLI options
+            force_compat_mode:
+                If True, forces Cylc to use compatibility mode
+                overriding compatibility mode checks.
+                See https://github.com/cylc/cylc-rose/issues/319
+
         """
-        check_deprecation(Path(fpath))
+        check_deprecation(Path(fpath), force_compat_mode=force_compat_mode)
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
