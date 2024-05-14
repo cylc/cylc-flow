@@ -25,6 +25,14 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow import flags
+
+
+@pytest.fixture(autouse=True)
+def test_reset():
+    """Reset global state before all tests."""
+    flags.verbosity = 0
+    flags.cylc7_back_compat = False
 
 
 @pytest.fixture(scope='module')
