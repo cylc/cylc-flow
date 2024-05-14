@@ -27,6 +27,13 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
 
+@pytest.fixture(autouse=True)
+def test_reset(monkeypatch):
+    """Reset global state before all tests."""
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 0)
+    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', False)
+
+
 @pytest.fixture(scope='module')
 def mod_monkeypatch():
     """A module-scoped version of the monkeypatch fixture."""
