@@ -190,10 +190,7 @@ def vro_cli(parser: COP, options: 'Values', workflow_id: str):
             unparsed_wid,
             options,
             compound_script_opts=VR_OPTIONS,
-            script_opts=(
-                PLAY_OPTIONS + CYLC_ROSE_OPTIONS
-                + parser.get_std_options()
-            ),
+            script_opts=(*PLAY_OPTIONS, *parser.get_std_options()),
             source='',  # Intentionally blank
         )
         log_subcommand(*sys.argv[1:])
