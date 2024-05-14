@@ -322,7 +322,7 @@ def test_combine_options(inputs, expect):
     'argv_before, kwargs, expect',
     [
         param(
-            'vip myworkflow -f something -b something_else --baz'.split(),
+            'vip myworkflow -f something -b something_else --baz',
             {
                 'script_name': 'play',
                 'workflow_id': 'myworkflow',
@@ -335,11 +335,11 @@ def test_combine_options(inputs, expect):
                     OptionSettings(['--foo', '-f']),
                 ]
             },
-            'play myworkflow -f something'.split(),
+            'play myworkflow -f something',
             id='remove some opts'
         ),
         param(
-            'vip myworkflow'.split(),
+            'vip myworkflow',
             {
                 'script_name': 'play',
                 'workflow_id': 'myworkflow',
@@ -350,11 +350,11 @@ def test_combine_options(inputs, expect):
                 ],
                 'script_opts': []
             },
-            'play myworkflow'.split(),
+            'play myworkflow',
             id='no opts to keep'
         ),
         param(
-            'vip ./myworkflow --foo something'.split(),
+            'vip ./myworkflow --foo something',
             {
                 'script_name': 'play',
                 'workflow_id': 'myworkflow',
@@ -365,11 +365,11 @@ def test_combine_options(inputs, expect):
                 ],
                 'source': './myworkflow',
             },
-            'play --foo something myworkflow'.split(),
+            'play --foo something myworkflow',
             id='replace path'
         ),
         param(
-            'vip --foo something'.split(),
+            'vip --foo something',
             {
                 'script_name': 'play',
                 'workflow_id': 'myworkflow',
@@ -380,11 +380,11 @@ def test_combine_options(inputs, expect):
                 ],
                 'source': './myworkflow',
             },
-            'play --foo something myworkflow'.split(),
+            'play --foo something myworkflow',
             id='no path given'
         ),
         param(
-            'vip -n myworkflow --no-run-name'.split(),
+            'vip -n myworkflow --no-run-name',
             {
                 'script_name': 'play',
                 'workflow_id': 'myworkflow',
@@ -396,17 +396,22 @@ def test_combine_options(inputs, expect):
                     OptionSettings(['--not-used']),
                 ]
             },
-            'play myworkflow'.split(),
+            'play myworkflow',
             id='workflow-id-added'
         ),
     ]
 )
-def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
+def test_cleanup_sysargv(
+    monkeypatch: pytest.MonkeyPatch,
+    argv_before: str,
+    kwargs: dict,
+    expect: str
+):
     """It replaces the contents of sysargv with Cylc Play argv items.
     """
     # Fake up sys.argv: for this test.
     dummy_cylc_path = ['/pathto/my/cylc/bin/cylc']
-    monkeypatch.setattr(sys, 'argv', dummy_cylc_path + argv_before)
+    monkeypatch.setattr(sys, 'argv', dummy_cylc_path + argv_before.split())
     # Fake options too:
     opts = SimpleNamespace(**{
         i.args[0].replace('--', ''): i for i in kwargs['compound_script_opts']
@@ -418,7 +423,7 @@ def test_cleanup_sysargv(monkeypatch, argv_before, kwargs, expect):
 
     # Test the script:
     cleanup_sysargv(**kwargs)
-    assert sys.argv == dummy_cylc_path + expect
+    assert sys.argv == dummy_cylc_path + expect.split()
 
 
 @pytest.mark.parametrize(
