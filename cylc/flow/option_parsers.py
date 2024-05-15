@@ -28,7 +28,7 @@ import os
 import re
 import sys
 from textwrap import dedent
-from typing import Any, Dict, Iterable, Optional, List, Tuple
+from typing import Any, Dict, Iterable, Optional, List, Set, Tuple
 
 from ansimarkup import (
     parse as cparse,
@@ -67,7 +67,13 @@ class OptionSettings():
     cylc.flow.option_parsers(thismodule).combine_options_pair.
     """
 
-    def __init__(self, argslist, sources=None, useif=None, **kwargs):
+    def __init__(
+        self,
+        argslist: List[str],
+        sources: Optional[Set[str]] = None,
+        useif: str = '',
+        **kwargs
+    ):
         """Init function:
 
         Args:
@@ -76,13 +82,10 @@ class OptionSettings():
             useif: badge for use by Cylc optionparser.
             **kwargs: kwargs for optparse.option.
         """
-        self.kwargs: Dict[str, str] = {}
-        self.sources: set = sources if sources is not None else set()
-        self.useif: str = useif if useif is not None else ''
-
-        self.args: list[str] = argslist
-        for kwarg, value in kwargs.items():
-            self.kwargs.update({kwarg: value})
+        self.args: List[str] = argslist
+        self.kwargs: Dict[str, Any] = kwargs
+        self.sources: Set[str] = sources if sources is not None else set()
+        self.useif: str = useif
 
     def __eq__(self, other):
         """Args and Kwargs, but not other props equal.
@@ -768,7 +771,7 @@ def cleanup_sysargv(
     # Get a list of unwanted args:
     unwanted_compound: List[str] = []
     unwanted_simple: List[str] = []
-    for unwanted_dest in (set(options.__dict__)) - set(script_opts_by_dest):
+    for unwanted_dest in set(options.__dict__) - set(script_opts_by_dest):
         for unwanted_arg in compound_opts_by_dest[unwanted_dest].args:
             if (
                 compound_opts_by_dest[unwanted_dest].kwargs.get('action', None)
