@@ -22,13 +22,12 @@ from typing import TYPE_CHECKING
 import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import (
+from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+    TASK_OUTPUT_FAILED,
+    SORT_ORDERS
 )
-from cylc.flow.task_outputs import SORT_ORDERS
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -74,7 +73,7 @@ def generate_graph_children(tdef, point):
 
 
 def generate_graph_parents(tdef, point, taskdefs):
-    """Determine concrent graph parents of task tdef at point.
+    """Determine concrete graph parents of task tdef at point.
 
     Infer parents be reversing upstream triggers that lead to point/task.
     """
@@ -178,6 +177,13 @@ class TaskDef:
         # optional/required is None until defined by the graph
         self.outputs[output] = (message, None)
 
+    def get_output(self, message):
+        """Return output name corresponding to task message."""
+        for name, (msg, _) in self.outputs.items():
+            if msg == message:
+                return name
+        raise KeyError(f"Unknown task output message: {message}")
+
     def _add_std_outputs(self):
         """Add the standard outputs."""
         # optional/required is None until defined by the graph
@@ -186,21 +192,16 @@ class TaskDef:
 
     def set_required_output(self, output, required):
         """Set outputs to required or optional."""
-        # (Note outputs and associated messages already defined.)
+        # (Note outputs and associated messages are already defined.)
         message, _ = self.outputs[output]
         self.outputs[output] = (message, required)
 
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
-
         # If :succeed or :fail not set, assume success is required.
-        # Unless submit (and submit-fail) is optional (don't stall
-        # because of missing succeed if submit is optional).
         if (
             self.outputs[TASK_OUTPUT_SUCCEEDED][1] is None
             and self.outputs[TASK_OUTPUT_FAILED][1] is None
-            and self.outputs[TASK_OUTPUT_SUBMITTED][1] is not False
-            and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
 

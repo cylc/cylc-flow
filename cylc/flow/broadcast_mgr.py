@@ -30,11 +30,12 @@ from cylc.flow.broadcast_report import (
 from cylc.flow.cfgspec.workflow import SPEC
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.parsec.util import listjoin
+from cylc.flow.parsec.util import listjoin, pdeepcopy, poverride
 from cylc.flow.parsec.validate import BroadcastConfigValidator
 
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
+    from cylc.flow.task_proxy import TaskProxy
 
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
@@ -178,6 +179,18 @@ class BroadcastMgr:
                 if namespace in self.broadcasts[cycle]:
                     addict(ret, self.broadcasts[cycle][namespace])
         return ret
+
+    def get_updated_rtconfig(self, itask: 'TaskProxy') -> dict:
+        """Retrieve updated rtconfig for a single task proxy"""
+        overrides = self.get_broadcast(
+            itask.tokens
+        )
+        if overrides:
+            rtconfig = pdeepcopy(itask.tdef.rtconfig)
+            poverride(rtconfig, overrides, prepend=True)
+        else:
+            rtconfig = itask.tdef.rtconfig
+        return rtconfig
 
     def load_db_broadcast_states(self, row_idx, row):
         """Load broadcast variables from runtime DB broadcast states row."""

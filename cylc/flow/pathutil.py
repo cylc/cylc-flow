@@ -261,18 +261,18 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
             # correct symlink already exists
             return False
         # symlink name is in use by a physical file or directory
-        # log and return
-        LOG.debug(
-            f"Unable to create symlink to {target}. "
-            f"The path {path} already exists.")
+        LOG.warning(
+            f"Path {path} already exists. Cannot create symlink to {target}."
+        )
         return False
     elif path.is_symlink():
         # remove a bad symlink.
         try:
             path.unlink()
-        except OSError:
+        except OSError as exc:
             raise WorkflowFilesError(
-                f"Error when symlinking. Failed to unlink bad symlink {path}.")
+                f"Failed to remove broken symlink {path}\n{exc}"
+            )
     try:
         target.mkdir(parents=True, exist_ok=False)
     except FileExistsError:

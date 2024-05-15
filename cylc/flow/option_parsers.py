@@ -26,24 +26,29 @@ from optparse import (
 )
 import os
 import re
+import sys
+from textwrap import dedent
+from typing import Any, Dict, Iterable, Optional, List, Set, Tuple
+
 from ansimarkup import (
     parse as cparse,
     strip as cstrip
 )
 
-import sys
-from textwrap import dedent
-from typing import Any, Dict, Iterable, Optional, List, Set, Tuple, Union
-
 from cylc.flow import LOG
-from cylc.flow.terminal import supports_color, DIM
+from cylc.flow.terminal import should_use_color, DIM
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
     setup_segregated_log_streams,
 )
+from cylc.flow.log_level import (
+    env_to_verbosity,
+    verbosity_to_log_level
+)
 
 WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
+OPT_WORKFLOW_ID_ARG_DOC = ('[WORKFLOW]', 'Workflow ID')
 WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
 WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
@@ -180,99 +185,6 @@ def format_help_headings(string):
     )
 
 
-def verbosity_to_log_level(verb: int) -> int:
-    """Convert Cylc verbosity to log severity level."""
-    if verb < 0:
-        return logging.WARNING
-    if verb > 0:
-        return logging.DEBUG
-    return logging.INFO
-
-
-def log_level_to_verbosity(lvl: int) -> int:
-    """Convert log severity level to Cylc verbosity.
-
-    Examples:
-        >>> log_level_to_verbosity(logging.NOTSET)
-        2
-        >>> log_level_to_verbosity(logging.DEBUG)
-        2
-        >>> log_level_to_verbosity(logging.INFO)
-        0
-        >>> log_level_to_verbosity(logging.WARNING)
-        -1
-        >>> log_level_to_verbosity(logging.ERROR)
-        -1
-    """
-    if lvl <= logging.DEBUG:
-        return 2
-    if lvl < logging.INFO:
-        return 1
-    if lvl == logging.INFO:
-        return 0
-    return -1
-
-
-def verbosity_to_opts(verb: int) -> List[str]:
-    """Convert Cylc verbosity to the CLI opts required to replicate it.
-
-    Examples:
-        >>> verbosity_to_opts(0)
-        []
-        >>> verbosity_to_opts(-2)
-        ['-q', '-q']
-        >>> verbosity_to_opts(2)
-        ['-v', '-v']
-
-    """
-    return [
-        '-q'
-        for _ in range(verb, 0)
-    ] + [
-        '-v'
-        for _ in range(0, verb)
-    ]
-
-
-def verbosity_to_env(verb: int) -> Dict[str, str]:
-    """Convert Cylc verbosity to the env vars required to replicate it.
-
-    Examples:
-        >>> verbosity_to_env(0)
-        {'CYLC_VERBOSE': 'false', 'CYLC_DEBUG': 'false'}
-        >>> verbosity_to_env(1)
-        {'CYLC_VERBOSE': 'true', 'CYLC_DEBUG': 'false'}
-        >>> verbosity_to_env(2)
-        {'CYLC_VERBOSE': 'true', 'CYLC_DEBUG': 'true'}
-
-    """
-    return {
-        'CYLC_VERBOSE': str((verb > 0)).lower(),
-        'CYLC_DEBUG': str((verb > 1)).lower(),
-    }
-
-
-def env_to_verbosity(env: Union[Dict, os._Environ]) -> int:
-    """Extract verbosity from environment variables.
-
-    Examples:
-        >>> env_to_verbosity({})
-        0
-        >>> env_to_verbosity({'CYLC_VERBOSE': 'true'})
-        1
-        >>> env_to_verbosity({'CYLC_DEBUG': 'true'})
-        2
-        >>> env_to_verbosity({'CYLC_DEBUG': 'TRUE'})
-        2
-
-    """
-    return (
-        2 if env.get('CYLC_DEBUG', '').lower() == 'true'
-        else 1 if env.get('CYLC_VERBOSE', '').lower() == 'true'
-        else 0
-    )
-
-
 class CylcOption(Option):
     """Optparse option which adds a decrement action."""
 
@@ -287,7 +199,7 @@ class CylcOption(Option):
 
 
 class CylcHelpFormatter(IndentedHelpFormatter):
-    def _format(self, text):
+    def _format(self, text: str) -> str:
         """Format help (usage) text on the fly to handle coloring.
 
         Help is printed to the terminal before color initialization for general
@@ -299,16 +211,7 @@ class CylcHelpFormatter(IndentedHelpFormatter):
           - Strip any hardwired color tags
 
         """
-        if (
-            hasattr(self.parser.values, 'color')
-            and (
-                self.parser.values.color == "always"
-                or (
-                    self.parser.values.color == "auto"
-                    and supports_color()
-                )
-            )
-        ):
+        if should_use_color(self.parser.values):
             # Add color formatting to examples text.
             text = format_shell_examples(
                 format_help_headings(text)
@@ -330,41 +233,41 @@ class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
-    MULTITASK_USAGE = cparse(dedent('''
+    MULTITASK_USAGE = dedent('''
         This command can operate on multiple tasks. Globs and selectors may
         be used to match active tasks:
             Multiple Tasks:
-                <dim># Operate on two tasks</dim>
+                # Operate on two tasks
                 workflow //cycle-1/task-1 //cycle-2/task-2
 
             Globs (note: globs should be quoted and only match active tasks):
-                <dim># Match any active task "foo" in all cycles</dim>
+                # Match any active task "foo" in all cycles
                 '//*/foo'
 
-                <dim># Match the tasks "foo-1" and "foo-2"</dim>
+                # Match the tasks "foo-1" and "foo-2"
                 '//*/foo-[12]'
 
             Selectors (note: selectors only match active tasks):
-                <dim># match all failed tasks in cycle "1"</dim>
+                # match all failed tasks in cycle "1"
                 //1:failed
 
             See `cylc help id` for more details.
-    '''))
-    MULTIWORKFLOW_USAGE = cparse(dedent('''
+    ''')
+    MULTIWORKFLOW_USAGE = dedent('''
         This command can operate on multiple workflows. Globs may be used:
             Multiple Workflows:
-                <dim># Operate on two workflows</dim>
+                # Operate on two workflows
                 workflow-1 workflow-2
 
             Globs (note: globs should be quoted):
-                <dim># Match all workflows</dim>
+                # Match all workflows
                 '*'
 
-                <dim># Match the workflows foo-1, foo-2</dim>
+                # Match the workflows foo-1, foo-2
                 'foo-[12]'
 
             See `cylc help id` for more details.
-    '''))
+    ''')
 
     CAN_BE_USED_MULTIPLE = (
         " This option can be used multiple times on the command line.")
@@ -391,7 +294,7 @@ class CylcOptionParser(OptionParser):
             action='store_false', dest='log_timestamp',
             default=True, useif='all'),
         OptionSettings(
-            ['--color', '--color'], metavar='WHEN', action='store',
+            ['--color', '--colour'], metavar='WHEN', action='store',
             default='auto', choices=['never', 'auto', 'always'],
             help=(
                 "When to use color/bold text in terminal output."
@@ -423,6 +326,7 @@ class CylcOptionParser(OptionParser):
         OptionSettings(
             ['-z', '--set-list', '--template-list'],
             metavar='NAME=VALUE1,VALUE2,...',
+            # NOTE: deliberate non-breaking spaces in help text:
             help=(
                 'A more convenient alternative to --set for defining a list'
                 ' of strings. E.G.'
@@ -795,6 +699,7 @@ def add_sources_to_helps(options, modify=None):
             cylc rose options apply to.
     """
     modify = {} if modify is None else modify
+    cformat = cparse if should_use_color(options) else cstrip
     for option in options:
         if hasattr(option, 'sources'):
             sources = list(option.sources)
@@ -803,9 +708,10 @@ def add_sources_to_helps(options, modify=None):
                     sources.append(sub)
                     sources.remove(match)
 
-            option.kwargs['help'] = cparse(
+            option.kwargs['help'] = cformat(
                 f'<cyan>[{", ".join(sources)}]</cyan>'
-                f' {option.kwargs["help"]}')
+                f' {option.kwargs["help"]}'
+            )
     return options
 
 
@@ -934,4 +840,5 @@ def log_subcommand(*args):
     # Args might be posixpath or similar.
     args = [str(a) for a in args]
     print(cparse(
-        f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'))
+        f'<b><cyan>$ cylc {" ".join(args)}</cyan></b>'
+    ))

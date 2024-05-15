@@ -127,11 +127,13 @@ message PbRuntime {
     optional string directives = 15;
     optional string environment = 16;
     optional string outputs = 17;
+    optional string completion = 18;
 }
 
 
 // Nodes
 message PbJob {
+    reserved 29;  /* see https://github.com/cylc/cylc-flow/pull/5672 */
     optional string stamp = 1;
     optional string id = 2;
     optional int32 submit_num = 3;
@@ -145,7 +147,6 @@ message PbJob {
     optional float execution_time_limit = 14;
     optional string platform = 15;
     optional string job_log_dir = 17;
-    repeated string extra_logs = 29;
     optional string name = 30; /* filter item */
     optional string cycle_point = 31; /* filter item */
     repeated string messages = 32;

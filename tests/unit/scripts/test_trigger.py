@@ -18,12 +18,17 @@
 
 from optparse import Values
 import pytest
-from typing import Iterable, Optional, Tuple, Type
+from typing import Optional, Tuple, Type
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
-from cylc.flow.scripts.trigger import get_option_parser, _validate
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NEW,
+    FLOW_NONE,
+    validate_flow_opts
+)
+from cylc.flow.scripts.trigger import get_option_parser
 
 
 Opts = Options(get_option_parser())
@@ -35,6 +40,13 @@ Opts = Options(get_option_parser())
         (
             Opts(
                 flow=[FLOW_ALL],
+                flow_wait=False
+            ),
+            None
+        ),
+        (
+            Opts(
+                flow=None,
                 flow_wait=False
             ),
             None
@@ -59,23 +71,12 @@ Opts = Options(get_option_parser())
         ),
         (
             Opts(
-                flow=[FLOW_ALL],
-                flow_wait=False,
-                flow_descr="the quick brown fox"
-            ),
-            (
-                InputError,
-                "Metadata is only for new flows"
-            )
-        ),
-        (
-            Opts(
                 flow=["cheese"],
                 flow_wait=False
             ),
             (
                 InputError,
-                "Flow values must be integer, 'all', 'new', or 'none'"
+                "Flow values must be an integer, or 'all', 'new', or 'none'"
             )
         ),
         (
@@ -117,7 +118,7 @@ def test_validate(
     if expected_err:
         err, msg = expected_err
         with pytest.raises(err) as exc:
-            _validate(opts)
+            validate_flow_opts(opts)
         assert msg in str(exc.value)
     else:
-        _validate(opts)
+        validate_flow_opts(opts)

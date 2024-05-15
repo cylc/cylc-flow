@@ -45,9 +45,9 @@
             )); then
                 # trigger 3/a in a new flow
                 cylc trigger --flow=new ${CYLC_WORKFLOW_ID}//3/a
-                cylc__job__poll_grep_workflow_log -E '3/a.*started'
+                cylc__job__poll_grep_workflow_log -E '3/a.*=> running'
                 # trigger 5/a in all flows
                 cylc trigger ${CYLC_WORKFLOW_ID}//5/a
-                cylc__job__poll_grep_workflow_log -E '5/a.*started'
+                cylc__job__poll_grep_workflow_log -E '5/a.*=> running'
             fi
        """

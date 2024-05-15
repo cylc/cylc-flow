@@ -37,21 +37,23 @@ title: (not given)
 description: (not given)
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 1 & 2 & (3 | (4 & 5)) & 0
-  + 	0 = 19991231T0000Z/f succeeded
-  + 	1 = 20000101T0000Z/a succeeded
-  + 	2 = 20000101T0000Z/b succeeded
-  + 	3 = 20000101T0000Z/c succeeded
-  + 	4 = 20000101T0000Z/d succeeded
-  + 	5 = 20000101T0000Z/e succeeded
-outputs: ('-': not completed)
-  - 20000101T0000Z/f expired
-  + 20000101T0000Z/f submitted
-  - 20000101T0000Z/f submit-failed
-  + 20000101T0000Z/f started
-  - 20000101T0000Z/f succeeded
-  - 20000101T0000Z/f failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 1 & 2 & (3 | (4 & 5)) & 0
+  ✓ 	0 = 19991231T0000Z/f succeeded
+  ✓ 	1 = 20000101T0000Z/a succeeded
+  ✓ 	2 = 20000101T0000Z/b succeeded
+  ✓ 	3 = 20000101T0000Z/c succeeded
+  ✓ 	4 = 20000101T0000Z/d succeeded
+  ✓ 	5 = 20000101T0000Z/e succeeded
+outputs: ('⨯': not completed)
+  ⨯ 20000101T0000Z/f expired
+  ✓ 20000101T0000Z/f submitted
+  ⨯ 20000101T0000Z/f submit-failed
+  ✓ 20000101T0000Z/f started
+  ⨯ 20000101T0000Z/f succeeded
+  ⨯ 20000101T0000Z/f failed
+output completion: incomplete
+  ⨯ ⦙  succeeded
 19991231T0000Z/f succeeded
 20000101T0000Z/a succeeded
 20000101T0000Z/b succeeded
@@ -62,21 +64,23 @@ title: (not given)
 description: (not given)
 URL: (not given)
 state: running
-prerequisites: ('-': not satisfied)
-  + 1 & 2 & (3 | (4 & 5)) & 0
-  + 	0 = 20000101T0000Z/f succeeded
-  + 	1 = 20000102T0000Z/a succeeded
-  + 	2 = 20000102T0000Z/b succeeded
-  + 	3 = 20000102T0000Z/c succeeded
-  + 	4 = 20000102T0000Z/d succeeded
-  + 	5 = 20000102T0000Z/e succeeded
-outputs: ('-': not completed)
-  - 20000102T0000Z/f expired
-  + 20000102T0000Z/f submitted
-  - 20000102T0000Z/f submit-failed
-  + 20000102T0000Z/f started
-  - 20000102T0000Z/f succeeded
-  - 20000102T0000Z/f failed
+prerequisites: ('⨯': not satisfied)
+  ✓ 1 & 2 & (3 | (4 & 5)) & 0
+  ✓ 	0 = 20000101T0000Z/f succeeded
+  ✓ 	1 = 20000102T0000Z/a succeeded
+  ✓ 	2 = 20000102T0000Z/b succeeded
+  ✓ 	3 = 20000102T0000Z/c succeeded
+  ✓ 	4 = 20000102T0000Z/d succeeded
+  ✓ 	5 = 20000102T0000Z/e succeeded
+outputs: ('⨯': not completed)
+  ⨯ 20000102T0000Z/f expired
+  ✓ 20000102T0000Z/f submitted
+  ⨯ 20000102T0000Z/f submit-failed
+  ✓ 20000102T0000Z/f started
+  ⨯ 20000102T0000Z/f succeeded
+  ⨯ 20000102T0000Z/f failed
+output completion: incomplete
+  ⨯ ⦙  succeeded
 20000101T0000Z/f succeeded
 20000102T0000Z/a succeeded
 20000102T0000Z/b succeeded

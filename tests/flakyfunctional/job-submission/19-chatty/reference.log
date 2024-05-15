@@ -1,0 +1,22 @@
+1/starter -triggered off [] in flow 1
+1/nh2 -triggered off ['1/starter'] in flow 1
+1/nh3 -triggered off ['1/starter'] in flow 1
+1/nh1 -triggered off ['1/starter'] in flow 1
+1/nh5 -triggered off ['1/starter'] in flow 1
+1/nh0 -triggered off ['1/starter'] in flow 1
+1/nh7 -triggered off ['1/starter'] in flow 1
+1/nh9 -triggered off ['1/starter'] in flow 1
+1/nh4 -triggered off ['1/starter'] in flow 1
+1/nh6 -triggered off ['1/starter'] in flow 1
+1/nh8 -triggered off ['1/starter'] in flow 1
+1/h6 -triggered off ['1/starter'] in flow 1
+1/h7 -triggered off ['1/starter'] in flow 1
+1/h9 -triggered off ['1/starter'] in flow 1
+1/h1 -triggered off ['1/starter'] in flow 1
+1/h3 -triggered off ['1/starter'] in flow 1
+1/h5 -triggered off ['1/starter'] in flow 1
+1/h8 -triggered off ['1/starter'] in flow 1
+1/h0 -triggered off ['1/starter'] in flow 1
+1/h2 -triggered off ['1/starter'] in flow 1
+1/h4 -triggered off ['1/starter'] in flow 1
+1/stopper -triggered off ['1/nh0', '1/nh1', '1/nh2', '1/nh3', '1/nh4', '1/nh5', '1/nh6', '1/nh7', '1/nh8', '1/nh9'] in flow 1

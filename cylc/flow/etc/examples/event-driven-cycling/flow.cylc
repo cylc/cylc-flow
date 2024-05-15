@@ -1,0 +1,32 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    runahead limit = P5  # max number of cycles which can run in parallel
+    [[special tasks]]
+        # register the external trigger, it must be given a name,
+        # here, 'trigger' is used as a placeholder, the bash script will
+        # need to be updated if this is changed
+        external-trigger = configure("trigger")
+    [[graph]]
+        P1 = """
+            # use a "?" to prevent failures causing runahead stalls
+            configure? => run
+        """
+
+[runtime]
+    [[configure]]
+        # this task reads in the broadcast file the trigger wrote
+        # and broadcasts any variables set to all tasks in this cycle
+        script = """
+            echo "received new ext-trigger ID=$CYLC_EXT_TRIGGER_ID"
+            TRIGGER_FILE="${CYLC_WORKFLOW_RUN_DIR}/triggers/${CYLC_EXT_TRIGGER_ID}.cylc"
+            cylc broadcast "${CYLC_WORKFLOW_ID}" \
+                -p "${CYLC_TASK_CYCLE_POINT}" \
+                -F "${TRIGGER_FILE}"
+        """
+
+    [[run]]
+        # this task could be a sub-workflow
+        script = """
+            echo "Hello $WORLD!"
+        """

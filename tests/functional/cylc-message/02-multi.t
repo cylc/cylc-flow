@@ -57,19 +57,19 @@ sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 # Note: the continuation bit gets printed twice, because the message gets a
 # warning as being unhandled.
 cmp_ok 'sed.out' <<__LOG__
-DEBUG - [1/foo submitted job:01 flows:1] (received)started
-WARNING - [1/foo running job:01 flows:1] (received)Warn this
-INFO - [1/foo running job:01 flows:1] (received)Greeting
-WARNING - [1/foo running job:01 flows:1] (received)Warn that
-DEBUG - [1/foo running job:01 flows:1] (received)Remove stuffs such as
+DEBUG - [1/foo/01:submitted] (received)started
+WARNING - [1/foo/01:running] (received)Warn this
+INFO - [1/foo/01:running] (received)Greeting
+WARNING - [1/foo/01:running] (received)Warn that
+DEBUG - [1/foo/01:running] (received)Remove stuffs such as
 ${LOG_INDENT}badness
 ${LOG_INDENT}slowness
 ${LOG_INDENT}and other incorrectness.
 ${LOG_INDENT}badness
 ${LOG_INDENT}slowness
 ${LOG_INDENT}and other incorrectness.
-INFO - [1/foo running job:01 flows:1] (received)whatever
-DEBUG - [1/foo running job:01 flows:1] (received)succeeded
+INFO - [1/foo/01:running] (received)whatever
+DEBUG - [1/foo/01:running] (received)succeeded
 __LOG__
 
 purge

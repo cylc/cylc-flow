@@ -39,6 +39,7 @@ from jinja2 import (
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import Jinja2Error
+from cylc.flow.parsec.fileparse import get_cylc_env_vars
 
 TRACEBACK_LINENO = re.compile(
     r'\s+?File "(?P<file>.*)", line (?P<line>\d+), in .*template'
@@ -186,11 +187,15 @@ def jinja2environment(dir_=None):
                     envnsp[fname] = getattr(module, fname)
 
     # Import WORKFLOW HOST USER ENVIRONMENT into template:
-    # (usage e.g.: {{environ['HOME']}}).
+    # (Usage e.g.: {{environ['HOME']}}).
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
 
+    # Add `CYLC_` environment variables to the global namespace.
+    env.globals.update(
+        get_cylc_env_vars()
+    )
     return env
 
 
@@ -269,7 +274,6 @@ def jinja2process(
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
     # Convert unicode to plain str, ToDo - still needed for parsec?)
-
     try:
         env = jinja2environment(dir_)
         template = env.from_string('\n'.join(flines[1:]))
@@ -300,16 +304,5 @@ def jinja2process(
             lines=get_error_lines(fpath, flines),
         )
 
-    flow_config = []
-    for line in lines:
-        # Jinja2 leaves blank lines where source lines contain
-        # only Jinja2 code; this matters if line continuation
-        # markers are involved, so we remove blank lines here.
-        if not line.strip():
-            continue
-            # restoring newlines here is only necessary for display by
-        # the cylc view command:
-        # ##flow_config.append(line + '\n')
-        flow_config.append(line)
-
-    return flow_config
+    # Ignore blank lines (lone Jinja2 statements leave blank lines behind)
+    return [line for line in lines if line.strip()]

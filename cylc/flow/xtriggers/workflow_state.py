@@ -54,6 +54,7 @@ def workflow_state(
             The task status required for this xtrigger to be satisfied.
         message:
             The custom task output required for this xtrigger to be satisfied.
+
             .. note::
 
                This cannot be specified in conjunction with ``status``.

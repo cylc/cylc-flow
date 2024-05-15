@@ -1,0 +1,22 @@
+# Start this with --start-task=1800/a.
+# It should stall because x => b is off-flow.
+# The stall handler should unstall it by spawning x.
+# The log should show a clock-trigger check before x runs.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
+        stall timeout = PT10S
+        abort on stall timeout = True
+        stall handlers = "cylc set --pre=all %(workflow)s//1800/x"
+
+[scheduling]
+    initial cycle point = 1800
+    [[graph]]
+        R1 = """
+            a => b
+            @wall_clock => x => b
+        """
+[runtime]
+    [[a, b, x]]

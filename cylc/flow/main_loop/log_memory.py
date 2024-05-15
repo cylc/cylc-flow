@@ -108,9 +108,12 @@ def _compute_sizes(obj, min_size=10000):
         raise Exception('Cannot find __dict__ reference')
 
     return {
-        item.name.split(':')[0][4:]: item.size
-        for item in ref.refs
-        if item.size > min_size
+        **{
+            item.name.split(':')[0][4:]: item.size
+            for item in ref.refs
+            if item.size > min_size
+        },
+        **{'total': size.size},
     }
 
 

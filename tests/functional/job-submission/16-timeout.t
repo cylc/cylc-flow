@@ -53,6 +53,7 @@ __END__
 
 cylc workflow-state "${WORKFLOW_NAME}" > workflow-state.log
 
+# make sure foo submit failed and the stopper ran
 contains_ok workflow-state.log << __END__
 stopper, 1, succeeded
 foo, 1, submit-failed

@@ -21,9 +21,12 @@ from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
 from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
     TaskState,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
     TASK_STATUS_WAITING,
+    TASK_STATUS_RUNNING,
 )
 
 
@@ -79,58 +82,6 @@ def test_reset(state, is_held, should_reset):
         assert tstate.status == state
 
 
-@pytest.mark.parametrize(
-    'before,after,outputs',
-    [
-        (
-            (TASK_STATUS_WAITING, False),
-            (TASK_STATUS_SUCCEEDED, False),
-            ['submitted', 'started', 'succeeded']
-        ),
-        (
-            (TASK_STATUS_WAITING, False),
-            (TASK_STATUS_FAILED, False),
-            ['submitted', 'started', 'failed']
-        ),
-        (
-            (TASK_STATUS_WAITING, False),
-            (TASK_STATUS_FAILED, None),  # no change to is_held
-            ['submitted', 'started', 'failed']
-        ),
-        (
-            (TASK_STATUS_WAITING, False),
-            (None, False),  # no change to status
-            []
-        ),
-        # only reset task outputs if not setting task to held
-        # https://github.com/cylc/cylc-flow/pull/2116
-        (
-            (TASK_STATUS_WAITING, False),
-            (TASK_STATUS_FAILED, True),
-            []
-        ),
-        # only reset task outputs if not setting task to held
-        # https://github.com/cylc/cylc-flow/pull/2116
-        (
-            (TASK_STATUS_WAITING, False),
-            (TASK_STATUS_SUCCEEDED, True),
-            []
-        )
-    ]
-)
-def test_reset_outputs(before, after, outputs):
-    """Test that outputs are reset correctly on state changes."""
-    tdef = TaskDef('foo', {}, 'live', '123', '123')
-
-    orig_status, orig_is_held = before
-    new_status, new_is_held = after
-
-    tstate = TaskState(tdef, '123', orig_status, orig_is_held)
-    assert tstate.outputs.get_completed() == []
-    tstate.reset(status=new_status, is_held=new_is_held)
-    assert tstate.outputs.get_completed() == outputs
-
-
 def test_task_prereq_duplicates(set_cycling_type):
     """Test prerequisite duplicates from multiple recurrences are discarded."""
 
@@ -152,3 +103,19 @@ def test_task_prereq_duplicates(set_cycling_type):
     prereqs = [p.satisfied for p in tstate.prerequisites]
 
     assert prereqs == [{("1", "a", "succeeded"): False}]
+
+
+def test_task_state_order():
+    """Test is_gt and is_gte methods."""
+
+    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tstate = TaskState(tdef, IntegerPoint("1"), TASK_STATUS_SUBMITTED, False)
+
+    assert tstate.is_gt(TASK_STATUS_WAITING)
+    assert tstate.is_gt(TASK_STATUS_PREPARING)
+    assert tstate.is_gt(TASK_STATUS_SUBMIT_FAILED)
+    assert not tstate.is_gt(TASK_STATUS_SUBMITTED)
+    assert tstate.is_gte(TASK_STATUS_SUBMITTED)
+    assert not tstate.is_gt(TASK_STATUS_RUNNING)
+    assert not tstate.is_gte(TASK_STATUS_RUNNING)
+

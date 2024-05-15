@@ -16,11 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable, List
+from typing import Callable, List, Type, Union
 
 import pytest
 
-from cylc.flow.scripts.clean import CleanOptions, scan, run
+from cylc.flow.exceptions import InputError
+from cylc.flow.scripts.clean import (
+    CleanOptions, _main, parse_timeout, scan, run
+)
 
 
 async def test_scan(tmp_run_dir):
@@ -88,3 +91,40 @@ async def test_multi(tmp_run_dir: Callable, mute: List[str]):
     mute.clear()
     await run('*', opts=opts)
     assert mute == ['bar/pub/beer', 'baz/run1', 'foo']
+
+
+@pytest.mark.parametrize(
+    'timeout, expected',
+    [('100', '100'),
+     ('PT1M2S', '62'),
+     ('', ''),
+     ('oopsie', InputError),
+     (' ', InputError)]
+)
+def test_parse_timeout(
+    timeout: str,
+    expected: Union[str, Type[InputError]]
+):
+    """It should accept ISO 8601 format or number of seconds."""
+    opts = CleanOptions(remote_timeout=timeout)
+
+    if expected is InputError:
+        with pytest.raises(expected):
+            parse_timeout(opts)
+    else:
+        parse_timeout(opts)
+        assert opts.remote_timeout == expected
+
+
+@pytest.mark.parametrize(
+    'opts, expected_msg',
+    [
+        ({'local_only': True, 'remote_only': True}, "mutually exclusive"),
+        ({'remote_timeout': 'oops'}, "Invalid timeout"),
+    ]
+)
+def test_bad_user_input(opts: dict, expected_msg: str, mute):
+    """It should raise an InputError for bad user input."""
+    with pytest.raises(InputError) as exc_info:
+        _main(CleanOptions(**opts), 'blah')
+    assert expected_msg in str(exc_info.value)
