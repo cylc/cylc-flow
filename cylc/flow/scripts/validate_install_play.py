@@ -105,10 +105,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
         workflow_id,
         options,
         compound_script_opts=VIP_OPTIONS,
-        script_opts=(
-            PLAY_OPTIONS + CYLC_ROSE_OPTIONS
-            + parser.get_std_options()
-        ),
+        script_opts=(*PLAY_OPTIONS, *parser.get_std_options()),
         source=orig_source,
     )
 
