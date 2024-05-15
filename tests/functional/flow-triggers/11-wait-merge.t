@@ -30,14 +30,14 @@ QUERY="SELECT cycle, name,flow_nums,outputs FROM task_outputs;"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
 
 cmp_ok "${TEST_NAME}.stdout" <<\__END__
-1|a|[1]|["submitted", "started", "succeeded"]
-1|b|[1]|["submitted", "started", "succeeded"]
-1|a|[2]|["submitted", "started", "succeeded"]
-1|c|[2]|["submitted", "started", "x"]
-1|c|[1, 2]|["submitted", "started", "succeeded", "x"]
-1|x|[1, 2]|["submitted", "started", "succeeded"]
-1|d|[1, 2]|["submitted", "started", "succeeded"]
-1|b|[2]|["submitted", "started", "succeeded"]
+1|a|[1]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
+1|b|[1]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
+1|a|[2]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
+1|c|[2]|{"submitted": "submitted", "started": "started", "x": "x"}
+1|c|[1, 2]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded", "x": "x"}
+1|x|[1, 2]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
+1|d|[1, 2]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
+1|b|[2]|{"submitted": "submitted", "started": "started", "succeeded": "succeeded"}
 __END__
 
 purge

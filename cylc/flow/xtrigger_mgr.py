@@ -316,15 +316,10 @@ class XtriggerManager:
 
         try:
             func = get_xtrig_func(fname, fname, fdir)
-        except ImportError:
-            raise XtriggerConfigError(
-                label, f"xtrigger module '{fname}' not found",
-            )
-        except AttributeError:
-            raise XtriggerConfigError(
-                label, f"'{fname}' not found in xtrigger module '{fname}'",
-            )
-
+        except (ImportError, AttributeError) as exc:
+            # xtrigger module itself not found, or it has internal import
+            #    or attribute errors..
+            raise XtriggerConfigError(label, str(exc))
         if not callable(func):
             raise XtriggerConfigError(
                 label, f"'{fname}' not callable in xtrigger module '{fname}'",
@@ -360,6 +355,7 @@ class XtriggerManager:
             )
         except TypeError as exc:
             raise XtriggerConfigError(label, f"{sig_str}: {exc}")
+
         # Specific xtrigger.validate(), if available.
         XtriggerManager.try_xtrig_validate_func(
             label, fname, fdir, bound_args, sig_str
@@ -406,6 +402,7 @@ class XtriggerManager:
         """Call an xtrigger's `validate()` function if it is implemented.
 
         Raise XtriggerConfigError if validation fails.
+
         """
         try:
             xtrig_validate_func = get_xtrig_func(fname, 'validate', fdir)
@@ -416,7 +413,7 @@ class XtriggerManager:
             xtrig_validate_func(bound_args.arguments)
         except Exception as exc:  # Note: catch all errors
             raise XtriggerConfigError(
-                label, f"{signature_str} validation failed: {exc}"
+                label, f"{signature_str}\n{exc}"
             )
 
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
@@ -623,6 +620,9 @@ class XtriggerManager:
 
         Record satisfaction status and function results dict.
 
+        Log a warning if the xtrigger functions errors, to distinguish
+        errors from not-satisfied.
+
         Args:
             ctx (SubFuncContext): function context
         Raises:
@@ -630,15 +630,25 @@ class XtriggerManager:
         """
         sig = ctx.get_signature()
         self.active.remove(sig)
+
+        if ctx.ret_code != 0:
+            msg = f"ERROR in xtrigger {sig}"
+            if ctx.err:
+                msg += f"\n{ctx.err}"
+            LOG.warning(msg)
+
         try:
             satisfied, results = json.loads(ctx.out)
         except (ValueError, TypeError):
             return
+
         LOG.debug('%s: returned %s', sig, results)
-        if satisfied:
-            # Newly satisfied
-            self.data_store_mgr.delta_task_xtrigger(sig, True)
-            self.workflow_db_mgr.put_xtriggers({sig: results})
-            LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
-            self.sat_xtrig[sig] = results
-            self.do_housekeeping = True
+        if not satisfied:
+            return
+
+        # Newly satisfied
+        self.data_store_mgr.delta_task_xtrigger(sig, True)
+        self.workflow_db_mgr.put_xtriggers({sig: results})
+        LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
+        self.sat_xtrig[sig] = results
+        self.do_housekeeping = True

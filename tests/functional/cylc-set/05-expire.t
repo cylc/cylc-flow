@@ -36,7 +36,7 @@ sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
    "SELECT outputs FROM task_outputs WHERE name is \"bar\"" > db-bar.2
 
 cmp_ok "db-bar.2" - << __OUT__
-["expired"]
+{"expired": "expired"}
 __OUT__
 
 purge

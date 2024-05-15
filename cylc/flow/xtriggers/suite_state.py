@@ -73,11 +73,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
 
     """
     return workflow_state(
-        workflow=suite,
-        task=task,
-        point=point,
+        f"{suite}//{point}/{task}:{status}",
         offset=offset,
-        status=status,
-        message=message,
-        cylc_run_dir=cylc_run_dir
+        alt_cylc_run_dir=cylc_run_dir
     )

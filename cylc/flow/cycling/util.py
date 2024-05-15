@@ -18,14 +18,17 @@
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
 
 
-def add_offset(cycle_point, offset):
+def add_offset(cycle_point, offset, dmp_fmt=None):
     """Add a (positive or negative) offset to a cycle point.
 
     Return the result.
 
     """
     my_parser = TimePointParser()
-    my_target_point = my_parser.parse(cycle_point, dump_as_parsed=True)
+    if dmp_fmt is None:
+        my_target_point = my_parser.parse(cycle_point, dump_as_parsed=True)
+    else:
+        my_target_point = my_parser.parse(cycle_point, dump_format=dmp_fmt)
     my_offset_parser = DurationParser()
 
     oper = "+"

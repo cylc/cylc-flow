@@ -45,7 +45,7 @@ WORKFLOW_LOG="$(cylc cat-log -m 'p' "${WORKFLOW_NAME}")"
 grep_ok 'WARNING - inactivity timer timed out after PT20S' "${WORKFLOW_LOG}"
 
 # ... with 2016/foo succeeded and 2016/FAM waiting.
-cylc workflow-state -p '2016' "${WORKFLOW_NAME}" >'workflow_state.out'
+cylc workflow-state --old-format "${WORKFLOW_NAME}//2016" >'workflow_state.out'
 contains_ok 'workflow_state.out' << __END__
 foo, 2016, succeeded
 f3, 2016, waiting
@@ -56,12 +56,9 @@ __END__
 # Check broadcast of xtrigger outputs to dependent tasks.
 JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}//2015/f1")"
 contains_ok "${JOB_LOG}" << __END__
-    upstream_task="foo"
-    upstream_point="2015"
-    upstream_status="succeeded"
-    upstream_message="data ready"
-    upstream_offset="None"
     upstream_workflow="${WORKFLOW_NAME_UPSTREAM}"
+    upstream_task="2015/data_ready"
+    upstream_flow="1"
 __END__
 
 # Check broadcast of xtrigger outputs is recorded: 1) in the workflow log...
@@ -74,13 +71,11 @@ ${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM
 ${LOG_INDENT}+ [2015/f1] [environment]upstream_task=foo
 ${LOG_INDENT}+ [2015/f1] [environment]upstream_point=2015
 ${LOG_INDENT}+ [2015/f1] [environment]upstream_offset=None
-${LOG_INDENT}+ [2015/f1] [environment]upstream_status=succeeded
-${LOG_INDENT}+ [2015/f1] [environment]upstream_message=data ready
+${LOG_INDENT}+ [2015/f1] [environment]upstream_output=data_ready
 ${LOG_INDENT}- [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
 ${LOG_INDENT}- [2015/f1] [environment]upstream_task=foo
 ${LOG_INDENT}- [2015/f1] [environment]upstream_point=2015
-${LOG_INDENT}- [2015/f1] [environment]upstream_status=succeeded
-${LOG_INDENT}- [2015/f1] [environment]upstream_message=data ready
+${LOG_INDENT}- [2015/f1] [environment]upstream_output=data_ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
@@ -93,15 +88,13 @@ sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events
      ORDER BY time, change, point, namespace, key' >"${NAME}"
 contains_ok "${NAME}" << __DB_BROADCASTS__
-+|2015|f1|[environment]upstream_message|data ready
++|2015|f1|[environment]upstream_output|data_ready
 +|2015|f1|[environment]upstream_offset|None
 +|2015|f1|[environment]upstream_point|2015
-+|2015|f1|[environment]upstream_status|succeeded
 +|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
 +|2015|f1|[environment]upstream_task|foo
--|2015|f1|[environment]upstream_message|data ready
+-|2015|f1|[environment]upstream_output|data_ready
 -|2015|f1|[environment]upstream_point|2015
--|2015|f1|[environment]upstream_status|succeeded
 -|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
 -|2015|f1|[environment]upstream_task|foo
 __DB_BROADCASTS__

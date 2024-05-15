@@ -357,7 +357,7 @@ def test_xtrig_validation_wall_clock(
         }
     })
     with pytest.raises(WorkflowConfigError, match=(
-        r'\[@myxt\] wall_clock\(offset=PT7MH\) validation failed: '
+        r'\[@myxt\] wall_clock\(offset=PT7MH\)\n'
         r'Invalid offset: PT7MH'
     )):
         validate(id_)
@@ -392,7 +392,7 @@ def test_xtrig_validation_echo(
     })
     with pytest.raises(
         WorkflowConfigError,
-        match=r'echo.* Requires \'succeed=True/False\' arg'
+        match=r'Requires \'succeed=True/False\' arg'
     ):
         validate(id_)
 

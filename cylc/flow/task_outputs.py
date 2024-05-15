@@ -296,7 +296,6 @@ class TaskOutputs:
             expression string.
 
     """
-
     __slots__ = (
         "_message_to_trigger",
         "_message_to_compvar",
@@ -381,16 +380,13 @@ class TaskOutputs:
             return self._completed[message]
         return None
 
-    def iter_completed_messages(self) -> Iterator[str]:
-        """A generator that yields completed messages.
-
-        Yields:
-            message: A completed task message.
-
-        """
-        for message, is_completed in self._completed.items():
-            if is_completed:
-                yield message
+    def get_completed_outputs(self) -> Dict[str, str]:
+        """Return a dict {trigger: message} of completed outputs."""
+        return {
+            self._message_to_trigger[message]: message
+            for message, is_completed in self._completed.items()
+            if is_completed
+        }
 
     def __iter__(self) -> Iterator[Tuple[str, str, bool]]:
         """A generator that yields all outputs.

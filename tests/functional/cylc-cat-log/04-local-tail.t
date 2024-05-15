@@ -29,7 +29,7 @@ create_test_global_config "" "
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
-cylc workflow-state "${WORKFLOW_NAME}" -t 'foo' -p '1' -S 'start' --interval=1
+cylc workflow-state "${WORKFLOW_NAME}//1/foo:started" --interval=1
 sleep 1
 TEST_NAME=${TEST_NAME_BASE}-cat-log
 cylc cat-log "${WORKFLOW_NAME}//1/foo" -f o -m t > "${TEST_NAME}.out"

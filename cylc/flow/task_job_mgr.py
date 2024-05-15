@@ -111,7 +111,7 @@ from cylc.flow.wallclock import (
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
-from cylc.flow.util import serialise
+from cylc.flow.util import serialise_set
 
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
@@ -441,7 +441,7 @@ class TaskJobManager:
                 # Log and persist
                 LOG.debug(f"[{itask}] host={host}")
                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
-                    'flow_nums': serialise(itask.flow_nums),
+                    'flow_nums': serialise_set(itask.flow_nums),
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
                     'time_submit': get_current_time_string(),
@@ -1262,7 +1262,7 @@ class TaskJobManager:
         self.workflow_db_mgr.put_insert_task_jobs(
             itask,
             {
-                'flow_nums': serialise(itask.flow_nums),
+                'flow_nums': serialise_set(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
                 'try_num': itask.get_try_num(),

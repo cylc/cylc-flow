@@ -19,4 +19,4 @@
         [[[workflow state polling]]]
             interval = PT2S
             max-polls = 20
-            message = "the quick brown fox"
+            output = "x"

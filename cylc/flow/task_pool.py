@@ -65,8 +65,8 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import (
-    serialise,
-    deserialise
+    serialise_set,
+    deserialise_set
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
@@ -208,7 +208,7 @@ class TaskPool:
                 "time_created": now,
                 "time_updated": now,
                 "status": itask.state.status,
-                "flow_nums": serialise(itask.flow_nums),
+                "flow_nums": serialise_set(itask.flow_nums),
                 "flow_wait": itask.flow_wait,
                 "is_manual_submit": itask.is_manual_submit
             }
@@ -475,7 +475,7 @@ class TaskPool:
                 self.tokens,
                 self.config.get_taskdef(name),
                 get_point(cycle),
-                deserialise(flow_nums),
+                deserialise_set(flow_nums),
                 status=status,
                 is_held=is_held,
                 submit_num=submit_num,

@@ -1764,6 +1764,10 @@ with Conf(
                     The maximum number of polls before timing out and entering
                     the "failed" state.
                 ''')
+                Conf('output', VDR.V_STRING, desc='''
+                    Wait for the task in the target workflow to receive a
+                    specified output rather than achieve a state.
+                ''')
                 Conf('message', VDR.V_STRING, desc='''
                     Wait for the task in the target workflow to receive a
                     specified message rather than achieve a state.

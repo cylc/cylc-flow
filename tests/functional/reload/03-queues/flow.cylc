@@ -28,13 +28,15 @@ cylc__job__poll_grep_workflow_log 'Reload completed'
         script = """
         cylc__job__wait_cylc_message_started
         while true; do
-            RUNNING=$(cylc workflow-state $CYLC_WORKFLOW_ID -S running | wc -l)
+            RUNNING=$(cylc dump -t "${CYLC_WORKFLOW_ID}" | grep running | wc -l)
             # Should be max of: monitor plus 3 members of q1
+            echo "RUNNING $RUNNING"
             if ((RUNNING > 4)); then
                 break
             fi
             sleep 1
-            SUCCEEDED=$(cylc workflow-state $CYLC_WORKFLOW_ID -S succeeded | wc -l)
+            SUCCEEDED=$(cylc workflow-state "${CYLC_WORKFLOW_ID}//*/*:succeeded" --max-polls=1 | wc -l)
+            echo "SUCCEEDED $SUCCEEDED"
             if ((SUCCEEDED==13)); then
                 break
             fi

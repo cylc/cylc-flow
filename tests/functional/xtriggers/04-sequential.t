@@ -35,11 +35,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
         clock_1 = wall_clock(offset=P2Y, sequential=False)
         clock_2 = wall_clock()
         up_1 = workflow_state(\
-            workflow=%(workflow)s, \
-            task=b, \
-            point=%(point)s, \
-            offset=-P1Y, \
-            sequential=False \
+            workflow=%(workflow)s//%(point)s/b:succeeded, offset=-P1Y, sequential=False \
         ):PT1S
     [[graph]]
         R1 = """
@@ -65,8 +61,7 @@ cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 cylc play "${WORKFLOW_NAME}"
 
 cylc show "${WORKFLOW_NAME}//3001/a" | grep -E 'state: ' > 3001.a.log
-cylc show "${WORKFLOW_NAME}//3002/a" 2>&1 >/dev/null \
-    | grep -E 'No matching' > 3002.a.log
+cylc show "${WORKFLOW_NAME}//3002/a" 2>&1 >/dev/null | grep -E 'No matching' > 3002.a.log
 
 # 3001/a should be spawned at both 3000/3001.
 cmp_ok 3001.a.log - <<__END__
@@ -81,9 +76,10 @@ cylc reload "${WORKFLOW_NAME}"
 
 cylc remove "${WORKFLOW_NAME}//3001/b"
 
+poll_grep_workflow_log 'Command "remove_tasks" actioned.'
+
 cylc show "${WORKFLOW_NAME}//3002/b" | grep -E 'state: ' > 3002.b.log
-cylc show "${WORKFLOW_NAME}//3003/b" 2>&1 >/dev/null \
-    | grep -E 'No matching' > 3003.b.log
+cylc show "${WORKFLOW_NAME}//3003/b" 2>&1 >/dev/null | grep -E 'No matching' > 3003.b.log
 
 # 3002/b should be only at 3002.
 cmp_ok 3002.b.log - <<__END__
@@ -104,7 +100,6 @@ cmp_ok 3005.c.log - <<__END__
 state: waiting
 __END__
 
-
 cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
+
 purge
-exit

@@ -40,7 +40,7 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import CylcError, ServiceFileError
-from cylc.flow.util import serialise
+from cylc.flow.util import serialise_set
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -429,7 +429,7 @@ class WorkflowDatabaseManager:
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
-            "flow_nums": serialise(itask.flow_nums),
+            "flow_nums": serialise_set(itask.flow_nums),
         }
         # Note tasks_states table rows are for latest submit_num only
         # (not one row per submit).
@@ -451,7 +451,7 @@ class WorkflowDatabaseManager:
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
-            "flow_nums": serialise(itask.flow_nums),
+            "flow_nums": serialise_set(itask.flow_nums),
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -481,7 +481,7 @@ class WorkflowDatabaseManager:
                     prereq.satisfied.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
-                        "flow_nums": serialise(itask.flow_nums),
+                        "flow_nums": serialise_set(itask.flow_nums),
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,
@@ -490,7 +490,7 @@ class WorkflowDatabaseManager:
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
-                "flow_nums": serialise(itask.flow_nums),
+                "flow_nums": serialise_set(itask.flow_nums),
                 "status": itask.state.status,
                 "is_held": itask.state.is_held
             })
@@ -535,7 +535,7 @@ class WorkflowDatabaseManager:
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
-                    "flow_nums": serialise(itask.flow_nums)
+                    "flow_nums": serialise_set(itask.flow_nums)
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -585,7 +585,7 @@ class WorkflowDatabaseManager:
             CylcWorkflowDAO.TABLE_TASK_OUTPUTS,
             itask,
             {
-                "flow_nums": serialise(itask.flow_nums),
+                "flow_nums": serialise_set(itask.flow_nums),
                 "outputs": json.dumps([])
             }
         )
@@ -632,13 +632,13 @@ class WorkflowDatabaseManager:
         """Put UPDATE statement for task_outputs table."""
         set_args = {
             "outputs": json.dumps(
-                list(itask.state.outputs.iter_completed_messages())
+                itask.state.outputs.get_completed_outputs()
             )
         }
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
-            "flow_nums": serialise(itask.flow_nums),
+            "flow_nums": serialise_set(itask.flow_nums),
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, [])
         self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
@@ -652,7 +652,7 @@ class WorkflowDatabaseManager:
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
         if "flow_nums" not in set_args:
-            where_args["flow_nums"] = serialise(itask.flow_nums)
+            where_args["flow_nums"] = serialise_set(itask.flow_nums)
         self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
 
@@ -742,8 +742,8 @@ class WorkflowDatabaseManager:
 
         # We can't upgrade if the flow_nums in task_states are not
         # distinct.
-        from cylc.flow.util import deserialise
-        flow_nums = deserialise(conn.execute(
+        from cylc.flow.util import deserialise_set
+        flow_nums = deserialise_set(conn.execute(
             'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
         if len(flow_nums) != 1:
             raise CylcError(

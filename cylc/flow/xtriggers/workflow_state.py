@@ -14,51 +14,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sqlite3
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
+import asyncio
 
-from metomi.isodatetime.parsers import TimePointParser
-
-from cylc.flow.cycling.util import add_offset
-from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
-from cylc.flow.pathutil import get_cylc_run_dir
-from cylc.flow.workflow_files import infer_latest_run_from_id
+from cylc.flow.scripts.workflow_state import WorkflowPoller
+from cylc.flow.id import tokenise
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 
 
 def workflow_state(
-    workflow: str,
-    task: str,
-    point: str,
+    workflow: str,  # TODO CANT CALL THIS WORKFLOW
     offset: Optional[str] = None,
-    status: str = 'succeeded',
-    message: Optional[str] = None,
-    cylc_run_dir: Optional[str] = None
-) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
-    """Connect to a workflow DB and query the requested task state.
+    flow_num: Optional[int] = 1,
+    alt_cylc_run_dir: Optional[str] = None,
+) -> Tuple[bool, Dict[str, Optional[str]]]:
+    """Connect to a workflow DB and check a task status or output.
 
-    * Reports satisfied only if the remote workflow state has been achieved.
-    * Returns all workflow state args to pass on to triggering tasks.
+    If the status or output has been achieved, return {True, result}.
 
     Arguments:
         workflow:
-            The workflow to interrogate.
-        task:
-            The name of the task to query.
-        point:
-            The cycle point.
+            ID of the workflow[//task] to check.
         offset:
-            The offset between the cycle this xtrigger is used in and the one
-            it is querying for as an ISO8601 time duration.
-            e.g. PT1H (one hour).
-        status:
-            The task status required for this xtrigger to be satisfied.
-        message:
-            The custom task output required for this xtrigger to be satisfied.
-
-            .. note::
-
-               This cannot be specified in conjunction with ``status``.
-        cylc_run_dir:
+            Interval offset from cycle point as an ISO8601 or integer duration,
+            e.g. PT1H (1 hour) or P1 (1 integer cycle)
+        flow_num:
+            Flow number of remote task.
+        alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
 
             .. note::
@@ -68,47 +51,57 @@ def workflow_state(
                configuration (usually ``~/cylc-run``).
 
     Returns:
-        tuple: (satisfied, results)
-
+        tuple: (satisfied, result)
         satisfied:
             True if ``satisfied`` else ``False``.
-        results:
-            Dictionary containing the args / kwargs which were provided
-            to this xtrigger.
+        result:
+            Dictionary of the args / kwargs provided to this xtrigger.
 
     """
-    workflow = infer_latest_run_from_id(workflow, cylc_run_dir)
-    cylc_run_dir = get_cylc_run_dir(cylc_run_dir)
-
-    if offset is not None:
-        point = str(add_offset(point, offset))
-
-    try:
-        checker = CylcWorkflowDBChecker(cylc_run_dir, workflow)
-    except (OSError, sqlite3.Error):
-        # Failed to connect to DB; target workflow may not be started.
-        return (False, None)
-    try:
-        fmt = checker.get_remote_point_format()
-    except sqlite3.OperationalError as exc:
-        try:
-            fmt = checker.get_remote_point_format_compat()
-        except sqlite3.OperationalError:
-            raise exc  # original error
-    if fmt:
-        my_parser = TimePointParser()
-        point = str(my_parser.parse(point, dump_format=fmt))
-    if message is not None:
-        satisfied = checker.task_state_met(task, point, message=message)
+    poller = WorkflowPoller(
+        workflow, offset, flow_num, alt_cylc_run_dir,
+        TASK_STATUS_SUCCEEDED,
+        f'"{workflow}"',
+        '10',  # interval
+        1,  # max polls
+        args={
+            "old_format": False,
+            "print_outputs": False,
+        }
+    )
+    if asyncio.run(poller.poll()):
+        return (
+            True,
+            {
+                "workflow": poller.workflow_id,
+                "task": f"{poller.cycle}/{poller.task}:{poller.task_sel}",
+                "flow": poller.flow_num
+            }
+        )
     else:
-        satisfied = checker.task_state_met(task, point, status=status)
-    results = {
-        'workflow': workflow,
-        'task': task,
-        'point': point,
-        'offset': offset,
-        'status': status,
-        'message': message,
-        'cylc_run_dir': cylc_run_dir
-    }
-    return satisfied, results
+        return (
+            False,
+            {}
+        )
+
+
+def validate(args: Dict[str, Any], Err=WorkflowConfigError):
+    """Validate workflow_state xtrigger function args.
+
+    * workflow: full workflow//cycle/task[:selector]
+    * flow_num: must be an integer
+    * status: must be a valid status
+
+    """
+    tokens = tokenise(args["workflow"])
+    if any(
+        tokens[token] is None
+        for token in ("workflow", "cycle", "task")
+    ):
+        raise WorkflowConfigError(
+            "Full ID needed: workflow//cycle/task[:selector].")
+
+    try:
+        int(args["flow_num"])
+    except ValueError:
+        raise WorkflowConfigError("flow_num must be an integer.")

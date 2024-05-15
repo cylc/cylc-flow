@@ -14,36 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
-import pytest
 import sqlite3
-from typing import Callable
-from unittest.mock import Mock
+from typing import TYPE_CHECKING
 from shutil import copytree, rmtree
 
-from cylc.flow.exceptions import InputError
-from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtriggers.workflow_state import workflow_state
-from ..conftest import MonkeyMock
+
+if TYPE_CHECKING:
+    from typing import Callable
+    from pytest import CaptureFixture
+    from pathlib import Path
 
 
-def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
-    """Test that the workflow_state xtrigger infers the run number"""
+def test_inferred_run(tmp_run_dir: 'Callable', capsys: 'CaptureFixture'):
+    """Test that the workflow_state xtrigger infers the run number.
+
+    Method: the faked run-dir has no DB to connect to, but the WorkflowPoller
+    prints inferred ID to stderr if the run-dir exists.
+
+    """
     id_ = 'isildur'
     expected_workflow_id = f'{id_}/run1'
     cylc_run_dir = str(tmp_run_dir())
     tmp_run_dir(expected_workflow_id, installed=True, named=True)
-    mock_db_checker = monkeymock(
-        'cylc.flow.xtriggers.workflow_state.CylcWorkflowDBChecker',
-        return_value=Mock(
-            get_remote_point_format=lambda: 'CCYY',
-        )
-    )
-
-    _, results = workflow_state(id_, task='precious', point='3000')
-    mock_db_checker.assert_called_once_with(cylc_run_dir, expected_workflow_id)
-    assert results['workflow'] == expected_workflow_id
+    workflow_state(id_ + '//3000/precious')
+    assert expected_workflow_id in capsys.readouterr().err
 
     # Now test we can see workflows in alternate cylc-run directories
     # e.g. for `cylc workflow-state` or xtriggers targetting another user.
@@ -54,19 +50,15 @@ def test_inferred_run(tmp_run_dir: Callable, monkeymock: MonkeyMock):
     rmtree(cylc_run_dir)
 
     # It can no longer parse IDs in the original cylc-run location.
-    with pytest.raises(InputError):
-        _, results = workflow_state(id_, task='precious', point='3000')
+    workflow_state(id_)
+    assert expected_workflow_id not in capsys.readouterr().err
 
     # But it can via an explicit alternate run directory.
-    mock_db_checker.reset_mock()
-    _, results = workflow_state(
-        id_, task='precious', point='3000', cylc_run_dir=alt_cylc_run_dir)
-    mock_db_checker.assert_called_once_with(
-        alt_cylc_run_dir, expected_workflow_id)
-    assert results['workflow'] == expected_workflow_id
+    workflow_state(id_, alt_cylc_run_dir=alt_cylc_run_dir)
+    assert expected_workflow_id in capsys.readouterr().err
 
 
-def test_back_compat(tmp_run_dir, caplog):
+def test_back_compat(tmp_run_dir: 'Callable', caplog: 'CaptureFixture'):
     """Test workflow_state xtrigger backwards compatibility with Cylc 7
     database."""
     id_ = 'celebrimbor'
@@ -105,9 +97,9 @@ def test_back_compat(tmp_run_dir, caplog):
         conn.close()
 
     # Test workflow_state function
-    satisfied, _ = workflow_state(id_, task='mithril', point='2012')
+    satisfied, _ = workflow_state(id_ + '//2012/mithril')
     assert satisfied
-    satisfied, _ = workflow_state(id_, task='arkenstone', point='2012')
+    satisfied, _ = workflow_state(id_ + '//2012/arkenstone')
     assert not satisfied
 
     # Test back-compat (old suite_state function)

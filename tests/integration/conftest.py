@@ -33,7 +33,7 @@ from cylc.flow.scripts.install import (
     install as cylc_install,
     get_option_parser as install_gop
 )
-from cylc.flow.util import serialise
+from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
 from cylc.flow.workflow_status import StopMode
@@ -545,7 +545,7 @@ def reflog():
                 deps = tuple(sorted(itask.state.get_resolved_dependencies()))
                 if flow_nums:
                     triggers.add(
-                        (itask.identity, serialise(itask.flow_nums), deps or None)
+                        (itask.identity, serialise_set(itask.flow_nums), deps or None)
                     )
                 else:
                     triggers.add((itask.identity, deps or None))

@@ -151,7 +151,7 @@ class TestWorkflowConfig:
                 fpath=flow_file,
                 options=SimpleNamespace()
             )
-        assert "not found" in str(excinfo.value)
+        assert "No module named 'piranha'" in str(excinfo.value)
 
     def test_xfunction_attribute_error(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function cannot be imported."""
@@ -181,7 +181,7 @@ class TestWorkflowConfig:
         with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
                            options=SimpleNamespace())
-        assert "not found" in str(excinfo.value)
+        assert "module 'capybara' has no attribute 'capybara'" in str(excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function is not callable."""

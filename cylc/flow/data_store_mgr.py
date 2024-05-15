@@ -101,8 +101,8 @@ from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_parents, generate_graph_children
 from cylc.flow.task_state import TASK_STATUSES_FINAL
 from cylc.flow.util import (
-    serialise,
-    deserialise
+    serialise_set,
+    deserialise_set
 )
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
@@ -1411,7 +1411,7 @@ class DataStoreMgr:
             relative_id = tokens.relative_id
             itask, is_parent = self.db_load_task_proxies[relative_id]
             itask.submit_num = submit_num
-            flow_nums = deserialise(flow_nums_str)
+            flow_nums = deserialise_set(flow_nums_str)
             # Do not set states and outputs for future tasks in flow.
             if (
                     itask.flow_nums and
@@ -1487,7 +1487,7 @@ class DataStoreMgr:
         update_time = time()
 
         tproxy.state = itask.state.status
-        tproxy.flow_nums = serialise(itask.flow_nums)
+        tproxy.flow_nums = serialise_set(itask.flow_nums)
 
         prereq_list = []
         for prereq in itask.state.prerequisites:

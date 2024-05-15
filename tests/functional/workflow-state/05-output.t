@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,10 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.util import deserialise_set
+# Test cylc workflow-state for outputs (as opposed to statuses)
+. "$(dirname "$0")/test_header"
 
+set_test_number 2
 
-def test_deserialise_set():
-    actual = deserialise_set('["2", "3"]')
-    expected = {'2', '3'}
-    assert actual == expected
+install_workflow "${TEST_NAME_BASE}" output
+
+TEST_NAME="${TEST_NAME_BASE}-run"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+
+TEST_NAME=${TEST_NAME_BASE}-cli-check
+run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//20100101T0000Z/t1:out1" --max-polls=1
+
+purge

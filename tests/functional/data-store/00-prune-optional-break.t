@@ -37,7 +37,7 @@ d => e
         script = false
     [[d]]
         script = """
-cylc workflow-state \$CYLC_WORKFLOW_ID --task=b --point=1 --status=failed --interval=2
+cylc workflow-state \${CYLC_WORKFLOW_ID}//1/b:failed --interval=2
 cylc pause \$CYLC_WORKFLOW_ID
 """
 __FLOW__
@@ -45,7 +45,7 @@ __FLOW__
 # run workflow
 run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 
-cylc workflow-state "${WORKFLOW_NAME}" --task=d --point=1 --status=succeeded --interval=2 --max-polls=60
+cylc workflow-state "${WORKFLOW_NAME}/1/d:succeeded" --interval=2 --max-polls=60
 
 # query workflow
 TEST_NAME="${TEST_NAME_BASE}-prune-optional-break"
