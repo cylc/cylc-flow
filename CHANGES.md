@@ -11,6 +11,14 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.2.7 (Released 2024-05-15)__
+
+### 🔧 Fixes
+
+[#6096](https://github.com/cylc/cylc-flow/pull/6096) - Fixed bug that caused graph arrows to go missing in the GUI when suicide triggers are present.
+
+[#6102](https://github.com/cylc/cylc-flow/pull/6102) - Fixed bug introduced in 8.2.6 in `cylc vip` & `cylc vr` when using cylc-rose options (`-S`, `-D`, `-O`).
+
 ## __cylc-8.2.6 (Released 2024-05-02)__
 
 ### ⚠ Breaking Changes
