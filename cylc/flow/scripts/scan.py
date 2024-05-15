@@ -214,9 +214,10 @@ def get_option_parser() -> COP:
             ' ("plain": name,host:port,PID on one line)'
             ' ("tree": name,host:port,PID in tree format)'
             ' ("json": full contact data in JSON format)'
+            ' ("state-totals": include task state totals)'
             ' ("rich": include task state summary data)'
         ),
-        choices=('rich', 'plain', 'json', 'tree', 'name'),
+        choices=('rich', 'plain', 'json', 'tree', 'name', 'state-totals'),
         default='plain'
     )
 
@@ -315,6 +316,27 @@ def _format_plain(flow, _):
 def _format_name_only(flow, _):
     """A single line format of the form: <name> [<host>:<port>]"""
     return flow['name']
+
+
+def _format_state_totals(flow, opts):
+    """A single line format which displays state totals."""
+    status = flow.get('status', 'stopped')
+    if opts.colour_blind:
+        name = f'{flow["name"]} ({status})'
+    else:
+        symbol = FLOW_STATE_SYMBOLS[status]
+        tag = FLOW_STATE_CMAP[status]
+        name = f'<{tag}>{symbol}</{tag}> {flow["name"]}'
+    if not flow.get('contact') or 'status' not in flow:
+        ret = f'<{DIM}><b>{name}</b></{DIM}>'
+    else:
+        ret = (
+            f'<b>{name}</b>'
+            + ' ('
+            + state_totals(flow['stateTotals'], opts.colour_blind)
+            + ')'
+        )
+    return ret
 
 
 def _format_rich(flow, opts):
@@ -480,7 +502,7 @@ def get_pipe(opts, formatter, scan_dir=None):
         graphql_filters.add((('status',), tuple(opts.states)))
 
     # get fancy data if requested
-    if formatter == _format_rich:
+    if formatter in {_format_rich, _format_state_totals}:
         # graphql_fields['status'] = None
         graphql_fields.update(RICH_FIELDS)
 
@@ -511,6 +533,9 @@ def get_formatter(opts):
         method = _serial
     elif opts.format == 'rich':
         formatter = _format_rich
+        method = _async
+    elif opts.format == 'state-totals':
+        formatter = _format_state_totals
         method = _async
     elif opts.format == 'tree':
         formatter = _format_plain

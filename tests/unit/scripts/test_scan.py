@@ -16,11 +16,13 @@
 
 import pytest
 from pathlib import Path
+from types import SimpleNamespace
 
 from cylc.flow.scripts.scan import (
     ScanOptions,
     get_pipe,
     _format_plain,
+    _format_state_totals,
     _construct_tree,
     FLOW_STATES,
     BAD_CONTACT_FILE_MSG
@@ -92,4 +94,43 @@ def test_bad_contact_info_tree(caplog: pytest.LogCaptureFixture) -> None:
     assert (
         BAD_CONTACT_FILE_MSG.format(flow_name=f"{Path(name).name}")
         in caplog.text
+    )
+
+
+def test_format_state_totals():
+    """Test the state total output format."""
+    # test a stopped workflow
+    assert _format_state_totals(
+        {
+            'name': 'myworkflow',
+        },
+        SimpleNamespace(colour_blind=True),
+    ) == '<fg 248><b>myworkflow (stopped)</b></fg 248>'
+
+    # test a running workflow
+    assert _format_state_totals(
+        {
+            'name': 'myworkflow',
+            'status': 'running',
+            'contact': 'true',
+            'stateTotals': {
+                'running': 1,
+                'failed': 2,
+                'succeeded': 3,
+                'submitted': 4,
+                'submit-failed': 5,
+            }
+        },
+        SimpleNamespace(colour_blind=True),
+    ) == (
+        # the workflow bit
+        '<b>myworkflow (running)</b>'
+        # the state totals
+        ' ('
+        '<fg 44>submitted:4</fg 44>'
+        ' <fg 13>submit-failed:5</fg 13>'
+        ' <fg 32>running:1</fg 32>'
+        ' <fg 35>succeeded:3</fg 35>'
+        ' <fg 124>failed:2</fg 124>'
+        ')'
     )
