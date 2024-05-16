@@ -121,8 +121,8 @@ jobs:
       - name: MyPy
         run: mypy
 
-      - name: Towncrier
-        run: towncrier build --draft
+      - name: Towncrier - draft changelog
+        uses: cylc/release-actions/towncrier-draft@v1
 
       - name: Linkcheck
         run: pytest -m linkcheck --dist=load --color=yes -n 10 tests/unit/test_links.py
