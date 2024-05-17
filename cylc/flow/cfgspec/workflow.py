@@ -1734,58 +1734,33 @@ with Conf(
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
-                The items in this section reflect
-                options and defaults of the ``cylc workflow-state`` command,
-                except that the target workflow ID and the
-                ``--task``, ``--cycle``, and ``--status`` options are
-                taken from the graph notation.
+                The config items in this section reflect the options of the
+                ``cylc workflow-state`` command, but with the target workflow ID
+                and status or output taken from the graph syntax.
 
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[runtime][<namespace>]suite state polling``.
             '''):
-                Conf('user', VDR.V_STRING, desc='''
-                    Username of your account on the workflow host.
-
-                    The polling
-                    ``cylc workflow-state`` command will be
-                    run on the remote account.
-                ''')
-                Conf('host', VDR.V_STRING, desc='''
-                    The hostname of the target workflow.
-
-                    The polling
-                    ``cylc workflow-state`` command will be run there.
-                ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
                 ''')
                 Conf('max-polls', VDR.V_INTEGER, desc='''
-                    The maximum number of polls before timing out and entering
-                    the "failed" state.
+                    Maximum number of polls to attempt.
+                ''')
+                Conf('status', VDR.V_STRING, desc='''
+                    Target task status.
                 ''')
                 Conf('output', VDR.V_STRING, desc='''
-                    Wait for the task in the target workflow to receive a
-                    specified output rather than achieve a state.
+                    Target task output.
                 ''')
-                Conf('message', VDR.V_STRING, desc='''
-                    Wait for the task in the target workflow to receive a
-                    specified message rather than achieve a state.
-                ''')
-                Conf('run-dir', VDR.V_STRING, desc='''
-                    Specify the location of the top level cylc-run directory
-                    for the other workflow.
+                Conf('alt-cylc-run-dir', VDR.V_STRING, desc='''
+                    The cylc-run directory location of the target workflow.
 
-                    For your own workflows, there is no need to set this as it
-                    is always ``~/cylc-run/``. But for other workflows,
-                    (e.g those owned by others), or mirrored workflow databases
-                    use this item to specify the location of the top level
-                    cylc run directory (the database should be in a the same
-                    place relative to this location for each workflow).
+                    Needed to target (e.g.) workflow owned by other users.
                 ''')
                 Conf('verbose mode', VDR.V_BOOLEAN, desc='''
-                    Run the polling ``cylc workflow-state`` command in verbose
-                    output mode.
+                    Run the ``cylc workflow-state`` command in verbose mode.
                 ''')
 
             with Conf('environment', desc='''

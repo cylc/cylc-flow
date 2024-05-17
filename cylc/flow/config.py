@@ -1531,24 +1531,21 @@ class WorkflowConfig:
                 continue
             rtc = tdef.rtconfig
             comstr = (
-                "cylc workflow-state"
-                f" --task={tdef.workflow_polling_cfg['task']}"
-                " --point=$CYLC_TASK_CYCLE_POINT"
+                "cylc workflow-state "
+                f"{tdef.workflow_polling_cfg['workflow']}//"
+                "${CYLC_TASK_CYCLE_POINT}/"
+                f"{tdef.workflow_polling_cfg['task']}"
             )
+            if rtc['workflow state polling']['output']:
+                comstr += f":{rtc['workflow state polling']['message']}"
+            else:
+                comstr += f":{tdef.workflow_polling_cfg['status']}"
             for key, fmt in [
-                    ('user', ' --%s=%s'),
-                    ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s')]:
+                    ('alt-cylc-run-dir', ' --%s=%s')]:
                 if rtc['workflow state polling'][key]:
                     comstr += fmt % (key, rtc['workflow state polling'][key])
-            if rtc['workflow state polling']['message']:
-                comstr += " --message='%s'" % (
-                    rtc['workflow state polling']['message'])
-            else:
-                comstr += " --status=" + tdef.workflow_polling_cfg['status']
-            comstr += " " + tdef.workflow_polling_cfg['workflow']
             script = "echo " + comstr + "\n" + comstr
             rtc['script'] = script
 
