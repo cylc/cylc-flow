@@ -205,6 +205,14 @@ class JobFileWriter:
             if var not in ('CYLC_DEBUG', 'CYLC_VERBOSE', 'CYLC_WORKFLOW_ID'):
                 handle.write('\n    export %s="%s"' % (var, val))
 
+        for dir_ in ("share", "work"):
+            val = job_conf["symlink_dirs"].get(dir_, None)
+            if val is not None:
+                handle.write(
+                    '\n    '
+                    f'export CYLC_WORKFLOW_{dir_.upper()}_DIR_RAW="{val}"'
+                )
+
         if str(self.workflow_env.get('CYLC_UTC')) == 'True':
             handle.write('\n    export TZ="UTC"')
 
