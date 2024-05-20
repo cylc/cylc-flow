@@ -27,7 +27,7 @@
              for TASK in foo bar
              do
                  cylc workflow-state \
-                    ${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/${TASK}:failed
+                    ${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/${TASK}:failed \
                     --max-polls=10 --interval=1
              done
              # set foo succeeded (via --output)

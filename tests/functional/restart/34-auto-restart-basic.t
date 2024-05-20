@@ -51,8 +51,7 @@ __FLOW_CONFIG__
 
 # run workflow on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
-run_ok "${TEST_NAME}-workflow-start" \
-    cylc play "${WORKFLOW_NAME}" --host=localhost -s 'FOO="foo"' -v
+run_ok "${TEST_NAME}-workflow-start" cylc play "${WORKFLOW_NAME}" --host=localhost -s 'FOO="foo"' -v
 cylc workflow-state "${WORKFLOW_NAME}//1/task_foo01:succeeded" --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
@@ -78,7 +77,7 @@ FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart-log-scan" "${FILE}" 20 1 \
     "Scheduler: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
 run_ok "${TEST_NAME}-restart-success" \
-    cylc workflow-state "${WORKFLOW_NAME}//1/$(printf 'task_foo%02d' $(( LATEST_TASK + 3 ))):succeeded \
+    cylc workflow-state "${WORKFLOW_NAME}//1/$(printf 'task_foo%02d' $(( LATEST_TASK + 3 ))):succeeded" \
         --interval=1 --max-polls=60
 
 # check the command the workflow has been restarted with

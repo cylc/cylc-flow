@@ -61,13 +61,11 @@ def workflow_state(
     poller = WorkflowPoller(
         workflow, offset, flow_num, alt_cylc_run_dir,
         TASK_STATUS_SUCCEEDED,
+        False, False,
         f'"{workflow}"',
         '10',  # interval
         1,  # max polls
-        args={
-            "old_format": False,
-            "print_outputs": False,
-        }
+        []
     )
     if asyncio.run(poller.poll()):
         return (

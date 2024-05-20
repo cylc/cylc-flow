@@ -44,8 +44,8 @@ cylc config -d \
     --set="UPSTREAM='${UPSTREAM}'" \
     -i '[runtime][lbad]script' "${WORKFLOW_NAME}" >'lbad.script'
 cmp_ok 'lbad.script' << __END__
-echo cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20 
-cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20 
+echo cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20
+cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20
 __END__
 
 # check auto-generated task script for l-good

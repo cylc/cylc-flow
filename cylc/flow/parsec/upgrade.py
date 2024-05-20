@@ -245,9 +245,8 @@ class upgrader:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
                 level = WARNING
-            LOG.log(level,
-                    'deprecated items were automatically upgraded in '
-                    f'"{self.descr}"')
+            LOG.log(
+                level, f"items were automatically upgraded in {self.descr}")
             for vn, msgs in warnings.items():
                 for msg in msgs:
                     LOG.log(level, ' * (%s) %s', vn, msg)

@@ -66,7 +66,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -142,7 +141,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -218,7 +216,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -296,7 +293,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -373,7 +369,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -451,7 +446,6 @@
         interval = 
         max-polls = 
         output = 
-        status = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -527,7 +521,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -605,7 +598,6 @@
         interval = 
         max-polls = 
         output = 
-        status = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -681,7 +673,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -759,7 +750,6 @@
         interval = 
         max-polls = 
         output = 
-        status = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -835,7 +825,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 
@@ -913,7 +902,6 @@
         interval = 
         max-polls = 
         output = 
-        status = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -989,7 +977,6 @@
     [[[workflow state polling]]]
         interval = 
         max-polls = 
-        status = 
         output = 
         alt-cylc-run-dir = 
         verbose mode = 

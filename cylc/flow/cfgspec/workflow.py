@@ -1731,12 +1731,14 @@ with Conf(
                 ''')
 
             with Conf('workflow state polling', desc=f'''
+                Deprecated: please use the workflow_state xtrigger instead.
+
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
                 The config items in this section reflect the options of the
-                ``cylc workflow-state`` command, but with the target workflow ID
-                and status or output taken from the graph syntax.
+                ``cylc workflow-state`` command, but the target workflow ID
+                and task status or output are taken from the graph syntax.
 
                 .. versionchanged:: 8.0.0
 
@@ -1748,11 +1750,9 @@ with Conf(
                 Conf('max-polls', VDR.V_INTEGER, desc='''
                     Maximum number of polls to attempt.
                 ''')
-                Conf('status', VDR.V_STRING, desc='''
-                    Target task status.
-                ''')
                 Conf('output', VDR.V_STRING, desc='''
-                    Target task output.
+                    Target task output (trigger name, not task message).
+                    Alternatively, put this in the graph trigger syntax.
                 ''')
                 Conf('alt-cylc-run-dir', VDR.V_STRING, desc='''
                     The cylc-run directory location of the target workflow.
@@ -1937,9 +1937,10 @@ def upg(cfg, descr):
 
     """
     u = upgrader(cfg, descr)
+
     u.obsolete(
-        '7.8.0',
-        ['runtime', '__MANY__', 'suite state polling', 'template'])
+        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template']
+    )
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
@@ -1975,6 +1976,25 @@ def upg(cfg, descr):
         ['cylc', 'mail', 'task event batch interval'],
         silent=cylc.flow.flags.cylc7_back_compat,
     )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'suite state polling'],
+        ['runtime', '__MANY__', 'workflow state polling'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
+    )
+    for item in ('host', 'user'):
+        u.obsolete(
+            '8.0.0', ['runtime', '__MANY__', 'workflow state polling', item],
+        )
+
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'workflow state polling', 'message'],
+        ['runtime', '__MANY__', 'workflow state polling', 'output'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
+
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameters'],
@@ -2040,14 +2060,6 @@ def upg(cfg, descr):
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point'],
         silent=cylc.flow.flags.cylc7_back_compat,
-    )
-
-    u.deprecate(
-        '8.0.0',
-        ['runtime', '__MANY__', 'suite state polling'],
-        ['runtime', '__MANY__', 'workflow state polling'],
-        silent=cylc.flow.flags.cylc7_back_compat,
-        is_section=True
     )
 
     for job_setting in [
@@ -2175,7 +2187,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         keys.add(key)
                 if keys and not cylc.flow.flags.cylc7_back_compat:
                     msg = (
-                        'deprecated graph items were automatically upgraded '
+                        'graph items were automatically upgraded '
                         f'in "{descr}":\n'
                         f' * (8.0.0) {msg_old} -> {msg_new}'
                     )

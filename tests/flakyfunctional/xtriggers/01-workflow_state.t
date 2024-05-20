@@ -57,7 +57,7 @@ __END__
 JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}//2015/f1")"
 contains_ok "${JOB_LOG}" << __END__
     upstream_workflow="${WORKFLOW_NAME_UPSTREAM}"
-    upstream_task="2015/data_ready"
+    upstream_task="2015/foo:data_ready"
     upstream_flow="1"
 __END__
 
@@ -68,14 +68,9 @@ __END__
 # use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${WORKFLOW_LOG}" << __LOG_BROADCASTS__
 ${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}+ [2015/f1] [environment]upstream_task=foo
-${LOG_INDENT}+ [2015/f1] [environment]upstream_point=2015
-${LOG_INDENT}+ [2015/f1] [environment]upstream_offset=None
-${LOG_INDENT}+ [2015/f1] [environment]upstream_output=data_ready
+${LOG_INDENT}+ [2015/f1] [environment]upstream_task=2015/foo:data_ready
 ${LOG_INDENT}- [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}- [2015/f1] [environment]upstream_task=foo
-${LOG_INDENT}- [2015/f1] [environment]upstream_point=2015
-${LOG_INDENT}- [2015/f1] [environment]upstream_output=data_ready
+${LOG_INDENT}- [2015/f1] [environment]upstream_task=2015/foo:data_ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
@@ -88,15 +83,10 @@ sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events
      ORDER BY time, change, point, namespace, key' >"${NAME}"
 contains_ok "${NAME}" << __DB_BROADCASTS__
-+|2015|f1|[environment]upstream_output|data_ready
-+|2015|f1|[environment]upstream_offset|None
-+|2015|f1|[environment]upstream_point|2015
 +|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
-+|2015|f1|[environment]upstream_task|foo
--|2015|f1|[environment]upstream_output|data_ready
--|2015|f1|[environment]upstream_point|2015
++|2015|f1|[environment]upstream_task|2015/foo:data_ready
 -|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
--|2015|f1|[environment]upstream_task|foo
+-|2015|f1|[environment]upstream_task|2015/foo:data_ready
 __DB_BROADCASTS__
 
 purge
@@ -105,4 +95,3 @@ purge
 cylc stop --now "${WORKFLOW_NAME_UPSTREAM}" --max-polls=20 --interval=2 \
     >'/dev/null' 2>&1
 purge "${WORKFLOW_NAME_UPSTREAM}"
-exit

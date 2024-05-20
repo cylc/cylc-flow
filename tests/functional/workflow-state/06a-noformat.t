@@ -19,7 +19,7 @@
 # sets no explicit cycle point format, and the CLI does (the reverse of 06.t).
 . "$(dirname "$0")/test_header"
 
-set_test_number 5
+set_test_number 3
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
@@ -38,15 +38,9 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 TEST_NAME=${TEST_NAME_BASE}-cli-poll
-run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//2010-01-01T00:00Z/foo:succeeded
+run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//2010-01-01T00+00"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-polling for 'succeeded': satisfied
-__OUT__
-
-TEST_NAME=${TEST_NAME_BASE}-cli-dump
-run_ok "${TEST_NAME}" cylc workflow-state --old-format "${WORKFLOW_NAME}/2010-01-01T00:00Z"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-foo, 20100101T0000Z, succeeded
+20100101T0000Z/foo:succeeded
 __OUT__
 
 purge

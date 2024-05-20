@@ -1533,13 +1533,25 @@ class WorkflowConfig:
             comstr = (
                 "cylc workflow-state "
                 f"{tdef.workflow_polling_cfg['workflow']}//"
-                "${CYLC_TASK_CYCLE_POINT}/"
+                "$CYLC_TASK_CYCLE_POINT/"
                 f"{tdef.workflow_polling_cfg['task']}"
             )
-            if rtc['workflow state polling']['output']:
-                comstr += f":{rtc['workflow state polling']['message']}"
+            graph_trigger = tdef.workflow_polling_cfg['status']
+            config_trigger = rtc['workflow state polling']['output']
+            if graph_trigger is not None and config_trigger is not None:
+                raise WorkflowConfigError(
+                    f'Workflow polling task "{name}" must configure a status'
+                    f" or output in the graph (:{graph_trigger}) or task"
+                    f" definition ({config_trigger}) but not both."
+                )
+            elif graph_trigger is not None:
+                comstr += f":{graph_trigger}"
+            elif config_trigger is not None:
+                comstr += f":{config_trigger}"
             else:
-                comstr += f":{tdef.workflow_polling_cfg['status']}"
+                # default to :succeeded
+                comstr += f":{TASK_OUTPUT_SUCCEEDED}"
+
             for key, fmt in [
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),

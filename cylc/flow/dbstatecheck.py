@@ -32,26 +32,12 @@ from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_STARTED,
-)
-from cylc.flow.task_state import (
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUSES_ORDERED
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED
 )
 from cylc.flow.util import deserialise_set
 from metomi.isodatetime.parsers import TimePointParser
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
-
-
-# map transient states to outputs
-TRANSIENT_STATUSES = {
-    TASK_STATUS_SUBMITTED: TASK_OUTPUT_SUBMITTED,
-    TASK_STATUS_RUNNING: TASK_OUTPUT_STARTED
-}
 
 
 class CylcWorkflowDBChecker:
@@ -172,44 +158,12 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
-    def status_or_output(self, task_sel):
-        """Determine whether to query task status or outputs.
-
-        For transient statuses, query the corresponding output
-        instead to avoid missing it between polls.
-
-        xtrigger defaults to succeeded.
-        CLI does not, in order to allow non-specific queries.
-
-        """
-        status = None
-        output = None
-
-        if task_sel in TRANSIENT_STATUSES:
-            if self.back_compat_mode:
-                # Cylc 7 only stored custom outputs.
-                status = task_sel
-            else:
-                output = TRANSIENT_STATUSES[task_sel]
-
-        elif task_sel in TASK_STATUSES_ORDERED:
-            status = task_sel
-
-        elif task_sel in ("finished", "finish"):
-            status = "finished"  # handled by query construction
-
-        else:
-            # Custom output
-            output = task_sel
-
-        return (status, output)
-
     def workflow_state_query(
         self,
         task: Optional[str] = None,
         cycle: Optional[str] = None,
-        status: Optional[str] = None,
-        output: Optional[str] = None,
+        selector: Optional[str] = None,
+        is_output: Optional[bool] = False,
         flow_num: Optional[int] = None,
         print_outputs: bool = False
     ):
@@ -239,7 +193,7 @@ class CylcWorkflowDBChecker:
         stmt_args = []
         stmt_wheres = []
 
-        if output or (status is None and print_outputs):
+        if is_output:
             target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
             mask = "name, cycle, outputs"
         else:
@@ -279,21 +233,16 @@ class CylcWorkflowDBChecker:
                 stmt_wheres.append("cycle==?")
             stmt_args.append(cycle)
 
-        if status:
-            stmt_frags = []
-            if status == "finished":
-                for state in (TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
-                    stmt_args.append(state)
-                    stmt_frags.append("status==?")
-                stmt_wheres.append("(" + (" OR ").join(stmt_frags) + ")")
-            else:
-                stmt_wheres.append("status==?")
-                stmt_args.append(status)
+        if selector is not None and not is_output:
+            # Can select by status in the DB but not outputs.
+            stmt_wheres.append("status==?")
+            stmt_args.append(selector)
 
         if stmt_wheres:
             stmt += "WHERE\n    " + (" AND ").join(stmt_wheres)
 
-        if status:
+        if not is_output:
+            # (outputs table doesn't record submit number)
             stmt += dedent("""
                 ORDER BY
                     submit_num
@@ -317,38 +266,30 @@ class CylcWorkflowDBChecker:
                     res.append(fstr)
             db_res.append(res)
 
-        if (
-            status is not None
-            or (output is None and not print_outputs)
-        ):
+        if not is_output:
             return db_res
 
         results = []
         for row in db_res:
-            outputs = list(json.loads(row[2]))
-            if output is not None and output not in outputs:
-                continue
-            results.append(row[:2] + [str(outputs)] + row[3:])
+            outputs_map = json.loads(row[2])
+            if self.back_compat_mode:
+                # task message
+                outputs = list(outputs_map.values())
+            else:
+                # task output
+                outputs = list(outputs_map)
+
+            if (
+                selector is None or
+                selector in outputs or
+                (
+                    selector in ("finished", "finish")
+                    and (
+                        TASK_OUTPUT_SUCCEEDED in outputs
+                        or TASK_OUTPUT_FAILED in outputs
+                    )
+                )
+            ):
+                results.append(row[:2] + [str(outputs)] + row[3:])
 
         return results
-
-    def task_state_met(
-        self,
-        task: str,
-        cycle: str,
-        status: Optional[str] = None,
-        output: Optional[str] = None,
-        flow_num: Optional[int] = None
-    ):
-        """Return True if cycle/task has achieved status or output.
-
-        Call when polling for a task status or output.
-
-        """
-        # Default to flow 1 for polling a specific task.
-        if flow_num is None:
-            flow_num = 1
-
-        return bool(
-            self.workflow_state_query(task, cycle, status, output, flow_num)
-        )

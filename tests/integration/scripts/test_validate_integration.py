@@ -105,7 +105,7 @@ def test_validate_simple_graph(flow, validate, caplog):
     })
     validate(id_)
     expect = (
-        'deprecated graph items were automatically upgraded'
+        'graph items were automatically upgraded'
         ' in "workflow definition":'
         '\n * (8.0.0) [scheduling][dependencies]graph -> [scheduling][graph]R1'
     )
@@ -205,7 +205,7 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
     })
     validate(id_)
     expect = (
-        'deprecated graph items were automatically upgraded in'
+        'graph items were automatically upgraded in'
         ' "workflow definition":'
         '\n * (8.0.0) [scheduling][dependencies][X]graph'
         ' -> [scheduling][graph]X - for X in:'

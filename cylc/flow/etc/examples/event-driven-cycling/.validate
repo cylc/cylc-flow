@@ -27,12 +27,7 @@ sleep 1  # give it a reasonable chance to start up
 ./bin/trigger "$ID" WORLD=earth
 
 # wait for it to complete
-cylc workflow-state "$ID" \
-    --task=run \
-    --point=1 \
-    --status=succeeded \
-    --max-polls=60 \
-    --interval=1
+cylc workflow-state "$ID//1/run:succeeded" --max-polls=60 --interval=1
 
 # check the job received the environment variable we provided
 grep 'Hello earth' "$HOME/cylc-run/$ID/log/job/1/run/NN/job.out"

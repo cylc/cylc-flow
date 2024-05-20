@@ -24,15 +24,16 @@ outputs, until matching results are found or polling is exhausted (see the
 
 If the database does not exist at first, polls are consumed waiting for it.
 
-In the ID "cycle/task:selector", the selector is interpreted as a status,
-with several exceptions:
-  - With --outputs, check task outputs instead.
-  - "Submitted" and "running" are taken as the associated outputs "submitted"
-     and "started", to avoid missing transient statuses between polls.
-  - if selector is not a known status it is assumed to be a custom output.
-  - the "finished" psuedo-status is an alias for "succeeded or failed".
+In "cycle/task:selector" the selector is interpreted as a status, unless:
+  - if not a known status, it will be interpreted as a task output (Cylc 8)
+    or as a task message (Cylc 7 DBs)
+  - with --output, it will be interpreted as a task output
 
-In theh ID, both cycle and task can include "*" to match any sequence of zero
+Selector does not default to "succeeded" - if omitted, any status will match.
+
+The "finished" pseudo-output is an alias for "succeeded or failed".
+
+In the ID, both cycle and task can include "*" to match any sequence of zero
 or more characters. Quote the pattern to protect it from shell expansion.
 
 Tasks are only recorded in the DB once they enter the active window (n=0).
@@ -44,14 +45,14 @@ Datetime cycle points are automatically converted to the DB point format.
 USE IN TASK SCRIPTING:
   - To poll a task at the same cycle point in another workflow, just use
     $CYLC_TASK_CYCLE_POINT in the ID (see also the workflow_state xtrigger).
-  - To poll a task at an offset cycle point, you can used the --offset option
-    instead of doing the datetime arithmetic yourself.
+  - To poll a task at an offset cycle point, use the --offset option to
+    have Cylc do the datetime arithmetic.
 
 WARNINGS:
- - Typos in the workflow or task ID will result in fruitless polling.
- - Avoid polling for the trainsient "waiting" status - it may be missed.
- - If your system clock is in local time and the database is UTC, command
-   line arguments will be converted to UTC before the database is queried.
+ - Mistakes in the workflow or task ID may result in fruitless polling.
+ - Transient states can be missed between polls; consider polling for the
+   corresponding output instead (for "running", use the "started" output").
+ - Cycle points will be converted to DB's point format and its UTC mode.
 
 Examples:
 
@@ -74,9 +75,9 @@ Examples:
   $ cylc workflow-state WORKFLOW//2033/foo:file1
 
 See also:
-  - The workflow_state xtrigger, for state polling within workflows.
-  - "cylc dump -t", to query a scheduler for current statuses.
-  - "cylc show", to show task prerequisite and output status.
+  - the workflow_state xtrigger, for state polling within workflows
+  - "cylc dump -t", to query a scheduler for current statuses
+  - "cylc show", to query a scheduler for task prerequisites and outputs
 """
 
 import asyncio
@@ -96,6 +97,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import infer_latest_run_from_id
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -115,24 +117,24 @@ class WorkflowPoller(Poller):
 
     def __init__(
         self, id_, offset, flow_num, alt_cylc_run_dir, default_status,
+        is_output, old_format,
         *args, **kwargs
     ):
         self.id_ = id_
         self.offset = offset
         self.flow_num = flow_num
         self.alt_cylc_run_dir = alt_cylc_run_dir
+        self.is_output = is_output
+        self.old_format = old_format
 
         self.db_checker = None
 
         tokens = Tokens(self.id_)
-
         self.workflow_id_raw = tokens.workflow_id
         self.task_sel = tokens["task_sel"] or default_status
         self.cycle = tokens["cycle"]
         self.task = tokens["task"]
 
-        self.status = None
-        self.outuput = None
         self.workflow_id = None
         self.results = None
         self.db_checker = None
@@ -176,12 +178,15 @@ class WorkflowPoller(Poller):
             except (OSError, sqlite3.Error):
                 return False
 
-        # Connected. At first connection:
-        # 1. check for status or output? (requires DB compat mode)
-        self.status, self.output = self.db_checker.status_or_output(
-            self.task_sel
+        self.is_output = (
+            self.is_output or
+            (
+                self.task_sel is not None and
+                self.task_sel not in TASK_STATUSES_ORDERED
+            )
         )
-        # 2. compute target cycle point (requires DB point format)
+
+        # compute target cycle point (requires DB point format)
         self.cycle = self.db_checker.tweak_cycle_point(self.cycle, self.offset)
 
         return True
@@ -190,7 +195,7 @@ class WorkflowPoller(Poller):
         """Return True if desired workflow state achieved, else False.
 
         Called once per poll by super().
-        Store self.result for access.
+        Store self.result for external access.
 
         """
         if self.db_checker is None and not self._db_connect():
@@ -198,14 +203,11 @@ class WorkflowPoller(Poller):
             return False
 
         self.result = self.db_checker.workflow_state_query(
-            self.task, self.cycle, self.status, self.output, self.flow_num,
-            self.args["print_outputs"]
+            self.task, self.cycle, self.task_sel, self.is_output, self.flow_num
         )
         if self.result:
             # End the polling dot stream and print inferred runN workflow ID.
-            self.db_checker.display_maps(
-                self.result, old_format=self.args["old_format"]
-            )
+            self.db_checker.display_maps(self.result, self.old_format)
         return bool(self.result)
 
 
@@ -222,11 +224,11 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "-s", "--offset",
-        help="Offset from ID cycle point as an ISO8601 duration, for datetime"
-        " cycling (e.g. PT30M for 30 minutes) or an integer interval, for"
-        " integer cycling (e.g. P2). Can be used in task job scripts to poll"
-        " offset cycle points without doing the cycle arithmetic yourself,"
-        " but see also the workflow_state xtrigger).",
+        help="Offset from ID cycle point as an ISO8601 duration for datetime"
+        " cycling (e.g. PT30M for 30 minutes) or an integer interval for"
+        " integer cycling (e.g. P2). This can be used in task job scripts"
+        " to poll offset cycle points without doing the cycle arithmetic"
+        " yourself - but see also the workflow_state xtrigger.",
         action="store", dest="offset", metavar="DURATION", default=None)
 
     parser.add_option(
@@ -235,10 +237,10 @@ def get_option_parser() -> COP:
         action="store", type="int", dest="flow_num", default=None)
 
     parser.add_option(
-        "--outputs",
-        help="For non status-specific queries print completed outputs instead"
-             "  of current task statuses.",
-        action="store_true", dest="print_outputs", default=False)
+        "--output",
+        help="Interpret task selector as an output rather than as a status."
+             "(Note this is not needed for custom outputs).",
+        action="store_true", dest="is_output", default=False)
 
     parser.add_option(
         "--old-format",
@@ -261,22 +263,18 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         raise InputError("Please give a single ID")
     id_ = ids[0]
 
-    if options.max_polls == 0:
-        raise InputError("max-polls must be at least 1.")
-
     poller = WorkflowPoller(
         id_,
         options.offset,
         options.flow_num,
         options.alt_cylc_run_dir,
         None,  # default status
+        options.is_output,
+        options.old_format,
         f'"{id_}"',
         options.interval,
         options.max_polls,
-        args={
-            "old_format": options.old_format,
-            "print_outputs": options.print_outputs
-        }
+        args=None
     )
 
     if not asyncio.run(poller.poll()):
