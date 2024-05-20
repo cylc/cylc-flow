@@ -21,6 +21,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    List,
     NoReturn,
     Optional,
     Tuple,
@@ -449,10 +450,12 @@ class NoPlatformsError(PlatformLookupError):
         place: Where the attempt to get the platform failed.
     """
     def __init__(
-        self, identity: str, set_type: str = 'group', place: str = ''
+        self, identity: str, set_type: str = 'group', place: str = '',
+        hosts_consumed: Optional[List[str]] = None
     ):
         self.identity = identity
         self.type = set_type
+        self.hosts_consumed = set(hosts_consumed) if hosts_consumed else set()
         if place:
             self.place = f' during {place}.'
         else:
