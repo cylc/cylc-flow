@@ -1781,7 +1781,7 @@ class DataStoreMgr:
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
-                tproxy.flow_nums
+                deserialise(tproxy.flow_nums)
             )
         # Flag difference between old and new window for pruning.
         self.prune_flagged_nodes.update(
