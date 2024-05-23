@@ -73,7 +73,7 @@ import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.data_messages_pb2 import (  # type: ignore
+from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
     FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
@@ -112,7 +112,7 @@ from cylc.flow.wallclock import (
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
-
+    from cylc.flow.flow_mgr import FlowNums
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -713,10 +713,10 @@ class DataStoreMgr:
     def increment_graph_window(
         self,
         source_tokens: Tokens,
-        point,
-        flow_nums,
-        is_manual_submit=False,
-        itask=None
+        point: 'PointBase',
+        flow_nums: 'FlowNums',
+        is_manual_submit: bool = False,
+        itask: Optional['TaskProxy'] = None
     ) -> None:
         """Generate graph window about active task proxy to n-edge-distance.
 
@@ -731,16 +731,12 @@ class DataStoreMgr:
         assessed for pruning eligibility.
 
         Args:
-            source_tokens (cylc.flow.id.Tokens)
-            point (PointBase)
-            flow_nums (set)
-            is_manual_submit (bool)
-            itask (cylc.flow.task_proxy.TaskProxy):
+            source_tokens
+            point
+            flow_nums
+            is_manual_submit
+            itask:
                 Active/Other task proxy, passed in with pool invocation.
-
-        Returns:
-            None
-
         """
 
         # common refrences
@@ -1149,28 +1145,23 @@ class DataStoreMgr:
     def generate_ghost_task(
         self,
         tokens: Tokens,
-        point,
-        flow_nums,
-        is_parent=False,
-        itask=None,
-        n_depth=0,
-    ):
+        point: 'PointBase',
+        flow_nums: 'FlowNums',
+        is_parent: bool = False,
+        itask: Optional['TaskProxy'] = None,
+        n_depth: int = 0,
+    ) -> None:
         """Create task-point element populated with static data.
 
         Args:
-            source_tokens (cylc.flow.id.Tokens)
-            point (PointBase)
-            flow_nums (set)
-            is_parent (bool):
+            source_tokens
+            point
+            flow_nums
+            is_parent:
                 Used to determine whether to load DB state.
-            itask (cylc.flow.task_proxy.TaskProxy):
+            itask:
                 Update task-node from corresponding task proxy object.
-            n_depth (int): n-window graph edge distance.
-
-        Returns:
-
-            None
-
+            n_depth: n-window graph edge distance.
         """
         tp_id = tokens.id
         if (
@@ -1486,7 +1477,11 @@ class DataStoreMgr:
 
         self.db_load_task_proxies.clear()
 
-    def _process_internal_task_proxy(self, itask, tproxy):
+    def _process_internal_task_proxy(
+        self,
+        itask: 'TaskProxy',
+        tproxy: PbTaskProxy,
+    ):
         """Extract information from internal task proxy object."""
 
         update_time = time()
@@ -1569,6 +1564,7 @@ class DataStoreMgr:
             cycle=str(cycle_point),
             task=name,
         )
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
             return
@@ -1642,6 +1638,7 @@ class DataStoreMgr:
             cycle=point_string,
             task=name,
         )
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
             return
@@ -1761,9 +1758,8 @@ class DataStoreMgr:
         self.apply_delta_checksum()
         self.publish_deltas = self.get_publish_deltas()
 
-    def window_resize_rewalk(self):
+    def window_resize_rewalk(self) -> None:
         """Re-create data-store n-window on resize."""
-        tokens: Tokens
         # Gather pre-resize window nodes
         if not self.all_n_window_nodes:
             self.all_n_window_nodes = set().union(*(
@@ -1777,7 +1773,8 @@ class DataStoreMgr:
         self.n_window_node_walks.clear()
         for tp_id in self.all_task_pool:
             tokens = Tokens(tp_id)
-            tp_id, tproxy = self.store_node_fetcher(tokens)
+            tproxy: PbTaskProxy
+            _, tproxy = self.store_node_fetcher(tokens)
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
@@ -2279,6 +2276,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2331,7 +2329,7 @@ class DataStoreMgr:
                 task=name,
                 cycle=str(cycle),
             )
-
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tokens)
         if not tproxy:
             return
@@ -2351,6 +2349,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2370,6 +2369,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2393,6 +2393,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2419,6 +2420,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2444,6 +2446,7 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
@@ -2472,13 +2475,14 @@ class DataStoreMgr:
         """Create delta for change in task proxy external_trigger.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
+            itask:
                 Update task-node from corresponding task proxy
                 objects from the workflow task pool.
-            trig (str): Trigger ID.
-            message (str): Trigger message.
+            trig: Trigger ID.
+            message: Trigger message.
 
         """
+        tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
