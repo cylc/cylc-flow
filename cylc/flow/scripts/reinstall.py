@@ -156,12 +156,13 @@ def main(
     *ids: str
 ) -> None:
     """CLI wrapper."""
-    call_multi(
+    rets = call_multi(
         partial(reinstall_cli, opts),
         *ids,
         constraint='workflows',
-        report=lambda x: print('Done')
+        report=lambda x: ('<green>Done</green>', None, True),
     )
+    sys.exit(all(rets.values()) is False)
 
 
 async def reinstall_cli(

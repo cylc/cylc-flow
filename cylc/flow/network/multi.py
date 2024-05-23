@@ -16,33 +16,16 @@
 
 import asyncio
 from functools import partial
+import sys
+from typing import Callable, Dict, List, Tuple, Optional, Union
+
+from ansimarkup import ansiprint
 
 from cylc.flow.async_util import unordered_map
+from cylc.flow.exceptions import CylcError, WorkflowStopped
+import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
-from cylc.flow.exceptions import InputError
-
-
-def print_response(multi_results):
-    """Print server mutation response to stdout.
-
-    The response will be either:
-        - (False, argument-validation-error)
-        - (True, ID-of-queued-command)
-
-    Raise InputError if validation failed.
-
-    """
-    for multi_result in multi_results:
-        for _cmd, results in multi_result.items():
-            for result in results.values():
-                for wf_res in result:
-                    wf_id = wf_res["id"]
-                    response = wf_res["response"]
-                    if not response[0]:
-                        # Validation failure
-                        raise InputError(response[1])
-                    else:
-                        print(f"{wf_id}: command {response[1]} queued")
+from cylc.flow.terminal import DIM
 
 
 def call_multi(*args, **kwargs):
@@ -57,10 +40,13 @@ async def call_multi_async(
     fcn,
     *ids,
     constraint='tasks',
-    report=None,
+    report: Optional[
+        # report(response: dict) -> (stdout, stderr, success)
+        Callable[[dict], Tuple[Optional[str], Optional[str], bool]]
+    ] = None,
     max_workflows=None,
     max_tasks=None,
-):
+) -> Dict[str, bool]:
     """Call a function for each workflow in a list of IDs.
 
     Args:
@@ -78,8 +64,16 @@ async def call_multi_async(
             mixed:
                 No constraint.
         report:
-            Override the default stdout output.
-            This function is provided with the return value of fcn.
+            The default reporter inspects the returned GraphQL status
+            extracting command outcome from the "response" field.
+            This reporter can be overwritten using the report kwarg.
+
+            Reporter functions are provided with the "response". They must
+            return the outcome of the operation and may also return stdout/err
+            text which will be written to the terminal.
+
+    Returns:
+        {workflow_id: outcome}
 
     """
     # parse ids
@@ -101,34 +95,170 @@ async def call_multi_async(
         reporter = partial(_report_single, report)
 
     if constraint == 'workflows':
-        # TODO: this is silly, just standardise the responses
         workflow_args = {
             workflow_id: []
             for workflow_id in workflow_args
         }
 
     # run coros
-    results = []
+    results: Dict[str, bool] = {}
     async for (workflow_id, *args), result in unordered_map(
         fcn,
         (
             (workflow_id, *args)
             for workflow_id, args in workflow_args.items()
         ),
+        # return exceptions rather than raising them
+        # (this way if one command errors, others may still run)
+        wrap_exceptions=True,
     ):
-        reporter(workflow_id, result)
-        results.append(result)
+        results[workflow_id] = reporter(workflow_id, result)
     return results
 
 
-def _report_multi(report, workflow, result):
-    print(workflow)
-    report(result)
+def _report_multi(
+    report: Callable, workflow: str, response: Union[dict, Exception]
+) -> bool:
+    """Report a response for a multi-workflow operation.
+
+    This is called once for each workflow the operation is called against.
+    """
+    out, err, outcome = _process_response(report, response)
+
+    msg = f'<b>{workflow}</b>:'
+    if out:
+        out = out.replace('\n', '\n    ')  # indent
+        msg += ' ' + out
+        ansiprint(msg)
+
+    if err:
+        err = err.replace('\n', '\n    ')  # indent
+        if not out:
+            err = f'{msg} {err}'
+        ansiprint(err, file=sys.stdout)
+
+    return outcome
 
 
-def _report_single(report, workflow, result):
-    report(result)
+def _report_single(
+    report: Callable, _workflow: str, response: Union[dict, Exception]
+) -> bool:
+    """Report the response for a single-workflow operation."""
+    out, err, outcome = _process_response(report, response)
+
+    if out:
+        ansiprint(out)
+    if err:
+        ansiprint(err, file=sys.stderr)
+
+    return outcome
 
 
-def _report(_):
-    pass
+def _process_response(
+    report: Callable,
+    response: Union[dict, Exception],
+) -> Tuple[Optional[str], Optional[str], bool]:
+    """Handle exceptions and return processed results.
+
+    If the response is an exception, return an appropriate error message,
+    otherwise run the reporter and return the result.
+
+    Args:
+        response:
+            The GraphQL response.
+        report:
+            The reporter function for extracting the result from the provided
+            response.
+
+    Returns:
+        (stdout, stderr, outcome)
+
+    """
+    if isinstance(response, WorkflowStopped):
+        # workflow stopped -> can't do anything
+        out = None
+        err = f'<yellow>{response.__class__.__name__}: {response}</yellow>'
+        outcome = False
+    elif isinstance(response, CylcError):
+        # exception -> report error
+        if cylc.flow.flags.verbosity > 1:  # debug mode
+            raise response from None
+        out = None
+        err = f'<red>{response.__class__.__name__}: {response}</red>'
+        outcome = False
+    elif isinstance(response, Exception):
+        # unexpected error -> raise
+        raise response
+    else:
+        try:
+            # run the reporter to extract the operation outcome
+            out, err, outcome = report(response)
+        except Exception as exc:
+            # an exception was raised in the reporter -> report this error the
+            # same was as an error in the response
+            return _process_response(report, exc)
+
+    return out, err, outcome
+
+
+def _report(
+    response: dict,
+) -> Tuple[Optional[str], Optional[str], bool]:
+    """Report the result of a GraphQL operation.
+
+    This analyses GraphQL mutation responses to determine the outcome.
+
+    Args:
+        response: The GraphQL response.
+
+    Returns:
+        (stdout, stderr, outcome)
+
+    """
+    try:
+        ret: List[Tuple[Optional[str], Optional[str], bool]] = []
+        for _mutation_name, mutation_response in response.items():
+            # extract the result of each mutation result in the response
+            success, msg = mutation_response['result'][0]['response']
+            out = None
+            err = None
+            if success:
+                # mutation succeeded
+                out = '<green>Command queued</green>'
+                if cylc.flow.flags.verbosity > 0:  # verbose mode
+                    out += f' <{DIM}>id={msg}</{DIM}>'
+            else:
+                # mutation failed
+                err = f'<red>{msg}</red>'
+            ret.append((out, err, success))
+
+        if len(ret) > 1:
+            # NOTE: at present we only support one mutation per operation at
+            # cylc-flow, however, multi-mutation operations can be actioned via
+            # cylc-uiserver
+            raise NotImplementedError(
+                'Cannot process multiple mutations in one operation.'
+            )
+
+        if len(ret) == 1:
+            return ret[0]
+
+        # error extracting result from GraphQL response
+        raise Exception(response)
+
+    except Exception as exc:
+        # response returned is not in the expected format - this shouldn't
+        # happen but we need to protect against it
+        err_msg = ''
+        if cylc.flow.flags.verbosity > 1:  # debug mode
+            # print the full result to stderr
+            err_msg += f'\n    <{DIM}>response={response}</{DIM}>'
+        return (
+            None,
+            (
+                '<red>Error processing command:\n'
+                + f'    {exc.__class__.__name__}: {exc}</red>'
+                + err_msg
+            ),
+            False,
+        )

@@ -16,22 +16,21 @@
 """Cylc scheduler server."""
 
 import asyncio
-from contextlib import suppress
 from collections import deque
+from contextlib import suppress
 import os
-import inspect
 from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
 from socket import gaierror
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import DEVNULL, PIPE, Popen
 import sys
 from threading import Barrier, Thread
 from time import sleep, time
 import traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Callable,
     Dict,
     Iterable,
@@ -39,6 +38,7 @@ from typing import (
     NoReturn,
     Optional,
     Set,
+    TYPE_CHECKING,
     Tuple,
     Union,
 )
@@ -46,26 +46,24 @@ from uuid import uuid4
 
 import psutil
 
-from metomi.isodatetime.parsers import TimePointParser
-
 from cylc.flow import (
-    LOG, main_loop, __version__ as CYLC_VERSION
+    LOG,
+    __version__ as CYLC_VERSION,
+    main_loop,
 )
+from cylc.flow import workflow_files
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow import command_validation
 from cylc.flow.config import WorkflowConfig
+from cylc.flow import commands
 from cylc.flow.data_store_mgr import DataStoreMgr
-from cylc.flow.id import Tokens
-from cylc.flow.flow_mgr import FLOW_NONE, FlowMgr, FLOW_NEW
 from cylc.flow.exceptions import (
     CommandFailedError,
-    CyclingError,
-    CylcConfigError,
     CylcError,
     InputError,
 )
 import cylc.flow.flags
+from cylc.flow.flow_mgr import FLOW_NEW, FLOW_NONE, FlowMgr
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -73,81 +71,76 @@ from cylc.flow.host_select import (
 from cylc.flow.hostuserutil import (
     get_host,
     get_user,
-    is_remote_platform
+    is_remote_platform,
 )
+from cylc.flow.id import Tokens
+from cylc.flow.log_level import verbosity_to_env, verbosity_to_opts
 from cylc.flow.loggingutil import (
-    RotatingLogFileHandler,
     ReferenceLogFileHandler,
+    RotatingLogFileHandler,
     get_next_log_number,
     get_reload_start_number,
     get_sorted_logs_by_time,
-    patch_log_level
-)
-from cylc.flow.timer import Timer
-from cylc.flow.log_level import (
-    log_level_to_verbosity,
-    verbosity_to_env,
-    verbosity_to_opts,
+    patch_log_level,
 )
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
+    get_workflow_name_from_id,
+    get_workflow_run_config_log_dir,
     get_workflow_run_dir,
     get_workflow_run_scheduler_log_dir,
-    get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_test_log_path,
     make_workflow_run_tree,
-    get_workflow_name_from_id
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
     get_localhost_install_target,
     get_platform,
-    is_platform_with_target_in_list
+    is_platform_with_target_in_list,
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.simulation import sim_time_check
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.templatevars import eval_var
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import RunMode, StopMode, AutoRestartMode
-from cylc.flow import workflow_files
-from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
-from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
+    REMOTE_FILE_INSTALL_FAILED,
     REMOTE_INIT_255,
     REMOTE_INIT_DONE,
-    REMOTE_FILE_INSTALL_FAILED,
-    REMOTE_INIT_FAILED
+    REMOTE_INIT_FAILED,
 )
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
     TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
-    TASK_STATUS_FAILED)
+)
+from cylc.flow.taskdef import TaskDef
+from cylc.flow.templatevars import eval_var
 from cylc.flow.templatevars import get_template_vars
+from cylc.flow.timer import Timer
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time as time2str,
-    get_utc_mode)
+    get_utc_mode,
+)
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_events import WorkflowEventHandler
+from cylc.flow.workflow_status import AutoRestartMode, RunMode, StopMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -224,7 +217,7 @@ class Scheduler:
     flow_mgr: FlowMgr
 
     # queues
-    command_queue: 'Queue[Tuple[str, str, list, dict]]'
+    command_queue: 'Queue[Tuple[str, str, AsyncGenerator]]'
     message_queue: 'Queue[TaskMsg]'
     ext_trigger_queue: Queue
 
@@ -550,7 +543,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.command_set_hold_point(holdcp)
+            await commands.run_cmd(commands.set_hold_point, self, holdcp)
 
         if self.options.paused_start:
             self.pause_workflow('Paused on start up')
@@ -640,7 +633,7 @@ class Scheduler:
                 if self.pool.get_tasks():
                     # (If we're not restarting a finished workflow)
                     self.restart_remote_init()
-                    self.command_poll_tasks(['*/*'])
+                    await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
 
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
@@ -943,20 +936,16 @@ class Scheduler:
         while True:
             uuid: str
             name: str
-            args: list
-            kwargs: dict
+            cmd: AsyncGenerator
             try:
-                uuid, name, args, kwargs = self.command_queue.get(False)
+                uuid, name, cmd = self.command_queue.get(False)
             except Empty:
                 break
             msg = f'Command "{name}" ' + '{result}' + f'. ID={uuid}'
             try:
-                fcn = self.get_command_method(name)
-                n_warnings: Optional[int]
-                if inspect.iscoroutinefunction(fcn):
-                    n_warnings = await fcn(*args, **kwargs)
-                else:
-                    n_warnings = fcn(*args, **kwargs)
+                n_warnings: Optional[int] = None
+                with suppress(StopAsyncIteration):
+                    n_warnings = await cmd.__anext__()
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (
@@ -989,230 +978,11 @@ class Scheduler:
             self.config.feet
         )
 
-    def command_stop(
-        self,
-        mode: Union[str, 'StopMode'],
-        cycle_point: Optional[str] = None,
-        # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
-        clock_time: Optional[str] = None,
-        task: Optional[str] = None,
-        flow_num: Optional[int] = None
-    ) -> None:
-        if flow_num:
-            self.pool.stop_flow(flow_num)
-            return
-
-        if cycle_point is not None:
-            # schedule shutdown after tasks pass provided cycle point
-            point = TaskID.get_standardised_point(cycle_point)
-            if point is not None and self.pool.set_stop_point(point):
-                self.options.stopcp = str(point)
-                self.config.stop_point = point
-                self.workflow_db_mgr.put_workflow_stop_cycle_point(
-                    self.options.stopcp)
-        elif clock_time is not None:
-            # schedule shutdown after wallclock time passes provided time
-            parser = TimePointParser()
-            self.set_stop_clock(
-                int(parser.parse(clock_time).seconds_since_unix_epoch)
-            )
-        elif task is not None:
-            # schedule shutdown after task succeeds
-            task_id = TaskID.get_standardised_taskid(task)
-            self.pool.set_stop_task(task_id)
-        else:
-            # immediate shutdown
-            with suppress(KeyError):
-                # By default, mode from mutation is a name from the
-                # WorkflowStopMode graphene.Enum, but we need the value
-                mode = WorkflowStopMode[mode]  # type: ignore[misc]
-            try:
-                mode = StopMode(mode)
-            except ValueError:
-                raise CommandFailedError(f"Invalid stop mode: '{mode}'")
-            self._set_stop(mode)
-            if mode is StopMode.REQUEST_KILL:
-                self.time_next_kill = time()
-
     def _set_stop(self, stop_mode: Optional[StopMode] = None) -> None:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
         self.update_data_store()
-
-    def command_release(self, tasks: Iterable[str]) -> int:
-        """Release held tasks."""
-        return self.pool.release_held_tasks(tasks)
-
-    def command_release_hold_point(self) -> None:
-        """Release all held tasks and unset workflow hold after cycle point,
-        if set."""
-        LOG.info("Releasing all tasks and removing hold cycle point.")
-        self.pool.release_hold_point()
-
-    def command_resume(self) -> None:
-        """Resume paused workflow."""
-        self.resume_workflow()
-
-    def command_poll_tasks(self, tasks: Iterable[str]) -> int:
-        """Poll pollable tasks or a task or family if options are provided."""
-        if self.get_run_mode() == RunMode.SIMULATION:
-            return 0
-        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
-        self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
-        return len(bad_items)
-
-    def command_kill_tasks(self, tasks: Iterable[str]) -> int:
-        """Kill all tasks or a task/family if options are provided."""
-        itasks, _, bad_items = self.pool.filter_task_proxies(tasks)
-        if self.get_run_mode() == RunMode.SIMULATION:
-            for itask in itasks:
-                if itask.state(*TASK_STATUSES_ACTIVE):
-                    itask.state_reset(TASK_STATUS_FAILED)
-                    self.data_store_mgr.delta_task_state(itask)
-            return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
-        return len(bad_items)
-
-    def command_hold(self, tasks: Iterable[str]) -> int:
-        """Hold specified tasks."""
-        return self.pool.hold_tasks(tasks)
-
-    def command_set_hold_point(self, point: str) -> None:
-        """Hold all tasks after the specified cycle point."""
-        cycle_point = TaskID.get_standardised_point(point)
-        if cycle_point is None:
-            raise CyclingError("Cannot set hold point to None")
-        LOG.info(
-            f"Setting hold cycle point: {cycle_point}\n"
-            "All tasks after this point will be held.")
-        self.pool.set_hold_point(cycle_point)
-
-    def command_pause(self) -> None:
-        """Pause the workflow."""
-        self.pause_workflow()
-
-    @staticmethod
-    def command_set_verbosity(level: Union[int, str]) -> None:
-        """Set workflow verbosity."""
-        try:
-            lvl = int(level)
-            LOG.setLevel(lvl)
-        except (TypeError, ValueError) as exc:
-            raise CommandFailedError(exc)
-        cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
-
-    def command_remove_tasks(self, tasks: Iterable[str]) -> int:
-        """Remove tasks."""
-        return self.pool.remove_tasks(tasks)
-
-    async def command_reload_workflow(self) -> None:
-        """Reload workflow configuration."""
-        # pause the workflow if not already
-        was_paused_before_reload = self.is_paused
-        if not was_paused_before_reload:
-            self.pause_workflow('Reloading workflow')
-            self.process_workflow_db_queue()  # see #5593
-
-        # flush out preparing tasks before attempting reload
-        self.reload_pending = 'waiting for pending tasks to submit'
-        while self.release_queued_tasks():
-            # Run the subset of main-loop functionality required to push
-            # preparing through the submission pipeline and keep the workflow
-            # responsive (e.g. to the `cylc stop` command).
-
-            # NOTE: this reload method was called by process_command_queue
-            # which is called synchronously in the main loop so this call is
-            # blocking to other main loop functions
-
-            # subproc pool - for issueing/tracking remote-init commands
-            self.proc_pool.process()
-            # task messages - for tracking task status changes
-            self.process_queued_task_messages()
-            # command queue - keeps the scheduler responsive
-            await self.process_command_queue()
-            # allows the scheduler to shutdown --now
-            await self.workflow_shutdown()
-            # keep the data store up to date with what's going on
-            await self.update_data_structure()
-            self.update_data_store()
-            # give commands time to complete
-            sleep(1)  # give any remove-init's time to complete
-
-        # reload the workflow definition
-        self.reload_pending = 'loading the workflow definition'
-        self.update_data_store()  # update workflow status msg
-        self._update_workflow_state()
-        LOG.info("Reloading the workflow definition.")
-        try:
-            config = self.load_flow_file(is_reload=True)
-        except (ParsecError, CylcConfigError) as exc:
-            if cylc.flow.flags.verbosity > 1:
-                # log full traceback in debug mode
-                LOG.exception(exc)
-            LOG.critical(
-                f'Reload failed - {exc.__class__.__name__}: {exc}'
-                '\nThis is probably due to an issue with the new'
-                ' configuration.'
-                '\nTo continue with the pre-reload config, un-pause the'
-                ' workflow.'
-                '\nOtherwise, fix the configuration and attempt to reload'
-                ' again.'
-            )
-        else:
-            self.reload_pending = 'applying the new config'
-            old_tasks = set(self.config.get_task_name_list())
-            # Things that can't change on workflow reload:
-            self._set_workflow_params(
-                self.workflow_db_mgr.pri_dao.select_workflow_params()
-            )
-            self.apply_new_config(config, is_reload=True)
-            self.broadcast_mgr.linearized_ancestors = (
-                self.config.get_linearized_ancestors())
-
-            self.task_events_mgr.mail_interval = self.cylc_config['mail'][
-                'task event batch interval']
-            self.task_events_mgr.mail_smtp = self._get_events_conf("smtp")
-            self.task_events_mgr.mail_footer = self._get_events_conf("footer")
-
-            # Log tasks that have been added by the reload, removed tasks are
-            # logged by the TaskPool.
-            add = set(self.config.get_task_name_list()) - old_tasks
-            for task in add:
-                LOG.warning(f"Added task: '{task}'")
-            self.workflow_db_mgr.put_workflow_template_vars(self.template_vars)
-            self.workflow_db_mgr.put_runtime_inheritance(self.config)
-            self.workflow_db_mgr.put_workflow_params(self)
-            self.process_workflow_db_queue()  # see #5593
-            self.is_updated = True
-            self.is_reloaded = True
-            self._update_workflow_state()
-
-            # Re-initialise data model on reload
-            self.data_store_mgr.initiate_data_model(self.is_reloaded)
-
-            # Reset the remote init map to trigger fresh file installation
-            self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
-            self.task_job_mgr.task_remote_mgr.is_reload = True
-            self.pool.reload_taskdefs(config)
-            # Load jobs from DB
-            self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
-                self.data_store_mgr.insert_db_job
-            )
-            if self.pool.compute_runahead(force=True):
-                self.pool.release_runahead_tasks()
-            self.is_reloaded = True
-            self.is_updated = True
-
-            LOG.info("Reload completed.")
-
-        # resume the workflow if previously paused
-        self.reload_pending = False
-        self.update_data_store()  # update workflow status msg
-        self._update_workflow_state()
-        if not was_paused_before_reload:
-            self.resume_workflow()
-            self.process_workflow_db_queue()  # see #5593
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1592,10 +1362,12 @@ class Scheduler:
                 raise SchedulerError(self.stop_mode.value)
             else:
                 raise SchedulerStop(self.stop_mode.value)
-        elif (self.time_next_kill is not None and
-              time() > self.time_next_kill):
-            self.command_poll_tasks(['*/*'])
-            self.command_kill_tasks(['*/*'])
+        elif (
+            self.time_next_kill is not None
+            and time() > self.time_next_kill
+        ):
+            await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
+            await commands.run_cmd(commands.kill_tasks, self, ['*/*'])
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
@@ -2137,40 +1909,6 @@ class Scheduler:
         self.is_paused = False
         self.workflow_db_mgr.put_workflow_paused(False)
         self.update_data_store()
-
-    def command_force_trigger_tasks(
-        self,
-        tasks: Iterable[str],
-        flow: List[str],
-        flow_wait: bool = False,
-        flow_descr: Optional[str] = None
-    ):
-        """Manual task trigger."""
-        return self.pool.force_trigger_tasks(
-            tasks, flow, flow_wait, flow_descr)
-
-    @command_validation.validate
-    def command_set(
-        self,
-        tasks: List[str],
-        flow: List[str],
-        outputs: Optional[List[str]] = None,
-        prerequisites: Optional[List[str]] = None,
-        flow_wait: bool = False,
-        flow_descr: Optional[str] = None
-    ):
-        """Force spawn task successors.
-
-        Note, the "outputs" and "prerequisites" arguments might not be
-        populated in the mutation arguments so must provide defaults here.
-        """
-        if outputs is None:
-            outputs = []
-        if prerequisites is None:
-            prerequisites = []
-        return self.pool.set_prereqs_and_outputs(
-            tasks, outputs, prerequisites, flow, flow_wait, flow_descr
-        )
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""

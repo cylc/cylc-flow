@@ -89,14 +89,12 @@ Examples:
 """
 
 from functools import partial
+import sys
 from typing import Tuple, TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.network.multi import (
-    call_multi,
-    print_response
-)
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
@@ -217,7 +215,7 @@ async def run(
     options: 'Values',
     workflow_id: str,
     *tokens_list
-) -> None:
+):
 
     validate_tokens(tokens_list)
 
@@ -244,6 +242,5 @@ async def run(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids) -> None:
-    print_response(
-        call_multi(partial(run, options), *ids)
-    )
+    rets = call_multi(partial(run, options), *ids)
+    sys.exit(all(rets.values()) is False)

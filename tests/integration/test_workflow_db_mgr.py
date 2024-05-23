@@ -14,12 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import pytest
 import sqlite3
 from typing import TYPE_CHECKING
 
-from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow import commands
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -37,7 +36,7 @@ async def test_restart_number(
         schd: 'Scheduler' = scheduler(id_, paused_start=True)
         async with start(schd) as log:
             if do_reload:
-                schd.command_reload_workflow()
+                await commands.run_cmd(commands.reload_workflow, schd)
             assert schd.workflow_db_mgr.n_restart == expected_restart_num
             assert log_filter(
                 log, contains=f"(re)start number={expected_restart_num + 1}"

@@ -18,7 +18,6 @@
 
 
 from typing import (
-    Callable,
     List,
     Optional,
 )
@@ -36,38 +35,27 @@ ERR_OPT_FLOW_WAIT = (
 )
 
 
-def validate(func: Callable):
-    """Decorate scheduler commands with a callable .validate attribute.
-
-    """
-    # TODO: properly handle "Callable has no attribute validate"?
-    func.validate = globals()[  # type: ignore
-        func.__name__.replace("command", "validate")
-    ]
-    return func
-
-
-def validate_flow_opts(flows: List[str], flow_wait: bool) -> None:
+def flow_opts(flows: List[str], flow_wait: bool) -> None:
     """Check validity of flow-related CLI options.
 
     Note the schema defaults flows to ["all"].
 
     Examples:
         Good:
-        >>> validate_flow_opts(["new"], False)
-        >>> validate_flow_opts(["1", "2"], False)
-        >>> validate_flow_opts(["1", "2"], True)
+        >>> flow_opts(["new"], False)
+        >>> flow_opts(["1", "2"], False)
+        >>> flow_opts(["1", "2"], True)
 
         Bad:
-        >>> validate_flow_opts(["none", "1"], False)
+        >>> flow_opts(["none", "1"], False)
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ... must all be integer valued
 
-        >>> validate_flow_opts(["cheese", "2"], True)
+        >>> flow_opts(["cheese", "2"], True)
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ... or 'all', 'new', or 'none'
 
-        >>> validate_flow_opts(["new"], True)
+        >>> flow_opts(["new"], True)
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
 
@@ -87,36 +75,36 @@ def validate_flow_opts(flows: List[str], flow_wait: bool) -> None:
         raise InputError(ERR_OPT_FLOW_WAIT)
 
 
-def validate_prereqs(prereqs: Optional[List[str]]):
+def prereqs(prereqs: Optional[List[str]]):
     """Validate a list of prerequisites, add implicit ":succeeded".
 
     Comma-separated lists should be split already, client-side.
 
     Examples:
         # Set multiple at once:
-        >>> validate_prereqs(['1/foo:bar', '2/foo:baz'])
+        >>> prereqs(['1/foo:bar', '2/foo:baz'])
         ['1/foo:bar', '2/foo:baz']
 
         # --pre=all
-        >>> validate_prereqs(["all"])
+        >>> prereqs(["all"])
         ['all']
 
         # implicit ":succeeded"
-        >>> validate_prereqs(["1/foo"])
+        >>> prereqs(["1/foo"])
         ['1/foo:succeeded']
 
         # Error: invalid format:
-        >>> validate_prereqs(["fish"])
+        >>> prereqs(["fish"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
 
         # Error: invalid format:
-        >>> validate_prereqs(["1/foo::bar"])
+        >>> prereqs(["1/foo::bar"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
 
         # Error: "all" must be used alone:
-        >>> validate_prereqs(["all", "2/foo:baz"])
+        >>> prereqs(["all", "2/foo:baz"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
 
@@ -127,7 +115,7 @@ def validate_prereqs(prereqs: Optional[List[str]]):
     prereqs2 = []
     bad: List[str] = []
     for pre in prereqs:
-        p = validate_prereq(pre)
+        p = prereq(pre)
         if p is not None:
             prereqs2.append(p)
         else:
@@ -145,23 +133,23 @@ def validate_prereqs(prereqs: Optional[List[str]]):
     return prereqs2
 
 
-def validate_prereq(prereq: str) -> Optional[str]:
+def prereq(prereq: str) -> Optional[str]:
     """Return prereq (with :succeeded) if valid, else None.
 
     Format: cycle/task[:output]
 
     Examples:
-        >>> validate_prereq('1/foo:succeeded')
+        >>> prereq('1/foo:succeeded')
         '1/foo:succeeded'
 
-        >>> validate_prereq('1/foo')
+        >>> prereq('1/foo')
         '1/foo:succeeded'
 
-        >>> validate_prereq('all')
+        >>> prereq('all')
         'all'
 
         # Error:
-        >>> validate_prereq('fish')
+        >>> prereq('fish')
 
     """
     try:
@@ -181,25 +169,25 @@ def validate_prereq(prereq: str) -> Optional[str]:
     return prereq
 
 
-def validate_outputs(outputs: Optional[List[str]]):
+def outputs(outputs: Optional[List[str]]):
     """Validate outputs.
 
     Comma-separated lists should be split already, client-side.
 
     Examples:
         Good:
-        >>> validate_outputs(['a', 'b'])
+        >>> outputs(['a', 'b'])
         ['a', 'b']
 
-        >>> validate_outputs(["required"])  # "required" is explicit default
+        >>> outputs(["required"])  # "required" is explicit default
         []
 
         Bad:
-        >>> validate_outputs(["required", "a"])
+        >>> outputs(["required", "a"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: --out=required must be used alone
 
-        >>> validate_outputs(["waiting"])
+        >>> outputs(["waiting"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: Tasks cannot be set to waiting...
 
@@ -219,39 +207,21 @@ def validate_outputs(outputs: Optional[List[str]]):
     return outputs
 
 
-def validate_consistency(
+def consistency(
     outputs: Optional[List[str]],
     prereqs: Optional[List[str]]
 ) -> None:
     """Check global option consistency
 
     Examples:
-        >>> validate_consistency(["a"], None)  # OK
+        >>> consistency(["a"], None)  # OK
 
-        >>> validate_consistency(None, ["1/a:failed"])  #OK
+        >>> consistency(None, ["1/a:failed"])  #OK
 
-        >>> validate_consistency(["a"], ["1/a:failed"])
+        >>> consistency(["a"], ["1/a:failed"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
 
     """
     if outputs and prereqs:
         raise InputError("Use --prerequisite or --output, not both.")
-
-
-def validate_set(
-    tasks: List[str],
-    flow: List[str],
-    outputs: Optional[List[str]] = None,
-    prerequisites: Optional[List[str]] = None,
-    flow_wait: bool = False,
-    flow_descr: Optional[str] = None
-) -> None:
-    """Validate args of the scheduler "command_set" method.
-
-    Raise InputError if validation fails.
-    """
-    validate_consistency(outputs, prerequisites)
-    outputs = validate_outputs(outputs)
-    prerequisites = validate_prereqs(prerequisites)
-    validate_flow_opts(flow, flow_wait)

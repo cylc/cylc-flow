@@ -420,11 +420,42 @@ async def asyncqgen(queue):
         yield await queue.get()
 
 
-async def unordered_map(coroutine, iterator):
+def wrap_exception(coroutine):
+    """Catch and return exceptions rather than raising them.
+
+    Examples:
+        >>> async def myfcn():
+        ...     raise Exception('foo')
+        >>> mywrappedfcn = wrap_exception(myfcn)
+        >>> ret = asyncio.run(mywrappedfcn())  # the exception is not raised...
+        >>> ret  # ...it is returned
+        Exception('foo')
+
+    """
+    async def _inner(*args, **kwargs):
+        nonlocal coroutine
+        try:
+            return await coroutine(*args, **kwargs)
+        except Exception as exc:
+            return exc
+
+    return _inner
+
+
+async def unordered_map(coroutine, iterator, wrap_exceptions=False):
     """An asynchronous map function which does not preserve order.
 
     Use in situations where you want results as they are completed rather than
     once they are all completed.
+
+    Args:
+        coroutine:
+            The async function you want to call.
+        iterator:
+            The arguments you want to call it with.
+        wrap_exceptions:
+            If True, then exceptions will be caught and returned rather than
+            raised.
 
     Example:
         # define your async coroutine
@@ -444,6 +475,9 @@ async def unordered_map(coroutine, iterator):
         [((0,), 0), ((1,), 1), ((2,), 4), ((3,), 9), ((4,), 16)]
 
     """
+    if wrap_exceptions:
+        coroutine = wrap_exception(coroutine)
+
     # create tasks
     pending = []
     for args in iterator:

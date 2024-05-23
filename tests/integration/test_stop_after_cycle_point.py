@@ -27,6 +27,7 @@ to None).
 
 from typing import Optional
 
+from cylc.flow import commands
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.id import Tokens
 from cylc.flow.workflow_status import StopMode
@@ -117,7 +118,9 @@ async def test_stop_after_cycle_point(
         assert schd.config.stop_point == IntegerPoint('2')
 
         # override this value whilst the workflow is running
-        schd.command_stop(
+        await commands.run_cmd(
+            commands.stop,
+            schd,
             cycle_point=IntegerPoint('4'),
             mode=StopMode.REQUEST_CLEAN,
         )

@@ -30,6 +30,7 @@ from pytest import param
 from json import loads
 
 from cylc.flow import CYLC_LOG
+from cylc.flow import commands
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_store_mgr import TASK_PROXIES
@@ -568,7 +569,7 @@ async def test_reload_stopcp(
     schd: 'Scheduler' = scheduler(flow(cfg))
     async with start(schd):
         assert str(schd.pool.stop_point) == '2020'
-        await schd.command_reload_workflow()
+        await commands.run_cmd(commands.reload_workflow, schd)
         assert str(schd.pool.stop_point) == '2020'
 
 
@@ -839,7 +840,7 @@ async def test_reload_prereqs(
         flow(conf, id_=id_)
 
         # Reload the workflow config
-        await schd.command_reload_workflow()
+        await commands.run_cmd(commands.reload_workflow, schd)
         assert list_tasks(schd) == expected_3
 
         # Check resulting dependencies of task z
@@ -970,7 +971,7 @@ async def test_graph_change_prereq_satisfaction(
             flow(conf, id_=id_)
 
             # Reload the workflow config
-            await schd.command_reload_workflow()
+            await commands.run_cmd(commands.reload_workflow, schd)
 
             await test.asend(schd)
 
@@ -1967,7 +1968,7 @@ async def test_remove_by_suicide(
         )
 
         # remove 1/b by request (cylc remove)
-        schd.command_remove_tasks(['1/b'])
+        await commands.run_cmd(commands.remove_tasks, schd, ['1/b'])
         assert log_filter(
             log,
             regex='1/b.*removed from active task pool: request',
@@ -2009,7 +2010,7 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         assert z1, '1/z should have been spawned after 1/a succeeded'
 
         # manually remove 1/z, it should be removed from the pool
-        schd.command_remove_tasks(['1/z'])
+        await commands.run_cmd(commands.remove_tasks, schd, ['1/z'])
         schd.workflow_db_mgr.process_queued_ops()
         z1 = schd.pool.get_task(IntegerPoint("1"), "z")
         assert z1 is None, '1/z should have been removed (by request)'

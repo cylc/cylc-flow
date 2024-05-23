@@ -24,7 +24,6 @@ If workflow WORKFLOW is running or TASK in WORKFLOW is currently running,
 exit with success status, else exit with error status.
 """
 
-from ansimarkup import parse as cparse
 from functools import partial
 import sys
 from typing import Any, Dict, TYPE_CHECKING
@@ -121,17 +120,18 @@ async def run(
             elif task_result['taskProxy']['state'] != TASK_STATUS_RUNNING:
                 msg = f"task not {TASK_STATUS_RUNNING}: {string_id}"
             if msg:
-                ret['stderr'].append(cparse(f'<red>{msg}</red>'))
+                ret['stderr'].append(msg)
                 ret['exit'] = 1
 
     return ret
 
 
-def report(ret):
-    for line in ret['stdout']:
-        print(line)
-    for line in ret['stderr']:
-        print(line, file=sys.stderr)
+def report(response):
+    return (
+        '\n'.join(response['stdout']),
+        '\n'.join(response['stderr']),
+        response['exit'] == 0,
+    )
 
 
 @cli_function(get_option_parser)
@@ -146,10 +146,4 @@ def main(
         report=report,
         constraint='mixed',
     )
-
-    if all(
-        ret['exit'] == 0
-        for ret in rets
-    ):
-        sys.exit(0)
-    sys.exit(1)
+    sys.exit(all(rets.values()) is False)
