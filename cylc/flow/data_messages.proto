@@ -25,7 +25,7 @@ syntax = "proto3";
  * message modules.
  *
  * Command:
- * $ protoc -I=./ --python_out=./ data_messages.proto && sed -i '1i# type: ignore' data_messages_pb2.py
+ * $ protoc -I=./ --python_out=./ --pyi_out=./ data_messages.proto
  *
  * Pre-compiled protoc binary may be download from:
  * https://github.com/protocolbuffers/protobuf/releases

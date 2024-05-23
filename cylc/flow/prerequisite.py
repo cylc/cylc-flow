@@ -22,7 +22,7 @@ from typing import Iterable, Set, TYPE_CHECKING
 
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
-from cylc.flow.data_messages_pb2 import (  # type: ignore
+from cylc.flow.data_messages_pb2 import (
     PbPrerequisite,
     PbCondition,
 )
