@@ -1130,7 +1130,7 @@ with Conf(
                       # "a" may either succeed or fail
                       completion = succeeded or failed
 
-                   Which could be fixed by ammending the graph like so:
+                   Which could be fixed by amending the graph like so:
 
                    .. code-block:: cylc-graph
 
