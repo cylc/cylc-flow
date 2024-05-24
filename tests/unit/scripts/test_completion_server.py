@@ -721,7 +721,7 @@ def test_check_completion_script_compatibility(monkeypatch, capsys):
 async def test_prereqs_and_outputs():
     """Test the error cases for listing task prereqs/outputs.
 
-    The succeess cases are tested in an integration test (requires a running
+    The success cases are tested in an integration test (requires a running
     scheduler).
     """
     # if no tokens are provided, no prereqs or outputs are returned

@@ -1095,7 +1095,7 @@ with Conf(
 
                       foo:x? => x
 
-                   In these cases succeess is presumed to be required unless
+                   In these cases success is presumed to be required unless
                    explicitly stated otherwise, either in the graph e.g:
 
                    .. code-block:: cylc-graph
