@@ -17,7 +17,6 @@
 
 import sys
 from time import sleep
-from cylc.flow import LOG
 
 
 class Poller:
@@ -30,6 +29,7 @@ class Poller:
         parser.add_option(
             "--max-polls",
             help=r"Maximum number of polls (default: %default).",
+            type="int",
             metavar="INT",
             action="store",
             dest="max_polls",
@@ -38,6 +38,7 @@ class Poller:
         parser.add_option(
             "--interval",
             help=r"Polling interval in seconds (default: %default).",
+            type="int",
             metavar="SECS",
             action="store",
             dest="interval",
@@ -45,23 +46,11 @@ class Poller:
         )
 
     def __init__(self, condition, interval, max_polls, args):
-
         self.condition = condition  # e.g. "workflow stopped"
-
-        # check max_polls is an int
-        try:
-            self.max_polls = int(max_polls)
-        except ValueError:
-            sys.exit("max_polls must be an integer")
-
-        # check interval is an int
-        try:
-            self.interval = int(interval)
-        except ValueError:
-            sys.exit("interval must be an integer")
-
-        self.n_polls = 0
+        self.interval = interval
+        self.max_polls = max_polls or 1  # no point in zero polls
         self.args = args  # any extra parameters needed by check()
+        self.n_polls = 0
 
     async def check(self):
         """Abstract method. Test polling condition."""
@@ -73,20 +62,6 @@ class Poller:
         Return True if condition met, or False if polling exhausted.
 
         """
-        if self.max_polls == 0:
-            # exit 1 as we can't know if the condition is satisfied
-            LOG.critical("nothing to do (--max-polls=0)")
-            sys.exit(1)
-
-        elif self.max_polls == 1:
-            LOG.debug(
-                f"checking for {self.condition}: ")
-        else:
-            LOG.debug(
-                f"polling (max {self.max_polls} x {self.interval} sec)"
-                f" for {self.condition}"
-            )
-
         while self.n_polls < self.max_polls:
             if self.n_polls > 1:
                 sys.stderr.write(".")
@@ -99,8 +74,8 @@ class Poller:
 
         sys.stderr.write("\n")
         sys.stderr.flush()
-        err = "condition not satisfied"
+        err = "ERROR: condition not satisfied"
         if self.max_polls > 1:
             err += f" after {self.max_polls} polls"
-        LOG.critical(err)
+        sys.stderr.write(err)
         return False

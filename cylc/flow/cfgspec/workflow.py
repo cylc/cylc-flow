@@ -1731,18 +1731,18 @@ with Conf(
                 ''')
 
             with Conf('workflow state polling', desc=f'''
-                Deprecated: please use the workflow_state xtrigger instead.
+                Deprecated support for automatic workflow state polling tasks
+                (creates tasks ),
+                as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
+                "user" and "host" items are not supported.
 
-                Configure automatic workflow polling tasks as described in
-                :ref:`WorkflowStatePolling`.
-
-                The config items in this section reflect the options of the
-                ``cylc workflow-state`` command, but the target workflow ID
-                and task status or output are taken from the graph syntax.
-
-                .. versionchanged:: 8.0.0
+                .. versionchanged:: 8.3.0
 
                    {REPLACES}``[runtime][<namespace>]suite state polling``.
+
+                .. deprecated:: 8.3.0
+
+                   Please switch to workflow_state xtriggers.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -1756,8 +1756,7 @@ with Conf(
                 ''')
                 Conf('alt-cylc-run-dir', VDR.V_STRING, desc='''
                     The cylc-run directory location of the target workflow.
-
-                    Needed to target (e.g.) workflow owned by other users.
+                    Use to poll workflows owned by other users.
                 ''')
                 Conf('verbose mode', VDR.V_BOOLEAN, desc='''
                     Run the ``cylc workflow-state`` command in verbose mode.

@@ -1540,8 +1540,8 @@ class WorkflowConfig:
             config_trigger = rtc['workflow state polling']['output']
             if graph_trigger is not None and config_trigger is not None:
                 raise WorkflowConfigError(
-                    f'Workflow polling task "{name}" must configure a status'
-                    f" or output in the graph (:{graph_trigger}) or task"
+                    f'Polling task "{name}" must configure a status or output'
+                    f" via the graph (:{graph_trigger}) or the task"
                     f" definition ({config_trigger}) but not both."
                 )
             elif graph_trigger is not None:

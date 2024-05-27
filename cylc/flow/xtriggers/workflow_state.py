@@ -63,8 +63,8 @@ def workflow_state(
         TASK_STATUS_SUCCEEDED,
         False, False,
         f'"{workflow}"',
-        '10',  # interval
-        1,  # max polls
+        '10',  # interval (irrelevant, for a single poll)
+        1,  # max polls (for xtriggers the scheduler does the polling)
         []
     )
     if asyncio.run(poller.poll()):

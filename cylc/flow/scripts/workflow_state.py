@@ -49,10 +49,10 @@ USE IN TASK SCRIPTING:
     have Cylc do the datetime arithmetic.
 
 WARNINGS:
- - Mistakes in the workflow or task ID may result in fruitless polling.
- - Transient states can be missed between polls; consider polling for the
-   corresponding output instead (for "running", use the "started" output").
- - Cycle points will be converted to DB's point format and its UTC mode.
+ - Typos in the workflow or task ID may result in fruitless polling.
+ - To avoid missing transient state ("submitted", "running") poll for the
+   corresponding output ("submitted", "started").
+ - Cycle points are converted to DB point format, and its UTC mode.
 
 Examples:
 
@@ -162,10 +162,11 @@ class WorkflowPoller(Poller):
                     self.alt_cylc_run_dir
                 )
             except InputError:
+                LOG.debug("Workflow not found")
                 return False
 
         if self.workflow_id:
-            # Print inferred ID even if we can't connect to the DB yet.
+            # Print inferred workflow ID.
             sys.stderr.write(f"{self.workflow_id}\n")
 
         if self.db_checker is None:
@@ -176,6 +177,7 @@ class WorkflowPoller(Poller):
                     self.workflow_id
                 )
             except (OSError, sqlite3.Error):
+                LOG.debug("DB not connected")
                 return False
 
         self.is_output = (
@@ -186,8 +188,9 @@ class WorkflowPoller(Poller):
             )
         )
 
-        # compute target cycle point (requires DB point format)
-        self.cycle = self.db_checker.tweak_cycle_point(self.cycle, self.offset)
+        # compute target cycle point (after getting the DB point format)
+        self.cycle = self.db_checker.adjust_point_to_db(
+            self.cycle, self.offset)
 
         return True
 
@@ -277,5 +280,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         args=None
     )
 
-    if not asyncio.run(poller.poll()):
+    if not asyncio.run(
+        poller.poll()
+    ):
         sys.exit(1)

@@ -19,7 +19,7 @@ import json
 import os
 import sqlite3
 import sys
-from typing import Optional
+from typing import Optional, List
 from textwrap import dedent
 
 from cylc.flow.exceptions import InputError
@@ -74,7 +74,7 @@ class CylcWorkflowDBChecker:
             except sqlite3.OperationalError:
                 raise exc  # original error
 
-    def tweak_cycle_point(self, cycle, offset):
+    def adjust_point_to_db(self, cycle, offset):
         """Adjust a cycle point (with offset) to the DB point format."""
 
         if offset is not None:
@@ -166,28 +166,23 @@ class CylcWorkflowDBChecker:
         is_output: Optional[bool] = False,
         flow_num: Optional[int] = None,
         print_outputs: bool = False
-    ):
+    ) -> List[List[str]]:
         """Query task status or outputs in workflow database.
 
-        Return a list of data for tasks with matching status or output:
+        Return a list of tasks with matching status or output and flow:
+
         For a status query:
-           [(name, cycle, status, serialised-flows), ...]
+           [
+              [name, cycle, status],
+              ...
+           ]
+
         For an output query:
-           [(name, cycle, serialised-outputs, serialised-flows), ...]
-
-        If all args are None, print the whole task_states table.
-
-        NOTE: the task_states table holds the latest state only, so querying
-        (e.g.) submitted will fail for a task that is running or finished.
-
-        Query cycle=2023, status=succeeded:
-           [[foo, 2023, succeeded], [bar, 2023, succeeded]]
-
-        Query task=foo, output="file_ready":
-           [[foo, 2023, "file_ready"], [foo, 2024, "file_ready"]]
-
-        Query task=foo, point=2023, output="file_ready":
-           [[foo, 2023, "file_ready"]]
+           [
+              [name, cycle, outputs],
+              ...
+           ]
+        where outputs is serialized, e.g.: "[out1: msg1, out2: msg2, ...]"
 
         """
         stmt_args = []
