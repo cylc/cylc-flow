@@ -24,10 +24,12 @@ def test_add_offset():
     """Test socket start."""
     orig_point = '20200202T0000Z'
     plus_offset = '+PT02H02M'
-    print(add_offset(orig_point, plus_offset))
     assert str(add_offset(orig_point, plus_offset)) == '20200202T0202Z'
     minus_offset = '-P1MT22H59M'
     assert str(add_offset(orig_point, minus_offset)) == '20200101T0101Z'
+    assert str(
+        add_offset(orig_point, minus_offset, dmp_fmt="CCYY-MM-DDThh:mmZ")
+    ) == '2020-01-01T01:01Z'
     bad_offset = '+foo'
-    with pytest.raises(ValueError, match=r'ERROR, bad offset format') as exc:
-        bad_point = add_offset(orig_point, bad_offset)
+    with pytest.raises(ValueError, match=r'ERROR, bad offset format'):
+        add_offset(orig_point, bad_offset)

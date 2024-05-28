@@ -1732,9 +1732,8 @@ with Conf(
 
             with Conf('workflow state polling', desc=f'''
                 Deprecated support for automatic workflow state polling tasks
-                (creates tasks ),
                 as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
-                "user" and "host" items are not supported.
+                "user" and "host" config items are not supported.
 
                 .. versionchanged:: 8.3.0
 
