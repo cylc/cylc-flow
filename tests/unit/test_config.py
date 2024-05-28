@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import deepcopy
 import os
 import sys
 from optparse import Values
@@ -23,7 +22,6 @@ from pathlib import Path
 import pytest
 import logging
 from types import SimpleNamespace
-from unittest.mock import Mock
 from contextlib import suppress
 
 from cylc.flow import CYLC_LOG
@@ -40,10 +38,8 @@ from cylc.flow.exceptions import (
 from cylc.flow.parsec.exceptions import Jinja2Error, EmPyError
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
-from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
-from cylc.flow.xtrigger_mgr import XtriggerManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
@@ -86,8 +82,7 @@ class TestWorkflowConfig:
     """Test class for the Cylc WorkflowConfig object."""
 
     def test_xfunction_imports(
-            self, mock_glbl_cfg: Fixture, tmp_path: Path,
-            xtrigger_mgr: XtriggerManager):
+            self, mock_glbl_cfg: Fixture, tmp_path: Path):
         """Test for a workflow configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -115,10 +110,9 @@ class TestWorkflowConfig:
         """
         flow_file.write_text(flow_config)
         workflow_config = WorkflowConfig(
-            workflow="name_a_tree", fpath=flow_file, options=SimpleNamespace(),
-            xtrigger_mgr=xtrigger_mgr
+            workflow="name_a_tree", fpath=flow_file, options=SimpleNamespace()
         )
-        assert 'tree' in workflow_config.xtrigger_mgr.functx_map
+        assert 'tree' in workflow_config.xtrigger_collator.functx_map
 
     def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function cannot be imported."""

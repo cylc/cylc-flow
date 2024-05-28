@@ -1280,7 +1280,7 @@ class TaskEventsManager():
                 [],
                 kwargs
             )
-            self.xtrigger_mgr.add_trig(
+            self.xtrigger_mgr.xtriggers.add_trig(
                 label,
                 xtrig,
                 os.getenv("CYLC_WORKFLOW_RUN_DIR")

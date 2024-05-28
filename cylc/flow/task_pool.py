@@ -123,6 +123,7 @@ class TaskPool:
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
+        self.xtrigger_mgr.add_xtriggers(self.config.xtrigger_collator)
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
@@ -483,7 +484,7 @@ class TaskPool:
                 flow_wait=bool(flow_wait),
                 is_manual_submit=bool(is_manual_submit),
                 sequential_xtrigger_labels=(
-                    self.xtrigger_mgr.sequential_xtrigger_labels
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
 
@@ -735,7 +736,8 @@ class TaskPool:
             if ntask is not None:
                 is_xtrig_sequential = ntask.is_xtrigger_sequential
             elif any(
-                xtrig_label in self.xtrigger_mgr.sequential_xtrigger_labels
+                xtrig_label in (
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels)
                 for sequence, xtrig_labels in tdef.xtrig_labels.items()
                 for xtrig_label in xtrig_labels
                 if sequence.is_valid(point)
@@ -1025,7 +1027,7 @@ class TaskPool:
                     itask.flow_nums,
                     itask.state.status,
                     sequential_xtrigger_labels=(
-                        self.xtrigger_mgr.sequential_xtrigger_labels
+                        self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                     ),
                 )
                 itask.copy_to_reload_successor(
@@ -1762,7 +1764,7 @@ class TaskPool:
             transient=transient,
             is_manual_submit=is_manual_submit,
             sequential_xtrigger_labels=(
-                self.xtrigger_mgr.sequential_xtrigger_labels
+                self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
             ),
         )
         if itask is None:
@@ -2161,7 +2163,7 @@ class TaskPool:
                 flow_wait=flow_wait,
                 submit_num=submit_num,
                 sequential_xtrigger_labels=(
-                    self.xtrigger_mgr.sequential_xtrigger_labels
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
             if itask is None:

@@ -24,7 +24,7 @@ from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 
 
 def workflow_state(
-    workflow: str,  # TODO CANT CALL THIS WORKFLOW
+    workflow_task_id: str,
     offset: Optional[str] = None,
     flow_num: Optional[int] = 1,
     alt_cylc_run_dir: Optional[str] = None,
@@ -34,35 +34,34 @@ def workflow_state(
     If the status or output has been achieved, return {True, result}.
 
     Arguments:
-        workflow:
-            ID of the workflow[//task] to check.
+        workflow_task_id:
+            ID (workflow//point/task:selector) of the target task.
         offset:
-            Interval offset from cycle point as an ISO8601 or integer duration,
+            Offset from cycle point as an ISO8601 or integer duration,
             e.g. PT1H (1 hour) or P1 (1 integer cycle)
         flow_num:
-            Flow number of remote task.
+            Flow number of the target task.
         alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
 
             .. note::
 
-               This only needs to be supplied if the workflow is running in a
-               different location to what is specified in the global
-               configuration (usually ``~/cylc-run``).
+               This is only needed if the workflow is installed to a
+               non-standard location.
 
     Returns:
         tuple: (satisfied, result)
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
-            Dictionary of the args / kwargs provided to this xtrigger.
+            Dict {workflow_id, task_id, task_selector, flow_number}.
 
     """
     poller = WorkflowPoller(
-        workflow, offset, flow_num, alt_cylc_run_dir,
+        workflow_task_id, offset, flow_num, alt_cylc_run_dir,
         TASK_STATUS_SUCCEEDED,
         False, False,
-        f'"{workflow}"',
+        f'"{id}"',
         '10',  # interval (irrelevant, for a single poll)
         1,  # max polls (for xtriggers the scheduler does the polling)
         []
@@ -71,9 +70,10 @@ def workflow_state(
         return (
             True,
             {
-                "workflow": poller.workflow_id,
-                "task": f"{poller.cycle}/{poller.task}:{poller.task_sel}",
-                "flow": poller.flow_num
+                "workflow_id": poller.workflow_id,
+                "task_id": f"{poller.cycle}/{poller.task}",
+                "task_selector": poller.task_sel,
+                "flow_number": poller.flow_num
             }
         )
     else:
@@ -86,12 +86,13 @@ def workflow_state(
 def validate(args: Dict[str, Any], Err=WorkflowConfigError):
     """Validate workflow_state xtrigger function args.
 
-    * workflow: full workflow//cycle/task[:selector]
+    * workflow_task_id: full workflow//cycle/task[:selector]
+    * offset: must be a valid status
     * flow_num: must be an integer
-    * status: must be a valid status
+    * alt_cylc_run_dir: must be a valid path
 
     """
-    tokens = tokenise(args["workflow"])
+    tokens = tokenise(args["workflow_task_id"])
     if any(
         tokens[token] is None
         for token in ("workflow", "cycle", "task")

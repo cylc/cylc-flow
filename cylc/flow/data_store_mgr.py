@@ -1186,7 +1186,7 @@ class DataStoreMgr:
                 submit_num=0,
                 data_mode=True,
                 sequential_xtrigger_labels=(
-                    self.schd.xtrigger_mgr.sequential_xtrigger_labels
+                    self.schd.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
 

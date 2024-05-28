@@ -10,7 +10,7 @@
     [[xtriggers]]
         # this is an "xtrigger" - it will wait for the task "b" in the same
         # cycle from the workflow "upstream"
-        upstream = workflow_state(workflow="inter-workflow-triggers/upstream//%(point)s/b")
+        upstream = workflow_state(workflow_task_id="inter-workflow-triggers/upstream//%(point)s/b")
     [[graph]]
         PT1H = """
             @upstream => process

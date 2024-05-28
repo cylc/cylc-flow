@@ -115,7 +115,7 @@ from cylc.flow.workflow_files import (
     check_deprecation,
 )
 from cylc.flow.workflow_status import RunMode
-from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.xtrigger_mgr import XtriggerCollator
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -220,7 +220,6 @@ class WorkflowConfig:
         options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
         output_fname: Optional[str] = None,
-        xtrigger_mgr: Optional[XtriggerManager] = None,
         mem_log_func: Optional[Callable[[str], None]] = None,
         run_dir: Optional[str] = None,
         log_dir: Optional[str] = None,
@@ -262,7 +261,7 @@ class WorkflowConfig:
         self.taskdefs: Dict[str, TaskDef] = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
-        self.xtrigger_mgr = xtrigger_mgr
+        self.xtrigger_collator = XtriggerCollator()
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
 
         self.initial_point: 'PointBase'
@@ -1914,10 +1913,9 @@ class WorkflowConfig:
                     f'Invalid xtrigger name "{label}" - {msg}'
                 )
 
-        if self.xtrigger_mgr is not None:
-            self.xtrigger_mgr.sequential_xtriggers_default = (
-                self.cfg['scheduling']['sequential xtriggers']
-            )
+        self.xtrigger_collator.sequential_xtriggers_default = (
+            self.cfg['scheduling']['sequential xtriggers']
+        )
         for label in xtrig_labels:
             try:
                 xtrig = xtrigs[label]
@@ -1937,13 +1935,7 @@ class WorkflowConfig:
                     f" {label} = {xtrig.get_signature()}"
                 )
 
-            # Generic xtrigger validation.
-            XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
-
-            if self.xtrigger_mgr:
-                # (not available during validation)
-                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
-
+            self.xtrigger_collator.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
@@ -2633,10 +2625,7 @@ class WorkflowConfig:
             # Define the xtrigger function.
             args = [] if offset is None else [offset]
             xtrig = SubFuncContext(label, 'wall_clock', args, {})
-            if self.xtrigger_mgr is None:
-                XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
-            else:
-                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            self.xtrigger_collator.add_trig(label, xtrig, self.fdir)
             # Add it to the task, for each sequence that the task appears in.
             taskdef = self.get_taskdef(task_name)
             for seq in taskdef.sequences:

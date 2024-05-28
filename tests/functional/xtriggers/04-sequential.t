@@ -35,7 +35,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
         clock_1 = wall_clock(offset=P2Y, sequential=False)
         clock_2 = wall_clock()
         up_1 = workflow_state(\
-            workflow=%(workflow)s//%(point)s/b:succeeded, offset=-P1Y, sequential=False \
+            workflow_task_id=%(workflow)s//%(point)s/b:succeeded, offset=-P1Y, sequential=False \
         ):PT1S
     [[graph]]
         R1 = """
