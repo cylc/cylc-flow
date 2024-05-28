@@ -16,8 +16,20 @@
 """Integration testing for platforms functionality.
 """
 
+from contextlib import suppress
 
-async def test_foo(flow, scheduler, run, mock_glbl_cfg, validate, monkeypatch):
+from cylc.flow.exceptions import NoPlatformsError
+from cylc.flow.task_job_logs import get_task_job_activity_log
+
+
+async def test_prep_submit_task_tries_multiple_platforms(
+    flow, scheduler, run, mock_glbl_cfg, monkeypatch, tmp_path
+):
+    """Preparation tries multiple platforms within a group if the
+    task platform setting matches a group, and that after all platforms
+    have been tried that the hosts matching that platform group are
+    cleared.
+    """
     global_conf = '''
         [platforms]
             [[myplatform]]
@@ -30,31 +42,14 @@ async def test_foo(flow, scheduler, run, mock_glbl_cfg, validate, monkeypatch):
     mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_conf)
 
     wid = flow({
-        "scheduling": {
-            "graph": {
-                "R1": "foo"
-            }
-        },
-        "runtime": {
-            "root": {},
-            "print-config": {
-                "script": "cylc config"
-            },
-            "foo": {
-                "script": "sleep 10",
-                "platform": "mygroup",
-                "submission retry delays": '3*PT5S'
-            }
-        }
+        "scheduling": {"graph": {"R1": "foo"}},
+        "runtime": {"foo": {"platform": "mygroup"}}
     })
-    validate(wid)
     schd = scheduler(wid, paused_start=False, run_mode='live')
-    async with run(schd) as log:
+    async with run(schd):
         itask = schd.pool.get_tasks()[0]
-
-        # Avoid breaking on trying to create log file path:
-        schd.task_job_mgr._create_job_log_path = lambda *_: None
+        itask.submit_num = 1
         schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
         res = schd.task_job_mgr._prep_submit_task_job(schd.workflow, itask)
-        assert res is True
+        assert isinstance(res, NoPlatformsError)
         assert not schd.task_job_mgr.bad_hosts

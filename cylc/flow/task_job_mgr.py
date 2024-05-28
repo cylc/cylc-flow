@@ -36,7 +36,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Any, Union, Optional
+from typing import TYPE_CHECKING, Any, List, Union, Optional
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -230,7 +230,7 @@ class TaskJobManager:
         """
         prepared_tasks = []
         bad_tasks = []
-        out_of_hosts_tasks: list = []
+        out_of_hosts_tasks: List[TaskProxy] = []
         for itask in itasks:
             if not itask.state(TASK_STATUS_PREPARING):
                 # bump the submit_num *before* resetting the state so that the
@@ -240,9 +240,8 @@ class TaskJobManager:
                 self.data_store_mgr.delta_task_state(itask)
             prep_task = self._prep_submit_task_job(
                 workflow, itask, check_syntax=check_syntax)
-            if prep_task is True:
+            if isinstance(prep_task, NoPlatformsError):
                 # This is a task whose platform has run out of hosts
-                # it's neither bad or good.
                 out_of_hosts_tasks.append(itask)
             elif prep_task:
                 prepared_tasks.append(itask)
@@ -288,10 +287,8 @@ class TaskJobManager:
             auth_itasks.setdefault(platform_name, [])
             auth_itasks[platform_name].append(itask)
         # Submit task jobs for each platform
-        done_tasks = bad_tasks
-
-        # Out of host tasks can be considered done for now:
-        [done_tasks.append(itask) for itask in out_of_hosts_tasks]
+        # Non-prepared tasks can be considered done for now:
+        done_tasks = [*bad_tasks, *out_of_hosts_tasks]
 
         for _, itasks in sorted(auth_itasks.items()):
             # Find the first platform where >1 host has not been tried and
@@ -1201,7 +1198,7 @@ class TaskJobManager:
                     self._set_retry_timers(itask, rtconfig)
                     self._prep_submit_task_job_error(
                         workflow, itask, '(no platforms available)', exc)
-                    return True
+                    return exc
                 self._prep_submit_task_job_error(
                     workflow, itask, '(platform not defined)', exc)
                 return False

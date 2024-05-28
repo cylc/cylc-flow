@@ -302,7 +302,7 @@ def get_platform_from_group(
     else:
         platform_names = group['platforms']
 
-    # Return False if there are no platforms available to be selected.
+    # If there are no platforms available to be selected:
     if not platform_names:
         hosts_consumed = [
             host
