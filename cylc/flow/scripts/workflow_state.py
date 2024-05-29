@@ -230,8 +230,8 @@ def get_option_parser() -> COP:
     parser.add_option(
         "-s", "--offset",
         help="Offset from ID cycle point as an ISO8601 duration for datetime"
-        " cycling (e.g. PT30M for 30 minutes) or an integer interval for"
-        " integer cycling (e.g. P2). This can be used in task job scripts"
+        " cycling (e.g. 'PT30M' for 30 minutes) or an integer interval for"
+        " integer cycling (e.g. 'P2'). This can be used in task job scripts"
         " to poll offset cycle points without doing the cycle arithmetic"
         " yourself - but see also the workflow_state xtrigger.",
         action="store", dest="offset", metavar="DURATION", default=None)

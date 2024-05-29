@@ -1,0 +1,21 @@
+[scheduler]
+    cycle point format = CCYY
+[scheduling]
+    initial cycle point = 2051
+    final cycle point = 2052
+    [[graph]]
+        P1Y = """
+            foo:x => bar
+        """
+[runtime]
+    [[foo]]
+        script = cylc message "hello"
+        [[[outputs]]]
+            x = "hello"
+    [[bar]]
+        script = """
+            if (( CYLC_TASK_CYCLE_POINT == 2052 )) && (( CYLC_TASK_SUBMIT_NUMBER == 1 ))
+            then
+                cylc trigger --flow=new $CYLC_WORKFLOW_ID//2052/foo  
+            fi
+        """
