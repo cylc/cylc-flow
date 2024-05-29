@@ -36,7 +36,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Any, List, Union, Optional
+from typing import TYPE_CHECKING, Any, Union, Optional
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -230,7 +230,6 @@ class TaskJobManager:
         """
         prepared_tasks = []
         bad_tasks = []
-        out_of_hosts_tasks: List[TaskProxy] = []
         for itask in itasks:
             if not itask.state(TASK_STATUS_PREPARING):
                 # bump the submit_num *before* resetting the state so that the
@@ -240,14 +239,11 @@ class TaskJobManager:
                 self.data_store_mgr.delta_task_state(itask)
             prep_task = self._prep_submit_task_job(
                 workflow, itask, check_syntax=check_syntax)
-            if isinstance(prep_task, NoPlatformsError):
-                # This is a task whose platform has run out of hosts
-                out_of_hosts_tasks.append(itask)
-            elif prep_task:
+            if prep_task:
                 prepared_tasks.append(itask)
             elif prep_task is False:
                 bad_tasks.append(itask)
-        return [prepared_tasks, bad_tasks, out_of_hosts_tasks]
+        return [prepared_tasks, bad_tasks]
 
     def submit_task_jobs(self, workflow, itasks, curve_auth,
                          client_pub_key_dir, is_simulation=False):
@@ -269,15 +265,13 @@ class TaskJobManager:
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks, workflow)
         # Prepare tasks for job submission
-        (
-            prepared_tasks,
-            bad_tasks,
-            out_of_hosts_tasks
-        ) = self.prep_submit_task_jobs(workflow, itasks)
+        prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
+            workflow, itasks)
+
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
-        if not prepared_tasks and not out_of_hosts_tasks:
+        if not prepared_tasks:
             return bad_tasks
 
         auth_itasks = {}  # {platform: [itask, ...], ...}
@@ -288,7 +282,7 @@ class TaskJobManager:
             auth_itasks[platform_name].append(itask)
         # Submit task jobs for each platform
         # Non-prepared tasks can be considered done for now:
-        done_tasks = [*bad_tasks, *out_of_hosts_tasks]
+        done_tasks = bad_tasks
 
         for _, itasks in sorted(auth_itasks.items()):
             # Find the first platform where >1 host has not been tried and
@@ -1097,9 +1091,6 @@ class TaskJobManager:
             * itask - preparation complete.
             * None - preparation in progress.
             * False - preparation failed.
-            * NoPlatformsError - preparation failed because no
-              platforms were found.
-
         """
         if itask.local_job_file_path:
             return itask
@@ -1193,13 +1184,13 @@ class TaskJobManager:
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(workflow, itask)
                 if isinstance(exc, NoPlatformsError):
-                    # Todo = need to clear all hosts from all platforms
-                    # in group.
+                    # Clear all hosts from all platforms in group from
+                    # bad_hosts:
                     self.bad_hosts -= exc.hosts_consumed
                     self._set_retry_timers(itask, rtconfig)
                     self._prep_submit_task_job_error(
                         workflow, itask, '(no platforms available)', exc)
-                    return exc
+                    return False
                 self._prep_submit_task_job_error(
                     workflow, itask, '(platform not defined)', exc)
                 return False

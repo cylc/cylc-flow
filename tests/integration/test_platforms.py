@@ -51,5 +51,5 @@ async def test_prep_submit_task_tries_multiple_platforms(
         itask.submit_num = 1
         schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
         res = schd.task_job_mgr._prep_submit_task_job(schd.workflow, itask)
-        assert isinstance(res, NoPlatformsError)
+        assert res is False
         assert not schd.task_job_mgr.bad_hosts
