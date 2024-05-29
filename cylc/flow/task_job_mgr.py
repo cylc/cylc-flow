@@ -1097,7 +1097,8 @@ class TaskJobManager:
             * itask - preparation complete.
             * None - preparation in progress.
             * False - preparation failed.
-            * True - preparation failed because no platforms were found.
+            * NoPlatformsError - preparation failed because no
+              platforms were found.
 
         """
         if itask.local_job_file_path:
