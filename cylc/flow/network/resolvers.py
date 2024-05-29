@@ -569,6 +569,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue: DeltaQueue = queue.Queue()
 
+        self.data_store_mgr.graphql_sub_interrogate(sub_id, info)
+
         counters: Dict[str, int] = {}
         delta_yield_queue: DeltaQueue = queue.Queue()
         flow_delta_queues: Dict[str, queue.Queue[Tuple[str, dict]]] = {}
@@ -591,6 +593,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                     if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:
                             delta_queues[w_id][sub_id] = deltas_queue
+                            await self.data_store_mgr.graphql_sub_data_match(
+                                w_id, sub_id
+                            )
                             # On new yield workflow data-store as added delta
                             if args.get('initial_burst'):
                                 delta_store = create_delta_store(
@@ -658,6 +663,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             import traceback
             logger.warning(traceback.format_exc())
         finally:
+            self.data_store_mgr.graphql_sub_discard(sub_id)
             for w_id in w_ids:
                 if delta_queues.get(w_id, {}).get(sub_id):
                     del delta_queues[w_id][sub_id]
