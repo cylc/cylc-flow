@@ -43,12 +43,7 @@ from metomi.isodatetime.exceptions import ISO8601SyntaxError
 class CylcWorkflowDBChecker:
     """Object for querying a workflow database."""
 
-    def __init__(
-        self,
-        rund,
-        workflow,
-        db_path=None,
-    ):
+    def __init__(self, rund, workflow, db_path=None):
         # (Explicit dp_path arg is to make testing easier).
         if db_path is None:
             # Infer DB path from workflow name and run dir.
@@ -77,6 +72,15 @@ class CylcWorkflowDBChecker:
     def adjust_point_to_db(self, cycle, offset):
         """Adjust a cycle point (with offset) to the DB point format."""
 
+        if cycle is None or "*" in cycle:
+            if offset is not None:
+                raise InputError(
+                    f'\ncycle point "{cycle}" is not compatible'
+                    ' with offset "{offset}"'
+                )
+            # Nothing to do
+            return cycle
+
         if offset is not None:
             if self.db_point_fmt is None:
                 # integer cycling
@@ -89,24 +93,21 @@ class CylcWorkflowDBChecker:
                     add_offset(cycle, offset)
                 )
 
-        if (
-            cycle is not None and "*" not in cycle
-            and self.db_point_fmt is not None
-        ):
-            # Convert cycle point to DB format.
-            try:
-                cycle = str(
-                    TimePointParser().parse(
-                        cycle,
-                        dump_format=self.db_point_fmt
-                    )
+        if self.db_point_fmt is None:
+            return cycle
+
+        # Convert cycle point to DB format.
+        try:
+            cycle = str(
+                TimePointParser().parse(
+                    cycle, dump_format=self.db_point_fmt
                 )
-            except ISO8601SyntaxError:
-                raise InputError(
-                    f'\ncycle point "{cycle}" is not compatible'
-                    ' with the DB point format'
-                    f' "{self.db_point_fmt}"'
-                )
+            )
+        except ISO8601SyntaxError:
+            raise InputError(
+                f'\ncycle point "{cycle}" is not compatible'
+                ' with DB point format "{self.db_point_fmt}"'
+            )
         return cycle
 
     @staticmethod

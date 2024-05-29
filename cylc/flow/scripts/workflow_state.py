@@ -124,7 +124,6 @@ class WorkflowPoller(Poller):
         self.offset = offset
         self.flow_num = flow_num
         self.alt_cylc_run_dir = alt_cylc_run_dir
-        self.is_output = is_output
         self.old_format = old_format
 
         self.db_checker = None
@@ -132,78 +131,80 @@ class WorkflowPoller(Poller):
         tokens = Tokens(self.id_)
         self.workflow_id_raw = tokens.workflow_id
         self.task_sel = tokens["task_sel"] or default_status
-        self.cycle = tokens["cycle"]
+        self.cycle_raw = tokens["cycle"]
         self.task = tokens["task"]
 
         self.workflow_id = None
+        self.cycle = None
         self.results = None
         self.db_checker = None
 
         if (
-            self.cycle is not None and
-            "*" in self.cycle and
+            self.cycle_raw is not None and
+            "*" in self.cycle_raw and
             self.offset is not None
         ):
             raise InputError(
                 f"Cycle point wildcard ({WILDCARD})"
                 " is not compatible with --offset")
 
-        super().__init__(*args, **kwargs)
-
-    def _db_connect(self) -> bool:
-        # """Find workflow and connect to Db, else return False."""
-
-        if self.workflow_id is None:
-            # Workflow not found (maybe not installed or running yet).
-            # Can't infer runN until the run dir exists.
-            try:
-                self.workflow_id = infer_latest_run_from_id(
-                    self.workflow_id_raw,
-                    self.alt_cylc_run_dir
-                )
-            except InputError:
-                LOG.debug("Workflow not found")
-                return False
-
-        if self.workflow_id:
-            # Print inferred workflow ID.
-            sys.stderr.write(f"{self.workflow_id}\n")
-
-        if self.db_checker is None:
-            # DB not connected yet.
-            try:
-                self.db_checker = CylcWorkflowDBChecker(
-                    get_cylc_run_dir(self.alt_cylc_run_dir),
-                    self.workflow_id
-                )
-            except (OSError, sqlite3.Error):
-                LOG.debug("DB not connected")
-                return False
-
         self.is_output = (
-            self.is_output or
+            is_output or
             (
                 self.task_sel is not None and
                 self.task_sel not in TASK_STATUSES_ORDERED
             )
         )
 
-        # compute target cycle point (after getting the DB point format)
-        self.cycle = self.db_checker.adjust_point_to_db(
-            self.cycle, self.offset)
+        super().__init__(*args, **kwargs)
+
+    def _find_workflow(self) -> bool:
+        """Find workflow and infer run directory, return True if found."""
+        try:
+            self.workflow_id = infer_latest_run_from_id(
+                self.workflow_id_raw,
+                self.alt_cylc_run_dir
+            )
+        except InputError:
+            LOG.debug("Workflow not found")
+            return False
+
+        # Print inferred workflow ID.
+        sys.stderr.write(f"{self.workflow_id}\n")
 
         return True
 
-    async def check(self):
-        """Return True if desired workflow state achieved, else False.
+    def _db_connect(self) -> bool:
+        """Connect to workflow DB, return True if connected."""
+        try:
+            self.db_checker = CylcWorkflowDBChecker(
+                get_cylc_run_dir(self.alt_cylc_run_dir),
+                self.workflow_id
+            )
+        except (OSError, sqlite3.Error):
+            LOG.debug("DB not connected")
+            return False
 
-        Called once per poll by super().
+        return True
+
+    async def check(self) -> bool:
+        """Return True if requested state achieved, else False.
+
+        Called once per poll by super() so only find and connect once.
+
         Store self.result for external access.
 
         """
-        if self.db_checker is None and not self._db_connect():
-            LOG.debug("DB not connected")
+        if self.workflow_id is None and not self._find_workflow():
             return False
+
+        if self.db_checker is None and not self._db_connect():
+            return False
+
+        if self.cycle is None:
+            # Adjust target cycle point to the DB format.
+            self.cycle = self.db_checker.adjust_point_to_db(
+                self.cycle_raw, self.offset)
 
         self.result = self.db_checker.workflow_state_query(
             self.task, self.cycle, self.task_sel, self.is_output, self.flow_num
@@ -211,6 +212,7 @@ class WorkflowPoller(Poller):
         if self.result:
             # End the polling dot stream and print inferred runN workflow ID.
             self.db_checker.display_maps(self.result, self.old_format)
+
         return bool(self.result)
 
 
