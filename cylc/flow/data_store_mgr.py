@@ -789,8 +789,9 @@ class DataStoreMgr:
             source_tokens,
             point,
             flow_nums,
-            False,
-            itask
+            is_parent=False,
+            itask=itask,
+            replace_existing=True,
         )
 
         # Pre-populate from previous walks
@@ -1150,6 +1151,7 @@ class DataStoreMgr:
         is_parent: bool = False,
         itask: Optional['TaskProxy'] = None,
         n_depth: int = 0,
+        replace_existing: bool = False,
     ) -> None:
         """Create task-point element populated with static data.
 
@@ -1168,6 +1170,8 @@ class DataStoreMgr:
             tp_id in self.data[self.workflow_id][TASK_PROXIES]
             or tp_id in self.added[TASK_PROXIES]
         ):
+            if replace_existing and itask is not None:
+                self.delta_from_task_proxy(itask)
             return
 
         name = tokens['task']
@@ -2521,6 +2525,27 @@ class DataStoreMgr:
             xtrigger.satisfied = satisfied
             xtrigger.time = update_time
             self.updates_pending = True
+
+    def delta_from_task_proxy(self, itask: TaskProxy) -> None:
+        """Create delta from existing pool task proxy.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+
+        """
+        tproxy: Optional[PbTaskProxy]
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        if not tproxy:
+            return
+        update_time = time()
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+        self._process_internal_task_proxy(itask, tp_delta)
+
+        self.updates_pending = True
 
     # -----------
     # Job Deltas
