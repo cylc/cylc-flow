@@ -70,8 +70,13 @@ class CylcWorkflowDBChecker:
                 raise exc  # original error
 
     def adjust_point_to_db(self, cycle, offset):
-        """Adjust a cycle point (with offset) to the DB point format."""
+        """Adjust a cycle point (with offset) to the DB point format.
 
+        Cycle point queries have to match in the DB as string literals,
+        so we convert given cycle points (e.g., from the command line)
+        to the DB point format before making the query.
+
+        """
         if cycle is None or "*" in cycle:
             if offset is not None:
                 raise InputError(

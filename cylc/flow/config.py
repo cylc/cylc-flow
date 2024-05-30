@@ -1512,6 +1512,19 @@ class WorkflowConfig:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
 
     def configure_workflow_state_polling_tasks(self):
+
+        # Deprecation warning - automatic workflow state polling tasks don't
+        # necessarily have deprecated config items outside the graph string.
+        if (
+            self.workflow_polling_tasks and
+            getattr(self.options, 'is_validate', False)
+        ):
+            LOG.warning(
+                "Workflow state polling tasks are deprecated."
+                " Please convert to workflow_state xtriggers:\n * "
+                + "\n * ".join(self.workflow_polling_tasks)
+            )
+
         # Check custom script not defined for automatic workflow polling tasks.
         for l_task in self.workflow_polling_tasks:
             try:
@@ -1561,7 +1574,7 @@ class WorkflowConfig:
                     ('alt-cylc-run-dir', ' --%s=%s')]:
                 if rtc['workflow state polling'][key]:
                     comstr += fmt % (key, rtc['workflow state polling'][key])
-            script = "echo " + comstr + "\n" + comstr
+            script = "set -x; " + comstr + "\n" + comstr
             rtc['script'] = script
 
     def get_parent_lists(self):

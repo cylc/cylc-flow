@@ -1730,6 +1730,23 @@ with Conf(
                        {REPLACES}``[runtime][task][events]mail to``
                 ''')
 
+            with Conf('suite state polling', desc=f'''
+                Deprecated support for automatic workflow state polling tasks
+                as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
+                "user" and "host" config items are not supported.
+
+                .. versionchanged:: 8.3.0
+
+                   {REPLACES}``[runtime][<namespace>]suite state polling``.
+
+                .. deprecated:: 8.3.0
+
+                   Please switch to workflow_state xtriggers.
+            '''):
+                Conf('template', VDR.V_STRING, desc='''
+                    Polling interval.
+                ''')
+
             with Conf('workflow state polling', desc=f'''
                 Deprecated support for automatic workflow state polling tasks
                 as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
@@ -1747,7 +1764,7 @@ with Conf(
                     Polling interval.
                 ''')
                 Conf('max-polls', VDR.V_INTEGER, desc='''
-                    Maximum number of polls to attempt.
+                    Maximum number of polls to attempt before the task fails.
                 ''')
                 Conf('output', VDR.V_STRING, desc='''
                     Target task output (trigger name, not task message).
@@ -1981,10 +1998,10 @@ def upg(cfg, descr):
         silent=cylc.flow.flags.cylc7_back_compat,
         is_section=True,
     )
-    for item in ('host', 'user'):
-        u.obsolete(
-            '8.0.0', ['runtime', '__MANY__', 'workflow state polling', item],
-        )
+    u.obsolete(
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'])
+    u.obsolete(
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'])
 
     u.deprecate(
         '8.0.0',

@@ -18,16 +18,19 @@
 
 r"""cylc workflow-state [OPTIONS] ARGS
 
-Repeatedly check (poll) a workflow database for task statuses or completed
-outputs, until matching results are found or polling is exhausted (see the
---max-polls and --interval options). For a one-off check set --max-polls=1.
+Check a workflow database for current task statuses or completed outputs.
+
+Repeatedly checks (polls) until matching results are found or polling is
+exhausted (see the --max-polls and --interval options). Set --max-polls=1
+for a one-off check.
 
 If the database does not exist at first, polls are consumed waiting for it.
 
 In "cycle/task:selector" the selector is interpreted as a status, unless:
   - if not a known status, it will be interpreted as a task output (Cylc 8)
     or as a task message (Cylc 7 DBs)
-  - with --output, it will be interpreted as a task output
+  - with --output, it will be interpreted as a task output (i.e., the trigger
+    name, not the corresponding task message.)
 
 Selector does not default to "succeeded" - if omitted, any status will match.
 
@@ -123,8 +126,6 @@ class WorkflowPoller(Poller):
         self.flow_num = flow_num
         self.alt_cylc_run_dir = alt_cylc_run_dir
         self.old_format = old_format
-
-        self.db_checker = None
 
         tokens = Tokens(self.id_)
         self.workflow_id_raw = tokens.workflow_id

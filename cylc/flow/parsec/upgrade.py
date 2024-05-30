@@ -194,6 +194,8 @@ class upgrader:
 
     def upgrade(self):
         warnings = OrderedDict()
+        deprecations = False
+        obsoletions = False
         for vn, upgs in self.upgrades.items():
             for u in upgs:
                 try:
@@ -212,6 +214,9 @@ class upgrader:
                         if upg['new']:
                             msg += ' -> ' + self.show_keys(upg['new'],
                                                            upg['is_section'])
+                            deprecations = True
+                        else:
+                            obsoletions = True
                         msg += " - " + upg['cvt'].describe().format(
                             old=old,
                             new=upg['cvt'].convert(old)
@@ -236,7 +241,6 @@ class upgrader:
                             self.put_item(upg['new'],
                                           upg['cvt'].convert(old))
         if warnings:
-            level = WARNING
             if self.descr == self.SITE_CONFIG:
                 # Site level configuration, user cannot easily fix.
                 # Only log at debug level.
@@ -245,8 +249,19 @@ class upgrader:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
                 level = WARNING
-            LOG.log(
-                level, f"items were automatically upgraded in {self.descr}")
+            if obsoletions:
+                LOG.log(
+                    level,
+                    "Obsolete config items were automatically deleted."
+                    " Please check your workflow and remove them permanently."
+                )
+            if deprecations:
+                LOG.log(
+                    level,
+                    "Deprecated config items were automatically upgraded."
+                    " Please alter your workflow to use the new syntax."
+                )
+
             for vn, msgs in warnings.items():
                 for msg in msgs:
                     LOG.log(level, ' * (%s) %s', vn, msg)
