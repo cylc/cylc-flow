@@ -2705,6 +2705,23 @@ class DataStoreMgr:
 
         return workflow_msg
 
+    def get_workflow_only(self):
+        """Gather workflow summary data into a Protobuf message.
+
+        No tasks / cycles, etc, just workflow stuff.
+
+        Returns:
+            cylc.flow.data_messages_pb2.PbEntireWorkflow
+
+        """
+
+        workflow_msg = PbEntireWorkflow()
+        workflow_msg.workflow.CopyFrom(
+            self.data[self.workflow_id][WORKFLOW]
+        )
+
+        return workflow_msg
+
     def get_publish_deltas(self):
         """Return deltas for publishing."""
         all_deltas = DELTAS_MAP[ALL_DELTAS]()
@@ -2752,3 +2769,16 @@ class DataStoreMgr:
                 f'$edge|{left_tokens.relative_id}|{right_tokens.relative_id}'
             )
         ).id
+
+    # subscription stubs
+    def graphql_sub_interrogate(self, sub_id, info):
+        """Scope data requirements."""
+        pass
+
+    async def graphql_sub_data_match(self, w_id, sub_id):
+        """Match store data level to requested graphql subscription."""
+        pass
+
+    async def graphql_sub_discard(self, sub_id):
+        """Discard graphql subscription references."""
+        pass

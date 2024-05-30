@@ -663,7 +663,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             import traceback
             logger.warning(traceback.format_exc())
         finally:
-            self.data_store_mgr.graphql_sub_discard(sub_id)
+            await self.data_store_mgr.graphql_sub_discard(sub_id)
             for w_id in w_ids:
                 if delta_queues.get(w_id, {}).get(sub_id):
                     del delta_queues[w_id][sub_id]
