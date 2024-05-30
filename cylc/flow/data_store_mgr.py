@@ -2544,7 +2544,6 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
         self._process_internal_task_proxy(itask, tp_delta)
-
         self.updates_pending = True
 
     # -----------
