@@ -75,8 +75,7 @@ class CylcWorkflowDBChecker:
         if cycle is None or "*" in cycle:
             if offset is not None:
                 raise InputError(
-                    f'\ncycle point "{cycle}" is not compatible'
-                    ' with offset "{offset}"'
+                    f'Cycle point "{cycle}" is not compatible with an offset.'
                 )
             # Nothing to do
             return cycle
@@ -105,8 +104,8 @@ class CylcWorkflowDBChecker:
             )
         except ISO8601SyntaxError:
             raise InputError(
-                f'\ncycle point "{cycle}" is not compatible'
-                ' with DB point format "{self.db_point_fmt}"'
+                f'Cycle point "{cycle}" is not compatible'
+                f' with DB point format "{self.db_point_fmt}"'
             )
         return cycle
 
@@ -170,21 +169,18 @@ class CylcWorkflowDBChecker:
     ) -> List[List[str]]:
         """Query task status or outputs in workflow database.
 
-        Return a list of tasks with matching status or output and flow:
+        Return tasks with matching status or output, and flow number.
 
         For a status query:
            [
               [name, cycle, status],
               ...
            ]
-
         For an output query:
            [
-              [name, cycle, outputs],
+              [name, cycle, "[out1: msg1, out2: msg2, ...]"],
               ...
            ]
-        where outputs is serialized, e.g.: "[out1: msg1, out2: msg2, ...]"
-
         """
         stmt_args = []
         stmt_wheres = []

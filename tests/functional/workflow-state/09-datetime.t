@@ -17,7 +17,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 22
+set_test_number 24
 
 install_workflow "${TEST_NAME_BASE}" datetime
 
@@ -109,6 +109,13 @@ run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//20510
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 2052/foo:succeeded
+__END__
+
+TEST_NAME="${TEST_NAME_BASE}_bad_point"
+run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//205/foo:succeeded"
+
+contains_ok "${TEST_NAME}.stderr" <<__END__
+InputError: Cycle point "205" is not compatible with DB point format "CCYY"
 __END__
 
 purge

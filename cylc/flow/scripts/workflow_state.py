@@ -40,8 +40,6 @@ Tasks are only recorded in the DB once they enter the active window (n=0).
 
 Flow numbers are only printed if not the original flow (i.e., if > 1).
 
-Datetime cycle points are automatically converted to the DB point format.
-
 USE IN TASK SCRIPTING:
   - To poll a task at the same cycle point in another workflow, just use
     $CYLC_TASK_CYCLE_POINT in the ID (see also the workflow_state xtrigger).
@@ -52,7 +50,7 @@ WARNINGS:
  - Typos in the workflow or task ID may result in fruitless polling.
  - To avoid missing transient state ("submitted", "running") poll for the
    corresponding output ("submitted", "started").
- - Cycle points are converted to DB point format, and its UTC mode.
+ - Cycle points are auto-converted to the DB point format (and UTC mode).
 
 Examples:
 
@@ -138,15 +136,6 @@ class WorkflowPoller(Poller):
         self.cycle = None
         self.results = None
         self.db_checker = None
-
-        if (
-            self.cycle_raw is not None and
-            "*" in self.cycle_raw and
-            self.offset is not None
-        ):
-            raise InputError(
-                f"Cycle point wildcard ({WILDCARD})"
-                " is not compatible with --offset")
 
         self.is_output = (
             is_output or

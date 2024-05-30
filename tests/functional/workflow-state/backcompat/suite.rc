@@ -1,0 +1,16 @@
+[cylc]
+    cycle point format = CCYY
+[scheduling]
+    initial cycle point = 2051
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+			    foo:x => bar
+            """
+[runtime]
+    [[foo]]
+	    script = "cylc message 'the quick brown fox'"
+	    [[[outputs]]]
+		    x = "the quick brown fox"
+	[[bar]]
+

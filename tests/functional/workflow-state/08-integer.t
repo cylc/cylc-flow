@@ -17,13 +17,20 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 12
+set_test_number 16
 
 install_workflow "${TEST_NAME_BASE}" integer
 
 # run one cycle
 TEST_NAME="${TEST_NAME_BASE}_run_1"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach --stopcp=1 "${WORKFLOW_NAME}"
+
+TEST_NAME="${TEST_NAME_BASE}_cl_error"
+run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}-a" "${WORKFLOW_NAME}-b"
+
+contains_ok "${TEST_NAME}.stderr" <<__END__
+InputError: Please give a single ID
+__END__
 
 TEST_NAME="${TEST_NAME_BASE}_check_1_status"
 run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}"
@@ -66,6 +73,13 @@ run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//1/foo
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 2/foo:succeeded
+__END__
+
+TEST_NAME="${TEST_NAME_BASE}_wildcard_offset"
+run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//*/foo:succeeded" --offset=P1
+
+contains_ok "${TEST_NAME}.stderr" <<__END__
+InputError: Cycle point "*" is not compatible with an offset.
 __END__
 
 purge
