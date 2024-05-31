@@ -1,1 +1,1 @@
-Ensure that if all hosts on all platforms in a group are exhausted at job preparation time that they will be reset.
+Fixed bug affecting job submission where the list of bad hosts was not always reset correctly.
