@@ -1,0 +1,11 @@
+[scheduling]
+    initial cycle point = 19900211
+    final cycle point = 19900212
+    [[graph]]
+        P1D = task
+
+[runtime]
+    [[task]]
+        script = """
+            echo "Hello World" > "${CYLC_SHARE_CYCLE_DIR}/stuff"
+        """
