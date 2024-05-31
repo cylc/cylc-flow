@@ -16,6 +16,7 @@
 
 from typing import Dict, Optional, Tuple, Any
 import asyncio
+from inspect import signature
 
 from cylc.flow.scripts.workflow_state import WorkflowPoller
 from cylc.flow.id import tokenise
@@ -114,7 +115,11 @@ def validate(args: Dict[str, Any]):
         raise WorkflowConfigError("flow_num must be an integer.")
 
 
-def workflow_state_backcompat(
+# BACK COMPAT: workflow_state_backcompat
+# from: 8.0.0
+# to: 8.3.0
+# remove at: 8.x
+def _workflow_state_backcompat(
     workflow: str,
     task: str,
     point: str,
@@ -165,45 +170,53 @@ def workflow_state_backcompat(
             to this xtrigger.
 
     """
+    args = {
+        'workflow': workflow,
+        'task': task,
+        'point': point,
+        'offset': offset,
+        'status': status,
+        'message': message,
+        'cylc_run_dir': cylc_run_dir
+    }
+    upg_args = _upgrade_workflow_state_sig(args)
+    satisfied, _results = workflow_state(**upg_args)
+
+    return (satisfied, args)
+
+
+# BACK COMPAT: workflow_state_backcompat
+# from: 8.0.0
+# to: 8.3.0
+# remove at: 8.x
+def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
+    """Return upgraded args for workflow_state, given the deprecated args."""
     is_message = False
-    workflow_task_id = f"{workflow}//{point}/{task}"
+    workflow_task_id = f"{args['workflow']}//{args['point']}/{args['task']}"
+    status = args.get('status')
+    message = args.get('message')
     if status is not None:
         workflow_task_id += f":{status}"
     elif message is not None:
         is_message = True
         workflow_task_id += f":{message}"
-
-    satisfied, _results = workflow_state(
-        workflow_task_id,
-        offset=offset,
-        is_message=is_message,
-        alt_cylc_run_dir=cylc_run_dir
-    )
-
-    return (
-        satisfied,
-        {
-            'workflow': workflow,
-            'task': task,
-            'point': point,
-            'offset': offset,
-            'status': status,
-            'message': message,
-            'cylc_run_dir': cylc_run_dir
-        }
-    )
+    return {
+        'workflow_task_id': workflow_task_id,
+        'offset': args.get('offset'),
+        'alt_cylc_run_dir': args.get('cylc_run_dir'),
+        'is_message': is_message,
+    }
 
 
-def validate_backcompat(args: Dict[str, Any]):
+# BACK COMPAT: workflow_state_backcompat
+# from: 8.0.0
+# to: 8.3.0
+# remove at: 8.x
+def _validate_backcompat(args: Dict[str, Any]):
     """Validate old workflow_state xtrigger function args.
-
     """
-    args['workflow_task_id'] = (
-        f"{args['workflow']}//{args['point']}/{args['task']}"
+    bound_args = signature(workflow_state).bind(
+        **_upgrade_workflow_state_sig(args)
     )
-    args['flow_num'] = 1
-    del args['workflow']
-    del args['point']
-    del args['task']
-
-    validate(args)
+    bound_args.apply_defaults()
+    validate(bound_args.arguments)

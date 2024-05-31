@@ -49,7 +49,7 @@ def test_add_missing_func():
     )
     with pytest.raises(
         XtriggerConfigError,
-        match="\[@xtrig\] No module named 'fooble123'"
+        match=r"\[@xtrig\] fooble123\(.*\)\nNo module named 'fooble123'"
     ):
         xtriggers.add_trig("xtrig", xtrig, 'fdir')
 

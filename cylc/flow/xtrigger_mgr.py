@@ -37,9 +37,14 @@ from cylc.flow.hostuserutil import get_user
 from cylc.flow.subprocctx import add_kwarg_to_sig
 from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.xtriggers.wall_clock import _wall_clock
+from cylc.flow.xtriggers.workflow_state import (
+    workflow_state,
+    _workflow_state_backcompat,
+    _upgrade_workflow_state_sig,
+)
 
 if TYPE_CHECKING:
-    from inspect import BoundArguments
+    from inspect import BoundArguments, Signature
     from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.subprocctx import SubFuncContext
@@ -200,7 +205,7 @@ class XtriggerCollator:
             label.startswith('_cylc_submit_retry_')
         ):
             # (the "_wall_clock" function fails "wall_clock" validation)
-            self.__class__._validate(label, fctx, fdir)
+            self._validate(label, fctx, fdir)
 
         self.functx_map[label] = fctx
 
@@ -245,75 +250,31 @@ class XtriggerCollator:
         try:
             func = get_xtrig_func(fctx.mod_name, fctx.func_name, fdir)
         except (ImportError, AttributeError) as exc:
-            raise XtriggerConfigError(label, str(exc))
+            raise XtriggerConfigError(label, sig_str, exc)
         try:
             sig = signature(func)
         except TypeError as exc:
             # not callable
-            raise XtriggerConfigError(label, str(exc))
+            raise XtriggerConfigError(label, sig_str, exc)
 
-        # Handle reserved 'sequential' kwarg:
-        sequential_param = sig.parameters.get('sequential', None)
-        if sequential_param:
-            if not isinstance(sequential_param.default, bool):
-                raise XtriggerConfigError(
-                    label,
-                    (
-                        f"xtrigger '{fctx.func_name}' has a reserved argument"
-                        " 'sequential' with no boolean default"
-                    )
-                )
-            fctx.func_kwargs.setdefault('sequential', sequential_param.default)
-
-        elif 'sequential' in fctx.func_kwargs:
-            # xtrig marked as sequential, so add 'sequential' arg to signature
-            sig = add_kwarg_to_sig(
-                sig, 'sequential', fctx.func_kwargs['sequential']
-            )
+        sig = cls._handle_sequential_kwarg(label, fctx, sig)
 
         # Validate args and kwargs against the function signature
         try:
             bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
         except TypeError as exc:
-            # try fname_backcompat
-            LOG.warning(
-                'Failed to match function signature of'
-                f' xtrigger "{label}" ({fctx.func_name})'
-            )
-            fctx.func_name += "_backcompat"
-            try:
-                func = get_xtrig_func(fctx.mod_name, fctx.func_name, fdir)
-            except (ImportError, AttributeError):
-                # Failed to find backcompat function, raise original
-                LOG.warning(
-                    f'Failed to find xtrigger "{label}" ({fctx.func_name})')
-                raise XtriggerConfigError(label, str(exc))
-
-            # Found backcompat function
-            try:
-                sig = signature(func)
-            except TypeError as exc2:
-                # not callable
-                raise XtriggerConfigError(label, str(exc2))
-
-            try:
-                bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
-            except TypeError as exc:
-                # failed signature check
-                LOG.warning(
-                    'Failed to match function signature of'
-                    f' xtrigger "{label}" ({fctx.func_name})'
+            err = XtriggerConfigError(label, sig_str, exc)
+            if func is workflow_state:
+                bound_args = cls._try_workflow_state_backcompat(
+                    label, fctx, err
                 )
-                raise XtriggerConfigError(label, str(exc))
             else:
-                # succeeded in loading and validating the backcompat version
-                LOG.warning(
-                    f'Using backcompat xtrigger "{label}" ({fctx.func_name})')
+                raise err
 
         # Specific xtrigger.validate(), if available.
         # Note arg string templating has not been done at this point.
         cls._try_xtrig_validate_func(
-            label, fctx.mod_name, fctx.func_name, fdir, bound_args, sig_str
+            label, fctx, fdir, bound_args, sig_str
         )
 
         # Check any string templates in the function arg values (note this
@@ -330,7 +291,8 @@ class XtriggerCollator:
                     template_vars.add(TemplateVariables(match))
                 except ValueError:
                     raise XtriggerConfigError(
-                        label, f"Illegal template in xtrigger: {match}",
+                        label, sig_str,
+                        f"Illegal template in xtrigger: {match}",
                     )
 
         # check for deprecated template variables
@@ -346,12 +308,34 @@ class XtriggerCollator:
                 f' {", ".join(t.value for t in deprecated_variables)}'
             )
 
-    @classmethod
+    @staticmethod
+    def _handle_sequential_kwarg(
+        label: str, fctx: 'SubFuncContext', sig: 'Signature'
+    ) -> 'Signature':
+        """Handle reserved 'sequential' kwarg in xtrigger functions."""
+        sequential_param = sig.parameters.get('sequential', None)
+        if sequential_param:
+            if not isinstance(sequential_param.default, bool):
+                raise XtriggerConfigError(
+                    label, fctx.func_name,
+                    (
+                        "xtrigger has a reserved argument"
+                        " 'sequential' with no boolean default"
+                    )
+                )
+            fctx.func_kwargs.setdefault('sequential', sequential_param.default)
+
+        elif 'sequential' in fctx.func_kwargs:
+            # xtrig marked as sequential, so add 'sequential' arg to signature
+            sig = add_kwarg_to_sig(
+                sig, 'sequential', fctx.func_kwargs['sequential']
+            )
+        return sig
+
+    @staticmethod
     def _try_xtrig_validate_func(
-        cls,
         label: str,
-        mname: str,
-        fname: str,
+        fctx: 'SubFuncContext',
         fdir: str,
         bound_args: 'BoundArguments',
         signature_str: str,
@@ -362,20 +346,60 @@ class XtriggerCollator:
 
         """
         vname = "validate"
-        if fname.endswith('_backcompat'):
-            vname = "validate_backcompat"
+        if fctx.func_name == _workflow_state_backcompat.__name__:
+            vname = "_validate_backcompat"
 
         try:
-            xtrig_validate_func = get_xtrig_func(mname, vname, fdir)
+            xtrig_validate_func = get_xtrig_func(fctx.mod_name, vname, fdir)
         except (AttributeError, ImportError):
             return
         bound_args.apply_defaults()
         try:
             xtrig_validate_func(bound_args.arguments)
         except Exception as exc:  # Note: catch all errors
-            raise XtriggerConfigError(
-                label, f"{signature_str}\n{exc}"
+            raise XtriggerConfigError(label, signature_str, exc)
+
+    # BACK COMPAT: workflow_state_backcompat
+    # from: 8.0.0
+    # to: 8.3.0
+    # remove at: 8.x
+    @classmethod
+    def _try_workflow_state_backcompat(
+        cls,
+        label: str,
+        fctx: 'SubFuncContext',
+        err: XtriggerConfigError,
+    ) -> 'BoundArguments':
+        """Try to validate args against the old workflow_state signature.
+
+        Raise the original signature check error if this signature check fails.
+
+        Returns the bound arguments for the old signature.
+        """
+        sig = cls._handle_sequential_kwarg(
+            label, fctx, signature(_workflow_state_backcompat)
+        )
+        try:
+            bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
+        except TypeError:
+            # failed signature check for backcompat function
+            raise err  # original signature check error
+
+        old_sig_str = fctx.get_signature()
+        upg_sig_str = "workflow_state({})".format(
+            ", ".join(
+                f'{k}={v}' for k, v in
+                _upgrade_workflow_state_sig(bound_args.arguments).items()
             )
+        )
+        LOG.warning(
+            "(8.3.0) Deprecated function signature used for "
+            "workflow_state xtrigger was automatically upgraded. Please "
+            "alter your workflow to use the new syntax:\n"
+            f"    {old_sig_str} --> {upg_sig_str}"
+        )
+        fctx.func_name = _workflow_state_backcompat.__name__
+        return bound_args
 
 
 class XtriggerManager:

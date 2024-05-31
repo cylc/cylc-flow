@@ -18,7 +18,7 @@
 # Test all kinds of workflow-state DB checking.
 . "$(dirname "$0")/test_header"
 
-set_test_number 2
+set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -30,8 +30,12 @@ for x in c7 c8a c8b; do
 done
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${WORKFLOW_NAME}" --set="ALT=\"${DBDIR}\"" 
-     
+    cylc validate "${WORKFLOW_NAME}" --set="ALT=\"${DBDIR}\""
+
+grep_ok \
+    "WARNING - (8.3.0) Deprecated function signature used for workflow_state xtrigger was automatically upgraded" \
+    "${TEST_NAME_BASE}-validate.stderr"
+
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" \
     cylc play "${WORKFLOW_NAME}" --set="ALT=\"${DBDIR}\"" \
