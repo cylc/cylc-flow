@@ -1739,7 +1739,7 @@ with Conf(
 
                    {REPLACES}``[runtime][<namespace>]suite state polling``.
 
-                .. deprecated:: 8.3.0
+                .. deprecated:: 8.0.0
 
                    Please switch to workflow_state xtriggers.
             '''):

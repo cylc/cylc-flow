@@ -461,12 +461,12 @@ def test_xtrig_validation_custom(
 @pytest.mark.parametrize('xtrig_call, expected_msg', [
     pytest.param(
         'xrandom()',
-        r"xrandom.* missing a required argument: 'percent'",
+        r"missing a required argument: 'percent'",
         id="missing-arg"
     ),
     pytest.param(
         'wall_clock(alan_grant=1)',
-        r"wall_clock.* unexpected keyword argument 'alan_grant'",
+        r"unexpected keyword argument 'alan_grant'",
         id="unexpected-arg"
     ),
 ])

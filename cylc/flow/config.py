@@ -1557,7 +1557,7 @@ class WorkflowConfig:
             ):
                 raise WorkflowConfigError(
                     f'Polling task "{name}" must configure a target status or'
-                    f' output\nin the graph (:{graph_trigger}) or in its task'
+                    f' output in the graph (:{graph_trigger}) or in its task'
                     f' definition (output = "{config_trigger}") but not both.'
                 )
             elif graph_trigger is not None:

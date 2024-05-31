@@ -222,7 +222,8 @@ class XtriggerCollator:
     ) -> None:
         """Check xtrigger existence, string templates and function signature.
 
-        Also call an xtrigger-specific argument validate() function if defined.
+        Also call a specific xtrigger argument validation function, "validate",
+        if defined in the xtrigger module.
 
         Args:
             label: xtrigger label
@@ -239,20 +240,17 @@ class XtriggerCollator:
                 * If the arguments do not match the function signature.
 
         """
-        fname = fctx.func_name
-        try:
-            func = get_xtrig_func(fname, fname, fdir)
-        except (ImportError, AttributeError) as exc:
-            # xtrigger module itself not found, or it has internal import
-            #    or attribute errors..
-            raise XtriggerConfigError(label, str(exc))
-        if not callable(func):
-            raise XtriggerConfigError(
-                label, f"'{fname}' not callable in xtrigger module '{fname}'",
-            )
-
-        sig = signature(func)
         sig_str = fctx.get_signature()
+
+        try:
+            func = get_xtrig_func(fctx.mod_name, fctx.func_name, fdir)
+        except (ImportError, AttributeError) as exc:
+            raise XtriggerConfigError(label, str(exc))
+        try:
+            sig = signature(func)
+        except TypeError as exc:
+            # not callable
+            raise XtriggerConfigError(label, str(exc))
 
         # Handle reserved 'sequential' kwarg:
         sequential_param = sig.parameters.get('sequential', None)
@@ -261,32 +259,61 @@ class XtriggerCollator:
                 raise XtriggerConfigError(
                     label,
                     (
-                        f"xtrigger '{fname}' function definition contains "
-                        "reserved argument 'sequential' that has no "
-                        "boolean default"
+                        f"xtrigger '{fctx.func_name}' has a reserved argument"
+                        " 'sequential' with no boolean default"
                     )
                 )
             fctx.func_kwargs.setdefault('sequential', sequential_param.default)
 
         elif 'sequential' in fctx.func_kwargs:
-            # xtrig call marked as sequential; add 'sequential' arg to
-            # signature for validation
+            # xtrig marked as sequential, so add 'sequential' arg to signature
             sig = add_kwarg_to_sig(
                 sig, 'sequential', fctx.func_kwargs['sequential']
             )
 
         # Validate args and kwargs against the function signature
         try:
-            bound_args = sig.bind(
-                *fctx.func_args, **fctx.func_kwargs
-            )
+            bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
         except TypeError as exc:
-            raise XtriggerConfigError(label, f"{sig_str}: {exc}")
+            # try fname_backcompat
+            LOG.warning(
+                'Failed to match function signature of'
+                f' xtrigger "{label}" ({fctx.func_name})'
+            )
+            fctx.func_name += "_backcompat"
+            try:
+                func = get_xtrig_func(fctx.mod_name, fctx.func_name, fdir)
+            except (ImportError, AttributeError):
+                # Failed to find backcompat function, raise original
+                LOG.warning(
+                    f'Failed to find xtrigger "{label}" ({fctx.func_name})')
+                raise XtriggerConfigError(label, str(exc))
+
+            # Found backcompat function
+            try:
+                sig = signature(func)
+            except TypeError as exc2:
+                # not callable
+                raise XtriggerConfigError(label, str(exc2))
+
+            try:
+                bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
+            except TypeError as exc:
+                # failed signature check
+                LOG.warning(
+                    'Failed to match function signature of'
+                    f' xtrigger "{label}" ({fctx.func_name})'
+                )
+                raise XtriggerConfigError(label, str(exc))
+            else:
+                # succeeded in loading and validating the backcompat version
+                LOG.warning(
+                    f'Using backcompat xtrigger "{label}" ({fctx.func_name})')
 
         # Specific xtrigger.validate(), if available.
         # Note arg string templating has not been done at this point.
         cls._try_xtrig_validate_func(
-            label, fname, fdir, bound_args, sig_str
+            label, fctx.mod_name, fctx.func_name, fdir, bound_args, sig_str
         )
 
         # Check any string templates in the function arg values (note this
@@ -323,6 +350,7 @@ class XtriggerCollator:
     def _try_xtrig_validate_func(
         cls,
         label: str,
+        mname: str,
         fname: str,
         fdir: str,
         bound_args: 'BoundArguments',
@@ -333,8 +361,12 @@ class XtriggerCollator:
         Raise XtriggerConfigError if validation fails.
 
         """
+        vname = "validate"
+        if fname.endswith('_backcompat'):
+            vname = "validate_backcompat"
+
         try:
-            xtrig_validate_func = get_xtrig_func(fname, 'validate', fdir)
+            xtrig_validate_func = get_xtrig_func(mname, vname, fdir)
         except (AttributeError, ImportError):
             return
         bound_args.apply_defaults()

@@ -83,7 +83,7 @@ def workflow_state(
         )
 
 
-def validate(args: Dict[str, Any], Err=WorkflowConfigError):
+def validate(args: Dict[str, Any]):
     """Validate workflow_state xtrigger function args.
 
     * workflow_task_id: full workflow//cycle/task[:selector]
@@ -92,7 +92,13 @@ def validate(args: Dict[str, Any], Err=WorkflowConfigError):
     * alt_cylc_run_dir: must be a valid path
 
     """
-    tokens = tokenise(args["workflow_task_id"])
+    try:
+        tokens = tokenise(args["workflow_task_id"])
+    except KeyError:
+        raise WorkflowConfigError(
+            # TODO better message
+            "Full ID needed: workflow//cycle/task[:selector].")
+
     if any(
         tokens[token] is None
         for token in ("workflow", "cycle", "task")
@@ -104,3 +110,90 @@ def validate(args: Dict[str, Any], Err=WorkflowConfigError):
         int(args["flow_num"])
     except ValueError:
         raise WorkflowConfigError("flow_num must be an integer.")
+
+
+def workflow_state_backcompat(
+    workflow: str,
+    task: str,
+    point: str,
+    offset: Optional[str] = None,
+    status: str = 'succeeded',
+    message: Optional[str] = None,
+    cylc_run_dir: Optional[str] = None
+) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
+    """Back-compat wrapper for the workflow_state xtrigger.
+
+    Arguments:
+        workflow:
+            The workflow to interrogate.
+        task:
+            The name of the task to query.
+        point:
+            The cycle point.
+        offset:
+            The offset between the cycle this xtrigger is used in and the one
+            it is querying for as an ISO8601 time duration.
+            e.g. PT1H (one hour).
+        status:
+            The task status required for this xtrigger to be satisfied.
+        message:
+            The custom task output required for this xtrigger to be satisfied.
+
+            .. note::
+
+               This cannot be specified in conjunction with ``status``.
+        cylc_run_dir:
+            Alternate cylc-run directory, e.g. for another user.
+
+            .. note::
+
+               This only needs to be supplied if the workflow is running in a
+               different location to what is specified in the global
+               configuration (usually ``~/cylc-run``).
+
+    Returns:
+        tuple: (satisfied, results)
+
+        satisfied:
+            True if ``satisfied`` else ``False``.
+        results:
+            Dictionary containing the args / kwargs which were provided
+            to this xtrigger.
+
+    """
+    workflow_task_id = f"{workflow}//{point}/{task}"
+    if status is not None:
+        workflow_task_id += f":{status}"
+    elif message is not None:
+        workflow_task_id += f":{message}"
+
+    satisfied, _results = workflow_state(
+        workflow_task_id, offset=offset, alt_cylc_run_dir=cylc_run_dir)
+
+    return (
+        satisfied,
+        {
+            'workflow': workflow,
+            'task': task,
+            'point': point,
+            'offset': offset,
+            'status': status,
+            'message': message,
+            'cylc_run_dir': cylc_run_dir
+        }
+    )
+
+
+def validate_backcompat(args: Dict[str, Any]):
+    """Validate old workflow_state xtrigger function args.
+
+    """
+    args['workflow_task_id'] = (
+        f"{args['workflow']}//{args['point']}/{args['task']}"
+    )
+    args['flow_num'] = 1
+    del args['workflow']
+    del args['point']
+    del args['task']
+
+    validate(args)

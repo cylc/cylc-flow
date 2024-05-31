@@ -40,7 +40,7 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import CylcError, ServiceFileError
-from cylc.flow.util import serialise_set
+from cylc.flow.util import serialise_set, deserialise_set
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -742,7 +742,6 @@ class WorkflowDatabaseManager:
 
         # We can't upgrade if the flow_nums in task_states are not
         # distinct.
-        from cylc.flow.util import deserialise_set
         flow_nums = deserialise_set(conn.execute(
             'SELECT DISTINCT flow_nums FROM task_states;').fetchall()[0][0])
         if len(flow_nums) != 1:

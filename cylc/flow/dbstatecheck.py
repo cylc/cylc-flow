@@ -56,8 +56,6 @@ class CylcWorkflowDBChecker:
         self.conn = sqlite3.connect(db_path, timeout=10.0)
 
         # Get workflow point format.
-        self.db_point_fmt = None
-        self.back_compat_mode = False
         try:
             self.db_point_fmt = self._get_db_point_format()
             self.back_compat_mode = False
@@ -127,7 +125,7 @@ class CylcWorkflowDBChecker:
 
     def _get_db_point_format(self):
         """Query a workflow database for a 'cycle point format' entry"""
-        for row in self.conn.execute(dedent(
+        for row in self.conn.execute(
             rf'''
                 SELECT
                     value
@@ -135,7 +133,7 @@ class CylcWorkflowDBChecker:
                     {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
                 WHERE
                     key==?
-            '''),  # nosec (table name is code constant)
+            ''',  # nosec (table name is code constant)
             ['cycle_point_format']
         ):
             return row[0]

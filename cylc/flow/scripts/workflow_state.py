@@ -114,7 +114,7 @@ INTERVAL = 5
 
 
 class WorkflowPoller(Poller):
-    """A polling object that queries task states or outputs from a DB."""
+    """An object that polls for task states or outputs in a workflow DB."""
 
     def __init__(
         self, id_, offset, flow_num, alt_cylc_run_dir, default_status,
@@ -214,7 +214,7 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "-d", "--alt-cylc-run-dir",
-        help="Alternate cylc-run directory, e.g. for others' workflows.",
+        help="Alternate cylc-run directory, e.g. for other users' workflows.",
         metavar="DIR", action="store", dest="alt_cylc_run_dir", default=None)
 
     parser.add_option(

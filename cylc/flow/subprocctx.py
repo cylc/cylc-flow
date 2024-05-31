@@ -166,10 +166,12 @@ class SubFuncContext(SubProcContext):
         func_name: str,
         func_args: List[Any],
         func_kwargs: Dict[str, Any],
-        intvl: Union[float, str] = DEFAULT_INTVL
+        intvl: Union[float, str] = DEFAULT_INTVL,
+        mod_name: Optional[str] = None
     ):
         """Initialize a function context."""
         self.label = label
+        self.mod_name = mod_name or func_name
         self.func_name = func_name
         self.func_kwargs = func_kwargs
         self.func_args = func_args
@@ -186,7 +188,9 @@ class SubFuncContext(SubProcContext):
 
     def update_command(self, workflow_run_dir):
         """Update the function wrap command after changes."""
-        self.cmd = ['cylc', 'function-run', self.func_name,
+        self.cmd = ['cylc', 'function-run',
+                    self.mod_name,
+                    self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs),
                     workflow_run_dir]
