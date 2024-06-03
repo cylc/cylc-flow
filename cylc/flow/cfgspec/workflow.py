@@ -1730,23 +1730,6 @@ with Conf(
                        {REPLACES}``[runtime][task][events]mail to``
                 ''')
 
-            with Conf('suite state polling', desc=f'''
-                Deprecated support for automatic workflow state polling tasks
-                as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
-                "user" and "host" config items are not supported.
-
-                .. versionchanged:: 8.3.0
-
-                   {REPLACES}``[runtime][<namespace>]suite state polling``.
-
-                .. deprecated:: 8.0.0
-
-                   Please switch to workflow_state xtriggers.
-            '''):
-                Conf('template', VDR.V_STRING, desc='''
-                    Polling interval.
-                ''')
-
             with Conf('workflow state polling', desc=f'''
                 Deprecated support for automatic workflow state polling tasks
                 as described in :ref:`WorkflowStatePolling`. Note the Cylc 7

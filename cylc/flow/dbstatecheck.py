@@ -167,6 +167,7 @@ class CylcWorkflowDBChecker:
         cycle: Optional[str] = None,
         selector: Optional[str] = None,
         is_output: Optional[bool] = False,
+        is_message: Optional[bool] = False,
         flow_num: Optional[int] = None,
         print_outputs: bool = False
     ) -> List[List[str]]:
@@ -188,7 +189,7 @@ class CylcWorkflowDBChecker:
         stmt_args = []
         stmt_wheres = []
 
-        if is_output:
+        if is_output or is_message:
             target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
             mask = "name, cycle, outputs"
         else:
@@ -228,7 +229,7 @@ class CylcWorkflowDBChecker:
                 stmt_wheres.append("cycle==?")
             stmt_args.append(cycle)
 
-        if selector is not None and not is_output:
+        if selector is not None and not (is_output or is_message):
             # Can select by status in the DB but not outputs.
             stmt_wheres.append("status==?")
             stmt_args.append(selector)
@@ -236,7 +237,7 @@ class CylcWorkflowDBChecker:
         if stmt_wheres:
             stmt += "WHERE\n    " + (" AND ").join(stmt_wheres)
 
-        if not is_output:
+        if not (is_output or is_message):
             # (outputs table doesn't record submit number)
             stmt += dedent("""
                 ORDER BY
@@ -261,15 +262,19 @@ class CylcWorkflowDBChecker:
                     res.append(fstr)
             db_res.append(res)
 
-        if not is_output:
+        if not (is_output or is_message):
             return db_res
 
         results = []
         for row in db_res:
             outputs_map = json.loads(row[2])
-            if self.back_compat_mode:
+            if self.back_compat_mode or is_message:
                 # task message
-                outputs = list(outputs_map.values())
+                try:
+                    outputs = list(outputs_map.values())
+                except AttributeError:
+                    # pre-8.3.0 back-compat: only output messages stored
+                    outputs = list(outputs_map)
             else:
                 # task output
                 outputs = list(outputs_map)

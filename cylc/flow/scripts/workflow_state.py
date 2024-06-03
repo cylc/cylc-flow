@@ -118,7 +118,7 @@ class WorkflowPoller(Poller):
 
     def __init__(
         self, id_, offset, flow_num, alt_cylc_run_dir, default_status,
-        is_output, old_format,
+        is_output, is_message, old_format,
         *args, **kwargs
     ):
         self.id_ = id_
@@ -138,13 +138,18 @@ class WorkflowPoller(Poller):
         self.results = None
         self.db_checker = None
 
-        self.is_output = (
-            is_output or
-            (
-                self.task_sel is not None and
-                self.task_sel not in TASK_STATUSES_ORDERED
+        if is_message:
+            self.is_message = is_message
+            self.is_output = False
+        else:
+            self.is_message = False
+            self.is_output = (
+                is_output or
+                (
+                    self.task_sel is not None and
+                    self.task_sel not in TASK_STATUSES_ORDERED
+                )
             )
-        )
 
         super().__init__(*args, **kwargs)
 
@@ -197,7 +202,8 @@ class WorkflowPoller(Poller):
                 self.cycle_raw, self.offset)
 
         self.result = self.db_checker.workflow_state_query(
-            self.task, self.cycle, self.task_sel, self.is_output, self.flow_num
+            self.task, self.cycle, self.task_sel, self.is_output,
+            self.is_message, self.flow_num
         )
         if self.result:
             # End the polling dot stream and print inferred runN workflow ID.
@@ -233,9 +239,15 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--output",
-        help="Interpret task selector as an output rather than as a status."
+        help="Interpret task selector as an output rather than a status."
              "(Note this is not needed for custom outputs).",
         action="store_true", dest="is_output", default=False)
+
+    parser.add_option(
+        "--message",
+        help="Interpret task selector as a task message rather than a status."
+             "(For legacy support - better to use --output).",
+        action="store_true", dest="is_message", default=False)
 
     parser.add_option(
         "--old-format",
@@ -265,6 +277,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         options.alt_cylc_run_dir,
         None,  # default status
         options.is_output,
+        options.is_message,
         options.old_format,
         f'"{id_}"',
         options.interval,

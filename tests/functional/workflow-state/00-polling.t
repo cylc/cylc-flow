@@ -39,8 +39,8 @@ run_fail "${TEST_NAME}" \
     cylc validate --set="UPSTREAM='${UPSTREAM}'" --set="OUTPUT=':y'" "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowConfigError: Polling task "l-mess" must configure a target status or output
-in the graph (:y) or in its task definition (output = "x") but not both.
+WorkflowConfigError: Polling task "l-mess" must configure a target status or output in \
+the graph (:y) or in its task definition (output = "x") but not both.
 __ERR__
 
 TEST_NAME=${TEST_NAME_BASE}-validate-polling-x

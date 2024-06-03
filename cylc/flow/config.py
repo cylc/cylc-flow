@@ -1574,7 +1574,7 @@ class WorkflowConfig:
                     ('alt-cylc-run-dir', ' --%s=%s')]:
                 if rtc['workflow state polling'][key]:
                     comstr += fmt % (key, rtc['workflow state polling'][key])
-            script = "set -x; " + comstr + "\n" + comstr
+            script = f"echo {comstr}\n{comstr}"
             rtc['script'] = script
 
     def get_parent_lists(self):
