@@ -52,10 +52,7 @@ cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section2"
 run_ok "${TEST_NAME}" cylc config -d --item=[runtime] "${WORKFLOW_NAME}"
-# Crude sorting to handle against change of dict order when new items added:
-sort "${TEST_NAME}.stdout" > stdout.1
-sort "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section2.stdout" > stdout.2
-cmp_ok stdout.1 stdout.2
+cmp_ok "${TEST_NAME}.stdout" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section2.stdout"
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 # Basic test that --print-hierarchy works
