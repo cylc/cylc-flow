@@ -1,4 +1,5 @@
-WARNING - items were automatically upgraded in workflow definition
+WARNING - Obsolete config items were automatically deleted. Please check your workflow and remove them permanently.
+WARNING - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
 WARNING -  * (8.0.0) [cylc]force run mode - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc]log resolved dependencies - DELETED (OBSOLETE)
