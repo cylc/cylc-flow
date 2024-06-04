@@ -72,8 +72,15 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             to this xtrigger.
 
     """
+    if message is not None:
+        selector = message
+        is_message = True
+    else:
+        selector = status
+        is_message = False
+
     return workflow_state(
-        f"{suite}//{point}/{task}:{status}",
-        offset=offset,
+        f"{suite}//{point}/{task}:{selector}",
+        offset=offset, is_message=is_message,
         alt_cylc_run_dir=cylc_run_dir
     )

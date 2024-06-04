@@ -165,14 +165,20 @@ def workflow_state_backcompat(
             to this xtrigger.
 
     """
+    is_message = False
     workflow_task_id = f"{workflow}//{point}/{task}"
     if status is not None:
         workflow_task_id += f":{status}"
     elif message is not None:
+        is_message = True
         workflow_task_id += f":{message}"
 
     satisfied, _results = workflow_state(
-        workflow_task_id, offset=offset, alt_cylc_run_dir=cylc_run_dir)
+        workflow_task_id,
+        offset=offset,
+        is_message=is_message,
+        alt_cylc_run_dir=cylc_run_dir
+    )
 
     return (
         satisfied,

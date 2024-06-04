@@ -273,7 +273,7 @@ class CylcWorkflowDBChecker:
                 try:
                     outputs = list(outputs_map.values())
                 except AttributeError:
-                    # pre-8.3.0 back-compat: only output messages stored
+                    # Cylc 8 pre 8.3.0 back-compat: only output messages stored
                     outputs = list(outputs_map)
             else:
                 # task output
