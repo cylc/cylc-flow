@@ -28,10 +28,10 @@ def workflow_state(
     workflow_task_id: str,
     offset: Optional[str] = None,
     flow_num: Optional[int] = 1,
-    is_output: Optional[bool] = False,
-    is_message: Optional[bool] = False,
+    is_output: bool = False,
+    is_message: bool = False,
     alt_cylc_run_dir: Optional[str] = None,
-) -> Tuple[bool, Dict[str, Optional[str]]]:
+) -> Tuple[bool, Dict[str, Any]]:
     """Connect to a workflow DB and check a task status or output.
 
     If the status or output has been achieved, return {True, result}.
@@ -64,10 +64,11 @@ def workflow_state(
         workflow_task_id, offset, flow_num, alt_cylc_run_dir,
         TASK_STATUS_SUCCEEDED,
         is_output, is_message,
-        f'"{id}"',
-        '10',  # interval (irrelevant, for a single poll)
-        1,  # max polls (for xtriggers the scheduler does the polling)
-        [], {}
+        old_format=False,
+        condition=workflow_task_id,
+        max_polls=1,  # (for xtriggers the scheduler does the polling)
+        interval=0,  # irrelevant for 1 poll
+        args=[]
     )
     if asyncio.run(poller.poll()):
         return (
