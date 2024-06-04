@@ -31,7 +31,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from ansimarkup import parse as cparse, strip as cstrip
 
@@ -434,3 +434,25 @@ def patch_log_level(logger: logging.Logger, level: int = logging.INFO):
         logger.setLevel(orig_level)
     else:  # No need to patch
         yield
+
+
+def log_iterable(
+    items: Iterable,
+    header: str,
+    singular_header: str,
+) -> str:
+    """Log a list.
+
+    Args:
+        items: The iterable
+        singular_header: To use if list has length 1
+        header: To use otherwise
+    """
+    if len(items) == 0:
+        raise ValueError('This function does not take len==0 iterables')
+    elif len(items) == 1:
+        return singular_header.format(items[0])
+    else:
+        msg = header + '\n    * '
+        msg += '\n    * '.join(items)
+        return msg
