@@ -15,7 +15,6 @@ WARNING -  * (8.0.0) [cylc][simulation]disable suite event handlers - DELETED (O
 WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc]task event mail interval -> [cylc][mail]task event batch interval - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][suite state polling] -> [runtime][foo, cat, dog][workflow state polling] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][workflow state polling]message -> [runtime][foo, cat, dog][workflow state polling]output - value unchanged
 WARNING -  * (8.0.0) [cylc][parameters] -> [task parameters] - value unchanged
 WARNING -  * (8.0.0) [cylc][parameter templates] -> [task parameters][templates] - value unchanged
 WARNING -  * (8.0.0) [cylc][events]mail to -> [cylc][mail]to - value unchanged

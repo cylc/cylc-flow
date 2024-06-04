@@ -1,0 +1,17 @@
+# Run this with Cylc 7, 8 (pre-8.3.0), and 8 (8.3.0+)
+# to generate DBs for workflow state checks.
+# (The task_outputs table is different in each case).
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                foo
+            """
+[runtime]
+    [[foo]]
+        script = "cylc message - 'the quick brown'"
+        [[[outputs]]]
+           x = "the quick brown"

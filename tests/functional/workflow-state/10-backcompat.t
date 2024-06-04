@@ -45,7 +45,7 @@ __END__
 
 # Cylc 7 DB only contains custom outputs, and only the task message.
 TEST_NAME="${TEST_NAME_BASE}_outputs"
-run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --output "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --message "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 2051/foo:['the quick brown fox']

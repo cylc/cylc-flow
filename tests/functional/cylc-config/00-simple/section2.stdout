@@ -67,6 +67,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -142,6 +143,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -217,6 +219,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -294,6 +297,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -370,6 +374,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -446,6 +451,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -522,6 +528,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -598,6 +605,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -674,6 +682,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -750,6 +759,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -826,6 +836,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -902,6 +913,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
@@ -978,6 +990,7 @@
         interval = 
         max-polls = 
         output = 
+        message = 
         alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]

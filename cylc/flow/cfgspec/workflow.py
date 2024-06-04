@@ -1753,6 +1753,9 @@ with Conf(
                     Target task output (trigger name, not task message).
                     Alternatively, put this in the graph trigger syntax.
                 ''')
+                Conf('message', VDR.V_STRING, desc='''
+                    Target task output (task message, not trigger name).
+                ''')
                 Conf('alt-cylc-run-dir', VDR.V_STRING, desc='''
                     The cylc-run directory location of the target workflow.
                     Use to poll workflows owned by other users.
@@ -1988,8 +1991,8 @@ def upg(cfg, descr):
 
     u.deprecate(
         '8.0.0',
-        ['runtime', '__MANY__', 'workflow state polling', 'message'],
-        ['runtime', '__MANY__', 'workflow state polling', 'output'],
+        ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
+        ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
         silent=cylc.flow.flags.cylc7_back_compat,
     )
 
