@@ -113,6 +113,27 @@ MAX_POLLS = 12
 INTERVAL = 5
 
 
+def unquote(s: str) -> str:
+    """Remove leading & trailing quotes from a string.
+
+    Examples:
+    >>> unquote('"foo"')
+    'foo'
+    >>> unquote("'foo'")
+    'foo'
+    >>> unquote('foo')
+    'foo'
+    >>> unquote("'tis a fine morning")
+    "'tis a fine morning"
+    """
+    if (
+        s.startswith('"') and s.endswith('"')
+        or s.startswith("'") and s.endswith("'")
+    ):
+        return s[1:-1]
+    return s
+
+
 class WorkflowPoller(Poller):
     """An object that polls for task states or outputs in a workflow DB."""
 
@@ -137,6 +158,8 @@ class WorkflowPoller(Poller):
         tokens = Tokens(self.id_)
         self.workflow_id_raw = tokens.workflow_id
         self.task_sel = tokens["task_sel"] or default_status
+        if self.task_sel:
+            self.task_sel = unquote(self.task_sel)
         self.cycle_raw = tokens["cycle"]
         self.task = tokens["task"]
 

@@ -586,7 +586,7 @@ class WorkflowDatabaseManager:
             itask,
             {
                 "flow_nums": serialise_set(itask.flow_nums),
-                "outputs": json.dumps([])
+                "outputs": json.dumps({})
             }
         )
 

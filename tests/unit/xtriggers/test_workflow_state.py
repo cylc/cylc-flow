@@ -14,20 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import sqlite3
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from shutil import copytree, rmtree
 
+import pytest
+
+from cylc.flow.dbstatecheck import output_fallback_msg
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import WorkflowFiles
-from cylc.flow.xtriggers.workflow_state import workflow_state
+from cylc.flow.xtriggers.workflow_state import (
+    _workflow_state_backcompat,
+    workflow_state,
+)
+from cylc.flow.xtriggers.suite_state import suite_state
 
 if TYPE_CHECKING:
-    from typing import Callable
-    from pytest import CaptureFixture
+    from typing import Any, Callable
     from pathlib import Path
 
 
-def test_inferred_run(tmp_run_dir: 'Callable', capsys: 'CaptureFixture'):
+def test_inferred_run(tmp_run_dir: 'Callable', capsys: pytest.CaptureFixture):
     """Test that the workflow_state xtrigger infers the run number.
 
     Method: the faked run-dir has no DB to connect to, but the WorkflowPoller
@@ -58,7 +66,7 @@ def test_inferred_run(tmp_run_dir: 'Callable', capsys: 'CaptureFixture'):
     assert expected_workflow_id in capsys.readouterr().err
 
 
-def test_back_compat(tmp_run_dir: 'Callable', caplog: 'CaptureFixture'):
+def test_c7_db_back_compat(tmp_run_dir: 'Callable'):
     """Test workflow_state xtrigger backwards compatibility with Cylc 7
     database."""
     id_ = 'celebrimbor'
@@ -80,6 +88,11 @@ def test_back_compat(tmp_run_dir: 'Callable', caplog: 'CaptureFixture'):
                 submit_num INTEGER, status TEXT, PRIMARY KEY(name, cycle)
             );
         """)
+        conn.execute(r"""
+            CREATE TABLE task_outputs(
+                cycle TEXT, name TEXT, outputs TEXT, PRIMARY KEY(cycle, name)
+            );
+        """)
         conn.executemany(
             r'INSERT INTO "suite_params" VALUES(?,?);',
             [('cylc_version', '7.8.12'),
@@ -87,9 +100,14 @@ def test_back_compat(tmp_run_dir: 'Callable', caplog: 'CaptureFixture'):
              ('cycle_point_tz', 'Z')]
         )
         conn.execute(r"""
-           INSERT INTO "task_states" VALUES(
-               'mithril','2012','2023-01-30T18:19:15Z','2023-01-30T18:19:15Z',
-               0,'succeeded'
+            INSERT INTO "task_states" VALUES(
+                'mithril','2012','2023-01-30T18:19:15Z','2023-01-30T18:19:15Z',
+                0,'succeeded'
+            );
+        """)
+        conn.execute(r"""
+            INSERT INTO "task_outputs" VALUES(
+                '2012','mithril','{"frodo": "bag end"}'
             );
         """)
         conn.commit()
@@ -97,14 +115,148 @@ def test_back_compat(tmp_run_dir: 'Callable', caplog: 'CaptureFixture'):
         conn.close()
 
     # Test workflow_state function
-    satisfied, _ = workflow_state(id_ + '//2012/mithril')
+    satisfied, _ = workflow_state(f'{id_}//2012/mithril')
     assert satisfied
+    satisfied, _ = workflow_state(f'{id_}//2012/mithril:succeeded')
+    assert satisfied
+    satisfied, _ = workflow_state(f'{id_}//2012/mithril:frodo', is_output=True)
+    assert satisfied
+    satisfied, _ = workflow_state(
+        f'{id_}//2012/mithril:"bag end"', is_message=True
+    )
+    assert satisfied
+    satisfied, _ = workflow_state(f'{id_}//2012/mithril:pippin')
+    assert not satisfied
     satisfied, _ = workflow_state(id_ + '//2012/arkenstone')
     assert not satisfied
 
     # Test back-compat (old suite_state function)
-    from cylc.flow.xtriggers.suite_state import suite_state
     satisfied, _ = suite_state(suite=id_, task='mithril', point='2012')
+    assert satisfied
+    satisfied, _ = suite_state(
+        suite=id_, task='mithril', point='2012', status='succeeded'
+    )
+    assert satisfied
+    satisfied, _ = suite_state(
+        suite=id_, task='mithril', point='2012', message='bag end'
+    )
     assert satisfied
     satisfied, _ = suite_state(suite=id_, task='arkenstone', point='2012')
     assert not satisfied
+
+
+def test_c8_db_back_compat(
+    tmp_run_dir: 'Callable',
+    caplog: pytest.LogCaptureFixture,
+    log_filter: 'Callable',
+):
+    """Test workflow_state xtrigger backwards compatibility with Cylc < 8.3.0
+    database."""
+    id_ = 'nazgul'
+    run_dir: Path = tmp_run_dir(id_)
+    db_file = run_dir / 'log' / 'db'
+    db_file.parent.mkdir(exist_ok=True)
+    # Note: don't use CylcWorkflowDAO here as DB should be frozen
+    conn = sqlite3.connect(str(db_file))
+    try:
+        conn.execute(r"""
+            CREATE TABLE workflow_params(
+                key TEXT, value TEXT, PRIMARY KEY(key)
+            );
+        """)
+        conn.execute(r"""
+            CREATE TABLE task_states(
+                name TEXT, cycle TEXT, flow_nums TEXT, time_created TEXT,
+                time_updated TEXT, submit_num INTEGER, status TEXT,
+                flow_wait INTEGER, is_manual_submit INTEGER,
+                PRIMARY KEY(name, cycle, flow_nums)
+            );
+        """)
+        conn.execute(r"""
+            CREATE TABLE task_outputs(
+                cycle TEXT, name TEXT, flow_nums TEXT, outputs TEXT,
+                PRIMARY KEY(cycle, name, flow_nums)
+            );
+        """)
+        conn.executemany(
+            r'INSERT INTO "workflow_params" VALUES(?,?);',
+            [('cylc_version', '8.2.7'),
+             ('cycle_point_format', '%Y'),
+             ('cycle_point_tz', 'Z')]
+        )
+        conn.execute(r"""
+            INSERT INTO "task_states" VALUES(
+                'gimli','2012','[1]','2023-01-30T18:19:15Z',
+                '2023-01-30T18:19:15Z',1,'succeeded',0,0
+            );
+        """)
+        conn.execute(r"""
+            INSERT INTO "task_outputs" VALUES(
+                '2012','gimli','[1]',
+                '["submitted", "started", "succeeded", "axe"]'
+            );
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+    gimli = f'{id_}//2012/gimli'
+
+    satisfied, _ = workflow_state(gimli)
+    assert satisfied
+    satisfied, _ = workflow_state(f'{gimli}:succeeded')
+    assert satisfied
+    caplog.clear()
+    satisfied, _ = workflow_state(f'{gimli}:axe', is_message=True)
+    assert satisfied
+    assert not caplog.records
+    # Output label selector falls back to message
+    # (won't work if messsage != output label)
+    caplog.clear()
+    satisfied, _ = workflow_state(f'{gimli}:axe', is_output=True)
+    assert satisfied
+    assert log_filter(
+        caplog, level=logging.WARNING, exact_match=output_fallback_msg
+    )
+
+
+def test__workflow_state_backcompat(tmp_run_dir: 'Callable'):
+    """Test the _workflow_state_backcompat & suite_state functions on a
+    *current* Cylc database."""
+    id_ = 'dune'
+    run_dir: Path = tmp_run_dir(id_)
+    db_file = run_dir / 'log' / 'db'
+    db_file.parent.mkdir(exist_ok=True)
+    with CylcWorkflowDAO(db_file, create_tables=True) as dao:
+        conn = dao.connect()
+        conn.executemany(
+            r'INSERT INTO "workflow_params" VALUES(?,?);',
+            [('cylc_version', '8.3.0'),
+             ('cycle_point_format', '%Y'),
+             ('cycle_point_tz', 'Z')]
+        )
+        conn.execute(r"""
+            INSERT INTO "task_states" VALUES(
+                'arrakis','2012','[1]','2023-01-30T18:19:15Z',
+                '2023-01-30T18:19:15Z',1,'succeeded',0,0
+            );
+        """)
+        conn.execute(r"""
+            INSERT INTO "task_outputs" VALUES(
+                '2012','arrakis','[1]',
+                '{"submitted": "submitted", "started": "started", "succeeded": "succeeded", "paul": "lisan al-gaib"}'
+            );
+        """)
+        conn.commit()
+
+    func: Any
+    for func in (_workflow_state_backcompat, suite_state):
+        satisfied, _ = func(id_, 'arrakis', '2012')
+        assert satisfied
+        satisfied, _ = func(id_, 'arrakis', '2012', status='succeeded')
+        assert satisfied
+        # Both output label and message work
+        satisfied, _ = func(id_, 'arrakis', '2012', message='paul')
+        assert satisfied
+        satisfied, _ = func(id_, 'arrakis', '2012', message='lisan al-gaib')
+        assert satisfied

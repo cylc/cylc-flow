@@ -47,9 +47,9 @@ TEST_NAME="${TEST_NAME_BASE}_check_1_outputs"
 run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --output "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
-2051/foo:['submitted', 'started', 'succeeded', 'x']
-2052/foo:[]
-2051/bar:['submitted', 'started', 'succeeded']
+2051/foo:{'submitted': 'submitted', 'started': 'started', 'succeeded': 'succeeded', 'x': 'hello'}
+2052/foo:{}
+2051/bar:{'submitted': 'submitted', 'started': 'started', 'succeeded': 'succeeded'}
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}_poll_fail"

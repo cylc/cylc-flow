@@ -19,9 +19,9 @@ import json
 import os
 import sqlite3
 import sys
-from typing import Optional, List
-from textwrap import dedent
+from typing import Dict, Iterable, Optional, List, Union
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.cycling.integer import (
@@ -33,11 +33,18 @@ from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_FINISHED,
 )
 from cylc.flow.util import deserialise_set
 from metomi.isodatetime.parsers import TimePointParser
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
+
+
+output_fallback_msg = (
+    "Unable to filter by task output label for tasks run in Cylc versions "
+    "between 8.0.0-8.3.0. Falling back to filtering by task message instead."
+)
 
 
 class CylcWorkflowDBChecker:
@@ -70,12 +77,12 @@ class CylcWorkflowDBChecker:
         # Get workflow point format.
         try:
             self.db_point_fmt = self._get_db_point_format()
-            self.back_compat_mode = False
+            self.c7_back_compat_mode = False
         except sqlite3.OperationalError as exc:
             # BACK COMPAT: Cylc 7 DB (see method below).
             try:
                 self.db_point_fmt = self._get_db_point_format_compat()
-                self.back_compat_mode = True
+                self.c7_back_compat_mode = True
             except sqlite3.OperationalError:
                 raise exc  # original error
 
@@ -194,7 +201,7 @@ class CylcWorkflowDBChecker:
            ]
         For an output query:
            [
-              [name, cycle, "[out1: msg1, out2: msg2, ...]"],
+              [name, cycle, "{out1: msg1, out2: msg2, ...}"],
               ...
            ]
         """
@@ -208,16 +215,16 @@ class CylcWorkflowDBChecker:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
             mask = "name, cycle, status"
 
-        if not self.back_compat_mode:
+        if not self.c7_back_compat_mode:
             # Cylc 8 DBs only
             mask += ", flow_nums"
 
-        stmt = dedent(rf'''
+        stmt = rf'''
             SELECT
                 {mask}
             FROM
                 {target_table}
-        ''')  # nosec
+        '''  # nosec
         # * mask is hardcoded
         # * target_table is a code constant
 
@@ -241,7 +248,10 @@ class CylcWorkflowDBChecker:
                 stmt_wheres.append("cycle==?")
             stmt_args.append(cycle)
 
-        if selector is not None and not (is_output or is_message):
+        if (
+            selector is not None
+            and target_table == CylcWorkflowDAO.TABLE_TASK_STATES
+        ):
             # Can select by status in the DB but not outputs.
             stmt_wheres.append("status==?")
             stmt_args.append(selector)
@@ -249,12 +259,9 @@ class CylcWorkflowDBChecker:
         if stmt_wheres:
             stmt += "WHERE\n    " + (" AND ").join(stmt_wheres)
 
-        if not (is_output or is_message):
+        if target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
             # (outputs table doesn't record submit number)
-            stmt += dedent("""
-                ORDER BY
-                    submit_num
-            """)
+            stmt += r"ORDER BY submit_num"
 
         # Query the DB and drop incompatible rows.
         db_res = []
@@ -264,7 +271,7 @@ class CylcWorkflowDBChecker:
             if row[2] is None:
                 # status can be None in Cylc 7 DBs
                 continue
-            if not self.back_compat_mode:
+            if not self.c7_back_compat_mode:
                 flow_nums = deserialise_set(row[3])
                 if flow_num is not None and flow_num not in flow_nums:
                     # skip result, wrong flow
@@ -274,34 +281,50 @@ class CylcWorkflowDBChecker:
                     res.append(fstr)
             db_res.append(res)
 
-        if not (is_output or is_message):
+        if target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
             return db_res
 
+        warn_output_fallback = is_output
         results = []
         for row in db_res:
-            outputs_map = json.loads(row[2])
-            if is_message:
-                # task message
-                try:
-                    outputs = list(outputs_map.values())
-                except AttributeError:
-                    # Cylc 8 pre 8.3.0 back-compat: list of output messages
-                    outputs = list(outputs_map)
+            outputs: Union[Dict[str, str], List[str]] = json.loads(row[2])
+            if isinstance(outputs, dict):
+                messages: Iterable[str] = outputs.values()
             else:
-                # task output
-                outputs = list(outputs_map)
+                # Cylc 8 pre 8.3.0 back-compat: list of output messages
+                messages = outputs
+                if warn_output_fallback:
+                    LOG.warning(output_fallback_msg)
+                    warn_output_fallback = False
 
             if (
                 selector is None or
-                selector in outputs or
-                (
-                    selector in ("finished", "finish")
-                    and (
-                        TASK_OUTPUT_SUCCEEDED in outputs
-                        or TASK_OUTPUT_FAILED in outputs
-                    )
-                )
+                (is_message and selector in messages) or
+                (is_output and self._selector_in_outputs(selector, outputs))
             ):
                 results.append(row[:2] + [str(outputs)] + row[3:])
 
         return results
+
+    @staticmethod
+    def _selector_in_outputs(selector: str, outputs: Iterable[str]) -> bool:
+        """Check if a selector, including "finished", is in the outputs.
+
+        Examples:
+            >>> this = CylcWorkflowDBChecker._selector_in_outputs
+            >>> this('moop', ['started', 'moop'])
+            True
+            >>> this('moop', ['started'])
+            False
+            >>> this('finished', ['succeeded'])
+            True
+            >>> this('finish', ['failed'])
+            True
+        """
+        return selector in outputs or (
+            selector in (TASK_OUTPUT_FINISHED, "finish")
+            and (
+                TASK_OUTPUT_SUCCEEDED in outputs
+                or TASK_OUTPUT_FAILED in outputs
+            )
+        )

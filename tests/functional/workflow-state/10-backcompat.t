@@ -33,7 +33,7 @@ contains_ok "${TEST_NAME}.stdout" <<__END__
 __END__
 
 # recreate Cylc 7 DB with one NULL status
-rm "${WORKFLOW_RUN_DIR}/log/db" 
+rm "${WORKFLOW_RUN_DIR}/log/db"
 run_ok "create-db" sqlite3 "${WORKFLOW_RUN_DIR}/log/db" < schema-2.sql
 
 TEST_NAME="${TEST_NAME_BASE}_compat_2"
@@ -43,12 +43,12 @@ contains_ok "${TEST_NAME}.stdout" <<__END__
 2051/foo:succeeded
 __END__
 
-# Cylc 7 DB only contains custom outputs, and only the task message.
+# Cylc 7 DB only contains custom outputs
 TEST_NAME="${TEST_NAME_BASE}_outputs"
 run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --message "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
-2051/foo:['the quick brown fox']
+2051/foo:{'x': 'the quick brown fox'}
 __END__
 
 purge
