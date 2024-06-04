@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
     from cylc.flow.task_events_mgr import EventKey
+    from cylc.flow.task_proxy import TaskProxy
 
 Version = Any
 # TODO: narrow down Any (should be str | int) after implementing type
@@ -628,7 +629,7 @@ class WorkflowDatabaseManager:
         self._put_update_task_x(
             CylcWorkflowDAO.TABLE_TASK_JOBS, itask, set_args)
 
-    def put_update_task_outputs(self, itask):
+    def put_update_task_outputs(self, itask: 'TaskProxy') -> None:
         """Put UPDATE statement for task_outputs table."""
         set_args = {
             "outputs": json.dumps(
@@ -640,9 +641,9 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, [])
-        self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
-            (set_args, where_args))
+        self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, []).append(
+            (set_args, where_args)
+        )
 
     def _put_update_task_x(self, table_name, itask, set_args):
         """Put UPDATE statement for a task_* table."""

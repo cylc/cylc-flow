@@ -23,6 +23,7 @@ import sqlite3
 import traceback
 from typing import (
     TYPE_CHECKING,
+    Dict,
     Iterable,
     List,
     Set,
@@ -38,6 +39,7 @@ import cylc.flow.flags
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from cylc.flow.flow_mgr import FlowNums
 
 
 @dataclass
@@ -806,10 +808,12 @@ class CylcWorkflowDAO:
         flow_nums_str = list(self.connect().execute(stmt))[0][0]
         return deserialise_set(flow_nums_str)
 
-    def select_task_outputs(self, name, point):
+    def select_task_outputs(
+        self, name: str, point: str
+    ) -> 'Dict[str, FlowNums]':
         """Select task outputs for each flow.
 
-        Return: {outputs_list: flow_nums_set}
+        Return: {outputs_dict_str: flow_nums_set}
 
         """
         stmt = rf'''
@@ -820,10 +824,12 @@ class CylcWorkflowDAO:
             WHERE
                 name==? AND cycle==?
         '''  # nosec (table name is code constant)
-        ret = {}
-        for flow_nums, outputs in self.connect().execute(stmt, (name, point,)):
-            ret[outputs] = deserialise_set(flow_nums)
-        return ret
+        return {
+            outputs: deserialise_set(flow_nums)
+            for flow_nums, outputs in self.connect().execute(
+                stmt, (name, point,)
+            )
+        }
 
     def select_xtriggers_for_restart(self, callback):
         stmt = rf'''

@@ -25,8 +25,8 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Create Cylc 7, 8 (pre-8.3.0), and 8(8.3.0+) DBs for workflow-state checking.
 DBDIR="${WORKFLOW_RUN_DIR}/dbs"
 for x in c7 c8a c8b; do
-  mkdir -p "${DBDIR}/${x}/log"
-  sqlite3 "${DBDIR}/${x}/log/db" < "${x}.schema"
+    mkdir -p "${DBDIR}/${x}/log"
+    sqlite3 "${DBDIR}/${x}/log/db" < "${x}.sql"
 done
 
 run_ok "${TEST_NAME_BASE}-validate" \

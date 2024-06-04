@@ -16,7 +16,7 @@
 
 from cylc.flow import LOG
 import cylc.flow.flags
-from cylc.flow.xtriggers.workflow_state import workflow_state
+from cylc.flow.xtriggers.workflow_state import _workflow_state_backcompat
 
 if not cylc.flow.flags.cylc7_back_compat:
     LOG.warning(
@@ -72,15 +72,6 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             to this xtrigger.
 
     """
-    if message is not None:
-        selector = message
-        is_message = True
-    else:
-        selector = status
-        is_message = False
-
-    return workflow_state(
-        f"{suite}//{point}/{task}:{selector}",
-        offset=offset, is_message=is_message,
-        alt_cylc_run_dir=cylc_run_dir
+    return _workflow_state_backcompat(
+        suite, task, point, offset, status, message, cylc_run_dir
     )
