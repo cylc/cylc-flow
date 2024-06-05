@@ -1,5 +1,7 @@
 import pytest
 
+from cylc.flow.scheduler import Scheduler
+
 
 @pytest.fixture
 def param_workflow(flow, scheduler):
@@ -86,7 +88,7 @@ async def test_queue_held_tasks(
 
     https://github.com/cylc/cylc-flow/issues/4628
     """
-    schd = param_workflow(paused_start=True, queue_limit=1)
+    schd: Scheduler = param_workflow(paused_start=True, queue_limit=1)
 
     async with start(schd):
         # capture task submissions (prevents real submissions)
@@ -97,7 +99,7 @@ async def test_queue_held_tasks(
 
         # hold all tasks and resume the workflow
         # (nothing should have run yet because the workflow started paused)
-        schd.command_hold('*/*')
+        schd.command_hold(['*/*'])
         schd.resume_workflow()
 
         # release queued tasks
@@ -106,7 +108,7 @@ async def test_queue_held_tasks(
         assert len(submitted_tasks) == 0
 
         # un-hold tasks
-        schd.command_release('*/*')
+        schd.command_release(['*/*'])
 
         # release queued tasks
         # (tasks should now be released from the queues)

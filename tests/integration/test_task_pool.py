@@ -497,17 +497,19 @@ async def test_hold_point(
         (TASK_STATUS_SUCCEEDED, True),
     ]
 )
-async def test_trigger_states(status, should_trigger, one, start):
+async def test_trigger_states(
+    status: str, should_trigger: bool, one: 'Scheduler', start: Callable
+):
     """It should only trigger tasks in compatible states."""
 
     async with start(one):
-        task = one.pool.filter_task_proxies('1/a')[0][0]
+        task = one.pool.filter_task_proxies(['1/one'])[0][0]
 
         # reset task a to the provided state
         task.state.reset(status)
 
         # try triggering the task
-        one.pool.force_trigger_tasks('1/a', [FLOW_ALL])
+        one.pool.force_trigger_tasks(['1/one'], [FLOW_ALL])
 
         # check whether the task triggered
         assert task.is_manual_submit == should_trigger
@@ -1219,7 +1221,7 @@ async def test_detect_incomplete_tasks(
             # the task should not have been removed
             assert itask in schd.pool.get_tasks()
 
-            
+
 async def test_future_trigger_final_point(
     flow,
     scheduler,

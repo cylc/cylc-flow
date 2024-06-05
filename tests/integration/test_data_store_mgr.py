@@ -194,8 +194,9 @@ async def test_delta_task_state(harness):
 async def test_delta_task_held(harness):
     """Test update_data_structure. This method will generate and
     apply adeltas/updates given."""
+    schd: Scheduler
     schd, data = harness
-    schd.pool.hold_tasks('*')
+    schd.pool.hold_tasks(['*'])
     await schd.update_data_structure()
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
     for itask in schd.pool.get_tasks():
@@ -270,7 +271,7 @@ async def test_update_data_structure(harness):
     schd, data = harness
     w_id = schd.data_store_mgr.workflow_id
     schd.data_store_mgr.data[w_id] = data
-    schd.pool.hold_tasks('*')
+    schd.pool.hold_tasks(['*'])
     await schd.update_data_structure()
     assert TASK_STATUS_FAILED not in set(collect_states(data, TASK_PROXIES))
     assert TASK_STATUS_FAILED not in set(collect_states(data, FAMILY_PROXIES))
