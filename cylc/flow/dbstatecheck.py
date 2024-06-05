@@ -41,7 +41,19 @@ from metomi.isodatetime.exceptions import ISO8601SyntaxError
 
 
 class CylcWorkflowDBChecker:
-    """Object for querying a workflow database."""
+    """Object for querying task status or outputs from a workflow database.
+
+    Back-compat and task outputs:
+        # Cylc 7 stored {trigger: message} for custom outputs only.
+        1|foo|{"x": "the quick brown"}
+
+        # Cylc 8 (pre-8.3.0) stored [message] only, for all outputs.
+        1|foo|[1]|["submitted", "started", "succeeded", "the quick brown"]
+
+        # Cylc 8 (8.3.0+) stores {trigger: message} for all ouputs.
+        1|foo|[1]|{"submitted": "submitted", "started": "started",
+                   "succeeded": "succeeded", "x": "the quick brown"}
+    """
 
     def __init__(self, rund, workflow, db_path=None):
         # (Explicit dp_path arg is to make testing easier).
@@ -268,12 +280,12 @@ class CylcWorkflowDBChecker:
         results = []
         for row in db_res:
             outputs_map = json.loads(row[2])
-            if self.back_compat_mode or is_message:
+            if is_message:
                 # task message
                 try:
                     outputs = list(outputs_map.values())
                 except AttributeError:
-                    # Cylc 8 pre 8.3.0 back-compat: only output messages stored
+                    # Cylc 8 pre 8.3.0 back-compat: list of output messages
                     outputs = list(outputs_map)
             else:
                 # task output
