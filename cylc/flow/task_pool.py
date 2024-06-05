@@ -434,7 +434,7 @@ class TaskPool:
         self,
         cycle: str,
         task: str,
-        output: str,
+        output_msg: str,
         flow_nums: 'FlowNums',
     ) -> Union[str, bool]:
         """Returns truthy if the specified output is satisfied in the DB."""
@@ -444,10 +444,20 @@ class TaskPool:
             # loop through matching tasks
             if flow_nums.intersection(task_flow_nums):
                 # this task is in the right flow
-                task_outputs = json.loads(task_outputs)
+                # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
+                #   messages were stored in the DB as a list.
+                # from: 8.0.0
+                # to: 8.3.0
+                outputs: Union[
+                    Dict[str, str], List[str]
+                ] = json.loads(task_outputs)
+                messages = (
+                    outputs.values() if isinstance(outputs, dict)
+                    else outputs
+                )
                 return (
                     'satisfied from database'
-                    if output in task_outputs
+                    if output_msg in messages
                     else False
                 )
         else:
@@ -539,14 +549,14 @@ class TaskPool:
 
             # Update prerequisite satisfaction status from DB
             sat = {}
-            for prereq_name, prereq_cycle, prereq_output, satisfied in (
+            for prereq_name, prereq_cycle, prereq_output_msg, satisfied in (
                     self.workflow_db_mgr.pri_dao.select_task_prerequisites(
                         cycle, name, flow_nums,
                     )
             ):
                 # Prereq satisfaction as recorded in the DB.
                 sat[
-                    (prereq_cycle, prereq_name, prereq_output)
+                    (prereq_cycle, prereq_name, prereq_output_msg)
                 ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
@@ -558,12 +568,12 @@ class TaskPool:
                         # added to an already-spawned task before restart.
                         # Look through task outputs to see if is has been
                         # satisfied
-                        prereq_cycle, prereq_task, prereq_output = key
+                        prereq_cycle, prereq_task, prereq_output_msg = key
                         itask_prereq.satisfied[key] = (
                             self.check_task_output(
                                 prereq_cycle,
                                 prereq_task,
-                                prereq_output,
+                                prereq_output_msg,
                                 itask.flow_nums,
                             )
                         )
@@ -1612,7 +1622,7 @@ class TaskPool:
 
         return never_spawned, submit_num, prev_status, prev_flow_wait
 
-    def _load_historical_outputs(self, itask):
+    def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
         """Load a task's historical outputs from the DB."""
         info = self.workflow_db_mgr.pri_dao.select_task_outputs(
             itask.tdef.name, str(itask.point))
@@ -1622,7 +1632,18 @@ class TaskPool:
         else:
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
-                    for msg in json.loads(outputs_str):
+                    # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
+                    #   messages were stored in the DB as a list.
+                    # from: 8.0.0
+                    # to: 8.3.0
+                    outputs: Union[
+                        Dict[str, str], List[str]
+                    ] = json.loads(outputs_str)
+                    messages = (
+                        outputs.values() if isinstance(outputs, dict)
+                        else outputs
+                    )
+                    for msg in messages:
                         itask.state.outputs.set_message_complete(msg)
 
     def spawn_task(
@@ -1771,15 +1792,7 @@ class TaskPool:
             return None
 
         # Update it with outputs that were already completed.
-        info = self.workflow_db_mgr.pri_dao.select_task_outputs(
-            itask.tdef.name, str(itask.point))
-        if not info:
-            # (Note still need this if task not run before)
-            self.db_add_new_flow_rows(itask)
-        for outputs_str, fnums in info.items():
-            if flow_nums.intersection(fnums):
-                for msg in json.loads(outputs_str):
-                    itask.state.outputs.set_message_complete(msg)
+        self._load_historical_outputs(itask)
         return itask
 
     def _standardise_prereqs(
