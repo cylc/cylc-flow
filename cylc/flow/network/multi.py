@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-from functools import partial
 import sys
-from typing import Callable, Dict, List, Tuple, Optional, Union
+from typing import Callable, Dict, List, Tuple, Optional, Union, Type
 
 from ansimarkup import ansiprint
 
@@ -46,6 +45,7 @@ async def call_multi_async(
     ] = None,
     max_workflows=None,
     max_tasks=None,
+    success_exceptions: Optional[Tuple[Type]] = None,
 ) -> Dict[str, bool]:
     """Call a function for each workflow in a list of IDs.
 
@@ -71,6 +71,10 @@ async def call_multi_async(
             Reporter functions are provided with the "response". They must
             return the outcome of the operation and may also return stdout/err
             text which will be written to the terminal.
+        success_exceptions:
+            An optional tuple of exceptions that can convey success outcomes.
+            E.G. a "WorkflowStopped" exception indicates an error state for
+            "cylc broadcast" but a success state for "cylc stop".
 
     Returns:
         {workflow_id: outcome}
@@ -90,9 +94,9 @@ async def call_multi_async(
     if not report:
         report = _report
     if multi_mode:
-        reporter = partial(_report_multi, report)
+        reporter = _report_multi
     else:
-        reporter = partial(_report_single, report)
+        reporter = _report_single
 
     if constraint == 'workflows':
         workflow_args = {
@@ -102,7 +106,7 @@ async def call_multi_async(
 
     # run coros
     results: Dict[str, bool] = {}
-    async for (workflow_id, *args), result in unordered_map(
+    async for (workflow_id, *args), response in unordered_map(
         fcn,
         (
             (workflow_id, *args)
@@ -112,19 +116,24 @@ async def call_multi_async(
         # (this way if one command errors, others may still run)
         wrap_exceptions=True,
     ):
-        results[workflow_id] = reporter(workflow_id, result)
+        # get outcome
+        out, err, outcome = _process_response(
+            report, response, success_exceptions
+        )
+        # report outcome
+        reporter(workflow_id, out, err)
+        results[workflow_id] = outcome
+
     return results
 
 
 def _report_multi(
-    report: Callable, workflow: str, response: Union[dict, Exception]
-) -> bool:
+    workflow: str, out: Optional[str], err: Optional[str]
+) -> None:
     """Report a response for a multi-workflow operation.
 
     This is called once for each workflow the operation is called against.
     """
-    out, err, outcome = _process_response(report, response)
-
     msg = f'<b>{workflow}</b>:'
     if out:
         out = out.replace('\n', '\n    ')  # indent
@@ -137,26 +146,21 @@ def _report_multi(
             err = f'{msg} {err}'
         ansiprint(err, file=sys.stdout)
 
-    return outcome
-
 
 def _report_single(
-    report: Callable, _workflow: str, response: Union[dict, Exception]
-) -> bool:
+    workflow: str, out: Optional[str], err: Optional[str]
+) -> None:
     """Report the response for a single-workflow operation."""
-    out, err, outcome = _process_response(report, response)
-
     if out:
         ansiprint(out)
     if err:
         ansiprint(err, file=sys.stderr)
 
-    return outcome
-
 
 def _process_response(
     report: Callable,
     response: Union[dict, Exception],
+    success_exceptions: Optional[Tuple[Type]] = None,
 ) -> Tuple[Optional[str], Optional[str], bool]:
     """Handle exceptions and return processed results.
 
@@ -169,16 +173,28 @@ def _process_response(
         report:
             The reporter function for extracting the result from the provided
             response.
+        success_exceptions:
+            An optional tuple of exceptions that can convey success outcomes.
+            E.G. a "WorkflowStopped" exception indicates an error state for
+            "cylc broadcast" but a success state for "cylc stop".
 
     Returns:
         (stdout, stderr, outcome)
 
     """
-    if isinstance(response, WorkflowStopped):
-        # workflow stopped -> can't do anything
+    if success_exceptions and isinstance(response, success_exceptions):
+        # an exception was raised, however, that exception indicates a success
+        # outcome in this case
+        out = f'<green>{response.__class__.__name__}: {response}</green>'
+        err = None
+        outcome = True
+
+    elif isinstance(response, WorkflowStopped):
+        # workflow stopped -> report differently to other CylcErrors
         out = None
         err = f'<yellow>{response.__class__.__name__}: {response}</yellow>'
         outcome = False
+
     elif isinstance(response, CylcError):
         # exception -> report error
         if cylc.flow.flags.verbosity > 1:  # debug mode
@@ -186,9 +202,11 @@ def _process_response(
         out = None
         err = f'<red>{response.__class__.__name__}: {response}</red>'
         outcome = False
+
     elif isinstance(response, Exception):
         # unexpected error -> raise
         raise response
+
     else:
         try:
             # run the reporter to extract the operation outcome
@@ -196,7 +214,7 @@ def _process_response(
         except Exception as exc:
             # an exception was raised in the reporter -> report this error the
             # same was as an error in the response
-            return _process_response(report, exc)
+            return _process_response(report, exc, success_exceptions)
 
     return out, err, outcome
 

@@ -71,6 +71,7 @@ from cylc.flow.exceptions import (
     ClientTimeout,
     CylcError,
     InputError,
+    WorkflowStopped,
 )
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -207,6 +208,14 @@ async def run(
     workflow_id,
     *tokens_list,
 ) -> object:
+    return await _run(options, workflow_id, *tokens_list)
+
+
+async def _run(
+    options: 'Values',
+    workflow_id,
+    *tokens_list,
+) -> object:
     # parse the stop-task or stop-cycle if provided
     stop_task = stop_cycle = None
     if tokens_list:
@@ -274,5 +283,6 @@ def main(
         *ids,
         constraint='mixed',
         max_tasks=1,
+        success_exceptions=(WorkflowStopped,),
     )
     sys.exit(all(rets.values()) is False)

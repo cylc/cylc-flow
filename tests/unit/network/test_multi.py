@@ -35,13 +35,26 @@ def test_report_valid(monkeypatch):
     """It should report command outcome."""
     monkeypatch.setattr('cylc.flow.flags.verbosity', 0)
 
-    assert _report(response(False, 'MyError')) == (None, '<red>MyError</red>', False)
-    assert _report(response(True, '12345')) == ('<green>Command queued</green>', None, True)
+    # fail case
+    assert _report(response(False, 'MyError')) == (
+        None,
+        '<red>MyError</red>',
+        False,
+    )
 
+    # success case
+    assert _report(response(True, '12345')) == (
+        '<green>Command queued</green>',
+        None,
+        True,
+    )
+
+    # success case (debug mode)
     monkeypatch.setattr('cylc.flow.flags.verbosity', 1)
-    assert (
-        _report(response(True, '12345'))
-        == (f'<green>Command queued</green> <{DIM}>id=12345</{DIM}>', None, True)
+    assert _report(response(True, '12345')) == (
+        f'<green>Command queued</green> <{DIM}>id=12345</{DIM}>',
+        None,
+        True,
     )
 
 
@@ -105,12 +118,26 @@ def test_process_response(monkeypatch):
     class Foo(Exception):
         pass
 
-    # WorkflowStopped -> expected error, log it
+    # WorkflowStopped -> fail case
     monkeypatch.setattr('cylc.flow.flags.verbosity', 0)
     assert _process_response(partial(report, WorkflowStopped), {}) == (
         None,
         '<yellow>WorkflowStopped: xxx is not running</yellow>',
         False,
+    )
+
+    # WorkflowStopped -> success case for this command
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 0)
+    assert _process_response(
+        partial(report, WorkflowStopped),
+        {},
+        # this overrides the default interpretation of "WorkflowStopped" as a
+        # fail case
+        success_exceptions=(WorkflowStopped,),
+    ) == (
+        '<green>WorkflowStopped: xxx is not running</green>',
+        None,
+        True,  # success outcome
     )
 
     # CylcError -> expected error, log it
