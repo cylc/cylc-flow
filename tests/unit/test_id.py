@@ -186,7 +186,7 @@ def test_universal_id_matches_hierarchical(identifier):
         '//~',
         '//:',
         '//workflow//cycle',
-        '//task:task_sel:task_sel'
+        '//cycle/task:task_sel:task_sel'
     ]
 )
 def test_relative_id_illegal(identifier):
