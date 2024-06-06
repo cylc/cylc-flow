@@ -45,15 +45,19 @@ Flow numbers are only printed if not the original flow (i.e., if > 1).
 
 USE IN TASK SCRIPTING:
   - To poll a task at the same cycle point in another workflow, just use
-    $CYLC_TASK_CYCLE_POINT in the ID (see also the workflow_state xtrigger).
+    $CYLC_TASK_CYCLE_POINT in the ID.
   - To poll a task at an offset cycle point, use the --offset option to
-    have Cylc do the datetime arithmetic.
+    have Cylc do the datetime arithmetic for you.
+  - However, see also the workflow_state xtrigger for this use case.
 
 WARNINGS:
- - Typos in the workflow or task ID may result in fruitless polling.
- - To avoid missing transient state ("submitted", "running") poll for the
-   corresponding output ("submitted", "started").
+ - Typos in the workflow or task ID will result in fruitless polling.
+ - To avoid missing transient states ("submitted", "running") poll for the
+   corresponding output instead ("submitted", "started").
  - Cycle points are auto-converted to the DB point format (and UTC mode).
+ - Task outputs manually completed by "cylc set" have "(force-completed)"
+   recorded as the task message in the DB, so it is best to query trigger
+   names, not messages, unless specifically interested in forced outputs.
 
 Examples:
 
@@ -146,7 +150,8 @@ class WorkflowPoller(Poller):
         default_status: Optional[str],
         is_output: bool,
         is_message: bool,
-        old_format: bool,
+        old_format: bool = False,
+        pretty_print: bool = False,
         **kwargs
     ):
         self.id_ = id_
@@ -154,6 +159,7 @@ class WorkflowPoller(Poller):
         self.flow_num = flow_num
         self.alt_cylc_run_dir = alt_cylc_run_dir
         self.old_format = old_format
+        self.pretty_print = pretty_print
 
         tokens = Tokens(self.id_)
         self.workflow_id_raw = tokens.workflow_id
@@ -179,7 +185,6 @@ class WorkflowPoller(Poller):
                     self.task_sel not in TASK_STATUSES_ORDERED
                 )
             )
-
         super().__init__(**kwargs)
 
     def _find_workflow(self) -> bool:
@@ -241,7 +246,8 @@ class WorkflowPoller(Poller):
         )
         if self.result:
             # End the polling dot stream and print inferred runN workflow ID.
-            self.db_checker.display_maps(self.result, self.old_format)
+            self.db_checker.display_maps(
+                self.result, self.old_format, self.pretty_print)
 
         return bool(self.result)
 
@@ -284,6 +290,11 @@ def get_option_parser() -> COP:
         action="store_true", dest="is_message", default=False)
 
     parser.add_option(
+        "--pretty", "-p",
+        help="Pretty-print outputs (the default is single-line output).",
+        action="store_true", dest="pretty_print", default=False)
+
+    parser.add_option(
         "--old-format",
         help="Print results in legacy comma-separated format.",
         action="store_true", dest="old_format", default=False)
@@ -313,6 +324,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         is_output=options.is_output,
         is_message=options.is_message,
         old_format=options.old_format,
+        pretty_print=options.pretty_print,
         condition=id_,
         interval=options.interval,
         max_polls=options.max_polls,

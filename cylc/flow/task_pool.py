@@ -1362,13 +1362,14 @@ class TaskPool:
             with suppress(KeyError):
                 children = itask.graph_children[output]
 
+        if itask.flow_wait and children:
+            LOG.warning(
+                f"[{itask}] not spawning on {output}: flow wait requested")
+            self.remove_if_complete(itask, output)
+            return
+
         suicide = []
         for c_name, c_point, is_abs in children:
-
-            if itask.flow_wait:
-                LOG.warning(
-                    f"[{itask}] not spawning on {output}: flow wait requested")
-                continue
 
             if is_abs:
                 self.abs_outputs_done.add(
@@ -1639,12 +1640,15 @@ class TaskPool:
                     outputs: Union[
                         Dict[str, str], List[str]
                     ] = json.loads(outputs_str)
-                    messages = (
-                        outputs.values() if isinstance(outputs, dict)
-                        else outputs
-                    )
-                    for msg in messages:
-                        itask.state.outputs.set_message_complete(msg)
+                    if isinstance(outputs, dict):
+                        # {trigger: message} - match triggers, not messages.
+                        # DB may record forced completion rather than message.
+                        for trigger in outputs.keys():
+                            itask.state.outputs.set_trigger_complete(trigger)
+                    else:
+                        # [message] - always the full task message
+                        for msg in outputs:
+                            itask.state.outputs.set_message_complete(msg)
 
     def spawn_task(
         self,

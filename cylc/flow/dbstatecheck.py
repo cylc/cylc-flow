@@ -19,6 +19,7 @@ import json
 import os
 import sqlite3
 import sys
+from contextlib import suppress
 from typing import Dict, Iterable, Optional, List, Union
 
 from cylc.flow import LOG
@@ -132,7 +133,7 @@ class CylcWorkflowDBChecker:
         return cycle
 
     @staticmethod
-    def display_maps(res, old_format=False):
+    def display_maps(res, old_format=False, pretty_print=False):
         if not res:
             sys.stderr.write("INFO: No results to display.\n")
         else:
@@ -140,7 +141,22 @@ class CylcWorkflowDBChecker:
                 if old_format:
                     sys.stdout.write(', '.join(row) + '\n')
                 else:
-                    sys.stdout.write(f"{row[1]}/{row[0]}:{''.join(row[2:])}\n")
+                    out = f"{row[1]}/{row[0]}:"  # cycle/task:
+                    status_or_outputs = row[2]
+                    if pretty_print:
+                        with suppress(json.decoder.JSONDecodeError):
+                            status_or_outputs = (
+                                json.dumps(
+                                    json.loads(
+                                        status_or_outputs.replace("'", '"')
+                                    ),
+                                    indent=4
+                                )
+                            )
+                    out += status_or_outputs
+                    if len(row) == 4:
+                        out += row[3]  # flow
+                    sys.stdout.write(out + "\n")
 
     def _get_db_point_format(self):
         """Query a workflow database for a 'cycle point format' entry"""
@@ -190,20 +206,19 @@ class CylcWorkflowDBChecker:
         flow_num: Optional[int] = None,
         print_outputs: bool = False
     ) -> List[List[str]]:
-        """Query task status or outputs in workflow database.
+        """Query task status or outputs (by trigger or message) in a database.
 
-        Return tasks with matching status or output, and flow number.
+        Return a list of results for all tasks that match the query.
+        [
+            [name, cycle, result, [flow]],
+            ...
+        ]
 
-        For a status query:
-           [
-              [name, cycle, status],
-              ...
-           ]
-        For an output query:
-           [
-              [name, cycle, "{out1: msg1, out2: msg2, ...}"],
-              ...
-           ]
+        result is single string:
+          - for status queries, the task status
+          - for output queries, a serialized dict of completed outputs
+            {trigger: message}
+
         """
         stmt_args = []
         stmt_wheres = []
