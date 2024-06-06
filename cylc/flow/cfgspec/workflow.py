@@ -413,9 +413,10 @@ with Conf(
                            {item} = echo %(workflow)s
 
                            # configure multiple event handlers
+                           # (which will run in parallel)
                            {item} = \\
-                               'echo %(workflow)s, %(event)s', \\
-                               'my_exe %(event)s %(message)s' \\
+                               'echo %(workflow)s %(event)s', \\
+                               'my_exe %(event)s %(message)s', \\
                                'curl -X PUT -d event=%(event)s host:port'
                     ''')
                 elif item.startswith("abort on"):
