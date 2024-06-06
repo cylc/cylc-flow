@@ -78,7 +78,7 @@ from ansimarkup import parse as cparse
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
-from cylc.flow.loggingutil import set_timestamps, log_iterable
+from cylc.flow.loggingutil import set_timestamps, bullet_list
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     WORKFLOW_ID_OR_PATH_ARG_DOC
@@ -443,7 +443,6 @@ CHECKS_DESC = {
     'S': 'Style'
 }
 LINE_LEN_NO = 'S012'
-EMPTY_FILE = 'S000'   # Reference for a completely empty file.
 # Checks Dictionary fields:
 # TODO: Consider making the checks an object.
 # Key: A unique reference number.
@@ -1148,11 +1147,6 @@ def lint(
     try:
         line = next(lines)
     except StopIteration:
-        LOG.warning(f'File {file_rel} is empty.')
-        if EMPTY_FILE in counter:
-            counter[EMPTY_FILE] += 1
-        else:
-            counter[EMPTY_FILE] = 1
         return
     # check if it is a jinja2 shebang
     jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
@@ -1442,7 +1436,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
 
     if options.rule:
         checks = {k: v for k, v in checks.items() if k in options.rule}
-        LOG.warning(log_iterable(
+        LOG.warning(bullet_list(
             [f'{k}: {v["short"]}' for k, v in checks.items()],
             header='Checking only:',
             singular_header='Checking only {}')

@@ -436,18 +436,19 @@ def patch_log_level(logger: logging.Logger, level: int = logging.INFO):
         yield
 
 
-def log_iterable(
-    items: Iterable,
+def bullet_list(
+    items: Iterable[str],
     header: str,
     singular_header: str,
 ) -> str:
-    """Log a list.
+    """Create a bullet point list of items.
 
     Args:
         items: The iterable
         singular_header: To use if list has length 1
         header: To use otherwise
     """
+    items = list(items)
     if len(items) == 0:
         raise ValueError('This function does not take len==0 iterables')
     elif len(items) == 1:

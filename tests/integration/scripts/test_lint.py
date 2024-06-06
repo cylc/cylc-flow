@@ -39,9 +39,8 @@ def test_lint_empty_file(tmp_path, setup, caplog):
     """
     (tmp_path / 'flow.cylc').touch()
     parser, options = setup
-    with pytest.raises(SystemExit, match="True"):
+    with pytest.raises(SystemExit, match="False"):
         main.__wrapped__(parser, options, str(tmp_path))
-    assert 'File flow.cylc is empty.' in caplog.messages
 
 
 def test_mutually_exclusive_args(tmp_path, setup):

@@ -31,7 +31,7 @@ from cylc.flow.loggingutil import (
     CylcLogFormatter,
     get_reload_start_number,
     get_sorted_logs_by_time,
-    log_iterable,
+    bullet_list,
     set_timestamps,
 )
 
@@ -200,16 +200,15 @@ def test_set_timestamps(capsys):
     assert re.match('^[0-9]{4}', errors[2])
 
 
-def test_log_iterable():
+def test_bullet_list():
     # It fails if no items are supplied:
     with pytest.raises(ValueError, match='^This function does'):
-        log_iterable([], 'Hello', '')
+        bullet_list([], 'Hello', '')
     # It uses an alternative singular header:
-    assert log_iterable(['foo'], 'Hello', 'Bon Jour: {}') == 'Bon Jour: foo'
+    assert bullet_list(['foo'], 'Hello', 'Bon Jour: {}') == 'Bon Jour: foo'
     # It lists items:
-    assert log_iterable(['foo', 'quartet'], 'Hello:', '') == (
+    assert bullet_list(['foo', 'quartet'], 'Hello:', '') == (
         'Hello:'
         '\n    * foo'
         '\n    * quartet'
     )
-
