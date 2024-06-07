@@ -1,0 +1,10 @@
+# file containing protobuf configuration
+
+version: v2
+
+plugins:
+  - protoc_builtin: python
+    out: ../
+
+  - protoc_builtin: pyi
+    out: ../

@@ -14,7 +14,7 @@ disable_warnings =
     module-not-measured
 omit =
     tests/*
-    */cylc/flow/*_pb2.py
+    */cylc/flow/network/protobuf/cylc/v5/*_pb2.py
     cylc/flow/etc/*
     cylc/flow/scripts/report_timings.py
 parallel = True
@@ -43,7 +43,7 @@ fail_under=0
 ignore_errors = False
 omit =
     tests/*
-    */cylc/flow/*_pb2.py
+    */cylc/flow/network/protobuf/cylc/v5/*_pb2.py
     cylc/flow/etc/*
 precision = 2
 show_missing = False

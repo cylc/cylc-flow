@@ -6,16 +6,18 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class PbMeta(_message.Message):
-    __slots__ = ["title", "description", "URL", "user_defined"]
+    __slots__ = ["title", "description", "URL", "user_defined", "new_field"]
     TITLE_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
     USER_DEFINED_FIELD_NUMBER: _ClassVar[int]
+    NEW_FIELD_FIELD_NUMBER: _ClassVar[int]
     title: str
     description: str
     URL: str
     user_defined: str
-    def __init__(self, title: _Optional[str] = ..., description: _Optional[str] = ..., URL: _Optional[str] = ..., user_defined: _Optional[str] = ...) -> None: ...
+    new_field: str
+    def __init__(self, title: _Optional[str] = ..., description: _Optional[str] = ..., URL: _Optional[str] = ..., user_defined: _Optional[str] = ..., new_field: _Optional[str] = ...) -> None: ...
 
 class PbTimeZone(_message.Message):
     __slots__ = ["hours", "minutes", "string_basic", "string_extended"]
