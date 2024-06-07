@@ -62,6 +62,7 @@ message PbMeta {
     // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
     optional string URL = 3;
     optional string user_defined = 4;
+    optional string some_new_field = 5;
 }
 
 message PbTimeZone {
