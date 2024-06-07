@@ -20,7 +20,7 @@ import pytest
 from pytest import param
 from graphql import parse
 
-from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
+from cylc.flow.network.protobuf.cylc.v5.schema_pb2 import PbTaskProxy, PbPrerequisite
 from cylc.flow.network.graphql import (
     AstDocArguments, null_setter, NULL_VALUE, grow_tree
 )
