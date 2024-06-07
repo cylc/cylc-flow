@@ -1,0 +1,81 @@
+name: protobuf
+
+on:
+  pull_request:
+  # NOTE: don't run this on "workflow_dispatch" or "schedule" as it will commit
+  # directly to the branch
+
+jobs:
+  protobuf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # we need all of the commits on the PR branch in order to be able to add new ones
+          fetch-depth: 100
+
+      - name: Install Protobuf
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: protobuf
+          create-args: protobuf
+          init-shell: bash
+
+      - name: Install bufbuild/buf
+        run: |
+          # activate homebrew (NOTE: must use "shell: bash -el {0}" to use this)
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+
+          # NOTE: bufbuild does exist on conda-forge but hasn't been updated for a while
+          brew install bufbuild/buf/buf
+
+      - name: Lint
+        run: |
+          # lint .proto files
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          cd proto
+          buf lint
+
+      - name: Compatibility
+        shell: bash -el {0}
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          cd proto
+          # NOTE: "buf breaking" exits "100" for a missing file (i.e. new version not present on old branch)
+            # --against 'https://github.com/cylc/cylc-flow.git#tag=${{ github.base_ref }},subdir=proto') \
+          buf breaking \
+            --against 'https://github.com/oliver-sanders/cylc-flow.git#tag=${{ github.base_ref }},subdir=proto' \
+            || ( \
+              ret=$?; \
+              if [[ $ret == 100 ]]; then exit 0; \
+              elif [[ $ret != 0 ]]; then echo '::error:: Breaking changes detected, create a new version of the protobuf schema if this is desired and increment the Cylc API number to match'; \
+              fi \
+            )
+
+      - name: Build
+        shell: bash -el {0}
+        run: |
+          # generate .py and .pyi files from the .proto files
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          micromamba activate protobuf
+          cd proto
+          buf generate
+
+      - name: Configure git
+        uses: cylc/release-actions/configure-git@v1
+
+      - name: Commit & Push
+        run: |
+          if [[ -z $(git diff --stat) ]]; then
+            echo '::error:: No functional changes made to the protobuf schema'
+            exit 0
+          else
+            echo '::info:: pushing update commit'
+              git add -u
+              git commit -m 'protobuf: updating generated files'
+              git push origin HEAD:${{ github.head_ref }}
+            exit 0
+          fi
