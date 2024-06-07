@@ -1,0 +1,11 @@
+# file containing protobuf configuration
+
+version: v2
+
+lint:
+  use:
+    - DEFAULT
+
+breaking:
+  use:
+    - FILE

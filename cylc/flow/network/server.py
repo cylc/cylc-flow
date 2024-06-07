@@ -36,7 +36,7 @@ from cylc.flow.network.replier import WorkflowReplier
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.data_messages_pb2 import PbEntireWorkflow
+from cylc.flow.network.protobuf.cylc.v5.schema_pb2 import PbEntireWorkflow
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler

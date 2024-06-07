@@ -73,10 +73,25 @@ import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.data_messages_pb2 import (
-    PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
-    PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
-    FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
+from cylc.flow.network.protobuf.cylc.v5.schema_pb2 import (
+    PbEdge,
+    PbEntireWorkflow,
+    PbFamily,
+    PbFamilyProxy,
+    PbJob,
+    PbTask,
+    PbTaskProxy,
+    PbWorkflow,
+    PbRuntime,
+    AllDeltas,
+    EDeltas,
+    FDeltas,
+    FPDeltas,
+    JDeltas,
+    TDeltas,
+    TPDeltas,
+    WDeltas,
+)
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
@@ -382,7 +397,7 @@ def create_delta_store(delta=None, workflow_id=None):
     """Create a mini data-store out of the all deltas message.
 
     Args:
-        delta (cylc.flow.data_messages_pb2.AllDeltas):
+        delta (AllDeltas):
             The message of accumulated deltas for publish/push.
         workflow_id (str):
             The workflow ID.
@@ -430,18 +445,18 @@ class DataStoreMgr:
             Local store of config.get_first_parent_ancestors()
         .data (dict):
             .edges (dict):
-                cylc.flow.data_messages_pb2.PbEdge by internal ID.
+                PbEdge by internal ID.
             .families (dict):
-                cylc.flow.data_messages_pb2.PbFamily by name (internal ID).
+                PbFamily by name (internal ID).
             .family_proxies (dict):
-                cylc.flow.data_messages_pb2.PbFamilyProxy by internal ID.
+                PbFamilyProxy by internal ID.
             .jobs (dict):
-                cylc.flow.data_messages_pb2.PbJob by internal ID.
+                PbJob by internal ID.
             .tasks (dict):
-                cylc.flow.data_messages_pb2.PbTask by name (internal ID).
+                PbTask by name (internal ID).
             .task_proxies (dict):
-                cylc.flow.data_messages_pb2.PbTaskProxy by internal ID.
-            .workflow (cylc.flow.data_messages_pb2.PbWorkflow)
+                PbTaskProxy by internal ID.
+            .workflow (PbWorkflow)
                 Message containing the global information of the workflow.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
@@ -2688,7 +2703,7 @@ class DataStoreMgr:
         """Gather data elements into single Protobuf message.
 
         Returns:
-            cylc.flow.data_messages_pb2.PbEntireWorkflow
+            PbEntireWorkflow
 
         """
 
