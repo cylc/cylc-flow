@@ -1,2 +1,1 @@
-Workflow-state command (and corresponding xtrigger): handle task status
-and outputs in the same way.
+The Workflow-state command now handles task status and outputs equally.

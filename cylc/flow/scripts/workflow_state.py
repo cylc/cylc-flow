@@ -18,14 +18,14 @@
 
 r"""cylc workflow-state [OPTIONS] ARGS
 
-Deprecated support for existing scripts:
-    cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
-       --output=MESSAGE --message=MESSAGE WORKFLOW
-
 Check a workflow database for current task statuses or completed outputs.
 
 Repeatedly check (poll) until results are matched or polling is exhausted
 (see --max-polls and --interval). Use --max-polls=1 for a single check.
+
+Legacy (pre-8.3.0) options are supported, but deprecated, for existing scripts:
+    cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
+       --output=MESSAGE --message=MESSAGE WORKFLOW
 
 If the database does not exist at first, polls are consumed waiting for it.
 
@@ -296,13 +296,12 @@ def get_option_parser() -> COP:
     parser.add_option(
         "--triggers",
         help="Task selector should match output triggers rather than status."
-             "(Note this is not needed for custom outputs).",
+             " (Note this is not needed for custom outputs).",
         action="store_true", dest="is_output", default=False)
 
     parser.add_option(
         "--messages",
-        help="Task selector should match output messages rather than status."
-             "(For legacy support - better to use --output).",
+        help="Task selector should match output messages rather than status.",
         action="store_true", dest="is_message", default=False)
 
     parser.add_option(
@@ -330,7 +329,7 @@ def get_option_parser() -> COP:
     parser.add_option(
         "-T", "--task-point",
         help="In task job scripts, task cycle point from the environment"
-             "(i.e., --point=$CYLC_TASK_CYCLE_POINT)",
+             " (i.e., --point=$CYLC_TASK_CYCLE_POINT)",
         action="store_true", dest="use_task_point", default=False)
 
     parser.add_option(
