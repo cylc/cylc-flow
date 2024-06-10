@@ -214,6 +214,7 @@ async def stop(
 @_command('release')
 async def release(schd: 'Scheduler', tasks: Iterable[str]):
     """Release held tasks."""
+    validate.is_tasks(tasks)
     yield
     yield schd.pool.release_held_tasks(tasks)
 
@@ -237,6 +238,7 @@ async def resume(schd: 'Scheduler'):
 @_command('poll_tasks')
 async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Poll pollable tasks or a task or family if options are provided."""
+    validate.is_tasks(tasks)
     yield
     if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
@@ -248,6 +250,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 @_command('kill_tasks')
 async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Kill all tasks or a task/family if options are provided."""
+    validate.is_tasks(tasks)
     yield
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
     if schd.get_run_mode() == RunMode.SIMULATION:
@@ -264,6 +267,7 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 @_command('hold')
 async def hold(schd: 'Scheduler', tasks: Iterable[str]):
     """Hold specified tasks."""
+    validate.is_tasks(tasks)
     yield
     yield schd.pool.hold_tasks(tasks)
 
@@ -304,6 +308,7 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
 @_command('remove_tasks')
 async def remove_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Remove tasks."""
+    validate.is_tasks(tasks)
     yield
     yield schd.pool.remove_tasks(tasks)
 
@@ -430,5 +435,6 @@ async def force_trigger_tasks(
     flow_descr: Optional[str] = None,
 ):
     """Manual task trigger."""
+    validate.is_tasks(tasks)
     yield
     yield schd.pool.force_trigger_tasks(tasks, flow, flow_wait, flow_descr)

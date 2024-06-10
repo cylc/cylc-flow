@@ -228,3 +228,40 @@ def consistency(
     """
     if outputs and prereqs:
         raise InputError("Use --prerequisite or --output, not both.")
+
+
+def is_tasks(tasks: List[str]):
+    """All tasks in a list of tasks are task ID's
+    without trailing job ID.
+    
+    Examples:
+
+        # All legal
+        >>> is_tasks(['1/foo', '1/bar', '*/baz', '*/*'])
+        True
+
+        # Some legal
+        >>> is_tasks(['1/foo/NN', '1/bar', '*/baz', '*/*/42'])
+        Traceback (most recent call last):
+        ...
+        Exception: This command does not take job ids:
+        * 1/foo/NN
+        * */*/42
+
+        # None legal
+        >>> is_tasks(['1/', '*/baz/12'])
+        Traceback (most recent call last):
+        ...
+        Exception: This command does not take job ids:
+        * 1/
+        * */baz/12
+    """
+    bad_tasks: List[str] = []
+    for task in tasks:
+        tokens = Tokens('//' + task)
+        if tokens.lowest_token < 'task':
+            bad_tasks.append(task)
+    if bad_tasks:
+        msg = 'This command does not take job ids:\n * '
+        raise Exception(msg + '\n * '.join(bad_tasks))
+    return True
