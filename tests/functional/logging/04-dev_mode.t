@@ -35,12 +35,12 @@ run_ok "${TEST_NAME_BASE}-validate-plain" \
     cylc validate "${WORKFLOW_NAME}"
 
 run_ok "${TEST_NAME_BASE}-validate-vvv" \
-    cylc validate -vvv "${WORKFLOW_NAME}"
+    cylc validate --timestamp -vvv "${WORKFLOW_NAME}"
 grep_ok " DEBUG - \[config:.*\]" "${TEST_NAME_BASE}-validate-vvv.stderr"
 
 
 run_ok "${TEST_NAME_BASE}-validate-vvv--no-timestamp" \
-    cylc validate -vvv --no-timestamp "${WORKFLOW_NAME}"
+    cylc validate -vvv "${WORKFLOW_NAME}"
 grep_ok "^DEBUG - \[config:.*\]" "${TEST_NAME_BASE}-validate-vvv--no-timestamp.stderr"
 
 purge

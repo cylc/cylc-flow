@@ -17,6 +17,7 @@
 
 import sys
 from time import sleep
+from cylc.flow import LOG
 
 
 class Poller:
@@ -50,7 +51,6 @@ class Poller:
         self.interval = interval
         self.max_polls = max_polls or 1  # no point in zero polls
         self.args = args  # any extra parameters needed by check()
-        self.n_polls = 0
 
     async def check(self):
         """Abstract method. Test polling condition."""
@@ -62,20 +62,24 @@ class Poller:
         Return True if condition met, or False if polling exhausted.
 
         """
-        while self.n_polls < self.max_polls:
-            if self.n_polls > 1:
+        n_polls = 0
+        result = False
+
+        while True:
+            n_polls += 1
+            result = await self.check()
+            if self.max_polls != 1:
                 sys.stderr.write(".")
                 sys.stderr.flush()
-            self.n_polls += 1
-            if await self.check():
-                return True
-            if self.max_polls > 1:
-                sleep(self.interval)
+            if result or n_polls >= self.max_polls:
+                if self.max_polls != 1:
+                    sys.stderr.write("\n")
+                    sys.stderr.flush()
+                break
+            sleep(self.interval)
 
-        sys.stderr.write("\n")
-        sys.stderr.flush()
-        err = "ERROR: condition not satisfied"
-        if self.max_polls > 1:
-            err += f" after {self.max_polls} polls"
-        sys.stderr.write(err)
-        return False
+        if result:
+            return True
+        else:
+            LOG.error(f"failed after {n_polls} polls")
+            return False

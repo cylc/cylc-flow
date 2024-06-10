@@ -311,7 +311,6 @@ class CylcWorkflowDBChecker:
                 if warn_output_fallback:
                     LOG.warning(output_fallback_msg)
                     warn_output_fallback = False
-
             if (
                 selector is None or
                 (is_message and selector in messages) or

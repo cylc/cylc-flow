@@ -42,7 +42,7 @@ contains_ok "${TEST_NAME}.stdout" <<__END__
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}_check_1_outputs"
-run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --output "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 --triggers "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 1/foo:{'submitted': 'submitted', 'started': 'started', 'succeeded': 'succeeded', 'x': 'hello'}
@@ -54,7 +54,7 @@ TEST_NAME="${TEST_NAME_BASE}_poll_fail"
 run_fail "${TEST_NAME}" cylc workflow-state --max-polls=2 --interval=1 "${WORKFLOW_NAME}//2/foo:succeeded"
 
 contains_ok "${TEST_NAME}.stderr" <<__END__
-ERROR: condition not satisfied after 2 polls
+ERROR - failed after 2 polls
 __END__
 
 # finish the run

@@ -61,7 +61,10 @@ def workflow_state(
 
     """
     poller = WorkflowPoller(
-        workflow_task_id, offset, flow_num, alt_cylc_run_dir,
+        workflow_task_id,
+        offset,
+        flow_num,
+        alt_cylc_run_dir,
         TASK_STATUS_SUCCEEDED,
         is_output, is_message,
         old_format=False,
@@ -76,7 +79,7 @@ def workflow_state(
             {
                 "workflow_id": poller.workflow_id,
                 "task_id": f"{poller.cycle}/{poller.task}",
-                "task_selector": poller.task_sel,
+                "task_selector": poller.selector,
                 "flow_number": poller.flow_num
             }
         )

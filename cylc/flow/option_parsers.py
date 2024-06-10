@@ -290,9 +290,15 @@ class CylcOptionParser(OptionParser):
             ['--debug'], help='Equivalent to -v -v',
             dest='verbosity', action='store_const', const=2, useif='all'),
         OptionSettings(
-            ['--no-timestamp'], help='Don\'t timestamp logged messages.',
-            action='store_false', dest='log_timestamp',
-            default=True, useif='all'),
+            ['--timestamp'],
+            help='Add a timestamp to messages logged to the terminal.',
+            action='store_true', dest='log_timestamp',
+            default=False, useif='all'),
+        OptionSettings(
+            ['--no-timestamp'], help="Don't add a timestamp to messages logged"
+            " to the terminal (this does nothing - it is now the default.",
+            action='store_false', dest='_noop',
+            default=False, useif='all'),
         OptionSettings(
             ['--color', '--colour'], metavar='WHEN', action='store',
             default='auto', choices=['never', 'auto', 'always'],

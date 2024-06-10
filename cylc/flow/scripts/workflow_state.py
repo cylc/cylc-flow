@@ -18,30 +18,34 @@
 
 r"""cylc workflow-state [OPTIONS] ARGS
 
+Deprecated support for existing scripts:
+    cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
+       --output=MESSAGE --message=MESSAGE WORKFLOW
+
 Check a workflow database for current task statuses or completed outputs.
 
-Repeatedly checks (polls) until matching results are found or polling is
-exhausted (see the --max-polls and --interval options). Set --max-polls=1
-for a one-off check.
+Repeatedly check (poll) until results are matched or polling is exhausted
+(see --max-polls and --interval). Use --max-polls=1 for a single check.
 
 If the database does not exist at first, polls are consumed waiting for it.
 
-In "cycle/task:selector" the selector is interpreted as a status, unless:
-  - if not a known status, it will be interpreted as a task output (Cylc 8)
-    or as a task message (Cylc 7 DBs)
-  - with --output, it will be interpreted as a task output (i.e., the trigger
-    name, not the corresponding task message.)
+In "cycle/task:selector" the selector will match task statuses, unless:
+  - if it is not a known status, it will match task output triggers
+    (Cylc 8 DB) or task ouput messages (Cylc 7 DB)
+  - with --triggers, it will only match task output triggers
+  - with --messages (deprecated), it will only match task output messages.
+    Triggers are more robust - they match manually and naturally set outputs.
 
-Selector does not default to "succeeded" - if omitted, any status will match.
+Selector does not default to "succeeded". If omitted, any status will match.
 
 The "finished" pseudo-output is an alias for "succeeded or failed".
 
 In the ID, both cycle and task can include "*" to match any sequence of zero
 or more characters. Quote the pattern to protect it from shell expansion.
 
-Tasks are only recorded in the DB once they enter the active window (n=0).
+Note tasks get recorded in the DB once they enter the active window (n=0).
 
-Flow numbers are only printed if not the original flow (i.e., if > 1).
+Flow numbers are only printed for flow numbers > 1.
 
 USE IN TASK SCRIPTING:
   - To poll a task at the same cycle point in another workflow, just use
@@ -53,7 +57,7 @@ USE IN TASK SCRIPTING:
 WARNINGS:
  - Typos in the workflow or task ID will result in fruitless polling.
  - To avoid missing transient states ("submitted", "running") poll for the
-   corresponding output instead ("submitted", "started").
+   corresponding output trigger instead ("submitted", "started").
  - Cycle points are auto-converted to the DB point format (and UTC mode).
  - Task outputs manually completed by "cylc set" have "(force-completed)"
    recorded as the task message in the DB, so it is best to query trigger
@@ -116,6 +120,9 @@ WILDCARD = "*"
 MAX_POLLS = 12
 INTERVAL = 5
 
+OPT_DEPR_MSG = "DEPRECATED, use ID"
+OPT_DEPR_MSG2 = 'DEPRECATED, use "ID:message"'
+
 
 def unquote(s: str) -> str:
     """Remove leading & trailing quotes from a string.
@@ -161,11 +168,19 @@ class WorkflowPoller(Poller):
         self.old_format = old_format
         self.pretty_print = pretty_print
 
-        tokens = Tokens(self.id_)
+        try:
+            tokens = Tokens(self.id_)
+        except ValueError as exc:
+            raise InputError(exc)
+
         self.workflow_id_raw = tokens.workflow_id
-        self.task_sel = tokens["task_sel"] or default_status
-        if self.task_sel:
-            self.task_sel = unquote(self.task_sel)
+        self.selector = (
+            tokens["cycle_sel"] or
+            tokens["task_sel"] or
+            default_status
+        )
+        if self.selector:
+            self.selector = unquote(self.selector)
         self.cycle_raw = tokens["cycle"]
         self.task = tokens["task"]
 
@@ -181,8 +196,8 @@ class WorkflowPoller(Poller):
             self.is_output = (
                 is_output or
                 (
-                    self.task_sel is not None and
-                    self.task_sel not in TASK_STATUSES_ORDERED
+                    self.selector is not None and
+                    self.selector not in TASK_STATUSES_ORDERED
                 )
             )
         super().__init__(**kwargs)
@@ -198,9 +213,9 @@ class WorkflowPoller(Poller):
             LOG.debug("Workflow not found")
             return False
 
-        # Print inferred workflow ID.
-        sys.stderr.write(f"{self.workflow_id}\n")
-
+        if self.workflow_id != self.workflow_id_raw:
+            # Print inferred ID.
+            sys.stderr.write(f"Inferred workflow ID: {self.workflow_id}\n")
         return True
 
     @property
@@ -241,7 +256,7 @@ class WorkflowPoller(Poller):
                 self.cycle_raw, self.offset)
 
         self.result = self.db_checker.workflow_state_query(
-            self.task, self.cycle, self.task_sel, self.is_output,
+            self.task, self.cycle, self.selector, self.is_output,
             self.is_message, self.flow_num
         )
         if self.result:
@@ -258,8 +273,9 @@ def get_option_parser() -> COP:
         argdoc=[ID_MULTI_ARG_DOC]
     )
 
+    # --run-dir for pre-8.3.0 back-compat
     parser.add_option(
-        "-d", "--alt-cylc-run-dir",
+        "-d", "--alt-cylc-run-dir", "--run-dir",
         help="Alternate cylc-run directory, e.g. for other users' workflows.",
         metavar="DIR", action="store", dest="alt_cylc_run_dir", default=None)
 
@@ -278,19 +294,19 @@ def get_option_parser() -> COP:
         action="store", type="int", dest="flow_num", default=None)
 
     parser.add_option(
-        "--output",
-        help="Interpret task selector as an output rather than a status."
+        "--triggers",
+        help="Task selector should match output triggers rather than status."
              "(Note this is not needed for custom outputs).",
         action="store_true", dest="is_output", default=False)
 
     parser.add_option(
-        "--message",
-        help="Interpret task selector as a task message rather than a status."
+        "--messages",
+        help="Task selector should match output messages rather than status."
              "(For legacy support - better to use --output).",
         action="store_true", dest="is_message", default=False)
 
     parser.add_option(
-        "--pretty", "-p",
+        "--pretty",
         help="Pretty-print outputs (the default is single-line output).",
         action="store_true", dest="pretty_print", default=False)
 
@@ -298,6 +314,37 @@ def get_option_parser() -> COP:
         "--old-format",
         help="Print results in legacy comma-separated format.",
         action="store_true", dest="old_format", default=False)
+
+    # Back-compat support for pre-8.3.0 command line options.
+    parser.add_option(
+        "-t", "--task", help=f"Task name. {OPT_DEPR_MSG}.",
+        metavar="NAME",
+        action="store", dest="depr_task", default=None)
+
+    parser.add_option(
+        "-p", "--point",
+        metavar="CYCLE",
+        help=f"Cycle point. {OPT_DEPR_MSG}.",
+        action="store", dest="depr_point", default=None)
+
+    parser.add_option(
+        "-T", "--task-point",
+        help="In task job scripts, task cycle point from the environment"
+             "(i.e., --point=$CYLC_TASK_CYCLE_POINT)",
+        action="store_true", dest="use_task_point", default=False)
+
+    parser.add_option(
+        "-S", "--status",
+        metavar="STATUS",
+        help=f"Task status. {OPT_DEPR_MSG}:status.",
+        action="store", dest="depr_status", default=None)
+
+    # Prior to 8.3.0 --output was just an alias for --message
+    parser.add_option(
+        "-O", "--output", "-m", "--message",
+        metavar="MSG",
+        help=f"Task output message. {OPT_DEPR_MSG2}.",
+        action="store", dest="depr_msg", default=None)
 
     WorkflowPoller.add_to_cmd_options(
         parser,
@@ -313,7 +360,44 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
 
     if len(ids) != 1:
         raise InputError("Please give a single ID")
+
     id_ = ids[0]
+
+    if any(
+        [
+            options.depr_task,
+            options.depr_status,
+            options.depr_msg,  # --message and --output
+            options.depr_point
+        ]
+    ):
+        depr_opts = "options --task, --status, --message, --output, --point"
+
+        if id_ != Tokens(id_)["workflow"]:
+            raise InputError(
+                f"with deprecated {depr_opts}, the argument must be a"
+                " plain workflow ID (i.e. with no cycle, task, or :selector)."
+            )
+
+        if options.depr_point is not None:
+            id_ += f"//{options.depr_point}"
+        elif (
+            options.depr_task is not None or
+            options.depr_status is not None or
+            options.depr_msg is not None
+        ):
+            id_ += "//*"
+        if options.depr_task is not None:
+            id_ += f"/{options.depr_task}"
+        if options.depr_status is not None:
+            id_ += f":{options.depr_status}"
+        elif options.depr_msg is not None:
+            id_ += f":{options.depr_msg}"
+            options.is_message = True
+
+        LOG.warning(
+            f"{depr_opts} are deprecated. Please use the ID format: {id_}."
+        )
 
     poller = WorkflowPoller(
         id_,

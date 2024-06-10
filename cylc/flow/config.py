@@ -1568,10 +1568,10 @@ class WorkflowConfig:
             if graph_trigger is not None:
                 comstr += f":{graph_trigger}"
             elif config_output is not None:
-                comstr += f":{config_trigger} --output"
+                comstr += f":{config_trigger} --triggers"
             elif config_message is not None:
                 # quote: may contain spaces
-                comstr += f':"{config_message}" --message'
+                comstr += f':"{config_message}" --messages'
             else:
                 # default to :succeeded
                 comstr += f":{TASK_OUTPUT_SUCCEEDED}"
