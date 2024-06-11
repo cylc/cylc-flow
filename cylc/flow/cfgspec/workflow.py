@@ -1735,7 +1735,7 @@ with Conf(
                 as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
                 "user" and "host" config items are not supported.
 
-                .. versionchanged:: 8.3.0
+                .. versionchanged:: 8.0.0
 
                    {REPLACES}``[runtime][<namespace>]suite state polling``.
 
@@ -1990,7 +1990,7 @@ def upg(cfg, descr):
         '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'])
 
     u.deprecate(
-        '8.0.0',
+        '8.3.0',
         ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
         ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
         silent=cylc.flow.flags.cylc7_back_compat,
