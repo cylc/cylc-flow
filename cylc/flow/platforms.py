@@ -309,7 +309,7 @@ def get_platform_from_group(
             for platform in group['platforms']
             for host in platform_from_name(platform)['hosts']}
         raise NoPlatformsError(
-            group_name, hosts_consumed
+            group_name, hosts_consumed)
 
     # Get the selection method
     method = group['selection']['method']
