@@ -72,7 +72,7 @@ Examples:
   $ cylc workflow-state WORKFLOW//2033
 
   # Print the status of all tasks named foo:
-  $ cylc workflow-state WORKFLOW//*/foo
+  $ cylc workflow-state "WORKFLOW//*/foo"
 
   # Print all succeeded tasks:
   $ cylc workflow-state "WORKFLOW//*/*:succeeded"
