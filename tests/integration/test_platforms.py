@@ -52,4 +52,5 @@ async def test_prep_submit_task_tries_multiple_platforms(
         schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
         res = schd.task_job_mgr._prep_submit_task_job(schd.workflow, itask)
         assert res is False
+        # ensure the bad hosts have been cleared
         assert not schd.task_job_mgr.bad_hosts
