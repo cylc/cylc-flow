@@ -1020,8 +1020,9 @@ with Conf(
                 task has generated the outputs it was expected to.
 
                 If the task fails this check its outputs are considered
-                :term:`incomplete` and a warning will be raised alerting you
-                that something has gone wrong which requires investigation.
+                :term:`incomplete <output completion>` and a warning will be
+                raised alerting you that something has gone wrong and requires
+                investigation.
 
                 .. note::
 
