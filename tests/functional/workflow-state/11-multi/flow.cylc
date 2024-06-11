@@ -29,21 +29,16 @@
     [[graph]]
         R1 = """
            # Deprecated workflow-state polling tasks.
-           # (does not support %(suite_name)s templates or offsets)
+           # (does not support %(suite_name)s templates or offsets
+           # or output triggers - just messages)
 
            # status
            bar1<c8b::foo> => g1
            bar2<c8b::foo:succeeded> => g2
 
            # output
-           baz1<c8b::foo:x> => g3
            baz2<c8b::foo> => g4  # message given in task definition
-           baz3<c8b::foo> => g5  # output given in task definition
-
-           # Cylc 7 DB
-           qux1<c7::foo:x> => g6
            qux2<c7::foo> => g7  # message given in task definition
-           qux3<c7::foo> => g8  # output given in task definition
 
            @z1 => x1
            @z2 => x2
@@ -64,18 +59,11 @@
         [[[workflow state polling]]]
             alt-cylc-run-dir = {{ALT}}
 
-    [[qux1, baz1]]
-        [[[workflow state polling]]]
-            alt-cylc-run-dir = {{ALT}}
     [[qux2, baz2]]
         [[[workflow state polling]]]
             message = "the quick brown"
             alt-cylc-run-dir = {{ALT}}
-    [[qux3, baz3]]
-        [[[workflow state polling]]]
-            output = "x"
-            alt-cylc-run-dir = {{ALT}}
 
     [[x1, x2]]
     [[f1, f2, f3, f4, f5, f6, f7]]
-    [[g1, g2, g3, g4, g5, g6, g7, g8]]
+    [[g1, g2, g4, g7]]

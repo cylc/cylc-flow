@@ -1020,8 +1020,9 @@ with Conf(
                 task has generated the outputs it was expected to.
 
                 If the task fails this check its outputs are considered
-                :term:`incomplete` and a warning will be raised alerting you
-                that something has gone wrong which requires investigation.
+                :term:`incomplete <output completion>` and a warning will be
+                raised alerting you that something has gone wrong which
+                requires investigation.
 
                 .. note::
 
@@ -1748,10 +1749,6 @@ with Conf(
                 ''')
                 Conf('max-polls', VDR.V_INTEGER, desc='''
                     Maximum number of polls to attempt before the task fails.
-                ''')
-                Conf('output', VDR.V_STRING, desc='''
-                    Target task output (trigger name, not task message).
-                    Alternatively, put this in the graph trigger syntax.
                 ''')
                 Conf('message', VDR.V_STRING, desc='''
                     Target task output (task message, not trigger name).

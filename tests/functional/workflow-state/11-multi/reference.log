@@ -1,11 +1,7 @@
 1/bar1 -triggered off [] in flow 1
-1/qux1 -triggered off [] in flow 1
 1/qux2 -triggered off [] in flow 1
-1/qux3 -triggered off [] in flow 1
 1/bar2 -triggered off [] in flow 1
-1/baz1 -triggered off [] in flow 1
 1/baz2 -triggered off [] in flow 1
-1/baz3 -triggered off [] in flow 1
 1/f4 -triggered off [] in flow 1
 1/f1 -triggered off [] in flow 1
 1/f2 -triggered off [] in flow 1
@@ -15,11 +11,7 @@
 1/f6 -triggered off [] in flow 1
 1/f7 -triggered off [] in flow 1
 1/x2 -triggered off [] in flow 1
-1/g3 -triggered off ['1/baz1'] in flow 1
 1/g4 -triggered off ['1/baz2'] in flow 1
-1/g6 -triggered off ['1/qux1'] in flow 1
 1/g2 -triggered off ['1/bar2'] in flow 1
-1/g5 -triggered off ['1/baz3'] in flow 1
 1/g7 -triggered off ['1/qux2'] in flow 1
 1/g1 -triggered off ['1/bar1'] in flow 1
-1/g8 -triggered off ['1/qux3'] in flow 1

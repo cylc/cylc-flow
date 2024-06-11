@@ -1549,9 +1549,7 @@ class WorkflowConfig:
                 f"{tdef.workflow_polling_cfg['task']}"
             )
             graph_trigger = tdef.workflow_polling_cfg['status']
-            config_output = rtc['workflow state polling']['output']
-            config_message = rtc['workflow state polling']['message']
-            config_trigger = config_message or config_output
+            config_trigger = rtc['workflow state polling']['message']
             if (
                 graph_trigger is not None and
                 (
@@ -1562,16 +1560,14 @@ class WorkflowConfig:
             ):
                 raise WorkflowConfigError(
                     f'Polling task "{name}" must configure a target status or'
-                    f' output in the graph (:{graph_trigger}) or in its task'
-                    f' definition (output = "{config_trigger}") but not both.'
+                    f' output message in the graph (:{graph_trigger}) or task'
+                    f' definition (message = "{config_trigger}") but not both.'
                 )
             if graph_trigger is not None:
                 comstr += f":{graph_trigger}"
-            elif config_output is not None:
-                comstr += f":{config_trigger} --triggers"
-            elif config_message is not None:
+            elif config_trigger is not None:
                 # quote: may contain spaces
-                comstr += f':"{config_message}" --messages'
+                comstr += f':"{config_trigger}" --messages'
             else:
                 # default to :succeeded
                 comstr += f":{TASK_OUTPUT_SUCCEEDED}"

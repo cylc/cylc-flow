@@ -20,7 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 8
+set_test_number 7
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" 'polling'
 #-------------------------------------------------------------------------------
@@ -39,13 +39,9 @@ run_fail "${TEST_NAME}" \
     cylc validate --set="UPSTREAM='${UPSTREAM}'" --set="OUTPUT=':y'" "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowConfigError: Polling task "l-mess" must configure a target status or output in \
-the graph (:y) or in its task definition (output = "x") but not both.
+WorkflowConfigError: Polling task "l-mess" must configure a target status or output message in \
+the graph (:y) or task definition (message = "the quick brown fox") but not both.
 __ERR__
-
-TEST_NAME=${TEST_NAME_BASE}-validate-polling-x
-run_ok "${TEST_NAME}" \
-    cylc validate --debug --set="UPSTREAM='${UPSTREAM}'" --set="OUTPUT=':x'" "${WORKFLOW_NAME}"
 
 TEST_NAME=${TEST_NAME_BASE}-validate-polling
 run_ok "${TEST_NAME}" \
