@@ -304,12 +304,12 @@ def get_platform_from_group(
 
     # If there are no platforms available to be selected:
     if not platform_names:
-        hosts_consumed = [
+        hosts_consumed = {
             host
             for platform in group['platforms']
-            for host in platform_from_name(platform)['hosts']]
-        raise NoPlatformsError(
-            group_name, hosts_consumed=hosts_consumed)
+            for host in platform_from_name(platform)['hosts']
+        }
+        raise NoPlatformsError(group_name, hosts_consumed)
 
     # Get the selection method
     method = group['selection']['method']
