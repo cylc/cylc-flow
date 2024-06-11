@@ -47,13 +47,9 @@ def workflow_state(
         alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
 
-            .. note::
-
-               This is only needed if the workflow is installed to a
-               non-standard location.
-
     Returns:
-        tuple: (satisfied, result)
+        tuple:
+            (satisfied, result)
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
@@ -93,10 +89,15 @@ def workflow_state(
 def validate(args: Dict[str, Any]):
     """Validate workflow_state xtrigger function args.
 
-    * workflow_task_id: full workflow//cycle/task[:selector]
-    * offset: must be a valid status
-    * flow_num: must be an integer
-    * alt_cylc_run_dir: must be a valid path
+    Arguments:
+        workflow_task_id:
+            full workflow//cycle/task[:selector]
+        offset:
+            must be a valid status
+        flow_num:
+            must be an integer
+        alt_cylc_run_dir:
+            must be a valid path
 
     """
     try:
@@ -155,14 +156,9 @@ def _workflow_state_backcompat(
             .. note::
 
                This cannot be specified in conjunction with ``status``.
+
         cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
-
-            .. note::
-
-               This only needs to be supplied if the workflow is running in a
-               different location to what is specified in the global
-               configuration (usually ``~/cylc-run``).
 
     Returns:
         tuple: (satisfied, results)
