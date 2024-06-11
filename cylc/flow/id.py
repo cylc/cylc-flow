@@ -403,7 +403,7 @@ class Tokens(dict):
 # //cycle[:sel][/task[:sel][/job[:sel]]]
 RELATIVE_PATTERN = rf'''
     //
-    (?P<{IDTokens.Cycle.value}>[^~\/:\n]+)
+    (?P<{IDTokens.Cycle.value}>[^~\/:\n][^~\/\n]*?)
     (?:
       :
       (?P<{IDTokens.Cycle.value}_sel>[^\/:\n]+)
