@@ -13,22 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Integration testing for platforms functionality.
-"""
-
-from contextlib import suppress
-
-from cylc.flow.exceptions import NoPlatformsError
-from cylc.flow.task_job_logs import get_task_job_activity_log
+"""Integration testing for platforms functionality."""
 
 
 async def test_prep_submit_task_tries_multiple_platforms(
-    flow, scheduler, run, mock_glbl_cfg, monkeypatch, tmp_path
+    flow, scheduler, start, mock_glbl_cfg
 ):
     """Preparation tries multiple platforms within a group if the
     task platform setting matches a group, and that after all platforms
     have been tried that the hosts matching that platform group are
     cleared.
+    
+    See https://github.com/cylc/cylc-flow/pull/6109
     """
     global_conf = '''
         [platforms]
@@ -45,10 +41,11 @@ async def test_prep_submit_task_tries_multiple_platforms(
         "scheduling": {"graph": {"R1": "foo"}},
         "runtime": {"foo": {"platform": "mygroup"}}
     })
-    schd = scheduler(wid, paused_start=False, run_mode='live')
-    async with run(schd):
+    schd = scheduler(wid, run_mode='live')
+    async with start(schd):
         itask = schd.pool.get_tasks()[0]
         itask.submit_num = 1
+        # simulate failed attempts to contact the job hosts
         schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
         res = schd.task_job_mgr._prep_submit_task_job(schd.workflow, itask)
         assert res is False

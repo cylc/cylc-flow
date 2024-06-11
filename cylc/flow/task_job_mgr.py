@@ -1091,6 +1091,7 @@ class TaskJobManager:
             * itask - preparation complete.
             * None - preparation in progress.
             * False - preparation failed.
+
         """
         if itask.local_job_file_path:
             return itask
