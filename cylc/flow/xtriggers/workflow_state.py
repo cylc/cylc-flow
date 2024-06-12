@@ -36,7 +36,7 @@ def workflow_state(
 
     If the status or output has been achieved, return {True, result}.
 
-    Arguments:
+    Arg:
         workflow_task_id:
             ID (workflow//point/task:selector) of the target task.
         offset:
@@ -48,8 +48,8 @@ def workflow_state(
             Alternate cylc-run directory, e.g. for another user.
 
     Returns:
-        tuple:
-            (satisfied, result)
+        tuple: (satisfied, result)
+
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
