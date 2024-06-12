@@ -200,7 +200,10 @@ class XtriggerCollator:
             # we've already seen this one
             return
 
-        if fctx.func_name != _wall_clock.__name__:
+        if (
+            not label.startswith('_cylc_retry_') and not
+            label.startswith('_cylc_submit_retry_')
+        ):
             # (the "_wall_clock" function fails "wall_clock" validation)
             self._validate(label, fctx, fdir)
 
