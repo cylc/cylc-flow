@@ -290,7 +290,7 @@ def test_validate_fail_bad_id(id_):
     'flow_num', ((4.25260), ('Belguim'))
 )
 def test_validate_fail_non_int_flow(flow_num):
-    """Validate failur for non integer flow numbers."""
+    """Validate failure for non integer flow numbers."""
     with pytest.raises(WorkflowConfigError, match='must be an integer'):
         validate({
             'workflow_task_id': 'foo//1/bar',
