@@ -97,6 +97,7 @@ def get_option_parser() -> COP:
     )
     for option in VR_OPTIONS:
         parser.add_option(*option.args, **option.kwargs)
+    parser.set_defaults(is_validate=True)
     return parser
 
 
@@ -168,6 +169,9 @@ async def vr_cli(parser: COP, options: 'Values', workflow_id: str):
     options.against_source = True   # Make validate check against source.
     log_subcommand('validate --against-source', workflow_id)
     await cylc_validate(parser, options, workflow_id)
+
+    # Unset is validate after validation.
+    delattr(options, 'is_validate')
 
     log_subcommand('reinstall', workflow_id)
     reinstall_ok = await cylc_reinstall(
