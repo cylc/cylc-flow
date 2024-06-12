@@ -69,6 +69,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -3163,4 +3164,13 @@ class DataStoreMgr:
 
     async def graphql_sub_discard(self, sub_id):
         """Discard graphql subscription references."""
+        pass
+
+    async def set_query_sync_levels(
+        self,
+        w_ids: Iterable[str],
+        level: Optional[str] = None,
+        expire_delay: Optional[float] = None,
+    ):
+        """Set a workflow sync level."""
         pass
