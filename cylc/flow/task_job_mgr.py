@@ -267,11 +267,13 @@ class TaskJobManager:
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
+
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
         if not prepared_tasks:
             return bad_tasks
+
         auth_itasks = {}  # {platform: [itask, ...], ...}
 
         for itask in prepared_tasks:
@@ -279,6 +281,7 @@ class TaskJobManager:
             auth_itasks.setdefault(platform_name, [])
             auth_itasks[platform_name].append(itask)
         # Submit task jobs for each platform
+        # Non-prepared tasks can be considered done for now:
         done_tasks = bad_tasks
 
         for _, itasks in sorted(auth_itasks.items()):
@@ -1087,7 +1090,7 @@ class TaskJobManager:
         Returns:
             * itask - preparation complete.
             * None - preparation in progress.
-            * False - perparation failed.
+            * False - preparation failed.
 
         """
         if itask.local_job_file_path:
@@ -1181,6 +1184,14 @@ class TaskJobManager:
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(workflow, itask)
+                if isinstance(exc, NoPlatformsError):
+                    # Clear all hosts from all platforms in group from
+                    # bad_hosts:
+                    self.bad_hosts -= exc.hosts_consumed
+                    self._set_retry_timers(itask, rtconfig)
+                    self._prep_submit_task_job_error(
+                        workflow, itask, '(no platforms available)', exc)
+                    return False
                 self._prep_submit_task_job_error(
                     workflow, itask, '(platform not defined)', exc)
                 return False

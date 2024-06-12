@@ -388,7 +388,10 @@ class TaskRemoteMgr:
             else:
                 LOG.error(
                     NoPlatformsError(
-                        install_target, 'install target', 'remote tidy'))
+                        install_target,
+                        set(),
+                        'install target',
+                        'remote tidy'))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while queue and time() < timeout:

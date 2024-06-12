@@ -21,6 +21,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Set,
     NoReturn,
     Optional,
     Tuple,
@@ -444,15 +445,21 @@ class NoPlatformsError(PlatformLookupError):
 
     Args:
         identity: The name of the platform group or install target
+        hosts_consumed: Hosts which have already been tried.
         set_type: Whether the set of platforms is a platform group or an
             install target
         place: Where the attempt to get the platform failed.
     """
     def __init__(
-        self, identity: str, set_type: str = 'group', place: str = ''
+        self,
+        identity: str,
+        hosts_consumed: Set[str],
+        set_type: str = 'group',
+        place: str = '',
     ):
         self.identity = identity
         self.type = set_type
+        self.hosts_consumed = hosts_consumed
         if place:
             self.place = f' during {place}.'
         else:
