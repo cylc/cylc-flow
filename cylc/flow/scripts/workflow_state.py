@@ -77,10 +77,10 @@ Examples:
   # Print all succeeded tasks:
   $ cylc workflow-state "WORKFLOW//*/*:succeeded"
 
-  # Print all tasks foo that completed output file1:
+  # Print all tasks foo that completed output (trigger name) file1:
   $ cylc workflow-state "WORKFLOW//*/foo:file1"
 
-  # Print if task 2033/foo completed output file1:
+  # Print if task 2033/foo completed output (trigger name) file1:
   $ cylc workflow-state WORKFLOW//2033/foo:file1
 
 See also:
@@ -112,8 +112,6 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-# TODO: flow=all, none?  Useful for CLI if not xrigger, pt format.
-
 WILDCARD = "*"
 
 # polling defaults
@@ -121,7 +119,8 @@ MAX_POLLS = 12
 INTERVAL = 5
 
 OPT_DEPR_MSG = "DEPRECATED, use ID"
-OPT_DEPR_MSG2 = 'DEPRECATED, use "ID:message"'
+OPT_DEPR_MSG1 = 'DEPRECATED, use "ID:STATUS"'
+OPT_DEPR_MSG2 = 'DEPRECATED, use "ID:MSG"'
 
 
 def unquote(s: str) -> str:
@@ -290,7 +289,7 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--flow",
-        help="Flow number, for target tasks.",
+        help="Flow number, for target tasks. By default, any flow.",
         action="store", type="int", dest="flow_num", default=None)
 
     parser.add_option(
@@ -335,7 +334,7 @@ def get_option_parser() -> COP:
     parser.add_option(
         "-S", "--status",
         metavar="STATUS",
-        help=f"Task status. {OPT_DEPR_MSG}:status.",
+        help=f"Task status. {OPT_DEPR_MSG1}.",
         action="store", dest="depr_status", default=None)
 
     # Prior to 8.3.0 --output was just an alias for --message
