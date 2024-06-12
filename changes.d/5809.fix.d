@@ -1,1 +1,2 @@
-The Workflow-state command now handles task status and outputs equally.
+Fix bug where the "cylc workflow-state" command only polled for
+task-specific status queries and custom outputs.
