@@ -22,11 +22,13 @@ from shutil import copytree, rmtree
 import pytest
 
 from cylc.flow.dbstatecheck import output_fallback_msg
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtriggers.workflow_state import (
     _workflow_state_backcompat,
     workflow_state,
+    validate,
 )
 from cylc.flow.xtriggers.suite_state import suite_state
 
@@ -260,3 +262,38 @@ def test__workflow_state_backcompat(tmp_run_dir: 'Callable'):
         assert satisfied
         satisfied, _ = func(id_, 'arrakis', '2012', message='lisan al-gaib')
         assert satisfied
+
+
+def test_validate_ok():
+    """Validate returns ok with valid args."""
+    validate({
+        'workflow_task_id': 'foo//1/bar',
+        'offset': 'PT1H',
+        'flow_num': 44,
+    })
+
+
+@pytest.mark.parametrize(
+    'id_', (('foo//1'),)
+)
+def test_validate_fail_bad_id(id_):
+    """Validation failure for bad id"""
+    with pytest.raises(WorkflowConfigError, match='Full ID needed'):
+        validate({
+            'workflow_task_id': id_,
+            'offset': 'PT1H',
+            'flow_num': 44,
+        })
+
+
+@pytest.mark.parametrize(
+    'flow_num', ((4.25260), ('Belguim'))
+)
+def test_validate_fail_non_int_flow(flow_num):
+    """Validate failur for non integer flow numbers."""
+    with pytest.raises(WorkflowConfigError, match='must be an integer'):
+        validate({
+            'workflow_task_id': 'foo//1/bar',
+            'offset': 'PT1H',
+            'flow_num': flow_num,
+        })
