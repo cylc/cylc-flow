@@ -100,12 +100,7 @@ def validate(args: Dict[str, Any]):
             must be a valid path
 
     """
-    try:
-        tokens = tokenise(args["workflow_task_id"])
-    except KeyError:
-        raise WorkflowConfigError(
-            # TODO better message
-            "Full ID needed: workflow//cycle/task[:selector].")
+    tokens = tokenise(args["workflow_task_id"])
 
     if any(
         tokens[token] is None
