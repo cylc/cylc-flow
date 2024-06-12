@@ -78,9 +78,7 @@ class InputError(CylcError):
 
 class CylcConfigError(CylcError):
     """Generic exception to handle an error in a Cylc configuration file."""
-    # TODO: reference the configuration el
-    
-    ement causing the problem
+    # TODO: reference the configuration element causing the problem
 
 
 class WorkflowConfigError(CylcConfigError):
