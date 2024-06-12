@@ -359,7 +359,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
     if len(ids) != 1:
         raise InputError("Please give a single ID")
 
-    id_ = ids[0]
+    id_ = ids[0].rstrip('/')  # might get 'id/' due to autcomplete
 
     if any(
         [
