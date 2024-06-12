@@ -114,9 +114,7 @@ def validate(args: Dict[str, Any]):
         raise WorkflowConfigError(
             "Full ID needed: workflow//cycle/task[:selector].")
 
-    try:
-        int(args["flow_num"])
-    except ValueError:
+    if not isinstance(args["flow_num"], int):
         raise WorkflowConfigError("flow_num must be an integer.")
 
 
