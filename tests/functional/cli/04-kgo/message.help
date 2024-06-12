@@ -1,0 +1,90 @@
+Usage:  One of:
+cylc message [OPTIONS] -- WORKFLOW JOB [[SEVERITY:]MESSAGE ...] 
+cylc message [OPTIONS] -- [[SEVERITY:]MESSAGE] [[SEVERITY:]MESSAGE] 
+
+Record task messages.
+
+Send messages to:
+- The job stdout/stderr.
+- The job status file, if there is one.
+- The scheduler, if communication is possible.
+
+Jobs use this command to record and report status such as success and
+failure. Applications run by jobs can use this command to report messages
+and to report registered task outputs.
+
+Messages can be specified as arguments. A '-' indicates that the command should
+read messages from STDIN. When reading from STDIN, multiple messages are
+separated by empty lines.
+
+Examples:
+  # Single message as an argument:
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'Hello world!'
+
+  # Multiple messages as arguments:
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" \
+  >     'Hello world!' 'Hi' 'WARNING:Hey!'
+
+  # Multiple messages on STDIN:
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
+  > Hello
+  > world!
+  >
+  > Hi
+  >
+  > WARNING:Hey!
+  >__STDIN__
+
+Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in job
+environments - you do not need to write their actual values in task scripting.
+
+Each message can be prefixed with a severity level using the syntax
+'SEVERITY:MESSAGE' (colons cannot be used unless such a prefix is provided).
+
+The default message severity is INFO. The --severity=SEVERITY option can be
+used to set the default severity level for all unprefixed messages.
+
+Increased severity will make messages more visible in workflow logs, using
+colour and format changes. DEBUG messages will not be shown in logs by default.
+
+The severity levels are those of the Python Logging Library
+https://docs.python.org/3/library/logging.html#logging-levels:
+
+- CRITICAL
+- ERROR
+- WARNING
+- INFO
+- DEBUG
+
+Note:
+  To abort a job script with a custom error message, use cylc__job_abort:
+    cylc__job_abort 'message...'
+  (For technical reasons this is a shell function, not a cylc sub-command).
+
+For backward compatibility, if number of arguments is less than or equal to 2,
+the command assumes the classic interface, where all arguments are messages.
+Otherwise, the first 2 arguments are assumed to be workflow ID and job
+identifier.
+
+
+Arguments:
+   WORKFLOW                               Workflow ID
+   JOB                                    Job ID - CYCLE/TASK_NAME/SUBMIT_NUM
+   [[SEVERITY:]MESSAGE ...]               Severity Level:Message
+   [[SEVERITY:]MESSAGE]                   Severity Level:Message
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEVERITY, -p SEVERITY, --severity=SEVERITY, --priority=SEVERITY
+                        Set severity levels for messages that do not have one
+  -q, --quiet           Decrease verbosity.
+  -v, --verbose         Increase Verbosity
+  --debug               Equivalent to -v -v
+  --no-timestamp        Don't timestamp logged messages.
+  --color=WHEN, --color=WHEN
+                        When to use color/bold text in terminal output.
+                        Options are 'never', 'auto' and 'always'.
+  --comms-timeout=SEC   Set a timeout for network connections to the running
+                        workflow. The default is no timeout. For task
+                        messaging connections see site/user config file
+                        documentation.

@@ -452,6 +452,8 @@ class CylcOptionParser(OptionParser):
         )
     ]
 
+    LINEBREAK = ('\n', '')
+
     def __init__(
         self,
         usage: str,
@@ -490,7 +492,6 @@ class CylcOptionParser(OptionParser):
         if multitask:
             usage += self.MULTITASK_USAGE
 
-        args = ""
         self.n_compulsory_args = 0
         self.n_optional_args = 0
         self.unlimited_args = False
@@ -502,21 +503,7 @@ class CylcOptionParser(OptionParser):
         self.segregated_log = segregated_log
 
         if argdoc:
-            maxlen = max(len(arg) for arg, _ in argdoc)
-            usage += "\n\nArguments:"
-            for arg, descr in argdoc:
-                if arg.startswith('['):
-                    self.n_optional_args += 1
-                else:
-                    self.n_compulsory_args += 1
-                if arg.rstrip(']').endswith('...'):
-                    self.unlimited_args = True
-
-                args += arg + " "
-
-                pad = (maxlen - len(arg)) * ' ' + '               '
-                usage += "\n   " + arg + pad + descr
-            usage = usage.replace('ARGS', args)
+            usage = self.argdoc_parser(argdoc, usage)
 
         OptionParser.__init__(
             self,
@@ -524,6 +511,43 @@ class CylcOptionParser(OptionParser):
             option_class=CylcOption,
             formatter=CylcHelpFormatter()
         )
+
+    def argdoc_parser(self, argdoc, usage) -> str:
+        """Convert argdoc list into a string to be passed to
+        OptionParser.__init__ as usage argument.
+        """
+        args = ""
+        maxlen = max(len(arg) for arg, _ in argdoc)
+        usage += "\n\nArguments:"
+        if 'ARGS' in usage:
+            script_name, usage = usage.split('ARGS', 1)
+        else:
+            return usage
+        used_args = [self.LINEBREAK]
+        if self.LINEBREAK in argdoc:
+            args += ' One of:\n'
+        args += script_name
+        for arg, descr in argdoc:
+            if arg.startswith('['):
+                self.n_optional_args += 1
+            else:
+                self.n_compulsory_args += 1
+            if arg.rstrip(']').endswith('...'):
+                self.unlimited_args = True
+
+            if arg == '\n':
+                args += arg
+                args += script_name
+            else:
+                args += arg + " "
+
+            if (arg, descr) not in used_args:
+                pad = (maxlen - len(arg)) * ' ' + '               '
+                usage += "\n   " + arg + pad + descr
+                used_args.append((arg, descr))
+
+        usage = args + usage
+        return usage
 
     def get_std_options(self):
         """Get a data-structure of standard options"""
