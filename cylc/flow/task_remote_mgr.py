@@ -389,7 +389,7 @@ class TaskRemoteMgr:
                 LOG.error(
                     NoPlatformsError(
                         install_target,
-                        Set(),
+                        set(),
                         'install target',
                         'remote tidy'))
         # Wait for commands to complete for a max of 10 seconds
