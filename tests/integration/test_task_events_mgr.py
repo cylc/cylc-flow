@@ -17,6 +17,7 @@
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 
+import logging
 from typing import Any as Fixture
 
 
@@ -27,7 +28,6 @@ async def test_process_job_logs_retrieval_warns_no_platform(
     """Job log retrieval handles `NoHostsError`"""
 
     ctx = TaskJobLogsRetrieveContext(
-        ctx_type='raa',
         platform_name='skarloey',
         max_size=256,
         key='skarloey'
@@ -52,7 +52,7 @@ async def test__reset_job_timers(
     process_execution_polling_intervals.
     """
     schd = scheduler(flow(one_conf))
-    async with start(schd):
+    async with start(schd, level=logging.DEBUG):
         itask = schd.pool.get_tasks()[0]
         itask.state.status = 'running'
         itask.platform['execution polling intervals'] = [25]
@@ -65,3 +65,37 @@ async def test__reset_job_timers(
         'polling intervals=PT25S,PT15S,PT10S,...'
         in caplog.records[0].msg
     )
+
+
+async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
+    """Simulation mode tasks are inserted into the Data Store,
+    with correct submit number.
+    """
+    conf = {
+        'scheduling': {'graph': {'R1': 'rhenas'}},
+        'runtime': {'rhenas': {'simulation': {
+            'fail cycle points': '1',
+            'fail try 1 only': False,
+    }}}}
+    id_ = flow(conf)
+    schd = scheduler(id_)
+    async with start(schd):
+        # Set task to running:
+        itask =  schd.pool.get_tasks()[0]
+        itask.state.status = 'running'
+        itask.submit_num += 1
+
+        # Not run _insert_task_job yet:
+        assert not schd.data_store_mgr.added['jobs'].keys()
+
+        # Insert task (twice):
+        schd.task_events_mgr._insert_task_job(itask, 'now', 1)
+        itask.submit_num += 1
+        schd.task_events_mgr._insert_task_job(itask, 'now', 1)
+
+        # Check that there are two entries with correct submit
+        # numbers waiting for data-store insertion:
+        assert [
+            i.submit_num for i
+            in schd.data_store_mgr.added['jobs'].values()
+        ] == [1, 2]

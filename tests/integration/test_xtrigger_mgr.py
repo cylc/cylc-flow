@@ -21,6 +21,7 @@ from textwrap import dedent
 
 from cylc.flow.pathutil import get_workflow_run_dir
 
+
 async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
     """Test that if an itask has 2 wall_clock triggers with different
     offsets that xtrigger manager gets both of them.

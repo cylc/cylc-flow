@@ -18,10 +18,13 @@
 
 (This command is for internal use.)
 
-Run a Python function "<name>(*args, **kwargs)" in the process pool. It must be
-defined in a module of the same name. Positional and keyword arguments must be
-passed in as JSON strings. <src-dir> is the workflow source dir, needed to find
-local xtrigger modules.
+Run a Python xtrigger function "<name>(*args, **kwargs)" in the process pool.
+It must be in a module of the same name. Positional and keyword arguments must
+be passed in as JSON strings.
+
+Python entry points are the preferred way to make xtriggers available to the
+scheduler, but local xtriggers can be stored in <src-dir>.
+
 """
 import sys
 

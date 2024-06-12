@@ -76,7 +76,7 @@ if TYPE_CHECKING:
 
 
 def filter_ids(
-    pools: 'List[Pool]',
+    pool: 'Pool',
     ids: 'Iterable[str]',
     *,
     warn: 'bool' = True,
@@ -145,8 +145,6 @@ def filter_ids(
             if tokens.get(lowest_token.value):
                 break
 
-        # This needs to be a set to avoid getting two copies of matched tasks
-        # in cycle points that appear in both pools:
         cycles = set()
         tasks = []
 
@@ -154,19 +152,18 @@ def filter_ids(
         if lowest_token == IDTokens.Cycle:
             cycle = tokens[IDTokens.Cycle.value]
             cycle_sel = tokens.get(IDTokens.Cycle.value + '_sel') or '*'
-            for pool in pools:
-                for icycle, itasks in pool.items():
-                    if not itasks:
-                        continue
-                    if not point_match(icycle, cycle, pattern_match):
-                        continue
-                    if cycle_sel == '*':
+            for icycle, itasks in pool.items():
+                if not itasks:
+                    continue
+                if not point_match(icycle, cycle, pattern_match):
+                    continue
+                if cycle_sel == '*':
+                    cycles.add(icycle)
+                    continue
+                for itask in itasks.values():
+                    if match(itask.state.status, cycle_sel):
                         cycles.add(icycle)
-                        continue
-                    for itask in itasks.values():
-                        if match(itask.state.status, cycle_sel):
-                            cycles.add(icycle)
-                            break
+                        break
 
         # filter by task
         elif lowest_token == IDTokens.Task:   # noqa SIM106
@@ -176,36 +173,35 @@ def filter_ids(
             task = tokens[IDTokens.Task.value]
             task_sel_raw = tokens.get(IDTokens.Task.value + '_sel')
             task_sel = task_sel_raw or '*'
-            for pool in pools:
-                for icycle, itasks in pool.items():
-                    if not point_match(icycle, cycle, pattern_match):
-                        continue
-                    for itask in itasks.values():
-                        if (
-                            # check cycle selector
+            for icycle, itasks in pool.items():
+                if not point_match(icycle, cycle, pattern_match):
+                    continue
+                for itask in itasks.values():
+                    if (
+                        # check cycle selector
+                        (
                             (
-                                (
-                                    # disable cycle_sel if not defined if
-                                    # pattern matching is turned off
-                                    pattern_match is False
-                                    and cycle_sel_raw is None
-                                )
-                                or match(itask.state.status, cycle_sel)
+                                # disable cycle_sel if not defined if
+                                # pattern matching is turned off
+                                pattern_match is False
+                                and cycle_sel_raw is None
                             )
-                            # check namespace name
-                            and itask.name_match(task, match_func=match)
-                            # check task selector
-                            and (
-                                (
-                                    # disable task_sel if not defined if
-                                    # pattern matching is turned off
-                                    pattern_match is False
-                                    and task_sel_raw is None
-                                )
-                                or match(itask.state.status, task_sel)
+                            or match(itask.state.status, cycle_sel)
+                        )
+                        # check namespace name
+                        and itask.name_match(task, match_func=match)
+                        # check task selector
+                        and (
+                            (
+                                # disable task_sel if not defined if
+                                # pattern matching is turned off
+                                pattern_match is False
+                                and task_sel_raw is None
                             )
-                        ):
-                            tasks.append(itask)
+                            or match(itask.state.status, task_sel)
+                        )
+                    ):
+                        tasks.append(itask)
 
         else:
             raise NotImplementedError
@@ -226,10 +222,9 @@ def filter_ids(
         })
         ret = _cycles
     elif out == IDTokens.Task:
-        for pool in pools:
-            for icycle in _cycles:
-                if icycle in pool:
-                    _tasks.extend(pool[icycle].values())
+        for icycle in _cycles:
+            if icycle in pool:
+                _tasks.extend(pool[icycle].values())
         ret = _tasks
     return ret, _not_matched
 

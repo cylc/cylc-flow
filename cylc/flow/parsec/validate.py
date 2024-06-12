@@ -340,18 +340,18 @@ class ParsecValidator:
             (1, 3)
             >>> ParsecValidator.coerce_range('1..3, 5', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
+            cylc.flow.parsec.exceptions.ListValueError:
             (type=list) k = 1..3, 5 - (Only one min..max pair is permitted)
-            >>> ParsecValidator.coerce_range('1..z', None)
+            >>> ParsecValidator.coerce_range('1..z', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
-            (type=list) k = 1..3, 5 - \
-            (Integer range must be in the format min..max)
+            cylc.flow.parsec.exceptions.ListValueError:
+            (type=list) k = 1..z - (Integer range must be in the
+            format min..max)
             >>> ParsecValidator.coerce_range('1', 'k')
             Traceback (most recent call last):
-            cylc.flow.parsec.exceptions.ListValueError: \
-            (type=list) k = 1..3, 5 - \
-            (Integer range must be in the format min..max)
+            cylc.flow.parsec.exceptions.ListValueError:
+            (type=list) k = 1 - (Integer range must be in the
+            format min..max)
 
         """
         items = cls.strip_and_unquote_list(keys, value)
@@ -662,6 +662,7 @@ class CylcConfigValidator(ParsecValidator):
     V_CYCLE_POINT = 'V_CYCLE_POINT'
     V_CYCLE_POINT_FORMAT = 'V_CYCLE_POINT_FORMAT'
     V_CYCLE_POINT_TIME_ZONE = 'V_CYCLE_POINT_TIME_ZONE'
+    V_CYCLE_POINT_WITH_OFFSETS = 'V_CYCLE_POINT_WITH_OFFSETS'
     V_INTERVAL = 'V_INTERVAL'
     V_INTERVAL_LIST = 'V_INTERVAL_LIST'
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
@@ -702,6 +703,26 @@ class CylcConfigValidator(ParsecValidator):
                 'Z': 'UTC / GMT.',
                 '+13': 'UTC plus 13 hours.',
                 '-0830': 'UTC minus 8 hours and 30 minutes.'
+            }
+        ),
+        V_CYCLE_POINT_WITH_OFFSETS: (
+            'cycle point with support for offsets',
+            'An integer or date-time cycle point, with optional offset(s).',
+            {
+                '1': 'An integer cycle point.',
+                '1 +P5': (
+                    'An integer cycle point with an offset'
+                    ' (this evaluates as ``6``).'
+                ),
+                '+P5': (
+                    'An integer cycle point offset.'
+                    ' This offset is added to the initial cycle point'
+                ),
+                '2000-01-01T00:00Z': 'A date-time cycle point.',
+                '2000-02-29T00:00Z +P1D +P1M': (
+                    'A date-time cycle point with offsets'
+                    ' (this evaluates as ``2000-04-01T00:00Z``).'
+                ),
             }
         ),
         V_INTERVAL: (
@@ -756,6 +777,9 @@ class CylcConfigValidator(ParsecValidator):
             self.V_CYCLE_POINT: self.coerce_cycle_point,
             self.V_CYCLE_POINT_FORMAT: self.coerce_cycle_point_format,
             self.V_CYCLE_POINT_TIME_ZONE: self.coerce_cycle_point_time_zone,
+            # NOTE: This type exists for documentation reasons
+            # it doesn't actually process offsets, that happens later
+            self.V_CYCLE_POINT_WITH_OFFSETS: self.coerce_str,
             self.V_INTERVAL: self.coerce_interval,
             self.V_INTERVAL_LIST: self.coerce_interval_list,
             self.V_PARAMETER_LIST: self.coerce_parameter_list,

@@ -25,13 +25,14 @@ This module provides the logic to:
 
 import json
 import os
-from pkg_resources import parse_version
 from shutil import copy, rmtree
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
     Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
 )
+
+from packaging.version import parse as parse_version
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
+    from cylc.flow.task_events_mgr import EventKey
 
 Version = Any
 # TODO: narrow down Any (should be str | int) after implementing type
@@ -384,16 +386,17 @@ class WorkflowDatabaseManager:
             for key, value in template_vars.items()
         )
 
-    def put_task_event_timers(self, task_events_mgr):
+    def put_task_event_timers(self, task_events_mgr) -> None:
         """Put statements to update the task_action_timers table."""
         if task_events_mgr.event_timers_updated:
             self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-            for key, timer in task_events_mgr._event_timers.items():
-                key1, point, name, submit_num = key
+            id_key: 'EventKey'
+            for id_key, timer in task_events_mgr._event_timers.items():
+                key1 = (id_key.handler, id_key.event)
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                    "name": name,
-                    "cycle": point,
-                    "ctx_key": json.dumps((key1, submit_num,)),
+                    "name": id_key.tokens['task'],
+                    "cycle": id_key.tokens['cycle'],
+                    "ctx_key": json.dumps((key1, id_key.tokens['job'],)),
                     "ctx": self._namedtuple2json(timer.ctx),
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
@@ -421,13 +424,34 @@ class WorkflowDatabaseManager:
             "time_updated": itask.state.time_updated,
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
-            "is_manual_submit": itask.is_manual_submit
+            "is_manual_submit": itask.is_manual_submit,
         }
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
             "flow_nums": serialise(itask.flow_nums),
-            "submit_num": itask.submit_num,
+        }
+        # Note tasks_states table rows are for latest submit_num only
+        # (not one row per submit).
+        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
+        self.db_updates_map[self.TABLE_TASK_STATES].append(
+            (set_args, where_args))
+
+    def put_update_task_flow_wait(self, itask):
+        """Update flow_wait status of a task, in the task_states table.
+
+        NOTE the task_states table is normally updated along with the task pool
+        table. This method is only needed as a final update for a non-pool task
+        that just spawned its children after a flow wait.
+        """
+        set_args = {
+            "time_updated": itask.state.time_updated,
+            "flow_wait": itask.flow_wait,
+        }
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_nums": serialise(itask.flow_nums),
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -451,7 +475,7 @@ class WorkflowDatabaseManager:
         # This should already be done by self.put_task_event_timers above:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
-        for itask in pool.get_all_tasks():
+        for itask in pool.get_tasks():
             for prereq in itask.state.prerequisites:
                 for (p_cycle, p_name, p_output), satisfied_state in (
                     prereq.satisfied.items()
@@ -505,7 +529,8 @@ class WorkflowDatabaseManager:
                     "time_updated": itask.state.time_updated,
                     "submit_num": itask.submit_num,
                     "try_num": itask.get_try_num(),
-                    "status": itask.state.status
+                    "status": itask.state.status,
+                    "is_manual_submit": itask.is_manual_submit,
                 }
                 where_args = {
                     "cycle": str(itask.point),
@@ -605,11 +630,10 @@ class WorkflowDatabaseManager:
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        outputs = []
-        for _, message in itask.state.outputs.get_completed_all():
-            outputs.append(message)
         set_args = {
-            "outputs": json.dumps(outputs)
+            "outputs": json.dumps(
+                list(itask.state.outputs.iter_completed_messages())
+            )
         }
         where_args = {
             "cycle": str(itask.point),

@@ -25,6 +25,23 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow import flags
+
+
+@pytest.fixture(autouse=True)
+def test_reset():
+    """Reset global state before all tests."""
+    flags.verbosity = 0
+    flags.cylc7_back_compat = False
+
+
+@pytest.fixture(scope='module')
+def mod_monkeypatch():
+    """A module-scoped version of the monkeypatch fixture."""
+    from _pytest.monkeypatch import MonkeyPatch
+    mpatch = MonkeyPatch()
+    yield mpatch
+    mpatch.undo()
 
 
 @pytest.fixture
@@ -103,7 +120,7 @@ def log_filter():
             if (name is None or name == log_name)
             and (level is None or level == log_level)
             and (contains is None or contains in log_message)
-            and (regex is None or re.match(regex, log_message))
+            and (regex is None or re.search(regex, log_message))
             and (exact_match is None or exact_match == log_message)
         ]
     return _log_filter

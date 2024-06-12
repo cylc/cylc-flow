@@ -30,6 +30,7 @@ from cylc.flow.id_cli import (
     _validate_constraint,
     _validate_workflow_ids,
     _validate_number,
+    cli_tokenise,
     parse_ids_async,
 )
 from cylc.flow.pathutil import get_cylc_run_dir
@@ -597,13 +598,47 @@ def no_scan(monkeypatch):
         # something that looks like scan but doesn't do anything
         yield
 
-    monkeypatch.setattr('cylc.flow.id_cli.scan', _scan)
+    monkeypatch.setattr('cylc.flow.network.scan.scan', _scan)
 
 
 async def test_expand_workflow_tokens_impl_selector(no_scan):
     """It should reject filters it can't handle."""
     tokens = tokenise('~user/*')
     await _expand_workflow_tokens([tokens])
-    tokens['workflow_sel'] = 'stopped'
+    tokens = tokens.duplicate(workflow_sel='stopped')
     with pytest.raises(InputError):
         await _expand_workflow_tokens([tokens])
+
+
+@pytest.mark.parametrize('identifier, expected', [
+    (
+        '//2024-01-01T00:fail/a',
+        {'cycle': '2024-01-01T00', 'cycle_sel': 'fail', 'task': 'a'}
+    ),
+    (
+        '//2024-01-01T00:00Z/a',
+        {'cycle': '2024-01-01T00:00Z', 'task': 'a'}
+    ),
+    (
+        '//2024-01-01T00:00Z:fail/a',
+        {'cycle': '2024-01-01T00:00Z', 'cycle_sel': 'fail', 'task': 'a'}
+    ),
+    (
+        '//2024-01-01T00:00:00+05:30/a',
+        {'cycle': '2024-01-01T00:00:00+05:30', 'task': 'a'}
+    ),
+    (
+        '//2024-01-01T00:00:00+05:30:f/a',
+        {'cycle': '2024-01-01T00:00:00+05:30', 'cycle_sel': 'f', 'task': 'a'}
+    ),
+    (
+        # Nonsensical example, but whatever...
+        '//2024-01-01T00:00Z:00Z/a',
+        {'cycle': '2024-01-01T00:00Z', 'cycle_sel': '00Z', 'task': 'a'}
+    )
+])
+def test_iso_long_fmt(identifier, expected):
+    assert {
+        k: v for k, v in cli_tokenise(identifier).items()
+        if v is not None
+    } == expected

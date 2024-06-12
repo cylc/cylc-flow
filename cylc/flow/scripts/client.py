@@ -27,7 +27,7 @@ Use the -n option if client function requires no keyword arguments.
 from google.protobuf.json_format import MessageToDict
 import json
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
@@ -40,6 +40,7 @@ from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
+    from google.protobuf.message import Message
 
 
 INTERNAL = True
@@ -76,11 +77,12 @@ def main(_, options: 'Values', workflow_id: str, func: str) -> None:
     sys.stdin.close()
     res = pclient(func, kwargs)
     if func in PB_METHOD_MAP:
+        pb_msg: Message
         if 'element_type' in kwargs:
             pb_msg = PB_METHOD_MAP[func][kwargs['element_type']]()
         else:
             pb_msg = PB_METHOD_MAP[func]()
-        pb_msg.ParseFromString(res)
+        pb_msg.ParseFromString(cast('bytes', res))
         res_msg: object = MessageToDict(pb_msg)
     else:
         res_msg = res

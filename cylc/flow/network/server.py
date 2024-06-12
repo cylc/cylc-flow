@@ -21,7 +21,6 @@ from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
-from graphql.execution import ExecutionResult
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -37,14 +36,15 @@ from cylc.flow.network.replier import WorkflowReplier
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.data_messages_pb2 import PbEntireWorkflow  # type: ignore
+from cylc.flow.data_messages_pb2 import PbEntireWorkflow
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
+    from graphql.execution import ExecutionResult
 
 
 # maps server methods to the protobuf message (for client/UIS import)
-PB_METHOD_MAP = {
+PB_METHOD_MAP: Dict[str, Any] = {
     'pb_entire_workflow': PbEntireWorkflow,
     'pb_data_elements': DELTAS_MAP
 }
@@ -368,7 +368,7 @@ class WorkflowRuntimeServer:
             object: Execution result, or a list with errors.
         """
         try:
-            executed: ExecutionResult = schema.execute(
+            executed: 'ExecutionResult' = schema.execute(
                 request_string,
                 variable_values=variables,
                 context_value={

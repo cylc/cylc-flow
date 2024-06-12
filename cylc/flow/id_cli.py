@@ -20,6 +20,9 @@ from pathlib import Path
 import re
 from typing import Optional, Dict, List, Tuple, Any
 
+from metomi.isodatetime.parsers import TimePointParser
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
     InputError,
@@ -28,14 +31,10 @@ from cylc.flow.hostuserutil import get_user
 from cylc.flow.id import (
     Tokens,
     contains_multiple_workflows,
+    tokenise,
     upgrade_legacy_ids,
 )
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
-from cylc.flow.network.scan import (
-    filter_name,
-    is_active,
-    scan,
-)
 from cylc.flow.workflow_files import (
     check_flow_file,
     detect_both_flow_and_suite,
@@ -48,6 +47,36 @@ from cylc.flow.workflow_files import (
 
 
 FN_CHARS = re.compile(r'[\*\?\[\]\!]')
+TP_PARSER = TimePointParser()
+
+
+def cli_tokenise(id_: str) -> Tokens:
+    """Tokenise with support for long-format datetimes.
+
+    If a cycle selector is present, it could be part of a long-format
+    ISO 8601 datetime that was erroneously split. Re-attach it if it
+    results in a valid datetime.
+
+    Examples:
+        >>> f = lambda t: {k: v for k, v in t.items() if v is not None}
+        >>> f(cli_tokenise('foo//2021-01-01T00:00Z'))
+        {'workflow': 'foo', 'cycle': '2021-01-01T00:00Z'}
+        >>> f(cli_tokenise('foo//2021-01-01T00:horse'))
+        {'workflow': 'foo', 'cycle': '2021-01-01T00', 'cycle_sel': 'horse'}
+    """
+    tokens = tokenise(id_)
+    cycle = tokens['cycle']
+    cycle_sel = tokens['cycle_sel']
+    if not (cycle and cycle_sel) or '-' not in cycle:
+        return tokens
+    cycle = f'{cycle}:{cycle_sel}'
+    try:
+        TP_PARSER.parse(cycle)
+    except ISO8601SyntaxError:
+        return tokens
+    dict.__setitem__(tokens, 'cycle', cycle)
+    del tokens['cycle_sel']
+    return tokens
 
 
 def _parse_cli(*ids: str) -> List[Tokens]:
@@ -104,19 +133,21 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # errors:
         >>> _parse_cli('////')
         Traceback (most recent call last):
-        InputError: Invalid ID: ////
+        cylc.flow.exceptions.InputError: Invalid ID: ////
 
         >>> parse_back('//cycle')
         Traceback (most recent call last):
-        InputError: Relative reference must follow an incomplete one.
+        cylc.flow.exceptions.InputError: Relative reference must follow an
+        incomplete one...
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
-        InputError: Relative reference must follow an incomplete one.
+        cylc.flow.exceptions.InputError: Relative reference must follow an
+        incomplete one...
 
         >>> parse_back('workflow///cycle/')
         Traceback (most recent call last):
-        InputError: Invalid ID: workflow///cycle/
+        cylc.flow.exceptions.InputError: Invalid ID: workflow///cycle/
 
     """
     # upgrade legacy ids if required
@@ -127,14 +158,14 @@ def _parse_cli(*ids: str) -> List[Tokens]:
     tokens_list: List[Tokens] = []
     for id_ in ids:
         try:
-            tokens = Tokens(id_)
+            tokens = cli_tokenise(id_)
         except ValueError:
             if id_.endswith('/') and not id_.endswith('//'):  # noqa: SIM106
                 # tolerate IDs that end in a single slash on the CLI
                 # (e.g. CLI auto completion)
                 try:
                     # this ID is invalid with or without the trailing slash
-                    tokens = Tokens(id_[:-1])
+                    tokens = cli_tokenise(id_[:-1])
                 except ValueError:
                     raise InputError(f'Invalid ID: {id_}')
             else:
@@ -303,7 +334,7 @@ async def parse_ids_async(
     # infer the run number if not specified the ID (and if possible)
     if infer_latest_runs:
         _infer_latest_runs(
-            *tokens_list, src_path=src_path, alt_run_dir=alt_run_dir)
+            tokens_list, src_path=src_path, alt_run_dir=alt_run_dir)
 
     _validate_number(
         *tokens_list,
@@ -418,13 +449,16 @@ def _validate_workflow_ids(*tokens_list, src_path):
         detect_both_flow_and_suite(src_path)
 
 
-def _infer_latest_runs(*tokens_list, src_path, alt_run_dir=None):
+def _infer_latest_runs(tokens_list, src_path, alt_run_dir=None):
     for ind, tokens in enumerate(tokens_list):
         if ind == 0 and src_path:
             # source workflow passed in as a path
             continue
-        tokens['workflow'] = infer_latest_run_from_id(
-            tokens['workflow'], alt_run_dir)
+        tokens_list[ind] = tokens.duplicate(
+            workflow=infer_latest_run_from_id(
+                tokens['workflow'], alt_run_dir
+            )
+        )
         pass
 
 
@@ -498,6 +532,12 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
             'currently supported.'
         )
 
+    # import only when needed to avoid slowing CLI unnecessarily
+    from cylc.flow.network.scan import (
+        filter_name,
+        is_active,
+        scan,
+    )
     # construct the pipe
     pipe = scan | filter_name(fnmatch.translate(tokens['workflow']))
     if match_active is not None:

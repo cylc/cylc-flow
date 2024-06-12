@@ -15,10 +15,10 @@ purpose = """
         R1 = """
             host_no_subshell
             localhost_subshell
-            platform_subshell:submit-fail => fin_platform
-            platform_no_subshell:submit-fail => fin_platform
-            host_subshell:submit-fail => fin_host
-            host_subshell_backticks:submit-fail => fin_host
+            platform_subshell:submit-fail? => fin_platform
+            platform_no_subshell:submit-fail? => fin_platform
+            host_subshell:submit-fail? => fin_host
+            host_subshell_backticks:submit-fail? => fin_host
         """
 
 [runtime]

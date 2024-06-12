@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid1
@@ -33,11 +35,11 @@ from cylc.flow.scripts.reinstall import (
     get_option_parser as reinstall_gop,
     reinstall_cli,
 )
-from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import (
     WorkflowFiles,
 )
 
+from .utils.entry_points import EntryPointWrapper
 
 ReInstallOptions = Options(reinstall_gop())
 
@@ -90,14 +92,14 @@ def one_run(one_src, test_dir, run_dir):
     )
 
 
-def test_rejects_random_workflows(one):
+async def test_rejects_random_workflows(one, one_run):
     """It should only work with workflows installed by cylc install."""
     with pytest.raises(WorkflowFilesError) as exc_ctx:
-        reinstall_cli(opts=ReInstallOptions(), args=one.workflow)
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=one.workflow)
     assert 'was not installed with cylc install' in str(exc_ctx.value)
 
 
-def test_invalid_source_dir(one_src, one_run):
+async def test_invalid_source_dir(one_src, one_run):
     """It should detect & fail for an invalid source symlink"""
     source_link = Path(
         one_run.path,
@@ -108,22 +110,22 @@ def test_invalid_source_dir(one_src, one_run):
     source_link.symlink_to(one_src.path / 'flow.cylc')
 
     with pytest.raises(WorkflowFilesError) as exc_ctx:
-        reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'Workflow source dir is not accessible' in str(exc_ctx.value)
 
 
-def test_no_changes_needed(one_src, one_run, capsys, interactive):
+async def test_no_changes_needed(one_src, one_run, capsys, interactive):
     """It should not reinstall if no changes are needed.
 
     This is not a hard requirement, in practice rsync output may differ
     from expectation so this is a nice-to-have, not expected to work 100%
     of the time.
     """
-    assert not reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert not await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'up to date with' in capsys.readouterr().out
 
 
-def test_non_interactive(one_src, one_run, capsys, capcall, non_interactive):
+async def test_non_interactive(one_src, one_run, capsys, capcall, non_interactive):
     """It should not perform a dry-run or prompt in non-interactive mode."""
     # capture reinstall calls
     reinstall_calls = capcall(
@@ -133,13 +135,13 @@ def test_non_interactive(one_src, one_run, capsys, capcall, non_interactive):
     # give it something to reinstall
     (one_src.path / 'a').touch()
     # reinstall
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     # only one rsync call should have been made (i.e. no --dry-run)
     assert len(reinstall_calls) == 1
     assert 'Successfully reinstalled' in capsys.readouterr().out
 
 
-def test_interactive(
+async def test_interactive(
     one_src,
     one_run,
     capsys,
@@ -161,7 +163,7 @@ def test_interactive(
         'cylc.flow.scripts.reinstall._input',
         lambda x: 'n'
     )
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id) is False
+    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id) is False
 
     # only one rsync call should have been made (i.e. the --dry-run)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [True]
@@ -173,7 +175,7 @@ def test_interactive(
         'cylc.flow.scripts.reinstall._input',
         lambda x: 'y'
     )
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
 
     # two rsync calls should have been made (i.e. the --dry-run and the real)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [
@@ -182,7 +184,7 @@ def test_interactive(
     assert 'Successfully reinstalled' in capsys.readouterr().out
 
 
-def test_workflow_running(
+async def test_workflow_running(
     one_src,
     one_run,
     monkeypatch,
@@ -194,7 +196,7 @@ def test_workflow_running(
     reload_message = f'Run "cylc reload {one_run.id}"'
 
     # reinstall with a stopped workflow (reload message shouldn't show)
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert reload_message not in capsys.readouterr().out
 
     # reinstall with a running workflow (reload message should show)
@@ -203,11 +205,11 @@ def test_workflow_running(
         'cylc.flow.scripts.reinstall.load_contact_file',
         lambda x: None,
     )
-    assert reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert reload_message in capsys.readouterr().out
 
 
-def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
+async def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
     """Make sure rsync is working correctly."""
     # src contains files: a, b
     (one_src.path / 'a').touch()
@@ -219,7 +221,7 @@ def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
     (one_run.path / 'b').touch()
     (one_run.path / 'c').touch()
 
-    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
 
     # a should have been left
     assert (one_run.path / 'a').exists()
@@ -231,7 +233,7 @@ def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
     assert not (one_run.path / 'c').exists()
 
 
-def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
+async def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
     """It should warn that Rose installed files will be deleted.
 
     See https://github.com/cylc/cylc-rose/issues/149
@@ -249,16 +251,16 @@ def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
     (one_src.path / 'a').touch()  # give it something to install
 
     # reinstall (with rose-suite.conf file)
-    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert rose_message in capsys.readouterr().err
 
     # reinstall (no rose-suite.conf file)
     (one_src.path / 'rose-suite.conf').unlink()
-    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert rose_message not in capsys.readouterr().err
 
 
-def test_keyboard_interrupt(
+async def test_keyboard_interrupt(
     one_src,
     one_run,
     interactive,
@@ -279,11 +281,11 @@ def test_keyboard_interrupt(
         raise_keyboard_interrupt,
     )
 
-    reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'Reinstall canceled, no changes made' in capsys.readouterr().out
 
 
-def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
+async def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
     """It should raise an error on rsync failure."""
     mock_glbl_cfg(
         'cylc.flow.install.glbl_cfg',
@@ -296,5 +298,91 @@ def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
 
     (one_src.path / 'a').touch()  # give it something to install
     with pytest.raises(WorkflowFilesError) as exc_ctx:
-        reinstall_cli(opts=ReInstallOptions(), args=one_run.id)
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'An error occurred reinstalling' in str(exc_ctx.value)
+
+
+@pytest.fixture
+def my_install_plugin(monkeypatch):
+    """This configures a single post_install plugin.
+
+    The plugin starts an async task, then returns.
+    """
+    progress = []
+
+    @EntryPointWrapper
+    def post_install_basic(*_, **__):
+        """Simple plugin that returns one env var and one template var."""
+        nonlocal progress
+
+        async def my_async():
+            # the async task
+            nonlocal progress
+            await asyncio.sleep(2)
+            progress.append('end')
+
+        # start the async task
+        progress.append('start')
+        asyncio.get_event_loop().create_task(my_async())
+        progress.append('return')
+
+        # return a blank result
+        return {
+            'env': {},
+            'template_variables': {},
+        }
+
+    monkeypatch.setattr(
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: (
+            [post_install_basic] if namespace == 'cylc.post_install' else []
+        )
+    )
+
+    return progress
+
+
+async def test_async_block(
+    one_src,
+    one_run,
+    my_install_plugin,
+    monkeypatch,
+):
+    """Ensure async tasks created by post_install plugins are awaited.
+
+    The cylc-rose plugin may create asyncio tasks when run but cannot await
+    them (because it isn't async itself). To get around this we have
+    "cylc reinstall" use "async_block" which detects tasks created in the
+    background and awaits them.
+
+    This test ensures that the async_block mechanism is correctly plugged in
+    to "cylc reinstall".
+
+    See https://github.com/cylc/cylc-rose/issues/274
+    """
+    # this is what it should do
+    (one_src.path / 'a').touch()  # give it something to install
+    assert my_install_plugin == []
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    # the presence of "end" means that the task was awaited
+    assert my_install_plugin == ['start', 'return', 'end']
+
+    # substitute the "async_block" (which waits for asyncio tasks started in
+    # the background) for a fake implementation (which doesn't)
+
+    @asynccontextmanager
+    async def async_block():
+        yield
+
+    monkeypatch.setattr(
+        'cylc.flow.plugins._async_block',
+        async_block,
+    )
+
+    # this is what it would have done without async block
+    (one_src.path / 'b').touch()  # give it something else to install
+    my_install_plugin.clear()
+    assert my_install_plugin == []
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    # the absence of "end" means that the task was not awaited
+    assert my_install_plugin == ['start', 'return']

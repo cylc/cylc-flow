@@ -41,11 +41,12 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
 reftest_run
 
 TEST_NAME="${TEST_NAME_BASE}-order-wait"
+# Note flow_wait is updated to False once used.
 QUERY="SELECT name,flow_nums,flow_wait FROM task_states ORDER BY time_created"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" <<\__END__
 a|[1]|0
-d|[1]|1
+d|[1]|0
 b|[1]|0
 c|[1]|0
 e|[1]|0

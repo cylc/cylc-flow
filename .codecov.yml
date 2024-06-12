@@ -17,18 +17,19 @@ coverage:
     project:
       default:
         # commits below this threshold will be marked as failed
-        target: '85%'
+        target: '92%'
         # how much we allow the coverage to drop
         threshold: '2%'
     patch:
       default:
-        target: '95%'
+        target: '97%'
         threshold: '5%'
 
 # files to ignore
 ignore:
   - "tests/**"
   - "ws_messages_pb2.py"
+  - "cylc/flow/scripts/report_timings.py"
 
 flag_management:
   default_rules:

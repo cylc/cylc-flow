@@ -1,0 +1,11 @@
+1/c_cold -triggered off [] in flow 1
+1/a_cold -triggered off [] in flow 1
+1/b_cold -triggered off [] in flow 1
+1/a -triggered off ['1/a_cold'] in flow 1
+1/b -triggered off ['1/a', '1/b_cold'] in flow 1
+1/c -triggered off ['1/b', '1/c_cold'] in flow 1
+1/reflow -triggered off ['1/c'] in flow 1
+1/a -triggered off ['1/a_cold'] in flow 2
+1/b -triggered off ['1/a', '1/b_cold'] in flow 2
+1/c -triggered off ['1/b', '1/c_cold'] in flow 2
+1/reflow -triggered off ['1/c'] in flow 2

@@ -40,6 +40,7 @@ import asyncio
 import re
 import json
 import sys
+from textwrap import indent
 from typing import Any, Dict, TYPE_CHECKING
 
 from ansimarkup import ansiprint
@@ -51,6 +52,7 @@ from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_RUNNING
@@ -60,6 +62,7 @@ from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
 )
 from cylc.flow.terminal import cli_function
+from cylc.flow.util import BOOL_SYMBOLS
 
 
 if TYPE_CHECKING:
@@ -135,16 +138,39 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
       label
       satisfied
     }
+    runtime {
+      completion
+    }
   }
 }
 '''
 
 
+SATISFIED = BOOL_SYMBOLS[True]
+UNSATISFIED = BOOL_SYMBOLS[False]
+
+
 def print_msg_state(msg, state):
     if state:
-        ansiprint(f'<green>  + {msg}</green>')
+        ansiprint(f'<green>  {SATISFIED} {msg}</green>')
     else:
-        ansiprint(f'<red>  - {msg}</red>')
+        ansiprint(f'<red>  {UNSATISFIED} {msg}</red>')
+
+
+def print_completion_state(t_proxy):
+    # create task outputs object
+    outputs = TaskOutputs(t_proxy["runtime"]["completion"])
+
+    for output in t_proxy['outputs']:
+        outputs.add(output['label'], output['message'])
+        if output['satisfied']:
+            outputs.set_message_complete(output['message'])
+
+    ansiprint(
+        f'<bold>output completion:</bold>'
+        f' {"complete" if outputs.is_complete() else "incomplete"}'
+        f'\n{indent(outputs.format_completion_status(ansimarkup=2), "  ")}'
+    )
 
 
 def flatten_data(data, flat_data=None):
@@ -316,14 +342,16 @@ async def prereqs_and_outputs_query(
                     ansiprint(f"{pre_txt} (n/a for past tasks)")
                 else:
                     ansiprint(
-                        f"{pre_txt} ('<red>-</red>': not satisfied)")
+                        f"{pre_txt}"
+                        f" ('<red>{UNSATISFIED}</red>': not satisfied)"
+                    )
                     for _, prefix, msg, state in prereqs:
                         print_msg_state(f'{prefix}{msg}', state)
 
                 # outputs
                 ansiprint(
                     '<bold>outputs:</bold>'
-                    " ('<red>-</red>': not completed)")
+                    f" ('<red>{UNSATISFIED}</red>': not completed)")
                 if not t_proxy['outputs']:  # (Not possible - standard outputs)
                     print('  (None)')
                 for output in t_proxy['outputs']:
@@ -334,7 +362,9 @@ async def prereqs_and_outputs_query(
                         or t_proxy['xtriggers']
                 ):
                     ansiprint(
-                        "<bold>other:</bold> ('<red>-</red>': not satisfied)")
+                        "<bold>other:</bold>"
+                        f" ('<red>{UNSATISFIED}</red>': not satisfied)"
+                    )
                     for ext_trig in t_proxy['externalTriggers']:
                         state = ext_trig['satisfied']
                         print_msg_state(
@@ -346,6 +376,9 @@ async def prereqs_and_outputs_query(
                         print_msg_state(
                             f'xtrigger "{xtrig["label"]} = {label}"',
                             state)
+
+                print_completion_state(t_proxy)
+
     if not results['taskProxies']:
         ansiprint(
             f"<red>No matching active tasks found: {', '.join(ids_list)}",

@@ -239,4 +239,6 @@ def test_cylc_config_xtriggers(tmp_run_dir, capsys: pytest.CaptureFixture):
             R1 = @rotund => foo
     [runtime]
         [[root]]
+        [[foo]]
+            completion = succeeded
     """)

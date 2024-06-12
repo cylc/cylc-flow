@@ -41,8 +41,8 @@ WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Note: double poll existence of workflow log on workflow host and then localhost to
 # avoid any issues with unstable mounting of the shared file system.
 poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST}" test -e "${WORKFLOW_LOG}"
-poll_grep_workflow_log -E '19700101T0000Z/t1 submitted .* => running'
-poll_grep_workflow_log -E '19700101T0000Z/t1 running .* => failed'
+poll_grep_workflow_log -E '19700101T0000Z/t1/01:submitted.* => running'
+poll_grep_workflow_log -E '19700101T0000Z/t1/01:running.* => failed'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast -n 't1' -s '[environment]CYLC_TEST_VAR_FOO=foo' "${WORKFLOW_NAME}"

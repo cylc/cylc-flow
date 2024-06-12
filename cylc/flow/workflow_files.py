@@ -22,21 +22,25 @@ See also:
 
 """
 
+from enum import Enum
+import errno
 import os
+from pathlib import Path
 import re
 import shutil
-from enum import Enum
-from pathlib import Path
 from subprocess import (
     PIPE,
     Popen,
     TimeoutExpired,
 )
 from typing import (
+    Callable,
     Dict,
     Optional,
     Tuple,
     Union,
+    NoReturn,
+    Type,
 )
 
 import cylc.flow.flags
@@ -48,7 +52,7 @@ from cylc.flow.exceptions import (
     InputError,
     ServiceFileError,
     WorkflowFilesError,
-    handle_rmtree_err,
+    FileRemovalError,
 )
 from cylc.flow.hostuserutil import (
     get_user,
@@ -61,12 +65,21 @@ from cylc.flow.pathutil import (
     get_alt_workflow_run_dir,
     make_localhost_symlinks,
 )
-from cylc.flow.remote import (
-    construct_cylc_server_ssh_cmd,
-)
-from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
+
+
+def handle_rmtree_err(
+    function: Callable,
+    path: str,
+    excinfo: Tuple[Type[Exception], Exception, object]
+) -> NoReturn:
+    """Error handler for shutil.rmtree."""
+    exc = excinfo[1]
+    if isinstance(exc, OSError) and exc.errno == errno.ENOTEMPTY:
+        # "Directory not empty", likely due to filesystem lag
+        raise FileRemovalError(exc)
+    raise exc
 
 
 class KeyType(Enum):
@@ -98,15 +111,21 @@ class KeyInfo():  # noqa: SIM119 (not really relevant here)
 
     """
 
-    def __init__(self, key_type, key_owner, full_key_path=None,
-                 workflow_srv_dir=None, install_target=None, server_held=True):
+    def __init__(
+        self,
+        key_type: KeyType,
+        key_owner: KeyOwner,
+        full_key_path: Optional[str] = None,
+        workflow_srv_dir: Optional[str] = None,
+        install_target: Optional[str] = None,
+        server_held: bool = True
+    ):
         self.key_type = key_type
         self.key_owner = key_owner
-        self.full_key_path = full_key_path
         self.workflow_srv_dir = workflow_srv_dir
         self.install_target = install_target
-        if self.full_key_path is not None:
-            self.key_path, self.file_name = os.path.split(self.full_key_path)
+        if full_key_path is not None:
+            self.key_path, self.file_name = os.path.split(full_key_path)
         elif self.workflow_srv_dir is not None:  # noqa: SIM106
             # Build key filename
             file_name = key_owner.value
@@ -117,7 +136,7 @@ class KeyInfo():  # noqa: SIM119 (not really relevant here)
                     and self.install_target is not None):
                 file_name = f"{file_name}_{self.install_target}"
 
-            if key_type == KeyType.PRIVATE:
+            if key_type is KeyType.PRIVATE:
                 file_extension = WorkflowFiles.Service.PRIVATE_FILE_EXTENSION
             else:
                 file_extension = WorkflowFiles.Service.PUBLIC_FILE_EXTENSION
@@ -383,6 +402,9 @@ def _is_process_running(
         False
 
     """
+    from cylc.flow.remote import construct_cylc_server_ssh_cmd
+    from cylc.flow.terminal import parse_dirty_json
+
     # See if the process is still running or not.
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):
@@ -779,10 +801,19 @@ def get_workflow_title(id_):
     return title
 
 
-def check_deprecation(path, warn=True):
+def check_deprecation(path, warn=True, force_compat_mode=False):
     """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
 
     Path can point to config file or parent directory (i.e. workflow name).
+
+    Args:
+        warn:
+            If True, then a warning will be logged when compatibility
+            mode is activated.
+        force_compat_mode:
+            If True, forces Cylc to use compatibility mode
+            overriding compatibility mode checks.
+            See https://github.com/cylc/cylc-rose/issues/319
     """
     if (
         # Don't want to log if it's already been set True.
@@ -790,6 +821,7 @@ def check_deprecation(path, warn=True):
         and (
             path.resolve().name == WorkflowFiles.SUITE_RC
             or (path / WorkflowFiles.SUITE_RC).is_file()
+            or force_compat_mode
         )
     ):
         cylc.flow.flags.cylc7_back_compat = True

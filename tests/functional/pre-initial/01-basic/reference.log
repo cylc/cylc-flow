@@ -1,6 +1,0 @@
-Initial point: 20100101T0000Z
-Final point: 20100102T0000Z
-20100101T0000Z/b -triggered off []
-20100102T0000Z/b -triggered off []
-20100101T0000Z/a -triggered off ['20091231T0000Z/a', '20100101T0000Z/b']
-20100102T0000Z/a -triggered off ['20100101T0000Z/a', '20100102T0000Z/b']

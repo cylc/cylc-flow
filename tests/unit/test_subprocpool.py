@@ -29,7 +29,14 @@ from cylc.flow.id import Tokens
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNCS, get_func
+from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNC_CACHE, _XTRIG_MOD_CACHE, get_xtrig_func
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_EXPIRED,
+)
 from cylc.flow.task_proxy import TaskProxy
 
 
@@ -155,7 +162,8 @@ class TestSubProcPool(unittest.TestCase):
             with the_answer_file.open(mode="w") as f:
                 f.write("""the_answer = lambda: 42""")
                 f.flush()
-            fn = get_func("the_answer", temp_dir)
+                f_name = "the_answer"
+            fn = get_xtrig_func(f_name, f_name, temp_dir)
             result = fn()
             self.assertEqual(42, result)
 
@@ -166,19 +174,18 @@ class TestSubProcPool(unittest.TestCase):
             python_dir.mkdir(parents=True)
             amandita_file = python_dir / "amandita.py"
             with amandita_file.open(mode="w") as f:
-                f.write("""amandita = lambda: 'chocolate'""")
+                f.write("""choco = lambda: 'chocolate'""")
                 f.flush()
-            fn = get_func("amandita", temp_dir)
+            m_name = "amandita"  # module
+            f_name = "choco"  # function
+            fn = get_xtrig_func(m_name, f_name, temp_dir)
             result = fn()
             self.assertEqual('chocolate', result)
 
             # is in the cache
-            self.assertTrue('amandita' in _XTRIG_FUNCS)
+            self.assertTrue((m_name, f_name) in _XTRIG_FUNC_CACHE)
             # returned from cache
-            self.assertEqual(fn, get_func("amandita", temp_dir))
-            del _XTRIG_FUNCS['amandita']
-            # is not in the cache
-            self.assertFalse('amandita' in _XTRIG_FUNCS)
+            self.assertEqual(fn, get_xtrig_func(m_name, f_name, temp_dir))
 
     def test_xfunction_import_error(self):
         """Test for error on importing a xtrigger function.
@@ -189,7 +196,7 @@ class TestSubProcPool(unittest.TestCase):
         """
         with TemporaryDirectory() as temp_dir:
             with self.assertRaises(ModuleNotFoundError):
-                get_func("invalid-module-name", temp_dir)
+                get_xtrig_func("invalid-module-name", "func-name", temp_dir)
 
     def test_xfunction_attribute_error(self):
         """Test for error on looking for an attribute in a xtrigger script."""
@@ -200,8 +207,9 @@ class TestSubProcPool(unittest.TestCase):
             with the_answer_file.open(mode="w") as f:
                 f.write("""the_droid = lambda: 'excalibur'""")
                 f.flush()
+            f_name = "the_sword"
             with self.assertRaises(AttributeError):
-                get_func("the_sword", temp_dir)
+                get_xtrig_func(f_name, f_name, temp_dir)
 
 
 @pytest.fixture
@@ -252,7 +260,7 @@ def _test_callback_255(ctx, foo=''):
         pytest.param(
             'platform: localhost - Could not connect to mouse.',
             255,
-            TaskJobLogsRetrieveContext(['ssh', 'something'], None, None, None),
+            TaskJobLogsRetrieveContext(['ssh', 'something'], None, None),
             id="return 255 (log-ret)"
         )
     ]
@@ -279,7 +287,6 @@ def test__run_command_exit_no_255_callback(caplog, mock_ctx):
 def test__run_command_exit_no_gettable_platform(caplog, mock_ctx):
     """It logs being unable to select a platform"""
     ret_ctx = TaskJobLogsRetrieveContext(
-        ctx_type='raa',
         platform_name='rhenas',
         max_size=256,
         key='rhenas'
@@ -316,8 +323,7 @@ def test__run_command_exit_add_to_badhosts(mock_ctx):
 
 
 def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
-    """It gets platform name from the callback args.
-    """
+    """It gets platform name from the callback args."""
     badhosts = {'foo', 'bar'}
     SubProcPool._run_command_exit(
         mock_ctx(cmd=['ssh']),
@@ -328,8 +334,13 @@ def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
             SimpleNamespace(
                 name='t', dependencies={}, sequential='',
                 external_triggers=[], xtrig_labels={},
+                expiration_offset=None,
                 outputs={
-                    'submitted': [None, None], 'submit-failed': [None, None]
+                    TASK_OUTPUT_SUBMITTED: [None, None],
+                    TASK_OUTPUT_SUBMIT_FAILED: [None, None],
+                    TASK_OUTPUT_SUCCEEDED: [None, None],
+                    TASK_OUTPUT_FAILED: [None, None],
+                    TASK_OUTPUT_EXPIRED: [None, None],
                 },
                 graph_children={}, rtconfig={'platform': 'foo'}
 

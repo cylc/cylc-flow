@@ -6,7 +6,7 @@
        inactivity timeout = PT3M
 [scheduling]
     [[graph]]
-        R1 = submit-failed:submit-failed => a-task
+        R1 = submit-failed:submit-failed? => a-task
 [runtime]
     [[a-task]]
         script = """

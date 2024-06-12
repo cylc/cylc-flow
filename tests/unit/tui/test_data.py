@@ -28,7 +28,7 @@ def test_generate_mutation(monkeypatch):
     monkeypatch.setattr(cylc.flow.tui.data, 'ARGUMENT_TYPES', arg_types)
     assert generate_mutation(
         'my_mutation',
-        ['foo', 'bar']
+        {'foo': 'foo', 'bar': 'bar', 'user': 'user'}
     ) == '''
         mutation($foo: String!, $bar: [Int]) {
             my_mutation (foos: $foo, bars: $bar) {

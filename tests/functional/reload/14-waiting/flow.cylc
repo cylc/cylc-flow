@@ -3,7 +3,7 @@
 
 [scheduling]
     [[graph]]
-# SoD: starter:start addeded to create a partially satisfied waiting task
+# SoD: starter:start added to create a partially satisfied waiting task
 # to be present during the reload.
         R1 = """
 starter:start => waiter
@@ -23,8 +23,9 @@ done
         script = true
     [[reloader]]
         script = """
+cylc__job__wait_cylc_message_started
 cylc reload "${CYLC_WORKFLOW_ID}"
-cylc__job__poll_grep_workflow_log -E '1/waiter .* reloaded task definition'
+cylc__job__poll_grep_workflow_log -E '1/waiter.* reloaded task definition'
 rm -f "${CYLC_WORKFLOW_WORK_DIR}/1/sleeping-waiter/file"
 rm -f "${CYLC_WORKFLOW_WORK_DIR}/1/starter/file"
         """

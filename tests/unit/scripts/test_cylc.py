@@ -15,14 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pkg_resources
+import os
+import sys
 from types import SimpleNamespace
 from typing import Callable
 from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.scripts.cylc import iter_commands
+from cylc.flow.scripts.cylc import iter_commands, pythonpath_manip
 
 from ..conftest import MonkeyMock
 
@@ -30,11 +31,8 @@ from ..conftest import MonkeyMock
 @pytest.fixture
 def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
     """Mock a range of entry points."""
-    def _resolve_fail(*args, **kwargs):
+    def _load_fail(*args, **kwargs):
         raise ModuleNotFoundError('foo')
-
-    def _require_fail(*args, **kwargs):
-        raise pkg_resources.DistributionNotFound('foo', ['my_extras'])
 
     def _resolve_ok(*args, **kwargs):
         return Mock()
@@ -47,24 +45,18 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
             # an entry point with all dependencies installed:
             'good': SimpleNamespace(
                 name='good',
-                module_name='os.path',
-                resolve=_resolve_ok,
-                require=_require_ok,
+                module='os.path',
+                load=_resolve_ok,
+                extras=[],
+                dist=SimpleNamespace(name='a'),
             ),
             # an entry point with optional dependencies missing:
             'missing': SimpleNamespace(
                 name='missing',
-                module_name='not.a.python.module',  # force an import error
-                resolve=_resolve_fail,
-                require=_require_fail,
-            ),
-            # an entry point with optional dependencies missing, but they
-            # are not needed for the core functionality of the entry point:
-            'partial': SimpleNamespace(
-                name='partial',
-                module_name='os.path',
-                resolve=_resolve_ok,
-                require=_require_fail,
+                module='not.a.python.module',  # force an import error
+                load=_load_fail,
+                extras=[],
+                dist=SimpleNamespace(name='foo'),
             ),
         }
         if include_bad:
@@ -72,9 +64,11 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
             # missing:
             commands['bad'] = SimpleNamespace(
                 name='bad',
-                module_name='not.a.python.module',
-                resolve=_resolve_fail,
+                module='not.a.python.module',
+                load=_load_fail,
                 require=_require_ok,
+                extras=[],
+                dist=SimpleNamespace(name='d'),
             )
         monkeypatch.setattr('cylc.flow.scripts.cylc.COMMANDS', commands)
 
@@ -88,14 +82,13 @@ def test_iter_commands(mock_entry_points):
     """
     mock_entry_points()
     commands = list(iter_commands())
-    assert [i[0] for i in commands] == ['good', 'partial']
+    assert [i[0] for i in commands] == ['good']
 
 
 def test_iter_commands_bad(mock_entry_points):
-    """Test listing commands fails if there is an unexpected import error."""
+    """Test listing commands doesn't fail on import error."""
     mock_entry_points(include_bad=True)
-    with pytest.raises(ModuleNotFoundError):
-        list(iter_commands())
+    list(iter_commands())
 
 
 def test_execute_cmd(
@@ -123,16 +116,33 @@ def test_execute_cmd(
     execute_cmd('missing')
     capexit.assert_any_call(1)
     assert capsys.readouterr().err.strip() == (
-        "cylc missing: The 'foo' distribution was not found and is"
-        " required by my_extras"
+        '"cylc missing" requires "foo"\n\nModuleNotFoundError: foo'
     )
 
-    # the "partial" entry point should exit 0
-    capexit.reset_mock()
-    execute_cmd('partial')
-    capexit.assert_called_once_with()
-    assert capsys.readouterr().err == ''
+    # the "bad" entry point should log an error
+    execute_cmd('bad')
+    capexit.assert_any_call(1)
 
-    # the "bad" entry point should raise an exception
-    with pytest.raises(ModuleNotFoundError):
-        execute_cmd('bad')
+    stderr = capsys.readouterr().err.strip()
+    assert '"cylc bad" requires "d"' in stderr
+    assert 'ModuleNotFoundError: foo' in stderr
+
+
+def test_pythonpath_manip(monkeypatch):
+    """pythonpath_manip removes items in PYTHONPATH from sys.path
+
+    and adds items from CYLC_PYTHONPATH
+    """
+    monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
+    monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
+    pythonpath_manip()
+    # ... we don't change PYTHONPATH
+    assert os.environ['PYTHONPATH'] == '/remove1:/remove2'
+    # ... but we do remove PYTHONPATH items from sys.path, and don't remove
+    # items there not in PYTHONPATH
+    assert sys.path == ['/leave-alone']
+    # If CYLC_PYTHONPATH is set we retrieve its contents and
+    # add them to the sys.path:
+    monkeypatch.setenv('CYLC_PYTHONPATH', '/add1:/add2')
+    pythonpath_manip()
+    assert sys.path == ['/add1', '/add2', '/leave-alone']

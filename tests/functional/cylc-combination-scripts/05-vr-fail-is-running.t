@@ -41,6 +41,7 @@ run_ok "setup (vip)" \
 
 # Get the workflow into an unreachable state
 CONTACTFILE="${RUN_DIR}/${WORKFLOW_NAME}/.service/contact"
+cp "$CONTACTFILE" "${CONTACTFILE}.old"
 poll test -e "${CONTACTFILE}"
 
 sed -i 's@CYLC_WORKFLOW_HOST=.*@CYLC_WORKFLOW_HOST=elephantshrew@' "${CONTACTFILE}"
@@ -54,7 +55,7 @@ run_fail "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 grep_ok "on elephantshrew." "${TEST_NAME_BASE}-runs.stderr"
 
 # Clean Up:
-sed -i "s@CYLC_WORKFLOW_HOST=elephantshrew@CYLC_WORKFLOW_HOST=$HOSTNAME@" "${CONTACTFILE}"
-run_ok "teardown (stop workflow)" cylc stop "${WORKFLOW_NAME}" --now --now
+mv "${CONTACTFILE}.old" "$CONTACTFILE"
+run_ok "${TEST_NAME_BASE}-stop" cylc stop "${WORKFLOW_NAME}" --now --now
 purge
 exit 0

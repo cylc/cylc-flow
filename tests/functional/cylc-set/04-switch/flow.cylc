@@ -1,0 +1,31 @@
+# Set outputs of future task to direct the flow at an optional branch point.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+        stall timeout = PT0S
+        abort on stall timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            switcher => foo
+            foo:a? => a
+            foo:b? => b
+        """
+[runtime]
+    [[switcher]]
+        script = """
+           cylc set --output=a,succeeded --wait ${CYLC_WORKFLOW_ID}//1/foo
+           # wait for command actioned, to avoid race condition
+           cylc__job__poll_grep_workflow_log "actioned"
+        """
+    [[foo]]
+        script = "cylc message b"  # always go b-way if I run
+        [[[outputs]]]
+             a = a
+             b = b
+    [[a]]
+    [[b]]
+        script = false

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Filter for formatting ISO8601 duration strings."""
 
+from typing import Callable, Dict, Tuple
+
 from metomi.isodatetime.parsers import DurationParser
 
 SECONDS_PER_MINUTE = 60.0
@@ -26,7 +28,7 @@ SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
 SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY
 SECONDS_PER_WEEK = SECONDS_PER_DAY * DAYS_PER_WEEK
 
-CONVERSIONS = {
+CONVERSIONS: Dict[Tuple[str, str], Callable] = {
     ('s', 'seconds'): float,
     ('m', 'minutes'): lambda s: float(s) / SECONDS_PER_MINUTE,
     ('h', 'hours'): lambda s: float(s) / SECONDS_PER_HOUR,
@@ -35,7 +37,7 @@ CONVERSIONS = {
 }
 
 
-def duration_as(iso8601_duration, units):
+def duration_as(iso8601_duration: str, units: str) -> float:
     """Format an :term:`ISO8601 duration` string as the specified units.
 
     Units for the conversion can be specified in a case-insensitive short or
@@ -57,8 +59,8 @@ def duration_as(iso8601_duration, units):
     - ``{{CYCLE_SUBINTERVAL | duration_as('s') | int}}`` - 1800
 
     Args:
-        iso8601_duration (str): Any valid ISO8601 duration as a string.
-        units (str): Destination unit for the duration conversion
+        iso8601_duration: Any valid ISO8601 duration as a string.
+        units: Destination unit for the duration conversion
 
     Return:
         The total number of the specified unit contained in the specified

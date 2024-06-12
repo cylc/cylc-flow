@@ -19,16 +19,30 @@
 from collections import Counter
 from copy import copy
 from fnmatch import fnmatchcase
+from time import time
 from typing import (
-    Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+    Any,
+    Callable,
+    Counter as TypingCounter,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
+from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
-from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
+from cylc.flow.task_state import (
+    TaskState,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_EXPIRED,
+)
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 from cylc.flow.cycling.iso8601 import (
@@ -38,10 +52,11 @@ from cylc.flow.cycling.iso8601 import (
 )
 
 if TYPE_CHECKING:
-    from cylc.flow.id import Tokens
     from cylc.flow.cycling import PointBase
+    from cylc.flow.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
+    from cylc.flow.id import Tokens
 
 
 class TaskProxy:
@@ -100,8 +115,6 @@ class TaskProxy:
                 Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
-            logfiles (list):
-                List of names of (extra) known job log files.
             name (str):
                 Same as the .tdef.name attribute.
             started_time (float):
@@ -139,6 +152,12 @@ class TaskProxy:
         .waiting_on_job_prep:
             True whilst task is awaiting job prep, reset to False once the
             preparation has completed.
+        .transient:
+            This is a transient proxy - not to be added to the task pool, but
+            used e.g. to spawn children, or to get task-specific information.
+        .is_xtrigger_sequential:
+            A flag used to determine whether this task needs to wait for
+            xtrigger satisfaction to spawn.
 
     Args:
         tdef: The definition object of this task.
@@ -180,6 +199,9 @@ class TaskProxy:
         'tokens',
         'try_timers',
         'waiting_on_job_prep',
+        'mode_settings',
+        'transient',
+        'is_xtrigger_sequential',
     ]
 
     def __init__(
@@ -195,6 +217,8 @@ class TaskProxy:
         is_manual_submit: bool = False,
         flow_wait: bool = False,
         data_mode: bool = False,
+        transient: bool = False,
+        sequential_xtrigger_labels: Optional[Set[str]] = None,
     ) -> None:
 
         self.tdef = tdef
@@ -225,7 +249,6 @@ class TaskProxy:
             'started_time_string': None,
             'finished_time': None,
             'finished_time_string': None,
-            'logfiles': [],
             'platforms_used': {},
             'execution_time_limit': None,
             'job_runner_name': None,
@@ -241,11 +264,13 @@ class TaskProxy:
         else:
             self.platform = get_platform()
 
+        self.transient = transient
+
         self.job_vacated = False
         self.poll_timer: Optional['TaskActionTimer'] = None
         self.timeout: Optional[float] = None
         self.try_timers: Dict[str, 'TaskActionTimer'] = {}
-        self.non_unique_events = Counter()  # type: ignore # TODO: figure out
+        self.non_unique_events: TypingCounter[str] = Counter()
 
         self.clock_trigger_times: Dict[str, int] = {}
         self.expire_time: Optional[float] = None
@@ -255,22 +280,46 @@ class TaskProxy:
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
+        # Set xtrigger checking type, which effects parentless spawning.
+        self.is_xtrigger_sequential = bool(
+            sequential_xtrigger_labels
+            and self.tdef.is_parentless(start_point)
+            and sequential_xtrigger_labels.intersection(self.state.xtriggers)
+        )
+
         # Determine graph children of this task (for spawning).
         if data_mode:
             self.graph_children = {}
         else:
             self.graph_children = generate_graph_children(tdef, self.point)
 
+        self.mode_settings: Optional['ModeSettings'] = None
+
+        if self.tdef.expiration_offset is not None:
+            self.expire_time = (
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(
+                    self.tdef.expiration_offset
+                )
+            )
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.tokens}'>"
 
     def __str__(self) -> str:
-        """Stringify with tokens, state, submit_num, and flow_nums."""
+        """Stringify with tokens, state, submit_num, and flow_nums.
+
+        Don't print submit number for pre job-prep states.
+
+        Format: "<point>/<name>/<job>{<flows>}:status".
+        """
+        id_ = self.identity
+        if self.transient:
+            return f"{id_}{stringify_flow_nums(self.flow_nums)}"
+        if not self.state(TASK_STATUS_WAITING, TASK_STATUS_EXPIRED):
+            id_ += f"/{self.submit_num:02d}"
         return (
-            f"{self.identity} "
-            f"{self.state} "
-            f"job:{self.submit_num:02d}"
-            f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"
+            f"{id_}{stringify_flow_nums(self.flow_nums)}:{self.state}"
         )
 
     def copy_to_reload_successor(self, reload_successor, check_output):
@@ -290,6 +339,7 @@ class TaskProxy:
         reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
+        reload_successor.mode_settings = self.mode_settings
 
         # Prerequisites: the graph might have changed before reload, so
         # we need to use the new prerequisites but update them with the
@@ -473,12 +523,50 @@ class TaskProxy:
 
     def state_reset(
         self, status=None, is_held=None, is_queued=None, is_runahead=None,
-        silent=False
+        silent=False, forced=False
     ) -> bool:
-        """Set new state and log the change. Return whether it changed."""
+        """Set new state and log the change. Return whether it changed.
+
+        """
         before = str(self)
-        if self.state.reset(status, is_held, is_queued, is_runahead):
-            if not silent:
+
+        if status == TASK_STATUS_EXPIRED:
+            is_queued = False
+            is_runahead = False
+
+        if self.state.reset(
+            status, is_held, is_queued, is_runahead, forced
+        ):
+            if not silent and not self.transient:
                 LOG.info(f"[{before}] => {self.state}")
             return True
+
         return False
+
+    def satisfy_me(
+        self, task_messages: 'List[Tokens]'
+    ) -> 'Set[Tokens]':
+        """Try to satisfy my prerequisites with given output messages.
+
+        The task output messages are of the form "cycle/task:message"
+        Log a warning for messages that I don't depend on.
+
+        Return a set of unmatched task messages.
+
+        """
+        used = self.state.satisfy_me(task_messages)
+        return set(task_messages) - used
+
+    def clock_expire(self) -> bool:
+        """Return True if clock expire time is up, else False."""
+        if (
+            self.expire_time is None  # expiry not configured
+            or self.state(TASK_STATUS_EXPIRED)  # already expired
+            or time() < self.expire_time  # not time yet
+        ):
+            return False
+        return True
+
+    def is_complete(self) -> bool:
+        """Return True if complete or expired."""
+        return self.state.outputs.is_complete()
