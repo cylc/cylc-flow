@@ -558,8 +558,12 @@ def reflog():
     return _reflog
 
 
-@pytest.fixture
-def complete():
+async def _complete(
+    schd,
+    *tokens_list: Union[Tokens, str],
+    stop_mode=StopMode.AUTO,
+    timeout: int = 60,
+) -> None:
     """Wait for the workflow, or tasks within it to complete.
 
     Args:
@@ -584,65 +588,67 @@ def complete():
             async_timeout (handles shutdown logic more cleanly).
 
     """
-    async def _complete(
-        schd,
-        *tokens_list: Union[Tokens, str],
-        stop_mode=StopMode.AUTO,
-        timeout: int = 60,
-    ) -> None:
-        start_time = time()
+    start_time = time()
 
-        _tokens_list: List[Tokens] = []
-        for tokens in tokens_list:
-            if isinstance(tokens, str):
-                tokens = Tokens(tokens, relative=True)
-            _tokens_list.append(tokens.task)
+    _tokens_list: List[Tokens] = []
+    for tokens in tokens_list:
+        if isinstance(tokens, str):
+            tokens = Tokens(tokens, relative=True)
+        _tokens_list.append(tokens.task)
 
-        # capture task completion
-        remove_if_complete = schd.pool.remove_if_complete
+    # capture task completion
+    remove_if_complete = schd.pool.remove_if_complete
 
-        def _remove_if_complete(itask, output=None):
-            nonlocal _tokens_list
-            ret = remove_if_complete(itask)
-            if ret and itask.tokens.task in _tokens_list:
-                _tokens_list.remove(itask.tokens.task)
-            return ret
+    def _remove_if_complete(itask, output=None):
+        nonlocal _tokens_list
+        ret = remove_if_complete(itask)
+        if ret and itask.tokens.task in _tokens_list:
+            _tokens_list.remove(itask.tokens.task)
+        return ret
 
-        schd.pool.remove_if_complete = _remove_if_complete
+    schd.pool.remove_if_complete = _remove_if_complete
 
-        # capture workflow shutdown
-        set_stop = schd._set_stop
-        has_shutdown = False
+    # capture workflow shutdown
+    set_stop = schd._set_stop
+    has_shutdown = False
 
-        def _set_stop(mode=None):
-            nonlocal has_shutdown, stop_mode
-            if mode == stop_mode:
-                has_shutdown = True
-                return set_stop(mode)
-            else:
-                set_stop(mode)
-                raise Exception(f'Workflow bailed with stop mode = {mode}')
-
-        schd._set_stop = _set_stop
-
-        # determine the completion condition
-        if _tokens_list:
-            condition = lambda: bool(_tokens_list)
+    def _set_stop(mode=None):
+        nonlocal has_shutdown, stop_mode
+        if mode == stop_mode:
+            has_shutdown = True
+            return set_stop(mode)
         else:
-            condition = lambda: bool(not has_shutdown)
+            set_stop(mode)
+            raise Exception(f'Workflow bailed with stop mode = {mode}')
 
-        # wait for the condition to be met
-        while condition():
-            # allow the main loop to advance
-            await asyncio.sleep(0)
-            if (time() - start_time) > timeout:
-                raise Exception(
-                    f'Timeout waiting for {", ".join(map(str, _tokens_list))}'
-                )
+    schd._set_stop = _set_stop
 
-        # restore regular shutdown logic
-        schd._set_stop = set_stop
+    # determine the completion condition
+    if _tokens_list:
+        condition = lambda: bool(_tokens_list)
+    else:
+        condition = lambda: bool(not has_shutdown)
 
+    # wait for the condition to be met
+    while condition():
+        # allow the main loop to advance
+        await asyncio.sleep(0)
+        if (time() - start_time) > timeout:
+            raise Exception(
+                f'Timeout waiting for {", ".join(map(str, _tokens_list))}'
+            )
+
+    # restore regular shutdown logic
+    schd._set_stop = set_stop
+
+
+@pytest.fixture
+def complete():
+    return _complete
+
+
+@pytest.fixture(scope='module')
+def mod_complete():
     return _complete
 
 
