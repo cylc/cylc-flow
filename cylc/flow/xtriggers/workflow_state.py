@@ -53,7 +53,7 @@ def workflow_state(
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
-            Dict {workflow_id, task_id, task_selector, flow_number}.
+            Dict {workflow_id, task_id, task_selector, flow_num}.
 
     """
     poller = WorkflowPoller(
@@ -76,7 +76,7 @@ def workflow_state(
                 "workflow_id": poller.workflow_id,
                 "task_id": f"{poller.cycle}/{poller.task}",
                 "task_selector": poller.selector,
-                "flow_number": poller.flow_num
+                "flow_num": poller.flow_num
             }
         )
     else:
