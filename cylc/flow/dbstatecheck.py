@@ -201,29 +201,42 @@ class CylcWorkflowDBChecker:
         task: Optional[str] = None,
         cycle: Optional[str] = None,
         selector: Optional[str] = None,
-        is_output: Optional[bool] = False,
+        is_trigger: Optional[bool] = False,
         is_message: Optional[bool] = False,
         flow_num: Optional[int] = None,
         print_outputs: bool = False
     ) -> List[List[str]]:
         """Query task status or outputs (by trigger or message) in a database.
 
-        Return a list of results for all tasks that match the query.
+        Args:
+            task:
+                task name
+            cycle:
+                cycle point
+            selector:
+                task status, trigger name, or message
+            is_trigger:
+                intpret the selector as a trigger
+            is_message:
+                interpret the selector as a task message
+
+        Return:
+            A list of results for all tasks that match the query.
         [
             [name, cycle, result, [flow]],
             ...
         ]
 
-        result is single string:
-          - for status queries, the task status
-          - for output queries, a serialized dict of completed outputs
+        "result" is single string:
+          - for status queries: the task status
+          - for output queries: a serialized dict of completed outputs
             {trigger: message}
 
         """
         stmt_args = []
         stmt_wheres = []
 
-        if is_output or is_message:
+        if is_trigger or is_message:
             target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
             mask = "name, cycle, outputs"
         else:
@@ -299,7 +312,7 @@ class CylcWorkflowDBChecker:
         if target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
             return db_res
 
-        warn_output_fallback = is_output
+        warn_output_fallback = is_trigger
         results = []
         for row in db_res:
             outputs: Union[Dict[str, str], List[str]] = json.loads(row[2])
@@ -314,7 +327,7 @@ class CylcWorkflowDBChecker:
             if (
                 selector is None or
                 (is_message and selector in messages) or
-                (is_output and self._selector_in_outputs(selector, outputs))
+                (is_trigger and self._selector_in_outputs(selector, outputs))
             ):
                 results.append(row[:2] + [str(outputs)] + row[3:])
 

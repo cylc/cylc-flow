@@ -154,7 +154,7 @@ class WorkflowPoller(Poller):
         flow_num: Optional[int],
         alt_cylc_run_dir: Optional[str],
         default_status: Optional[str],
-        is_output: bool,
+        is_trigger: bool,
         is_message: bool,
         old_format: bool = False,
         pretty_print: bool = False,
@@ -190,10 +190,10 @@ class WorkflowPoller(Poller):
 
         self.is_message = is_message
         if is_message:
-            self.is_output = False
+            self.is_trigger = False
         else:
-            self.is_output = (
-                is_output or
+            self.is_trigger = (
+                is_trigger or
                 (
                     self.selector is not None and
                     self.selector not in TASK_STATUSES_ORDERED
@@ -255,7 +255,7 @@ class WorkflowPoller(Poller):
                 self.cycle_raw, self.offset)
 
         self.result = self.db_checker.workflow_state_query(
-            self.task, self.cycle, self.selector, self.is_output,
+            self.task, self.cycle, self.selector, self.is_trigger,
             self.is_message, self.flow_num
         )
         if self.result:
@@ -296,7 +296,7 @@ def get_option_parser() -> COP:
         "--triggers",
         help="Task selector should match output triggers rather than status."
              " (Note this is not needed for custom outputs).",
-        action="store_true", dest="is_output", default=False)
+        action="store_true", dest="is_trigger", default=False)
 
     parser.add_option(
         "--messages",
@@ -410,7 +410,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         options.flow_num,
         options.alt_cylc_run_dir,
         default_status=None,
-        is_output=options.is_output,
+        is_trigger=options.is_trigger,
         is_message=options.is_message,
         old_format=options.old_format,
         pretty_print=options.pretty_print,

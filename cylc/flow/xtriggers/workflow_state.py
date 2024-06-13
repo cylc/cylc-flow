@@ -28,7 +28,7 @@ def workflow_state(
     workflow_task_id: str,
     offset: Optional[str] = None,
     flow_num: Optional[int] = None,
-    is_output: bool = False,
+    is_trigger: bool = False,
     is_message: bool = False,
     alt_cylc_run_dir: Optional[str] = None,
 ) -> Tuple[bool, Dict[str, Any]]:
@@ -44,6 +44,12 @@ def workflow_state(
             e.g. PT1H (1 hour) or P1 (1 integer cycle)
         flow_num:
             Flow number of the target task.
+        is_message:
+            Interpret the task:selector as a task output message
+            (the default is a task status or trigger)
+        is_trigger:
+            Interpret the task:selector as a task trigger name
+            (only needed if it is also a valid status name)
         alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
 
@@ -63,7 +69,7 @@ def workflow_state(
         flow_num,
         alt_cylc_run_dir,
         TASK_STATUS_SUCCEEDED,
-        is_output, is_message,
+        is_trigger, is_message,
         old_format=False,
         condition=workflow_task_id,
         max_polls=1,  # (for xtriggers the scheduler does the polling)
@@ -90,7 +96,7 @@ def workflow_state(
 
         if poller.is_message:
             results['message'] = poller.selector
-        elif poller.is_output:
+        elif poller.is_trigger:
             results['trigger'] = poller.selector
         else:
             results['status'] = poller.selector

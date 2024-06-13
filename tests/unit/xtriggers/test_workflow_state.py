@@ -121,7 +121,7 @@ def test_c7_db_back_compat(tmp_run_dir: 'Callable'):
     assert satisfied
     satisfied, _ = workflow_state(f'{id_}//2012/mithril:succeeded')
     assert satisfied
-    satisfied, _ = workflow_state(f'{id_}//2012/mithril:frodo', is_output=True)
+    satisfied, _ = workflow_state(f'{id_}//2012/mithril:frodo', is_trigger=True)
     assert satisfied
     satisfied, _ = workflow_state(
         f'{id_}//2012/mithril:"bag end"', is_message=True
@@ -215,7 +215,7 @@ def test_c8_db_back_compat(
     # Output label selector falls back to message
     # (won't work if messsage != output label)
     caplog.clear()
-    satisfied, _ = workflow_state(f'{gimli}:axe', is_output=True)
+    satisfied, _ = workflow_state(f'{gimli}:axe', is_trigger=True)
     assert satisfied
     assert log_filter(
         caplog, level=logging.WARNING, exact_match=output_fallback_msg
