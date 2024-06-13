@@ -56,9 +56,10 @@ __END__
 # Check broadcast of xtrigger outputs to dependent tasks.
 JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}//2015/f1")"
 contains_ok "${JOB_LOG}" << __END__
-    upstream_workflow_id="${WORKFLOW_NAME_UPSTREAM}"
-    upstream_task_id="2015/foo"
-    upstream_task_selector="data_ready"
+    upstream_workflow="${WORKFLOW_NAME_UPSTREAM}"
+    upstream_task="foo"
+    upstream_point="2015"
+    upstream_trigger="data_ready"
 __END__
 
 # Check broadcast of xtrigger outputs is recorded: 1) in the workflow log...
@@ -67,12 +68,14 @@ __END__
 # set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
 # use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${WORKFLOW_LOG}" << __LOG_BROADCASTS__
-${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow_id=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}+ [2015/f1] [environment]upstream_task_id=2015/foo
-${LOG_INDENT}+ [2015/f1] [environment]upstream_task_selector=data_ready
-${LOG_INDENT}- [2015/f1] [environment]upstream_workflow_id=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}- [2015/f1] [environment]upstream_task_id=2015/foo
-${LOG_INDENT}- [2015/f1] [environment]upstream_task_selector=data_ready
+${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}+ [2015/f1] [environment]upstream_task=foo
+${LOG_INDENT}+ [2015/f1] [environment]upstream_point=2015
+${LOG_INDENT}+ [2015/f1] [environment]upstream_trigger=data_ready
+${LOG_INDENT}- [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}- [2015/f1] [environment]upstream_task=foo
+${LOG_INDENT}- [2015/f1] [environment]upstream_point=2015
+${LOG_INDENT}- [2015/f1] [environment]upstream_trigger=data_ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
@@ -85,12 +88,14 @@ sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events
      ORDER BY time, change, point, namespace, key' >"${NAME}"
 contains_ok "${NAME}" << __DB_BROADCASTS__
-+|2015|f1|[environment]upstream_workflow_id|${WORKFLOW_NAME_UPSTREAM}
-+|2015|f1|[environment]upstream_task_id|2015/foo
-+|2015|f1|[environment]upstream_task_selector|data_ready
--|2015|f1|[environment]upstream_workflow_id|${WORKFLOW_NAME_UPSTREAM}
--|2015|f1|[environment]upstream_task_id|2015/foo
--|2015|f1|[environment]upstream_task_selector|data_ready
++|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
++|2015|f1|[environment]upstream_task|foo
++|2015|f1|[environment]upstream_point|2015
++|2015|f1|[environment]upstream_trigger|data_ready
+-|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
+-|2015|f1|[environment]upstream_task|foo
+-|2015|f1|[environment]upstream_point|2015
+-|2015|f1|[environment]upstream_trigger|data_ready
 __DB_BROADCASTS__
 
 purge

@@ -53,7 +53,8 @@ def workflow_state(
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
-            Dict {workflow_id, task_id, task_selector, flow_num}.
+            Dict of workflow, task, point, offset,
+            status, message, trigger, flow_num, run_dir
 
     """
     poller = WorkflowPoller(
@@ -69,15 +70,32 @@ def workflow_state(
         interval=0,  # irrelevant for 1 poll
         args=[]
     )
+
+    # NOTE the results dict item names remain compatible with older usage.
+
     if asyncio.run(poller.poll()):
-        result = {
-            "workflow_id": poller.workflow_id,
-            "task_id": f"{poller.cycle}/{poller.task}",
-            "task_selector": poller.selector,
+        results = {
+            'workflow': poller.workflow_id,
+            'task': poller.task,
+            'point': poller.cycle,
         }
+        if poller.alt_cylc_run_dir is not None:
+            results['cylc_run_dir'] = poller.alt_cylc_run_dir
+
+        if offset is not None:
+            results['offset'] = poller.offset
+
         if flow_num is not None:
-            result["flow_num"] = poller.flow_num
-        return (True, result)
+            results["flow_num"] = poller.flow_num
+
+        if poller.is_message:
+            results['message'] = poller.selector
+        elif poller.is_output:
+            results['trigger'] = poller.selector
+        else:
+            results['status'] = poller.selector
+
+        return (True, results)
     else:
         return (False, {})
 
