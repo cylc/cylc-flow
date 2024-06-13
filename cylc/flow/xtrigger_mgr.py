@@ -390,6 +390,7 @@ class XtriggerCollator:
             ", ".join(
                 f'{k}={v}' for k, v in
                 _upgrade_workflow_state_sig(bound_args.arguments).items()
+                if v is not None
             )
         )
         LOG.warning(
