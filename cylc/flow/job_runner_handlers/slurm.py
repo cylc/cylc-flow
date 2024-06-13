@@ -135,6 +135,8 @@ class SLURMHandler():
     #  Separator between het job directive sections
     SEP_HETJOB = "#SBATCH hetjob"
 
+    ETL_DIRECTIVE = "--time"
+
     @classmethod
     def filter_poll_many_output(cls, out):
         """Return list of job IDs extracted from job poll stdout.
@@ -161,8 +163,8 @@ class SLURMHandler():
         directives['--output'] = job_file_path.replace('%', '%%') + ".out"
         directives['--error'] = job_file_path.replace('%', '%%') + ".err"
         if (job_conf["execution_time_limit"] and
-                directives.get("--time") is None):
-            directives["--time"] = "%d:%02d" % (
+                directives.get(cls.ETL_DIRECTIVE) is None):
+            directives[cls.ETL_DIRECTIVE] = "%d:%02d" % (
                 job_conf["execution_time_limit"] / 60,
                 job_conf["execution_time_limit"] % 60)
         for key, value in list(job_conf['directives'].items()):

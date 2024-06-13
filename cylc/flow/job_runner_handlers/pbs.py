@@ -84,6 +84,7 @@ class PBSHandler:
     POLL_CANT_CONNECT_ERR = "Connection refused"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^\s*(?P<id>\d+)", re.M)
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
+    ETL_DIRECTIVE = "-l walltime"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
@@ -105,9 +106,12 @@ class PBSHandler:
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        if (job_conf["execution_time_limit"] and
-                directives.get("-l walltime") is None):
-            directives["-l walltime"] = "%d" % job_conf["execution_time_limit"]
+        if (
+            job_conf["execution_time_limit"]
+            and directives.get(self.ETL_DIRECTIVE) is None
+        ):
+            directives[self.ETL_DIRECTIVE] = "%d" % job_conf[
+                "execution_time_limit"]
         for key, value in list(job_conf["directives"].items()):
             directives[key] = value
         lines = []
