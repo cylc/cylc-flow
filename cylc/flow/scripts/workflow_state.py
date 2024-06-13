@@ -356,6 +356,13 @@ def get_option_parser() -> COP:
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', *ids: str) -> None:
 
+    # Note it would be cleaner to use 'id_cli.parse_ids()' here to get the
+    # workflow ID and tokens, but that function infers run number and fails
+    # if the workflow is not installed yet. We want to be able to start polling
+    # before the workflow is installed, which makes it easier to get set of
+    # interdependent workflows up and running, so runN inference is done inside
+    # the poller. TODO: consider using id_cli.parse_ids inside the poller.
+
     if len(ids) != 1:
         raise InputError("Please give a single ID")
 

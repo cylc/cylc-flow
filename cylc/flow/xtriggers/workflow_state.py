@@ -27,7 +27,7 @@ from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 def workflow_state(
     workflow_task_id: str,
     offset: Optional[str] = None,
-    flow_num: Optional[int] = 1,
+    flow_num: Optional[int] = None,
     is_output: bool = False,
     is_message: bool = False,
     alt_cylc_run_dir: Optional[str] = None,
@@ -70,20 +70,16 @@ def workflow_state(
         args=[]
     )
     if asyncio.run(poller.poll()):
-        return (
-            True,
-            {
-                "workflow_id": poller.workflow_id,
-                "task_id": f"{poller.cycle}/{poller.task}",
-                "task_selector": poller.selector,
-                "flow_num": poller.flow_num
-            }
-        )
+        result = {
+            "workflow_id": poller.workflow_id,
+            "task_id": f"{poller.cycle}/{poller.task}",
+            "task_selector": poller.selector,
+        }
+        if flow_num is not None:
+            result["flow_num"] = poller.flow_num
+        return (True, result)
     else:
-        return (
-            False,
-            {}
-        )
+        return (False, {})
 
 
 def validate(args: Dict[str, Any]):
@@ -109,8 +105,11 @@ def validate(args: Dict[str, Any]):
         raise WorkflowConfigError(
             "Full ID needed: workflow//cycle/task[:selector].")
 
-    if not isinstance(args["flow_num"], int):
-        raise WorkflowConfigError("flow_num must be an integer.")
+    if (
+        args["flow_num"] is not None and
+        not isinstance(args["flow_num"], int)
+    ):
+        raise WorkflowConfigError("flow_num must be an integer if given.")
 
 
 # BACK COMPAT: workflow_state_backcompat

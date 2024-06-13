@@ -1742,8 +1742,8 @@ with Conf(
 
                 .. deprecated:: 8.3.0
 
-                Please use the workflow_state xtrigger instead:
-                :py:mod:`cylc.flow.xtriggers.workflow_state`.
+                Please use the :ref:`workflow_state xtrigger
+                <Built-in Workflow State Triggers>` instead.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
