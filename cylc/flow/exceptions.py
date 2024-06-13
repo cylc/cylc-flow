@@ -21,6 +21,7 @@ from typing import (
     Dict,
     Optional,
     Sequence,
+    Set,
     Union,
     TYPE_CHECKING,
 )
@@ -455,13 +456,17 @@ class NoPlatformsError(PlatformLookupError):
             target.
         place:
             Where the attempt to get the platform failed.
-
     """
     def __init__(
-        self, identity: str, set_type: str = 'group', place: str = ''
+        self,
+        identity: str,
+        hosts_consumed: Set[str],
+        set_type: str = 'group',
+        place: str = '',
     ):
         self.identity = identity
         self.type = set_type
+        self.hosts_consumed = hosts_consumed
         if place:
             self.place = f' during {place}.'
         else:
