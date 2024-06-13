@@ -159,10 +159,8 @@ async def test_sequential_arg_ok(
         assert len(list_cycles(schd)) == expected_num_cycles
 
 
-def test_sequential_arg_bad(
-    flow, validate
-):
-    """Test validation of 'sequential' arg for custom xtriggers"""
+def test_sequential_arg_bad(flow, validate):
+    """Test validation of 'sequential' arg for custom xtrigger function def"""
     wid = flow({
         'scheduling': {
             'xtriggers': {
@@ -192,6 +190,27 @@ def test_sequential_arg_bad(
             assert (
                 "reserved argument 'sequential' with no boolean default"
             ) in str(excinfo.value)
+
+
+def test_sequential_arg_bad2(flow, validate):
+    """Test validation of 'sequential' arg for xtrigger calls"""
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '2000',
+            'xtriggers': {
+                'clock': 'wall_clock(sequential=3)',
+            },
+            'graph': {
+                'R1': '@clock => foo',
+            },
+        },
+    })
+
+    with pytest.raises(XtriggerConfigError) as excinfo:
+        validate(wid)
+    assert (
+        "invalid argument 'sequential=3' - must be boolean"
+    ) in str(excinfo.value)
 
 
 @pytest.mark.parametrize('is_sequential', [True, False])
