@@ -36,7 +36,7 @@ def workflow_state(
 
     If the status or output has been achieved, return {True, result}.
 
-    Arg:
+    Args:
         workflow_task_id:
             ID (workflow//point/task:selector) of the target task.
         offset:
@@ -62,6 +62,13 @@ def workflow_state(
             Dict of workflow, task, point, offset,
             status, message, trigger, flow_num, run_dir
 
+    .. versionchanged:: 8.3.0
+
+       The ``workflow_task_id`` argument was introduced to replace the
+       separate ``workflow``, ``point``, ``task``, ``status``, and ``message``
+       arguments (which are still supported for backwards compatibility).
+       The ``flow_num`` argument was added. The ``cylc_run_dir`` argument
+       was renamed to ``alt_cylc_run_dir``.
     """
     poller = WorkflowPoller(
         workflow_task_id,
