@@ -188,3 +188,46 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
 
     # check the DB to ensure no additional entries have been created
     assert db_select(schd, True, 'xtriggers') == db_xtriggers
+
+
+async def test_error_in_xtrigger(flow, start, scheduler):
+    """Failure in an xtrigger is handled nicely.
+    """
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True'
+        },
+        'scheduling': {
+            'xtriggers': {
+                'mytrig': 'mytrig()'
+            },
+            'graph': {
+                'R1': '@mytrig => foo'
+            },
+        }
+    })
+
+    # add a custom xtrigger to the workflow
+    run_dir = Path(get_workflow_run_dir(id_))
+    xtrig_dir = run_dir / 'lib/python'
+    xtrig_dir.mkdir(parents=True)
+    (xtrig_dir / 'mytrig.py').write_text(dedent('''
+        def mytrig(*args, **kwargs):
+            raise Exception('This Xtrigger is broken')
+    '''))
+
+    schd = scheduler(id_)
+    async with start(schd) as log:
+        foo = schd.pool.get_tasks()[0]
+        schd.xtrigger_mgr.call_xtriggers_async(foo)
+        for _ in range(50):
+            await asyncio.sleep(0.1)
+            schd.proc_pool.process()
+            if len(schd.proc_pool.runnings) == 0:
+                break
+        else:
+            raise Exception('Process pool did not clear')
+
+        error = log.messages[-1].split('\n')
+        assert error[-2] == 'Exception: This Xtrigger is broken'
+        assert error[0] == 'ERROR in xtrigger mytrig()'
