@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
+from pathlib import Path
 import sqlite3
-from typing import TYPE_CHECKING, Any
+from typing import Any, Callable
 from shutil import copytree, rmtree
 
 import pytest
@@ -31,10 +31,6 @@ from cylc.flow.xtriggers.workflow_state import (
     validate,
 )
 from cylc.flow.xtriggers.suite_state import suite_state
-
-if TYPE_CHECKING:
-    from typing import Any, Callable
-    from pathlib import Path
 
 
 def test_inferred_run(tmp_run_dir: 'Callable', capsys: pytest.CaptureFixture):
@@ -121,7 +117,9 @@ def test_c7_db_back_compat(tmp_run_dir: 'Callable'):
     assert satisfied
     satisfied, _ = workflow_state(f'{id_}//2012/mithril:succeeded')
     assert satisfied
-    satisfied, _ = workflow_state(f'{id_}//2012/mithril:frodo', is_trigger=True)
+    satisfied, _ = workflow_state(
+        f'{id_}//2012/mithril:frodo', is_trigger=True
+    )
     assert satisfied
     satisfied, _ = workflow_state(
         f'{id_}//2012/mithril:"bag end"', is_message=True
@@ -149,8 +147,7 @@ def test_c7_db_back_compat(tmp_run_dir: 'Callable'):
 
 def test_c8_db_back_compat(
     tmp_run_dir: 'Callable',
-    caplog: pytest.LogCaptureFixture,
-    log_filter: 'Callable',
+    capsys: pytest.CaptureFixture,
 ):
     """Test workflow_state xtrigger backwards compatibility with Cylc < 8.3.0
     database."""
@@ -208,18 +205,16 @@ def test_c8_db_back_compat(
     assert satisfied
     satisfied, _ = workflow_state(f'{gimli}:succeeded')
     assert satisfied
-    caplog.clear()
     satisfied, _ = workflow_state(f'{gimli}:axe', is_message=True)
     assert satisfied
-    assert not caplog.records
+    _, err = capsys.readouterr()
+    assert not err
     # Output label selector falls back to message
     # (won't work if messsage != output label)
-    caplog.clear()
     satisfied, _ = workflow_state(f'{gimli}:axe', is_trigger=True)
     assert satisfied
-    assert log_filter(
-        caplog, level=logging.WARNING, exact_match=output_fallback_msg
-    )
+    _, err = capsys.readouterr()
+    assert output_fallback_msg in err
 
 
 def test__workflow_state_backcompat(tmp_run_dir: 'Callable'):

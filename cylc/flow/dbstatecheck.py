@@ -22,7 +22,6 @@ import sys
 from contextlib import suppress
 from typing import Dict, Iterable, Optional, List, Union
 
-from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.cycling.integer import (
@@ -322,7 +321,7 @@ class CylcWorkflowDBChecker:
                 # Cylc 8 pre 8.3.0 back-compat: list of output messages
                 messages = outputs
                 if warn_output_fallback:
-                    LOG.warning(output_fallback_msg)
+                    print(f"WARNING - {output_fallback_msg}", file=sys.stderr)
                     warn_output_fallback = False
             if (
                 selector is None or
