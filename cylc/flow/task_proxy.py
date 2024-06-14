@@ -399,7 +399,7 @@ class TaskProxy:
         """Compute and store my cycle point as seconds since epoch."""
         if self.point_as_seconds is None:
             iso_timepoint = point_parse(str(self.point))
-            self.point_as_seconds = int(iso_timepoint.seconds_since_unix_epoch)
+            self.point_as_seconds = iso_timepoint.seconds_since_unix_epoch
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
                     get_local_time_zone())
@@ -429,8 +429,7 @@ class TaskProxy:
             else:
                 trigger_time = point + ISO8601Interval(offset_str)
 
-            offset = int(
-                point_parse(str(trigger_time)).seconds_since_unix_epoch)
+            offset = point_parse(str(trigger_time)).seconds_since_unix_epoch
             self.clock_trigger_times[offset_str] = offset
         return self.clock_trigger_times[offset_str]
 
