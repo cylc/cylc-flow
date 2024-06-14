@@ -465,14 +465,14 @@ def _infer_latest_runs(tokens_list, src_path, alt_run_dir=None):
 def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
     if not max_workflows and not max_tasks:
         return
-    workflows_count = 0
+    workflows_seen = set()
     tasks_count = 0
     for tokens in tokens_list:
         if tokens.is_task_like:
             tasks_count += 1
-        else:
-            workflows_count += 1
-    if max_workflows and workflows_count > max_workflows:
+        if tokens["workflow"] is not None:
+            workflows_seen.add(tokens["workflow"])
+    if max_workflows and len(workflows_seen) > max_workflows:
         raise InputError(
             f'IDs contain too many workflows (max {max_workflows})'
         )
