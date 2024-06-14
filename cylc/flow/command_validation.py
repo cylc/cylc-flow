@@ -94,19 +94,22 @@ def prereqs(prereqs: Optional[List[str]]):
         ['1/foo:succeeded']
 
         # Error: invalid format:
-        >>> prereqs(["fish"])
+        >>> prereqs(["fish", "dog"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
+          * fish
+          * dog
 
         # Error: invalid format:
         >>> prereqs(["1/foo::bar"])
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
+          * 1/foo::bar
 
         # Error: "all" must be used alone:
         >>> prereqs(["all", "2/foo:baz"])
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
+        cylc.flow.exceptions.InputError: --pre=all must be used alone
 
     """
     if prereqs is None:
@@ -122,8 +125,8 @@ def prereqs(prereqs: Optional[List[str]]):
             bad.append(pre)
     if bad:
         raise InputError(
-            "Use prerequisite format <cycle-point>/<task>:output\n"
-            "\n  ".join(bad)
+            "Use prerequisite format <cycle>/<task>:output\n  * "
+            + "\n  * ".join(bad)
         )
 
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")

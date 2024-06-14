@@ -216,7 +216,6 @@ async def run(
     workflow_id: str,
     *tokens_list
 ):
-
     validate_tokens(tokens_list)
 
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
