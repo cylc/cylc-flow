@@ -21,6 +21,7 @@ import pytest
 import re
 from typing import Any, Callable
 
+from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
@@ -172,7 +173,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
-        one.command_hold(['*/*'])
+        await commands.run_cmd(commands.hold, one, ['*/*'])
         one.resume_workflow()
 
         # release queued tasks
@@ -181,7 +182,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # release all tasks
-        one.command_release(['*/*'])
+        await commands.run_cmd(commands.release, one, ['*/*'])
 
         # release queued tasks
         # (the task should be submitted)
@@ -217,12 +218,12 @@ async def test_no_poll_waiting_tasks(
         polled_tasks = capture_polling(one)
 
         # Waiting tasks should not be polled.
-        one.command_poll_tasks(['*/*'])
+        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
         assert polled_tasks == set()
 
         # Even if they have a submit number.
         task.submit_num = 1
-        one.command_poll_tasks(['*/*'])
+        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
         assert len(polled_tasks) == 0
 
         # But these states should be:
@@ -233,7 +234,7 @@ async def test_no_poll_waiting_tasks(
             TASK_STATUS_RUNNING
         ]:
             task.state.status = state
-            one.command_poll_tasks(['*/*'])
+            await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
             assert len(polled_tasks) == 1
             polled_tasks.clear()
 

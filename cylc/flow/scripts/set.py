@@ -89,7 +89,8 @@ Examples:
 """
 
 from functools import partial
-from typing import TYPE_CHECKING, List, Optional
+import sys
+from typing import Tuple, TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
@@ -98,17 +99,16 @@ from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
 )
-from cylc.flow.id import Tokens
-from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
-from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import (
-    add_flow_opts,
-    validate_flow_opts
+from cylc.flow.terminal import (
+    cli_function,
+    flatten_cli_lists
 )
+from cylc.flow.flow_mgr import add_flow_opts
 
 
 if TYPE_CHECKING:
     from optparse import Values
+    from cylc.flow.id import Tokens
 
 
 MUTATION = '''
@@ -177,189 +177,14 @@ def get_option_parser() -> COP:
     return parser
 
 
-def validate_prereq(prereq: str) -> Optional[str]:
-    """Return prereq (with :succeeded) if valid, else None.
-
-    Format: cycle/task[:output]
-
-    Examples:
-        >>> validate_prereq('1/foo:succeeded')
-        '1/foo:succeeded'
-
-        >>> validate_prereq('1/foo')
-        '1/foo:succeeded'
-
-        >>> validate_prereq('all')
-        'all'
-
-        # Error:
-        >>> validate_prereq('fish')
-
-    """
-    try:
-        tokens = Tokens(prereq, relative=True)
-    except ValueError:
-        return None
-    if (
-        tokens["cycle"] == prereq
-        and prereq != "all"
-    ):
-        # Error: --pre=<word> other than "all"
-        return None
-
-    if prereq != "all" and tokens["task_sel"] is None:
-        prereq += f":{TASK_OUTPUT_SUCCEEDED}"
-
-    return prereq
-
-
-def split_opts(options: List[str]):
-    """Return list from multi-use and comma-separated options.
-
-    Examples:
-        # --out='a,b,c'
-        >>> split_opts(['a,b,c'])
-        ['a', 'b', 'c']
-
-        # --out='a' --out='a,b'
-        >>> split_opts(['a', 'b,c'])
-        ['a', 'b', 'c']
-
-        # --out='a' --out='a,b'
-        >>> split_opts(['a', 'a,b'])
-        ['a', 'b']
-
-        # --out='  a '
-        >>> split_opts(['  a  '])
-        ['a']
-
-        # --out='a, b, c , d'
-        >>> split_opts(['a, b, c , d'])
-        ['a', 'b', 'c', 'd']
-
-    """
-    return sorted({
-        item.strip()
-        for option in (options or [])
-        for item in option.strip().split(',')
-    })
-
-
-def get_prereq_opts(prereq_options: List[str]):
-    """Convert prerequisites to a flat list with output selectors.
-
-    Examples:
-        # Set multiple at once:
-        >>> get_prereq_opts(['1/foo:bar', '2/foo:baz,3/foo:qux'])
-        ['1/foo:bar', '2/foo:baz', '3/foo:qux']
-
-        # --pre=all
-        >>> get_prereq_opts(["all"])
-        ['all']
-
-        # implicit ":succeeded"
-        >>> get_prereq_opts(["1/foo"])
-        ['1/foo:succeeded']
-
-        # Error: invalid format:
-        >>> get_prereq_opts(["fish"])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-
-        # Error: invalid format:
-        >>> get_prereq_opts(["1/foo::bar"])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-
-        # Error: "all" must be used alone:
-        >>> get_prereq_opts(["all", "2/foo:baz"])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-
-     """
-    prereqs = split_opts(prereq_options)
-    if not prereqs:
-        return []
-
-    prereqs2 = []
-    bad: List[str] = []
-    for pre in prereqs:
-        p = validate_prereq(pre)
-        if p is not None:
-            prereqs2.append(p)
-        else:
-            bad.append(pre)
-    if bad:
-        raise InputError(
-            "Use prerequisite format <cycle-point>/<task>:output\n"
-            "\n  ".join(bad)
-        )
-
-    if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
-        if "all" in prereqs:
-            raise InputError("--pre=all must be used alone")
-
-    return prereqs2
-
-
-def get_output_opts(output_options: List[str]):
-    """Convert outputs options to a flat list, and validate.
-
-    Examples:
-        Good:
-        >>> get_output_opts(['a', 'b,c'])
-        ['a', 'b', 'c']
-        >>> get_output_opts(["required"])  # "required" is explicit default
-        []
-
-        Bad:
-        >>> get_output_opts(["required", "a"])  # "required" must be used alone
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: --out=required must be used alone
-        >>> get_output_opts(["waiting"])  # cannot "reset" to waiting
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: Tasks cannot be set to waiting...
-
-    """
-    outputs = split_opts(output_options)
-
-    # If "required" is explicit just ditch it (same as the default)
-    if not outputs or outputs == ["required"]:
-        return []
-
-    if "required" in outputs:
-        raise InputError("--out=required must be used alone")
-    if "waiting" in outputs:
-        raise InputError(
-            "Tasks cannot be set to waiting, use a new flow to re-run"
-        )
-
-    return outputs
-
-
-def validate_opts(output_opt: List[str], prereq_opt: List[str]):
-    """Check global option consistency
-
-    Examples:
-        >>> validate_opts(["a"], None)  # OK
-
-        >>> validate_opts(None, ["1/a:failed"])  #OK
-
-        >>> validate_opts(["a"], ["1/a:failed"])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-
-    """
-    if output_opt and prereq_opt:
-        raise InputError("Use --prerequisite or --output, not both.")
-
-
-def validate_tokens(tokens_list):
+def validate_tokens(tokens_list: Tuple['Tokens']) -> None:
     """Check the cycles/tasks provided.
 
     This checks that cycle/task selectors have not been provided in the IDs.
 
     Examples:
+        >>> from cylc.flow.id import Tokens
+
         Good:
         >>> validate_tokens([Tokens('w//c')])
         >>> validate_tokens([Tokens('w//c/t')])
@@ -390,7 +215,7 @@ async def run(
     options: 'Values',
     workflow_id: str,
     *tokens_list
-) -> None:
+):
     validate_tokens(tokens_list)
 
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
@@ -403,22 +228,18 @@ async def run(
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ],
-            'outputs': get_output_opts(options.outputs),
-            'prerequisites': get_prereq_opts(options.prerequisites),
+            'outputs': flatten_cli_lists(options.outputs),
+            'prerequisites': flatten_cli_lists(options.prerequisites),
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr
         }
     }
 
-    await pclient.async_request('graphql', mutation_kwargs)
+    return await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids) -> None:
-    validate_opts(options.outputs, options.prerequisites)
-    validate_flow_opts(options)
-    call_multi(
-        partial(run, options),
-        *ids,
-    )
+    rets = call_multi(partial(run, options), *ids)
+    sys.exit(all(rets.values()) is False)

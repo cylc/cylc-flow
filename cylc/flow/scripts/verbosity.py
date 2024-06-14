@@ -25,6 +25,7 @@ WARNING (say) only WARNING and CRITICAL messages will be logged.
 """
 
 from functools import partial
+import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow import LOG_LEVELS
@@ -69,7 +70,7 @@ def get_option_parser() -> COP:
     return parser
 
 
-async def run(options: 'Values', severity: str, workflow_id: str) -> None:
+async def run(options: 'Values', severity: str, workflow_id: str):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
@@ -80,15 +81,16 @@ async def run(options: 'Values', severity: str, workflow_id: str) -> None:
         }
     }
 
-    await pclient.async_request('graphql', mutation_kwargs)
+    return await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', severity: str, *ids: str) -> None:
     if severity not in LOG_LEVELS:
         raise InputError(f"Illegal logging level, {severity}")
-    call_multi(
+    rets = call_multi(
         partial(run, options, severity),
         *ids,
         constraint='workflows',
     )
+    sys.exit(all(rets.values()) is False)

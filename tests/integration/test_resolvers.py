@@ -25,6 +25,7 @@ from cylc.flow.id import Tokens
 from cylc.flow import CYLC_LOG
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.workflow_status import StopMode
 
 
 @pytest.fixture
@@ -228,7 +229,11 @@ async def test_command_logging(mock_flow, caplog, log_filter):
 
     caplog.set_level(logging.INFO, CYLC_LOG)
 
-    await mock_flow.resolvers._mutation_mapper("stop", {}, meta)
+    await mock_flow.resolvers._mutation_mapper(
+        "stop",
+        {'mode': StopMode.REQUEST_CLEAN.value},
+        meta,
+    )
     assert log_filter(caplog, contains='Command "stop" received')
 
     # put_messages: only log for owner

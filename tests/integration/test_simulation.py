@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 from pytest import param
 
+from cylc.flow import commands
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.simulation import sim_time_check
 
@@ -341,7 +342,7 @@ async def test_settings_reload(
             conf_file.read_text().replace('False', 'True'))
 
         # Reload Workflow:
-        await schd.command_reload_workflow()
+        await commands.run_cmd(commands.reload_workflow, schd)
 
         # Submit second psuedo-job and "run" to success:
         itask = run_simjob(schd, one_1066.point, 'one')

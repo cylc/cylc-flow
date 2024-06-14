@@ -50,3 +50,41 @@ async def test_protobuf(harness):
     pb_data = PB_METHOD_MAP['pb_entire_workflow']()
     pb_data.ParseFromString(ret)
     assert schd.workflow in pb_data.workflow.id
+
+
+async def test_command_validation_failure(harness):
+    """It should send the correct response if a command fails validation.
+
+    Command arguments are validated before the command is queued. Any issues at
+    this stage will be communicated back via the mutation "result".
+
+    See https://github.com/cylc/cylc-flow/pull/6112
+    """
+    schd, client = harness
+
+    # run a mutation that will fail validation
+    response = await client.async_request(
+        'graphql',
+        {
+            'request_string': '''
+                 mutation {
+                   set(
+                     workflows: ["*"],
+                     tasks: ["*"],
+                     # this list of prerequisites fails validation:
+                     prerequisites: ["1/a", "all"]
+                   ) {
+                     result
+                   }
+                 }
+        '''
+        },
+    )
+
+    # the validation error should be returned to the client
+    assert response['set']['result'] == [
+        {
+            'id': schd.id,
+            'response': [False, '--pre=all must be used alone'],
+        }
+    ]

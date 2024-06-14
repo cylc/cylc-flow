@@ -22,15 +22,6 @@ import pytest
 from cylc.flow.exceptions import ClientError
 
 
-async def gen_commands(schd):
-    """Yield commands from the scheduler's command queue."""
-    while True:
-        await asyncio.sleep(0.1)
-        if not schd.command_queue.empty():
-            # (ignore first item: command UUID)
-            yield schd.command_queue.get()[1:]
-
-
 async def process_command(schd, tries=10, interval=0.1):
     """Wait for command(s) to be queued and run.
 
@@ -62,12 +53,13 @@ async def test_online_mutation(
     start,
     rakiura,
     monkeypatch,
+    log_filter,
 ):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
     with rakiura(size='80,15') as rk:
-        async with start(schd):
+        async with start(schd) as schd_log:
             await schd.update_data_structure()
             assert schd.command_queue.empty()
 
@@ -98,10 +90,8 @@ async def test_online_mutation(
             rk.user_input('enter')
 
             # the mutation should be in the scheduler's command_queue
-            command = None
-            async for command in gen_commands(schd):
-                break
-            assert command == ('hold', [], {'tasks': ['1/one']})
+            await asyncio.sleep(0)
+            assert log_filter(schd_log, contains="hold(tasks=['1/one'])")
 
         # close the dialogue and re-run the hold mutation
         rk.user_input('q', 'q', 'enter')

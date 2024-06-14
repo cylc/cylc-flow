@@ -39,6 +39,7 @@ See also 'cylc hold'.
 """
 
 from functools import partial
+import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
@@ -137,13 +138,14 @@ async def run(options: 'Values', workflow_id, *tokens_list):
         }
     }
 
-    await pclient.async_request('graphql', mutation_kwargs)
+    return await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids):
-    call_multi(
+    rets = call_multi(
         partial(run, options),
         *ids,
         constraint='mixed',
     )
+    sys.exit(all(rets.values()) is False)

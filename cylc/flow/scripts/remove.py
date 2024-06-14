@@ -22,6 +22,7 @@ Remove one or more task instances from a running workflow.
 """
 
 from functools import partial
+import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
@@ -77,12 +78,13 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
         }
     }
 
-    await pclient.async_request('graphql', mutation_kwargs)
+    return await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
-    call_multi(
+    rets = call_multi(
         partial(run, options),
         *ids,
     )
+    sys.exit(all(rets.values()) is False)

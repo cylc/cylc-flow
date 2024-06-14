@@ -1,6 +1,27 @@
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from typing import TYPE_CHECKING
+
 import pytest
 
-from cylc.flow.scheduler import Scheduler
+from cylc.flow import commands
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
 
 @pytest.fixture
@@ -99,7 +120,7 @@ async def test_queue_held_tasks(
 
         # hold all tasks and resume the workflow
         # (nothing should have run yet because the workflow started paused)
-        schd.command_hold(['*/*'])
+        await commands.run_cmd(commands.hold, schd, ['*/*'])
         schd.resume_workflow()
 
         # release queued tasks
@@ -108,7 +129,7 @@ async def test_queue_held_tasks(
         assert len(submitted_tasks) == 0
 
         # un-hold tasks
-        schd.command_release(['*/*'])
+        await commands.run_cmd(commands.release, schd, ['*/*'])
 
         # release queued tasks
         # (tasks should now be released from the queues)

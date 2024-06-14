@@ -25,6 +25,7 @@ To find the version you've invoked at the command line see "cylc version".
 
 from functools import partial
 from typing import TYPE_CHECKING
+import sys
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -76,11 +77,12 @@ async def run(options, workflow_id, *_):
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    call_multi(
+    rets = call_multi(
         partial(run, options),
         workflow_id,
-        report=print,
+        report=lambda x: (x, None, True),
         # we need the mixed format for call_multi but don't want any tasks
         constraint='mixed',
         max_tasks=0,
     )
+    sys.exit(all(rets.values()) is False)

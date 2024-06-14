@@ -40,10 +40,12 @@ from uuid import uuid4
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import LOG
+from cylc.flow.commands import COMMANDS
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
 )
+import cylc.flow.flags
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
@@ -746,9 +748,22 @@ class Resolvers(BaseResolvers):
             return method(**kwargs)
 
         try:
-            self.schd.get_command_method(command)
-        except AttributeError:
+            meth = COMMANDS[command]
+        except KeyError:
             raise ValueError(f"Command '{command}' not found")
+
+        try:
+            # Initiate the command. Validation may be performed at this point,
+            # validators may raise Exceptions (preferably InputErrors) to
+            # communicate errors.
+            cmd = meth(**kwargs, schd=self.schd)
+            await cmd.__anext__()
+        except Exception as exc:
+            # NOTE: keep this exception vague to prevent a bad command taking
+            # down the scheduler
+            if cylc.flow.flags.verbosity > 1:
+                LOG.exception(exc)  # log full traceback in debug mode
+            return (False, str(exc))
 
         # Queue the command to the scheduler, with a unique command ID
         cmd_uuid = str(uuid4())
@@ -757,8 +772,7 @@ class Resolvers(BaseResolvers):
             (
                 cmd_uuid,
                 command,
-                [],
-                kwargs,
+                cmd,
             )
         )
         return (True, cmd_uuid)

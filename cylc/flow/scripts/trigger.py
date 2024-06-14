@@ -42,8 +42,10 @@ Examples:
 """
 
 from functools import partial
+import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow import command_validation
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -51,10 +53,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import (
-    add_flow_opts,
-    validate_flow_opts
-)
+from cylc.flow.flow_mgr import add_flow_opts
 
 
 if TYPE_CHECKING:
@@ -110,14 +109,15 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flowDescr': options.flow_descr,
         }
     }
-    await pclient.async_request('graphql', mutation_kwargs)
+    return await pclient.async_request('graphql', mutation_kwargs)
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-    validate_flow_opts(options)
-    call_multi(
+    command_validation.flow_opts(options.flow or ['all'], options.flow_wait)
+    rets = call_multi(
         partial(run, options),
         *ids,
     )
+    sys.exit(all(rets.values()) is False)
