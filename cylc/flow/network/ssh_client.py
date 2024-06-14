@@ -67,6 +67,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                     'ssh command': ssh_cmd,
                     'cylc path': cylc_path,
                     'use login shell': login_sh,
+                    'ssh forward environment variables': [],
                 }
                 # NOTE: this can not raise NoHostsError
                 # because we have provided the host
