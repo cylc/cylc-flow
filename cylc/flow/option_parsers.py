@@ -51,6 +51,7 @@ WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
 OPT_WORKFLOW_ID_ARG_DOC = ('[WORKFLOW]', 'Workflow ID')
 WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
 WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
+ID_SEL_ARG_DOC = ('ID[:sel]', 'WORKFLOW-ID[[//CYCLE[/TASK]]:selector]')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 

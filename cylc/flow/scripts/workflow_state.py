@@ -18,16 +18,24 @@
 
 r"""cylc workflow-state [OPTIONS] ARGS
 
-Check a workflow database for current task statuses or completed outputs.
+Check or poll a workflow database for task statuses or completed outputs.
 
-Repeatedly check (poll) until results are matched or polling is exhausted
-(see --max-polls and --interval). Use --max-polls=1 for a single check.
+The ID argument can target a workflow, or a cycle point, or a specific
+task, with an optional selector on cycle or task to match task status,
+output trigger (if not a status, or with --trigger) or output message
+(with --message). All matching results will be printed.
+
+If no results match, the command will repeatedly check (poll) until a match
+is found or polling is exhausted (see --max-polls and --interval). For a
+one-off check set --max-polls=1.
+
+If the database does not exist at first, polls are consumed waiting for it
+so you can start checking before the target workflow is started.
 
 Legacy (pre-8.3.0) options are supported, but deprecated, for existing scripts:
     cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
-       --output=MESSAGE --message=MESSAGE WORKFLOW
-
-If the database does not exist at first, polls are consumed waiting for it.
+        --output=MESSAGE --message=MESSAGE --task-point WORKFLOW
+(Note from 8.0 until 8.3.0 --output and --message both match task messages).
 
 In "cycle/task:selector" the selector will match task statuses, unless:
   - if it is not a known status, it will match task output triggers
@@ -90,6 +98,7 @@ See also:
 """
 
 import asyncio
+import os
 import sqlite3
 import sys
 from typing import TYPE_CHECKING, List, Optional
@@ -98,7 +107,7 @@ from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.id import Tokens
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import (
-    ID_MULTI_ARG_DOC,
+    ID_SEL_ARG_DOC,
     CylcOptionParser as COP,
 )
 from cylc.flow import LOG
@@ -269,7 +278,7 @@ class WorkflowPoller(Poller):
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[ID_MULTI_ARG_DOC]
+        argdoc=[ID_SEL_ARG_DOC]
     )
 
     # --run-dir for pre-8.3.0 back-compat
@@ -320,16 +329,15 @@ def get_option_parser() -> COP:
         action="store", dest="depr_task", default=None)
 
     parser.add_option(
-        "-p", "--point",
-        metavar="CYCLE",
+        "-p", "--point", metavar="CYCLE",
         help=f"Cycle point. {OPT_DEPR_MSG}.",
         action="store", dest="depr_point", default=None)
 
     parser.add_option(
         "-T", "--task-point",
-        help="In task job scripts, task cycle point from the environment"
-             " (i.e., --point=$CYLC_TASK_CYCLE_POINT)",
-        action="store_true", dest="use_task_point", default=False)
+        help="Get cycle point from the environment variable"
+        " $CYLC_TASK_CYCLE_POINT (e.g. in task job scripts)",
+        action="store_true", dest="depr_env_point", default=False)
 
     parser.add_option(
         "-S", "--status",
@@ -359,12 +367,10 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
     # Note it would be cleaner to use 'id_cli.parse_ids()' here to get the
     # workflow ID and tokens, but that function infers run number and fails
     # if the workflow is not installed yet. We want to be able to start polling
-    # before the workflow is installed, which makes it easier to get set of
+    # before the workflow is installed, which makes it easier to get a set of
     # interdependent workflows up and running, so runN inference is done inside
     # the poller. TODO: consider using id_cli.parse_ids inside the poller.
-
-    if len(ids) != 1:
-        raise InputError("Please give a single ID")
+    # (Note this applies to polling tasks, which use the CLI, not xtriggers).
 
     id_ = ids[0].rstrip('/')  # might get 'id/' due to autcomplete
 
@@ -372,17 +378,33 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         [
             options.depr_task,
             options.depr_status,
-            options.depr_msg,  # --message and --output
-            options.depr_point
+            options.depr_msg,  # --message and --trigger
+            options.depr_point,
+            options.depr_env_point
         ]
     ):
-        depr_opts = "options --task, --status, --message, --output, --point"
+        depr_opts = (
+            "--task, --status, --message, --output, --point, --task-point"
+        )
 
         if id_ != Tokens(id_)["workflow"]:
             raise InputError(
                 f"with deprecated {depr_opts}, the argument must be a"
-                " plain workflow ID (i.e. with no cycle, task, or :selector)."
+                " plain workflow ID (i.e. no cycle, task, or :selector)."
             )
+
+        if options.depr_status and options.depr_msg:
+            raise InputError("set --status or --message, not both.")
+
+        if options.depr_env_point:
+            if options.depr_point:
+                raise InputError(
+                    "set --task-point or --point=CYCLE, not both.")
+            try:
+                options.depr_point = os.environ["CYLC_TASK_CYCLE_POINT"]
+            except KeyError:
+                raise InputError(
+                    "--task-point: $CYLC_TASK_CYCLE_POINT is not defined")
 
         if options.depr_point is not None:
             id_ += f"//{options.depr_point}"
@@ -400,9 +422,12 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
             id_ += f":{options.depr_msg}"
             options.is_message = True
 
-        LOG.warning(
-            f"{depr_opts} are deprecated. Please use the ID format: {id_}."
-        )
+        msg = f"{depr_opts} are deprecated. Please use an ID: "
+        if not options.depr_env_point:
+            msg += id_
+        else:
+            msg += id_.replace(options.depr_point, "$CYLC_TASK_CYCLE_POINT")
+        LOG.warning(msg)
 
     poller = WorkflowPoller(
         id_,

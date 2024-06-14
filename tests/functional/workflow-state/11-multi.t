@@ -21,7 +21,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 35
+set_test_number 42
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -100,5 +100,31 @@ run_fail "${T}-8" $CMD c8b --point=1 --task=foo --message="x"
 run_fail "${T}-9" $CMD c8b --point=1 --task=foo --output="x"
 run_fail "${T}-10" $CMD c8b --point=2
 run_fail "${T}-11" $CMD c8b --point=2 --task=foo --status="succeeded"
+
+#---------------
+T=${TEST_NAME_BASE}-bad-cli
+
+TEST_NAME="${T}-1" 
+run_fail "$TEST_NAME" $CMD c8b --status=succeeded --message="the quick brown"
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+InputError: set --status or --message, not both.
+__ERR__
+
+TEST_NAME="${T}-2" 
+run_fail "$TEST_NAME" $CMD c8b --task-point --point=1
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+InputError: set --task-point or --point=CYCLE, not both.
+__ERR__
+
+
+TEST_NAME="${T}-3" 
+run_fail "$TEST_NAME" $CMD c8b --task-point
+cmp_ok "${TEST_NAME}.stderr" << "__ERR__"
+InputError: --task-point: $CYLC_TASK_CYCLE_POINT is not defined
+__ERR__
+
+export CYLC_TASK_CYCLE_POINT=1
+TEST_NAME="${T}-3" 
+run_ok "$TEST_NAME" $CMD c8b --task-point
 
 purge

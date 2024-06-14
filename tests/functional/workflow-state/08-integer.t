@@ -17,7 +17,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 16
+set_test_number 15
 
 install_workflow "${TEST_NAME_BASE}" integer
 
@@ -25,12 +25,9 @@ install_workflow "${TEST_NAME_BASE}" integer
 TEST_NAME="${TEST_NAME_BASE}_run_1"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach --stopcp=1 "${WORKFLOW_NAME}"
 
+# too many args
 TEST_NAME="${TEST_NAME_BASE}_cl_error"
 run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}-a" "${WORKFLOW_NAME}-b"
-
-contains_ok "${TEST_NAME}.stderr" <<__END__
-InputError: Please give a single ID
-__END__
 
 TEST_NAME="${TEST_NAME_BASE}_check_1_status"
 run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}"
