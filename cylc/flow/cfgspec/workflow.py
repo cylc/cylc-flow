@@ -1020,8 +1020,9 @@ with Conf(
                 task has generated the outputs it was expected to.
 
                 If the task fails this check its outputs are considered
-                :term:`incomplete` and a warning will be raised alerting you
-                that something has gone wrong which requires investigation.
+                :term:`incomplete <output completion>` and a warning will be
+                raised alerting you that something has gone wrong which
+                requires investigation.
 
                 .. note::
 
@@ -1731,57 +1732,34 @@ with Conf(
                 ''')
 
             with Conf('workflow state polling', desc=f'''
-                Configure automatic workflow polling tasks as described in
-                :ref:`WorkflowStatePolling`.
-
-                The items in this section reflect
-                options and defaults of the ``cylc workflow-state`` command,
-                except that the target workflow ID and the
-                ``--task``, ``--cycle``, and ``--status`` options are
-                taken from the graph notation.
+                Deprecated support for automatic workflow state polling tasks
+                as described in :ref:`WorkflowStatePolling`. Note the Cylc 7
+                "user" and "host" config items are not supported.
 
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[runtime][<namespace>]suite state polling``.
+
+                .. deprecated:: 8.3.0
+
+                Please use the :ref:`workflow_state xtrigger
+                <Built-in Workflow State Triggers>` instead.
             '''):
-                Conf('user', VDR.V_STRING, desc='''
-                    Username of your account on the workflow host.
-
-                    The polling
-                    ``cylc workflow-state`` command will be
-                    run on the remote account.
-                ''')
-                Conf('host', VDR.V_STRING, desc='''
-                    The hostname of the target workflow.
-
-                    The polling
-                    ``cylc workflow-state`` command will be run there.
-                ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
                 ''')
                 Conf('max-polls', VDR.V_INTEGER, desc='''
-                    The maximum number of polls before timing out and entering
-                    the "failed" state.
+                    Maximum number of polls to attempt before the task fails.
                 ''')
                 Conf('message', VDR.V_STRING, desc='''
-                    Wait for the task in the target workflow to receive a
-                    specified message rather than achieve a state.
+                    Target task output (task message, not trigger name).
                 ''')
-                Conf('run-dir', VDR.V_STRING, desc='''
-                    Specify the location of the top level cylc-run directory
-                    for the other workflow.
-
-                    For your own workflows, there is no need to set this as it
-                    is always ``~/cylc-run/``. But for other workflows,
-                    (e.g those owned by others), or mirrored workflow databases
-                    use this item to specify the location of the top level
-                    cylc run directory (the database should be in a the same
-                    place relative to this location for each workflow).
+                Conf('alt-cylc-run-dir', VDR.V_STRING, desc='''
+                    The cylc-run directory location of the target workflow.
+                    Use to poll workflows owned by other users.
                 ''')
                 Conf('verbose mode', VDR.V_BOOLEAN, desc='''
-                    Run the polling ``cylc workflow-state`` command in verbose
-                    output mode.
+                    Run the ``cylc workflow-state`` command in verbose mode.
                 ''')
 
             with Conf('environment', desc='''
@@ -1958,9 +1936,10 @@ def upg(cfg, descr):
 
     """
     u = upgrader(cfg, descr)
+
     u.obsolete(
-        '7.8.0',
-        ['runtime', '__MANY__', 'suite state polling', 'template'])
+        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template']
+    )
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
@@ -1996,6 +1975,25 @@ def upg(cfg, descr):
         ['cylc', 'mail', 'task event batch interval'],
         silent=cylc.flow.flags.cylc7_back_compat,
     )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'suite state polling'],
+        ['runtime', '__MANY__', 'workflow state polling'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
+    )
+    u.obsolete(
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'])
+    u.obsolete(
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'])
+
+    u.deprecate(
+        '8.3.0',
+        ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
+        ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
+
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameters'],
@@ -2061,14 +2059,6 @@ def upg(cfg, descr):
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point'],
         silent=cylc.flow.flags.cylc7_back_compat,
-    )
-
-    u.deprecate(
-        '8.0.0',
-        ['runtime', '__MANY__', 'suite state polling'],
-        ['runtime', '__MANY__', 'workflow state polling'],
-        silent=cylc.flow.flags.cylc7_back_compat,
-        is_section=True
     )
 
     for job_setting in [
@@ -2196,7 +2186,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         keys.add(key)
                 if keys and not cylc.flow.flags.cylc7_back_compat:
                     msg = (
-                        'deprecated graph items were automatically upgraded '
+                        'graph items were automatically upgraded '
                         f'in "{descr}":\n'
                         f' * (8.0.0) {msg_old} -> {msg_new}'
                     )

@@ -314,8 +314,9 @@ def test_inter_workflow_dependence_simple():
             'a': (
                 'WORKFLOW', 'TASK', 'failed', '<WORKFLOW::TASK:fail>'
             ),
+            # Default to "succeeded" is done in config module.
             'c': (
-                'WORKFLOW', 'TASK', 'succeeded', '<WORKFLOW::TASK>'
+                'WORKFLOW', 'TASK', None, '<WORKFLOW::TASK>'
             )
         }
     )

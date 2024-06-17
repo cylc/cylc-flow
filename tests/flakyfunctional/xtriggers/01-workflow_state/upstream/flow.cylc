@@ -4,7 +4,7 @@
    initial cycle point = 2010
    final cycle point = 2015
    [[graph]]
-      P1Y = "foo:x => bar"
+      P1Y = "foo:data_ready => bar"
 [runtime]
    [[root]]
       script = true
@@ -12,4 +12,4 @@
    [[foo]]
       script = cylc message "data ready"
       [[[outputs]]]
-          x = "data ready"
+          data_ready = "data ready"

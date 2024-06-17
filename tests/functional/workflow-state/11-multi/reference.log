@@ -1,0 +1,17 @@
+1/bar1 -triggered off [] in flow 1
+1/qux2 -triggered off [] in flow 1
+1/bar2 -triggered off [] in flow 1
+1/baz2 -triggered off [] in flow 1
+1/f4 -triggered off [] in flow 1
+1/f1 -triggered off [] in flow 1
+1/f2 -triggered off [] in flow 1
+1/f3 -triggered off [] in flow 1
+1/f5 -triggered off [] in flow 1
+1/x1 -triggered off [] in flow 1
+1/f6 -triggered off [] in flow 1
+1/f7 -triggered off [] in flow 1
+1/x2 -triggered off [] in flow 1
+1/g4 -triggered off ['1/baz2'] in flow 1
+1/g2 -triggered off ['1/bar2'] in flow 1
+1/g7 -triggered off ['1/qux2'] in flow 1
+1/g1 -triggered off ['1/bar1'] in flow 1

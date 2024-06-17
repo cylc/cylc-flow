@@ -51,10 +51,8 @@ __FLOW_CONFIG__
 
 # run workflow on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
-run_ok "${TEST_NAME}-workflow-start" \
-    cylc play "${WORKFLOW_NAME}" --host=localhost -s 'FOO="foo"' -v
-cylc workflow-state "${WORKFLOW_NAME}" --task='task_foo01' \
-    --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
+run_ok "${TEST_NAME}-workflow-start" cylc play "${WORKFLOW_NAME}" --host=localhost -s 'FOO="foo"' -v
+cylc workflow-state "${WORKFLOW_NAME}//1/task_foo01:succeeded" --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
 create_test_global_config '' "
@@ -70,7 +68,7 @@ log_scan "${TEST_NAME}-shutdown-log-scan" "${FILE}" 20 1 \
     'Workflow shutting down - REQUEST(NOW-NOW)' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
     "Workflow now running on \"${CYLC_TEST_HOST}\""
-LATEST_TASK=$(cylc workflow-state "${WORKFLOW_NAME}" -S succeeded \
+LATEST_TASK=$(cylc workflow-state --old-format "${WORKFLOW_NAME}//*/*:succeeded" \
     | cut -d ',' -f 1 | sort | tail -n 1 | sed 's/task_foo//')
 
 # test restart procedure  - scan the second log file created on restart
@@ -78,9 +76,9 @@ poll_workflow_restart
 FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart-log-scan" "${FILE}" 20 1 \
     "Scheduler: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
-run_ok "${TEST_NAME}-restart-success" cylc workflow-state "${WORKFLOW_NAME}" \
-    --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
-    --status='succeeded' --point=1 --interval=1 --max-polls=60
+run_ok "${TEST_NAME}-restart-success" \
+    cylc workflow-state "${WORKFLOW_NAME}//1/$(printf 'task_foo%02d' $(( LATEST_TASK + 3 ))):succeeded" \
+        --interval=1 --max-polls=60
 
 # check the command the workflow has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${WORKFLOW_NAME}"

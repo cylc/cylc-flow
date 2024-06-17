@@ -67,6 +67,9 @@ TASK_OUTPUTS = (
     TASK_OUTPUT_FINISHED,
 )
 
+# DB output message for forced completion
+FORCED_COMPLETION_MSG = "(manually completed)"
+
 # this evaluates task completion expressions
 CompletionEvaluator = restricted_evaluator(
     # expressions
@@ -296,23 +299,25 @@ class TaskOutputs:
             expression string.
 
     """
-
     __slots__ = (
         "_message_to_trigger",
         "_message_to_compvar",
         "_completed",
         "_completion_expression",
+        "_forced",
     )
 
     _message_to_trigger: Dict[str, str]  # message: trigger
     _message_to_compvar: Dict[str, str]  # message: completion variable
     _completed: Dict[str, bool]  # message: is_complete
     _completion_expression: str
+    _forced: List[str]  # list of messages of force-completed outputs
 
     def __init__(self, tdef: 'Union[TaskDef, str]'):
         self._message_to_trigger = {}
         self._message_to_compvar = {}
         self._completed = {}
+        self._forced = []
 
         if isinstance(tdef, str):
             # abnormal use e.g. from the "cylc show" command
@@ -341,7 +346,32 @@ class TaskOutputs:
         """Return the trigger associated with this message."""
         return self._message_to_trigger[message]
 
-    def set_message_complete(self, message: str) -> Optional[bool]:
+    def set_trigger_complete(
+        self, trigger: str, forced=False
+    ) -> Optional[bool]:
+        """Set the provided output trigger as complete.
+
+        Args:
+            trigger:
+                The task output trigger to satisfy.
+
+        Returns:
+            True:
+                If the output was unset before.
+            False:
+                If the output was already set.
+            None
+                If the output does not apply.
+
+        """
+        trg_to_msg = {
+            v: k for k, v in self._message_to_trigger.items()
+        }
+        return self.set_message_complete(trg_to_msg[trigger], forced)
+
+    def set_message_complete(
+        self, message: str, forced=False
+    ) -> Optional[bool]:
         """Set the provided task message as complete.
 
         Args:
@@ -364,6 +394,8 @@ class TaskOutputs:
         if self._completed[message] is False:
             # output was incomplete
             self._completed[message] = True
+            if forced:
+                self._forced.append(message)
             return True
 
         # output was already completed
@@ -381,16 +413,23 @@ class TaskOutputs:
             return self._completed[message]
         return None
 
-    def iter_completed_messages(self) -> Iterator[str]:
-        """A generator that yields completed messages.
+    def get_completed_outputs(self) -> Dict[str, str]:
+        """Return a dict {trigger: message} of completed outputs.
 
-        Yields:
-            message: A completed task message.
+        Replace message with "forced" if the output was forced.
 
         """
-        for message, is_completed in self._completed.items():
-            if is_completed:
-                yield message
+        def _get_msg(message):
+            if message in self._forced:
+                return FORCED_COMPLETION_MSG
+            else:
+                return message
+
+        return {
+            self._message_to_trigger[message]: _get_msg(message)
+            for message, is_completed in self._completed.items()
+            if is_completed
+        }
 
     def __iter__(self) -> Iterator[Tuple[str, str, bool]]:
         """A generator that yields all outputs.

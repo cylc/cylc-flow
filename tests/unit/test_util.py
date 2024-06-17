@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.util import deserialise
+from cylc.flow.util import deserialise_set
 
 
-def test_deserialise():
-    actual = deserialise('["2", "3"]')
+def test_deserialise_set():
+    actual = deserialise_set('["2", "3"]')
     expected = {'2', '3'}
     assert actual == expected

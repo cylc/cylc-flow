@@ -190,7 +190,7 @@ def test_sequential_arg_bad(
             with pytest.raises(XtriggerConfigError) as excinfo:
                 validate(wid)
             assert (
-                "reserved argument 'sequential' that has no boolean default"
+                "reserved argument 'sequential' with no boolean default"
             ) in str(excinfo.value)
 
 

@@ -64,12 +64,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[directives]]]
@@ -141,12 +139,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[directives]]]
@@ -218,12 +214,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[directives]]]
@@ -297,12 +291,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -375,12 +367,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -453,12 +443,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -531,12 +519,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -609,12 +595,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -687,12 +671,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -765,12 +747,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -843,12 +823,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -921,12 +899,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]
@@ -999,12 +975,10 @@
         from = 
         to = 
     [[[workflow state polling]]]
-        user = 
-        host = 
         interval = 
         max-polls = 
         message = 
-        run-dir = 
+        alt-cylc-run-dir = 
         verbose mode = 
     [[[environment]]]
     [[[outputs]]]

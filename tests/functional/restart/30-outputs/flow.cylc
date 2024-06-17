@@ -13,9 +13,9 @@ t1:greet? => t3
 """
 [runtime]
     [[t1]]
-        script = cylc message 'hello'
+        script = cylc message -- 'hi there'
         [[[outputs]]]
-            hello = hello
+            hello = "hi there"
             greet = greeting
     [[t2, t3]]
         script = true

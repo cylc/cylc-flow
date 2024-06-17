@@ -1,5 +1,8 @@
 #!jinja2
 
+{# e.g. set OUTPUT = ":x" #}
+{% set OUTPUT = OUTPUT | default("") %}
+
 [meta]
     title = "polls for success and failure tasks in another workflow"
 [scheduler]
@@ -8,7 +11,7 @@
     [[graph]]
         R1 = """
             l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>
-            l-mess<{{UPSTREAM}}::messenger> => done
+            l-mess<{{UPSTREAM}}::messenger{{OUTPUT}}> => done
         """
 [runtime]
     [[l-good,lbad]]

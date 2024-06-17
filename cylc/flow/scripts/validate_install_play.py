@@ -86,7 +86,7 @@ def get_option_parser() -> COP:
         # no sense in a VIP context.
         if option.kwargs.get('dest') != 'against_source':
             parser.add_option(*option.args, **option.kwargs)
-
+    parser.set_defaults(is_validate=True)
     return parser
 
 
@@ -102,6 +102,9 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     source = get_source_location(workflow_id)
     log_subcommand('validate', source)
     asyncio.run(cylc_validate(parser, options, str(source)))
+
+    # Unset is validate after validation.
+    delattr(options, 'is_validate')
 
     log_subcommand('install', source)
     _, workflow_id = asyncio.run(cylc_install(options, workflow_id))

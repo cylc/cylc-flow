@@ -14,14 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
+
 # Test "cylc workflow-state" cycle point format conversion, when the target workflow
 # sets no explicit cycle point format, and the CLI does (the reverse of 06.t).
-
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-set_test_number 5
-#-------------------------------------------------------------------------------
+
+set_test_number 3
+
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     UTC mode = True
@@ -34,23 +33,15 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[foo]]
         script = true
 __FLOW_CONFIG__
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
+
 TEST_NAME=${TEST_NAME_BASE}-cli-poll
-run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}" -p 2010-01-01T00:00Z \
-        --task=foo --status=succeeded
+run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//2010-01-01T00+00"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-polling for 'succeeded': satisfied
+20100101T0000Z/foo:succeeded
 __OUT__
-#-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-cli-dump
-run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}" -p 2010-01-01T00:00Z
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-foo, 20100101T0000Z, succeeded
-__OUT__
-#-------------------------------------------------------------------------------
+
 purge
-#-------------------------------------------------------------------------------
-exit 0
+

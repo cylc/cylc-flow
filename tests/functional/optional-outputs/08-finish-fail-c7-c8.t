@@ -32,7 +32,7 @@ mv "${WORKFLOW_RUN_DIR}/suite.rc" "${WORKFLOW_RUN_DIR}/flow.cylc"
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c8"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-DEPR_MSG="deprecated graph items were automatically upgraded"  # (not back-compat)
+DEPR_MSG="graph items were automatically upgraded"  # (not back-compat)
 grep_ok "${DEPR_MSG}" "${TEST_NAME}.stderr"
 
 # No stall expected.

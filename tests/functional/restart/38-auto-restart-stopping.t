@@ -52,8 +52,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 run_ok "${TEST_NAME}-workflow-start" cylc play "${WORKFLOW_NAME}" --host=localhost
-cylc workflow-state "${WORKFLOW_NAME}" --task='foo' --status='running' --point=1 \
-    --interval=1 --max-polls=20 >& $ERR
+cylc workflow-state "${WORKFLOW_NAME}//1/foo:running" --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
 create_test_global_config '' "

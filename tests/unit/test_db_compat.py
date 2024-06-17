@@ -134,9 +134,9 @@ def test_cylc_7_db_wflow_params_table(_setup_db):
     with pytest.raises(
         sqlite3.OperationalError, match="no such table: workflow_params"
     ):
-        checker.get_remote_point_format()
+        checker._get_db_point_format()
 
-    assert checker.get_remote_point_format_compat() == ptformat
+    assert checker.db_point_fmt == ptformat
 
 
 def test_pre_830_task_action_timers(_setup_db):

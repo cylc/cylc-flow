@@ -1,15 +1,14 @@
 #!Jinja2
 [scheduler]
-  cycle point format = %Y
+    cycle point format = %Y
     [[events]]
-       inactivity timeout = PT20S
-       abort on inactivity timeout = True
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
 [scheduling]
     initial cycle point = 2011
     final cycle point = 2016
     [[xtriggers]]
-         upstream = workflow_state(workflow={{UPSTREAM}}, task=foo,\
-                                point=%(point)s, message='data ready'):PT1S
+        upstream = workflow_state("{{UPSTREAM}}//%(point)s/foo:data_ready"):PT1S
    [[graph]]
         P1Y = """
             foo

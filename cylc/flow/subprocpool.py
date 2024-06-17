@@ -126,7 +126,7 @@ def get_xtrig_func(mod_name, func_name, src_dir):
     return _XTRIG_FUNC_CACHE[(mod_name, func_name)]
 
 
-def run_function(func_name, json_args, json_kwargs, src_dir):
+def run_function(mod_name, func_name, json_args, json_kwargs, src_dir):
     """Run a Python function in the process pool.
 
     func_name(*func_args, **func_kwargs)
@@ -142,7 +142,7 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     func_kwargs = json.loads(json_kwargs)
 
     # Find and import then function.
-    func = get_xtrig_func(func_name, func_name, src_dir)
+    func = get_xtrig_func(mod_name, func_name, src_dir)
 
     # Redirect stdout to stderr.
     orig_stdout = sys.stdout

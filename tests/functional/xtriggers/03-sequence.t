@@ -60,4 +60,3 @@ __END__
 
 cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 purge
-exit

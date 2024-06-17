@@ -15,8 +15,8 @@
     [[foo]]
         script = true
     [[env_polling]]
-        script = cylc workflow-state $CYLC_WORKFLOW_ID --task=foo --task-point -S succeeded
+        script = cylc workflow-state ${CYLC_WORKFLOW_ID}//$CYLC_TASK_CYCLE_POINT/foo:succeeded
     [[offset_polling]]
-        script = cylc workflow-state $CYLC_WORKFLOW_ID --task=foo -p 20100101T0000Z --offset=P1D
+        script = cylc workflow-state ${CYLC_WORKFLOW_ID}//20100102T0000Z/foo --offset=P1D
     [[offset_polling2]]
-        script = cylc workflow-state $CYLC_WORKFLOW_ID --task=foo -p 20100101T0000Z --offset=-P1D
+        script = cylc workflow-state ${CYLC_WORKFLOW_ID}//20100102T0000Z/foo --offset=-P1D

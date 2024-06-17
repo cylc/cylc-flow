@@ -1,0 +1,14 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[graph]]
+        P1 = """
+            foo:x => bar
+        """
+[runtime]
+    [[foo]]
+        script = cylc message "hello"
+        [[[outputs]]]
+            x = "hello"
+    [[bar]]

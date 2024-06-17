@@ -41,7 +41,7 @@ cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}"
 # Pick a deliberately peculier timezone;
 export TZ=Australia/Eucla
 
-run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach
+run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --timestamp
 grep_ok "+08:45 INFO" "${TEST_NAME_BASE}.stderr"
 
 purge
@@ -57,8 +57,9 @@ __FLOW_CONFIG__
 
 cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}-foo"
 
-run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}-foo" --no-detach
+run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}-foo" --no-detach --timestamp
 grep_ok "+08:45 INFO" "${TEST_NAME_BASE}.stderr"
 
+purge
 
 exit

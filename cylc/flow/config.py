@@ -115,7 +115,7 @@ from cylc.flow.workflow_files import (
     check_deprecation,
 )
 from cylc.flow.workflow_status import RunMode
-from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.xtrigger_mgr import XtriggerCollator
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -220,7 +220,6 @@ class WorkflowConfig:
         options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
         output_fname: Optional[str] = None,
-        xtrigger_mgr: Optional[XtriggerManager] = None,
         mem_log_func: Optional[Callable[[str], None]] = None,
         run_dir: Optional[str] = None,
         log_dir: Optional[str] = None,
@@ -262,7 +261,7 @@ class WorkflowConfig:
         self.taskdefs: Dict[str, TaskDef] = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
-        self.xtrigger_mgr = xtrigger_mgr
+        self.xtrigger_collator = XtriggerCollator()
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
 
         self.initial_point: 'PointBase'
@@ -1513,6 +1512,19 @@ class WorkflowConfig:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
 
     def configure_workflow_state_polling_tasks(self):
+
+        # Deprecation warning - automatic workflow state polling tasks don't
+        # necessarily have deprecated config items outside the graph string.
+        if (
+            self.workflow_polling_tasks and
+            getattr(self.options, 'is_validate', False)
+        ):
+            LOG.warning(
+                "Workflow state polling tasks are deprecated."
+                " Please convert to workflow_state xtriggers:\n * "
+                + "\n * ".join(self.workflow_polling_tasks)
+            )
+
         # Check custom script not defined for automatic workflow polling tasks.
         for l_task in self.workflow_polling_tasks:
             try:
@@ -1531,25 +1543,42 @@ class WorkflowConfig:
                 continue
             rtc = tdef.rtconfig
             comstr = (
-                "cylc workflow-state"
-                f" --task={tdef.workflow_polling_cfg['task']}"
-                " --point=$CYLC_TASK_CYCLE_POINT"
+                "cylc workflow-state "
+                f"{tdef.workflow_polling_cfg['workflow']}//"
+                "$CYLC_TASK_CYCLE_POINT/"
+                f"{tdef.workflow_polling_cfg['task']}"
             )
+            graph_selector = tdef.workflow_polling_cfg['status']
+            config_message = rtc['workflow state polling']['message']
+            if (
+                graph_selector is not None and
+                (
+                    config_message is not None
+                ) and (
+                    graph_selector != config_message
+                )
+            ):
+                raise WorkflowConfigError(
+                    f'Polling task "{name}" must configure a target status or'
+                    f' output message in the graph (:{graph_selector}) or task'
+                    f' definition (message = "{config_message}") but not both.'
+                )
+            if graph_selector is not None:
+                comstr += f":{graph_selector}"
+            elif config_message is not None:
+                # quote: may contain spaces
+                comstr += f':"{config_message}" --messages'
+            else:
+                # default to :succeeded
+                comstr += f":{TASK_OUTPUT_SUCCEEDED}"
+
             for key, fmt in [
-                    ('user', ' --%s=%s'),
-                    ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s')]:
+                    ('alt-cylc-run-dir', ' --%s=%s')]:
                 if rtc['workflow state polling'][key]:
                     comstr += fmt % (key, rtc['workflow state polling'][key])
-            if rtc['workflow state polling']['message']:
-                comstr += " --message='%s'" % (
-                    rtc['workflow state polling']['message'])
-            else:
-                comstr += " --status=" + tdef.workflow_polling_cfg['status']
-            comstr += " " + tdef.workflow_polling_cfg['workflow']
-            script = "echo " + comstr + "\n" + comstr
+            script = f"echo {comstr}\n{comstr}"
             rtc['script'] = script
 
     def get_parent_lists(self):
@@ -1905,10 +1934,9 @@ class WorkflowConfig:
                     f'Invalid xtrigger name "{label}" - {msg}'
                 )
 
-        if self.xtrigger_mgr is not None:
-            self.xtrigger_mgr.sequential_xtriggers_default = (
-                self.cfg['scheduling']['sequential xtriggers']
-            )
+        self.xtrigger_collator.sequential_xtriggers_default = (
+            self.cfg['scheduling']['sequential xtriggers']
+        )
         for label in xtrig_labels:
             try:
                 xtrig = xtrigs[label]
@@ -1928,13 +1956,7 @@ class WorkflowConfig:
                     f" {label} = {xtrig.get_signature()}"
                 )
 
-            # Generic xtrigger validation.
-            XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
-
-            if self.xtrigger_mgr:
-                # (not available during validation)
-                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
-
+            self.xtrigger_collator.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
@@ -2624,10 +2646,7 @@ class WorkflowConfig:
             # Define the xtrigger function.
             args = [] if offset is None else [offset]
             xtrig = SubFuncContext(label, 'wall_clock', args, {})
-            if self.xtrigger_mgr is None:
-                XtriggerManager.check_xtrigger(label, xtrig, self.fdir)
-            else:
-                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            self.xtrigger_collator.add_trig(label, xtrig, self.fdir)
             # Add it to the task, for each sequence that the task appears in.
             taskdef = self.get_taskdef(task_name)
             for seq in taskdef.sequences:

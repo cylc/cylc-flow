@@ -1136,7 +1136,7 @@ class CylcConfigValidator(ParsecValidator):
 
     @classmethod
     def _coerce_type(cls, value):
-        """Convert value to int, float, or bool, if possible.
+        """Convert value to int, float, bool, or None, if possible.
 
         Examples:
             >>> CylcConfigValidator._coerce_type('1')
@@ -1147,6 +1147,7 @@ class CylcConfigValidator(ParsecValidator):
             True
             >>> CylcConfigValidator._coerce_type('abc')
             'abc'
+            >>> CylcConfigValidator._coerce_type('None')
 
         """
         try:
@@ -1159,6 +1160,8 @@ class CylcConfigValidator(ParsecValidator):
                     val = False
                 elif value == 'True':
                     val = True
+                elif value == 'None':
+                    val = None
                 else:
                     # Leave as string.
                     val = cls.strip_and_unquote([], value)

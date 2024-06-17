@@ -242,12 +242,13 @@ class XtriggerConfigError(WorkflowConfigError):
 
     """
 
-    def __init__(self, label: str, message: str):
-        self.label: str = label
-        self.message: str = message
+    def __init__(self, label: str, func: str, message: Union[str, Exception]):
+        self.label = label
+        self.func = func
+        self.message = message
 
     def __str__(self) -> str:
-        return f'[@{self.label}] {self.message}'
+        return f'[@{self.label}] {self.func}\n{self.message}'
 
 
 class ClientError(CylcError):

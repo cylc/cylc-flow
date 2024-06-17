@@ -20,7 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 7
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" 'polling'
 #-------------------------------------------------------------------------------
@@ -33,6 +33,15 @@ cylc install  "${TEST_DIR}/upstream" --workflow-name="${UPSTREAM}" --no-run-name
 # validate both workflows as tests
 TEST_NAME="${TEST_NAME_BASE}-validate-upstream"
 run_ok "${TEST_NAME}" cylc validate --debug "${UPSTREAM}"
+
+TEST_NAME=${TEST_NAME_BASE}-validate-polling-y
+run_fail "${TEST_NAME}" \
+    cylc validate --set="UPSTREAM='${UPSTREAM}'" --set="OUTPUT=':y'" "${WORKFLOW_NAME}"
+
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowConfigError: Polling task "l-mess" must configure a target status or output message in \
+the graph (:y) or task definition (message = "the quick brown fox") but not both.
+__ERR__
 
 TEST_NAME=${TEST_NAME_BASE}-validate-polling
 run_ok "${TEST_NAME}" \
@@ -48,8 +57,8 @@ cylc config -d \
     --set="UPSTREAM='${UPSTREAM}'" -i '[runtime][lbad]script' "${WORKFLOW_NAME}" \
     >'lbad.script'
 cmp_ok 'lbad.script' << __END__
-echo cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=failed ${UPSTREAM}
-cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=failed ${UPSTREAM}
+echo cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20
+cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/bad:failed --interval=2 --max-polls=20
 __END__
 
 # check auto-generated task script for l-good
@@ -57,8 +66,8 @@ cylc config -d \
     --set="UPSTREAM='${UPSTREAM}'" -i '[runtime][l-good]script' "${WORKFLOW_NAME}" \
     >'l-good.script'
 cmp_ok 'l-good.script' << __END__
-echo cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeeded ${UPSTREAM}
-cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeeded ${UPSTREAM}
+echo cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/good-stuff:succeeded --interval=2 --max-polls=20
+cylc workflow-state ${UPSTREAM}//\$CYLC_TASK_CYCLE_POINT/good-stuff:succeeded --interval=2 --max-polls=20
 __END__
 
 #-------------------------------------------------------------------------------

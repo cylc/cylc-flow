@@ -17,6 +17,7 @@
 
 import sys
 from time import sleep
+from cylc.flow import LOG
 
 
 class Poller:
@@ -25,39 +26,30 @@ class Poller:
 
     @classmethod
     def add_to_cmd_options(cls, parser, d_interval=60, d_max_polls=10):
-        """Add command line options for commands that can do polling"""
+        """Add command line options for commands that can do polling."""
         parser.add_option(
             "--max-polls",
             help=r"Maximum number of polls (default: %default).",
+            type="int",
             metavar="INT",
             action="store",
             dest="max_polls",
-            default=d_max_polls)
+            default=d_max_polls
+        )
         parser.add_option(
             "--interval",
             help=r"Polling interval in seconds (default: %default).",
+            type="int",
             metavar="SECS",
             action="store",
             dest="interval",
-            default=d_interval)
+            default=d_interval
+        )
 
     def __init__(self, condition, interval, max_polls, args):
-
         self.condition = condition  # e.g. "workflow stopped"
-
-        # check max_polls is an int
-        try:
-            self.max_polls = int(max_polls)
-        except ValueError:
-            sys.exit("max_polls must be an int")
-
-        # check interval is an int
-        try:
-            self.interval = int(interval)
-        except ValueError:
-            sys.exit("interval must be an integer")
-
-        self.n_polls = 0
+        self.interval = interval
+        self.max_polls = max_polls or 1  # no point in zero polls
         self.args = args  # any extra parameters needed by check()
 
     async def check(self):
@@ -66,29 +58,28 @@ class Poller:
 
     async def poll(self):
         """Poll for the condition embodied by self.check().
-        Return True if condition met, or False if polling exhausted."""
 
-        if self.max_polls == 0:
-            # exit 1 as we can't know if the condition is satisfied
-            sys.exit("WARNING: nothing to do (--max-polls=0)")
-        elif self.max_polls == 1:
-            sys.stdout.write("checking for '%s'" % self.condition)
-        else:
-            sys.stdout.write("polling for '%s'" % self.condition)
+        Return True if condition met, or False if polling exhausted.
 
-        while self.n_polls < self.max_polls:
-            self.n_polls += 1
-            if await self.check():
-                sys.stdout.write(": satisfied\n")
-                return True
-            if self.max_polls > 1:
-                sys.stdout.write(".")
-                sleep(self.interval)
-        sys.stdout.write("\n")
-        if self.max_polls > 1:
-            sys.stderr.write(
-                "ERROR: condition not satisfied after %d polls\n" %
-                self.max_polls)
+        """
+        n_polls = 0
+        result = False
+
+        while True:
+            n_polls += 1
+            result = await self.check()
+            if self.max_polls != 1:
+                sys.stderr.write(".")
+                sys.stderr.flush()
+            if result or n_polls >= self.max_polls:
+                if self.max_polls != 1:
+                    sys.stderr.write("\n")
+                    sys.stderr.flush()
+                break
+            sleep(self.interval)
+
+        if result:
+            return True
         else:
-            sys.stderr.write("ERROR: condition not satisfied\n")
-        return False
+            LOG.error(f"failed after {n_polls} polls")
+            return False

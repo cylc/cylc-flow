@@ -51,6 +51,7 @@ WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
 OPT_WORKFLOW_ID_ARG_DOC = ('[WORKFLOW]', 'Workflow ID')
 WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
 WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
+ID_SEL_ARG_DOC = ('ID[:sel]', 'WORKFLOW-ID[[//CYCLE[/TASK]]:selector]')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
@@ -290,9 +291,15 @@ class CylcOptionParser(OptionParser):
             ['--debug'], help='Equivalent to -v -v',
             dest='verbosity', action='store_const', const=2, useif='all'),
         OptionSettings(
-            ['--no-timestamp'], help='Don\'t timestamp logged messages.',
-            action='store_false', dest='log_timestamp',
-            default=True, useif='all'),
+            ['--timestamp'],
+            help='Add a timestamp to messages logged to the terminal.',
+            action='store_true', dest='log_timestamp',
+            default=False, useif='all'),
+        OptionSettings(
+            ['--no-timestamp'], help="Don't add a timestamp to messages logged"
+            " to the terminal (this does nothing - it is now the default.",
+            action='store_false', dest='_noop',
+            default=False, useif='all'),
         OptionSettings(
             ['--color', '--colour'], metavar='WHEN', action='store',
             default='auto', choices=['never', 'auto', 'always'],

@@ -65,8 +65,8 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import (
-    serialise,
-    deserialise
+    serialise_set,
+    deserialise_set
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
@@ -123,6 +123,7 @@ class TaskPool:
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.xtrigger_mgr: 'XtriggerManager' = xtrigger_mgr
+        self.xtrigger_mgr.add_xtriggers(self.config.xtrigger_collator)
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
@@ -208,7 +209,7 @@ class TaskPool:
                 "time_created": now,
                 "time_updated": now,
                 "status": itask.state.status,
-                "flow_nums": serialise(itask.flow_nums),
+                "flow_nums": serialise_set(itask.flow_nums),
                 "flow_wait": itask.flow_wait,
                 "is_manual_submit": itask.is_manual_submit
             }
@@ -433,7 +434,7 @@ class TaskPool:
         self,
         cycle: str,
         task: str,
-        output: str,
+        output_msg: str,
         flow_nums: 'FlowNums',
     ) -> Union[str, bool]:
         """Returns truthy if the specified output is satisfied in the DB."""
@@ -443,10 +444,20 @@ class TaskPool:
             # loop through matching tasks
             if flow_nums.intersection(task_flow_nums):
                 # this task is in the right flow
-                task_outputs = json.loads(task_outputs)
+                # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
+                #   messages were stored in the DB as a list.
+                # from: 8.0.0
+                # to: 8.3.0
+                outputs: Union[
+                    Dict[str, str], List[str]
+                ] = json.loads(task_outputs)
+                messages = (
+                    outputs.values() if isinstance(outputs, dict)
+                    else outputs
+                )
                 return (
                     'satisfied from database'
-                    if output in task_outputs
+                    if output_msg in messages
                     else False
                 )
         else:
@@ -475,7 +486,7 @@ class TaskPool:
                 self.tokens,
                 self.config.get_taskdef(name),
                 get_point(cycle),
-                deserialise(flow_nums),
+                deserialise_set(flow_nums),
                 status=status,
                 is_held=is_held,
                 submit_num=submit_num,
@@ -483,7 +494,7 @@ class TaskPool:
                 flow_wait=bool(flow_wait),
                 is_manual_submit=bool(is_manual_submit),
                 sequential_xtrigger_labels=(
-                    self.xtrigger_mgr.sequential_xtrigger_labels
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
 
@@ -538,14 +549,14 @@ class TaskPool:
 
             # Update prerequisite satisfaction status from DB
             sat = {}
-            for prereq_name, prereq_cycle, prereq_output, satisfied in (
+            for prereq_name, prereq_cycle, prereq_output_msg, satisfied in (
                     self.workflow_db_mgr.pri_dao.select_task_prerequisites(
                         cycle, name, flow_nums,
                     )
             ):
                 # Prereq satisfaction as recorded in the DB.
                 sat[
-                    (prereq_cycle, prereq_name, prereq_output)
+                    (prereq_cycle, prereq_name, prereq_output_msg)
                 ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
@@ -557,12 +568,12 @@ class TaskPool:
                         # added to an already-spawned task before restart.
                         # Look through task outputs to see if is has been
                         # satisfied
-                        prereq_cycle, prereq_task, prereq_output = key
+                        prereq_cycle, prereq_task, prereq_output_msg = key
                         itask_prereq.satisfied[key] = (
                             self.check_task_output(
                                 prereq_cycle,
                                 prereq_task,
-                                prereq_output,
+                                prereq_output_msg,
                                 itask.flow_nums,
                             )
                         )
@@ -735,7 +746,8 @@ class TaskPool:
             if ntask is not None:
                 is_xtrig_sequential = ntask.is_xtrigger_sequential
             elif any(
-                xtrig_label in self.xtrigger_mgr.sequential_xtrigger_labels
+                xtrig_label in (
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels)
                 for sequence, xtrig_labels in tdef.xtrig_labels.items()
                 for xtrig_label in xtrig_labels
                 if sequence.is_valid(point)
@@ -1025,7 +1037,7 @@ class TaskPool:
                     itask.flow_nums,
                     itask.state.status,
                     sequential_xtrigger_labels=(
-                        self.xtrigger_mgr.sequential_xtrigger_labels
+                        self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                     ),
                 )
                 itask.copy_to_reload_successor(
@@ -1350,13 +1362,14 @@ class TaskPool:
             with suppress(KeyError):
                 children = itask.graph_children[output]
 
+        if itask.flow_wait and children:
+            LOG.warning(
+                f"[{itask}] not spawning on {output}: flow wait requested")
+            self.remove_if_complete(itask, output)
+            return
+
         suicide = []
         for c_name, c_point, is_abs in children:
-
-            if itask.flow_wait:
-                LOG.warning(
-                    f"[{itask}] not spawning on {output}: flow wait requested")
-                continue
 
             if is_abs:
                 self.abs_outputs_done.add(
@@ -1610,7 +1623,7 @@ class TaskPool:
 
         return never_spawned, submit_num, prev_status, prev_flow_wait
 
-    def _load_historical_outputs(self, itask):
+    def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
         """Load a task's historical outputs from the DB."""
         info = self.workflow_db_mgr.pri_dao.select_task_outputs(
             itask.tdef.name, str(itask.point))
@@ -1620,8 +1633,22 @@ class TaskPool:
         else:
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
-                    for msg in json.loads(outputs_str):
-                        itask.state.outputs.set_message_complete(msg)
+                    # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
+                    #   messages were stored in the DB as a list.
+                    # from: 8.0.0
+                    # to: 8.3.0
+                    outputs: Union[
+                        Dict[str, str], List[str]
+                    ] = json.loads(outputs_str)
+                    if isinstance(outputs, dict):
+                        # {trigger: message} - match triggers, not messages.
+                        # DB may record forced completion rather than message.
+                        for trigger in outputs.keys():
+                            itask.state.outputs.set_trigger_complete(trigger)
+                    else:
+                        # [message] - always the full task message
+                        for msg in outputs:
+                            itask.state.outputs.set_message_complete(msg)
 
     def spawn_task(
         self,
@@ -1762,22 +1789,14 @@ class TaskPool:
             transient=transient,
             is_manual_submit=is_manual_submit,
             sequential_xtrigger_labels=(
-                self.xtrigger_mgr.sequential_xtrigger_labels
+                self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
             ),
         )
         if itask is None:
             return None
 
         # Update it with outputs that were already completed.
-        info = self.workflow_db_mgr.pri_dao.select_task_outputs(
-            itask.tdef.name, str(itask.point))
-        if not info:
-            # (Note still need this if task not run before)
-            self.db_add_new_flow_rows(itask)
-        for outputs_str, fnums in info.items():
-            if flow_nums.intersection(fnums):
-                for msg in json.loads(outputs_str):
-                    itask.state.outputs.set_message_complete(msg)
+        self._load_historical_outputs(itask)
         return itask
 
     def _standardise_prereqs(
@@ -2161,7 +2180,7 @@ class TaskPool:
                 flow_wait=flow_wait,
                 submit_num=submit_num,
                 sequential_xtrigger_labels=(
-                    self.xtrigger_mgr.sequential_xtrigger_labels
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
             if itask is None:

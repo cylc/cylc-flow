@@ -62,8 +62,7 @@ cylc play "${WORKFLOW_NAME}"
 #     ensure the workflow WAITS for local jobs to complete before restarting
 TEST_NAME="${TEST_NAME_BASE}-normal-mode"
 
-cylc workflow-state "${WORKFLOW_NAME}" --task='foo' --status='running' --point=1 \
-    --interval=1 --max-polls=20 >& $ERR
+cylc workflow-state "${WORKFLOW_NAME}//1/foo:running" --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
@@ -93,7 +92,7 @@ log_scan "${TEST_NAME}-restart-log-scan" "$LOG_FILE" 20 1 \
 TEST_NAME="${TEST_NAME_BASE}-force-mode"
 
 cylc trigger "${WORKFLOW_NAME}//1/bar"
-cylc workflow-state "${WORKFLOW_NAME}" --task='bar' --status='running' --point=1 \
+cylc workflow-state "${WORKFLOW_NAME}//1/bar:running" --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "

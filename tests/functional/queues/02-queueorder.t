@@ -22,7 +22,7 @@ set_test_number 3
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${WORKFLOW_NAME}" --reference-test --debug --no-detach
+    cylc play "${WORKFLOW_NAME}" --reference-test --debug --no-detach --timestamp
 run_ok "${TEST_NAME_BASE}-test" bash -o pipefail -c "
     cylc cat-log '${WORKFLOW_NAME}' |
     grep 'proc_n.*submitted at' |

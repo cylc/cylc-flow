@@ -13,11 +13,11 @@
         inherit = FAM
     [[monitor]]
         script = """
-        N_SUCCEDED=0
-        while ((N_SUCCEDED < 12)); do
+        N_SUCCEEDED=0
+        while ((N_SUCCEEDED < 12)); do
             sleep 1
-            N_RUNNING=$(cylc workflow-state $CYLC_WORKFLOW_ID -S running | wc -l)
+            N_RUNNING=$(cylc dump -t $CYLC_WORKFLOW_ID | grep running | wc -l)
             ((N_RUNNING <= {{q_size}})) # check
-            N_SUCCEDED=$(cylc workflow-state $CYLC_WORKFLOW_ID -S succeeded | wc -l)
+            N_SUCCEEDED=$(cylc workflow-state "${CYLC_WORKFLOW_ID}//*/*:succeeded" | wc -l)
         done
 """

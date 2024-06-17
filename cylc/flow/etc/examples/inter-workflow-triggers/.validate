@@ -37,12 +37,7 @@ cylc vip \
     ./downstream
 
 # wait for the first task in the downstream to succeed
-cylc workflow-state "$DOID" \
-    --task=process \
-    --point="$ICP" \
-    --status=succeeded \
-    --max-polls=60 \
-    --interval=1
+cylc workflow-state "$DOID//$ICP/process:succeeded" --max-polls=60 --interval=1
 
 # stop the workflows
 cylc stop --kill --max-polls=10 --interval=2 "$UPID"

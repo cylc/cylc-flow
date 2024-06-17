@@ -699,7 +699,9 @@ class TaskEventsManager():
 
         completed_output: Optional[bool] = False
         if msg0 not in [TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_FAILED]:
-            completed_output = itask.state.outputs.set_message_complete(msg0)
+            completed_output = (
+                itask.state.outputs.set_message_complete(msg0, forced)
+            )
             if completed_output:
                 self.data_store_mgr.delta_task_output(itask, msg0)
 
@@ -716,8 +718,8 @@ class TaskEventsManager():
 
         if message == self.EVENT_STARTED:
             if (
-                    flag == self.FLAG_RECEIVED
-                    and itask.state.is_gt(TASK_STATUS_RUNNING)
+                flag == self.FLAG_RECEIVED
+                and itask.state.is_gt(TASK_STATUS_RUNNING)
             ):
                 # Already running.
                 return True
@@ -1280,7 +1282,7 @@ class TaskEventsManager():
                 [],
                 kwargs
             )
-            self.xtrigger_mgr.add_trig(
+            self.xtrigger_mgr.xtriggers.add_trig(
                 label,
                 xtrig,
                 os.getenv("CYLC_WORKFLOW_RUN_DIR")

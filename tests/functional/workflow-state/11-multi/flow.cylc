@@ -1,0 +1,69 @@
+#!Jinja2
+
+{# alt-cylc-run-dir default for easy validation #}
+{% set ALT = ALT | default("alt") %}
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[xtriggers]]
+        # Cylc 7 back compat
+        z1 = suite_state(c7, foo, 1, offset=P0, cylc_run_dir={{ALT}}):PT1S  # status=succeeded
+        z2 = suite_state(c7, foo, 1, offset=P0, message="the quick brown", cylc_run_dir={{ALT}}):PT1S
+
+        # Cylc 7 xtrigger, Cylc 8 DB
+        a1 = suite_state(c8b, foo, 1, offset=P0, cylc_run_dir={{ALT}}):PT1S  # status=succeeded
+        a2 = suite_state(c8b, foo, 1, offset=P0, message="the quick brown", cylc_run_dir={{ALT}}):PT1S
+
+        # Cylc 8 back compat (pre-8.3.0)
+        b1 = workflow_state(c8a, foo, 1, offset=P0, status=succeeded, cylc_run_dir={{ALT}}):PT1S
+        b2 = workflow_state(c8a, foo, 1, offset=P0, message="the quick brown", cylc_run_dir={{ALT}}):PT1S
+
+        # Cylc 8 new (from 8.3.0)
+        c1 = workflow_state(c8b//1/foo, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
+        c2 = workflow_state(c8b//1/foo:succeeded, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
+        c3 = workflow_state(c8b//1/foo:x, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
+        c4 = workflow_state(c8b//1/foo:"the quick brown", offset=P0, is_message=True, alt_cylc_run_dir={{ALT}}):PT1S
+
+    [[graph]]
+        R1 = """
+           # Deprecated workflow-state polling tasks.
+           # (does not support %(suite_name)s templates or offsets
+           # or output triggers - just messages)
+
+           # status
+           bar1<c8b::foo> => g1
+           bar2<c8b::foo:succeeded> => g2
+
+           # output
+           baz2<c8b::foo> => g4  # message given in task definition
+           qux2<c7::foo> => g7  # message given in task definition
+
+           @z1 => x1
+           @z2 => x2
+
+           @a1 => f1
+           @a2 => f2
+
+           @b1 => f3
+           @b2 => f4
+
+           @c1 => f5
+           @c2 => f6
+           @c3 => f7
+
+        """
+[runtime]
+    [[bar1, bar2]]
+        [[[workflow state polling]]]
+            alt-cylc-run-dir = {{ALT}}
+
+    [[qux2, baz2]]
+        [[[workflow state polling]]]
+            message = "the quick brown"
+            alt-cylc-run-dir = {{ALT}}
+
+    [[x1, x2]]
+    [[f1, f2, f3, f4, f5, f6, f7]]
+    [[g1, g2, g4, g7]]
