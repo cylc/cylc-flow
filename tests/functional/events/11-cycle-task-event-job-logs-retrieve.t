@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval, requires compatible version of cylc on remote
 # job host.
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
