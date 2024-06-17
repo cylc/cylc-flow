@@ -21,3 +21,7 @@ showcontent = true
 directory = "fix"
 name = "🔧 Fixes"
 showcontent = true
+[[tool.towncrier.type]]
+directory = "lint"
+name = "✅ Lint"
+showcontent = true
