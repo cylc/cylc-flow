@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test reload triggers a fresh file install
 
-export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 create_test_global_config "" "
