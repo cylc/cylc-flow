@@ -129,14 +129,13 @@ def test_cylc_7_db_wflow_params_table(_setup_db):
         rf'("cycle_point_format", "{ptformat}")'
     )
     db_file_name = _setup_db([create, insert])
-    checker = CylcWorkflowDBChecker('foo', 'bar', db_path=db_file_name)
+    with CylcWorkflowDBChecker('foo', 'bar', db_path=db_file_name) as checker:
+        with pytest.raises(
+            sqlite3.OperationalError, match="no such table: workflow_params"
+        ):
+            checker._get_db_point_format()
 
-    with pytest.raises(
-        sqlite3.OperationalError, match="no such table: workflow_params"
-    ):
-        checker._get_db_point_format()
-
-    assert checker.db_point_fmt == ptformat
+        assert checker.db_point_fmt == ptformat
 
 
 def test_pre_830_task_action_timers(_setup_db):

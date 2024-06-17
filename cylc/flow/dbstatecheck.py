@@ -72,7 +72,7 @@ class CylcWorkflowDBChecker:
         if not os.path.exists(db_path):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
 
-        self.conn = sqlite3.connect(db_path, timeout=10.0)
+        self.conn: sqlite3.Connection = sqlite3.connect(db_path, timeout=10.0)
 
         # Get workflow point format.
         try:
@@ -84,7 +84,16 @@ class CylcWorkflowDBChecker:
                 self.db_point_fmt = self._get_db_point_format_compat()
                 self.c7_back_compat_mode = True
             except sqlite3.OperationalError:
+                with suppress(Exception):
+                    self.conn.close()
                 raise exc  # original error
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Close DB connection when leaving context manager."""
+        self.conn.close()
 
     def adjust_point_to_db(self, cycle, offset):
         """Adjust a cycle point (with offset) to the DB point format.
