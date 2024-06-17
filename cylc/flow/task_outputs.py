@@ -419,14 +419,10 @@ class TaskOutputs:
         Replace message with "forced" if the output was forced.
 
         """
-        def _get_msg(message):
-            if message in self._forced:
-                return FORCED_COMPLETION_MSG
-            else:
-                return message
-
         return {
-            self._message_to_trigger[message]: _get_msg(message)
+            self._message_to_trigger[message]: (
+                FORCED_COMPLETION_MSG if message in self._forced else message
+            )
             for message, is_completed in self._completed.items()
             if is_completed
         }

@@ -20,19 +20,15 @@
 from asyncio import sleep
 import pytest
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
-from cylc.flow.dbstatecheck import CylcWorkflowDBChecker as Checker
-
-
-if TYPE_CHECKING:
-    from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
+from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
+from cylc.flow.scheduler import Scheduler
 
 
 @pytest.fixture(scope='module')
 async def checker(
     mod_flow, mod_scheduler, mod_run, mod_complete
-) -> 'CylcWorkflowDBChecker':
+):
     """Make a real world database.
 
     We could just write the database manually but this is a better
@@ -53,17 +49,17 @@ async def checker(
             'output': {'outputs': {'trigger': 'message'}}
         }
     })
-    schd = mod_scheduler(wid, paused_start=False)
+    schd: Scheduler = mod_scheduler(wid, paused_start=False)
     async with mod_run(schd):
         await mod_complete(schd)
-        schd.pool.force_trigger_tasks(['1000/good'], [2])
+        schd.pool.force_trigger_tasks(['1000/good'], ['2'])
         # Allow a cycle of the main loop to pass so that flow 2 can be
         # added to db
         await sleep(1)
-        yield Checker(
-                'somestring', 'utterbunkum',
-                schd.workflow_db_mgr.pub_path
-            )
+        with CylcWorkflowDBChecker(
+            'somestring', 'utterbunkum', schd.workflow_db_mgr.pub_path
+        ) as _checker:
+            yield _checker
 
 
 def test_basic(checker):

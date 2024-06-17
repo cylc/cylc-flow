@@ -38,6 +38,9 @@ def wall_clock(offset: str = 'PT0S', sequential: bool = True):
             Wall-clock xtriggers are run sequentially by default.
             See :ref:`Sequential Xtriggers` for more details.
 
+    .. versionchanged:: 8.3.0
+
+       The ``sequential`` argument was added.
     """
     # NOTE: This is just a placeholder for the actual implementation.
     # This is only used for validating the signature and for autodocs.

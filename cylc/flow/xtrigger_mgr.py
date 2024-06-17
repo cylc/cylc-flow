@@ -325,11 +325,16 @@ class XtriggerCollator:
                 )
             fctx.func_kwargs.setdefault('sequential', sequential_param.default)
 
-        elif 'sequential' in fctx.func_kwargs:
-            # xtrig marked as sequential, so add 'sequential' arg to signature
-            sig = add_kwarg_to_sig(
-                sig, 'sequential', fctx.func_kwargs['sequential']
-            )
+        if 'sequential' in fctx.func_kwargs:
+            # xtrig marked as sequential in function call
+            value = fctx.func_kwargs['sequential']
+            if not isinstance(value, bool):
+                raise XtriggerConfigError(
+                    label, fctx.func_name,
+                    f"invalid argument 'sequential={value}' - must be boolean"
+                )
+            if not sequential_param:
+                sig = add_kwarg_to_sig(sig, 'sequential', value)
         return sig
 
     @staticmethod
