@@ -59,8 +59,17 @@ def workflow_state(
         satisfied:
             True if ``satisfied`` else ``False``.
         result:
-            Dict of workflow, task, point, offset,
-            status, message, trigger, flow_num, run_dir
+            Dict containing the keys:
+
+            * ``workflow``
+            * ``task``
+            * ``point``
+            * ``offset``
+            * ``status``
+            * ``message``
+            * ``trigger``
+            * ``flow_num``
+            * ``run_dir``
 
     .. versionchanged:: 8.3.0
 
