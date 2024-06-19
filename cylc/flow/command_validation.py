@@ -233,7 +233,6 @@ def consistency(
 def is_tasks(tasks: List[str]):
     """All tasks in a list of tasks are task ID's
     without trailing job ID.
-    
     Examples:
 
         # All legal
