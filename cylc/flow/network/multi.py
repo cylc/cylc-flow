@@ -235,7 +235,7 @@ def _report(
     """
     try:
         ret: List[Tuple[Optional[str], Optional[str], bool]] = []
-        for _mutation_name, mutation_response in response.items():
+        for mutation_response in response.values():
             # extract the result of each mutation result in the response
             success, msg = mutation_response['result'][0]['response']
             out = None
