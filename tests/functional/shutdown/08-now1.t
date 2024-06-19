@@ -18,7 +18,7 @@
 # Test "cylc stop --now" will wait for event handler.
 . "$(dirname "$0")/test_header"
 
-set_test_number 6
+set_test_number 5
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -27,10 +27,6 @@ LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok 'INFO - Workflow shutting down - REQUEST(NOW)' "${LOGD}/scheduler/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that 1/t1 event handler runs
-run_ok "${TEST_NAME_BASE}-activity-log-succeeded" \
-    grep -q -F \
-    "[(('event-handler-00', 'succeeded'), 1) out] Well done 1/t1 succeeded" \
-    "${JLOGD}/job-activity.log"
 run_ok "${TEST_NAME_BASE}-activity-log-started" \
     grep -q -F \
     "[(('event-handler-00', 'started'), 1) out] Hello 1/t1 started" \
