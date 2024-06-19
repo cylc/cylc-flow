@@ -79,12 +79,7 @@ run_ok "${TEST_NAME_BASE}-id" cylc help id
 
 # Check "cylc version --long" output is correct.
 cylc version --long | head -n 1 > long1
-WHICH="$(command -v cylc)"
-PARENT1="$(dirname "${WHICH}")"
-PARENT2="$(dirname "${PARENT1}")"
-echo "$(cylc version) (${PARENT2})" > long2
-# the concise version of the above is a bash quoting nightmare:
-# echo "$(cylc version) ($(dirname $(dirname $(which cylc))))" > long2
+echo "$(cylc version) ($(command -v cylc))" > long2
 cmp_ok long1 long2
 
 # --help with no DISPLAY
