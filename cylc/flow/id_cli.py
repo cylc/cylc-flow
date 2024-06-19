@@ -347,7 +347,7 @@ async def parse_ids_async(
     if src:
         if not flow_file_path:
             # get the workflow file path from the run dir
-            flow_file_path = get_flow_file(list(workflows)[0])
+            flow_file_path = get_flow_file(next(iter(workflows)))
         return workflows, flow_file_path
     return workflows, multi_mode
 
@@ -375,7 +375,7 @@ async def parse_id_async(
             'max_tasks': 1,
         },
     )
-    workflow_id = list(workflows)[0]
+    workflow_id = next(iter(workflows))
     tokens_list = workflows[workflow_id]
     tokens: Optional[Tokens]
     if tokens_list:
