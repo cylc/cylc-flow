@@ -18,6 +18,7 @@
 
 
 from typing import (
+    Iterable,
     List,
     Optional,
 )
@@ -230,7 +231,7 @@ def consistency(
         raise InputError("Use --prerequisite or --output, not both.")
 
 
-def is_tasks(tasks: List[str]):
+def is_tasks(tasks: Iterable[str]):
     """All tasks in a list of tasks are task ID's
     without trailing job ID.
 
@@ -249,7 +250,7 @@ def is_tasks(tasks: List[str]):
         * */*/42
 
         # None legal
-        >>> is_tasks(['1/', '*/baz/12'])
+        >>> is_tasks(['*/baz/12'])
         Traceback (most recent call last):
         ...
         Exception: This command does not take job ids:
@@ -258,7 +259,7 @@ def is_tasks(tasks: List[str]):
     bad_tasks: List[str] = []
     for task in tasks:
         tokens = Tokens('//' + task)
-        if tokens.lowest_token == IDTokens.Job:
+        if tokens.lowest_token == IDTokens.Job.value:
             bad_tasks.append(task)
     if bad_tasks:
         msg = 'This command does not take job ids:\n * '
