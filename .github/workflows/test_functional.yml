@@ -260,11 +260,11 @@ jobs:
         timeout-minutes: 1
         run: |
           find "$HOME/cylc-run" -name '*.err' -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
           find "$HOME/cylc-run" -name '*.log' -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
 
       - name: Set artifact upload name
         if: always()
