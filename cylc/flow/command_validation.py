@@ -253,13 +253,12 @@ def is_tasks(tasks: List[str]):
         Traceback (most recent call last):
         ...
         Exception: This command does not take job ids:
-        * 1/
         * */baz/12
     """
     bad_tasks: List[str] = []
     for task in tasks:
         tokens = Tokens('//' + task)
-        if tokens.lowest_token < 'task':
+        if tokens.lowest_token == 'job':
             bad_tasks.append(task)
     if bad_tasks:
         msg = 'This command does not take job ids:\n * '
