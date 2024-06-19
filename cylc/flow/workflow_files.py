@@ -424,7 +424,8 @@ def _is_process_running(
         out, err = proc.communicate(timeout=10, input=metric)
     except TimeoutExpired:
         raise CylcError(
-            f'Cannot determine whether workflow is running on {host}.'
+            f'Attempt to determine whether workflow is running on {host}'
+            ' timed out after 10 seconds.'
         )
 
     if proc.returncode == 2:
@@ -435,7 +436,7 @@ def _is_process_running(
     error = False
     if proc.returncode:
         # the psutil call failed in some other way e.g. network issues
-        LOG.debug(
+        LOG.warning(
             f'$ {cli_format(cmd)}  # returned {proc.returncode}\n{err}'
         )
         error = True
