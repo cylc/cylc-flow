@@ -23,7 +23,7 @@ from typing import (
 )
 
 from cylc.flow.exceptions import InputError
-from cylc.flow.id import Tokens
+from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 
@@ -258,7 +258,7 @@ def is_tasks(tasks: List[str]):
     bad_tasks: List[str] = []
     for task in tasks:
         tokens = Tokens('//' + task)
-        if tokens.lowest_token == 'job':
+        if tokens.lowest_token == IDTokens.Job:
             bad_tasks.append(task)
     if bad_tasks:
         msg = 'This command does not take job ids:\n * '
