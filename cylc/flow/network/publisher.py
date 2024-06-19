@@ -21,7 +21,7 @@ from typing import Callable, Optional, Set, Union
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.network import ZMQSocketBase
+from cylc.flow.network.base import ZMQSocketBase
 
 
 def serialize_data(

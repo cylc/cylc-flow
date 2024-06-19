@@ -22,8 +22,9 @@ from typing import TYPE_CHECKING, Iterable, Optional, Set, Union
 
 import zmq
 
-from cylc.flow.network import ZMQSocketBase, get_location
 from cylc.flow.data_store_mgr import DELTAS_MAP
+from cylc.flow.network.base import ZMQSocketBase
+from cylc.flow.network.util import get_location
 
 if TYPE_CHECKING:
     import zmq.asyncio

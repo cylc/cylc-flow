@@ -18,7 +18,7 @@ import pytest
 import zmq
 
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network import ZMQSocketBase
+from cylc.flow.network.base import ZMQSocketBase
 
 from .key_setup import setup_keys
 
