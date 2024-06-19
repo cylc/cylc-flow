@@ -129,7 +129,7 @@ def _clean_check(opts: 'Values', id_: str, run_dir: Path) -> None:
     except ContactFileExists as exc:
         raise ServiceFileError(
             f"Cannot clean running workflow {id_}.\n\n{exc}"
-        )
+        ) from None
 
 
 def init_clean(id_: str, opts: 'Values') -> None:
@@ -173,7 +173,7 @@ def init_clean(id_: str, opts: 'Values') -> None:
             try:
                 platform_names = get_platforms_from_db(local_run_dir)
             except ServiceFileError as exc:
-                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
+                raise ServiceFileError(f"Cannot clean {id_} - {exc}") from None
             except sqlite3.OperationalError as exc:
                 # something went wrong with the query
                 # e.g. the table/field we need isn't there
@@ -184,7 +184,7 @@ def init_clean(id_: str, opts: 'Values') -> None:
                     ' with to remove it.'
                     '\nOtherwise please delete the database file.'
                 )
-                raise ServiceFileError(f"Cannot clean {id_} - {exc}")
+                raise ServiceFileError(f"Cannot clean {id_} - {exc}") from exc
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
@@ -359,7 +359,8 @@ def remote_clean(
     except PlatformLookupError as exc:
         raise PlatformLookupError(
             f"Cannot clean {id_} on remote platforms as the workflow database "
-            f"is out of date/inconsistent with the global config - {exc}")
+            f"is out of date/inconsistent with the global config - {exc}"
+        ) from None
 
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(

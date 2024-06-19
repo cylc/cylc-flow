@@ -75,7 +75,7 @@ class PyModuleLoader(BaseLoader):
         try:
             mdict = __import__(name, fromlist=['*']).__dict__
         except ImportError:
-            raise TemplateNotFound(name)
+            raise TemplateNotFound(name) from None
 
         # inject module dict into the context of an empty template
         def root_render_func(context, *args, **kwargs):
@@ -297,12 +297,12 @@ def jinja2process(
             exc,
             lines=get_error_lines(fpath, flines),
             filename=filename
-        )
+        ) from None
     except Exception as exc:
         raise Jinja2Error(
             exc,
             lines=get_error_lines(fpath, flines),
-        )
+        ) from None
 
     # Ignore blank lines (lone Jinja2 statements leave blank lines behind)
     return [line for line in lines if line.strip()]

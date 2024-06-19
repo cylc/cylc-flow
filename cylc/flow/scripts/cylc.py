@@ -612,7 +612,7 @@ def pycoverage(cmd_args):  # pragma: no cover
             'Could not initiate coverage, likely because Cylc was not '
             'installed in editable mode.'
             '\n\n*****************************\n\n'
-        )
+        ) from None
 
     # start the coverage running
     cov.start()

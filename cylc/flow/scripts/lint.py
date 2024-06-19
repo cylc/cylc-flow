@@ -805,7 +805,7 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
         try:
             loadeddata = toml_loads(tomlfile.read_text())
         except TOMLDecodeError as exc:
-            raise CylcError(f'pyproject.toml did not load: {exc}')
+            raise CylcError(f'pyproject.toml did not load: {exc}') from None
 
         _tool, _cylc, _lint = LINT_TABLE
         try:
