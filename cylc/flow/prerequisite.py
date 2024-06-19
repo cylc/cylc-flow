@@ -195,7 +195,8 @@ class Prerequisite:
                 err_msg += (
                     " (could be unmatched parentheses in the graph string?)")
             raise TriggerExpressionError(
-                '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg))
+                '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg)
+            ) from None
         return res
 
     def satisfy_me(self, outputs: Iterable['Tokens']) -> 'Set[Tokens]':

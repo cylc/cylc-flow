@@ -701,7 +701,9 @@ class WorkflowDatabaseManager:
                 [cls.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except (TypeError, OperationalError):
-            raise ServiceFileError(f"{INCOMPAT_MSG}, or is corrupted.")
+            raise ServiceFileError(
+                f"{INCOMPAT_MSG}, or is corrupted."
+            ) from None
         return parse_version(last_run_ver)
 
     @classmethod

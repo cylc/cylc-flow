@@ -75,4 +75,6 @@ def validate(args: Dict[str, Any]):
     try:
         interval_parse(args["offset"])
     except (ValueError, AttributeError):
-        raise WorkflowConfigError(f"Invalid offset: {args['offset']}")
+        raise WorkflowConfigError(
+            f"Invalid offset: {args['offset']}"
+        ) from None

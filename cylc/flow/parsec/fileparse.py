@@ -493,8 +493,10 @@ def read_and_proc(
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
             except ImportError:
-                raise ParsecError('EmPy Python package must be installed '
-                                  'to process file: ' + fpath)
+                raise ParsecError(
+                    'EmPy Python package must be installed '
+                    'to process file: ' + fpath
+                ) from None
             flines = empyprocess(
                 fpath, flines, fdir, template_vars
             )
@@ -513,8 +515,10 @@ def read_and_proc(
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
             except ImportError:
-                raise ParsecError('Jinja2 Python package must be installed '
-                                  'to process file: ' + fpath)
+                raise ParsecError(
+                    'Jinja2 Python package must be installed '
+                    'to process file: ' + fpath
+                ) from None
             flines = jinja2process(
                 fpath, flines, fdir, template_vars
             )

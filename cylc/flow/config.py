@@ -199,11 +199,11 @@ def interpolate_template(tmpl, params_dict):
     try:
         return tmpl % params_dict
     except KeyError:
-        raise ParamExpandError('bad parameter')
+        raise ParamExpandError('bad parameter') from None
     except TypeError:
-        raise ParamExpandError('wrong data type for parameter')
+        raise ParamExpandError('wrong data type for parameter') from None
     except ValueError:
-        raise ParamExpandError('bad template syntax')
+        raise ParamExpandError('bad template syntax') from None
 
 
 class WorkflowConfig:
@@ -480,8 +480,8 @@ class WorkflowConfig:
                             get_interval(offset_string).standardise())
                     except IntervalParsingError:
                         raise WorkflowConfigError(
-                            "Illegal %s spec: %s" % (
-                                s_type, offset_string))
+                            "Illegal %s spec: %s" % (s_type, offset_string)
+                        ) from None
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
@@ -709,7 +709,7 @@ class WorkflowConfig:
                 try:
                     icp = ingest_time(orig_icp, get_current_time_string())
                 except IsodatetimeError as exc:
-                    raise WorkflowConfigError(str(exc))
+                    raise WorkflowConfigError(str(exc)) from None
         if orig_icp != icp:
             # now/next()/previous() was used, need to store
             # evaluated point in DB
@@ -761,7 +761,7 @@ class WorkflowConfig:
                     for taskid in self.options.starttask
                 ]
             except ValueError as exc:
-                raise InputError(str(exc))
+                raise InputError(str(exc)) from None
             self.start_point = min(
                 get_point(cycle).standardise()
                 for cycle in cycle_points if cycle
@@ -1114,7 +1114,7 @@ class WorkflowConfig:
                     f'\n  {expr}'
                     '\nThe "finished" output cannot be used in completion'
                     ' expressions, use "succeeded or failed".'
-                )
+                ) from None
 
             for alt_qualifier, qualifier in ALT_QUALIFIERS.items():
                 _alt_compvar = trigger_to_completion_variable(alt_qualifier)
@@ -1125,21 +1125,21 @@ class WorkflowConfig:
                         f'\n  {expr}'
                         f'\nUse "{_compvar}" not "{_alt_compvar}" '
                         'in completion expressions.'
-                    )
+                    ) from None
 
             raise WorkflowConfigError(
                 # NOTE: str(exc) == "name 'x' is not defined" tested in
                 # tests/integration/test_optional_outputs.py
                 f'Error in [runtime][{task_name}]completion:'
                 f'\n{error}'
-            )
+            ) from None
         except Exception as exc:  # includes InvalidCompletionExpression
             # expression contains non-whitelisted syntax or any other error in
             # the expression e.g. SyntaxError
             raise WorkflowConfigError(
                 f'Error in [runtime][{task_name}]completion:'
                 f'\n{str(exc)}'
-            )
+            ) from None
 
         # ensure consistency between the graph and the completion expression
         for compvar in (
@@ -1415,11 +1415,12 @@ class WorkflowConfig:
                     c3_single.mro(name))
             except RecursionError:
                 raise WorkflowConfigError(
-                    "circular [runtime] inheritance?")
+                    "circular [runtime] inheritance?"
+                ) from None
             except Exception as exc:
                 # catch inheritance errors
                 # TODO - specialise MRO exceptions
-                raise WorkflowConfigError(str(exc))
+                raise WorkflowConfigError(str(exc)) from None
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
@@ -1758,7 +1759,7 @@ class WorkflowConfig:
                                     f' {taskdef.name}:'
                                     f' {handler_template}:'
                                     f' {repr(exc)}'
-                                )
+                                ) from None
 
     def _check_special_tasks(self):
         """Check declared special tasks are valid, and detect special
@@ -1865,7 +1866,9 @@ class WorkflowConfig:
         try:
             expr_list = listify(lexpression)
         except SyntaxError:
-            raise WorkflowConfigError('Error in expression "%s"' % lexpression)
+            raise WorkflowConfigError(
+                'Error in expression "%s"' % lexpression
+            ) from None
 
         triggers = {}
         xtrig_labels = set()
@@ -1942,7 +1945,9 @@ class WorkflowConfig:
                 xtrig = xtrigs[label]
             except KeyError:
                 if label != 'wall_clock':
-                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
+                    raise WorkflowConfigError(
+                        f"xtrigger not defined: {label}"
+                    ) from None
                 else:
                     # Allow "@wall_clock" in graph as implicit zero-offset.
                     xtrig = SubFuncContext('wall_clock', 'wall_clock', [], {})
@@ -2276,7 +2281,7 @@ class WorkflowConfig:
                 msg += ' (final cycle point=%s)' % fcp
                 if isinstance(exc, CylcError):
                     msg += ' %s' % exc.args[0]
-                raise WorkflowConfigError(msg)
+                raise WorkflowConfigError(msg) from None
             self.sequences.append(seq)
             parser = GraphParser(
                 family_map,
@@ -2431,7 +2436,7 @@ class WorkflowConfig:
             except TaskDefError as exc:
                 if orig_expr:
                     LOG.error(orig_expr)
-                raise WorkflowConfigError(str(exc))
+                raise WorkflowConfigError(str(exc)) from None
             else:
                 # Record custom message outputs from [runtime].
                 for output, message in (
@@ -2443,14 +2448,14 @@ class WorkflowConfig:
                             f'Invalid task output "'
                             f'[runtime][{name}][outputs]'
                             f'{output} = {message}" - {msg}'
-                        )
+                        ) from None
                     valid, msg = TaskMessageValidator.validate(message)
                     if not valid:
                         raise WorkflowConfigError(
                             f'Invalid task message "'
                             f'[runtime][{name}][outputs]'
                             f'{output} = {message}" - {msg}'
-                        )
+                        ) from None
                     self.taskdefs[name].add_output(output, message)
 
         return self.taskdefs[name]
@@ -2462,7 +2467,7 @@ class WorkflowConfig:
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise WorkflowConfigError("Task not defined: %s" % name)
+            raise WorkflowConfigError("Task not defined: %s" % name) from None
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
@@ -2554,7 +2559,9 @@ class WorkflowConfig:
                     'workflow': self.workflow,
                 }
             except (KeyError, ValueError):
-                raise InputError(f'Invalid template [meta]URL: {url}')
+                raise InputError(
+                    f'Invalid template [meta]URL: {url}'
+                ) from None
             else:
                 LOG.warning(
                     'Detected deprecated template variables in [meta]URL.'
@@ -2590,7 +2597,9 @@ class WorkflowConfig:
                         'task': name,
                     }
                 except (KeyError, ValueError):
-                    raise InputError(f'Invalid template [meta]URL: {url}')
+                    raise InputError(
+                        f'Invalid template [meta]URL: {url}'
+                    ) from None
                 else:
                     LOG.warning(
                         'Detected deprecated template variables in'

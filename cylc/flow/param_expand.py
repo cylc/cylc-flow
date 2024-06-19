@@ -195,8 +195,9 @@ class NameExpander:
             try:
                 results.append((tmpl % current_values, current_values))
             except KeyError as exc:
-                raise ParamExpandError('parameter %s is not '
-                                       'defined.' % str(exc.args[0]))
+                raise ParamExpandError(
+                    'parameter %s is not ' 'defined.' % str(exc.args[0])
+                ) from None
         else:
             for param_val in params[0][1]:
                 spec_vals[params[0][0]] = param_val
@@ -306,8 +307,8 @@ class NameExpander:
                     used[item] = param_values[item]
                 except KeyError:
                     raise ParamExpandError(
-                        "parameter '%s' undefined in '%s'" % (
-                            item, origin))
+                        "parameter '%s' undefined in '%s'" % (item, origin)
+                    ) from None
 
         # For each parameter substitute the param_tmpl_cfg.
         tmpl = tmpl.format(**self.param_tmpl_cfg)
@@ -425,8 +426,9 @@ class GraphExpander:
                 try:
                     repl = tmpl % param_values
                 except KeyError as exc:
-                    raise ParamExpandError('parameter %s is not '
-                                           'defined.' % str(exc.args[0]))
+                    raise ParamExpandError(
+                        'parameter %s is not ' 'defined.' % str(exc.args[0])
+                    ) from None
                 line = line.replace('<' + p_group + '>', repl)
             if line:
                 line_set.add(line)

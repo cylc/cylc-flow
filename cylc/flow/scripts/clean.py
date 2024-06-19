@@ -157,7 +157,7 @@ def parse_timeout(opts: 'Values') -> None:
                 raise InputError(
                     f"Invalid timeout: {opts.remote_timeout}. Must be "
                     "an ISO 8601 duration or number of seconds."
-                )
+                ) from None
         opts.remote_timeout = str(timeout)
 
 

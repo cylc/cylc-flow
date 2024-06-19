@@ -255,7 +255,7 @@ class CylcTimeParser:
             except CylcMissingContextPointError:
                 raise CylcMissingFinalCyclePointError(
                     "This workflow requires a final cycle point."
-                )
+                ) from None
 
             exclusion_points = []
             # Convert the exclusion strings to ISO8601 points

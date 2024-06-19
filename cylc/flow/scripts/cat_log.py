@@ -495,7 +495,7 @@ def _main(
                     raise InputError(
                         f"--rotation {rotation_number} invalid "
                         f"(max value is {len(logs) - 1})"
-                    )
+                    ) from None
             else:
                 raise InputError('Log file not found.')
         else:

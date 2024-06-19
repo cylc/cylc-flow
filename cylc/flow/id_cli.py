@@ -167,9 +167,9 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                     # this ID is invalid with or without the trailing slash
                     tokens = cli_tokenise(id_[:-1])
                 except ValueError:
-                    raise InputError(f'Invalid ID: {id_}')
+                    raise InputError(f'Invalid ID: {id_}') from None
             else:
-                raise InputError(f'Invalid ID: {id_}')
+                raise InputError(f'Invalid ID: {id_}') from None
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
         is_relative = not tokens.get('workflow')
 

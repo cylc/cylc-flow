@@ -150,7 +150,7 @@ class IntegerPoint(PointBase):
         try:
             self.value = str(int(self))
         except (TypeError, ValueError) as exc:
-            raise PointParsingError(type(self), self.value, exc)
+            raise PointParsingError(type(self), self.value, exc) from None
         return self
 
     def __int__(self):
