@@ -250,3 +250,59 @@ async def test_command_logging(mock_flow, caplog, log_filter):
     await mock_flow.resolvers._mutation_mapper("put_messages", kwargs, meta)
     assert log_filter(
         caplog, contains='Command "put_messages" received from Dr Spock')
+
+
+async def test_command_validation_failure(
+    mock_flow,
+    caplog,
+    flow_args,
+    monkeypatch,
+):
+    """It should log command validation failures server side."""
+    caplog.set_level(logging.DEBUG, None)
+    flow_args['workflows'].append(
+        {
+            'user': mock_flow.owner,
+            'workflow': mock_flow.name,
+            'workflow_sel': None,
+        }
+    )
+
+    # submit a command with invalid arguments:
+    async def submit_invalid_command(verbosity=0):
+        nonlocal caplog, mock_flow, flow_args
+        monkeypatch.setattr('cylc.flow.flags.verbosity', verbosity)
+        caplog.clear()
+        return await mock_flow.resolvers.mutator(
+            None,
+            'stop',
+            flow_args,
+            {'task': 'cycle/task/job', 'mode': 'not-a-mode'},
+            {},
+        )
+
+    # submitting the invalid command should result in this error
+    msg = 'This command does not take job ids:\n * cycle/task/job'
+
+    # test submitting the command at *default* verbosity
+    response = await submit_invalid_command()
+
+    # the error should be sent back to the client:
+    assert response[0]['response'][1] == msg
+    # it should also be logged by the server:
+    assert caplog.records[-1].levelno == logging.WARNING
+    assert msg in caplog.records[-1].message
+
+    # test submitting the command at *debug* verbosity
+    response = await submit_invalid_command(verbosity=2)
+
+    # the error should be sent back to the client:
+    assert response[0]['response'][1] == msg
+    # it should be logged at the server
+    assert caplog.records[-2].levelno == logging.WARNING
+    assert msg in caplog.records[-2].message
+    # the traceback should also be logged
+    # (note traceback gets logged at the ERROR level and shows up funny in
+    # caplog)
+    assert caplog.records[-1].levelno == logging.ERROR
+    assert msg in caplog.records[-1].message
