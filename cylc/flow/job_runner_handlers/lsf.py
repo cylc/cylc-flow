@@ -70,7 +70,7 @@ class LSFHandler():
     POLL_CMD = "bjobs"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^Job <(?P<id>\d+)>")
     SUBMIT_CMD_TMPL = "bsub"
-    ETL_DIRECTIVE = "-W"
+    TIME_LIMIT_DIRECTIVE = "-W"
 
     @classmethod
     def format_directives(cls, job_conf):
@@ -85,9 +85,9 @@ class LSFHandler():
         directives["-e"] = job_file_path + ".err"
         if (
             job_conf["execution_time_limit"]
-            and directives.get(cls.ETL_DIRECTIVE) is None
+            and directives.get(cls.TIME_LIMIT_DIRECTIVE) is None
         ):
-            directives[cls.ETL_DIRECTIVE] = str(math.ceil(
+            directives[cls.TIME_LIMIT_DIRECTIVE] = str(math.ceil(
                 job_conf["execution_time_limit"] / 60))
         for key, value in list(job_conf["directives"].items()):
             directives[key] = value

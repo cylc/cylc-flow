@@ -76,7 +76,7 @@ class SGEHandler:
     POLL_CMD = "qstat"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"\D+(?P<id>\d+)\D+")
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
-    ETL_DIRECTIVE = "-l h_rt"
+    TIME_LIMIT_DIRECTIVE = "-l h_rt"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
@@ -89,8 +89,8 @@ class SGEHandler:
         directives['-o'] = job_file_path + ".out"
         directives['-e'] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
-                directives.get(self.ETL_DIRECTIVE) is None):
-            directives[self.ETL_DIRECTIVE] = "%d:%02d:%02d" % (
+                directives.get(self.TIME_LIMIT_DIRECTIVE) is None):
+            directives[self.TIME_LIMIT_DIRECTIVE] = "%d:%02d:%02d" % (
                 job_conf["execution_time_limit"] / 3600,
                 (job_conf["execution_time_limit"] / 60) % 60,
                 job_conf["execution_time_limit"] % 60)

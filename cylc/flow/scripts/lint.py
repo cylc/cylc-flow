@@ -166,13 +166,13 @@ deprecated_string_templates = {
 
 
 def get_wallclock_directives():
-    """Get a set of directives equivelent to execution time limit"""
+    """Get a set of directives equivalent to execution time limit"""
     job_runner_manager = JobRunnerManager()
     directives = {}
     for module in pkgutil.iter_modules(job_runner_handlers.__path__):
         directive = getattr(
             job_runner_manager._get_sys(module.name),
-            'ETL_DIRECTIVE',
+            'TIME_LIMIT_DIRECTIVE',
             None
         )
         if directive:
