@@ -37,7 +37,6 @@ SGE directives can be provided in the flow.cylc file:
                -cwd =
                -q = foo
                -l h_data = 1024M
-               -l h_rt = 24:00:00
 
 These are written to the top of the job script like this:
 
