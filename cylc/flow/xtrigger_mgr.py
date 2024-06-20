@@ -31,7 +31,7 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import XtriggerConfigError
+from cylc.flow.exceptions import WorkflowConfigError, XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.subprocctx import add_kwarg_to_sig
@@ -362,6 +362,8 @@ class XtriggerCollator:
         try:
             xtrig_validate_func(bound_args.arguments)
         except Exception as exc:  # Note: catch all errors
+            if not isinstance(exc, WorkflowConfigError):
+                LOG.exception(exc)
             raise XtriggerConfigError(label, signature_str, exc)
 
     # BACK COMPAT: workflow_state_backcompat
