@@ -232,20 +232,17 @@ def consistency(
 
 
 def is_tasks(tasks: Iterable[str]):
-    """All tasks in a list of tasks are task ID's
-    without trailing job ID.
+    """All tasks in a list of tasks are task ID's without trailing job ID.
 
     Examples:
-
         # All legal
         >>> is_tasks(['1/foo', '1/bar', '*/baz', '*/*'])
-        True
 
         # Some legal
         >>> is_tasks(['1/foo/NN', '1/bar', '*/baz', '*/*/42'])
         Traceback (most recent call last):
         ...
-        Exception: This command does not take job ids:
+        cylc.flow.exceptions.InputError: This command does not take job ids:
         * 1/foo/NN
         * */*/42
 
@@ -253,7 +250,7 @@ def is_tasks(tasks: Iterable[str]):
         >>> is_tasks(['*/baz/12'])
         Traceback (most recent call last):
         ...
-        Exception: This command does not take job ids:
+        cylc.flow.exceptions.InputError: This command does not take job ids:
         * */baz/12
     """
     bad_tasks: List[str] = []
@@ -263,5 +260,4 @@ def is_tasks(tasks: Iterable[str]):
             bad_tasks.append(task)
     if bad_tasks:
         msg = 'This command does not take job ids:\n * '
-        raise Exception(msg + '\n * '.join(bad_tasks))
-    return True
+        raise InputError(msg + '\n * '.join(bad_tasks))
