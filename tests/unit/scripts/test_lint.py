@@ -178,6 +178,8 @@ LINT_TEST_FILE = """
 something\t
     [[bar]]
         platform = $(some-script foo)
+            [[[directives]]]
+                -l walltime = 666
     [[baz]]
         platform = `no backticks`
 """ + (

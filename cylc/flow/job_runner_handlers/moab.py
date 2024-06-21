@@ -78,6 +78,7 @@ class MoabHandler:
     POLL_CMD = "checkjob"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
     SUBMIT_CMD_TMPL = "msub '%(job)s'"
+    TIME_LIMIT_DIRECTIVE = "-l walltime"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
@@ -91,8 +92,9 @@ class MoabHandler:
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
-                directives.get("-l walltime") is None):
-            directives["-l walltime"] = "%d" % job_conf["execution_time_limit"]
+                directives.get(self.TIME_LIMIT_DIRECTIVE) is None):
+            directives[self.TIME_LIMIT_DIRECTIVE] = "%d" % job_conf[
+                "execution_time_limit"]
         # restartable?
         directives.update(job_conf["directives"])
         lines = []
