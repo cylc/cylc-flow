@@ -145,6 +145,7 @@ async def set_prereqs_and_outputs(
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
     validate.flow_opts(flow, flow_wait)
+    validate.is_tasks(tasks)
 
     yield
 
@@ -172,6 +173,8 @@ async def stop(
     task: Optional[str] = None,
     flow_num: Optional[int] = None,
 ):
+    if task:
+        validate.is_tasks([task])
     yield
     if flow_num:
         schd.pool.stop_flow(flow_num)
