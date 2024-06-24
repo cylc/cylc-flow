@@ -120,6 +120,13 @@ class Prerequisite:
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied: Optional[bool] = None
 
+    def dump(self):
+        print(f"POINT {self.point}")
+        for k, v in self._satisfied.items():
+            print(f"_SAT: {k}, {v}")
+        print(f"COND: {self.conditional_expression}")
+        print(f"ALL SAT: {self._all_satisfied}")
+
     def instantaneous_hash(self) -> int:
         """Generate a hash of this prerequisite in its current state.
 

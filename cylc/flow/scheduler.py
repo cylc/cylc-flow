@@ -1271,14 +1271,16 @@ class Scheduler:
             self.server.client_pub_key_dir,
             is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
         ):
+            LOG.warning(f"SUBMITTING {itask} ... {itask.is_manual_submit}")
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
             else:
                 flow = FLOW_NONE
-            log(
-                f"{itask.identity} -triggered off "
-                f"{itask.state.get_resolved_dependencies()} in flow {flow}"
-            )
+            if itask.is_manual_submit:
+                off = f"[] in flow {flow}"
+            else:
+                off = f"{itask.state.get_resolved_dependencies()} in flow {flow}"
+            log(f"{itask.identity} -triggered off {off}")
 
         # one or more tasks were passed through the submission pipeline
         return True

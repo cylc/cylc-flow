@@ -480,10 +480,18 @@ class TaskProxy:
             self.summary[event_key + '_time'] = float(str2time(time_str))
         self.summary[event_key + '_time_string'] = time_str
 
+    def is_task_prereqs_done(self):
+        """Are all task prerequisites satisfied?"""
+        return (
+            all(
+                pre.is_satisfied()
+                for pre in self.state.prerequisites
+            )
+        )
+
     def is_task_prereqs_not_done(self):
         """Are some task prerequisites not satisfied?"""
-        return (not all(pre.is_satisfied()
-                for pre in self.state.prerequisites))
+        return not self.is_task_prereqs_done()
 
     def is_waiting_prereqs_done(self):
         """Are ALL prerequisites satisfied?"""
