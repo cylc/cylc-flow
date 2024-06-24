@@ -18,12 +18,13 @@
 
 
 from typing import (
+    Iterable,
     List,
     Optional,
 )
 
 from cylc.flow.exceptions import InputError
-from cylc.flow.id import Tokens
+from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 
@@ -228,3 +229,35 @@ def consistency(
     """
     if outputs and prereqs:
         raise InputError("Use --prerequisite or --output, not both.")
+
+
+def is_tasks(tasks: Iterable[str]):
+    """All tasks in a list of tasks are task ID's without trailing job ID.
+
+    Examples:
+        # All legal
+        >>> is_tasks(['1/foo', '1/bar', '*/baz', '*/*'])
+
+        # Some legal
+        >>> is_tasks(['1/foo/NN', '1/bar', '*/baz', '*/*/42'])
+        Traceback (most recent call last):
+        ...
+        cylc.flow.exceptions.InputError: This command does not take job ids:
+        * 1/foo/NN
+        * */*/42
+
+        # None legal
+        >>> is_tasks(['*/baz/12'])
+        Traceback (most recent call last):
+        ...
+        cylc.flow.exceptions.InputError: This command does not take job ids:
+        * */baz/12
+    """
+    bad_tasks: List[str] = []
+    for task in tasks:
+        tokens = Tokens('//' + task)
+        if tokens.lowest_token == IDTokens.Job.value:
+            bad_tasks.append(task)
+    if bad_tasks:
+        msg = 'This command does not take job ids:\n * '
+        raise InputError(msg + '\n * '.join(bad_tasks))
