@@ -203,6 +203,11 @@ class WorkflowFiles:
         DB = 'db'
         """The public database"""
 
+        JOB = 'job'
+        """The job log directory."""
+
+    LOG_JOB_DIR = os.path.join(LogDir.DIRNAME, LogDir.JOB)
+
     SHARE_DIR = 'share'
     """Workflow share directory."""
 
@@ -259,7 +264,7 @@ class WorkflowFiles:
     """Reserved filenames that cannot be used as run names."""
 
     SYMLINK_DIRS = frozenset([
-        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, WORK_DIR, ''
+        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, LOG_JOB_DIR, WORK_DIR, ''
     ])
     """The paths of the symlink dirs that may be set in
     global.cylc[install][symlink dirs], relative to the run dir

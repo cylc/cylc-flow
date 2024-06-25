@@ -24,7 +24,7 @@ if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
 fi
 
-set_test_number 12
+set_test_number 14
 
 create_test_global_config "" "
 [install]
@@ -33,12 +33,14 @@ create_test_global_config "" "
             run = \$TMPDIR/\$USER/cylctb_tmp_run_dir
             share = \$TMPDIR/\$USER
             log = \$TMPDIR/\$USER
+            log/job = \$TMPDIR/\$USER/cylctb_tmp_log_job_dir
             share/cycle = \$TMPDIR/\$USER/cylctb_tmp_share_dir
             work = \$TMPDIR/\$USER
         [[[$CYLC_TEST_INSTALL_TARGET]]]
             run = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_run_dir
             share = \$TMPDIR/\$USER/test_cylc_symlink/
             log = \$TMPDIR/\$USER/test_cylc_symlink/
+            log/job = \$TMPDIR/\$USER/cylctb_tmp_log_job_dir
             share/cycle = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_share_dir
             work = \$TMPDIR/\$USER/test_cylc_symlink/
 "
@@ -61,6 +63,14 @@ fi
 TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
 if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}/share/cycle") == \
 "$TMPDIR/$USER/cylctb_tmp_share_dir/cylc-run/${WORKFLOW_NAME}/share/cycle" ]]; then
+    ok "$TEST_SYM.localhost"
+else
+    fail "$TEST_SYM.localhost"
+fi
+
+TEST_SYM="${TEST_NAME_BASE}-log/job-symlink-exists-ok"
+if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}/log/job") == \
+"$TMPDIR/$USER/cylctb_tmp_log_job_dir/cylc-run/${WORKFLOW_NAME}/log/job" ]]; then
     ok "$TEST_SYM.localhost"
 else
     fail "$TEST_SYM.localhost"
@@ -92,6 +102,14 @@ if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_share_dir/cylc-run/${WORKFLOW_NAME
     ok "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
+fi
+
+# shellcheck disable=SC2016
+LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"/log/job'"')"
+if [[ "$LINK" == *"/test_cylc_symlink/cylctb_tmp_log_job_dir/cylc-run/${WORKFLOW_NAME}/log/job" ]]; then
+    ok "${TEST_NAME_BASE}-log/job-symlink-exists-ok.remotehost"
+else
+    fail "${TEST_NAME_BASE}-log/job-symlink-exists-ok.remotehost"
 fi
 
 for DIR in 'work' 'share' 'log'; do
