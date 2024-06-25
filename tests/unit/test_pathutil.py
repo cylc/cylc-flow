@@ -203,6 +203,7 @@ def test_make_workflow_run_tree(
                     run = $DEE
                     work = $DAH
                     log = $DUH
+                    log/job =$RAY
                     share = $DOH
                     share/cycle = $DAH
             ''',
@@ -210,6 +211,7 @@ def test_make_workflow_run_tree(
                 'run': '$DEE/cylc-run/morpheus',
                 'work': '$DAH/cylc-run/morpheus/work',
                 'log': '$DUH/cylc-run/morpheus/log',
+                'log/job': '$RAY/cylc-run/morpheus/log/job',
                 'share': '$DOH/cylc-run/morpheus/share',
                 'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
             },

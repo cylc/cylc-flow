@@ -37,6 +37,7 @@ create_test_global_config "" "
         [[[${CYLC_TEST_INSTALL_TARGET}]]]
             run = ${TEST_DIR}/${SYM_NAME}/run
             log = ${TEST_DIR}/${SYM_NAME}/other
+            log/job = ${TEST_DIR}/${SYM_NAME}/job
             share = ${TEST_DIR}/${SYM_NAME}/other
             share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
             work = ${TEST_DIR}/${SYM_NAME}/other
