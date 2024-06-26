@@ -575,7 +575,7 @@ STYLE_CHECKS = {
     },
     'S014': {
         'short': 'Run mode is not live: This task will only appear to run.',
-        FUNCTION: re.compile(r'run mode\s*=\s*[^l][^i][^v][^e]$').findall
+        FUNCTION: re.compile(r'run mode\s*=\s*(?!\s*live\b)').findall
     },
     'S015': {
         'short': 'Task outputs {outputs}: {description}.',
