@@ -242,7 +242,7 @@ def get_dirs_to_symlink(
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(
             base_dir, 'cylc-run', workflow_id)
-    for dir_ in SYMLINKABLE_LOCATIONS.keys():
+    for dir_ in SYMLINKABLE_LOCATIONS:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
