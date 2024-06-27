@@ -400,11 +400,11 @@ async def scheduler_cli(
     # upgrade the workflow DB (after user has confirmed upgrade)
     _upgrade_database(db_file)
 
-    # re-execute on another host if required
-    _distribute(options.host, workflow_id_raw, workflow_id, options.color)
-
     # print the start message
     _print_startup_message(options)
+
+    # re-execute on another host if required
+    _distribute(options.host, workflow_id_raw, workflow_id, options.color)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -561,10 +561,14 @@ def _upgrade_database(db_file: Path) -> None:
 
 
 def _print_startup_message(options):
-    """Print the Cylc header including the CLI logo."""
+    """Print the Cylc header including the CLI logo to the user's terminal."""
     if (
         cylc.flow.flags.verbosity > -1
         and (options.no_detach or options.format == 'plain')
+        # don't print the startup message on reinvocation (note
+        # --host=localhost is the best indication we have that reinvokation has
+        # happened)
+        and options.host != 'localhost'
     ):
         print(
             cparse(
