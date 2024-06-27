@@ -1536,10 +1536,11 @@ class TaskEventsManager():
             job_conf = itask.jobs[-1]
 
         # insert job into data store
+        job_status = 'submitted' if submit_status == 0 else 'submit-failed'
         self.data_store_mgr.insert_job(
             itask.tdef.name,
             itask.point,
-            itask.state.status,
+            job_status,
             {
                 **job_conf,
                 # NOTE: the platform name may have changed since task
