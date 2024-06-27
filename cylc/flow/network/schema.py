@@ -51,6 +51,7 @@ from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
+    RunMode,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -821,6 +822,7 @@ class Runtime(ObjectType):
     directives = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     environment = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     outputs = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
+    run_mode = graphene.String(default_value=RunMode.WORKFLOW)
 
 
 RUNTIME_FIELD_TO_CFG_MAP = {

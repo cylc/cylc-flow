@@ -107,8 +107,13 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
-from cylc.flow.simulation import sim_time_check
+from cylc.flow.run_modes.simulation import sim_time_check
 from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.templatevars import eval_var
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_events import WorkflowEventHandler
+from cylc.flow.workflow_status import StopMode, AutoRestartMode
+from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
@@ -127,9 +132,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
-)
-from cylc.flow.taskdef import TaskDef
-from cylc.flow.templatevars import eval_var
+    RunMode)
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.timer import Timer
 from cylc.flow.util import cli_format
@@ -138,9 +141,6 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode,
 )
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import AutoRestartMode, RunMode, StopMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -1269,7 +1269,7 @@ class Scheduler:
             pre_prep_tasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
-            is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
+            run_mode=self.get_run_mode()
         ):
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
@@ -1516,17 +1516,12 @@ class Scheduler:
 
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
-
         self.pool.clock_expire_tasks()
         self.release_queued_tasks()
-
-        if (
-            self.get_run_mode() == RunMode.SIMULATION
-            and sim_time_check(
-                self.task_events_mgr,
-                self.pool.get_tasks(),
-                self.workflow_db_mgr,
-            )
+        if sim_time_check(
+            self.task_events_mgr,
+            self.pool.get_tasks(),
+            self.workflow_db_mgr,
         ):
             # A simulated task state change occurred.
             self.reset_inactivity_timer()

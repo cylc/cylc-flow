@@ -23,6 +23,7 @@ from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Values
     from cylc.flow.id import Tokens
 
 
@@ -152,6 +153,62 @@ TASK_STATUSES_TRIGGERABLE = {
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
 }
+
+
+class RunMode:
+    """The possible run modes of a task/workflow."""
+
+    LIVE = 'live'
+    """Task will run normally."""
+
+    SIMULATION = 'simulation'
+    """Task will run in simulation mode."""
+
+    DUMMY = 'dummy'
+    """Task will run in dummy mode."""
+
+    SKIP = 'skip'
+    """Task will run in skip mode."""
+
+    WORKFLOW = 'workflow'
+    """Default to workflow run mode"""
+
+    MODES = {LIVE, SIMULATION, DUMMY, SKIP, WORKFLOW}
+
+    WORKFLOW_MODES = [LIVE, DUMMY, SIMULATION, SKIP]
+    """Workflow mode not sensible mode for workflow.
+
+    n.b. converted to a list to ensure ordering doesn't change in
+    CLI
+    """
+
+    JOB_MODES = {LIVE, DUMMY}
+    """Modes which need to have real jobs submitted."""
+
+    JOBLESS_MODES = {SKIP, SIMULATION}
+    """Modes which completely ignore the standard submission path."""
+
+    @staticmethod
+    def get(options: 'Values') -> str:
+        """Return the run mode from the options."""
+        return getattr(options, 'run_mode', None) or RunMode.LIVE
+
+    @staticmethod
+    def disable_task_event_handlers(itask):
+        """Should we disable event handlers for this task?
+
+        No event handlers in simulation mode, or in skip mode
+        if we don't deliberately enable them:
+        """
+        mode = itask.tdef.run_mode
+        return (
+            mode == RunMode.SIMULATION
+            or (
+                mode == RunMode.SKIP
+                and itask.tdef.rtconfig['skip'][
+                    'disable task event handlers'] is True
+            )
+        )
 
 
 def status_leq(status_a, status_b):
@@ -312,7 +369,8 @@ class TaskState:
 
     def satisfy_me(
         self,
-        outputs: Iterable['Tokens']
+        outputs: Iterable['Tokens'],
+        mode,
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 
@@ -320,7 +378,7 @@ class TaskState:
         """
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
-            yep = prereq.satisfy_me(outputs)
+            yep = prereq.satisfy_me(outputs, mode)
             if yep:
                 valid = valid.union(yep)
                 continue

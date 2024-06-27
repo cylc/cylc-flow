@@ -20,7 +20,7 @@ from pytest import param
 
 from cylc.flow import commands
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.simulation import sim_time_check
+from cylc.flow.run_modes.simulation import sim_time_check
 
 
 @pytest.fixture
@@ -28,7 +28,8 @@ def monkeytime(monkeypatch):
     """Convenience function monkeypatching time."""
     def _inner(time_: int):
         monkeypatch.setattr('cylc.flow.task_job_mgr.time', lambda: time_)
-        monkeypatch.setattr('cylc.flow.simulation.time', lambda: time_)
+        monkeypatch.setattr(
+            'cylc.flow.run_modes.simulation.time', lambda: time_)
     return _inner
 
 
@@ -42,8 +43,8 @@ def run_simjob(monkeytime):
         itask = schd.pool.get_task(point, task)
         itask.state.is_queued = False
         monkeytime(0)
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         monkeytime(itask.mode_settings.timeout + 1)
 
         # Run Time Check
@@ -150,8 +151,8 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
 
     for i, result in enumerate(results):
         itask.try_timers['execution-retry'].num = i
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert itask.mode_settings.sim_task_fails is result
 
 
@@ -170,11 +171,11 @@ def test_task_finishes(sim_time_check_setup, monkeytime, caplog):
     fail_all_1066 = schd.pool.get_task(ISO8601Point('1066'), 'fail_all')
     fail_all_1066.state.status = 'running'
     fail_all_1066.state.is_queued = False
-    schd.task_job_mgr._simulation_submit_task_jobs(
-        [fail_all_1066], schd.workflow)
+    schd.task_job_mgr._nonlive_submit_task_jobs(
+        [fail_all_1066], schd.workflow, 'simulation')
 
     # For the purpose of the test delete the started time set by
-    # _simulation_submit_task_jobs.
+    # _nonlive_submit_task_jobs.
     fail_all_1066.summary['started_time'] = 0
 
     # Before simulation time is up:
@@ -200,8 +201,8 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
 
     # Run the job submission method:
     monkeytime(0)
-    schd.task_job_mgr._simulation_submit_task_jobs(
-        [fast_forward_1066], schd.workflow)
+    schd.task_job_mgr._nonlive_submit_task_jobs(
+        [fast_forward_1066], schd.workflow, 'simulation')
     fast_forward_1066.state.is_queued = False
 
     result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
@@ -254,8 +255,8 @@ async def test_settings_restart(
     async with start(schd):
         og_timeouts = {}
         for itask in schd.pool.get_tasks():
-            schd.task_job_mgr._simulation_submit_task_jobs(
-                [itask], schd.workflow)
+            schd.task_job_mgr._nonlive_submit_task_jobs(
+                [itask], schd.workflow, 'simulation')
 
             og_timeouts[itask.identity] = itask.mode_settings.timeout
 
@@ -379,8 +380,8 @@ async def test_settings_broadcast(
         itask.state.is_queued = False
 
         # Submit the first - the sim task will fail:
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert itask.mode_settings.sim_task_fails is True
 
         # Let task finish.
@@ -398,14 +399,14 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': ''}
             }])
         # Submit again - result is different:
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert itask.mode_settings.sim_task_fails is False
 
         # Assert Clearing the broadcast works
         schd.broadcast_mgr.clear_broadcast()
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert itask.mode_settings.sim_task_fails is True
 
         # Assert that list of broadcasts doesn't change if we submit
@@ -415,18 +416,22 @@ async def test_settings_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
             }])
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert (
             'Invalid ISO 8601 date representation: higadfuhasgiurguj'
             in log.messages[-1])
+
+        # Check that the invalid broadcast hasn't
+        # changed the itask sim mode settings:
+        assert itask.mode_settings.sim_task_fails is True
 
         schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1'}
             }])
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert (
             'Invalid ISO 8601 date representation: 1'
             in log.messages[-1])
@@ -437,8 +442,8 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': '1945, 1977, 1066'},
                 'execution retry delays': '3*PT2S'
             }])
-        schd.task_job_mgr._simulation_submit_task_jobs(
-            [itask], schd.workflow)
+        schd.task_job_mgr._nonlive_submit_task_jobs(
+            [itask], schd.workflow, 'simulation')
         assert itask.mode_settings.sim_task_fails is True
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:

@@ -255,6 +255,7 @@ def runtime_from_config(rtconfig):
         pre_script=rtconfig['pre-script'],
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
+        run_mode=rtconfig['run mode'],
         execution_time_limit=str(rtconfig['execution time limit'] or ''),
         execution_polling_intervals=listjoin(
             rtconfig['execution polling intervals']
@@ -1220,6 +1221,7 @@ class DataStoreMgr:
             graph_depth=n_depth,
             name=name,
         )
+
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
 

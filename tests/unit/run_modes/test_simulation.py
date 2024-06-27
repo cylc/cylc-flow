@@ -20,9 +20,8 @@ from pytest import param
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.simulation import (
+from cylc.flow.run_modes.simulation import (
     parse_fail_cycle_points,
-    build_dummy_script,
     disable_platforms,
     get_simulated_run_len,
     sim_task_failed,
@@ -57,27 +56,6 @@ def test_get_simulated_run_len(
 
 
 @pytest.mark.parametrize(
-    'fail_one_time_only', (True, False)
-)
-def test_set_simulation_script(fail_one_time_only):
-    rtc = {
-        'outputs': {'foo': '1', 'bar': '2'},
-        'simulation': {
-            'fail try 1 only': fail_one_time_only,
-            'fail cycle points': '1',
-        }
-    }
-    result = build_dummy_script(rtc, 60)
-    assert result.split('\n') == [
-        'sleep 60',
-        "cylc message '1'",
-        "cylc message '2'",
-        f"cylc__job__dummy_result {str(fail_one_time_only).lower()}"
-        " 1 || exit 1"
-    ]
-
-
-@pytest.mark.parametrize(
     'rtc, expect', (
         ({'platform': 'skarloey'}, 'localhost'),
         ({'remote': {'host': 'rheneas'}}, 'localhost'),
@@ -100,7 +78,7 @@ def test_disable_platforms(rtc, expect):
 def test_parse_fail_cycle_points(set_cycling_type):
     before = ['2', '4']
     set_cycling_type()
-    assert parse_fail_cycle_points(before) == [
+    assert parse_fail_cycle_points(before, ['']) == [
         IntegerPoint(i) for i in before
     ]
 

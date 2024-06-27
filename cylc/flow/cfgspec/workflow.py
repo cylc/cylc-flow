@@ -1334,6 +1334,22 @@ with Conf(
                     "[platforms][<platform name>]submission retry delays"
                 )
             )
+            Conf(
+                'run mode', VDR.V_STRING,
+                options=['workflow', 'simulation', 'dummy', 'live', 'skip'],
+                default='workflow',
+                desc='''
+                    Override the workflow's run mode.
+
+                    By default workflows run in "live mode" - tasks run
+                    in the way defined by the runtime config.
+                    This setting allows individual tasks to be run using
+                    a different run mode.
+
+                    .. TODO: Reference updated documention.
+
+                    .. versionadded:: 8.4.0
+            ''')
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
@@ -1406,9 +1422,44 @@ with Conf(
                     determine how an event handler responds to task failure
                     events.
                 ''')
+            with Conf('skip', desc='''
+                Task configuration for task :ref:`SkipMode`.
 
+                For a full description of skip run mode see
+                :ref:`SkipMode`.
+
+                .. versionadded:: 8.4.0
+            '''):
+                Conf(
+                    'outputs',
+                    VDR.V_STRING_LIST,
+                    desc='''
+                        Outputs to be emitted by a task in skip mode.
+
+                        By default started, submitted, succeeded and all
+                        required outputs will be emitted.
+
+                        If outputs are specified, but neither succeeded or
+                        failed are specified, succeeded will automatically be
+                        emitted.
+
+                        .. versionadded:: 8.4.0
+                    '''
+                )
+                Conf(
+                    'disable task event handlers',
+                    VDR.V_BOOLEAN,
+                    default=True,
+                    desc='''
+                        Task event handlers are turned off by default for
+                        skip mode tasks. Changing this setting to ``False``
+                        will re-enable task event handlers.
+
+                        .. versionadded:: 8.4.0
+                    '''
+                )
             with Conf('simulation', desc='''
-                Task configuration for workflow *simulation* and *dummy* run
+                Task configuration for *simulation* and *dummy* run
                 modes.
 
                 For a full description of simulation and dummy run modes see

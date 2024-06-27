@@ -57,6 +57,7 @@ class Prerequisite:
     MESSAGE_TEMPLATE = r'%s/%s %s'
 
     DEP_STATE_SATISFIED = 'satisfied naturally'
+    DEP_STATE_ARTIFICIAL = 'Artificially satisfied'
     DEP_STATE_OVERRIDDEN = 'force satisfied'
     DEP_STATE_UNSATISFIED = False
 
@@ -198,20 +199,26 @@ class Prerequisite:
                 '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg))
         return res
 
-    def satisfy_me(self, outputs: Iterable['Tokens']) -> 'Set[Tokens]':
+    def satisfy_me(
+        self, outputs: Iterable['Tokens'], mode: str = 'live'
+    ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
         Updates cache with the result.
         Return outputs that match.
 
         """
+        if mode != 'live':
+            satisfied_message = self.DEP_STATE_ARTIFICIAL + f' by {mode} mode'
+        else:
+            satisfied_message = self.DEP_STATE_SATISFIED
         valid = set()
         for output in outputs:
             prereq = (output['cycle'], output['task'], output['task_sel'])
             if prereq not in self.satisfied:
                 continue
             valid.add(output)
-            self.satisfied[prereq] = self.DEP_STATE_SATISFIED
+            self.satisfied[prereq] = satisfied_message
             if self.conditional_expression is None:
                 self._all_satisfied = all(self.satisfied.values())
             else:
@@ -292,6 +299,14 @@ class Prerequisite:
         E.G: ['1/foo', '2/bar']
 
         """
-        return [f'{point}/{name}' for
-                (point, name, _), satisfied in self.satisfied.items() if
-                satisfied == self.DEP_STATE_SATISFIED]
+        return [
+            f'{point}/{name}' for
+            (point, name, _), satisfied in self.satisfied.items()
+            if (
+                satisfied == self.DEP_STATE_SATISFIED
+                or (
+                    isinstance(satisfied, str)
+                    and satisfied.startswith(self.DEP_STATE_ARTIFICIAL)
+                )
+            )
+        ]

@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import re
 import sqlite3
+from textwrap import dedent
 from typing import Any
 import pytest
 
@@ -503,3 +505,46 @@ def test_special_task_non_word_names(flow: Fixture, validate: Fixture):
         },
     })
     validate(wid)
+
+
+def test_nonlive_mode_validation(flow, validate, caplog):
+    """Nonlive tasks return a warning at validation.
+    """
+    msg1 = dedent(
+        '''        The following tasks are set to run in non-live mode:
+        simulation mode:
+            * simulation
+        dummy mode:
+            * dummy''')
+
+    wid = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'live => skip => simulation => dummy => default'
+            }
+        },
+        'runtime': {
+            'default': {},
+            'live': {'run mode': 'live'},
+            'simulation': {'run mode': 'simulation'},
+            'dummy': {'run mode': 'dummy'},
+            'skip': {
+                'run mode': 'skip',
+                'skip': {'outputs': 'started, submitted'}
+            },
+        },
+    })
+
+    validate(wid)
+    assert msg1 in caplog.messages
+
+
+@pytest.mark.parametrize('mode', (('simulation'), ('skip'), ('dummy')))
+def test_nonlive_mode_forbidden_as_outputs(flow, validate, mode):
+    """Run mode names are forbidden as task output names."""
+    wid = flow({
+        'scheduling': {'graph': {'R1': 'task'}},
+        'runtime': {'task': {'outputs': {mode: f'message for {mode}'}}}
+    })
+    with pytest.raises(WorkflowConfigError, match=f'message for {mode}'):
+        validate(wid)

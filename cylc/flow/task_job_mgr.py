@@ -35,7 +35,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Any, Union, Optional
+from typing import TYPE_CHECKING, Any, List, Tuple, Union, Optional
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -63,7 +63,12 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
-from cylc.flow.simulation import ModeSettings
+from cylc.flow.run_modes.simulation import (
+    submit_task_job as simulation_submit_task_job)
+from cylc.flow.run_modes.skip import (
+    submit_task_job as skip_submit_task_job)
+from cylc.flow.run_modes.dummy import (
+    submit_task_job as dummy_submit_task_job)
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_action_timer import (
@@ -103,7 +108,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
-    TASK_STATUSES_ACTIVE
+    TASK_STATUSES_ACTIVE,
+    RunMode
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -247,7 +253,7 @@ class TaskJobManager:
         return [prepared_tasks, bad_tasks]
 
     def submit_task_jobs(self, workflow, itasks, curve_auth,
-                         client_pub_key_dir, is_simulation=False):
+                         client_pub_key_dir, run_mode='live'):
         """Prepare for job submission and submit task jobs.
 
         Preparation (host selection, remote host init, and remote install)
@@ -262,8 +268,8 @@ class TaskJobManager:
 
         Return (list): list of tasks that attempted submission.
         """
-        if is_simulation:
-            return self._simulation_submit_task_jobs(itasks, workflow)
+        itasks, jobless_tasks = self._nonlive_submit_task_jobs(
+            itasks, workflow, run_mode)
 
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
@@ -272,9 +278,10 @@ class TaskJobManager:
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
-        if not prepared_tasks:
+        if not prepared_tasks and not jobless_tasks:
             return bad_tasks
-
+        elif not prepared_tasks:
+            return jobless_tasks
         auth_itasks = {}  # {platform: [itask, ...], ...}
 
         for itask in prepared_tasks:
@@ -282,8 +289,7 @@ class TaskJobManager:
             auth_itasks.setdefault(platform_name, [])
             auth_itasks[platform_name].append(itask)
         # Submit task jobs for each platform
-        # Non-prepared tasks can be considered done for now:
-        done_tasks = bad_tasks
+        done_tasks = bad_tasks + jobless_tasks
 
         for _, itasks in sorted(auth_itasks.items()):
             # Find the first platform where >1 host has not been tried and
@@ -997,44 +1003,64 @@ class TaskJobManager:
             except KeyError:
                 itask.try_timers[key] = TaskActionTimer(delays=delays)
 
-    def _simulation_submit_task_jobs(self, itasks, workflow):
-        """Simulation mode task jobs submission."""
+    def _nonlive_submit_task_jobs(
+        self: 'TaskJobManager',
+        itasks: 'List[TaskProxy]',
+        workflow: str,
+        workflow_run_mode: str,
+    ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
+        """Simulation mode task jobs submission.
+
+        Returns:
+            lively_tasks:
+                A list of tasks which require subsequent
+                processing **as if** they were live mode tasks.
+                (This includes live and dummy mode tasks)
+            ghostly_tasks:
+                A list of tasks which require no further processing
+                because their apparent execution is done entirely inside
+                the scheduler. (This includes skip and simulation mode tasks).
+        """
+        lively_tasks: 'List[TaskProxy]' = []
+        jobless_tasks: 'List[TaskProxy]' = []
         now = time()
-        now_str = get_time_string_from_unix_time(now)
+        now = (now, get_time_string_from_unix_time(now))
+
         for itask in itasks:
-            # Handle broadcasts
+            # Handle broadcasts:
             rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
                 itask)
 
-            itask.summary['started_time'] = now
-            self._set_retry_timers(itask, rtconfig)
-            itask.mode_settings = ModeSettings(
-                itask,
-                self.workflow_db_mgr,
-                rtconfig
-            )
+            # Apply task run mode
 
-            itask.waiting_on_job_prep = False
-            itask.submit_num += 1
+            if rtconfig['run mode'] == 'workflow':
+                run_mode = workflow_run_mode
+            else:
+                if rtconfig['run mode'] != workflow_run_mode:
+                    LOG.info(
+                        f'[{itask.identity}] run mode set by task settings'
+                        f' to: {rtconfig["run mode"]} mode.')
+                run_mode = rtconfig['run mode']
+            itask.tdef.run_mode = run_mode
 
-            itask.platform = {'name': 'SIMULATION'}
-            itask.summary['job_runner_name'] = 'SIMULATION'
-            itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.mode_settings.simulated_run_length
-            )
-            itask.jobs.append(
-                self.get_simulation_job_conf(itask, workflow)
-            )
-            self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED,
-            )
-            self.workflow_db_mgr.put_insert_task_jobs(
-                itask, {
-                    'time_submit': now_str,
-                    'try_num': itask.get_try_num(),
-                }
-            )
-        return itasks
+            # Submit ghost tasks, or add live-like tasks to list
+            # of tasks to put through live submission pipeline:
+            is_done = False
+            if run_mode == RunMode.DUMMY:
+                is_done = dummy_submit_task_job(
+                    self, itask, rtconfig, workflow, now)
+            elif run_mode == RunMode.SIMULATION:
+                is_done = simulation_submit_task_job(
+                    self, itask, rtconfig, workflow, now)
+            elif run_mode == RunMode.SKIP:
+                is_done = skip_submit_task_job(
+                    self, itask, now)
+            # Assign task to list:
+            if is_done:
+                jobless_tasks.append(itask)
+            else:
+                lively_tasks.append(itask)
+        return lively_tasks, jobless_tasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when submit task jobs command exits."""
