@@ -47,11 +47,11 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
 SHELL_ENV_VARS = re.compile(r'\$[^$/]*')
 SYMLINKABLE_LOCATIONS: Dict[str, str] = {
     # Location: Version Added
-    'log': '8.0.0',
-    'log/job': '8.4.0',
     'share': '8.0.0',
     'share/cycle': '8.0.0',
-    'work': '8.0.0'
+    'log': '8.0.0',
+    'log/job': '8.4.0',
+    'work': '8.0.0',
 }
 
 

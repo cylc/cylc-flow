@@ -106,7 +106,7 @@ fi
 
 # shellcheck disable=SC2016
 LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"/log/job'"')"
-if [[ "$LINK" == *"/test_cylc_symlink/cylctb_tmp_log_job_dir/cylc-run/${WORKFLOW_NAME}/log/job" ]]; then
+if [[ "$LINK" == *"/cylctb_tmp_log_job_dir/cylc-run/${WORKFLOW_NAME}/log/job" ]]; then
     ok "${TEST_NAME_BASE}-log/job-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-log/job-symlink-exists-ok.remotehost"

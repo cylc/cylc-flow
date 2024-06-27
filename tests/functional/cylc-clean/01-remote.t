@@ -82,16 +82,22 @@ ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
 |           \`-- share
 |               \`-- cycle
 \`-- leave-me-alone
+${TEST_DIR}/${SYM_NAME}/job/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            \`-- log
+                \`-- job
+                    \`-- 1
+                        \`-- santa
+                            |-- 01
+                            \`-- NN -> 01
 ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
             |-- log
-            |   \`-- job
-            |       \`-- 1
-            |           \`-- santa
-            |               |-- 01
-            |               \`-- NN -> 01
+            |   \`-- job -> ${TEST_DIR}/${SYM_NAME}/job/cylc-run/${WORKFLOW_NAME}/log/job
             |-- share
             |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
             \`-- work
