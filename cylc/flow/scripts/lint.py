@@ -78,7 +78,7 @@ from ansimarkup import parse as cparse
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
-from cylc.flow.loggingutil import set_timestamps
+from cylc.flow.loggingutil import set_timestamps, bullet_list
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     WORKFLOW_ID_OR_PATH_ARG_DOC
@@ -1144,7 +1144,10 @@ def lint(
     """
     # get the first line
     line_no = 1
-    line = next(lines)
+    try:
+        line = next(lines)
+    except StopIteration:
+        return
     # check if it is a jinja2 shebang
     jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
 
@@ -1341,6 +1344,13 @@ def get_option_parser() -> COP:
         default=False,
     )
     parser.add_option(
+        '--rule', '-R',
+        help='Carry out only specific checks.',
+        choices=list(parse_checks(['style', '728']).keys()),
+        action='append',
+        default=[],
+    )
+    parser.add_option(
         '--ruleset', '-r',
         help=(
             'Set of rules to use: '
@@ -1390,6 +1400,13 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         print(get_reference(options.ruleset, 'text'))
         sys.exit(0)
 
+    if options.rule and options.ruleset:
+        LOG.error('arguments --rule and --ruleset are mutually exclusive')
+        sys.exit(1)
+    if options.rule and options.ignores:
+        LOG.error('arguments --rule and --ignores are mutually exclusive')
+        sys.exit(1)
+
     # If target not given assume we are looking at PWD:
     if target is None:
         target = str(Path.cwd())
@@ -1416,6 +1433,14 @@ def main(parser: COP, options: 'Values', target=None) -> None:
         ignores=mergedopts[IGNORE],
         max_line_len=mergedopts[MAX_LINE_LENGTH]
     )
+
+    if options.rule:
+        checks = {k: v for k, v in checks.items() if k in options.rule}
+        LOG.warning(bullet_list(
+            [f'{k}: {v["short"]}' for k, v in checks.items()],
+            header='Checking only:',
+            singular_header='Checking only {}')
+        )
 
     # Check each file matching a pattern:
     counter: Dict[str, int] = {}
