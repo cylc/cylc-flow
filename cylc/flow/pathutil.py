@@ -47,11 +47,11 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
 SHELL_ENV_VARS = re.compile(r'\$[^$/]*')
 SYMLINKABLE_LOCATIONS: Dict[str, str] = {
     # Location: Version Added
-    'log': '8.0.0',
-    'log/job': '8.4.0',
     'share': '8.0.0',
     'share/cycle': '8.0.0',
-    'work': '8.0.0'
+    'log': '8.0.0',
+    'log/job': '8.4.0',
+    'work': '8.0.0',
 }
 
 
@@ -242,7 +242,7 @@ def get_dirs_to_symlink(
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(
             base_dir, 'cylc-run', workflow_id)
-    for dir_ in SYMLINKABLE_LOCATIONS.keys():
+    for dir_ in SYMLINKABLE_LOCATIONS:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue

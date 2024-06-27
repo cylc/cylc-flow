@@ -59,6 +59,7 @@ from cylc.flow.hostuserutil import (
     is_remote_host,
 )
 from cylc.flow.pathutil import (
+    SYMLINKABLE_LOCATIONS,
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
@@ -263,9 +264,7 @@ class WorkflowFiles:
     RESERVED_NAMES = frozenset([FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES])
     """Reserved filenames that cannot be used as run names."""
 
-    SYMLINK_DIRS = frozenset([
-        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, LOG_JOB_DIR, WORK_DIR, ''
-    ])
+    SYMLINK_DIRS = frozenset(list(SYMLINKABLE_LOCATIONS) + [''])
     """The paths of the symlink dirs that may be set in
     global.cylc[install][symlink dirs], relative to the run dir
     ('' represents the run dir)."""

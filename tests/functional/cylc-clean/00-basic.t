@@ -33,7 +33,7 @@ create_test_global_config "" "
         [[[localhost]]]
             run = ${TEST_DIR}/${SYM_NAME}/run
             log = ${TEST_DIR}/${SYM_NAME}/log
-            log/job = ${TEST_DIR}/${SYM_NAME}/log
+            log/job = ${TEST_DIR}/${SYM_NAME}/job
             share = ${TEST_DIR}/${SYM_NAME}/share
             share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
             work = ${TEST_DIR}/${SYM_NAME}/work
@@ -56,6 +56,10 @@ cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${WORKFLO
 INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${WORKFLOW_NAME}/log/install")
 TEST_NAME="test-dir-tree-pre-clean"
 run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"
+# cat ${TEST_NAME}.stdout >&2
+# echo "${CYLC_TEST_REG_BASE}" >&2
+# echo ${TEST_DIR}/${SYM_NAME} >&2
+# sleep 600
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
@@ -64,6 +68,12 @@ ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
         \`-- ${TEST_NAME_BASE}
             \`-- share
                 \`-- cycle
+${TEST_DIR}/${SYM_NAME}/job/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            \`-- log
+                \`-- job
 ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
 |-- ${FUNCTIONAL_DIR}
 |   \`-- cylc-clean
@@ -71,7 +81,7 @@ ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
 |           \`-- log
 |               |-- install
 |               |   \`-- ${INSTALL_LOG_FILE}
-|               \`-- job
+|               \`-- job -> ${TEST_DIR}/${SYM_NAME}/job/cylc-run/${WORKFLOW_NAME}/log/job
 \`-- leave-me-alone
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
