@@ -88,7 +88,7 @@ def get_version(long=False):
     from pathlib import Path
     version = f"{__version__}"
     if long:
-        version += f" ({Path(sys.executable).parent.parent})"
+        version += f" ({Path(sys.argv[0])})"
     return version
 
 
