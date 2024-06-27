@@ -23,7 +23,7 @@
         # Cylc 8 new (from 8.3.0)
         c1 = workflow_state(c8b//1/foo, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
         c2 = workflow_state(c8b//1/foo:succeeded, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
-        c3 = workflow_state(c8b//1/foo:x, offset=P0, alt_cylc_run_dir={{ALT}}):PT1S
+        c3 = workflow_state(c8b//1/foo:x, offset=P0, alt_cylc_run_dir={{ALT}}, is_trigger=True):PT1S
         c4 = workflow_state(c8b//1/foo:"the quick brown", offset=P0, is_message=True, alt_cylc_run_dir={{ALT}}):PT1S
 
     [[graph]]
