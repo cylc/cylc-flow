@@ -33,8 +33,8 @@ If the database does not exist at first, polls are consumed waiting for it
 so you can start checking before the target workflow is started.
 
 Legacy (pre-8.3.0) options are supported, but deprecated, for existing scripts:
-    cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
-        --output=MESSAGE --message=MESSAGE --task-point WORKFLOW
+  cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
+      --output=MESSAGE --message=MESSAGE --task-point WORKFLOW
 (Note from 8.0 until 8.3.0 --output and --message both match task messages).
 
 In "cycle/task:selector" the selector will match task statuses, unless:
@@ -55,24 +55,23 @@ Note tasks get recorded in the DB once they enter the active window (n=0).
 
 Flow numbers are only printed for flow numbers > 1.
 
-USE IN TASK SCRIPTING:
+Use in task scripting:
   - To poll a task at the same cycle point in another workflow, just use
     $CYLC_TASK_CYCLE_POINT in the ID.
   - To poll a task at an offset cycle point, use the --offset option to
     have Cylc do the datetime arithmetic for you.
   - However, see also the workflow_state xtrigger for this use case.
 
-WARNINGS:
- - Typos in the workflow or task ID will result in fruitless polling.
- - To avoid missing transient states ("submitted", "running") poll for the
-   corresponding output trigger instead ("submitted", "started").
- - Cycle points are auto-converted to the DB point format (and UTC mode).
- - Task outputs manually completed by "cylc set" have "(force-completed)"
-   recorded as the task message in the DB, so it is best to query trigger
-   names, not messages, unless specifically interested in forced outputs.
+Warnings:
+  - Typos in the workflow or task ID will result in fruitless polling.
+  - To avoid missing transient states ("submitted", "running") poll for the
+    corresponding output trigger instead ("submitted", "started").
+  - Cycle points are auto-converted to the DB point format (and UTC mode).
+  - Task outputs manually completed by "cylc set" have "(force-completed)"
+    recorded as the task message in the DB, so it is best to query trigger
+    names, not messages, unless specifically interested in forced outputs.
 
 Examples:
-
   # Print the status of all tasks in WORKFLOW:
   $ cylc workflow-state WORKFLOW
 
@@ -115,7 +114,11 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import infer_latest_run_from_id
-from cylc.flow.task_state import TASK_STATUSES_ORDERED
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUSES_FINAL,
+    TASK_STATUSES_ALL,
+)
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -363,7 +366,6 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', *ids: str) -> None:
-
     # Note it would be cleaner to use 'id_cli.parse_ids()' here to get the
     # workflow ID and tokens, but that function infers run number and fails
     # if the workflow is not installed yet. We want to be able to start polling
@@ -427,6 +429,15 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
             msg += id_
         else:
             msg += id_.replace(options.depr_point, "$CYLC_TASK_CYCLE_POINT")
+
+        if (
+            options.depr_status
+            and options.depr_status in TASK_STATUSES_ALL
+            and options.depr_status not in TASK_STATUSES_FINAL
+        ):
+            # polling for non-final task statuses is flaky
+            msg += ' and the --triggers option'
+
         LOG.warning(msg)
 
     poller = WorkflowPoller(

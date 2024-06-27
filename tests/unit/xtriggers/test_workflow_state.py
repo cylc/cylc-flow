@@ -263,6 +263,8 @@ def test_validate_ok():
     """Validate returns ok with valid args."""
     validate({
         'workflow_task_id': 'foo//1/bar',
+        'is_trigger': False,
+        'is_message': False,
         'offset': 'PT1H',
         'flow_num': 44,
     })
@@ -291,4 +293,34 @@ def test_validate_fail_non_int_flow(flow_num):
             'workflow_task_id': 'foo//1/bar',
             'offset': 'PT1H',
             'flow_num': flow_num,
+        })
+
+
+def test_validate_polling_config():
+    """It should reject invalid or unreliable polling configurations.
+
+    See https://github.com/cylc/cylc-flow/issues/6157
+    """
+    with pytest.raises(WorkflowConfigError, match='No such task state'):
+        validate({
+            'workflow_task_id': 'foo//1/bar:elephant',
+            'is_trigger': False,
+            'is_message': False,
+            'flow_num': 44,
+        })
+
+    with pytest.raises(WorkflowConfigError, match='Cannot poll for'):
+        validate({
+            'workflow_task_id': 'foo//1/bar:waiting',
+            'is_trigger': False,
+            'is_message': False,
+            'flow_num': 44,
+        })
+
+    with pytest.raises(WorkflowConfigError, match='is not reliable'):
+        validate({
+            'workflow_task_id': 'foo//1/bar:submitted',
+            'is_trigger': False,
+            'is_message': False,
+            'flow_num': 44,
         })

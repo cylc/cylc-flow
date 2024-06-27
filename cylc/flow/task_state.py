@@ -19,7 +19,15 @@
 
 from typing import List, Iterable, Set, TYPE_CHECKING
 from cylc.flow.prerequisite import Prerequisite
-from cylc.flow.task_outputs import TaskOutputs
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_EXPIRED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
+    TaskOutputs,
+)
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
@@ -144,13 +152,17 @@ TASK_STATUSES_ACTIVE = {
     TASK_STATUS_RUNNING,
 }
 
-# Task statuses that can be manually triggered.
-TASK_STATUSES_TRIGGERABLE = {
-    TASK_STATUS_WAITING,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
+# Mapping between task outputs and their corresponding states
+TASK_STATE_MAP = {
+    # status: trigger
+    TASK_STATUS_WAITING: None,
+    TASK_STATUS_EXPIRED: TASK_OUTPUT_EXPIRED,
+    TASK_STATUS_PREPARING: None,
+    TASK_STATUS_SUBMIT_FAILED: TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED: TASK_OUTPUT_SUBMITTED,
+    TASK_STATUS_RUNNING: TASK_OUTPUT_STARTED,
+    TASK_STATUS_FAILED: TASK_OUTPUT_FAILED,
+    TASK_STATUS_SUCCEEDED: TASK_OUTPUT_SUCCEEDED,
 }
 
 
