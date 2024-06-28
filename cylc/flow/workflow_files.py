@@ -426,7 +426,7 @@ def _is_process_running(
         raise CylcError(
             f'Attempt to determine whether workflow is running on {host}'
             ' timed out after 10 seconds.'
-        )
+        ) from None
 
     if proc.returncode == 2:
         # the psutil call failed to gather metrics on the process
@@ -505,7 +505,7 @@ def detect_old_contact_file(
         # this can happen if contact file is from an outdated version of Cylc
         raise ServiceFileError(
             f'Found contact file with incomplete data:\n{exc}.'
-        )
+        ) from None
 
     # check if the workflow process is running ...
     # NOTE: can raise CylcError
@@ -631,7 +631,7 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
         with open(path) as f:
             file_content = f.read()
     except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+        raise ServiceFileError("Couldn't load contact file") from None
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
@@ -914,7 +914,7 @@ def infer_latest_run(
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
-        raise ValueError(f"{path} is not in the cylc-run directory")
+        raise ValueError(f"{path} is not in the cylc-run directory") from None
 
     if not path.exists():
         raise InputError(

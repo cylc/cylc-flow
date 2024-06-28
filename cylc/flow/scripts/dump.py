@@ -296,4 +296,5 @@ async def dump(workflow_id, options, write=print):
                         write(', '.join(values))
     except Exception as exc:
         raise CylcError(
-            json.dumps(workflows, indent=4) + '\n' + str(exc) + '\n')
+            json.dumps(workflows, indent=4) + '\n' + str(exc) + '\n'
+        ) from None

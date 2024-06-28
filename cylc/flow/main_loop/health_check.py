@@ -56,4 +56,4 @@ def _check_contact_file(scheduler):
         raise CylcError(
             '%s: contact file corrupted/modified and may be left'
             % workflow_files.get_contact_file_path(scheduler.workflow)
-        )
+        ) from None

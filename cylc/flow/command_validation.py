@@ -70,7 +70,7 @@ def flow_opts(flows: List[str], flow_wait: bool) -> None:
             try:
                 int(val)
             except ValueError:
-                raise InputError(ERR_OPT_FLOW_VAL.format(val))
+                raise InputError(ERR_OPT_FLOW_VAL.format(val)) from None
 
     if flow_wait and flows[0] in [FLOW_NEW, FLOW_NONE]:
         raise InputError(ERR_OPT_FLOW_WAIT)

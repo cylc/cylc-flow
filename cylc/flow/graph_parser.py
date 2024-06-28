@@ -346,7 +346,7 @@ class GraphParser:
                         raise GraphParseError(
                             f"Dangling {seq}:"
                             f"{this_line}"
-                        )
+                        ) from None
             part_lines.append(this_line)
 
             # Check that a continuation sequence doesn't end this line and
@@ -638,7 +638,8 @@ class GraphParser:
                     except KeyError:
                         # "FAM:bad => foo" in LHS (includes "FAM => bar" too).
                         raise GraphParseError(
-                            f"Illegal family trigger in {expr}")
+                            f"Illegal family trigger in {expr}"
+                        ) from None
                 else:
                     # Not a family.
                     if trig in self.__class__.fam_to_mem_trigger_map:
@@ -911,7 +912,8 @@ class GraphParser:
                 except KeyError:
                     # Illegal family trigger on RHS of a pair.
                     raise GraphParseError(
-                        f"Illegal family trigger: {name}:{output}")
+                        f"Illegal family trigger: {name}:{output}"
+                    ) from None
             else:
                 fam = False
                 if not output:
