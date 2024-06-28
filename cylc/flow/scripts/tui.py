@@ -66,7 +66,7 @@ def get_option_parser() -> COP:
         metavar='SEC',
         help=(
             "Set a timeout for network connections"
-            " to the running workflow. The default is no timeout."
+            " to the running workflow. The default is 3 seconds."
             " For task messaging connections see"
             " site/user config file documentation."
         ),
