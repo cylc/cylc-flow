@@ -3,7 +3,7 @@
         abort on stall timeout = True
         stall timeout = PT0S
         abort on inactivity timeout = True
-        inactivity timeout = PT3M
+        inactivity timeout = PT1M
 
 [scheduling]
     [[graph]]
@@ -14,6 +14,5 @@
         script = cylc__job__wait_cylc_message_started; cylc stop --now "${CYLC_WORKFLOW_ID}"
         [[[events]]]
             started handlers = sleep 10 && echo 'Hello %(id)s %(event)s'
-            succeeded handlers = echo 'Well done %(id)s %(event)s'
     [[t2]]
         script = true

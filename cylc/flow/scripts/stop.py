@@ -53,9 +53,9 @@ There are several shutdown methods:
      CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
 Tasks that become ready after the shutdown is ordered will be submitted
-immediately if the workflow is restarted.  Remaining task event handlers and
-job poll and kill commands, however, will be executed prior to shutdown, unless
---now is used.
+immediately if the workflow is restarted. Remaining task event handlers and
+job poll and kill commands will be executed prior to shutdown, unless
+--now is used twice.
 
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for workflow shutdown.
