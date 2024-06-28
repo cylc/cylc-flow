@@ -24,7 +24,7 @@ if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
 fi
 
-set_test_number 30
+set_test_number 32
 
 create_test_global_config "" "
 [install]
@@ -33,6 +33,7 @@ create_test_global_config "" "
         run = \$TMPDIR/\$USER/test_cylc_symlink/cylctb_tmp_run_dir
         share = \$TMPDIR/\$USER/test_cylc_symlink/
         log = \$TMPDIR/\$USER/test_cylc_symlink/
+        log/job = \$TMPDIR/\$USER/test_cylc_symlink/job_log_dir
         share/cycle = \$TMPDIR/\$USER/test_cylc_symlink/cylctb_tmp_share_dir
         work = \$TMPDIR/\$USER/test_cylc_symlink/
 "
@@ -52,6 +53,10 @@ run_ok "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}")" \
 TEST_SYM="${TEST_NAME_BASE}-share-cycle-glblcfg"
 run_ok "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}/share/cycle")" \
     = "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle"
+
+TEST_SYM="${TEST_NAME_BASE}-log-job-glblcfg"
+run_ok "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}/log/job")" \
+    = "$TMPDIR/${USER}/test_cylc_symlink/job_log_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/log/job"
 
 for DIR in 'work' 'share' 'log'; do
     TEST_SYM="${TEST_NAME_BASE}-${DIR}-glbcfg"
@@ -136,6 +141,10 @@ run_fail "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}")" \
 TEST_SYM="${TEST_NAME}-share-cycle"
 run_fail "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}/share/cycle")" \
     = "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle"
+
+TEST_SYM="${TEST_NAME}-log-job"
+run_fail "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}/log/job")" \
+    = "$TMPDIR/${USER}/test_cylc_symlink/job_log_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/log/job"
 
 for DIR in 'work' 'share' 'log'; do
     TEST_SYM="${TEST_NAME}-${DIR}"

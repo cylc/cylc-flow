@@ -33,6 +33,7 @@ create_test_global_config "" "
         [[[localhost]]]
             run = ${TEST_DIR}/${SYM_NAME}/run
             log = ${TEST_DIR}/${SYM_NAME}/log
+            log/job = ${TEST_DIR}/${SYM_NAME}/log
             share = ${TEST_DIR}/${SYM_NAME}/share
             share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
             work = ${TEST_DIR}/${SYM_NAME}/work
@@ -68,8 +69,9 @@ ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
 |   \`-- cylc-clean
 |       \`-- ${TEST_NAME_BASE}
 |           \`-- log
-|               \`-- install
-|                   \`-- ${INSTALL_LOG_FILE}
+|               |-- install
+|               |   \`-- ${INSTALL_LOG_FILE}
+|               \`-- job
 \`-- leave-me-alone
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
