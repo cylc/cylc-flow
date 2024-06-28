@@ -89,6 +89,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 [#6067](https://github.com/cylc/cylc-flow/pull/6067) - Fixed a bug that sometimes allowed suicide-triggered or manually removed tasks to be added back later.
 
+[#6109](https://github.com/cylc/cylc-flow/pull/6109) - Fixed bug affecting job submission where the list of bad hosts was not always reset correctly.
+
 [#6123](https://github.com/cylc/cylc-flow/pull/6123) - Allow long-format datetime cycle points in IDs used on the command line.
 
 ## __cylc-8.2.7 (Released 2024-05-15)__
@@ -118,6 +120,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 ## __cylc-8.2.5 (Released 2024-04-04)__
 
 ### 🔧 Fixes
+
+[#5924](https://github.com/cylc/cylc-flow/pull/5924) - Validation: a cycle offset can only appear on the right of a dependency if the task's cycling is defined elsewhere with no offset.
 
 [#5933](https://github.com/cylc/cylc-flow/pull/5933) - Fixed bug in `cylc broadcast` (and the GUI Edit Runtime command) where everything after a `#` character in a setting would be stripped out.
 
