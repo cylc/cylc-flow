@@ -74,14 +74,14 @@ jobs:
             platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
           # macos
           - name: 'macos 1/5'
-            os: 'macos-11'
-            python-version: '3.7'
+            os: 'macos-latest'
+            python-version: '3.9'
             test-base: 'tests/f'
             chunk: '1/5'
             platform: '_local_background*'
           - name: 'macos 2/5'
-            os: 'macos-11'
-            python-version: '3.7'
+            os: 'macos-latest'
+            python-version: '3.9'
             test-base: 'tests/f'
             chunk: '2/5'
             platform: '_local_background*'
@@ -135,19 +135,15 @@ jobs:
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)
-          echo \
-            "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-          echo \
-            "/usr/local/opt/gnu-sed/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-          echo \
-            "/usr/local/opt/grep/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/coreutils/libexec/gnubin" >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/grep/libexec/gnubin" >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> "${GITHUB_PATH}"
 
           # add coreutils to the bashrc too (for jobs)
           cat >> "${HOME}/.bashrc" <<__HERE__
-          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/grep/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
           export PATH
           __HERE__
 
