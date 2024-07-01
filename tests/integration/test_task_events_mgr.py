@@ -118,16 +118,12 @@ async def test__always_insert_task_job(
     pytest parameterization for ease of debugging, but the test is
     very much faster with the parameterization inside.
     """
-    conf = {
-        'scheduler': {'allow implicit tasks': True},
-        'scheduling': {'graph': {'R1': 'skarloey'}},
-    }
-    id_ = flow(conf)
+    id_ = flow(one_conf)
     schd = scheduler(id_)
     async with start(schd):
         # Set task to running:
         itask = schd.pool.get_tasks()[0]
-        itask.state.status = 'waiting'
+        assert itask.state.status == TASK_STATUS_WAITING
         itask.submit_num += 1
         itask.try_timers = {'foo': '1'}
 
