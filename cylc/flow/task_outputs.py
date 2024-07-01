@@ -251,11 +251,7 @@ def get_optional_outputs(
             )
             for output in used_compvars
         },
-        # the outputs that are not used in the expression
-        **{
-            output: None
-            for output in all_compvars - used_compvars
-        },
+        **dict.fromkeys(all_compvars - used_compvars),
     }
 
 
