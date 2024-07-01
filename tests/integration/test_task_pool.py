@@ -1893,7 +1893,7 @@ async def test_fast_respawn(
     # attempt to spawn it again
     itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
     assert itask is None
-    assert "Not spawning 1/foo - task removed" in caplog.text
+    assert "Not spawning 1/foo - task was removed" in caplog.text
 
 
 async def test_remove_active_task(
@@ -2019,9 +2019,56 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         # respawned as a result
         schd.pool.spawn_on_output(b1, TASK_OUTPUT_SUCCEEDED)
         assert log_filter(
-            log, contains='Not spawning 1/z - task removed'
+            log, contains='Not spawning 1/z - task was removed'
         )
         z1 = schd.pool.get_task(IntegerPoint("1"), "z")
         assert (
             z1 is None
         ), '1/z should have stayed removed (but has been added back into the pool'
+
+
+async def test_set_future_flow(flow, scheduler, start, log_filter):
+    """Manually-set outputs for new flow num must be recorded in the DB.
+
+    See https://github.com/cylc/cylc-flow/pull/6186
+
+    To trigger the bug, the flow must be new but the task must have been
+    spawned before in an earlier flow.
+
+    """
+    # Scenario: set c2:succeeded in a future flow so when b succeeds
+    # in that flow it will spawn c1 but not c2.
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'cycling mode': 'integer',
+            'graph': {
+                'R1': 'a => b => c1 & c2 => z',
+            },
+        },
+    })
+    schd: 'Scheduler' = scheduler(id_)
+    async with start(schd, level=logging.DEBUG) as log:
+
+        a1 = schd.pool.get_task(IntegerPoint("1"), "a")
+        assert a1, '1/a should have been spawned on startup'
+
+        # set a:succeeded, b:succeeded, c2:succeeded, and c1:failed, in flow 1
+        schd.pool.set_prereqs_and_outputs(['1/a', '1/b', '1/c2'], prereqs=[], outputs=[], flow=[1])
+        schd.pool.set_prereqs_and_outputs(['1/c1'], prereqs=[], outputs=["failed"], flow=[1])
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # set task c2:succeeded in flow 2
+        schd.pool.set_prereqs_and_outputs(['1/c2'], prereqs=[], outputs=[], flow=[2])
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # set b:succeeded in flow 2
+        schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
+
+        c1 = schd.pool.get_task(IntegerPoint("1"), "c1")
+        assert c1, '1/c1 (flow 2) should have been spawned after 1/b:succeeded'
+
+        c2 = schd.pool.get_task(IntegerPoint("1"), "c2")
+        assert c2 is None, '1/c2 (flow 2) should not have been spawned after 1/b:succeeded'

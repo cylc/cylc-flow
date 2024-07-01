@@ -177,7 +177,7 @@ def get_option_parser() -> COP:
     return parser
 
 
-def validate_tokens(tokens_list: Tuple['Tokens']) -> None:
+def validate_tokens(tokens_list: Tuple['Tokens', ...]) -> None:
     """Check the cycles/tasks provided.
 
     This checks that cycle/task selectors have not been provided in the IDs.
@@ -214,7 +214,7 @@ def validate_tokens(tokens_list: Tuple['Tokens']) -> None:
 async def run(
     options: 'Values',
     workflow_id: str,
-    *tokens_list
+    *tokens_list: 'Tokens'
 ):
     validate_tokens(tokens_list)
 

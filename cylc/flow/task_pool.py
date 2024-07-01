@@ -1631,8 +1631,11 @@ class TaskPool:
             # task never ran before
             self.db_add_new_flow_rows(itask)
         else:
+            flow_seen = False
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
+                    # DB row has overlap with itask's flows
+                    flow_seen = True
                     # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
@@ -1649,6 +1652,9 @@ class TaskPool:
                         # [message] - always the full task message
                         for msg in outputs:
                             itask.state.outputs.set_message_complete(msg)
+            if not flow_seen:
+                # itask never ran before in its assigned flows
+                self.db_add_new_flow_rows(itask)
 
     def spawn_task(
         self,
@@ -1676,14 +1682,16 @@ class TaskPool:
             self._get_task_history(name, point, flow_nums)
         )
 
+        spawned_but_not_submitted = False
         if (
             not never_spawned and
             not prev_flow_wait and
             submit_num == 0
         ):
-            # Previous instance removed before completing any outputs.
-            LOG.debug(f"Not spawning {point}/{name} - task removed")
-            return None
+            # Task previously spawned but never submitted, which implies:
+            #  - removed before completing any outputs
+            #  - or some outputs were set manually
+            spawned_but_not_submitted = True
 
         itask = self._get_task_proxy_db_outputs(
             point,
@@ -1694,6 +1702,17 @@ class TaskPool:
             flow_wait=flow_wait,
         )
         if itask is None:
+            return None
+
+        if (
+            spawned_but_not_submitted and
+            not itask.state.outputs.get_completed_outputs()
+        ):
+            # spawned but never submitted, and has no completed outputs.
+            # This implies it was removed, rather than manually set.
+            # TODO: Detecting removal after completion of some outputs probably
+            # TODO: requires recording removal in the DB (set :expired maybe?).
+            LOG.debug(f"Not spawning {point}/{name} - task was removed")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:
@@ -1877,7 +1896,6 @@ class TaskPool:
         - globs (cycle and name) only match in the pool
         - future tasks must be specified individually
         - family names are not expanded to members
-
 
         Uses a transient task proxy to spawn children. (Even if parent was
         previously spawned in this flow its children might not have been).
