@@ -21,7 +21,8 @@ from typing import TYPE_CHECKING, Optional
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.network import encode_, decode_, ZMQSocketBase
+from cylc.flow.network.base import ZMQSocketBase
+from cylc.flow.network.util import encode_, decode_
 
 if TYPE_CHECKING:
     from cylc.flow.network.server import WorkflowRuntimeServer

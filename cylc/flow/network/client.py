@@ -35,14 +35,14 @@ from cylc.flow.exceptions import (
     WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.network import (
+from cylc.flow.network.base import ZMQSocketBase
+from cylc.flow.network.client_factory import CommsMeth
+from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.network.util import (
     encode_,
     decode_,
     get_location,
-    ZMQSocketBase
 )
-from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.workflow_files import (
     detect_old_contact_file,
 )
