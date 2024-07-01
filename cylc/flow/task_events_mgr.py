@@ -1535,8 +1535,14 @@ class TaskEventsManager():
         else:
             job_conf = itask.jobs[-1]
 
+        # Job status should be task status unless task is awaiting a
+        # retry:
+        if itask.state.status == 'waiting' and itask.try_timers:
+            job_status = 'submitted' if submit_status == 0 else 'submit-failed'
+        else:
+            job_status = itask.state.status
+
         # insert job into data store
-        job_status = 'submitted' if submit_status == 0 else 'submit-failed'
         self.data_store_mgr.insert_job(
             itask.tdef.name,
             itask.point,

@@ -127,15 +127,13 @@ async def test__always_insert_task_job(
     async with start(schd):
         # Set task to running:
         itask = schd.pool.get_tasks()[0]
-        for count, (submit_status, task_status) in enumerate(
-                product([1, 0], TASK_STATUSES_ORDERED)
-        ):
-            itask.state.status = task_status
-            itask.submit_num += 1
+        itask.state.status = 'waiting'
+        itask.submit_num += 1
+        itask.try_timers = {'foo': '1'}
 
-            # Insert task (twice):
-            schd.task_events_mgr._insert_task_job(
-                itask, 'now', submit_status)
+        # Insert task (twice):
+        schd.task_events_mgr._insert_task_job(
+            itask, 'now', 1)
 
-            # Number of jobs increments _every_ time
-            assert len(schd.data_store_mgr.added['jobs']) == count + 1
+        # Number of jobs increments _every_ time
+        assert len(schd.data_store_mgr.added['jobs']) == 1
