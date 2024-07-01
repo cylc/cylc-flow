@@ -502,7 +502,7 @@ async def get_nodes_edges(root, info: 'ResolveInfo', **args):
 
 
 def resolve_state_totals(root, info, **args):
-    state_totals = {state: 0 for state in TASK_STATUSES_ORDERED}
+    state_totals = dict.fromkeys(TASK_STATUSES_ORDERED, 0)
     # Update with converted protobuf map container
     state_totals.update(
         dict(getattr(root, to_snake_case(info.field_name), {})))
