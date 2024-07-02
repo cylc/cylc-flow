@@ -1631,8 +1631,11 @@ class TaskPool:
             # task never ran before
             self.db_add_new_flow_rows(itask)
         else:
+            flow_seen = False
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
+                    # DB row has overlap with itask's flows
+                    flow_seen = True
                     # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
@@ -1649,6 +1652,10 @@ class TaskPool:
                         # [message] - always the full task message
                         for msg in outputs:
                             itask.state.outputs.set_message_complete(msg)
+            if not flow_seen:
+                # itask never ran before in its assigned flows
+                # TODO check flow-merged examples?
+                self.db_add_new_flow_rows(itask)
 
     def spawn_task(
         self,
@@ -1877,7 +1884,6 @@ class TaskPool:
         - globs (cycle and name) only match in the pool
         - future tasks must be specified individually
         - family names are not expanded to members
-
 
         Uses a transient task proxy to spawn children. (Even if parent was
         previously spawned in this flow its children might not have been).
