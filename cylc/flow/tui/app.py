@@ -216,7 +216,10 @@ def updater_subproc(filters, client_timeout):
         yield updater
     finally:
         updater.terminate()
-        p.join()
+        p.join(4)  # timeout of 4 seconds
+        if p.exitcode is None:
+            # updater did not exit within timeout -> kill it
+            p.terminate()
 
 
 class TuiApp:
