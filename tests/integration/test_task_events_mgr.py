@@ -20,7 +20,12 @@ from typing import Any as Fixture
 
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.data_store_mgr import TASK_STATUSES_ORDERED
+from cylc.flow.data_store_mgr import (
+    JOBS,
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_SUBMIT_FAILED,
+)
 
 
 async def test_process_job_logs_retrieval_warns_no_platform(
@@ -127,10 +132,11 @@ async def test__always_insert_task_job(
     mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_config)
 
     id_ = flow({
-        'scheduling': {'graph': {'R1': 'broken'}},
+        'scheduling': {'graph': {'R1': 'broken & broken2'}},
         'runtime': {
             'root': {'submission retry delays': 'PT10M'},
             'broken': {'platform': 'broken'},
+            'broken2': {'platform': 'broken2'}
         }
     })
 
@@ -144,9 +150,9 @@ async def test__always_insert_task_job(
             schd.server.client_pub_key_dir,
             is_simulation=False
         ):
-            assert itask.state.status == 'waiting'
+            assert itask.state.status == TASK_STATUS_WAITING
             schd.update_data_store()
             update = [
-                i for i in schd.data_store_mgr.updated['jobs'].values()][0]
+                i for i in schd.data_store_mgr.updated[JOBS].values()][0]
             assert update.id.endswith('1/broken/01')
-            assert update.state == 'submit-failed'
+            assert update.state == TASK_STATUS_SUBMIT_FAILED
