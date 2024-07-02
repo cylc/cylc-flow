@@ -7,12 +7,26 @@
 
 [scheduling]
     [[graph]]
-        R1 = t1:finish => t2
+        R1 = t1 => t2
 
 [runtime]
     [[t1]]
-        script = cylc__job__wait_cylc_message_started; cylc stop --now "${CYLC_WORKFLOW_ID}"
+        script = """
+            # wait for the started message to be sent
+            cylc__job__wait_cylc_message_started;
+            # issue the stop command
+            cylc stop --now "${CYLC_WORKFLOW_ID}"
+            # wait for the stop command to be recieved
+            cylc__job__poll_grep_workflow_log 'Command "stop" received'
+            # send a message telling the started handler to exit
+            cylc message -- stopping
+        """
         [[[events]]]
-            started handlers = sleep 10 && echo 'Hello %(id)s %(event)s'
+            # wait for the stopping message, sleep a bit, then echo some stuff
+            started handlers = """
+                cylc workflow-state %(workflow)s//%(point)s/%(name)s:stopping >/dev/null && sleep 1 && echo 'Hello %(id)s %(event)s'
+            """
+        [[[outputs]]]
+            stopping = stopping
     [[t2]]
         script = true
