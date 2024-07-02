@@ -104,7 +104,7 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
 
 
 async def test__always_insert_task_job(
-    flow, one_conf, scheduler, start, validate
+    flow, scheduler, mock_glbl_cfg, start, run
 ):
     """Insert Task Job _Always_ inserts a task into the data store.
 
@@ -113,23 +113,40 @@ async def test__always_insert_task_job(
     a submission retry was in progress the task state would be
     "waiting" which caused the data_store_mgr.insert_job
     to return without adding the task to the data store.
-
-    n.b. future debuggers may with to convert the for loop to
-    pytest parameterization for ease of debugging, but the test is
-    very much faster with the parameterization inside.
     """
-    id_ = flow(one_conf)
-    schd = scheduler(id_)
+    global_config = """
+        [platforms]
+            [[broken1]]
+                hosts = no-such-host-1
+            [[broken2]]
+                hosts = no-such-host-2
+        [platform groups]
+            [[broken]]
+                platforms = broken1, broken2
+    """
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_config)
+
+    id_ = flow({
+        'scheduling': {'graph': {'R1': 'broken'}},
+        'runtime': {
+            'root': {'submission retry delays': 'PT10M'},
+            'broken': {'platform': 'broken'},
+        }
+    })
+
+    schd = scheduler(id_, run_mode='live')
+    schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
     async with start(schd):
-        # Set task to running:
-        itask = schd.pool.get_tasks()[0]
-        assert itask.state.status == TASK_STATUS_WAITING
-        itask.submit_num += 1
-        itask.try_timers = {'foo': '1'}
-
-        # Insert task (twice):
-        schd.task_events_mgr._insert_task_job(
-            itask, 'now', 1)
-
-        # Number of jobs increments _every_ time
-        assert len(schd.data_store_mgr.added['jobs']) == 1
+        for itask in schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            schd.server.curve_auth,
+            schd.server.client_pub_key_dir,
+            is_simulation=False
+        ):
+            assert itask.state.status == 'waiting'
+            schd.update_data_store()
+            update = [
+                i for i in schd.data_store_mgr.updated['jobs'].values()][0]
+            assert update.id.endswith('1/broken/01')
+            assert update.state == 'submit-failed'
