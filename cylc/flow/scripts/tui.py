@@ -25,7 +25,7 @@ Tui allows you to monitor and interact with workflows in a manner similar
 to the GUI.
 
 Press "h" whilst running Tui to bring up the help screen, use the arrow
-keys to navigage.
+keys to navigate.
 
 """
 
