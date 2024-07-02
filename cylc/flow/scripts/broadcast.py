@@ -79,6 +79,7 @@ from standard input.
 Broadcast cannot change [runtime] inheritance.
 """
 
+import json
 from ansimarkup import parse as cparse
 import asyncio
 from copy import deepcopy
@@ -436,8 +437,7 @@ async def run(options: 'Values', workflow_id):
     results = await pclient.async_request('graphql', mutation_kwargs)
     try:
         for result in results['data']['broadcast']['results']:
-            modified_settings = result['message'][0]
-            bad_options = result['message'][1]
+            modified_settings, bad_options = json.loads(result['message'])
             if modified_settings:
                 ret['stdout'].append(
                     get_broadcast_change_report(

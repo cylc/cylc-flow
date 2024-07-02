@@ -20,6 +20,7 @@ from abc import ABCMeta, abstractmethod
 import asyncio
 from contextlib import suppress
 from fnmatch import fnmatchcase
+import json
 import logging
 import queue
 from time import time
@@ -60,6 +61,7 @@ from cylc.flow.network.schema import (
 if TYPE_CHECKING:
     from uuid import UUID
     from graphql import ResolveInfo
+    from cylc.flow.broadcast_mgr import BroadcastMgr
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
 
@@ -801,7 +803,7 @@ class Resolvers(BaseResolvers):
         namespaces: Optional[List[str]] = None,
         settings: Optional[List[Dict[str, str]]] = None,
         cutoff: Any = None
-    ):
+    ) -> Tuple[bool, str]:
         """Put or clear broadcasts."""
         if settings is not None:
             # Convert schema field names to workflow config setting names if
@@ -811,24 +813,35 @@ class Resolvers(BaseResolvers):
                     RUNTIME_FIELD_TO_CFG_MAP.get(key, key): value
                     for key, value in dict_.items()
                 }
+        broadcast_mgr: BroadcastMgr = self.schd.task_events_mgr.broadcast_mgr
         if mode == 'put_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
-                cycle_points, namespaces, settings)
-        if mode == 'clear_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
+            modified_settings, bad_options = broadcast_mgr.put_broadcast(
+                cast('List[str]', cycle_points),
+                cast('List[str]', namespaces),
+                cast('List[dict]', settings)
+            )
+        elif mode == 'clear_broadcast':
+            modified_settings, bad_options = broadcast_mgr.clear_broadcast(
                 point_strings=cycle_points,
                 namespaces=namespaces,
-                cancel_settings=settings)
-        if mode == 'expire_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
-                cutoff)
-        raise ValueError('Unsupported broadcast mode')
+                cancel_settings=settings
+            )
+        elif mode == 'expire_broadcast':
+            modified_settings, bad_options = broadcast_mgr.expire_broadcast(
+                cutoff
+            )
+        else:
+            raise ValueError('Unsupported broadcast mode')
+        return (
+            bool(modified_settings),
+            json.dumps([modified_settings, bad_options])
+        )
 
     def put_ext_trigger(
         self,
         message,
         id  # noqa: A002 (graphql interface)
-    ):
+    ) -> Tuple[bool, str]:
         """Server-side external event trigger interface.
 
         Args:

@@ -18,7 +18,7 @@
 import re
 from copy import deepcopy
 from threading import RLock
-from typing import Optional, TYPE_CHECKING
+from typing import Iterable, List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import (
@@ -84,7 +84,12 @@ class BroadcastMgr:
         return self._match_ext_trigger(itask)
 
     def clear_broadcast(
-            self, point_strings=None, namespaces=None, cancel_settings=None):
+        self,
+        point_strings: Optional[Iterable[str]] = None,
+        namespaces: Optional[Iterable[str]] = None,
+        cancel_settings: Optional[Iterable[dict]] = None
+    ) -> Tuple[List[Tuple[str, str, dict]], dict]:
+
         """Clear broadcasts globally, or for listed namespaces and/or points.
 
         Return a tuple (modified_settings, bad_options), where:
@@ -112,7 +117,9 @@ class BroadcastMgr:
                         point_string_settings.items()):
                     if namespaces and namespace not in namespaces:
                         continue
-                    stuff_stack = [([], namespace_settings)]
+                    stuff_stack: List[
+                        Tuple[List[str], dict]
+                    ] = [([], namespace_settings)]
                     while stuff_stack:
                         keys, stuff = stuff_stack.pop()
                         for key, value in stuff.items():
@@ -267,7 +274,11 @@ class BroadcastMgr:
         return False
 
     def put_broadcast(
-            self, point_strings=None, namespaces=None, settings=None):
+        self,
+        point_strings: Iterable[str],
+        namespaces: Iterable[str],
+        settings: Iterable[dict]
+    ) -> Tuple[List[Tuple[str, str, dict]], dict]:
         """Add new broadcast settings (server side interface).
 
         Return a tuple (modified_settings, bad_options) where:
