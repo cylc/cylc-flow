@@ -25,7 +25,7 @@ Tui allows you to monitor and interact with workflows in a manner similar
 to the GUI.
 
 Press "h" whilst running Tui to bring up the help screen, use the arrow
-keys to navigage.
+keys to navigate.
 
 """
 
@@ -66,7 +66,7 @@ def get_option_parser() -> COP:
         metavar='SEC',
         help=(
             "Set a timeout for network connections"
-            " to the running workflow. The default is no timeout."
+            " to the running workflow. The default is 3 seconds."
             " For task messaging connections see"
             " site/user config file documentation."
         ),
