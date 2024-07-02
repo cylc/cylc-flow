@@ -761,6 +761,7 @@ class Resolvers(BaseResolvers):
         except Exception as exc:
             # NOTE: keep this exception vague to prevent a bad command taking
             # down the scheduler
+            LOG.warning(f'{log1}\n{exc.__class__.__name__}: {exc}')
             if cylc.flow.flags.verbosity > 1:
                 LOG.exception(exc)  # log full traceback in debug mode
             return (False, str(exc))
