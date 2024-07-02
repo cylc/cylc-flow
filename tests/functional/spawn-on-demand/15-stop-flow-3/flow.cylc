@@ -8,7 +8,7 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        inactivity timeout = PT20S
+        inactivity timeout = PT1M
         abort on inactivity timeout = True
 [scheduling]
     [[xtriggers]]

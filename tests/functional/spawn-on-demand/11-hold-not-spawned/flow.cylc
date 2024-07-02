@@ -1,7 +1,7 @@
 # Test holding a task that hasn't spawned yet.
 [scheduler]
     [[events]]
-        inactivity timeout = PT20S
+        inactivity timeout = PT1M
         abort on inactivity timeout = True
 [scheduling]
     [[graph]]

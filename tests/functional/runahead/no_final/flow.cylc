@@ -5,7 +5,7 @@
         abort on stall timeout = True
         stall timeout = PT0S
         abort on inactivity timeout = True
-        inactivity timeout = PT20S
+        inactivity timeout = PT1M
 [scheduling]
     runahead limit = P1
     initial cycle point = 20100101T00

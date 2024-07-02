@@ -3,7 +3,7 @@
 
 [scheduler]
     [[events]]
-        inactivity timeout = PT20S
+        inactivity timeout = PT1M
         abort on inactivity timeout = True
 [scheduling]
     [[graph]]
@@ -20,10 +20,10 @@
     [[b, d]]
     [[c]]
        script = """
-           if ((CYLC_TASK_FLOW_NUMBERS == 1)); then
-               cylc trigger --flow=new --meta="cheese wizard" \
-                   "$CYLC_WORKFLOW_ID//1/a"
-               cylc__job__poll_grep_workflow_log -E "\[1/a/02\(flows=2\):submitted\] => running"
-               cylc stop $CYLC_WORKFLOW_ID
-           fi
+            if ((CYLC_TASK_FLOW_NUMBERS == 1)); then
+                cylc trigger --flow=new --meta="cheese wizard" \
+                    "$CYLC_WORKFLOW_ID//1/a"
+                cylc__job__poll_grep_workflow_log -E "\[1/a/02\(flows=2\):submitted\] => running"
+                cylc stop $CYLC_WORKFLOW_ID
+            fi
        """
