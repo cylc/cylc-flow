@@ -68,11 +68,8 @@ def get_default_filters():
     These filters show everything.
     """
     return {
-        'tasks': {
-            # filtered task statuses
-            state: True
-            for state in TASK_STATUSES_ORDERED
-        },
+        # filtered task statuses
+        'tasks': dict.fromkeys(TASK_STATUSES_ORDERED, True),
         'workflows': {
             # filtered workflow statuses
             **{
