@@ -130,7 +130,11 @@ mutation (
     settings: $bSettings,
     cutoff: $bCutoff
   ) {
-    results
+    results {
+      workflowId
+      success
+      message
+    }
   }
 }
 '''

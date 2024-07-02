@@ -87,7 +87,11 @@ mutation (
     workflows: $wFlows,
     tasks: $tasks
   ) {
-    results
+    results {
+      workflowId
+      success
+      message
+    }
   }
 }
 '''
@@ -101,7 +105,11 @@ mutation (
     workflows: $wFlows,
     point: $point
   ) {
-    results
+    results {
+      workflowId
+      success
+      message
+    }
   }
 }
 '''

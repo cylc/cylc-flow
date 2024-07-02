@@ -71,7 +71,11 @@ mutation (
     message: $eventMsg,
     id: $eventId
   ) {
-    results
+    results {
+      workflowId
+      success
+      message
+    }
   }
 }
 '''
