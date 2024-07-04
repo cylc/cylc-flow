@@ -40,7 +40,9 @@ class LimitedTaskQueue:
         if itask.tdef.name in self.members:
             self.deque.appendleft(itask)
 
-    def release(self, active: Counter[str]) -> List['TaskProxy']:
+    def release(
+        self, active: Counter[str], is_paused: bool = False
+    ) -> List['TaskProxy']:
         """Release tasks if below the active limit."""
         # The "active" argument counts active tasks by name.
         released: List['TaskProxy'] = []
@@ -54,7 +56,10 @@ class LimitedTaskQueue:
             except IndexError:
                 # deque empty
                 break
-            if itask.state.is_held:
+            if (
+                itask.state.is_held or
+                (is_paused and not itask.is_manual_submit)
+            ):
                 held.append(itask)
             else:
                 released.append(itask)
@@ -114,6 +119,8 @@ class IndepQueueManager(TaskQueueManagerBase):
             )
 
         self.force_released: Set['TaskProxy'] = set()
+        # if paused don't release tasks unless manually triggered
+        self.is_paused = False
 
     def push_task(self, itask: 'TaskProxy') -> None:
         """Push a task to the appropriate queue."""
@@ -124,7 +131,7 @@ class IndepQueueManager(TaskQueueManagerBase):
         """Release tasks up to the queue limits."""
         released: List['TaskProxy'] = []
         for queue in self.queues.values():
-            released += queue.release(active)
+            released += queue.release(active, self.is_paused)
         if self.force_released:
             released.extend(self.force_released)
             self.force_released = set()
