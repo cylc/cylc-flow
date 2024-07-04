@@ -384,19 +384,6 @@ def get_task_status_summary(flow):
     ]
 
 
-def get_workflow_status_str(flow):
-    """Return a workflow status string for the header.
-
-    Arguments:
-        flow (dict):
-            GraphQL JSON response for this workflow.
-
-    Returns:
-        list - Text list for the urwid.Text widget.
-
-    """
-
-
 def _render_user(node, data):
     return f'~{ME}'
 
