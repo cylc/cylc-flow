@@ -82,6 +82,36 @@ def get_default_filters():
     }
 
 
+def set_message(data, workflow_id, message, prefix='Error - '):
+    """Set a message to display instead of the workflow contents.
+
+    This is for critical errors that mean we are unable to load a workflow.
+
+    Args:
+        data:
+            The updater data.
+        workflow_id:
+            The ID of the workflow to set the error for.
+        message:
+            A message string or an Exception instance to use for the error
+            text. If a string is provided, it may not contain newlines.
+        prefix:
+            A string that will be prepended to the message.
+
+    """
+    if isinstance(message, Exception):
+        # use the first line of the error message.
+        message = str(message).splitlines()[0]
+    for workflow in data['workflows']:
+        # find the workflow in the data
+        if workflow['id'] == workflow_id:
+            # use the _tui_data field to hold the message
+            workflow['_tui_data'] = (
+                f'{prefix}{message}'
+            )
+            break
+
+
 class Updater():
     """The bit of Tui which provides the data.
 
@@ -266,17 +296,19 @@ class Updater():
                     'id': w_id,
                     'status': 'stopped',
                 })
+        except ClientTimeout:
+            self._clients[w_id] = None
+            set_message(
+                data,
+                w_id,
+                'Timeout communicating with workflow.'
+                ' Use "--comms-timeout" to increase the timeout',
+            )
         except (CylcError, ZMQError) as exc:
             # something went wrong :(
             # remove the client on any error, we'll reconnect next time
             self._clients[w_id] = None
-            for workflow in data['workflows']:
-                if workflow['id'] == w_id:
-                    workflow['_tui_data'] = (
-                        f'Error - {str(exc).splitlines()[0]}'
-                    )
-                    break
-
+            set_message(data, w_id, exc)
         else:
             # the data arrived, add it to the update
             workflow_data = workflow_update['workflows'][0]
@@ -295,16 +327,18 @@ class Updater():
                         timeout=self.client_timeout,
                     )
                 except WorkflowStopped:
-                    for workflow in data['workflows']:
-                        if workflow['id'] == w_id:
-                            workflow['_tui_data'] = 'Workflow is not running'
-                except (ZMQError, ClientError, ClientTimeout) as exc:
-                    for workflow in data['workflows']:
-                        if workflow['id'] == w_id:
-                            workflow['_tui_data'] = (
-                                f'Error - {str(exc).splitlines()[0]}'
-                            )
-                            break
+                    set_message(
+                        data, w_id, 'Workflow is not running', prefix=''
+                    )
+                except ClientTimeout:
+                    set_message(
+                        data,
+                        w_id,
+                        'Timeout connecting to workflow.'
+                        ' Use "--comms-timeout" to increase the timeout',
+                    )
+                except (ZMQError, ClientError) as exc:
+                    set_message(data, w_id, exc)
 
     async def _scan(self):
         """Scan for workflows on the filesystem."""
