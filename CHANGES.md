@@ -11,6 +11,16 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.1 (Released 2024-07-04)__
+
+### 🔧 Fixes
+
+[#6130](https://github.com/cylc/cylc-flow/pull/6130) - Prevent commands accepting job IDs where it doesn't make sense.
+
+[#6170](https://github.com/cylc/cylc-flow/pull/6170) - Fix an issue where the Cylc logo could appear in the workflow log.
+
+[#6176](https://github.com/cylc/cylc-flow/pull/6176) - Fix bug where jobs which fail to submit are not shown in GUI/TUI if submission retries are set.
+
 ## __cylc-8.3.0 (Released 2024-06-18)__
 
 ### ⚠ Breaking Changes
