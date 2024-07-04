@@ -118,6 +118,10 @@ async def test__always_insert_task_job(
     a submission retry was in progress the task state would be
     "waiting" which caused the data_store_mgr.insert_job
     to return without adding the task to the data store.
+    This is testing two different cases:
+
+    * Could not select host from platform
+    * Could not select host from platform group
     """
     global_config = """
         [platforms]
