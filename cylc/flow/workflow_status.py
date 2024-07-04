@@ -16,7 +16,7 @@
 """Workflow status constants."""
 
 from enum import Enum
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 
@@ -143,62 +143,41 @@ class AutoRestartMode(Enum):
     """Workflow will stop immediately but *not* attempt to restart."""
 
 
-def get_workflow_status(schd: 'Scheduler') -> Tuple[str, str]:
-    """Return the status of the provided workflow.
-
-    This should be a short, concise description of the workflow state.
-
-    Args:
-        schd: The running workflow
-
-    Returns:
-        tuple - (state, state_msg)
-
-        state:
-            The WorkflowState.
-        state_msg:
-            Text describing the current state (may be an empty string).
-
-    """
-    status = WorkflowStatus.RUNNING
-    status_msg = ''
-
+def get_workflow_status(schd: 'Scheduler') -> WorkflowStatus:
+    """Return the status of the provided workflow."""
     if schd.stop_mode is not None:
-        status = WorkflowStatus.STOPPING
-        status_msg = f'stopping: {schd.stop_mode.explain()}'
-    elif schd.reload_pending:
-        status = WorkflowStatus.PAUSED
-        status_msg = f'reloading: {schd.reload_pending}'
-    elif schd.is_stalled:
-        status_msg = 'stalled'
-    elif schd.is_paused:
-        status = WorkflowStatus.PAUSED
-        status_msg = 'paused'
-    elif schd.pool.hold_point:
-        status_msg = (
-            WORKFLOW_STATUS_RUNNING_TO_HOLD %
-            schd.pool.hold_point)
-    elif schd.pool.stop_point:
-        status_msg = (
-            WORKFLOW_STATUS_RUNNING_TO_STOP %
-            schd.pool.stop_point)
-    elif schd.stop_clock_time is not None:
-        status_msg = (
-            WORKFLOW_STATUS_RUNNING_TO_STOP %
-            time2str(schd.stop_clock_time))
-    elif schd.pool.stop_task_id:
-        status_msg = (
-            WORKFLOW_STATUS_RUNNING_TO_STOP %
-            schd.pool.stop_task_id)
-    elif schd.config and schd.config.final_point:
-        status_msg = (
-            WORKFLOW_STATUS_RUNNING_TO_STOP %
-            schd.config.final_point)
-    else:
-        # fallback - running indefinitely
-        status_msg = 'running'
+        return WorkflowStatus.STOPPING
+    if schd.is_paused or schd.reload_pending:
+        return WorkflowStatus.PAUSED
+    return WorkflowStatus.RUNNING
 
-    return (status.value, status_msg)
+
+def get_workflow_status_msg(schd: 'Scheduler') -> str:
+    """Return a short, concise status message for the provided workflow."""
+    if schd.stop_mode is not None:
+        return f'stopping: {schd.stop_mode.explain()}'
+    if schd.reload_pending:
+        return f'reloading: {schd.reload_pending}'
+    if schd.is_stalled:
+        if schd.is_paused:
+            return 'stalled (paused)'
+        return 'stalled'
+    if schd.is_paused:
+        return 'paused'
+    if schd.pool.hold_point:
+        return WORKFLOW_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point
+    if schd.pool.stop_point:
+        return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.pool.stop_point
+    if schd.stop_clock_time is not None:
+        return WORKFLOW_STATUS_RUNNING_TO_STOP % time2str(
+            schd.stop_clock_time
+        )
+    if schd.pool.stop_task_id:
+        return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.pool.stop_task_id
+    if schd.config and schd.config.final_point:
+        return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.config.final_point
+    # fallback - running indefinitely
+    return 'running'
 
 
 class RunMode:

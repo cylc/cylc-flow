@@ -17,6 +17,7 @@
 from types import SimpleNamespace
 
 import pytest
+from metomi.isodatetime.data import TimePoint
 
 from cylc.flow.workflow_status import (
     StopMode,
@@ -24,7 +25,11 @@ from cylc.flow.workflow_status import (
     WORKFLOW_STATUS_RUNNING_TO_HOLD,
     WORKFLOW_STATUS_RUNNING_TO_STOP,
     get_workflow_status,
+    get_workflow_status_msg,
 )
+
+
+STOP_TIME = TimePoint(year=2006).to_local_time_zone()
 
 
 def schd(
@@ -50,6 +55,7 @@ def schd(
             stop_task_id=stop_task_id,
         ),
         config=SimpleNamespace(final_point=final_point),
+        options=SimpleNamespace(utc_mode=True),
     )
 
 
@@ -83,9 +89,9 @@ def schd(
             WORKFLOW_STATUS_RUNNING_TO_STOP % 'point'
         ),
         (
-            {'stop_clock_time': 1234},
+            {'stop_clock_time': int(STOP_TIME.seconds_since_unix_epoch)},
             WorkflowStatus.RUNNING,
-            WORKFLOW_STATUS_RUNNING_TO_STOP % ''
+            WORKFLOW_STATUS_RUNNING_TO_STOP % str(STOP_TIME)
         ),
         (
             {'stop_task_id': 'foo'},
@@ -112,22 +118,21 @@ def schd(
         (
             # stopping should trump stalled, paused & running
             {
-                'stop_mode': StopMode.AUTO,
+                'stop_mode': StopMode.REQUEST_NOW,
                 'is_stalled': True,
                 'is_paused': True
             },
             WorkflowStatus.STOPPING,
-            'stopping'
+            'stopping: shutting down'
         ),
         (
-            # stalled should trump paused & running
             {'is_stalled': True, 'is_paused': True},
-            WorkflowStatus.RUNNING,
-            'stalled'
+            WorkflowStatus.PAUSED,
+            'stalled (paused)'
         ),
     ]
 )
 def test_get_workflow_status(kwargs, state, message):
-    state_, message_ = get_workflow_status(schd(**kwargs))
-    assert state_ == state.value
-    assert message in message_
+    scheduler = schd(**kwargs)
+    assert get_workflow_status(scheduler) == state
+    assert get_workflow_status_msg(scheduler) == message
