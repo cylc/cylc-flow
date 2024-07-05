@@ -14,11 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
-from cylc.flow.scheduler import Scheduler
-
+from itertools import product
 import logging
 from typing import Any as Fixture
+
+from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.data_store_mgr import (
+    JOBS,
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_SUBMIT_FAILED,
+)
 
 
 async def test_process_job_logs_retrieval_warns_no_platform(
@@ -99,3 +106,67 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
             i.submit_num for i
             in schd.data_store_mgr.added['jobs'].values()
         ] == [1, 2]
+
+
+async def test__always_insert_task_job(
+    flow, scheduler, mock_glbl_cfg, start, run
+):
+    """Insert Task Job _Always_ inserts a task into the data store.
+
+    Bug https://github.com/cylc/cylc-flow/issues/6172 was caused
+    by passing task state to data_store_mgr.insert_job: Where
+    a submission retry was in progress the task state would be
+    "waiting" which caused the data_store_mgr.insert_job
+    to return without adding the task to the data store.
+    This is testing two different cases:
+
+    * Could not select host from platform
+    * Could not select host from platform group
+    """
+    global_config = """
+        [platforms]
+            [[broken1]]
+                hosts = no-such-host-1
+            [[broken2]]
+                hosts = no-such-host-2
+        [platform groups]
+            [[broken]]
+                platforms = broken1
+    """
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_config)
+
+    id_ = flow({
+        'scheduling': {'graph': {'R1': 'broken & broken2'}},
+        'runtime': {
+            'root': {'submission retry delays': 'PT10M'},
+            'broken': {'platform': 'broken'},
+            'broken2': {'platform': 'broken2'}
+        }
+    })
+
+    schd = scheduler(id_, run_mode='live')
+    schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
+    async with start(schd):
+        schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            schd.server.curve_auth,
+            schd.server.client_pub_key_dir,
+            is_simulation=False
+        )
+
+        # Both tasks are in a waiting state:
+        assert all(
+            i.state.status == TASK_STATUS_WAITING
+            for i in schd.pool.get_tasks())
+
+        # Both tasks have updated the data store with info
+        # about a failed job:
+        updates = {
+            k.split('//')[-1]: v.state
+            for k, v in schd.data_store_mgr.updated[JOBS].items()
+        }
+        assert updates == {
+            '1/broken/01': 'submit-failed',
+            '1/broken2/01': 'submit-failed'
+        }

@@ -120,13 +120,11 @@ class HostUtil:
         """Return the extended info of the current host."""
         if target is None:
             target = socket.getfqdn()
-        if (
-            IS_MAC_OS
-            and target == (
-                '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
-                '0.0.0.0.0.0.ip6.arpa'
-            )
-        ):
+        if IS_MAC_OS and target in {
+            '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
+            '0.0.0.0.0.0.ip6.arpa',
+            '1.0.0.127.in-addr.arpa',
+        }:
             # Python's socket bindings don't play nicely with mac os
             # so by default we get the above ip6.arpa address from
             # socket.getfqdn, note this does *not* match `hostname -f`.
