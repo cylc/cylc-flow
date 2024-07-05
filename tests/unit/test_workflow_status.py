@@ -19,15 +19,15 @@ from types import SimpleNamespace
 import pytest
 from metomi.isodatetime.data import TimePoint
 
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.workflow_status import (
-    StopMode,
-    WorkflowStatus,
     WORKFLOW_STATUS_RUNNING_TO_HOLD,
     WORKFLOW_STATUS_RUNNING_TO_STOP,
+    StopMode,
+    WorkflowStatus,
     get_workflow_status,
     get_workflow_status_msg,
 )
-
 
 STOP_TIME = TimePoint(year=2006).to_local_time_zone()
 
@@ -79,14 +79,14 @@ def schd(
             'stopping: waiting for active jobs to complete'
         ),
         (
-            {'hold_point': 'point'},
+            {'hold_point': 2},
             WorkflowStatus.RUNNING,
-            WORKFLOW_STATUS_RUNNING_TO_HOLD % 'point'
+            WORKFLOW_STATUS_RUNNING_TO_HOLD % 2
         ),
         (
-            {'stop_point': 'point'},
+            {'stop_point': 4},
             WorkflowStatus.RUNNING,
-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'point'
+            WORKFLOW_STATUS_RUNNING_TO_STOP % 4
         ),
         (
             {'stop_clock_time': int(STOP_TIME.seconds_since_unix_epoch)},
@@ -94,14 +94,14 @@ def schd(
             WORKFLOW_STATUS_RUNNING_TO_STOP % str(STOP_TIME)
         ),
         (
-            {'stop_task_id': 'foo'},
+            {'stop_task_id': '6/foo'},
             WorkflowStatus.RUNNING,
-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'foo'
+            WORKFLOW_STATUS_RUNNING_TO_STOP % '6/foo'
         ),
         (
-            {'final_point': 'point'},
+            {'final_point': 8},
             WorkflowStatus.RUNNING,
-            WORKFLOW_STATUS_RUNNING_TO_STOP % 'point'
+            WORKFLOW_STATUS_RUNNING_TO_STOP % 8
         ),
         (
             {'is_stalled': True},
@@ -128,11 +128,48 @@ def schd(
         (
             {'is_stalled': True, 'is_paused': True},
             WorkflowStatus.PAUSED,
-            'stalled (paused)'
+            'stalled and paused',
+        ),
+        (
+            # earliest of stop point, hold point and stop task id
+            {
+                'stop_point': IntegerPoint(4),
+                'hold_point': IntegerPoint(2),
+                'stop_task_id': '6/foo',
+            },
+            WorkflowStatus.RUNNING,
+            WORKFLOW_STATUS_RUNNING_TO_HOLD % 2,
+        ),
+        (
+            {
+                'stop_point': IntegerPoint(11),
+                'hold_point': IntegerPoint(15),
+                'stop_task_id': '9/bar',
+            },
+            WorkflowStatus.RUNNING,
+            WORKFLOW_STATUS_RUNNING_TO_STOP % '9/bar',
+        ),
+        (
+            {
+                'stop_point': IntegerPoint(3),
+                'hold_point': IntegerPoint(3),
+            },
+            WorkflowStatus.RUNNING,
+            WORKFLOW_STATUS_RUNNING_TO_STOP % 3,
+        ),
+        (
+            # stop point trumps final point
+            {
+                'stop_point': IntegerPoint(1),
+                'final_point': IntegerPoint(2),
+            },
+            WorkflowStatus.RUNNING,
+            WORKFLOW_STATUS_RUNNING_TO_STOP % 1,
         ),
     ]
 )
-def test_get_workflow_status(kwargs, state, message):
+def test_get_workflow_status(kwargs, state, message, set_cycling_type):
+    set_cycling_type()
     scheduler = schd(**kwargs)
     assert get_workflow_status(scheduler) == state
     assert get_workflow_status_msg(scheduler) == message

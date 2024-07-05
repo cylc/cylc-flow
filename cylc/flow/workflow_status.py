@@ -16,13 +16,18 @@
 """Workflow status constants."""
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
+from cylc.flow.cycling.loader import get_point
+from cylc.flow.id import tokenise
 from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 
 if TYPE_CHECKING:
     from optparse import Values
+
+    from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.task_pool import TaskPool
 
 # Keys for identify API call
 KEY_GROUP = "group"
@@ -160,24 +165,43 @@ def get_workflow_status_msg(schd: 'Scheduler') -> str:
         return f'reloading: {schd.reload_pending}'
     if schd.is_stalled:
         if schd.is_paused:
-            return 'stalled (paused)'
+            return 'stalled and paused'
         return 'stalled'
     if schd.is_paused:
         return 'paused'
-    if schd.pool.hold_point:
-        return WORKFLOW_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point
-    if schd.pool.stop_point:
-        return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.pool.stop_point
     if schd.stop_clock_time is not None:
         return WORKFLOW_STATUS_RUNNING_TO_STOP % time2str(
             schd.stop_clock_time
         )
-    if schd.pool.stop_task_id:
-        return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.pool.stop_task_id
+    stop_point_msg = _get_earliest_stop_point_status_msg(schd.pool)
+    if stop_point_msg is not None:
+        return stop_point_msg
     if schd.config and schd.config.final_point:
         return WORKFLOW_STATUS_RUNNING_TO_STOP % schd.config.final_point
     # fallback - running indefinitely
     return 'running'
+
+
+def _get_earliest_stop_point_status_msg(pool: 'TaskPool') -> Optional[str]:
+    """Return the status message for the earliest stop point in the pool,
+    if any."""
+    template = WORKFLOW_STATUS_RUNNING_TO_STOP
+    prop: Union[PointBase, str, None] = pool.stop_task_id
+    min_point: Optional[PointBase] = get_point(
+        tokenise(pool.stop_task_id, relative=True)['cycle']
+        if pool.stop_task_id else None
+    )
+    for point, tmpl in (
+        (pool.stop_point, WORKFLOW_STATUS_RUNNING_TO_STOP),
+        (pool.hold_point, WORKFLOW_STATUS_RUNNING_TO_HOLD)
+    ):
+        if point is not None and (min_point is None or point < min_point):
+            template = tmpl
+            min_point = point
+            prop = point
+    if prop is None:
+        return None
+    return template % prop
 
 
 class RunMode:
