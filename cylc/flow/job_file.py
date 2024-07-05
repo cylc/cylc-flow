@@ -18,6 +18,7 @@
 from contextlib import suppress
 import os
 import re
+import secrets
 import stat
 from subprocess import Popen, PIPE, DEVNULL
 from textwrap import dedent
@@ -256,17 +257,25 @@ class JobFileWriter:
             handle.write("\n    export")
             for var in job_conf['environment']:
                 handle.write(f' {var}')
+            # Random terminator to ensure no overlap with content.
+            opaque_terminator = secrets.token_hex()
             for var, val in job_conf['environment'].items():
                 value = JobFileWriter._get_variable_value_definition(
                     str(val), job_conf.get('param_var', {})
                 )
-                handle.write(f'\n    {var}={value}')
+                # NOTE: This is an unquoted here-document. All lines of the
+                # here-document are subjected to parameter expansion, command
+                # substitution, and arithmetic expansion, the character sequence
+                # \newline is ignored, and ‘\’ must be used to quote the
+                # characters ‘\’, ‘$’, and ‘`’. Quotes however, are left as is.
+                handle.write(
+                    f'\n    read "{var}" << {opaque_terminator}\n{value}\n{opaque_terminator}'
+                )
             handle.write("\n}")
 
     @staticmethod
     def _get_variable_value_definition(value, param_vars):
-        """Return a properly-quoted command which handles parameter environment
-        templates and the '~' character.
+        """Return value after parameter environment templates are interpolated.
 
         Args:
             value (str): value to assign to a variable
@@ -280,31 +289,13 @@ class JobFileWriter:
                 # cylc.flow.config.WorkflowConfig.check_param_env_tmpls()
 
         # Handle '~':
-        match = re.match(r"^(~[^/\s]*/)(.*)$", value)
-        if match:
-            # ~foo/bar or ~/bar
-            # write as ~foo/"bar" or ~/"bar"
-            head, tail = match.groups()
-            return '%s"%s"' % (head, tail)
-        elif re.match(r"^~[^\s]*$", value):
-            # plain ~foo or just ~
-            # just leave unquoted as subsequent spaces don't
-            # make sense in this case anyway
-            return value
-        else:
-            # Non tilde values - quote the lot.
-            # This gets values like "~one ~two" too, but these
-            # (in variable values) aren't expanded by the shell
-            # anyway so it doesn't matter.
-            return '"%s"' % value
-
-        # NOTE ON TILDE EXPANSION:
-        # The code above handles the following correctly:
-        # | ~foo/bar
-        # | ~/bar
-        # | ~/filename with spaces
-        # | ~foo
-        # | ~
+        # TODO: Interpreting ~ is something that the here-document does not do.
+        # It avoids the need to quote differently depending on the location of
+        # the ~, however in the resulting variable the ~ is not expanded. If
+        # this is desired more work is needed. If this python code runs in the
+        # context of the user, then we can just use os.path.expanduser, however
+        # if this runs on the scheduler things are more difficult.
+        return value
 
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):
