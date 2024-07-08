@@ -18,8 +18,14 @@
 import asyncio
 from pathlib import Path
 from textwrap import dedent
+from typing import Set
 
 from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.scheduler import Scheduler
+
+
+def get_task_ids(schd: Scheduler) -> Set[str]:
+    return {task.identity for task in schd.pool.get_tasks()}
 
 
 async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
@@ -210,3 +216,36 @@ async def test_error_in_xtrigger(flow, start, scheduler):
         error = log.messages[-1].split('\n')
         assert error[-2] == 'Exception: This Xtrigger is broken'
         assert error[0] == 'ERROR in xtrigger mytrig()'
+
+
+async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
+    """Test that all tasks dependent on a sequential clock trigger continue to
+    spawn after the first cycle.
+
+    See https://github.com/cylc/cylc-flow/issues/6204
+    """
+    id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': '1990',
+            'graph': {
+                'P1Y': '@wall_clock => foo & bar',
+            },
+        },
+    })
+    schd: Scheduler = scheduler(id_)
+
+    async with start(schd):
+        start_task_pool = get_task_ids(schd)
+        assert start_task_pool == {'1990/foo', '1990/bar'}
+
+        for _ in range(3):
+            await schd._main_loop()
+
+        assert get_task_ids(schd) == start_task_pool.union(
+            f'{year}/{name}'
+            for year in range(1991, 1994)
+            for name in ('foo', 'bar')
+        )
