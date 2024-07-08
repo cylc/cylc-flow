@@ -74,14 +74,14 @@ jobs:
             platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
           # macos
           - name: 'macos 1/5'
-            os: 'macos-11'
-            python-version: '3.7'
+            os: 'macos-latest'
+            python-version: '3.9'
             test-base: 'tests/f'
             chunk: '1/5'
             platform: '_local_background*'
           - name: 'macos 2/5'
-            os: 'macos-11'
-            python-version: '3.7'
+            os: 'macos-latest'
+            python-version: '3.9'
             test-base: 'tests/f'
             chunk: '2/5'
             platform: '_local_background*'
@@ -103,6 +103,29 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create global config
+        run: |
+          CONF_PATH="$HOME/.cylc/flow/8"
+          mkdir -p "$CONF_PATH"
+          touch "$CONF_PATH/global.cylc"
+          ln -s "$CONF_PATH/global.cylc" "$CONF_PATH/global-tests.cylc"
+          echo "GLOBAL_CFG_PATH=${CONF_PATH}/global.cylc" >> "$GITHUB_ENV"
+
+      - name: Patch DNS
+        uses: cylc/release-actions/patch-dns@v1
+
+      - name: Add localhost entries to global config
+        if: startsWith(runner.os, 'macos')
+        run: |
+          cat >> "$GLOBAL_CFG_PATH" <<__HERE__
+          [platforms]
+            [[localhost, $(hostname -f), $(hostname -s)]]
+              hosts = localhost
+              install target = localhost
+              ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
+          __HERE__
+          cat "$GLOBAL_CFG_PATH"
+
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -112,19 +135,15 @@ jobs:
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)
-          echo \
-            "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-          echo \
-            "/usr/local/opt/gnu-sed/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
-          echo \
-            "/usr/local/opt/grep/libexec/gnubin" \
-            >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/coreutils/libexec/gnubin" >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/grep/libexec/gnubin" >> "${GITHUB_PATH}"
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> "${GITHUB_PATH}"
 
           # add coreutils to the bashrc too (for jobs)
           cat >> "${HOME}/.bashrc" <<__HERE__
-          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/grep/libexec/gnubin:$PATH"
+          PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
           export PATH
           __HERE__
 
@@ -146,16 +165,13 @@ jobs:
       - name: Configure Atrun
         if: contains(matrix.platform, '_local_at')
         run: |
-          PTH="$HOME/.cylc/flow/"
-          mkdir -p "${PTH}"
-          cat > "${PTH}/global.cylc" << __HERE__
+          cat >> "$GLOBAL_CFG_PATH" << __HERE__
             [platforms]
                 [[_local_at_indep_tcp]]
                     hosts = localhost
                     install target = localhost
                     job runner = at
           __HERE__
-          cp "${PTH}/global.cylc" "${PTH}/global-tests.cylc"
 
       - name: Swarm Configure
         run: |
@@ -244,11 +260,11 @@ jobs:
         timeout-minutes: 1
         run: |
           find "$HOME/cylc-run" -name '*.err' -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
           find "$HOME/cylc-run" -name '*.log' -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
-              -exec echo '====== {} ======' \; -exec cat '{}' \;
+            -exec echo \; -exec echo '====== {} ======' \; -exec cat '{}' \;
 
       - name: Set artifact upload name
         if: always()
