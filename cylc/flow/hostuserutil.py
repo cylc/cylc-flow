@@ -50,6 +50,7 @@ import pwd
 import socket
 import sys
 from time import time
+from typing import List, Optional, Tuple
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -113,25 +114,24 @@ class HostUtil:
         """Return internal IP address of target."""
         return socket.gethostbyname(target)
 
-    def _get_host_info(self, target=None):
+    def _get_host_info(
+        self, target: Optional[str] = None
+    ) -> Tuple[str, List[str], List[str]]:
         """Return the extended info of the current host."""
+        if target is None:
+            target = socket.getfqdn()
+        if IS_MAC_OS and target in {
+            '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
+            '0.0.0.0.0.0.ip6.arpa',
+            '1.0.0.127.in-addr.arpa',
+        }:
+            # Python's socket bindings don't play nicely with mac os
+            # so by default we get the above ip6.arpa address from
+            # socket.getfqdn, note this does *not* match `hostname -f`.
+            # https://github.com/cylc/cylc-flow/issues/2689
+            # https://github.com/cylc/cylc-flow/issues/3595
+            target = socket.gethostname()
         if target not in self._host_exs:
-            if target is None:
-                target = socket.getfqdn()
-            if (
-                IS_MAC_OS
-                and target in {
-                    '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
-                    '0.0.0.0.0.0.ip6.arpa',
-                    '1.0.0.127.in-addr.arpa'
-                }
-            ):
-                # Python's socket bindings don't play nicely with mac os
-                # so by default we get the above ip6.arpa address from
-                # socket.getfqdn, note this does *not* match `hostname -f`.
-                # https://github.com/cylc/cylc-flow/issues/2689
-                # https://github.com/cylc/cylc-flow/issues/3595
-                target = socket.gethostname()
             try:
                 self._host_exs[target] = socket.gethostbyname_ex(target)
             except IOError as exc:
