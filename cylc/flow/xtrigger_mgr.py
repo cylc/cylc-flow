@@ -644,6 +644,8 @@ class XtriggerManager:
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
+                    if self.all_task_seq_xtriggers_satisfied(itask):
+                        self.sequential_spawn_next.add(itask.identity)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
