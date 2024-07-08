@@ -51,14 +51,18 @@ async def checker(
     })
     schd: Scheduler = mod_scheduler(wid, paused_start=False)
     async with mod_run(schd):
+        print("ONE")
         await mod_complete(schd)
+        print("TWO")
         schd.pool.force_trigger_tasks(['1000/good'], ['2'])
         # Allow a cycle of the main loop to pass so that flow 2 can be
         # added to db
         await sleep(1)
+        print("FOU")
         with CylcWorkflowDBChecker(
             'somestring', 'utterbunkum', schd.workflow_db_mgr.pub_path
         ) as _checker:
+            print("FIV")
             yield _checker
 
 
@@ -73,7 +77,7 @@ def test_basic(checker):
         ['output', '10000101T0000Z', 'succeeded'],
         ['output', '10010101T0000Z', 'succeeded'],
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
-    ]
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'], ]
     assert result == expect
 
 
@@ -131,5 +135,6 @@ def test_flownum(checker):
     result = checker.workflow_state_query(flow_num=2)
     expect = [
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'],
     ]
     assert result == expect
