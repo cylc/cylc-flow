@@ -90,7 +90,7 @@ Examples:
 
 from functools import partial
 import sys
-from typing import Tuple, TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
@@ -177,7 +177,7 @@ def get_option_parser() -> COP:
     return parser
 
 
-def validate_tokens(tokens_list: Tuple['Tokens', ...]) -> None:
+def validate_tokens(tokens_list: Iterable['Tokens']) -> None:
     """Check the cycles/tasks provided.
 
     This checks that cycle/task selectors have not been provided in the IDs.

@@ -51,18 +51,14 @@ async def checker(
     })
     schd: Scheduler = mod_scheduler(wid, paused_start=False)
     async with mod_run(schd):
-        print("ONE")
         await mod_complete(schd)
-        print("TWO")
         schd.pool.force_trigger_tasks(['1000/good'], ['2'])
         # Allow a cycle of the main loop to pass so that flow 2 can be
         # added to db
         await sleep(1)
-        print("FOU")
         with CylcWorkflowDBChecker(
             'somestring', 'utterbunkum', schd.workflow_db_mgr.pub_path
         ) as _checker:
-            print("FIV")
             yield _checker
 
 

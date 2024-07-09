@@ -1708,11 +1708,12 @@ class TaskPool:
             spawned_but_not_submitted and
             not itask.state.outputs.get_completed_outputs()
         ):
-            # spawned but never submitted, and has no completed outputs.
-            # This implies it was removed, rather than manually set.
-            # TODO: Detecting removal after completion of some outputs probably
-            # TODO: requires recording removal in the DB (set :expired maybe?).
-            LOG.debug(f"Not spawning {point}/{name} - task was removed")
+            # Task spawned but never submitted and has no completed outputs,
+            # so we can infer it was removed as waiting and not manually set.
+            # Return None to avoid respawning it now (e.g. via a prerequisite
+            # that was not satisfied yet at removal time).
+            # TODO: this test will fail if any outputs were set before removal.
+            LOG.debug(f"Not respawning {point}/{name} - task was removed")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:

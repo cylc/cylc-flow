@@ -1893,7 +1893,7 @@ async def test_fast_respawn(
     # attempt to spawn it again
     itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
     assert itask is None
-    assert "Not spawning 1/foo - task was removed" in caplog.text
+    assert "Not respawning 1/foo - task was removed" in caplog.text
 
 
 async def test_remove_active_task(
@@ -2019,7 +2019,7 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         # respawned as a result
         schd.pool.spawn_on_output(b1, TASK_OUTPUT_SUCCEEDED)
         assert log_filter(
-            log, contains='Not spawning 1/z - task was removed'
+            log, contains='Not respawning 1/z - task was removed'
         )
         z1 = schd.pool.get_task(IntegerPoint("1"), "z")
         assert (
