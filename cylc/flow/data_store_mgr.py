@@ -1159,11 +1159,11 @@ class DataStoreMgr:
             source_tokens
             point
             flow_nums
-            is_parent:
-                Used to determine whether to load DB state.
-            itask:
-                Update task-node from corresponding task proxy object.
+            is_parent: Used to determine whether to load DB state.
+            itask: Update task-node from corresponding task proxy object.
             n_depth: n-window graph edge distance.
+            replace_existing: Replace any existing data for task as it may
+                be out of date (e.g. flow nums).
         """
         tp_id = tokens.id
         if (
