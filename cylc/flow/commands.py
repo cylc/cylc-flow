@@ -189,16 +189,19 @@ async def stop(
             schd.workflow_db_mgr.put_workflow_stop_cycle_point(
                 schd.options.stopcp
             )
+        schd._update_workflow_state()
     elif clock_time is not None:
         # schedule shutdown after wallclock time passes provided time
         parser = TimePointParser()
         schd.set_stop_clock(
             int(parser.parse(clock_time).seconds_since_unix_epoch)
         )
+        schd._update_workflow_state()
     elif task is not None:
         # schedule shutdown after task succeeds
         task_id = TaskID.get_standardised_taskid(task)
         schd.pool.set_stop_task(task_id)
+        schd._update_workflow_state()
     else:
         # immediate shutdown
         with suppress(KeyError):
@@ -229,6 +232,7 @@ async def release_hold_point(schd: 'Scheduler'):
     yield
     LOG.info("Releasing all tasks and removing hold cycle point.")
     schd.pool.release_hold_point()
+    schd._update_workflow_state()
 
 
 @_command('resume')
@@ -287,6 +291,7 @@ async def set_hold_point(schd: 'Scheduler', point: str):
         "All tasks after this point will be held."
     )
     schd.pool.set_hold_point(cycle_point)
+    schd._update_workflow_state()
 
 
 @_command('pause')

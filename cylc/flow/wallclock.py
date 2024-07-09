@@ -16,7 +16,7 @@
 """Wall clock related utilities."""
 
 from calendar import timegm
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
@@ -209,7 +209,7 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
     to use as the time zone designator.
 
     """
-    date_time = datetime.utcfromtimestamp(unix_time)
+    date_time = datetime.fromtimestamp(unix_time, timezone.utc)
     return get_time_string(date_time,
                            display_sub_seconds=display_sub_seconds,
                            use_basic_format=use_basic_format,

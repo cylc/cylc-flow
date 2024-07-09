@@ -2000,7 +2000,7 @@ class Scheduler:
 
         Call this method whenever the Scheduler's state has changed in a way
         that requires a data store update.
-        See cylc.flow.workflow_status.get_workflow_status() for a
+        See cylc.flow.workflow_status.get_workflow_status_msg() for a
         (non-exhaustive?) list of properties that if changed will require
         this update.
 
