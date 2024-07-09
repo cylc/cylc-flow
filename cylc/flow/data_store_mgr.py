@@ -85,7 +85,10 @@ from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
 )
-from cylc.flow.workflow_status import get_workflow_status
+from cylc.flow.workflow_status import (
+    get_workflow_status,
+    get_workflow_status_msg,
+)
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -2174,8 +2177,8 @@ class DataStoreMgr:
                 w_delta.latest_state_tasks[state].task_proxies[:] = tp_queue
 
         # Set status & msg if changed.
-        status, status_msg = map(
-            str, get_workflow_status(self.schd))
+        status = get_workflow_status(self.schd).value
+        status_msg = get_workflow_status_msg(self.schd)
         if w_data.status != status or w_data.status_msg != status_msg:
             w_delta.status = status
             w_delta.status_msg = status_msg
