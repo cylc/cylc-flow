@@ -23,6 +23,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.exceptions import (
+    PointParsingError,
     ServiceFileError,
     WorkflowConfigError,
     XtriggerConfigError,
@@ -593,3 +594,27 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 
     # the cache should have been updated by the reload
     assert get_platforms(glbl_cfg()) == {'localhost', 'foo', 'bar'}
+
+
+def test_validate_run_mode(flow: Fixture, validate: Fixture):
+    """Test that Cylc validate will only check simulation mode settings
+    if validate --mode simulation or dummy.
+
+    Discovered in:
+    https://github.com/cylc/cylc-flow/pull/6213#issuecomment-2225365825
+    """
+    wid = flow({
+        'scheduling': {'graph': {'R1': 'mytask'}},
+        'runtime': {'mytask': {'simulation': {'fail cycle points': 'alll'}}}
+    })
+
+    # It's fine with run mode live
+    validate(wid)
+
+    # It fails with run mode simulation:
+    with pytest.raises(PointParsingError, match='Incompatible value'):
+        validate(wid, run_mode='simulation')
+
+    # It fails with run mode dummy:
+    with pytest.raises(PointParsingError, match='Incompatible value'):
+        validate(wid, run_mode='dummy')
