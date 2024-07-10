@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Set up the cylc environment."""
 
-import os
 import logging
-
+import os
 
 CYLC_LOG = 'cylc'
 
@@ -53,7 +52,7 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.3.3.dev'
+__version__ = '8.4.0.dev'
 
 
 def iter_entry_points(entry_point_name):
