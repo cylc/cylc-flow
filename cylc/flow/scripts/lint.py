@@ -183,7 +183,7 @@ def get_wallclock_directives():
 WALLCLOCK_DIRECTIVES = get_wallclock_directives()
 
 
-def check_etl_directives(line: str) -> Union[Dict[str, str], bool]:
+def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
     """Check for job runner specific directives
     equivelent to exection time limit.
     """
@@ -587,7 +587,7 @@ STYLE_CHECKS = {
             ' is automatically translated to the job runner\'s timeout'
             ' directive can make your workflow more portable.'
         ),
-        FUNCTION: check_etl_directives,
+        FUNCTION: check_wallclock_directives,
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
