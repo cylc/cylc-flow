@@ -100,6 +100,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check Towncrier Files
+        run: |
+          set -eu pipefail
+          if ls changes.d | grep ^[a-z].*.md; then
+            echo "the following towncrier files may be wrong:"
+            ls changes.d | grep ^[a-z].*.md
+            exit 1
+          fi
+
       # note: exclude python 3.10+ from mypy checks as these produce false
       # positives in installed libraries for python 3.7
       - name: Configure Python
