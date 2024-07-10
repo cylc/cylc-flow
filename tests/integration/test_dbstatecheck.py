@@ -16,10 +16,7 @@
 
 """Tests for the backend method of workflow_state"""
 
-
-from asyncio import sleep
 import pytest
-from textwrap import dedent
 
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.scheduler import Scheduler
@@ -36,13 +33,15 @@ async def checker(
     """
     wid = mod_flow({
         'scheduling': {
-            'graph': {'P1Y': dedent('''
-                good:succeeded
-                bad:failed?
-                output:custom_output
-            ''')},
             'initial cycle point': '1000',
-            'final cycle point': '1001'
+            'final cycle point': '1001',
+            'graph': {
+                'P1Y': '''
+                    good:succeeded
+                    bad:failed?
+                    output:custom_output
+                 '''
+            },
         },
         'runtime': {
             'bad': {'simulation': {'fail cycle points': '1000'}},
@@ -51,11 +50,17 @@ async def checker(
     })
     schd: Scheduler = mod_scheduler(wid, paused_start=False)
     async with mod_run(schd):
-        await mod_complete(schd)
-        schd.pool.force_trigger_tasks(['1000/good'], ['2'])
-        # Allow a cycle of the main loop to pass so that flow 2 can be
+        # allow a cycle of the main loop to pass so that flow 2 can be
         # added to db
-        await sleep(1)
+        await mod_complete(schd)
+
+        # trigger a new task in flow 2
+        schd.pool.force_trigger_tasks(['1000/good'], ['2'])
+
+        # update the database
+        schd.process_workflow_db_queue()
+
+        # yield a DB checker
         with CylcWorkflowDBChecker(
             'somestring', 'utterbunkum', schd.workflow_db_mgr.pub_path
         ) as _checker:
@@ -73,7 +78,7 @@ def test_basic(checker):
         ['output', '10000101T0000Z', 'succeeded'],
         ['output', '10010101T0000Z', 'succeeded'],
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
-    ]
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'], ]
     assert result == expect
 
 
@@ -131,5 +136,6 @@ def test_flownum(checker):
     result = checker.workflow_state_query(flow_num=2)
     expect = [
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'],
     ]
     assert result == expect

@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Set up the cylc environment."""
 
-import os
 import logging
-
+import os
 
 CYLC_LOG = 'cylc'
 
