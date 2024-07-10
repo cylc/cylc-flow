@@ -73,7 +73,7 @@ def test_basic(checker):
         ['output', '10000101T0000Z', 'succeeded'],
         ['output', '10010101T0000Z', 'succeeded'],
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
-    ]
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'], ]
     assert result == expect
 
 
@@ -131,5 +131,6 @@ def test_flownum(checker):
     result = checker.workflow_state_query(flow_num=2)
     expect = [
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
+        ['good', '10010101T0000Z', 'waiting', '(flows=2)'],
     ]
     assert result == expect

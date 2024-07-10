@@ -1578,8 +1578,8 @@ class TaskPool:
 
     def _get_task_history(
         self, name: str, point: 'PointBase', flow_nums: Set[int]
-    ) -> Tuple[bool, int, str, bool]:
-        """Get history of previous submits for this task.
+    ) -> Tuple[int, Optional[str], bool]:
+        """Get submit_num, status, flow_wait for point/name in flow_nums.
 
         Args:
             name: task name
@@ -1587,41 +1587,33 @@ class TaskPool:
             flow_nums: task flow numbers
 
         Returns:
-            never_spawned: if task never spawned before
-            submit_num: submit number of previous submit
-            prev_status: task status of previous sumbit
-            prev_flow_wait: if previous submit was a flow-wait task
+           (submit_num, status, flow_wait)
+           If no matching history, status will be None
 
         """
+        submit_num: int = 0
+        status: Optional[str] = None
+        flow_wait = False
+
         info = self.workflow_db_mgr.pri_dao.select_prev_instances(
             name, str(point)
         )
-        try:
-            submit_num: int = max(s[0] for s in info)
-        except ValueError:
-            # never spawned in any flow
-            submit_num = 0
-            never_spawned = True
-        else:
-            never_spawned = False
-            # (submit_num could still be zero, if removed before submit)
+        with suppress(ValueError):
+            submit_num = max(s[0] for s in info)
 
-        prev_status: str = TASK_STATUS_WAITING
-        prev_flow_wait = False
-
-        for _snum, f_wait, old_fnums, status in info:
+        for _snum, f_wait, old_fnums, old_status in info:
             if set.intersection(flow_nums, old_fnums):
                 # matching flows
-                prev_status = status
-                prev_flow_wait = f_wait
-                if prev_status in TASK_STATUSES_FINAL:
+                status = old_status
+                flow_wait = f_wait
+                if status in TASK_STATUSES_FINAL:
                     # task finished
                     break
                 # Else continue: there may be multiple entries with flow
                 # overlap due to merges (they'll have have same snum and
                 # f_wait); keep going to find the finished one, if any.
 
-        return never_spawned, submit_num, prev_status, prev_flow_wait
+        return submit_num, status, flow_wait
 
     def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
         """Load a task's historical outputs from the DB."""
@@ -1631,8 +1623,11 @@ class TaskPool:
             # task never ran before
             self.db_add_new_flow_rows(itask)
         else:
+            flow_seen = False
             for outputs_str, fnums in info.items():
                 if itask.flow_nums.intersection(fnums):
+                    # DB row has overlap with itask's flows
+                    flow_seen = True
                     # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
@@ -1649,6 +1644,9 @@ class TaskPool:
                         # [message] - always the full task message
                         for msg in outputs:
                             itask.state.outputs.set_message_complete(msg)
+            if not flow_seen:
+                # itask never ran before in its assigned flows
+                self.db_add_new_flow_rows(itask)
 
     def spawn_task(
         self,
@@ -1658,42 +1656,50 @@ class TaskPool:
         force: bool = False,
         flow_wait: bool = False,
     ) -> Optional[TaskProxy]:
-        """Return task proxy if not completed in this flow, or if forced.
+        """Return a new task proxy for the given flow if possible.
 
-        If finished previously with flow wait, just try to spawn children.
+        We need to hit the DB for:
+        - submit number
+        - task status
+        - flow-wait
+        - completed outputs (e.g. via "cylc set")
 
-        Note finished tasks may be incomplete, but we don't automatically
-        re-run incomplete tasks in the same flow.
+        If history records a final task status (for this flow):
+        - if not flow wait, don't spawn (return None)
+        - if flow wait, don't spawn (return None) but do spawn children
+        - if outputs are incomplete, don't auto-rerun it (return None)
 
-        For every task spawned, we need a DB lookup for submit number,
-        and flow-wait.
+        Otherwise, spawn the task and load any completed outputs.
 
         """
-        if not self.can_be_spawned(name, point):
-            return None
-
-        never_spawned, submit_num, prev_status, prev_flow_wait = (
+        submit_num, prev_status, prev_flow_wait = (
             self._get_task_history(name, point, flow_nums)
         )
 
-        if (
-            not never_spawned and
-            not prev_flow_wait and
-            submit_num == 0
-        ):
-            # Previous instance removed before completing any outputs.
-            LOG.debug(f"Not spawning {point}/{name} - task removed")
-            return None
-
+        # Create the task proxy with any completed outputs loaded.
         itask = self._get_task_proxy_db_outputs(
             point,
             self.config.get_taskdef(name),
             flow_nums,
-            status=prev_status,
+            status=prev_status or TASK_STATUS_WAITING,
             submit_num=submit_num,
             flow_wait=flow_wait,
         )
         if itask is None:
+            return None
+
+        if (
+            prev_status is not None
+            and not itask.state.outputs.get_completed_outputs()
+        ):
+            # If itask has any history in this flow but no completed outputs
+            # we can infer it was deliberately removed, so don't respawn it.
+            # TODO (follow-up work):
+            # - this logic fails if task removed after some outputs completed
+            # - this is does not conform to future "cylc remove" flow-erasure
+            #   behaviour which would result in respawning of the removed task
+            # See github.com/cylc/cylc-flow/pull/6186/#discussion_r1669727292
+            LOG.debug(f"Not respawning {point}/{name} - task was removed")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:
@@ -1878,7 +1884,6 @@ class TaskPool:
         - future tasks must be specified individually
         - family names are not expanded to members
 
-
         Uses a transient task proxy to spawn children. (Even if parent was
         previously spawned in this flow its children might not have been).
 
@@ -1963,6 +1968,7 @@ class TaskPool:
         self.data_store_mgr.delta_task_outputs(itask)
         self.workflow_db_mgr.put_update_task_state(itask)
         self.workflow_db_mgr.put_update_task_outputs(itask)
+        self.workflow_db_mgr.process_queued_ops()
 
     def _set_prereqs_itask(
         self,
@@ -2168,10 +2174,9 @@ class TaskPool:
             if not self.can_be_spawned(name, point):
                 continue
 
-            _, submit_num, _prev_status, prev_fwait = (
+            submit_num, _, prev_fwait = (
                 self._get_task_history(name, point, flow_nums)
             )
-
             itask = TaskProxy(
                 self.tokens,
                 self.config.get_taskdef(name),
