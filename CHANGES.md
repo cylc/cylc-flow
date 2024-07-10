@@ -11,6 +11,18 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.2 (Released 2024-07-10)__
+
+### 🔧 Fixes
+
+[#6178](https://github.com/cylc/cylc-flow/pull/6178) - Fix an issue where Tui could hang when closing.
+
+[#6186](https://github.com/cylc/cylc-flow/pull/6186) - Fixed bug where using flow numbers with `cylc set` would not work correctly.
+
+[#6200](https://github.com/cylc/cylc-flow/pull/6200) - Fixed bug where a stalled paused workflow would be incorrectly reported as running, not paused
+
+[#6206](https://github.com/cylc/cylc-flow/pull/6206) - Fixes the spawning of multiple parentless tasks off the same sequential wall-clock xtrigger.
+
 ## __cylc-8.3.1 (Released 2024-07-04)__
 
 ### 🔧 Fixes
