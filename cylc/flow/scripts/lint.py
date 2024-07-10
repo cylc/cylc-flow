@@ -150,7 +150,7 @@ DEPRECATED_STRING_TEMPLATES = {
 }
 
 
-LIST_ITEM = '    * '
+LIST_ITEM = '\n    * '
 
 
 deprecated_string_templates = {
@@ -264,7 +264,12 @@ def check_for_suicide_triggers(
 def check_for_deprecated_environment_variables(
     line: str
 ) -> Union[bool, dict]:
-    """Warn that environment variables with SUITE in are deprecated"""
+    """Warn that environment variables with SUITE in are deprecated
+
+    Examples:
+        >>> check_for_deprecated_environment_variables('CYLC_SUITE_HOST')
+        {'vars': ['CYLC_SUITE_HOST: CYLC_WORKFLOW_HOST']}
+    """
     vars_found = [
         f'{k}: {v}' for k, v in DEPRECATED_ENV_VARS.items()
         if k in line
@@ -277,16 +282,21 @@ def check_for_deprecated_environment_variables(
     return False
 
 
-def check_for_obsolete_environment_variables(line: str) -> List[str]:
+def check_for_obsolete_environment_variables(line: str) -> Dict[str, List]:
     """Warn that environment variables are obsolete.
 
     Examples:
 
         >>> this = check_for_obsolete_environment_variables
-        >>> this('CYLC_SUITE_DEF_PATH')
-        ['CYLC_SUITE_DEF_PATH']
+        >>> this('script = echo $CYLC_SUITE_DEF_PATH')
+        {'vars': ['CYLC_SUITE_DEF_PATH']}
+        >>> this('script = echo "irrelevent"')
+        {}
     """
-    return [i for i in OBSOLETE_ENV_VARS if i in line]
+    vars_found = [i for i in OBSOLETE_ENV_VARS if i in line]
+    if vars_found:
+        return {'vars': vars_found}
+    return {}
 
 
 def check_for_deprecated_task_event_template_vars(
@@ -298,13 +308,10 @@ def check_for_deprecated_task_event_template_vars(
         >>> this = check_for_deprecated_task_event_template_vars
 
         >>> this('hello = "My name is %(suite)s"')
-        {'list': '    * %(suite)s ⇒ %(workflow)s'}
+        {'suggest': '\\n    * %(suite)s ⇒ %(workflow)s'}
 
-        >>> expect = {'list': (
-        ...     '    * %(suite)s ⇒ %(workflow)s    * %(task_url)s'
-        ... ' - get ``URL`` (if set in :cylc:conf:`[meta]URL`)')}
-        >>> this('hello = "My name is %(suite)s, %(task_url)s"') == expect
-        True
+        >>> this('hello = "My name is %(suite)s, %(task_url)s"')
+        {'suggest': '\\n    * %(suite)s ⇒ %(workf...cylc:conf:`[meta]URL`)'}
     """
     result = []
     for key, (regex, replacement) in deprecated_string_templates.items():
@@ -315,7 +322,7 @@ def check_for_deprecated_task_event_template_vars(
             result.append(f'%({key})s ⇒ %({replacement})s')
 
     if result:
-        return {'list': LIST_ITEM + LIST_ITEM.join(result)}
+        return {'suggest': LIST_ITEM + LIST_ITEM.join(result)}
     return None
 
 
@@ -370,7 +377,14 @@ LOWERCASE_REGEX = re.compile(r'[a-z]')
 
 
 def check_lowercase_family_names(line: str) -> bool:
-    """Check for lowercase in family names."""
+    """Check for lowercase in family names.
+
+    Examples:
+        >>> check_lowercase_family_names(' inherit = FOO')
+        False
+        >>> check_lowercase_family_names(' inherit = foo')
+        True
+    """
     match = INHERIT_REGEX.match(line)
     if not match:
         return False
@@ -673,7 +687,7 @@ MANUAL_DEPRECATIONS = {
     },
     'U015': {
         'short': (
-            'Deprecated template variables.'),
+            'Deprecated template variables: {suggest}'),
         'rst': (
             'The following template variables, mostly used in event handlers,'
             'are deprecated, and should be replaced:'
