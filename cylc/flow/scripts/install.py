@@ -234,7 +234,7 @@ async def scan(wf_name: str, ping: bool = True) -> None:
             if n > 1 else
             ["", "is", "it"]
         )
-        print(
+        cprint(
             CylcLogFormatter.COLORS['WARNING'].format(
                 f'NOTE: {n} run%s of "{wf_name}"'
                 ' %s already active:' % tuple(grammar[:2])
