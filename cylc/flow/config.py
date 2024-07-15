@@ -2434,9 +2434,18 @@ class WorkflowConfig:
                 raise WorkflowConfigError(str(exc))
             else:
                 # Record custom message outputs from [runtime].
+                messages = set(self.cfg['runtime'][name]['outputs'].values())
                 for output, message in (
                     self.cfg['runtime'][name]['outputs'].items()
                 ):
+                    try:
+                        messages.remove(message)
+                    except KeyError:
+                        raise WorkflowConfigError(
+                            'Duplicate task message in'
+                            f' "[runtime][{name}][outputs]'
+                            f'{output} = {message}" - messages must be unique'
+                        )
                     valid, msg = TaskOutputValidator.validate(output)
                     if not valid:
                         raise WorkflowConfigError(
