@@ -319,12 +319,15 @@ class TaskPool:
         if not self.active_tasks:
             # Find the earliest sequence point beyond the workflow start point.
             base_point = min(
-                point
-                for point in {
-                    seq.get_first_point(self.config.start_point)
-                    for seq in self.config.sequences
-                }
-                if point is not None
+                (
+                    point
+                    for point in {
+                        seq.get_first_point(self.config.start_point)
+                        for seq in self.config.sequences
+                    }
+                    if point is not None
+                ),
+                default=None,
             )
         else:
             # Find the earliest point with incomplete tasks.
