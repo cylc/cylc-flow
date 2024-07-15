@@ -1750,6 +1750,26 @@ async def test_compute_runahead(
         assert int(str(schd.pool.runahead_limit_point)) == 5  # +1
 
 
+async def test_compute_runahead_with_no_tasks(flow, scheduler, run):
+    """It should handle the case of an empty workflow.
+
+    See https://github.com/cylc/cylc-flow/issues/6225
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'initial cycle point': '2000',
+                'graph': {'R1': 'foo'},
+            },
+        }
+    )
+    schd = scheduler(id_, startcp='2002', paused_start=False)
+    async with run(schd):
+        assert schd.pool.compute_runahead() is False
+        assert schd.pool.runahead_limit_point is None
+        assert schd.pool.get_tasks() == []
+
+
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
 @pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 async def test_runahead_future_trigger(
