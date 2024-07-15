@@ -182,7 +182,9 @@ def init_clean(id_: str, opts: 'Values') -> None:
                     ' this version of "cylc clean".'
                     '\nTry using the version of Cylc the workflow was last ran'
                     ' with to remove it.'
-                    '\nOtherwise please delete the database file.'
+                    '\nOtherwise, use the "--local-only" option to remove'
+                    ' local files (you may need to remove files on other'
+                    ' platforms manually).'
                 )
                 raise ServiceFileError(f"Cannot clean {id_} - {exc}")
 
