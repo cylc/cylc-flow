@@ -40,7 +40,8 @@ Examples:
   $ cylc stop my_workflow//1234/foo
 
 By default stopping workflows wait for submitted and running tasks to complete
-before shutting down. You can change this behaviour with the --mode option.
+before shutting down. You can change this behaviour with the --now or
+--kill options.
 
 There are several shutdown methods:
 
