@@ -2166,6 +2166,15 @@ class TaskPool:
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
                 continue
+            if (
+                itask.state(TASK_STATUS_WAITING, is_queued=True)
+                and flow_nums != self._get_active_flow_nums()
+            ):
+                LOG.warning(
+                    f"[{itask}] ignoring trigger - already queued"
+                    " (cannot change flow)"
+                )
+                continue
             self._force_trigger(itask)
 
         # Spawn and trigger future tasks.

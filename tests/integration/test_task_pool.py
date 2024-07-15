@@ -516,6 +516,36 @@ async def test_trigger_states(
         assert task.is_manual_submit == should_trigger
 
 
+async def test_trigger_queue(one, run, db_select, complete, log_filter):
+    """It should handle triggering tasks in the queued state.
+
+    It should not be possible to use "trigger" to add flows to a task that is
+    in the queued state. This is not a firm requirement, we could reconsider
+    this behaviour at a later date, however, it is tricky as at present the
+    task's entry in the task_outputs table already exists by this point.
+
+    This test ensures that a warning is produced in this circumstance.
+
+    See https://github.com/cylc/cylc-flow/issues/6174
+    """
+    async with run(one) as log:
+        # the workflow should start up with one task in the original flow
+        task = one.pool.get_tasks()[0]
+        assert task.state(TASK_STATUS_WAITING, is_queued=True)
+        assert task.flow_nums == {1}
+
+        # we should not be able to trigger this task as it is already queued in
+        # flow 1
+        log.clear()
+        one.pool.force_trigger_tasks([task.identity], '2')
+        assert log_filter(log, contains='ignoring trigger - already queued')
+
+        # only the original flow should continue
+        one.resume_workflow()
+        await complete(one, timeout=2)
+        assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1]',)]
+
+
 async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, start):
     """Preparing tasks should be reset to waiting on restart.
 
