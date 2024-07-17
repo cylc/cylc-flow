@@ -40,7 +40,7 @@ from cylc.flow.parsec.exceptions import (
     ValidationError,
 )
 from cylc.flow.parsec.upgrade import upgrader
-from cylc.flow.parsec.util import printcfg, expand_many_section
+from cylc.flow.parsec.util import printcfg, expand_many_section, replicate
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
@@ -2076,8 +2076,11 @@ class GlobalConfig(ParsecConfig):
         platforms[bar].
         """
         if self.sparse.get('platforms'):
-            self.sparse['platforms'] = expand_many_section(
-                self.sparse['platforms']
+            expanded_platforms = expand_many_section(self.sparse['platforms'])
+            self.sparse['platforms'].clear()
+            replicate(
+                self.sparse['platforms'],
+                expanded_platforms,
             )
 
     def platform_dump(
