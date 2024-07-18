@@ -339,3 +339,37 @@ def test_completion_expression_cylc7_compat(
         match="completion cannot be used in Cylc 7 compatibility mode."
     ):
         validate(id_)
+
+
+def test_unique_messages(
+    flow,
+    validate
+):
+    """Task messages must be unique in the [outputs] section.
+
+    See: https://github.com/cylc/cylc-flow/issues/6056
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': 'foo'}
+        },
+        'runtime': {
+            'foo': {
+                'outputs': {
+                    'a': 'foo',
+                    'b': 'bar',
+                    'c': 'baz',
+                    'd': 'foo',
+                }
+            },
+        }
+    })
+
+    with pytest.raises(
+        WorkflowConfigError,
+        match=(
+            r'"\[runtime\]\[foo\]\[outputs\]d = foo"'
+            ' - messages must be unique'
+        ),
+    ):
+        validate(id_)
