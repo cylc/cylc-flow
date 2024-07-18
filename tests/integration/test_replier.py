@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout
-from cylc.flow.network import decode_
-from cylc.flow.network.client import WorkflowRuntimeClient
 import asyncio
 
+from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.util import decode_
+
+from async_timeout import timeout
 import pytest
 
 

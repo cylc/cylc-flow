@@ -28,7 +28,7 @@ coverage:
 # files to ignore
 ignore:
   - "tests/**"
-  - "ws_messages_pb2.py"
+  - "cylc/flow/network/protobuf/cylc/v5/schema_pb2.py"
   - "cylc/flow/scripts/report_timings.py"
 
 flag_management:

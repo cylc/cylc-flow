@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package cylc.v5;
+
 /* THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
  Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 
@@ -16,6 +18,7 @@ syntax = "proto3";
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
+
 /* Protobuf message definitions
  *
  * The original intention of these messages is for use as data elements sent
@@ -24,15 +27,21 @@ syntax = "proto3";
  * This file is not needed at runtime. It is used to generate python protobuf
  * message modules.
  *
- * Command:
- * $ protoc -I=./ --python_out=./ --pyi_out=./ data_messages.proto
+ * Hand edit this file to make changes to the schema, use "bufbuild" to lint
+ * changes and regenerate Python files e.g:
  *
- * Pre-compiled protoc binary may be download from:
- * https://github.com/protocolbuffers/protobuf/releases
+ *   # cd into the directory which contains the "buf.yaml" file, this is the
+ *   # project's root directory as far as protobuf is concerned
+ *   $ cd cylc/flow/network/protobuf
  *
- * If merge/rebase conflicts arise, then regenerate the module.
- * (DO NOT manually resolve conflicts)
+ *   # install bufbuild
+ *   $ npm install @bufbuild/buf
  *
+ *   # lint protobuf schema source files
+ *   node_modules/@bufbuild/buf/bin/buf lint
+ *
+ *   # generate Python files
+ *   node_modules/@bufbuild/buf/bin/buf generate
  *
  * WARNING: Avoid re-indexing existing fields!
  *    - Field numbers do not need to be continuous/sequential (gaps are fine).
@@ -43,7 +52,6 @@ syntax = "proto3";
  *
  * https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
  *
- *
  * */
 
 
@@ -51,6 +59,7 @@ syntax = "proto3";
 message PbMeta {
     optional string title = 1;
     optional string description = 2;
+    // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
     optional string URL = 3;
     optional string user_defined = 4;
 }

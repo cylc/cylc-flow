@@ -1,0 +1,83 @@
+name: protobuf
+# CI tests to run against the protobuf schema on change:
+
+on:
+  # run for any PRs raising changes to the protobuf files or setup
+  pull_request:
+    paths:
+      - 'cylc/flow/network/protobuf/**'
+
+jobs:
+  protobuf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # we need all of the commits on the PR branch in order to be able to add new ones
+          fetch-depth: 100
+
+      - name: Configure git
+        uses: cylc/release-actions/configure-git@v1
+
+      - name: Install Protobuf
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          # install protobuf into a mamba env (note use shell = "bash -el {0}"
+          # to access this envionment)
+          environment-name: protobuf
+          create-args: protobuf
+          init-shell: bash
+
+      - name: Install bufbuild/buf
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+
+          # NOTE: bufbuild does exist on conda-forge but hasn't been updated for a while
+          brew install bufbuild/buf/buf
+
+      - name: Lint
+        run: |
+          # lint .proto files
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          cd cylc/flow/network/protobuf
+          buf lint
+
+      - name: Compatibility
+        shell: bash -el {0}
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          cd cylc/flow/network/protobuf
+          # NOTE: there is currently no process for committing a breaking change.
+          # If a breaking change is needed:
+          # - Increment the Cylc API version number.
+          # - Increment the protobuf schema version number to match.
+          # - Increment the API number filter in cylc-uiserver.
+          # - Bypass this step of the workflow.
+          buf breaking \
+            --against 'https://github.com/cylc/cylc-flow.git#tag=${{ github.base_ref }},subdir=cylc/flow/network/protobuf'
+
+      - name: Build
+        shell: bash -el {0}
+        run: |
+          # generate .py and .pyi files from the .proto files
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # activate homebrew
+          micromamba activate protobuf
+          cd cylc/flow/network/protobuf
+          buf generate
+
+      - name: Commit & Push
+        run: |
+          if [[ -z $(git diff --stat) ]]; then
+            echo '::error:: No functional changes made to the protobuf schema'
+            exit 0
+          else
+            echo '::info:: pushing update commit'
+              git add -u
+              git commit -m 'protobuf: updating generated files'
+              git remote add pr https://github.com/${{ github.event.pull_request.head.repo.owner.login }}/cylc-flow
+              git push pr HEAD:${{ github.head_ref }}
+            exit 0
+          fi
