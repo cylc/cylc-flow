@@ -373,7 +373,7 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
                     f'\n    Expression: {item}'
                     f'\n    Configuration: {GLBL_CFG_STR}'
                     f'\n    Error: {exc}'
-                )
+                ) from None
             if isinstance(result, bool):
                 host_rankings[item] = result
                 data[host][item] = result

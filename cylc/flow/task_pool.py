@@ -873,8 +873,8 @@ class TaskPool:
         if self.active_tasks_changed:
             self.active_tasks_changed = False
             self._active_tasks_list = []
-            for _, itask_id_map in self.active_tasks.items():
-                for __, itask in itask_id_map.items():
+            for itask_id_map in self.active_tasks.values():
+                for itask in itask_id_map.values():
                     self._active_tasks_list.append(itask)
         return self._active_tasks_list
 

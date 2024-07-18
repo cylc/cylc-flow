@@ -206,7 +206,7 @@ class RotatingLogFileHandler(logging.FileHandler):
             self.stream.seek(0, 2)
         except ValueError as exc:
             # intended to catch - ValueError: I/O operation on closed file
-            raise SystemExit(exc)
+            raise SystemExit(exc) from None
         return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
 
     @property

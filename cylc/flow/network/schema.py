@@ -271,7 +271,7 @@ def field_name_from_type(
     try:
         return NODE_MAP[named_type.name]
     except KeyError:
-        raise ValueError(f"'{named_type.name}' is not a node type")
+        raise ValueError(f"'{named_type.name}' is not a node type") from None
 
 
 def get_resolvers(info: 'ResolveInfo') -> 'BaseResolvers':
