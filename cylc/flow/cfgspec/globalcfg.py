@@ -1978,24 +1978,29 @@ class GlobalConfig(ParsecConfig):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def get_inst(cls, cached: bool = True) -> 'GlobalConfig':
+    def get_inst(
+        cls, cached: bool = True, reload: bool = False
+    ) -> 'GlobalConfig':
         """Return a GlobalConfig instance.
 
         Args:
-            cached (bool):
-                If cached create if necessary and return the singleton
-                instance, else return a new instance.
+            cached:
+                If True, return a cached instance if present. If False, return
+                a new instance.
+            reload:
+                If true, reload the cached instance (implies cached=True).
+
         """
-        if not cached:
-            # Return an up-to-date global config without affecting the
-            # singleton.
-            new_instance = cls(SPEC, upg, validator=cylc_config_validate)
-            new_instance.load()
-            return new_instance
-        elif not cls._DEFAULT:
-            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
-            cls._DEFAULT.load()
-        return cls._DEFAULT
+        if cached and cls._DEFAULT and not reload:
+            return cls._DEFAULT
+
+        new_instance = cls(SPEC, upg, validator=cylc_config_validate)
+        new_instance.load()
+
+        if cached or reload:
+            cls._DEFAULT = new_instance
+
+        return new_instance
 
     def _load(self, fname: Union[Path, str], conf_type: str) -> None:
         if not os.access(fname, os.F_OK | os.R_OK):
@@ -2008,7 +2013,7 @@ class GlobalConfig(ParsecConfig):
             raise
 
     def load(self) -> None:
-        """Load or reload configuration from files."""
+        """Load configuration from files."""
         self.sparse.clear()
         self.dense.clear()
         LOG.debug("Loading site/user config files")
