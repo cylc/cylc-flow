@@ -2367,6 +2367,25 @@ class DataStoreMgr:
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
+    def delta_task_flow_nums(self, itask: TaskProxy) -> None:
+        """Create delta for change in task proxy flow_nums.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+
+        """
+        tproxy: Optional[PbTaskProxy]
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        if not tproxy:
+            return
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{time()}'
+        tp_delta.flow_nums = serialise_set(itask.flow_nums)
+        self.updates_pending = True
+
     def delta_task_runahead(self, itask: TaskProxy) -> None:
         """Create delta for change in task proxy runahead state.
 
