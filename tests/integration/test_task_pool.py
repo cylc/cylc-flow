@@ -2086,3 +2086,26 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
         assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
         assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded' 
+
+
+async def test_trigger_queue(one, run, db_select, complete):
+    """It should handle triggering tasks in the queued state.
+
+    Triggering a queued task with a new flow number should result in the
+    task running with merged flow numbers.
+
+    See https://github.com/cylc/cylc-flow/pull/6241
+    """
+    async with run(one):
+        # the workflow should start up with one task in the original flow
+        task = one.pool.get_tasks()[0]
+        assert task.state(TASK_STATUS_WAITING, is_queued=True)
+        assert task.flow_nums == {1}
+
+        # trigger this task even though is already queued in flow 1
+        one.pool.force_trigger_tasks([task.identity], '2')
+
+        # the merged flow should continue
+        one.resume_workflow()
+        await complete(one, timeout=2)
+        assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]

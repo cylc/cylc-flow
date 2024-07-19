@@ -1387,6 +1387,7 @@ class TaskPool:
             ).relative_id
 
             c_task = self._get_task_by_id(c_taskid)
+            in_pool = c_task is not None
 
             if c_task is not None and c_task != itask:
                 # (Avoid self-suicide: A => !A)
@@ -1411,10 +1412,12 @@ class TaskPool:
                         tasks.append(c_task)
                 else:
                     tasks = [c_task]
+
                 for t in tasks:
                     t.satisfy_me([itask.tokens.duplicate(task_sel=output)])
                     self.data_store_mgr.delta_task_prerequisite(t)
-                    self.add_to_pool(t)
+                    if not in_pool:
+                        self.add_to_pool(t)
 
                     if t.point <= self.runahead_limit_point:
                         self.rh_release_and_queue(t)
@@ -2169,6 +2172,7 @@ class TaskPool:
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
                 continue
+            self.merge_flows(itask, flow_nums)
             self._force_trigger(itask)
 
         # Spawn and trigger future tasks.
@@ -2471,7 +2475,7 @@ class TaskPool:
         if not flow_nums or (flow_nums == itask.flow_nums):
             # Don't do anything if:
             # 1. merging from a no-flow task, or
-            # 2. trying to spawn the same task in the same flow. This arises
+            # 2. same flow (no merge needed); can arise
             # downstream of an AND trigger (if "A & B => C"
             # and A spawns C first, B will find C is already in the pool),
             # and via suicide triggers ("A =>!A": A tries to spawn itself).
@@ -2480,6 +2484,8 @@ class TaskPool:
         merge_with_no_flow = not itask.flow_nums
 
         itask.merge_flows(flow_nums)
+        self.data_store_mgr.delta_task_flow_nums(itask)
+
         # Merged tasks get a new row in the db task_states table.
         self.db_add_new_flow_rows(itask)
 
