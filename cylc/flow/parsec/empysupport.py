@@ -22,6 +22,7 @@ from io import StringIO
 import em
 import os
 import typing as t
+import inspect
 
 from cylc.flow.parsec.exceptions import EmPyError
 from cylc.flow.parsec.fileparse import get_cylc_env_vars
@@ -52,7 +53,20 @@ def empyprocess(
     os.chdir(dir_)
     ftempl = StringIO('\n'.join(flines))
     xtempl = StringIO()
-    interpreter = em.Interpreter(output=em.UncloseableFile(xtempl))
+    # Detect EmPy version by interpreter.file() args.
+    # TODO: Use importlib.metadata version() once we drop Python 3.7
+    if 'name' in inspect.signature(em.Interpreter.file).parameters:
+        # Empy 3
+        interpreter = em.Interpreter(
+            output=em.UncloseableFile(xtempl)
+        )
+    else:
+        # Empy 4
+        # dispatcher = False: raise errors to caller
+        interpreter = em.Interpreter(
+            output=em.UncloseableFile(xtempl),
+            dispatcher=False
+        )
 
     # Add `CYLC_` environment variables to the global namespace.
     interpreter.updateGlobals(
@@ -60,7 +74,8 @@ def empyprocess(
     )
 
     try:
-        interpreter.file(ftempl, '<template>', template_vars)
+        # These args work for EmPy versions 3 and 4.
+        interpreter.file(ftempl, locals=template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
         raise EmPyError(
