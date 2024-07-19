@@ -1724,8 +1724,21 @@ class WorkflowConfig:
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
         # Add workflow bin directory to PATH for workflow and event handlers
-        os.environ['PATH'] = os.pathsep.join([
-            os.path.join(self.fdir, 'bin'), os.environ['PATH']])
+        if self.share_dir is not None:
+            os.environ['PATH'] = os.pathsep.join(
+                [
+                    os.path.join(self.share_dir, 'bin'),
+                    os.path.join(self.fdir, 'bin'),
+                    os.environ['PATH']
+                ]
+            )
+        else:
+            os.environ['PATH'] = os.pathsep.join(
+                [
+                    os.path.join(self.fdir, 'bin'),
+                    os.environ['PATH']
+                ]
+            )
 
     def run_mode(self) -> str:
         """Return the run mode."""
@@ -2439,9 +2452,18 @@ class WorkflowConfig:
                 raise WorkflowConfigError(str(exc)) from None
             else:
                 # Record custom message outputs from [runtime].
+                messages = set(self.cfg['runtime'][name]['outputs'].values())
                 for output, message in (
                     self.cfg['runtime'][name]['outputs'].items()
                 ):
+                    try:
+                        messages.remove(message)
+                    except KeyError:
+                        raise WorkflowConfigError(
+                            'Duplicate task message in'
+                            f' "[runtime][{name}][outputs]'
+                            f'{output} = {message}" - messages must be unique'
+                        )
                     valid, msg = TaskOutputValidator.validate(output)
                     if not valid:
                         raise WorkflowConfigError(

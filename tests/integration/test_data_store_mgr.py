@@ -18,6 +18,7 @@ import pytest
 from typing import TYPE_CHECKING
 
 from cylc.flow.data_store_mgr import (
+    EDGES,
     FAMILY_PROXIES,
     JOBS,
     TASKS,
@@ -316,3 +317,36 @@ def test_delta_task_prerequisite(harness):
         p.satisfied
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
         for p in t.prerequisites})
+
+
+async def test_absolute_graph_edges(flow, scheduler, start):
+    """It should add absolute graph edges to the store.
+
+    See: https://github.com/cylc/cylc-flow/issues/5845
+    """
+    runahead_cycles = 1
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '1',
+            'cycling mode': 'integer',
+            'runahead limit': f'P{runahead_cycles}',
+            'graph': {
+                'R1': 'build',
+                'P1': 'build[^] => run',
+            },
+        },
+    })
+    schd = scheduler(id_)
+
+    async with start(schd):
+        await schd.update_data_structure()
+
+        assert {
+            (Tokens(edge.source).relative_id, Tokens(edge.target).relative_id)
+            for edge in schd.data_store_mgr.data[schd.id][EDGES].values()
+        } == {
+            ('1/build', f'{cycle}/run')
+            # +1 for Python's range()
+            # +2 for Cylc's runahead
+            for cycle in range(1, runahead_cycles + 3)
+        }

@@ -101,11 +101,7 @@ def generate_graph_parents(tdef, point, taskdefs):
                 # where (point -Px) does not land on a valid point for woo.
                 # TODO ideally validation would flag this as an error.
                 continue
-            is_abs = (trigger.offset_is_absolute or
-                      trigger.offset_is_from_icp)
-            if is_abs and parent_point != point:
-                # If 'foo[^] => bar' only spawn off of '^'.
-                continue
+            is_abs = trigger.offset_is_absolute or trigger.offset_is_from_icp
             graph_parents[seq].append((parent_name, parent_point, is_abs))
 
     if tdef.sequential:
