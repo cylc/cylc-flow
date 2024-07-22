@@ -138,7 +138,6 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     FILE_HEADER_FLAG = 'cylc_log_file_header'
     ROLLOVER_NUM = 'cylc_log_num'
-    MIN_BYTES = 1024
 
     header_extra = {FILE_HEADER_FLAG: True}
     """Use to indicate the log msg is a header that should be logged on
@@ -146,7 +145,7 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     def __init__(
         self,
-        log_file_path: str,
+        log_file_path: Union[Path, str],
         no_detach: bool = False,
         restart_num: int = 0,
         timestamp: bool = True,
@@ -155,10 +154,20 @@ class RotatingLogFileHandler(logging.FileHandler):
         self.no_detach = no_detach
         self.formatter = CylcLogFormatter(timestamp=timestamp)
         # Header records get appended to when calling
-        # LOG.info(extra=RotatingLogFileHandler.[rollover_]header_extra)
+        # `LOG.info(extra=RotatingLogFileHandler.[rollover_]header_extra)`:
         self.header_records: List[logging.LogRecord] = []
         self.restart_num = restart_num
         self.log_num: Optional[int] = None  # null value until log file created
+        # Get & cache properties from global config (note: we should not access
+        # the global config object when emitting log messages as as doing so
+        # can have the side effect of expanding the global config):
+        self.max_bytes: int = max(
+            glbl_cfg().get(['scheduler', 'logging', 'maximum size in bytes']),
+            1024  # Max size must be >= 1KB
+        )
+        self.arch_len: Optional[int] = glbl_cfg().get([
+            'scheduler', 'logging', 'rolling archive length'
+        ])
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -196,10 +205,6 @@ class RotatingLogFileHandler(logging.FileHandler):
         """Should rollover?"""
         if self.log_num is None or self.stream is None:
             return True
-        max_bytes = glbl_cfg().get(
-            ['scheduler', 'logging', 'maximum size in bytes'])
-        if max_bytes < self.MIN_BYTES:  # No silly value
-            max_bytes = self.MIN_BYTES
         msg = "%s\n" % self.format(record)
         try:
             # due to non-posix-compliant Windows feature
@@ -207,7 +212,7 @@ class RotatingLogFileHandler(logging.FileHandler):
         except ValueError as exc:
             # intended to catch - ValueError: I/O operation on closed file
             raise SystemExit(exc)
-        return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
+        return self.stream.tell() + len(msg.encode('utf8')) >= self.max_bytes
 
     @property
     def load_type(self) -> str:
@@ -221,10 +226,8 @@ class RotatingLogFileHandler(logging.FileHandler):
         # Create new log file
         self.new_log_file()
         # Housekeep old log files
-        arch_len = glbl_cfg().get(
-            ['scheduler', 'logging', 'rolling archive length'])
-        if arch_len:
-            self.update_log_archive(arch_len)
+        if self.arch_len:
+            self.update_log_archive(self.arch_len)
         # Reopen stream, redirect STDOUT and STDERR to log
         if self.stream:
             self.stream.close()
@@ -246,7 +249,7 @@ class RotatingLogFileHandler(logging.FileHandler):
                 )
             logging.FileHandler.emit(self, header_record)
 
-    def update_log_archive(self, arch_len):
+    def update_log_archive(self, arch_len: int) -> None:
         """Maintain configured log file archive.
             - Sort logs by file modification time
             - Delete old log files in line with archive length configured in
