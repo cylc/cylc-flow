@@ -529,7 +529,7 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 
     def get_platforms(cfg_obj):
         """Return the platforms defined in the provided config instance."""
-        return {p for p in cfg_obj.get(['platforms']).keys()}
+        return set(cfg_obj.get(['platforms']).keys())
 
     def expect_platforms_during_reload(platforms):
         """Test the platforms defined in glbl_cfg() during reload.
