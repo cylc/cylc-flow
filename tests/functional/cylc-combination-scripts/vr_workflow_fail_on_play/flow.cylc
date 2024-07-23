@@ -1,0 +1,19 @@
+#!jinja2
+{% from "sys" import argv %}
+{% from "cylc.flow" import LOG %}
+{% from "pathlib" import Path %}
+{% if argv[1] == "play" %}
+    this = should cause cylc play to fail
+{% endif %}
+
+{% set SPATH = Path.cwd().__str__() %}
+{% do LOG.warning(argv[1] + ":" + SPATH) %}
+
+
+[scheduling]
+    initial cycle point = 1500
+    [[graph]]
+        P1Y = foo
+
+[runtime]
+    [[foo]]

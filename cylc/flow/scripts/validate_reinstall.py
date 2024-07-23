@@ -62,6 +62,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, scheduler_cli
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
+    VALIDATE_AGAINST_SOURCE_OPTION,
     run as cylc_validate,
 )
 from cylc.flow.scripts.reinstall import (
@@ -166,11 +167,14 @@ async def vr_cli(parser: COP, options: 'Values', workflow_id: str):
         return 1
 
     # Force on the against_source option:
-    options.against_source = True   # Make validate check against source.
+    options.against_source = True
+
+    # Run cylc validate
     log_subcommand('validate --against-source', workflow_id)
     await cylc_validate(parser, options, workflow_id)
 
-    # Unset is validate after validation.
+    # Unset options that do not apply after validation:
+    delattr(options, 'against_source')
     delattr(options, 'is_validate')
 
     log_subcommand('reinstall', workflow_id)
@@ -198,7 +202,7 @@ async def vr_cli(parser: COP, options: 'Values', workflow_id: str):
             'play',
             unparsed_wid,
             options,
-            compound_script_opts=VR_OPTIONS,
+            compound_script_opts=[*VR_OPTIONS, VALIDATE_AGAINST_SOURCE_OPTION],
             script_opts=(*PLAY_OPTIONS, *parser.get_std_options()),
             source='',  # Intentionally blank
         )
