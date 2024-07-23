@@ -15,77 +15,95 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from pathlib import Path
-import tempfile
-from time import sleep
-import pytest
-from pytest import param
 import re
 import sys
-from typing import Callable
+from io import TextIOWrapper
+from pathlib import Path
+from time import sleep
+from typing import Callable, cast
 from unittest import mock
 
+import pytest
+from pytest import param
+
 from cylc.flow import LOG
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.loggingutil import (
-    RotatingLogFileHandler,
     CylcLogFormatter,
+    RotatingLogFileHandler,
     get_reload_start_number,
     get_sorted_logs_by_time,
     set_timestamps,
 )
 
 
+@pytest.fixture
+def rotating_log_file_handler(tmp_path: Path):
+    """Fixture to create a RotatingLogFileHandler for testing."""
+    log_file = tmp_path / "log"
+    log_file.touch()
+
+    handler = cast('RotatingLogFileHandler', None)
+    orig_stream = cast('TextIOWrapper', None)
+
+    def inner(
+        *args, level: int = logging.INFO, **kwargs
+    ) -> RotatingLogFileHandler:
+        nonlocal handler, orig_stream
+        handler = RotatingLogFileHandler(log_file, *args, **kwargs)
+        orig_stream = handler.stream
+        # next line is important as pytest can have a "Bad file descriptor"
+        # due to a FileHandler with default "a" (pytest tries to r/w).
+        handler.mode = "a+"
+
+        # enable the logger
+        LOG.setLevel(level)
+        LOG.addHandler(handler)
+
+        return handler
+
+    yield inner
+
+    # clean up
+    LOG.setLevel(logging.INFO)
+    LOG.removeHandler(handler)
+
+
 @mock.patch("cylc.flow.loggingutil.glbl_cfg")
 def test_value_error_raises_system_exit(
-    mocked_glbl_cfg,
+    mocked_glbl_cfg, rotating_log_file_handler
 ):
     """Test that a ValueError when writing to a log stream won't result
     in multiple exceptions (what could lead to infinite loop in some
     occasions. Instead, it **must** raise a SystemExit"""
-    with tempfile.NamedTemporaryFile() as tf:
-        # mock objects used when creating the file handler
-        mocked = mock.MagicMock()
-        mocked_glbl_cfg.return_value = mocked
-        mocked.get.return_value = 100
-        file_handler = RotatingLogFileHandler(tf.name, False)
-        # next line is important as pytest can have a "Bad file descriptor"
-        # due to a FileHandler with default "a" (pytest tries to r/w).
-        file_handler.mode = "a+"
+    # mock objects used when creating the file handler
+    mocked = mock.MagicMock()
+    mocked_glbl_cfg.return_value = mocked
+    mocked.get.return_value = 100
+    file_handler = rotating_log_file_handler(level=logging.INFO)
 
-        # enable the logger
-        LOG.setLevel(logging.INFO)
-        LOG.addHandler(file_handler)
+    # Disable raising uncaught exceptions in logging, due to file
+    # handler using stdin.fileno. See the following links for more.
+    # https://github.com/pytest-dev/pytest/issues/2276 &
+    # https://github.com/pytest-dev/pytest/issues/1585
+    logging.raiseExceptions = False
 
-        # Disable raising uncaught exceptions in logging, due to file
-        # handler using stdin.fileno. See the following links for more.
-        # https://github.com/pytest-dev/pytest/issues/2276 &
-        # https://github.com/pytest-dev/pytest/issues/1585
-        logging.raiseExceptions = False
+    # first message will initialize the stream and the handler
+    LOG.info("What could go")
 
-        # first message will initialize the stream and the handler
-        LOG.info("What could go")
+    # here we change the stream of the handler
+    file_handler.stream = mock.MagicMock()
+    file_handler.stream.seek = mock.MagicMock()
+    # in case where
+    file_handler.stream.seek.side_effect = ValueError
 
-        # here we change the stream of the handler
-        old_stream = file_handler.stream
-        file_handler.stream = mock.MagicMock()
-        file_handler.stream.seek = mock.MagicMock()
-        # in case where
-        file_handler.stream.seek.side_effect = ValueError
+    with pytest.raises(SystemExit):
+        # next call will call the emit method and use the mocked stream
+        LOG.info("wrong?!")
 
-        try:
-            # next call will call the emit method and use the mocked stream
-            LOG.info("wrong?!")
-            raise Exception("Exception SystemError was not raised")
-        except SystemExit:
-            pass
-        finally:
-            # clean up
-            file_handler.stream = old_stream
-            # for log_handler in LOG.handlers:
-            #     log_handler.close()
-            file_handler.close()
-            LOG.removeHandler(file_handler)
-            logging.raiseExceptions = True
+    # clean up
+    logging.raiseExceptions = True
 
 
 @pytest.mark.parametrize(
@@ -197,3 +215,33 @@ def test_set_timestamps(capsys):
     assert re.match('^[0-9]{4}', errors[0])
     assert re.match('^WARNING - bar', errors[1])
     assert re.match('^[0-9]{4}', errors[2])
+
+    LOG.removeHandler(log_handler)
+
+
+def test_log_emit_and_glbl_cfg(
+    monkeypatch: pytest.MonkeyPatch, rotating_log_file_handler
+):
+    """Test that log calls do not access the global config object.
+
+    Doing so can have the side effect of expanding the global config object
+    so should be avoided - see https://github.com/cylc/cylc-flow/issues/6244
+    """
+    rotating_log_file_handler(level=logging.DEBUG)
+    mock_cfg = mock.Mock(spec=GlobalConfig)
+    monkeypatch.setattr(
+        'cylc.flow.cfgspec.globalcfg.GlobalConfig',
+        mock.Mock(
+            spec=GlobalConfig,
+            get_inst=lambda *a, **k: mock_cfg
+        )
+    )
+
+    # Check mocking is correct:
+    glbl_cfg().get(['kinesis'])
+    assert mock_cfg.get.call_args_list == [mock.call(['kinesis'])]
+    mock_cfg.reset_mock()
+
+    # Check log emit does not access global config object:
+    LOG.debug("Entering zero gravity")
+    assert mock_cfg.get.call_args_list == []
