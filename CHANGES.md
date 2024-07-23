@@ -11,6 +11,18 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.3 (Released 2024-07-23)__
+
+### 🔧 Fixes
+
+[#6213](https://github.com/cylc/cylc-flow/pull/6213) - Fix bug where the `-S`, `-O` and `-D` options in `cylc vr` would not be applied correctly when restarting a workflow.
+
+[#6241](https://github.com/cylc/cylc-flow/pull/6241) - Allow flow-merge when triggering n=0 tasks.
+
+[#6242](https://github.com/cylc/cylc-flow/pull/6242) - Put `share/bin` in the `PATH` of scheduler environment, event handlers therein will now be found.
+
+[#6249](https://github.com/cylc/cylc-flow/pull/6249) - Fix a race condition between global config reload and debug logging that caused "platform not defined" errors when running workflows that contained a "rose-suite.conf" file in verbose or debug mode.
+
 ## __cylc-8.3.2 (Released 2024-07-10)__
 
 ### 🔧 Fixes
