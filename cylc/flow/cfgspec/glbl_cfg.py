@@ -16,7 +16,7 @@
 """Allow lazy loading of `cylc.flow.cfgspec.globalcfg`."""
 
 
-def glbl_cfg(cached=True):
+def glbl_cfg(**kwargs):
     """Load and return the global configuration singleton instance."""
     from cylc.flow.cfgspec.globalcfg import GlobalConfig
-    return GlobalConfig.get_inst(cached=cached)
+    return GlobalConfig.get_inst(**kwargs)
