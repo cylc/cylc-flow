@@ -50,6 +50,7 @@ pyproject.toml configuration:
    max-line-length = 130        # Max line length for linting
 """
 import functools
+import pkgutil
 from pathlib import Path
 import re
 import sys
@@ -78,6 +79,8 @@ from ansimarkup import parse as cparse
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
+from cylc.flow import job_runner_handlers
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -160,6 +163,34 @@ deprecated_string_templates = {
     )
     for key, value in DEPRECATED_STRING_TEMPLATES.items()
 }
+
+
+def get_wallclock_directives():
+    """Get a set of directives equivalent to execution time limit"""
+    job_runner_manager = JobRunnerManager()
+    directives = {}
+    for module in pkgutil.iter_modules(job_runner_handlers.__path__):
+        directive = getattr(
+            job_runner_manager._get_sys(module.name),
+            'TIME_LIMIT_DIRECTIVE',
+            None
+        )
+        if directive:
+            directives[module.name] = directive
+    return directives
+
+
+WALLCLOCK_DIRECTIVES = get_wallclock_directives()
+
+
+def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
+    """Check for job runner specific directives
+    equivelent to exection time limit.
+    """
+    for directive in set(WALLCLOCK_DIRECTIVES.values()):
+        if line.strip().startswith(directive):
+            return {'directive': line.strip()}
+    return False
 
 
 def check_jinja2_no_shebang(
@@ -533,6 +564,30 @@ STYLE_CHECKS = {
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
         FUNCTION: check_indentation
+    },
+    'S014': {
+        'short': (
+            'Use ``[runtime][TASK]execution time limit``'
+            ' rather than job runner directive: ``{directive}``.'
+        ),
+        'rst': (
+            'Using ``[runtime][TASK]execution time limit`` is'
+            ' recommended in preference to using job runner'
+            ' directives because it allows Cylc to retain awareness'
+            ' of whether the job should have finished, even if contact'
+            ' with the target job runner\'s platform has been lost.'
+            ' \n\nThe following directives are considered equivelent to'
+            ' execution time limit:\n * '
+        )
+        + '\n * '.join((
+            f'``{directive}`` ({job_runner})'
+            for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
+        )) + (
+            '\n\n.. note:: Using ``execution time limit`` which'
+            ' is automatically translated to the job runner\'s timeout'
+            ' directive can make your workflow more portable.'
+        ),
+        FUNCTION: check_wallclock_directives,
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
@@ -805,7 +860,7 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
         try:
             loadeddata = toml_loads(tomlfile.read_text())
         except TOMLDecodeError as exc:
-            raise CylcError(f'pyproject.toml did not load: {exc}')
+            raise CylcError(f'pyproject.toml did not load: {exc}') from None
 
         _tool, _cylc, _lint = LINT_TABLE
         try:

@@ -1311,7 +1311,7 @@ with Conf('global.cylc', desc='''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
-                Options:
+                ..rubric:: Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
@@ -1319,6 +1319,8 @@ with Conf('global.cylc', desc='''
                    The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
+
+                For more information, see :ref:`TaskComms`.
 
                 .. versionchanged:: 8.0.0
 

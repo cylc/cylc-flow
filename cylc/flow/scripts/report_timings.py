@@ -257,7 +257,7 @@ class TimingSummary:
             raise CylcError(
                 'Cannot import pandas - summary unavailable.'
                 ' try: pip install cylc-flow[report-timings]'
-            )
+            ) from None
         else:
             del pandas
 
@@ -402,5 +402,5 @@ class HTMLTimingSummary(TimingSummary):
         except ImportError:
             raise CylcError(
                 'Cannot import matplotlib - HTML summary unavailable.'
-            )
+            ) from None
         super(HTMLTimingSummary, self)._check_imports()
