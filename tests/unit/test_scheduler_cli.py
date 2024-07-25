@@ -14,16 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
 import sqlite3
+from contextlib import contextmanager
 
 import pytest
 
 from cylc.flow.exceptions import ServiceFileError
-from cylc.flow.scheduler_cli import (
-    _distribute,
-    _version_check,
-)
+from cylc.flow.scheduler_cli import RunOptions, _distribute, _version_check
 
 
 @pytest.fixture
@@ -184,7 +181,12 @@ def test_version_check_interactive(
     db_file = stopped_workflow_db(before)
     set_cylc_version(after)
     with answer(response):
-        assert _version_check(db_file, False, downgrade) is outcome
+        assert (
+            _version_check(
+                db_file, RunOptions(downgrade=downgrade)
+            )
+            is outcome
+        )
 
 
 def test_version_check_non_interactive(
@@ -200,15 +202,19 @@ def test_version_check_non_interactive(
     # upgrade
     db_file = stopped_workflow_db('8.0.0')
     set_cylc_version('8.1.0')
-    assert _version_check(db_file, False, False) is False
-    assert _version_check(db_file, True, False) is True  # CLI --upgrade
+    assert _version_check(db_file, RunOptions()) is False
+    assert (
+        _version_check(db_file, RunOptions(upgrade=True)) is True
+    )  # CLI --upgrade
 
     # downgrade
     db_file.unlink()
     db_file = stopped_workflow_db('8.1.0')
     set_cylc_version('8.0.0')
-    assert _version_check(db_file, False, False) is False
-    assert _version_check(db_file, False, True) is True  # CLI --downgrade
+    assert _version_check(db_file, RunOptions()) is False
+    assert (
+        _version_check(db_file, RunOptions(downgrade=True)) is True
+    )  # CLI --downgrade
 
 
 def test_version_check_incompat(tmp_path):
@@ -216,13 +222,13 @@ def test_version_check_incompat(tmp_path):
     db_file = tmp_path / 'db'  # invalid DB file
     db_file.touch()
     with pytest.raises(ServiceFileError):
-        _version_check(db_file, False, False)
+        _version_check(db_file, RunOptions())
 
 
 def test_version_check_no_db(tmp_path):
     """It should pass if there is no DB file (e.g. on workflow first start)."""
     db_file = tmp_path / 'db'  # non-existent file
-    assert _version_check(db_file, False, False)
+    assert _version_check(db_file, RunOptions())
 
 
 @pytest.mark.parametrize(
@@ -257,5 +263,6 @@ def test_distribute_colour(
     _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
     _is_terminal.return_value = is_terminal
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
-    _distribute('myhost', 'foo', 'foo/run1', cli_colour)
+    opts = RunOptions(host='myhost', color=cli_colour)
+    _distribute('foo', 'foo/run1', opts)
     assert distribute_colour in _cylc_server_cmd.call_args[0][0]
