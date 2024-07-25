@@ -65,7 +65,6 @@ from cylc.flow.workflow_files import (
     check_flow_file,
     get_cylc_run_abs_path,
     is_valid_run_dir,
-    check_reserved_dir_names,
     validate_workflow_name,
 )
 
@@ -285,13 +284,17 @@ def install_workflow(
     source = Path(expand_path(source)).resolve()
     if not workflow_name:
         workflow_name = get_source_workflow_name(source)
-    validate_workflow_name(workflow_name, check_reserved_names=True)
     if run_name is not None:
         if len(Path(run_name).parts) != 1:
             raise WorkflowFilesError(
                 f'Run name cannot be a path. (You used {run_name})'
             )
-        check_reserved_dir_names(run_name)
+        validate_workflow_name(
+            os.path.join(workflow_name, run_name),
+            check_reserved_names=True
+        )
+    else:
+        validate_workflow_name(workflow_name, check_reserved_names=True)
     validate_source_dir(source, workflow_name)
     run_path_base = Path(get_workflow_run_dir(workflow_name))
     relink, run_num, rundir = get_run_dir_info(
