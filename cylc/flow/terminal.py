@@ -16,27 +16,43 @@
 
 """Functionality to assist working with terminals"""
 
-from functools import wraps
 import inspect
 import json
 import logging
 import os
-from subprocess import PIPE, Popen  # nosec
 import sys
+from functools import wraps
+from subprocess import PIPE, Popen  # nosec
 from textwrap import wrap
-from typing import Any, Callable, List, Optional, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
 
+import cylc.flow.flags
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
-import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
 
+
 if TYPE_CHECKING:
     from optparse import OptionParser, Values
+
+    T = TypeVar('T')
+    StrFunc = Callable[[str], str]
 
 
 # CLI exception message format
@@ -341,7 +357,32 @@ def cli_function(
     return inner
 
 
-def prompt(message, options, default=None, process=None):
+@overload
+def prompt(
+    message: str,
+    options: Sequence[str],
+    default: Optional[str] = None,
+    process: Optional['StrFunc'] = None,
+) -> str:
+    ...
+
+
+@overload
+def prompt(
+    message: str,
+    options: Dict[str, 'T'],
+    default: Optional[str] = None,
+    process: Optional['StrFunc'] = None,
+) -> 'T':
+    ...
+
+
+def prompt(
+    message: str,
+    options: Union[Sequence[str], Dict[str, 'T']],
+    default: Optional[str] = None,
+    process: Optional['StrFunc'] = None,
+) -> Union[str, 'T']:
     """Dead simple CLI textual prompting.
 
     Args:
@@ -369,10 +410,10 @@ def prompt(message, options, default=None, process=None):
     if default:
         default_ = f'[{default}] '
     message += f': {default_}{",".join(options)}? '
-    usr = None
+    usr = cast('str', None)
     while usr not in options:
         usr = input(f'{message}')
-        if default is not None and usr == '':
+        if default is not None and not usr:
             usr = default
         if process:
             usr = process(usr)
