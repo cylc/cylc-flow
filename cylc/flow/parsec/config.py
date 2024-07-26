@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
+import json
 import re
+import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, Iterable, List, Optional
+from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, TextIO
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
@@ -33,6 +35,7 @@ from cylc.flow.parsec.util import itemstr, m_override, replicate, un_many
 
 if TYPE_CHECKING:
     from optparse import Values
+    from typing_extensions import Literal
 
 
 class DefaultList(list):
@@ -41,6 +44,7 @@ class DefaultList(list):
 
 class ParsecConfig:
     """Object wrapper for parsec functions."""
+    META: "Literal['meta']" = 'meta'
 
     def __init__(
         self,
@@ -166,7 +170,7 @@ class ParsecConfig:
         return cfg
 
     def idump(self, items=None, sparse=False, prefix='',
-              oneline=False, none_str='', handle=None):
+              oneline=False, none_str='', handle=None, json=False):
         """
         items is a list of --item style inputs:
            '[runtime][foo]script'.
@@ -182,7 +186,40 @@ class ParsecConfig:
                 mkeys.append(j)
         if null:
             mkeys = [[]]
-        self.mdump(mkeys, sparse, prefix, oneline, none_str, handle=handle)
+        if json:
+            self.jdump(mkeys, sparse, oneline, none_str, handle=handle)
+        else:
+            self.mdump(mkeys, sparse, prefix, oneline, none_str, handle=handle)
+
+    def jdump(
+        self,
+        mkeys: Optional[Iterable] = None,
+        sparse: bool = False,
+        oneline: bool = False,
+        none_str: Optional[str] = None,
+        handle: Optional[TextIO] = None
+    ) -> None:
+        """Dump a config to JSON format.
+
+        Args:
+            mkeys: Items to display.
+            sparse: Only display user set items, not defaults.
+            oneline: Output on a single line.
+            none_str: Value to give instead of null.
+            handle: Where to write the output.
+        """
+        # Use json indent to control online output:
+        indent = None if oneline else 4
+
+        for keys in mkeys or []:
+            if not keys:
+                keys = []
+            cfg = self.get(keys, sparse)
+            if none_str:
+                cfg.repl_val(cfg, None, none_str)
+            data = json.dumps(cfg, indent=indent)
+
+        print(data, file=handle or sys.stdout)
 
     def mdump(self, mkeys=None, sparse=False, prefix='',
               oneline=False, none_str='', handle=None):
