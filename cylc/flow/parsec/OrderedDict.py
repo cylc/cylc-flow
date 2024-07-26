@@ -100,6 +100,19 @@ class OrderedDictWithDefaults(OrderedDict):
         self[key] = value
         self.move_to_end(key, last=False)
 
+    @staticmethod
+    def repl_val(target, replace, replacement):
+        """Replace dictionary values with a string.
+
+        Designed to be used recursively.
+        """
+        for key, val in target.items():
+            if isinstance(val, dict):
+                OrderedDictWithDefaults.repl_val(
+                    val, replace, replacement)
+            elif val == replace:
+                target[key] = replacement
+
 
 class DictTree:
     """An object providing a single point of access to a tree of dicts.
