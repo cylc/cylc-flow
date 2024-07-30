@@ -22,6 +22,8 @@ import pytest
 from cylc.flow.exceptions import ServiceFileError
 from cylc.flow.scheduler_cli import RunOptions, _distribute, _version_check
 
+from .conftest import MonkeyMock
+
 
 @pytest.fixture
 def stopped_workflow_db(tmp_path):
@@ -189,6 +191,22 @@ def test_version_check_interactive(
         )
 
 
+def test_version_check_interactive_upgrade(
+    stopped_workflow_db,
+    set_cylc_version,
+    interactive,
+    answer,
+):
+    """If a user interactively upgrades, it should set the upgrade option."""
+    db_file = stopped_workflow_db('8.0.0')
+    set_cylc_version('8.1.0')
+    opts = RunOptions()
+    assert opts.upgrade is False
+    with answer(True):
+        assert _version_check(db_file, opts) is True
+    assert opts.upgrade is True
+
+
 def test_version_check_non_interactive(
     stopped_workflow_db,
     set_cylc_version,
@@ -259,10 +277,31 @@ def test_distribute_colour(
 
     See https://github.com/cylc/cylc-flow/issues/5159
     """
-    monkeymock('cylc.flow.scheduler_cli.sys.exit')
     _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
     _is_terminal.return_value = is_terminal
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
     opts = RunOptions(host='myhost', color=cli_colour)
-    _distribute('foo', 'foo/run1', opts)
+    with pytest.raises(SystemExit) as excinfo:
+        _distribute('foo', 'foo/run1', opts)
+    assert excinfo.value.code == 0
     assert distribute_colour in _cylc_server_cmd.call_args[0][0]
+
+
+def test_distribute_upgrade(
+    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch
+):
+    """It should start detached workflows with the --upgrade option if the user
+    has interactively chosen to upgrade (typed 'y' at prompt).
+    """
+    monkeypatch.setattr(
+        'sys.argv', ['cylc', 'play', 'foo']  # no upgrade option here
+    )
+    _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    opts = RunOptions(
+        host='myhost',
+        upgrade=True,  # added by interactive upgrade
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        _distribute('foo', 'foo/run1', opts)
+    assert excinfo.value.code == 0
+    assert '--upgrade' in _cylc_server_cmd.call_args[0][0]
