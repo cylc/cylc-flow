@@ -56,10 +56,6 @@ cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${WORKFLO
 INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${WORKFLOW_NAME}/log/install")
 TEST_NAME="test-dir-tree-pre-clean"
 run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"
-# cat ${TEST_NAME}.stdout >&2
-# echo "${CYLC_TEST_REG_BASE}" >&2
-# echo ${TEST_DIR}/${SYM_NAME} >&2
-# sleep 600
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
