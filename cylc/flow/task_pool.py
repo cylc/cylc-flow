@@ -1990,7 +1990,7 @@ class TaskPool:
 
         """
         if prereqs == ["all"]:
-            itask.state.set_all_satisfied()
+            itask.state.set_prerequisites_all_satisfied()
         else:
             # Attempt to set the given presrequisites.
             # Log any that aren't valid for the task.

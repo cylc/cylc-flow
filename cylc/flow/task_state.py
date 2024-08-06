@@ -309,10 +309,9 @@ class TaskState:
         """
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
-            yep = prereq.satisfy_me(outputs)
-            if yep:
-                valid = valid.union(yep)
-                continue
+            valid.update(
+                prereq.satisfy_me(outputs)
+            )
         return valid
 
     def xtriggers_all_satisfied(self):
@@ -322,11 +321,6 @@ class TaskState:
     def external_triggers_all_satisfied(self):
         """Return True if all external triggers are satisfied."""
         return all(self.external_triggers.values())
-
-    def set_all_satisfied(self):
-        """Set all my prerequisites satisfied."""
-        for p in self.prerequisites:
-            p.set_satisfied()
 
     def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
@@ -349,9 +343,12 @@ class TaskState:
             for point in prerequisite.get_target_points()
         }
 
-    def prerequisites_eval_all(self):
-        """Set all prerequisites to satisfied."""
-        # (Validation: will abort on illegal trigger expressions.)
+    def prerequisites_eval_all(self) -> None:
+        """Evaluate satisifaction of all prerequisites and
+        suicide prerequisites.
+
+        Provides validation - will abort on illegal trigger expressions.
+        """
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
                 preq.is_satisfied()
