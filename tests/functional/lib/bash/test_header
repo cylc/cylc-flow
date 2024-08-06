@@ -782,6 +782,13 @@ skip_all() {
     exit
 }
 
+skip_macos_gh_actions() {
+    # https://github.com/cylc/cylc-flow/issues/6276
+    if [[ "$CI" && "$OSTYPE" == "darwin"* ]]; then
+        skip_all "Skipped due to performance issues on GH Actions MacOS runner"
+    fi
+}
+
 ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=
