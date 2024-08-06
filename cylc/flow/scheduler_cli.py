@@ -390,11 +390,7 @@ async def scheduler_cli(
 
     # check the workflow can be safely restarted with this version of Cylc
     db_file = Path(get_workflow_srv_dir(workflow_id), 'db')
-    if not _version_check(
-        db_file,
-        options.upgrade,
-        options.downgrade,
-    ):
+    if not _version_check(db_file, options):
         sys.exit(1)
 
     # upgrade the workflow DB (after user has confirmed upgrade)
@@ -404,7 +400,7 @@ async def scheduler_cli(
     _print_startup_message(options)
 
     # re-execute on another host if required
-    _distribute(options.host, workflow_id_raw, workflow_id, options.color)
+    _distribute(workflow_id_raw, workflow_id, options)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -474,8 +470,7 @@ async def _resume(workflow_id, options):
 
 def _version_check(
     db_file: Path,
-    can_upgrade: bool,
-    can_downgrade: bool
+    options: 'Values',
 ) -> bool:
     """Check the workflow can be safely restarted with this version of Cylc."""
     if not db_file.is_file():
@@ -491,7 +486,7 @@ def _version_check(
     )):
         if this < that:
             # restart would REDUCE the Cylc version
-            if can_downgrade:
+            if options.downgrade:
                 # permission to downgrade given in CLI flags
                 LOG.warning(
                     'Restarting with an older version of Cylc'
@@ -517,7 +512,7 @@ def _version_check(
             return False
         elif itt < 2 and this > that:
             # restart would INCREASE the Cylc version in a big way
-            if can_upgrade:
+            if options.upgrade:
                 # permission to upgrade given in CLI flags
                 LOG.warning(
                     'Restarting with a newer version of Cylc'
@@ -531,7 +526,7 @@ def _version_check(
             ))
             if is_terminal():
                 # we are in interactive mode, ask the user if this is ok
-                return prompt(
+                options.upgrade = prompt(
                     cparse(
                         'Are you sure you want to upgrade from'
                         f' <yellow>{last_run_version}</yellow>'
@@ -540,6 +535,7 @@ def _version_check(
                     {'y': True, 'n': False},
                     process=str.lower,
                 )
+                return options.upgrade
             # we are in non-interactive mode, abort abort abort
             print('Use "--upgrade" to upgrade the workflow.', file=sys.stderr)
             return False
@@ -580,22 +576,23 @@ def _print_startup_message(options):
         LOG.warning(SUITERC_DEPR_MSG)
 
 
-def _distribute(host, workflow_id_raw, workflow_id, color):
+def _distribute(
+    workflow_id_raw: str, workflow_id: str, options: 'Values'
+) -> None:
     """Re-invoke this command on a different host if requested.
 
     Args:
-        host:
-            The remote host to re-invoke on.
         workflow_id_raw:
             The workflow ID as it appears in the CLI arguments.
         workflow_id:
             The workflow ID after it has gone through the CLI.
             This may be different (i.e. the run name may have been inferred).
+        options:
+            The CLI options.
 
     """
     # Check whether a run host is explicitly specified, else select one.
-    if not host:
-        host = select_workflow_host()[0]
+    host = options.host or select_workflow_host()[0]
     if is_remote_host(host):
         # Protect command args from second shell interpretation
         cmd = list(map(quote, sys.argv[1:]))
@@ -612,8 +609,12 @@ def _distribute(host, workflow_id_raw, workflow_id, color):
         # Prevent recursive host selection
         cmd.append("--host=localhost")
 
+        # Ensure interactive upgrade carries over:
+        if options.upgrade and '--upgrade' not in cmd:
+            cmd.append('--upgrade')
+
         # Preserve CLI colour
-        if is_terminal() and color != 'never':
+        if is_terminal() and options.color != 'never':
             # the detached process doesn't pass the is_terminal test
             # so we have to explicitly tell Cylc to use color
             cmd.append('--color=always')
