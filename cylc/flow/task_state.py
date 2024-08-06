@@ -195,9 +195,6 @@ class TaskState:
             Time string of latest update time.
         .xtriggers (dict):
             xtriggers as {trigger (str): satisfied (boolean), ...}.
-        ._suicide_is_satisfied (boolean):
-            Are prerequisites to trigger suicide satisfied?
-            Reset None to force re-evaluation when a prereq gets satisfied.
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -214,7 +211,6 @@ class TaskState:
         "suicide_prerequisites",
         "time_updated",
         "xtriggers",
-        "_suicide_is_satisfied",
     ]
 
     def __init__(self, tdef, point, status, is_held):
@@ -224,8 +220,6 @@ class TaskState:
         self.is_runahead = True
         self.is_updated = False
         self.time_updated = None
-
-        self._suicide_is_satisfied = None
 
         # Prerequisites.
         self.prerequisites: List[Prerequisite] = []
@@ -319,7 +313,6 @@ class TaskState:
             if yep:
                 valid = valid.union(yep)
                 continue
-            self._suicide_is_satisfied = None
         return valid
 
     def xtriggers_all_satisfied(self):
@@ -346,10 +339,7 @@ class TaskState:
 
     def suicide_prerequisites_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
-        if self._suicide_is_satisfied is None:
-            self._suicide_is_satisfied = all(
-                preq.is_satisfied() for preq in self.suicide_prerequisites)
-        return self._suicide_is_satisfied
+        return all(preq.is_satisfied() for preq in self.suicide_prerequisites)
 
     def prerequisites_get_target_points(self):
         """Return a list of cycle points targeted by each prerequisite."""
@@ -456,7 +446,6 @@ class TaskState:
         """Add task prerequisites."""
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
-        self._suicide_is_satisfied = None
 
         # Use dicts to avoid generating duplicate prerequisites from sequences
         # with coincident cycle points.
