@@ -219,7 +219,7 @@
       <end>#\}</end>
     </context>
     <context id="jinja2-substitution" style-ref="template">
-      <match>\{\{.*\}\}</match>
+      <match>\{\{.*?\}\}</match>
     </context>
     <context id="jinja2-block" style-ref="template" end-at-line-end="false">
       <start>\{%</start>
