@@ -195,9 +195,6 @@ class TaskState:
             Time string of latest update time.
         .xtriggers (dict):
             xtriggers as {trigger (str): satisfied (boolean), ...}.
-        ._is_satisfied (boolean):
-            Are prerequisites satisfied?
-            Reset None to force re-evaluation when a prereq gets satisfied.
         ._suicide_is_satisfied (boolean):
             Are prerequisites to trigger suicide satisfied?
             Reset None to force re-evaluation when a prereq gets satisfied.
@@ -217,7 +214,6 @@ class TaskState:
         "suicide_prerequisites",
         "time_updated",
         "xtriggers",
-        "_is_satisfied",
         "_suicide_is_satisfied",
     ]
 
@@ -229,7 +225,6 @@ class TaskState:
         self.is_updated = False
         self.time_updated = None
 
-        self._is_satisfied = None
         self._suicide_is_satisfied = None
 
         # Prerequisites.
@@ -324,7 +319,6 @@ class TaskState:
             if yep:
                 valid = valid.union(yep)
                 continue
-            self._is_satisfied = None
             self._suicide_is_satisfied = None
         return valid
 
@@ -340,14 +334,10 @@ class TaskState:
         """Set all my prerequisites satisfied."""
         for p in self.prerequisites:
             p.set_satisfied()
-        self._is_satisfied = True
 
     def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
-        if self._is_satisfied is None:
-            self._is_satisfied = all(
-                preq.is_satisfied() for preq in self.prerequisites)
-        return self._is_satisfied
+        return all(preq.is_satisfied() for preq in self.prerequisites)
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
@@ -380,7 +370,6 @@ class TaskState:
         """Set prerequisites to all satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
-        self._is_satisfied = None
 
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task.
@@ -467,7 +456,6 @@ class TaskState:
         """Add task prerequisites."""
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
-        self._is_satisfied = None
         self._suicide_is_satisfied = None
 
         # Use dicts to avoid generating duplicate prerequisites from sequences
