@@ -22,7 +22,7 @@ from shutil import copytree, rmtree
 import pytest
 
 from cylc.flow.dbstatecheck import output_fallback_msg
-from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.exceptions import WorkflowConfigError, InputError
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtriggers.workflow_state import (
@@ -125,8 +125,10 @@ def test_c7_db_back_compat(tmp_run_dir: 'Callable'):
         f'{id_}//2012/mithril:"bag end"', is_message=True
     )
     assert satisfied
-    satisfied, _ = workflow_state(f'{id_}//2012/mithril:pippin')
-    assert not satisfied
+
+    with pytest.raises(InputError, match='No such task state "pippin"'):
+        workflow_state(f'{id_}//2012/mithril:pippin')
+
     satisfied, _ = workflow_state(id_ + '//2012/arkenstone')
     assert not satisfied
 

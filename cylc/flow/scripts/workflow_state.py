@@ -115,7 +115,6 @@ from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import infer_latest_run_from_id
 from cylc.flow.task_state import (
-    TASK_STATUSES_ORDERED,
     TASK_STATUSES_FINAL,
     TASK_STATUSES_ALL,
 )
@@ -178,6 +177,8 @@ class WorkflowPoller(Poller):
         self.alt_cylc_run_dir = alt_cylc_run_dir
         self.old_format = old_format
         self.pretty_print = pretty_print
+        self.is_message = is_message
+        self.is_trigger = is_trigger
 
         try:
             tokens = Tokens(self.id_)
@@ -200,17 +201,6 @@ class WorkflowPoller(Poller):
         self.result: Optional[List[List[str]]] = None
         self._db_checker: Optional[CylcWorkflowDBChecker] = None
 
-        self.is_message = is_message
-        if is_message:
-            self.is_trigger = False
-        else:
-            self.is_trigger = (
-                is_trigger or
-                (
-                    self.selector is not None and
-                    self.selector not in TASK_STATUSES_ORDERED
-                )
-            )
         super().__init__(**kwargs)
 
     def _find_workflow(self) -> bool:
