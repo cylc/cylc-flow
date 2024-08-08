@@ -1209,16 +1209,14 @@ class TaskPool:
             task_point = itask.point
             if self.stop_point and task_point > self.stop_point:
                 continue
-            for point, task, msg in (
-                itask.state.get_unsatisfied_prerequisites()
-            ):
-                if get_point(point) > self.stop_point:
+            for pr in itask.state.get_unsatisfied_prerequisites():
+                if self.stop_point and get_point(pr.point) > self.stop_point:
                     continue
                 if itask.identity not in unsat:
                     unsat[itask.identity] = []
                 unsat[itask.identity].append(
-                    f"{point}/{task}:"
-                    f"{self.config.get_taskdef(task).get_output(msg)}"
+                    f"{pr.get_id()}:"
+                    f"{self.config.get_taskdef(pr.task).get_output(pr.output)}"
                 )
         if unsat:
             LOG.warning(
