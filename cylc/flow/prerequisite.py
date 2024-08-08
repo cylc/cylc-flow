@@ -295,4 +295,4 @@ class Prerequisite:
         """
         return [f'{point}/{name}' for
                 (point, name, _), satisfied in self.satisfied.items() if
-                satisfied == self.DEP_STATE_SATISFIED]
+                satisfied]

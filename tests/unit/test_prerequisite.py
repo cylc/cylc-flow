@@ -16,6 +16,7 @@
 
 import pytest
 
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE, get_point
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.id import Tokens
@@ -102,3 +103,16 @@ def test_get_target_points(prereq):
         get_point('2000'),
         get_point('2001'),
     }
+
+
+def test_get_resolved_dependencies():
+    prereq = Prerequisite(IntegerPoint('2'))
+    prereq.satisfied[('1', 'a', 'x')] = 'satisfied naturally'
+    prereq.satisfied[('1', 'b', 'x')] = False
+    prereq.satisfied[('1', 'c', 'x')] = 'satisfied from database'
+    prereq.satisfied[('1', 'd', 'x')] = 'force satisfied'
+    assert prereq.get_resolved_dependencies() == [
+        '1/a',
+        '1/c',
+        '1/d',
+    ]
