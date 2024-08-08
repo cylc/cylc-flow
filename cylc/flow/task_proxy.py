@@ -21,14 +21,15 @@ from copy import copy
 from fnmatch import fnmatchcase
 from time import time
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Counter as TypingCounter,
     Dict,
+    Iterable,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
 )
 
@@ -53,10 +54,12 @@ from cylc.flow.cycling.iso8601 import (
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
+    from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.id import Tokens
+    from cylc.flow.prerequisite import PrereqMessage, SatisfiedState
     from cylc.flow.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
-    from cylc.flow.id import Tokens
 
 
 class TaskProxy:
@@ -322,7 +325,11 @@ class TaskProxy:
             f"{id_}{stringify_flow_nums(self.flow_nums)}:{self.state}"
         )
 
-    def copy_to_reload_successor(self, reload_successor, check_output):
+    def copy_to_reload_successor(
+        self,
+        reload_successor: 'TaskProxy',
+        check_output: Callable[[str, str, str, 'FlowNums'], 'SatisfiedState'],
+    ):
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
@@ -346,10 +353,10 @@ class TaskProxy:
         # pre-reload state of prerequisites that still exist post-reload.
 
         # Get all prereq states, e.g. {('1', 'c', 'succeeded'): False, ...}
-        pre_reload = {
+        pre_reload: Dict[PrereqMessage, SatisfiedState] = {
             k: v
             for pre in self.state.prerequisites
-            for (k, v) in pre.satisfied.items()
+            for (k, v) in pre.items()
         }
         # Use them to update the new prerequisites.
         # - unchanged prerequisites will keep their pre-reload state.
@@ -357,16 +364,12 @@ class TaskProxy:
         # - added prerequisites will be recorded as unsatisfied
         #   NOTE: even if the corresponding output was completed pre-reload!
         for pre in reload_successor.state.prerequisites:
-            for k in pre.satisfied.keys():
-                try:
-                    pre.satisfied[k] = pre_reload[k]
-                except KeyError:
-                    # Look through task outputs to see if is has been
-                    # satisfied
-                    pre.satisfied[k] = check_output(
-                        *k,
-                        self.flow_nums,
-                    )
+            for k in pre:
+                pre[k] = pre_reload.get(
+                    k,
+                    # Else look thru task outputs to see if it's been satisfied
+                    check_output(*k, self.flow_nums)
+                )
 
         reload_successor.state.xtriggers.update({
             # copy across any special "_cylc" xtriggers which were added
@@ -544,7 +547,7 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'List[Tokens]'
+        self, task_messages: 'Iterable[Tokens]'
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 

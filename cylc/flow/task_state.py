@@ -17,13 +17,24 @@
 """Task state related logic."""
 
 
-from typing import List, Iterable, Set, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Iterable,
+    List,
+    Set,
+)
+
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.wallclock import get_current_time_string
 
+
 if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
+    from cylc.flow.prerequisite import PrereqMessage
+    from cylc.flow.taskdef import TaskDef
 
 
 # Task status names and meanings.
@@ -439,15 +450,15 @@ class TaskState:
         return (TASK_STATUSES_ORDERED.index(self.status) >=
                 TASK_STATUSES_ORDERED.index(status))
 
-    def _add_prerequisites(self, point, tdef):
+    def _add_prerequisites(self, point: 'PointBase', tdef: 'TaskDef'):
         """Add task prerequisites."""
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
 
         # Use dicts to avoid generating duplicate prerequisites from sequences
         # with coincident cycle points.
-        prerequisites = {}
-        suicide_prerequisites = {}
+        prerequisites: Dict[int, Prerequisite] = {}
+        suicide_prerequisites: Dict[int, Prerequisite] = {}
 
         for sequence, dependencies in tdef.dependencies.items():
             if not sequence.is_valid(point):
@@ -470,8 +481,9 @@ class TaskState:
             if adjusted:
                 p_prev = max(adjusted)
                 cpre = Prerequisite(point)
-                cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
-                         p_prev < tdef.start_point)
+                cpre[(p_prev, tdef.name, TASK_STATUS_SUCCEEDED)] = (
+                    p_prev < tdef.start_point
+                )
                 cpre.set_condition(tdef.name)
                 prerequisites[cpre.instantaneous_hash()] = cpre
 
@@ -497,13 +509,9 @@ class TaskState:
             for xtrig_label in xtrig_labels:
                 self.add_xtrigger(xtrig_label)
 
-    def get_unsatisfied_prerequisites(self):
-        unsat = []
-        for prereq in self.prerequisites:
-            if prereq.is_satisfied():
-                continue
-            for key, val in prereq.satisfied.items():
-                if val:
-                    continue
-                unsat.append(key)
-        return unsat
+    def get_unsatisfied_prerequisites(self) -> List['PrereqMessage']:
+        return [
+            key
+            for prereq in self.prerequisites if not prereq.is_satisfied()
+            for key, satisfied in prereq.items() if not satisfied
+        ]

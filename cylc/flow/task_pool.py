@@ -89,11 +89,12 @@ if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
-    from cylc.flow.taskdef import TaskDef
-    from cylc.flow.task_events_mgr import TaskEventsManager
-    from cylc.flow.xtrigger_mgr import XtriggerManager
-    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
+    from cylc.flow.prerequisite import SatisfiedState
+    from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.taskdef import TaskDef
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+    from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
@@ -439,7 +440,7 @@ class TaskPool:
         task: str,
         output_msg: str,
         flow_nums: 'FlowNums',
-    ) -> Union[str, bool]:
+    ) -> 'SatisfiedState':
         """Returns truthy if the specified output is satisfied in the DB."""
         for task_outputs, task_flow_nums in (
             self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
@@ -563,16 +564,16 @@ class TaskPool:
                 ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
-                for key in itask_prereq.satisfied.keys():
-                    try:
-                        itask_prereq.satisfied[key] = sat[key]
-                    except KeyError:
+                for key in itask_prereq:
+                    if key in sat:
+                        itask_prereq[key] = sat[key]
+                    else:
                         # This prereq is not in the DB: new dependencies
                         # added to an already-spawned task before restart.
                         # Look through task outputs to see if is has been
                         # satisfied
                         prereq_cycle, prereq_task, prereq_output_msg = key
-                        itask_prereq.satisfied[key] = (
+                        itask_prereq[key] = (
                             self.check_task_output(
                                 prereq_cycle,
                                 prereq_task,
@@ -1995,7 +1996,7 @@ class TaskPool:
             # Attempt to set the given presrequisites.
             # Log any that aren't valid for the task.
             presus = self._standardise_prereqs(prereqs)
-            unmatched = itask.satisfy_me(list(presus.keys()))
+            unmatched = itask.satisfy_me(presus.keys())
             for task_msg in unmatched:
                 LOG.warning(
                     f"{itask.identity} does not depend on"

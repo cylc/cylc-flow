@@ -33,6 +33,7 @@ from cylc.flow import CYLC_LOG
 from cylc.flow import commands
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -699,7 +700,7 @@ async def test_restart_prereqs(
         }
     }
     id_ = flow(conf)
-    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+    schd: Scheduler = scheduler(id_, paused_start=False)
 
     async with start(schd):
         # Release tasks 1/a and 1/b
@@ -737,7 +738,7 @@ async def test_restart_prereqs(
         ][0]
         assert sorted(
             (
-                p.satisfied
+                p._satisfied
                 for p in task_z.state.prerequisites
             ),
             key=lambda d: tuple(d.keys())[0],
@@ -822,7 +823,7 @@ async def test_reload_prereqs(
         }
     }
     id_ = flow(conf)
-    schd = scheduler(id_, run_mode='simulation', paused_start=False)
+    schd: Scheduler = scheduler(id_, paused_start=False)
 
     async with start(schd):
         # Release tasks 1/a and 1/b
@@ -849,7 +850,7 @@ async def test_reload_prereqs(
         ][0]
         assert sorted(
             (
-                p.satisfied
+                p._satisfied
                 for p in task_z.state.prerequisites
             ),
             key=lambda d: tuple(d.keys())[0],
@@ -857,6 +858,7 @@ async def test_reload_prereqs(
 
 
 async def _test_restart_prereqs_sat():
+    schd: Scheduler
     # YIELD: the workflow has now started...
     schd = yield
     await schd.update_data_structure()
@@ -891,7 +893,7 @@ async def _test_restart_prereqs_sat():
     assert sorted(
         (*key, satisfied)
         for prereq in task_c.state.prerequisites
-        for key, satisfied in prereq.satisfied.items()
+        for key, satisfied in prereq.items()
     ) == [
         ('1', 'a', 'succeeded', 'satisfied naturally'),
         ('1', 'b', 'succeeded', 'satisfied from database')
@@ -902,7 +904,7 @@ async def _test_restart_prereqs_sat():
     tasks = (
         schd.data_store_mgr.data[schd.data_store_mgr.workflow_id][TASK_PROXIES]
     )
-    task_c_prereqs = tasks[
+    task_c_prereqs: List[PbPrerequisite] = tasks[
         schd.data_store_mgr.id_.duplicate(cycle='1', task='c').id
     ].prerequisites
     assert sorted(
@@ -1414,7 +1416,7 @@ async def test_set_bad_prereqs(
     async with start(schd) as log:
         # Invalid: task name wildcard:
         set_prereqs(["2040/*"])
-        assert log_filter(log, contains='Invalid prerequisite task name' )
+        assert log_filter(log, contains='Invalid prerequisite task name')
 
         # Invalid: cycle point wildcard.
         set_prereqs(["*/foo"])
@@ -2085,7 +2087,7 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         # set b:succeeded in flow 2 and check downstream spawning
         schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
         assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
-        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded' 
+        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded'
 
 
 async def test_trigger_queue(one, run, db_select, complete):
