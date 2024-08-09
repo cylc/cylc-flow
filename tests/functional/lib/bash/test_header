@@ -386,7 +386,7 @@ contains_ok() {
     local FILE_CONTROL="${2:--}"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE_TEST}")-contains-ok"
-    LANG=C comm -13 <(sort "${FILE_TEST}") <(sort "${FILE_CONTROL}") \
+    LANG=C comm -13 <(LANG=C sort "${FILE_TEST}") <(LANG=C sort "${FILE_CONTROL}") \
         1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     if [[ -s "${TEST_NAME}.stdout" ]]; then
         mkdir -p "${TEST_LOG_DIR}"

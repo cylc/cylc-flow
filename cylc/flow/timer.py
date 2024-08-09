@@ -52,7 +52,7 @@ class Timer:
         if self.timeout is None:
             return
         self.timeout = None
-        LOG.warning(f"{self.name} stopped")
+        LOG.info(f"{self.name} stopped")
 
     def timed_out(self) -> bool:
         """Return whether timed out yet."""
