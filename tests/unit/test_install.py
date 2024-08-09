@@ -542,3 +542,48 @@ def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     with pytest.raises(WorkflowFilesError) as exc_info:
         validate_source_dir(src_dir, 'ajay')
     assert "exists in source directory" in str(exc_info.value)
+
+
+def test_install_workflow_failif_name_name(tmp_src_dir):
+    """If a run_name is given validate_workflow_name is called on
+    the workflow and the run name in combination.
+    """
+    src_dir: Path = tmp_src_dir('ludlow')
+    # It only has a workflow name:
+    with pytest.raises(WorkflowFilesError, match='can only contain'):
+        install_workflow(src_dir, workflow_name='foo?')
+    # It only has a run name:
+    with pytest.raises(WorkflowFilesError, match='can only contain'):
+        install_workflow(src_dir, run_name='foo?')
+    # It has a legal workflow name, but an invalid run name:
+    with pytest.raises(WorkflowFilesError, match='can only contain'):
+        install_workflow(src_dir, workflow_name='foo', run_name='bar?')
+
+
+def test_install_workflow_failif_reserved_name(tmp_src_dir):
+    """Reserved names cause install validation failure.
+
+    n.b. manually defined to avoid test dependency on workflow_files.
+    """
+    src_dir = tmp_src_dir('ludlow')
+    is_reserved = '(that filename is reserved)'
+    reserved_names = {
+        'share',
+        'log',
+        'runN',
+        'suite.rc',
+        'work',
+        '_cylc-install',
+        'flow.cylc',
+        # .service fails because starting a workflow/run can't start with "."
+        # And that check fails first.
+        # '.service'
+    }
+    install_workflow(src_dir, workflow_name='ok', run_name='also_ok')
+    for name in reserved_names:
+        with pytest.raises(WorkflowFilesError, match=is_reserved):
+            install_workflow(src_dir, workflow_name='ok', run_name=name)
+        with pytest.raises(WorkflowFilesError, match=is_reserved):
+            install_workflow(src_dir, workflow_name=name)
+        with pytest.raises(WorkflowFilesError, match=is_reserved):
+            install_workflow(src_dir, workflow_name=name, run_name='ok')
