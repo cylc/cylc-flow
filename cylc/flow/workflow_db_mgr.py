@@ -479,7 +479,7 @@ class WorkflowDatabaseManager:
         for itask in pool.get_tasks():
             for prereq in itask.state.prerequisites:
                 for (p_cycle, p_name, p_output), satisfied_state in (
-                    prereq.satisfied.items()
+                    prereq.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
                         "flow_nums": serialise_set(itask.flow_nums),
