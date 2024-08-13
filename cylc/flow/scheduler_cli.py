@@ -22,6 +22,7 @@ from functools import lru_cache
 from itertools import zip_longest
 from pathlib import Path
 from shlex import quote
+import os
 import sys
 from typing import TYPE_CHECKING
 
@@ -413,7 +414,13 @@ async def scheduler_cli(
     #       ensure you have tidied up all threads etc before daemonizing
     if not options.no_detach:
         from cylc.flow.daemonize import daemonize
-        daemonize(scheduler)
+        try:
+            daemonize(scheduler)
+        except SystemExit:
+            # This is supposed to happen on daemonization, but raising
+            # SystemExit or calling sys.exit() here results in a traceback
+            # to the terminal at start-up on macOS.
+            os._exit(0)
 
     # setup loggers
     _open_logs(
@@ -436,9 +443,14 @@ async def scheduler_cli(
     # NOTE: we must clean up all asyncio / threading stuff before exiting
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
-    LOG.info("DONE")
+    msg = "DONE"
+    if ret != 0:
+        msg += f" (exit {ret})"
+    LOG.info(msg)
     close_log(LOG)
-    sys.exit(ret)
+    # Calling sys.exit() here results in a traceback to the LOG for normal
+    # shutdown on macOS, for a detaching scheduler.
+    os._exit(0)
 
 
 async def _resume(workflow_id, options):
