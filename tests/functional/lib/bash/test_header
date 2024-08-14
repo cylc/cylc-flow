@@ -784,7 +784,7 @@ skip_all() {
 
 skip_macos_gh_actions() {
     # https://github.com/cylc/cylc-flow/issues/6276
-    if [[ "$CI" && "$OSTYPE" == "darwin"* ]]; then
+    if [[ "${CI:-}" && "$OSTYPE" == "darwin"* ]]; then
         skip_all "Skipped due to performance issues on GH Actions MacOS runner"
     fi
 }
