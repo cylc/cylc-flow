@@ -416,11 +416,21 @@ async def scheduler_cli(
         from cylc.flow.daemonize import daemonize
         try:
             daemonize(scheduler)
-        except SystemExit:
+        except SystemExit as exc:
             # This is supposed to happen on daemonization, but raising
             # SystemExit or calling sys.exit() here results in a traceback
             # to the terminal at start-up on macOS.
-            os._exit(0)
+            excode: int
+            if isinstance(exc.code, int):
+                excode = exc.code
+            elif isinstance(exc.code, str):
+                try:
+                    excode = int(exc.code)
+                except ValueError:
+                    excode = 1
+            else:
+                excode = 1
+            os._exit(excode)
 
     # setup loggers
     _open_logs(
@@ -443,14 +453,12 @@ async def scheduler_cli(
     # NOTE: we must clean up all asyncio / threading stuff before exiting
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
-    msg = "DONE"
-    if ret != 0:
-        msg += f" (exit {ret})"
-    LOG.info(msg)
+    LOG.info("DONE")
     close_log(LOG)
-    # Calling sys.exit() here results in a traceback to the LOG for normal
-    # shutdown on macOS, for a detaching scheduler.
-    os._exit(0)
+    # The sys.exit call here results in a traceback to the LOG on normal
+    # shutdown on macOS for a detaching scheduler, but we can't resort to
+    # os._exit() in this case - it bypasses needed shutdown processing.
+    sys.exit(ret)
 
 
 async def _resume(workflow_id, options):
