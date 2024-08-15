@@ -16,7 +16,6 @@
 
 """Functionality for expressing and evaluating logical triggers."""
 
-import math
 import re
 from typing import Iterable, Set, TYPE_CHECKING
 
@@ -232,11 +231,11 @@ class Prerequisite:
                 for s_msg in self.satisfied
             )
         conds = []
-        num_length = math.ceil(len(self.satisfied) / 10)
+        num_length = len(str(len(self.satisfied)))
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             point, name = message_tuple[0:2]
             t_id = quick_relative_detokenise(point, name)
-            char = 'c%.{0}d'.format(num_length) % ind
+            char = str(ind).zfill(num_length)
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
             c_bool = bool(c_val)
