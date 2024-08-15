@@ -21,7 +21,7 @@ from unittest import mock
 import pytest
 
 from cylc.flow.remote import (
-    run_cmd, construct_rsync_over_ssh_cmd, construct_ssh_cmd
+    run_cmd, construct_rsync_over_ssh_cmd, construct_ssh_cmd, platform_cylc_path
 )
 import cylc.flow
 
@@ -122,3 +122,19 @@ def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
     expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'FOO=BAR', 'cylc', 'play']
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect
+
+
+def test_platform_cylc_path():
+    # No platform given
+    expect = 'cylc'
+    assert platform_cylc_path() == expect
+
+    # Platform given, cylc path not set
+    platform = {}
+    expect = 'cylc'
+    assert platform_cylc_path(platform) == expect
+
+    # Platform given, cylc path set
+    platform = {'cylc path': '/opt/cylc/bin'}
+    expect = '/opt/cylc/bin/cylc'
+    assert platform_cylc_path(platform) == expect

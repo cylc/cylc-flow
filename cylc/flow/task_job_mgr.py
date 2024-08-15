@@ -62,7 +62,7 @@ from cylc.flow.platforms import (
     get_localhost_install_target,
     get_platform,
 )
-from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.remote import construct_ssh_cmd, platform_cylc_path
 from cylc.flow.simulation import ModeSettings
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
@@ -530,7 +530,7 @@ class TaskJobManager:
                     cmd, platform, host
                 )
             else:
-                cmd = ['cylc'] + cmd
+                cmd = [platform_cylc_path(platform)] + cmd
 
             for itasks_batch in itasks_batches:
                 stdin_files = []

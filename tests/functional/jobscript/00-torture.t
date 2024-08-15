@@ -24,7 +24,8 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-export PATH_TO_CYLC_BIN="/path/to/cylc/bin"
+PATH_TO_CYLC_BIN="$(dirname "$(which cylc)")"
+export PATH_TO_CYLC_BIN
 create_test_global_config '' "
 [platforms]
     [[localhost]]

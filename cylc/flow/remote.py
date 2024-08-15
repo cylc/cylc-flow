@@ -322,11 +322,7 @@ def construct_ssh_cmd(
         command += ['timeout', timeout]
 
     # 'cylc' on the remote host
-    remote_cylc_path = platform['cylc path']
-    if remote_cylc_path:
-        cylc_cmd = str(Path(remote_cylc_path) / 'cylc')
-    else:
-        cylc_cmd = 'cylc'
+    cylc_cmd = platform_cylc_path(platform)
     command.append(cylc_cmd)
 
     # Insert core raw command after ssh, but before its own, command options.
@@ -336,6 +332,23 @@ def construct_ssh_cmd(
         command.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
 
     return command
+
+
+def platform_cylc_path(platform=None) -> str:
+    """
+    Returns the cylc command on the given platform
+    """
+    if platform is None:
+        # Use localhost if not specified
+        platform = get_platform()
+
+    cylc_path = platform.get('cylc path')
+    if cylc_path:
+        cylc_cmd = str(Path(cylc_path) / 'cylc')
+    else:
+        cylc_cmd = 'cylc'
+
+    return cylc_cmd
 
 
 def construct_cylc_server_ssh_cmd(
