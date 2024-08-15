@@ -2229,7 +2229,10 @@ def delta_subs(root, info: 'ResolveInfo', **args) -> AsyncGenerator[Any, None]:
 
 class Pruned(ObjectType):
     class Meta:
-        description = 'WFS Nodes/Edges that have been removed.'
+        description = sstrip('''
+            Objects (e.g. workflows, tasks, jobs) which have been removed from
+            the store.       
+        ''')   
     workflow = String()
     families = graphene.List(String, default_value=[])
     family_proxies = graphene.List(String, default_value=[])
