@@ -1,5 +1,5 @@
 Extending Workflow
-==================
+------------------
 
 .. cylc-scope:: flow.cylc[scheduling]
 
@@ -24,7 +24,7 @@ solution avoids this issue.
 
 
 Example
--------
+^^^^^^^
 
 .. admonition:: Get a copy of this example
    :class: hint
@@ -73,5 +73,33 @@ Or change it at any point whilst the workflow is running:
    take precedence over the one in the workflow configuration. Use
    ``cylc play --stop-cycle-point=reload`` to restart the workflow using the
    `stop after cycle point` configured in the workflow configuration.
+
+
+Running Tasks At The `stop after cycle point`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have tasks that you want to run before the workflow shuts down at the
+`stop after cycle point`, use the recurrence ``R1/<cycle-point>`` to schedudule
+them, e.g:
+
+.. code-block:: cylc
+
+   #!Jinja2
+
+   {% set stop_cycle = '3000' %}
+
+   [scheduling]
+      initial cycle point = 2000
+      stop after cycle point = {{ stop_cycle }}
+      [[graph]]
+         R1/{{ stop_cycle }} = """
+            # these tasks will run *before* the workflow shuts down
+            z => run_me => and_me
+         """
+
+When the workflow is subsequently restarted with a later
+`stop after cycle point`, these tasks will be re-scheduled at the new
+stop point.
+
 
 .. cylc-scope::
