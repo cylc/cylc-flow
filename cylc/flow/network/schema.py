@@ -2231,8 +2231,8 @@ class Pruned(ObjectType):
     class Meta:
         description = sstrip('''
             Objects (e.g. workflows, tasks, jobs) which have been removed from
-            the store.       
-        ''')   
+            the store.
+        ''')
     workflow = String()
     families = graphene.List(String, default_value=[])
     family_proxies = graphene.List(String, default_value=[])
