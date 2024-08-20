@@ -700,10 +700,10 @@ class WorkflowDatabaseManager:
                 ''',  # nosec (table name is a code constant)
                 [cls.KEY_CYLC_VERSION]
             ).fetchone()[0]
-        except (TypeError, OperationalError):
+        except (TypeError, OperationalError) as exc:
             raise ServiceFileError(
                 f"{INCOMPAT_MSG}, or is corrupted."
-            ) from None
+            ) from exc
         return parse_version(last_run_ver)
 
     @classmethod

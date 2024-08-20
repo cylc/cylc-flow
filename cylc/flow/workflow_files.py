@@ -634,8 +634,8 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
     try:
         with open(path) as f:
             file_content = f.read()
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file") from None
+    except IOError as exc:
+        raise ServiceFileError("Couldn't load contact file") from exc
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
