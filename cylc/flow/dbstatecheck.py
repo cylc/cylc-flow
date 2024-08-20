@@ -78,7 +78,7 @@ class CylcWorkflowDBChecker:
         try:
             self.db_point_fmt = self._get_db_point_format()
             self.c7_back_compat_mode = False
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as exc:
             # BACK COMPAT: Cylc 7 DB (see method below).
             try:
                 self.db_point_fmt = self._get_db_point_format_compat()
@@ -86,7 +86,7 @@ class CylcWorkflowDBChecker:
             except sqlite3.OperationalError:
                 with suppress(Exception):
                     self.conn.close()
-                raise
+                raise exc from None  # original error
 
     def __enter__(self):
         return self

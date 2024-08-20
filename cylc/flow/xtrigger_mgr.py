@@ -390,7 +390,7 @@ class XtriggerCollator:
             bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
         except TypeError:
             # failed signature check for backcompat function
-            raise
+            raise err from None  # original signature check error
 
         old_sig_str = fctx.get_signature()
         upg_sig_str = "workflow_state({})".format(
