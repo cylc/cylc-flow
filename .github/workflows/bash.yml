@@ -89,3 +89,4 @@ jobs:
         with:
           name: 'cylc-run (bash-${{ matrix.bash-version }})'
           path: cylc-run
+          include-hidden-files: true
