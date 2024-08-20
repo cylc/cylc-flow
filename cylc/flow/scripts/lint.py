@@ -51,53 +51,62 @@ pyproject.toml configuration:
 """
 import functools
 import pkgutil
-from pathlib import Path
 import re
-import sys
 import shutil
+import sys
+from collections import Counter
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Counter as CounterType,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+)
+
 try:
     # BACK COMPAT: tomli
     #   Support for Python versions before tomllib was added to the
     #   standard library.
     # FROM: Python 3.7
     # TO: Python: 3.10
-    from tomli import (
-        loads as toml_loads,
-        TOMLDecodeError,
-    )
+    from tomli import TOMLDecodeError, loads as toml_loads
 except ImportError:
     from tomllib import (  # type: ignore[no-redef]
         loads as toml_loads,
         TOMLDecodeError,
     )
-from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union
-)
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import LOG
-from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
-from cylc.flow import job_runner_handlers
+from cylc.flow import LOG, job_runner_handlers
+from cylc.flow.cfgspec.workflow import SPEC, upg
+from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
-    WORKFLOW_ID_OR_PATH_ARG_DOC
 )
-from cylc.flow.cfgspec.workflow import upg, SPEC
-from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.terminal import cli_function
 
+
 if TYPE_CHECKING:
+    from optparse import Values
+
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
-    from optparse import Values
+
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
 LINT_SECTION = '.'.join(LINT_TABLE)
@@ -1114,7 +1123,7 @@ def check_cylc_file(
     file: Path,
     file_rel: Path,
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
@@ -1172,7 +1181,7 @@ def lint(
     file_rel: Path,
     lines: Iterator[str],
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
     write: Callable = print
 ) -> Iterator[str]:
@@ -1186,7 +1195,7 @@ def lint(
             Iterator which produces one line of text at a time
             e.g. open(file) or iter(['foo\n', 'bar\n', 'baz\n'].
         counter:
-            Dictionary for counting lint hits per category.
+            Counter for counting lint hits per category.
         modify:
             If True, this generator will yield the file one line at a time
             with comments inserted to help users fix their lint.
@@ -1238,7 +1247,6 @@ def lint(
                     msg = check_meta['short'].format(**check)
                 else:
                     msg = check_meta['short']
-                counter.setdefault(check_meta['purpose'], 0)
                 counter[check_meta['purpose']] += 1
                 if modify:
                     # insert a command to help the user
@@ -1473,7 +1481,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     )
 
     # Check each file matching a pattern:
-    counter: Dict[str, int] = {}
+    counter: CounterType[str] = Counter()
     for file in get_cylc_files(target, mergedopts[EXCLUDE]):
         LOG.debug(f'Checking {file}')
         check_cylc_file(

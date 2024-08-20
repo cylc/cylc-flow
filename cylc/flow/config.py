@@ -2463,7 +2463,7 @@ class WorkflowConfig:
                             'Duplicate task message in'
                             f' "[runtime][{name}][outputs]'
                             f'{output} = {message}" - messages must be unique'
-                        )
+                        ) from None
                     valid, msg = TaskOutputValidator.validate(output)
                     if not valid:
                         raise WorkflowConfigError(
