@@ -282,6 +282,7 @@ jobs:
         with:
           name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
           path: ~/cylc-run/
+          include-hidden-files: true
 
       - name: Fetch Remote Coverage
         if: env.REMOTE_PLATFORM == 'true'
