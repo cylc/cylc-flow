@@ -75,6 +75,7 @@ jobs:
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
+          include-hidden-files: true
 
       - name: Coverage report
         run: |
