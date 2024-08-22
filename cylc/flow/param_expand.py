@@ -62,7 +62,6 @@ from typing import List, Tuple
 
 from cylc.flow.exceptions import ParamExpandError
 from cylc.flow.task_id import TaskID
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|<[^>]*>)+')
@@ -398,13 +397,12 @@ class GraphExpander:
             # Inner loop.
             for p_group in set(REC_P_GROUP.findall(line)):
                 # Parameters must be expanded in the order found.
-                param_values = OrderedDictWithDefaults()
-                tmpl = ''
+                param_values = {}
                 for item in p_group.split(','):
                     pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:
                         param_values[pname] = values[pname]
-                    elif offs.startswith('='):
+                    elif offs[0] == '=':
                         # Specific value.
                         try:
                             # Template may require an integer
@@ -421,8 +419,10 @@ class GraphExpander:
                         else:
                             offval = self._REMOVE
                         param_values[pname] = offval
-                for pname in param_values:
-                    tmpl += self.param_tmpl_cfg[pname]
+                tmpl = ''.join(
+                    self.param_tmpl_cfg[pname]
+                    for pname in param_values
+                )
                 try:
                     repl = tmpl % param_values
                 except KeyError as exc:
