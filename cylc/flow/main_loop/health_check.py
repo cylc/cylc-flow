@@ -52,8 +52,8 @@ def _check_contact_file(scheduler):
             scheduler.workflow)
         if contact_data != scheduler.contact_data:
             raise CylcError('contact file modified')
-    except (AssertionError, IOError, ValueError, ServiceFileError):
+    except (AssertionError, IOError, ValueError, ServiceFileError) as exc:
         raise CylcError(
             '%s: contact file corrupted/modified and may be left'
             % workflow_files.get_contact_file_path(scheduler.workflow)
-        ) from None
+        ) from exc

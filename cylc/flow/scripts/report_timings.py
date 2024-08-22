@@ -48,12 +48,11 @@ For long-running or large workflows (i.e. workflows with many task events),
 the database query to obtain the timing information may take some time.
 """
 
-import collections
 import contextlib
 import io as StringIO
 import sys
+from collections import Counter
 from typing import TYPE_CHECKING
-
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -65,6 +64,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -278,7 +278,7 @@ class TimingSummary:
             # there are duplicate entries in the index (see #2509).  The
             # best way around this seems to be to add an intermediate index
             # level (in this case a retry counter) to de-duplicate indices.
-            counts = collections.defaultdict(int)
+            counts = Counter()
             retry = []
             for t in timings.index:
                 counts[t] += 1

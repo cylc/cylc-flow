@@ -196,7 +196,7 @@ class NameExpander:
                 results.append((tmpl % current_values, current_values))
             except KeyError as exc:
                 raise ParamExpandError(
-                    'parameter %s is not ' 'defined.' % str(exc.args[0])
+                    'parameter %s is not defined.' % str(exc.args[0])
                 ) from None
         else:
             for param_val in params[0][1]:
@@ -427,7 +427,7 @@ class GraphExpander:
                     repl = tmpl % param_values
                 except KeyError as exc:
                     raise ParamExpandError(
-                        'parameter %s is not ' 'defined.' % str(exc.args[0])
+                        'parameter %s is not defined.' % str(exc.args[0])
                     ) from None
                 line = line.replace('<' + p_group + '>', repl)
             if line:
