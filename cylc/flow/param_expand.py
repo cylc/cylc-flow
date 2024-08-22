@@ -398,7 +398,6 @@ class GraphExpander:
             for p_group in set(REC_P_GROUP.findall(line)):
                 # Parameters must be expanded in the order found.
                 param_values = {}
-                tmpl = ''
                 for item in p_group.split(','):
                     pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:
@@ -420,8 +419,10 @@ class GraphExpander:
                         else:
                             offval = self._REMOVE
                         param_values[pname] = offval
-                for pname in param_values:
-                    tmpl += self.param_tmpl_cfg[pname]
+                tmpl = ''.join(
+                    self.param_tmpl_cfg[pname]
+                    for pname in param_values
+                )
                 try:
                     repl = tmpl % param_values
                 except KeyError as exc:
