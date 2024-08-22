@@ -404,7 +404,7 @@ class GraphExpander:
                     pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:
                         param_values[pname] = values[pname]
-                    elif offs.startswith('='):
+                    elif offs[0] == '=':
                         # Specific value.
                         try:
                             # Template may require an integer
