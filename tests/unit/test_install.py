@@ -542,7 +542,7 @@ def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     assert "exists in source directory" in str(exc_info.value)
 
 
-def test_install_workflow_failif_name_name(tmp_src_dir):
+def test_install_workflow_failif_name_name(tmp_src_dir, tmp_run_dir):
     """If a run_name is given validate_workflow_name is called on
     the workflow and the run name in combination.
     """
@@ -558,7 +558,7 @@ def test_install_workflow_failif_name_name(tmp_src_dir):
         install_workflow(src_dir, workflow_name='foo', run_name='bar?')
 
 
-def test_install_workflow_failif_reserved_name(tmp_src_dir):
+def test_install_workflow_failif_reserved_name(tmp_src_dir, tmp_run_dir):
     """Reserved names cause install validation failure.
 
     n.b. manually defined to avoid test dependency on workflow_files.
