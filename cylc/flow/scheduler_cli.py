@@ -23,7 +23,7 @@ from itertools import zip_longest
 from pathlib import Path
 from shlex import quote
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
 from packaging.version import Version
 
@@ -351,12 +351,12 @@ def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
     )
 
 
-async def scheduler_cli(
+async def _scheduler_cli_1(
     options: 'Values',
     workflow_id_raw: str,
     parse_workflow_id: bool = True
-) -> None:
-    """Run the workflow.
+) -> Tuple[Scheduler, str]:
+    """Run the workflow (part 1 - async).
 
     This function should contain all of the command line facing
     functionality of the Scheduler, exit codes, logging, etc.
@@ -408,6 +408,14 @@ async def scheduler_cli(
     scheduler = Scheduler(workflow_id, options)
     await _setup(scheduler)
 
+    return scheduler, workflow_id
+
+
+def _scheduler_cli_2(
+    options: 'Values',
+    scheduler: Scheduler,
+) -> None:
+    """Run the workflow (part 2 - sync)."""
     # daemonize if requested
     # NOTE: asyncio event loops cannot persist across daemonization
     #       ensure you have tidied up all threads etc before daemonizing
@@ -415,6 +423,13 @@ async def scheduler_cli(
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
 
+
+async def _scheduler_cli_3(
+    options: 'Values',
+    workflow_id: str,
+    scheduler: Scheduler,
+) -> None:
+    """Run the workflow (part 3 - async)."""
     # setup loggers
     _open_logs(
         workflow_id,
@@ -423,14 +438,7 @@ async def scheduler_cli(
     )
 
     # run the workflow
-    if options.no_detach:
-        ret = await _run(scheduler)
-    else:
-        # Note: The daemonization messes with asyncio so we have to start a
-        # new event loop if detaching
-        ret = asyncio.run(
-            _run(scheduler)
-        )
+    ret = await _run(scheduler)
 
     # exit
     # NOTE: we must clean up all asyncio / threading stuff before exiting
@@ -658,5 +666,36 @@ async def _run(scheduler: Scheduler) -> int:
 
 @cli_function(get_option_parser)
 def play(parser: COP, options: 'Values', id_: str):
-    """Implement cylc play."""
-    return asyncio.run(scheduler_cli(options, id_))
+    cylc_play(options, id_)
+
+
+def cylc_play(options: 'Values', id_: str, parse_workflow_id=True) -> None:
+    """Implement cylc play.
+
+    Raises:
+        CylcError:
+            If this function is called whilst an asyncio event loop is running.
+
+            Because the scheduler process can be daemonised, this must not be
+            called whilst an asyncio event loop is active as memory associated
+            with this event loop will also exist in the new fork leading to
+            potentially strange problems.
+
+            See https://github.com/cylc/cylc-flow/issues/6291
+
+    """
+    try:
+        # try opening an event loop to make sure there isn't one already open
+        asyncio.get_running_loop()
+    except RuntimeError:
+        # start/restart/resume the workflow
+        scheduler, workflow_id = asyncio.run(
+            _scheduler_cli_1(options, id_, parse_workflow_id=parse_workflow_id)
+        )
+        _scheduler_cli_2(options, scheduler)
+        asyncio.run(_scheduler_cli_3(options, workflow_id, scheduler))
+    else:
+        # if this line every gets hit then there is a bug within Cylc
+        raise CylcError(
+            'cylc_play called whilst asyncio event loop is running'
+        ) from None

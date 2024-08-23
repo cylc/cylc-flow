@@ -182,7 +182,6 @@ def test_init_clean__no_dir(
 ) -> None:
     """Test init_clean() when the run dir doesn't exist"""
     caplog.set_level(logging.INFO, CYLC_LOG)
-    tmp_run_dir()
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
 
@@ -754,7 +753,6 @@ def test_clean__targeted(
     """
     # --- Setup ---
     caplog.set_level(logging.DEBUG, CYLC_LOG)
-    tmp_run_dir()
     id_ = 'foo/bar'
     run_dir: Path
     files_to_delete: List[str]

@@ -84,7 +84,6 @@ def test_install_workflow__max_depth(
     prevent_symlinking,
 ):
     """Test that trying to install beyond max depth fails."""
-    tmp_run_dir()
     src_dir = tmp_src_dir('bar')
     if err_expected:
         with pytest.raises(WorkflowFilesError) as exc_info:
@@ -138,7 +137,6 @@ def test_install_workflow__symlink_target_exists(
     already exists."""
     id_ = 'smeagol'
     src_dir: Path = tmp_src_dir(id_)
-    tmp_run_dir()
     sym_run = tmp_path / 'sym-run'
     sym_log = tmp_path / 'sym-log'
     mock_glbl_cfg(
@@ -544,7 +542,7 @@ def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     assert "exists in source directory" in str(exc_info.value)
 
 
-def test_install_workflow_failif_name_name(tmp_src_dir):
+def test_install_workflow_failif_name_name(tmp_src_dir, tmp_run_dir):
     """If a run_name is given validate_workflow_name is called on
     the workflow and the run name in combination.
     """
@@ -560,7 +558,7 @@ def test_install_workflow_failif_name_name(tmp_src_dir):
         install_workflow(src_dir, workflow_name='foo', run_name='bar?')
 
 
-def test_install_workflow_failif_reserved_name(tmp_src_dir):
+def test_install_workflow_failif_reserved_name(tmp_src_dir, tmp_run_dir):
     """Reserved names cause install validation failure.
 
     n.b. manually defined to avoid test dependency on workflow_files.
