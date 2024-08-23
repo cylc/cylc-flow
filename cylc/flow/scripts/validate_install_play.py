@@ -40,7 +40,7 @@ from cylc.flow.option_parsers import (
     cleanup_sysargv,
     log_subcommand,
 )
-from cylc.flow.scheduler_cli import scheduler_cli as cylc_play
+from cylc.flow.scheduler_cli import cylc_play
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
     run as cylc_validate,
@@ -120,4 +120,4 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
 
     set_timestamps(LOG, options.log_timestamp)
     log_subcommand(*sys.argv[1:])
-    asyncio.run(cylc_play(options, workflow_id))
+    cylc_play(options, workflow_id)
