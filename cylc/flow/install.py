@@ -90,8 +90,7 @@ def _get_logger(rund, log_name, open_file=True):
 
     """
     logger = logging.getLogger(log_name)
-    if logger.getEffectiveLevel != logging.INFO:
-        logger.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     if open_file and not logger.hasHandlers():
         _open_install_log(rund, logger)
     return logger
