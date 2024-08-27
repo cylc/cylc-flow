@@ -16,7 +16,6 @@
 
 """Functionality for expressing and evaluating logical triggers."""
 
-import math
 import re
 from typing import (
     TYPE_CHECKING,
@@ -286,10 +285,10 @@ class Prerequisite:
                 for s_msg in self._satisfied
             )
         conds = []
-        num_length = math.ceil(len(self._satisfied) / 10)
+        num_length = len(str(len(self._satisfied)))
         for ind, message_tuple in enumerate(sorted(self._satisfied)):
             t_id = message_tuple.get_id()
-            char = 'c%.{0}d'.format(num_length) % ind
+            char = str(ind).zfill(num_length)
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self._satisfied[message_tuple]
             conds.append(
