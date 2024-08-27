@@ -100,7 +100,7 @@ def test_task_prereq_duplicates(set_cycling_type):
 
     tstate = TaskState(tdef, IntegerPoint("1"), TASK_STATUS_WAITING, False)
 
-    prereqs = [p.satisfied for p in tstate.prerequisites]
+    prereqs = [p._satisfied for p in tstate.prerequisites]
 
     assert prereqs == [{("1", "a", "succeeded"): False}]
 
@@ -118,4 +118,3 @@ def test_task_state_order():
     assert tstate.is_gte(TASK_STATUS_SUBMITTED)
     assert not tstate.is_gt(TASK_STATUS_RUNNING)
     assert not tstate.is_gte(TASK_STATUS_RUNNING)
-
