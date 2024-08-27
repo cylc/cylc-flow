@@ -306,10 +306,12 @@ class TaskJobManager:
 
                     # Get another platform, if task config platform is a group
                     use_next_platform_in_group = False
-                    if itask.tdef.rtconfig['platform']:
+                    bc_mgr = self.task_events_mgr.broadcast_mgr
+                    rtconf = bc_mgr.get_updated_rtconfig(itask)
+                    if rtconf['platform']:
                         try:
                             platform = get_platform(
-                                itask.tdef.rtconfig['platform'],
+                                rtconf['platform'],
                                 bad_hosts=self.bad_hosts
                             )
                         except PlatformLookupError:
