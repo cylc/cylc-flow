@@ -280,8 +280,16 @@ class BroadcastMgr:
         bad_namespaces = []
 
         with self.lock:
-            for setting in settings:
-                for point_string in point_strings:
+            for setting in settings or []:
+                # Coerce setting to cylc runtime object,
+                # i.e. str to  DurationFloat.
+                coerced_setting = deepcopy(setting)
+                BroadcastConfigValidator().validate(
+                    coerced_setting,
+                    SPEC['runtime']['__MANY__'],
+                )
+
+                for point_string in point_strings or []:
                     # Standardise the point and check its validity.
                     bad_point = False
                     try:
@@ -292,26 +300,23 @@ class BroadcastMgr:
                             bad_point = True
                     if not bad_point and point_string not in self.broadcasts:
                         self.broadcasts[point_string] = {}
-                    for namespace in namespaces:
+                    for namespace in namespaces or []:
                         if namespace not in self.linearized_ancestors:
                             bad_namespaces.append(namespace)
                         elif not bad_point:
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
+
                             # Keep saved/reported setting as workflow
-                            # config format.
+                            # config format:
                             modified_settings.append(
-                                (point_string, namespace, deepcopy(setting))
+                                (point_string, namespace, setting)
                             )
-                            # Coerce setting to cylc runtime object,
-                            # i.e. str to  DurationFloat.
-                            BroadcastConfigValidator().validate(
-                                setting,
-                                SPEC['runtime']['__MANY__']
-                            )
+
+                            # Apply the broadcast with the "coerced" format:
                             addict(
                                 self.broadcasts[point_string][namespace],
-                                setting
+                                coerced_setting,
                             )
 
         # Log the broadcast

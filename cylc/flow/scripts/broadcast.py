@@ -325,6 +325,10 @@ async def run(options: 'Values', workflow_id):
     """Implement cylc broadcast."""
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
+    # remove any duplicate namespaces
+    # see https://github.com/cylc/cylc-flow/issues/6334
+    namespaces = list(set(options.namespaces))
+
     ret: Dict[str, Any] = {
         'stdout': [],
         'stderr': [],
@@ -337,7 +341,7 @@ async def run(options: 'Values', workflow_id):
             'wFlows': [workflow_id],
             'bMode': 'Set',
             'cPoints': options.point_strings,
-            'nSpaces': options.namespaces,
+            'nSpaces': namespaces,
             'bSettings': options.settings,
             'bCutoff': options.expire,
         }
@@ -382,7 +386,6 @@ async def run(options: 'Values', workflow_id):
         mutation_kwargs['variables']['bMode'] = 'Expire'
 
     # implement namespace and cycle point defaults here
-    namespaces = options.namespaces
     if not namespaces:
         namespaces = ["root"]
     point_strings = options.point_strings
