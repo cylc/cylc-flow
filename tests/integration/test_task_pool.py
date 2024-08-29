@@ -2111,3 +2111,36 @@ async def test_trigger_queue(one, run, db_select, complete):
         one.resume_workflow()
         await complete(one, timeout=2)
         assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]
+
+
+async def test_job_insert_on_crash(one_conf, flow, scheduler, start):
+    """Ensure that a job can be inserted if its config is not known.
+
+    It is possible, though very difficult, to create the circumstances where
+    the configuration for the latest job is not held in `itask.jobs`.
+
+    This should not happen under normal circumstances, but should be handled
+    elegantly if it does occur.
+
+    See https://github.com/cylc/cylc-flow/issues/6314
+    """
+    id_ = flow(one_conf)
+    schd: Scheduler = scheduler(id_, run_mode='live')
+    async with start(schd):
+        task_1 = schd.pool.get_tasks()[0]
+
+        # make it look like the task submitted but without storing the job
+        # config in TaskProxy.jobs
+        task_1.submit_num += 1
+        task_1.state.reset('preparing')
+        schd.task_events_mgr.process_message(
+            task_1,
+            'INFO',
+            'submitted',
+        )
+
+        # the task state should be updated correctly
+        assert task_1.state.status == 'submitted'
+
+        # and a job entry should be added
+        assert len(task_1.jobs) == 1
