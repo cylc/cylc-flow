@@ -2085,7 +2085,7 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         # set b:succeeded in flow 2 and check downstream spawning
         schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
         assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
-        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded' 
+        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded'
 
 
 async def test_trigger_queue(one, run, db_select, complete):
@@ -2109,3 +2109,44 @@ async def test_trigger_queue(one, run, db_select, complete):
         one.resume_workflow()
         await complete(one, timeout=2)
         assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]
+
+
+async def test_trigger_unqueued(flow, scheduler, start):
+    """Test triggering an unqueued active task.
+
+    It should not add to the force_released list.
+    See https://github.com/cylc/cylc-flow/pull/6337
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b => c'
+            }
+        }
+    }
+    schd = scheduler(
+        flow(conf),
+        run_mode='simulation',
+        paused_start=False
+    )
+
+    async with start(schd):
+        # Release tasks 1/a and 1/b
+        schd.pool.release_runahead_tasks()
+        schd.release_queued_tasks()
+        assert pool_get_task_ids(schd.pool) == ['1/a', '1/b']
+
+        # Mark 1/a as succeeded and spawn 1/c
+        task_a = schd.pool.get_task(IntegerPoint("1"), "a")
+        schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
+        assert pool_get_task_ids(schd.pool) == ['1/b', '1/c']
+
+        # Trigger the partially satisified (and not queued) task 1/c
+        schd.pool.force_trigger_tasks(['1/c'], [FLOW_ALL])
+
+        # It should not add to the queue managers force_released list.
+        assert not schd.pool.task_queue_mgr.force_released, (
+            "Triggering an unqueued task should not affect the force_released list"
+        )
