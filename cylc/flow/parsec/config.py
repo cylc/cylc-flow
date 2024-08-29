@@ -216,7 +216,7 @@ class ParsecConfig:
                 keys = []
             cfg = self.get(keys, sparse)
             if none_str:
-                cfg.repl_val(cfg, None, none_str)
+                OrderedDictWithDefaults.repl_val(cfg, None, none_str)
             data = json.dumps(cfg, indent=indent)
 
         print(data, file=handle or sys.stdout)
