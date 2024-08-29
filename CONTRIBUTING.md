@@ -95,6 +95,7 @@ requests_).
  - Mark Dawson
  - Diquan Jabbour
  - Shixian Sheng
+ - Utheri Wagura
  - Paul Earnshaw
 <!-- end-shortlog -->
 
