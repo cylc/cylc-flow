@@ -252,7 +252,6 @@ def test_patch_log_level(caplog: pytest.LogCaptureFixture):
     """Test patch_log_level temporarily changes the log level."""
     caplog.set_level(logging.DEBUG)
     logger = logging.getLogger("forest")
-    assert logger.level == logging.NOTSET
     logger.setLevel(logging.ERROR)
     logger.info("nope")
     assert not caplog.records
@@ -264,7 +263,10 @@ def test_patch_log_level(caplog: pytest.LogCaptureFixture):
 
 
 def test_patch_log_level__reset(caplog: pytest.LogCaptureFixture):
-    """Test patch_log_level resets the log level correctly after use."""
+    """Test patch_log_level resets the log level correctly after
+    use, not affected by the parent logger level - see
+    https://github.com/cylc/cylc-flow/pull/6327
+    """
     caplog.set_level(logging.ERROR)
     logger = logging.getLogger("woods")
     assert logger.level == logging.NOTSET
