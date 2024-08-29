@@ -51,10 +51,10 @@ def suppress_logging():
     silly for the duration of this context manager then set it back again
     afterwards.
     """
-    level = LOG.getEffectiveLevel()
+    orig_level = LOG.level
     LOG.setLevel(99999)
     yield
-    LOG.setLevel(level)
+    LOG.setLevel(orig_level)
 
 
 def get_task_icon(
