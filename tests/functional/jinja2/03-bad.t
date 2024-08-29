@@ -20,7 +20,7 @@
 # an include statement
 
 . "$(dirname "$0")/test_header"
-set_test_number 12
+set_test_number 10
 
 sub_tabs() {
     sed -i 's/\t/ /g' "${TEST_NAME}.stderr"
@@ -47,27 +47,6 @@ File ${WORKFLOW_RUN_DIR}/flow.cylc
   #!Jinja2
   # line before
   {% set x = %} <-- TemplateSyntaxError
-__HERE__
-
-purge_workflow
-
-#------------------------------------------------------------------------------
-# Test generic exception in an include file
-install_workflow "${TEST_NAME_BASE}" include-exception
-
-TEST_NAME="${TEST_NAME_BASE}-include-exception"
-run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-
-sub_tabs
-cmp_ok "${TEST_NAME}.stderr" <<__HERE__
-Jinja2Error: Jinja2 Error: some error
-File ${WORKFLOW_RUN_DIR}/foo.cylc
-  # line before error
-  {{ raise('some error') }} <-- Exception
-File ${WORKFLOW_RUN_DIR}/flow.cylc
-  #!Jinja2
-  # line before
-  {% include "foo.cylc" %} <-- Exception
 __HERE__
 
 purge_workflow

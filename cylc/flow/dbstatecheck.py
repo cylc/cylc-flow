@@ -86,7 +86,7 @@ class CylcWorkflowDBChecker:
             except sqlite3.OperationalError:
                 with suppress(Exception):
                     self.conn.close()
-                raise exc  # original error
+                raise exc from None  # original error
 
     def __enter__(self):
         return self
@@ -137,7 +137,7 @@ class CylcWorkflowDBChecker:
             raise InputError(
                 f'Cycle point "{cycle}" is not compatible'
                 f' with DB point format "{self.db_point_fmt}"'
-            )
+            ) from None
         return cycle
 
     @staticmethod

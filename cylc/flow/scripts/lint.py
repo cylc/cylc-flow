@@ -50,51 +50,63 @@ pyproject.toml configuration:
    max-line-length = 130        # Max line length for linting
 """
 import functools
-from pathlib import Path
+import pkgutil
 import re
-import sys
 import shutil
+import sys
+from collections import Counter
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Counter as CounterType,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+)
+
 try:
     # BACK COMPAT: tomli
     #   Support for Python versions before tomllib was added to the
     #   standard library.
     # FROM: Python 3.7
     # TO: Python: 3.10
-    from tomli import (
-        loads as toml_loads,
-        TOMLDecodeError,
-    )
+    from tomli import TOMLDecodeError, loads as toml_loads
 except ImportError:
     from tomllib import (  # type: ignore[no-redef]
         loads as toml_loads,
         TOMLDecodeError,
     )
-from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union
-)
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import LOG
-from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
+from cylc.flow import LOG, job_runner_handlers
+from cylc.flow.cfgspec.workflow import SPEC, upg
+from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
-    WORKFLOW_ID_OR_PATH_ARG_DOC
 )
-from cylc.flow.cfgspec.workflow import upg, SPEC
-from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.terminal import cli_function
 
+
 if TYPE_CHECKING:
+    from optparse import Values
+
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
-    from optparse import Values
+
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
 LINT_SECTION = '.'.join(LINT_TABLE)
@@ -160,6 +172,43 @@ deprecated_string_templates = {
     )
     for key, value in DEPRECATED_STRING_TEMPLATES.items()
 }
+
+
+def get_wallclock_directives():
+    """Get a set of directives equivalent to execution time limit"""
+    job_runner_manager = JobRunnerManager()
+    directives = {}
+    for module in pkgutil.iter_modules(job_runner_handlers.__path__):
+        directive = getattr(
+            job_runner_manager._get_sys(module.name),
+            'TIME_LIMIT_DIRECTIVE',
+            None
+        )
+        if directive:
+            directives[module.name] = directive
+    return directives
+
+
+WALLCLOCK_DIRECTIVES = get_wallclock_directives()
+
+
+def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
+    """Check for job runner specific directives
+    equivelent to exection time limit.
+
+    It's recommended that users prefer execution time limit
+    because it gives the Cylc scheduler awareness should communications
+    with a remote job runner be lost.
+
+    Examples:
+        >>> this = check_wallclock_directives
+        >>> this('    -W 42:22')
+        {'directive': '-W 42:22'}
+    """
+    for directive in set(WALLCLOCK_DIRECTIVES.values()):
+        if line.strip().startswith(directive):
+            return {'directive': line.strip()}
+    return False
 
 
 def check_jinja2_no_shebang(
@@ -547,6 +596,30 @@ STYLE_CHECKS = {
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
         FUNCTION: check_indentation
+    },
+    'S014': {
+        'short': (
+            'Use ``[runtime][TASK]execution time limit``'
+            ' rather than job runner directive: ``{directive}``.'
+        ),
+        'rst': (
+            'Using ``[runtime][TASK]execution time limit`` is'
+            ' recommended in preference to using job runner'
+            ' directives because it allows Cylc to retain awareness'
+            ' of whether the job should have finished, even if contact'
+            ' with the target job runner\'s platform has been lost.'
+            ' \n\nThe following directives are considered equivelent to'
+            ' execution time limit:\n * '
+        )
+        + '\n * '.join((
+            f'``{directive}`` ({job_runner})'
+            for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
+        )) + (
+            '\n\n.. note:: Using ``execution time limit`` which'
+            ' is automatically translated to the job runner\'s timeout'
+            ' directive can make your workflow more portable.'
+        ),
+        FUNCTION: check_wallclock_directives,
     }
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
@@ -819,7 +892,7 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
         try:
             loadeddata = toml_loads(tomlfile.read_text())
         except TOMLDecodeError as exc:
-            raise CylcError(f'pyproject.toml did not load: {exc}')
+            raise CylcError(f'pyproject.toml did not load: {exc}') from None
 
         _tool, _cylc, _lint = LINT_TABLE
         try:
@@ -1073,7 +1146,7 @@ def check_cylc_file(
     file: Path,
     file_rel: Path,
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
@@ -1131,7 +1204,7 @@ def lint(
     file_rel: Path,
     lines: Iterator[str],
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
     write: Callable = print
 ) -> Iterator[str]:
@@ -1145,7 +1218,7 @@ def lint(
             Iterator which produces one line of text at a time
             e.g. open(file) or iter(['foo\n', 'bar\n', 'baz\n'].
         counter:
-            Dictionary for counting lint hits per category.
+            Counter for counting lint hits per category.
         modify:
             If True, this generator will yield the file one line at a time
             with comments inserted to help users fix their lint.
@@ -1197,7 +1270,6 @@ def lint(
                     msg = check_meta['short'].format(**check)
                 else:
                     msg = check_meta['short']
-                counter.setdefault(check_meta['purpose'], 0)
                 counter[check_meta['purpose']] += 1
                 if modify:
                     # insert a command to help the user
@@ -1432,7 +1504,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     )
 
     # Check each file matching a pattern:
-    counter: Dict[str, int] = {}
+    counter: CounterType[str] = Counter()
     for file in get_cylc_files(target, mergedopts[EXCLUDE]):
         LOG.debug(f'Checking {file}')
         check_cylc_file(
