@@ -53,8 +53,8 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def remove_task(self, itask: 'TaskProxy') -> None:
-        """Remove a task from the queueing system."""
+    def remove_task(self, itask: 'TaskProxy') -> bool:
+        """Try to remove a task from the queues. Return True if done."""
         pass
 
     @abstractmethod
