@@ -34,6 +34,7 @@ from cylc.flow.loggingutil import (
     RotatingLogFileHandler,
     get_reload_start_number,
     get_sorted_logs_by_time,
+    patch_log_level,
     set_timestamps,
 )
 
@@ -245,3 +246,34 @@ def test_log_emit_and_glbl_cfg(
     # Check log emit does not access global config object:
     LOG.debug("Entering zero gravity")
     assert mock_cfg.get.call_args_list == []
+
+
+def test_patch_log_level(caplog: pytest.LogCaptureFixture):
+    """Test patch_log_level temporarily changes the log level."""
+    caplog.set_level(logging.DEBUG)
+    logger = logging.getLogger("forest")
+    logger.setLevel(logging.ERROR)
+    logger.info("nope")
+    assert not caplog.records
+    with patch_log_level(logger, logging.INFO):
+        LOG.info("yep")
+        assert len(caplog.records) == 1
+    logger.info("nope")
+    assert len(caplog.records) == 1
+
+
+def test_patch_log_level__reset(caplog: pytest.LogCaptureFixture):
+    """Test patch_log_level resets the log level correctly after
+    use, not affected by the parent logger level - see
+    https://github.com/cylc/cylc-flow/pull/6327
+    """
+    caplog.set_level(logging.ERROR)
+    logger = logging.getLogger("woods")
+    assert logger.level == logging.NOTSET
+    with patch_log_level(logger, logging.INFO):
+        logger.info("emitted but not captured, as caplog is at ERROR level")
+        assert not caplog.records
+    caplog.set_level(logging.INFO)
+    logger.info("yep")
+    assert len(caplog.records) == 1
+    assert logger.level == logging.NOTSET

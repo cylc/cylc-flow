@@ -130,19 +130,17 @@ class IndepQueueManager(TaskQueueManagerBase):
             self.force_released = set()
         return released
 
-    def remove_task(self, itask: 'TaskProxy') -> None:
-        """Remove a task from whichever queue it belongs to."""
-        for queue in self.queues.values():
-            if queue.remove(itask):
-                break
+    def remove_task(self, itask: 'TaskProxy') -> bool:
+        """Try to remove a task from the queues. Return True if done."""
+        return any(queue.remove(itask) for queue in self.queues.values())
 
     def force_release_task(self, itask: 'TaskProxy') -> None:
         """Remove a task from whichever queue it belongs to.
 
         To be returned when release_tasks() is next called.
         """
-        self.remove_task(itask)
-        self.force_released.add(itask)
+        if self.remove_task(itask):
+            self.force_released.add(itask)
 
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt orphaned tasks to the default group."""
