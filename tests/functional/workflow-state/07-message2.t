@@ -29,7 +29,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 TEST_NAME=${TEST_NAME_BASE}-query
-run_fail "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//2013/foo:x" --max-polls=1
+run_fail "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//2013/foo:x" --triggers --max-polls=1
 
 grep_ok "failed after 1 polls" "${TEST_NAME}.stderr"
 

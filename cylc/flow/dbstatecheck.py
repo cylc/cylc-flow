@@ -36,6 +36,10 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
 )
+from cylc.flow.task_state import (
+    TASK_STATE_MAP,
+    TASK_STATUSES_FINAL,
+)
 from cylc.flow.util import deserialise_set
 from metomi.isodatetime.parsers import TimePointParser
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
@@ -244,6 +248,8 @@ class CylcWorkflowDBChecker:
         stmt_args = []
         stmt_wheres = []
 
+        check_polling_config(selector, is_trigger, is_message)
+
         if is_trigger or is_message:
             target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
             mask = "name, cycle, outputs"
@@ -363,3 +369,25 @@ class CylcWorkflowDBChecker:
                 or TASK_OUTPUT_FAILED in outputs
             )
         )
+
+
+def check_polling_config(selector, is_trigger, is_message):
+    """Check for invalid or unreliable polling configurations."""
+    if selector and not (is_trigger or is_message):
+        # we are using task status polling
+        try:
+            trigger = TASK_STATE_MAP[selector]
+        except KeyError:
+            raise InputError(f'No such task state "{selector}"')
+        else:
+            if trigger is None:
+                raise InputError(
+                    f'Cannot poll for the "{selector}" task state'
+                )
+
+            if selector not in TASK_STATUSES_FINAL:
+                raise InputError(
+                    f'Polling for the "{selector}" task status is not'
+                    ' reliable as it is a transient state.'
+                    f'\nPoll for the "{trigger}" trigger instead.'
+                )

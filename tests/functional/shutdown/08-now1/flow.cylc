@@ -24,7 +24,7 @@
         [[[events]]]
             # wait for the stopping message, sleep a bit, then echo some stuff
             started handlers = """
-                cylc workflow-state %(workflow)s//%(point)s/%(name)s:stopping >/dev/null && sleep 1 && echo 'Hello %(id)s %(event)s'
+                cylc workflow-state %(workflow)s//%(point)s/%(name)s:stopping --triggers >/dev/null && sleep 1 && echo 'Hello %(id)s %(event)s'
             """
         [[[outputs]]]
             stopping = stopping
