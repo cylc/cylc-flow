@@ -8,7 +8,7 @@
     initial cycle point = 2011
     final cycle point = 2016
     [[xtriggers]]
-        upstream = workflow_state("{{UPSTREAM}}//%(point)s/foo:data_ready"):PT1S
+        upstream = workflow_state("{{UPSTREAM}}//%(point)s/foo:data_ready", is_trigger=True):PT1S
    [[graph]]
         P1Y = """
             foo
