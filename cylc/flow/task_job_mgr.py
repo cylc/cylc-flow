@@ -51,10 +51,6 @@ from cylc.flow.hostuserutil import (
     is_remote_platform
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.parsec.util import (
-    pdeepcopy,
-    poverride
-)
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -1116,14 +1112,9 @@ class TaskJobManager:
             return itask
 
         # Handle broadcasts
-        overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.tokens
+        rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+            itask
         )
-        if overrides:
-            rtconfig = pdeepcopy(itask.tdef.rtconfig)
-            poverride(rtconfig, overrides, prepend=True)
-        else:
-            rtconfig = itask.tdef.rtconfig
 
         # BACK COMPAT: host logic
         # Determine task host or platform now, just before job submission,
