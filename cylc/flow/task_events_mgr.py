@@ -776,6 +776,9 @@ class TaskEventsManager():
                 )
                 self.data_store_mgr.delta_job_attr(
                     job_tokens, 'job_id', itask.summary['submit_method_id'])
+            else:
+                # In simulation mode submitted implies started:
+                self.spawn_children(itask, TASK_OUTPUT_STARTED)
 
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
