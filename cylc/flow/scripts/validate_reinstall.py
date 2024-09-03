@@ -46,6 +46,8 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from optparse import Values
 
+from ansimarkup import parse as cparse
+
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ContactFileExists,
@@ -74,7 +76,7 @@ from cylc.flow.scripts.reinstall import (
 from cylc.flow.scripts.reload import (
     run as cylc_reload
 )
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function, is_terminal
 from cylc.flow.workflow_files import detect_old_contact_file
 
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
@@ -86,6 +88,10 @@ VR_OPTIONS = combine_options(
     CYLC_ROSE_OPTIONS,
     modify={'cylc-rose': 'validate, install'}
 )
+
+_input = input  # to enable testing
+
+NO_CHANGES_STR = 'No changes to reinstall'
 
 
 def get_option_parser() -> COP:
@@ -189,7 +195,7 @@ async def vr_cli(
     # Force on the against_source option:
     options.against_source = True
 
-    # Run cylc validate
+    # Run "cylc validate"
     log_subcommand('validate --against-source', workflow_id)
     await cylc_validate(parser, options, workflow_id)
 
@@ -197,26 +203,46 @@ async def vr_cli(
     delattr(options, 'against_source')
     delattr(options, 'is_validate')
 
+    # Run "cylc reinstall"
     log_subcommand('reinstall', workflow_id)
     reinstall_ok = await cylc_reinstall(
-        options, workflow_id,
+        options,
+        workflow_id,
         [],
         print_reload_tip=False
     )
     if not reinstall_ok:
-        LOG.warning(
-            'No changes to source: No reinstall or'
-            f' {"reload" if workflow_running else "play"} required.'
-        )
-        return False
+        if (
+            not workflow_running
+            and is_terminal()
+            and not options.skip_interactive
+        ):
+            # there are no changes to install but the workflow isn't running
+            # => ask the user if they want to restart it anyway
+            usr = None
+            while usr not in ['y', 'n']:
+                LOG.warning(NO_CHANGES_STR)
+                usr = _input(
+                    cparse('<bold>Restart anyway?</bold> [y/n]: ')
+                ).lower()
+            if usr == 'n':
+                return False
+        else:
+            # the are no changes to install and the workflow is running
+            # => there is nothing for us to do here
+            LOG.warning(
+                f'{NO_CHANGES_STR}: No reinstall or'
+                f' {"reload" if workflow_running else "play"} required.'
+            )
+            return False
 
-    # Run reload if workflow is running or paused:
+    # Run "cylc reload" (if workflow is running or paused)
     if workflow_running:
         log_subcommand('reload', workflow_id)
         await cylc_reload(options, workflow_id)
         return True
 
-    # run play anyway, to play a stopped workflow:
+    # Run "cylc play" (if workflow is stopped)
     else:
         set_timestamps(LOG, options.log_timestamp)
         cleanup_sysargv(
