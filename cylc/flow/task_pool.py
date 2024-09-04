@@ -764,7 +764,12 @@ class TaskPool:
         # ntask may still be None
         return ntask, is_in_pool, is_xtrig_sequential
 
-    def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
+    def spawn_to_rh_limit(
+        self,
+        tdef: 'TaskDef',
+        point: Optional['PointBase'],
+        flow_nums: 'FlowNums',
+    ) -> None:
         """Spawn parentless task instances from point to runahead limit.
 
         Sequentially checked xtriggers will spawn the next occurrence of their
@@ -779,16 +784,14 @@ class TaskPool:
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
+            if self.runahead_limit_point is None:
+                return
 
         is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
             if tdef.is_parentless(point):
                 ntask, is_in_pool, is_xtrig_sequential = (
-                    self.get_or_spawn_task(
-                        point,
-                        tdef,
-                        flow_nums
-                    )
+                    self.get_or_spawn_task(point, tdef, flow_nums)
                 )
                 if ntask is not None:
                     if not is_in_pool:
@@ -1329,7 +1332,9 @@ class TaskPool:
         """
         return self.abort_task_failed
 
-    def spawn_on_output(self, itask, output, forced=False):
+    def spawn_on_output(
+        self, itask: TaskProxy, output: str, forced: bool = False
+    ) -> None:
         """Spawn child-tasks of given output, into the pool.
 
         Remove the parent task from the pool if complete.
@@ -1419,7 +1424,10 @@ class TaskPool:
                     if not in_pool:
                         self.add_to_pool(t)
 
-                    if t.point <= self.runahead_limit_point:
+                    if (
+                        self.runahead_limit_point is not None
+                        and t.point <= self.runahead_limit_point
+                    ):
                         self.rh_release_and_queue(t)
 
                     # Event-driven suicide.
