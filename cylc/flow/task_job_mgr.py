@@ -536,6 +536,12 @@ class TaskJobManager:
                 stdin_files = []
                 job_log_dirs = []
                 for itask in itasks_batch:
+                    if not itask.waiting_on_job_prep:
+                        # Avoid duplicate job submissions when flushing
+                        # preparing tasks before a reload. See
+                        # https://github.com/cylc/cylc-flow/pull/6345
+                        continue
+
                     if remote_mode:
                         stdin_files.append(
                             os.path.expandvars(
@@ -554,8 +560,11 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-
                     itask.waiting_on_job_prep = False
+
+                if not job_log_dirs:
+                    continue
+
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
