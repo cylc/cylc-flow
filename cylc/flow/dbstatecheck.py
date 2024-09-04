@@ -378,7 +378,7 @@ def check_polling_config(selector, is_trigger, is_message):
         try:
             trigger = TASK_STATE_MAP[selector]
         except KeyError:
-            raise InputError(f'No such task state "{selector}"')
+            raise InputError(f'No such task state "{selector}"') from None
         else:
             if trigger is None:
                 raise InputError(
