@@ -1332,9 +1332,7 @@ class TaskPool:
         """
         return self.abort_task_failed
 
-    def spawn_on_output(
-        self, itask: TaskProxy, output: str, forced: bool = False
-    ) -> None:
+    def spawn_on_output(self, itask: TaskProxy, output: str) -> None:
         """Spawn child-tasks of given output, into the pool.
 
         Remove the parent task from the pool if complete.
@@ -1355,7 +1353,6 @@ class TaskPool:
 
         Args:
             output: output to spawn on.
-            forced: True if called from manual set task command
 
         """
         if (
@@ -1366,7 +1363,7 @@ class TaskPool:
             self.abort_task_failed = True
 
         children = []
-        if itask.flow_nums or forced:
+        if itask.flow_nums:
             with suppress(KeyError):
                 children = itask.graph_children[output]
 
@@ -1397,10 +1394,7 @@ class TaskPool:
             if c_task is not None and c_task != itask:
                 # (Avoid self-suicide: A => !A)
                 self.merge_flows(c_task, itask.flow_nums)
-            elif (
-                c_task is None
-                and (itask.flow_nums or forced)
-            ):
+            elif c_task is None and itask.flow_nums:
                 # If child is not in the pool already, and parent belongs to a
                 # flow (so it can spawn children), and parent is not waiting
                 # for an upcoming flow merge before spawning ... then spawn it.
