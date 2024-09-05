@@ -742,7 +742,9 @@ class TaskPool:
         is_xtrig_sequential = False
         if ntask is None:
             # ntask does not exist: spawn it in the flow.
-            ntask = self.spawn_task(tdef.name, point, flow_nums, flow_wait)
+            ntask = self.spawn_task(
+                tdef.name, point, flow_nums, flow_wait=flow_wait
+            )
             # if the task was found set xtrigger checking type.
             # otherwise find the xtrigger type if it can't spawn
             # for whatever reason.
@@ -1661,7 +1663,6 @@ class TaskPool:
         name: str,
         point: 'PointBase',
         flow_nums: Set[int],
-        force: bool = False,
         flow_wait: bool = False,
     ) -> Optional[TaskProxy]:
         """Return a new task proxy for the given flow if possible.
@@ -1726,7 +1727,7 @@ class TaskPool:
             if prev_flow_wait:
                 self._spawn_after_flow_wait(itask)
 
-            if itask.transient and not force:
+            if itask.transient:
                 return None
 
         if not itask.transient:
@@ -2019,7 +2020,9 @@ class TaskPool:
     ):
         """Spawn a future task and set prerequisites on it."""
 
-        itask = self.spawn_task(taskdef.name, point, flow_nums, flow_wait)
+        itask = self.spawn_task(
+            taskdef.name, point, flow_nums, flow_wait=flow_wait
+        )
         if itask is None:
             return
         if self._set_prereqs_itask(itask, prereqs, flow_nums):
