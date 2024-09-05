@@ -48,6 +48,8 @@ cmp_ok "${NAME}" <<'__SELECT__'
 +|*|m8|[environment]BCAST|M8
 +|*|m9|[environment]BCAST|M9
 -|20100808T00|foo|[environment]BCAST|FOO
+-|20100809T00|baz|[environment]BCAST|BAZ
+-|20100809T00|m2|[environment]BCAST|M2
 __SELECT__
 
 NAME='select-broadcast-states.out'
@@ -62,8 +64,6 @@ cmp_ok "${NAME}" <<'__SELECT__'
 *|m8|[environment]BCAST|M8
 *|m9|[environment]BCAST|M9
 *|root|[environment]BCAST|ROOT
-20100809T00|baz|[environment]BCAST|BAZ
-20100809T00|m2|[environment]BCAST|M2
 __SELECT__
 
 purge

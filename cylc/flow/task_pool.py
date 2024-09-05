@@ -1441,6 +1441,18 @@ class TaskPool:
     def remove_if_complete(
         self, itask: TaskProxy, output: Optional[str] = None
     ) -> bool:
+        """Wraps _remove_if_complete, clears broadcasts targeted
+        at this task if it's complete.
+        """
+        complete = self._remove_if_complete(itask, output)
+        if complete:
+            self.task_events_mgr.broadcast_mgr.housekeep(
+                **itask.tokens.task)
+        return complete
+
+    def _remove_if_complete(
+        self, itask: TaskProxy, output: Optional[str] = None
+    ) -> bool:
         """Remove a finished task if required outputs are complete.
 
         Return True if removed else False.

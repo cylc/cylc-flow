@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
 from typing import (
     TYPE_CHECKING,
@@ -2200,3 +2201,81 @@ async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
 
         # the task should also have been removed from the queue
         assert not schd.pool.task_queue_mgr.remove_task(itask)
+
+
+async def test_broadcast_to_succeeded_task_not_cleared(
+    flow,
+    scheduler,
+    run,
+    complete,
+    log_filter
+):
+    """Clear broadcast on task exit, but don't routinely houskeep broadcasts
+    by cycle (as was earlier Cylc behaviour).
+
+    Instead, clear broadcasts for a task on task completion.
+
+    https://github.com/cylc/cylc-flow/issues/6308
+    """
+    # Add a completely irrelevent broadcast to check that it's
+    # left alone by the clearing logic.
+    control = {
+        'not_a_hippo': {'environment': {'irrelephant': '42'}}}
+    ignore_me = {'1000': control}
+
+    def get_expect(val):
+        """Shortcut to writing out the full dictionary"""
+        return {
+            '1000': {
+                'foo': {'environment': {'testvar': val}},
+                **control}}
+
+    # Setup scheduler:
+    wid = flow({
+        'scheduler': {'cycle point format': '%Y'},
+        'scheduling': {
+            'initial cycle point': 1000,
+            'final cycle point': 1002,
+            'graph': {
+                'P1Y': 'foo[-P1Y] => foo',
+                'R1/$': 'not_a_hippo'
+            }},
+        'runtime': {'foo': {'environment': {'testvar': 1}}}
+    })
+    schd = scheduler(wid, paused_start=False)
+
+    async with run(schd) as log:
+        # Control broadcast - should be left alone:
+        schd.broadcast_mgr.put_broadcast(
+            ["1000"], ['not_a_hippo'], [control['not_a_hippo']])
+
+        # Add a broadcast relating to a non-expired
+        # task and check that it's there:
+        schd.broadcast_mgr.put_broadcast(
+            ["1000"], ['foo'], [{'environment': {'testvar': "2"}}])
+        assert schd.broadcast_mgr.broadcasts == get_expect('2')
+
+        # Allow the 1000/foo to complete, check that
+        # broadcasts have been cleared:
+        await complete(schd, '1000/foo')
+        assert schd.broadcast_mgr.broadcasts == ignore_me
+        assert log_filter(log, regex='testvar=2')[-1][2] == (
+            'Broadcast cancelled (housekept on task completion):'
+            '\n- [1000/foo] [environment]testvar=2')
+
+        # Update the broadcast and check that the main loop
+        # doesn't clear it:
+        schd.broadcast_mgr.put_broadcast(
+            ["1000"], ['foo'], [{'environment': {'testvar': "3"}}])
+        await asyncio.sleep(1)
+        assert schd.broadcast_mgr.broadcasts == get_expect("3")
+
+        # Check that the broadcast _is_ consumed by the finishing
+        # of the task to which it applies a second time:
+        schd.pool.force_trigger_tasks(['1000/foo'], [2])
+        await complete(schd, '1000/foo')
+        assert schd.broadcast_mgr.broadcasts == ignore_me
+        assert log_filter(log, regex='testvar=3')[-1][2] == (
+            'Broadcast cancelled (housekept on task completion):'
+            '\n- [1000/foo] [environment]testvar=3'
+        )

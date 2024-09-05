@@ -24,6 +24,8 @@ CHANGE_FMT = "\n%(change)s [%(point)s/%(namespace)s] %(key)s=%(value)s"
 CHANGE_PREFIX_CANCEL = "-"
 CHANGE_PREFIX_SET = "+"
 CHANGE_TITLE_CANCEL = "Broadcast cancelled:"
+CHANGE_TITLE_CANCEL_ON_COMPLETION = (
+    "Broadcast cancelled (housekept on task completion):")
 CHANGE_TITLE_SET = "Broadcast set:"
 
 
@@ -85,11 +87,19 @@ def get_broadcast_change_iter(modified_settings, is_cancel=False):
                     "value": str(value)}
 
 
-def get_broadcast_change_report(modified_settings, is_cancel=False):
-    """Return a string for reporting modification to broadcast settings."""
+def get_broadcast_change_report(
+    modified_settings, is_cancel=False, is_housekeeping=False
+):
+    """Return a string for reporting modification to broadcast settings.
+
+    Args:
+        is_housekeeping: Note that this is an automatic cancellation.
+    """
     if not modified_settings:
         return ""
-    if is_cancel:
+    if is_housekeeping:
+        msg = CHANGE_TITLE_CANCEL_ON_COMPLETION
+    elif is_cancel:
         msg = CHANGE_TITLE_CANCEL
     else:
         msg = CHANGE_TITLE_SET
