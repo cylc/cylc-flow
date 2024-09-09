@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+
 import pytest
 from pytest import param
 
 from cylc.flow import commands
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.simulation import sim_time_check
 
 
@@ -443,3 +445,15 @@ async def test_settings_broadcast(
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:
         assert itask.tdef.rtconfig['execution retry delays'] == [5.0, 5.0]
+
+
+async def test_db_submit_num(
+    flow, one_conf, scheduler, run, complete, db_select
+):
+    """Test simulation mode correctly increments the submit_num in the DB."""
+    schd: Scheduler = scheduler(flow(one_conf), paused_start=False)
+    async with run(schd):
+        await complete(schd, '1/one')
+    assert db_select(schd, False, 'task_states', 'submit_num', 'status') == [
+        (1, 'succeeded'),
+    ]
