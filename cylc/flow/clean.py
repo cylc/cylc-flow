@@ -259,7 +259,7 @@ def glob_in_run_dir(
     """Execute a (recursive) glob search in the given run directory.
 
     Returns list of any absolute paths that match the pattern. However:
-    * Does not follow symlinks (apart from the spcedified symlink dirs).
+    * Does not follow symlinks (apart from the specified symlink dirs).
     * Also does not return matching subpaths of matching directories (because
         that would be redundant).
 
@@ -281,6 +281,9 @@ def glob_in_run_dir(
     results: List[Path] = []
     subpath_excludes: Set[Path] = set()
     for path in matches:
+        # Iterate down through ancestors (starting at the run dir) to
+        # weed out redundant subpaths of matched directories and subpaths of
+        # non-standard symlinks
         for rel_ancestor in reversed(path.relative_to(run_dir).parents):
             ancestor = run_dir / rel_ancestor
             if ancestor in subpath_excludes:
