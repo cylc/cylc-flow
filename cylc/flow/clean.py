@@ -117,12 +117,8 @@ def _clean_check(opts: 'Values', id_: str, run_dir: Path) -> None:
     # Thing to clean must be a dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         raise FileNotFoundError(f"No directory to clean at {run_dir}")
-    db_path = (
-        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
-    )
-    if opts.local_only and not db_path.is_file():
-        # Will reach here if this is cylc clean re-invoked on remote host
-        # (workflow DB only exists on scheduler host); don't need to worry
+    if opts.no_scan:
+        # This is cylc clean re-invoked on remote host; don't need to worry
         # about contact file.
         return
     try:
