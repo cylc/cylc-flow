@@ -669,13 +669,7 @@ def test__clean_using_glob(
                     'flow.cylc': None,
                 }}}},
                 'sym-share': {'cylc-run': {}},
-                'sym-cycle': {'cylc-run': {'foo': {'bar': {
-                    'share': {
-                        'cycle': {
-                            'macklunkey.txt': None
-                        }
-                    }
-                }}}}
+                'sym-cycle': {'cylc-run': {}},
             },
             id="filetree2 share"
         ),
@@ -701,13 +695,7 @@ def test__clean_using_glob(
                     '.service': {'db': None},
                 }}}},
                 'sym-share': {'cylc-run': {}},
-                'sym-cycle': {'cylc-run': {'foo': {'bar': {
-                    'share': {
-                        'cycle': {
-                            'macklunkey.txt': None
-                        }
-                    }
-                }}}}
+                'sym-cycle': {'cylc-run': {}},
             },
             id="filetree2 *"
         ),
