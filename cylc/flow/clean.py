@@ -57,6 +57,7 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
+    is_relative_to,
     parse_rm_dirs,
     remove_dir_and_target,
     remove_dir_or_file,
@@ -329,13 +330,19 @@ def _clean_using_glob(
         LOG.info(f"No files matching '{pattern}' in {run_dir}")
         return
     # First clean any matching symlink dirs
-    for path in abs_symlink_dirs:
-        if path in matches:
-            remove_dir_and_target(path)
-            if path == run_dir:
+    for symlink_dir in abs_symlink_dirs:
+        # Note: must clean e.g. share/cycle/ before share/ if the former
+        # is a symlink even if only the latter was specified.
+        if (
+            any(is_relative_to(symlink_dir, path) for path in matches)
+            and symlink_dir.is_symlink()
+        ):
+            remove_dir_and_target(symlink_dir)
+            if symlink_dir == run_dir:
                 # We have deleted the run dir
                 return
-            matches.remove(path)
+            if symlink_dir in matches:
+                matches.remove(symlink_dir)
     # Now clean the rest
     for path in matches:
         remove_dir_or_file(path)
