@@ -2239,6 +2239,7 @@ class TaskPool:
                 # check if this task is clock expired
                 and itask.clock_expire()
             ):
+                self.task_queue_mgr.remove_task(itask)
                 self.task_events_mgr.process_message(
                     itask,
                     logging.WARNING,
