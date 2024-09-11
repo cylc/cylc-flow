@@ -45,7 +45,6 @@ from functools import partial
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow import command_validation
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -115,7 +114,6 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-    command_validation.flow_opts(options.flow or ['all'], options.flow_wait)
     rets = call_multi(
         partial(run, options),
         *ids,

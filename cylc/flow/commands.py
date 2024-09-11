@@ -282,10 +282,10 @@ async def hold(schd: 'Scheduler', tasks: Iterable[str]):
 @_command('set_hold_point')
 async def set_hold_point(schd: 'Scheduler', point: str):
     """Hold all tasks after the specified cycle point."""
-    yield
     cycle_point = TaskID.get_standardised_point(point)
     if cycle_point is None:
         raise CyclingError("Cannot set hold point to None")
+    yield
     LOG.info(
         f"Setting hold cycle point: {cycle_point}\n"
         "All tasks after this point will be held."
@@ -304,13 +304,13 @@ async def pause(schd: 'Scheduler'):
 @_command('set_verbosity')
 async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
     """Set workflow verbosity."""
-    yield
     try:
         lvl = int(level)
         LOG.setLevel(lvl)
     except (TypeError, ValueError) as exc:
         raise CommandFailedError(exc)
     cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
+    yield
 
 
 @_command('remove_tasks')
@@ -444,5 +444,6 @@ async def force_trigger_tasks(
 ):
     """Manual task trigger."""
     validate.is_tasks(tasks)
+    validate.flow_opts(flow, flow_wait)
     yield
     yield schd.pool.force_trigger_tasks(tasks, flow, flow_wait, flow_descr)
