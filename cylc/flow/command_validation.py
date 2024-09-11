@@ -252,7 +252,14 @@ def is_tasks(tasks: Iterable[str]):
         ...
         cylc.flow.exceptions.InputError: This command does not take job ids:
         * */baz/12
+
+        >>> is_tasks([])
+        Traceback (most recent call last):
+        ...
+        cylc.flow.exceptions.InputError: No tasks specified
     """
+    if not tasks:
+        raise InputError("No tasks specified")
     bad_tasks: List[str] = []
     for task in tasks:
         tokens = Tokens('//' + task)
