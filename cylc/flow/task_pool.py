@@ -1908,11 +1908,6 @@ class TaskPool:
             flow_descr: description of new flow
 
         """
-        flow_nums = self._get_flow_nums(flow, flow_descr)
-        if flow_nums is None:
-            # Illegal flow command opts
-            return
-
         # Get matching pool tasks and future task definitions.
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -1920,14 +1915,17 @@ class TaskPool:
             warn=False,
         )
 
+        # Set existing task proxies.
+        flow_nums = self._get_flow_nums(flow, flow_descr, active=True)
         for itask in itasks:
-            # Existing task proxies.
             self.merge_flows(itask, flow_nums)
             if prereqs:
                 self._set_prereqs_itask(itask, prereqs, flow_nums)
             else:
                 self._set_outputs_itask(itask, outputs)
 
+        # Spawn and set future tasks.
+        flow_nums = self._get_flow_nums(flow, flow_descr, active=False)
         for name, point in future_tasks:
             tdef = self.config.get_taskdef(name)
             if prereqs:
@@ -2066,34 +2064,43 @@ class TaskPool:
             self,
             flow: List[str],
             meta: Optional[str] = None,
-    ) -> Optional[Set[int]]:
-        """Get correct flow numbers given user command options."""
-        if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):
-            if len(flow) != 1:
-                LOG.warning(
-                    f'The "flow" values {FLOW_ALL}, {FLOW_NEW} & {FLOW_NONE}'
-                    ' cannot be used in combination with integer flow numbers.'
-                )
-                return None
-            if flow[0] == FLOW_ALL:
-                flow_nums = self._get_active_flow_nums()
-            elif flow[0] == FLOW_NEW:
-                flow_nums = {self.flow_mgr.get_flow_num(meta=meta)}
-            elif flow[0] == FLOW_NONE:
+            active: bool = False
+    ) -> Set[int]:
+        """Return flow numbers corresponding to user command options.
+
+        Arg should have been validated already during command validation.
+
+        Call this method separately for active (n=0) and future tasks.
+        - future tasks: assign the result to the new task
+        - active tasks: merge the result with existing flow numbers
+
+        The result is different in the default case (no --flow option):
+        - future tasks: return all active flows
+        - active tasks: stick with the existing flows (so return empty set).
+
+        """
+        if not flow:
+            # default (i.e. no --flow option was used)
+            if active:
+                # active tasks: stick with the existing flow
                 flow_nums = set()
+            else:
+                # future tasks: assign to all active flows
+                flow_nums = self._get_active_flow_nums()
+        elif flow == [FLOW_NONE]:
+            flow_nums = set()
+        elif flow == [FLOW_ALL]:
+            flow_nums = self._get_active_flow_nums()
+        elif flow == [FLOW_NEW]:
+            flow_nums = {self.flow_mgr.get_flow_num(meta=meta)}
         else:
-            try:
-                flow_nums = {
-                    self.flow_mgr.get_flow_num(
-                        flow_num=int(n), meta=meta
-                    )
-                    for n in flow
-                }
-            except ValueError:
-                LOG.warning(
-                    f"Ignoring command: illegal flow values {flow}"
+            # specific flow numbers
+            flow_nums = {
+                self.flow_mgr.get_flow_num(
+                    flow_num=int(n), meta=meta
                 )
-                return None
+                for n in flow
+            }
         return flow_nums
 
     def _force_trigger(self, itask):
@@ -2157,17 +2164,13 @@ class TaskPool:
               unless flow-wait is set.
 
         """
-        # Get flow numbers for the tasks to be triggered.
-        flow_nums = self._get_flow_nums(flow, flow_descr)
-        if flow_nums is None:
-            return
-
         # Get matching tasks proxies, and matching future task IDs.
         existing_tasks, future_ids, unmatched = self.filter_task_proxies(
             items, future=True, warn=False,
         )
 
-        # Trigger existing tasks.
+        # Trigger active tasks.
+        flow_nums = self._get_flow_nums(flow, flow_descr, active=True)
         for itask in existing_tasks:
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
@@ -2176,11 +2179,10 @@ class TaskPool:
             self._force_trigger(itask)
 
         # Spawn and trigger future tasks.
+        flow_nums = self._get_flow_nums(flow, flow_descr, active=False)
         for name, point in future_ids:
-
             if not self.can_be_spawned(name, point):
                 continue
-
             submit_num, _, prev_fwait = (
                 self._get_task_history(name, point, flow_nums)
             )

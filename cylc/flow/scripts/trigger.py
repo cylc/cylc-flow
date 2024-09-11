@@ -17,18 +17,25 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run despite unsatisfied prerequisites.
+Force tasks to run regardless of prerequisites.
 
 * Triggering an unqueued waiting task queues it, regardless of prerequisites.
 * Triggering a queued task submits it, regardless of queue limiting.
 * Triggering an active task has no effect (it already triggered).
 
-Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them queues them to run (or rerun) in the same flow.
+Future tasks (n>0) do not already belong to a flow.
+* by default they are assigned to all active flows
+* otherwise, according to the --flow option
 
-Beyond n=0, triggered tasks get all current active flow numbers by default, or
-specified flow numbers via the --flow option. Those flows - if/when they catch
-up - will see tasks that ran after triggering event as having run already.
+Active tasks (n=0) already belong to a flow.
+* by default they run in the same flow
+* with --flow=all, they are assigned to all active flows
+* with --flow=INT or --flow=new, the new flow merges with the old one
+* --flow=none is ignored, to avoid blocking the existing flow
+
+Note --flow=new increments the global flow counter so if you need multiple
+commands to start a single new flow only use --flow=new in the first command,
+then use the actual new flow number (e.g. read it from the scheduler log).
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -53,6 +60,7 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.command_validation import flow_opts
 
 
 if TYPE_CHECKING:
@@ -114,6 +122,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
+    flow_opts(options.flow, options.flow_wait)
     rets = call_multi(
         partial(run, options),
         *ids,

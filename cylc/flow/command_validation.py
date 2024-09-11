@@ -39,10 +39,11 @@ ERR_OPT_FLOW_WAIT = (
 def flow_opts(flows: List[str], flow_wait: bool) -> None:
     """Check validity of flow-related CLI options.
 
-    Note the schema defaults flows to ["all"].
+    Note the schema defaults flows to [].
 
     Examples:
         Good:
+        >>> flow_opts([], False)
         >>> flow_opts(["new"], False)
         >>> flow_opts(["1", "2"], False)
         >>> flow_opts(["1", "2"], True)
@@ -61,6 +62,9 @@ def flow_opts(flows: List[str], flow_wait: bool) -> None:
         cylc.flow.exceptions.InputError: ...
 
     """
+    if not flows:
+        return
+
     for val in flows:
         val = val.strip()
         if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:

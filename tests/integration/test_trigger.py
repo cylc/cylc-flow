@@ -17,6 +17,8 @@
 import logging
 
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
+from cylc.flow.command_validation import flow_opts
+from cylc.flow.exceptions import InputError
 
 import pytest
 import time
@@ -34,11 +36,11 @@ import time
     )
 )
 async def test_trigger_invalid(mod_one, start, log_filter, flow_strs):
-    """Ensure invalid flow values are rejected."""
+    """Ensure invalid flow values are rejected during command validation."""
     async with start(mod_one) as log:
         log.clear()
-        assert mod_one.pool.force_trigger_tasks(['*'], flow_strs) is None
-        assert len(log_filter(log, level=logging.WARN)) == 1
+        with pytest.raises(InputError):
+            flow_opts(flow_strs, False)
 
 
 async def test_trigger_no_flows(one, start, log_filter):
