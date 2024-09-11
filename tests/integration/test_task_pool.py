@@ -2152,3 +2152,51 @@ async def test_trigger_unqueued(flow, scheduler, start):
         assert not schd.pool.task_queue_mgr.force_released, (
             "Triggering an unqueued task should not affect the force_released list"
         )
+
+
+@pytest.mark.parametrize('expire_type', ['clock-expire', 'manual'])
+async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
+    """An expired waiting task should be removed from any queues.
+
+    See https://github.com/cylc/cylc-flow/issues/6284
+    """
+    conf = {
+        'scheduling': {
+            'initial cycle point': '2000',
+
+            'graph': {
+                'R1': 'foo'
+            },
+        },
+        'runtime': {
+            'foo': {
+                'execution retry delays': 'PT0S'
+            }
+        }
+    }
+
+    if expire_type == 'clock-expire':
+        conf['scheduling']['special tasks'] = {'clock-expire': 'foo(PT0S)'}
+        method = lambda schd: schd.pool.clock_expire_tasks() 
+    else:
+        method = lambda schd: schd.pool.set_prereqs_and_outputs(
+            ['2000/foo'], prereqs=[], outputs=['expired'], flow=['1']
+        )
+
+    id_ = flow(conf)
+    schd = scheduler(id_)
+    schd: Scheduler
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+
+        # the task should start as "waiting(queued)"
+        assert itask.state(TASK_STATUS_WAITING, is_queued=True)
+
+        # expire the task via whichever method we are testing
+        method(schd)
+
+        # the task should enter the "expired" state
+        assert itask.state(TASK_STATUS_EXPIRED, is_queued=False)
+
+        # the task should also have been removed from the queue
+        assert not schd.pool.task_queue_mgr.remove_task(itask)
