@@ -11,6 +11,38 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.4 (Released 2024-09-12)__
+
+### 🚀 Enhancements
+
+[#6266](https://github.com/cylc/cylc-flow/pull/6266) - 'cylc show' task output is now sorted by the task id
+
+### 🔧 Fixes
+
+[#6175](https://github.com/cylc/cylc-flow/pull/6175) - The workflow-state command and xtrigger will now reject invalid polling arguments.
+
+[#6214](https://github.com/cylc/cylc-flow/pull/6214) - `cylc lint` rules U013 & U015 now tell you which deprecated variables you are using
+
+[#6264](https://github.com/cylc/cylc-flow/pull/6264) - Fix bug where `cylc install` failed to prevent invalid run names.
+
+[#6267](https://github.com/cylc/cylc-flow/pull/6267) - Fixed bug in `cylc play` affecting run host reinvocation after interactively upgrading the workflow to a new Cylc version.
+
+[#6310](https://github.com/cylc/cylc-flow/pull/6310) - Fix a spurious traceback that could occur when running the `cylc play` command on Mac OS.
+
+[#6330](https://github.com/cylc/cylc-flow/pull/6330) - Fix bug where broadcasting failed to change platform selected after host selection failure.
+
+[#6332](https://github.com/cylc/cylc-flow/pull/6332) - Fixes unformatted string
+
+[#6335](https://github.com/cylc/cylc-flow/pull/6335) - Fix an issue that could cause broadcasts made to multiple namespaces to fail.
+
+[#6337](https://github.com/cylc/cylc-flow/pull/6337) - Fix potential duplicate job submissions when manually triggering unqueued active tasks.
+
+[#6345](https://github.com/cylc/cylc-flow/pull/6345) - Fix duplicate job submissions of tasks in the preparing state before reload.
+
+[#6351](https://github.com/cylc/cylc-flow/pull/6351) - Fix a bug where simulation mode tasks were not spawning children of task:started.
+
+[#6353](https://github.com/cylc/cylc-flow/pull/6353) - Prevent clock-expired tasks from being automatically retried.
+
 ## __cylc-8.3.3 (Released 2024-07-23)__
 
 ### 🔧 Fixes
