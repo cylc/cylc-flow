@@ -1915,6 +1915,15 @@ class TaskPool:
             warn=False,
         )
 
+        if flow == [FLOW_NEW]:
+            # Translate --flow=new to an actual flow number now to avoid
+            # incrementing it twice below.
+            flow = [
+                str(
+                    self.flow_mgr.get_flow_num(meta=flow_descr)
+                )
+            ]
+
         # Set existing task proxies.
         flow_nums = self._get_flow_nums(flow, flow_descr, active=True)
         for itask in itasks:
@@ -2074,6 +2083,10 @@ class TaskPool:
         - future tasks: assign the result to the new task
         - active tasks: merge the result with existing flow numbers
 
+        Note if a single command results in two calls to this method (for
+        active and future tasks), translate --flow=new to an actual flow
+        number first, to avoid incrementing the flow counter twice.
+
         The result is different in the default case (no --flow option):
         - future tasks: return all active flows
         - active tasks: stick with the existing flows (so return empty set).
@@ -2168,6 +2181,15 @@ class TaskPool:
         existing_tasks, future_ids, unmatched = self.filter_task_proxies(
             items, future=True, warn=False,
         )
+
+        if flow == [FLOW_NEW]:
+            # Translate --flow=new to an actual flow number now to avoid
+            # incrementing it twice below.
+            flow = [
+                str(
+                    self.flow_mgr.get_flow_num(meta=flow_descr)
+                )
+            ]
 
         # Trigger active tasks.
         flow_nums = self._get_flow_nums(flow, flow_descr, active=True)
