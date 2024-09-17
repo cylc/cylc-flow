@@ -281,7 +281,7 @@ def restricted_evaluator(
                 error_class,
                 f'{exc.msg}: {exc.text}',
                 {'expr': expr}
-            )
+            ) from None
 
         # check against whitelisted types
         try:
@@ -302,7 +302,7 @@ def restricted_evaluator(
                     'error_node': error_node,
                     'error_type': error_node.__class__.__name__,
                 },
-            )
+            ) from None
 
         # run the expresion
         # Note: this may raise runtime errors

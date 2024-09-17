@@ -90,7 +90,7 @@ class CylcWorkflowDBChecker:
             except sqlite3.OperationalError:
                 with suppress(Exception):
                     self.conn.close()
-                raise exc  # original error
+                raise exc from None  # original error
 
     def __enter__(self):
         return self
@@ -141,7 +141,7 @@ class CylcWorkflowDBChecker:
             raise InputError(
                 f'Cycle point "{cycle}" is not compatible'
                 f' with DB point format "{self.db_point_fmt}"'
-            )
+            ) from None
         return cycle
 
     @staticmethod
@@ -378,7 +378,7 @@ def check_polling_config(selector, is_trigger, is_message):
         try:
             trigger = TASK_STATE_MAP[selector]
         except KeyError:
-            raise InputError(f'No such task state "{selector}"')
+            raise InputError(f'No such task state "{selector}"') from None
         else:
             if trigger is None:
                 raise InputError(

@@ -20,8 +20,10 @@ Note: see also functional tests
 """
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.task_state import TASK_STATUS_WAITING, TASK_STATUS_SUCCEEDED
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
 
 
 async def test_set_parentless_spawning(
@@ -106,11 +108,11 @@ async def test_data_store(
             'a': {'outputs': {'x': 'xyz'}},
         },
     })
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         await schd.update_data_structure()
         data = schd.data_store_mgr.data[schd.tokens.id]
-        task_a = data[TASK_PROXIES][
+        task_a: PbTaskProxy = data[TASK_PROXIES][
             schd.pool.get_task(IntegerPoint('1'), 'a').tokens.id
         ]
 

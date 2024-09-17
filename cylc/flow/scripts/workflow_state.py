@@ -183,7 +183,7 @@ class WorkflowPoller(Poller):
         try:
             tokens = Tokens(self.id_)
         except ValueError as exc:
-            raise InputError(exc)
+            raise InputError(exc) from None
 
         self.workflow_id_raw = tokens.workflow_id
         self.selector = (
@@ -396,7 +396,8 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
                 options.depr_point = os.environ["CYLC_TASK_CYCLE_POINT"]
             except KeyError:
                 raise InputError(
-                    "--task-point: $CYLC_TASK_CYCLE_POINT is not defined")
+                    "--task-point: $CYLC_TASK_CYCLE_POINT is not defined"
+                ) from None
 
         if options.depr_point is not None:
             id_ += f"//{options.depr_point}"

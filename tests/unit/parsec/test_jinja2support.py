@@ -24,15 +24,10 @@ from cylc.flow.parsec.jinja2support import *
 def test_raise_helper():
     message = 'Ops'
     error_type = 'CRITICAL'
-    with pytest.raises(Exception) as cm:
+    with pytest.raises(Jinja2AssertionError) as cm:
         raise_helper(message=message)
 
-    assert str(cm.value) == "Jinja2 Error: Ops"
-
-    with pytest.raises(Exception) as cm:
-        raise_helper(message=message, error_type=error_type)
-
-    assert str(cm.value) == "Jinja2 CRITICAL: Ops"
+    assert str(cm.value) == "Ops"
 
 
 def test_assert_helper():

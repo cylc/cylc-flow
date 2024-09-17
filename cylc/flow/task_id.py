@@ -92,7 +92,8 @@ class TaskID:
         except PointParsingError as exc:
             # (This is only needed to raise a clearer error message).
             raise ValueError(
-                "Invalid cycle point: %s (%s)" % (point_string, exc))
+                "Invalid cycle point: %s (%s)" % (point_string, exc)
+            ) from None
         return point_string
 
     @classmethod
