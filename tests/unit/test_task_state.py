@@ -19,9 +19,9 @@ from types import SimpleNamespace
 
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
+from cylc.flow.run_modes import RunMode, disable_task_event_handlers
 from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
-    RunMode,
     TaskState,
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -147,4 +147,4 @@ def test_disable_task_event_handlers(itask_run_mode, disable_handlers, expect):
                 'skip': {'disable task event handlers': disable_handlers}})
     )
     # Check method:
-    assert RunMode.disable_task_event_handlers(itask) is expect
+    assert disable_task_event_handlers(itask) is expect

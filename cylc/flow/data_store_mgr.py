@@ -85,6 +85,7 @@ from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
 )
+from cylc.flow.run_modes import RunMode
 from cylc.flow.workflow_status import (
     get_workflow_status,
     get_workflow_status_msg,
@@ -700,8 +701,7 @@ class DataStoreMgr:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
             setbuff(workflow.time_zone_info, key, val)
-
-        workflow.run_mode = config.run_mode()
+        workflow.run_mode = RunMode.get(config.options)
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.workflow_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))

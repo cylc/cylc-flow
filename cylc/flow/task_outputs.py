@@ -642,7 +642,6 @@ class TaskOutputs:
             set(self._message_to_compvar.values()),
             force_optional=exclude
         ).items():
-            # breakpoint(header=f"=== {compvar=}, {is_optional=} ===")
             if is_optional is False:
                 for message, _compvar in self._message_to_compvar.items():
                     if _compvar == compvar:

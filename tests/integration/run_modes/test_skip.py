@@ -16,6 +16,8 @@
 """Test for skip mode integration.
 """
 
+from cylc.flow.cycling.integer import IntegerPoint
+
 
 async def test_settings_override_from_broadcast(
     flow, scheduler, start, complete, log_filter
@@ -78,15 +80,16 @@ async def test_broadcast_changes_set_skip_outputs(
     | The skip keyword should not be allowed in custom outputs.
     """
     wid = flow({
-        'scheduling': {'graph': {'R1': 'foo:expect_this'}},
-        'runtime': {'foo': {'outputs': {'expect_this': 'some message'}}}
+        'scheduling': {'graph': {'R1': 'foo:x?\nfoo:y?'}},
+        'runtime': {'foo': {'outputs': {
+            'x': 'some message', 'y': 'another message'}}}
     })
     schd = scheduler(wid, run_mode='live')
     async with start(schd):
         schd.broadcast_mgr.put_broadcast(
             ['1'],
             ['foo'],
-            [{'skip': {'outputs': 'expect_this'}}],
+            [{'skip': {'outputs': 'x'}}],
         )
         foo, = schd.pool.get_tasks()
         schd.pool.set_prereqs_and_outputs(
@@ -94,14 +97,18 @@ async def test_broadcast_changes_set_skip_outputs(
 
         foo_outputs = foo.state.outputs.get_completed_outputs()
 
-        assert 'expect_this' in foo_outputs
-        assert foo_outputs['expect_this'] == '(manually completed)'
+        assert foo_outputs == {
+            'submitted': '(manually completed)',
+            'started': '(manually completed)',
+            'succeeded': '(manually completed)',
+            'x': '(manually completed)'}
 
 
 async def test_skip_mode_outputs(
     flow, scheduler, reftest,
 ):
-    """Nearly a functional test of the output emission of skip mode tasks
+    """Skip mode can be configured by the `[runtime][<namespace>][skip]`
+    section.
 
     Skip mode proposal point 2
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
@@ -110,7 +117,7 @@ async def test_skip_mode_outputs(
         # By default, all required outputs will be generated
         # plus succeeded if success is optional:
         foo? & foo:required_out => success_if_optional & required_outs
-        
+
         # The outputs submitted and started are always produced
         # and do not need to be defined in outputs:
         foo:submitted => submitted_always
@@ -159,7 +166,7 @@ async def test_skip_mode_outputs(
 
 
 async def test_doesnt_release_held_tasks(
-    one_conf, flow, scheduler, start, log_filter
+    one_conf, flow, scheduler, start, log_filter, capture_live_submissions
 ):
     """Point 5 of the proposal
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
@@ -168,57 +175,28 @@ async def test_doesnt_release_held_tasks(
     | flag as normal.
 
     """
-    schd = scheduler(flow(one_conf), run_mode='skip')
+    one_conf['runtime'] = {'one': {'run mode': 'skip'}}
+    schd = scheduler(flow(one_conf), run_mode='live', paused_start=False)
     async with start(schd) as log:
-        itask = schd.pool.get_tasks()[0]
+        itask, = schd.pool.get_tasks()
         msg = 'held tasks shoudn\'t {}'
 
         # Set task to held and check submission in skip mode doesn't happen:
         itask.state.is_held = True
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            [itask],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir,
-            run_mode=schd.get_run_mode()
-        )
+
+        # Relinquish contol to the main loop.
+        schd.release_queued_tasks()
+
         assert not log_filter(log, contains='=> running'), msg.format('run')
         assert not log_filter(log, contains='=> succeeded'), msg.format(
             'succeed')
 
         # Release held task and assert that it now skips successfully:
         schd.pool.release_held_tasks(['1/one'])
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            [itask],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir,
-            run_mode=schd.get_run_mode()
-        )
+        schd.release_queued_tasks()
+
         assert log_filter(log, contains='=> running'), msg.format('run')
         assert log_filter(log, contains='=> succeeded'), msg.format('succeed')
-
-
-async def test_force_trigger_doesnt_change_mode(
-    flow, scheduler, run, complete
-):
-    """Point 6 from the skip mode proposal
-    https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
-
-    | Force-triggering a task will not override the run mode.
-    """
-    wid = flow({
-        'scheduling': {'graph': {'R1': 'slow => skip'}},
-        'runtime': {
-            'slow': {'script': 'sleep 6'},
-            'skip': {'script': 'exit 1', 'run mode': 'skip'}
-        }
-    })
-    schd = scheduler(wid, run_mode='live', paused_start=False)
-    async with run(schd):
-        schd.pool.force_trigger_tasks(['1/skip'], [1])
-        # This will timeout if the skip task has become live on triggering:
-        await complete(schd, '1/skip', timeout=6)
 
 
 async def test_prereqs_marked_satisfied_by_skip_mode(
@@ -232,11 +210,12 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
     | rather than "satisfied naturally" for provenance reasons.
     """
     schd = scheduler(flow({
-        'scheduling': {'graph': {'R1': 'foo => bar'}}
-    }), run_mode='skip')
+        'scheduling': {'graph': {'R1': 'foo => bar'}},
+        'runtime': {'foo': {'run mode': 'skip'}}
+    }), run_mode='live')
 
-    async with start(schd) as log:
-        foo, = schd.pool.get_tasks()
+    async with start(schd):
+        foo = schd.pool.get_task(IntegerPoint(1), 'foo')
         schd.task_job_mgr.submit_task_jobs(
             schd.workflow,
             [foo],
@@ -244,6 +223,6 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
             schd.server.client_pub_key_dir,
             run_mode=schd.get_run_mode()
         )
-        bar, = schd.pool.get_tasks()
+        bar = schd.pool.get_task(IntegerPoint(1), 'bar')
         satisfied_message, = bar.state.prerequisites[0]._satisfied.values()
         assert satisfied_message == 'satisfied by skip mode'

@@ -18,7 +18,7 @@
 # Testing Skip mode functionality.
 
 . "$(dirname "$0")/test_header"
-set_test_number 11
+set_test_number 6
 
 # Install and run the workflow in live mode (default).
 # Check that tasks with run mode unset and run mode = live
@@ -40,27 +40,6 @@ done
 # in skip mode and fails to produce a log file:
 JOB_LOGS="${WORKFLOW_RUN_DIR}/log/job/1001"
 run_fail "${TEST_NAME}:broadcast run mode=skip" ls "${JOB_LOGS}/default_/"
-
-purge
-
-# Install and run the workflow in skip mode.
-# Check that tasks with run mode unset and run mode = skip
-# don't leave log files, and that skip mode tasks does.
-TEST_NAME="${TEST_NAME_BASE}:skip-workflow"
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-workflow_run_ok "${TEST_NAME}:run" \
-    cylc play "${WORKFLOW_NAME}" \
-        --no-detach \
-        --mode skip \
-        --set='changemode="live"' \
-        --final-cycle-point=1000
-
-JOB_LOGS="${WORKFLOW_RUN_DIR}/log/job/1000"
-run_ok "${TEST_NAME}:run mode=live" ls "${JOB_LOGS}/live_"
-run_fail "${TEST_NAME}:run mode=default" ls "${JOB_LOGS}/default_"
-run_fail "${TEST_NAME}:run mode=skip" ls "${JOB_LOGS}/skip_"
-JOB_LOGS="${WORKFLOW_RUN_DIR}/log/job/1000"
-named_grep_ok "${TEST_NAME}:run mode=live" "===.*===" "${JOB_LOGS}/live_/NN/job.out"
 
 purge
 exit 0

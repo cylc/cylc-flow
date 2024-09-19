@@ -30,48 +30,42 @@ integration test framework.
 
 import pytest
 
+from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.run_modes import WORKFLOW_RUN_MODES
 
-@pytest.mark.parametrize(
-    'workflow_run_mode', [('live'), ('skip')])
+
+@pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
 async def test_run_mode_override_from_config(
-    workflow_run_mode, flow, scheduler, run, complete, log_filter
+    capture_live_submissions,
+    flow,
+    scheduler,
+    run,
+    complete,
+    workflow_run_mode
 ):
-    """Test that ``[runtime][TASK]run mode`` overrides workflow modes.
-    """
-    cfg = {
-        "scheduler": {"cycle point format": "%Y"},
-        "scheduling": {
-            "initial cycle point": "1000",
-            "final cycle point": "1000",
-            "graph": {"P1Y": "live_\nskip_\ndefault_"}},
-        "runtime": {
-            "skip_": {"run mode": "skip"},
-            "live_": {"run mode": "live"}
+    """Test that `[runtime][<namespace>]run mode` overrides workflow modes."""
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'live & skip',
+            },
+        },
+        'runtime': {
+            'live': {'run mode': 'live'},
+            'skip': {'run mode': 'skip'},
         }
-    }
-    id_ = flow(cfg)
+    })
     schd = scheduler(id_, run_mode=workflow_run_mode, paused_start=False)
-    expect_template = (
-        '[1000/{}_/01:preparing] submitted to localhost:background')
-
-    async with run(schd) as log:
+    async with run(schd):
         await complete(schd)
 
-        # Live task has been really submitted:
-        assert log_filter(log, contains=expect_template.format('live'))
-
-        # Default is the same as workflow:
-        if workflow_run_mode == 'live':
-            assert log_filter(log, contains=expect_template.format('default'))
-        else:
-            assert log_filter(
-                log, contains='[1000/default_/01:running] => succeeded')
-            assert not log_filter(
-                log, contains=expect_template.format('default'))
-
-        # Skip task has run, but not actually been submitted:
-        assert log_filter(log, contains='[1000/skip_/01:running] => succeeded')
-        assert not log_filter(log, contains=expect_template.format('skip'))
+    if workflow_run_mode == 'live':
+        assert capture_live_submissions() == {'1/live'}
+    elif workflow_run_mode == 'dummy':
+        # Skip mode doesn't override dummy mode:
+        assert capture_live_submissions() == {'1/live', '1/skip'}
+    else:
+        assert capture_live_submissions() == set()
 
 
 async def test_force_trigger_does_not_override_run_mode(
@@ -81,34 +75,19 @@ async def test_force_trigger_does_not_override_run_mode(
 ):
     """Force-triggering a task will not override the run mode.
 
-    Tasks with run mode = skip will continue to abide by
-    the is_held flag as normal.
-
     Taken from spec at
-    https://github.com/cylc/cylc-admin/blob/master/
-        docs/proposal-skip-mode.md#proposal
+    https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md#proposal
     """
     wid = flow({
         'scheduling': {'graph': {'R1': 'foo'}},
         'runtime': {'foo': {'run mode': 'skip'}}
     })
-    schd = scheduler(wid)
+    schd = scheduler(wid, run_mode="live")
     async with start(schd):
-        # Check that task isn't held at first
         foo = schd.pool.get_tasks()[0]
-        assert foo.state.is_held is False
 
-        # Hold task, check that it's held:
-        schd.pool.hold_tasks('1/foo')
-        assert foo.state.is_held is True
-
-        # Trigger task, check that it's _still_ held:
+        # Force trigger task:
         schd.pool.force_trigger_tasks('1/foo', [1])
-        assert foo.state.is_held is True
-
-        # run_mode will always be simulation from test
-        # workflow before submit routine...
-        assert not foo.run_mode
 
         # ... but job submission will always change this to the correct mode:
         schd.task_job_mgr.submit_task_jobs(
@@ -116,11 +95,45 @@ async def test_force_trigger_does_not_override_run_mode(
             [foo],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)
+
         assert foo.run_mode == 'skip'
 
 
+async def test_run_mode_skip_abides_by_held(
+    flow,
+    scheduler,
+    run,
+    complete
+):
+    """Tasks with run mode = skip will continue to abide by the
+    is_held flag as normal.
+
+    Taken from spec at
+    https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md#proposal
+    """
+    wid = flow({
+        'scheduling': {'graph': {'R1': 'foo'}},
+        'runtime': {'foo': {'run mode': 'skip'}}
+    })
+    schd = scheduler(wid, run_mode="live", paused_start=False)
+    async with run(schd):
+        foo = schd.pool.get_tasks()[0]
+        assert foo.state.is_held is False
+
+        # Hold task, check that it's held:
+        schd.pool.hold_tasks('1/foo')
+        assert foo.state.is_held is True
+
+        # Run to completion, should happen if task isn't held:
+        with pytest.raises(
+            Exception,
+            match="Timeout waiting for workflow to shut down"
+        ):
+            await complete(schd, timeout=5)
+
+
 async def test_run_mode_override_from_broadcast(
-    flow, scheduler, run, complete, log_filter
+    flow, scheduler, start, complete, log_filter, capture_live_submissions
 ):
     """Test that run_mode modifications only apply to one task.
     """
@@ -136,17 +149,17 @@ async def test_run_mode_override_from_broadcast(
     id_ = flow(cfg)
     schd = scheduler(id_, run_mode='live', paused_start=False)
 
-    async with run(schd):
+    async with start(schd):
         schd.broadcast_mgr.put_broadcast(
             ['1000'], ['foo'], [{'run mode': 'skip'}])
 
-        foo_1000, foo_1001 = schd.pool.get_tasks()
+        foo_1000 = schd.pool.get_task(ISO8601Point('1000'), 'foo')
+        foo_1001 = schd.pool.get_task(ISO8601Point('1001'), 'foo')
 
         schd.task_job_mgr.submit_task_jobs(
             schd.workflow,
             [foo_1000, foo_1001],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)
-
         assert foo_1000.run_mode == 'skip'
-        assert foo_1001.run_mode == 'live'
+        assert capture_live_submissions() == {'1001/foo'}

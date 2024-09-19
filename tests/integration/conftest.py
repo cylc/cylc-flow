@@ -33,6 +33,7 @@ from cylc.flow.scripts.install import (
     install as cylc_install,
     get_option_parser as install_gop
 )
+from cylc.flow.task_state import TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED
 from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
@@ -46,6 +47,7 @@ from .utils.flow_tools import (
     _run_flow,
     _start_flow,
 )
+
 
 if TYPE_CHECKING:
     from cylc.flow.network.client import WorkflowRuntimeClient
@@ -672,3 +674,43 @@ def reftest(run, reflog, complete):
         return triggers
 
     return _reftest
+
+
+@pytest.fixture
+def capture_live_submissions(capcall, monkeypatch):
+    """Capture live submission attempts.
+
+    This prevents real jobs from being submitted to the system.
+
+    If you call this fixture from a test, it will return a set of tasks that
+    would have been submitted had this fixture not been used.
+    """
+    def fake_submit(self, _workflow, itasks, *_):
+        self.submit_nonlive_task_jobs(_workflow, itasks, 'simulation')
+        for itask in itasks:
+            for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
+                self.task_events_mgr.process_message(
+                    itask,
+                    'INFO',
+                    status,
+                    '2000-01-01T00:00:00Z',
+                    '(received)',
+                )
+        return itasks
+
+    # suppress and capture live submissions
+    submit_live_calls = capcall(
+        'cylc.flow.task_job_mgr.TaskJobManager.submit_livelike_task_jobs',
+        fake_submit)
+
+
+
+    def get_submissions():
+        nonlocal submit_live_calls
+        return {
+            itask.identity
+            for ((_self, _workflow, itasks, *_), _kwargs) in submit_live_calls
+            for itask in itasks
+        }
+
+    return get_submissions

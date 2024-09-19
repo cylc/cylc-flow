@@ -14,7 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from typing import Any, Dict
+
+from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Point
+
 
 # Define here to ensure test doesn't just mirror code:
 KGO = {
@@ -22,11 +27,11 @@ KGO = {
         'flow_nums': '[1]',
         'is_manual_submit': 0,
         'try_num': 1,
-        'submit_status': None,
+        'submit_status': 0,
         'run_signal': None,
-        'run_status': None,
-        'platform_name': 'localhost',
-        'job_runner_name': 'background',
+        'run_status': 0,
+        'platform_name': 'simulation',
+        'job_runner_name': 'simulation',
         'job_id': None},
     'skip': {
         'flow_nums': '[1]',
@@ -36,7 +41,7 @@ KGO = {
         'run_signal': None,
         'run_status': 0,
         'platform_name': 'skip',
-        'job_runner_name': 'simulation',
+        'job_runner_name': 'skip',
         'job_id': None},
 }
 
@@ -47,7 +52,41 @@ def not_time(data: Dict[str, Any]):
     return {k: v for k, v in data.items() if 'time' not in k}
 
 
-async def test_task_jobs(flow, scheduler, start):
+@pytest.fixture
+def submit_and_check_db():
+    """Wraps up testing that we want to do repeatedly in
+    test_db_task_jobs.
+    """
+    def _inner(schd):
+        # Submit task jobs:
+        schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            schd.server.curve_auth,
+            schd.server.client_pub_key_dir
+        )
+        # Make sure that db changes are enacted:
+        schd.workflow_db_mgr.process_queued_ops()
+
+        for mode, kgo in KGO.items():
+            task_jobs = schd.workflow_db_mgr.pub_dao.select_task_job(1, mode)
+
+            # Check all non-datetime items against KGO:
+            assert not_time(task_jobs) == kgo, (
+                f'Mode {mode}: incorrect db entries.')
+
+            # Check that timestamps have been created:
+            for timestamp in [
+                'time_submit', 'time_submit_exit', 'time_run', 'time_run_exit'
+            ]:
+                assert task_jobs[timestamp] is not None
+    return _inner
+
+
+async def test_db_task_jobs(
+    flow, scheduler, start, capture_live_submissions,
+    submit_and_check_db
+):
     """Ensure that task job data is added to the database correctly
     for each run mode.
     """
@@ -58,22 +97,33 @@ async def test_task_jobs(flow, scheduler, start):
             mode: {'run mode': mode} for mode in KGO}
     }))
     async with start(schd):
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir
-        )
-        schd.workflow_db_mgr.process_queued_ops()
+        # Reference all task proxies so we can examine them
+        # at the end of the test:
+        itask_skip = schd.pool.get_task(IntegerPoint('1'), 'skip')
+        itask_live = schd.pool.get_task(IntegerPoint('1'), 'live')
 
-        for mode, kgo in KGO.items():
-            taskdata = not_time(
-                schd.workflow_db_mgr.pub_dao.select_task_job(1, mode))
-            assert taskdata == kgo, (
-                f'Mode {mode}: incorrect db entries.')
 
+        submit_and_check_db(schd)
+
+        # Set outputs to failed:
         schd.pool.set_prereqs_and_outputs('*', ['failed'], [], [])
 
+        submit_and_check_db(schd)
+
+        assert itask_live.run_mode == 'simulation'
+        assert itask_skip.run_mode == 'skip'
+
+
+async def test_db_task_states(
+    one_conf, flow, scheduler, start
+):
+    """Test that tasks will have the same information entered into the task
+    state database whichever mode is used.
+    """
+    conf = one_conf
+    conf['runtime'] = {'one': {'run mode': 'skip'}}
+    schd = scheduler(flow(conf))
+    async with start(schd):
         schd.task_job_mgr.submit_task_jobs(
             schd.workflow,
             schd.pool.get_tasks(),
@@ -81,15 +131,18 @@ async def test_task_jobs(flow, scheduler, start):
             schd.server.client_pub_key_dir
         )
         schd.workflow_db_mgr.process_queued_ops()
+        result = schd.workflow_db_mgr.pri_dao.connect().execute(
+            'SELECT * FROM task_states').fetchone()
 
-        for mode, kgo in KGO.items():
-            taskdata = not_time(
-                schd.workflow_db_mgr.pub_dao.select_task_job(1, mode))
-            assert taskdata == kgo, (
-                f'Mode {mode}: incorrect db entries.')
+        # Submit number has been added to the table:
+        assert result[5] == 1
+        # time_created added to the table
+        assert result[3]
 
 
-async def test_mean_task_time(flow, scheduler, run, complete):
+async def test_mean_task_time(
+    flow, scheduler, start, complete, capture_live_submissions
+):
     """Non-live tasks are not added to the list of task times,
     so skipping tasks will not affect how long Cylc expects tasks to run.
     """
@@ -100,21 +153,26 @@ async def test_mean_task_time(flow, scheduler, run, complete):
             'graph': {'P1Y': 'foo'}}
     }), run_mode='live')
 
-    async with run(schd):
-        tasks = schd.pool.get_tasks()
-        tdef = tasks[0].tdef
-        assert list(tdef.elapsed_times) == []
+    async with start(schd):
+        itask = schd.pool.get_task(ISO8601Point('10000101T0000Z'), 'foo')
+        assert list(itask.tdef.elapsed_times) == []
 
         # Make the task run in skip mode at one cycle:
         schd.broadcast_mgr.put_broadcast(
             ['1000'], ['foo'], [{'run mode': 'skip'}])
 
+        # Fake adding some other examples of the task:
+        itask.tdef.elapsed_times.extend([133.0, 132.4])
+
         # Submit two tasks:
         schd.task_job_mgr.submit_task_jobs(
             schd.workflow,
-            tasks[:2],
+            [itask],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir
         )
-        await complete(schd, '10010101T0000Z/foo')
-        assert len(tdef.elapsed_times) == 1
+
+        # Ensure that the skipped task has succeeded, and that the
+        # number of items in the elapsed_times has not changed.
+        assert itask.state.status == 'succeeded'
+        assert len(itask.tdef.elapsed_times) == 2

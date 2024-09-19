@@ -36,7 +36,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
@@ -73,8 +73,12 @@ def submit_task_job(
     itask.submit_num += 1
 
     itask.platform = {
-        'name': RunMode.SIMULATION.value, 'install target': 'localhost'}
-    itask.platform['name'] = RunMode.SIMULATION.value
+        'name': RunMode.SIMULATION.value,
+        'install target': 'localhost',
+        'hosts': ['localhost'],
+        'disable task event handlers':
+            rtconfig['simulation']['disable task event handlers'],
+    }
     itask.summary['job_runner_name'] = RunMode.SIMULATION.value
     itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (
         itask.mode_settings.simulated_run_length
@@ -88,6 +92,7 @@ def submit_task_job(
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],
+            'time_run': now[1],
             'try_num': itask.get_try_num(),
             'flow_nums': str(list(itask.flow_nums)),
             'is_manual_submit': itask.is_manual_submit,
@@ -311,7 +316,10 @@ def sim_time_check(
     for itask in itasks:
         if (
             itask.state.status != TASK_STATUS_RUNNING
-            or itask.run_mode and itask.run_mode != RunMode.SIMULATION.value
+            or (
+                itask.run_mode
+                and itask.run_mode != RunMode.SIMULATION.value
+            )
         ):
             continue
 

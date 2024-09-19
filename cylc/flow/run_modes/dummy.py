@@ -26,7 +26,7 @@ from cylc.flow.run_modes.simulation import (
     get_simulated_run_len,
     parse_fail_cycle_points
 )
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import RunMode
 from cylc.flow.platforms import get_platform
 
 

@@ -38,9 +38,9 @@ from metomi.isodatetime.timezone import get_local_time_zone
 from cylc.flow import LOG
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.platforms import get_platform
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
-    RunMode,
     TaskState,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
@@ -566,6 +566,7 @@ class TaskProxy:
         Return a set of unmatched task messages.
 
         """
+
         used = self.state.satisfy_me(task_messages, mode)
         return set(task_messages) - used
 

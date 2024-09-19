@@ -68,6 +68,8 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_OUT,
     JOB_LOG_ERR,
 )
+from cylc.flow.run_modes import (
+    JOBLESS_MODES, RunMode, disable_task_event_handlers)
 from cylc.flow.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.flow.task_state import (
@@ -80,7 +82,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
-    RunMode,
 )
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
@@ -940,7 +941,7 @@ class TaskEventsManager():
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
-        if RunMode.disable_task_event_handlers(itask):
+        if disable_task_event_handlers(itask):
             return
         msg = ""
         if message != f"job {event}":
@@ -1541,7 +1542,7 @@ class TaskEventsManager():
         # do not submit jobs.
         if (
             not itask.run_mode
-            or itask.run_mode in RunMode.JOBLESS_MODES.value
+            or itask.run_mode in JOBLESS_MODES
             or forced
         ):
             job_conf = {"submit_num": itask.submit_num}

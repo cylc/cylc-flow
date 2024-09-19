@@ -34,7 +34,6 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
-from cylc.flow.task_state import RunMode
 
 
 PLATFORMS = {

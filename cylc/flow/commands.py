@@ -76,9 +76,10 @@ import cylc.flow.flags
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED, RunMode)
+    TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED)
 from cylc.flow.workflow_status import StopMode
 
 from metomi.isodatetime.parsers import TimePointParser

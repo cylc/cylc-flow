@@ -272,6 +272,7 @@ class Prerequisite:
 
         """
         satisfied_message: SatisfiedState
+
         if mode != 'live':
             satisfied_message = self.DEP_STATE_SATISFIED_BY.format(
                 mode)   # type: ignore

@@ -22,8 +22,9 @@ from cylc.flow.task_id import (
     _TASK_NAME_CHARACTERS,
     _TASK_NAME_PREFIX,
 )
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_qualifiers import TASK_QUALIFIERS
-from cylc.flow.task_state import TASK_STATUSES_ORDERED, RunMode
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',

@@ -49,9 +49,10 @@ from cylc.flow.data_store_mgr import (
 )
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
+from cylc.flow.run_modes import (
+    TASK_CONFIG_RUN_MODES, WORKFLOW_RUN_MODES, RunMode)
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
-    RunMode,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -605,20 +606,19 @@ def describe_run_mode(run_mode: Optional['Enum']) -> str:
     return getattr(RunMode, run_mode.value.upper()).__doc__
 
 
+# The run mode for the workflow.
 WorkflowRunMode = graphene.Enum(
     'WorkflowRunMode',
-    [(m.capitalize(), m) for m in RunMode.WORKFLOW_MODES.value],
-    description=describe_run_mode,
+    [(m.capitalize(), m) for m in WORKFLOW_RUN_MODES],
+    description=lambda x: RunMode(x.value).describe() if x else None,
 )
-"""The run mode for the workflow."""
 
-
+# The run mode for the task.
 TaskRunMode = graphene.Enum(
     'TaskRunMode',
-    [(m.capitalize(), m) for m in RunMode.WORKFLOW_MODES.value],
-    description=describe_run_mode,
+    [(m.capitalize(), m) for m in TASK_CONFIG_RUN_MODES],
+    description=lambda x: RunMode(x.value).describe() if x else None,
 )
-"""The run mode for tasks."""
 
 
 class Workflow(ObjectType):

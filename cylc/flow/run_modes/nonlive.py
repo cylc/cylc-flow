@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Dict, List
 
 from cylc.flow import LOG
 from cylc.flow.run_modes.skip import check_task_skip_config
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef

@@ -31,7 +31,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import JOBLESS_MODES
 
 if TYPE_CHECKING:
     from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -267,7 +267,7 @@ def platform_from_name(
             return platform_data
 
     # If platform name in run mode and not otherwise defined:
-    if platform_name in RunMode.JOBLESS_MODES.value:
+    if platform_name in JOBLESS_MODES:
         return platforms['localhost']
 
     raise PlatformLookupError(
@@ -652,7 +652,7 @@ def get_install_target_to_platforms_map(
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     ret: Dict[str, List[Dict[str, Any]]] = {}
-    for p_name in set(platform_names) - set(RunMode.JOBLESS_MODES.value):
+    for p_name in set(platform_names) - set(JOBLESS_MODES):
         try:
             platform = platform_from_name(p_name)
         except PlatformLookupError as exc:
@@ -665,10 +665,10 @@ def get_install_target_to_platforms_map(
     # Map jobless modes to localhost.
     if 'localhost' in ret:
         ret['localhost'] += [
-            {'name': mode} for mode in RunMode.JOBLESS_MODES.value]
+            {'name': mode} for mode in JOBLESS_MODES]
     else:
         ret['localhost'] = [
-            {'name': mode} for mode in RunMode.JOBLESS_MODES.value]
+            {'name': mode} for mode in JOBLESS_MODES]
     return ret
 
 

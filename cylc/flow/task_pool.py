@@ -42,6 +42,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
+from cylc.flow.run_modes import RunMode
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -53,7 +54,6 @@ from cylc.flow.task_events_mgr import (
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    RunMode,
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_FINAL,
     TASK_STATUS_WAITING,
@@ -1433,9 +1433,10 @@ class TaskPool:
                     tasks = [c_task]
 
                 for t in tasks:
+
                     t.satisfy_me(
                         [itask.tokens.duplicate(task_sel=output)],
-                        getattr(itask.tdef, 'run_mode', RunMode.LIVE.value)
+                        mode=itask.run_mode
                     )
                     self.data_store_mgr.delta_task_prerequisite(t)
                     if not in_pool:
@@ -1564,7 +1565,7 @@ class TaskPool:
                 if completed_only:
                     c_task.satisfy_me(
                         [itask.tokens.duplicate(task_sel=message)],
-                        itask.run_mode
+                        mode=itask.run_mode
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)

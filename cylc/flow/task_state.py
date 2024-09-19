@@ -16,8 +16,6 @@
 
 """Task state related logic."""
 
-
-from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -41,7 +39,6 @@ from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
-    from cylc.flow.option_parsers import Values
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqMessage
     from cylc.flow.taskdef import TaskDef
@@ -177,73 +174,6 @@ TASK_STATE_MAP = {
     TASK_STATUS_FAILED: TASK_OUTPUT_FAILED,
     TASK_STATUS_SUCCEEDED: TASK_OUTPUT_SUCCEEDED,
 }
-
-
-class RunMode(Enum):
-    """The possible run modes of a task/workflow."""
-
-    LIVE = 'live'
-    """Task will run normally."""
-
-    SIMULATION = 'simulation'
-    """Simulates job submission with configurable exection time
-    and succeeded/failed outcomes(does not submit real jobs)."""
-
-    DUMMY = 'dummy'
-    """Submits real jobs with empty scripts."""
-
-    SKIP = 'skip'
-    """Skips job submission; sets required outputs (by default) or
-    configured outputs."""
-
-    WORKFLOW_MODES = (LIVE, DUMMY, SIMULATION, SKIP)
-    """Workflow mode not sensible mode for workflow.
-
-    n.b. not using a set to ensure ordering in CLI
-    """
-
-    OVERRIDING_MODES = frozenset({LIVE, SKIP})
-    """Modes which can be set in task config."""
-
-    NON_OVERRIDABLE_MODES = frozenset({SIMULATION, DUMMY})
-
-    JOBLESS_MODES = frozenset({SKIP, SIMULATION})
-    """Modes which completely ignore the standard submission path."""
-
-    def describe(self):
-        """Return user friendly description of run mode.
-
-        For use by configuration spec documenter.
-        """
-        if self == self.LIVE:
-            return "Task will run normally."
-        if self == self.SKIP:
-            return (
-                "Skips job submission; sets required outputs"
-                " (by default) or configured outputs.")
-        raise KeyError(f'No description for {self}.')
-
-    @staticmethod
-    def get(options: 'Values') -> str:
-        """Return the workflow run mode from the options."""
-        return getattr(options, 'run_mode', None) or RunMode.LIVE.value
-
-    @staticmethod
-    def disable_task_event_handlers(itask):
-        """Should we disable event handlers for this task?
-
-        No event handlers in simulation mode, or in skip mode
-        if we don't deliberately enable them:
-        """
-        mode = itask.run_mode
-        return (
-            mode == RunMode.SIMULATION.value
-            or (
-                mode == RunMode.SKIP.value
-                and itask.platform.get(
-                    'disable task event handlers', False)
-            )
-        )
 
 
 def status_leq(status_a, status_b):

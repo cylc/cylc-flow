@@ -26,7 +26,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED
 )
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef
@@ -39,6 +39,7 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict,
+    _workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in skip mode.
@@ -46,10 +47,6 @@ def submit_task_job(
     Returns:
         True - indicating that TaskJobManager need take no further action.
     """
-    # Don't do anything if task is held:
-    if itask.state.is_held:
-        return True
-
     task_job_mgr._set_retry_timers(itask, rtconfig)
     itask.summary['started_time'] = now[0]
     itask.waiting_on_job_prep = False
@@ -63,7 +60,6 @@ def submit_task_job(
             rtconfig['skip']['disable task event handlers'],
         'execution polling intervals': []
     }
-    itask.platform['name'] = RunMode.SKIP.value
     itask.summary['job_runner_name'] = RunMode.SKIP.value
     itask.run_mode = RunMode.SKIP.value
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
@@ -72,11 +68,12 @@ def submit_task_job(
             'try_num': itask.get_try_num(),
             'flow_nums': str(list(itask.flow_nums)),
             'is_manual_submit': itask.is_manual_submit,
-            'job_runner_name': RunMode.SIMULATION.value,
-            'platform_name': RunMode.SIMULATION.value,
+            'job_runner_name': RunMode.SKIP.value,
+            'platform_name': RunMode.SKIP.value,
             'submit_status': 0   # Submission has succeeded
         }
     )
+    task_job_mgr.workflow_db_mgr.put_update_task_state(itask)
     for output in process_outputs(itask, rtconfig):
         task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
 

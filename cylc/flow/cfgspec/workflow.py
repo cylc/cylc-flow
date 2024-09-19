@@ -56,8 +56,9 @@ from cylc.flow.parsec.validate import (
 from cylc.flow.platforms import (
     fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
     is_platform_definition_subshell)
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import EventData
-from cylc.flow.task_state import RunMode
+from cylc.flow.run_modes import TASK_CONFIG_RUN_MODES
 
 
 # Regex to check whether a string is a command
@@ -1338,8 +1339,8 @@ with Conf(
             )
             Conf(
                 'run mode', VDR.V_STRING,
-                options=list(RunMode.OVERRIDING_MODES.value) + [''],
-                default='',
+                options=list(TASK_CONFIG_RUN_MODES),
+                default=RunMode.LIVE.value,
                 desc=f'''
                     For a workflow run in live mode run this task in skip
                     mode.
