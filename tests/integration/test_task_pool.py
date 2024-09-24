@@ -1085,12 +1085,9 @@ async def test_no_flow_tasks_dont_spawn(
                 'R1': 'a => b => c'
             }
         },
-        'scheduler': {
-            'allow implicit tasks': 'true',
-        },
     })
 
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         task_a = schd.pool.get_tasks()[0]
 
@@ -1099,29 +1096,22 @@ async def test_no_flow_tasks_dont_spawn(
 
         # Set as completed: should not spawn children.
         schd.pool.set_prereqs_and_outputs(
-            [task_a.identity], None, None, [FLOW_NONE])
+            [task_a.identity], [], [], [FLOW_NONE]
+        )
+        assert not schd.pool.get_tasks()
 
-        for flow_nums, force, pool in (
+        for flow_nums, expected_pool in (
             # outputs yielded from a no-flow task should not spawn downstreams
-            (set(), False, []),
-            # forced spawning downstream of a no-flow task should spawn
-            # downstreams with flow_nums={}
-            (set(), True, [('1/b', set())]),
+            (set(), []),
             # outputs yielded from a task with flow numbers should spawn
             # downstreams in the same flow
-            ({1}, False, [('1/b', {1})]),
-            # forced spawning should work in the same way
-            ({1}, True, [('1/b', {1})]),
+            ({1}, [('1/b', {1})]),
         ):
             # set the flow-nums on 1/a
             task_a.flow_nums = flow_nums
 
             # spawn on the succeeded output
-            schd.pool.spawn_on_output(
-                task_a,
-                TASK_OUTPUT_SUCCEEDED,
-                forced=force,
-            )
+            schd.pool.spawn_on_output(task_a, TASK_OUTPUT_SUCCEEDED)
 
             schd.pool.spawn_on_all_outputs(task_a)
 
@@ -1129,7 +1119,7 @@ async def test_no_flow_tasks_dont_spawn(
             assert [
                 (itask.identity, itask.flow_nums)
                 for itask in schd.pool.get_tasks()
-            ] == pool
+            ] == expected_pool
 
 
 async def test_task_proxy_remove_from_queues(

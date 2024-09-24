@@ -35,6 +35,7 @@ from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     NamedTuple,
@@ -437,6 +438,9 @@ class TaskEventsManager():
 
     workflow_cfg: Dict[str, Any]
     uuid_str: str
+    # To be set by the task pool:
+    spawn_func: Callable[['TaskProxy', str], Any]
+
     mail_interval: float = 0
     mail_smtp: Optional[str] = None
     mail_footer: Optional[str] = None
@@ -459,8 +463,6 @@ class TaskEventsManager():
         self._event_timers: Dict[EventKey, Any] = {}
         # NOTE: flag for DB use
         self.event_timers_updated = True
-        # To be set by the task pool:
-        self.spawn_func = None
         self.timestamp = timestamp
         self.bad_hosts = bad_hosts
 
@@ -1966,7 +1968,7 @@ class TaskEventsManager():
             )
             self.bad_hosts.clear()
 
-    def spawn_children(self, itask, output):
+    def spawn_children(self, itask: 'TaskProxy', output: str) -> None:
         # update DB task outputs
         self.workflow_db_mgr.put_update_task_outputs(itask)
         # spawn child-tasks

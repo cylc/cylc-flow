@@ -116,6 +116,7 @@ from cylc.flow.wallclock import (
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.scheduler import Scheduler
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -468,7 +469,7 @@ class DataStoreMgr:
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
     def __init__(self, schd, n_edge_distance=1):
-        self.schd = schd
+        self.schd: Scheduler = schd
         self.id_ = Tokens(
             user=self.schd.owner,
             workflow=self.schd.workflow,
@@ -1182,10 +1183,7 @@ class DataStoreMgr:
         t_id = self.definition_id(name)
 
         if itask is None:
-            itask = self.schd.pool.get_task(point_string, name)
-
-        if itask is None:
-            itask = TaskProxy(
+            itask = self.schd.pool.get_task(point_string, name) or TaskProxy(
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
@@ -1226,6 +1224,7 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
+            flow_nums=serialise_set(flow_nums),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
