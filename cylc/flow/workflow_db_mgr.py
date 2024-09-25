@@ -328,10 +328,13 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_STOP_TASK, "value": schd.stop_task},
         ])
 
-        # Retrieve raw initial cycle point stored on the config.
-        value = getattr(schd.config, 'evaluated_icp', None)
+        # Store raw initial cycle point in the DB.
+        value = schd.config.evaluated_icp
         value = None if value == 'reload' else value
-        self.put_workflow_params_1(self.KEY_INITIAL_CYCLE_POINT, value)
+        self.put_workflow_params_1(
+            self.KEY_INITIAL_CYCLE_POINT,
+            value or str(schd.config.initial_point)
+        )
 
         for key in (
             self.KEY_FINAL_CYCLE_POINT,
