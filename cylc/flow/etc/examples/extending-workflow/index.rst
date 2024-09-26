@@ -79,7 +79,7 @@ Running Tasks At The `stop after cycle point`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you have tasks that you want to run before the workflow shuts down at the
-`stop after cycle point`, use the recurrence ``R1/<cycle-point>`` to schedudule
+`stop after cycle point`, use the recurrence ``R1/<cycle-point>`` to schedule
 them, e.g:
 
 .. code-block:: cylc
