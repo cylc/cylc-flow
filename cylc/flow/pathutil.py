@@ -489,7 +489,8 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
 
 
 def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
-    """Return whether or not path1 is relative to path2.
+    """Return whether or not path1 is relative to path2 (including if they are
+    the same path).
 
     Normalizes both paths to avoid trickery with paths containing `..`
     somewhere in them.
