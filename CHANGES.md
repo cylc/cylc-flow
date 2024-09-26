@@ -61,8 +61,6 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 ### 🔧 Fixes
 
-[#6178](https://github.com/cylc/cylc-flow/pull/6178) - Fix an issue where Tui could hang when closing.
-
 [#6186](https://github.com/cylc/cylc-flow/pull/6186) - Fixed bug where using flow numbers with `cylc set` would not work correctly.
 
 [#6200](https://github.com/cylc/cylc-flow/pull/6200) - Fixed bug where a stalled paused workflow would be incorrectly reported as running, not paused
@@ -78,6 +76,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 [#6170](https://github.com/cylc/cylc-flow/pull/6170) - Fix an issue where the Cylc logo could appear in the workflow log.
 
 [#6176](https://github.com/cylc/cylc-flow/pull/6176) - Fix bug where jobs which fail to submit are not shown in GUI/TUI if submission retries are set.
+
+[#6178](https://github.com/cylc/cylc-flow/pull/6178) - Fix an issue where Tui could hang when closing.
 
 ## __cylc-8.3.0 (Released 2024-06-18)__
 

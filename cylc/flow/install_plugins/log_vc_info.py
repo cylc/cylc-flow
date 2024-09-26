@@ -253,7 +253,7 @@ def _run_cmd(
     except FileNotFoundError as exc:
         # This will only be raised if the VCS command is not installed,
         # otherwise Popen() will succeed with a non-zero return code
-        raise VCSNotInstalledError(vcs, exc)
+        raise VCSNotInstalledError(vcs, exc) from None
     if stdout == PIPE:
         out, err = pipe_poller(proc, proc.stdout, proc.stderr)
     else:

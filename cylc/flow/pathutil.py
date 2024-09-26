@@ -45,6 +45,14 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
 """Matches relative paths that are explicit (starts with ./)"""
 
 SHELL_ENV_VARS = re.compile(r'\$[^$/]*')
+SYMLINKABLE_LOCATIONS: Dict[str, str] = {
+    # Location: Version Added
+    'share': '8.0.0',
+    'share/cycle': '8.0.0',
+    'log': '8.0.0',
+    'log/job': '8.4.0',
+    'work': '8.0.0',
+}
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -234,7 +242,7 @@ def get_dirs_to_symlink(
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(
             base_dir, 'cylc-run', workflow_id)
-    for dir_ in ['log', 'share', 'share/cycle', 'work']:
+    for dir_ in SYMLINKABLE_LOCATIONS:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
@@ -272,7 +280,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
         except OSError as exc:
             raise WorkflowFilesError(
                 f"Failed to remove broken symlink {path}\n{exc}"
-            )
+            ) from None
     try:
         target.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
@@ -280,7 +288,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
             f"Symlink dir target already exists: ({path} ->) {target}\n"
             "Tip: in future, use 'cylc clean' instead of manually deleting "
             "workflow run dirs."
-        )
+        ) from None
 
     # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
@@ -291,7 +299,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
         path.symlink_to(target)
         return True
     except OSError as exc:
-        raise WorkflowFilesError(f"Error when symlinking\n{exc}")
+        raise WorkflowFilesError(f"Error when symlinking\n{exc}") from None
 
 
 def remove_dir_and_target(path: Union[Path, str]) -> None:

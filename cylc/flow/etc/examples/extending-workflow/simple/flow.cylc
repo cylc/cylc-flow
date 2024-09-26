@@ -1,0 +1,24 @@
+[meta]
+    title = "Basic extendable workflow"
+    description = """
+        Use the "stop after cycle point" rather than the "final cycle point"
+        to allow this workflow to be easily extended at a later date.
+    """
+
+[scheduler]
+    # use the year for the cycle point
+    # (strip off the month, day, hour and minute)
+    cycle point format = CCYY
+
+[scheduling]
+    initial cycle point = 2000
+    stop after cycle point = 2002  # stop after two years of simulated time
+    [[graph]]
+        P1Y = """
+            z[-P1Y] => a
+            a => z
+        """
+
+[runtime]
+    [[a]]
+    [[z]]
