@@ -31,7 +31,7 @@ Active tasks (n=0) already belong to a flow.
 * by default they run in the same flow
 * with --flow=all, they are assigned to all active flows
 * with --flow=INT or --flow=new, the new flow merges with the old one
-* --flow=none is ignored, to avoid blocking the existing flow
+* --flow=none is ignored
 
 Note --flow=new increments the global flow counter so if you need multiple
 commands to start a single new flow only use --flow=new in the first command,

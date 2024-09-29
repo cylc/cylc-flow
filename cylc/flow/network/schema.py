@@ -2000,7 +2000,7 @@ class FlowMutationArguments:
         graphene.NonNull(Flow),
         default_value=[],
         description=sstrip(f'''
-            The flow(s) to trigger these tasks in.
+            The flow(s) to trigger/set these tasks in.
 
             By default:
             * active tasks (n=0) keep their existing flow assignment
