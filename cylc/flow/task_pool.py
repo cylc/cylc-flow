@@ -1908,7 +1908,7 @@ class TaskPool:
             flow_descr: description of new flow
 
         """
-        # Get matching pool tasks and future task definitions.
+        # Get matching pool tasks and inactive task definitions.
         itasks, inactive_tasks, unmatched = self.filter_task_proxies(
             items,
             future=True,
@@ -2150,7 +2150,7 @@ class TaskPool:
               unless flow-wait is set.
 
         """
-        # Get matching tasks proxies, and matching future task IDs.
+        # Get matching tasks proxies, and matching inactive task IDs.
         existing_tasks, future_ids, unmatched = self.filter_task_proxies(
             items, future=True, warn=False,
         )

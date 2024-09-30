@@ -2004,9 +2004,9 @@ class FlowMutationArguments:
 
             By default:
             * active tasks (n=0) keep their existing flow assignment
-            * future tasks (n>0) get assigned all active flows
+            * inactive tasks (n>0) get assigned all active flows
 
-            Otherwise you can assign (future tasks) or add to (active tasks):
+            Otherwise you can assign (inactive tasks) or add to (active tasks):
             * a list of integer flow numbers
             or a single-item list containing one of the following strings:
             * {FLOW_ALL} - all active flows

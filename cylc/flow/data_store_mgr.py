@@ -1419,7 +1419,7 @@ class DataStoreMgr:
             itask, is_parent = self.db_load_task_proxies[relative_id]
             itask.submit_num = submit_num
             flow_nums = deserialise_set(flow_nums_str)
-            # Do not set states and outputs for future tasks in flow.
+            # Do not set states and outputs for inactive tasks in flow.
             if (
                     itask.flow_nums and
                     flow_nums != itask.flow_nums and
