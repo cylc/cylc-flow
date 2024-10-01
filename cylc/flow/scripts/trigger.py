@@ -60,7 +60,6 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.flow_mgr import add_flow_opts
-from cylc.flow.command_validation import flow_opts
 
 
 if TYPE_CHECKING:
@@ -122,7 +121,6 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-    flow_opts(options.flow, options.flow_wait)
     rets = call_multi(
         partial(run, options),
         *ids,
