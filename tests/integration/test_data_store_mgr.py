@@ -350,3 +350,37 @@ async def test_absolute_graph_edges(flow, scheduler, start):
             # +2 for Cylc's runahead
             for cycle in range(1, runahead_cycles + 3)
         }
+
+
+async def test_flow_numbers(flow, scheduler, start):
+    """It should update flow numbers when a task is triggered.
+
+    See https://github.com/cylc/cylc-flow/issues/6114
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+
+        # the task should exist in the original flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[1]'
+
+        # force trigger the task in a new flow
+        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+
+        # update the data store
+        await schd.update_data_structure()
+
+        # the task should now exist in the new flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[2]'
