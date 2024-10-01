@@ -194,7 +194,7 @@ WALLCLOCK_DIRECTIVES = get_wallclock_directives()
 
 def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
     """Check for job runner specific directives
-    equivelent to exection time limit.
+    equivalent to exection time limit.
 
     It's recommended that users prefer execution time limit
     because it gives the Cylc scheduler awareness should communications
