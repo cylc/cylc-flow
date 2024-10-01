@@ -21,7 +21,7 @@ from getpass import getuser
 from itertools import zip_longest
 import re
 from time import time
-from typing import Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
@@ -40,6 +40,10 @@ from cylc.flow.wallclock import get_unix_time_from_time_string
 # the Tui user, note this is always the same as the workflow owner
 # (Tui doesn't do multi-user stuff)
 ME = getuser()
+
+
+Node = Dict[str, Any]
+NodeStore = Dict[str, Dict[str, Node]]
 
 
 @contextmanager
@@ -137,12 +141,21 @@ def idpop(id_):
     return tokens.id
 
 
-def compute_tree(data):
-    """Digest GraphQL data to produce a tree."""
-    root_node = add_node('root', 'root', {}, data={})
+def compute_tree(data: dict, prune_families: bool = False) -> Node:
+    """Digest GraphQL data to produce a tree.
+
+    Args:
+        data:
+            The workflow data as returned from the GraphQL query.
+        prune_families:
+            If True any empty families will be removed from the tree.
+            Turn this on if task state filters are active.
+
+    """
+    root_node: Node = add_node('root', 'root', create_node_store(), data={})
 
     for flow in data['workflows']:
-        nodes = {}
+        nodes: NodeStore = create_node_store()  # nodes for this workflow
         flow_node = add_node(
             'workflow', flow['id'], nodes, data=flow)
         root_node['children'].append(flow_node)
@@ -197,9 +210,13 @@ def compute_tree(data):
                 job_node['children'] = [job_info_node]
                 task_node['children'].append(job_node)
 
+        # trim empty families / cycles (cycles are just "root" families)
+        if prune_families:
+            _prune_empty_families(nodes)
+
         # sort
-        for (type_, _), node in nodes.items():
-            if type_ != 'task':
+        for type_ in ('workflow', 'cycle', 'family', 'job'):
+            for node in nodes[type_].values():
                 # NOTE: jobs are sorted by submit-num in the GraphQL query
                 node['children'].sort(
                     key=lambda x: NaturalSort(x['id_'])
@@ -221,6 +238,62 @@ def compute_tree(data):
             )
 
     return root_node
+
+
+def _prune_empty_families(nodes: NodeStore) -> None:
+    """Prune empty families from the tree.
+
+    Note, cycles are "root" families.
+
+    We can end up with empty families when filtering by task state. We filter
+    tasks by state in the GraphQL query (so we don't need to perform this
+    filtering client-side), however, we cannot filter families by state because
+    the family state is an aggregate representing a collection of tasks (and or
+    families).
+
+    Args:
+        nodes: Dictionary containing all nodes present in the tree.
+
+    """
+    # go through all families and cycles
+    stack: Set[str] = {*nodes['family'], *nodes['cycle']}
+    while stack:
+        family_id = stack.pop()
+
+        if family_id in nodes['family']:
+            # this is a family
+            family = nodes['family'][family_id]
+            if len(family['children']) > 0:
+                continue
+
+            # this family is empty -> find its parent (family/cycle)
+            _first_parent = family['data']['firstParent']
+            if _first_parent['name'] == 'root':
+                parent_type = 'cycle'
+                parent_id = idpop(_first_parent['id'])
+            else:
+                parent_type = 'family'
+                parent_id = _first_parent['id']
+
+        elif family_id in nodes['cycle']:
+            # this is a cycle
+            family = nodes['cycle'][family_id]
+            if len(family['children']) > 0:
+                continue
+
+            # this cycle is empty -> find its parent (workflow)
+            parent_type = 'workflow'
+            parent_id = idpop(family_id)
+
+        else:
+            # this node has already been pruned
+            continue
+
+        # remove the node from its parent
+        nodes[parent_type][parent_id]['children'].remove(family)
+        if parent_type in {'family', 'cycle'}:
+            # recurse up the family tree
+            stack.add(parent_id)
 
 
 class NaturalSort:
@@ -307,16 +380,39 @@ class NaturalSort:
         return False
 
 
-def dummy_flow(data):
+def dummy_flow(data) -> Node:
     return add_node(
         'workflow',
         data['id'],
-        {},
+        create_node_store(),
         data
     )
 
 
-def add_node(type_, id_, nodes, data=None):
+def create_node_store() -> NodeStore:
+    """Returns a "node store" dictionary for use with add_nodes."""
+    return {  # node_type: {node_id: node}
+        # the root of the tree
+        'root': {},
+        # spring nodes load the workflow when visited
+        '#spring': {},
+        # workflow//cycle/<task/family>/job
+        'workflow': {},
+        'cycle': {},
+        'family': {},
+        'task': {},
+        'job': {},
+        # the node under a job that contains metadata (platform, job_id, etc)
+        'job_info': {},
+    }
+
+
+def add_node(
+    type_: str,
+    id_: str,
+    nodes: NodeStore,
+    data: Optional[dict] = None,
+) -> Node:
     """Create a node add it to the store and return it.
 
     Arguments:
@@ -334,14 +430,14 @@ def add_node(type_, id_, nodes, data=None):
         dict - The requested node.
 
     """
-    if (type_, id_) not in nodes:
-        nodes[(type_, id_)] = {
+    if id_ not in nodes[type_]:
+        nodes[type_][id_] = {
             'children': [],
             'id_': id_,
             'data': data or {},
             'type_': type_
         }
-    return nodes[(type_, id_)]
+    return nodes[type_][id_]
 
 
 def get_job_icon(status):
