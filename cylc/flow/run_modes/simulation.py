@@ -78,6 +78,8 @@ def submit_task_job(
         'hosts': ['localhost'],
         'disable task event handlers':
             rtconfig['simulation']['disable task event handlers'],
+        'submission retry delays': [],
+        'execution retry delays': []
     }
     itask.summary['job_runner_name'] = RunMode.SIMULATION.value
     itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (

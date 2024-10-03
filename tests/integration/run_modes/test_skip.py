@@ -226,3 +226,35 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
         bar = schd.pool.get_task(IntegerPoint(1), 'bar')
         satisfied_message, = bar.state.prerequisites[0]._satisfied.values()
         assert satisfied_message == 'satisfied by skip mode'
+
+
+async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate):
+
+    schd = scheduler(flow(one_conf), run_mode='live')
+    async with start(schd) as log:
+        # Broadcast the task into skip mode, output failed and submit it:
+        schd.broadcast_mgr.put_broadcast(
+            ["1"],
+            ["one"],
+            [
+                {"run mode": "skip"},
+                {"skip": {"outputs": "failed"}},
+            ],
+        )
+        schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            None,
+            None
+        )
+
+        # Broadcast the task into skip mode, output succeeded and submit it:
+        schd.broadcast_mgr.put_broadcast(
+            ['1'], ['one'], [{'skip': {'outputs': 'succeeded'}}]
+        )
+        schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            None,
+            None
+        )

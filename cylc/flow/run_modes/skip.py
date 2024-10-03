@@ -58,7 +58,9 @@ def submit_task_job(
         'hosts': ['localhost'],
         'disable task event handlers':
             rtconfig['skip']['disable task event handlers'],
-        'execution polling intervals': []
+        'execution polling intervals': [],
+        'submission retry delays': [],
+        'execution retry delays': []
     }
     itask.summary['job_runner_name'] = RunMode.SKIP.value
     itask.run_mode = RunMode.SKIP.value
