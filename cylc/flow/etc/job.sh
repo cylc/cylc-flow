@@ -219,7 +219,7 @@ cylc__job__wait_cylc_message_started() {
 # Poll existence of pattern from workflow log for up to a minute.
 cylc__job__poll_grep_workflow_log() {
     local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
-    while ! grep -s "$@" "${CYLC_WORKFLOW_LOG_DIR}/log"; do
+    while ! grep "$@" "${CYLC_WORKFLOW_LOG_DIR}/log"; do
         sleep 1
         if (($(date +%s) > TIMEOUT)); then
             echo "ERROR: poll timed out: grep -s $* ${CYLC_WORKFLOW_LOG_DIR}/log" >&2
