@@ -2175,7 +2175,7 @@ class TaskPool:
               unless flow-wait is set.
 
         TODO: ensure above description of triggering still works.
-        TODO: and original trigger functionality 
+        TODO: and original trigger functionality
 
         (Re)run a selected group of tasks.
 

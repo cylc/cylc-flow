@@ -1279,7 +1279,10 @@ class Scheduler:
             if itask.is_manual_submit:
                 off = f"[] in flow {flow}"
             else:
-                off = f"{itask.state.get_resolved_dependencies()} in flow {flow}"
+                off = (
+                    f"{itask.state.get_resolved_dependencies()}"
+                    f" in flow {flow}"
+                )
             log(f"{itask.identity} -triggered off {off}")
 
         # one or more tasks were passed through the submission pipeline
