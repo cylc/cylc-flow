@@ -1271,7 +1271,6 @@ class Scheduler:
             self.server.client_pub_key_dir,
             is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
         ):
-            LOG.warning(f"SUBMITTING {itask} ... {itask.is_manual_submit}")
             if itask.flow_nums:
                 flow = ','.join(str(i) for i in itask.flow_nums)
             else:

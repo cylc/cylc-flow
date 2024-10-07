@@ -1873,7 +1873,8 @@ class TaskPool:
         prereqs: List[str],
         flow: List[str],
         flow_wait: bool = False,
-        flow_descr: Optional[str] = None
+        flow_descr: Optional[str] = None,
+        trigger: bool = False
     ):
         """Set prerequisites or outputs of target tasks.
 
@@ -1928,8 +1929,7 @@ class TaskPool:
             # Existing task proxies.
             self.merge_flows(itask, flow_nums)
             if prereqs:
-                self._set_prereqs_itask(itask, prereqs, flow_nums)
-                self._force_trigger_if_ready(itask)
+                self._set_prereqs_itask(itask, prereqs, flow_nums, trigger)
             else:
                 self._set_outputs_itask(itask, outputs)
 
@@ -1937,7 +1937,7 @@ class TaskPool:
             tdef = self.config.get_taskdef(name)
             if prereqs:
                 self._set_prereqs_tdef(
-                    point, tdef, prereqs, flow_nums, flow_wait)
+                    point, tdef, prereqs, flow_nums, flow_wait, trigger)
             else:
                 trans = self._get_task_proxy_db_outputs(
                     point, tdef, flow_nums,
@@ -1986,6 +1986,7 @@ class TaskPool:
         itask: 'TaskProxy',
         prereqs: 'List[str]',
         flow_nums: 'Set[int]',
+        trigger: bool = False
     ) -> bool:
         """Set prerequisites on a task proxy.
 
@@ -1993,11 +1994,12 @@ class TaskPool:
 
         Return True if any prereqs are valid, else False.
 
+        Args:
+            trigger: trigger tasks immediately if fully satisfied.
+
         """
         if prereqs == ["all"]:
             itask.state.set_prerequisites_all_satisfied()
-            self._force_trigger_if_ready(itask)
-
         else:
             # Attempt to set the given presrequisites.
             # Log any that aren't valid for the task.
@@ -2011,12 +2013,26 @@ class TaskPool:
             if len(unmatched) == len(prereqs):
                 # No prereqs matched.
                 return False
+        if (
+            itask.state.is_runahead
+            and self.runahead_limit_point is not None
+            and itask.point <= self.runahead_limit_point
+        ):
+            # Release from runahead, and queue it.
+            self.rh_release_and_queue(itask)
+            self.spawn_to_rh_limit(
+                itask.tdef,
+                itask.tdef.next_point(itask.point),
+                itask.flow_nums
+            )
+
+        if trigger:
             self._force_trigger_if_ready(itask)
 
         return True
 
     def _set_prereqs_tdef(
-        self, point, taskdef, prereqs, flow_nums, flow_wait
+        self, point, taskdef, prereqs, flow_nums, flow_wait, trigger=False
     ):
         """Spawn a future task and set prerequisites on it."""
 
@@ -2025,7 +2041,7 @@ class TaskPool:
         )
         if itask is None:
             return
-        if self._set_prereqs_itask(itask, prereqs, flow_nums):
+        if self._set_prereqs_itask(itask, prereqs, flow_nums, trigger):
             self.add_to_pool(itask)
 
     def _get_active_flow_nums(self) -> Set[int]:
@@ -2105,7 +2121,6 @@ class TaskPool:
         """Assumes task is in the pool"""
         # TODO is this flag still needed, and consistent with "cylc set"?
         itask.is_manual_submit = True
-        LOG.warning(f"FORCE TRIGGER {itask} ... {itask.is_manual_submit}")
         itask.reset_try_timers()
         if itask.state_reset(TASK_STATUS_WAITING):
             # (could also be unhandled failed)
@@ -2243,7 +2258,8 @@ class TaskPool:
                     [], ["all"],
                     flow_nums,
                     flow_wait,
-                    flow_descr
+                    flow_descr,
+                    trigger=True
                 )
             for pid in tdef.get_triggers(point):
                 p_point = pid.get_point(point)
@@ -2257,7 +2273,8 @@ class TaskPool:
                     [], [f"{p_point}/{p_name}"],
                     flow_nums,
                     flow_wait,
-                    flow_descr
+                    flow_descr,
+                    trigger=True
                 )
 
     def spawn_parentless_sequential_xtriggers(self):
