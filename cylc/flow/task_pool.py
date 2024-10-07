@@ -1871,9 +1871,10 @@ class TaskPool:
         items: Iterable[str],
         outputs: List[str],
         prereqs: List[str],
-        flow: List[str],
+        flow: Optional[List[str]] = None,
         flow_wait: bool = False,
         flow_descr: Optional[str] = None,
+        flow_nums: Optional[Set[int]] = None,
         trigger: bool = False
     ):
         """Set prerequisites or outputs of target tasks.
@@ -1908,12 +1909,15 @@ class TaskPool:
             items: task ID match patterns
             prereqs: prerequisites to set
             outputs: outputs to set
-            flow: flow numbers for spawned or merged tasks
+            flow: raw input flow numbers for spawned or merged tasks
+            flow_nums: if actual flow numbers have aldready been computed
             flow_wait: wait for flows to catch up before continuing
             flow_descr: description of new flow
 
         """
-        flow_nums = self._get_flow_nums(flow, flow_descr)
+        if flow is not None:
+            flow_nums = self._get_flow_nums(flow, flow_descr)
+
         if flow_nums is None:
             # Illegal flow command opts
             return
@@ -2195,6 +2199,10 @@ class TaskPool:
               unless flow-wait is set.
 
         """
+        flow_nums = self._get_flow_nums(flow, flow_descr)
+        if flow_nums is None:
+            return
+
         # Get matching tasks proxies, and matching future task IDs.
         existing_tasks, future_ids, unmatched = self.filter_task_proxies(
             items, future=True, warn=False,
@@ -2211,9 +2219,10 @@ class TaskPool:
                 self.set_prereqs_and_outputs(
                     [f"{point}/{name}"],
                     [], ["all"],
-                    flow,
+                    None,
                     flow_wait,
                     flow_descr,
+                    flow_nums,
                     trigger=True
                 )
             for pid in tdef.get_triggers(point):
@@ -2226,15 +2235,12 @@ class TaskPool:
                 self.set_prereqs_and_outputs(
                     [f"{point}/{name}"],
                     [], [f"{p_point}/{p_name}"],
-                    flow,
+                    None,
                     flow_wait,
                     flow_descr,
+                    flow_nums,
                     trigger=True
                 )
-
-        flow_nums = self._get_flow_nums(flow, flow_descr)
-        if flow_nums is None:
-            return
 
         for itask in existing_tasks:
             # active tasks, present in the pool
