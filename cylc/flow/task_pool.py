@@ -2173,11 +2173,16 @@ class TaskPool:
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
-        """Force a task to trigger (user command).
+        """Force trigger a selected group of tasks.
 
-        Always run the task, even if a previous run was flow-waited.
+        Set any off-group prerequisites (all task proxies).
+        - Tasks with only off-group prereqs will run immediately
+        Unset any in-flow prerequisites (existing task proxies).
+        - The flow will respect dependencies within the group
 
-        If the task did not run before in the flow:
+        # TODO: check the following (presumably there are tests):
+
+        If a task did not run before in the flow:
           - run it, and spawn on outputs unless flow-wait is set.
             (but load the previous outputs from the DB)
 
@@ -2189,29 +2194,7 @@ class TaskPool:
             - just spawn (if not already spawned in this flow)
               unless flow-wait is set.
 
-        TODO: ensure above description of triggering still works.
-        TODO: and original trigger functionality
-
-        (Re)run a selected group of tasks.
-
-        Set any off-flow prerequisites (all task proxies).
-        Unset any in-flow prerequisites (existing task proxies).
-
-        TODO - check triggering if waiting on xtrigger
-        TODO - CALL _force_trigger on the initial tasks?
-        TODO - get_resolved no longer reports "triggered off []" for manual
-               triggering because we now do it by setting prerequisites as if
-               naturally. Use is_manual_submit instead?
         """
-        # Get flow numbers for the tasks to be triggered.
-        flow_nums = self._get_flow_nums(flow, flow_descr)
-        if flow_nums is None:
-            return
-
-        # if ignore_deps:  TODO
-        #    return self.force_trigger_tasks(
-        #       items, flow, flow_wait, flow_descr)
-
         # Get matching tasks proxies, and matching future task IDs.
         existing_tasks, future_ids, unmatched = self.filter_task_proxies(
             items, future=True, warn=False,
@@ -2220,6 +2203,38 @@ class TaskPool:
             list(future_ids) +
             [(itask.tdef.name, itask.point) for itask in existing_tasks]
         )
+
+        for name, point in future_ids:
+            tdef = self.config.taskdefs[name]
+            if tdef.is_parentless(point):
+                # parentless: promote to task pool
+                self.set_prereqs_and_outputs(
+                    [f"{point}/{name}"],
+                    [], ["all"],
+                    flow,
+                    flow_wait,
+                    flow_descr,
+                    trigger=True
+                )
+            for pid in tdef.get_triggers(point):
+                p_point = pid.get_point(point)
+                p_name = pid.task_name
+                if (p_name, p_point) in all_ids:
+                    # in-flow
+                    continue
+                # set off-flow prerequisite
+                self.set_prereqs_and_outputs(
+                    [f"{point}/{name}"],
+                    [], [f"{p_point}/{p_name}"],
+                    flow,
+                    flow_wait,
+                    flow_descr,
+                    trigger=True
+                )
+
+        flow_nums = self._get_flow_nums(flow, flow_descr)
+        if flow_nums is None:
+            return
 
         for itask in existing_tasks:
             # active tasks, present in the pool
@@ -2248,34 +2263,6 @@ class TaskPool:
                         )
             # not in loop! we could trigger a task with no prereqs
             self._force_trigger_if_ready(itask)
-
-        for name, point in future_ids:
-            tdef = self.config.taskdefs[name]
-            if tdef.is_parentless(point):
-                # parentless: promote to task pool
-                self.set_prereqs_and_outputs(
-                    [f"{point}/{name}"],
-                    [], ["all"],
-                    flow_nums,
-                    flow_wait,
-                    flow_descr,
-                    trigger=True
-                )
-            for pid in tdef.get_triggers(point):
-                p_point = pid.get_point(point)
-                p_name = pid.task_name
-                if (p_name, p_point) in all_ids:
-                    # in-flow
-                    continue
-                # set off-flow prerequisite
-                self.set_prereqs_and_outputs(
-                    [f"{point}/{name}"],
-                    [], [f"{p_point}/{p_name}"],
-                    flow_nums,
-                    flow_wait,
-                    flow_descr,
-                    trigger=True
-                )
 
     def spawn_parentless_sequential_xtriggers(self):
         """Spawn successor(s) of parentless wall clock satisfied tasks."""
