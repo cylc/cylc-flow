@@ -23,20 +23,6 @@ Force tasks to run regardless of prerequisites.
 * Triggering a queued task submits it, regardless of queue limiting.
 * Triggering an active task has no effect (it already triggered).
 
-Future tasks (n>0) do not already belong to a flow.
-* by default they are assigned to all active flows
-* otherwise, according to the --flow option
-
-Active tasks (n=0) already belong to a flow.
-* by default they run in the same flow
-* with --flow=all, they are assigned to all active flows
-* with --flow=INT or --flow=new, the new flow merges with the old one
-* --flow=none is ignored
-
-Note --flow=new increments the global flow counter so if you need multiple
-commands to start a single new flow only use --flow=new in the first command,
-then use the actual new flow number (e.g. read it from the scheduler log).
-
 Examples:
   # trigger task foo in cycle 1234 in test
   $ cylc trigger test//1234/foo
@@ -46,6 +32,21 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+Flows:
+  Active tasks (in the n=0 window) already belong to a flow.
+  * by default, if triggered, they run in the same flow
+  * or with --flow=all, they are assigned all active flows
+  * or with --flow=INT or --flow=new, the original and new flows are merged
+  * (--flow=none is ignored for active tasks)
+
+  Inactive tasks (n>0) do not already belong to a flow.
+  * by default they are assigned all active flows
+  * otherwise, they are assigned the --flow value
+
+  Note --flow=new increments the global flow counter with each use. If it
+  takes multiple commands to start a new flow use the actual flow number
+  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
