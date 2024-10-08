@@ -14,10 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test targeting a specific flow, with trigger --wait.
+
+#------------------------------------------------------------------------------
+# Ensure that validate step of Cylc VR cannot change the options object.
+# See https://github.com/cylc/cylc-flow/issues/6262
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
-reftest
-exit
+
+WORKFLOW_ID=$(workflow_id)
+
+cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc" .
+
+run_ok "${TEST_NAME_BASE}-vip" \
+    cylc vip . \
+        --workflow-name "${WORKFLOW_ID}" \
+        --no-detach \
+        --no-run-name
+
+echo "# Some Comment" >> flow.cylc
+
+run_ok "${TEST_NAME_BASE}-vr" \
+    cylc vr "${WORKFLOW_ID}" \
+        --stop-cycle-point 2020-01-01T00:02Z

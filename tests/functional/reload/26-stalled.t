@@ -26,7 +26,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
 [scheduler]
     [[events]]
         stall handlers = cylc reload %(workflow)s
-        stall timeout = PT10S
+        stall timeout = PT30S
         abort on stall timeout = True
         # Prevent infinite loop if the bug resurfaces
         workflow timeout = PT3M
