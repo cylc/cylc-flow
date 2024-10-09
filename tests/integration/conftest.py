@@ -510,6 +510,10 @@ def reflog():
     Note, you'll need to call this on the scheduler *after* you have started
     it.
 
+    N.B. Trigger order is not stable; using a set ensures that tests check
+    trigger logic rather than binding to specific trigger order which could
+    change in the future, breaking the test.
+
     Args:
         schd:
             The scheduler to capture triggering information for.
@@ -588,6 +592,9 @@ async def _complete(
             async_timeout (handles shutdown logic more cleanly).
 
     """
+    if schd.is_paused:
+        raise Exception("Cannot wait for completion of a paused scheduler")
+
     start_time = time()
 
     tokens_list: List[Tokens] = []
@@ -622,11 +629,16 @@ async def _complete(
     # determine the completion condition
     def done():
         if wait_tokens:
-            return not tokens_list
+            if not tokens_list:
+                return True
+            if not schd.contact_data:
+                raise AssertionError(
+                    "Scheduler shut down before tasks completed: " +
+                    ", ".join(map(str, tokens_list))
+                )
+            return False
         # otherwise wait for the scheduler to shut down
-        if not schd.contact_data:
-            return True
-        return stop_requested
+        return stop_requested or not schd.contact_data
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(schd.pool, 'remove_if_complete', _remove_if_complete)
