@@ -110,7 +110,7 @@ async def test_flow_assignment(
     }
     id_ = flow(conf)
     schd: Scheduler = scheduler(id_, run_mode='simulation', paused_start=True)
-    async with start(schd) as log:
+    async with start(schd):
         if command == 'set':
             do_command: Callable = functools.partial(
                 schd.pool.set_prereqs_and_outputs, outputs=['x'], prereqs=[]
@@ -137,7 +137,6 @@ async def test_flow_assignment(
         do_command([active_a.identity], flow=[FLOW_NONE])
         assert active_a.flow_nums == {1, 2}
         assert log_filter(
-            log,
             contains=(
                 f'[{active_a}] ignoring \'flow=none\' {command}: '
                 f'task already has {stringify_flow_nums(active_a.flow_nums)}'

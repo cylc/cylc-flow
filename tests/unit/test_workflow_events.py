@@ -83,13 +83,13 @@ def test_process_mail_footer(caplog, log_filter):
     assert process_mail_footer(
         '%(host)s|%(port)s|%(owner)s|%(suite)s|%(workflow)s', template_vars
     ) == 'myhost|42|me|my_workflow|my_workflow\n'
-    assert not log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert not log_filter(contains='Ignoring bad mail footer template')
 
     # test invalid variable
     assert process_mail_footer('%(invalid)s', template_vars) == ''
-    assert log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert log_filter(contains='Ignoring bad mail footer template')
 
     # test broken template
     caplog.clear()
     assert process_mail_footer('%(invalid)s', template_vars) == ''
-    assert log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert log_filter(contains='Ignoring bad mail footer template')
