@@ -53,18 +53,23 @@ For more info see: https://github.com/cylc/cylc-flow/issues/3329
 """
 
 from contextlib import suppress
-from time import sleep, time
+from time import (
+    sleep,
+    time,
+)
 from typing import (
+    TYPE_CHECKING,
     AsyncGenerator,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
-    TYPE_CHECKING,
     TypeVar,
     Union,
 )
+
+from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import LOG
 import cylc.flow.command_validation as validate
@@ -74,14 +79,21 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
+from cylc.flow.flow_mgr import get_flow_nums_set
+from cylc.flow.id import tokenise
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
-from cylc.flow.workflow_status import RunMode, StopMode
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUSES_ACTIVE,
+)
+from cylc.flow.workflow_status import (
+    RunMode,
+    StopMode,
+)
 
-from metomi.isodatetime.parsers import TimePointParser
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -313,11 +325,22 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
 
 
 @_command('remove_tasks')
-async def remove_tasks(schd: 'Scheduler', tasks: Iterable[str]):
+async def remove_tasks(
+    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+):
     """Remove tasks."""
     validate.is_tasks(tasks)
+    validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
-    yield schd.pool.remove_tasks(tasks)
+    flow_nums = get_flow_nums_set(flow)
+    schd.pool.remove_tasks(tasks)
+    for task in tasks:
+        task_id = tokenise(task, relative=True)
+        schd.workflow_db_mgr.remove_task_from_flows(
+            point=task_id['cycle'],
+            name=task_id['task'],
+            flow_nums=flow_nums
+        )
 
 
 @_command('reload_workflow')

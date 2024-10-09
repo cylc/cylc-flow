@@ -27,7 +27,7 @@ from cylc.flow.flow_mgr import (
     FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
-    stringify_flow_nums
+    repr_flow_nums
 )
 from cylc.flow.scheduler import Scheduler
 
@@ -139,7 +139,7 @@ async def test_flow_assignment(
         assert log_filter(
             contains=(
                 f'[{active_a}] ignoring \'flow=none\' {command}: '
-                f'task already has {stringify_flow_nums(active_a.flow_nums)}'
+                f'task already has {repr_flow_nums(active_a.flow_nums)}'
             ),
             level=logging.ERROR
         )

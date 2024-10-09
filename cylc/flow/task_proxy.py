@@ -36,26 +36,30 @@ from typing import (
 from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
-from cylc.flow.flow_mgr import stringify_flow_nums
+from cylc.flow.cycling.iso8601 import (
+    interval_parse,
+    point_parse,
+)
+from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
-    TaskState,
-    TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
+    TASK_STATUS_WAITING,
+    TaskState,
 )
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
-from cylc.flow.cycling.iso8601 import (
-    point_parse,
-    interval_parse,
-)
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.id import Tokens
-    from cylc.flow.prerequisite import PrereqMessage, SatisfiedState
+    from cylc.flow.prerequisite import (
+        PrereqMessage,
+        SatisfiedState,
+    )
     from cylc.flow.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
@@ -317,11 +321,11 @@ class TaskProxy:
         """
         id_ = self.identity
         if self.transient:
-            return f"{id_}{stringify_flow_nums(self.flow_nums)}"
+            return f"{id_}{repr_flow_nums(self.flow_nums)}"
         if not self.state(TASK_STATUS_WAITING, TASK_STATUS_EXPIRED):
             id_ += f"/{self.submit_num:02d}"
         return (
-            f"{id_}{stringify_flow_nums(self.flow_nums)}:{self.state}"
+            f"{id_}{repr_flow_nums(self.flow_nums)}:{self.state}"
         )
 
     def copy_to_reload_successor(

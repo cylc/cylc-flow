@@ -16,34 +16,52 @@
 
 """Wrangle task proxies to manage the workflow."""
 
-from contextlib import suppress
 from collections import Counter
+from contextlib import suppress
 import json
+import logging
 from textwrap import indent
 from typing import (
+    TYPE_CHECKING,
     Dict,
     Iterable,
     List,
     NamedTuple,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
 )
-import logging
 
-import cylc.flow.flags
 from cylc.flow import LOG
-from cylc.flow.cycling.loader import get_point, standardise_point_string
+from cylc.flow.cycling.loader import (
+    get_point,
+    standardise_point_string,
+)
 from cylc.flow.exceptions import (
-    WorkflowConfigError, PointParsingError, PlatformLookupError)
-from cylc.flow.id import Tokens, detokenise
+    PlatformLookupError,
+    PointParsingError,
+    WorkflowConfigError,
+)
+import cylc.flow.flags
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NEW,
+    FLOW_NONE,
+    repr_flow_nums,
+)
+from cylc.flow.id import (
+    Tokens,
+    detokenise,
+)
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
-from cylc.flow.workflow_status import StopMode
-from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
+from cylc.flow.platforms import get_platform
+from cylc.flow.task_action_timer import (
+    TaskActionTimer,
+    TimerFlags,
+)
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext,
     EventKey,
@@ -51,45 +69,45 @@ from cylc.flow.task_events_mgr import (
     TaskJobLogsRetrieveContext,
 )
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_FINAL,
-    TASK_STATUS_WAITING,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-)
-from cylc.flow.task_trigger import TaskTrigger
-from cylc.flow.util import (
-    serialise_set,
-    deserialise_set
-)
-from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import get_platform
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_queues.independent import IndepQueueManager
-
-from cylc.flow.flow_mgr import (
-    stringify_flow_nums,
-    FLOW_ALL,
-    FLOW_NONE,
-    FLOW_NEW
+from cylc.flow.task_state import (
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_FINAL,
 )
+from cylc.flow.task_trigger import TaskTrigger
+from cylc.flow.util import (
+    deserialise_set,
+    serialise_set,
+)
+from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.workflow_status import StopMode
+
 
 if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
-    from cylc.flow.cycling import IntervalBase, PointBase
+    from cylc.flow.cycling import (
+        IntervalBase,
+        PointBase,
+    )
     from cylc.flow.data_store_mgr import DataStoreMgr
-    from cylc.flow.flow_mgr import FlowMgr, FlowNums
+    from cylc.flow.flow_mgr import (
+        FlowMgr,
+        FlowNums,
+    )
     from cylc.flow.prerequisite import SatisfiedState
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.taskdef import TaskDef
@@ -817,7 +835,7 @@ class TaskPool:
             if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
 
-    def remove(self, itask, reason=None):
+    def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
         """Remove a task from the pool."""
 
         if itask.state.is_runahead and itask.flow_nums:
@@ -1733,7 +1751,7 @@ class TaskPool:
                 msg += " incomplete"
 
             LOG.info(
-                f"{msg} {stringify_flow_nums(flow_nums, full=True)})"
+                f"{msg} {repr_flow_nums(flow_nums, full=True)})"
             )
             if prev_flow_wait:
                 self._spawn_after_flow_wait(itask)
@@ -1936,7 +1954,7 @@ class TaskPool:
             if flow == ['none'] and itask.flow_nums != set():
                 LOG.error(
                     f"[{itask}] ignoring 'flow=none' set: task already has"
-                    f" {stringify_flow_nums(itask.flow_nums, full=True)}"
+                    f" {repr_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
             self.merge_flows(itask, flow_nums)
@@ -2061,9 +2079,9 @@ class TaskPool:
             or {1}
         )
 
-    def remove_tasks(self, items):
+    def remove_tasks(self, items: Iterable[str]) -> None:
         """Remove tasks from the pool (forced by command)."""
-        itasks, _, bad_items = self.filter_task_proxies(items)
+        itasks, _, _unmatched = self.filter_task_proxies(items, warn=False)
         for itask in itasks:
             # Spawn next occurrence of xtrigger sequential task.
             if (
@@ -2084,7 +2102,6 @@ class TaskPool:
             self.remove(itask, 'request')
         if self.compute_runahead():
             self.release_runahead_tasks()
-        return len(bad_items)
 
     def _get_flow_nums(
         self,
@@ -2185,7 +2202,7 @@ class TaskPool:
             if flow == ['none'] and itask.flow_nums != set():
                 LOG.error(
                     f"[{itask}] ignoring 'flow=none' trigger: task already has"
-                    f" {stringify_flow_nums(itask.flow_nums, full=True)}"
+                    f" {repr_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
