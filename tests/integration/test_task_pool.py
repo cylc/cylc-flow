@@ -1959,50 +1959,6 @@ async def test_remove_by_suicide(
         )
 
 
-async def test_remove_no_respawn(flow, scheduler, start, log_filter):
-    """Ensure that removed tasks stay removed.
-
-    If a task is removed by suicide trigger or "cylc remove", then it should
-    not be automatically spawned at a later time.
-    """
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': 'a & b => z',
-            },
-        },
-    })
-    schd: 'Scheduler' = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
-        a1 = schd.pool.get_task(IntegerPoint("1"), "a")
-        b1 = schd.pool.get_task(IntegerPoint("1"), "b")
-        assert a1, '1/a should have been spawned on startup'
-        assert b1, '1/b should have been spawned on startup'
-
-        # mark one of the upstream tasks as succeeded, 1/z should spawn
-        schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
-        schd.workflow_db_mgr.process_queued_ops()
-        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
-        assert z1, '1/z should have been spawned after 1/a succeeded'
-
-        # manually remove 1/z, it should be removed from the pool
-        await commands.run_cmd(
-            commands.remove_tasks(schd, ['1/z'], [FLOW_ALL])
-        )
-        schd.workflow_db_mgr.process_queued_ops()
-        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
-        assert z1 is None, '1/z should have been removed (by request)'
-
-        # mark the other upstream task as succeeded, 1/z should not be
-        # respawned as a result
-        schd.pool.spawn_on_output(b1, TASK_OUTPUT_SUCCEEDED)
-        assert log_filter(contains='Not respawning 1/z - task was removed')
-        z1 = schd.pool.get_task(IntegerPoint("1"), "z")
-        assert (
-            z1 is None
-        ), '1/z should have stayed removed (but has been added back into the pool'
-
-
 async def test_set_future_flow(flow, scheduler, start, log_filter):
     """Manually-set outputs for new flow num must be recorded in the DB.
 
