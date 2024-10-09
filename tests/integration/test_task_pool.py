@@ -63,9 +63,6 @@ if TYPE_CHECKING:
 # immediately too, because we spawn autospawn absolute-triggered tasks as
 # well as parentless tasks. 3/asd does not spawn at start, however.
 EXAMPLE_FLOW_CFG = {
-    'scheduler': {
-        'allow implicit tasks': True
-    },
     'scheduling': {
         'cycling mode': 'integer',
         'initial cycle point': 1,
@@ -86,7 +83,6 @@ EXAMPLE_FLOW_CFG = {
 
 EXAMPLE_FLOW_2_CFG = {
     'scheduler': {
-        'allow implicit tasks': True,
         'UTC mode': True
     },
     'scheduling': {
@@ -142,7 +138,7 @@ def assert_expected_log(
 @pytest.fixture(scope='module')
 async def mod_example_flow(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
-) -> 'Scheduler':
+) -> AsyncGenerator['Scheduler', None]:
     """Return a scheduler for interrogating its task pool.
 
     This is module-scoped so faster than example_flow, but should only be used
@@ -178,7 +174,7 @@ async def example_flow(
 @pytest.fixture(scope='module')
 async def mod_example_flow_2(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
-) -> 'Scheduler':
+) -> AsyncGenerator['Scheduler', None]:
     """Return a scheduler for interrogating its task pool.
 
     This is module-scoped so faster than example_flow, but should only be used
@@ -1580,8 +1576,8 @@ async def test_prereq_satisfaction(
             }
         }
     )
-    schd = scheduler(id_)
-    async with start(schd) as log:
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
         # it should start up with just 1/a
         assert pool_get_task_ids(schd.pool) == ["1/a"]
         # spawn b
@@ -1592,7 +1588,7 @@ async def test_prereq_satisfaction(
 
         b = schd.pool.get_task(IntegerPoint("1"), "b")
 
-        assert not b.is_waiting_prereqs_done()
+        assert not b.prereqs_are_satisfied()
 
         # set valid and invalid prerequisites, by label and message.
         schd.pool.set_prereqs_and_outputs(
@@ -1604,7 +1600,7 @@ async def test_prereq_satisfaction(
         # FIXME: testing that something is *not* logged is extremely fragile:
         assert not log_filter(regex='.*does not depend on.*')
 
-        assert b.is_waiting_prereqs_done()
+        assert b.prereqs_are_satisfied()
 
 
 @pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
