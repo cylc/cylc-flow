@@ -25,30 +25,55 @@ This module provides the logic to:
 
 import json
 import os
-from shutil import copy, rmtree
+from shutil import (
+    copy,
+    rmtree,
+)
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
-    Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
 )
 
 from packaging.version import parse as parse_version
 
-from cylc.flow import LOG
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.broadcast_report import get_broadcast_change_iter
+from cylc.flow.exceptions import (
+    CylcError,
+    ServiceFileError,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.exceptions import CylcError, ServiceFileError
-from cylc.flow.util import serialise_set, deserialise_set
+from cylc.flow.util import (
+    deserialise_set,
+    serialise_set,
+)
+from cylc.flow.wallclock import (
+    get_current_time_string,
+    get_utc_mode,
+)
+
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
-    from cylc.flow.task_pool import TaskPool
     from cylc.flow.task_events_mgr import EventKey
+    from cylc.flow.task_pool import TaskPool
     from cylc.flow.task_proxy import TaskProxy
+
 
 Version = Any
 # TODO: narrow down Any (should be str | int) after implementing type
@@ -422,7 +447,7 @@ class WorkflowDatabaseManager:
                     "signature": sig,
                     "results": json.dumps(res)})
 
-    def put_update_task_state(self, itask):
+    def put_update_task_state(self, itask: 'TaskProxy') -> None:
         """Update task_states table for current state of itask.
 
         NOTE the task_states table is normally updated along with the task pool
@@ -443,9 +468,9 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
-        self.db_updates_map[self.TABLE_TASK_STATES].append(
-            (set_args, where_args))
+        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, []).append(
+            (set_args, where_args)
+        )
 
     def put_update_task_flow_wait(self, itask):
         """Update flow_wait status of a task, in the task_states table.
