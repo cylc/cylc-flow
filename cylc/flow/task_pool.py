@@ -54,6 +54,7 @@ from cylc.flow.flow_mgr import (
 from cylc.flow.id import (
     Tokens,
     detokenise,
+    quick_relative_id,
 )
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
@@ -459,13 +460,24 @@ class TaskPool:
         output_msg: str,
         flow_nums: 'FlowNums',
     ) -> 'SatisfiedState':
-        """Returns truthy if the specified output is satisfied in the DB."""
+        """Returns truthy if the specified output is satisfied in the DB.
+
+        Args:
+            cycle: Cycle point of the task whose output is being checked.
+            task: Name of the task whose output is being checked.
+            output_msg: The output message to check for.
+            flow_nums: Flow numbers of the task whose output is being
+                checked. If this is empty it means 'none'; will return False.
+        """
+        if not flow_nums:
+            return False
+
         for task_outputs, task_flow_nums in (
             self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
         ).items():
             # loop through matching tasks
+            # (if task_flow_nums is empty, it means the 'none' flow)
             if flow_nums.intersection(task_flow_nums):
-                # this task is in the right flow
                 # BACK COMPAT: In Cylc >8.0.0,<8.3.0, only the task
                 #   messages were stored in the DB as a list.
                 # from: 8.0.0
@@ -1316,8 +1328,8 @@ class TaskPool:
         # Hold active tasks:
         itasks, inactive_tasks, unmatched = self.filter_task_proxies(
             items,
-            warn=False,
-            future=True,
+            warn_no_active=False,
+            inactive=True,
         )
         for itask in itasks:
             self.hold_active_task(itask)
@@ -1334,8 +1346,8 @@ class TaskPool:
         # Release active tasks:
         itasks, inactive_tasks, unmatched = self.filter_task_proxies(
             items,
-            warn=False,
-            future=True,
+            warn_no_active=False,
+            inactive=True,
         )
         for itask in itasks:
             self.release_held_active_task(itask)
@@ -1436,7 +1448,7 @@ class TaskPool:
                 if is_abs:
                     tasks, *_ = self.filter_task_proxies(
                         [f'*/{c_name}'],
-                        warn=False,
+                        warn_no_active=False,
                     )
                     if c_task not in tasks:
                         tasks.append(c_task)
@@ -1664,6 +1676,7 @@ class TaskPool:
         else:
             flow_seen = False
             for outputs_str, fnums in info.items():
+                # (if fnums is empty, it means the 'none' flow)
                 if itask.flow_nums.intersection(fnums):
                     # DB row has overlap with itask's flows
                     flow_seen = True
@@ -1943,8 +1956,8 @@ class TaskPool:
         # Get matching pool tasks and inactive task definitions.
         itasks, inactive_tasks, unmatched = self.filter_task_proxies(
             items,
-            future=True,
-            warn=False,
+            inactive=True,
+            warn_no_active=False,
         )
 
         flow_nums = self._get_flow_nums(flow, flow_descr)
@@ -2034,7 +2047,7 @@ class TaskPool:
             # Attempt to set the given presrequisites.
             # Log any that aren't valid for the task.
             presus = self._standardise_prereqs(prereqs)
-            unmatched = itask.satisfy_me(presus.keys())
+            unmatched = itask.satisfy_me(presus.keys(), forced=True)
             for task_msg in unmatched:
                 LOG.warning(
                     f"{itask.identity} does not depend on"
@@ -2079,28 +2092,108 @@ class TaskPool:
             or {1}
         )
 
-    def remove_tasks(self, items: Iterable[str]) -> None:
-        """Remove tasks from the pool (forced by command)."""
-        itasks, _, _unmatched = self.filter_task_proxies(items, warn=False)
-        for itask in itasks:
-            # Spawn next occurrence of xtrigger sequential task.
-            if (
-                itask.is_xtrigger_sequential
-                and (
-                    itask.identity not in
-                    self.xtrigger_mgr.sequential_has_spawned_next
-                )
+    def remove_tasks(
+        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
+    ) -> None:
+        """Remove tasks from the pool (forced by command).
+
+        Args:
+            items: Relative IDs or globs.
+            flow_nums: Flows to remove the tasks from. If empty or None, it
+                means 'all'.
+        """
+        active, inactive, _unmatched = self.filter_task_proxies(
+            items, warn_no_active=False, inactive=True
+        )
+        if not (active or inactive):
+            return
+
+        if flow_nums is None:
+            flow_nums = set()
+        # Mapping of task IDs to removed flow numbers:
+        removed: Dict[str, FlowNums] = {}
+        not_removed: Set[str] = set()
+
+        for itask in active:
+            fnums_to_remove = itask.match_flows(flow_nums)
+            if not fnums_to_remove:
+                not_removed.add(itask.identity)
+                continue
+            removed[itask.identity] = fnums_to_remove
+            if fnums_to_remove == itask.flow_nums:
+                # Need to remove the task from the pool.
+                # Spawn next occurrence of xtrigger sequential task (otherwise
+                # this would not happen after removing this occurrence):
+                if (
+                    itask.is_xtrigger_sequential
+                    and (
+                        itask.identity not in
+                        self.xtrigger_mgr.sequential_has_spawned_next
+                    )
+                ):
+                    self.xtrigger_mgr.sequential_has_spawned_next.add(
+                        itask.identity
+                    )
+                    self.spawn_to_rh_limit(
+                        itask.tdef,
+                        itask.tdef.next_point(itask.point),
+                        itask.flow_nums
+                    )
+                self.remove(itask, 'request')
+            else:
+                itask.flow_nums.difference_update(fnums_to_remove)
+
+        matched_task_ids = {
+            *removed.keys(),
+            *(quick_relative_id(cycle, task) for task, cycle in inactive),
+        }
+
+        # Unset any prereqs naturally satisfied by these tasks
+        # (do not unset those satisfied by `cylc set --pre`):
+        for itask in self.get_tasks():
+            fnums_to_remove = itask.match_flows(flow_nums)
+            if not fnums_to_remove:
+                continue
+            for prereq in (
+                *itask.state.prerequisites,
+                *itask.state.suicide_prerequisites,
             ):
-                self.xtrigger_mgr.sequential_has_spawned_next.add(
-                    itask.identity
+                for msg in prereq.naturally_satisfied_dependencies():
+                    id_ = msg.get_id()
+                    if id_ in matched_task_ids:
+                        prereq[msg] = False
+                        if id_ not in removed:
+                            removed[id_] = fnums_to_remove
+
+        # Remove from DB tables:
+        for id_ in matched_task_ids:
+            point, name = id_.split('/', 1)
+            db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
+                point, name, flow_nums
+            )
+            if db_removed_fnums:
+                removed.setdefault(id_, set()).update(db_removed_fnums)
+
+        if removed:
+            tasks_str = ', '.join(
+                sorted(
+                    f"{task} {repr_flow_nums(fnums, full=True)}"
+                    for task, fnums in removed.items()
                 )
-                self.spawn_to_rh_limit(
-                    itask.tdef,
-                    itask.tdef.next_point(itask.point),
-                    itask.flow_nums
-                )
-            self.remove(itask, 'request')
-        if self.compute_runahead():
+            )
+            LOG.info(f"Removed task(s): {tasks_str}")
+
+        not_removed.update(matched_task_ids.difference(removed))
+        if not_removed:
+            fnums_str = (
+                repr_flow_nums(flow_nums, full=True) if flow_nums else ''
+            )
+            LOG.warning(
+                "Task(s) not removable: "
+                f"{', '.join(sorted(not_removed))} {fnums_str}"
+            )
+
+        if removed and self.compute_runahead():
             self.release_runahead_tasks()
 
     def _get_flow_nums(
@@ -2191,8 +2284,8 @@ class TaskPool:
 
         """
         # Get matching tasks proxies, and matching inactive task IDs.
-        existing_tasks, future_ids, unmatched = self.filter_task_proxies(
-            items, future=True, warn=False,
+        existing_tasks, inactive_ids, unmatched = self.filter_task_proxies(
+            items, inactive=True, warn_no_active=False,
         )
 
         flow_nums = self._get_flow_nums(flow, flow_descr)
@@ -2215,7 +2308,7 @@ class TaskPool:
         if not flow:
             # default: assign to all active flows
             flow_nums = self._get_active_flow_nums()
-        for name, point in future_ids:
+        for name, point in inactive_ids:
             if not self.can_be_spawned(name, point):
                 continue
             submit_num, _, prev_fwait = (
@@ -2328,41 +2421,41 @@ class TaskPool:
     def filter_task_proxies(
         self,
         ids: Iterable[str],
-        warn: bool = True,
-        future: bool = False,
+        warn_no_active: bool = True,
+        inactive: bool = False,
     ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
         """Return task proxies that match names, points, states in items.
 
         Args:
             ids:
                 ID strings.
-            warn:
-                Whether to log a warning if no matching tasks are found.
-            future:
+            warn_no_active:
+                Whether to log a warning if no matching active tasks are found.
+            inactive:
                 If True, unmatched IDs will be checked against taskdefs
-                and cycle, task pairs will be provided in the future_matched
-                argument providing the ID
+                and cycle, and any matches will be returned in the second
+                return value, provided that the ID:
 
                 * Specifies a cycle point.
                 * Is not a pattern. (e.g. `*/foo`).
                 * Does not contain a state selector (e.g. `:failed`).
 
         Returns:
-            (matched, future_matched, unmatched)
+            (matched, inactive_matched, unmatched)
 
         """
         matched, unmatched = filter_ids(
             self.active_tasks,
             ids,
-            warn=warn,
+            warn=warn_no_active,
         )
-        future_matched: 'Set[Tuple[str, PointBase]]' = set()
-        if future and unmatched:
-            future_matched, unmatched = self.match_inactive_tasks(
+        inactive_matched: 'Set[Tuple[str, PointBase]]' = set()
+        if inactive and unmatched:
+            inactive_matched, unmatched = self.match_inactive_tasks(
                 unmatched
             )
 
-        return matched, future_matched, unmatched
+        return matched, inactive_matched, unmatched
 
     def match_inactive_tasks(
         self,

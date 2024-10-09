@@ -690,12 +690,43 @@ class WorkflowDatabaseManager:
 
     def remove_task_from_flows(
         self, point: str, name: str, flow_nums: 'FlowNums'
-    ) -> None:
+    ) -> 'FlowNums':
+        """Remove flow numbers for a task in the task_states and task_outputs
+        tables.
+
+        Args:
+            point: Cycle point of the task.
+            name: Name of the task.
+            flow_nums: Flow numbers to remove. If empty, remove all
+                flow numbers.
+
+        Returns the flow numbers that were removed, if any.
+
+        N.B. the task_prerequisites table is automatically updated separately
+        during the main loop.
+        """
+        removed_flow_nums: FlowNums = set()
         for table in (
             self.TABLE_TASK_STATES,
             self.TABLE_TASK_OUTPUTS,
         ):
+            fnums_select_stmt = rf'''
+                SELECT
+                    flow_nums
+                FROM
+                    {table}
+                WHERE
+                    cycle = ?
+                    AND name = ?
+            '''
+            fnums_select_cursor = self.pri_dao.connect().execute(
+                fnums_select_stmt, (point, name)
+            )
+
             if not flow_nums:
+                for db_fnums_str, *_ in fnums_select_cursor:
+                    removed_flow_nums.update(deserialise_set(db_fnums_str))
+
                 stmt = rf'''
                     UPDATE OR REPLACE
                         {table}
@@ -707,23 +738,17 @@ class WorkflowDatabaseManager:
                 '''
                 params: List[tuple] = [(point, name)]
             else:
-                select_stmt = rf'''
-                    SELECT
-                        flow_nums
-                    FROM
-                        {table}
-                    WHERE
-                        cycle = ?
-                        AND name = ?
-                '''
                 # Mapping of existing flow nums to what should be left after
                 # removing the specified flow nums:
-                flow_nums_map: Dict[str, FlowNums] = {
-                    x: deserialise_set(x).difference(flow_nums)
-                    for x, *_ in
-                    self.pri_dao.connect().execute(select_stmt, (point, name))
-                    if deserialise_set(x).intersection(flow_nums)
-                }
+                flow_nums_map: Dict[str, FlowNums] = {}
+                for db_fnums_str, *_ in fnums_select_cursor:
+                    db_fnums: FlowNums = deserialise_set(db_fnums_str)
+                    fnums_to_remove = db_fnums.intersection(flow_nums)
+                    if fnums_to_remove:
+                        flow_nums_map[db_fnums_str] = db_fnums.difference(
+                            flow_nums
+                        )
+                        removed_flow_nums.update(fnums_to_remove)
 
                 stmt = rf'''
                     UPDATE OR REPLACE
@@ -743,6 +768,8 @@ class WorkflowDatabaseManager:
             self.db_updates_map[table].append(
                 (stmt, params)
             )
+
+        return removed_flow_nums
 
     def recover_pub_from_pri(self):
         """Recover public database from private database."""

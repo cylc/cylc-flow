@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-from pytest import param
 from typing import Callable, Optional
 from unittest.mock import Mock
 
+import pytest
+from pytest import param
+
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.flow_mgr import FlowNums
 from cylc.flow.task_proxy import TaskProxy
 
 
@@ -101,3 +103,18 @@ def test_status_match(status_str: Optional[str], expected: bool):
     mock_itask = Mock(state=Mock(status='waiting'))
 
     assert TaskProxy.status_match(mock_itask, status_str) is expected
+
+
+@pytest.mark.parametrize('itask_flow_nums, flow_nums, expected', [
+    param({1, 2}, {2}, {2}, id="subset"),
+    param({2}, {1, 2}, {2}, id="superset"),
+    param({1, 2}, {3, 4}, set(), id="disjoint"),
+    param({1, 2}, set(), {1, 2}, id="all-matches-num"),
+    param(set(), {1, 2}, set(), id="num-doesnt-match-none"),
+    param(set(), set(), set(), id="all-doesnt-match-none"),
+])
+def test_match_flows(
+    itask_flow_nums: FlowNums, flow_nums: FlowNums, expected: FlowNums
+):
+    mock_itask = Mock(flow_nums=itask_flow_nums)
+    assert TaskProxy.match_flows(mock_itask, flow_nums) == expected

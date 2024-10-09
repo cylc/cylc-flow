@@ -14,12 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
+
 import pytest
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE, get_point
-from cylc.flow.prerequisite import Prerequisite
-from cylc.flow.id import Tokens
+from cylc.flow.id import Tokens, detokenise
+from cylc.flow.prerequisite import Prerequisite, SatisfiedState
+
+
+detok = partial(detokenise, selectors=True, relative=True)
 
 
 @pytest.fixture
@@ -138,14 +143,84 @@ def test_get_target_points(prereq):
     }
 
 
-def test_get_resolved_dependencies():
+@pytest.fixture
+def satisfied_states_prereq():
+    """Fixture for testing the full range of possible satisfied states."""
     prereq = Prerequisite(IntegerPoint('2'))
     prereq[('1', 'a', 'x')] = True
     prereq[('1', 'b', 'x')] = False
     prereq[('1', 'c', 'x')] = 'satisfied from database'
     prereq[('1', 'd', 'x')] = 'force satisfied'
-    assert prereq.get_resolved_dependencies() == [
+    return prereq
+
+
+def test_get_satisfied_dependencies(satisfied_states_prereq: Prerequisite):
+    assert satisfied_states_prereq.get_satisfied_dependencies() == [
         '1/a',
         '1/c',
         '1/d',
     ]
+
+
+def test_naturally_satisfied_dependencies(
+    satisfied_states_prereq: Prerequisite,
+):
+    assert satisfied_states_prereq.naturally_satisfied_dependencies() == [
+        ('1', 'a', 'x'),
+        ('1', 'c', 'x'),
+    ]
+
+
+def test_satisfy_me():
+    prereq = Prerequisite(IntegerPoint('2'))
+    for task_name in ('a', 'b', 'c'):
+        prereq[('1', task_name, 'x')] = False
+    assert not prereq.is_satisfied()
+    assert prereq._all_satisfied is False
+
+    valid = prereq.satisfy_me(
+        [Tokens('//1/a:x'), Tokens('//1/d:x'), Tokens('//1/c:y')],
+    )
+    assert {detok(tokens) for tokens in valid} == {'1/a:x'}
+    assert prereq._satisfied == {
+        ('1', 'a', 'x'): 'satisfied naturally',
+        ('1', 'b', 'x'): False,
+        ('1', 'c', 'x'): False,
+    }
+    # should have reset cached satisfaction state
+    assert prereq._all_satisfied is None
+
+    valid = prereq.satisfy_me(
+        [Tokens('//1/a:x'), Tokens('//1/b:x')],
+        forced=True,
+    )
+    assert {detok(tokens) for tokens in valid} == {'1/a:x', '1/b:x'}
+    assert prereq._satisfied == {
+        # 1/a:x unaffected as already satisfied
+        ('1', 'a', 'x'): 'satisfied naturally',
+        ('1', 'b', 'x'): 'force satisfied',
+        ('1', 'c', 'x'): False,
+    }
+
+
+@pytest.mark.parametrize('forced', [False, True])
+@pytest.mark.parametrize('existing, expected_when_forced', [
+    (False, 'force satisfied'),
+    ('satisfied from database', 'force satisfied'),
+    ('force satisfied', 'force satisfied'),
+    ('satisfied naturally', 'satisfied naturally'),
+])
+def test_satisfy_me__override(
+    forced: bool,
+    existing: SatisfiedState,
+    expected_when_forced: SatisfiedState,
+):
+    """Test that satisfying a prereq with a different state works as expected
+    with and without the `forced` arg."""
+    prereq = Prerequisite(IntegerPoint('2'))
+    prereq[('1', 'a', 'x')] = existing
+
+    prereq.satisfy_me([Tokens('//1/a:x')], forced)
+    assert prereq[('1', 'a', 'x')] == (
+        expected_when_forced if forced else 'satisfied naturally'
+    )

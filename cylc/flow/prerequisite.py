@@ -39,7 +39,7 @@ from typing_extensions import Literal
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import PbCondition, PbPrerequisite
 from cylc.flow.exceptions import TriggerExpressionError
-from cylc.flow.id import quick_relative_detokenise
+from cylc.flow.id import quick_relative_id
 
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class PrereqMessage(NamedTuple):
 
     def get_id(self) -> str:
         """Get the relative ID of the task in this prereq message."""
-        return quick_relative_detokenise(self.point, self.task)
+        return quick_relative_id(self.point, self.task)
 
     @staticmethod
     def coerce(tuple_: AnyPrereqMessage) -> 'PrereqMessage':
@@ -253,12 +253,17 @@ class Prerequisite:
             ) from None
         return res
 
-    def satisfy_me(self, outputs: Iterable['Tokens']) -> 'Set[Tokens]':
-        """Attempt to satisfy me with given outputs.
+    def satisfy_me(
+        self, outputs: Iterable['Tokens'], forced: bool = False
+    ) -> 'Set[Tokens]':
+        """Set the given outputs as satisfied.
 
-        Updates cache with the result.
         Return outputs that match.
 
+        Args:
+            outputs: List of outputs to satisfy.
+            forced: If True, records that this should not be undone by
+                `cylc remove`.
         """
         valid = set()
         for output in outputs:
@@ -268,7 +273,10 @@ class Prerequisite:
             if prereq not in self._satisfied:
                 continue
             valid.add(output)
-            self[prereq] = 'satisfied naturally'
+            if self._satisfied[prereq] != 'satisfied naturally':
+                self[prereq] = (
+                    'force satisfied' if forced else 'satisfied naturally'
+                )
         return valid
 
     def api_dump(self) -> Optional[PbPrerequisite]:
@@ -334,7 +342,7 @@ class Prerequisite:
             get_point(p) for p in self.iter_target_point_strings()
         ]
 
-    def get_resolved_dependencies(self) -> List[str]:
+    def get_satisfied_dependencies(self) -> List[str]:
         """Return a list of satisfied dependencies.
 
         E.G: ['1/foo', '2/bar']
@@ -344,4 +352,12 @@ class Prerequisite:
             msg.get_id()
             for msg, satisfied in self._satisfied.items()
             if satisfied
+        ]
+
+    def naturally_satisfied_dependencies(self) -> List[PrereqMessage]:
+        """Return naturally satisfied dependencies."""
+        return [
+            msg
+            for msg, sat in self._satisfied.items()
+            if sat and sat != 'force satisfied'
         ]

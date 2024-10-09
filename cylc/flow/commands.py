@@ -80,7 +80,6 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import get_flow_nums_set
-from cylc.flow.id import tokenise
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
@@ -333,14 +332,7 @@ async def remove_tasks(
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
     flow_nums = get_flow_nums_set(flow)
-    schd.pool.remove_tasks(tasks)
-    for task in tasks:
-        task_id = tokenise(task, relative=True)
-        schd.workflow_db_mgr.remove_task_from_flows(
-            point=task_id['cycle'],
-            name=task_id['task'],
-            flow_nums=flow_nums
-        )
+    schd.pool.remove_tasks(tasks, flow_nums)
 
 
 @_command('reload_workflow')
