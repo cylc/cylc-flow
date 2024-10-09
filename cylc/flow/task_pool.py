@@ -2148,13 +2148,13 @@ class TaskPool:
                 removed.setdefault(id_, set()).update(db_removed_fnums)
 
         if removed:
-            tasks_str = ', '.join(
-                sorted(
+            tasks_str_list = []
+            for task, fnums in removed.items():
+                self.data_store_mgr.delta_remove_task_flow_nums(task, fnums)
+                tasks_str_list.append(
                     f"{task} {repr_flow_nums(fnums, full=True)}"
-                    for task, fnums in removed.items()
                 )
-            )
-            LOG.info(f"Removed task(s): {tasks_str}")
+            LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
 
         not_removed.update(matched_task_ids.difference(removed))
         if not_removed:
