@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi
 #-------------------------------------------------------------------------------
-set_test_number 8
+set_test_number 7
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" 'broadcast'
 cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "${WORKFLOW_RUN_DIR}/"
@@ -50,14 +50,6 @@ output_states|20130923T0000Z|1|1|succeeded
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-sqlite3 "${WORKFLOW_RUN_DIR}/log/db" '
-    SELECT
-        point,namespace,key,value
-    FROM
-        broadcast_states
-    ORDER BY
-        point,namespace,key' >'select-broadcast-states.out'
-cmp_ok 'select-broadcast-states.out' \
-    <<<"20130923T0000Z|broadcast_task|[environment]MY_VALUE|'something'"
+
 #-------------------------------------------------------------------------------
 purge

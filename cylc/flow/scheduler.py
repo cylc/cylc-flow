@@ -1531,7 +1531,6 @@ class Scheduler:
             # A simulated task state change occurred.
             self.reset_inactivity_timer()
 
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.late_tasks_check()
 
         self.process_queued_task_messages()

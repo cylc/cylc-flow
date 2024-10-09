@@ -84,7 +84,12 @@ class BroadcastMgr:
         return self._match_ext_trigger(itask)
 
     def clear_broadcast(
-            self, point_strings=None, namespaces=None, cancel_settings=None):
+            self,
+            point_strings=None,
+            namespaces=None,
+            cancel_settings=None,
+            is_housekeeping=False
+    ):
         """Clear broadcasts globally, or for listed namespaces and/or points.
 
         Return a tuple (modified_settings, bad_options), where:
@@ -98,6 +103,10 @@ class BroadcastMgr:
           * namespaces: a list of bad namespaces.
           * cancel: a list of tuples. Each tuple contains the keys of a bad
             setting.
+
+        Args:
+            task_completion: Tells logging to indicate that this clearance is
+            automated housekeeping.
         """
         # If cancel_settings defined, only clear specific broadcasts
         cancel_keys_list = self._settings_to_keys_list(cancel_settings)
@@ -138,7 +147,10 @@ class BroadcastMgr:
         # Log the broadcast
         self.workflow_db_mgr.put_broadcast(modified_settings, is_cancel=True)
         LOG.info(
-            get_broadcast_change_report(modified_settings, is_cancel=True))
+            get_broadcast_change_report(
+                modified_settings,
+                is_cancel=True,
+                is_housekeeping=is_housekeeping))
         if bad_options:
             LOG.error(get_broadcast_bad_options_report(bad_options))
         if modified_settings:
@@ -160,6 +172,18 @@ class BroadcastMgr:
         if not point_strings:
             return (None, {"expire": [cutoff]})
         return self.clear_broadcast(point_strings=point_strings, **kwargs)
+
+    def housekeep(self, cycle, task):
+        """Clear broadcasts to a specific task at a specific point."""
+        with self.lock:
+            if (
+                self.broadcasts.get(str(cycle), '')
+                and self.broadcasts[str(cycle)].get(task, '')
+            ):
+                self.clear_broadcast(
+                    point_strings=[cycle],
+                    namespaces=[task],
+                    is_housekeeping=True)
 
     def get_broadcast(self, tokens: 'Optional[Tokens]' = None) -> dict:
         """Retrieve all broadcast variables that target a given task ID."""

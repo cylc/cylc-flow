@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Workflow database content, broadcast + manual trigger to recover a failure.
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 4
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -37,13 +37,7 @@ sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events' >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
 +|1|t1|[environment]HELLO|Hello
-__SELECT__
-
-NAME='select-broadcast-states.out'
-sqlite3 "${DB_FILE}" \
-    'SELECT point, namespace, key, value FROM broadcast_states' >"${NAME}"
-cmp_ok "${NAME}" <<'__SELECT__'
-1|t1|[environment]HELLO|Hello
+-|1|t1|[environment]HELLO|Hello
 __SELECT__
 
 NAME='select-task-jobs.out'
