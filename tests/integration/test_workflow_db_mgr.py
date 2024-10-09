@@ -36,7 +36,7 @@ async def test_restart_number(
         schd: 'Scheduler' = scheduler(id_, paused_start=True)
         async with start(schd) as log:
             if do_reload:
-                await commands.run_cmd(commands.reload_workflow, schd)
+                await commands.run_cmd(commands.reload_workflow(schd))
             assert schd.workflow_db_mgr.n_restart == expected_restart_num
             assert log_filter(
                 log, contains=f"(re)start number={expected_restart_num + 1}"

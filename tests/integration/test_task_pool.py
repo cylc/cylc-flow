@@ -570,7 +570,7 @@ async def test_reload_stopcp(
     schd: 'Scheduler' = scheduler(flow(cfg))
     async with start(schd):
         assert str(schd.pool.stop_point) == '2020'
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
         assert str(schd.pool.stop_point) == '2020'
 
 
@@ -841,7 +841,7 @@ async def test_reload_prereqs(
         flow(conf, id_=id_)
 
         # Reload the workflow config
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
         assert list_tasks(schd) == expected_3
 
         # Check resulting dependencies of task z
@@ -973,7 +973,7 @@ async def test_graph_change_prereq_satisfaction(
             flow(conf, id_=id_)
 
             # Reload the workflow config
-            await commands.run_cmd(commands.reload_workflow, schd)
+            await commands.run_cmd(commands.reload_workflow(schd))
 
             await test.asend(schd)
 
@@ -1980,7 +1980,9 @@ async def test_remove_by_suicide(
         )
 
         # remove 1/b by request (cylc remove)
-        await commands.run_cmd(commands.remove_tasks, schd, ['1/b'])
+        await commands.run_cmd(
+            commands.remove_tasks(schd, ['1/b'], [FLOW_ALL])
+        )
         assert log_filter(
             log,
             regex='1/b.*removed from active task pool: request',
@@ -2022,7 +2024,9 @@ async def test_remove_no_respawn(flow, scheduler, start, log_filter):
         assert z1, '1/z should have been spawned after 1/a succeeded'
 
         # manually remove 1/z, it should be removed from the pool
-        await commands.run_cmd(commands.remove_tasks, schd, ['1/z'])
+        await commands.run_cmd(
+            commands.remove_tasks(schd, ['1/z'], [FLOW_ALL])
+        )
         schd.workflow_db_mgr.process_queued_ops()
         z1 = schd.pool.get_task(IntegerPoint("1"), "z")
         assert z1 is None, '1/z should have been removed (by request)'
@@ -2170,7 +2174,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
 
         # reload
         flow(config, id_=id_)
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
 
         # check xtrigs post-reload
         assert list_xtrig_mgr() == {
@@ -2182,7 +2186,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
             'c': 'wall_clock(trigger_time=946688400)',
         }
 
-        
+
 async def test_trigger_unqueued(flow, scheduler, start):
     """Test triggering an unqueued active task.
 
@@ -2247,7 +2251,7 @@ async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
 
     if expire_type == 'clock-expire':
         conf['scheduling']['special tasks'] = {'clock-expire': 'foo(PT0S)'}
-        method = lambda schd: schd.pool.clock_expire_tasks() 
+        method = lambda schd: schd.pool.clock_expire_tasks()
     else:
         method = lambda schd: schd.pool.set_prereqs_and_outputs(
             ['2000/foo'], prereqs=[], outputs=['expired'], flow=['1']
