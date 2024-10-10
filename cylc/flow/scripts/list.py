@@ -32,6 +32,7 @@ To visualize the full multiple inheritance hierarchy use:
 
 import asyncio
 import os
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 
@@ -43,6 +44,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     icp_option,
 )
+from cylc.flow.workflow_files import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -151,6 +153,12 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
             [options.all_tasks, options.all_namespaces, options.mro]):
         print("WARNING: -t chosen, ignoring non-tree options.",
               file=sys.stderr)
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if options.against_source:
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
+
     config = WorkflowConfig(
         workflow_id,
         flow_file,
