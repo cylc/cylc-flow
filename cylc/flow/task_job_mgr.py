@@ -447,7 +447,6 @@ class TaskJobManager:
                     'platform_name': itask.platform['name'],
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
-                itask.is_manual_submit = False
 
             if ri_map[install_target] == REMOTE_FILE_INSTALL_255:
                 del ri_map[install_target]
@@ -1103,6 +1102,8 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
+        # Submitted, so reset the is_manual submit flag in case of retries.
+        itask.is_manual_submit = False
 
     def _prep_submit_task_job(
         self,

@@ -46,7 +46,8 @@ async def test_trigger_no_flows(one, start, log_filter):
 
     It should get the flow numbers of the most recent active tasks.
     """
-    async with start(one):
+    import logging
+    async with start(one, level=logging.DEBUG):
 
         # Remove the task (flow 1) --> pool empty
         task = one.pool.get_tasks()[0]
