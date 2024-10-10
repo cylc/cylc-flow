@@ -267,13 +267,14 @@ async def test_ref1(flow, scheduler, run, reflog, complete, log_filter):
     )
     async with run(schd):
         reflog_triggers: set = reflog(schd)
-        schd.pool.tasks_to_hold.add(('c', IntegerPoint('1')))
         await complete(schd, '1/b')
         assert not schd.pool.is_stalled()
+        assert len(schd.pool.task_queue_mgr.queues['default'].deque)
 
         await run_cmd(remove_tasks(schd, ['1/a', '1/b'], [FLOW_ALL]))
         schd.process_workflow_db_queue()
         # Removing 1/b should cause stall because it is prereq of 1/c:
+        assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
         assert schd.pool.is_stalled()
         assert log_filter(
             logging.WARNING, "1/c is waiting on ['1/b:succeeded']"
