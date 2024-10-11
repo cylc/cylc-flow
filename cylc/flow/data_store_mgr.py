@@ -2251,7 +2251,9 @@ class DataStoreMgr:
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
         cfg = self.schd.config.cfg
-        for node_id, node in node_data.items():
+        # NOTE: node_data may change during operation so make a copy
+        # see https://github.com/cylc/cylc-flow/pull/6397
+        for node_id, node in list(node_data.items()):
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
