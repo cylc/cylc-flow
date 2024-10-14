@@ -928,11 +928,12 @@ class TaskEventsManager():
             return False
 
         severity_lvl: int = LOG_LEVELS.get(severity, INFO)
-        # Demote log level to DEBUG if this is a message that duplicates what
-        # gets logged by itask state change anyway (and not manual poll)
+        # Demote log level to DEBUG if this duplicates task state change
+        # logging (and not manual poll). Failed messages are not demoted
+        # however - they are more important and have no obvious corresponding
+        # state change when there are retries lined up).
         if severity_lvl > DEBUG and flag != self.FLAG_POLLED and message in {
             self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
         }:
             severity_lvl = DEBUG
         LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
