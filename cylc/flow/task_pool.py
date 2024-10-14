@@ -870,6 +870,11 @@ class TaskPool:
                 msg += " - active job orphaned"
 
             LOG.log(level, f"[{itask}] {msg}")
+
+            # ensure this task is written to the DB before moving on
+            # https://github.com/cylc/cylc-flow/issues/6315
+            self.workflow_db_mgr.process_queued_ops()
+
             del itask
 
     def get_tasks(self) -> List[TaskProxy]:
