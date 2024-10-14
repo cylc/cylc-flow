@@ -1,0 +1,9 @@
+[scheduling]
+    initial cycle point = 2020
+    stop after cycle point = 2020-01-01T00:01Z
+    [[graph]]
+        PT1M = foo
+[runtime]
+    [[foo]]
+        [[[simulation]]]
+            default run length = PT0S

@@ -27,9 +27,9 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
     final cycle point = 1
     [[graph]]
         P1 = """
-a? => b? => c?
-d => e
-"""
+            a => b? => c?
+            a => d => e
+        """
 [runtime]
     [[a,c,e]]
         script = true
@@ -37,15 +37,15 @@ d => e
         script = false
     [[d]]
         script = """
-cylc workflow-state \${CYLC_WORKFLOW_ID}//1/b:failed --interval=2
-cylc pause \$CYLC_WORKFLOW_ID
-"""
+            cylc workflow-state \${CYLC_WORKFLOW_ID}//1/b:failed --interval=2 --max-polls=20 -v
+            cylc pause \$CYLC_WORKFLOW_ID
+        """
 __FLOW__
 
 # run workflow
 run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 
-cylc workflow-state "${WORKFLOW_NAME}/1/d:succeeded" --interval=2 --max-polls=60
+cylc workflow-state "${WORKFLOW_NAME}//1/d:succeeded" --interval=2 --max-polls=60 -v
 
 # query workflow
 TEST_NAME="${TEST_NAME_BASE}-prune-optional-break"
