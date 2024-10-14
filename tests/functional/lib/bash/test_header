@@ -1160,7 +1160,6 @@ for SKIP in ${CYLC_TEST_SKIP}; do
         # Deliberately print variable substitution syntax unexpanded
         # shellcheck disable=SC2016
         skip_all 'this test is in $CYLC_TEST_SKIP.'
-        break
     fi
 done
 
