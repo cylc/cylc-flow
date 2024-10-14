@@ -2008,7 +2008,7 @@ class FlowMutationArguments:
 
             Otherwise you can assign (inactive tasks) or add to (active tasks):
             * a list of integer flow numbers
-            or a single-item list containing one of the following strings:
+            or one of the following strings:
             * {FLOW_ALL} - all active flows
             * {FLOW_NEW} - an automatically generated new flow number
             * {FLOW_NONE} - (ignored for active tasks): no flow
