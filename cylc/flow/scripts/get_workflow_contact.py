@@ -49,10 +49,10 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     )
     try:
         data = load_contact_file(workflow_id)
-    except ServiceFileError:
+    except ServiceFileError as exc:
         raise CylcError(
             f"{workflow_id}: cannot get contact info, workflow not running?"
-        )
+        ) from exc
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))

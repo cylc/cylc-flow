@@ -1,0 +1,51 @@
+#!Jinja2
+
+{%
+    set DATES = [
+        '2000-01-01T00:00Z',
+        '2000-01-01T06:00Z',
+        '2000-03-05T12:00Z',
+        '2000-05-28T13:36Z',
+        '2001-01-05T23:24',
+        '2002-04-30T04:20',
+    ]
+%}
+
+[meta]
+    title = Irregular cycling example
+    description = """
+        A workflow that runs a group of tasks on arbitrary dates
+        with inter-cycle dependencies between those dates.
+    """
+
+[scheduling]
+    initial cycle point = 2000
+    [[graph]]
+        # define the tasks you want to run on startup
+        R1 = install
+
+        # run this graph every year
+        P1Y = """
+            install[^] => prep
+        """
+
+{# loop over the list of dates #}
+{% for date in DATES %}
+        # schedule the tasks to run at each date
+        R1/{{ date }} = """
+            # make "run_model" depend on the "prep" task from the same year
+            prep[{{ date | strftime('%Y') }}] => run_model => plot
+
+    {# include this for all but the first date #}
+    {% if not loop.first %}
+            # make the run_model task depend on its previous instance
+            run_model[ {{ loop.previtem }} ] => run_model
+    {% endif %}
+        """
+{% endfor %}
+
+[runtime]
+    [[install]]
+    [[prep]]
+    [[run_model]]
+    [[plot]]

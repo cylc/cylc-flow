@@ -211,7 +211,7 @@ async def stop(
         try:
             mode = StopMode(mode)
         except ValueError:
-            raise CommandFailedError(f"Invalid stop mode: '{mode}'")
+            raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
         if mode is StopMode.REQUEST_KILL:
             schd.time_next_kill = time()
@@ -308,7 +308,7 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
         lvl = int(level)
         LOG.setLevel(lvl)
     except (TypeError, ValueError) as exc:
-        raise CommandFailedError(exc)
+        raise CommandFailedError(exc) from None
     cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
     yield
 

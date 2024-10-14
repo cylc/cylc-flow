@@ -14,27 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-from typing import TYPE_CHECKING
+from typing import Iterable, List, cast
 
+import pytest
+
+from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
 from cylc.flow.data_store_mgr import (
     EDGES,
     FAMILY_PROXIES,
     JOBS,
-    TASKS,
     TASK_PROXIES,
-    WORKFLOW
+    TASKS,
+    WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
 from cylc.flow.wallclock import get_current_time_string
-
-if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
 
 
 # NOTE: These tests mutate the data store, so running them in isolation may
@@ -86,6 +86,18 @@ def int_id(_):
 
 def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
+
+
+def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+    """Get all protobuf prerequisites from the data store task proxies."""
+    return [
+        p
+        for t in cast(
+            'Iterable[PbTaskProxy]',
+            schd.data_store_mgr.updated[TASK_PROXIES].values()
+        )
+        for p in t.prerequisites
+    ]
 
 
 @pytest.fixture(scope='module')
@@ -296,6 +308,7 @@ async def test_update_data_structure(harness):
 
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
+    schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
         [t.identity for t in schd.pool.get_tasks()],
@@ -303,20 +316,15 @@ def test_delta_task_prerequisite(harness):
         [],
         "all"
     )
-    assert all({
-        p.satisfied
-        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
-        for p in t.prerequisites})
+    assert all(p.satisfied for p in get_pb_prereqs(schd))
     for itask in schd.pool.get_tasks():
         # set prereqs as not-satisfied
         for prereq in itask.state.prerequisites:
             prereq._all_satisfied = False
-            prereq.satisfied = {key: False for key in prereq.satisfied}
+            for key in prereq:
+                prereq._satisfied[key] = False
         schd.data_store_mgr.delta_task_prerequisite(itask)
-    assert not any({
-        p.satisfied
-        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
-        for p in t.prerequisites})
+    assert not any(p.satisfied for p in get_pb_prereqs(schd))
 
 
 async def test_absolute_graph_edges(flow, scheduler, start):
@@ -350,3 +358,37 @@ async def test_absolute_graph_edges(flow, scheduler, start):
             # +2 for Cylc's runahead
             for cycle in range(1, runahead_cycles + 3)
         }
+
+
+async def test_flow_numbers(flow, scheduler, start):
+    """It should update flow numbers when a task is triggered.
+
+    See https://github.com/cylc/cylc-flow/issues/6114
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+
+        # the task should exist in the original flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[1]'
+
+        # force trigger the task in a new flow
+        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+
+        # update the data store
+        await schd.update_data_structure()
+
+        # the task should now exist in the new flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[2]'
