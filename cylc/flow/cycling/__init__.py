@@ -92,8 +92,7 @@ class PointBase(metaclass=ABCMeta):
         pass
 
     def standardise(self, allow_truncated: bool = True) -> 'PointBase':
-        """Format self
-        value into a standard representation and check it.
+        """Format self.value into a standard representation and check it.
 
         Args:
            allow_truncated:
