@@ -342,7 +342,7 @@ async def test_match_taskdefs(
     [
         param(
             ['1/foo', '3/asd'], ['1/foo', '3/asd'], [],
-            id="Active & future tasks"
+            id="Active & inactive tasks"
         ),
         param(
             ['1/*', '2/*', '3/*', '6/*'],
@@ -367,7 +367,7 @@ async def test_match_taskdefs(
             ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
              "No active tasks matching: 6/bar:waiting"],
-            id="Specifying task state works for active tasks, not future tasks"
+            id="Specifying task state works for active tasks, not inactive tasks"
         )
     ]
 )
@@ -412,7 +412,7 @@ async def test_release_held_tasks(
 ) -> None:
     """Test TaskPool.release_held_tasks().
 
-    For a workflow with held active tasks 1/foo & 1/bar, and held future task
+    For a workflow with held active tasks 1/foo & 1/bar, and held inactive task
     3/asd.
 
     We skip testing the matching logic here because it would be slow using the
@@ -1347,7 +1347,7 @@ async def test_set_prereqs(
                 "20400101T0000Z/foo"]
         )
 
-        # set one prereq of future task 20400101T0000Z/qux
+        # set one prereq of inactive task 20400101T0000Z/qux
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/qux"],
             None,
@@ -1526,7 +1526,7 @@ async def test_set_outputs_future(
     start,
     log_filter,
 ):
-    """Check manual setting of future task outputs.
+    """Check manual setting of inactive task outputs.
 
     """
     id_ = flow(
@@ -1556,7 +1556,7 @@ async def test_set_outputs_future(
         # it should start up with just 1/a
         assert pool_get_task_ids(schd.pool) == ["1/a"]
 
-        # setting future task b succeeded should spawn c but not b
+        # setting inactive task b succeeded should spawn c but not b
         schd.pool.set_prereqs_and_outputs(
             ["1/b"], ["succeeded"], None, ['all'])
         assert (

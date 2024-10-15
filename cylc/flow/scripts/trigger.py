@@ -17,18 +17,11 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run despite unsatisfied prerequisites.
+Force tasks to run regardless of prerequisites.
 
 * Triggering an unqueued waiting task queues it, regardless of prerequisites.
 * Triggering a queued task submits it, regardless of queue limiting.
 * Triggering an active task has no effect (it already triggered).
-
-Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them queues them to run (or rerun) in the same flow.
-
-Beyond n=0, triggered tasks get all current active flow numbers by default, or
-specified flow numbers via the --flow option. Those flows - if/when they catch
-up - will see tasks that ran after triggering event as having run already.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -39,6 +32,21 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+Flows:
+  Active tasks (in the n=0 window) already belong to a flow.
+  * by default, if triggered, they run in the same flow
+  * or with --flow=all, they are assigned all active flows
+  * or with --flow=INT or --flow=new, the original and new flows are merged
+  * (--flow=none is ignored for active tasks)
+
+  Inactive tasks (n>0) do not already belong to a flow.
+  * by default they are assigned all active flows
+  * otherwise, they are assigned the --flow value
+
+  Note --flow=new increments the global flow counter with each use. If it
+  takes multiple commands to start a new flow use the actual flow number
+  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
