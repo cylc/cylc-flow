@@ -34,8 +34,7 @@ from unittest import mock
 
 import pytest
 
-from cylc.flow import CYLC_LOG
-from cylc.flow import clean as cylc_clean
+from cylc.flow import CYLC_LOG, clean as cylc_clean
 from cylc.flow.clean import (
     _clean_using_glob,
     _remote_clean_cmd,
@@ -64,9 +63,11 @@ from .filetree import (
     FILETREE_2,
     FILETREE_3,
     FILETREE_4,
+    Symlink,
     create_filetree,
     get_filetree_as_list,
 )
+
 
 NonCallableFixture = Any
 
@@ -536,7 +537,7 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
                 'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
-                    'rincewind.txt': Path('whatever')
+                    'rincewind.txt': Symlink('whatever')
                 }}},
                 'sym': {'cylc-run': {'foo': {'bar': {}}}}
             }
@@ -548,12 +549,12 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
                 'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
-                    'log': Path('whatever'),
-                    'mirkwood': Path('whatever')
+                    'log': Symlink('whatever'),
+                    'mirkwood': Symlink('whatever')
                 }}},
                 'sym': {'cylc-run': {'foo': {'bar': {
                     'log': {
-                        'darmok': Path('whatever'),
+                        'darmok': Symlink('whatever'),
                         'bib': {}
                     }
                 }}}}
@@ -612,7 +613,7 @@ def test__clean_using_glob(
                 'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
-                    'rincewind.txt': Path('whatever')
+                    'rincewind.txt': Symlink('whatever')
                 }}},
                 'sym': {'cylc-run': {}}
             },
@@ -625,12 +626,12 @@ def test__clean_using_glob(
                 'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
-                    'log': Path('whatever'),
-                    'mirkwood': Path('whatever')
+                    'log': Symlink('whatever'),
+                    'mirkwood': Symlink('whatever')
                 }}},
                 'sym': {'cylc-run': {'foo': {'bar': {
                     'log': {
-                        'darmok': Path('whatever'),
+                        'darmok': Symlink('whatever'),
                         'bib': {}
                     }
                 }}}}
@@ -641,11 +642,13 @@ def test__clean_using_glob(
             {'**/cycle'},
             FILETREE_2,
             {
-                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'cylc-run': {'foo': {
+                    'bar': Symlink('sym-run/cylc-run/foo/bar')
+                }},
                 'sym-run': {'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
-                    'share': Path('sym-share/cylc-run/foo/bar/share')
+                    'share': Symlink('sym-share/cylc-run/foo/bar/share')
                 }}}},
                 'sym-share': {'cylc-run': {'foo': {'bar': {
                     'share': {}
@@ -658,19 +661,15 @@ def test__clean_using_glob(
             {'share'},
             FILETREE_2,
             {
-                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'cylc-run': {'foo': {
+                    'bar': Symlink('sym-run/cylc-run/foo/bar')
+                }},
                 'sym-run': {'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                     'flow.cylc': None,
                 }}}},
                 'sym-share': {'cylc-run': {}},
-                'sym-cycle': {'cylc-run': {'foo': {'bar': {
-                    'share': {
-                        'cycle': {
-                            'macklunkey.txt': None
-                        }
-                    }
-                }}}}
+                'sym-cycle': {'cylc-run': {}},
             },
             id="filetree2 share"
         ),
@@ -689,18 +688,14 @@ def test__clean_using_glob(
             {'*'},
             FILETREE_2,
             {
-                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'cylc-run': {'foo': {
+                    'bar': Symlink('sym-run/cylc-run/foo/bar')
+                }},
                 'sym-run': {'cylc-run': {'foo': {'bar': {
                     '.service': {'db': None},
                 }}}},
                 'sym-share': {'cylc-run': {}},
-                'sym-cycle': {'cylc-run': {'foo': {'bar': {
-                    'share': {
-                        'cycle': {
-                            'macklunkey.txt': None
-                        }
-                    }
-                }}}}
+                'sym-cycle': {'cylc-run': {}},
             },
             id="filetree2 *"
         ),
@@ -1087,6 +1082,12 @@ def test_clean_top_level(tmp_run_dir: Callable):
              'cylc-run/foo/bar/share',
              'cylc-run/foo/bar/share/cycle'],
             id="filetree2 **"
+        ),
+        pytest.param(
+            'share',
+            FILETREE_2,
+            ['cylc-run/foo/bar/share'],
+            id="filetree2 share"
         ),
         pytest.param(
             '**',

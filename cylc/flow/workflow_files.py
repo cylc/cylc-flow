@@ -59,6 +59,7 @@ from cylc.flow.hostuserutil import (
     is_remote_host,
 )
 from cylc.flow.pathutil import (
+    SYMLINKABLE_LOCATIONS,
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
@@ -203,6 +204,11 @@ class WorkflowFiles:
         DB = 'db'
         """The public database"""
 
+        JOB = 'job'
+        """The job log directory."""
+
+    LOG_JOB_DIR = os.path.join(LogDir.DIRNAME, LogDir.JOB)
+
     SHARE_DIR = 'share'
     """Workflow share directory."""
 
@@ -258,9 +264,7 @@ class WorkflowFiles:
     RESERVED_NAMES = frozenset([FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES])
     """Reserved filenames that cannot be used as run names."""
 
-    SYMLINK_DIRS = frozenset([
-        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, WORK_DIR, ''
-    ])
+    SYMLINK_DIRS = frozenset(list(SYMLINKABLE_LOCATIONS) + [''])
     """The paths of the symlink dirs that may be set in
     global.cylc[install][symlink dirs], relative to the run dir
     ('' represents the run dir)."""
@@ -426,7 +430,7 @@ def _is_process_running(
         raise CylcError(
             f'Attempt to determine whether workflow is running on {host}'
             ' timed out after 10 seconds.'
-        )
+        ) from None
 
     if proc.returncode == 2:
         # the psutil call failed to gather metrics on the process
@@ -505,7 +509,7 @@ def detect_old_contact_file(
         # this can happen if contact file is from an outdated version of Cylc
         raise ServiceFileError(
             f'Found contact file with incomplete data:\n{exc}.'
-        )
+        ) from None
 
     # check if the workflow process is running ...
     # NOTE: can raise CylcError
@@ -630,8 +634,8 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
     try:
         with open(path) as f:
             file_content = f.read()
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+    except IOError as exc:
+        raise ServiceFileError("Couldn't load contact file") from exc
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
@@ -914,7 +918,7 @@ def infer_latest_run(
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
-        raise ValueError(f"{path} is not in the cylc-run directory")
+        raise ValueError(f"{path} is not in the cylc-run directory") from None
 
     if not path.exists():
         raise InputError(

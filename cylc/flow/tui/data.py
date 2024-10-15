@@ -408,11 +408,11 @@ def online_mutate(mutation, selection):
     except WorkflowStopped:
         raise Exception(
             f'Cannot peform command {mutation} on a stopped workflow'
-        )
+        ) from None
     except (ClientError, ClientTimeout) as exc:
         raise Exception(
             f'Error connecting to workflow: {exc}'
-        )
+        ) from None
 
     request_string = generate_mutation(mutation, variables)
     client(
