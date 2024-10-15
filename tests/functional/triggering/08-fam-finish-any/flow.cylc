@@ -2,12 +2,19 @@
     [[graph]]
         R1 = """FAM:finish-any => foo"""
 [runtime]
+    [[root]]
+        script = true
     [[FAM]]
-        script = sleep 10
-    [[a,c]]
+    [[a]]
         inherit = FAM
+        script = """
+            cylc__job__poll_grep_workflow_log -E "1/b.*succeeded"
+        """
     [[b]]
         inherit = FAM
-        script = true
+    [[c]]
+        inherit = FAM
+        script = """
+            cylc__job__poll_grep_workflow_log -E "1/b.*succeeded"
+        """
     [[foo]]
-        script = true

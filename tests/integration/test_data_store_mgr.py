@@ -314,7 +314,7 @@ def test_delta_task_prerequisite(harness):
         [t.identity for t in schd.pool.get_tasks()],
         [(TASK_STATUS_SUCCEEDED,)],
         [],
-        "all"
+        flow=[]
     )
     assert all(p.satisfied for p in get_pb_prereqs(schd))
     for itask in schd.pool.get_tasks():

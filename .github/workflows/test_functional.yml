@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest']
+        os: ['ubuntu-22.04']
         python-version: ['3.7']
         test-base: ['tests/f']
         chunk: ['1/4', '2/4', '3/4', '4/4']
@@ -56,20 +56,20 @@ jobs:
             platform: '_local_background*'
           # tests/k
           - name: 'flaky'
-            os: 'ubuntu-latest'
+            os: 'ubuntu-22.04'
             python-version: '3.7'
             test-base: 'tests/k'
             chunk: '1/1'
             platform: '_local_background* _local_at*'
           # remote platforms
           - name: '_remote_background_indep_poll'
-            os: 'ubuntu-latest'
+            os: 'ubuntu-22.04'
             python-version: '3.7'
             test-base: 'tests/f tests/k'
             chunk: '1/1'
             platform: '_remote_background_indep_poll _remote_at_indep_poll'
           - name: '_remote_background_indep_tcp'
-            os: 'ubuntu-latest'
+            os: 'ubuntu-22.04'
             test-base: 'tests/f tests/k'
             python-version: '3.7'
             chunk: '1/1'
