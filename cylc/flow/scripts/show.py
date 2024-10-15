@@ -383,8 +383,10 @@ async def prereqs_and_outputs_query(
 
     if not task_proxies:
         ansiprint(
-            f"<red>No matching active tasks found: {', '.join(ids_list)}",
-            file=sys.stderr)
+            "<red>No matching active tasks found: "
+            f"{', '.join(ids_list)}</red>",
+            file=sys.stderr,
+        )
         return 1
     return 0
 
