@@ -1,0 +1,80 @@
+#!/bin/bash
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -eux
+
+test_simple () {
+    local ID
+    ID="$(< /dev/urandom tr -dc A-Za-z | head -c6)"
+    
+    # lint
+    cylc lint ./simple
+    
+    # copy into a temp directory
+    local SRC_DIR
+    SRC_DIR="$(mktemp -d)"
+    cp simple/flow.cylc "$SRC_DIR"
+    
+    # speed things up with simulation mode
+    cat >>"${SRC_DIR}/flow.cylc" <<__HERE__
+    [runtime]
+        [[root]]
+            [[[simulation]]]
+                default run length = PT0S
+__HERE__
+    
+    # start the workflow
+    cylc vip \
+        --check-circular \
+        --no-run-name \
+        --no-detach \
+        --workflow-name "$ID" \
+        --mode=simulation \
+        "$SRC_DIR"
+    
+    # it should have reached the 2002 cycle
+    grep '2002/a' "${HOME}/cylc-run/${ID}/log/scheduler/log"
+    if grep '2003/a' "${HOME}/cylc-run/${ID}/log/scheduler/log"; then
+        exit 1
+    fi
+    
+    # edit the "stop after cycle point"
+    sed -i \
+        's/stop after cycle point.*/stop after cycle point = 2004/' \
+        "${SRC_DIR}/flow.cylc"
+    
+    # continue the run
+    cylc vr \
+        --no-detach \
+        --mode=simulation \
+        --yes \
+        "$ID"
+    
+    # it should have reached the 2004 cycle
+    grep '2004/a' "${HOME}/cylc-run/${ID}/log/scheduler/log"
+    if grep '2005/a' "${HOME}/cylc-run/${ID}/log/scheduler/log"; then
+        exit 1
+    fi
+    
+    # clean up
+    cylc clean "$ID"
+    
+    rm -r "${SRC_DIR}"
+}
+
+
+test_simple

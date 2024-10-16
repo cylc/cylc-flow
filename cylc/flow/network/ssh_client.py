@@ -90,7 +90,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                 f"Command exceeded the timeout {timeout}s. "
                 "This could be due to network problems. "
                 "Check the workflow log."
-            )
+            ) from None
 
     def prepare_command(
         self, command: str, args: Optional[dict], timeout: Union[float, str]

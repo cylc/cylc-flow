@@ -326,7 +326,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
             raise ClientError(
                 error.get('message'),  # type: ignore
                 error.get('traceback'),  # type: ignore
-            )
+            ) from None
 
     def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.

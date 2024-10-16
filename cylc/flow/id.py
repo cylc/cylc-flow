@@ -128,7 +128,7 @@ class Tokens(dict):
             return dict.__getitem__(self, key)
         except KeyError:
             if key not in self._KEYS:
-                raise ValueError(f'Invalid token: {key}')
+                raise ValueError(f'Invalid token: {key}') from None
             return None
 
     def __str__(self):
