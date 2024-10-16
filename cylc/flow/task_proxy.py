@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqMessage, SatisfiedState
-    from cylc.flow.simulation import ModeSettings
+    from cylc.flow.run_modes.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
 

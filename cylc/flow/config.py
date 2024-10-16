@@ -82,7 +82,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
-from cylc.flow.run_modes.nonlive import run_mode_validate_checks
+from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
@@ -563,7 +563,7 @@ class WorkflowConfig:
 
         self.mem_log("config.py: end init config")
 
-        run_mode_validate_checks(self.taskdefs)
+        skip_mode_validate(self.taskdefs)
 
     @staticmethod
     def _warn_if_queues_have_implicit_tasks(

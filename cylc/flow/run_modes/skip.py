@@ -19,6 +19,7 @@ from logging import INFO
 from typing import (
     TYPE_CHECKING, Dict, List, Tuple)
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
@@ -158,3 +159,24 @@ def check_task_skip_config(tdef: 'TaskDef') -> None:
         raise WorkflowConfigError(
             f'Skip mode settings for task {tdef.name} has'
             ' mutually exclusive outputs: succeeded AND failed.')
+
+
+def skip_mode_validate(taskdefs: 'Dict[str, TaskDef]') -> None:
+    """Warn user if any tasks have "run mode" set to skip.
+    """
+    warn_nonlive: Dict[str, List[str]] = {RunMode.SKIP.value: []}
+
+    # Run through taskdefs looking for those with nonlive modes
+    for taskdef in taskdefs.values():
+        # Add to list of tasks to be run in non-live modes:
+        if (taskdef.rtconfig.get('run mode', None) == RunMode.SKIP.value):
+            warn_nonlive[taskdef.rtconfig['run mode']].append(taskdef.name)
+
+        # Run any mode specific validation checks:
+        check_task_skip_config(taskdef)
+
+    if any(warn_nonlive.values()):
+        message = 'The following tasks are set to run in skip mode:'
+        for taskname in warn_nonlive[RunMode.SKIP.value]:
+            message += f'\n    * {taskname}'
+        LOG.warning(message)
