@@ -144,10 +144,7 @@ def check_task_skip_config(tdef: 'TaskDef') -> None:
     Raises:
         * Error if outputs include succeeded and failed.
     """
-    skip_config = tdef.rtconfig.get('skip', {})
-    if not skip_config:
-        return
-    skip_outputs = skip_config.get('outputs', {})
+    skip_outputs = tdef.rtconfig.get('skip', {}).get('outputs', {})
     if not skip_outputs:
         return
 
@@ -164,19 +161,16 @@ def check_task_skip_config(tdef: 'TaskDef') -> None:
 def skip_mode_validate(taskdefs: 'Dict[str, TaskDef]') -> None:
     """Warn user if any tasks have "run mode" set to skip.
     """
-    warn_nonlive: Dict[str, List[str]] = {RunMode.SKIP.value: []}
-
-    # Run through taskdefs looking for those with nonlive modes
+    skip_mode_tasks: List[str] = []
     for taskdef in taskdefs.values():
-        # Add to list of tasks to be run in non-live modes:
         if (taskdef.rtconfig.get('run mode', None) == RunMode.SKIP.value):
-            warn_nonlive[taskdef.rtconfig['run mode']].append(taskdef.name)
+            skip_mode_tasks.append(taskdef.name)
 
         # Run any mode specific validation checks:
         check_task_skip_config(taskdef)
 
-    if any(warn_nonlive.values()):
+    if skip_mode_tasks:
         message = 'The following tasks are set to run in skip mode:'
-        for taskname in warn_nonlive[RunMode.SKIP.value]:
+        for taskname in skip_mode_tasks:
             message += f'\n    * {taskname}'
         LOG.warning(message)

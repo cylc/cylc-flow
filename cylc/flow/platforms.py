@@ -663,12 +663,9 @@ def get_install_target_to_platforms_map(
             ret.setdefault(install_target, []).append(platform)
 
     # Map jobless modes to localhost.
-    if 'localhost' in ret:
-        ret['localhost'] += [
-            {'name': mode} for mode in JOBLESS_MODES]
-    else:
-        ret['localhost'] = [
-            {'name': mode} for mode in JOBLESS_MODES]
+    ret.setdefault('localhost', []).extend(
+        {'name': mode} for mode in JOBLESS_MODES
+    )
     return ret
 
 
