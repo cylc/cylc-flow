@@ -116,6 +116,7 @@ from cylc.flow.wallclock import (
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
 
 EDGES = 'edges'
@@ -1443,7 +1444,7 @@ class DataStoreMgr:
             prereq_ids.add(f'{relative_id}/{flow_nums_str}')
 
         # Batch load prerequisites of tasks according to flow.
-        prereqs_map = {}
+        prereqs_map: Dict[str, dict] = {}
         for (
                 cycle, name, prereq_name,
                 prereq_cycle, prereq_output, satisfied
@@ -1457,16 +1458,14 @@ class DataStoreMgr:
             ] = satisfied if satisfied != '0' else False
 
         for ikey, prereqs in prereqs_map.items():
+            itask_prereq: Prerequisite
             for itask_prereq in (
-                    self.db_load_task_proxies[ikey][0].state.prerequisites
+                self.db_load_task_proxies[ikey][0].state.prerequisites
             ):
-                for key in itask_prereq.satisfied.keys():
-                    try:
-                        itask_prereq.satisfied[key] = prereqs[key]
-                    except KeyError:
-                        # This prereq is not in the DB: new dependencies
-                        # added to an already-spawned task before restart.
-                        itask_prereq.satisfied[key] = False
+                for key in itask_prereq:
+                    itask_prereq[key] = prereqs.get(key, False)
+                    # (False if prereq is not in the DB: new dependencies
+                    # added to an already-spawned task before restart.)
 
         # Extract info from itasks to data-store.
         for task_info in self.db_load_task_proxies.values():

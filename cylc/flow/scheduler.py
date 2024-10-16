@@ -917,7 +917,7 @@ class Scheduler:
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
         # proxy can be removed, but the orphaned job still sends messages.
-        for _id, tms in messages.items():
+        for tms in messages.values():
             warn = "Undeliverable task messages received and ignored:"
             for _, msg in tms:
                 warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'

@@ -14,10 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import TYPE_CHECKING, Tuple
+
 from cylc.flow.cycling.loader import (
-    get_point, get_point_relative, get_interval)
+    get_interval,
+    get_point,
+    get_point_relative,
+)
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
+
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
+    from cylc.flow.taskdef import TaskDef
+
 
 # Task trigger names (e.g. foo:fail => bar).
 # Can use "foo:fail => bar" or "foo:failed => bar", etc.
@@ -176,23 +187,21 @@ class Dependency:
 
     def __init__(self, exp, task_triggers, suicide):
         self._exp = exp
-        self.task_triggers = tuple(task_triggers)  # More memory efficient.
+        self.task_triggers: Tuple[
+            TaskTrigger
+        ] = tuple(task_triggers)  # More memory efficient.
         self.suicide = suicide
 
-    def get_prerequisite(self, point, tdef):
+    def get_prerequisite(
+        self, point: 'PointBase', tdef: 'TaskDef'
+    ) -> Prerequisite:
         """Generate a Prerequisite object from this dependency.
 
         Args:
-            point (cylc.flow.cycling.PointBase): The cycle point at which to
-                generate the Prerequisite for.
-            tdef (cylc.flow.taskdef.TaskDef): The TaskDef of the dependent
-                task.
-
-        Returns:
-            cylc.flow.prerequisite.Prerequisite
+            point: The cycle point at which to generate the Prerequisite for.
+            tdef: The TaskDef of the dependent task.
 
         """
-        # Create Prerequisite.
         cpre = Prerequisite(point)
 
         # Loop over TaskTrigger instances.
@@ -213,21 +222,22 @@ class Dependency:
                              tdef.max_future_prereq_offset)):
                         tdef.max_future_prereq_offset = (
                             prereq_offset)
-                cpre.add(
-                    task_trigger.task_name,
+                cpre[(
                     task_trigger.get_point(point),
-                    task_trigger.output,
-                    (
-                        (prereq_offset_point < tdef.start_point) &
-                        (point >= tdef.start_point)
-                    )
+                    task_trigger.task_name,
+                    task_trigger.output
+                )] = (
+                    (prereq_offset_point < tdef.start_point) &
+                    (point >= tdef.start_point)
                 )
             else:
                 # Trigger is within the same cycle point.
                 # Register task message with Prerequisite object.
-                cpre.add(task_trigger.task_name,
-                         task_trigger.get_point(point),
-                         task_trigger.output)
+                cpre[(
+                    task_trigger.get_point(point),
+                    task_trigger.task_name,
+                    task_trigger.output,
+                )] = False
         cpre.set_condition(self.get_expression(point))
         return cpre
 

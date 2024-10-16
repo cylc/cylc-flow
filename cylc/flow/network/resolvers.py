@@ -750,7 +750,7 @@ class Resolvers(BaseResolvers):
         try:
             meth = COMMANDS[command]
         except KeyError:
-            raise ValueError(f"Command '{command}' not found")
+            raise ValueError(f"Command '{command}' not found") from None
 
         try:
             # Initiate the command. Validation may be performed at this point,

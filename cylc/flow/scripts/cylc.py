@@ -605,14 +605,14 @@ def pycoverage(cmd_args):  # pragma: no cover
             data_file=str(cylc_wc / '.coverage'),
             source=[str(cylc_wc / 'cylc')]
         )
-    except coverage.misc.CoverageException:
+    except coverage.misc.CoverageException as exc:
         raise Exception(
             # make sure this exception is visible in the traceback
             '\n\n*****************************\n\n'
             'Could not initiate coverage, likely because Cylc was not '
             'installed in editable mode.'
             '\n\n*****************************\n\n'
-        )
+        ) from exc
 
     # start the coverage running
     cov.start()
