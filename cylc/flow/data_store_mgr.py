@@ -948,7 +948,7 @@ class DataStoreMgr:
                             )
                         for items in graph_children.values():
                             for child_name, child_point, _ in items:
-                                if child_point > final_point:
+                                if final_point and child_point > final_point:
                                     continue
                                 child_tokens = self.id_.duplicate(
                                     cycle=str(child_point),
@@ -978,7 +978,7 @@ class DataStoreMgr:
                             taskdefs
                         ).values():
                             for parent_name, parent_point, _ in items:
-                                if parent_point > final_point:
+                                if final_point and parent_point > final_point:
                                     continue
                                 parent_tokens = self.id_.duplicate(
                                     cycle=str(parent_point),
