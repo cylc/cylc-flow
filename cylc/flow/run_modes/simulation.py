@@ -25,7 +25,6 @@ from time import time
 from metomi.isodatetime.parsers import DurationParser
 
 from cylc.flow import LOG
-from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
@@ -40,6 +39,7 @@ from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
@@ -189,7 +189,7 @@ class ModeSettings:
         self.timeout = started_time + self.simulated_run_length
 
 
-def configure_sim_mode(rtc, fallback):
+def configure_sim_mode(rtc, fail_at_points_config):
     """Adjust task defs for simulation mode.
 
     Example:
@@ -220,7 +220,7 @@ def configure_sim_mode(rtc, fallback):
         "fail cycle points"
     ] = parse_fail_cycle_points(
         rtc["simulation"]["fail cycle points"],
-        fallback
+        fail_at_points_config
     )
 
 
@@ -263,12 +263,20 @@ def disable_platforms(
 
 
 def parse_fail_cycle_points(
-    f_pts_orig: List[str], fallback
+    fail_at_points_updated: List[str],
+    fail_at_points_config,
 ) -> 'Union[None, List[PointBase]]':
     """Parse `[simulation][fail cycle points]`.
 
     - None for "fail all points".
     - Else a list of cycle point objects.
+
+    Args:
+        fail_at_points_updated: Fail cycle points from a broadcast.
+        fail_at_points_config:
+            Fail cycle points from original workflow config, which would
+            have caused the scheduler to fail on config parsing. This check is
+            designed to prevent broadcasts from taking the scheduler down.
 
     Examples:
         >>> this = parse_fail_cycle_points
@@ -279,26 +287,21 @@ def parse_fail_cycle_points(
         >>> this(None, ['42']) is None
         True
     """
-    f_pts: 'Optional[List[PointBase]]' = []
+    fail_at_points: 'Optional[List[PointBase]]' = []
     if (
-        f_pts_orig is None
-        or f_pts_orig and 'all' in f_pts_orig
+        fail_at_points_updated is None
+        or fail_at_points_updated
+        and 'all' in fail_at_points_updated
     ):
-        f_pts = None
-    elif f_pts_orig:
-        f_pts = []
-        for point_str in f_pts_orig:
-            if isinstance(point_str, PointBase):
-                f_pts.append(point_str)
-            else:
-                try:
-                    f_pts.append(get_point(point_str).standardise())
-                except PointParsingError:
-                    LOG.warning(
-                        f'Invalid ISO 8601 date representation: {point_str}'
-                    )
-                    return fallback
-    return f_pts
+        return None
+    elif fail_at_points_updated:
+        for point_str in fail_at_points_updated:
+            try:
+                fail_at_points.append(get_point(point_str).standardise())
+            except PointParsingError as exc:
+                LOG.warning(exc.args[0])
+                return fail_at_points_config
+    return fail_at_points
 
 
 def sim_time_check(
