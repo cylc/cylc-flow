@@ -11,6 +11,18 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.5 (Released 2024-10-15)__
+
+### 🔧 Fixes
+
+[#6316](https://github.com/cylc/cylc-flow/pull/6316) - Fixed bug in `cylc vr` where an initial cycle point of `now`/`next()`/`previous()` would result in an error.
+
+[#6362](https://github.com/cylc/cylc-flow/pull/6362) - Fixed simulation mode bug where the task submit number would not increment
+
+[#6367](https://github.com/cylc/cylc-flow/pull/6367) - Fix bug where `cylc trigger` and `cylc set` would assign active flows to existing tasks by default.
+
+[#6397](https://github.com/cylc/cylc-flow/pull/6397) - Fix "dictionary changed size during iteration error" which could occur with broadcasts.
+
 ## __cylc-8.3.4 (Released 2024-09-12)__
 
 ### 🚀 Enhancements
