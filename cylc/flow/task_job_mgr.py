@@ -242,8 +242,14 @@ class TaskJobManager:
                 bad_tasks.append(itask)
         return [prepared_tasks, bad_tasks]
 
-    def submit_task_jobs(self, workflow, itasks, curve_auth,
-                         client_pub_key_dir, run_mode=RunMode.LIVE):
+    def submit_task_jobs(
+        self,
+        workflow,
+        itasks,
+        curve_auth,
+        client_pub_key_dir,
+        run_mode: Union[str, RunMode] = RunMode.LIVE,
+    ):
         """Prepare for job submission and submit task jobs.
 
         Preparation (host selection, remote host init, and remote install)
@@ -1022,7 +1028,7 @@ class TaskJobManager:
         self: 'TaskJobManager',
         workflow: str,
         itasks: 'List[TaskProxy]',
-        workflow_run_mode: str,
+        workflow_run_mode: Union[str, RunMode],
     ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Identify task mode and carry out alternative submission
         paths if required:

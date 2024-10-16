@@ -31,6 +31,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Union,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -298,7 +299,7 @@ class TaskProxy:
             self.graph_children = generate_graph_children(tdef, self.point)
 
         self.mode_settings: Optional['ModeSettings'] = None
-        self.run_mode: Optional[str] = None
+        self.run_mode: Optional[Union[str, RunMode]] = None
 
         if self.tdef.expiration_offset is not None:
             self.expire_time = (

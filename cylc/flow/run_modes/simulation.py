@@ -19,7 +19,7 @@
 from dataclasses import dataclass
 from logging import INFO
 from typing import (
-    TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union)
+    TYPE_CHECKING, Any, Dict, List, Tuple, Union)
 from time import time
 
 from metomi.isodatetime.parsers import DurationParser
@@ -287,7 +287,7 @@ def parse_fail_cycle_points(
         >>> this(None, ['42']) is None
         True
     """
-    fail_at_points: 'Optional[List[PointBase]]' = []
+    fail_at_points: 'List[PointBase]' = []
     if (
         fail_at_points_updated is None
         or fail_at_points_updated
