@@ -134,3 +134,38 @@ async def test_broadcast_multi_namespace(
             ('*', 'VOWELS', 'execution time limit', 'PT5S'),
             ('*', 'root', 'execution time limit', 'PT5S'),
         ]
+
+
+async def test_broadcast_truncated_datetime(flow, scheduler, start, capsys):
+    """It should reject truncated datetime cycle points.
+
+    See https://github.com/cylc/cylc-flow/issues/6407
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '2000',
+            'graph': {
+                'R1': 'foo',
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # attempt an invalid broadcast
+        rets = await _main(
+            BroadcastOptions(
+                settings=['[environment]FOO=bar'],
+                point_strings=['050101T0000Z'],  # <== truncated
+            ),
+            schd.workflow,
+        )
+
+        # the broadcast should fail
+        assert list(rets.values()) == [False]
+
+        # an error should be recorded
+        _out, err = capsys.readouterr()
+        assert (
+            'Rejected broadcast:'
+            ' settings are not compatible with the workflow'
+        ) in err

@@ -91,8 +91,15 @@ class PointBase(metaclass=ABCMeta):
         """Compare self to other point, returning a 'cmp'-like result."""
         pass
 
-    def standardise(self) -> 'PointBase':
-        """Format self.value into a standard representation and check it."""
+    def standardise(self, allow_truncated: bool = True) -> 'PointBase':
+        """Format self.value into a standard representation and check it.
+
+        Args:
+           allow_truncated:
+               If True, then truncated points (i.e. any point with context
+               missing off the front) will be tollerated, if False, truncated
+               points will cause an exception to be raised.
+        """
         return self
 
     @abstractmethod
