@@ -131,7 +131,7 @@ def process_outputs(itask: 'TaskProxy', rtconfig: Dict) -> List[str]:
     # Send succeeded/failed last.
     if TASK_OUTPUT_FAILED in conf_outputs:
         result.append(TASK_OUTPUT_FAILED)
-    elif TASK_OUTPUT_SUCCEEDED and TASK_OUTPUT_SUCCEEDED not in result:
+    elif TASK_OUTPUT_SUCCEEDED not in result:
         result.append(TASK_OUTPUT_SUCCEEDED)
 
     return result

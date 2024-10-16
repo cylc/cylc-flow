@@ -46,11 +46,11 @@ class RunMode(Enum):
     """The possible run modes of a task/workflow."""
 
     LIVE = 'live'
-    """Task will run normally."""
+    """Tasks will run normally."""
 
     SIMULATION = 'simulation'
     """Simulates job submission with configurable exection time
-    and succeeded/failed outcomes(but does not submit real jobs)."""
+    and succeeded/failed outcomes (but does not submit real jobs)."""
 
     DUMMY = 'dummy'
     """Submits real jobs with empty scripts."""
@@ -76,16 +76,13 @@ class RunMode(Enum):
             return (
                 "Simulates job submission with configurable"
                 " exection time and succeeded/failed outcomes"
-                "(but does not submit real jobs).")
+                " (but does not submit real jobs).")
         raise KeyError(f'No description for {self}.')
 
     @staticmethod
     def get(options: 'Values') -> str:
         """Return the workflow run mode from the options."""
-        if hasattr(options, 'run_mode') and options.run_mode:
-            return options.run_mode
-        else:
-            return RunMode.LIVE.value
+        return getattr(options, 'run_mode', None) or RunMode.LIVE.value
 
     def get_submit_method(self) -> 'Optional[SubmissionInterface]':
         """Return the job submission method for this run mode.

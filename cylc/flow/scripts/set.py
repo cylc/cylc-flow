@@ -158,9 +158,9 @@ def get_option_parser() -> COP:
         help=(
             "Complete task outputs. For multiple outputs re-use the"
             " option, or give a comma-separated list of outputs."
-            ' Use "--out=required" to complete all required outputs.'
-            ' Use "--out=skip" to complete outputs defined in the tasks.'
-            ' [skip] configuration.'
+            " Use '--out=required' to complete all required outputs."
+            " Use '--out=skip' to complete outputs defined in the task's"
+            " [skip] configuration."
             " OUTPUT format: trigger names as used in the graph."
         ),
         action="append", default=None, dest="outputs"

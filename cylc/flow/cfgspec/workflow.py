@@ -1342,8 +1342,7 @@ with Conf(
                 options=list(TASK_CONFIG_RUN_MODES),
                 default=RunMode.LIVE.value,
                 desc=f'''
-                    For a workflow run in live mode run this task in skip
-                    mode.
+                    Run the task in one of the following modes:
 
                     {RunMode.LIVE.value}:
                         {RunMode.LIVE.describe()}

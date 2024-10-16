@@ -599,13 +599,6 @@ class TimeZone(ObjectType):
     string_extended = String()
 
 
-def describe_run_mode(run_mode: Optional['Enum']) -> str:
-    """Returns description for a workflow/task run mode."""
-    if not run_mode:
-        return ""
-    return getattr(RunMode, run_mode.value.upper()).__doc__
-
-
 # The run mode for the workflow.
 WorkflowRunMode = graphene.Enum(
     'WorkflowRunMode',

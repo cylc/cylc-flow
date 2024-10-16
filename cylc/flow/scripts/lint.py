@@ -387,10 +387,8 @@ BAD_SKIP_OUTS = re.compile(r'outputs\s*=\s*(.*)')
 
 
 def check_skip_mode_outputs(line: str) -> Dict:
-    """Ensure skip mode output setting doesn't include:
-
-    * succeeded _and_ failed: Mutually exclusive.
-    * submitted and started: These are emitted by skip mode anyway.
+    """Ensure skip mode output setting doesn't include
+    succeeded _and_ failed, as they are mutually exclusive.
 
     n.b.
 
