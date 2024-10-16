@@ -470,8 +470,11 @@ def test_get_install_target_to_platforms_map(
             for install_target in _map:
                 _map[install_target] = sorted(_map[install_target],
                                               key=lambda k: k['name'])
-        result.pop('localhost')
+        expected_map.update(
+            {'localhost': [{'name': 'simulation'}, {'name': 'skip'}]}
+        )
         assert result == expected_map
+
 
 @pytest.mark.parametrize(
     'platform, job, remote, expect',
