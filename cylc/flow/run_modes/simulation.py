@@ -25,6 +25,7 @@ from time import time
 from metomi.isodatetime.parsers import DurationParser
 
 from cylc.flow import LOG
+from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
@@ -39,7 +40,6 @@ from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
-    from cylc.flow.cycling import PointBase
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
@@ -189,7 +189,7 @@ class ModeSettings:
         self.timeout = started_time + self.simulated_run_length
 
 
-def configure_sim_mode(rtc, fail_at_points_config):
+def configure_sim_mode(rtc, fallback):
     """Adjust task defs for simulation mode.
 
     Example:
@@ -220,7 +220,7 @@ def configure_sim_mode(rtc, fail_at_points_config):
         "fail cycle points"
     ] = parse_fail_cycle_points(
         rtc["simulation"]["fail cycle points"],
-        fail_at_points_config
+        fallback
     )
 
 
@@ -296,11 +296,14 @@ def parse_fail_cycle_points(
         return None
     elif fail_at_points_updated:
         for point_str in fail_at_points_updated:
-            try:
-                fail_at_points.append(get_point(point_str).standardise())
-            except PointParsingError as exc:
-                LOG.warning(exc.args[0])
-                return fail_at_points_config
+            if isinstance(point_str, PointBase):
+                fail_at_points.append(point_str)
+            else:
+                try:
+                    fail_at_points.append(get_point(point_str).standardise())
+                except PointParsingError as exc:
+                    LOG.warning(exc.args[0])
+                    return fail_at_points_config
     return fail_at_points
 
 

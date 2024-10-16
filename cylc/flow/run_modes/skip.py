@@ -166,8 +166,8 @@ def skip_mode_validate(taskdefs: 'Dict[str, TaskDef]') -> None:
         if (taskdef.rtconfig.get('run mode', None) == RunMode.SKIP.value):
             skip_mode_tasks.append(taskdef.name)
 
-        # Run any mode specific validation checks:
-        check_task_skip_config(taskdef)
+            # Run any mode specific validation checks:
+            check_task_skip_config(taskdef)
 
     if skip_mode_tasks:
         message = 'The following tasks are set to run in skip mode:'
