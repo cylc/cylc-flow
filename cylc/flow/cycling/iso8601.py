@@ -92,9 +92,16 @@ class ISO8601Point(PointBase):
             self.value, other.value, CALENDAR.mode
         ))
 
-    def standardise(self):
+    def standardise(self, allow_truncated=True):
         """Reformat self.value into a standard representation."""
         try:
+            point = point_parse(self.value)
+            if not allow_truncated and point.truncated:
+                raise PointParsingError(
+                    type(self),
+                    self.value,
+                    'Truncated ISO8601 dates are not permitted',
+                )
             self.value = str(point_parse(self.value))
         except IsodatetimeError as exc:
             if self.value.startswith("+") or self.value.startswith("-"):
