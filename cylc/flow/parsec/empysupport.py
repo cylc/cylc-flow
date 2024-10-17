@@ -52,7 +52,11 @@ def empyprocess(
     os.chdir(dir_)
     ftempl = StringIO('\n'.join(flines))
     xtempl = StringIO()
-    interpreter = em.Interpreter(output=em.UncloseableFile(xtempl))
+    # Requires EmPy >= 4.1
+    interpreter = em.Interpreter(
+        output=em.UncloseableFile(xtempl),
+        dispatcher=False  # raise errors to caller
+    )
 
     # Add `CYLC_` environment variables to the global namespace.
     interpreter.updateGlobals(
@@ -60,7 +64,7 @@ def empyprocess(
     )
 
     try:
-        interpreter.file(ftempl, '<template>', template_vars)
+        interpreter.file(ftempl, locals=template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
         raise EmPyError(
