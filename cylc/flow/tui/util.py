@@ -23,6 +23,8 @@ import re
 from time import time
 from typing import Tuple
 
+import urwid
+
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
@@ -563,3 +565,32 @@ def get_text_dimensions(text: str) -> Tuple[int, int]:
     """
     lines = text.splitlines()
     return max((0, *(len(line) for line in lines))), len(lines)
+
+
+class ListBoxPlus(urwid.ListBox):
+    """An extended list box that responds to the "home" and "end" keys."""
+
+    def keypress(self, size, key):
+        # NOTE: The urwid.ListBox class supports "page up" and "page down" but
+        # not "home" and "end". The implementation of these methods is highly
+        # non-trivial.
+        if key == 'home':
+            # press "page up" until we stop moving
+            target = self.get_scrollpos(size)
+            while True:
+                super().keypress(size, 'page up')
+                new_target = self.get_scrollpos(size)
+                if target == new_target:
+                    break
+                target = new_target
+        elif key == 'end':
+            # press "page down" until we stop moving
+            target = self.get_scrollpos(size)
+            while True:
+                super().keypress(size, 'page down')
+                new_target = self.get_scrollpos(size)
+                if target == new_target:
+                    break
+                target = new_target
+        else:
+            return super().keypress(size, key)

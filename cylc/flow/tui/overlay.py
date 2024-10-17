@@ -58,6 +58,7 @@ from cylc.flow.tui.data import (
     mutate,
 )
 from cylc.flow.tui.util import (
+    ListBoxPlus,
     get_task_icon,
     get_text_dimensions,
 )
@@ -444,7 +445,10 @@ def log(app, id_=None, list_files=None, get_log=None):
         open_log()
 
     return (
-        urwid.ListBox([
+        ListBoxPlus([
+            # NOTE: We use a ListBox here because it allows the file-select
+            # button to have focus whilst keeping the overlay scrollable at the
+            # same time.
             host_widget,
             file_widget,
             urwid.Button(
