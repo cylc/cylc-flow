@@ -52,7 +52,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --no-detach "${WORKFLOW_NAME}"
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep-1" \
-    "platform: badhostplatform - initialisation did not complete (no hosts were reachable)"
+    "platform: badhostplatform - initialisation did not complete"
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep-2" "CRITICAL - Workflow stalled"
 

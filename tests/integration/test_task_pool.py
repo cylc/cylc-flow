@@ -342,7 +342,7 @@ async def test_match_taskdefs(
     [
         param(
             ['1/foo', '3/asd'], ['1/foo', '3/asd'], [],
-            id="Active & future tasks"
+            id="Active & inactive tasks"
         ),
         param(
             ['1/*', '2/*', '3/*', '6/*'],
@@ -367,7 +367,7 @@ async def test_match_taskdefs(
             ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
              "No active tasks matching: 6/bar:waiting"],
-            id="Specifying task state works for active tasks, not future tasks"
+            id="Specifying task state works for active tasks, not inactive tasks"
         )
     ]
 )
@@ -412,7 +412,7 @@ async def test_release_held_tasks(
 ) -> None:
     """Test TaskPool.release_held_tasks().
 
-    For a workflow with held active tasks 1/foo & 1/bar, and held future task
+    For a workflow with held active tasks 1/foo & 1/bar, and held inactive task
     3/asd.
 
     We skip testing the matching logic here because it would be slow using the
@@ -1085,12 +1085,9 @@ async def test_no_flow_tasks_dont_spawn(
                 'R1': 'a => b => c'
             }
         },
-        'scheduler': {
-            'allow implicit tasks': 'true',
-        },
     })
 
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         task_a = schd.pool.get_tasks()[0]
 
@@ -1099,29 +1096,22 @@ async def test_no_flow_tasks_dont_spawn(
 
         # Set as completed: should not spawn children.
         schd.pool.set_prereqs_and_outputs(
-            [task_a.identity], None, None, [FLOW_NONE])
+            [task_a.identity], [], [], [FLOW_NONE]
+        )
+        assert not schd.pool.get_tasks()
 
-        for flow_nums, force, pool in (
+        for flow_nums, expected_pool in (
             # outputs yielded from a no-flow task should not spawn downstreams
-            (set(), False, []),
-            # forced spawning downstream of a no-flow task should spawn
-            # downstreams with flow_nums={}
-            (set(), True, [('1/b', set())]),
+            (set(), []),
             # outputs yielded from a task with flow numbers should spawn
             # downstreams in the same flow
-            ({1}, False, [('1/b', {1})]),
-            # forced spawning should work in the same way
-            ({1}, True, [('1/b', {1})]),
+            ({1}, [('1/b', {1})]),
         ):
             # set the flow-nums on 1/a
             task_a.flow_nums = flow_nums
 
             # spawn on the succeeded output
-            schd.pool.spawn_on_output(
-                task_a,
-                TASK_OUTPUT_SUCCEEDED,
-                forced=force,
-            )
+            schd.pool.spawn_on_output(task_a, TASK_OUTPUT_SUCCEEDED)
 
             schd.pool.spawn_on_all_outputs(task_a)
 
@@ -1129,7 +1119,7 @@ async def test_no_flow_tasks_dont_spawn(
             assert [
                 (itask.identity, itask.flow_nums)
                 for itask in schd.pool.get_tasks()
-            ] == pool
+            ] == expected_pool
 
 
 async def test_task_proxy_remove_from_queues(
@@ -1357,7 +1347,7 @@ async def test_set_prereqs(
                 "20400101T0000Z/foo"]
         )
 
-        # set one prereq of future task 20400101T0000Z/qux
+        # set one prereq of inactive task 20400101T0000Z/qux
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/qux"],
             None,
@@ -1536,7 +1526,7 @@ async def test_set_outputs_future(
     start,
     log_filter,
 ):
-    """Check manual setting of future task outputs.
+    """Check manual setting of inactive task outputs.
 
     """
     id_ = flow(
@@ -1566,7 +1556,7 @@ async def test_set_outputs_future(
         # it should start up with just 1/a
         assert pool_get_task_ids(schd.pool) == ["1/a"]
 
-        # setting future task b succeeded should spawn c but not b
+        # setting inactive task b succeeded should spawn c but not b
         schd.pool.set_prereqs_and_outputs(
             ["1/b"], ["succeeded"], None, ['all'])
         assert (
@@ -2085,7 +2075,7 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         # set b:succeeded in flow 2 and check downstream spawning
         schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
         assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
-        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded' 
+        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded'
 
 
 async def test_trigger_queue(one, run, db_select, complete):
@@ -2109,7 +2099,6 @@ async def test_trigger_queue(one, run, db_select, complete):
         one.resume_workflow()
         await complete(one, timeout=2)
         assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]
-
 
 async def test_reload_xtriggers(flow, scheduler, start):
     """It should rebuild xtriggers when the workflow is reloaded.
@@ -2189,3 +2178,148 @@ async def test_reload_xtriggers(flow, scheduler, start):
             'b': 'wall_clock(trigger_time=946728000)',
             'c': 'wall_clock(trigger_time=946688400)',
         }
+
+        
+async def test_trigger_unqueued(flow, scheduler, start):
+    """Test triggering an unqueued active task.
+
+    It should not add to the force_released list.
+    See https://github.com/cylc/cylc-flow/pull/6337
+
+    """
+    conf = {
+        'scheduler': {'allow implicit tasks': 'True'},
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b => c'
+            }
+        }
+    }
+    schd = scheduler(
+        flow(conf),
+        run_mode='simulation',
+        paused_start=False
+    )
+
+    async with start(schd):
+        # Release tasks 1/a and 1/b
+        schd.pool.release_runahead_tasks()
+        schd.release_queued_tasks()
+        assert pool_get_task_ids(schd.pool) == ['1/a', '1/b']
+
+        # Mark 1/a as succeeded and spawn 1/c
+        task_a = schd.pool.get_task(IntegerPoint("1"), "a")
+        schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
+        assert pool_get_task_ids(schd.pool) == ['1/b', '1/c']
+
+        # Trigger the partially satisified (and not queued) task 1/c
+        schd.pool.force_trigger_tasks(['1/c'], [FLOW_ALL])
+
+        # It should not add to the queue managers force_released list.
+        assert not schd.pool.task_queue_mgr.force_released, (
+            "Triggering an unqueued task should not affect the force_released list"
+        )
+
+
+@pytest.mark.parametrize('expire_type', ['clock-expire', 'manual'])
+async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
+    """An expired waiting task should be removed from any queues.
+
+    See https://github.com/cylc/cylc-flow/issues/6284
+    """
+    conf = {
+        'scheduling': {
+            'initial cycle point': '2000',
+
+            'graph': {
+                'R1': 'foo'
+            },
+        },
+        'runtime': {
+            'foo': {
+                'execution retry delays': 'PT0S'
+            }
+        }
+    }
+
+    if expire_type == 'clock-expire':
+        conf['scheduling']['special tasks'] = {'clock-expire': 'foo(PT0S)'}
+        method = lambda schd: schd.pool.clock_expire_tasks() 
+    else:
+        method = lambda schd: schd.pool.set_prereqs_and_outputs(
+            ['2000/foo'], prereqs=[], outputs=['expired'], flow=['1']
+        )
+
+    id_ = flow(conf)
+    schd = scheduler(id_)
+    schd: Scheduler
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+
+        # the task should start as "waiting(queued)"
+        assert itask.state(TASK_STATUS_WAITING, is_queued=True)
+
+        # expire the task via whichever method we are testing
+        method(schd)
+
+        # the task should enter the "expired" state
+        assert itask.state(TASK_STATUS_EXPIRED, is_queued=False)
+
+        # the task should also have been removed from the queue
+        assert not schd.pool.task_queue_mgr.remove_task(itask)
+
+
+async def test_downstream_complete_before_upstream(
+    flow, scheduler, start, db_select
+):
+    """It should handle an upstream task completing before a downstream task.
+
+    See https://github.com/cylc/cylc-flow/issues/6315
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': 'a => b',
+                },
+            },
+        }
+    )
+    schd = scheduler(id_)
+    async with start(schd):
+        # 1/a should be pre-spawned (parentless)
+        a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
+        assert a_1
+
+        # spawn 1/b (this can happens as the result of request e.g. trigger)
+        b_1 = schd.pool.spawn_task('b', IntegerPoint('1'), {1})
+        schd.pool.add_to_pool(b_1)
+        assert b_1
+
+        # mark 1/b as succeeded
+        schd.task_events_mgr.process_message(b_1, 'INFO', 'succeeded')
+
+        # 1/b should be removed from the pool (completed)
+        assert schd.pool.get_tasks() == [a_1]
+
+        # as a side effect the DB should have been updated
+        assert (
+            TASK_OUTPUT_SUCCEEDED
+            in db_select(
+                schd,
+                # "False" means "do not run the DB update before checking it"
+                False,  # do not change this to "True"
+                'task_outputs',
+                'outputs',
+                name='b',
+                cycle='1',
+            )[0][0]
+        )
+
+        # mark 1/a as succeeded
+        schd.task_events_mgr.process_message(a_1, 'INFO', 'succeeded')
+
+        # 1/a should be removed from the pool (completed)
+        # 1/b should not be re-spawned by the success of 1/a
+        assert schd.pool.get_tasks() == []
+

@@ -170,11 +170,7 @@ def format_help_headings(string):
     """Put "headings" in bold.
 
     Where "headings" are lines with no indentation which are followed by a
-    colon e.g:
-
-    Examples:
-      ...
-
+    colon.
     """
     return cparse(
         re.sub(
@@ -200,6 +196,9 @@ class CylcOption(Option):
 
 
 class CylcHelpFormatter(IndentedHelpFormatter):
+    """This formatter handles colour in help text, and automatically
+    colourises headings & shell examples."""
+
     def _format(self, text: str) -> str:
         """Format help (usage) text on the fly to handle coloring.
 
@@ -214,20 +213,27 @@ class CylcHelpFormatter(IndentedHelpFormatter):
         """
         if should_use_color(self.parser.values):
             # Add color formatting to examples text.
-            text = format_shell_examples(
+            return format_shell_examples(
                 format_help_headings(text)
             )
-        else:
-            # Strip any hardwired formatting
-            text = cstrip(text)
-        return text
+        # Else strip any hardwired formatting
+        return cstrip(text)
 
-    def format_usage(self, usage):
+    def format_usage(self, usage: str) -> str:
         return super().format_usage(self._format(usage))
 
     # If we start using "description" as well as "usage" (also epilog):
     # def format_description(self, description):
     #     return super().format_description(self._format(description))
+
+    def format_option(self, option: Option) -> str:
+        """Format help text for options."""
+        if option.help:
+            if should_use_color(self.parser.values):
+                option.help = cparse(option.help)
+            else:
+                option.help = cstrip(option.help)
+        return super().format_option(option)
 
 
 class CylcOptionParser(OptionParser):
@@ -693,20 +699,21 @@ def combine_options_pair(first_list, second_list):
     return output
 
 
-def add_sources_to_helps(options, modify=None):
-    """Prettify format of list of CLI commands this option applies to
+def add_sources_to_helps(
+    options: Iterable[OptionSettings], modify: Optional[dict] = None
+) -> None:
+    """Get list of CLI commands this option applies to
     and prepend that list to the start of help.
 
     Arguments:
-        Options:
-            Options dicts to modify help upon.
+        options:
+            List of OptionSettings to modify help upon.
         modify:
             Dict of items to substitute: Intended to allow one
             to replace cylc-rose with the names of the sub-commands
             cylc rose options apply to.
     """
     modify = {} if modify is None else modify
-    cformat = cparse if should_use_color(options) else cstrip
     for option in options:
         if hasattr(option, 'sources'):
             sources = list(option.sources)
@@ -715,25 +722,26 @@ def add_sources_to_helps(options, modify=None):
                     sources.append(sub)
                     sources.remove(match)
 
-            option.kwargs['help'] = cformat(
+            option.kwargs['help'] = (
                 f'<cyan>[{", ".join(sources)}]</cyan>'
                 f' {option.kwargs["help"]}'
             )
-    return options
 
 
-def combine_options(*args, modify=None):
-    """Combine a list of argument dicts.
+def combine_options(
+    *args: List[OptionSettings], modify: Optional[dict] = None
+) -> List[OptionSettings]:
+    """Combine lists of Cylc options.
 
     Ordering should be irrelevant because combine_options_pair should
     be commutative, and the overall order of args is not relevant.
     """
-    list_ = list(args)
-    output = list_[0]
-    for arg in list_[1:]:
+    output = args[0]
+    for arg in args[1:]:
         output = combine_options_pair(arg, output)
 
-    return add_sources_to_helps(output, modify)
+    add_sources_to_helps(output, modify)
+    return output
 
 
 def cleanup_sysargv(

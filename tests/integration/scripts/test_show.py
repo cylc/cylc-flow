@@ -150,3 +150,46 @@ async def test_task_meta_query(mod_my_schd, capsys):
             'URL': 'http://hasthelargehadroncolliderdestroyedtheworldyet.com/',
         }
     }
+
+
+async def test_task_instance_query(
+    flow, scheduler, start, capsys
+):
+    """It should fetch task instance data, sorted by task name."""
+
+    colour_init(strip=True, autoreset=True)
+    opts = SimpleNamespace(
+        comms_timeout=5,
+        json=False,
+        task_defs=None,
+        list_prereqs=False,
+    )
+    schd = scheduler(
+        flow(
+            {
+               'scheduling': {
+                   'graph': {'R1': 'zed & dog & cat & ant'},
+               },
+           }
+        ),
+       paused_start=False
+    )
+    async with start(schd):
+        await schd.update_data_structure()
+        ret = await show(
+            schd.workflow,
+            [Tokens('//1/*')],
+            opts,
+        )
+        assert ret == 0
+
+    out, _ = capsys.readouterr()
+    assert [
+         line for line in out.splitlines()
+         if line.startswith("Task ID")
+    ] == [  # results should be sorted
+        'Task ID: 1/ant',
+        'Task ID: 1/cat',
+        'Task ID: 1/dog',
+        'Task ID: 1/zed',
+    ]

@@ -145,11 +145,9 @@ prompt () {
         case $USR in
             [Yy])
                 return 0
-                break
                 ;;
             [Nn])
                 return 1
-                break
                 ;;
         esac
     done

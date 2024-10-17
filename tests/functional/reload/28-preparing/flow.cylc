@@ -1,0 +1,8 @@
+[scheduler]
+   [[events]]
+       startup handlers = "sleep 10; echo"
+[scheduling]
+    [[graph]]
+        R1 = "foo => bar"
+[runtime]
+    [[foo, bar]]

@@ -282,13 +282,18 @@ class SurfaceFitter:
         return z_val
 
 
-def parse_domain(domain):
-    bbox = list(map(float, domain.split(',')))
+def parse_domain(domain: str):
+    lng1, lat1, lng2, lat2 = list(map(float, domain.split(',')))
+    msg = "Invalid domain '{}' ({} {} >= {})"
+    if lng1 >= lng2:
+        raise ValueError(msg.format(domain, 'longitude', lng1, lng2))
+    if lat1 >= lat2:
+        raise ValueError(msg.format(domain, 'latitude', lat1, lat2))
     return {
-        'lng1': bbox[0],
-        'lat1': bbox[1],
-        'lng2': bbox[2],
-        'lat2': bbox[3]
+        'lng1': lng1,
+        'lat1': lat1,
+        'lng2': lng2,
+        'lat2': lat2,
     }
 
 

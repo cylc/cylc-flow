@@ -20,6 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 12
 
+# shellcheck disable=SC2317
 grep_workflow_log_n_times() {
     TEXT="$1"
     N_TIMES="$2"

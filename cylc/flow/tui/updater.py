@@ -51,6 +51,7 @@ from cylc.flow.tui.data import (
     QUERY
 )
 from cylc.flow.tui.util import (
+    NaturalSort,
     compute_tree,
     suppress_logging,
 )
@@ -363,5 +364,5 @@ class Updater():
                 'stateTotals': {},
             })
 
-        data['workflows'].sort(key=lambda x: x['id'])
+        data['workflows'].sort(key=lambda x: NaturalSort(x['id']))
         return data

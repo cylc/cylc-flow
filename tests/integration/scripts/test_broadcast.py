@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow.option_parsers import Options
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.broadcast import _main, get_option_parser
 
 
 BroadcastOptions = Options(get_option_parser())
 
 
-async def test_broadcast_multi(
+async def test_broadcast_multi_workflow(
     one_conf,
     flow,
     scheduler,
@@ -77,3 +78,94 @@ async def test_broadcast_multi(
                     ' settings are not compatible with the workflow'
                 ) in out
                 assert err == ''
+
+
+async def test_broadcast_multi_namespace(
+    flow,
+    scheduler,
+    start,
+    db_select,
+):
+    """Test a multi-namespace broadcast command.
+
+    See https://github.com/cylc/cylc-flow/issues/6334
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {'R1': 'a & b & c & fin'},
+            },
+            'runtime': {
+                'root': {'execution time limit': 'PT1S'},
+                'VOWELS': {'execution time limit': 'PT2S'},
+                'CONSONANTS': {'execution time limit': 'PT3S'},
+                'a': {'inherit': 'VOWELS'},
+                'b': {'inherit': 'CONSONANTS'},
+                'c': {'inherit': 'CONSONANTS'},
+            },
+        }
+    )
+    schd = scheduler(id_)
+
+    async with start(schd):
+        # issue a broadcast to multiple namespaces
+        rets = await _main(
+            BroadcastOptions(
+                settings=['execution time limit = PT5S'],
+                namespaces=['root', 'VOWELS', 'CONSONANTS'],
+            ),
+            schd.workflow,
+        )
+
+        # the broadcast should succeed
+        assert list(rets.values()) == [True]
+
+        # the broadcast manager should store the "coerced" setting
+        for task in ['a', 'b', 'c', 'fin']:
+            assert schd.broadcast_mgr.get_broadcast(
+                schd.tokens.duplicate(cycle='1', task=task)
+            ) == {'execution time limit': 5.0}
+
+        # the database should store the "raw" setting
+        assert sorted(
+            db_select(schd, True, CylcWorkflowDAO.TABLE_BROADCAST_STATES)
+        ) == [
+            ('*', 'CONSONANTS', 'execution time limit', 'PT5S'),
+            ('*', 'VOWELS', 'execution time limit', 'PT5S'),
+            ('*', 'root', 'execution time limit', 'PT5S'),
+        ]
+
+
+async def test_broadcast_truncated_datetime(flow, scheduler, start, capsys):
+    """It should reject truncated datetime cycle points.
+
+    See https://github.com/cylc/cylc-flow/issues/6407
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '2000',
+            'graph': {
+                'R1': 'foo',
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # attempt an invalid broadcast
+        rets = await _main(
+            BroadcastOptions(
+                settings=['[environment]FOO=bar'],
+                point_strings=['050101T0000Z'],  # <== truncated
+            ),
+            schd.workflow,
+        )
+
+        # the broadcast should fail
+        assert list(rets.values()) == [False]
+
+        # an error should be recorded
+        _out, err = capsys.readouterr()
+        assert (
+            'Rejected broadcast:'
+            ' settings are not compatible with the workflow'
+        ) in err

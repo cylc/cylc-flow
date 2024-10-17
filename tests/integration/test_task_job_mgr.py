@@ -187,3 +187,52 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
             schd.task_job_mgr._prep_submit_task_job(
                 schd.workflow, task_a)
         assert not task_a.summary.get('execution_time_limit', '')
+
+
+async def test_broadcast_platform_change(
+    mock_glbl_cfg,
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """Broadcast can change task platform.
+
+    Even after host selection failure.
+
+    see https://github.com/cylc/cylc-flow/issues/6320
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+            [platforms]
+                [[foo]]
+                    hosts = food
+        ''')
+
+    id_ = flow({
+        "scheduling": {"graph": {"R1": "mytask"}},
+        # Platform = None doesn't cause this issue!
+        "runtime": {"mytask": {"platform": "localhost"}}})
+
+    schd = scheduler(id_, run_mode='live')
+
+    async with start(schd) as log:
+        # Change the task platform with broadcast:
+        schd.broadcast_mgr.put_broadcast(
+            ['1'], ['mytask'], [{'platform': 'foo'}])
+
+        # Simulate prior failure to contact hosts:
+        schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
+
+        # Attempt job submission:
+        schd.task_job_mgr.submit_task_jobs(
+            schd.workflow,
+            schd.pool.get_tasks(),
+            schd.server.curve_auth,
+            schd.server.client_pub_key_dir)
+
+        # Check that task platform hasn't become "localhost":
+        assert schd.pool.get_tasks()[0].platform['name'] == 'foo'
+        # ... and that remote init failed because all hosts bad:
+        assert log_filter(log, contains="(no hosts were reachable)")

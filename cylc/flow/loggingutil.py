@@ -430,7 +430,7 @@ def patch_log_level(logger: logging.Logger, level: int = logging.INFO):
 
     Defaults to INFO.
     """
-    orig_level = logger.getEffectiveLevel()
+    orig_level = logger.level
     if level < orig_level:
         logger.setLevel(level)
         yield

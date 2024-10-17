@@ -386,7 +386,7 @@ contains_ok() {
     local FILE_CONTROL="${2:--}"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE_TEST}")-contains-ok"
-    LANG=C comm -13 <(sort "${FILE_TEST}") <(sort "${FILE_CONTROL}") \
+    LANG=C comm -13 <(LANG=C sort "${FILE_TEST}") <(LANG=C sort "${FILE_CONTROL}") \
         1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     if [[ -s "${TEST_NAME}.stdout" ]]; then
         mkdir -p "${TEST_LOG_DIR}"
@@ -782,6 +782,13 @@ skip_all() {
     exit
 }
 
+skip_macos_gh_actions() {
+    # https://github.com/cylc/cylc-flow/issues/6276
+    if [[ "${CI:-}" && "$OSTYPE" == "darwin"* ]]; then
+        skip_all "Skipped due to performance issues on GH Actions MacOS runner"
+    fi
+}
+
 ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=
@@ -1153,7 +1160,6 @@ for SKIP in ${CYLC_TEST_SKIP}; do
         # Deliberately print variable substitution syntax unexpanded
         # shellcheck disable=SC2016
         skip_all 'this test is in $CYLC_TEST_SKIP.'
-        break
     fi
 done
 

@@ -267,7 +267,7 @@ def test_family_inheritance_and_quotes(
 
 
 @pytest.mark.parametrize(
-    ('cycling_type', 'scheduling_cfg', 'expected_icp', 'expected_opt_icp',
+    ('cycling_type', 'scheduling_cfg', 'expected_icp', 'expected_eval_icp',
      'expected_err'),
     [
         pytest.param(
@@ -356,7 +356,7 @@ def test_process_icp(
     cycling_type: str,
     scheduling_cfg: Dict[str, Any],
     expected_icp: Optional[str],
-    expected_opt_icp: Optional[str],
+    expected_eval_icp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
     monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
 ) -> None:
@@ -368,7 +368,7 @@ def test_process_icp(
         cycling_type: Workflow cycling type.
         scheduling_cfg: 'scheduling' section of workflow config.
         expected_icp: The expected icp value that gets set.
-        expected_opt_icp: The expected value of options.icp that gets set
+        expected_eval_icp: The expected value of options.icp that gets set
             (this gets stored in the workflow DB).
         expected_err: Exception class expected to be raised plus the message.
     """
@@ -396,10 +396,10 @@ def test_process_icp(
         assert mocked_config.cfg[
             'scheduling']['initial cycle point'] == expected_icp
         assert str(mocked_config.initial_point) == expected_icp
-        opt_icp = mocked_config.options.icp
-        if opt_icp is not None:
-            opt_icp = str(loader.get_point(opt_icp).standardise())
-        assert opt_icp == expected_opt_icp
+        eval_icp = mocked_config.evaluated_icp
+        if eval_icp is not None:
+            eval_icp = str(loader.get_point(eval_icp).standardise())
+        assert eval_icp == expected_eval_icp
 
 
 @pytest.mark.parametrize(

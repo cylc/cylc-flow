@@ -1998,17 +1998,20 @@ class TaskMutation:
 class FlowMutationArguments:
     flow = graphene.List(
         graphene.NonNull(Flow),
-        default_value=[FLOW_ALL],
+        default_value=[],
         description=sstrip(f'''
-            The flow(s) to trigger these tasks in.
+            The flow(s) to trigger/set these tasks in.
 
-            This should be a list of flow numbers OR a single-item list
-            containing one of the following three strings:
+            By default:
+            * active tasks (n=0) keep their existing flow assignment
+            * inactive tasks (n>0) get assigned all active flows
 
-            * {FLOW_ALL} - Triggered tasks belong to all active flows
-              (default).
-            * {FLOW_NEW} - Triggered tasks are assigned to a new flow.
-            * {FLOW_NONE} - Triggered tasks do not belong to any flow.
+            Otherwise you can assign (inactive tasks) or add to (active tasks):
+            * a list of integer flow numbers
+            or one of the following strings:
+            * {FLOW_ALL} - all active flows
+            * {FLOW_NEW} - an automatically generated new flow number
+            * {FLOW_NONE} - (ignored for active tasks): no flow
         ''')
     )
     flow_wait = Boolean(

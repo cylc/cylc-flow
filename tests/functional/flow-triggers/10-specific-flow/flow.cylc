@@ -17,6 +17,10 @@
    [[trigger-happy]]
       script = """
          cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_ID}//1/f
-         cylc__job__poll_grep_workflow_log "1/d/01:submitted.*running"
-         cylc trigger --flow=2 ${CYLC_WORKFLOW_ID}//1/b
+      """
+   [[d]]
+      script = """
+         if [[ "$CYLC_TASK_SUBMIT_NUMBER" == "1" ]]; then
+            cylc trigger --flow=2 ${CYLC_WORKFLOW_ID}//1/b
+         fi
       """

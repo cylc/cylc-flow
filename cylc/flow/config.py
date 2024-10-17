@@ -690,7 +690,7 @@ class WorkflowConfig:
         Sets:
             self.initial_point
             self.cfg['scheduling']['initial cycle point']
-            self.options.icp
+            self.evaluated_icp
         Raises:
             WorkflowConfigError - if it fails to validate
         """
@@ -710,10 +710,11 @@ class WorkflowConfig:
                     icp = ingest_time(orig_icp, get_current_time_string())
                 except IsodatetimeError as exc:
                     raise WorkflowConfigError(str(exc))
-        if orig_icp != icp:
+        self.evaluated_icp = None
+        if icp != orig_icp:
             # now/next()/previous() was used, need to store
             # evaluated point in DB
-            self.options.icp = icp
+            self.evaluated_icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
 

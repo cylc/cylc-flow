@@ -112,10 +112,10 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
         "runtime": {"completion": "(started and succeeded)"},
         "prerequisites": [
             {
-                "expression": "c0",
+                "expression": "0",
                 "conditions": [
                     {
-                        "exprAlias": "c0",
+                        "exprAlias": "0",
                         "taskId": "20141106T0900Z/bar",
                         "reqState": "succeeded",
                         "message": "satisfied naturally",

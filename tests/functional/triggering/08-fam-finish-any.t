@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test correct expansion of 'FAM:finish-any'
 . "$(dirname "$0")/test_header"
+skip_macos_gh_actions
 set_test_number 2
 reftest
 exit

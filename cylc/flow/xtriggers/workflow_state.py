@@ -20,8 +20,12 @@ from inspect import signature
 
 from cylc.flow.scripts.workflow_state import WorkflowPoller
 from cylc.flow.id import tokenise
-from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.exceptions import WorkflowConfigError, InputError
 from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
+from cylc.flow.dbstatecheck import check_polling_config
+
+
+DEFAULT_STATUS = TASK_STATUS_SUCCEEDED
 
 
 def workflow_state(
@@ -84,7 +88,7 @@ def workflow_state(
         offset,
         flow_num,
         alt_cylc_run_dir,
-        TASK_STATUS_SUCCEEDED,
+        DEFAULT_STATUS,
         is_trigger, is_message,
         old_format=False,
         condition=workflow_task_id,
@@ -150,6 +154,15 @@ def validate(args: Dict[str, Any]):
         not isinstance(args["flow_num"], int)
     ):
         raise WorkflowConfigError("flow_num must be an integer if given.")
+
+    try:
+        check_polling_config(
+            tokens['cycle_sel'] or tokens['task_sel'] or DEFAULT_STATUS,
+            args['is_trigger'],
+            args['is_message'],
+        )
+    except InputError as exc:
+        raise WorkflowConfigError(str(exc)) from None
 
 
 # BACK COMPAT: workflow_state_backcompat

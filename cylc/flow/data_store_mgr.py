@@ -116,6 +116,7 @@ from cylc.flow.wallclock import (
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.scheduler import Scheduler
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -468,7 +469,7 @@ class DataStoreMgr:
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
     def __init__(self, schd, n_edge_distance=1):
-        self.schd = schd
+        self.schd: Scheduler = schd
         self.id_ = Tokens(
             user=self.schd.owner,
             workflow=self.schd.workflow,
@@ -946,7 +947,7 @@ class DataStoreMgr:
                             )
                         for items in graph_children.values():
                             for child_name, child_point, _ in items:
-                                if child_point > final_point:
+                                if final_point and child_point > final_point:
                                     continue
                                 child_tokens = self.id_.duplicate(
                                     cycle=str(child_point),
@@ -976,7 +977,7 @@ class DataStoreMgr:
                             taskdefs
                         ).values():
                             for parent_name, parent_point, _ in items:
-                                if parent_point > final_point:
+                                if final_point and parent_point > final_point:
                                     continue
                                 parent_tokens = self.id_.duplicate(
                                     cycle=str(parent_point),
@@ -1182,10 +1183,7 @@ class DataStoreMgr:
         t_id = self.definition_id(name)
 
         if itask is None:
-            itask = self.schd.pool.get_task(point_string, name)
-
-        if itask is None:
-            itask = TaskProxy(
+            itask = self.schd.pool.get_task(point_string, name) or TaskProxy(
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
@@ -1226,6 +1224,7 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
+            flow_nums=serialise_set(flow_nums),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1419,7 +1418,7 @@ class DataStoreMgr:
             itask, is_parent = self.db_load_task_proxies[relative_id]
             itask.submit_num = submit_num
             flow_nums = deserialise_set(flow_nums_str)
-            # Do not set states and outputs for future tasks in flow.
+            # Do not set states and outputs for inactive tasks in flow.
             if (
                     itask.flow_nums and
                     flow_nums != itask.flow_nums and
@@ -2252,7 +2251,9 @@ class DataStoreMgr:
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
         cfg = self.schd.config.cfg
-        for node_id, node in node_data.items():
+        # NOTE: node_data may change during operation so make a copy
+        # see https://github.com/cylc/cylc-flow/pull/6397
+        for node_id, node in list(node_data.items()):
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(

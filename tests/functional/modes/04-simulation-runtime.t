@@ -18,6 +18,7 @@
 # Test that we can broadcast an alteration to simulation mode.
 
 . "$(dirname "$0")/test_header"
+skip_macos_gh_actions
 set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

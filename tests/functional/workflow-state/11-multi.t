@@ -54,15 +54,15 @@ CMD="cylc workflow-state --run-dir=$DBDIR --max-polls=1"
 #   foo|1|[1]|2024-06-05T16:34:02+12:00|2024-06-05T16:34:04+12:00|1|succeeded|0|0
 
 #---------------
-# Test the new-format command line (pre-8.3.0).
+# Test the new-format command line (8.3.0+).
 T=${TEST_NAME_BASE}-cli-c8b
 run_ok "${T}-1" $CMD c8b
 run_ok "${T}-2" $CMD c8b//1
 run_ok "${T}-3" $CMD c8b//1/foo
+run_fail "${T}-4" $CMD c8b//1/foo:waiting
 run_ok "${T}-4" $CMD c8b//1/foo:succeeded
 run_ok "${T}-5" $CMD "c8b//1/foo:the quick brown" --messages
 run_ok "${T}-6" $CMD "c8b//1/foo:x" --triggers
-run_ok "${T}-7" $CMD "c8b//1/foo:x"  # default to trigger if not a status
 run_ok "${T}-8" $CMD c8b//1
 run_ok "${T}-9" $CMD c8b//1:succeeded
 
@@ -86,7 +86,7 @@ run_fail "${T}-2" $CMD "c7//1/foo:the quick brown" --triggers
 run_ok   "${T}-3" $CMD "c7//1/foo:x" --triggers
 
 #---------------
-# Test the old-format command line (8.3.0+).
+# Test the old-format command line (pre-8.3.0).
 T=${TEST_NAME_BASE}-cli-8b-compat
 run_ok "${T}-1" $CMD c8b
 run_ok "${T}-2" $CMD c8b --point=1

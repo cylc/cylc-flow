@@ -288,8 +288,10 @@ async def prereqs_and_outputs_query(
         }
     }
     results = await pclient.async_request('graphql', tp_kwargs)
-    multi = len(results['taskProxies']) > 1
-    for t_proxy in results['taskProxies']:
+    task_proxies = sorted(results['taskProxies'],
+                          key=lambda proxy: proxy['id'])
+    multi = len(task_proxies) > 1
+    for t_proxy in task_proxies:
         task_id = Tokens(t_proxy['id']).relative_id
         state = t_proxy['state']
         if options.json:
@@ -379,10 +381,12 @@ async def prereqs_and_outputs_query(
 
                 print_completion_state(t_proxy)
 
-    if not results['taskProxies']:
+    if not task_proxies:
         ansiprint(
-            f"<red>No matching active tasks found: {', '.join(ids_list)}",
-            file=sys.stderr)
+            "<red>No matching active tasks found: "
+            f"{', '.join(ids_list)}</red>",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

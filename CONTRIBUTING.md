@@ -95,6 +95,7 @@ requests_).
  - Mark Dawson
  - Diquan Jabbour
  - Shixian Sheng
+ - Utheri Wagura
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

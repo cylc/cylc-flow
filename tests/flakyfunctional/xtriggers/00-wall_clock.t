@@ -18,6 +18,7 @@
 # Test clock xtriggers
 . "$(dirname "$0")/test_header"
 
+# shellcheck disable=SC2317
 run_workflow() {
   cylc play --no-detach --debug "$1" \
     -s "START='$2'" -s "HOUR='$3'" -s "OFFSET='$4'"

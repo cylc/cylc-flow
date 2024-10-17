@@ -1,4 +1,4 @@
-# Set outputs of future task to direct the flow at an optional branch point.
+# Set outputs of inactive task to direct the flow at an optional branch point.
 
 [scheduler]
     [[events]]

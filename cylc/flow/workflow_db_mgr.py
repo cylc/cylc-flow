@@ -327,8 +327,16 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_STOP_CLOCK_TIME, "value": schd.stop_clock_time},
             {"key": self.KEY_STOP_TASK, "value": schd.stop_task},
         ])
-        for key in (
+
+        # Store raw initial cycle point in the DB.
+        value = schd.config.evaluated_icp
+        value = None if value == 'reload' else value
+        self.put_workflow_params_1(
             self.KEY_INITIAL_CYCLE_POINT,
+            value or str(schd.config.initial_point)
+        )
+
+        for key in (
             self.KEY_FINAL_CYCLE_POINT,
             self.KEY_START_CYCLE_POINT,
             self.KEY_STOP_CYCLE_POINT
@@ -426,14 +434,15 @@ class WorkflowDatabaseManager:
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
             "is_manual_submit": itask.is_manual_submit,
+            "submit_num": itask.submit_num,
         }
+        # Note tasks_states table rows are for latest submit_num only
+        # (not one row per submit).
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        # Note tasks_states table rows are for latest submit_num only
-        # (not one row per submit).
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
             (set_args, where_args))

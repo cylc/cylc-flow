@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from time import sleep
 
 import pytest
@@ -23,7 +24,7 @@ from cylc.flow.timer import Timer
 
 def test_Timer(caplog: pytest.LogCaptureFixture):
     """Test the Timer class."""
-    caplog.set_level('WARNING')
+    caplog.set_level(logging.INFO)
     timer = Timer("bob timeout", 1.0)
 
     # timer attributes

@@ -27,6 +27,6 @@ workflow_run_ok "${TEST_NAME}" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 TEST_NAME=${TEST_NAME_BASE}-cli-check
-run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//20100101T0000Z/t1:out1" --max-polls=1
+run_ok "${TEST_NAME}" cylc workflow-state "${WORKFLOW_NAME}//20100101T0000Z/t1:out1" --triggers --max-polls=1
 
 purge
