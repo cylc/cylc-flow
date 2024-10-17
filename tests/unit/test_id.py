@@ -17,12 +17,15 @@
 
 import pytest
 
+from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.id import (
     LEGACY_CYCLE_SLASH_TASK,
     LEGACY_TASK_DOT_CYCLE,
     RELATIVE_ID,
-    Tokens,
     UNIVERSAL_ID,
+    Tokens,
+    quick_relative_id,
 )
 
 
@@ -392,3 +395,14 @@ def test_task_property():
     ) == (
         Tokens('//c:cs/t:ts/j:js', relative=True)
     )
+
+
+@pytest.mark.parametrize('cycle, expected', [
+    ('2000', '2000/foo'),
+    (2001, '2001/foo'),
+    (IntegerPoint('3'), '3/foo'),
+    # NOTE: ISO8601Points are not standardised by this function:
+    (ISO8601Point('2002'), '2002/foo'),
+])
+def test_quick_relative_id(cycle, expected):
+    assert quick_relative_id(cycle, 'foo') == expected

@@ -22,6 +22,7 @@ This module contains the abstract ID tokenising/detokenising code.
 from enum import Enum
 import re
 from typing import (
+    TYPE_CHECKING,
     Iterable,
     List,
     Optional,
@@ -31,6 +32,10 @@ from typing import (
 )
 
 from cylc.flow import LOG
+
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 class IDTokens(Enum):
@@ -524,14 +529,14 @@ LEGACY_CYCLE_SLASH_TASK = re.compile(
 )
 
 
-def quick_relative_detokenise(cycle, task):
+def quick_relative_id(cycle: Union[str, int, 'PointBase'], task: str) -> str:
     """Generate a relative ID for a task.
 
     This is a more efficient solution to `Tokens` for cases where
     you only want the ID string and don't have any use for a Tokens object.
 
     Example:
-        >>> q = quick_relative_detokenise
+        >>> q = quick_relative_id
         >>> q('1', 'a') == Tokens(cycle='1', task='a').relative_id
         True
 

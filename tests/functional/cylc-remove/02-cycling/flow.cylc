@@ -28,18 +28,6 @@
     [[foo, waz]]
         script = true
     [[bar]]
-        script = """
-            if [[ $CYLC_TASK_CYCLE_POINT == 2020 ]]; then
-               false
-            else
-                true
-            fi
-        """
+        script = [[ $CYLC_TASK_CYCLE_POINT != 2020 ]]
     [[baz]]
-        script = """
-            if [[ $CYLC_TASK_CYCLE_POINT == 2021 ]]; then
-               false
-            else
-                true
-            fi
-        """
+        script = [[ $CYLC_TASK_CYCLE_POINT != 2021 ]]

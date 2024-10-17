@@ -89,7 +89,7 @@ async def test_reload_waits_for_pending_tasks(
         change_state()
 
         # reload the workflow
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
 
         # the task should end in the submitted state
         assert foo.state(TASK_STATUS_SUBMITTED)
@@ -127,18 +127,17 @@ async def test_reload_failure(
     """
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         # corrupt the config by removing the scheduling section
         two_conf = {**one_conf, 'scheduling': {}}
         flow(two_conf, id_=id_)
 
         # reload the workflow
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
 
         # the reload should have failed but the workflow should still be
         # running
         assert log_filter(
-            log,
             contains=(
                 'Reload failed - WorkflowConfigError:'
                 ' missing [scheduling][[graph]] section'

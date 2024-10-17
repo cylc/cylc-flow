@@ -277,10 +277,10 @@ def test_no_base_commit_git(tmp_path: Path):
 
 @require_svn
 def test_untracked_svn_subdir(
-    svn_source_repo: Tuple[str, str, str], caplog, log_filter
+    svn_source_repo: Tuple[str, str, str], log_filter
 ):
     repo_dir, *_ = svn_source_repo
     source_dir = Path(repo_dir, 'jar_jar_binks')
     source_dir.mkdir()
     assert get_vc_info(source_dir) is None
-    assert log_filter(caplog, level=logging.WARNING, contains="$ svn info")
+    assert log_filter(logging.WARNING, contains="$ svn info")

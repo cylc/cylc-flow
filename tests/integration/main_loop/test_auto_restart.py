@@ -45,6 +45,6 @@ async def test_no_detach(
     id_: str = flow(one_conf)
     schd: Scheduler = scheduler(id_, paused_start=True, no_detach=True)
     with pytest.raises(MainLoopPluginException) as exc:
-        async with run(schd) as log:
+        async with run(schd):
             await asyncio.sleep(2)
-    assert log_filter(log, contains=f"Workflow shutting down - {exc.value}")
+    assert log_filter(contains=f"Workflow shutting down - {exc.value}")

@@ -945,7 +945,7 @@ def test_remote_clean(
             id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
         )
     for msg in expected_err_msgs:
-        assert log_filter(caplog, level=logging.ERROR, contains=msg)
+        assert log_filter(logging.ERROR, msg)
     if expected_platforms:
         for p_name in expected_platforms:
             mocked_remote_clean_cmd.assert_any_call(

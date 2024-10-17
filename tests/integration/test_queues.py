@@ -120,7 +120,7 @@ async def test_queue_held_tasks(
 
         # hold all tasks and resume the workflow
         # (nothing should have run yet because the workflow started paused)
-        await commands.run_cmd(commands.hold, schd, ['*/*'])
+        await commands.run_cmd(commands.hold(schd, ['*/*']))
         schd.resume_workflow()
 
         # release queued tasks
@@ -129,7 +129,7 @@ async def test_queue_held_tasks(
         assert len(submitted_tasks) == 0
 
         # un-hold tasks
-        await commands.run_cmd(commands.release, schd, ['*/*'])
+        await commands.run_cmd(commands.release(schd, ['*/*']))
 
         # release queued tasks
         # (tasks should now be released from the queues)
