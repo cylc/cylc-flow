@@ -952,28 +952,32 @@ def _interval_parse(interval_string):
     return WorkflowSpecifics.interval_parser.parse(interval_string)
 
 
-def point_parse(point_string: str) -> 'TimePoint':
-    """Parse a point_string into a proper TimePoint object."""
+def point_parse(
+    point_string: str, dump_format: Optional[str] = None
+) -> 'TimePoint':
+    """Parse a point_string into a proper format specific TimePoint object."""
+    if dump_format is None:
+        dump_format = WorkflowSpecifics.DUMP_FORMAT
     return _point_parse(
         point_string,
-        WorkflowSpecifics.DUMP_FORMAT,
+        dump_format,
         WorkflowSpecifics.ASSUMED_TIME_ZONE
     )
 
 
 @lru_cache(10000)
-def _point_parse(point_string: str, _dump_fmt, _tz) -> 'TimePoint':
+def _point_parse(point_string: str, dump_fmt, _tz) -> 'TimePoint':
     """Parse a point_string into a proper TimePoint object.
 
     Args:
         point_string: The string to parse.
-        _dump_fmt: Dump format (only used to avoid invalid cache hits).
+        dump_fmt: Dump format (used to avoid invalid cache hits).
         _tz: Cycle point time zone (only used to avoid invalid cache hits).
     """
-    if "%" in WorkflowSpecifics.DUMP_FORMAT:
+    if "%" in dump_fmt:
         # May be a custom not-quite ISO 8601 dump format.
         with contextlib.suppress(IsodatetimeError):
             return WorkflowSpecifics.point_parser.strptime(
-                point_string, WorkflowSpecifics.DUMP_FORMAT)
+                point_string, dump_fmt)
     # Attempt to parse it in ISO 8601 format.
     return WorkflowSpecifics.point_parser.parse(point_string)
