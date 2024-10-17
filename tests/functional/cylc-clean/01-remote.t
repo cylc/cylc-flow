@@ -81,6 +81,7 @@ ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
 |       \`-- ${TEST_NAME_BASE}
 |           \`-- share
 |               \`-- cycle
+|                   \`-- 1
 \`-- leave-me-alone
 ${TEST_DIR}/${SYM_NAME}/job/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
