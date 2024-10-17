@@ -248,7 +248,7 @@ class TaskJobManager:
         itasks,
         curve_auth,
         client_pub_key_dir,
-        run_mode: Union[str, RunMode] = RunMode.LIVE,
+        run_mode: "Union[str, RunMode]" = RunMode.LIVE,
     ):
         """Prepare for job submission and submit task jobs.
 

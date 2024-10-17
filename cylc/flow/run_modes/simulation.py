@@ -302,8 +302,13 @@ def parse_fail_cycle_points(
                 try:
                     fail_at_points.append(get_point(point_str).standardise())
                 except PointParsingError as exc:
-                    LOG.warning(exc.args[0])
-                    return fail_at_points_config
+                    # If we're checking a broadcast then warn on failure,
+                    # to avoid taking the scheduler down, else raise:
+                    if fail_at_points_config:
+                        LOG.warning(exc.args[0])
+                        return fail_at_points_config
+                    else:
+                        raise exc
     return fail_at_points
 
 
@@ -383,3 +388,12 @@ def sim_task_failed(
     ) and (
         try_num == 1 or not sim_conf['fail try 1 only']
     )
+
+
+def validate_sim_mode_tasks(tasks):
+    """Validate multiple tasks in sim mode, to be used at validation.
+
+    n.b. Also used for dummy mode.
+    """
+    for tdef in tasks:
+        configure_sim_mode(tdef.rtconfig, {})

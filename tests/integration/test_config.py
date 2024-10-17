@@ -24,6 +24,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.exceptions import (
+    PointParsingError,
     ServiceFileError,
     WorkflowConfigError,
     XtriggerConfigError,
@@ -596,25 +597,29 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 
 
 def test_nonlive_mode_validation(flow, validate, caplog, log_filter):
-    """Nonlive tasks return a warning at validation.
-    """
-    msg1 = dedent('The following tasks are set to run in skip mode:\n    * skip')
+    """Nonlive tasks return a warning at validation."""
 
-    wid = flow({
-        'scheduling': {
-            'graph': {
-                'R1': 'live => skip => simulation => dummy => default'
-            }
-        },
-        'runtime': {
-            'default': {},
-            'live': {'run mode': 'live'},
-            'skip': {
-                'run mode': 'skip',
-                'skip': {'outputs': 'started, submitted'}
+    msg1 = dedent(
+        'The following tasks are set to run in skip mode:\n    * skip'
+    )
+
+    wid = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': 'live => skip => simulation => dummy => default'
+                }
             },
-        },
-    })
+            'runtime': {
+                'default': {},
+                'live': {'run mode': 'live'},
+                'skip': {
+                    'run mode': 'skip',
+                    'skip': {'outputs': 'started, submitted'},
+                },
+            },
+        }
+    )
 
     validate(wid)
     assert log_filter(caplog, contains=msg1)
@@ -628,3 +633,26 @@ def test_skip_forbidden_as_output(flow, validate):
     })
     with pytest.raises(WorkflowConfigError, match='message for skip'):
         validate(wid)
+
+
+def test_validate_run_mode(flow: Fixture, validate: Fixture):
+    """Test that Cylc validate will only check simulation mode settings
+    if validate --mode simulation or dummy.
+    Discovered in:
+    https://github.com/cylc/cylc-flow/pull/6213#issuecomment-2225365825
+    """
+    wid = flow({
+        'scheduling': {'graph': {'R1': 'mytask'}},
+        'runtime': {'mytask': {'simulation': {'fail cycle points': 'alll'}}}
+    })
+
+    # It's fine with run mode live
+    validate(wid)
+
+    # It fails with run mode simulation:
+    with pytest.raises(PointParsingError, match='Incompatible value'):
+        validate(wid, run_mode='simulation')
+
+    # It fails with run mode dummy:
+    with pytest.raises(PointParsingError, match='Incompatible value'):
+        validate(wid, run_mode='dummy')

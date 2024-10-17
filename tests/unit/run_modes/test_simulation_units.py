@@ -18,6 +18,7 @@
 import pytest
 from pytest import param
 
+from cylc.flow.exceptions import PointParsingError
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.run_modes.simulation import (
@@ -76,38 +77,70 @@ def test_disable_platforms(rtc, expect):
 
 
 @pytest.mark.parametrize(
-    'args, cycling, fallback',
+    'args, cycling, expect, check_log',
     (
-        param((['2', '4'], ['']), 'integer', False, id='int.valid'),
-        param((['garbage'], []), 'integer', True, id='int.invalid'),
-        param((['20200101T0000Z'], []), 'iso8601', False, id='iso.valid'),
-        param((['garbage'], []), 'iso8601', True, id='iso.invalid'),
+        param(
+            (['2', '4'], ['1']),
+            'integer',
+            [IntegerPoint('2'), IntegerPoint('4')],
+            False,
+            id='int.valid',
+        ),
+        param(
+            (['garbage'], ['1']),
+            'integer',
+            ['1'],
+            True,
+            id='int.invalid'
+        ),
+        param(
+            (['garbage'], []),
+            'integer',
+            False,
+            True,
+            id='int.invalid.no-fallback'
+        ),
+        param(
+            (['20200101T0000Z'], ['20200101T0000Z']),
+            'iso8601',
+            [ISO8601Point('20200101T0000Z')],
+            False,
+            id='iso.valid',
+        ),
+        param(
+            (['garbage'], ['20200101T0000Z']),
+            'iso8601',
+            ['20200101T0000Z'],
+            True,
+            id='iso.invalid',
+        ),
+        param(
+            (['garbage'], []),
+            'iso8601',
+            False,
+            True,
+            id='iso.invalid',
+        ),
     ),
 )
 def test_parse_fail_cycle_points(
-    caplog, set_cycling_type, args, cycling, fallback
+    caplog, set_cycling_type, args, cycling, expect, check_log
 ):
-    """Tests for parse_fail_cycle points.
-    """
+    """Tests for parse_fail_cycle points."""
     set_cycling_type(cycling)
-    if fallback:
-        expect = args[1]
-        check_log = True
-    else:
-        expect = args[0]
-        check_log = False
 
-    if cycling == 'integer':
-        assert parse_fail_cycle_points(*args) == [
-            IntegerPoint(i) for i in expect
-        ]
-    else:
-        assert parse_fail_cycle_points(*args) == [
-            ISO8601Point(i) for i in expect
-        ]
-    if check_log:
+    if expect is False:
+        # Don't give a fallback, assert exception raised:
+        with pytest.raises(PointParsingError):
+            assert parse_fail_cycle_points(*args) == expect
+    elif check_log:
+        # Fallback value, but bad input value, assert failure logged:
+        assert parse_fail_cycle_points(*args) == expect
         assert "Incompatible" in caplog.messages[0]
         assert cycling in caplog.messages[0].lower()
+    else:
+        # Valid values, all good:
+        assert parse_fail_cycle_points(*args) == expect
 
 
 @pytest.mark.parametrize(

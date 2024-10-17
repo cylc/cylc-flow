@@ -129,6 +129,7 @@ WORKFLOW_RUN_MODES = frozenset(i.value for i in {
 # Modes which can be set in task config:
 TASK_CONFIG_RUN_MODES = frozenset(
     i.value for i in (RunMode.LIVE, RunMode.SKIP))
+
 # And those only available to the workflow:
 WORKFLOW_ONLY_MODES = frozenset(
     i.value for i in RunMode) - TASK_CONFIG_RUN_MODES
@@ -136,3 +137,7 @@ WORKFLOW_ONLY_MODES = frozenset(
 # Modes which completely ignore the standard submission path:
 JOBLESS_MODES = frozenset(i.value for i in {
     RunMode.SKIP, RunMode.SIMULATION})
+
+# Not-live Modes settable at workflow level:
+WORKFLOW_NONLIVE_MODES = frozenset(i.value for i in {
+    RunMode.DUMMY, RunMode.SIMULATION})

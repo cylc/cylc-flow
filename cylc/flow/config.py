@@ -82,6 +82,8 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
+from cylc.flow.run_modes import WORKFLOW_NONLIVE_MODES
+from cylc.flow.run_modes.simulation import validate_sim_mode_tasks
 from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
@@ -512,6 +514,9 @@ class WorkflowConfig:
         self._set_completion_expressions()
 
         self.process_runahead_limit()
+
+        if RunMode.get(self.options) in WORKFLOW_NONLIVE_MODES:
+            validate_sim_mode_tasks(self.taskdefs.values())
 
         self.configure_workflow_state_polling_tasks()
 

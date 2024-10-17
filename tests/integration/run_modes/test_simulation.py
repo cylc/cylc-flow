@@ -32,10 +32,20 @@ async def test_started_trigger(flow, reftest, scheduler):
     Long standing Bug discovered in Skip Mode work.
     https://github.com/cylc/cylc-flow/pull/6039#issuecomment-2321147445
     """
-    schd = scheduler(flow({
-        'scheduler': {'events': {'stall timeout': 'PT0S', 'abort on stall timeout': True}},
-        'scheduling': {'graph': {'R1': 'a:started => b'}}
-    }), paused_start=False)
+    schd = scheduler(
+        flow(
+            {
+                'scheduler': {
+                    'events': {
+                        'stall timeout': 'PT0S',
+                        'abort on stall timeout': True,
+                    }
+                },
+                'scheduling': {'graph': {'R1': 'a:started => b'}},
+            }
+        ),
+        paused_start=False,
+    )
     assert await reftest(schd) == {
         ('1/a', None),
         ('1/b', ('1/a',))
@@ -302,10 +312,8 @@ async def test_settings_restart(
                 )
                 schd.workflow_db_mgr.process_queued_ops()
                 monkeytime(42)
-                expected_timeout = 102.0
             else:
                 monkeytime(og_timeouts[itask.identity] - 1)
-                expected_timeout = float(int(og_timeouts[itask.identity]))
 
             assert sim_time_check(
                 schd.task_events_mgr, [itask], schd.workflow_db_mgr
@@ -460,3 +468,15 @@ async def test_settings_broadcast(
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:
         assert itask.tdef.rtconfig['execution retry delays'] == [5.0, 5.0]
+
+
+async def test_db_submit_num(
+    flow, one_conf, scheduler, run, complete, db_select
+):
+    """Test simulation mode correctly increments the submit_num in the DB."""
+    schd = scheduler(flow(one_conf), paused_start=False)
+    async with run(schd):
+        await complete(schd, '1/one')
+    assert db_select(schd, False, 'task_states', 'submit_num', 'status') == [
+        (1, 'succeeded'),
+    ]

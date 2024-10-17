@@ -262,7 +262,7 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     validate.is_tasks(tasks)
     yield
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    if schd.get_run_mode() == RunMode.SIMULATION.value:
+    if schd.get_run_mode() == RunMode.SIMULATION:
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
                 itask.state_reset(TASK_STATUS_FAILED)
