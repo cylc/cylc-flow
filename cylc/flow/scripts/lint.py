@@ -603,21 +603,21 @@ STYLE_CHECKS = {
             ' rather than job runner directive: ``{directive}``.'
         ),
         'rst': (
-            'Using ``[runtime][TASK]execution time limit`` is'
-            ' recommended in preference to using job runner'
-            ' directives because it allows Cylc to retain awareness'
-            ' of whether the job should have finished, even if contact'
-            ' with the target job runner\'s platform has been lost.'
-            ' \n\nThe following directives are considered equivelent to'
-            ' execution time limit:\n * '
+            "Using ``[runtime][TASK]execution time limit`` is"
+            " recommended in preference to using job runner"
+            " directives because it allows Cylc to retain awareness"
+            " of whether the job should have finished, even if contact"
+            " with the target job runner's platform has been lost."
+            " \n\nThe following directives are considered equivalent to"
+            " execution time limit:\n * "
         )
         + '\n * '.join((
             f'``{directive}`` ({job_runner})'
             for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
         )) + (
-            '\n\n.. note:: Using ``execution time limit`` which'
-            ' is automatically translated to the job runner\'s timeout'
-            ' directive can make your workflow more portable.'
+            "\n\n.. note:: Using ``execution time limit`` which"
+            " is automatically translated to the job runner's timeout"
+            " directive can make your workflow more portable."
         ),
         FUNCTION: check_wallclock_directives,
     }
