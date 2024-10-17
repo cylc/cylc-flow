@@ -31,6 +31,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Union,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -38,6 +39,7 @@ from metomi.isodatetime.timezone import get_local_time_zone
 from cylc.flow import LOG
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.platforms import get_platform
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
     TaskState,
@@ -57,7 +59,7 @@ if TYPE_CHECKING:
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqMessage, SatisfiedState
-    from cylc.flow.simulation import ModeSettings
+    from cylc.flow.run_modes.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
 
@@ -190,6 +192,7 @@ class TaskProxy:
         'point_as_seconds',
         'poll_timer',
         'reload_successor',
+        'run_mode',
         'submit_num',
         'tdef',
         'state',
@@ -297,6 +300,7 @@ class TaskProxy:
             self.graph_children = generate_graph_children(tdef, self.point)
 
         self.mode_settings: Optional['ModeSettings'] = None
+        self.run_mode: Optional[Union[str, RunMode]] = None
 
         if self.tdef.expiration_offset is not None:
             self.expire_time = (
@@ -547,7 +551,7 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'Iterable[Tokens]'
+        self, task_messages: 'Iterable[Tokens]', mode=RunMode.LIVE.value
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 
@@ -557,7 +561,8 @@ class TaskProxy:
         Return a set of unmatched task messages.
 
         """
-        used = self.state.satisfy_me(task_messages)
+
+        used = self.state.satisfy_me(task_messages, mode)
         return set(task_messages) - used
 
     def clock_expire(self) -> bool:

@@ -1,0 +1,28 @@
+#!Jinja2
+[scheduler]
+    cycle point format = %Y
+
+[scheduling]
+    initial cycle point = 1000
+    final cycle point = 1001
+    [[graph]]
+        R1/1000 = default_ & live_ & skip_ => end
+        R1/1001 = end[-P1Y] => broadcaster => default_
+
+[runtime]
+    [[root]]
+        script = echo "=== this task ran in live mode ==="
+        [[[simulation]]]
+            default run length = PT0S
+    [[default_, end]]
+    [[live_]]
+        run mode = live
+    [[skip_]]
+        run mode = skip
+    [[broadcaster]]
+        script = """
+            cylc broadcast "${CYLC_WORKFLOW_ID}" \
+                --name default_ \
+                --point 1001 \
+                --set='run mode="{{changemode | default("skip")}}"'
+        """

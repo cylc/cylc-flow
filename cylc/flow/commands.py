@@ -76,9 +76,11 @@ import cylc.flow.flags
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
-from cylc.flow.workflow_status import RunMode, StopMode
+from cylc.flow.task_state import (
+    TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED)
+from cylc.flow.workflow_status import StopMode
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -247,7 +249,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Poll pollable tasks or a task or family if options are provided."""
     validate.is_tasks(tasks)
     yield
-    if schd.get_run_mode() == RunMode.SIMULATION:
+    if schd.get_run_mode() == RunMode.SIMULATION.value:
         yield 0
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
     schd.task_job_mgr.poll_task_jobs(schd.workflow, itasks)

@@ -16,7 +16,6 @@
 
 """Task state related logic."""
 
-
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -324,7 +323,8 @@ class TaskState:
 
     def satisfy_me(
         self,
-        outputs: Iterable['Tokens']
+        outputs: Iterable['Tokens'],
+        mode,
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 
@@ -333,7 +333,7 @@ class TaskState:
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
             valid.update(
-                prereq.satisfy_me(outputs)
+                prereq.satisfy_me(outputs, mode)
             )
         return valid
 

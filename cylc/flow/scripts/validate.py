@@ -51,11 +51,11 @@ from cylc.flow.option_parsers import (
     ICP_OPTION,
 )
 from cylc.flow.profiler import Profiler
+from cylc.flow.scheduler_cli import RUN_MODE
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.scheduler_cli import RUN_MODE
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.run_modes import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Values
@@ -128,7 +128,7 @@ ValidateOptions = Options(
     {
         'check_circular': False,
         'profile_mode': False,
-        'run_mode': RunMode.LIVE
+        'run_mode': RunMode.LIVE.value
     }
 )
 
