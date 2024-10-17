@@ -18,7 +18,16 @@
 import pytest
 import urwid
 
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.task_state import (
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUCCEEDED,
+)
 from cylc.flow.workflow_status import StopMode
 
 
@@ -184,46 +193,83 @@ async def test_workflow_states(one_conf, flow, scheduler, start, rakiura):
                 )
 
 
-# TODO: Task state filtering is currently broken
-# see: https://github.com/cylc/cylc-flow/issues/5716
-#
-# async def test_task_states(flow, scheduler, start, rakiura):
-#     id_ = flow({
-#         'scheduler': {
-#             'allow implicit tasks': 'true',
-#         },
-#         'scheduling': {
-#             'initial cycle point': '1',
-#             'cycling mode': 'integer',
-#             'runahead limit': 'P1',
-#             'graph': {
-#                 'P1': '''
-#                     a => b => c
-#                     b[-P1] => b
-#                 '''
-#             }
-#         }
-#     }, name='test_task_states')
-#     schd = scheduler(id_)
-#     async with start(schd):
-#         set_task_state(
-#             schd,
-#             [
-#                 (IntegerPoint('1'), 'a', TASK_STATUS_SUCCEEDED, False),
-#                 # (IntegerPoint('1'), 'b', TASK_STATUS_FAILED, False),
-#                 (IntegerPoint('1'), 'c', TASK_STATUS_RUNNING, False),
-#                 # (IntegerPoint('2'), 'a', TASK_STATUS_RUNNING, False),
-#                 (IntegerPoint('2'), 'b', TASK_STATUS_WAITING, True),
-#             ]
-#         )
-#         await schd.update_data_structure()
-#
-#         with rakiura(schd.tokens.id, size='80,20') as rk:
-#             rk.compare_screenshot('unfiltered')
-#
-#             # filter out waiting tasks
-#             rk.user_input('T', 'down', 'enter', 'q')
-#             rk.compare_screenshot('filter-not-waiting')
+async def test_task_states(flow, scheduler, start, rakiura):
+    id_ = flow({
+        'scheduler': {
+            'allow implicit tasks': 'true',
+        },
+        'scheduling': {
+            'initial cycle point': '1',
+            'cycling mode': 'integer',
+            'runahead limit': 'P1',
+            'graph': {
+                'P1': '''
+                    a & b & c
+                '''
+            },
+        },
+        'runtime': {
+            'X': {},
+            'Y': {},
+            'Y1': {'inherit': 'Y'},
+            'a': {'inherit': 'X'},
+            'b': {'inherit': 'Y'},
+            'c': {'inherit': 'Y1'},
+        },
+    }, name='test_task_states')
+    schd = scheduler(id_)
+    async with start(schd):
+        set_task_state(
+            schd,
+            [
+                (IntegerPoint('1'), 'a', TASK_STATUS_SUCCEEDED, False),
+                (IntegerPoint('1'), 'b', TASK_STATUS_FAILED, False),
+                (IntegerPoint('1'), 'c', TASK_STATUS_EXPIRED, False),
+                (IntegerPoint('2'), 'a', TASK_STATUS_SUBMITTED, False),
+                (IntegerPoint('2'), 'b', TASK_STATUS_RUNNING, True),
+                (IntegerPoint('2'), 'c', TASK_STATUS_SUBMIT_FAILED, True),
+            ]
+        )
+        await schd.update_data_structure()
+
+        with rakiura(schd.tokens.id, size='80,30') as rk:
+            rk.compare_screenshot(
+                'unfiltered',
+                'all tasks should be displayed'
+                ' (i.e. 1/*, 2/* and 3/* should be displayed)',
+            )
+
+            # filter OUT waiting tasks
+            rk.user_input('T', 'down', 'enter', 'q')  # select waiting
+            rk.compare_screenshot(
+                'filter-not-waiting',
+                'waiting tasks should be filtered out'
+                ' (i.e. 1/* and 2/* should be displayed)',
+            )
+
+            # filter OUT waiting & expired tasks
+            rk.user_input('T', 'down', 'down', 'enter', 'q')  # select expired
+            rk.compare_screenshot(
+                'filter-not-waiting-or-expired',
+                'waiting & expired tasks should be filtered out'
+                ' (i.e. only 1/a, 1/b and 2/* should be displayed)',
+            )
+
+            # filter FOR waiting & expired tasks
+            rk.user_input('T', 'enter', 'q')  # select invert
+            rk.compare_screenshot(
+                'filter-waiting-or-expired',
+                'only waiting and expired tasks should be displayed'
+                ' (i.e. only 1/c and 3/* should be displayed)',
+            )
+
+            # filter FOR submitted tasks (using shortcuts)
+            rk.user_input('R', 's')  # reset filters and apply submitted filter
+            rk.compare_screenshot(
+                'filter-submitted',
+                'only submitted tasks should be displayed'
+                ' (i.e. only 2/a should be displayed)',
+            )
 
 
 async def test_navigation(flow, scheduler, start, rakiura):
