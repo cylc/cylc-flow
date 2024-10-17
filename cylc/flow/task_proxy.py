@@ -48,7 +48,6 @@ from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 from cylc.flow.cycling.iso8601 import (
     point_parse,
     interval_parse,
-    ISO8601Interval
 )
 
 if TYPE_CHECKING:
@@ -424,14 +423,20 @@ class TaskProxy:
         """
         offset_str = offset_str if offset_str else 'P0Y'
         if offset_str not in self.clock_trigger_times:
+            point_time = point_parse(str(point))
             if offset_str == 'P0Y':
-                trigger_time = point
+                trigger_time = point_time
             else:
-                trigger_time = point + ISO8601Interval(offset_str)
-
-            offset = int(
-                point_parse(str(trigger_time)).seconds_since_unix_epoch)
-            self.clock_trigger_times[offset_str] = offset
+                trigger_time = (
+                    point_parse(
+                        point_time.__str__(strftime_format='%Y%m%dT%H%M%S'),
+                        '%Y%m%dT%H%M%S'
+                    )
+                    + interval_parse(offset_str)
+                )
+            self.clock_trigger_times[offset_str] = int(
+                trigger_time.seconds_since_unix_epoch
+            )
         return self.clock_trigger_times[offset_str]
 
     def get_try_num(self):
