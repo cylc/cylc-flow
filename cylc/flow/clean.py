@@ -57,6 +57,7 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
+    is_relative_to,
     parse_rm_dirs,
     remove_dir_and_target,
     remove_dir_or_file,
@@ -116,12 +117,8 @@ def _clean_check(opts: 'Values', id_: str, run_dir: Path) -> None:
     # Thing to clean must be a dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         raise FileNotFoundError(f"No directory to clean at {run_dir}")
-    db_path = (
-        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
-    )
-    if opts.local_only and not db_path.is_file():
-        # Will reach here if this is cylc clean re-invoked on remote host
-        # (workflow DB only exists on scheduler host); don't need to worry
+    if opts.no_scan:
+        # This is cylc clean re-invoked on remote host; don't need to worry
         # about contact file.
         return
     try:
@@ -259,7 +256,7 @@ def glob_in_run_dir(
     """Execute a (recursive) glob search in the given run directory.
 
     Returns list of any absolute paths that match the pattern. However:
-    * Does not follow symlinks (apart from the spcedified symlink dirs).
+    * Does not follow symlinks (apart from the specified symlink dirs).
     * Also does not return matching subpaths of matching directories (because
         that would be redundant).
 
@@ -281,6 +278,9 @@ def glob_in_run_dir(
     results: List[Path] = []
     subpath_excludes: Set[Path] = set()
     for path in matches:
+        # Iterate down through ancestors (starting at the run dir) to
+        # weed out redundant subpaths of matched directories and subpaths of
+        # non-standard symlinks
         for rel_ancestor in reversed(path.relative_to(run_dir).parents):
             ancestor = run_dir / rel_ancestor
             if ancestor in subpath_excludes:
@@ -326,13 +326,19 @@ def _clean_using_glob(
         LOG.info(f"No files matching '{pattern}' in {run_dir}")
         return
     # First clean any matching symlink dirs
-    for path in abs_symlink_dirs:
-        if path in matches:
-            remove_dir_and_target(path)
-            if path == run_dir:
+    for symlink_dir in abs_symlink_dirs:
+        # Note: must clean e.g. share/cycle/ before share/ if the former
+        # is a symlink even if only the latter was specified.
+        if (
+            any(is_relative_to(symlink_dir, path) for path in matches)
+            and symlink_dir.is_symlink()
+        ):
+            remove_dir_and_target(symlink_dir)
+            if symlink_dir == run_dir:
                 # We have deleted the run dir
                 return
-            matches.remove(path)
+            if symlink_dir in matches:
+                matches.remove(symlink_dir)
     # Now clean the rest
     for path in matches:
         remove_dir_or_file(path)
