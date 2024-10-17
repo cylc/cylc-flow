@@ -55,32 +55,32 @@ For more info see: https://github.com/cylc/cylc-flow/issues/3329
 from contextlib import suppress
 from time import sleep, time
 from typing import (
+    TYPE_CHECKING,
     AsyncGenerator,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
-    TYPE_CHECKING,
     Union,
 )
 
-from cylc.flow import LOG
+from metomi.isodatetime.parsers import TimePointParser
+
 import cylc.flow.command_validation as validate
+import cylc.flow.flags
+from cylc.flow import LOG
 from cylc.flow.exceptions import (
     CommandFailedError,
     CyclingError,
     CylcConfigError,
 )
-import cylc.flow.flags
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
+from cylc.flow.task_state import TASK_STATUS_FAILED, TASK_STATUSES_ACTIVE
 from cylc.flow.workflow_status import RunMode, StopMode
-
-from metomi.isodatetime.parsers import TimePointParser
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -194,7 +194,7 @@ async def stop(
         # schedule shutdown after wallclock time passes provided time
         parser = TimePointParser()
         schd.set_stop_clock(
-            int(parser.parse(clock_time).seconds_since_unix_epoch)
+            parser.parse(clock_time).seconds_since_unix_epoch
         )
         schd._update_workflow_state()
     elif task is not None:
