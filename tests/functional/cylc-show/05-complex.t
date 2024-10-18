@@ -53,7 +53,7 @@ outputs: ('⨯': not completed)
   ⨯ 20000101T0000Z/f succeeded
   ⨯ 20000101T0000Z/f failed
 output completion: incomplete
-  ⨯ ⦙  succeeded
+  ⨯ ┆  succeeded
 19991231T0000Z/f succeeded
 20000101T0000Z/a succeeded
 20000101T0000Z/b succeeded
@@ -80,7 +80,7 @@ outputs: ('⨯': not completed)
   ⨯ 20000102T0000Z/f succeeded
   ⨯ 20000102T0000Z/f failed
 output completion: incomplete
-  ⨯ ⦙  succeeded
+  ⨯ ┆  succeeded
 20000101T0000Z/f succeeded
 20000102T0000Z/a succeeded
 20000102T0000Z/b succeeded
