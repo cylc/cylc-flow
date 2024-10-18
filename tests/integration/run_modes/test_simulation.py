@@ -460,3 +460,15 @@ async def test_settings_broadcast(
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:
         assert itask.tdef.rtconfig['execution retry delays'] == [5.0, 5.0]
+
+
+async def test_db_submit_num(
+    flow, one_conf, scheduler, run, complete, db_select
+):
+    """Test simulation mode correctly increments the submit_num in the DB."""
+    schd = scheduler(flow(one_conf), paused_start=False)
+    async with run(schd):
+        await complete(schd, '1/one')
+    assert db_select(schd, False, 'task_states', 'submit_num', 'status') == [
+        (1, 'succeeded'),
+    ]
