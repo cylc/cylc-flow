@@ -526,9 +526,12 @@ class XtriggerManager:
         self.do_housekeeping = False
         self.xtriggers = XtriggerCollator()
 
-    def add_xtriggers(self, xtriggers: 'XtriggerCollator'):
+    def add_xtriggers(self, xtriggers: 'XtriggerCollator', reload=False):
         """Add pre-collated and validated xtriggers."""
-        self.xtriggers.update(xtriggers)
+        if reload:
+            self.xtriggers = xtriggers
+        else:
+            self.xtriggers.update(xtriggers)
         self.xtriggers.sequential_xtriggers_default = (
             xtriggers.sequential_xtriggers_default
         )

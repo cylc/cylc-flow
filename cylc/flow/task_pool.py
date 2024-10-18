@@ -995,18 +995,25 @@ class TaskPool:
         if max_offset != orig and self.compute_runahead(force=True):
             self.release_runahead_tasks()
 
-    def reload_taskdefs(self, config: 'WorkflowConfig') -> None:
+    def reload(self, config: 'WorkflowConfig') -> None:
+        self.config = config   # store the updated config
+        self.xtrigger_mgr.add_xtriggers(
+            self.config.xtrigger_collator, reload=True)
+        self._reload_taskdefs()
+
+    def _reload_taskdefs(self) -> None:
         """Reload the definitions of task proxies in the pool.
 
         Orphaned tasks (whose definitions were removed from the workflow):
         - remove if not active yet
         - if active, leave them but prevent them from spawning children on
           subsequent outputs
+
         Otherwise: replace task definitions but copy over existing outputs etc.
 
+        self.config should already be updated for the reload.
         """
-        self.config = config
-        self.stop_point = config.stop_point or config.final_point
+        self.stop_point = self.config.stop_point or self.config.final_point
 
         # find any old tasks that have been removed from the workflow
         old_task_name_list = self.task_name_list

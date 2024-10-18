@@ -116,7 +116,7 @@ async def test_reload(sequential, start):
         assert pre_reload.is_xtrigger_sequential is True
 
         # reload the workflow
-        sequential.pool.reload_taskdefs(sequential.config)
+        sequential.pool.reload(sequential.config)
 
         # the original task proxy should have been replaced
         post_reload = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
