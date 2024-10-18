@@ -150,15 +150,16 @@ OBSOLETE_ENV_VARS = {
 
 
 DEPRECATED_STRING_TEMPLATES = {
-    'suite': 'workflow',
-    'suite_uuid': 'uuid',
-    'batch_sys_name': 'job_runner_name',
-    'batch_sys_job_id': 'job_id',
-    'user@host': 'platform_name',
-    'task_url': '``URL`` (if set in :cylc:conf:`[meta]URL`)',
-    'workflow_url': (
-        '``workflow_URL`` (if set in '
-        ':cylc:conf:`[runtime][<namespace>][meta]URL`)'),
+    'suite': ['workflow'],
+    'suite_uuid': ['uuid'],
+    'batch_sys_name': ['job_runner_name'],
+    'batch_sys_job_id': ['job_id'],
+    'user@host': ['platform_name'],
+    'task_url': ['URL', '(if set in :cylc:conf:`[meta]URL`)'],
+    'workflow_url': [
+        'workflow_URL',
+        '(if set in :cylc:conf:`[runtime][<namespace>][meta]URL`)',
+    ],
 }
 
 
@@ -359,16 +360,19 @@ def check_for_deprecated_task_event_template_vars(
         >>> this('hello = "My name is %(suite)s"')
         {'suggest': '\\n    * %(suite)s ⇒ %(workflow)s'}
 
-        >>> this('hello = "My name is %(suite)s, %(task_url)s"')
-        {'suggest': '\\n    * %(suite)s ⇒ %(workf...cylc:conf:`[meta]URL`)'}
+        >>> this('x = %(user@host)s, %(suite)')
+        {'suggest': '\\n    * %(user@host)s ⇒ %(platform_name)s'}
+
+        >>> this('x = %(task_url)s')
+        {'suggest': '\\n    * %(task_url)s ⇒ %(URL)s (if set in ...)'}
     """
-    result = []
-    for key, (regex, replacement) in deprecated_string_templates.items():
-        search_outcome = regex.findall(line)
-        if search_outcome and ' ' in replacement:
-            result.append(f'%({key})s - get {replacement}')
-        elif search_outcome:
-            result.append(f'%({key})s ⇒ %({replacement})s')
+    result = [
+        f"%({key})s ⇒ %({replacement})s {' '.join(extra)}".rstrip()
+        for key, (
+            regex, (replacement, *extra),
+        ) in deprecated_string_templates.items()
+        if regex.findall(line)
+    ]
 
     if result:
         return {'suggest': LIST_ITEM + LIST_ITEM.join(result)}
@@ -603,22 +607,17 @@ STYLE_CHECKS = {
             ' rather than job runner directive: ``{directive}``.'
         ),
         'rst': (
-            'Using ``[runtime][TASK]execution time limit`` is'
-            ' recommended in preference to using job runner'
-            ' directives because it allows Cylc to retain awareness'
-            ' of whether the job should have finished, even if contact'
-            ' with the target job runner\'s platform has been lost.'
-            ' \n\nThe following directives are considered equivelent to'
-            ' execution time limit:\n * '
+            "Use :cylc:conf:`flow.cylc[runtime][<namespace>]execution "
+            "time limit` rather than directly specifying a timeout "
+            "directive, otherwise Cylc has no way of knowing when the job "
+            "should have finished. Cylc automatically translates the "
+            "execution time limit to the correct timeout directive for the "
+            "particular job runner:\n"
         )
-        + '\n * '.join((
-            f'``{directive}`` ({job_runner})'
+        + ''.join((
+            f'\n * ``{directive}`` ({job_runner})'
             for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
-        )) + (
-            '\n\n.. note:: Using ``execution time limit`` which'
-            ' is automatically translated to the job runner\'s timeout'
-            ' directive can make your workflow more portable.'
-        ),
+        )),
         FUNCTION: check_wallclock_directives,
     }
 }
@@ -762,12 +761,12 @@ MANUAL_DEPRECATIONS = {
         'short': (
             'Deprecated template variables: {suggest}'),
         'rst': (
-            'The following template variables, mostly used in event handlers,'
-            'are deprecated, and should be replaced:'
-            + ''.join([
-                f'\n * ``{old}`` ⇒ {new}'
-                for old, new in DEPRECATED_STRING_TEMPLATES.items()
-            ])
+            "The following deprecated template variables, mostly used in "
+            "event handlers, should be replaced:\n"
+            + ''.join(
+                f"\n * ``{old}`` ⇒ ``{new}`` {' '.join(extra)}".rstrip()
+                for old, (new, *extra) in DEPRECATED_STRING_TEMPLATES.items()
+            )
         ),
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/user-guide/'
