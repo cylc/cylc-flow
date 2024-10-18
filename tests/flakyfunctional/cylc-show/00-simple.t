@@ -64,10 +64,10 @@ outputs: ('⨯': not completed)
   ⨯ 20141106T0900Z/foo succeeded
   ⨯ 20141106T0900Z/foo failed
 output completion: incomplete
-    ⦙  (
-  ✓ ⦙    started
-  ⨯ ⦙    and succeeded
-    ⦙  )
+    ┆  (
+  ✓ ┆    started
+  ⨯ ┆    and succeeded
+    ┆  )
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"

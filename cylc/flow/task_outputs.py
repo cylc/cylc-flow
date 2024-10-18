@@ -531,7 +531,7 @@ class TaskOutputs:
         ret: List[str] = []
         indent_level: int = 0
         op: Optional[str] = None
-        fence = '⦙'  # U+2999 (dotted fence)
+        fence = '┆'  # U+2506 (Box Drawings Light Triple Dash Vertical)
         for part in RE_EXPR_SPLIT.split(self._completion_expression):
             if not part.strip():
                 continue
