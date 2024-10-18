@@ -52,6 +52,7 @@ Examples:
 import asyncio
 
 import os.path
+from pathlib import Path
 from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -201,6 +202,11 @@ async def _main(
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(workflow_id)))
         return
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if options.against_source:
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
 
     config = WorkflowConfig(
         workflow_id,
