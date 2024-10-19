@@ -110,8 +110,8 @@ async def test_db_task_jobs(
 
         submit_and_check_db(schd)
 
-        assert itask_live.run_mode == 'simulation'
-        assert itask_skip.run_mode == 'skip'
+        assert itask_live.run_mode.value == 'simulation'
+        assert itask_skip.run_mode.value == 'skip'
 
 
 async def test_db_task_states(

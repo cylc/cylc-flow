@@ -31,7 +31,6 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -299,7 +298,7 @@ class TaskProxy:
             self.graph_children = generate_graph_children(tdef, self.point)
 
         self.mode_settings: Optional['ModeSettings'] = None
-        self.run_mode: Optional[Union[str, RunMode]] = None
+        self.run_mode: Optional[RunMode] = None
 
         if self.tdef.expiration_offset is not None:
             self.expire_time = (
@@ -557,7 +556,7 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'Iterable[Tokens]', mode=RunMode.LIVE.value
+        self, task_messages: 'Iterable[Tokens]', mode: "RunMode" = RunMode.LIVE
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 

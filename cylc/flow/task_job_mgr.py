@@ -248,7 +248,7 @@ class TaskJobManager:
         itasks,
         curve_auth,
         client_pub_key_dir,
-        run_mode: Union[str, RunMode] = RunMode.LIVE,
+        run_mode: RunMode = RunMode.LIVE,
     ):
         """Prepare for job submission and submit task jobs.
 
@@ -1028,7 +1028,7 @@ class TaskJobManager:
         self: 'TaskJobManager',
         workflow: str,
         itasks: 'List[TaskProxy]',
-        workflow_run_mode: Union[str, RunMode],
+        workflow_run_mode: RunMode,
     ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Identify task mode and carry out alternative submission
         paths if required:
@@ -1058,14 +1058,19 @@ class TaskJobManager:
             # Get task config with broadcasts applied:
             rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
                 itask)
+
             # Apply task run mode
-            if workflow_run_mode in WORKFLOW_ONLY_MODES:
+            if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
                 # Task run mode cannot override workflow run-mode sim or dummy:
                 run_mode = workflow_run_mode
             else:
                 # If workflow mode is skip or live and task mode is set,
                 # override workflow mode, else use workflow mode.
-                run_mode = rtconfig.get('run mode', None) or workflow_run_mode
+                run_mode = rtconfig.get('run mode', None)
+                if run_mode:
+                    run_mode = RunMode(run_mode)
+                else:
+                    run_mode = workflow_run_mode
 
             # Store the run mode of the this submission:
             itask.run_mode = run_mode

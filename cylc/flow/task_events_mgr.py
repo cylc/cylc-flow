@@ -773,7 +773,7 @@ class TaskEventsManager():
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
-            if itask.run_mode != RunMode.SIMULATION.value:
+            if itask.run_mode != RunMode.SIMULATION:
                 job_tokens = itask.tokens.duplicate(
                     job=str(itask.submit_num)
                 )
@@ -896,7 +896,7 @@ class TaskEventsManager():
         if (
             itask.state(TASK_STATUS_WAITING)
             # Polling in live mode only:
-            and itask.run_mode == RunMode.LIVE.value
+            and itask.run_mode == RunMode.LIVE
             and (
                 (
                     # task has a submit-retry lined up
@@ -1470,7 +1470,7 @@ class TaskEventsManager():
             )
 
         itask.set_summary_time('submitted', event_time)
-        if itask.run_mode == RunMode.SIMULATION.value:
+        if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
@@ -1507,7 +1507,7 @@ class TaskEventsManager():
             'submitted',
             event_time,
         )
-        if itask.run_mode == RunMode.SIMULATION.value:
+        if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             self.data_store_mgr.delta_job_time(
                 job_tokens,

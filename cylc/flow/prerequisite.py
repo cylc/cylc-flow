@@ -40,6 +40,7 @@ from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import PbCondition, PbPrerequisite
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.id import quick_relative_detokenise
+from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
@@ -263,7 +264,7 @@ class Prerequisite:
 
     def satisfy_me(
         self, outputs: Iterable['Tokens'],
-        mode: Literal['skip', 'live', 'simulation', 'skip'] = 'live'
+        mode: "RunMode" = RunMode.LIVE
     ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
@@ -273,9 +274,9 @@ class Prerequisite:
         """
         satisfied_message: SatisfiedState
 
-        if mode != 'live':
+        if mode != RunMode.LIVE:
             satisfied_message = self.DEP_STATE_SATISFIED_BY.format(
-                mode)   # type: ignore
+                mode.value)  # type: ignore
         else:
             satisfied_message = self.DEP_STATE_SATISFIED
         valid = set()

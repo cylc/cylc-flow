@@ -28,6 +28,7 @@ from cylc.flow.id import Tokens
 from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.run_modes import RunMode
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.scripts.install import (
     install as cylc_install,
@@ -686,7 +687,7 @@ def capture_live_submissions(capcall, monkeypatch):
     would have been submitted had this fixture not been used.
     """
     def fake_submit(self, _workflow, itasks, *_):
-        self.submit_nonlive_task_jobs(_workflow, itasks, 'simulation')
+        self.submit_nonlive_task_jobs(_workflow, itasks, RunMode.SIMULATION)
         for itask in itasks:
             for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
                 self.task_events_mgr.process_message(
