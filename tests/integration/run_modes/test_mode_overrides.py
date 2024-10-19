@@ -31,17 +31,18 @@ integration test framework.
 import pytest
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.run_modes import WORKFLOW_RUN_MODES
+from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
 
 
-@pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
+@pytest.mark.parametrize('workflow_run_mode', WORKFLOW_RUN_MODES)
 async def test_run_mode_override_from_config(
     capture_live_submissions,
     flow,
     scheduler,
     run,
     complete,
-    workflow_run_mode
+    workflow_run_mode,
+    validate
 ):
     """Test that `[runtime][<namespace>]run mode` overrides workflow modes."""
     id_ = flow({
@@ -51,11 +52,14 @@ async def test_run_mode_override_from_config(
             },
         },
         'runtime': {
+            'root': {'simulation': {'default run length': 'PT0S'}},
             'live': {'run mode': 'live'},
             'skip': {'run mode': 'skip'},
         }
     })
-    schd = scheduler(id_, run_mode=workflow_run_mode, paused_start=False)
+    run_mode = RunMode(workflow_run_mode)
+    validate(id_)
+    schd = scheduler(id_, run_mode=run_mode, paused_start=False)
     async with run(schd):
         await complete(schd)
 
@@ -96,7 +100,7 @@ async def test_force_trigger_does_not_override_run_mode(
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)
 
-        assert foo.run_mode == 'skip'
+        assert foo.run_mode.value == 'skip'
 
 
 async def test_run_mode_skip_abides_by_held(
@@ -161,5 +165,5 @@ async def test_run_mode_override_from_broadcast(
             [foo_1000, foo_1001],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)
-        assert foo_1000.run_mode == 'skip'
+        assert foo_1000.run_mode.value == 'skip'
         assert capture_live_submissions() == {'1001/foo'}

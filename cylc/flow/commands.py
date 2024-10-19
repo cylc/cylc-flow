@@ -249,7 +249,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Poll pollable tasks or a task or family if options are provided."""
     validate.is_tasks(tasks)
     yield
-    if schd.get_run_mode() == RunMode.SIMULATION.value:
+    if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
     schd.task_job_mgr.poll_task_jobs(schd.workflow, itasks)
@@ -262,7 +262,7 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     validate.is_tasks(tasks)
     yield
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    if schd.get_run_mode() == RunMode.SIMULATION.value:
+    if schd.get_run_mode() == RunMode.SIMULATION:
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
                 itask.state_reset(TASK_STATUS_FAILED)

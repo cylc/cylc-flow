@@ -432,8 +432,10 @@ class Scheduler:
             og_run_mode = self.get_run_mode()
             if run_mode != og_run_mode:
                 raise InputError(
-                    f'This workflow was originally run in {og_run_mode} mode:'
-                    f' Will not restart in {run_mode} mode.')
+                    "This workflow was originally run in "
+                    f"{run_mode.value} mode:"
+                    f" Will not restart in {run_mode.value} mode."
+                )
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -1195,7 +1197,7 @@ class Scheduler:
 
         Run workflow events only in live mode or skip mode.
         """
-        if self.get_run_mode() in WORKFLOW_ONLY_MODES:
+        if self.get_run_mode().value in WORKFLOW_ONLY_MODES:
             return
         self.workflow_event_handler.handle(self, event, str(reason))
 
@@ -1320,7 +1322,7 @@ class Scheduler:
         """Check workflow and task timers."""
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
-        if self.get_run_mode() != RunMode.SIMULATION.value:
+        if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
 
     async def workflow_shutdown(self):
@@ -1518,8 +1520,9 @@ class Scheduler:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
         self.pool.clock_expire_tasks()
         self.release_queued_tasks()
+
         if (
-            self.options.run_mode == RunMode.SIMULATION.value
+            self.get_run_mode() == RunMode.SIMULATION
             and sim_time_check(
                 self.task_events_mgr,
                 self.pool.get_tasks(),
@@ -1979,7 +1982,7 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    def get_run_mode(self) -> str:
+    def get_run_mode(self) -> RunMode:
         return RunMode.get(self.options)
 
     async def handle_exception(self, exc: BaseException) -> NoReturn:

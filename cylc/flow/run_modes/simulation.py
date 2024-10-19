@@ -321,12 +321,13 @@ def sim_time_check(
     """
     now = time()
     sim_task_state_changed: bool = False
+
     for itask in itasks:
         if (
             itask.state.status != TASK_STATUS_RUNNING
             or (
                 itask.run_mode
-                and itask.run_mode != RunMode.SIMULATION.value
+                and itask.run_mode != RunMode.SIMULATION
             )
         ):
             continue

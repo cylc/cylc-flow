@@ -22,6 +22,7 @@ from pytest import param
 
 from cylc.flow import commands
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.simulation import sim_time_check
 
 
@@ -63,7 +64,7 @@ def run_simjob(monkeytime):
         itask.state.is_queued = False
         monkeytime(0)
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         monkeytime(itask.mode_settings.timeout + 1)
 
         # Run Time Check
@@ -171,7 +172,7 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
     for i, result in enumerate(results):
         itask.try_timers['execution-retry'].num = i
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is result
 
 
@@ -191,7 +192,7 @@ def test_task_finishes(sim_time_check_setup, monkeytime, caplog):
     fail_all_1066.state.status = 'running'
     fail_all_1066.state.is_queued = False
     schd.task_job_mgr.submit_nonlive_task_jobs(
-        schd.workflow, [fail_all_1066], 'simulation')
+        schd.workflow, [fail_all_1066], RunMode.SIMULATION)
 
     # For the purpose of the test delete the started time set by
     # submit_nonlive_task_jobs.
@@ -221,7 +222,7 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
     # Run the job submission method:
     monkeytime(0)
     schd.task_job_mgr.submit_nonlive_task_jobs(
-        schd.workflow, [fast_forward_1066], 'simulation')
+        schd.workflow, [fast_forward_1066], RunMode.SIMULATION)
     fast_forward_1066.state.is_queued = False
 
     result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
@@ -235,7 +236,7 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
 
 
 async def test_settings_restart(
-    monkeytime, flow, scheduler, start
+    monkeytime, flow, scheduler, start,validate
 ):
     """Check that simulation mode settings are correctly restored
     upon restart.
@@ -269,13 +270,12 @@ async def test_settings_restart(
         }
     })
     schd = scheduler(id_)
-
     # Start the workflow:
     async with start(schd):
         og_timeouts = {}
         for itask in schd.pool.get_tasks():
             schd.task_job_mgr.submit_nonlive_task_jobs(
-                schd.workflow, [itask], 'simulation')
+                schd.workflow, [itask], RunMode.SIMULATION)
 
             og_timeouts[itask.identity] = itask.mode_settings.timeout
 
@@ -285,9 +285,9 @@ async def test_settings_restart(
             schd.task_events_mgr, [itask], schd.workflow_db_mgr
         ) is False
 
-    # Stop and restart the scheduler:
+    # Stop and restart the  scheduler:
     schd = scheduler(id_)
-    async with start(schd):
+    async with start(schd) as log:
         for itask in schd.pool.get_tasks():
             # Check that we haven't got mode settings back:
             assert itask.mode_settings is None
@@ -312,6 +312,7 @@ async def test_settings_restart(
             ) is False
 
             # Check that the itask.mode_settings is now re-created
+            
             assert itask.mode_settings.simulated_run_length == 60.0
             assert itask.mode_settings.sim_task_fails is True
 
@@ -393,7 +394,7 @@ async def test_settings_broadcast(
 
         # Submit the first - the sim task will fail:
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
 
         # Let task finish.
@@ -412,13 +413,13 @@ async def test_settings_broadcast(
             }])
         # Submit again - result is different:
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is False
 
         # Assert Clearing the broadcast works
         schd.broadcast_mgr.clear_broadcast()
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
 
         # Assert that list of broadcasts doesn't change if we submit
@@ -429,7 +430,7 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
             }])
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert (
             'Invalid ISO 8601 date representation: higadfuhasgiurguj'
             in log.messages[-1])
@@ -443,7 +444,7 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': '1'}
             }])
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert (
             'Invalid ISO 8601 date representation: 1'
             in log.messages[-1])
@@ -455,7 +456,7 @@ async def test_settings_broadcast(
                 'execution retry delays': '3*PT2S'
             }])
         schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], 'simulation')
+            schd.workflow, [itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:
@@ -466,9 +467,12 @@ async def test_db_submit_num(
     flow, one_conf, scheduler, run, complete, db_select
 ):
     """Test simulation mode correctly increments the submit_num in the DB."""
+    one_conf['runtime'] = {
+        'one': {'simulation': {'default run length': 'PT0S'}}
+    }
     schd = scheduler(flow(one_conf), paused_start=False)
     async with run(schd):
-        await complete(schd, '1/one')
+        await complete(schd, '1/one', timeout=10)
     assert db_select(schd, False, 'task_states', 'submit_num', 'status') == [
         (1, 'succeeded'),
     ]

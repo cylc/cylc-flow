@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqMessage
+    from cylc.flow.run_modes import RunMode
     from cylc.flow.taskdef import TaskDef
 
 
@@ -324,7 +325,7 @@ class TaskState:
     def satisfy_me(
         self,
         outputs: Iterable['Tokens'],
-        mode,
+        mode: "RunMode",
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 

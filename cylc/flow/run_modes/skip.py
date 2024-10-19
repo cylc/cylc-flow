@@ -64,7 +64,10 @@ def submit_task_job(
         'execution retry delays': []
     }
     itask.summary['job_runner_name'] = RunMode.SKIP.value
-    itask.run_mode = RunMode.SKIP.value
+    itask.jobs.append(
+        task_job_mgr.get_simulation_job_conf(itask, _workflow)
+    )
+    itask.run_mode = RunMode.SKIP
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],

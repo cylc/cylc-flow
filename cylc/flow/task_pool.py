@@ -1422,10 +1422,9 @@ class TaskPool:
                     tasks = [c_task]
 
                 for t in tasks:
-
                     t.satisfy_me(
                         [itask.tokens.duplicate(task_sel=output)],
-                        mode=itask.run_mode
+                        mode=itask.run_mode    # type: ignore
                     )
                     self.data_store_mgr.delta_task_prerequisite(t)
                     if not in_pool:
@@ -1554,7 +1553,7 @@ class TaskPool:
                 if completed_only:
                     c_task.satisfy_me(
                         [itask.tokens.duplicate(task_sel=message)],
-                        mode=itask.run_mode
+                        mode=itask.run_mode   # type: ignore
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
@@ -1979,7 +1978,7 @@ class TaskPool:
                 rtconfig = bc_mgr.get_updated_rtconfig(itask)
                 outputs.remove(RunMode.SKIP.value)
                 skips = get_skip_mode_outputs(itask, rtconfig)
-                itask.run_mode = RunMode.SKIP.value
+                itask.run_mode = RunMode.SKIP
             outputs = self._standardise_outputs(
                 itask.point, itask.tdef, outputs)
             outputs = list(set(outputs + skips))

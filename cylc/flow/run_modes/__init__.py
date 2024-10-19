@@ -80,9 +80,12 @@ class RunMode(Enum):
         raise KeyError(f'No description for {self}.')
 
     @staticmethod
-    def get(options: 'Values') -> str:
+    def get(options: 'Values') -> "RunMode":
         """Return the workflow run mode from the options."""
-        return getattr(options, 'run_mode', None) or RunMode.LIVE.value
+        run_mode = getattr(options, 'run_mode', None)
+        if run_mode:
+            return RunMode(run_mode)
+        return RunMode.LIVE
 
     def get_submit_method(self) -> 'Optional[SubmissionInterface]':
         """Return the job submission method for this run mode.
@@ -113,9 +116,9 @@ def disable_task_event_handlers(itask: 'TaskProxy'):
     """
     mode = itask.run_mode
     return (
-        mode == RunMode.SIMULATION.value
+        mode == RunMode.SIMULATION
         or (
-            mode == RunMode.SKIP.value
+            mode == RunMode.SKIP
             and itask.platform.get(
                 'disable task event handlers', False)
         )
