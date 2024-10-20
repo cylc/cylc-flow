@@ -1151,7 +1151,7 @@ with Conf('global.cylc', desc='''
                 """)
                 for folder, versionadded in SYMLINKABLE_LOCATIONS.items():
                     Conf(folder, VDR.V_STRING, None, desc=f"""
-                        Alternative location for the log dir.
+                        Alternative location for the {folder} dir.
 
                         If specified the workflow {folder} directory will
                         be created in
