@@ -26,9 +26,11 @@ from typing import (
     Callable,
     Dict,
     List,
+    Optional,
     Sequence,
     Tuple,
 )
+
 
 BOOL_SYMBOLS: Dict[bool, str] = {
     # U+2A2F (vector cross product)
@@ -148,25 +150,28 @@ def cli_format(cmd: List[str]):
     return ' '.join(cmd)
 
 
-def serialise_set(flow_nums: set) -> str:
+def serialise_set(flow_nums: Optional[set] = None) -> str:
     """Convert set to json, sorted.
 
     For use when a sorted result is needed for consistency.
 
-    Example:
-    >>> serialise_set({'3','2'})
-    '["2", "3"]'
-
+    Examples:
+        >>> serialise_set({'b', 'a'})
+        '["a", "b"]'
+        >>> serialise_set({3, 2})
+        '[2, 3]'
+        >>> serialise_set()
+        '[]'
     """
-    return json.dumps(sorted(flow_nums))
+    return json.dumps(sorted(flow_nums or set()))
 
 
 def deserialise_set(flow_num_str: str) -> set:
     """Convert json string to set.
 
     Example:
-    >>> sorted(deserialise_set('[2, 3]'))
-    [2, 3]
+    >>> deserialise_set('[2, 3]') == {2, 3}
+    True
 
     """
     return set(json.loads(flow_num_str))

@@ -149,9 +149,9 @@ async def test_incomplete_detection(
 ):
     """It should detect and log finished tasks left with incomplete outputs."""
     schd = scheduler(flow(one_conf))
-    async with start(schd) as log:
+    async with start(schd):
         schd.pool.set_prereqs_and_outputs(['1/one'], ['failed'], None, ['1'])
-    assert log_filter(log, contains='1/one did not complete')
+    assert log_filter(contains='1/one did not complete')
 
 
 async def test_pre_all(flow, scheduler, run):

@@ -18,21 +18,34 @@
 import asyncio
 from functools import partial
 from pathlib import Path
-import pytest
+import re
 from shutil import rmtree
 from time import time
-from typing import List, TYPE_CHECKING, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Set,
+    Tuple,
+    Union,
+)
+
+import pytest
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id import Tokens
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.scripts.install import (
+    get_option_parser as install_gop,
     install as cylc_install,
-    get_option_parser as install_gop
 )
+from cylc.flow.scripts.show import (
+    ShowOptions,
+    prereqs_and_outputs_query,
+)
+from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
@@ -41,14 +54,14 @@ from cylc.flow.workflow_status import StopMode
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
-    _make_src_flow,
     _make_scheduler,
+    _make_src_flow,
     _run_flow,
     _start_flow,
 )
 
+
 if TYPE_CHECKING:
-    from cylc.flow.network.client import WorkflowRuntimeClient
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
 
@@ -116,7 +129,11 @@ def ses_test_dir(request, run_dir):
 @pytest.fixture(scope='module')
 def mod_test_dir(request, ses_test_dir):
     """The root run dir for test flows in this test module."""
-    path = Path(ses_test_dir, request.module.__name__)
+    path = Path(
+        ses_test_dir,
+        # Shorten path by dropping `integration.` prefix:
+        re.sub(r'^integration\.', '', request.module.__name__)
+    )
     path.mkdir(exist_ok=True)
     yield path
     if _pytest_passed(request):
@@ -510,6 +527,10 @@ def reflog():
     Note, you'll need to call this on the scheduler *after* you have started
     it.
 
+    N.B. Trigger order is not stable; using a set ensures that tests check
+    trigger logic rather than binding to specific trigger order which could
+    change in the future, breaking the test.
+
     Args:
         schd:
             The scheduler to capture triggering information for.
@@ -588,6 +609,9 @@ async def _complete(
             async_timeout (handles shutdown logic more cleanly).
 
     """
+    if schd.is_paused:
+        raise Exception("Cannot wait for completion of a paused scheduler")
+
     start_time = time()
 
     tokens_list: List[Tokens] = []
@@ -622,11 +646,16 @@ async def _complete(
     # determine the completion condition
     def done():
         if wait_tokens:
-            return not tokens_list
+            if not tokens_list:
+                return True
+            if not schd.contact_data:
+                raise AssertionError(
+                    "Scheduler shut down before tasks completed: " +
+                    ", ".join(map(str, tokens_list))
+                )
+            return False
         # otherwise wait for the scheduler to shut down
-        if not schd.contact_data:
-            return True
-        return stop_requested
+        return stop_requested or not schd.contact_data
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(schd.pool, 'remove_if_complete', _remove_if_complete)
@@ -672,3 +701,23 @@ def reftest(run, reflog, complete):
         return triggers
 
     return _reftest
+
+
+@pytest.fixture
+def cylc_show():
+    """Fixture that runs `cylc show` on a scheduler, returning JSON object."""
+
+    async def _cylc_show(schd: 'Scheduler', *task_ids: str) -> dict:
+        pclient = WorkflowRuntimeClient(schd.workflow)
+        await schd.update_data_structure()
+        json_filter: dict = {}
+        await prereqs_and_outputs_query(
+            schd.id,
+            [Tokens(id_, relative=True) for id_ in task_ids],
+            pclient,
+            ShowOptions(json=True),
+            json_filter,
+        )
+        return json_filter
+
+    return _cylc_show

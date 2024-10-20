@@ -16,8 +16,15 @@
 
 """Manage flow counter and flow metadata."""
 
-from typing import Dict, Set, Optional, TYPE_CHECKING
 import datetime
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+)
 
 from cylc.flow import LOG
 
@@ -55,8 +62,42 @@ def add_flow_opts(parser):
     )
 
 
-def stringify_flow_nums(flow_nums: Set[int], full: bool = False) -> str:
-    """Return a string representation of a set of flow numbers
+def get_flow_nums_set(flow: List[str]) -> FlowNums:
+    """Return set of integer flow numbers from list of strings.
+
+    Returns an empty set if the input is empty or contains only "all".
+
+    >>> get_flow_nums_set(["1", "2", "3"])
+    {1, 2, 3}
+    >>> get_flow_nums_set([])
+    set()
+    >>> get_flow_nums_set(["all"])
+    set()
+    """
+    if flow == [FLOW_ALL]:
+        return set()
+    return {int(val.strip()) for val in flow}
+
+
+def stringify_flow_nums(flow_nums: Iterable[int]) -> str:
+    """Return the canonical string for a set of flow numbers.
+
+    Examples:
+        >>> stringify_flow_nums({1})
+        '1'
+
+        >>> stringify_flow_nums({3, 1, 2})
+        '1,2,3'
+
+        >>> stringify_flow_nums({})
+        ''
+
+    """
+    return ','.join(str(i) for i in sorted(flow_nums))
+
+
+def repr_flow_nums(flow_nums: FlowNums, full: bool = False) -> str:
+    """Return a representation of a set of flow numbers
 
     Return:
     - "none" for no flow
@@ -64,27 +105,22 @@ def stringify_flow_nums(flow_nums: Set[int], full: bool = False) -> str:
     - otherwise e.g. "(flow=1,2,3)"
 
     Examples:
-        >>> stringify_flow_nums({})
+        >>> repr_flow_nums({})
         '(flows=none)'
 
-        >>> stringify_flow_nums({1})
+        >>> repr_flow_nums({1})
         ''
 
-        >>> stringify_flow_nums({1}, True)
+        >>> repr_flow_nums({1}, full=True)
         '(flows=1)'
 
-        >>> stringify_flow_nums({1,2,3})
+        >>> repr_flow_nums({1,2,3})
         '(flows=1,2,3)'
 
     """
     if not full and flow_nums == {1}:
         return ""
-    else:
-        return (
-            "(flows="
-            f"{','.join(str(i) for i in flow_nums) or 'none'}"
-            ")"
-        )
+    return f"(flows={stringify_flow_nums(flow_nums) or 'none'})"
 
 
 class FlowMgr:

@@ -133,7 +133,7 @@ def test_auto_restart_DNS_error(monkeypatch, caplog, log_filter):
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
     assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
-    assert log_filter(caplog, contains='elephant')
+    assert log_filter(contains='elephant')
 
 
 def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
@@ -166,4 +166,4 @@ def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
     assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
-    assert log_filter(caplog, contains='mystderr')
+    assert log_filter(contains='mystderr')

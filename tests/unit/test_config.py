@@ -1400,7 +1400,7 @@ def test_implicit_tasks(
 
 @pytest.mark.parametrize('workflow_meta', [True, False])
 @pytest.mark.parametrize('url_type', ['good', 'bad', 'ugly', 'broken'])
-def test_process_urls(caplog, log_filter, workflow_meta, url_type):
+def test_process_urls(log_filter, workflow_meta, url_type):
 
     if url_type == 'good':
         # valid cylc 8 syntax
@@ -1436,7 +1436,6 @@ def test_process_urls(caplog, log_filter, workflow_meta, url_type):
     elif url_type == 'ugly':
         WorkflowConfig.process_metadata_urls(config)
         assert log_filter(
-            caplog,
             contains='Detected deprecated template variables',
         )
 
@@ -1464,7 +1463,6 @@ def test_zero_interval(
     should_warn: bool,
     opts: Values,
     tmp_flow_config: Callable,
-    caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
 ):
     """Test that a zero-duration recurrence with >1 repetition gets an
@@ -1482,7 +1480,6 @@ def test_zero_interval(
     """)
     WorkflowConfig(id_, flow_file, options=opts)
     logged = log_filter(
-        caplog,
         level=logging.WARNING,
         contains="Cannot have more than 1 repetition for zero-duration"
     )

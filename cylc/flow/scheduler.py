@@ -31,7 +31,6 @@ import traceback
 from typing import (
     Any,
     AsyncGenerator,
-    Callable,
     Dict,
     Iterable,
     List,
@@ -543,7 +542,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            await commands.run_cmd(commands.set_hold_point, self, holdcp)
+            await commands.run_cmd(commands.set_hold_point(self, holdcp))
 
         if self.options.paused_start:
             self.pause_workflow('Paused on start up')
@@ -633,7 +632,7 @@ class Scheduler:
                 if self.pool.get_tasks():
                     # (If we're not restarting a finished workflow)
                     self.restart_remote_init()
-                    await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
+                    await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
 
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
@@ -922,10 +921,6 @@ class Scheduler:
             for _, msg in tms:
                 warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
             LOG.warning(warn)
-
-    def get_command_method(self, command_name: str) -> Callable:
-        """Return a command processing method or raise AttributeError."""
-        return getattr(self, f'command_{command_name}')
 
     async def process_command_queue(self) -> None:
         """Process queued commands."""
@@ -1365,8 +1360,8 @@ class Scheduler:
             self.time_next_kill is not None
             and time() > self.time_next_kill
         ):
-            await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
-            await commands.run_cmd(commands.kill_tasks, self, ['*/*'])
+            await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
+            await commands.run_cmd(commands.kill_tasks(self, ['*/*']))
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
@@ -1508,7 +1503,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if all(itask.is_ready_to_run()):
+            if itask.is_ready_to_run():
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.sequential_spawn_next:

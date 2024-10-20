@@ -234,7 +234,7 @@ async def test_command_logging(mock_flow, caplog, log_filter):
         {'mode': StopMode.REQUEST_CLEAN.value},
         meta,
     )
-    assert log_filter(caplog, contains='Command "stop" received')
+    assert log_filter(contains='Command "stop" received')
 
     # put_messages: only log for owner
     kwargs = {
@@ -244,12 +244,11 @@ async def test_command_logging(mock_flow, caplog, log_filter):
     }
     meta["auth_user"] = mock_flow.owner
     await mock_flow.resolvers._mutation_mapper("put_messages", kwargs, meta)
-    assert not log_filter(caplog, contains='Command "put_messages" received:')
+    assert not log_filter(contains='Command "put_messages" received:')
 
     meta["auth_user"] = "Dr Spock"
     await mock_flow.resolvers._mutation_mapper("put_messages", kwargs, meta)
-    assert log_filter(
-        caplog, contains='Command "put_messages" received from Dr Spock')
+    assert log_filter(contains='Command "put_messages" received from Dr Spock')
 
 
 async def test_command_validation_failure(

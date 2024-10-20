@@ -52,7 +52,7 @@ async def test_mail_footer_template(
     # start the workflow and get it to send an email
     ctx = SimpleNamespace(mail_to=None, mail_from=None)
     id_keys = [EventKey('none', 'failed', 'failed', Tokens('//1/a'))]
-    async with start(mod_one) as one_log:
+    async with start(mod_one):
         mod_one.task_events_mgr._process_event_email(mod_one, ctx, id_keys)
 
     # warnings should appear only when the template is invalid
@@ -60,11 +60,9 @@ async def test_mail_footer_template(
 
     # check that template issues are handled correctly
     assert bool(log_filter(
-        one_log,
         contains='Ignoring bad mail footer template',
     )) == should_log
     assert bool(log_filter(
-        one_log,
         contains=template,
     )) == should_log
 
