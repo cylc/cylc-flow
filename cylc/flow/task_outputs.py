@@ -634,7 +634,7 @@ class TaskOutputs:
         e.g. "completion = succeeded or failed".
 
         Args:
-            exclude: Exclude one possible required messages, allowing
+            exclude: Exclude one possible required message, allowing
             specification of all required outputs if succeeded or failed.
         """
         for compvar, is_optional in get_optional_outputs(
