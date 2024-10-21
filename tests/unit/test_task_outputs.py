@@ -223,12 +223,12 @@ def test_format_completion_status():
         indent=2, gutter=2
     ) == '  ' + sstrip(
         '''
-          ⦙  (
-        ⨯ ⦙    succeeded
-        ⨯ ⦙    and x
-        ⨯ ⦙    and y
-          ⦙  )
-        ⨯ ⦙  or expired
+          ┆  (
+        ⨯ ┆    succeeded
+        ⨯ ┆    and x
+        ⨯ ┆    and y
+          ┆  )
+        ⨯ ┆  or expired
         '''
     )
     outputs.set_message_complete('succeeded')
@@ -237,12 +237,12 @@ def test_format_completion_status():
         indent=2, gutter=2
     ) == '  ' + sstrip(
         '''
-          ⦙  (
-        ✓ ⦙    succeeded
-        ✓ ⦙    and x
-        ⨯ ⦙    and y
-          ⦙  )
-        ⨯ ⦙  or expired
+          ┆  (
+        ✓ ┆    succeeded
+        ✓ ┆    and x
+        ⨯ ┆    and y
+          ┆  )
+        ⨯ ┆  or expired
         '''
     )
 
