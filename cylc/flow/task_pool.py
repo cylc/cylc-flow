@@ -1928,7 +1928,7 @@ class TaskPool:
         # Set existing task proxies.
         for itask in itasks:
             if flow == ['none'] and itask.flow_nums != set():
-                LOG.warning(
+                LOG.error(
                     f"[{itask}] ignoring 'flow=none' set: task already has"
                     f" {stringify_flow_nums(itask.flow_nums, full=True)}"
                 )
@@ -2176,13 +2176,13 @@ class TaskPool:
         # Trigger active tasks.
         for itask in existing_tasks:
             if flow == ['none'] and itask.flow_nums != set():
-                LOG.warning(
+                LOG.error(
                     f"[{itask}] ignoring 'flow=none' trigger: task already has"
                     f" {stringify_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
-                LOG.warning(f"[{itask}] ignoring trigger - already active")
+                LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
             self.merge_flows(itask, flow_nums)
             self._force_trigger(itask)
