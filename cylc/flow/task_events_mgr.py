@@ -744,7 +744,7 @@ class TaskEventsManager():
                 # Already failed.
                 return True
             if self._process_message_failed(
-                itask, event_time, self.JOB_FAILED, forced
+                itask, event_time, self.JOB_FAILED, forced, message
             ):
                 self.spawn_children(itask, TASK_OUTPUT_FAILED)
 
@@ -795,7 +795,7 @@ class TaskEventsManager():
             self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
             if self._process_message_failed(
-                itask, event_time, self.JOB_FAILED, forced
+                itask, event_time, self.JOB_FAILED, forced, message
             ):
                 self.spawn_children(itask, TASK_OUTPUT_FAILED)
 
@@ -812,7 +812,7 @@ class TaskEventsManager():
             self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
             if self._process_message_failed(
-                itask, event_time, aborted_with, forced
+                itask, event_time, aborted_with, forced, message
             ):
                 self.spawn_children(itask, TASK_OUTPUT_FAILED)
 
@@ -1297,10 +1297,17 @@ class TaskEventsManager():
         if itask.state_reset(TASK_STATUS_WAITING):
             self.data_store_mgr.delta_task_state(itask)
 
-    def _process_message_failed(self, itask, event_time, message, forced):
+    def _process_message_failed(
+            self, itask, event_time, message, forced, full_message
+    ):
         """Helper for process_message, handle a failed message.
 
         Return True if no retries (hence go to the failed state).
+
+        Args:
+            full_message:
+                If we have retries lined up we still tell users what
+                happened to cause the this attempt to fail.
         """
         no_retries = False
         if event_time is None:
@@ -1332,7 +1339,10 @@ class TaskEventsManager():
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
             self._retry_task(itask, timer.timeout)
             delay_msg = f"retrying in {timer.delay_timeout_as_str()}"
-            LOG.warning(f"[{itask}] {delay_msg}")
+            LOG.warning(
+                f'[{itask}] {full_message or self.EVENT_FAILED} - '
+                f'{delay_msg}'
+            )
             msg = f"{self.JOB_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_RETRY, msg)
         self._reset_job_timers(itask)
