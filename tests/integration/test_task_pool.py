@@ -645,7 +645,8 @@ def list_tasks(schd):
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'a', 'succeeded'):
+                    'satisfied by simulation mode'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
             ],
@@ -673,7 +674,8 @@ def list_tasks(schd):
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'a', 'succeeded'):
+                    'satisfied by simulation mode'},
                 {('1', 'b', 'succeeded'): False},
             ],
             id='removed'
@@ -768,7 +770,8 @@ async def test_restart_prereqs(
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'a', 'succeeded'):
+                    'satisfied by simulation mode'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
             ],
@@ -796,7 +799,8 @@ async def test_restart_prereqs(
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
+                {('1', 'a', 'succeeded'):
+                    'satisfied by simulation mode'},
                 {('1', 'b', 'succeeded'): False},
             ],
             id='removed'
@@ -895,7 +899,7 @@ async def _test_restart_prereqs_sat():
         for prereq in task_c.state.prerequisites
         for key, satisfied in prereq.items()
     ) == [
-        ('1', 'a', 'succeeded', 'satisfied naturally'),
+        ('1', 'a', 'succeeded', 'satisfied by simulation mode'),
         ('1', 'b', 'succeeded', 'satisfied from database')
     ]
 
@@ -912,7 +916,7 @@ async def _test_restart_prereqs_sat():
         for prereq in task_c_prereqs
         for condition in prereq.conditions
     ) == [
-        ('1/a', True, 'satisfied naturally'),
+        ('1/a', True, 'satisfied by simulation mode'),
         ('1/b', True, 'satisfied from database'),
     ]
 
@@ -1574,6 +1578,75 @@ async def test_set_outputs_future(
         assert log_filter(log, contains="output 1/a:cheese not found")
         assert log_filter(log, contains="completed output x")
         assert log_filter(log, contains="completed output y")
+
+
+async def test_set_outputs_from_skip_settings(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+    validate
+):
+    """Check working of ``cylc set --out=skip``:
+
+    1. --out=skip can be used to set all required outputs.
+    2. --out=skip,other_output can be used to set other outputs.
+
+    """
+    id_ = flow(
+        {
+            'scheduler': {
+                'allow implicit tasks': 'True',
+            },
+            'scheduling': {
+                'cycling mode': 'integer',
+                'initial cycle point': 1,
+                'final cycle point': 2,
+                'graph': {
+                    'P1': """
+                        a => after_asucceeded
+                        a:x => after_ax
+                        a:y? => after_ay
+                    """
+                }
+            },
+            'runtime': {
+                'a': {
+                    'outputs': {
+                        'x': 'xebec',
+                        'y': 'yacht'
+                    },
+                    'skip': {'outputs': 'x'}
+                }
+            }
+        }
+    )
+    validate(id_)
+    schd = scheduler(id_)
+
+    async with start(schd):
+
+        # it should start up with just tasks a:
+        assert pool_get_task_ids(schd.pool) == ['1/a', '2/a']
+
+        # setting 1/a output to skip should set output x, but not
+        # y (because y is optional).
+        schd.pool.set_prereqs_and_outputs(
+            ['1/a'], ['skip'], None, ['all'])
+        assert (pool_get_task_ids(schd.pool) == [
+            '1/after_asucceeded',
+            '1/after_ax',
+            '2/a'])
+
+        # You should be able to set skip as part of a list of outputs:
+        schd.pool.set_prereqs_and_outputs(
+            ['2/a'], ['skip', 'y'], None, ['all'])
+        assert (pool_get_task_ids(schd.pool) == [
+            '1/after_asucceeded',
+            '1/after_ax',
+            '2/after_asucceeded',
+            '2/after_ax',
+            '2/after_ay'])
 
 
 async def test_prereq_satisfaction(
