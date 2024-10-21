@@ -142,7 +142,7 @@ async def test_flow_assignment(
                 f'[{active_a}] ignoring \'flow=none\' {command}: '
                 f'task already has {stringify_flow_nums(active_a.flow_nums)}'
             ),
-            level=logging.WARNING
+            level=logging.ERROR
         )
 
         do_command([active_a.identity], flow=[FLOW_NEW])
