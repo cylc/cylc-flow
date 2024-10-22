@@ -48,5 +48,9 @@ async def test_dump_tasks(flow, scheduler, start):
         # schd.release_queued_tasks()
         await schd.update_data_structure()
         ret = []
-        await dump(id_, DumpOptions(disp_form='tasks'), write=ret.append)
+        await dump(
+            id_,
+            DumpOptions(disp_form='tasks', legacy_format=True),
+            write=ret.append
+        )
         assert ret == ['a, 1, waiting, not-held, queued, not-runahead']
