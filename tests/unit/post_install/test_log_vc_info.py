@@ -19,6 +19,7 @@ import logging
 from pathlib import Path
 import pytest
 from pytest import MonkeyPatch, TempPathFactory
+from secrets import token_hex
 import shutil
 import subprocess
 from typing import Any, Callable, Tuple
@@ -26,13 +27,14 @@ from unittest.mock import Mock
 
 from cylc.flow.install_plugins.log_vc_info import (
     INFO_FILENAME,
+    VCSNotInstalledError,
     _get_git_commit,
+    _run_cmd,
     get_status,
     get_vc_info,
     main,
     write_diff,
 )
-
 from cylc.flow.workflow_files import WorkflowFiles
 
 Fixture = Any
@@ -284,3 +286,27 @@ def test_untracked_svn_subdir(
     source_dir.mkdir()
     assert get_vc_info(source_dir) is None
     assert log_filter(caplog, level=logging.WARNING, contains="$ svn info")
+
+
+def test_not_installed(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    log_filter,
+):
+    """Test what happens if version control software is not installed."""
+    fake_vcs = token_hex(8)
+    with pytest.raises(VCSNotInstalledError):
+        _run_cmd(fake_vcs, [], cwd=tmp_path)
+
+    monkeypatch.setattr(
+        'cylc.flow.install_plugins.log_vc_info.INFO_COMMANDS',
+        {fake_vcs: []}
+    )
+    caplog.set_level(logging.DEBUG)
+    assert get_vc_info(tmp_path) is None
+    assert log_filter(
+        caplog,
+        level=logging.DEBUG,
+        contains=f"{fake_vcs} does not appear to be installed",
+    )
