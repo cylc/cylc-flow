@@ -934,6 +934,7 @@ class TaskEventsManager():
         # state change when there are retries lined up).
         if severity_lvl > DEBUG and flag != self.FLAG_POLLED and message in {
             self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
+            self.EVENT_SUBMIT_FAILED
         }:
             severity_lvl = DEBUG
         LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
