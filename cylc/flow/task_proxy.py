@@ -368,11 +368,14 @@ class TaskProxy:
                     )
 
         reload_successor.state.xtriggers.update({
-            # copy across any special "_cylc" xtriggers which were added
-            # dynamically at runtime (i.e. execution retry xtriggers)
+            # Copy across any auto-defined "_cylc" xtriggers runtime (retries),
+            # but avoid "_cylc_wallclock" xtriggers which are user-defined.
             key: value
             for key, value in self.state.xtriggers.items()
-            if key.startswith('_cylc')
+            if (
+                key.startswith('_cylc') and not
+                key.startswith('_cylc_wallclock')
+            )
         })
         reload_successor.jobs = self.jobs
 

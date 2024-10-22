@@ -187,6 +187,28 @@ class XtriggerCollator:
         self.sequential_xtrigger_labels.update(
             xtriggers.sequential_xtrigger_labels)
 
+    def purge_user_xtriggers(self):
+        """Purge user-defined triggers before a reload.
+
+        User-defined triggers need to be recreated from the config file.
+        Auto-defined triggers (retries) need to be kept.
+
+        """
+        nuke = []
+        for label in self.functx_map:
+            if (
+                label.startswith("_cylc_wallclock")
+                or not label.startswith("_cylc")
+            ):
+                # _cylc_wallclock xtriggers are user-defined
+                # otherwise all _cylc xtriggers are automatic.
+                nuke.append(label)
+        for label in nuke:
+            del self.functx_map[label]
+            with suppress(KeyError):
+                self.wall_clock_labels.remove(label)
+                self.sequential_xtrigger_labels.remove(label)
+
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:
         """Add a new xtrigger function.
 
@@ -201,8 +223,8 @@ class XtriggerCollator:
             return
 
         if (
-            not label.startswith('_cylc_retry_') and not
-            label.startswith('_cylc_submit_retry_')
+            not label.startswith('_cylc_retry_') and
+            not label.startswith('_cylc_submit_retry_')
         ):
             # (the "_wall_clock" function fails "wall_clock" validation)
             self._validate(label, fctx, fdir)
@@ -526,8 +548,10 @@ class XtriggerManager:
         self.do_housekeeping = False
         self.xtriggers = XtriggerCollator()
 
-    def add_xtriggers(self, xtriggers: 'XtriggerCollator'):
-        """Add pre-collated and validated xtriggers."""
+    def add_xtriggers(self, xtriggers: 'XtriggerCollator', reload=False):
+        """Add validated xtriggers, parsed from the workflow config."""
+        if reload:
+            self.xtriggers.purge_user_xtriggers()
         self.xtriggers.update(xtriggers)
         self.xtriggers.sequential_xtriggers_default = (
             xtriggers.sequential_xtriggers_default
