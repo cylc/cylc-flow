@@ -37,14 +37,14 @@ async def test_prompt_for_running_workflow_with_no_changes(
 
     See: https://github.com/cylc/cylc-flow/issues/6261
 
-    We hope to get users into the habbit of "cylc vip" to create a new run,
+    We hope to get users into the habit of "cylc vip" to create a new run,
     and "cylc vr" to contine an old one (picking up any new changes in the
     process).
 
     This works fine, unless there are no changes to reinstall, in which case
     the "cylc vr" command exits (nothing to do).
 
-    The "nothing to reinstall" situation can be interpretted two ways:
+    The "nothing to reinstall" situation can be interpreted two ways:
     1. Unexpected error, the user expected there to be something to reinstall,
        but there wasn't. E.g, they forgot to press save.
     2. Unexpected annoyance, I wanted to restart the workflow, just do it.
