@@ -878,6 +878,10 @@ class TaskPool:
 
             del itask
 
+            # removing this task could nudge the runahead limit forward
+            if self.compute_runahead():
+                self.release_runahead_tasks()
+
     def get_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the task pool."""
         # Cached list only for use internally in this method.
