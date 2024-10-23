@@ -19,7 +19,7 @@ from types import SimpleNamespace
 
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
-from cylc.flow.run_modes import disable_task_event_handlers
+from cylc.flow.run_modes import RunMode, disable_task_event_handlers
 from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
     TaskState,
@@ -140,7 +140,7 @@ def test_disable_task_event_handlers(itask_run_mode, disable_handlers, expect):
     """
     # Construct a fake itask object:
     itask = SimpleNamespace(
-        run_mode=itask_run_mode,
+        run_mode=RunMode(itask_run_mode),
         platform={'disable task event handlers': disable_handlers},
         tdef=SimpleNamespace(
             rtconfig={
