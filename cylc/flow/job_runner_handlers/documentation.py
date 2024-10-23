@@ -424,8 +424,7 @@ class ExampleHandler():
             ret_code:
                 Subprocess return code.
             out:
-                Subprocess standard output, note this should be newline
-                terminated.
+                Subprocess standard output.
             err:
                 Subprocess standard error.
 
