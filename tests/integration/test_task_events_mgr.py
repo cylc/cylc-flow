@@ -17,6 +17,7 @@
 import logging
 from typing import Any as Fixture
 
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.data_store_mgr import (
@@ -154,7 +155,7 @@ async def test__always_insert_task_job(
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir,
-            run_mode='live'
+            run_mode=RunMode('live')
         )
 
         # Both tasks are in a waiting state:
