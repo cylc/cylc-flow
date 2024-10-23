@@ -2100,7 +2100,86 @@ async def test_trigger_queue(one, run, db_select, complete):
         await complete(one, timeout=2)
         assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]
 
+async def test_reload_xtriggers(flow, scheduler, start):
+    """It should rebuild xtriggers when the workflow is reloaded.
 
+    See https://github.com/cylc/cylc-flow/pull/6263
+    """
+    config = {
+        'scheduling': {
+            'initial cycle point': '2000',
+            'graph': {
+                'R1': '''
+                    @a => foo
+                    @b => foo
+                '''
+            },
+            'xtriggers': {
+                'a': 'wall_clock(offset="P0D")',
+                'b': 'wall_clock(offset="P5D")',
+            },
+        }
+    }
+    id_ = flow(config)
+    schd: Scheduler = scheduler(id_)
+
+    def list_xtrig_mgr():
+        """List xtrigs from the xtrigger_mgr."""
+        nonlocal schd
+        return {
+            key: repr(value)
+            for key, value in schd.xtrigger_mgr.xtriggers.functx_map.items()
+        }
+
+    async def list_data_store():
+        """List xtrigs from the data_store_mgr."""
+        nonlocal schd
+        await schd.update_data_structure()
+        return {
+            value.label: key
+            for key, value in schd.data_store_mgr.data[schd.tokens.id][
+                TASK_PROXIES
+            ][
+                schd.tokens.duplicate(cycle='20000101T0000Z', task='foo').id
+            ].xtriggers.items()
+        }
+
+    async with start(schd):
+        # check xtrigs on startup
+        assert list_xtrig_mgr() == {
+            'a': '<SubFuncContext wall_clock(offset=P0D):10.0>',
+            'b': '<SubFuncContext wall_clock(offset=P5D):10.0>',
+        }
+        assert await list_data_store() == {
+            'a': 'wall_clock(trigger_time=946684800)',
+            'b': 'wall_clock(trigger_time=947116800)',
+        }
+
+        # remove @a
+        config['scheduling']['xtriggers'].pop('a')
+        # modify @b
+        config['scheduling']['xtriggers']['b'] = 'wall_clock(offset="PT12H")'
+        # add @c
+        config['scheduling']['xtriggers']['c'] = 'wall_clock(offset="PT1H")'
+        config['scheduling']['graph']['R1'] = config['scheduling']['graph'][
+            'R1'
+        ].replace('@a', '@c')
+
+        # reload
+        flow(config, id_=id_)
+        await commands.run_cmd(commands.reload_workflow, schd)
+
+        # check xtrigs post-reload
+        assert list_xtrig_mgr() == {
+            'b': '<SubFuncContext wall_clock(offset=PT12H):10.0>',
+            'c': '<SubFuncContext wall_clock(offset=PT1H):10.0>',
+        }
+        assert await list_data_store() == {
+            'b': 'wall_clock(trigger_time=946728000)',
+            'c': 'wall_clock(trigger_time=946688400)',
+        }
+
+        
 async def test_trigger_unqueued(flow, scheduler, start):
     """Test triggering an unqueued active task.
 
