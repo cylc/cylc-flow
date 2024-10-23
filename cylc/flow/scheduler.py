@@ -434,7 +434,7 @@ class Scheduler:
             if run_mode != og_run_mode:
                 raise InputError(
                     "This workflow was originally run in "
-                    f"{run_mode.value} mode:"
+                    f"{og_run_mode.value} mode:"
                     f" Will not restart in {run_mode.value} mode."
                 )
 
