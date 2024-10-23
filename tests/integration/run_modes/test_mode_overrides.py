@@ -34,7 +34,7 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
 
 
-@pytest.mark.parametrize('workflow_run_mode', WORKFLOW_RUN_MODES)
+@pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
 async def test_run_mode_override_from_config(
     capture_live_submissions,
     flow,
