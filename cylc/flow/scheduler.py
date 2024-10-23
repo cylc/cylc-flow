@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
+import signal
 from socket import gaierror
 from subprocess import DEVNULL, PIPE, Popen
 import sys
@@ -671,7 +672,7 @@ class Scheduler:
                 LOG.exception(exc)
                 raise
 
-        except (KeyboardInterrupt, asyncio.CancelledError) as exc:
+        except asyncio.CancelledError as exc:
             await self.handle_exception(exc)
 
         except CylcError as exc:  # Includes SchedulerError
@@ -747,11 +748,36 @@ class Scheduler:
         """Run the startup sequence and set the main loop running.
 
         Lightweight wrapper for testing convenience.
-
         """
+        # register signal handlers
+        for sig in (
+            # ctrl+c
+            signal.SIGINT,
+            # the "stop please" signal
+            signal.SIGTERM,
+            # the controlling process bailed
+            # (e.g. terminal quit in no detach mode)
+            signal.SIGHUP,
+        ):
+            signal.signal(sig, self._handle_signal)
+
         await self.start()
         # note run_scheduler handles its own shutdown logic
         await self.run_scheduler()
+
+    def _handle_signal(self, sig: int, frame) -> None:
+        """Handle a signal."""
+        LOG.critical(f'Signal {signal.Signals(sig).name} received')
+        if sig in {signal.SIGINT, signal.SIGTERM, signal.SIGHUP}:
+            if self.stop_mode == StopMode.REQUEST_NOW:
+                # already shutting down NOW -> escalate to NOW_NOW
+                # (i.e. don't run/wait for event handlers)
+                stop_mode = StopMode.REQUEST_NOW_NOW
+            else:
+                # stop NOW (orphan running tasks)
+                stop_mode = StopMode.REQUEST_NOW
+
+            self._set_stop(stop_mode)
 
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
@@ -1688,9 +1714,21 @@ class Scheduler:
         # At the moment this method must be called from the main_loop.
         # In the future it should shutdown the main_loop itself but
         # we're not quite there yet.
+
+        # cancel signal handlers
+        def _handle_signal(sig, frame):
+            LOG.warning(
+                f'Signal {signal.Signals(sig).name} received,'
+                ' already shutting down'
+            )
+
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            signal.signal(sig, _handle_signal)
+
         try:
+            # action shutdown
             await self._shutdown(reason)
-        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+        except (asyncio.CancelledError, Exception) as exc:
             # In case of exception in the shutdown method itself.
             LOG.error("Error during shutdown")
             # Suppress the reason for shutdown, which is logged separately
@@ -1712,7 +1750,6 @@ class Scheduler:
             try:
                 self.proc_pool.close()
                 if self.proc_pool.is_not_done():
-                    # e.g. KeyboardInterrupt
                     self.proc_pool.terminate()
                 self.proc_pool.process()
             except Exception as exc:
