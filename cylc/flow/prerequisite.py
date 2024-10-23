@@ -264,7 +264,7 @@ class Prerequisite:
 
     def satisfy_me(
         self, outputs: Iterable['Tokens'],
-        mode: "RunMode" = RunMode.LIVE
+        mode: "Optional[Union[RunMode, str]]" = RunMode.LIVE
     ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
@@ -274,9 +274,11 @@ class Prerequisite:
         """
         satisfied_message: SatisfiedState
 
-        if mode != RunMode.LIVE:
+        if mode and mode != RunMode.LIVE:
+            # RunMode.value actually actually restricts the results in
+            # SatisfiedState, but MyPy does not recognize this.
             satisfied_message = self.DEP_STATE_SATISFIED_BY.format(
-                mode.value)  # type: ignore
+                RunMode(mode).value)   # type: ignore
         else:
             satisfied_message = self.DEP_STATE_SATISFIED
         valid = set()
