@@ -207,6 +207,7 @@ class XtriggerCollator:
             del self.functx_map[label]
             with suppress(KeyError):
                 self.wall_clock_labels.remove(label)
+            with suppress(KeyError):
                 self.sequential_xtrigger_labels.remove(label)
 
     def add_trig(self, label: str, fctx: 'SubFuncContext', fdir: str) -> None:

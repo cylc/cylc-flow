@@ -2322,4 +2322,3 @@ async def test_downstream_complete_before_upstream(
         # 1/a should be removed from the pool (completed)
         # 1/b should not be re-spawned by the success of 1/a
         assert schd.pool.get_tasks() == []
-
