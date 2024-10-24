@@ -210,12 +210,10 @@ class JobRunnerManager():
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
             # Note: Print STDERR to STDOUT may look a bit strange, but it
             # requires less logic for the workflow to parse the output.
-            if err.strip():
-                for line in err.splitlines(True):
-                    if not line.endswith("\n"):
-                        line += "\n"
-                    sys.stdout.write("%s%s|%s|%s" % (
-                        self.OUT_PREFIX_CMD_ERR, now, job_log_dir, line))
+            for line in err.strip().splitlines():
+                sys.stdout.write(
+                    f"{self.OUT_PREFIX_CMD_ERR}{now}|{job_log_dir}|{line}\n"
+                )
 
     def jobs_poll(self, job_log_root, job_log_dirs):
         """Poll multiple jobs.
@@ -303,13 +301,13 @@ class JobRunnerManager():
             sys.stdout.write("%s%s|%s|%d|%s\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code, job_id))
             for key, value in [("STDERR", err), ("STDOUT", out)]:
-                if value is None or not value.strip():
+                if value is None:
                     continue
-                for line in value.splitlines(True):
-                    if not value.endswith("\n"):
-                        value += "\n"
-                    sys.stdout.write("%s%s|%s|[%s] %s" % (
-                        self.OUT_PREFIX_COMMAND, now, job_log_dir, key, line))
+                for line in value.strip().splitlines():
+                    sys.stdout.write(
+                        f"{self.OUT_PREFIX_COMMAND}{now}"
+                        f"|{job_log_dir}|[{key}] {line}\n"
+                    )
 
     def job_kill(self, st_file_path):
         """Ask job runner to terminate the job specified in "st_file_path".

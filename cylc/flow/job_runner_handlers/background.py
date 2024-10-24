@@ -89,7 +89,7 @@ class BgCommandHandler:
                 exc.filename = "nohup"
             return (1, None, str(exc))
         else:
-            return (0, "%d\n" % (proc.pid), None)
+            return (0, str(proc.pid), None)
 
 
 JOB_RUNNER_HANDLER = BgCommandHandler()
