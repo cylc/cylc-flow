@@ -75,13 +75,13 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         } == {
             ('1', 1, 'foo'),
             ('1', 0, 'recover'),
-            ('1', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('1', 1, 'bar'),
             ('2', 1, 'foo'),
             ('2', 0, 'recover'),
-            ('2', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('2', 1, 'bar'),
             ('3', 1, 'foo'),
             ('3', 0, 'recover'),
-            ('3', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('3', 1, 'bar'),
             ('4', 0, 'foo'),
             ('4', 1, 'recover'),
             ('4', 1, 'bar'),
@@ -112,13 +112,13 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         } == {
             ('4', 1, 'foo'),
             ('4', 0, 'recover'),
-            ('4', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('4', 1, 'bar'),
             ('5', 1, 'foo'),
             ('5', 0, 'recover'),
-            ('5', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('5', 1, 'bar'),
             ('6', 1, 'foo'),
             ('6', 0, 'recover'),
-            ('6', 0, 'bar'),  # NOTE: this should be n=2 not n=0
+            ('6', 1, 'bar'),
             ('7', 0, 'foo'),
             ('7', 1, 'recover'),
             ('7', 1, 'bar'),

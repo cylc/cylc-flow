@@ -1137,6 +1137,7 @@ class DataStoreMgr:
             self.prune_flagged_nodes.update(
                 self.n_window_node_walks[tp_id]['walk_ids']
             )
+        self.update_window_depths = True
         self.updates_pending = True
 
     def add_pool_node(self, name, point):
