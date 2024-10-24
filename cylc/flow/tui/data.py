@@ -65,7 +65,7 @@ QUERY = '''
           meanElapsedTime
         }
       }
-      familyProxies(exids: ["*/root"], states: $taskStates) {
+      familyProxies(exids: ["*/root"]) {
         id
         name
         cyclePoint
@@ -78,13 +78,18 @@ QUERY = '''
           name
         }
       }
-      cyclePoints: familyProxies(ids: ["*/root"], states: $taskStates) {
+      cyclePoints: familyProxies(ids: ["*/root"]) {
         id
+        name
         cyclePoint
         state
         isHeld
         isQueued
         isRunahead
+        firstParent {
+          id
+          name
+        }
       }
     }
   }
