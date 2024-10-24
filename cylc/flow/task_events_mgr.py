@@ -1538,7 +1538,19 @@ class TaskEventsManager():
         if (itask.tdef.run_mode == RunMode.SIMULATION) or forced:
             job_conf = {"submit_num": itask.submit_num}
         else:
-            job_conf = itask.jobs[-1]
+            try:
+                job_conf = itask.jobs[-1]
+            except IndexError:
+                # we do not have access to the job config (e.g. Scheduler
+                # crashed) - https://github.com/cylc/cylc-flow/pull/6326
+                job_id = itask.tokens.duplicate(
+                    job=itask.submit_num
+                ).relative_id
+                LOG.warning(
+                    f'Could not find the job configuration for "{job_id}".'
+                )
+                itask.jobs.append({"submit_num": itask.submit_num})
+                job_conf = itask.jobs[-1]
 
         # Job status should be task status unless task is awaiting a
         # retry:
