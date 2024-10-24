@@ -2050,19 +2050,20 @@ class TaskPool:
         if self._set_prereqs_itask(itask, prereqs, flow_nums):
             self.add_to_pool(itask)
 
-    def _get_active_flow_nums(self) -> Set[int]:
-        """Return active flow numbers.
+    def _get_active_flow_nums(self) -> 'FlowNums':
+        """Return all active flow numbers.
 
         If there are no active flows (e.g. on restarting a completed workflow)
         return the most recent active flows.
+        Or, if there are no flows in the workflow history (e.g. after
+        `cylc remove`), return flow=1.
 
         """
-        fnums = set()
-        for itask in self.get_tasks():
-            fnums.update(itask.flow_nums)
-        if not fnums:
-            fnums = self.workflow_db_mgr.pri_dao.select_latest_flow_nums()
-        return fnums
+        return (
+            set().union(*(itask.flow_nums for itask in self.get_tasks()))
+            or self.workflow_db_mgr.pri_dao.select_latest_flow_nums()
+            or {1}
+        )
 
     def remove_tasks(self, items):
         """Remove tasks from the pool (forced by command)."""
