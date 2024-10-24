@@ -928,11 +928,16 @@ class TaskEventsManager():
             return False
 
         severity_lvl: int = LOG_LEVELS.get(severity, INFO)
+        # Don't log submit/failure messages here:
+        if flag != self.FLAG_POLLED and message in {
+            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+        }:
+            return True
         # Demote log level to DEBUG if this is a message that duplicates what
         # gets logged by itask state change anyway (and not manual poll)
         if severity_lvl > DEBUG and flag != self.FLAG_POLLED and message in {
             self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-            self.EVENT_SUBMIT_FAILED, f'{FAIL_MESSAGE_PREFIX}ERR'
+            self.EVENT_FAILED
         }:
             severity_lvl = DEBUG
         LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
@@ -1334,6 +1339,9 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
+            LOG.error(
+                f'[{itask}] {full_message or self.EVENT_FAILED} - '
+            )
         else:
             # There is an execution retry lined up.
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
@@ -1414,7 +1422,6 @@ class TaskEventsManager():
         Return True if no retries (hence go to the submit-failed state).
         """
         no_retries = False
-        LOG.critical(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if event_time is None:
             event_time = get_current_time_string()
         self.workflow_db_mgr.put_update_task_jobs(itask, {
@@ -1440,6 +1447,7 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_SUBMIT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
+            LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]

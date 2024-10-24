@@ -1,1 +1,1 @@
-Ensure that job failure is logged, even when the presence of retries causes the task not to change state.
+Ensure that job submit/failure is logged, even when retries are planned.
