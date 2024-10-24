@@ -34,6 +34,7 @@ See also `cylc config`, which displays the fully parsed configuration.
 """
 
 import asyncio
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id_async
@@ -42,6 +43,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
 )
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -122,6 +124,12 @@ async def _main(options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if options.against_source:
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
+
     # read in the flow.cylc file
     for line in read_and_proc(
         flow_file,

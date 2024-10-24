@@ -40,6 +40,7 @@ Note:
 """
 
 import asyncio
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING, Union
 
@@ -75,7 +76,10 @@ from cylc.flow.scripts.reload import (
     run as cylc_reload
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import detect_old_contact_file
+from cylc.flow.workflow_files import (
+    detect_old_contact_file,
+    get_workflow_run_dir,
+)
 
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
 VR_OPTIONS = combine_options(
@@ -186,8 +190,9 @@ async def vr_cli(
     ):
         return False
 
-    # Force on the against_source option:
-    options.against_source = True
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    options.against_source = Path(get_workflow_run_dir(workflow_id))
 
     # Run cylc validate
     log_subcommand('validate --against-source', workflow_id)
