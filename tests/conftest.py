@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import re
 from pathlib import Path
 from shutil import rmtree
@@ -21,7 +22,7 @@ from typing import List, Optional, Tuple
 
 import pytest
 
-from cylc.flow import flags
+from cylc.flow import LOG, flags
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.graphnode import GraphNodeParser
@@ -30,10 +31,11 @@ from cylc.flow.parsec.validate import cylc_config_validate
 
 
 @pytest.fixture(autouse=True)
-def test_reset():
-    """Reset global state before all tests."""
+def before_each():
+    """Reset global state before every test."""
     flags.verbosity = 0
     flags.cylc7_back_compat = False
+    LOG.setLevel(logging.NOTSET)
     # Reset graph node parser singleton:
     GraphNodeParser.get_inst().clear()
 
