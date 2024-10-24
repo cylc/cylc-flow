@@ -30,11 +30,18 @@ from cylc.flow.option_parsers import (
 )
 
 
-USAGE_WITH_COMMENT = "usage \n # comment"
+USAGE_WITH_COMMENT = "ARGS usage \n # comment"
 ARGS = 'args'
 KWARGS = 'kwargs'
 SOURCES = 'sources'
 USEIF = 'useif'
+
+
+class MockCylcOptionParser(COP):
+    """A stub subclass to allow unit-like testing of methods."""
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
 
 
 @pytest.fixture(scope='module')
@@ -94,7 +101,9 @@ def test_help_nocolor(monkeypatch: pytest.MonkeyPatch, parser: COP):
     f = io.StringIO()
     with redirect_stdout(f):
         parser.print_help()
-    assert (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
+    str_ = f.getvalue()
+    assert str_.startswith(
+        "Usage: " + USAGE_WITH_COMMENT.replace('ARGS', 'SOME_ARG '))
 
 
 def test_Options_std_opts():
@@ -580,3 +589,61 @@ class TestOptionSettings():
         second = OptionSettings(['--foo'])
         third = OptionSettings(['--bar'])
         assert first._in_list([second, third]) is True
+
+    @pytest.mark.parametrize(
+        'argdoc, usage, expect',
+        (
+            param(
+                [('WORKFLOW', 'Workflow ID')],
+                'cylc play [OPTIONS] ARGS\n\nStart, resume...',
+                enumerate(('cylc play [OPTIONS] WORKFLOW',)),
+                id='basic'
+            ),
+            param(
+                [
+                    ('WORKFLOW', 'Workflow ID'),
+                    COP.LINEBREAK,
+                    ('[TASK]', 'Task ID'),
+                ],
+                'cylc total-perspective [OPTIONS] ARGS\n\nThe most savage...',
+                enumerate([
+                    'One of:',
+                    'cylc total-perspective [OPTIONS] WORKFLOW',
+                    'cylc total-perspective [OPTIONS] [TASK]'
+                ]),
+                id='has-line-break'
+            ),
+            param(
+                [('[TASK]', 'Task ID')],
+                'cylc infinite-improbability [OPTIONS] ARGS\n\nEvery point...',
+                enumerate(['cylc infinite-improbability [OPTIONS] [TASK]',]),
+                id='startswith-sq-bracket',
+            ),
+            param(
+                [
+                    ('WORKFLOW', 'Workflow ID'),
+                    COP.LINEBREAK,
+                    ('WORKFLOW', 'Workflow ID'),
+                ],
+                'cylc skin-cat [OPTIONS] ARGS\n\nThere are many ways.',
+                {
+                    -2: 'Arguments:',
+                    -1: 'WORKFLOW               Workflow ID'
+                }.items(),
+                id='no-repeated-arg-descriptions'
+            )
+        )
+    )
+    def test_argdoc_parser(self, argdoc, usage, expect):
+        """Tests for standalone argdoc_parser method when argdoc
+        offers multiple ways to call a command.
+        """
+        parser = MockCylcOptionParser(
+            n_compulsory_args=0,
+            n_optional_args=0,
+            unlimited_args=False)
+
+        result = parser.argdoc_parser(argdoc, usage)
+        results = [r for r in result.split('\n') if r]
+        for i, line in expect:
+            assert results[i].strip() == line
