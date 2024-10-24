@@ -76,17 +76,22 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
     with correct submit number.
     """
     conf = {
-        'scheduling': {'graph': {'R1': 'rhenas'}},
-        'runtime': {'rhenas': {'simulation': {
-            'fail cycle points': '1',
-            'fail try 1 only': False,
-    }}}}
+        "scheduling": {"graph": {"R1": "rhenas"}},
+        "runtime": {
+            "rhenas": {
+                "simulation": {
+                    "fail cycle points": "1",
+                    "fail try 1 only": False,
+                }
+            }
+        },
+    }
     id_ = flow(conf)
     schd = scheduler(id_)
     async with start(schd):
         # Set task to running:
-        itask =  schd.pool.get_tasks()[0]
-        itask.state.status = 'running'
+        itask = schd.pool.get_tasks()[0]
+        itask.state.status = "running"
         itask.submit_num += 1
 
         # Not run _insert_task_job yet:
@@ -185,9 +190,28 @@ async def test__process_message_failed_with_retry(one, start):
                 'submission retry delays': [1]
             })
 
-        # Process failed message:
+        # Process submit failed message with and without retries:
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, 1, False)
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.WARNING
+        assert '1/one:waiting(queued)' in last_record.message
+
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, 2, False)
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.ERROR
+        assert 'submission failed' in last_record.message
+
+        # Process failed message with and without retries:
         one.task_events_mgr._process_message_failed(
             fail_once, None, 'failed', False, 'failed/OOK')
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.WARNING
+        assert 'failed/OOK' in last_record.message
 
-        # Check that failure reported:
-        assert 'failed/OOK' in LOG.messages[-1]
+        one.task_events_mgr._process_message_failed(
+            fail_once, None, 'failed', False, 'failed/OOK')
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.ERROR
+        assert 'failed/OOK' in last_record.message
