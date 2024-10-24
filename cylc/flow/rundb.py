@@ -26,19 +26,24 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     Set,
     Tuple,
-    Optional,
-    Union
+    Union,
 )
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformLookupError
-from cylc.flow.util import deserialise_set
 import cylc.flow.flags
+from cylc.flow.util import (
+    deserialise_set,
+    serialise_set,
+)
+
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from cylc.flow.flow_mgr import FlowNums
 
 
@@ -800,13 +805,22 @@ class CylcWorkflowDAO:
             )
         ]
 
-    def select_latest_flow_nums(self):
+    def select_latest_flow_nums(self) -> Optional['FlowNums']:
         """Return a list of the most recent previous flow numbers."""
         stmt = rf'''
-            SELECT flow_nums, MAX(time_created) FROM {self.TABLE_TASK_STATES}
-        '''  # nosec (table name is code constant)
-        flow_nums_str = list(self.connect().execute(stmt))[0][0]
-        return deserialise_set(flow_nums_str)
+            SELECT
+                flow_nums, MAX(time_created)
+            FROM
+                {self.TABLE_TASK_STATES}
+            WHERE
+                flow_nums != ?
+        '''  # nosec B608 (table name is code constant)
+        # Exclude flow=none:
+        params = [serialise_set()]
+        flow_nums_str = self.connect().execute(stmt, params).fetchone()[0]
+        if flow_nums_str:
+            return deserialise_set(flow_nums_str)
+        return None
 
     def select_task_outputs(
         self, name: str, point: str
