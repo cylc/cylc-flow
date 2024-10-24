@@ -2431,11 +2431,25 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        output = tp_delta.outputs[label]
-        output.label = label
-        output.message = message
-        output.satisfied = outputs.is_message_complete(message)
-        output.time = update_time
+
+        for _label in tproxy.outputs:
+            output = tp_delta.outputs[_label]
+
+            # set the new output
+            if _label == label:
+                output.label = label
+                output.message = message
+                output.satisfied = outputs.is_message_complete(message)
+
+            # ensure all outputs are included in the delta
+            else:
+                _output = tproxy.outputs[_label]
+                output.label = _output.label
+                output.message = _output.message
+                output.satisfied = _output.satisfied
+
+            output.time = update_time
+
         self.updates_pending = True
 
     def delta_task_outputs(self, itask: TaskProxy) -> None:
