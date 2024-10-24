@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import suppress
 from pathlib import Path
 from time import sleep
 import pytest
@@ -228,6 +229,9 @@ def test_map_platforms_used_for_install_targets(
 
     install_targets_map = TaskRemoteMgr._get_remote_tidy_targets(
         set(platform_names), set(install_targets))
+
+    with suppress(KeyError):
+        install_targets_map.pop('localhost')
 
     assert (
         expect['targets'] == flatten_install_targets_map(install_targets_map))

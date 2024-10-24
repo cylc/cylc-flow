@@ -128,6 +128,7 @@ message PbRuntime {
     optional string environment = 16;
     optional string outputs = 17;
     optional string completion = 18;
+    optional string run_mode = 19;
 }
 
 

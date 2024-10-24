@@ -82,7 +82,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
-from cylc.flow.simulation import configure_sim_modes
+from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
@@ -99,6 +99,7 @@ from cylc.flow.task_outputs import (
     get_trigger_completion_variable_maps,
     trigger_to_completion_variable,
 )
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
@@ -114,7 +115,6 @@ from cylc.flow.workflow_files import (
     WorkflowFiles,
     check_deprecation,
 )
-from cylc.flow.workflow_status import RunMode
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
 if TYPE_CHECKING:
@@ -513,10 +513,6 @@ class WorkflowConfig:
 
         self.process_runahead_limit()
 
-        run_mode = self.run_mode()
-        if run_mode in {RunMode.SIMULATION, RunMode.DUMMY}:
-            configure_sim_modes(self.taskdefs.values(), run_mode)
-
         self.configure_workflow_state_polling_tasks()
 
         self._check_task_event_handlers()
@@ -566,6 +562,8 @@ class WorkflowConfig:
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+        skip_mode_validate(self.taskdefs)
 
     @staticmethod
     def _warn_if_queues_have_implicit_tasks(
@@ -1741,10 +1739,6 @@ class WorkflowConfig:
                 ]
             )
 
-    def run_mode(self) -> str:
-        """Return the run mode."""
-        return RunMode.get(self.options)
-
     def _check_task_event_handlers(self):
         """Check custom event handler templates can be expanded.
 
@@ -2496,7 +2490,10 @@ class WorkflowConfig:
 
         # Get the taskdef object for generating the task proxy class
         taskd = TaskDef(
-            name, rtcfg, self.run_mode(), self.start_point,
+            name,
+            rtcfg,
+            RunMode.get(self.options),
+            self.start_point,
             self.initial_point)
 
         # TODO - put all taskd.foo items in a single config dict

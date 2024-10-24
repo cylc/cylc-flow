@@ -31,6 +31,7 @@ from typing import Any, Optional, Union
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.run_modes import RunMode
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.scheduler_cli import RunOptions

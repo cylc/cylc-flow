@@ -274,7 +274,7 @@ def test_iter_required_outputs():
     assert set(outputs.iter_required_messages()) == set()
 
     # the preconditions expiry/submitted are excluded from this logic when
-    # defined as optional
+    # defined as optional:
     outputs = TaskOutputs(
         tdef(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
@@ -287,6 +287,32 @@ def test_iter_required_outputs():
         'x',
         'y',
     }
+
+    # Get all outputs required for success path (excluding failure, what
+    # is still required):
+    outputs = TaskOutputs(
+        tdef(
+            {},
+            {'a', 'succeeded', 'b', 'y', 'failed', 'x'},
+            '(x and y and failed) or (a and b and succeeded)'
+        )
+    )
+
+    # Excluding succeeded leaves us with failure required outputs:
+    assert set(outputs.iter_required_messages(
+        exclude=TASK_OUTPUT_SUCCEEDED)) == {
+            TASK_OUTPUT_FAILED, 'x', 'y',}
+
+    # Excluding failed leaves us with succeeded required outputs:
+    assert set(outputs.iter_required_messages(
+        exclude=TASK_OUTPUT_FAILED)) == {
+            TASK_OUTPUT_SUCCEEDED, 'a', 'b',}
+
+    # Excluding an abitrary output leaves us with required outputs
+    # from another branch:
+    assert set(outputs.iter_required_messages(
+        exclude='a')) == {
+            TASK_OUTPUT_FAILED, 'x', 'y',}
 
 
 def test_get_trigger_completion_variable_maps():
