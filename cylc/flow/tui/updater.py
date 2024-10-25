@@ -258,7 +258,10 @@ class Updater():
             )
         )
 
-        return compute_tree(data)
+        # are any task state filters active?
+        task_filters_active = not all(self.filters['tasks'].values())
+
+        return compute_tree(data, prune_families=task_filters_active)
 
     async def _update_workflow(self, w_id, client, data):
         if not client:
