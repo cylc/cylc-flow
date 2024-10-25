@@ -25,6 +25,33 @@ from cylc.flow.scripts.validate_reinstall import (
 ValidateReinstallOptions = Options(vr_gop())
 
 
+def answer_prompts(monkeypatch, *responses):
+    """Hardcode responses to "cylc vr" interactive prompts."""
+    # make it look like we are running this command in a terminal
+    monkeypatch.setattr(
+        'cylc.flow.scripts.validate_reinstall.is_terminal',
+        lambda: True
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.reinstall.is_terminal',
+        lambda: True
+    )
+
+    # patch user input
+    count = -1
+
+    def _input(prompt):
+        nonlocal count, responses
+        count += 1
+        print(prompt)  # send the prompt to stdout for testing
+        return responses[count]
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.validate_reinstall._input',
+        _input,
+    )
+
+
 async def test_prompt_for_running_workflow_with_no_changes(
     monkeypatch,
     caplog,
@@ -57,25 +84,8 @@ async def test_prompt_for_running_workflow_with_no_changes(
         'cylc.flow.scripts.validate_reinstall.cleanup_sysargv'
     )
 
-    # answer "y" to all prompts
-    def _input(prompt):
-        print(prompt)
-        return 'y'
-
-    monkeypatch.setattr(
-        'cylc.flow.scripts.validate_reinstall._input',
-        _input,
-    )
-
-    # make it look like we are running this command in a terminal
-    monkeypatch.setattr(
-        'cylc.flow.scripts.validate_reinstall.is_terminal',
-        lambda: True
-    )
-    monkeypatch.setattr(
-        'cylc.flow.scripts.reinstall.is_terminal',
-        lambda: True
-    )
+    # answer "y" to prompt
+    answer_prompts(monkeypatch, 'y')
 
     # attempt to restart it with "cylc vr"
     ret = await vr_cli(
@@ -93,3 +103,24 @@ async def test_prompt_for_running_workflow_with_no_changes(
 
     # the workflow should have restarted
     assert len(cleanup_sysargv_calls) == 1
+
+
+async def test_reinstall_abort(
+    monkeypatch,
+    capsys,
+    log_filter,
+    one_run,
+):
+    """It should abort reinstallation according to user prompt."""
+    # answer 'n' to prompt
+    answer_prompts(monkeypatch, 'n')
+
+    # attempt to restart it with "cylc vr"
+    ret = await vr_cli(
+        vr_gop(), ValidateReinstallOptions(), one_run.id
+    )
+    assert ret is False
+
+    # they should have been presented with a prompt
+    # (to which we have hardcoded the response "n")
+    assert 'Restart anyway?' in capsys.readouterr()[0]
