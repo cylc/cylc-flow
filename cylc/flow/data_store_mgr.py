@@ -2420,23 +2420,27 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
-        if not tproxy:
-            return
-        outputs = itask.state.outputs
-        label = outputs.get_trigger(message)
-        # update task instance
-        update_time = time()
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{update_time}'
-        output = tp_delta.outputs[label]
-        output.label = label
-        output.message = message
-        output.satisfied = outputs.is_message_complete(message)
-        output.time = update_time
-        self.updates_pending = True
+        # TODO: Restore incremental update when we have a protocol to do so
+        # https://github.com/cylc/cylc-flow/issues/6307
+        return self.delta_task_outputs(itask)
+
+        # tproxy: Optional[PbTaskProxy]
+        # tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        # if not tproxy:
+        #     return
+        # outputs = itask.state.outputs
+        # label = outputs.get_trigger(message)
+        # # update task instance
+        # update_time = time()
+        # tp_delta = self.updated[TASK_PROXIES].setdefault(
+        #     tp_id, PbTaskProxy(id=tp_id))
+        # tp_delta.stamp = f'{tp_id}@{update_time}'
+        # output = tp_delta.outputs[label]
+        # output.label = label
+        # output.message = message
+        # output.satisfied = outputs.is_message_complete(message)
+        # output.time = update_time
+        # self.updates_pending = True
 
     def delta_task_outputs(self, itask: TaskProxy) -> None:
         """Create delta for change in all task proxy outputs.
