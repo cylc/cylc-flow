@@ -354,10 +354,12 @@ class Prerequisite:
             if satisfied
         ]
 
-    def naturally_satisfied_dependencies(self) -> List[PrereqMessage]:
-        """Return naturally satisfied dependencies."""
-        return [
-            msg
-            for msg, sat in self._satisfied.items()
-            if sat and sat != 'force satisfied'
-        ]
+    def unset_naturally_satisfied_dependency(self, id_: str) -> bool:
+        """Set the matching dependency to unsatisfied and return True only if
+        it was naturally satisfied."""
+        changed = False
+        for msg, sat in self._satisfied.items():
+            if msg.get_id() == id_ and sat and sat != 'force satisfied':
+                self[msg] = False
+                changed = True
+        return changed

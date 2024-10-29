@@ -528,3 +528,12 @@ class TaskState:
             for prereq in self.prerequisites if not prereq.is_satisfied()
             for key, satisfied in prereq.items() if not satisfied
         ]
+
+    def any_satisfied_prerequisite_tasks(self) -> bool:
+        """Return True if any of this task's prerequisite tasks are
+        satisfied."""
+        return any(
+            satisfied
+            for prereq in self.prerequisites
+            for satisfied in prereq._satisfied.values()
+        )

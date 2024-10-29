@@ -53,7 +53,7 @@ def _make_src_flow(src_path, conf, filename=WorkflowFiles.FLOW_FILE):
 def _make_flow(
     cylc_run_dir: Union[Path, str],
     test_dir: Path,
-    conf: dict,
+    conf: Union[dict, str],
     name: Optional[str] = None,
     id_: Optional[str] = None,
     defaults: Optional[bool] = True,
@@ -62,6 +62,8 @@ def _make_flow(
     """Construct a workflow on the filesystem.
 
     Args:
+        conf: Either a workflow config dictionary, or a graph string to be
+            used as the R1 graph in the workflow config.
         defaults: Set up a common defaults.
             * [scheduling]allow implicit tasks = true
 
@@ -75,6 +77,14 @@ def _make_flow(
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
     id_ = str(flow_run_dir.relative_to(cylc_run_dir))
+    if isinstance(conf, str):
+        conf = {
+            'scheduling': {
+                'graph': {
+                    'R1': conf
+                }
+            }
+        }
     if defaults:
         # set the default simulation runtime to zero (can be overridden)
         (
