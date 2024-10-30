@@ -596,9 +596,15 @@ class CylcReviewService(object):
                 return cherrypy.lib.static.serve_file(f_name, mime)
             text = open(f_name).read()
         try:
+            text = unicode(text, encoding='UTF-8', errors='replace')
             if mode in [None, "text"]:
-                text = jinja2.escape(text)
-            lines = [unicode(line) for line in text.splitlines()]
+                # escape HTML tags
+                # NOTE: jinja2.escape returns a Markup object which will also
+                # escape future modifications to this string. In order to
+                # allow log file syntax highlighting (DEBUG, INFO, etc) we
+                # must cast this back to a unicode to remove this functionality.
+                text = unicode(jinja2.escape(text))
+            lines = text.splitlines()
         except UnicodeDecodeError:
             if path_in_tar:
                 handle.seek(0)
