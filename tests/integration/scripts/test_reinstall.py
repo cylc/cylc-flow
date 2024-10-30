@@ -19,8 +19,6 @@
 import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
-from types import SimpleNamespace
-from uuid import uuid1
 
 import pytest
 
@@ -39,7 +37,7 @@ from cylc.flow.workflow_files import (
     WorkflowFiles,
 )
 
-from .utils.entry_points import EntryPointWrapper
+from ..utils.entry_points import EntryPointWrapper
 
 ReInstallOptions = Options(reinstall_gop())
 
@@ -63,32 +61,6 @@ def non_interactive(monkeypatch):
     monkeypatch.setattr(
         'cylc.flow.scripts.reinstall.is_terminal',
         lambda: False,
-    )
-
-
-@pytest.fixture
-def one_src(tmp_path):
-    src_dir = tmp_path
-    (src_dir / 'flow.cylc').touch()
-    (src_dir / 'rose-suite.conf').touch()
-    return SimpleNamespace(path=src_dir)
-
-
-@pytest.fixture
-def one_run(one_src, test_dir, run_dir):
-    w_run_dir = test_dir / str(uuid1())
-    w_run_dir.mkdir()
-    (w_run_dir / 'flow.cylc').touch()
-    (w_run_dir / 'rose-suite.conf').touch()
-    install_dir = (w_run_dir / WorkflowFiles.Install.DIRNAME)
-    install_dir.mkdir(parents=True)
-    (install_dir / WorkflowFiles.Install.SOURCE).symlink_to(
-        one_src.path,
-        target_is_directory=True,
-    )
-    return SimpleNamespace(
-        path=w_run_dir,
-        id=str(w_run_dir.relative_to(run_dir)),
     )
 
 
