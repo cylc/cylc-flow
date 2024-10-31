@@ -556,7 +556,9 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'Iterable[Tokens]', mode: "RunMode" = RunMode.LIVE
+        self,
+        task_messages: 'Iterable[Tokens]',
+        mode: Optional[RunMode] = RunMode.LIVE,
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 

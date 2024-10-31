@@ -19,6 +19,7 @@
 from typing import (
     TYPE_CHECKING,
     Dict,
+    Optional,
     Iterable,
     List,
     Set,
@@ -325,7 +326,7 @@ class TaskState:
     def satisfy_me(
         self,
         outputs: Iterable['Tokens'],
-        mode: "RunMode",
+        mode: "Optional[RunMode]",
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 

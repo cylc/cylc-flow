@@ -1564,7 +1564,7 @@ class TaskPool:
                 if completed_only:
                     c_task.satisfy_me(
                         [itask.tokens.duplicate(task_sel=message)],
-                        mode=itask.run_mode   # type: ignore
+                        mode=itask.run_mode
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)

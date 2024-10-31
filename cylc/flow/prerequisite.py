@@ -264,7 +264,7 @@ class Prerequisite:
 
     def satisfy_me(
         self, outputs: Iterable['Tokens'],
-        mode: "Optional[Union[RunMode, str]]" = RunMode.LIVE
+        mode: Optional[RunMode] = RunMode.LIVE
     ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
