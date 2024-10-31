@@ -47,6 +47,7 @@ from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+from cylc.url import quote
 from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -496,7 +497,7 @@ class CylcReviewService(object):
                 continue
             try:
                 data["entries"].append({
-                    "name": item,
+                    "name": unicode(item, 'UTF-8', errors='ignore'),
                     "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
@@ -561,7 +562,7 @@ class CylcReviewService(object):
                 mime = self.MIME_TEXT_PLAIN
             else:
                 mime = mimetypes.guess_type(
-                    urllib.pathname2url(path_in_tar))[0]
+                    quote(path_in_tar))[0]
             handle.seek(0)
             if (mode == "download" or
                     f_size > view_size_max or
@@ -585,7 +586,7 @@ class CylcReviewService(object):
             if open(f_name).read(2) == "#!":
                 mime = self.MIME_TEXT_PLAIN
             else:
-                mime = mimetypes.guess_type(urllib.pathname2url(f_name))[0]
+                mime = mimetypes.guess_type(quote(f_name))[0]
             if not mime:
                 mime = self.MIME_TEXT_PLAIN
             if (mode == "download" or
