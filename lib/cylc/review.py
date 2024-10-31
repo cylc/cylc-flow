@@ -549,6 +549,7 @@ class CylcReviewService(object):
         suite = suite.replace('%2F', '/')
         f_name = self._get_user_suite_dir(user, suite, path)
         self._check_file_path(path)
+        self._check_link_path(f_name, suite)
         view_size_max = self.VIEW_SIZE_MAX
         if path_in_tar:
             tar_f = tarfile.open(f_name, "r:gz")
@@ -917,6 +918,45 @@ class CylcReviewService(object):
 
         """
         if os.path.split(string)[0] != '':
+            raise cherrypy.HTTPError(403)
+
+    @classmethod
+    def _check_link_path(cls, path, suite):
+        """Raise HTTP 403 error if the path is not under cylc-run/<suite>.
+
+        The files "cylc review" is intended to serve may be symlinked to
+        other parts of the filesystem, however, the linked files should
+        always reside in directories managed by Cylc which should always
+        sit under the path "cylc-run/<suite>".
+
+        Examples:
+            # OK
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/cylc-run/elephant'), 'elephant'
+            ... )
+
+            # BAD
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/cylc-run/elephant'), 'shrew'
+            ... )
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+
+            # BAD
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/anything-else'), 'anything-else'
+            ... )
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+
+        Raises:
+            cherrypy.HTTPError(403)
+
+        """
+        rel = os.path.join('cylc-run', suite)
+        if rel not in os.path.realpath(path):
             raise cherrypy.HTTPError(403)
 
     @classmethod
