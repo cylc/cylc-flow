@@ -1435,7 +1435,7 @@ class TaskPool:
                 for t in tasks:
                     t.satisfy_me(
                         [itask.tokens.duplicate(task_sel=output)],
-                        mode=itask.run_mode    # type: ignore
+                        mode=itask.run_mode
                     )
                     self.data_store_mgr.delta_task_prerequisite(t)
                     if not in_pool:

@@ -37,6 +37,7 @@ from cylc.flow.util import (
 
 if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef
+    from typing_extensions import Literal
 
 
 # Standard task output strings, used for triggering.
@@ -626,7 +627,7 @@ class TaskOutputs:
 
     def iter_required_messages(
         self,
-        exclude=None
+        exclude: 'Optional[Literal["succeeded", "failed"]]' = None
     ) -> Iterator[str]:
         """Yield task messages that are required for this task to be complete.
 
@@ -634,8 +635,9 @@ class TaskOutputs:
         e.g. "completion = succeeded or failed".
 
         Args:
-            exclude: Exclude one possible required message, allowing
-            specification of all required outputs if succeeded or failed.
+            exclude: Don't check wether this output is required for
+            completion - in skip mode we only want to check either
+            succeeded or failed, but not both.
         """
         for compvar, is_optional in get_optional_outputs(
             self._completion_expression,
