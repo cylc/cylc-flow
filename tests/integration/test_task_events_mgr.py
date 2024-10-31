@@ -94,6 +94,7 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
         itask = schd.pool.get_tasks()[0]
         itask.state.status = 'running'
         itask.submit_num += 1
+        itask.run_mode = RunMode.SIMULATION
 
         # Not run _insert_task_job yet:
         assert not schd.data_store_mgr.added['jobs'].keys()

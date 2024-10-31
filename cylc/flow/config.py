@@ -82,6 +82,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
+from cylc.flow.run_modes.simulation import configure_sim_mode
 from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
@@ -512,6 +513,11 @@ class WorkflowConfig:
         self._set_completion_expressions()
 
         self.process_runahead_limit()
+
+        run_mode = RunMode.get(self.options)
+        if run_mode in {RunMode.SIMULATION, RunMode.DUMMY}:
+            for taskdef in self.taskdefs.values():
+                configure_sim_mode(taskdef.rtconfig, None, False)
 
         self.configure_workflow_state_polling_tasks()
 

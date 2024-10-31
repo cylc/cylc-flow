@@ -130,7 +130,7 @@ PLAY_ICP_OPTION.sources = {'play'}
 RUN_MODE = OptionSettings(
     ["-m", "--mode"],
     help=(
-        f"Run mode: {WORKFLOW_RUN_MODES} (default live)."
+        f"Run mode: {sorted(WORKFLOW_RUN_MODES)} (default live)."
         " Live mode executes the tasks as defined in the runtime"
         " section."
         " Simulation, skip and dummy modes ignore part of tasks'"

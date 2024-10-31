@@ -1541,7 +1541,7 @@ class TaskEventsManager():
         # And transient tasks, used for setting outputs and spawning children,
         # do not submit jobs.
         if (
-            itask.run_mode in JOBLESS_MODES
+            itask.run_mode and itask.run_mode.value in JOBLESS_MODES
             or forced
         ):
             job_conf = {"submit_num": itask.submit_num}

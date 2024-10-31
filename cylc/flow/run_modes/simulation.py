@@ -189,7 +189,7 @@ class ModeSettings:
         self.timeout = started_time + self.simulated_run_length
 
 
-def configure_sim_mode(rtc, fallback):
+def configure_sim_mode(rtc, fallback, warnonly: bool = True):
     """Adjust task defs for simulation mode.
 
     Example:
@@ -209,6 +209,13 @@ def configure_sim_mode(rtc, fallback):
         >>> rtc['platform']
         'localhost'
     """
+    if not warnonly:
+        parse_fail_cycle_points(
+            rtc["simulation"]["fail cycle points"],
+            fallback,
+            warnonly
+        )
+        return
     rtc['submission retry delays'] = [1]
 
     disable_platforms(rtc)
@@ -220,7 +227,8 @@ def configure_sim_mode(rtc, fallback):
         "fail cycle points"
     ] = parse_fail_cycle_points(
         rtc["simulation"]["fail cycle points"],
-        fallback
+        fallback,
+        warnonly
     )
 
 
@@ -265,6 +273,7 @@ def disable_platforms(
 def parse_fail_cycle_points(
     fail_at_points_updated: List[str],
     fail_at_points_config,
+    warnonly: bool = True
 ) -> 'Union[None, List[PointBase]]':
     """Parse `[simulation][fail cycle points]`.
 
@@ -302,8 +311,11 @@ def parse_fail_cycle_points(
                 try:
                     fail_at_points.append(get_point(point_str).standardise())
                 except PointParsingError as exc:
-                    LOG.warning(exc.args[0])
-                    return fail_at_points_config
+                    if warnonly:
+                        LOG.warning(exc.args[0])
+                        return fail_at_points_config
+                    else:
+                        raise exc
     return fail_at_points
 
 
