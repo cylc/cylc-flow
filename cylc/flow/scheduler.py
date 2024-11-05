@@ -1036,9 +1036,7 @@ class Scheduler:
                     status=(TASK_STATUS_FAILED if jobless else None),
                     is_held=True,
                 )
-                if jobless:
-                    self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_held(itask)
+                self.data_store_mgr.delta_task_state(itask)
                 to_kill.append(itask)
             else:
                 unkillable.append(itask)

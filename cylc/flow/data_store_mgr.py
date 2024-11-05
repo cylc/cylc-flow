@@ -67,7 +67,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    Union,
 )
 import zlib
 
@@ -2275,7 +2274,7 @@ class DataStoreMgr:
     # -----------
     # Task Deltas
     # -----------
-    def delta_task_state(self, itask):
+    def delta_task_state(self, itask: 'TaskProxy') -> None:
         """Create delta for change in task proxy state.
 
         Args:
@@ -2291,34 +2290,47 @@ class DataStoreMgr:
         update_time = time()
 
         # update task instance
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta: PbTaskProxy = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        tp_delta.state = itask.state.status
+        for field in ('is_held', 'is_queued', 'is_runahead'):
+            val = getattr(itask.state, field)
+            if (
+                # only update the fields that have changed compared to store:
+                getattr(tproxy, field) != val
+                # or changed since earlier delta that is not yet sent:
+                or getattr(tp_delta, field) != val
+            ):
+                setattr(tp_delta, field, val)
+        if (
+            tproxy.state != itask.state.status
+            or tp_delta.state != itask.state.status
+        ):
+            tp_delta.state = itask.state.status
+            if tp_delta.state in self.latest_state_tasks:
+                tp_ref = itask.identity
+                tp_queue = self.latest_state_tasks[tp_delta.state]
+                if tp_ref in tp_queue:
+                    tp_queue.remove(tp_ref)
+                self.latest_state_tasks[tp_delta.state].appendleft(tp_ref)
+            # if state is final work out new task mean.
+            if tp_delta.state in TASK_STATUSES_FINAL:
+                elapsed_time = task_mean_elapsed_time(itask.tdef)
+                if elapsed_time:
+                    t_id = self.definition_id(tproxy.name)
+                    t_delta = PbTask(
+                        stamp=f'{t_id}@{update_time}',
+                        mean_elapsed_time=elapsed_time
+                    )
+                    self.updated[TASKS].setdefault(
+                        t_id,
+                        PbTask(id=t_id)).MergeFrom(t_delta)
         self.state_update_families.add(tproxy.first_parent)
-        if tp_delta.state in self.latest_state_tasks:
-            tp_ref = itask.identity
-            tp_queue = self.latest_state_tasks[tp_delta.state]
-            if tp_ref in tp_queue:
-                tp_queue.remove(tp_ref)
-            self.latest_state_tasks[tp_delta.state].appendleft(tp_ref)
-        # if state is final work out new task mean.
-        if tp_delta.state in TASK_STATUSES_FINAL:
-            elapsed_time = task_mean_elapsed_time(itask.tdef)
-            if elapsed_time:
-                t_id = self.definition_id(tproxy.name)
-                t_delta = PbTask(
-                    stamp=f'{t_id}@{update_time}',
-                    mean_elapsed_time=elapsed_time
-                )
-                self.updated[TASKS].setdefault(
-                    t_id,
-                    PbTask(id=t_id)).MergeFrom(t_delta)
         self.updates_pending = True
 
     def delta_task_held(
-        self,
-        itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
+        self, name: str, cycle: 'PointBase', is_held: bool
     ) -> None:
         """Create delta for change in task proxy held state.
 
@@ -2328,15 +2340,10 @@ class DataStoreMgr:
                 (name, cycle, is_held).
 
         """
-        if isinstance(itask, TaskProxy):
-            tokens = itask.tokens
-            is_held = itask.state.is_held
-        else:
-            name, cycle, is_held = itask
-            tokens = self.id_.duplicate(
-                task=name,
-                cycle=str(cycle),
-            )
+        tokens = self.id_.duplicate(
+            task=name,
+            cycle=str(cycle),
+        )
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tokens)
         if not tproxy:
@@ -2345,26 +2352,6 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{time()}'
         tp_delta.is_held = is_held
-        self.state_update_families.add(tproxy.first_parent)
-        self.updates_pending = True
-
-    def delta_task_queued(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy queued state.
-
-        Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
-        """
-        tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
-        if not tproxy:
-            return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.is_queued = itask.state.is_queued
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
@@ -2385,26 +2372,6 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{time()}'
         tp_delta.flow_nums = serialise_set(itask.flow_nums)
-        self.updates_pending = True
-
-    def delta_task_runahead(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy runahead state.
-
-        Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
-        """
-        tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
-        if not tproxy:
-            return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.is_runahead = itask.state.is_runahead
-        self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
     def delta_task_output(
