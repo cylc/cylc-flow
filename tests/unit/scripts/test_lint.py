@@ -45,7 +45,7 @@ from cylc.flow.exceptions import CylcError
 STYLE_CHECKS = parse_checks(['style'])
 UPG_CHECKS = parse_checks(['728'])
 
-TEST_FILE = """
+TEST_FILE = '''
 [visualization]
 
 [cylc]
@@ -98,7 +98,13 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = MyFaM:finish-all => remote => !mash_theme
+            graph = """
+                MyFaM:finish-all => remote => !mash_theme
+                a & \\
+                b => c
+                c | \\
+                d => e
+            """
 
 [runtime]
     [[root]]
@@ -155,10 +161,10 @@ TEST_FILE = """
             host = `rose host-select thingy`
 
 %include foo.cylc
-"""
+'''
 
 
-LINT_TEST_FILE = """
+LINT_TEST_FILE = '''
 \t[scheduler]
 
  [scheduler]
@@ -168,6 +174,11 @@ LINT_TEST_FILE = """
 {% foo %}
 {{foo}}
 # {{quix}}
+    R1 = """
+        foo & \\
+        bar => \\
+        baz
+    """
 
 [runtime]
     [[this_is_ok]]
@@ -183,7 +194,7 @@ something\t
                 -l walltime = 666
     [[baz]]
         platform = `no backticks`
-""" + (
+''' + (
     '\nscript = the quick brown fox jumps over the lazy dog until it becomes '
     'clear that this line is longer than the default 130 character limit.'
 )
