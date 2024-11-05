@@ -74,7 +74,6 @@ SatisfiedState = Literal[
     'satisfied naturally',
     'satisfied from database',
     'satisfied by skip mode',
-    'satisfied by simulation mode',
     'force satisfied',
     False
 ]
@@ -103,12 +102,6 @@ class Prerequisite:
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self._satisfied[("%s", "%s", "%s")])'
     MESSAGE_TEMPLATE = r'%s/%s %s'
-
-    DEP_STATE_SATISFIED: SatisfiedState = 'satisfied naturally'
-    DEP_STATE_SATISFIED_BY = 'satisfied by {} mode'
-    DEP_STATE_OVERRIDDEN = 'force satisfied'
-    DEP_STATE_UNSATISFIED = False
-    SATISFIED_MODE_RE = re.compile(r'satisfied by .* mode')
 
     def __init__(self, point: 'PointBase'):
         # The cycle point to which this prerequisite belongs.
@@ -263,8 +256,9 @@ class Prerequisite:
         return res
 
     def satisfy_me(
-        self, outputs: Iterable['Tokens'],
-        mode: Optional[RunMode] = RunMode.LIVE
+        self,
+        outputs: Iterable['Tokens'],
+        mode: Optional[RunMode] = None,
     ) -> 'Set[Tokens]':
         """Attempt to satisfy me with given outputs.
 
@@ -272,15 +266,10 @@ class Prerequisite:
         Return outputs that match.
 
         """
-        satisfied_message: SatisfiedState
-
-        if mode and mode != RunMode.LIVE:
-            # RunMode.value actually actually restricts the results in
-            # SatisfiedState, but MyPy does not recognize this.
-            satisfied_message = self.DEP_STATE_SATISFIED_BY.format(
-                RunMode(mode).value)   # type: ignore
-        else:
-            satisfied_message = self.DEP_STATE_SATISFIED
+        satisfied_message: SatisfiedState = (
+            'satisfied by skip mode' if mode == RunMode.SKIP
+            else 'satisfied naturally'
+        )
         valid = set()
         for output in outputs:
             prereq = PrereqMessage(

@@ -645,8 +645,7 @@ def list_tasks(schd):
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'):
-                    'satisfied by simulation mode'},
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
             ],
@@ -674,8 +673,7 @@ def list_tasks(schd):
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'):
-                    'satisfied by simulation mode'},
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
             ],
             id='removed'
@@ -770,8 +768,7 @@ async def test_restart_prereqs(
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'):
-                    'satisfied by simulation mode'},
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
                 {('1', 'c', 'succeeded'): False},
             ],
@@ -799,8 +796,7 @@ async def test_restart_prereqs(
                 ('1', 'z', 'waiting'),
             ],
             [
-                {('1', 'a', 'succeeded'):
-                    'satisfied by simulation mode'},
+                {('1', 'a', 'succeeded'): 'satisfied naturally'},
                 {('1', 'b', 'succeeded'): False},
             ],
             id='removed'
@@ -899,7 +895,7 @@ async def _test_restart_prereqs_sat():
         for prereq in task_c.state.prerequisites
         for key, satisfied in prereq.items()
     ) == [
-        ('1', 'a', 'succeeded', 'satisfied by simulation mode'),
+        ('1', 'a', 'succeeded', 'satisfied naturally'),
         ('1', 'b', 'succeeded', 'satisfied from database')
     ]
 
@@ -916,7 +912,7 @@ async def _test_restart_prereqs_sat():
         for prereq in task_c_prereqs
         for condition in prereq.conditions
     ) == [
-        ('1/a', True, 'satisfied by simulation mode'),
+        ('1/a', True, 'satisfied naturally'),
         ('1/b', True, 'satisfied from database'),
     ]
 
@@ -2255,7 +2251,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
             'c': 'wall_clock(trigger_time=946688400)',
         }
 
-        
+
 async def test_trigger_unqueued(flow, scheduler, start):
     """Test triggering an unqueued active task.
 
@@ -2320,7 +2316,7 @@ async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
 
     if expire_type == 'clock-expire':
         conf['scheduling']['special tasks'] = {'clock-expire': 'foo(PT0S)'}
-        method = lambda schd: schd.pool.clock_expire_tasks() 
+        method = lambda schd: schd.pool.clock_expire_tasks()
     else:
         method = lambda schd: schd.pool.set_prereqs_and_outputs(
             ['2000/foo'], prereqs=[], outputs=['expired'], flow=['1']
