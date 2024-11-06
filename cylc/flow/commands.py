@@ -325,7 +325,7 @@ async def remove_tasks(
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
     flow_nums = get_flow_nums_set(flow)
-    schd.pool.remove_tasks(tasks, flow_nums)
+    schd.remove_tasks(tasks, flow_nums)
 
 
 @_command('reload_workflow')

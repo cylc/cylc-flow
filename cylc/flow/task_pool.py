@@ -18,7 +18,6 @@
 
 from collections import Counter
 from contextlib import suppress
-import itertools
 import json
 import logging
 from textwrap import indent
@@ -91,7 +90,6 @@ from cylc.flow.task_state import (
     TASK_STATUSES_FINAL,
 )
 from cylc.flow.task_trigger import TaskTrigger
-from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.util import deserialise_set
 from cylc.flow.workflow_status import StopMode
 
@@ -2077,129 +2075,6 @@ class TaskPool:
             or self.workflow_db_mgr.pri_dao.select_latest_flow_nums()
             or {1}
         )
-
-    def remove_tasks(
-        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
-    ) -> None:
-        """Remove tasks from the pool (forced by command).
-
-        Args:
-            items: Relative IDs or globs.
-            flow_nums: Flows to remove the tasks from. If empty or None, it
-                means 'all'.
-        """
-        active, inactive, _unmatched = self.filter_task_proxies(
-            items, warn_no_active=False, inactive=True
-        )
-        if not (active or inactive):
-            return
-
-        if flow_nums is None:
-            flow_nums = set()
-        # Mapping of task IDs to removed flow numbers:
-        removed: Dict[str, FlowNums] = {}
-        not_removed: Set[str] = set()
-
-        for itask in active:
-            fnums_to_remove = itask.match_flows(flow_nums)
-            if not fnums_to_remove:
-                not_removed.add(itask.identity)
-                continue
-            removed[itask.identity] = fnums_to_remove
-            if fnums_to_remove == itask.flow_nums:
-                # Need to remove the task from the pool.
-                # Spawn next occurrence of xtrigger sequential task (otherwise
-                # this would not happen after removing this occurrence):
-                self.check_spawn_psx_task(itask)
-                self.remove(itask, 'request')
-            else:
-                itask.flow_nums.difference_update(fnums_to_remove)
-
-        matched_task_ids = {
-            *removed.keys(),
-            *(quick_relative_id(cycle, task) for task, cycle in inactive),
-        }
-
-        for id_ in matched_task_ids:
-            point_str, name = id_.split('/', 1)
-            tdef = self.config.taskdefs[name]
-            # Go through downstream tasks to see if any need to stand down
-            # as a result of this task being removed:
-            for child in set(itertools.chain.from_iterable(
-                generate_graph_children(tdef, get_point(point_str)).values()
-            )):
-                child_itask = self.get_task(child.point, child.name)
-                if not child_itask:
-                    continue
-                fnums_to_remove = child_itask.match_flows(flow_nums)
-                if not fnums_to_remove:
-                    continue
-                prereqs_changed = False
-                for prereq in (
-                    *child_itask.state.prerequisites,
-                    *child_itask.state.suicide_prerequisites,
-                ):
-                    # Unset any prereqs naturally satisfied by these tasks
-                    # (do not unset those satisfied by `cylc set --pre`):
-                    if prereq.unset_naturally_satisfied_dependency(id_):
-                        prereqs_changed = True
-                        removed.setdefault(id_, set()).update(fnums_to_remove)
-                if not prereqs_changed:
-                    continue
-                self.data_store_mgr.delta_task_prerequisite(child_itask)
-                # Check if downstream task is still ready to run:
-                if (
-                    child_itask.state.is_gte(TASK_STATUS_PREPARING)
-                    # Still ready if the task exists in other flows:
-                    or child_itask.flow_nums != fnums_to_remove
-                    or child_itask.state.prerequisites_all_satisfied()
-                ):
-                    continue
-                # No longer ready to run
-                self.unqueue_task(child_itask)
-                # Check if downstream task should remain spawned:
-                if (
-                    # Ignoring tasks we are already dealing with:
-                    child_itask.identity in matched_task_ids
-                    or child_itask.state.any_satisfied_prerequisite_tasks()
-                ):
-                    continue
-                # No longer has reason to be in pool:
-                self.remove(child_itask, 'prerequisite task(s) removed')
-                # Remove from DB tables to ensure it is not skipped if it
-                # respawns in future:
-                self.workflow_db_mgr.remove_task_from_flows(
-                    str(child.point), child.name, fnums_to_remove
-                )
-
-            # Remove from DB tables:
-            db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
-                point_str, name, flow_nums
-            )
-            if db_removed_fnums:
-                removed.setdefault(id_, set()).update(db_removed_fnums)
-
-        if removed:
-            tasks_str_list = []
-            for task, fnums in removed.items():
-                self.data_store_mgr.delta_remove_task_flow_nums(task, fnums)
-                tasks_str_list.append(
-                    f"{task} {repr_flow_nums(fnums, full=True)}"
-                )
-            LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
-
-        not_removed.update(matched_task_ids.difference(removed))
-        if not_removed:
-            fnums_str = (
-                repr_flow_nums(flow_nums, full=True) if flow_nums else ''
-            )
-            LOG.warning(
-                "Task(s) not removable: "
-                f"{', '.join(sorted(not_removed))} {fnums_str}"
-            )
-
-        if removed and self.compute_runahead():
-            self.release_runahead_tasks()
 
     def _get_flow_nums(
         self,

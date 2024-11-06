@@ -49,7 +49,7 @@ def sequential(flow, scheduler):
     return scheduler(id_)
 
 
-async def test_remove(sequential, start):
+async def test_remove(sequential: Scheduler, start):
     """It should spawn the next instance when a task is removed.
 
     Ensure that removing a task with a sequential xtrigger does not break the
@@ -74,7 +74,7 @@ async def test_remove(sequential, start):
         ]
 
         # remove all tasks in the pool
-        sequential.pool.remove_tasks(['*'])
+        sequential.remove_tasks(['*'])
 
         # the next cycle should be automatically spawned
         assert list_cycles(sequential) == ['2004']
