@@ -22,6 +22,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     Set,
 )
 
@@ -278,32 +279,27 @@ class TaskState:
         return ret
 
     def __call__(
-            self, *status, is_held=None, is_queued=None, is_runahead=None):
+        self,
+        *status: Optional[str],
+        is_held: Optional[bool] = None,
+        is_queued: Optional[bool] = None,
+        is_runahead: Optional[bool] = None,
+    ) -> bool:
         """Compare task state attributes.
 
         Args:
-            status (str/list/None):
-                ``str``
-                    Check if the task status is the same as the one provided
-                ``list``
-                    Check if the task status is one of the ones provided
-                ``None``
-                    Do not check the task state.
-            is_held (bool):
-                ``bool``
-                    Check the task is_held attribute is the same as provided
-                ``None``
-                    Do not check the is_held attribute
-            is_queued (bool):
-                ``bool``
-                    Check the task is_queued attribute is the same as provided
-                ``None``
-                    Do not check the is_queued attribute
-            is_runahead (bool):
-                ``bool``
-                    Check the task is_runahead attribute is as provided
-                ``None``
-                    Do not check the is_runahead attribute
+            status:
+                Check if the task status is one of the ones provided, or
+                do not check the task state if None.
+            is_held:
+                Check the task is_held attribute is the same as provided, or
+                do not check the is_held attribute if None.
+            is_queued:
+                Check the task is_queued attribute is the same as provided, or
+                do not check the is_queued attribute if None.
+            is_runahead:
+                Check the task is_runahead attribute is as provided, or
+                do not check the is_runahead attribute if None.
 
         """
         return (
