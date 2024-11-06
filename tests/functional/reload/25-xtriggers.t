@@ -42,7 +42,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[reload]]
         script = """
             # wait for "broken" to fail
-            cylc__job__poll_grep_workflow_log -E '1/broken/01.* \(received\)failed/ERR'
+            cylc__job__poll_grep_workflow_log -E '1/broken/01.* failed/ERR'
             # fix "broken" to allow it to pass
             sed -i 's/false/true/' "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
             # reload the workflow

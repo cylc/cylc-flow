@@ -15,7 +15,7 @@
         script = false
     [[cleaner]]
         script = """
-cylc__job__poll_grep_workflow_log -E '1/b/01:running.* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E '1/b/01.* failed'
 # Remove the unhandled failed task
 cylc remove "$CYLC_WORKFLOW_ID//1/b"
 # Remove waiting 1/c
