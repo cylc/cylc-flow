@@ -937,7 +937,6 @@ class TaskEventsManager():
         # gets logged by itask state change anyway (and not manual poll)
         if severity_lvl > DEBUG and flag != self.FLAG_POLLED and message in {
             self.EVENT_SUBMITTED, self.EVENT_STARTED, self.EVENT_SUCCEEDED,
-            self.EVENT_FAILED
         }:
             severity_lvl = DEBUG
         LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
