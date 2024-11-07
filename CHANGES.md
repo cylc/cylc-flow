@@ -11,6 +11,34 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.3.6 (Released 2024-11-07)__
+
+### 🔧 Fixes
+
+[#4983](https://github.com/cylc/cylc-flow/pull/4983) - Ensure the runahead limit is recomputed when legacy "suicide-triggers" are used, to prevent erroneous stall in niche cases.
+
+[#6263](https://github.com/cylc/cylc-flow/pull/6263) - Fix bug that prevented changes to user-defined xtriggers taking effect after a reload.
+
+[#6326](https://github.com/cylc/cylc-flow/pull/6326) - Fix a rare issue where missing job records could cause tasks to become stuck in active states.
+
+[#6364](https://github.com/cylc/cylc-flow/pull/6364) - Fixed bug where `cylc clean <workflow> --rm share` would not take care of removing the target of the `share/cycle` symlink directory.
+
+[#6376](https://github.com/cylc/cylc-flow/pull/6376) - Fixes an issue that could cause Cylc to ignore the remaining hosts in a platform in response to an `ssh` error in some niche circumstances.
+
+[#6388](https://github.com/cylc/cylc-flow/pull/6388) - Fix task state filtering in Tui.
+
+[#6414](https://github.com/cylc/cylc-flow/pull/6414) - Broadcast will now reject truncated cycle points to aviod runtime errors.
+
+[#6422](https://github.com/cylc/cylc-flow/pull/6422) - Enabled jumping to the top/bottom of log files in Tui using the "home" and "end" keys.
+
+[#6431](https://github.com/cylc/cylc-flow/pull/6431) - The `cycle point format` was imposing an undesirable constraint on `wall_clock` offsets, this has been fixed.
+
+[#6433](https://github.com/cylc/cylc-flow/pull/6433) - Ignore requests to trigger or set active tasks with --flow=none.
+
+[#6445](https://github.com/cylc/cylc-flow/pull/6445) - Ensure `cylc trigger` does not fall back to `flow=none` when there are no active flows.
+
+[#6448](https://github.com/cylc/cylc-flow/pull/6448) - Fix the non-spawning of parentless sequential xtriggered tasks when outputs are set.
+
 ## __cylc-8.3.5 (Released 2024-10-15)__
 
 ### 🔧 Fixes
