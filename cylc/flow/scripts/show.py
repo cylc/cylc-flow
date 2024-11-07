@@ -494,7 +494,7 @@ def main(_, options: 'Values', *ids) -> None:
         constraint='mixed',
         max_workflows=1,
     )
-    workflow_id = list(workflow_args)[0]
+    workflow_id = next(iter(workflow_args))
     tokens_list = workflow_args[workflow_id]
 
     if tokens_list and options.task_defs:

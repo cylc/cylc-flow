@@ -30,18 +30,22 @@ from cylc.flow.exceptions import TaskDefError
 import cylc.flow.flags
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
+    SORT_ORDERS,
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED,
-    SORT_ORDERS
 )
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import (
         PointBase,
         SequenceBase,
     )
-    from cylc.flow.task_trigger import TaskTrigger
+    from cylc.flow.task_trigger import (
+        Dependency,
+        TaskTrigger,
+    )
 
 
 class TaskTuple(NamedTuple):
@@ -167,7 +171,7 @@ class TaskDef:
         self.start_point = start_point
         self.initial_point = initial_point
 
-        self.sequences = []
+        self.sequences: List[SequenceBase] = []
         self.used_in_offset_trigger = False
 
         # some defaults
@@ -177,7 +181,7 @@ class TaskDef:
 
         self.expiration_offset = None
         self.namespace_hierarchy = []
-        self.dependencies = {}
+        self.dependencies: Dict[SequenceBase, List[Dependency]] = {}
         self.outputs = {}  # {output: (message, is_required)}
         self.graph_children: Dict[
             SequenceBase, Dict[str, List[Tuple[str, TaskTrigger]]]

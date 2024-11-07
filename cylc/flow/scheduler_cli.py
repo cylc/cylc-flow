@@ -655,8 +655,6 @@ async def _run(scheduler: Scheduler) -> int:
     # stop cylc stop
     except SchedulerError:
         ret = 1
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        ret = 2
     except Exception:
         ret = 3
 

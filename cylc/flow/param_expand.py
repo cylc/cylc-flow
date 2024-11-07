@@ -62,7 +62,6 @@ from typing import List, Tuple
 
 from cylc.flow.exceptions import ParamExpandError
 from cylc.flow.task_id import TaskID
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|<[^>]*>)+')
@@ -195,8 +194,9 @@ class NameExpander:
             try:
                 results.append((tmpl % current_values, current_values))
             except KeyError as exc:
-                raise ParamExpandError('parameter %s is not '
-                                       'defined.' % str(exc.args[0]))
+                raise ParamExpandError(
+                    'parameter %s is not defined.' % str(exc.args[0])
+                ) from None
         else:
             for param_val in params[0][1]:
                 spec_vals[params[0][0]] = param_val
@@ -306,8 +306,8 @@ class NameExpander:
                     used[item] = param_values[item]
                 except KeyError:
                     raise ParamExpandError(
-                        "parameter '%s' undefined in '%s'" % (
-                            item, origin))
+                        "parameter '%s' undefined in '%s'" % (item, origin)
+                    ) from None
 
         # For each parameter substitute the param_tmpl_cfg.
         tmpl = tmpl.format(**self.param_tmpl_cfg)
@@ -397,13 +397,12 @@ class GraphExpander:
             # Inner loop.
             for p_group in set(REC_P_GROUP.findall(line)):
                 # Parameters must be expanded in the order found.
-                param_values = OrderedDictWithDefaults()
-                tmpl = ''
+                param_values = {}
                 for item in p_group.split(','):
                     pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:
                         param_values[pname] = values[pname]
-                    elif offs.startswith('='):
+                    elif offs[0] == '=':
                         # Specific value.
                         try:
                             # Template may require an integer
@@ -420,13 +419,16 @@ class GraphExpander:
                         else:
                             offval = self._REMOVE
                         param_values[pname] = offval
-                for pname in param_values:
-                    tmpl += self.param_tmpl_cfg[pname]
+                tmpl = ''.join(
+                    self.param_tmpl_cfg[pname]
+                    for pname in param_values
+                )
                 try:
                     repl = tmpl % param_values
                 except KeyError as exc:
-                    raise ParamExpandError('parameter %s is not '
-                                           'defined.' % str(exc.args[0]))
+                    raise ParamExpandError(
+                        'parameter %s is not defined.' % str(exc.args[0])
+                    ) from None
                 line = line.replace('<' + p_group + '>', repl)
             if line:
                 line_set.add(line)
