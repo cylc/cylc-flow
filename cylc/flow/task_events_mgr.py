@@ -1324,6 +1324,7 @@ class TaskEventsManager():
             "run_status": 1,
             "time_run_exit": event_time,
         })
+        LOG.error(f'[{itask}] {full_message or self.EVENT_FAILED}')
         if (
                 forced
                 or TimerFlags.EXECUTION_RETRY not in itask.try_timers
@@ -1338,9 +1339,6 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
-            LOG.error(
-                f'[{itask}] {full_message or self.EVENT_FAILED} - '
-            )
         else:
             # There is an execution retry lined up.
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
@@ -1428,6 +1426,7 @@ class TaskEventsManager():
             "submit_status": 1,
         })
         itask.summary['submit_method_id'] = None
+        LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if (
                 forced
                 or TimerFlags.SUBMISSION_RETRY not in itask.try_timers
@@ -1446,7 +1445,6 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_SUBMIT_FAILED)
                 self.data_store_mgr.delta_task_state(itask)
-            LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
