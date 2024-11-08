@@ -69,8 +69,8 @@
 #     named_grep_ok NAME PATTERN FILE [$OPTS]
 #         Run grep_ok with a custom test name.
 #         OPTS: put grep options like '-E' (extended regex) at end of line.
-#     grep_fail PATTERN FILE
-#         Run "grep -q -e PATTERN FILE", expect no match.
+#     grep_fail PATTERN FILE [$OPTS]
+#         Run "grep [$OPTS] -q -e PATTERN FILE", expect no match.
 #     count_ok PATTERN FILE COUNT
 #         Test that PATTERN occurs in exactly COUNT lines of FILE.
 #     exists_ok FILE
@@ -459,7 +459,7 @@ named_grep_ok() {
     local BRE="$2"
     local FILE="$3"
     shift 3
-    OPTS="$*"
+    local OPTS="$*"
     local TEST_NAME
     TEST_NAME="grep-ok: ${NAME}"
     # shellcheck disable=SC2086
@@ -485,13 +485,16 @@ __ERR__
 grep_fail() {
     local BRE="$1"
     local FILE="$2"
+    shift 2
+    local OPTS="$*"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE}")-grep-fail"
     if [[ ! -f "${FILE}" ]]; then
         fail "${TEST_NAME}-file to be grepped does not exist."
         return
     fi
-    if grep -q -e "${BRE}" "${FILE}"; then
+    # shellcheck disable=SC2086
+    if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         mkdir -p "${TEST_LOG_DIR}"
         echo "ERROR: Found ${BRE} in ${FILE}" \
           >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
