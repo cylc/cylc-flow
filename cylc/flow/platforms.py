@@ -265,6 +265,12 @@ def platform_from_name(
             platform_data['name'] = platform_name
             return platform_data
 
+    # If platform name in run mode and not otherwise defined:
+    if platform_name == 'SIMULATION':
+        platform_data = deepcopy(platforms['localhost'])
+        platform_data['name'] = 'localhost'
+        return platform_data
+
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")
 

@@ -473,6 +473,19 @@ def test_get_install_target_to_platforms_map(
         assert result == expected_map
 
 
+def test_platform_from_name__sim_mode():
+    result = platform_from_name('SIMULATION')
+    assert result['name'] == 'localhost'
+
+
+def test_get_install_target_to_platforms_map__sim_mode():
+    result = get_install_target_to_platforms_map(['SIMULATION'])
+    assert list(result) == ['localhost']
+    assert len(result['localhost']) == 1
+    assert result['localhost'][0]['hosts'] == ['localhost']
+    assert result['localhost'][0]['install target'] == 'localhost'
+
+
 @pytest.mark.parametrize(
     'platform, job, remote, expect',
     [
