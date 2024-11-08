@@ -162,6 +162,9 @@ class TaskProxy:
         .is_xtrigger_sequential:
             A flag used to determine whether this task needs to wait for
             xtrigger satisfaction to spawn.
+        .disable_fail_handlers:
+            A flag to disable failed/submit-failed event handlers for this
+            task (e.g. when `cylc remove` kills a running/submitted task).
 
     Args:
         tdef: The definition object of this task.
@@ -176,7 +179,7 @@ class TaskProxy:
     """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = [
+    __slots__ = (
         'clock_trigger_times',
         'expire_time',
         'identity',
@@ -206,7 +209,8 @@ class TaskProxy:
         'mode_settings',
         'transient',
         'is_xtrigger_sequential',
-    ]
+        'disable_fail_handlers',
+    )
 
     def __init__(
         self,
@@ -281,6 +285,7 @@ class TaskProxy:
         self.late_time: Optional[float] = None
         self.is_late = is_late
         self.waiting_on_job_prep = False
+        self.disable_fail_handlers: bool = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
 

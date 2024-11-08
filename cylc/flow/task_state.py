@@ -278,6 +278,9 @@ class TaskState:
             ret += '(runahead)'
         return ret
 
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self}>"
+
     def __call__(
         self,
         *status: Optional[str],

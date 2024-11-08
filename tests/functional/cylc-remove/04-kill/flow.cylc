@@ -1,0 +1,30 @@
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        expected task failures = 1/a, 1/b
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    [[graph]]
+        R1 = """
+            a:started => remover
+            a:failed => u
+
+            b:submitted? => remover
+            b:submit-failed? => v
+
+            # Give u & v time to spawn if they're going to (but they shouldn't):
+            remover => end
+        """
+
+[runtime]
+    [[a, b]]
+        script = sleep 40
+        [[[events]]]
+            submitted handlers = echo %(event)s
+            failed handlers = echo %(event)s
+            submission failed handlers = echo %(event)s
+    [[b]]
+        platform = old_street
+    [[remover]]
+        script = cylc remove "$CYLC_WORKFLOW_ID//1/a" "$CYLC_WORKFLOW_ID//1/b"

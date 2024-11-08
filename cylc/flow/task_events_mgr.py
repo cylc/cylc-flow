@@ -1328,7 +1328,10 @@ class TaskEventsManager():
             # No retry lined up: definitive failure.
             no_retries = True
             if itask.state_reset(TASK_STATUS_FAILED, forced=forced):
-                self.setup_event_handlers(itask, self.EVENT_FAILED, message)
+                if not itask.disable_fail_handlers:
+                    self.setup_event_handlers(
+                        itask, self.EVENT_FAILED, message
+                    )
                 itask.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_FAILED)
@@ -1429,9 +1432,11 @@ class TaskEventsManager():
             # See github #476.
             no_retries = True
             if itask.state_reset(TASK_STATUS_SUBMIT_FAILED, forced=forced):
-                self.setup_event_handlers(
-                    itask, self.EVENT_SUBMIT_FAILED,
-                    f'job {self.EVENT_SUBMIT_FAILED}')
+                if not itask.disable_fail_handlers:
+                    self.setup_event_handlers(
+                        itask, self.EVENT_SUBMIT_FAILED,
+                        f'job {self.EVENT_SUBMIT_FAILED}'
+                    )
                 itask.state.outputs.set_message_complete(
                     TASK_OUTPUT_SUBMIT_FAILED
                 )

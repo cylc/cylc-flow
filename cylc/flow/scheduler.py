@@ -1069,6 +1069,7 @@ class Scheduler:
         # Mapping of task IDs to removed flow numbers:
         removed: Dict[str, FlowNums] = {}
         not_removed: Set[str] = set()
+        to_kill: List[TaskProxy] = []
 
         for itask in active:
             fnums_to_remove = itask.match_flows(flow_nums)
@@ -1082,8 +1083,11 @@ class Scheduler:
                 # this would not happen after removing this occurrence):
                 self.pool.check_spawn_psx_task(itask)
                 self.pool.remove(itask, 'request')
-            else:
-                itask.flow_nums.difference_update(fnums_to_remove)
+                to_kill.append(itask)
+                itask.disable_fail_handlers = True
+            itask.flow_nums.difference_update(fnums_to_remove)
+
+        self.kill_tasks(to_kill, warn=False)
 
         matched_task_ids = {
             *removed.keys(),

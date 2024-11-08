@@ -34,6 +34,7 @@ from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.task_state import TASK_STATUS_FAILED
 
 
 def get_pool_tasks(schd: Scheduler) -> Set[str]:
@@ -237,7 +238,9 @@ async def test_not_unset_prereq(
         ]
 
 
-async def test_logging(flow, scheduler, start, log_filter):
+async def test_logging(
+    flow, scheduler, start, log_filter, caplog: pytest.LogCaptureFixture
+):
     """Test logging of a mixture of valid and invalid task removals."""
     schd: Scheduler = scheduler(
         flow({
@@ -273,6 +276,8 @@ async def test_logging(flow, scheduler, start, log_filter):
     assert log_filter(logging.WARNING, "No active tasks matching: 2002/*")
     assert log_filter(logging.WARNING, "Invalid cycle point for task: a, 2005")
     assert log_filter(logging.WARNING, "No matching tasks found: doh")
+    # No tasks were submitted/running so none should have been killed:
+    assert "job killed" not in caplog.text
 
 
 async def test_logging_flow_nums(
@@ -431,4 +436,46 @@ async def test_suicide(flow, scheduler, run, reflog, complete):
         ('1/d', ('1/c',)),
         # 1/x not suicided as 1/a was removed:
         ('1/x', ('1/d',)),
+    }
+
+
+async def test_kill_running(flow, scheduler, run, complete, reflog):
+    """Test removing a running task should kill it.
+
+    Note this only tests simulation mode and a separate test for live mode
+    exists in tests/functional/cylc-remove.
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'graph': {
+                    'R1': '''
+                        a:started => b => c
+                        a:failed => q
+                    '''
+                },
+            },
+            'runtime': {
+                'a': {
+                    'simulation': {
+                        'default run length': 'PT30S'
+                    },
+                },
+            },
+        }),
+        paused_start=False,
+    )
+    async with run(schd):
+        reflog_triggers = reflog(schd)
+        await complete(schd, '1/b')
+        a = schd.pool._get_task_by_id('1/a')
+        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        assert a.state(TASK_STATUS_FAILED, is_held=True)
+        await complete(schd)
+
+    assert reflog_triggers == {
+        ('1/a', None),
+        ('1/b', ('1/a',)),
+        ('1/c', ('1/b',)),
+        # The a:failed output should not cause 1/q to run
     }
