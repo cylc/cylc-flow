@@ -22,7 +22,7 @@
 
 export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 10
 
 # Create platform that ensures job b will be in submitted state for long enough
 create_test_global_config '' "
@@ -52,5 +52,14 @@ grep_workflow_log_ok "${TEST_NAME_BASE}-grep-b" \
 J_LOG_B="${WORKFLOW_RUN_DIR}/log/job/1/b/NN/job-activity.log"
 grep_fail "[(('event-handler-00', 'submission failed'), 1) out]" "$J_LOG_B" -F
 grep_ok "[(('event-handler-00', 'submitted'), 1) out]" "$J_LOG_B" -F
+
+# Check task state updated in DB despite removal from task pool:
+sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" \
+    "SELECT status, flow_nums FROM task_states WHERE name='a';" > task_states.out
+cmp_ok task_states.out - <<< "failed|[]"
+# Check job updated in DB:
+sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" \
+    "SELECT run_status, time_run_exit FROM task_jobs WHERE cycle='1' AND name='a';" > task_jobs.out
+cmp_ok_re task_jobs.out - <<< "1\|[\w:+-]+"
 
 purge

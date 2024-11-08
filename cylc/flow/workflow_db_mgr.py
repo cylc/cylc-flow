@@ -667,10 +667,12 @@ class WorkflowDatabaseManager:
         args.setdefault("submit_num", itask.submit_num)
         self.db_inserts_map.setdefault(table_name, []).append(args)
 
-    def put_update_task_jobs(self, itask, set_args):
+    def put_update_task_jobs(self, itask: 'TaskProxy', set_args: dict) -> None:
         """Put UPDATE statement for task_jobs table."""
+        set_args.setdefault('flow_nums', serialise_set(itask.flow_nums))
         self._put_update_task_x(
-            CylcWorkflowDAO.TABLE_TASK_JOBS, itask, set_args)
+            CylcWorkflowDAO.TABLE_TASK_JOBS, itask, set_args
+        )
 
     def put_update_task_outputs(self, itask: 'TaskProxy') -> None:
         """Put UPDATE statement for task_outputs table."""

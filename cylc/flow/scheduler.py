@@ -1028,14 +1028,15 @@ class Scheduler:
         unkillable: List[TaskProxy] = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(
-                    # directly reset to failed in sim mode, else let
-                    # task_job_mgr handle it
-                    status=(TASK_STATUS_FAILED if jobless else None),
-                    is_held=True,
-                )
-                self.data_store_mgr.delta_task_state(itask)
+                if itask.state_reset(is_held=True):
+                    self.data_store_mgr.delta_task_state(itask)
                 to_kill.append(itask)
+                if jobless:
+                    # Directly set failed in sim mode:
+                    self.task_events_mgr.process_message(
+                        itask, 'CRITICAL', TASK_STATUS_FAILED,
+                        flag=self.task_events_mgr.FLAG_RECEIVED
+                    )
             else:
                 unkillable.append(itask)
         if warn and unkillable:
@@ -1084,10 +1085,8 @@ class Scheduler:
                 self.pool.check_spawn_psx_task(itask)
                 self.pool.remove(itask, 'request')
                 to_kill.append(itask)
-                itask.disable_fail_handlers = True
+                itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
-
-        self.kill_tasks(to_kill, warn=False)
 
         matched_task_ids = {
             *removed.keys(),
@@ -1152,6 +1151,9 @@ class Scheduler:
             )
             if db_removed_fnums:
                 removed.setdefault(id_, set()).update(db_removed_fnums)
+
+        if to_kill:
+            self.kill_tasks(to_kill, warn=False)
 
         if removed:
             tasks_str_list = []

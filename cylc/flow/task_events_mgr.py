@@ -1328,7 +1328,10 @@ class TaskEventsManager():
             # No retry lined up: definitive failure.
             no_retries = True
             if itask.state_reset(TASK_STATUS_FAILED, forced=forced):
-                if not itask.disable_fail_handlers:
+                if itask.removed:
+                    # Need to update DB as task not include in pool update
+                    self.workflow_db_mgr.put_update_task_state(itask)
+                else:
                     self.setup_event_handlers(
                         itask, self.EVENT_FAILED, message
                     )
@@ -1432,7 +1435,10 @@ class TaskEventsManager():
             # See github #476.
             no_retries = True
             if itask.state_reset(TASK_STATUS_SUBMIT_FAILED, forced=forced):
-                if not itask.disable_fail_handlers:
+                if itask.removed:
+                    # Need to update DB as task not include in pool update
+                    self.workflow_db_mgr.put_update_task_state(itask)
+                else:
                     self.setup_event_handlers(
                         itask, self.EVENT_SUBMIT_FAILED,
                         f'job {self.EVENT_SUBMIT_FAILED}'
