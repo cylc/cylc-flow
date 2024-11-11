@@ -1569,7 +1569,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if all(itask.is_ready_to_run()):
+            if itask.is_ready_to_run():
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.sequential_spawn_next:

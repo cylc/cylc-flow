@@ -48,10 +48,10 @@ def test_satisfied(prereq: Prerequisite):
         ('2001', 'd', 'custom'): False,
     }
     # No cached satisfaction state yet:
-    assert prereq._all_satisfied is None
+    assert prereq._cached_satisfied is None
     # Calling self.is_satisfied() should cache the result:
     assert not prereq.is_satisfied()
-    assert prereq._all_satisfied is False
+    assert prereq._cached_satisfied is False
 
     # mark two prerequisites as satisfied
     prereq.satisfy_me([
@@ -68,7 +68,7 @@ def test_satisfied(prereq: Prerequisite):
         ('2001', 'd', 'custom'): False,
     }
     # Should have reset cached satisfaction state:
-    assert prereq._all_satisfied is None
+    assert prereq._cached_satisfied is None
     assert not prereq.is_satisfied()
 
     # mark all prereqs as satisfied
@@ -83,7 +83,7 @@ def test_satisfied(prereq: Prerequisite):
         ('2001', 'd', 'custom'): 'force satisfied',
     }
     # Should have set cached satisfaction state as must be true now:
-    assert prereq._all_satisfied is True
+    assert prereq._cached_satisfied is True
     assert prereq.is_satisfied()
 
 
@@ -176,7 +176,7 @@ def test_satisfy_me():
     for task_name in ('a', 'b', 'c'):
         prereq[('1', task_name, 'x')] = False
     assert not prereq.is_satisfied()
-    assert prereq._all_satisfied is False
+    assert prereq._cached_satisfied is False
 
     valid = prereq.satisfy_me(
         [Tokens('//1/a:x'), Tokens('//1/d:x'), Tokens('//1/c:y')],
@@ -188,7 +188,7 @@ def test_satisfy_me():
         ('1', 'c', 'x'): False,
     }
     # should have reset cached satisfaction state
-    assert prereq._all_satisfied is None
+    assert prereq._cached_satisfied is None
 
     valid = prereq.satisfy_me(
         [Tokens('//1/a:x'), Tokens('//1/b:x')],

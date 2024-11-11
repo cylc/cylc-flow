@@ -30,7 +30,6 @@ from typing import (
     List,
     Optional,
     Set,
-    Tuple,
 )
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -458,7 +457,7 @@ class TaskProxy:
         """Return the next cycle point."""
         return self.tdef.next_point(self.point)
 
-    def is_ready_to_run(self) -> Tuple[bool, ...]:
+    def is_ready_to_run(self) -> bool:
         """Is this task ready to run?
 
         Takes account of all dependence: on other tasks, xtriggers, and
@@ -467,16 +466,18 @@ class TaskProxy:
         """
         if self.is_manual_submit:
             # Manually triggered, ignore unsatisfied prerequisites.
-            return (True,)
+            return True
         if self.state.is_held:
             # A held task is not ready to run.
-            return (False,)
+            return False
         if self.state.status in self.try_timers:
             # A try timer is still active.
-            return (self.try_timers[self.state.status].is_delay_done(),)
+            return self.try_timers[self.state.status].is_delay_done()
         return (
-            self.state(TASK_STATUS_WAITING),
-            self.is_waiting_prereqs_done()
+            self.state(TASK_STATUS_WAITING)
+            and self.prereqs_are_satisfied()
+            and self.state.external_triggers_all_satisfied()
+            and self.state.xtriggers_all_satisfied()
         )
 
     def set_summary_time(self, event_key, time_str=None):
@@ -490,18 +491,9 @@ class TaskProxy:
             self.summary[event_key + '_time'] = float(str2time(time_str))
         self.summary[event_key + '_time_string'] = time_str
 
-    def is_task_prereqs_not_done(self):
-        """Are some task prerequisites not satisfied?"""
-        return (not all(pre.is_satisfied()
-                for pre in self.state.prerequisites))
-
-    def is_waiting_prereqs_done(self):
-        """Are ALL prerequisites satisfied?"""
-        return (
-            all(pre.is_satisfied() for pre in self.state.prerequisites)
-            and self.state.external_triggers_all_satisfied()
-            and self.state.xtriggers_all_satisfied()
-        )
+    def prereqs_are_satisfied(self) -> bool:
+        """Are all task prerequisites satisfied?"""
+        return all(pre.is_satisfied() for pre in self.state.prerequisites)
 
     def reset_try_timers(self):
         # unset any retry delay timers

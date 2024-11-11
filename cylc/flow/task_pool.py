@@ -90,11 +90,7 @@ from cylc.flow.task_state import (
     TASK_STATUSES_FINAL,
 )
 from cylc.flow.task_trigger import TaskTrigger
-from cylc.flow.util import (
-    deserialise_set,
-    serialise_set,
-)
-from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.util import deserialise_set
 from cylc.flow.workflow_status import StopMode
 
 
@@ -222,18 +218,7 @@ class TaskPool:
         Call when a new task is spawned or a flow merge occurs.
         """
         # Add row to task_states table.
-        now = get_current_time_string()
-        self.workflow_db_mgr.put_insert_task_states(
-            itask,
-            {
-                "time_created": now,
-                "time_updated": now,
-                "status": itask.state.status,
-                "flow_nums": serialise_set(itask.flow_nums),
-                "flow_wait": itask.flow_wait,
-                "is_manual_submit": itask.is_manual_submit
-            }
-        )
+        self.workflow_db_mgr.put_insert_task_states(itask)
         # Add row to task_outputs table:
         self.workflow_db_mgr.put_insert_task_outputs(itask)
 
@@ -736,7 +721,7 @@ class TaskPool:
         """
         if itask.state_reset(is_runahead=False):
             self.data_store_mgr.delta_task_state(itask)
-        if all(itask.is_ready_to_run()):
+        if itask.is_ready_to_run():
             # (otherwise waiting on xtriggers etc.)
             self.queue_task(itask)
 
@@ -763,9 +748,7 @@ class TaskPool:
 
         It does not add a spawned task proxy to the pool.
         """
-        ntask = self._get_task_by_id(
-            Tokens(cycle=str(point), task=tdef.name).relative_id
-        )
+        ntask = self.get_task(point, tdef.name)
         is_in_pool = False
         is_xtrig_sequential = False
         if ntask is None:
@@ -910,31 +893,32 @@ class TaskPool:
         # Cached list only for use internally in this method.
         if self.active_tasks_changed:
             self.active_tasks_changed = False
-            self._active_tasks_list = []
-            for itask_id_map in self.active_tasks.values():
-                for itask in itask_id_map.values():
-                    self._active_tasks_list.append(itask)
+            self._active_tasks_list = [
+                itask
+                for itask_id_map in self.active_tasks.values()
+                for itask in itask_id_map.values()
+            ]
         return self._active_tasks_list
 
     def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
         """Return a map of task proxies by cycle point."""
-        point_itasks = {}
-        for point, itask_id_map in self.active_tasks.items():
-            point_itasks[point] = list(itask_id_map.values())
-        return point_itasks
+        return {
+            point: list(itask_id_map.values())
+            for point, itask_id_map in self.active_tasks.items()
+        }
 
     def get_task(self, point: 'PointBase', name: str) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
         rel_id = f'{point}/{name}'
         tasks = self.active_tasks.get(point)
-        if tasks and rel_id in tasks:
-            return tasks[rel_id]
+        if tasks:
+            return tasks.get(rel_id)
         return None
 
     def _get_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return pool task by ID if it exists, or None."""
         for itask_ids in self.active_tasks.values():
-            with suppress(KeyError):
+            if id_ in itask_ids:
                 return itask_ids[id_]
         return None
 
@@ -1123,8 +1107,7 @@ class TaskPool:
             if itask.state.is_queued:
                 # Already queued
                 continue
-            ready_check_items = itask.is_ready_to_run()
-            if all(ready_check_items) and not itask.state.is_runahead:
+            if itask.is_ready_to_run() and not itask.state.is_runahead:
                 self.queue_task(itask)
 
     def set_stop_point(self, stop_point: 'PointBase') -> bool:
@@ -1289,7 +1272,7 @@ class TaskPool:
                 itask.state(TASK_STATUS_WAITING)
                 and not itask.state.is_runahead
                 # (avoid waiting pre-spawned absolute-triggered tasks:)
-                and not itask.is_task_prereqs_not_done()
+                and itask.prereqs_are_satisfied()
             ) for itask in self.get_tasks()
         ):
             return False
@@ -1307,7 +1290,7 @@ class TaskPool:
     def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=False):
             self.data_store_mgr.delta_task_state(itask)
-            if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
+            if (not itask.state.is_runahead) and itask.is_ready_to_run():
                 self.queue_task(itask)
         self.tasks_to_hold.discard((itask.tdef.name, itask.point))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
@@ -1423,12 +1406,7 @@ class TaskPool:
                     str(itask.point), itask.tdef.name, output)
                 self.workflow_db_mgr.process_queued_ops()
 
-            c_taskid = Tokens(
-                cycle=str(c_point),
-                task=c_name,
-            ).relative_id
-
-            c_task = self._get_task_by_id(c_taskid)
+            c_task = self._get_task_by_id(quick_relative_id(c_point, c_name))
             in_pool = c_task is not None
 
             if c_task is not None and c_task != itask:
@@ -1846,9 +1824,6 @@ class TaskPool:
                 self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
             ),
         )
-        if itask is None:
-            return None
-
         # Update it with outputs that were already completed.
         self._load_historical_outputs(itask)
         return itask

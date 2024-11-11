@@ -92,7 +92,7 @@ class Prerequisite:
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = (
         "_satisfied",
-        "_all_satisfied",
+        "_cached_satisfied",
         "conditional_expression",
         "point",
     )
@@ -118,7 +118,7 @@ class Prerequisite:
         # * `None` (no cached state)
         # * `True` (prerequisite satisfied)
         # * `False` (prerequisite unsatisfied).
-        self._all_satisfied: Optional[bool] = None
+        self._cached_satisfied: Optional[bool] = None
 
     def instantaneous_hash(self) -> int:
         """Generate a hash of this prerequisite in its current state.
@@ -159,9 +159,9 @@ class Prerequisite:
         if value is True:
             value = 'satisfied naturally'
         self._satisfied[key] = value
-        if not (self._all_satisfied and value):
+        if not (self._cached_satisfied and value):
             # Force later recalculation of cached satisfaction state:
-            self._all_satisfied = None
+            self._cached_satisfied = None
 
     def __iter__(self) -> Iterator[PrereqMessage]:
         return iter(self._satisfied)
@@ -185,7 +185,7 @@ class Prerequisite:
 
     def set_condition(self, expr):
         """Set the conditional expression for this prerequisite.
-        Resets the cached state (self._all_satisfied).
+        Resets the cached state (self._cached_satisfied).
 
         Examples:
             # GH #3644 construct conditional expression when one task name
@@ -201,7 +201,7 @@ class Prerequisite:
             'bool(self._satisfied[("1", "xfoo", "succeeded")])']
 
         """
-        self._all_satisfied = None
+        self._cached_satisfied = None
         if '|' in expr:
             # Make a Python expression so we can eval() the logic.
             for message in self._satisfied:
@@ -221,14 +221,14 @@ class Prerequisite:
         Return cached state if present, else evaluate the prerequisite.
 
         """
-        if self._all_satisfied is not None:
+        if self._cached_satisfied is not None:
             # Cached value.
-            return self._all_satisfied
+            return self._cached_satisfied
         if self._satisfied == {}:
             # No prerequisites left after pre-initial simplification.
             return True
-        self._all_satisfied = self._eval_satisfied()
-        return self._all_satisfied
+        self._cached_satisfied = self._eval_satisfied()
+        return self._cached_satisfied
 
     def _eval_satisfied(self) -> bool:
         """Evaluate the prerequisite's condition expression.
@@ -326,9 +326,9 @@ class Prerequisite:
             if not self._satisfied[message]:
                 self._satisfied[message] = 'force satisfied'
         if self.conditional_expression:
-            self._all_satisfied = self._eval_satisfied()
+            self._cached_satisfied = self._eval_satisfied()
         else:
-            self._all_satisfied = True
+            self._cached_satisfied = True
 
     def iter_target_point_strings(self):
         yield from {

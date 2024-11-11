@@ -513,7 +513,6 @@ class WorkflowDatabaseManager:
                     prereq.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
-                        "flow_nums": serialise_set(itask.flow_nums),
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,
@@ -602,12 +601,25 @@ class WorkflowDatabaseManager:
         """Put INSERT statement for task_jobs table."""
         self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_JOBS, itask, args)
 
-    def put_insert_task_states(self, itask, args):
+    def put_insert_task_states(self, itask: 'TaskProxy') -> None:
         """Put INSERT statement for task_states table."""
-        self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_STATES, itask, args)
+        now = get_current_time_string()
+        self._put_insert_task_x(
+            CylcWorkflowDAO.TABLE_TASK_STATES,
+            itask,
+            {
+                "time_created": now,
+                "time_updated": now,
+                "status": itask.state.status,
+                "flow_nums": serialise_set(itask.flow_nums),
+                "flow_wait": itask.flow_wait,
+                "is_manual_submit": itask.is_manual_submit,
+            },
+        )
 
     def put_insert_task_prerequisites(self, itask, args):
         """Put INSERT statement for task_prerequisites table."""
+        args.setdefault("flow_nums", serialise_set(itask.flow_nums))
         self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
@@ -644,15 +656,16 @@ class WorkflowDatabaseManager:
             }
         )
 
-    def _put_insert_task_x(self, table_name, itask, args):
+    def _put_insert_task_x(
+        self, table_name: str, itask: 'TaskProxy', args: 'DbArgDict'
+    ) -> None:
         """Put INSERT statement for a task_* table."""
         args.update({
             "name": itask.tdef.name,
-            "cycle": str(itask.point)})
-        if "submit_num" not in args:
-            args["submit_num"] = itask.submit_num
-        self.db_inserts_map.setdefault(table_name, [])
-        self.db_inserts_map[table_name].append(args)
+            "cycle": str(itask.point),
+        })
+        args.setdefault("submit_num", itask.submit_num)
+        self.db_inserts_map.setdefault(table_name, []).append(args)
 
     def put_update_task_jobs(self, itask, set_args):
         """Put UPDATE statement for task_jobs table."""
@@ -681,7 +694,8 @@ class WorkflowDatabaseManager:
         """Put UPDATE statement for a task_* table."""
         where_args = {
             "cycle": str(itask.point),
-            "name": itask.tdef.name}
+            "name": itask.tdef.name,
+        }
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
         if "flow_nums" not in set_args:
