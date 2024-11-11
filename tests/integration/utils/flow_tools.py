@@ -28,7 +28,7 @@ from contextlib import asynccontextmanager, contextmanager
 import logging
 import pytest
 from typing import Any, Optional, Union
-from uuid import uuid1
+from secrets import token_hex
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.workflow_files import WorkflowFiles
@@ -41,7 +41,7 @@ from .flow_writer import flow_config_str
 
 def _make_src_flow(src_path, conf, filename=WorkflowFiles.FLOW_FILE):
     """Construct a workflow on the filesystem"""
-    flow_src_dir = (src_path / str(uuid1()))
+    flow_src_dir = (src_path / token_hex(4))
     flow_src_dir.mkdir(parents=True, exist_ok=True)
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
@@ -71,7 +71,7 @@ def _make_flow(
         flow_run_dir = (cylc_run_dir / id_)
     else:
         if name is None:
-            name = str(uuid1())
+            name = token_hex(4)
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
     id_ = str(flow_run_dir.relative_to(cylc_run_dir))
