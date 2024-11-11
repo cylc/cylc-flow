@@ -826,11 +826,7 @@ class TaskPool:
                 itask.flow_nums
             )
 
-        msg = "removed from active task pool"
-        if reason is None:
-            msg += ": completed"
-        else:
-            msg += f": {reason}"
+        msg = f"removed from active task pool: {reason or 'completed'}"
 
         if itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
