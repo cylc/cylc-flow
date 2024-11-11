@@ -12,9 +12,6 @@
 
             b:submitted? => remover
             b:submit-failed? => v
-
-            # Give u & v time to spawn if they're going to (but they shouldn't):
-            remover => end
         """
 
 [runtime]
@@ -27,4 +24,8 @@
     [[b]]
         platform = old_street
     [[remover]]
-        script = cylc remove "$CYLC_WORKFLOW_ID//1/a" "$CYLC_WORKFLOW_ID//1/b"
+        script = """
+            cylc remove "$CYLC_WORKFLOW_ID//1/a" "$CYLC_WORKFLOW_ID//1/b"
+            cylc__job__poll_grep_workflow_log -E '1\/a.* => failed'
+            cylc__job__poll_grep_workflow_log -E '1\/b.* => submit-failed'
+        """

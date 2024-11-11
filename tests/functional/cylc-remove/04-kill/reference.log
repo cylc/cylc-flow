@@ -3,4 +3,3 @@ Final point: 1
 1/a -triggered off []
 1/b -triggered off []
 1/remover -triggered off ['1/a', '1/b']
-1/end -triggered off ['1/remover']
