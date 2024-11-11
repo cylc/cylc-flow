@@ -603,7 +603,7 @@ class CylcWorkflowDAO:
                 key, value
             FROM
                 {self.TABLE_WORKFLOW_PARAMS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return self.connect().execute(stmt)
 
     def select_workflow_flows(self, flow_nums: Iterable[int]):
@@ -615,7 +615,7 @@ class CylcWorkflowDAO:
                 {self.TABLE_WORKFLOW_FLOWS}
             WHERE
                 flow_num in ({stringify_flow_nums(flow_nums)})
-        '''  # nosec (table name is code constant, flow_nums just integers)
+        '''  # nosec B608 (table name is code constant, flow_nums just ints)
         flows = {}
         for flow_num, start_time, descr in self.connect().execute(stmt):
             flows[flow_num] = {
@@ -631,7 +631,7 @@ class CylcWorkflowDAO:
                 MAX(flow_num)
             FROM
                 {self.TABLE_WORKFLOW_FLOWS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return self.connect().execute(stmt).fetchone()[0]
 
     def select_workflow_params_restart_count(self):
@@ -643,7 +643,7 @@ class CylcWorkflowDAO:
                 {self.TABLE_WORKFLOW_PARAMS}
             WHERE
                 key == 'n_restart'
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         result = self.connect().execute(stmt).fetchone()
         return int(result[0]) if result else 0
 
@@ -659,7 +659,7 @@ class CylcWorkflowDAO:
                         key, value
                     FROM
                         {self.TABLE_WORKFLOW_TEMPLATE_VARS}
-                '''  # nosec (table name is code constant)
+                '''  # nosec B608 (table name is code constant)
         )):
             callback(row_idx, list(row))
 
@@ -676,7 +676,7 @@ class CylcWorkflowDAO:
                 {",".join(attrs)}
             FROM
                 {self.TABLE_TASK_ACTION_TIMERS}
-        '''  # nosec
+        '''  # nosec B608
         # * table name is code constant
         # * attrs are code constants
         for row_idx, row in enumerate(self.connect().execute(stmt)):
@@ -702,7 +702,7 @@ class CylcWorkflowDAO:
                     AND name==?
                 ORDER BY
                     submit_num DESC LIMIT 1
-            '''  # nosec
+            '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name]
@@ -716,7 +716,7 @@ class CylcWorkflowDAO:
                     cycle==?
                     AND name==?
                     AND submit_num==?
-            '''  # nosec
+            '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name, submit_num]
@@ -799,7 +799,7 @@ class CylcWorkflowDAO:
                 platform_name
             FROM
                 {self.TABLE_TASK_JOBS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return {i[0] for i in self.connect().execute(stmt)}
 
     def select_prev_instances(
@@ -812,7 +812,7 @@ class CylcWorkflowDAO:
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
-        stmt = (  # nosec
+        stmt = (  # nosec B608
             r"SELECT flow_nums,submit_num,flow_wait,status FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
@@ -860,7 +860,7 @@ class CylcWorkflowDAO:
                {self.TABLE_TASK_OUTPUTS}
             WHERE
                 name==? AND cycle==?
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return {
             outputs: deserialise_set(flow_nums)
             for flow_nums, outputs in self.connect().execute(
@@ -874,7 +874,7 @@ class CylcWorkflowDAO:
                 signature, results
             FROM
                 {self.TABLE_XTRIGGERS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
@@ -884,7 +884,7 @@ class CylcWorkflowDAO:
                 cycle, name, output
             FROM
                 {self.TABLE_ABS_OUTPUTS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
@@ -997,7 +997,7 @@ class CylcWorkflowDAO:
                 cycle == ? AND
                 name == ? AND
                 flow_nums == ?
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         stmt_args = [cycle, name, flow_nums]
         return list(self.connect().execute(stmt, stmt_args))
 
@@ -1008,7 +1008,7 @@ class CylcWorkflowDAO:
                 name, cycle
             FROM
                 {self.TABLE_TASKS_TO_HOLD}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return list(self.connect().execute(stmt))
 
     def select_task_times(self):
@@ -1030,7 +1030,7 @@ class CylcWorkflowDAO:
                 {self.TABLE_TASK_JOBS}
             WHERE
                 run_status = 0
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         columns = (
             'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'

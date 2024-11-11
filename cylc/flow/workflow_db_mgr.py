@@ -718,7 +718,7 @@ class WorkflowDatabaseManager:
                 WHERE
                     cycle = ?
                     AND name = ?
-            '''
+            '''  # nosec B608 (table name is a code constant)
             fnums_select_cursor = self.pri_dao.connect().execute(
                 fnums_select_stmt, (point, name)
             )
@@ -731,12 +731,12 @@ class WorkflowDatabaseManager:
                     UPDATE OR REPLACE
                         {table}
                     SET
-                        flow_nums = "{serialise_set()}"
+                        flow_nums = ?
                     WHERE
                         cycle = ?
                         AND name = ?
-                '''
-                params: List[tuple] = [(point, name)]
+                '''  # nosec B608 (table name is a code constant)
+                params: List[tuple] = [(serialise_set(), point, name)]
             else:
                 # Mapping of existing flow nums to what should be left after
                 # removing the specified flow nums:
@@ -759,7 +759,7 @@ class WorkflowDatabaseManager:
                         cycle = ?
                         AND name = ?
                         AND flow_nums = ?
-                '''
+                '''  # nosec B608 (table name is a code constant)
                 params = [
                     (serialise_set(new), point, name, old)
                     for old, new in flow_nums_map.items()
@@ -811,7 +811,7 @@ class WorkflowDatabaseManager:
                         {cls.TABLE_WORKFLOW_PARAMS}
                     WHERE
                         key == ?
-                ''',  # nosec (table name is a code constant)
+                ''',  # nosec B608 (table name is a code constant)
                 [cls.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except (TypeError, OperationalError) as exc:
