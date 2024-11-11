@@ -381,3 +381,54 @@ async def test_downstream_preparing(flow, scheduler, start):
         schd.pool._get_task_by_id('1/y').state_reset('preparing')
         await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
         assert get_pool_tasks(schd) == {'1/y'}
+
+
+async def test_downstream_other_flows(flow, scheduler, run, complete):
+    """Downstream dependents should not be removed if they exist in other
+    flows."""
+    schd: Scheduler = scheduler(
+        flow('''
+            a => b => c => x
+            a => x
+        '''),
+        paused_start=False,
+    )
+    async with run(schd):
+        await complete(schd, '1/a')
+        schd.pool.force_trigger_tasks(['1/c'], ['2'])
+        c = schd.pool._get_task_by_id('1/c')
+        schd.pool.spawn_on_output(c, TASK_OUTPUT_SUCCEEDED)
+        assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
+
+        await run_cmd(remove_tasks(schd, ['1/c'], ['2']))
+        assert get_pool_tasks(schd) == {'1/b', '1/x'}
+        # Note: in future we might want to remove 1/x from flow 2 as well, to
+        # maintain flow continuity. However it is tricky at the moment because
+        # other prerequisite tasks could exist in flow 2 (we don't know as
+        # prereqs do not hold flow info other than in the DB).
+        assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
+
+
+async def test_suicide(flow, scheduler, run, reflog, complete):
+    """Test that suicide prereqs are unset by `cylc remove`."""
+    schd: Scheduler = scheduler(
+        flow('''
+            a => b => c => d => x
+            a & c => !x
+        '''),
+        paused_start=False,
+    )
+    async with run(schd):
+        reflog_triggers: set = reflog(schd)
+        await complete(schd, '1/b')
+        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        await complete(schd)
+
+    assert reflog_triggers == {
+        ('1/a', None),
+        ('1/b', ('1/a',)),
+        ('1/c', ('1/b',)),
+        ('1/d', ('1/c',)),
+        # 1/x not suicided as 1/a was removed:
+        ('1/x', ('1/d',)),
+    }
