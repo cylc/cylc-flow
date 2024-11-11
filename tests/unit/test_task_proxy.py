@@ -122,6 +122,7 @@ def test_match_flows(
 
 def test_match_flows_copy():
     """Test that this method does not return the same reference as
+    itask.flow_nums, otherwise you could end up unexpectedly mutating
     itask.flow_nums."""
     mock_itask = Mock(flow_nums={1, 2})
     result = TaskProxy.match_flows(mock_itask, set())

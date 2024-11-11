@@ -1052,7 +1052,7 @@ class Scheduler:
     def remove_tasks(
         self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
     ) -> None:
-        """Remove tasks from the task pool (by command).
+        """Remove tasks (`cylc remove` command).
 
         Args:
             items: Relative IDs or globs.
@@ -1088,6 +1088,7 @@ class Scheduler:
                 itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
 
+        # All the matched tasks (including inactive & applicable active tasks):
         matched_task_ids = {
             *removed.keys(),
             *(quick_relative_id(cycle, task) for task, cycle in inactive),
@@ -1096,8 +1097,9 @@ class Scheduler:
         for id_ in matched_task_ids:
             point_str, name = id_.split('/', 1)
             tdef = self.config.taskdefs[name]
-            # Go through downstream tasks to see if any need to stand down
-            # as a result of this task being removed:
+
+            # Go through any tasks downstream of this matched task to see if
+            # any need to stand down as a result of this task being removed:
             for child in set(itertools.chain.from_iterable(
                 generate_graph_children(tdef, get_point(point_str)).values()
             )):
@@ -1139,13 +1141,13 @@ class Scheduler:
                     continue
                 # No longer has reason to be in pool:
                 self.pool.remove(child_itask, 'prerequisite task(s) removed')
-                # Remove from DB tables to ensure it is not skipped if it
-                # respawns in future:
+                # Remove this downstream task from flows in DB tables to ensure
+                # it is not skipped if it respawns in future:
                 self.workflow_db_mgr.remove_task_from_flows(
                     str(child.point), child.name, fnums_to_remove
                 )
 
-            # Remove from DB tables:
+            # Remove the matched tasks from the flows in the DB tables:
             db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
                 point_str, name, flow_nums
             )

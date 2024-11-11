@@ -18,25 +18,35 @@
 
 """cylc remove [OPTIONS] ARGS
 
-Remove task instances from a running workflow and the workflow's history.
+Remove tasks in the active window, or erase the run-history of past tasks.
 
-This removes the task(s) from any specified flows. The task will still exist,
-just not in the specified flows, so will not influence the evolution of
-the workflow in those flows.
+Final-status incomplete tasks can be removed from the n=0 active window to
+prevent/recover from a stall, if they don't need to be completed to continue
+the flow.
 
-If a task is removed from all flows, it and its outputs will be left in the
-`None` flow. This preserves a record that the task ran, but it will not
-influence any flows in any way.
+Erasing the run-history of past tasks allows them to be run again in the
+same flow (this is an alternative to starting a new flow).
+
+By default, the specified task(s) will be removed from all flows.
+
+Tasks removed from all flows, and any waiting downstream tasks spawned by
+their outputs, will be recorded in the `None` flow and will not affect
+the evolution of the workflow.
+
+If you remove a task from some but not all of its flows, it will still exist
+in the remaining flows, but it will not affect the evolution of the removed
+flows.
+
+Removing a submitted or running task will also kill it (see "cylc kill").
 
 Examples:
-  # remove a task which has already run
-  # (any tasks downstream of this task which have already run or are currently
-  # running will be left alone The task and its outputs will be left in the
-  # None flow)
+  # Remove a task that already ran.
+  # (Any downstream tasks that are already running or finished will be
+  # left alone. The task and its outputs will be left in the None flow.)
   $ cylc remove <id>
 
-  # remove a task from a specified flow
-  # (the task may remain in other flows)
+  # Remove a task from a specified flow.
+  # (The task may remain in other flows)
   $ cylc remove <id> --flow=1
 """
 
@@ -89,10 +99,9 @@ def get_option_parser() -> COP:
         dest='flow',
         metavar='FLOW',
         help=(
-            "Remove the task(s) from the specified flow number. "
+            "Remove the task(s) from the specified flow. "
             "Reuse the option to remove the task(s) from multiple flows. "
-            "If the option is not used at all, the task(s) will be removed "
-            "from all flows."
+            "(By default, the task(s) will be removed from all flows.)"
         ),
     )
 

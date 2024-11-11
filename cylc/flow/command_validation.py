@@ -37,10 +37,10 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 
 
 ERR_OPT_FLOW_VAL = (
-    f"Flow values must be an integer, or '{FLOW_ALL}', '{FLOW_NEW}', "
+    f"Flow values must be integers, or '{FLOW_ALL}', '{FLOW_NEW}', "
     f"or '{FLOW_NONE}'"
 )
-ERR_OPT_FLOW_VAL_2 = f"Flow values must be an integer, or '{FLOW_ALL}'"
+ERR_OPT_FLOW_VAL_2 = f"Flow values must be integers, or '{FLOW_ALL}'"
 ERR_OPT_FLOW_COMBINE = "Cannot combine --flow={0} with other flow values"
 ERR_OPT_FLOW_WAIT = (
     f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
@@ -80,7 +80,7 @@ def flow_opts(
 
         >>> flow_opts(["new"], False, allow_new_or_none=False)
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ... must be an integer, or 'all'
+        cylc.flow.exceptions.InputError: ... must be integers, or 'all'
 
     """
     if not flows:
