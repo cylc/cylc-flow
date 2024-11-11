@@ -118,3 +118,12 @@ def test_match_flows(
 ):
     mock_itask = Mock(flow_nums=itask_flow_nums)
     assert TaskProxy.match_flows(mock_itask, flow_nums) == expected
+
+
+def test_match_flows_copy():
+    """Test that this method does not return the same reference as
+    itask.flow_nums."""
+    mock_itask = Mock(flow_nums={1, 2})
+    result = TaskProxy.match_flows(mock_itask, set())
+    assert result == mock_itask.flow_nums
+    assert result is not mock_itask.flow_nums

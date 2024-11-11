@@ -17,7 +17,6 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
-from copy import copy
 from fnmatch import fnmatchcase
 from time import time
 from typing import (
@@ -235,7 +234,7 @@ class TaskProxy:
             self.flow_nums = set()
         else:
             # (don't share flow_nums ref with parent task)
-            self.flow_nums = copy(flow_nums)
+            self.flow_nums = flow_nums.copy()
         self.flow_wait = flow_wait
         self.point = start_point
         self.tokens = scheduler_tokens.duplicate(
@@ -526,7 +525,7 @@ class TaskProxy:
         and will not match.
         """
         if not flow_nums or not self.flow_nums:
-            return self.flow_nums
+            return self.flow_nums.copy()
         return self.flow_nums.intersection(flow_nums)
 
     def merge_flows(self, flow_nums: Set) -> None:
