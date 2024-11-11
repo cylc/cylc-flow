@@ -97,6 +97,7 @@ requests_).
  - Shixian Sheng
  - Utheri Wagura
  - Paul Armstrong
+ - Paul Earnshaw
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

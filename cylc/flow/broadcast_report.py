@@ -72,7 +72,7 @@ def get_broadcast_change_iter(modified_settings, is_cancel=False):
         value = setting
         keys_str = ""
         while isinstance(value, dict):
-            key, value = list(value.items())[0]
+            key, value = next(iter(value.items()))
             if isinstance(value, dict):
                 keys_str += "[" + key + "]"
             else:

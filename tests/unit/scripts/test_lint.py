@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
+from collections import Counter
 import logging
 from pathlib import Path
 from pprint import pformat
@@ -178,6 +179,8 @@ LINT_TEST_FILE = """
 something\t
     [[bar]]
         platform = $(some-script foo)
+            [[[directives]]]
+                -l walltime = 666
     [[baz]]
         platform = `no backticks`
 """ + (
@@ -188,7 +191,7 @@ something\t
 
 def lint_text(text, checks, ignores=None, modify=False):
     checks = parse_checks(checks, ignores)
-    counter = {}
+    counter = Counter()
     messages = []
     outlines = [
         line

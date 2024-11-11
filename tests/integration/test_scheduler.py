@@ -19,6 +19,7 @@ import logging
 from pathlib import Path
 import pytest
 import re
+from signal import SIGHUP, SIGINT, SIGTERM
 from typing import Any, Callable
 
 from cylc.flow import commands
@@ -33,7 +34,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED
 )
 
-from cylc.flow.workflow_status import AutoRestartMode
+from cylc.flow.workflow_status import AutoRestartMode, StopMode
 
 
 Fixture = Any
@@ -374,3 +375,28 @@ async def test_restart_timeout(
         schd.pool.force_trigger_tasks(['1/one'], {1})
         await asyncio.sleep(0)  # yield control to the main loop
         assert log_filter(log, contains='restart timer stopped')
+
+
+@pytest.mark.parametrize("signal", ((SIGHUP), (SIGINT), (SIGTERM)))
+async def test_signal_escallation(one, start, signal, log_filter):
+    """Double signal should escalate shutdown.
+
+    If a term-like signal is received whilst the workflow is already stopping
+    in NOW mode, then the shutdown should be escalated to NOW_NOW
+    mode.
+
+    See https://github.com/cylc/cylc-flow/pull/6444
+    """
+    async with start(one) as log:
+        # put the workflow in the stopping state
+        one._set_stop(StopMode.REQUEST_CLEAN)
+        assert one.stop_mode.name == 'REQUEST_CLEAN'
+
+        # one signal should escalate this from CLEAN to NOW
+        one._handle_signal(signal, None)
+        assert log_filter(log, contains=signal.name)
+        assert one.stop_mode.name == 'REQUEST_NOW'
+
+        # two signals should escalate this from NOW to NOW_NOW
+        one._handle_signal(signal, None)
+        assert one.stop_mode.name == 'REQUEST_NOW_NOW'

@@ -1,0 +1,66 @@
+#!Jinja2
+
+[meta]
+    title = Weather Station Workflow
+    description = """
+        This workflow demonstrates how to read in a data file for use in
+        defining your workflow.
+
+        We have a file called "stations.json" which contains a list of weather
+        stations with some data for each. This workflow reads the
+        "stations.json" file and creates a family for each weather station
+        with an environment variable for each data field.
+
+        You can load data in other formats too. Try changing "load_json" to
+        "load_csv" and "stations.json" to "stations.csv" for a CSV example.
+    """
+
+
+{# Import a Python function to load our data. #}
+{% from "load_data" import load_json %}
+
+{# Load data from the specified file. #}
+{% set stations = load_json('stations.json') %}
+
+{# Extract a list of station names from the data file. #}
+{% set station_names = stations | map(attribute="name") | list %}
+
+
+{# Provide Cylc with a list of weather stations. #}
+[task parameters]
+    station = {{ station_names | join(', ') }}
+
+
+[scheduling]
+    initial cycle point = 2000-01-01
+    final cycle point = 2000-01-02
+    [[graph]]
+        P1D = fetch<station> => process<station> => collate
+
+
+[runtime]
+{# Define a family for each weather station #}
+{% for station in stations %}
+    [[STATION<station={{ station["name"] }}>]]
+        [[[environment]]]
+            {# Turn the <station> parameter into an environment variable #}
+            {# NB: Just to show how, we could also have used `station["name"]`. #}
+            name = %(station)s
+            {# Turn the data for this station into environment variables. #}
+            wmo = {{ station["wmo"] }}
+            alt = {{ station["alt"] }}
+            lat = {{ station["lat"] }}
+            lon = {{ station["lon"] }}
+{% endfor %}
+
+    # a task that gets data
+    [[fetch<station>]]
+        inherit = STATION<station>
+        script = echo "fetch data for $name, WMO ID: $wmo"
+
+    [[process<station>]]
+        inherit = STATION<station>
+        script = echo "process data for $name, location: $lat,$lon"
+
+    [[collate]]
+        script = "echo collate data for stations: {{ station_names }}"

@@ -66,7 +66,7 @@ def empyprocess(
         raise EmPyError(
             str(exc),
             lines={'<template>': flines[max(lineno - 4, 0): lineno]},
-        )
+        ) from None
     finally:
         interpreter.shutdown()
         xworkflow = xtempl.getvalue()

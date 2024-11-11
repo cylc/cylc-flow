@@ -21,12 +21,21 @@ from pathlib import Path
 import re
 from shutil import rmtree
 from time import sleep
-from typing import Dict, Iterable, Set, Union, Optional, Any
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Set,
+    Union,
+)
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    FileRemovalError, InputError, WorkflowFilesError
+    FileRemovalError,
+    InputError,
+    WorkflowFilesError,
 )
 from cylc.flow.platforms import get_localhost_install_target
 
@@ -40,19 +49,27 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
     ^({re.escape(os.curdir)}|{re.escape(os.pardir)})
     ({re.escape(os.sep)}|$)
     ''',
-    re.VERBOSE
+    re.VERBOSE,
 )
 """Matches relative paths that are explicit (starts with ./)"""
 
 SHELL_ENV_VARS = re.compile(r'\$[^$/]*')
+SYMLINKABLE_LOCATIONS: Dict[str, str] = {
+    # Location: Version Added
+    'share': '8.0.0',
+    'share/cycle': '8.0.0',
+    'log': '8.0.0',
+    'log/job': '8.4.0',
+    'work': '8.0.0',
+}
 
 
 def expand_path(*args: Union[Path, str]) -> str:
     """Expand both vars and user in path and normalise it, joining any
     extra args."""
-    return os.path.normpath(os.path.expanduser(os.path.expandvars(
-        os.path.join(*args)
-    )))
+    return os.path.normpath(
+        os.path.expanduser(os.path.expandvars(os.path.join(*args)))
+    )
 
 
 def get_remote_workflow_run_dir(
@@ -79,7 +96,7 @@ def get_cylc_run_dir(alt_run_dir: Optional[str] = None) -> str:
 def get_alt_workflow_run_dir(
     alt_run_dir: Union[Path, str],
     workflow_id: Union[Path, str],
-    *args: Union[Path, str]
+    *args: Union[Path, str],
 ) -> str:
     """Return alternate workflow run directory.
 
@@ -117,9 +134,7 @@ def get_workflow_run_scheduler_log_path(workflow):
 
 def get_workflow_file_install_log_dir(workflow, *args):
     """Return workflow file install log file dir, join any extra args."""
-    return get_workflow_run_dir(
-        workflow, 'log', 'remote-install', *args
-    )
+    return get_workflow_run_dir(workflow, 'log', 'remote-install', *args)
 
 
 def get_workflow_run_config_log_dir(workflow, *args):
@@ -165,7 +180,7 @@ def make_workflow_run_tree(workflow):
 def make_localhost_symlinks(
     rund: Union[Path, str],
     named_sub_dir: str,
-    symlink_conf: Optional[Dict[str, Dict[str, str]]] = None
+    symlink_conf: Optional[Dict[str, Dict[str, str]]] = None,
 ) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
@@ -181,7 +196,8 @@ def make_localhost_symlinks(
     symlinks_created = {}
     dirs_to_symlink = get_dirs_to_symlink(
         get_localhost_install_target(),
-        named_sub_dir, symlink_conf=symlink_conf
+        named_sub_dir,
+        symlink_conf=symlink_conf,
     )
     for key, value in dirs_to_symlink.items():
         if value is None:
@@ -196,7 +212,8 @@ def make_localhost_symlinks(
             raise WorkflowFilesError(
                 f"Can't symlink to {target}\n"
                 "Undefined variables, check "
-                f"global config: {', '.join(env_vars)}")
+                f"global config: {', '.join(env_vars)}"
+            )
 
         symlink_success = make_symlink_dir(symlink_path, target)
         # Symlink info returned for logging purposes. Symlinks should be
@@ -209,7 +226,7 @@ def make_localhost_symlinks(
 def get_dirs_to_symlink(
     install_target: str,
     workflow_id: str,
-    symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
+    symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, str]:
     """Returns dictionary of directories to symlink.
 
@@ -233,13 +250,15 @@ def get_dirs_to_symlink(
     base_dir = symlink_conf[install_target]['run']
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(
-            base_dir, 'cylc-run', workflow_id)
-    for dir_ in ['log', 'share', 'share/cycle', 'work']:
+            base_dir, 'cylc-run', workflow_id
+        )
+    for dir_ in SYMLINKABLE_LOCATIONS:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(
-            link, 'cylc-run', workflow_id, dir_)
+            link, 'cylc-run', workflow_id, dir_
+        )
     return dirs_to_symlink
 
 
@@ -272,7 +291,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
         except OSError as exc:
             raise WorkflowFilesError(
                 f"Failed to remove broken symlink {path}\n{exc}"
-            )
+            ) from None
     try:
         target.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
@@ -280,7 +299,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
             f"Symlink dir target already exists: ({path} ->) {target}\n"
             "Tip: in future, use 'cylc clean' instead of manually deleting "
             "workflow run dirs."
-        )
+        ) from None
 
     # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
@@ -291,7 +310,7 @@ def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
         path.symlink_to(target)
         return True
     except OSError as exc:
-        raise WorkflowFilesError(f"Error when symlinking\n{exc}")
+        raise WorkflowFilesError(f"Error when symlinking\n{exc}") from None
 
 
 def remove_dir_and_target(path: Union[Path, str]) -> None:
@@ -432,16 +451,17 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         # This function unlikely to be called in circumstances where this will
         # be a problem.
         last_run_num = re_runX.search(  # type: ignore
-            old_run_path).group(1)
+            old_run_path
+        ).group(1)
         last_run_num = int(last_run_num)
     else:
         # If the ``runN`` symlink has been removed, get next numbered run from
         # file names:
         paths = Path(run_path).glob('run[0-9]*')
         run_numbers = (
-            int(m.group(1)) for m in (
-                re_runX.search(i.name) for i in paths
-            ) if m
+            int(m.group(1))
+            for m in (re_runX.search(i.name) for i in paths)
+            if m
         )
         last_run_num = max(run_numbers, default=0)
 
@@ -465,8 +485,8 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             if os.path.isabs(part):
                 raise InputError("--rm option cannot take absolute paths")
             if (
-                part in {os.curdir, os.pardir} or
-                part.startswith(f"{os.pardir}{os.sep}")  # '../'
+                part in {os.curdir, os.pardir}
+                or part.startswith(f"{os.pardir}{os.sep}")  # '../'
             ):
                 raise InputError(
                     "--rm option cannot take paths that point to the "
@@ -497,8 +517,7 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
 
 
 def get_workflow_name_from_id(workflow_id: str) -> str:
-    """Workflow name is the ID shorn of the runN directory name.
-    """
+    """Workflow name is the ID shorn of the runN directory name."""
     cylc_run_dir = Path(get_cylc_run_dir())
     if Path(workflow_id).is_absolute():
         # this is a source directory, not an install dir:
