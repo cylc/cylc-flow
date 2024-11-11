@@ -1719,12 +1719,10 @@ class TaskPool:
             and not itask.state.outputs.get_completed_outputs()
         ):
             # If itask has any history in this flow but no completed outputs
-            # we can infer it was deliberately removed, so don't respawn it.
+            # we can infer it has just been deliberately removed (N.B. not
+            # by `cylc remove`), so don't immediately respawn it.
             # TODO (follow-up work):
             # - this logic fails if task removed after some outputs completed
-            # - this is does not conform to future "cylc remove" flow-erasure
-            #   behaviour which would result in respawning of the removed task
-            # See github.com/cylc/cylc-flow/pull/6186/#discussion_r1669727292
             LOG.debug(f"Not respawning {point}/{name} - task was removed")
             return None
 
