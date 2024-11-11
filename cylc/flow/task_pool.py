@@ -928,6 +928,12 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)
             self.task_queue_mgr.push_task(itask)
 
+    def unqueue_task(self, itask: TaskProxy) -> None:
+        """Un-queue a task that is no longer ready to run."""
+        if itask.state_reset(is_queued=False):
+            self.data_store_mgr.delta_task_state(itask)
+            self.task_queue_mgr.remove_task(itask)
+
     def release_queued_tasks(self):
         """Return list of queue-released tasks awaiting job prep.
 
@@ -2122,6 +2128,8 @@ class TaskPool:
                         prereq[msg] = False
                         if id_ not in removed:
                             removed[id_] = fnums_to_remove
+            if not itask.prereqs_are_satisfied():
+                self.unqueue_task(itask)
 
         # Remove from DB tables:
         for id_ in matched_task_ids:
