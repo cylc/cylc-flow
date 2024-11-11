@@ -69,11 +69,9 @@ async def test_mail_footer_template(
 
     # check that template issues are handled correctly
     assert bool(log_filter(
-        one_log,
         contains='Ignoring bad mail footer template',
     )) == should_log
     assert bool(log_filter(
-        one_log,
         contains=template,
     )) == should_log
 
@@ -114,10 +112,8 @@ async def test_custom_event_handler_template(
 
     # check that template issues are handled correctly
     assert bool(log_filter(
-        one_log,
         contains='bad template',
     )) == should_log
     assert bool(log_filter(
-        one_log,
         contains=template,
     )) == should_log

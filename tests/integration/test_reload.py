@@ -127,7 +127,7 @@ async def test_reload_failure(
     """
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         # corrupt the config by removing the scheduling section
         two_conf = {**one_conf, 'scheduling': {}}
         flow(two_conf, id_=id_)
@@ -138,7 +138,6 @@ async def test_reload_failure(
         # the reload should have failed but the workflow should still be
         # running
         assert log_filter(
-            log,
             contains=(
                 'Reload failed - WorkflowConfigError:'
                 ' missing [scheduling][[graph]] section'

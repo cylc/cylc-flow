@@ -196,7 +196,6 @@ def test_infer_latest_run(
 @pytest.mark.parametrize('warn_arg', [True, False])
 def test_infer_latest_run_warns_for_runN(
     warn_arg: bool,
-    caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
     tmp_run_dir: Callable,
 ):
@@ -206,8 +205,7 @@ def test_infer_latest_run_warns_for_runN(
     runN_path.symlink_to('run1')
     infer_latest_run(runN_path, warn_runN=warn_arg)
     filtered_log = log_filter(
-        caplog, level=logging.WARNING,
-        contains="You do not need to include runN in the workflow ID"
+        logging.WARNING, "You do not need to include runN in the workflow ID"
     )
     assert filtered_log if warn_arg else not filtered_log
 
