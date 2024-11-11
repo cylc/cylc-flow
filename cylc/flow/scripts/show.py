@@ -60,6 +60,7 @@ from cylc.flow.task_state import (
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     ID_MULTI_ARG_DOC,
+    Options,
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.util import BOOL_SYMBOLS
@@ -244,6 +245,9 @@ def get_option_parser():
     )
 
     return parser
+
+
+ShowOptions = Options(get_option_parser())
 
 
 async def workflow_meta_query(workflow_id, pclient, options, json_filter):

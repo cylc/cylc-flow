@@ -33,12 +33,17 @@ import pytest
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id import Tokens
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.install import (
     get_option_parser as install_gop,
     install as cylc_install,
+)
+from cylc.flow.scripts.show import (
+    ShowOptions,
+    prereqs_and_outputs_query,
 )
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.util import serialise_set
@@ -57,7 +62,6 @@ from .utils.flow_tools import (
 
 
 if TYPE_CHECKING:
-    from cylc.flow.network.client import WorkflowRuntimeClient
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
 
@@ -697,3 +701,23 @@ def reftest(run, reflog, complete):
         return triggers
 
     return _reftest
+
+
+@pytest.fixture
+def cylc_show():
+    """Fixture that runs `cylc show` on a scheduler, returning JSON object."""
+
+    async def _cylc_show(schd: 'Scheduler', *task_ids: str) -> dict:
+        pclient = WorkflowRuntimeClient(schd.workflow)
+        await schd.update_data_structure()
+        json_filter: dict = {}
+        await prereqs_and_outputs_query(
+            schd.id,
+            [Tokens(id_, relative=True) for id_ in task_ids],
+            pclient,
+            ShowOptions(json=True),
+            json_filter,
+        )
+        return json_filter
+
+    return _cylc_show

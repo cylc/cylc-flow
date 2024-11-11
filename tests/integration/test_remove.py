@@ -15,10 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import (
+    Dict,
+    List,
+    NamedTuple,
+    Set,
+)
 
 import pytest
 
-from cylc.flow.commands import force_trigger_tasks, remove_tasks, run_cmd
+from cylc.flow.commands import (
+    force_trigger_tasks,
+    remove_tasks,
+    run_cmd,
+)
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
@@ -26,11 +36,39 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
 
 
+def get_pool_tasks(schd: Scheduler) -> Set[str]:
+    return {itask.identity for itask in schd.pool.get_tasks()}
+
+
+class CylcShowPrereqs(NamedTuple):
+    prereqs: List[bool]
+    conditions: List[Dict[str, bool]]
+
+
+@pytest.fixture
+async def cylc_show_prereqs(cylc_show):
+    """Fixture that returns the prereq info from `cylc show` in an
+    easy-to-use format."""
+    async def inner(schd: Scheduler, task: str):
+        prerequisites = (await cylc_show(schd, task))[task]['prerequisites']
+        return [
+            (
+                p['satisfied'],
+                {c['taskId']: c['satisfied'] for c in p['conditions']},
+            )
+            for p in prerequisites
+        ]
+
+    return inner
+
+
 @pytest.fixture
 def example_workflow(flow):
     return flow({
         'scheduling': {
             'graph': {
+                # Note: test both `&` and separate arrows for combining
+                # dependencies
                 'R1': '''
                     a1 & a2 => b
                     a3 => b
@@ -42,7 +80,8 @@ def example_workflow(flow):
 
 def get_data_store_flow_nums(schd: Scheduler, itask: TaskProxy):
     _, ds_tproxy = schd.data_store_mgr.store_node_fetcher(itask.tokens)
-    return ds_tproxy.flow_nums
+    if ds_tproxy:
+        return ds_tproxy.flow_nums
 
 
 async def test_basic(
@@ -52,7 +91,9 @@ async def test_basic(
     schd: Scheduler = scheduler(example_workflow)
     async with start(schd):
         a1 = schd.pool._get_task_by_id('1/a1')
+        a3 = schd.pool._get_task_by_id('1/a3')
         schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
+        schd.pool.spawn_on_output(a3, TASK_OUTPUT_SUCCEEDED)
         await schd.update_data_structure()
 
         assert a1 in schd.pool.get_tasks()
@@ -253,43 +294,90 @@ async def test_logging_flow_nums(
         assert schd.pool._get_task_by_id('1/a1').flow_nums == {1}
 
 
-async def test_ref1(flow, scheduler, run, reflog, complete, log_filter):
-    """Test prereqs/stall & re-run behaviour when removing tasks."""
+async def test_retrigger(flow, scheduler, run, reflog, complete):
+    """Test prereqs & re-run behaviour when removing tasks."""
     schd: Scheduler = scheduler(
-        flow({
-            'scheduling': {
-                'graph': {
-                    'R1': 'a => b => c',
-                },
-            },
-        }),
+        flow('a => b => c'),
         paused_start=False,
     )
     async with run(schd):
         reflog_triggers: set = reflog(schd)
         await complete(schd, '1/b')
-        assert not schd.pool.is_stalled()
-        assert len(schd.pool.task_queue_mgr.queues['default'].deque)
 
         await run_cmd(remove_tasks(schd, ['1/a', '1/b'], [FLOW_ALL]))
         schd.process_workflow_db_queue()
-        # Removing 1/b should cause stall because it is prereq of 1/c:
+        # Removing 1/b should un-queue 1/c:
         assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
-        assert schd.pool.is_stalled()
-        assert log_filter(
-            logging.WARNING, "1/c is waiting on ['1/b:succeeded']"
-        )
+
         assert reflog_triggers == {
             ('1/a', None),
             ('1/b', ('1/a',)),
         }
         reflog_triggers.clear()
 
-        await run_cmd(force_trigger_tasks(schd, ['1/a'], [FLOW_ALL]))
-        await complete(schd, '1/b')
+        await run_cmd(force_trigger_tasks(schd, ['1/a'], []))
+        await complete(schd)
+
+    assert reflog_triggers == {
+        ('1/a', None),
+        # 1/b should have run again after 1/a on the re-trigger in flow 1:
+        ('1/b', ('1/a',)),
+        ('1/c', ('1/b',)),
+    }
+
+
+async def test_prereqs(
+    flow, scheduler, run, complete, cylc_show_prereqs, log_filter
+):
+    """Test prereqs & stall behaviour when removing tasks."""
+    schd: Scheduler = scheduler(
+        flow('(a1 | a2) & b => x'),
+        paused_start=False,
+    )
+    async with run(schd):
+        await complete(schd, '1/a1', '1/a2', '1/b')
+
+        await run_cmd(remove_tasks(schd, ['1/a1'], [FLOW_ALL]))
         assert not schd.pool.is_stalled()
-        assert reflog_triggers == {
-            ('1/a', None),
-            # 1/b should have run again after 1/a on the re-trigger in flow 1:
-            ('1/b', ('1/a',)),
-        }
+        assert len(schd.pool.task_queue_mgr.queues['default'].deque)
+        # `cylc show` should reflect the now-unsatisfied condition:
+        assert await cylc_show_prereqs(schd, '1/x') == [
+            (True, {'1/a1': False, '1/a2': True, '1/b': True})
+        ]
+
+        await run_cmd(remove_tasks(schd, ['1/b'], [FLOW_ALL]))
+        # Should cause stall now because 1/c prereq is unsatisfied:
+        assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
+        assert schd.pool.is_stalled()
+        assert log_filter(
+            logging.WARNING,
+            "1/x is waiting on ['1/a1:succeeded', '1/b:succeeded']",
+        )
+        assert await cylc_show_prereqs(schd, '1/x') == [
+            (False, {'1/a1': False, '1/a2': True, '1/b': False})
+        ]
+
+        assert schd.pool._get_task_by_id('1/x')
+        await run_cmd(remove_tasks(schd, ['1/a2'], [FLOW_ALL]))
+        # Should cause 1/x to be removed from the pool as it no longer has
+        # any satisfied prerequisite tasks:
+        assert not schd.pool._get_task_by_id('1/x')
+
+
+async def test_downstream_preparing(flow, scheduler, start):
+    """Downstream dependents should not be removed if they are already
+    preparing."""
+    schd: Scheduler = scheduler(
+        flow('''
+            a => x
+            a => y
+        '''),
+    )
+    async with start(schd):
+        a = schd.pool._get_task_by_id('1/a')
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_SUCCEEDED)
+        assert get_pool_tasks(schd) == {'1/a', '1/x', '1/y'}
+
+        schd.pool._get_task_by_id('1/y').state_reset('preparing')
+        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        assert get_pool_tasks(schd) == {'1/y'}

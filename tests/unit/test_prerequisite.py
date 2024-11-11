@@ -162,13 +162,29 @@ def test_get_satisfied_dependencies(satisfied_states_prereq: Prerequisite):
     ]
 
 
-def test_naturally_satisfied_dependencies(
-    satisfied_states_prereq: Prerequisite,
+def test_unset_naturally_satisfied_dependency(
+    satisfied_states_prereq: Prerequisite
 ):
-    assert satisfied_states_prereq.naturally_satisfied_dependencies() == [
-        ('1', 'a', 'x'),
-        ('1', 'c', 'x'),
-    ]
+    satisfied_states_prereq[('1', 'a', 'y')] = True
+    satisfied_states_prereq[('1', 'a', 'z')] = 'force satisfied'
+    for id_, expected in [
+        ('1/a', True),
+        ('1/b', False),
+        ('1/c', True),
+        ('1/d', False),
+    ]:
+        assert (
+            satisfied_states_prereq.unset_naturally_satisfied_dependency(id_)
+            == expected
+        )
+    assert satisfied_states_prereq._satisfied == {
+        ('1', 'a', 'x'): False,
+        ('1', 'a', 'y'): False,
+        ('1', 'a', 'z'): 'force satisfied',
+        ('1', 'b', 'x'): False,
+        ('1', 'c', 'x'): False,
+        ('1', 'd', 'x'): 'force satisfied',
+    }
 
 
 def test_satisfy_me():

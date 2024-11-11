@@ -1263,7 +1263,7 @@ class TaskPool:
             LOG.warning(
                 "Partially satisfied prerequisites:\n"
                 + "\n".join(
-                    f"  * {id_} is waiting on {others}"
+                    f"  * {id_} is waiting on {sorted(others)}"
                     for id_, others in unsat.items()
                 )
             )
@@ -2123,27 +2123,54 @@ class TaskPool:
         for id_ in matched_task_ids:
             point_str, name = id_.split('/', 1)
             tdef = self.config.taskdefs[name]
-            # Unset any prereqs naturally satisfied by these tasks
-            # (do not unset those satisfied by `cylc set --pre`):
-            for child in itertools.chain.from_iterable(
+            # Go through downstream tasks to see if any need to stand down
+            # as a result of this task being removed:
+            for child in set(itertools.chain.from_iterable(
                 generate_graph_children(tdef, get_point(point_str)).values()
-            ):
+            )):
                 child_itask = self.get_task(child.point, child.name)
                 if not child_itask:
                     continue
                 fnums_to_remove = child_itask.match_flows(flow_nums)
                 if not fnums_to_remove:
                     continue
+                prereqs_changed = False
                 for prereq in (
                     *child_itask.state.prerequisites,
                     *child_itask.state.suicide_prerequisites,
                 ):
-                    for msg in prereq.naturally_satisfied_dependencies():
-                        if msg.get_id() == id_:
-                            prereq[msg] = False
-                            self.unqueue_task(child_itask)
-                            if id_ not in removed:
-                                removed[id_] = fnums_to_remove
+                    # Unset any prereqs naturally satisfied by these tasks
+                    # (do not unset those satisfied by `cylc set --pre`):
+                    if prereq.unset_naturally_satisfied_dependency(id_):
+                        prereqs_changed = True
+                        removed.setdefault(id_, set()).update(fnums_to_remove)
+                if not prereqs_changed:
+                    continue
+                self.data_store_mgr.delta_task_prerequisite(child_itask)
+                # Check if downstream task is still ready to run:
+                if (
+                    child_itask.state.is_gte(TASK_STATUS_PREPARING)
+                    # Still ready if the task exists in other flows:
+                    or child_itask.flow_nums != fnums_to_remove
+                    or child_itask.state.prerequisites_all_satisfied()
+                ):
+                    continue
+                # No longer ready to run
+                self.unqueue_task(child_itask)
+                # Check if downstream task should remain spawned:
+                if (
+                    # Ignoring tasks we are already dealing with:
+                    child_itask.identity in matched_task_ids
+                    or child_itask.state.any_satisfied_prerequisite_tasks()
+                ):
+                    continue
+                # No longer has reason to be in pool:
+                self.remove(child_itask, 'prerequisite task(s) removed')
+                # Remove from DB tables to ensure it is not skipped if it
+                # respawns in future:
+                self.workflow_db_mgr.remove_task_from_flows(
+                    str(child.point), child.name, fnums_to_remove
+                )
 
             # Remove from DB tables:
             db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(

@@ -23,9 +23,11 @@ useful testing in the process 😀.)
 import asyncio
 import logging
 from pathlib import Path
+
 import pytest
 
 from cylc.flow import __version__
+from cylc.flow.scheduler import Scheduler
 
 
 async def test_create_flow(flow, run_dir):
@@ -286,3 +288,11 @@ async def test_reftest(flow, scheduler, reftest):
         ('1/a', None),
         ('1/b', ('1/a',)),
     }
+
+
+async def test_show(one: Scheduler, start, cylc_show):
+    """Demonstrate the `cylc_show` fixture"""
+    async with start(one):
+        out = await cylc_show(one, '1/one')
+    assert list(out.keys()) == ['1/one']
+    assert out['1/one']['state'] == 'waiting'
