@@ -23,6 +23,7 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.task_proxy import TaskProxy
 
 
 @pytest.fixture
@@ -37,6 +38,11 @@ def example_workflow(flow):
             },
         },
     })
+
+
+def get_data_store_flow_nums(schd: Scheduler, itask: TaskProxy):
+    _, ds_tproxy = schd.data_store_mgr.store_node_fetcher(itask.tokens)
+    return ds_tproxy.flow_nums
 
 
 async def test_basic(
@@ -59,6 +65,7 @@ async def test_basic(
         ) == [
             ('satisfied naturally',),
         ]
+        assert get_data_store_flow_nums(schd, a1) == '[1]'
 
         await run_cmd(remove_tasks(schd, ['1/a1'], [FLOW_ALL]))
         await schd.update_data_structure()
@@ -73,6 +80,7 @@ async def test_basic(
         ) == [
             ('0',),  # prereq is now unsatisfied
         ]
+        assert get_data_store_flow_nums(schd, a1) == '[]'
 
 
 async def test_specific_flow(
@@ -109,6 +117,7 @@ async def test_specific_flow(
         assert select_prereqs() == [
             ('[1, 2]', 'satisfied naturally'),
         ]
+        assert get_data_store_flow_nums(schd, a1) == '[1, 2]'
 
         await run_cmd(remove_tasks(schd, ['1/a1'], ['1']))
         await schd.update_data_structure()
@@ -125,6 +134,7 @@ async def test_specific_flow(
         assert select_prereqs() == [
             ('[1, 2]', '0'),
         ]
+        assert get_data_store_flow_nums(schd, a1) == '[2]'
 
 
 async def test_unset_prereq(example_workflow, scheduler, start):
