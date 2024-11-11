@@ -344,7 +344,7 @@ async def test_settings_reload(
             conf_file.read_text().replace('False', 'True'))
 
         # Reload Workflow:
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
 
         # Submit second psuedo-job and "run" to success:
         itask = run_simjob(schd, one_1066.point, 'one')

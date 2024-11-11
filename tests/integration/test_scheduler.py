@@ -174,7 +174,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
-        await commands.run_cmd(commands.hold, one, ['*/*'])
+        await commands.run_cmd(commands.hold(one, ['*/*']))
         one.resume_workflow()
 
         # release queued tasks
@@ -183,7 +183,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # release all tasks
-        await commands.run_cmd(commands.release, one, ['*/*'])
+        await commands.run_cmd(commands.release(one, ['*/*']))
 
         # release queued tasks
         # (the task should be submitted)
@@ -219,12 +219,12 @@ async def test_no_poll_waiting_tasks(
         polled_tasks = capture_polling(one)
 
         # Waiting tasks should not be polled.
-        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+        await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
         assert polled_tasks == set()
 
         # Even if they have a submit number.
         task.submit_num = 1
-        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+        await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
         assert len(polled_tasks) == 0
 
         # But these states should be:
@@ -235,7 +235,7 @@ async def test_no_poll_waiting_tasks(
             TASK_STATUS_RUNNING
         ]:
             task.state.status = state
-            await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+            await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
             assert len(polled_tasks) == 1
             polled_tasks.clear()
 
