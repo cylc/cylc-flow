@@ -324,7 +324,8 @@ class TaskState:
 
     def satisfy_me(
         self,
-        outputs: Iterable['Tokens']
+        outputs: Iterable['Tokens'],
+        forced: bool = False,
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 
@@ -333,7 +334,7 @@ class TaskState:
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
             valid.update(
-                prereq.satisfy_me(outputs)
+                prereq.satisfy_me(outputs, forced)
             )
         return valid
 
@@ -393,7 +394,7 @@ class TaskState:
         return sorted(
             dep
             for prereq in self.prerequisites
-            for dep in prereq.get_resolved_dependencies()
+            for dep in prereq.get_satisfied_dependencies()
         )
 
     def reset(

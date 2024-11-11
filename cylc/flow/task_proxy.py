@@ -152,7 +152,7 @@ class TaskProxy:
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
-            flows I belong to
+            flows I belong to (if empty, belongs to 'none' flow)
          flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
@@ -215,7 +215,7 @@ class TaskProxy:
         scheduler_tokens: 'Tokens',
         tdef: 'TaskDef',
         start_point: 'PointBase',
-        flow_nums: Optional[Set[int]] = None,
+        flow_nums: Optional['FlowNums'] = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
         submit_num: int = 0,
@@ -526,6 +526,17 @@ class TaskProxy:
             match_func(ns, value) for ns in self.tdef.namespace_hierarchy
         )
 
+    def match_flows(self, flow_nums: 'FlowNums') -> 'FlowNums':
+        """Return which of the given flow numbers the task belongs to.
+
+        NOTE: If `flow_nums` is empty, it means 'all', whereas
+        if `self.flow_nums` is empty, it means this task is in the 'none' flow
+        and will not match.
+        """
+        if not flow_nums or not self.flow_nums:
+            return self.flow_nums
+        return self.flow_nums.intersection(flow_nums)
+
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
         self.flow_nums.update(flow_nums)
@@ -557,7 +568,7 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'Iterable[Tokens]'
+        self, task_messages: 'Iterable[Tokens]', forced: bool = False
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 
@@ -567,7 +578,7 @@ class TaskProxy:
         Return a set of unmatched task messages.
 
         """
-        used = self.state.satisfy_me(task_messages)
+        used = self.state.satisfy_me(task_messages, forced)
         return set(task_messages) - used
 
     def clock_expire(self) -> bool:
