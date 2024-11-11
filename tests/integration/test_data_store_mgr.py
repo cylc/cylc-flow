@@ -225,7 +225,9 @@ async def test_delta_task_held(harness):
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
     for itask in schd.pool.get_tasks():
         itask.state.reset(is_held=False)
-        schd.data_store_mgr.delta_task_held(itask)
+        schd.data_store_mgr.delta_task_held(
+            itask.tdef.name, itask.point, False
+        )
     assert True not in {
         t.is_held
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()

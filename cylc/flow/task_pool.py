@@ -245,9 +245,6 @@ class TaskPool:
             itask=itask
         )
         self.data_store_mgr.delta_task_state(itask)
-        self.data_store_mgr.delta_task_held(itask)
-        self.data_store_mgr.delta_task_queued(itask)
-        self.data_store_mgr.delta_task_runahead(itask)
 
     def release_runahead_tasks(self):
         """Release tasks below the runahead limit.
@@ -583,7 +580,7 @@ class TaskPool:
                         )
 
             if itask.state_reset(status, is_runahead=True):
-                self.data_store_mgr.delta_task_runahead(itask)
+                self.data_store_mgr.delta_task_state(itask)
             self.add_to_pool(itask)
 
             # All tasks load as runahead-limited, but finished and manually
@@ -708,7 +705,7 @@ class TaskPool:
         forced triggering we need to release even if beyond the limit).
         """
         if itask.state_reset(is_runahead=False):
-            self.data_store_mgr.delta_task_runahead(itask)
+            self.data_store_mgr.delta_task_state(itask)
         if all(itask.is_ready_to_run()):
             # (otherwise waiting on xtriggers etc.)
             self.queue_task(itask)
@@ -918,7 +915,7 @@ class TaskPool:
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
         if itask.state_reset(is_queued=True):
-            self.data_store_mgr.delta_task_queued(itask)
+            self.data_store_mgr.delta_task_state(itask)
             self.task_queue_mgr.push_task(itask)
 
     def release_queued_tasks(self):
@@ -961,7 +958,7 @@ class TaskPool:
 
         for itask in released:
             itask.state_reset(is_queued=False)
-            self.data_store_mgr.delta_task_queued(itask)
+            self.data_store_mgr.delta_task_state(itask)
             itask.waiting_on_job_prep = True
 
             if cylc.flow.flags.cylc7_back_compat:
@@ -1128,7 +1125,7 @@ class TaskPool:
                     and itask.state(TASK_STATUS_WAITING)
                     and itask.state_reset(is_runahead=True)
                 ):
-                    self.data_store_mgr.delta_task_runahead(itask)
+                    self.data_store_mgr.delta_task_state(itask)
         return True
 
     def can_stop(self, stop_mode):
@@ -1277,13 +1274,13 @@ class TaskPool:
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=True):
-            self.data_store_mgr.delta_task_held(itask)
+            self.data_store_mgr.delta_task_state(itask)
         self.tasks_to_hold.add((itask.tdef.name, itask.point))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=False):
-            self.data_store_mgr.delta_task_held(itask)
+            self.data_store_mgr.delta_task_state(itask)
             if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
                 self.queue_task(itask)
         self.tasks_to_hold.discard((itask.tdef.name, itask.point))
@@ -1309,7 +1306,7 @@ class TaskPool:
             self.hold_active_task(itask)
         # Set inactive tasks to be held:
         for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, True))
+            self.data_store_mgr.delta_task_held(name, cycle, True)
         self.tasks_to_hold.update(inactive_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
@@ -1327,7 +1324,7 @@ class TaskPool:
             self.release_held_active_task(itask)
         # Unhold inactive tasks:
         for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, False))
+            self.data_store_mgr.delta_task_held(name, cycle, False)
         self.tasks_to_hold.difference_update(inactive_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
@@ -1996,7 +1993,6 @@ class TaskPool:
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
-            self.data_store_mgr.delta_task_queued(itask)
 
         self.data_store_mgr.delta_task_state(itask)
         self.data_store_mgr.delta_task_outputs(itask)

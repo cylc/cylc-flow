@@ -827,7 +827,6 @@ class TaskEventsManager():
             if itask.state_reset(TASK_STATUS_SUBMITTED, forced=forced):
                 itask.state_reset(is_queued=False, forced=forced)
                 self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_queued(itask)
             self._reset_job_timers(itask)
             # We should really have a special 'vacated' handler, but given that
             # this feature can only be used on the deprecated loadleveler
@@ -1322,7 +1321,6 @@ class TaskEventsManager():
             no_retries = True
             if itask.state_reset(TASK_STATUS_FAILED, forced=forced):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
-                self.data_store_mgr.delta_task_state(itask)
                 itask.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
                 self.data_store_mgr.delta_task_output(
                     itask, TASK_OUTPUT_FAILED)
@@ -1364,7 +1362,6 @@ class TaskEventsManager():
         if not itask.state_reset(TASK_STATUS_EXPIRED, forced=forced):
             return
         self.data_store_mgr.delta_task_state(itask)
-        self.data_store_mgr.delta_task_queued(itask)
         self.setup_event_handlers(
             itask,
             self.EVENT_EXPIRED,
@@ -1489,7 +1486,6 @@ class TaskEventsManager():
                         f'job {self.EVENT_SUBMITTED}',
                     )
                     self.data_store_mgr.delta_task_state(itask)
-                    self.data_store_mgr.delta_task_queued(itask)
                 self._reset_job_timers(itask)
 
         # Register the newly submitted job with the database and datastore.

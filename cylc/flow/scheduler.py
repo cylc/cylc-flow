@@ -122,12 +122,13 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED,
 )
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_NEVER_ACTIVE,
+    TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_NEVER_ACTIVE,
 )
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.templatevars import eval_var
@@ -145,12 +146,15 @@ from cylc.flow.workflow_status import AutoRestartMode, RunMode, StopMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
+    from optparse import Values
+
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
-    from optparse import Values
+
     from cylc.flow.network.resolvers import TaskMsg
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class SchedulerStop(CylcError):
@@ -1009,6 +1013,42 @@ class Scheduler:
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
         self.update_data_store()
+
+    def kill_tasks(
+        self, itasks: 'Iterable[TaskProxy]', warn: bool = True
+    ) -> int:
+        """Kill tasks if they are in a killable state.
+
+        Args:
+            itasks: Tasks to kill.
+            warn: Whether to warn about tasks that are not in a killable state.
+
+        Returns number of tasks that could not be killed.
+        """
+        jobless = self.get_run_mode() == RunMode.SIMULATION
+        to_kill: List[TaskProxy] = []
+        unkillable: List[TaskProxy] = []
+        for itask in itasks:
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                itask.state_reset(
+                    # directly reset to failed in sim mode, else let
+                    # task_job_mgr handle it
+                    status=(TASK_STATUS_FAILED if jobless else None),
+                    is_held=True,
+                )
+                self.data_store_mgr.delta_task_state(itask)
+                to_kill.append(itask)
+            else:
+                unkillable.append(itask)
+        if warn and unkillable:
+            LOG.warning(
+                "Tasks not killable: "
+                f"{', '.join(sorted(t.identity for t in unkillable))}"
+            )
+        if not jobless:
+            self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
+
+        return len(unkillable)
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
