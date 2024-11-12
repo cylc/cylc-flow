@@ -1062,15 +1062,11 @@ class TaskJobManager:
             # Apply task run mode
             if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
                 # Task run mode cannot override workflow run-mode sim or dummy:
-                run_mode = workflow_run_mode
+                run_mode: RunMode = workflow_run_mode
             else:
                 # If workflow mode is skip or live and task mode is set,
                 # override workflow mode, else use workflow mode.
-                run_mode = rtconfig.get('run mode', None)
-                if run_mode:
-                    run_mode = RunMode(run_mode)
-                else:
-                    run_mode = workflow_run_mode
+                run_mode = RunMode(rtconfig.get('run mode', workflow_run_mode))
 
             # Store the run mode of the this submission:
             itask.run_mode = run_mode
@@ -1079,7 +1075,7 @@ class TaskJobManager:
             # tasks to list of tasks to put through live
             # submission pipeline - We decide based on the output
             # of the submit method:
-            submit_func = RunMode(run_mode).get_submit_method()
+            submit_func = run_mode.get_submit_method()
             if not submit_func:
                 # Return to nonlive.
                 nonlive_mode = False

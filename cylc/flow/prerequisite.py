@@ -266,10 +266,6 @@ class Prerequisite:
         Return outputs that match.
 
         """
-        satisfied_message: SatisfiedState = (
-            'satisfied by skip mode' if mode == RunMode.SKIP
-            else 'satisfied naturally'
-        )
         valid = set()
         for output in outputs:
             prereq = PrereqMessage(
@@ -278,7 +274,10 @@ class Prerequisite:
             if prereq not in self._satisfied:
                 continue
             valid.add(output)
-            self[prereq] = satisfied_message
+            self[prereq] = (
+                'satisfied by skip mode' if mode == RunMode.SKIP
+                else 'satisfied naturally'
+            )
         return valid
 
     def api_dump(self) -> Optional[PbPrerequisite]:
