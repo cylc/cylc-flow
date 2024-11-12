@@ -42,7 +42,7 @@ from cylc.flow.wallclock import get_current_time_string
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
-    from cylc.flow.prerequisite import PrereqMessage
+    from cylc.flow.prerequisite import PrereqTuple
     from cylc.flow.taskdef import TaskDef
 
 
@@ -382,7 +382,8 @@ class TaskState:
             prereq.set_satisfied()
 
     def get_resolved_dependencies(self):
-        """Return a list of dependencies which have been met for this task.
+        """Return a list of dependencies which have been met for this task
+        (ignoring the specific output in the depedency).
 
         E.G: ['1/foo', '2/bar']
 
@@ -391,9 +392,10 @@ class TaskState:
 
         """
         return sorted(
-            dep
+            task_output.get_id()
             for prereq in self.prerequisites
-            for dep in prereq.get_satisfied_dependencies()
+            for task_output, satisfied in prereq._satisfied.items()
+            if satisfied
         )
 
     def reset(
@@ -496,7 +498,7 @@ class TaskState:
                 cpre[(p_prev, tdef.name, TASK_STATUS_SUCCEEDED)] = (
                     p_prev < tdef.start_point
                 )
-                cpre.set_condition(tdef.name)
+                cpre.set_conditional_expr(tdef.name)
                 prerequisites[cpre.instantaneous_hash()] = cpre
 
         self.suicide_prerequisites = list(suicide_prerequisites.values())
@@ -521,15 +523,15 @@ class TaskState:
             for xtrig_label in xtrig_labels:
                 self.add_xtrigger(xtrig_label)
 
-    def get_unsatisfied_prerequisites(self) -> List['PrereqMessage']:
+    def get_unsatisfied_prerequisites(self) -> List['PrereqTuple']:
         return [
             key
             for prereq in self.prerequisites if not prereq.is_satisfied()
             for key, satisfied in prereq.items() if not satisfied
         ]
 
-    def any_satisfied_prerequisite_tasks(self) -> bool:
-        """Return True if any of this task's prerequisite tasks are
+    def any_satisfied_prerequisite_outputs(self) -> bool:
+        """Return True if any of this task's prerequisite outputs are
         satisfied."""
         return any(
             satisfied

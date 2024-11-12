@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import (
-        PrereqMessage,
+        PrereqTuple,
         SatisfiedState,
     )
     from cylc.flow.simulation import ModeSettings
@@ -359,7 +359,7 @@ class TaskProxy:
         # pre-reload state of prerequisites that still exist post-reload.
 
         # Get all prereq states, e.g. {('1', 'c', 'succeeded'): False, ...}
-        pre_reload: Dict[PrereqMessage, SatisfiedState] = {
+        pre_reload: Dict[PrereqTuple, SatisfiedState] = {
             k: v
             for pre in self.state.prerequisites
             for (k, v) in pre.items()

@@ -121,9 +121,9 @@ def test_items(prereq: Prerequisite):
     ]
 
 
-def test_set_condition(prereq: Prerequisite):
+def test_set_conditional_expr(prereq: Prerequisite):
     assert not prereq.is_satisfied()
-    prereq.set_condition('1999/a succeeded | 2000/b succeeded')
+    prereq.set_conditional_expr('1999/a succeeded | 2000/b succeeded')
     assert prereq.is_satisfied()
 
 
@@ -154,17 +154,7 @@ def satisfied_states_prereq():
     return prereq
 
 
-def test_get_satisfied_dependencies(satisfied_states_prereq: Prerequisite):
-    assert satisfied_states_prereq.get_satisfied_dependencies() == [
-        '1/a',
-        '1/c',
-        '1/d',
-    ]
-
-
-def test_unset_naturally_satisfied_dependency(
-    satisfied_states_prereq: Prerequisite
-):
+def test_unset_naturally_satisfied(satisfied_states_prereq: Prerequisite):
     satisfied_states_prereq[('1', 'a', 'y')] = True
     satisfied_states_prereq[('1', 'a', 'z')] = 'force satisfied'
     for id_, expected in [
@@ -174,8 +164,7 @@ def test_unset_naturally_satisfied_dependency(
         ('1/d', False),
     ]:
         assert (
-            satisfied_states_prereq.unset_naturally_satisfied_dependency(id_)
-            == expected
+            satisfied_states_prereq.unset_naturally_satisfied(id_) == expected
         )
     assert satisfied_states_prereq._satisfied == {
         ('1', 'a', 'x'): False,
