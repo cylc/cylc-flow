@@ -2498,7 +2498,6 @@ class WorkflowConfig:
         taskd = TaskDef(
             name,
             rtcfg,
-            RunMode.get(self.options),
             self.start_point,
             self.initial_point)
 
