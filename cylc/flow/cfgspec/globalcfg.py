@@ -2018,6 +2018,7 @@ class GlobalConfig(ParsecConfig):
         self.dense.clear()
         LOG.debug("Loading site/user config files")
         conf_path_str = os.getenv("CYLC_CONF_PATH")
+
         if conf_path_str:
             # Explicit config file override.
             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
@@ -2030,7 +2031,7 @@ class GlobalConfig(ParsecConfig):
 
         # Expand platforms needs to be performed first because it
         # manipulates the sparse config.
-        self._expand_platforms()
+        self._expand_commas()
 
         # Flesh out with defaults
         self.expand()
@@ -2074,8 +2075,8 @@ class GlobalConfig(ParsecConfig):
                     msg += f'\n * {name}'
                 raise GlobalConfigError(msg)
 
-    def _expand_platforms(self):
-        """Expand comma separated platform names.
+    def _expand_commas(self):
+        """Expand comma separated section headers.
 
         E.G. turn [platforms][foo, bar] into [platforms][foo] and
         platforms[bar].
@@ -2083,6 +2084,13 @@ class GlobalConfig(ParsecConfig):
         if self.sparse.get('platforms'):
             self.sparse['platforms'] = expand_many_section(
                 self.sparse['platforms']
+            )
+        if (
+            self.sparse.get("install")
+            and self.sparse["install"].get("symlink dirs")
+        ):
+            self.sparse["install"]["symlink dirs"] = expand_many_section(
+                self.sparse["install"]["symlink dirs"]
             )
 
     def platform_dump(
