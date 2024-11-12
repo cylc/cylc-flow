@@ -76,8 +76,6 @@ def submit_task_job(
         'name': RunMode.SIMULATION.value,
         'install target': 'localhost',
         'hosts': ['localhost'],
-        'disable task event handlers':
-            rtconfig['simulation']['disable task event handlers'],
         'submission retry delays': [],
         'execution retry delays': []
     }

@@ -41,7 +41,7 @@ from cylc.flow.task_state import (
 )
 def test_state_comparison(state, is_held):
     """Test the __call__ method."""
-    tdef = TaskDef('foo', {}, 'live', '123', '123')
+    tdef = TaskDef('foo', {}, '123', '123')
     tstate = TaskState(tdef, '123', state, is_held)
 
     assert tstate(state, is_held=is_held)
@@ -72,7 +72,7 @@ def test_state_comparison(state, is_held):
 )
 def test_reset(state, is_held, should_reset):
     """Test that tasks do or don't have their state changed."""
-    tdef = TaskDef('foo', {}, 'live', '123', '123')
+    tdef = TaskDef('foo', {}, '123', '123')
     # create task state:
     #   * status: waiting
     #   * is_held: true
@@ -96,7 +96,7 @@ def test_task_prereq_duplicates(set_cycling_type):
 
     dep = Dependency([trig], [trig], False)
 
-    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tdef = TaskDef('foo', {}, IntegerPoint("1"), IntegerPoint("1"))
     tdef.add_dependency(dep, seq1)
     tdef.add_dependency(dep, seq2)  # duplicate!
 
@@ -110,7 +110,7 @@ def test_task_prereq_duplicates(set_cycling_type):
 def test_task_state_order():
     """Test is_gt and is_gte methods."""
 
-    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tdef = TaskDef('foo', {}, IntegerPoint("1"), IntegerPoint("1"))
     tstate = TaskState(tdef, IntegerPoint("1"), TASK_STATUS_SUBMITTED, False)
 
     assert tstate.is_gt(TASK_STATUS_WAITING)

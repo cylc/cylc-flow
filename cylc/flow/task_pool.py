@@ -1993,12 +1993,12 @@ class TaskPool:
                 # Check for broadcasts to task:
                 bc_mgr = self.task_events_mgr.broadcast_mgr
                 rtconfig = bc_mgr.get_updated_rtconfig(itask)
-                outputs.remove(RunMode.SKIP.value)
                 skips = get_skip_mode_outputs(itask, rtconfig)
                 itask.run_mode = RunMode.SKIP
             outputs = self._standardise_outputs(
-                itask.point, itask.tdef, outputs)
-            outputs = list(set(outputs + skips))
+                itask.point, itask.tdef, outputs
+            )
+            outputs = list(set(outputs + skips) - {RunMode.SKIP.value})
 
         for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
             if itask.state.outputs.is_message_complete(output):

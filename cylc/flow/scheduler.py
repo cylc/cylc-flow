@@ -114,7 +114,7 @@ from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_status import StopMode, AutoRestartMode
-from cylc.flow.run_modes import RunMode, WORKFLOW_ONLY_MODES
+from cylc.flow.run_modes import RunMode
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_job_mgr import TaskJobManager
@@ -1264,7 +1264,7 @@ class Scheduler:
 
         Run workflow events only in live mode or skip mode.
         """
-        if self.get_run_mode().value in WORKFLOW_ONLY_MODES:
+        if self.get_run_mode() in {RunMode.SIMULATION, RunMode.DUMMY}:
             return
         self.workflow_event_handler.handle(self, event, str(reason))
 

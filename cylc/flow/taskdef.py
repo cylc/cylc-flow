@@ -409,7 +409,7 @@ class TaskDef:
     def __repr__(self) -> str:
         """
         >>> TaskDef(
-        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     name='oliver', rtcfg={}, start_point='1',
         ...     initial_point='1'
         ... )
         <TaskDef 'oliver'>

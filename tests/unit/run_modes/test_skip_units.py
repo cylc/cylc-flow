@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for utilities supporting skip modes
 """
+import logging
 import pytest
 from pytest import param, raises
 from types import SimpleNamespace
@@ -105,7 +106,7 @@ def test_process_outputs(outputs, required, expect):
     assert process_outputs(itask, rtconf) == ['submitted', 'started'] + expect
 
 
-def test_skip_mode_validate(monkeypatch, caplog):
+def test_skip_mode_validate(caplog, log_filter):
     """It warns us if we've set a task config to nonlive mode.
 
     (And not otherwise)
@@ -128,8 +129,12 @@ def test_skip_mode_validate(monkeypatch, caplog):
 
     skip_mode_validate(taskdefs)
 
-    message = caplog.messages[0]
-
-    assert 'skip mode:\n    * skip_task' in message
-    assert ' live mode' not in message   # Avoid matching "non-live mode"
-    assert 'workflow mode' not in message
+    assert len(caplog.records) == 1
+    assert log_filter(
+        level=logging.WARNING,
+        exact_match=(
+            "The following tasks are set to run in skip mode:\n"
+            "    * skip_task"
+        ),
+        log=caplog
+    )

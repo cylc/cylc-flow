@@ -1074,14 +1074,9 @@ class TaskJobManager:
             # submission pipeline - We decide based on the output
             # of the submit method:
             submit_func = run_mode.get_submit_method()
-            if not submit_func:
-                # Return to nonlive.
-                nonlive_mode = False
-            else:
-                nonlive_mode = submit_func(
-                    self, itask, rtconfig, workflow, now)
-
-            if nonlive_mode:
+            if submit_func and submit_func(
+                self, itask, rtconfig, workflow, now
+            ):
                 self.workflow_db_mgr.put_insert_task_states(
                     itask,
                     {
