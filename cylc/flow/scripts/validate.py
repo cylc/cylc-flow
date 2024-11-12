@@ -28,6 +28,7 @@ use 'cylc view -i,--inline WORKFLOW' for comparison.
 import asyncio
 from ansimarkup import parse as cparse
 from copy import deepcopy
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 
@@ -56,6 +57,9 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.run_modes import RunMode
+from cylc.flow.scheduler_cli import RUN_MODE
+from cylc.flow.workflow_files import get_workflow_run_dir
+from cylc.flow.workflow_status import RunMode
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Values
@@ -153,6 +157,11 @@ async def run(
         src=True,
         constraint='workflows',
     )
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if getattr(options, 'against_source', False):
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
 
     cfg = WorkflowConfig(
         workflow_id,

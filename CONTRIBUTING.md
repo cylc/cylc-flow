@@ -29,7 +29,7 @@ We use [semver](https://semver.org/) to separate riskier changes (e.g. new featu
 (e.g. 8.1, 8.2, 8.3)
 
 **Bugfixes** and minor usability enhancements are made on bugfix branches and
-released as the next maintainance version (e.g. 8.0.1, 8.0.2, 8.0.3). E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
+released as the next maintenance version (e.g. 8.0.1, 8.0.2, 8.0.3). E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
 develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
 
 Feel free to ask questions on the issue or
@@ -96,6 +96,7 @@ requests_).
  - Diquan Jabbour
  - Shixian Sheng
  - Utheri Wagura
+ - Paul Armstrong
  - Paul Earnshaw
 <!-- end-shortlog -->
 
