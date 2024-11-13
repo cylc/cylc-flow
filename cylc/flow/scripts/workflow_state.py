@@ -296,8 +296,8 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--triggers",
-        help="Task selector should match output triggers rather than status."
-             " (Note this is not needed for custom outputs).",
+        help="Task selector should match output trigger names rather than "
+             "status.",
         action="store_true", dest="is_trigger", default=False)
 
     parser.add_option(
