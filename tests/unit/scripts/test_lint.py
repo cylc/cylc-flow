@@ -274,7 +274,7 @@ def test_check_cylc_file_line_no():
         'inherit = FOO_BAr',
         # whitespace & trailing commas
         '  inherit  =  a  ,  ',
-        # parameters, jinja2 and empy should be ignored
+        # parameters, templating code should be ignored
         # but any lowercase chars before or after should not
         'inherit = A<x>z',
         'inherit = A{{ x }}z',
@@ -313,8 +313,6 @@ def test_check_lowercase_family_names__true(line):
             'A{{ x }}, {% endfor %}',
             id='jinja2-long'
         ),
-        # empy should be ignored
-        'inherit = A@( a )Z',
         # trailing comments should be ignored
         'inherit = A, B # no, comment',
         'inherit = # a',
@@ -325,13 +323,13 @@ def test_check_lowercase_family_names__true(line):
         'inherit = <a = 1, b - 1>',
         # one really awkward, but valid example
         param(
-            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
+            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z',
             id='awkward'
         ),
     ]
 )
 def test_check_lowercase_family_names__false(line):
-    assert check_lowercase_family_names(line) is False
+    assert check_lowercase_family_names(line) is False 
 
 
 def test_inherit_lowercase_matches():

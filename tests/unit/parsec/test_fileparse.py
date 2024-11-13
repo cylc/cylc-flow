@@ -286,8 +286,9 @@ def test_read_and_proc_no_template_engine():
         fpath = tf.name
         template_vars = None
         viewcfg = {
-            'empy': False, 'jinja2': False,
-            'contin': False, 'inline': False
+            'jinja2': False,
+            'contin': False,
+            'inline': False,
         }
         tf.write("a=b\n".encode())
         tf.flush()
@@ -300,8 +301,9 @@ def test_read_and_proc_no_template_engine():
         tf.flush()
 
         viewcfg = {
-            'empy': False, 'jinja2': False,
-            'contin': True, 'inline': False
+            'jinja2': False,
+            'contin': True,
+            'inline': False,
         }
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
                           viewcfg=viewcfg)
@@ -313,9 +315,12 @@ def test_inline():
         fpath = tf.name
         template_vars = None
         viewcfg = {
-            'empy': False, 'jinja2': False,
-            'contin': False, 'inline': True,
-            'mark': None, 'single': None, 'label': None
+            'jinja2': False,
+            'contin': False,
+            'inline': True,
+            'mark': None,
+            'single': None,
+            'label': None,
         }
         with NamedTemporaryFile() as include_file:
             include_file.write("c=d".encode())
@@ -333,9 +338,12 @@ def test_inline_error():
         fpath = tf.name
         template_vars = None
         viewcfg = {
-            'empy': False, 'jinja2': False,
-            'contin': False, 'inline': True,
-            'mark': None, 'single': None, 'label': None
+            'jinja2': False,
+            'contin': False,
+            'inline': True,
+            'mark': None,
+            'single': None,
+            'label': None,
         }
         tf.write("a=b\n%include \"404.txt\"".encode())
         tf.flush()
@@ -352,8 +360,9 @@ def test_read_and_proc_jinja2():
             'name': 'Cylc'
         }
         viewcfg = {
-            'empy': False, 'jinja2': True,
-            'contin': False, 'inline': False
+            'jinja2': True,
+            'contin': False,
+            'inline': False,
         }
         tf.write("#!jinja2\na={{ name }}\n".encode())
         tf.flush()
@@ -375,7 +384,6 @@ def test_read_and_proc_cwd(tmp_path):
         (sdir / sub).touch()
 
     viewcfg = {
-        'empy': False,
         'jinja2': True,
         'contin': False,
         'inline': False
@@ -405,8 +413,9 @@ def test_read_and_proc_jinja2_error():
             'name': 'Cylc'
         }
         viewcfg = {
-            'empy': False, 'jinja2': True,
-            'contin': False, 'inline': False
+            'jinja2': True,
+            'contin': False,
+            'inline': False,
         }
         tf.write("#!jinja2\na={{ name \n".encode())
         tf.flush()
@@ -426,8 +435,9 @@ def test_read_and_proc_jinja2_error_missing_shebang():
             'name': 'Cylc'
         }
         viewcfg = {
-            'empy': False, 'jinja2': True,
-            'contin': False, 'inline': False
+            'jinja2': True,
+            'contin': False,
+            'inline': False,
         }
         # first line is missing shebang!
         tf.write("a={{ name }}\n".encode())
@@ -436,8 +446,6 @@ def test_read_and_proc_jinja2_error_missing_shebang():
                           viewcfg=viewcfg)
         assert r == ['a={{ name }}']
 
-
-# --- originally we had a test for empy here, moved to test_empysupport
 
 def test_parse_keys_only_singleline():
     with NamedTemporaryFile() as of, NamedTemporaryFile() as tf:

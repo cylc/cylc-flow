@@ -35,7 +35,7 @@ from cylc.flow.exceptions import (
     WorkflowConfigError,
     XtriggerConfigError,
 )
-from cylc.flow.parsec.exceptions import Jinja2Error, EmPyError
+from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.workflow_files import WorkflowFiles
@@ -1072,47 +1072,6 @@ def test_jinja2_cylc_vars(tmp_flow_config, cylc_var, expected_err):
         with pytest.raises(expected_err[0]) as exc:
             WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
         assert expected_err[1] in str(exc)
-
-
-@pytest.mark.parametrize(
-    'cylc_var, expected_err',
-    [
-        ["CYLC_WORKFLOW_NAME", None],
-        ["CYLC_BEEF_WELLINGTON", (EmPyError, "is not defined")],
-    ]
-)
-def test_empy_cylc_vars(tmp_flow_config, cylc_var, expected_err):
-    """Defined CYLC_ variables should be available to empy during parsing.
-
-    This test is not located in the empy_support unit test module because
-    CYLC_ variables are only defined during workflow config parsing.
-    """
-    reg = 'nodule'
-    flow_file = tmp_flow_config(reg, """#!empy
-    # @(""" + cylc_var + """)
-    [scheduler]
-        allow implicit tasks = True
-    [scheduling]
-        [[graph]]
-            R1 = foo
-    """)
-
-    # empy replaces sys.stdout with a "proxy". And pytest needs it for capture?
-    # (clue: "pytest --capture=no" avoids the error)
-    stdout = sys.stdout
-    sys.stdout._testProxy = lambda: ''
-    sys.stdout.pop = lambda _: ''
-    sys.stdout.push = lambda _: ''
-    sys.stdout.clear = lambda _: ''
-
-    if expected_err is None:
-        WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
-    else:
-        with pytest.raises(expected_err[0]) as exc:
-            WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
-        assert expected_err[1] in str(exc)
-
-    sys.stdout = stdout
 
 
 def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
