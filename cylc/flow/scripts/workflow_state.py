@@ -20,10 +20,13 @@ r"""cylc workflow-state [OPTIONS] ARGS
 
 Check or poll a workflow database for task statuses or completed outputs.
 
-The ID argument can target a workflow, or a cycle point, or a specific
-task, with an optional selector on cycle or task to match task status,
-output trigger (if not a status, or with --trigger) or output message
-(with --message). All matching results will be printed.
+The ID argument can target a workflow, or a cycle point, or a specific task,
+with an optional selector on cycle or task to match final task statuses,
+output trigger (with --triggers), or output message (with --messages).
+You cannot poll for transient states such as "submitted" and "running";
+poll for the corresponding output triggers instead ("submitted", "started").
+
+All matching results will be printed.
 
 If no results match, the command will repeatedly check (poll) until a match
 is found or polling is exhausted (see --max-polls and --interval). For a
@@ -35,14 +38,12 @@ so you can start checking before the target workflow is started.
 Legacy (pre-8.3.0) options are supported, but deprecated, for existing scripts:
   cylc workflow-state --task=NAME --point=CYCLE --status=STATUS
       --output=MESSAGE --message=MESSAGE --task-point WORKFLOW
-(Note from 8.0 until 8.3.0 --output and --message both match task messages).
+(Note from 8.0 until 8.3.0 --output and --message both matched task messages).
 
 In "cycle/task:selector" the selector will match task statuses, unless:
-  - if it is not a known status, it will match task output triggers
-    (Cylc 8 DB) or task ouput messages (Cylc 7 DB)
-  - with --triggers, it will only match task output triggers
-  - with --messages (deprecated), it will only match task output messages.
-    Triggers are more robust - they match manually and naturally set outputs.
+  - with --triggers, it will only match task output triggers.
+  - with --messages, it will only match task output messages. It is recommended
+    to use triggers instead - they match both naturally & manually set outputs.
 
 Selector does not default to "succeeded". If omitted, any status will match.
 
@@ -64,8 +65,6 @@ Use in task scripting:
 
 Warnings:
   - Typos in the workflow or task ID will result in fruitless polling.
-  - To avoid missing transient states ("submitted", "running") poll for the
-    corresponding output trigger instead ("submitted", "started").
   - Cycle points are auto-converted to the DB point format (and UTC mode).
   - Task outputs manually completed by "cylc set" have "(force-completed)"
     recorded as the task message in the DB, so it is best to query trigger
@@ -370,7 +369,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         [
             options.depr_task,
             options.depr_status,
-            options.depr_msg,  # --message and --trigger
+            options.depr_msg,
             options.depr_point,
             options.depr_env_point
         ]
