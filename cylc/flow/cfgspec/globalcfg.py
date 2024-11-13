@@ -587,6 +587,40 @@ task_event_handling.template_variables`.
     '''
 }
 
+COMMA_SEPARATED_SECTION_NOTE = '''
+
+
+    .. note::
+
+       This section can be a comma separated list.
+
+        .. spoiler:: Example
+
+            For example:
+
+            .. code-block:: cylc
+
+                [a, b]
+                    setting = x
+                [a]
+                    another_setting = y
+
+            Will become:
+
+            .. code-block:: cylc
+
+                [a]
+                    setting = x
+                [b]
+                    setting = x
+                [a]
+                    another_setting = y
+
+            Which will then be combined according to
+            :ref:`the rules for Cylc config syntax<syntax>`.
+
+'''
+
 # ----------------------------------------------------------------------------
 
 
@@ -1131,8 +1165,9 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         """):
-            with Conf('<install target>', desc="""
+            with Conf('<install target>', desc=f"""
                 :ref:`Host <Install targets>` on which to create the symlinks.
+                {COMMA_SEPARATED_SECTION_NOTE}
             """):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
@@ -1209,7 +1244,7 @@ with Conf('global.cylc', desc='''
 
         .. versionadded:: 8.0.0
     '''):
-        with Conf('<platform name>', desc='''
+        with Conf('<platform name>', desc=f'''
             Configuration defining a platform.
 
             Many of these settings have replaced those of the same name from
@@ -1219,7 +1254,7 @@ with Conf('global.cylc', desc='''
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
             ``desktop0000, .., desktop9999`` one would define platforms with
-            names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
+            names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{{4}}]]``.
 
             Cylc searches for a matching platform in the reverse
             of the definition order to allow user defined platforms
@@ -1254,6 +1289,8 @@ with Conf('global.cylc', desc='''
                  platform configurations.
 
             .. versionadded:: 8.0.0
+
+            {COMMA_SEPARATED_SECTION_NOTE}
         ''') as Platform:
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
