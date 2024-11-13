@@ -792,6 +792,12 @@ class RuntimeSetting(ObjectType):
     value = String(default_value=None)
 
 
+class TaskEventsSettings(ObjectType):
+    """Key = value setting for a `[runtime][<namespace>]` configuration."""
+    handlers = String(default_value=None)
+    foo = String(default_value=None)
+
+
 class Runtime(ObjectType):
     class Meta:
         description = sstrip("""
@@ -803,6 +809,8 @@ class Runtime(ObjectType):
               of the definition)
             - Job (a record of what was run for a particular submit)
         """)
+    events = Field(TaskEventsSettings)
+
     platform = String(default_value=None)
     script = String(default_value=None)
     completion = String(default_value=None)
