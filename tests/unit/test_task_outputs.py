@@ -288,6 +288,8 @@ def test_iter_required_outputs():
         'y',
     }
 
+
+def test_iter_required_outputs__disable():
     # Get all outputs required for success path (excluding failure, what
     # is still required):
     outputs = TaskOutputs(
@@ -298,21 +300,31 @@ def test_iter_required_outputs():
         )
     )
 
-    # Excluding succeeded leaves us with failure required outputs:
-    assert set(outputs.iter_required_messages(
-        exclude=TASK_OUTPUT_SUCCEEDED)) == {
-            TASK_OUTPUT_FAILED, 'x', 'y',}
+    assert set(outputs.iter_required_messages()) == set()
 
-    # Excluding failed leaves us with succeeded required outputs:
-    assert set(outputs.iter_required_messages(
-        exclude=TASK_OUTPUT_FAILED)) == {
-            TASK_OUTPUT_SUCCEEDED, 'a', 'b',}
+    # Disabling succeeded leaves us with failure required outputs:
+    assert set(
+        outputs.iter_required_messages(disable=TASK_OUTPUT_SUCCEEDED)
+    ) == {
+        TASK_OUTPUT_FAILED,
+        'x',
+        'y',
+    }
 
-    # Excluding an abitrary output leaves us with required outputs
+    # Disabling failed leaves us with succeeded required outputs:
+    assert set(outputs.iter_required_messages(disable=TASK_OUTPUT_FAILED)) == {
+        TASK_OUTPUT_SUCCEEDED,
+        'a',
+        'b',
+    }
+
+    # Disabling an abitrary output leaves us with required outputs
     # from another branch:
-    assert set(outputs.iter_required_messages(
-        exclude='a')) == {
-            TASK_OUTPUT_FAILED, 'x', 'y',}
+    assert set(outputs.iter_required_messages(disable='a')) == {
+        TASK_OUTPUT_FAILED,
+        'x',
+        'y',
+    }
 
 
 def test_get_trigger_completion_variable_maps():

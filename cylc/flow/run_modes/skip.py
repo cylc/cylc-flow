@@ -109,9 +109,10 @@ def process_outputs(itask: 'TaskProxy', rtconfig: Dict) -> List[str]:
     # which we hold back, to prevent warnings about pre-requisites being
     # unmet being shown because a "finished" output happens to come first.
     for message in itask.state.outputs.iter_required_messages(
-        exclude=(
-            TASK_OUTPUT_SUCCEEDED if TASK_OUTPUT_FAILED
-            in conf_outputs else TASK_OUTPUT_FAILED
+        disable=(
+            TASK_OUTPUT_SUCCEEDED
+            if TASK_OUTPUT_FAILED in conf_outputs
+            else TASK_OUTPUT_FAILED
         )
     ):
         trigger = itask.state.outputs._message_to_trigger[message]

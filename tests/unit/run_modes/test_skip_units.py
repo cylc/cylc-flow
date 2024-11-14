@@ -99,7 +99,7 @@ def test_process_outputs(outputs, required, expect):
             rtconfig=rtconf),
         state=SimpleNamespace(
             outputs=SimpleNamespace(
-                iter_required_messages=lambda exclude: iter(required),
+                iter_required_messages=lambda *a, **k: iter(required),
                 _message_to_trigger={v: v for v in required}
             )))
 
@@ -115,7 +115,7 @@ def test_skip_mode_validate(caplog, log_filter):
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
 
     | If the run mode is set to simulation or skip in the workflow
-    | configuration, then cylc validate and cylc lint should produce 
+    | configuration, then cylc validate and cylc lint should produce
     | warning (similar to development features in other languages / systems).
     """
     taskdefs = {
