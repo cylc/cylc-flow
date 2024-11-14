@@ -792,11 +792,6 @@ class RuntimeSetting(ObjectType):
     value = String(default_value=None)
 
 
-class TaskEventsSettings(ObjectType):
-    """Key = value setting for a `[runtime][<namespace>]` configuration."""
-    handlers = String(default_value=None)
-    foo = String(default_value=None)
-
 class Runtime(ObjectType):
     class Meta:
         description = sstrip("""
