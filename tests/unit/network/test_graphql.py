@@ -18,11 +18,11 @@ from typing import Optional, Type
 
 import pytest
 from pytest import param
-from graphql import parse
+from graphql import parse, TypeInfo, TypeInfoVisitor, visit
 
 from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
 from cylc.flow.network.graphql import (
-    AstDocArguments, null_setter, NULL_VALUE, grow_tree
+    CylcVisitor, null_setter, strip_null, async_next, NULL_VALUE, grow_tree
 )
 from cylc.flow.network.schema import schema
 
@@ -34,8 +34,8 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
 @pytest.mark.parametrize(
     'query,'
     'variables,'
-    'expected_variables,'
-    'expected_error',
+    'search_arg,'
+    'expected_result',
     [
         pytest.param(
             '''
@@ -49,9 +49,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
                 'workflowID': 'cylc|workflow'
             },
             {
-                'workflowID': 'cylc|workflow'
+                'arg': 'ids',
+                'val': ['cylc|workflow'],
             },
-            None,
+            True,
             id="simple query with correct variables"
         ),
         pytest.param(
@@ -69,9 +70,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
                 'workflowID': 'cylc|workflow'
             },
             {
-                'workflowID': 'cylc|workflow'
+                'arg': 'ids',
+                'val': ['cylc|workflow'],
             },
-            None,
+            True,
             id="query with a fragment and correct variables"
         ),
         pytest.param(
@@ -85,46 +87,67 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
             {
                 'workflowId': 'cylc|workflow'
             },
-            None,
-            ValueError,
+            {
+                'arg': 'ids',
+                'val': None,
+            },
+            False,
             id="correct variable definition, but missing variable in "
                "provided values"
+        ),
+        pytest.param(
+            '''
+            query ($workflowID: ID) {
+                workflows (ids: [$workflowID]) {
+                    id
+                }
+            }
+            ''',
+            {
+                'workflowId': 'cylc|workflow'
+            },
+            {
+                'arg': 'idfsdf',
+                'val': ['cylc|workflow'],
+            },
+            False,
+            id="correct variable definition, but wrong search argument"
         )
     ]
 )
 def test_query_variables(
         query: str,
         variables: dict,
-        expected_variables: Optional[dict],
-        expected_error: Optional[Type[Exception]],
+        search_arg: dict,
+        expected_result: bool,
 ):
-    """Test that query variables are parsed correctly.
+    """Test that query variables are parsed and found correctly.
 
     Args:
         query: a valid GraphQL query (using our schema)
         variables: map with variable values for the query
-        expected_variables: expected parsed variables
-        expected_error: expected error, if any
+        search_arg: argument and value to search for
+        expected_result: was the argument and value found
     """
     def test():
         """Inner function to avoid duplication in if/else"""
         document = parse(query)
-        document_arguments = AstDocArguments(
-            schema=schema,
-            document_ast=document,
-            variable_values=variables
+        type_info = TypeInfo(self.schema)
+        cylc_visitor = CylcVisitor(
+            type_info,
+            variables,
+            search_arg
         )
-        parsed_variables = next(
-            iter(
-                document_arguments.operation_defs.values()
-            )
-        )['variables']
-        assert expected_variables == parsed_variables
-    if expected_error is not None:
-        with pytest.raises(expected_error):
-            test()
-    else:
-        test()
+        visit(
+            self.operation,
+            TypeInfoVisitor(
+                type_info,
+                cylc_visitor
+            ),
+            None
+        )
+
+        assert expected_result == cylc_visitor.arg_flag
 
 
 @pytest.mark.parametrize(
@@ -157,6 +180,46 @@ def test_null_setter(pre_result, expected_result):
     """Test the null setting of different data types/results."""
     post_result = null_setter(pre_result)
     assert post_result == expected_result
+
+
+@pytest.mark.parametrize(
+    'pre_result,'
+    'expected_result',
+    [
+        (
+            'foo',
+            'foo'
+        ),
+        (
+            [NULL_VALUE],
+            []
+        ),
+        (
+            {'nothing': NULL_VALUE},
+            {},
+        ),
+        (
+            TASK_PROXY_PREREQS.prerequisites,
+            TASK_PROXY_PREREQS.prerequisites
+        ),
+        (
+            [NULL_VALUE],
+            [],
+        )
+    ]
+)
+async def test_strip_null(pre_result, expected_result):
+    """Test the null stripping of different result data/types."""
+    # non-async
+    post_result = async_next(strip_null, pre_result)
+    assert post_result == expected_result
+
+    async def async_result(result):
+        return result
+
+    # async
+    async_post_result = async_next(strip_null, async_result(pre_result))
+    assert await async_post_result == expected_result
 
 
 @pytest.mark.parametrize(
