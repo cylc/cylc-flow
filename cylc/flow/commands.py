@@ -81,7 +81,6 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
-from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
@@ -90,6 +89,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
+    from enum import Enum
     from cylc.flow.scheduler import Scheduler
 
     # define a type for command implementations
@@ -170,7 +170,7 @@ async def set_prereqs_and_outputs(
 @_command('stop')
 async def stop(
     schd: 'Scheduler',
-    mode: Union[str, 'StopMode'],
+    mode: Union[str, 'Enum'],
     cycle_point: Optional[str] = None,
     # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
     clock_time: Optional[str] = None,
@@ -208,10 +208,10 @@ async def stop(
         schd._update_workflow_state()
     else:
         # immediate shutdown
-        with suppress(KeyError):
-            # By default, mode from mutation is a name from the
-            # WorkflowStopMode graphene.Enum, but we need the value
-            mode = WorkflowStopMode[mode]  # type: ignore[misc]
+        with suppress(AttributeError):
+            # By default, mode from mutation is a WorkflowStopMode
+            # graphene.Enum, but we need the value
+            mode = mode.value  # type: ignore
         try:
             mode = StopMode(mode)
         except ValueError:
@@ -303,10 +303,10 @@ async def pause(schd: 'Scheduler'):
 
 
 @_command('set_verbosity')
-async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
+async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
     """Set workflow verbosity."""
     try:
-        lvl = int(level)
+        lvl = int(level.value)
         LOG.setLevel(lvl)
     except (TypeError, ValueError) as exc:
         raise CommandFailedError(exc) from None

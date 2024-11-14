@@ -29,9 +29,10 @@ from typing import (
     Union,
 )
 
-from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
+
+from graphql.pyutils import is_awaitable
 
 from cylc.flow import (
     LOG,
@@ -42,9 +43,9 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.data_messages_pb2 import PbEntireWorkflow
 from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.network.graphql import (
-    CylcGraphQLBackend,
+    CylcExecutionContext,
     IgnoreFieldMiddleware,
-    instantiate_middleware,
+    instantiate_middleware
 )
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.replier import WorkflowReplier
@@ -265,7 +266,7 @@ class WorkflowRuntimeServer:
         """Orchestrate the receive, send, publish of messages."""
         # Note: this cannot be an async method because the response part
         # of the listener runs the event loop synchronously
-        # (in graphql AsyncioExecutor)
+        # (in graphql schema.execute_async)
         while True:
             if self.waiting_to_stop:
                 # The self.stop() method is waiting for us to signal that we
@@ -402,26 +403,25 @@ class WorkflowRuntimeServer:
         Returns:
             object: Execution result, or a list with errors.
         """
-        executed: 'ExecutionResult' = schema.execute(
+        executed: 'ExecutionResult' = schema.execute_async(
             request_string,
             variable_values=variables,
             context_value={
                 'resolvers': self.resolvers,
                 'meta': meta or {},
             },
-            backend=CylcGraphQLBackend(),
             middleware=list(instantiate_middleware(self.middleware)),
-            executor=AsyncioExecutor(),
-            validate=True,  # validate schema (dev only? default is True)
-            return_promise=False,
+            execution_context_class=CylcExecutionContext,
         )
-        if executed.errors:
-            for error in executed.errors:
+        if is_awaitable(executed):
+            result = self.loop.run_until_complete(executed)
+        if result.errors:
+            for error in result.errors:
                 LOG.warning(f"GraphQL: {error}")
             # If there are execution errors, it means there was an unexpected
             # error, so fail the command.
-            raise Exception(*executed.errors)
-        return executed.data
+            raise Exception(*result.errors)
+        return result.data
 
     # UIServer Data Commands
     @expose

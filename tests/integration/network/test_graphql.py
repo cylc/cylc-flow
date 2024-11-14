@@ -199,14 +199,14 @@ async def test_task_proxies(harness):
         w_tokens.duplicate(
             cycle='1',
             task=namespace,
-        ).id
+        )
         # NOTE: task "d" is not in the n=1 window yet
         for namespace in ('a', 'b', 'c')
     ]
     ret['taskProxies'].sort(key=lambda x: x['id'])
     assert ret == {
         'taskProxies': [
-            {'id': id_}
+            {'id': id_.id}
             for id_ in ids
         ]
     }
@@ -214,11 +214,25 @@ async def test_task_proxies(harness):
     # query "task"
     ret = await client.async_request(
         'graphql',
-        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0]}
+        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0].id}
     )
     assert ret == {
-        'taskProxy': {'id': ids[0]}
+        'taskProxy': {'id': ids[0].id}
     }
+
+
+    # query "taskProxies" fragment with null stripping
+    ret = await client.async_request(
+        'graphql',
+        {'request_string': '''
+            fragment wf on Workflow {
+                taskProxies (ids: ["%s"], stripNull: true) { id }
+            }
+            query { workflows (ids: ["%s"]) { ...wf } }
+        ''' % (ids[0].relative_id, ids[0].workflow_id)
+        }
+    )
+    assert ret == {'workflows': [{'taskProxies': [{'id': ids[0].id}]}]}
 
 
 async def test_family_proxies(harness):

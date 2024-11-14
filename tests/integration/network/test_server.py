@@ -52,6 +52,22 @@ def test_graphql(myflow):
     assert myflow.id == data['workflows'][0]['id']
 
 
+def test_graphql_error(myflow):
+    """Test GraphQL endpoint method."""
+    request_string = f'''
+        query {{
+            workflows(ids: ["{myflow.id}"]) {{
+                id
+                notafield
+                alsonotafield
+            }}
+        }}
+    '''
+    errors = call_server_method(myflow.server.graphql, request_string)
+    for error in errors:
+        assert 'error' in error
+
+
 def test_pb_data_elements(myflow):
     """Test Protobuf elements endpoint method."""
     element_type = 'workflow'
