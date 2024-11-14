@@ -57,8 +57,9 @@ from cylc.flow.network.schema import (
 )
 
 if TYPE_CHECKING:
+    from enum import Enum
     from uuid import UUID
-    from graphql import ResolveInfo
+    from graphql import GraphQLResolveInfo
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
 
@@ -545,7 +546,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             edges=sort_elements(edges, args))
 
     async def subscribe_delta(
-        self, root, info: 'ResolveInfo', args
+        self, root, info: 'GraphQLResolveInfo', args
     ) -> AsyncGenerator[Any, None]:
         """Delta subscription async generator.
 
@@ -676,7 +677,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     @abstractmethod
     async def mutator(
         self,
-        info: 'ResolveInfo',
+        info: 'GraphQLResolveInfo',
         command: str,
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
@@ -697,7 +698,7 @@ class Resolvers(BaseResolvers):
     # Mutations
     async def mutator(
         self,
-        _info: 'ResolveInfo',
+        _info: 'GraphQLResolveInfo',
         command: str,
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
@@ -780,7 +781,7 @@ class Resolvers(BaseResolvers):
 
     def broadcast(
         self,
-        mode: str,
+        mode: 'Enum',
         cycle_points: Optional[List[str]] = None,
         namespaces: Optional[List[str]] = None,
         settings: Optional[List[Dict[str, str]]] = None,
@@ -792,16 +793,15 @@ class Resolvers(BaseResolvers):
             # applicable:
             for i, dict_ in enumerate(settings):
                 settings[i] = runtime_schema_to_cfg(dict_)
-
-        if mode == 'put_broadcast':
+        if mode.value == 'put_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
                 cycle_points, namespaces, settings)
-        if mode == 'clear_broadcast':
+        if mode.value == 'clear_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
                 point_strings=cycle_points,
                 namespaces=namespaces,
                 cancel_settings=settings)
-        if mode == 'expire_broadcast':
+        if mode.value == 'expire_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                 cutoff)
         raise ValueError(f"Unsupported broadcast mode: '{mode}'")

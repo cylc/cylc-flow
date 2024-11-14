@@ -260,7 +260,7 @@ def runtime_from_config(rtconfig):
         pre_script=rtconfig['pre-script'],
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
-        run_mode=rtconfig['run mode'],
+        run_mode=rtconfig['run mode'].capitalize(),
         execution_time_limit=str(rtconfig['execution time limit'] or ''),
         execution_polling_intervals=listjoin(
             rtconfig['execution polling intervals']
@@ -701,7 +701,7 @@ class DataStoreMgr:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
             setbuff(workflow.time_zone_info, key, val)
-        workflow.run_mode = RunMode.get(config.options).value
+        workflow.run_mode = RunMode.get(config.options).value.capitalize()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.workflow_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))
