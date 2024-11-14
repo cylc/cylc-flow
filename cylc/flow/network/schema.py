@@ -797,7 +797,6 @@ class TaskEventsSettings(ObjectType):
     handlers = String(default_value=None)
     foo = String(default_value=None)
 
-
 class Runtime(ObjectType):
     class Meta:
         description = sstrip("""
@@ -809,8 +808,6 @@ class Runtime(ObjectType):
               of the definition)
             - Job (a record of what was run for a particular submit)
         """)
-    events = Field(TaskEventsSettings)
-
     platform = String(default_value=None)
     script = String(default_value=None)
     completion = String(default_value=None)
