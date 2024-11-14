@@ -28,7 +28,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
     cast,
 )
 
@@ -92,11 +91,10 @@ from cylc.flow.workflow_status import StopMode
 
 if TYPE_CHECKING:
     from enum import Enum
-    from graphql import ResolveInfo
+    from graphql import GraphQLResolveInfo
     from graphql.type.definition import (
-        GraphQLList,
+        GraphQLType,
         GraphQLNamedType,
-        GraphQLNonNull,
     )
 
     from cylc.flow.network.resolvers import BaseResolvers
@@ -287,9 +285,7 @@ NODES_EDGES_ARGS_ALL = {
 
 # Resolvers:
 
-def field_name_from_type(
-    obj_type: 'Union[GraphQLNamedType, GraphQLList, GraphQLNonNull]'
-) -> str:
+def field_name_from_type(obj_type: 'GraphQLType') -> str:
     """Return the field name for given a GraphQL type.
 
     If the type is a list or non-null, the base field is extracted.
@@ -301,13 +297,13 @@ def field_name_from_type(
         raise ValueError(f"'{named_type.name}' is not a node type") from None
 
 
-def get_resolvers(info: 'ResolveInfo') -> 'BaseResolvers':
+def get_resolvers(info: 'GraphQLResolveInfo') -> 'BaseResolvers':
     """Return the resolvers from the context."""
     return cast('dict', info.context)['resolvers']
 
 
 def process_resolver_info(
-    root: Optional[Any], info: 'ResolveInfo', args: Dict[str, Any]
+    root: Optional[Any], info: 'GraphQLResolveInfo', args: Dict[str, Any]
 ) -> Tuple[str, Optional[Any]]:
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
@@ -335,7 +331,7 @@ def get_native_ids(field_ids):
     return field_ids
 
 
-async def get_workflows(root, info: 'ResolveInfo', **args):
+async def get_workflows(root, info: 'GraphQLResolveInfo', **args):
     """Get filtered workflows."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -348,7 +344,7 @@ async def get_workflows(root, info: 'ResolveInfo', **args):
     return await resolvers.get_workflows(args)
 
 
-async def get_workflow_by_id(root, info: 'ResolveInfo', **args):
+async def get_workflow_by_id(root, info: 'GraphQLResolveInfo', **args):
     """Return single workflow element."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -361,7 +357,7 @@ async def get_workflow_by_id(root, info: 'ResolveInfo', **args):
 
 
 async def get_nodes_all(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family nodes"""
 
@@ -400,7 +396,7 @@ async def get_nodes_all(
 
 
 async def get_nodes_by_ids(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family node"""
     field_name, field_ids = process_resolver_info(root, info, args)
@@ -437,7 +433,7 @@ async def get_nodes_by_ids(
 
 
 async def get_node_by_id(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family node"""
 
@@ -475,7 +471,7 @@ async def get_node_by_id(
     )
 
 
-async def get_edges_all(root, info: 'ResolveInfo', **args):
+async def get_edges_all(root, info: 'GraphQLResolveInfo', **args):
     """Get all edges from the store filtered by args."""
 
     process_resolver_info(root, info, args)
@@ -490,7 +486,7 @@ async def get_edges_all(root, info: 'ResolveInfo', **args):
     return await resolvers.get_edges_all(args)
 
 
-async def get_edges_by_ids(root, info: 'ResolveInfo', **args):
+async def get_edges_by_ids(root, info: 'GraphQLResolveInfo', **args):
     """Get all edges from the store by id lookup filtered by args."""
 
     _, field_ids = process_resolver_info(root, info, args)
@@ -504,7 +500,7 @@ async def get_edges_by_ids(root, info: 'ResolveInfo', **args):
     return await resolvers.get_edges_by_ids(args)
 
 
-async def get_nodes_edges(root, info: 'ResolveInfo', **args):
+async def get_nodes_edges(root, info: 'GraphQLResolveInfo', **args):
     """Resolver for returning job, task, family nodes"""
 
     process_resolver_info(root, info, args)
@@ -544,7 +540,7 @@ def resolve_state_tasks(root, info, **args):
         if state in data}
 
 
-async def resolve_broadcasts(root, info: 'ResolveInfo', **args):
+async def resolve_broadcasts(root, info: 'GraphQLResolveInfo', **args):
     """Resolve and parse broadcasts from JSON."""
     broadcasts = json.loads(
         getattr(root, to_snake_case(info.field_name), '{}'))
@@ -1494,7 +1490,7 @@ class GenericResponse(ObjectType):
 
 async def mutator(
     root: Optional[Any],
-    info: 'ResolveInfo',
+    info: 'GraphQLResolveInfo',
     *,
     command: Optional[str] = None,
     workflows: Optional[List[str]] = None,
@@ -1530,6 +1526,7 @@ async def mutator(
     if kwargs.get('args', False):
         kwargs.update(kwargs.get('args', {}))
         kwargs.pop('args')
+
     resolvers = get_resolvers(info)
     meta = info.context.get('meta')  # type: ignore[union-attr]
     res = await resolvers.mutator(info, command, w_args, kwargs, meta)
@@ -1684,13 +1681,12 @@ class WorkflowStopMode(graphene.Enum):
     """The mode used to stop a running workflow."""
 
     # NOTE: using a different enum because:
-    # * Graphene requires special enums.
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
-    Clean = cast('Enum', StopMode.REQUEST_CLEAN.value)
-    Kill = cast('Enum', StopMode.REQUEST_KILL.value)
-    Now = cast('Enum', StopMode.REQUEST_NOW.value)
-    NowNow = cast('Enum', StopMode.REQUEST_NOW_NOW.value)
+    Clean = cast('Enum', StopMode.REQUEST_CLEAN)  # type: graphene.Enum
+    Kill = cast('Enum', StopMode.REQUEST_KILL)  # type: graphene.Enum
+    Now = cast('Enum', StopMode.REQUEST_NOW)  # type: graphene.Enum
+    NowNow = cast('Enum', StopMode.REQUEST_NOW_NOW)  # type: graphene.Enum
 
     @property
     def description(self):
@@ -1745,9 +1741,7 @@ class Broadcast(Mutation):
         workflows = graphene.List(WorkflowID, required=True)
 
         mode = BroadcastMode(
-            # use the enum name as the default value
-            # https://github.com/graphql-python/graphql-core-legacy/issues/166
-            default_value=BroadcastMode.Set.name,
+            default_value=BroadcastMode.Set,
             description='What type of broadcast is this?',
             required=True
         )
@@ -1981,9 +1975,7 @@ class Stop(Mutation):
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
-        mode = WorkflowStopMode(
-            default_value=WorkflowStopMode.Clean.name
-        )
+        mode = WorkflowStopMode(default_value=WorkflowStopMode.Clean)
         cycle_point = CyclePoint(
             description='Stop after the workflow reaches this cycle.'
         )
@@ -2308,7 +2300,8 @@ SUB_RESOLVERS = {
 }
 
 
-def delta_subs(root, info: 'ResolveInfo', **args) -> AsyncGenerator[Any, None]:
+def delta_subs(
+        root, info: 'GraphQLResolveInfo', **args) -> AsyncGenerator[Any, None]:
     """Generates the root data from the async gen resolver."""
     return get_resolvers(info).subscribe_delta(root, info, args)
 
@@ -2320,12 +2313,12 @@ class Pruned(ObjectType):
             the store.
         ''')
     workflow = String()
-    families = graphene.List(String, default_value=[])
-    family_proxies = graphene.List(String, default_value=[])
-    jobs = graphene.List(String, default_value=[])
-    tasks = graphene.List(String, default_value=[])
-    task_proxies = graphene.List(String, default_value=[])
-    edges = graphene.List(String, default_value=[])
+    families = graphene.List(String)
+    family_proxies = graphene.List(String)
+    jobs = graphene.List(String)
+    tasks = graphene.List(String)
+    task_proxies = graphene.List(String)
+    edges = graphene.List(String)
 
 
 class Delta(Interface):
