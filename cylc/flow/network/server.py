@@ -21,15 +21,16 @@ from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
-from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
+
+from graphql.pyutils import is_awaitable
 
 from cylc.flow import LOG, workflow_files
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
-    CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
+    CylcExecutionContext, IgnoreFieldMiddleware, instantiate_middleware
 )
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.replier import WorkflowReplier
@@ -245,7 +246,7 @@ class WorkflowRuntimeServer:
         """Orchestrate the receive, send, publish of messages."""
         # Note: this cannot be an async method because the response part
         # of the listener runs the event loop synchronously
-        # (in graphql AsyncioExecutor)
+        # (in graphql schema.execute_async)
         while True:
             if self.waiting_to_stop:
                 # The self.stop() method is waiting for us to signal that we
@@ -368,24 +369,23 @@ class WorkflowRuntimeServer:
             object: Execution result, or a list with errors.
         """
         try:
-            executed: 'ExecutionResult' = schema.execute(
+            executed: 'ExecutionResult' = schema.execute_async(
                 request_string,
                 variable_values=variables,
                 context_value={
                     'resolvers': self.resolvers,
                     'meta': meta or {},
                 },
-                backend=CylcGraphQLBackend(),
                 middleware=list(instantiate_middleware(self.middleware)),
-                executor=AsyncioExecutor(),
-                validate=True,  # validate schema (dev only? default is True)
-                return_promise=False,
+                execution_context_class=CylcExecutionContext,
             )
+            if is_awaitable(executed):
+                result = self.loop.run_until_complete(executed)
         except Exception as exc:
             return 'ERROR: GraphQL execution error \n%s' % exc
-        if executed.errors:
+        if getattr(result, 'errors', None):
             errors: List[Any] = []
-            for error in executed.errors:
+            for error in result.errors:
                 LOG.error(error)
                 if hasattr(error, '__traceback__'):
                     import traceback
@@ -402,7 +402,7 @@ class WorkflowRuntimeServer:
                     continue
                 errors.append(getattr(error, 'message', None))
             return errors
-        return executed.data
+        return result.data
 
     # UIServer Data Commands
     @authorise()
