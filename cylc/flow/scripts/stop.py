@@ -250,17 +250,25 @@ async def _run(
         mode = WorkflowStopMode.NowNow.name
     elif options.now:
         mode = WorkflowStopMode.Now.name
+    else:
+        mode = WorkflowStopMode.Clean.name
+
+    variables = {
+        'wFlows': [workflow_id],
+        'stopMode': mode,
+        'cyclePoint': stop_cycle,
+        'clockTime': options.wall_clock,
+        'task': stop_task,
+    }
+    # Only include argument if set.
+    if options.flow_num is not None:
+        if options.flow_num.isdigit():
+            options.flow_num = int(options.flow_num)
+        variables['flowNum'] = options.flow_num
 
     mutation_kwargs = {
         'request_string': MUTATION,
-        'variables': {
-            'wFlows': [workflow_id],
-            'stopMode': mode,
-            'cyclePoint': stop_cycle,
-            'clockTime': options.wall_clock,
-            'task': stop_task,
-            'flowNum': options.flow_num
-        }
+        'variables': variables,
     }
 
     ret = await pclient.async_request('graphql', mutation_kwargs)
