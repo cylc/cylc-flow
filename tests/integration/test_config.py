@@ -627,7 +627,9 @@ def test_skip_forbidden_as_output(flow, validate):
         'scheduling': {'graph': {'R1': 'task'}},
         'runtime': {'task': {'outputs': {'skip': 'message for skip'}}}
     })
-    with pytest.raises(WorkflowConfigError, match='message for skip'):
+    with pytest.raises(
+        WorkflowConfigError, match='Invalid task output .* cannot be: `skip`'
+    ):
         validate(wid)
 
 

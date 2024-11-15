@@ -52,7 +52,6 @@ async def test_run_mode_override_from_config(
             },
         },
         'runtime': {
-            'root': {'simulation': {'default run length': 'PT0S'}},
             'live': {'run mode': 'live'},
             'skip': {'run mode': 'skip'},
         }

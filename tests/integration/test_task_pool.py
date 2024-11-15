@@ -1591,9 +1591,6 @@ async def test_set_outputs_from_skip_settings(
     """
     id_ = flow(
         {
-            'scheduler': {
-                'allow implicit tasks': 'True',
-            },
             'scheduling': {
                 'cycling mode': 'integer',
                 'initial cycle point': 1,
