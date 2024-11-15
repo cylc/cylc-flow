@@ -254,9 +254,6 @@ class IntervalBase(metaclass=ABCMeta):
         """Subtract other (interval) from self; return an interval."""
         pass
 
-    def is_null(self):
-        return (self == self.get_null())
-
     def __str__(self) -> str:
         # Stringify.
         return self.value
