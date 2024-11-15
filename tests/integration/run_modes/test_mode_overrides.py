@@ -32,6 +32,8 @@ import pytest
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
+from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.task_state import TASK_STATUS_WAITING
 
 
 @pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
@@ -102,12 +104,7 @@ async def test_force_trigger_does_not_override_run_mode(
         assert foo.run_mode.value == 'skip'
 
 
-async def test_run_mode_skip_abides_by_held(
-    flow,
-    scheduler,
-    run,
-    complete
-):
+async def test_run_mode_skip_abides_by_held(flow, scheduler, run):
     """Tasks with run mode = skip will continue to abide by the
     is_held flag as normal.
 
@@ -118,21 +115,22 @@ async def test_run_mode_skip_abides_by_held(
         'scheduling': {'graph': {'R1': 'foo'}},
         'runtime': {'foo': {'run mode': 'skip'}}
     })
-    schd = scheduler(wid, run_mode="live", paused_start=False)
+    schd: Scheduler = scheduler(wid, run_mode="live", paused_start=False)
     async with run(schd):
         foo = schd.pool.get_tasks()[0]
-        assert foo.state.is_held is False
+        assert not foo.state.is_held
 
         # Hold task, check that it's held:
-        schd.pool.hold_tasks('1/foo')
-        assert foo.state.is_held is True
+        schd.pool.hold_tasks(['1/foo'])
+        assert foo.state.is_held
+        await schd._main_loop()
+        assert foo.state(TASK_STATUS_WAITING)
 
-        # Run to completion, should happen if task isn't held:
-        with pytest.raises(
-            Exception,
-            match="Timeout waiting for workflow to shut down"
-        ):
-            await complete(schd, timeout=5)
+        schd.pool.release_held_tasks(['1/foo'])
+        assert not foo.state.is_held
+        with pytest.raises(SchedulerStop):
+            # Will shut down as foo has run
+            await schd._main_loop()
 
 
 async def test_run_mode_override_from_broadcast(

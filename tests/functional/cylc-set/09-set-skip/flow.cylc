@@ -14,18 +14,18 @@
     [[graph]]
         R1 = """
             # Optional out not created by set --out skip
-            foo:no? => not_this_task?
+            foo:no? => not_this_task
 
             # set --out skip creates required, started, submitted
             # and succeeded (unless failed is set):
-            foo:yes => require_this_task
-            foo:submitted => submitted_emitted
-            foo:succeeded => succeeded_emitted
-            foo:started => skip_foo
+            foo:yes => foo_done
+            foo:submitted => foo_done
+            foo:succeeded => foo_done
+            foo:started => do_skip
 
             # set --out skip creates failed if that is required
             # by skip mode settings:
-            bar:started => skip_bar
+            bar:started => do_skip
             bar:failed? => bar_failed
         """
 
@@ -35,16 +35,16 @@
         [[[skip]]]
             outputs = yes
         [[[outputs]]]
-            no = 'Don\'t require this task'
-            yes = 'Require this task'
+            no = Don't require this task
+            yes = Require this task
 
     [[bar]]
         script = sleep 100
         [[[skip]]]
             outputs = failed
 
-    [[skip_foo]]
-        script = cylc set ${CYLC_WORKFLOW_ID}//1/foo --out skip
-
-    [[skip_bar]]
-        script = cylc set ${CYLC_WORKFLOW_ID}//1/bar --out skip
+    [[do_skip]]
+        script = """
+            cylc set --out skip ${CYLC_WORKFLOW_ID}//1/foo \
+                ${CYLC_WORKFLOW_ID}//1/bar
+        """
