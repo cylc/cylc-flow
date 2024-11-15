@@ -900,6 +900,10 @@ class TaskPool:
             ]
         return self._active_tasks_list
 
+    def get_task_ids(self) -> Set[str]:
+        """Return a list of task IDs in the task pool."""
+        return {itask.identity for itask in self.get_tasks()}
+
     def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
         """Return a map of task proxies by cycle point."""
         return {

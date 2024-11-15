@@ -15,12 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import (
-    Dict,
-    List,
-    NamedTuple,
-    Set,
-)
 
 import pytest
 
@@ -35,15 +29,6 @@ from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import TASK_STATUS_FAILED
-
-
-def get_pool_tasks(schd: Scheduler) -> Set[str]:
-    return {itask.identity for itask in schd.pool.get_tasks()}
-
-
-class CylcShowPrereqs(NamedTuple):
-    prereqs: List[bool]
-    conditions: List[Dict[str, bool]]
 
 
 @pytest.fixture
@@ -381,11 +366,11 @@ async def test_downstream_preparing(flow, scheduler, start):
     async with start(schd):
         a = schd.pool._get_task_by_id('1/a')
         schd.pool.spawn_on_output(a, TASK_OUTPUT_SUCCEEDED)
-        assert get_pool_tasks(schd) == {'1/a', '1/x', '1/y'}
+        assert schd.pool.get_task_ids() == {'1/a', '1/x', '1/y'}
 
         schd.pool._get_task_by_id('1/y').state_reset('preparing')
         await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
-        assert get_pool_tasks(schd) == {'1/y'}
+        assert schd.pool.get_task_ids() == {'1/y'}
 
 
 async def test_downstream_other_flows(flow, scheduler, run, complete):
@@ -406,7 +391,7 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
 
         await run_cmd(remove_tasks(schd, ['1/c'], ['2']))
-        assert get_pool_tasks(schd) == {'1/b', '1/x'}
+        assert schd.pool.get_task_ids() == {'1/b', '1/x'}
         # Note: in future we might want to remove 1/x from flow 2 as well, to
         # maintain flow continuity. However it is tricky at the moment because
         # other prerequisite tasks could exist in flow 2 (we don't know as

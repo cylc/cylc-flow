@@ -324,7 +324,7 @@ def test_delta_task_prerequisite(harness):
     schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
-        [t.identity for t in schd.pool.get_tasks()],
+        schd.pool.get_task_ids(),
         [(TASK_STATUS_SUCCEEDED,)],
         [],
         flow=[]
