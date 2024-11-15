@@ -80,7 +80,6 @@ from cylc.flow.pathutil import (
     get_cylc_run_dir,
     is_relative_to,
 )
-from cylc.flow.print_tree import print_tree
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
 from cylc.flow.simulation import configure_sim_modes
 from cylc.flow.subprocctx import SubFuncContext
@@ -1604,18 +1603,6 @@ class WorkflowConfig:
     def get_first_parent_descendants(self):
         return self.runtime['first-parent descendants']
 
-    @staticmethod
-    def define_inheritance_tree(tree, hierarchy):
-        """Combine inheritance hierarchies into a tree structure."""
-        for rt_ in hierarchy:
-            hier = copy(hierarchy[rt_])
-            hier.reverse()
-            cur_tree = tree
-            for item in hier:
-                if item not in cur_tree:
-                    cur_tree[item] = {}
-                cur_tree = cur_tree[item]
-
     def add_tree_titles(self, tree):
         for key, val in tree.items():
             if val == {}:
@@ -1650,34 +1637,6 @@ class WorkflowConfig:
         except KeyError:
             mro = ["no such namespace: " + ns]
         return mro
-
-    def print_first_parent_tree(self, pretty=False, titles=False):
-        # find task namespaces (no descendants)
-        tasks = []
-        for ns in self.cfg['runtime']:
-            if ns not in self.runtime['descendants']:
-                tasks.append(ns)
-
-        pruned_ancestors = self.get_first_parent_ancestors(pruned=True)
-        tree = {}
-        self.define_inheritance_tree(tree, pruned_ancestors)
-        padding = ''
-        if titles:
-            self.add_tree_titles(tree)
-            # compute pre-title padding
-            maxlen = 0
-            for namespace in pruned_ancestors:
-                items = copy(pruned_ancestors[namespace])
-                items.reverse()
-                for itt, item in enumerate(items):
-                    tmp = 2 * itt + 1 + len(item)
-                    if itt == 0:
-                        tmp -= 1
-                    if tmp > maxlen:
-                        maxlen = tmp
-            padding = maxlen * ' '
-
-        print_tree(tree, padding=padding, use_unicode=pretty)
 
     def process_workflow_env(self):
         """Export Workflow context to the local environment.

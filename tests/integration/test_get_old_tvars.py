@@ -85,7 +85,7 @@ async def test_validate_with_old_tvars(
         opts.reference = True
 
     async with mod_start(_setup):
-        if function == view:
+        if function in {view, cylclist}:
             await function(opts, _setup.workflow_name)
         else:
             await function(parser, opts, _setup.workflow_name)

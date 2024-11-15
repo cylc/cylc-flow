@@ -100,7 +100,7 @@ class PointBase(metaclass=ABCMeta):
                missing off the front) will be tollerated, if False, truncated
                points will cause an exception to be raised.
         """
-        return self
+        raise NotImplementedError
 
     @abstractmethod
     def sub(self, other):

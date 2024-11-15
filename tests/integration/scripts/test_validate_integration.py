@@ -18,9 +18,12 @@
 
 """Integration tests for Cylc Validate CLI script."""
 
-from cylc.flow.parsec.exceptions import IllegalItemError
+import logging
+
 import pytest
-from cylc.flow.parsec.exceptions import Jinja2Error
+
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.parsec.exceptions import IllegalItemError, Jinja2Error
 
 
 async def test_validate_against_source_checks_source(
@@ -213,3 +216,36 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
         '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
     )
     assert expect in caplog.messages[0]
+
+
+def test_undefined_parent(flow, validate):
+    """It should catch tasks which inherit from implicit families."""
+    id_ = flow({
+        'scheduling': {'graph': {'R1': 'foo'}},
+        'runtime': {'foo': {'inherit': 'FOO'}}
+    })
+    with pytest.raises(WorkflowConfigError, match='undefined parent for foo'):
+        validate(id_)
+
+
+def test_log_parent_demoted(flow, validate, monkeypatch, caplog, log_filter):
+    """It should log family "demotion" in verbose mode."""
+    monkeypatch.setattr(
+        'cylc.flow.flags.verbosity',
+        10,
+    )
+    caplog.set_level(logging.DEBUG)
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo'
+            }
+        },
+        'runtime': {
+            'foo': {'inherit': 'None, FOO'},
+            'FOO': {},
+        }
+    })
+    validate(id_)
+    assert log_filter(caplog, contains='First parent(s) demoted to secondary')
+    assert log_filter(caplog, contains="FOO as parent of 'foo'")
