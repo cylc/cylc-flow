@@ -605,6 +605,13 @@ def _main(
                 )
             if (
                 mode == 'list-dir'
+                and live_job_id is not None
+                and platform["tail command template"]
+            ):
+                print('job.out')
+                print('job.err')
+            if (
+                mode == 'list-dir'
                 and os.path.exists(
                     os.path.join(
                         local_log_dir,
