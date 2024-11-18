@@ -48,6 +48,9 @@ def test_remove_task_from_flows(
         {5},
         set(),  # FLOW_NONE
     ]
+    expected_remaining = {
+        serialise_set(flow - expected_removed) for flow in db_flows
+    }
     db_mgr = WorkflowDatabaseManager(tmp_path)
     schd_tokens = Tokens('~asterix/gaul')
     tdef = TaskDef('a', {}, None, None, None)
@@ -55,26 +58,22 @@ def test_remove_task_from_flows(
         db_mgr.pri_dao = dao
         db_mgr.pub_dao = Mock()
         for flow in db_flows:
-            db_mgr.put_insert_task_states(
-                TaskProxy(
-                    schd_tokens,
-                    tdef,
-                    IntegerPoint('1'),
-                    flow_nums=flow,
-                ),
+            itask = TaskProxy(
+                schd_tokens, tdef, IntegerPoint('1'), flow_nums=flow
             )
+            db_mgr.put_insert_task_states(itask)
+            db_mgr.put_insert_task_outputs(itask)
         db_mgr.process_queued_ops()
 
         removed_fnums = db_mgr.remove_task_from_flows('1', 'a', flow_nums)
         assert removed_fnums == expected_removed
 
         db_mgr.process_queued_ops()
-        remaining_fnums: Set[str] = {
-            fnums_str
-            for fnums_str, *_ in dao.connect().execute(
-                'SELECT flow_nums FROM task_states'
-            )
-        }
-        assert remaining_fnums == {
-            serialise_set(flow - expected_removed) for flow in db_flows
-        }
+        for table in ('task_states', 'task_outputs'):
+            remaining_fnums: Set[str] = {
+                fnums_str
+                for fnums_str, *_ in dao.connect().execute(
+                    f'SELECT flow_nums FROM {table}'
+                )
+            }
+            assert remaining_fnums == expected_remaining

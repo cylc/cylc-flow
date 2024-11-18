@@ -19,7 +19,7 @@
 # Integration tests exist for more comprehensive coverage.
 
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 6
 
 init_workflow "${TEST_NAME_BASE}" <<'__EOF__'
 [scheduler]
@@ -39,5 +39,12 @@ cylc stop "${WORKFLOW_NAME}"
 poll_workflow_stopped
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed task(s): 1/foo (flows=1)"
+
+# Simple additional test of DB:
+TEST_NAME="${TEST_NAME_BASE}-workflow-state"
+run_ok "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME"
+cmp_ok "${TEST_NAME}.stdout" <<__EOF__
+1/foo:waiting(flows=none)
+__EOF__
 
 purge
