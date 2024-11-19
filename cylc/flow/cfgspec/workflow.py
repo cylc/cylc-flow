@@ -1432,10 +1432,12 @@ with Conf(
                     events.
                 ''')
             with Conf('skip', desc='''
-                Task configuration for task :ref:`task-run-modes.skip`.
+                Task configuration for :ref:`task-run-modes.skip`.
 
-                For a full description of skip run mode see
-                :ref:`task-run-modes.skip`.
+                .. seealso::
+
+                   - :ref:`task-run-modes.skip`
+                   - :cylc:conf:`flow.cylc[runtime][<namespace>]run mode`
 
                 .. versionadded:: 8.4.0
             '''):
