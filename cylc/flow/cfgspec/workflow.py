@@ -1342,17 +1342,19 @@ with Conf(
                 options=list(TASK_CONFIG_RUN_MODES),
                 default=RunMode.LIVE.value,
                 desc=f'''
-                    Run the task in one of the following modes:
+                    When the workflow is running in live mode, run the *task*
+                    in one of the following modes:
 
-                    {RunMode.LIVE.value}:
+                    ``{RunMode.LIVE.value}`` (default):
                         {RunMode.LIVE.describe()}
-                    {RunMode.SKIP.value}:
+                    ``{RunMode.SKIP.value}``:
                         {RunMode.SKIP.describe()}
 
 
                     .. seealso::
 
-                       :ref:`task-run-modes`
+                       - :ref:`task-run-modes`
+                       - :cylc:conf:`flow.cylc[runtime][<namespace>][skip]`
 
                     .. versionadded:: 8.4.0
 
