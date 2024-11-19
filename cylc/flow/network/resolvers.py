@@ -49,10 +49,10 @@ import cylc.flow.flags
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
-    RUNTIME_FIELD_TO_CFG_MAP,
     NodesEdges,
     PROXY_NODES,
     SUB_RESOLVERS,
+    runtime_schema_to_cfg,
     sort_elements,
 )
 
@@ -791,10 +791,8 @@ class Resolvers(BaseResolvers):
             # Convert schema field names to workflow config setting names if
             # applicable:
             for i, dict_ in enumerate(settings):
-                settings[i] = {
-                    RUNTIME_FIELD_TO_CFG_MAP.get(key, key): value
-                    for key, value in dict_.items()
-                }
+                settings[i] = runtime_schema_to_cfg(dict_)
+
         if mode == 'put_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
                 cycle_points, namespaces, settings)

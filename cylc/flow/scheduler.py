@@ -609,7 +609,7 @@ class Scheduler:
             # Note that the following lines must be present at the top of
             # the workflow log file for use in reference test runs.
             LOG.info(
-                f'Run mode: {self.get_run_mode()}',
+                f'Run mode: {self.get_run_mode().value}',
                 extra=RotatingLogFileHandler.header_extra
             )
             LOG.info(
