@@ -18,7 +18,7 @@
 import os
 from pathlib import Path
 from sys import stderr
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
@@ -1165,10 +1165,9 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         """):
-            with Conf('<install target>', desc=f"""
+            with Conf('<install target>', desc="""
                 :ref:`Host <Install targets>` on which to create the symlinks.
-                {COMMA_SEPARATED_SECTION_NOTE}
-            """):
+            """ + COMMA_SEPARATED_SECTION_NOTE):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
 
@@ -1290,8 +1289,7 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
 
-            {COMMA_SEPARATED_SECTION_NOTE}
-        ''') as Platform:
+        ''' + indent(COMMA_SEPARATED_SECTION_NOTE, '   ' * 3)) as Platform:
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
