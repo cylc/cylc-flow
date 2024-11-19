@@ -2123,8 +2123,7 @@ class GlobalConfig(ParsecConfig):
                 self.sparse['platforms']
             )
         if (
-            self.sparse.get("install")
-            and self.sparse["install"].get("symlink dirs")
+            self.sparse.get("install", {}).get("symlink dirs")
         ):
             self.sparse["install"]["symlink dirs"] = expand_many_section(
                 self.sparse["install"]["symlink dirs"]
