@@ -116,7 +116,7 @@ async def test_plain(cylc_list, supports_utf8, capsys):
 
 
 async def test_mro(cylc_list, supports_utf8, capsys):
-    """Test the --mro option."""
+    """Test the --mro (method resolution order) option."""
     assert await cylc_list(capsys, mro=True) == [
         'a111  a111 A11 A1 A root',
         'a112  a112 A11 A1 A root',

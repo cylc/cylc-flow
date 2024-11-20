@@ -258,7 +258,7 @@ def test_point_comparisons():
     assert IntegerInterval('P2') >= IntegerInterval('P1')
     assert IntegerInterval('P1') != IntegerInterval('P2')
 
-    # None comparisons work counter intuatively
+    # None comparisons work counter intuitively
     # (reason unknown)
     assert IntegerPoint(1) < None
     assert None > IntegerPoint(1)
