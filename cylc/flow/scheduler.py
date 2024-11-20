@@ -1291,7 +1291,8 @@ class Scheduler:
 
         """
         if (
-            self.stop_mode is None
+            not self.is_paused
+            and self.stop_mode is None
             and self.auto_restart_time is None
             and self.reload_pending is False
         ):
@@ -1959,7 +1960,7 @@ class Scheduler:
         if msg:
             _msg += f': {msg}'
         LOG.info(_msg)
-        self.is_paused = self.pool.task_queue_mgr.is_paused = True
+        self.is_paused = True
         self.workflow_db_mgr.put_workflow_paused(True)
         self.update_data_store()
 
@@ -1981,7 +1982,7 @@ class Scheduler:
             return
         if not quiet:
             LOG.info("RESUMING the workflow now")
-        self.is_paused = self.pool.task_queue_mgr.is_paused = False
+        self.is_paused = False
         self.workflow_db_mgr.put_workflow_paused(False)
         self.update_data_store()
 
