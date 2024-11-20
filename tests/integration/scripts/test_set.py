@@ -50,7 +50,9 @@ async def test_set_parentless_spawning(
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # mark cycle 1 as succeeded
-        schd.pool.set_prereqs_and_outputs(['1/a', '1/z'], ['succeeded'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(
+            ['1/a', '1/z'], ['succeeded'], None, ['1']
+        )
 
         # the parentless task "a" should be spawned out to the runahead limit
         assert [

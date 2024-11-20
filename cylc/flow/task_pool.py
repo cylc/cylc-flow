@@ -1869,7 +1869,7 @@ class TaskPool:
         return _prereqs
 
     def _standardise_outputs(
-        self, point: 'PointBase', tdef: 'TaskDef', outputs: List[str]
+        self, point: 'PointBase', tdef: 'TaskDef', outputs: Iterable[str]
     ) -> List[str]:
         """Convert output names to task output messages."""
         _outputs = []
@@ -1996,7 +1996,7 @@ class TaskPool:
                 skips = get_skip_mode_outputs(itask, rtconfig)
                 itask.run_mode = RunMode.SKIP
             outputs = self._standardise_outputs(
-                itask.point, itask.tdef, outputs
+                itask.point, itask.tdef, set(outputs) - {RunMode.SKIP.value}
             )
             outputs = list(set(outputs + skips) - {RunMode.SKIP.value})
 

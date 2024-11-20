@@ -1617,8 +1617,7 @@ async def test_set_outputs_from_skip_settings(
     validate(id_)
     schd = scheduler(id_)
 
-    async with start(schd):
-
+    async with start(schd) as log:
         # it should start up with just tasks a:
         assert pool_get_task_ids(schd.pool) == ['1/a', '2/a']
 
@@ -1630,6 +1629,10 @@ async def test_set_outputs_from_skip_settings(
             '1/after_asucceeded',
             '1/after_ax',
             '2/a'])
+
+        # Check that the presence of "skip" in outputs doesn't
+        # trigger a warning:
+        assert not log_filter(log, level=30)
 
         # You should be able to set skip as part of a list of outputs:
         schd.pool.set_prereqs_and_outputs(
