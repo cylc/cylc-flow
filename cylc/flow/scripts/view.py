@@ -134,7 +134,7 @@ async def _main(options: 'Values', workflow_id: str) -> None:
             'label': options.label,
             'jinja2': options.jinja2 or options.process,
             'contin': options.cat or options.process,
-            'inline': options.inline or options.process,
+            'inline': options.jinja2 or options.inline or options.process,
         },
         opts=options,
     ):
