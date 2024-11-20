@@ -18,7 +18,7 @@
 # Test cylc config --platform-names and --platforms
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 7
 #-------------------------------------------------------------------------------
 cat > "global.cylc" <<__HEREDOC__
 [platforms]
@@ -62,5 +62,17 @@ TEST_NAME="${TEST_NAME_BASE}-s"
 head -n 10 > just_platforms < global.cylc
 run_ok "${TEST_NAME}" cylc config --platforms
 cmp_ok "${TEST_NAME}.stdout" "just_platforms"
+
+#-------------------------------------------------------------------------------
+# test with no platforms or platform groups defined
+rm "global.cylc"
+touch "global.cylc"
+
+TEST_NAME="${TEST_NAME_BASE}-names"
+run_ok "${TEST_NAME}" cylc config --platform-names
+cmp_ok "${TEST_NAME}.stdout" <<__HEREDOC__
+localhost
+
+__HEREDOC__
 
 exit

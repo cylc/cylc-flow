@@ -100,7 +100,7 @@ class PointBase(metaclass=ABCMeta):
                missing off the front) will be tollerated, if False, truncated
                points will cause an exception to be raised.
         """
-        return self
+        raise NotImplementedError
 
     @abstractmethod
     def sub(self, other):
@@ -253,9 +253,6 @@ class IntervalBase(metaclass=ABCMeta):
     def sub(self, other):
         """Subtract other (interval) from self; return an interval."""
         pass
-
-    def is_null(self):
-        return (self == self.get_null())
 
     def __str__(self) -> str:
         # Stringify.
