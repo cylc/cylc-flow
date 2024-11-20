@@ -111,6 +111,8 @@ def test_release_queued_tasks__auto_restart():
     # Should not actually release any more tasks, just submit the
     # preparing ones
     mock_schd.pool.release_queued_tasks.assert_not_called()
+
+    Scheduler.start_job_submission(mock_schd, mock_schd.pool.get_tasks())
     mock_schd.task_job_mgr.submit_task_jobs.assert_called()
 
 

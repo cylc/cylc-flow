@@ -346,6 +346,17 @@ async def test_restart_timeout(
 
     See: https://github.com/cylc/cylc-flow/issues/5078
     """
+    one_conf.update(
+        {
+            'runtime': {
+                'one': {
+                    'simulation': {
+                        'default run length': 'PT5S'
+                    }
+                }
+            }
+        }
+    )
     id_ = flow(one_conf)
 
     # run the workflow to completion
@@ -362,6 +373,10 @@ async def test_restart_timeout(
     # restart the completed workflow
     schd = scheduler(id_)
     async with run(schd) as log:
+        # allow start-up process to complete?
+        # without this we get KeyError from platform['install target']
+        await asyncio.sleep(0)
+
         # it should detect that the workflow has completed and alert the user
         assert log_filter(
             log,
@@ -373,7 +388,9 @@ async def test_restart_timeout(
 
         # when we trigger tasks the timeout should be cleared
         schd.pool.force_trigger_tasks(['1/one'], {1})
-        await asyncio.sleep(0)  # yield control to the main loop
+
+        # allow time for the log to update
+        await asyncio.sleep(3)
         assert log_filter(log, contains='restart timer stopped')
 
 

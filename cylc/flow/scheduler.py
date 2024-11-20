@@ -1335,6 +1335,7 @@ class Scheduler:
         log = LOG.debug
         if self.options.reftest or self.options.genref:
             log = LOG.info
+
         for itask in self.task_job_mgr.submit_task_jobs(
             self.workflow,
             pre_prep_tasks,
