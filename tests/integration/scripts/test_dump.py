@@ -16,6 +16,8 @@
 
 """Test the "cylc dump" command."""
 
+import pytest
+
 from cylc.flow.option_parsers import (
     Options,
 )
@@ -54,8 +56,26 @@ async def test_dump_tasks(flow, scheduler, start):
         )
         assert ret == ['a, 1, waiting, not-held, queued, not-runahead']
 
-
-async def test_dump_format(flow, scheduler, start):
+@pytest.mark.parametrize(
+    'attributes_bool, flow_nums, dump_str',
+    [
+        pytest.param(
+            True,
+            [1,2],
+            '1/a:waiting (held,queued,runahead) flows=[1,2]',
+            id='1'
+        ),
+        pytest.param(
+            False,
+            [1,2],
+            '1/a:waiting',
+            id='2'
+        )
+    ]
+ )
+async def test_dump_format(
+    flow, scheduler, start, attributes_bool, flow_nums, dump_str
+):
     """Check the new "cylc dump" output format, i.e. task IDs.
 
     See: https://github.com/cylc/cylc-flow/pull/6440
@@ -74,25 +94,23 @@ async def test_dump_format(flow, scheduler, start):
     async with start(schd):
         [itask] = schd.pool.get_tasks()
 
-        itask.state_reset(is_held=True)
-        schd.pool.data_store_mgr.delta_task_held(itask)
+        itask.state_reset(
+            is_held=attributes_bool,
+            is_runahead=attributes_bool,
+            is_queued=attributes_bool
+        )
+        itask.flow_nums = set(flow_nums)
 
-        itask.state_reset(is_runahead=True)
-        schd.pool.data_store_mgr.delta_task_runahead(itask)
-
-        itask.state_reset(is_queued=True)
-        schd.pool.data_store_mgr.delta_task_queued(itask)
-
-        itask.flow_nums = set([1,2])
+        schd.pool.data_store_mgr.delta_task_held(
+            itask.tdef.name, itask.point, itask.state.is_held)
+        schd.pool.data_store_mgr.delta_task_state(itask)
         schd.pool.data_store_mgr.delta_task_flow_nums(itask)
-
         await schd.update_data_structure()
+
         ret = []
         await dump(
             id_,
-            DumpOptions(disp_form='tasks', show_flows=True),
+            DumpOptions(disp_form='tasks', show_flows=attributes_bool),
             write=ret.append
         )
-        assert ret == [
-            '1/a:waiting (held,queued,runahead) flows=[1,2]',
-        ]
+        assert ret == [dump_str]
