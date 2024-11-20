@@ -478,6 +478,7 @@ class Scheduler:
                 get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
+            self.start_job_submission,
             self.tokens,
             self.config,
             self.workflow_db_mgr,
@@ -1317,9 +1318,13 @@ class Scheduler:
         # Return, if no tasks to submit.
         else:
             return False
+
         if not pre_prep_tasks:
             return False
 
+        return self.start_job_submission(pre_prep_tasks)
+
+    def start_job_submission(self, pre_prep_tasks) -> bool:
         # Start the job submission process.
         self.is_updated = True
         self.reset_inactivity_timer()

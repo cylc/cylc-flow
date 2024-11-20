@@ -48,6 +48,17 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def push_task_if_limited(
+            self, itask: 'TaskProxy', active: Counter[str]
+    ) -> bool:
+        """Queue the task only if the queue limit is reached.
+
+        Requires current active task counts.
+        Return True if queued, else False.
+        """
+        pass
+
+    @abstractmethod
     def release_tasks(self, active: Counter[str]) -> 'List[TaskProxy]':
         """Release tasks, given current active task counts."""
         pass
@@ -58,10 +69,10 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def force_release_task(self, itask: 'TaskProxy') -> None:
+    def force_release_task(self, itask: 'TaskProxy') -> bool:
         """Remove a task from whichever queue it belongs to.
 
-        To be returned when release_tasks() is next called.
+        Return True if released, else False
         """
         pass
 
