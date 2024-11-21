@@ -742,10 +742,10 @@ class Scheduler:
                 self.uuid_str = dict(params)['uuid_str']
             else:
                 self.uuid_str = str(uuid4())
+            self.task_events_mgr.uuid_str = self.uuid_str
 
             self._configure_contact()
             await self.configure(params)
-            self.task_events_mgr.uuid_str = self.uuid_str
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
