@@ -73,7 +73,8 @@ async def test_trigger_workflow_paused(
         schd.pool.force_trigger_tasks(['1/y'], [1])
         assert len(submitted_tasks) == 1
 
-        # manually trigger 1/y again - it should not be submitted
+        # manually trigger 1/y again - it should be submitted
+        # (triggering a queued task runs it regardless of queue limit)
         schd.pool.force_trigger_tasks(['1/y'], [1])
         assert len(submitted_tasks) == 2
 

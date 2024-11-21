@@ -82,7 +82,11 @@ async def test_get_flow_nums(one: Scheduler, start):
 
 
 async def test_flow_assignment_set(
-    flow, scheduler, start, log_filter: Callable
+    flow: 'Fixture',
+    scheduler: 'Fixture',
+    start: 'Fixture',
+    log_filter: Callable,
+    capture_submission: 'Fixture',
 ):
     """Test flow assignment when setting tasks.
 
@@ -111,6 +115,9 @@ async def test_flow_assignment_set(
     schd: Scheduler = scheduler(id_, run_mode='simulation', paused_start=True)
     async with start(schd) as log:
 
+        # capture task submissions (prevents real submissions)
+        submitted_tasks = capture_submission(schd)
+
         command = "set"
         do_command = functools.partial(
             schd.pool.set_prereqs_and_outputs, outputs=['x'], prereqs=[]
@@ -124,6 +131,8 @@ async def test_flow_assignment_set(
         assert active_y.flow_nums == {1, 2}
 
         # -----(1. Test active tasks)-----
+
+        # Note this also tests that setting prerequisites 
 
         # By default active tasks keep existing flow assignment.
         do_command([active_x.identity], flow=[])
@@ -157,6 +166,12 @@ async def test_flow_assignment_set(
         do_command(['1/a'], flow=[])
         assert schd.pool._get_task_by_id('1/a').flow_nums == {1, 2, 3}
 
+        # set --pre=all should not cause a task to submit in a paused workflow
+        assert len(submitted_tasks) == 0
+        # but triggering it should
+        schd.pool.force_trigger_tasks(['1/a'], [])
+        assert len(submitted_tasks) == 1
+ 
         # Else assign requested flows.
         do_command(['1/b'], flow=[FLOW_NONE])
         assert schd.pool._get_task_by_id('1/b').flow_nums == set()
