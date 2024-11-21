@@ -29,7 +29,7 @@ async def test_trigger_workflow_paused(
     log_filter: Callable
 ):
     """
-    Tasks can be trigger manually when the workflow is paused.
+    Test manual triggering when the workflow is paused.
 
     The usual queue limiting behaviour is expected.
 
@@ -60,20 +60,27 @@ async def test_trigger_workflow_paused(
 
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
+
+        # paused at start-up so no tasks should be submitted
         assert len(submitted_tasks) == 0
 
+        # manually trigger 1/x - it should be submitted
         schd.pool.force_trigger_tasks(['1/x'], [1])
         assert len(submitted_tasks) == 1
 
+        # manually trigger 1/y - it should not be submitted
+        # (the queue limit is 1)
         schd.pool.force_trigger_tasks(['1/y'], [1])
         assert len(submitted_tasks) == 1
 
+        # manually trigger 1/y again - it should not be submitted
         schd.pool.force_trigger_tasks(['1/y'], [1])
         assert len(submitted_tasks) == 2
 
+        # manually trigger 1/y yet again - the trigger should be ignored
+        # (task already active)
         schd.pool.force_trigger_tasks(['1/y'], [1])
         assert len(submitted_tasks) == 2
-
         assert log_filter(
             log, level=logging.ERROR,
             contains="ignoring trigger - already active"
