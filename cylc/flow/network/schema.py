@@ -2143,7 +2143,7 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
 class Trigger(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Manually trigger tasks.
+            Manually trigger tasks, even in a paused workflow.
 
             Warning: waiting tasks that are queue-limited will be queued if
             triggered, to submit as normal when released by the queue; queued
