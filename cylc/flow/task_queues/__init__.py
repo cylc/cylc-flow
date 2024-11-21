@@ -40,12 +40,12 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
            * descendants: runtime family dict
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def push_task(self, itask: 'TaskProxy') -> None:
         """Queue the given task."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def push_task_if_limited(
@@ -56,17 +56,17 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         Requires current active task counts.
         Return True if queued, else False.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def release_tasks(self, active: Counter[str]) -> 'List[TaskProxy]':
         """Release tasks, given current active task counts."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def remove_task(self, itask: 'TaskProxy') -> bool:
         """Try to remove a task from the queues. Return True if done."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def force_release_task(self, itask: 'TaskProxy') -> bool:
@@ -74,12 +74,12 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
 
         Return True if released, else False
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt tasks with defs removed by scheduler reload or restart."""
-        pass
+        raise NotImplementedError
 
     def _expand_families(self,
                          qconfig: dict,
