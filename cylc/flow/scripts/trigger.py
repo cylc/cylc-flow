@@ -17,7 +17,7 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run regardless of prerequisites.
+Force tasks to run regardless of prerequisites, even in a paused worklfow.
 
 * Triggering an unqueued waiting task queues it, regardless of prerequisites.
 * Triggering a queued task submits it, regardless of queue limiting.
