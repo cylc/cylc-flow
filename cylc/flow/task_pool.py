@@ -2166,7 +2166,8 @@ class TaskPool:
         self.check_spawn_psx_task(itask)
 
     def force_trigger_tasks(
-        self, items: Iterable[str],
+        self,
+        items: Iterable[str],
         flow: List[str],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
