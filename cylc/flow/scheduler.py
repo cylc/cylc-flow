@@ -1324,8 +1324,15 @@ class Scheduler:
 
         return self.start_job_submission(pre_prep_tasks)
 
-    def start_job_submission(self, pre_prep_tasks) -> bool:
-        # Start the job submission process.
+    def start_job_submission(self, itasks: 'Iterable[TaskProxy]') -> bool:
+        """Start the job submission process for some tasks.
+
+        Return True if any were started, else False.
+
+        """
+        if self.stop_mode is not None:
+            return False
+
         self.is_updated = True
         self.reset_inactivity_timer()
 
@@ -1338,7 +1345,7 @@ class Scheduler:
 
         for itask in self.task_job_mgr.submit_task_jobs(
             self.workflow,
-            pre_prep_tasks,
+            itasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
             is_simulation=(self.get_run_mode() == RunMode.SIMULATION)
