@@ -793,7 +793,7 @@ MANUAL_DEPRECATIONS = {
     },
     'U017': {
         'short': (
-            '`&` and `|` are line continuations without `\\`'
+            '`&` and `|` imply line continuation without `\\`'
         ),
         FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
