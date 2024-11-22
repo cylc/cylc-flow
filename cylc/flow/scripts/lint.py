@@ -547,7 +547,13 @@ STYLE_CHECKS = {
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
         FUNCTION: check_indentation
-    }
+    },
+    'S014': {
+        'short': (
+            '`=>` implies line continuation without `\\`'
+        ),
+        FUNCTION: re.compile(r'=>\s*\\').findall
+    },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
@@ -714,6 +720,12 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: functools.partial(
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+    },
+    'U017': {
+        'short': (
+            '`&` and `|` imply line continuation without `\\`'
+        ),
+        FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']
