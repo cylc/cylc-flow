@@ -550,7 +550,7 @@ STYLE_CHECKS = {
     },
     'S014': {
         'short': (
-            '`=>` is a line continuation without `\\`'
+            '`=>` implies line continuation without `\\`'
         ),
         FUNCTION: re.compile(r'=>\s*\\').findall
     },
@@ -723,7 +723,7 @@ MANUAL_DEPRECATIONS = {
     },
     'U017': {
         'short': (
-            '`&` and `|` are line continuations without `\\`'
+            '`&` and `|` imply line continuation without `\\`'
         ),
         FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
