@@ -1342,7 +1342,7 @@ with Conf(
                 options=list(TASK_CONFIG_RUN_MODES),
                 default=RunMode.LIVE.value,
                 desc=f'''
-                    When the workflow is running in live mode, run the *task*
+                    When the workflow is running in live mode, run this *task*
                     in one of the following modes:
 
                     ``{RunMode.LIVE.value}`` (default):
@@ -1453,7 +1453,7 @@ with Conf(
                           include either succeeded or failed then succeeded
                           will be produced.
                         * The outputs submitted and started are always
-                          produced and do not need to be defined in outputs.
+                          produced and do not need to be defined in here.
 
                         .. versionadded:: 8.4.0
                     '''

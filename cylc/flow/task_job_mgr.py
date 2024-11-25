@@ -1033,7 +1033,7 @@ class TaskJobManager:
 
         * Simulation: Job submission.
         * Skip: Entire job lifecycle happens here!
-        * Dummy: Pre-submission preparation (removing task scripts content)
+        * Dummy: Pre-submission preparation (removing task script's content)
           before returning to live pathway.
         * Live: return to main submission pathway without doing anything.
 
@@ -1060,20 +1060,16 @@ class TaskJobManager:
             # Apply task run mode
             if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
                 # Task run mode cannot override workflow run-mode sim or dummy:
-                run_mode: RunMode = workflow_run_mode
+                itask.run_mode: RunMode = workflow_run_mode
             else:
                 # If workflow mode is skip or live and task mode is set,
                 # override workflow mode, else use workflow mode.
-                run_mode = RunMode(rtconfig.get('run mode', workflow_run_mode))
-
-            # Store the run mode of the this submission:
-            itask.run_mode = run_mode
+                itask.run_mode = RunMode(
+                    rtconfig.get('run mode', workflow_run_mode))
 
             # Submit nonlive tasks, or add live-like (live or dummy)
-            # tasks to list of tasks to put through live
-            # submission pipeline - We decide based on the output
-            # of the submit method:
-            submit_func = run_mode.get_submit_method()
+            # tasks to list of tasks to put through live submission pipeline.
+            submit_func = itask.run_mode.get_submit_method()
             if submit_func and submit_func(
                 self, itask, rtconfig, workflow, now
             ):
