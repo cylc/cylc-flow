@@ -24,6 +24,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.exceptions import (
+    InputError,
     PointParsingError,
     ServiceFileError,
     WorkflowConfigError,
@@ -659,3 +660,12 @@ def test_validate_workflow_run_mode(flow: Fixture, validate: Fixture, caplog: Fi
     # It fails with run mode dummy:
     with pytest.raises(PointParsingError, match='Incompatible value'):
         validate(wid, run_mode='dummy')
+
+
+async def test_invalid_starttask(one_conf, flow, scheduler, start):
+    """It should reject invalid starttask arguments."""
+    id_ = flow(one_conf)
+    schd = scheduler(id_, starttask=['a///b'])
+    with pytest.raises(InputError, match='a///b'):
+        async with start(schd):
+            pass

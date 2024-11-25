@@ -455,8 +455,6 @@ FAM_NAME_IGNORE_REGEX = re.compile(
         | <[^>]+>
         # or Jinja2
         | {{.*?}} | {%.*?%} | {\#.*?\#}
-        # or EmPy
-        | (@[\[{\(]).*([\]\}\)])
     ''',
     re.X
 )

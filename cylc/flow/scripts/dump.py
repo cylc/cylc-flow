@@ -163,6 +163,9 @@ def get_option_parser():
         "-t", "--tasks", help="Task states only.",
         action="store_const", const="tasks", dest="disp_form")
     parser.add_option(
+        "-l", "--legacy", help="Tasks states only; use legacy format.",
+        action="store_true", default=False, dest="legacy_format")
+    parser.add_option(
         "-f", "--flows", help="Print flow numbers with tasks.",
         action="store_true", default=False, dest="show_flows")
     parser.add_option(
@@ -274,7 +277,7 @@ async def dump(workflow_id, options, write=print):
                     for key, value in sorted(summary.items()):
                         write(
                             f'{to_snake_case(key).replace("_", " ")}={value}')
-                else:
+                elif options.legacy_format:
                     for item in summary['taskProxies']:
                         if options.sort_by_cycle:
                             values = [
@@ -294,6 +297,27 @@ async def dump(workflow_id, options, write=print):
                         if options.show_flows:
                             values.append(item['flowNums'])
                         write(', '.join(values))
+                else:
+                    for item in summary['taskProxies']:
+                        result = (
+                            f"{item['cyclePoint']}/{item['name']}"
+                            f":{item['state']}"
+                        )
+                        attrs = []
+                        if item['isHeld']:
+                            attrs.append("held")
+                        if item['isQueued']:
+                            attrs.append("queued")
+                        if item['isRunahead']:
+                            attrs.append("runahead")
+                        if attrs:
+                            result += " (" + ",".join(attrs) + ")"
+                        if options.show_flows:
+                            result += (
+                                f" flows={item['flowNums'].replace(' ','')}"
+                            )
+                        write(result)
+
     except Exception as exc:
         raise CylcError(
             json.dumps(workflows, indent=4) + '\n' + str(exc) + '\n'

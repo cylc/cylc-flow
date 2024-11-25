@@ -34,7 +34,7 @@ poll_grep_workflow_log -E "${NEXT1}/bar.* added to active task pool"
 sleep 10
 
 # (gratuitous use of --flows for test coverage)
-cylc dump --flows -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3 $7}' >'log'
+cylc dump -l --flows -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3 $7}' >'log'
 
 # The scheduler task pool should contain:
 #   NEXT1/foo - waiting on clock trigger
