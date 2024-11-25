@@ -18,7 +18,7 @@
 import os
 from pathlib import Path
 from sys import stderr
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
@@ -587,39 +587,46 @@ task_event_handling.template_variables`.
     '''
 }
 
-COMMA_SEPARATED_SECTION_NOTE = '''
 
+def comma_sep_section_note(version_changed: str = '') -> str:
+    note_text = "This section can be a comma separated list."
+    if version_changed:
+        note_text = (
+            f".. versionchanged:: {version_changed}\n\n" +
+            indent(note_text, 3 * ' ')
+        )
 
-.. note::
+    example = dedent('''
 
-   This section can be a comma separated list.
+    .. spoiler:: Example
 
-   .. spoiler:: Example
+       For example:
 
-      For example:
+       .. code-block:: cylc
 
-      .. code-block:: cylc
+          [a, b]
+              setting = x
+          [a]
+              another_setting = y
 
-         [a, b]
-             setting = x
-         [a]
-             another_setting = y
+       Will become:
 
-      Will become:
+       .. code-block:: cylc
 
-      .. code-block:: cylc
+          [a]
+              setting = x
+          [b]
+              setting = x
+          [a]
+              another_setting = y
 
-         [a]
-             setting = x
-         [b]
-             setting = x
-         [a]
-             another_setting = y
+       Which will then be combined according to
+       :ref:`the rules for Cylc config syntax<syntax>`.
 
-      Which will then be combined according to
-      :ref:`the rules for Cylc config syntax<syntax>`.
+    ''')
 
-'''
+    return "\n\n.. note::\n\n" + indent(note_text + example, 3 * ' ')
+
 
 # ----------------------------------------------------------------------------
 
@@ -1167,7 +1174,10 @@ with Conf('global.cylc', desc='''
         """):
             with Conf('<install target>', desc=dedent("""
                 :ref:`Host <Install targets>` on which to create the symlinks.
-            """) + COMMA_SEPARATED_SECTION_NOTE):
+
+                .. versionadded:: 8.0.0
+
+            """) + comma_sep_section_note(version_changed='8.4.0')):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
 
@@ -1243,7 +1253,9 @@ with Conf('global.cylc', desc='''
 
         .. versionadded:: 8.0.0
     '''):
-        with Conf('<platform name>', desc=dedent('''
+        with Conf(
+            '<platform name>',
+            desc=dedent('''
             Configuration defining a platform.
 
             Many of these settings have replaced those of the same name from
@@ -1287,9 +1299,10 @@ with Conf('global.cylc', desc='''
                - :ref:`AdminGuide.PlatformConfigs`, an administrator's guide to
                  platform configurations.
 
-            .. versionadded:: 8.0.0
-
-        ''') + COMMA_SEPARATED_SECTION_NOTE) as Platform:
+        ''')
+            + comma_sep_section_note()
+            + ".. versionadded:: 8.0.0",
+        ) as Platform:
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
