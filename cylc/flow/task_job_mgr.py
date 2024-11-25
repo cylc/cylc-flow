@@ -1073,6 +1073,7 @@ class TaskJobManager:
             if submit_func and submit_func(
                 self, itask, rtconfig, workflow, now
             ):
+                # A submit function returns true if this is a nonlive task:
                 self.workflow_db_mgr.put_insert_task_states(
                     itask,
                     {
