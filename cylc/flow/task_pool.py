@@ -1980,25 +1980,26 @@ class TaskPool:
     def _set_outputs_itask(
         self,
         itask: 'TaskProxy',
-        outputs: List[str],
+        outputs: Iterable[str],
     ) -> None:
         """Set requested outputs on a task proxy and spawn children."""
         if not outputs:
-            outputs = list(itask.state.outputs.iter_required_messages())
+            outputs = itask.state.outputs.iter_required_messages()
         else:
             # --out=skip is a shortcut to setting all the outputs that
             # skip mode would.
+            outputs = set(outputs)
             skips = []
             if RunMode.SKIP.value in outputs:
                 # Check for broadcasts to task:
+                outputs.remove(RunMode.SKIP.value)
                 bc_mgr = self.task_events_mgr.broadcast_mgr
                 rtconfig = bc_mgr.get_updated_rtconfig(itask)
                 skips = get_skip_mode_outputs(itask, rtconfig)
                 itask.run_mode = RunMode.SKIP
-            outputs = self._standardise_outputs(
-                itask.point, itask.tdef, set(outputs) - {RunMode.SKIP.value}
-            )
-            outputs = list(set(outputs + skips) - {RunMode.SKIP.value})
+            outputs = set(
+                self._standardise_outputs(itask.point, itask.tdef, outputs)
+            ).union(skips)
 
         for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
             if itask.state.outputs.is_message_complete(output):
