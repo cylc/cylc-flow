@@ -89,11 +89,12 @@ if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
-    from cylc.flow.taskdef import TaskDef
-    from cylc.flow.task_events_mgr import TaskEventsManager
-    from cylc.flow.xtrigger_mgr import XtriggerManager
-    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
     from cylc.flow.flow_mgr import FlowMgr, FlowNums
+    from cylc.flow.prerequisite import SatisfiedState
+    from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.taskdef import TaskDef
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+    from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
@@ -244,9 +245,6 @@ class TaskPool:
             itask=itask
         )
         self.data_store_mgr.delta_task_state(itask)
-        self.data_store_mgr.delta_task_held(itask)
-        self.data_store_mgr.delta_task_queued(itask)
-        self.data_store_mgr.delta_task_runahead(itask)
 
     def release_runahead_tasks(self):
         """Release tasks below the runahead limit.
@@ -439,7 +437,7 @@ class TaskPool:
         task: str,
         output_msg: str,
         flow_nums: 'FlowNums',
-    ) -> Union[str, bool]:
+    ) -> 'SatisfiedState':
         """Returns truthy if the specified output is satisfied in the DB."""
         for task_outputs, task_flow_nums in (
             self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
@@ -563,16 +561,16 @@ class TaskPool:
                 ] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
-                for key in itask_prereq.satisfied.keys():
-                    try:
-                        itask_prereq.satisfied[key] = sat[key]
-                    except KeyError:
+                for key in itask_prereq:
+                    if key in sat:
+                        itask_prereq[key] = sat[key]
+                    else:
                         # This prereq is not in the DB: new dependencies
                         # added to an already-spawned task before restart.
                         # Look through task outputs to see if is has been
                         # satisfied
                         prereq_cycle, prereq_task, prereq_output_msg = key
-                        itask_prereq.satisfied[key] = (
+                        itask_prereq[key] = (
                             self.check_task_output(
                                 prereq_cycle,
                                 prereq_task,
@@ -582,7 +580,7 @@ class TaskPool:
                         )
 
             if itask.state_reset(status, is_runahead=True):
-                self.data_store_mgr.delta_task_runahead(itask)
+                self.data_store_mgr.delta_task_state(itask)
             self.add_to_pool(itask)
 
             # All tasks load as runahead-limited, but finished and manually
@@ -707,7 +705,7 @@ class TaskPool:
         forced triggering we need to release even if beyond the limit).
         """
         if itask.state_reset(is_runahead=False):
-            self.data_store_mgr.delta_task_runahead(itask)
+            self.data_store_mgr.delta_task_state(itask)
         if all(itask.is_ready_to_run()):
             # (otherwise waiting on xtriggers etc.)
             self.queue_task(itask)
@@ -887,8 +885,8 @@ class TaskPool:
         if self.active_tasks_changed:
             self.active_tasks_changed = False
             self._active_tasks_list = []
-            for _, itask_id_map in self.active_tasks.items():
-                for __, itask in itask_id_map.items():
+            for itask_id_map in self.active_tasks.values():
+                for itask in itask_id_map.values():
                     self._active_tasks_list.append(itask)
         return self._active_tasks_list
 
@@ -917,7 +915,7 @@ class TaskPool:
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
         if itask.state_reset(is_queued=True):
-            self.data_store_mgr.delta_task_queued(itask)
+            self.data_store_mgr.delta_task_state(itask)
             self.task_queue_mgr.push_task(itask)
 
     def release_queued_tasks(self):
@@ -960,7 +958,7 @@ class TaskPool:
 
         for itask in released:
             itask.state_reset(is_queued=False)
-            self.data_store_mgr.delta_task_queued(itask)
+            self.data_store_mgr.delta_task_state(itask)
             itask.waiting_on_job_prep = True
 
             if cylc.flow.flags.cylc7_back_compat:
@@ -1127,7 +1125,7 @@ class TaskPool:
                     and itask.state(TASK_STATUS_WAITING)
                     and itask.state_reset(is_runahead=True)
                 ):
-                    self.data_store_mgr.delta_task_runahead(itask)
+                    self.data_store_mgr.delta_task_state(itask)
         return True
 
     def can_stop(self, stop_mode):
@@ -1229,16 +1227,14 @@ class TaskPool:
             task_point = itask.point
             if self.stop_point and task_point > self.stop_point:
                 continue
-            for point, task, msg in (
-                itask.state.get_unsatisfied_prerequisites()
-            ):
-                if get_point(point) > self.stop_point:
+            for pr in itask.state.get_unsatisfied_prerequisites():
+                if self.stop_point and get_point(pr.point) > self.stop_point:
                     continue
                 if itask.identity not in unsat:
                     unsat[itask.identity] = []
                 unsat[itask.identity].append(
-                    f"{point}/{task}:"
-                    f"{self.config.get_taskdef(task).get_output(msg)}"
+                    f"{pr.get_id()}:"
+                    f"{self.config.get_taskdef(pr.task).get_output(pr.output)}"
                 )
         if unsat:
             LOG.warning(
@@ -1278,13 +1274,13 @@ class TaskPool:
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=True):
-            self.data_store_mgr.delta_task_held(itask)
+            self.data_store_mgr.delta_task_state(itask)
         self.tasks_to_hold.add((itask.tdef.name, itask.point))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state_reset(is_held=False):
-            self.data_store_mgr.delta_task_held(itask)
+            self.data_store_mgr.delta_task_state(itask)
             if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
                 self.queue_task(itask)
         self.tasks_to_hold.discard((itask.tdef.name, itask.point))
@@ -1310,7 +1306,7 @@ class TaskPool:
             self.hold_active_task(itask)
         # Set inactive tasks to be held:
         for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, True))
+            self.data_store_mgr.delta_task_held(name, cycle, True)
         self.tasks_to_hold.update(inactive_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
@@ -1328,7 +1324,7 @@ class TaskPool:
             self.release_held_active_task(itask)
         # Unhold inactive tasks:
         for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held((name, cycle, False))
+            self.data_store_mgr.delta_task_held(name, cycle, False)
         self.tasks_to_hold.difference_update(inactive_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
@@ -1997,7 +1993,6 @@ class TaskPool:
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
-            self.data_store_mgr.delta_task_queued(itask)
 
         self.data_store_mgr.delta_task_state(itask)
         self.data_store_mgr.delta_task_outputs(itask)
@@ -2019,12 +2014,12 @@ class TaskPool:
 
         """
         if prereqs == ["all"]:
-            itask.state.set_all_satisfied()
+            itask.state.set_prerequisites_all_satisfied()
         else:
             # Attempt to set the given presrequisites.
             # Log any that aren't valid for the task.
             presus = self._standardise_prereqs(prereqs)
-            unmatched = itask.satisfy_me(list(presus.keys()))
+            unmatched = itask.satisfy_me(presus.keys())
             for task_msg in unmatched:
                 LOG.warning(
                     f"{itask.identity} does not depend on"

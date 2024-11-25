@@ -18,7 +18,7 @@
             if ((CYLC_TASK_CYCLE_POINT == 1)); then
                 # Force trigger 3/foo while 2/foo is runahead limited.
                 expected="foo, 2, waiting, not-held, not-queued, runahead"
-                diff <(cylc dump -t "${CYLC_WORKFLOW_ID}" | grep 'foo, 2') \
+                diff <(cylc dump -l -t "${CYLC_WORKFLOW_ID}" | grep 'foo, 2') \
                      <(echo "$expected")
                 cylc trigger --flow=none $CYLC_WORKFLOW_ID//3/foo
             elif ((CYLC_TASK_CYCLE_POINT == 3)); then

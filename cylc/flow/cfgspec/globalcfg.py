@@ -30,6 +30,7 @@ from cylc.flow.platforms import validate_platforms
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
+from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
@@ -1148,55 +1149,21 @@ with Conf('global.cylc', desc='''
 
                     .. versionadded:: 8.0.0
                 """)
-                Conf('log', VDR.V_STRING, None, desc="""
-                    Alternative location for the log dir.
+                for folder, versionadded in SYMLINKABLE_LOCATIONS.items():
+                    Conf(folder, VDR.V_STRING, None, desc=f"""
+                        Alternative location for the {folder} dir.
 
-                    If specified the workflow log directory will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/log`` and a
-                    symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/log``. If not specified
-                    the workflow log directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/log``.
+                        If specified the workflow {folder} directory will
+                        be created in
+                        ``<this-path>/cylc-run/<workflow-id>/{folder}``
+                        and a symbolic link will be created from
+                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
+                        If not specified the workflow log directory will
+                        be created in
+                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
 
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('share', VDR.V_STRING, None, desc="""
-                    Alternative location for the share dir.
-
-                    If specified the workflow share directory will be
-                    created in ``<this-path>/cylc-run/<workflow-id>/share``
-                    and a symbolic link will be created from
-                    ``<$HOME/cylc-run/<workflow-id>/share``. If not specified
-                    the workflow share directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/share``.
-
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('share/cycle', VDR.V_STRING, None, desc="""
-                    Alternative directory for the share/cycle dir.
-
-                    If specified the workflow share/cycle directory
-                    will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/share/cycle``
-                    and a symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/share/cycle``. If not
-                    specified the workflow share/cycle directory will be
-                    created in ``$HOME/cylc-run/<workflow-id>/share/cycle``.
-
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('work', VDR.V_STRING, None, desc="""
-                    Alternative directory for the work dir.
-
-                    If specified the workflow work directory will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/work`` and a
-                    symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/work``. If not specified
-                    the workflow work directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/work``.
-
-                    .. versionadded:: 8.0.0
-                """)
+                        .. versionadded:: {versionadded}
+                    """)
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
         site.
@@ -1311,7 +1278,7 @@ with Conf('global.cylc', desc='''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
-                Options:
+                ..rubric:: Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
@@ -1319,6 +1286,8 @@ with Conf('global.cylc', desc='''
                    The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
+
+                For more information, see :ref:`TaskComms`.
 
                 .. versionchanged:: 8.0.0
 

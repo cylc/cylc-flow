@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
+import signal
 from socket import gaierror
 from subprocess import DEVNULL, PIPE, Popen
 import sys
@@ -121,12 +122,13 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED,
 )
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_NEVER_ACTIVE,
+    TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_NEVER_ACTIVE,
 )
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.templatevars import eval_var
@@ -144,12 +146,15 @@ from cylc.flow.workflow_status import AutoRestartMode, RunMode, StopMode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
+    from optparse import Values
+
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
-    from optparse import Values
+
     from cylc.flow.network.resolvers import TaskMsg
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class SchedulerStop(CylcError):
@@ -671,7 +676,7 @@ class Scheduler:
                 LOG.exception(exc)
                 raise
 
-        except (KeyboardInterrupt, asyncio.CancelledError) as exc:
+        except asyncio.CancelledError as exc:
             await self.handle_exception(exc)
 
         except CylcError as exc:  # Includes SchedulerError
@@ -747,11 +752,36 @@ class Scheduler:
         """Run the startup sequence and set the main loop running.
 
         Lightweight wrapper for testing convenience.
-
         """
+        # register signal handlers
+        for sig in (
+            # ctrl+c
+            signal.SIGINT,
+            # the "stop please" signal
+            signal.SIGTERM,
+            # the controlling process bailed
+            # (e.g. terminal quit in no detach mode)
+            signal.SIGHUP,
+        ):
+            signal.signal(sig, self._handle_signal)
+
         await self.start()
         # note run_scheduler handles its own shutdown logic
         await self.run_scheduler()
+
+    def _handle_signal(self, sig: int, frame) -> None:
+        """Handle a signal."""
+        LOG.critical(f'Signal {signal.Signals(sig).name} received')
+        if sig in {signal.SIGINT, signal.SIGTERM, signal.SIGHUP}:
+            if self.stop_mode == StopMode.REQUEST_NOW:
+                # already shutting down NOW -> escalate to NOW_NOW
+                # (i.e. don't run/wait for event handlers)
+                stop_mode = StopMode.REQUEST_NOW_NOW
+            else:
+                # stop NOW (orphan running tasks)
+                stop_mode = StopMode.REQUEST_NOW
+
+            self._set_stop(stop_mode)
 
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
@@ -917,7 +947,7 @@ class Scheduler:
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
         # proxy can be removed, but the orphaned job still sends messages.
-        for _id, tms in messages.items():
+        for tms in messages.values():
             warn = "Undeliverable task messages received and ignored:"
             for _, msg in tms:
                 warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
@@ -983,6 +1013,42 @@ class Scheduler:
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
         self.update_data_store()
+
+    def kill_tasks(
+        self, itasks: 'Iterable[TaskProxy]', warn: bool = True
+    ) -> int:
+        """Kill tasks if they are in a killable state.
+
+        Args:
+            itasks: Tasks to kill.
+            warn: Whether to warn about tasks that are not in a killable state.
+
+        Returns number of tasks that could not be killed.
+        """
+        jobless = self.get_run_mode() == RunMode.SIMULATION
+        to_kill: List[TaskProxy] = []
+        unkillable: List[TaskProxy] = []
+        for itask in itasks:
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                itask.state_reset(
+                    # directly reset to failed in sim mode, else let
+                    # task_job_mgr handle it
+                    status=(TASK_STATUS_FAILED if jobless else None),
+                    is_held=True,
+                )
+                self.data_store_mgr.delta_task_state(itask)
+                to_kill.append(itask)
+            else:
+                unkillable.append(itask)
+        if warn and unkillable:
+            LOG.warning(
+                "Tasks not killable: "
+                f"{', '.join(sorted(t.identity for t in unkillable))}"
+            )
+        if not jobless:
+            self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
+
+        return len(unkillable)
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1688,9 +1754,21 @@ class Scheduler:
         # At the moment this method must be called from the main_loop.
         # In the future it should shutdown the main_loop itself but
         # we're not quite there yet.
+
+        # cancel signal handlers
+        def _handle_signal(sig, frame):
+            LOG.warning(
+                f'Signal {signal.Signals(sig).name} received,'
+                ' already shutting down'
+            )
+
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            signal.signal(sig, _handle_signal)
+
         try:
+            # action shutdown
             await self._shutdown(reason)
-        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+        except (asyncio.CancelledError, Exception) as exc:
             # In case of exception in the shutdown method itself.
             LOG.error("Error during shutdown")
             # Suppress the reason for shutdown, which is logged separately
@@ -1712,7 +1790,6 @@ class Scheduler:
             try:
                 self.proc_pool.close()
                 if self.proc_pool.is_not_done():
-                    # e.g. KeyboardInterrupt
                     self.proc_pool.terminate()
                 self.proc_pool.process()
             except Exception as exc:

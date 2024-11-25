@@ -329,14 +329,14 @@ def load(config, additional_plugins=None):
                 f'No main-loop plugin: "{plugin_name}"\n'
                 + '    Available plugins:\n'
                 + indent('\n'.join(sorted(entry_points)), '        ')
-            )
+            ) from None
         # load plugin
         try:
             module = entry_point.load()
         except Exception as exc:
             raise PluginError(
                 'cylc.main_loop', entry_point.name, exc
-            )
+            ) from None
         # load coroutines
         log = []
         for coro_name, coro in getmembers(module):

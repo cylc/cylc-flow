@@ -14,18 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-from typing import TYPE_CHECKING
+from typing import Iterable, List, TYPE_CHECKING, cast
 
+import pytest
+
+from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
 from cylc.flow.data_store_mgr import (
     EDGES,
     FAMILY_PROXIES,
     JOBS,
-    TASKS,
     TASK_PROXIES,
-    WORKFLOW
+    TASKS,
+    WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_events_mgr import TaskEventsManager
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED,
+)
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
@@ -33,12 +42,14 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import get_current_time_string
 
+
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
 
 
-# NOTE: These tests mutate the data store, so running them in isolation may
-# see failures when they actually pass if you run the whole file
+# NOTE: Some of these tests mutate the data store, so running them in
+# isolation may see failures when they actually pass if you run the
+# whole file
 
 
 def job_config(schd):
@@ -86,6 +97,18 @@ def int_id(_):
 
 def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
+
+
+def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+    """Get all protobuf prerequisites from the data store task proxies."""
+    return [
+        p
+        for t in cast(
+            'Iterable[PbTaskProxy]',
+            schd.data_store_mgr.updated[TASK_PROXIES].values()
+        )
+        for p in t.prerequisites
+    ]
 
 
 @pytest.fixture(scope='module')
@@ -202,7 +225,9 @@ async def test_delta_task_held(harness):
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
     for itask in schd.pool.get_tasks():
         itask.state.reset(is_held=False)
-        schd.data_store_mgr.delta_task_held(itask)
+        schd.data_store_mgr.delta_task_held(
+            itask.tdef.name, itask.point, False
+        )
     assert True not in {
         t.is_held
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
@@ -296,6 +321,7 @@ async def test_update_data_structure(harness):
 
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
+    schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
         [t.identity for t in schd.pool.get_tasks()],
@@ -303,20 +329,15 @@ def test_delta_task_prerequisite(harness):
         [],
         flow=[]
     )
-    assert all({
-        p.satisfied
-        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
-        for p in t.prerequisites})
+    assert all(p.satisfied for p in get_pb_prereqs(schd))
     for itask in schd.pool.get_tasks():
         # set prereqs as not-satisfied
         for prereq in itask.state.prerequisites:
             prereq._all_satisfied = False
-            prereq.satisfied = {key: False for key in prereq.satisfied}
+            for key in prereq:
+                prereq._satisfied[key] = False
         schd.data_store_mgr.delta_task_prerequisite(itask)
-    assert not any({
-        p.satisfied
-        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
-        for p in t.prerequisites})
+    assert not any(p.satisfied for p in get_pb_prereqs(schd))
 
 
 async def test_absolute_graph_edges(flow, scheduler, start):
@@ -350,3 +371,136 @@ async def test_absolute_graph_edges(flow, scheduler, start):
             # +2 for Cylc's runahead
             for cycle in range(1, runahead_cycles + 3)
         }
+
+
+async def test_flow_numbers(flow, scheduler, start):
+    """It should update flow numbers when a task is triggered.
+
+    See https://github.com/cylc/cylc-flow/issues/6114
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+
+        # the task should exist in the original flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[1]'
+
+        # force trigger the task in a new flow
+        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+
+        # update the data store
+        await schd.update_data_structure()
+
+        # the task should now exist in the new flow
+        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        assert ds_task.name == 'b'
+        assert ds_task.flow_nums == '[2]'
+
+
+async def test_delta_task_outputs(one: 'Scheduler', start):
+    """Ensure task outputs are inserted into the store.
+
+    Note: Task outputs should *not* be updated incrementally until we have
+    a protocol for doing so, see https://github.com/cylc/cylc-flow/pull/6403
+    """
+
+    def get_data_outputs():
+        """Return satisfied outputs from the *data* store."""
+        nonlocal one, itask
+        return {
+            output.label
+            for output in one.data_store_mgr.data[one.id][TASK_PROXIES][
+                itask.tokens.id
+            ].outputs.values()
+            if output.satisfied
+        }
+
+    def get_delta_outputs():
+        """Return satisfied outputs from the *delta* store.
+
+        Or return None if there's nothing there.
+        """
+        nonlocal one, itask
+        try:
+            return {
+                output.label
+                for output in one.data_store_mgr.updated[TASK_PROXIES][
+                    itask.tokens.id
+                ].outputs.values()
+                if output.satisfied
+            }
+        except KeyError:
+            return None
+
+    def _patch_remove(*args, **kwargs):
+        """Prevent the task/workflow from completing."""
+        pass
+
+    async with start(one):
+        one.pool.remove = _patch_remove
+
+        # create a job submission
+        itask = one.pool.get_tasks()[0]
+        assert itask
+        itask.submit_num += 1
+        one.data_store_mgr.insert_job(
+            itask.tdef.name, itask.point, itask.state.status, {'submit_num': 1}
+        )
+        await one.update_data_structure()
+
+        # satisfy the submitted & started outputs
+        # (note started implies submitted)
+        one.task_events_mgr.process_message(
+            itask, 'INFO', TaskEventsManager.EVENT_STARTED
+        )
+
+        # the delta should be populated with the newly satisfied outputs
+        assert get_data_outputs() == set()
+        assert get_delta_outputs() == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+        }
+
+        # the delta should be applied to the store
+        await one.update_data_structure()
+        assert get_data_outputs() == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+        }
+        assert get_delta_outputs() is None
+
+        # satisfy the succeeded output
+        one.task_events_mgr.process_message(
+            itask, 'INFO', TaskEventsManager.EVENT_SUCCEEDED
+        )
+
+        # the delta should be populated with ALL satisfied outputs
+        # (not just the newly satisfied output)
+        assert get_data_outputs() == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+        }
+        assert get_delta_outputs() == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+            TASK_OUTPUT_SUCCEEDED,
+        }
+
+        # the delta should be applied to the store
+        await one.update_data_structure()
+        assert get_data_outputs() == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+            TASK_OUTPUT_SUCCEEDED,
+        }
+        assert get_delta_outputs() is None

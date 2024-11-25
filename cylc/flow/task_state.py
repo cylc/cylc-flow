@@ -17,7 +17,14 @@
 """Task state related logic."""
 
 
-from typing import List, Iterable, Set, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Iterable,
+    List,
+    Set,
+)
+
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
@@ -30,8 +37,12 @@ from cylc.flow.task_outputs import (
 )
 from cylc.flow.wallclock import get_current_time_string
 
+
 if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
+    from cylc.flow.prerequisite import PrereqMessage
+    from cylc.flow.taskdef import TaskDef
 
 
 # Task status names and meanings.
@@ -207,12 +218,6 @@ class TaskState:
             Time string of latest update time.
         .xtriggers (dict):
             xtriggers as {trigger (str): satisfied (boolean), ...}.
-        ._is_satisfied (boolean):
-            Are prerequisites satisfied?
-            Reset None to force re-evaluation when a prereq gets satisfied.
-        ._suicide_is_satisfied (boolean):
-            Are prerequisites to trigger suicide satisfied?
-            Reset None to force re-evaluation when a prereq gets satisfied.
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -229,8 +234,6 @@ class TaskState:
         "suicide_prerequisites",
         "time_updated",
         "xtriggers",
-        "_is_satisfied",
-        "_suicide_is_satisfied",
     ]
 
     def __init__(self, tdef, point, status, is_held):
@@ -240,9 +243,6 @@ class TaskState:
         self.is_runahead = True
         self.is_updated = False
         self.time_updated = None
-
-        self._is_satisfied = None
-        self._suicide_is_satisfied = None
 
         # Prerequisites.
         self.prerequisites: List[Prerequisite] = []
@@ -332,12 +332,9 @@ class TaskState:
         """
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
-            yep = prereq.satisfy_me(outputs)
-            if yep:
-                valid = valid.union(yep)
-                continue
-            self._is_satisfied = None
-            self._suicide_is_satisfied = None
+            valid.update(
+                prereq.satisfy_me(outputs)
+            )
         return valid
 
     def xtriggers_all_satisfied(self):
@@ -348,18 +345,9 @@ class TaskState:
         """Return True if all external triggers are satisfied."""
         return all(self.external_triggers.values())
 
-    def set_all_satisfied(self):
-        """Set all my prerequisites satisfied."""
-        for p in self.prerequisites:
-            p.set_satisfied()
-        self._is_satisfied = True
-
     def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
-        if self._is_satisfied is None:
-            self._is_satisfied = all(
-                preq.is_satisfied() for preq in self.prerequisites)
-        return self._is_satisfied
+        return all(preq.is_satisfied() for preq in self.prerequisites)
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
@@ -368,10 +356,7 @@ class TaskState:
 
     def suicide_prerequisites_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
-        if self._suicide_is_satisfied is None:
-            self._suicide_is_satisfied = all(
-                preq.is_satisfied() for preq in self.suicide_prerequisites)
-        return self._suicide_is_satisfied
+        return all(preq.is_satisfied() for preq in self.suicide_prerequisites)
 
     def prerequisites_get_target_points(self):
         """Return a list of cycle points targeted by each prerequisite."""
@@ -381,9 +366,12 @@ class TaskState:
             for point in prerequisite.get_target_points()
         }
 
-    def prerequisites_eval_all(self):
-        """Set all prerequisites to satisfied."""
-        # (Validation: will abort on illegal trigger expressions.)
+    def prerequisites_eval_all(self) -> None:
+        """Evaluate satisifaction of all prerequisites and
+        suicide prerequisites.
+
+        Provides validation - will abort on illegal trigger expressions.
+        """
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
                 preq.is_satisfied()
@@ -392,7 +380,6 @@ class TaskState:
         """Set prerequisites to all satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
-        self._is_satisfied = None
 
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task.
@@ -475,17 +462,15 @@ class TaskState:
         return (TASK_STATUSES_ORDERED.index(self.status) >=
                 TASK_STATUSES_ORDERED.index(status))
 
-    def _add_prerequisites(self, point, tdef):
+    def _add_prerequisites(self, point: 'PointBase', tdef: 'TaskDef'):
         """Add task prerequisites."""
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
-        self._is_satisfied = None
-        self._suicide_is_satisfied = None
 
         # Use dicts to avoid generating duplicate prerequisites from sequences
         # with coincident cycle points.
-        prerequisites = {}
-        suicide_prerequisites = {}
+        prerequisites: Dict[int, Prerequisite] = {}
+        suicide_prerequisites: Dict[int, Prerequisite] = {}
 
         for sequence, dependencies in tdef.dependencies.items():
             if not sequence.is_valid(point):
@@ -508,8 +493,9 @@ class TaskState:
             if adjusted:
                 p_prev = max(adjusted)
                 cpre = Prerequisite(point)
-                cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
-                         p_prev < tdef.start_point)
+                cpre[(p_prev, tdef.name, TASK_STATUS_SUCCEEDED)] = (
+                    p_prev < tdef.start_point
+                )
                 cpre.set_condition(tdef.name)
                 prerequisites[cpre.instantaneous_hash()] = cpre
 
@@ -535,13 +521,9 @@ class TaskState:
             for xtrig_label in xtrig_labels:
                 self.add_xtrigger(xtrig_label)
 
-    def get_unsatisfied_prerequisites(self):
-        unsat = []
-        for prereq in self.prerequisites:
-            if prereq.is_satisfied():
-                continue
-            for key, val in prereq.satisfied.items():
-                if val:
-                    continue
-                unsat.append(key)
-        return unsat
+    def get_unsatisfied_prerequisites(self) -> List['PrereqMessage']:
+        return [
+            key
+            for prereq in self.prerequisites if not prereq.is_satisfied()
+            for key, satisfied in prereq.items() if not satisfied
+        ]

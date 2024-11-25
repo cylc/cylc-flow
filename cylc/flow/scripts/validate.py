@@ -190,7 +190,8 @@ async def run(
             continue
         except Exception as exc:
             raise WorkflowConfigError(
-                'failed to instantiate task %s: %s' % (name, exc))
+                'failed to instantiate task %s: %s' % (name, exc)
+            ) from None
 
         # force trigger evaluation now
         try:
@@ -198,17 +199,21 @@ async def run(
         except TriggerExpressionError as exc:
             err = str(exc)
             if '@' in err:
-                print(f"ERROR, {name}: xtriggers can't be in conditional"
-                      f" expressions: {err}",
-                      file=sys.stderr)
+                print(
+                    f"ERROR, {name}: xtriggers can't be in conditional"
+                    f" expressions: {err}",
+                    file=sys.stderr,
+                )
             else:
-                print('ERROR, %s: bad trigger: %s' % (name, err),
-                      file=sys.stderr)
-            raise WorkflowConfigError("ERROR: bad trigger")
+                print(
+                    'ERROR, %s: bad trigger: %s' % (name, err), file=sys.stderr
+                )
+            raise WorkflowConfigError("ERROR: bad trigger") from None
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             raise WorkflowConfigError(
-                '%s: failed to evaluate triggers.' % name)
+                '%s: failed to evaluate triggers.' % name
+            ) from None
         if cylc.flow.flags.verbosity > 0:
             print('  + %s ok' % itask.identity)
 

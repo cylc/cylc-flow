@@ -77,7 +77,6 @@ from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
 from cylc.flow.workflow_status import RunMode, StopMode
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -211,7 +210,7 @@ async def stop(
         try:
             mode = StopMode(mode)
         except ValueError:
-            raise CommandFailedError(f"Invalid stop mode: '{mode}'")
+            raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
         if mode is StopMode.REQUEST_KILL:
             schd.time_next_kill = time()
@@ -256,19 +255,16 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 
 @_command('kill_tasks')
 async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
-    """Kill all tasks or a task/family if options are provided."""
+    """Kill tasks.
+
+    Args:
+        tasks: Tasks/families/globs to kill.
+    """
     validate.is_tasks(tasks)
     yield
-    itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    if schd.get_run_mode() == RunMode.SIMULATION:
-        for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(TASK_STATUS_FAILED)
-                schd.data_store_mgr.delta_task_state(itask)
-        yield len(bad_items)
-    else:
-        schd.task_job_mgr.kill_task_jobs(schd.workflow, itasks)
-        yield len(bad_items)
+    active, _, unmatched = schd.pool.filter_task_proxies(tasks)
+    num_unkillable = schd.kill_tasks(active)
+    yield len(unmatched) + num_unkillable
 
 
 @_command('hold')
@@ -308,7 +304,7 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
         lvl = int(level)
         LOG.setLevel(lvl)
     except (TypeError, ValueError) as exc:
-        raise CommandFailedError(exc)
+        raise CommandFailedError(exc) from None
     cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
     yield
 

@@ -273,12 +273,12 @@ class XtriggerCollator:
         try:
             func = get_xtrig_func(fctx.mod_name, fctx.func_name, fdir)
         except (ImportError, AttributeError) as exc:
-            raise XtriggerConfigError(label, sig_str, exc)
+            raise XtriggerConfigError(label, sig_str, exc) from None
         try:
             sig = signature(func)
         except TypeError as exc:
             # not callable
-            raise XtriggerConfigError(label, sig_str, exc)
+            raise XtriggerConfigError(label, sig_str, exc) from None
 
         sig = cls._handle_sequential_kwarg(label, fctx, sig)
 
@@ -292,7 +292,7 @@ class XtriggerCollator:
                     label, fctx, err
                 )
             else:
-                raise err
+                raise err from None
 
         # Specific xtrigger.validate(), if available.
         # Note arg string templating has not been done at this point.
@@ -316,7 +316,7 @@ class XtriggerCollator:
                     raise XtriggerConfigError(
                         label, sig_str,
                         f"Illegal template in xtrigger: {match}",
-                    )
+                    ) from None
 
         # check for deprecated template variables
         deprecated_variables = template_vars & {
@@ -387,7 +387,7 @@ class XtriggerCollator:
         except Exception as exc:  # Note: catch all errors
             if not isinstance(exc, WorkflowConfigError):
                 LOG.exception(exc)
-            raise XtriggerConfigError(label, signature_str, exc)
+            raise XtriggerConfigError(label, signature_str, exc) from None
 
     # BACK COMPAT: workflow_state_backcompat
     # from: 8.0.0
@@ -413,7 +413,7 @@ class XtriggerCollator:
             bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
         except TypeError:
             # failed signature check for backcompat function
-            raise err  # original signature check error
+            raise err from None  # original signature check error
 
         old_sig_str = fctx.get_signature()
         upg_sig_str = "workflow_state({})".format(

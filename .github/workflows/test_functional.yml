@@ -335,7 +335,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           name: ${{ github.workflow }}
           flags: functional-tests

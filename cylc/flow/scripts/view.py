@@ -21,7 +21,7 @@
 Print a processed workflow configuration.
 
 Print workflow configurations as processed before full parsing by Cylc. This
-includes Jinja2 or Empy template processing, and inlining of include-files.
+includes Jinja2 template processing, and inlining of include-files.
 Some explanatory markup may also be requested.
 
 Warning:
@@ -64,12 +64,6 @@ def get_option_parser():
         default=False, dest="inline")
 
     parser.add_option(
-        "--empy", "-e",
-        help="View after EmPy template processing "
-             "(implies '-i/--inline' as well).",
-        action="store_true", default=False, dest="empy")
-
-    parser.add_option(
         "--jinja2", "-j",
         help="View after Jinja2 template processing "
              "(implies '-i/--inline' as well).",
@@ -77,7 +71,7 @@ def get_option_parser():
 
     parser.add_option(
         "-p", "--process",
-        help="View after all processing (EmPy, Jinja2, inlining, "
+        help="View after all processing (Jinja2, inlining, "
              "line-continuation joining).",
         action="store_true", default=False, dest="process")
 
@@ -138,13 +132,9 @@ async def _main(options: 'Values', workflow_id: str) -> None:
             'mark': options.mark,
             'single': options.single,
             'label': options.label,
-            'empy': options.empy or options.process,
             'jinja2': options.jinja2 or options.process,
             'contin': options.cat or options.process,
-            'inline': (
-                options.jinja2 or options.empy or
-                options.inline or options.process
-            ),
+            'inline': options.jinja2 or options.inline or options.process,
         },
         opts=options,
     ):

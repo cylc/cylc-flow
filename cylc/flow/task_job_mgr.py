@@ -35,7 +35,13 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Any, Union, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    Optional,
+    Union,
+)
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -51,10 +57,6 @@ from cylc.flow.hostuserutil import (
     is_remote_platform
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.parsec.util import (
-    pdeepcopy,
-    poverride
-)
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -103,7 +105,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
-    TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -176,22 +177,12 @@ class TaskJobManager:
         if poll_tasks:
             self.poll_task_jobs(workflow, poll_tasks)
 
-    def kill_task_jobs(self, workflow, itasks):
-        """Kill jobs of active tasks, and hold the tasks.
-
-        If items is specified, kill active tasks matching given IDs.
-
-        """
-        to_kill_tasks = []
-        for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(is_held=True)
-                self.data_store_mgr.delta_task_held(itask)
-                to_kill_tasks.append(itask)
-            else:
-                LOG.warning(f"[{itask}] not killable")
+    def kill_task_jobs(
+        self, workflow: str, itasks: 'Iterable[TaskProxy]'
+    ) -> None:
+        """Issue the command to kill jobs of active tasks."""
         self._run_job_cmd(
-            self.JOBS_KILL, workflow, to_kill_tasks,
+            self.JOBS_KILL, workflow, itasks,
             self._kill_task_jobs_callback,
             self._kill_task_jobs_callback_255
         )
@@ -1126,14 +1117,9 @@ class TaskJobManager:
             return itask
 
         # Handle broadcasts
-        overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.tokens
+        rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+            itask
         )
-        if overrides:
-            rtconfig = pdeepcopy(itask.tdef.rtconfig)
-            poverride(rtconfig, overrides, prepend=True)
-        else:
-            rtconfig = itask.tdef.rtconfig
 
         # BACK COMPAT: host logic
         # Determine task host or platform now, just before job submission,

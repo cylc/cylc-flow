@@ -78,7 +78,7 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
         contact = load_contact_file(workflow)
     except (IOError, ValueError, ServiceFileError):
         # Contact file does not exist or corrupted, workflow should be dead
-        raise WorkflowStopped(workflow)
+        raise WorkflowStopped(workflow) from None
 
     host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
@@ -176,16 +176,14 @@ class ZMQSocketBase:
                 srv_prv_key_info.full_key_path)
         except ValueError:
             raise ServiceFileError(
-                f"Failed to find server's public "
-                f"key in "
+                "Failed to find server's public key in "
                 f"{srv_prv_key_info.full_key_path}."
-            )
-        except OSError:
+            ) from None
+        except OSError as exc:
             raise ServiceFileError(
-                f"IO error opening server's private "
-                f"key from "
+                "IO error opening server's private key from "
                 f"{srv_prv_key_info.full_key_path}."
-            )
+            ) from exc
         if server_private_key is None:  # this can't be caught by exception
             raise ServiceFileError(
                 f"Failed to find server's private "
@@ -204,7 +202,9 @@ class ZMQSocketBase:
                 self.port = self.socket.bind_to_random_port(
                     'tcp://*', min_port, max_port)
         except (zmq.error.ZMQError, zmq.error.ZMQBindError) as exc:
-            raise CylcError(f'could not start Cylc ZMQ server: {exc}')
+            raise CylcError(
+                f'could not start Cylc ZMQ server: {exc}'
+            ) from None
 
     # Keeping srv_public_key_loc as optional arg so as to not break interface
     def _socket_connect(self, host, port, srv_public_key_loc=None):
@@ -236,8 +236,10 @@ class ZMQSocketBase:
         try:
             client_public_key, client_priv_key = zmq.auth.load_certificate(
                 client_priv_key_info.full_key_path)
-        except (OSError, ValueError):
-            raise ClientError(error_msg)
+        except ValueError:
+            raise ClientError(error_msg) from None
+        except OSError as exc:
+            raise ClientError(error_msg) from exc
         if client_priv_key is None:  # this can't be caught by exception
             raise ClientError(error_msg)
         self.socket.curve_publickey = client_public_key
@@ -245,6 +247,9 @@ class ZMQSocketBase:
 
         # A client can only connect to the server if it knows its public key,
         # so we grab this from the location it was created on the filesystem:
+        error_msg = (
+            "Failed to load the workflow's public key, so cannot connect."
+        )
         try:
             # 'load_certificate' will try to load both public & private keys
             # from a provided file but will return None, not throw an error,
@@ -254,9 +259,10 @@ class ZMQSocketBase:
             server_public_key = zmq.auth.load_certificate(
                 srv_pub_key_info.full_key_path)[0]
             self.socket.curve_serverkey = server_public_key
-        except (OSError, ValueError):  # ValueError raised w/ no public key
-            raise ClientError(
-                "Failed to load the workflow's public key, so cannot connect.")
+        except ValueError:  # ValueError raised w/ no public key
+            raise ClientError(error_msg) from None
+        except OSError as exc:
+            raise ClientError(error_msg) from exc
 
         self.socket.connect(f'tcp://{host}:{port}')
 
