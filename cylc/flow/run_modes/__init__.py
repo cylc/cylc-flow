@@ -66,18 +66,17 @@ class RunMode(Enum):
         """
         if self == self.LIVE:
             return "Task will run normally."
-        if self == self.SKIP:
+        elif self == self.SKIP:
             return (
                 "Skips job submission; sets required outputs"
                 " (by default) or configured outputs.")
-        if self == self.DUMMY:
+        elif self == self.DUMMY:
             return "Submits real jobs with empty scripts."
-        if self == self.SIMULATION:
+        else:   # self == self.SIMULATION:
             return (
                 "Simulates job submission with configurable"
                 " exection time and succeeded/failed outcomes"
                 " (but does not submit real jobs).")
-        raise KeyError(f'No description for {self}.')
 
     @staticmethod
     def get(options: 'Values') -> "RunMode":

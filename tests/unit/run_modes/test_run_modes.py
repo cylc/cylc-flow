@@ -23,3 +23,8 @@ def test_run_mode_desc():
     """All run mode labels have descriptions."""
     for mode in RunMode:
         assert mode.describe()
+
+
+def test_get_default_live():
+    """RunMode.get() => live"""
+    assert RunMode.get({}) == RunMode.LIVE
