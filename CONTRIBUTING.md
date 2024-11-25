@@ -96,6 +96,7 @@ requests_).
  - Diquan Jabbour
  - Shixian Sheng
  - Utheri Wagura
+ - Maxime Rio
  - Paul Armstrong
  - Paul Earnshaw
 <!-- end-shortlog -->
