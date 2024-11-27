@@ -2156,7 +2156,12 @@ class Trigger(Mutation, TaskMutation):
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        ...
+        now = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Trigger now, even if the workflow is paused.
+            ''')
+        )
 
 
 def _mut_field(cls):

@@ -478,7 +478,6 @@ class Scheduler:
                 get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
-            self.start_job_submission,
             self.tokens,
             self.config,
             self.workflow_db_mgr,
@@ -1266,8 +1265,8 @@ class Scheduler:
             return
         self.workflow_event_handler.handle(self, event, str(reason))
 
-    def release_queued_tasks(self) -> bool:
-        """Release queued tasks, and submit jobs.
+    def release_tasks_to_run(self) -> bool:
+        """Release queued or manually submitted tasks, and submit jobs.
 
         The task queue manages references to task proxies in the task pool.
 
@@ -1291,14 +1290,26 @@ class Scheduler:
             submission).
 
         """
+        pre_prep_tasks = []
         if (
-            not self.is_paused
-            and self.stop_mode is None
+            self.stop_mode is None
             and self.auto_restart_time is None
             and self.reload_pending is False
         ):
-            pre_prep_tasks = self.pool.release_queued_tasks()
+            if self.pool.tasks_to_trigger_now:
+                # manually triggered tasks to run even if paused
+                pre_prep_tasks = self.pool.tasks_to_trigger_now
+                self.pool.tasks_to_trigger_now = []
 
+            elif not self.is_paused:
+                if self.pool.tasks_to_trigger:
+                    # manually triggered tasks to run only if not paused
+                    # TODO handle switch to NOW!
+                    pre_prep_tasks = self.pool.tasks_to_trigger
+                    self.pool.tasks_to_trigger = []
+                else:
+                    # release queued tasks
+                    pre_prep_tasks = self.pool.release_queued_tasks()
         elif (
             (
                 # Need to get preparing tasks to submit before auto restart
@@ -1597,7 +1608,7 @@ class Scheduler:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
         self.pool.clock_expire_tasks()
-        self.release_queued_tasks()
+        self.release_tasks_to_run()
 
         if (
             self.get_run_mode() == RunMode.SIMULATION

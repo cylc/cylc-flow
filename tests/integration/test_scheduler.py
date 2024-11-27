@@ -170,7 +170,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         # release runahead/queued tasks
         # (nothing should happen because the scheduler is paused)
         one.pool.release_runahead_tasks()
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
@@ -179,7 +179,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (there should be no change because the task is still held)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # release all tasks
@@ -187,7 +187,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (the task should be submitted)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert len(submitted_tasks) == 1
 
 
@@ -387,7 +387,7 @@ async def test_restart_timeout(
         assert log_filter(log, contains='restart timer starts NOW')
 
         # when we trigger tasks the timeout should be cleared
-        schd.pool.force_trigger_tasks(['1/one'], {1})
+        schd.pool.force_trigger_tasks(['1/one'], {1}, now=True)
 
         # allow time for the log to update
         await asyncio.sleep(3)

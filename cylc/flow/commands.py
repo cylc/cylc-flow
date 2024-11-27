@@ -329,7 +329,7 @@ async def reload_workflow(schd: 'Scheduler'):
 
     # flush out preparing tasks before attempting reload
     schd.reload_pending = 'waiting for pending tasks to submit'
-    while schd.release_queued_tasks():
+    while schd.release_tasks_to_run():
         # Run the subset of main-loop functionality required to push
         # preparing through the submission pipeline and keep the workflow
         # responsive (e.g. to the `cylc stop` command).
@@ -437,9 +437,12 @@ async def force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
+    now: bool = False
 ):
     """Manual task trigger."""
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     yield
-    yield schd.pool.force_trigger_tasks(tasks, flow, flow_wait, flow_descr)
+    yield schd.pool.force_trigger_tasks(
+        tasks, flow, flow_wait, flow_descr, now
+    )

@@ -21,7 +21,6 @@ from collections import Counter
 import json
 from textwrap import indent
 from typing import (
-    Callable,
     Dict,
     Iterable,
     List,
@@ -110,7 +109,6 @@ class TaskPool:
 
     def __init__(
         self,
-        start_job_submission_func: Callable,
         tokens: 'Tokens',
         config: 'WorkflowConfig',
         workflow_db_mgr: 'WorkflowDatabaseManager',
@@ -119,7 +117,6 @@ class TaskPool:
         data_store_mgr: 'DataStoreMgr',
         flow_mgr: 'FlowMgr'
     ) -> None:
-        self.start_job_submission_func = start_job_submission_func
         self.tokens = tokens
         self.config: 'WorkflowConfig' = config
         self.stop_point = config.stop_point or config.final_point
@@ -157,6 +154,8 @@ class TaskPool:
             self.config.runtime['descendants']
         )
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
+        self.tasks_to_trigger: List[TaskProxy] = []
+        self.tasks_to_trigger_now: List[TaskProxy] = []
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -2111,7 +2110,7 @@ class TaskPool:
             for n in flow
         }
 
-    def _force_trigger(self, itask):
+    def _force_trigger(self, itask: 'TaskProxy', now: bool = False):
         """Force a task to trigger.
 
         Assumes the task is in the pool.
@@ -2120,11 +2119,14 @@ class TaskPool:
         than relying on queue processing in the scheduler main loop, so that
         manual trigger works even if the worklfow is paused.
 
-        Triggering an un-queued task will:
-        - run it now, if its queue is not full
-        - or queue it, if its queue is full
+        - Triggering an un-queued task will:
+          - run it now, if its queue is not full
+          - or queue it, if its queue is full
+        - Triggering a queued task will run it now.
 
-        Triggering a queued task will run it now.
+        If the workflow is paused: add triggered tasks to
+        - if "now" is True, run itask now
+        - else, add itask to tasks_to_trigger, to be run when unpaused.
 
         """
         itask.is_manual_submit = True
@@ -2159,7 +2161,10 @@ class TaskPool:
         if not itask.state.is_queued:
             # if not queued after the above, run it now
             itask.waiting_on_job_prep = True
-            self.start_job_submission_func([itask])
+            if now:
+                self.tasks_to_trigger_now.append(itask)
+            else:
+                self.tasks_to_trigger.append(itask)
 
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
@@ -2170,7 +2175,8 @@ class TaskPool:
         items: Iterable[str],
         flow: List[str],
         flow_wait: bool = False,
-        flow_descr: Optional[str] = None
+        flow_descr: Optional[str] = None,
+        now: bool = False
     ):
         """Force tasks to trigger (user command).
 
@@ -2208,7 +2214,7 @@ class TaskPool:
                 LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
             self.merge_flows(itask, flow_nums)
-            self._force_trigger(itask)
+            self._force_trigger(itask, now)
 
         # Spawn and trigger inactive tasks.
         if not flow:
@@ -2243,7 +2249,7 @@ class TaskPool:
 
             # run it (or run it again for incomplete flow-wait)
             self.add_to_pool(itask)
-            self._force_trigger(itask)
+            self._force_trigger(itask, now)
 
     def spawn_parentless_sequential_xtriggers(self):
         """Spawn successor(s) of parentless wall clock satisfied tasks."""

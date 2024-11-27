@@ -462,8 +462,9 @@ class TaskProxy:
 
         """
         if self.is_manual_submit:
-            # Manually triggered, ignore unsatisfied prerequisites.
-            return (True,)
+            # Manually triggered tasks are run by this mechansim.
+            # TODO GET RID OF THIS
+            return (False,)
         if self.state.is_held:
             # A held task is not ready to run.
             return (False,)

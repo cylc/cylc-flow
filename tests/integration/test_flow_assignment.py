@@ -46,7 +46,7 @@ async def test_trigger_no_flows(one, start):
 
         # Trigger the task, with new flow nums.
         time.sleep(2)  # The flows need different timestamps!
-        one.pool.force_trigger_tasks([task.identity], flow=['5', '9'])
+        one.pool.force_trigger_tasks([task.identity], flow=['5', '9'], now=True)
         assert len(one.pool.get_tasks()) == 1
 
         # Ensure the new flow is in the db.
@@ -58,7 +58,7 @@ async def test_trigger_no_flows(one, start):
         assert len(one.pool.get_tasks()) == 0
 
         # Trigger the task; it should get flow nums 5, 9
-        one.pool.force_trigger_tasks([task.identity], [FLOW_ALL])
+        one.pool.force_trigger_tasks([task.identity], [FLOW_ALL], now=True)
         assert len(one.pool.get_tasks()) == 1
         task = one.pool.get_tasks()[0]
         assert task.flow_nums == {5, 9}
@@ -169,7 +169,8 @@ async def test_flow_assignment_set(
         # set --pre=all should not cause a task to submit in a paused workflow
         assert len(submitted_tasks) == 0
         # but triggering it should
-        schd.pool.force_trigger_tasks(['1/a'], [])
+        schd.pool.force_trigger_tasks(['1/a'], [], now=True)
+        schd.release_tasks_to_run()
         assert len(submitted_tasks) == 1
  
         # Else assign requested flows.
@@ -234,11 +235,13 @@ async def test_flow_assignment_trigger(
 
         # By default active tasks keep existing flow assignment.
         # This trigger makes the task literally active (submitted, running)
-        do_command([active_x.identity], flow=[])
+        do_command([active_x.identity], flow=[], now=True)
+        schd.release_tasks_to_run()
         assert active_x.flow_nums == {1}
 
         # Triggering it again will be ignored (already active).
-        do_command([active_x.identity], flow=[FLOW_ALL])
+        do_command([active_x.identity], flow=[FLOW_ALL], now=True)
+        schd.release_tasks_to_run()
         assert active_x.flow_nums == {1}
         assert log_filter(
             log,
@@ -250,18 +253,23 @@ async def test_flow_assignment_trigger(
 
         # -----(2. Test inactive tasks)-----
         # By default inactive tasks get all active flows.
-        do_command(['1/a'], flow=[])
+        do_command(['1/a'], flow=[], now=True)
+        schd.release_tasks_to_run()
         assert schd.pool._get_task_by_id('1/a').flow_nums == {1, 2}
 
         # Else assign requested flows.
-        do_command(['1/b'], flow=[FLOW_NONE])
+        do_command(['1/b'], flow=[FLOW_NONE], now=True)
+        schd.release_tasks_to_run()
         assert schd.pool._get_task_by_id('1/b').flow_nums == set()
 
-        do_command(['1/c'], flow=[FLOW_NEW])
+        do_command(['1/c'], flow=[FLOW_NEW], now=True)
+        schd.release_tasks_to_run()
         assert schd.pool._get_task_by_id('1/c').flow_nums == {3}
 
-        do_command(['1/d'], flow=[FLOW_ALL])
+        do_command(['1/d'], flow=[FLOW_ALL], now=True)
+        schd.release_tasks_to_run()
         assert schd.pool._get_task_by_id('1/d').flow_nums == {1, 2, 3}
 
-        do_command(['1/e'], flow=[7])
+        do_command(['1/e'], flow=[7], now=True)
+        schd.release_tasks_to_run()
         assert schd.pool._get_task_by_id('1/e').flow_nums == {7}

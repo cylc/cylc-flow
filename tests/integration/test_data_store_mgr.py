@@ -396,7 +396,7 @@ async def test_flow_numbers(flow, scheduler, start):
         assert ds_task.flow_nums == '[1]'
 
         # force trigger the task in a new flow
-        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+        schd.pool.force_trigger_tasks(['1/b'], ['2'], now=True)
 
         # update the data store
         await schd.update_data_structure()

@@ -97,7 +97,7 @@ async def test_trigger(sequential, start):
         assert list_cycles(sequential) == ['2000']
 
         foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
-        sequential.pool.force_trigger_tasks([foo.identity], {1})
+        sequential.pool.force_trigger_tasks([foo.identity], {1}, now=True)
         foo.state_reset('succeeded')
         sequential.pool.spawn_on_output(foo, 'succeeded')
 

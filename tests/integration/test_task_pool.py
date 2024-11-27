@@ -511,7 +511,7 @@ async def test_trigger_states(
         task.state.reset(status)
 
         # try triggering the task
-        one.pool.force_trigger_tasks(['1/one'], [FLOW_ALL])
+        one.pool.force_trigger_tasks(['1/one'], [FLOW_ALL], now=True)
 
         # check whether the task triggered
         assert task.is_manual_submit == should_trigger
@@ -705,7 +705,7 @@ async def test_restart_prereqs(
     async with start(schd):
         # Release tasks 1/a and 1/b
         schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
         # Mark 1/a as succeeded and spawn 1/z
@@ -828,7 +828,7 @@ async def test_reload_prereqs(
     async with start(schd):
         # Release tasks 1/a and 1/b
         schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
         # Mark 1/a as succeeded and spawn 1/z
@@ -865,7 +865,7 @@ async def _test_restart_prereqs_sat():
 
     # Release tasks 1/a and 1/b
     schd.pool.release_runahead_tasks()
-    schd.release_queued_tasks()
+    schd.release_tasks_to_run()
     assert list_tasks(schd) == [
         ('1', 'a', 'running'),
         ('1', 'b', 'running')
@@ -1973,7 +1973,7 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        schd.pool.force_trigger_tasks(['1/b'], ['1'], now=True)
         assert log_filter(
             log,
             regex='1/b.*added to active task pool',
@@ -1988,7 +1988,7 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        schd.pool.force_trigger_tasks(['1/b'], ['1'], now=True)
         assert log_filter(
             log,
             regex='1/b.*added to active task pool',
@@ -2095,7 +2095,7 @@ async def test_trigger_queue(one, run, db_select, complete):
         assert task.flow_nums == {1}
 
         # trigger this task even though is already queued in flow 1
-        one.pool.force_trigger_tasks([task.identity], '2')
+        one.pool.force_trigger_tasks([task.identity], '2', now=True)
 
         # the merged flow should continue
         one.resume_workflow()

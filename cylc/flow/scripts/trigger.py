@@ -17,11 +17,16 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run regardless of prerequisites, even in a paused worklfow.
+Manually trigger tasks to run regardless of their prerequisites.
 
+In a paused workflow use --now to trigger tasks now; otherwise they will run
+when the workflow is played (un-paused) again.
+
+Triggering an already-active task (submitted, running) has no effect.
+
+Two triggers may be needed to run a task if its queue is full:
 * Triggering an unqueued waiting task queues it, regardless of prerequisites.
 * Triggering a queued task submits it, regardless of queue limiting.
-* Triggering an active task has no effect (it already triggered).
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -74,13 +79,15 @@ mutation (
   $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
+  $now: Boolean,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
     flow: $flow,
     flowWait: $flowWait,
-    flowDescr: $flowDescr
+    flowDescr: $flowDescr,
+    now: $now,
   ) {
     result
   }
@@ -96,7 +103,16 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts(parser)
+
+    parser.add_option(
+        "--now",
+        help=r"Trigger now, even if the workflow is paused.",
+        action="store_true",
+        default=False,
+        dest="now"
+    )
     return parser
 
 
@@ -114,6 +130,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
+            'now': options.now,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)
