@@ -283,7 +283,8 @@ DEAD_ENDS = {
     'gscan':
         'cylc gscan has been removed, use the web UI',
     'insert':
-        'inserting tasks is now done automatically',
+        'Insertion is now automatic: Use `cylc set` or `cylc trigger`'
+        ' to re-run old tasks.',
     'jobscript':
         'cylc jobscript has been removed',
     'nudge':
