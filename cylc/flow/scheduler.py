@@ -640,6 +640,19 @@ class Scheduler:
                     self.restart_remote_init()
                     await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
 
+                    # If we shut down with manually triggered waiting tasks,
+                    # submit them to run now.
+                    pre_prep_tasks = []
+                    for itask in self.pool.get_tasks():
+                        if (
+                            itask.is_manual_submit
+                            and itask.state(TASK_STATUS_WAITING)
+                        ):
+                            itask.waiting_on_job_prep = True
+                            pre_prep_tasks.append(itask)
+
+                    self.start_job_submission(pre_prep_tasks)
+
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -828,6 +841,7 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
+
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
 
@@ -1598,7 +1612,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if all(itask.is_ready_to_run()):
+            if all(itask.is_ready_to_run()) and not itask.is_manual_submit:
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.sequential_spawn_next:

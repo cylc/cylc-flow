@@ -457,14 +457,9 @@ class TaskProxy:
     def is_ready_to_run(self) -> Tuple[bool, ...]:
         """Is this task ready to run?
 
-        Takes account of all dependence: on other tasks, xtriggers, and
-        old-style ext-triggers. Or, manual triggering.
+        Return True if not held, no active try timers, and prerequisites done.
 
         """
-        if self.is_manual_submit:
-            # Manually triggered tasks are run by this mechansim.
-            # TODO GET RID OF THIS
-            return (False,)
         if self.state.is_held:
             # A held task is not ready to run.
             return (False,)
