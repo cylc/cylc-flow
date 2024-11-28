@@ -498,6 +498,15 @@ def test_advanced_exclusions_sequences_implied_start_point(set_cycling_type):
     ]
 
 
+def test_point_init():
+    """It should error if inited with anything other than a string."""
+    ISO8601Point('1000')
+    with pytest.raises(TypeError):
+        ISO8601Point(1000)
+    with pytest.raises(TypeError):
+        ISO8601Interval(1000)
+
+
 def test_exclusions_sequences_points(set_cycling_type):
     """Test ISO8601Sequence methods for sequences with exclusions"""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")

@@ -104,6 +104,10 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
     name
     cyclePoint
     state
+    isHeld
+    isQueued
+    isRunahead
+    flowNums
     task {
       meta {
         title
@@ -334,7 +338,25 @@ async def prereqs_and_outputs_query(
                         f'<bold>{key}:</bold>'
                         f' {value or "<m>(not given)</m>"}')
 
-                ansiprint(f'<bold>state:</bold> {state}')
+                # state and state attributes
+                attrs = []
+                if t_proxy['isHeld']:
+                    attrs.append("held")
+                if t_proxy['isQueued']:
+                    attrs.append("queued")
+                if t_proxy['isRunahead']:
+                    attrs.append("runahead")
+                state_msg = state
+                if attrs:
+                    state_msg += f" ({','.join(attrs)})"
+                ansiprint(f'<bold>state:</bold> {state_msg}')
+
+                # flow numbers, if not just 1
+                if t_proxy["flowNums"] != "[1]":
+                    ansiprint(
+                        f"<bold>flows:</bold> "
+                        f"{t_proxy['flowNums'].replace(' ','')}"
+                    )
 
                 # prerequisites
                 pre_txt = "<bold>prerequisites:</bold>"

@@ -421,8 +421,6 @@ FAM_NAME_IGNORE_REGEX = re.compile(
         | <[^>]+>
         # or Jinja2
         | {{.*?}} | {%.*?%} | {\#.*?\#}
-        # or EmPy
-        | (@[\[{\(]).*([\]\}\)])
     ''',
     re.X
 )
@@ -619,7 +617,13 @@ STYLE_CHECKS = {
             for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
         )),
         FUNCTION: check_wallclock_directives,
-    }
+    },
+    'S015': {
+        'short': (
+            '``=>`` implies line continuation without ``\\``.'
+        ),
+        FUNCTION: re.compile(r'=>\s*\\').findall
+    },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
@@ -786,6 +790,12 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: functools.partial(
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+    },
+    'U017': {
+        'short': (
+            '``&`` and ``|`` imply line continuation without ``\\``'
+        ),
+        FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']

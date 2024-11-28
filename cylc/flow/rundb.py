@@ -504,7 +504,7 @@ class CylcWorkflowDAO:
 
         # something went wrong
         # (includes DB file not found, transaction processing issue, db locked)
-        except sqlite3.Error:
+        except sqlite3.Error as e:
             if not self.is_public:
                 # incase this isn't a filesystem issue, log the statements
                 # which make up the transaction to assist debug
@@ -516,8 +516,13 @@ class CylcWorkflowDAO:
                 raise
             self.n_tries += 1
             LOG.warning(
-                "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
-                    "file": self.db_file_name, "attempt": self.n_tries})
+                "%(file)s: write attempt (%(attempt)d)"
+                " did not complete: %(error)s\n" % {
+                    "file": self.db_file_name,
+                    "attempt": self.n_tries,
+                    "error": str(e)
+                }
+            )
             if self.conn is not None:
                 with suppress(sqlite3.Error):
                     self.conn.rollback()

@@ -344,12 +344,11 @@ CONTACT_FILE_EXISTS_MSG = r"""workflow contact file exists: %(fname)s
 
 Workflow "%(workflow)s" is already running, listening at "%(host)s:%(port)s".
 
-To start a new run, stop the old one first with one or more of these:
+If you like, you can stop it with one or more of the following commands:
 * cylc stop %(workflow)s              # wait for active tasks/event handlers
 * cylc stop --kill %(workflow)s       # kill active tasks and wait
-
 * cylc stop --now %(workflow)s        # don't wait for active tasks
-* cylc stop --now --now %(workflow)s  # don't wait
+* cylc stop --now --now %(workflow)s  # don't wait for tasks or handlers
 * ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
