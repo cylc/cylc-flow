@@ -2357,22 +2357,42 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def delta_task_flow_nums(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy flow_nums.
+        """Create delta for change in task proxy flow numbers.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
+            itask: TaskProxy with updated flow numbers.
         """
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
+        self._delta_task_flow_nums(tp_id, itask.flow_nums)
+
+    def delta_remove_task_flow_nums(
+        self, task: str, removed: 'FlowNums'
+    ) -> None:
+        """Create delta for removal of flow numbers from a task proxy.
+
+        Args:
+            task: Relative ID of task.
+            removed: Flow numbers to remove from the task proxy in the
+                data store.
+        """
+        tproxy: Optional[PbTaskProxy]
+        tp_id, tproxy = self.store_node_fetcher(
+            Tokens(task, relative=True).duplicate(**self.id_)
+        )
+        if not tproxy:
+            return
+        new_flow_nums = deserialise_set(tproxy.flow_nums).difference(removed)
+        self._delta_task_flow_nums(tp_id, new_flow_nums)
+
+    def _delta_task_flow_nums(self, tp_id: str, flow_nums: 'FlowNums') -> None:
+        tp_delta: PbTaskProxy = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
         tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.flow_nums = serialise_set(itask.flow_nums)
+        tp_delta.flow_nums = serialise_set(flow_nums)
         self.updates_pending = True
 
     def delta_task_output(

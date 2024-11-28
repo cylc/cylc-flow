@@ -174,8 +174,8 @@ def test_graph_upgrade_msg_default(flow, validate, caplog, log_filter):
         },
     })
     validate(id_)
-    assert log_filter(caplog, contains='[scheduling][dependencies][X]graph')
-    assert log_filter(caplog, contains='for X in:\n       P1Y, R1')
+    assert log_filter(contains='[scheduling][dependencies][X]graph')
+    assert log_filter(contains='for X in:\n       P1Y, R1')
 
 
 def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
@@ -192,8 +192,8 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
     })
     validate(id_)
     assert log_filter(
-        caplog,
-        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1')
+        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1'
+    )
 
 
 def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
@@ -216,7 +216,7 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
         '\n       P1Y, graph'
         '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
     )
-    assert log_filter(caplog, contains=expect)
+    assert log_filter(contains=expect)
 
 
 def test_undefined_parent(flow, validate):
@@ -248,5 +248,5 @@ def test_log_parent_demoted(flow, validate, monkeypatch, caplog, log_filter):
         }
     })
     validate(id_)
-    assert log_filter(caplog, contains='First parent(s) demoted to secondary')
-    assert log_filter(caplog, contains="FOO as parent of 'foo'")
+    assert log_filter(contains='First parent(s) demoted to secondary')
+    assert log_filter(contains="FOO as parent of 'foo'")

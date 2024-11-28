@@ -238,7 +238,7 @@ class Dependency:
                     task_trigger.task_name,
                     task_trigger.output,
                 )] = False
-        cpre.set_condition(self.get_expression(point))
+        cpre.set_conditional_expr(self.get_expression(point))
         return cpre
 
     def get_expression(self, point):

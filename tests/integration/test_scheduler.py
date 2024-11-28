@@ -174,7 +174,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
-        await commands.run_cmd(commands.hold, one, ['*/*'])
+        await commands.run_cmd(commands.hold(one, ['*/*']))
         one.resume_workflow()
 
         # release queued tasks
@@ -183,7 +183,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert submitted_tasks == set()
 
         # release all tasks
-        await commands.run_cmd(commands.release, one, ['*/*'])
+        await commands.run_cmd(commands.release(one, ['*/*']))
 
         # release queued tasks
         # (the task should be submitted)
@@ -219,12 +219,12 @@ async def test_no_poll_waiting_tasks(
         polled_tasks = capture_polling(one)
 
         # Waiting tasks should not be polled.
-        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+        await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
         assert polled_tasks == set()
 
         # Even if they have a submit number.
         task.submit_num = 1
-        await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+        await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
         assert len(polled_tasks) == 0
 
         # But these states should be:
@@ -235,7 +235,7 @@ async def test_no_poll_waiting_tasks(
             TASK_STATUS_RUNNING
         ]:
             task.state.status = state
-            await commands.run_cmd(commands.poll_tasks, one, ['*/*'])
+            await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
             assert len(polled_tasks) == 1
             polled_tasks.clear()
 
@@ -267,7 +267,7 @@ async def test_unexpected_ParsecError(
             pass
 
     assert log_filter(
-        log, level=logging.CRITICAL,
+        logging.CRITICAL,
         exact_match="Workflow shutting down - Mock error"
     )
     assert TRACEBACK_MSG in log.text
@@ -295,7 +295,7 @@ async def test_error_during_auto_restart(
         async with run(one) as log:
             pass
 
-    assert log_filter(log, level=logging.ERROR, contains=err_msg)
+    assert log_filter(logging.ERROR, err_msg)
     assert TRACEBACK_MSG in log.text
 
 
@@ -361,20 +361,19 @@ async def test_restart_timeout(
 
     # restart the completed workflow
     schd = scheduler(id_)
-    async with run(schd) as log:
+    async with run(schd):
         # it should detect that the workflow has completed and alert the user
         assert log_filter(
-            log,
             contains='This workflow already ran to completion.'
         )
 
         # it should activate a timeout
-        assert log_filter(log, contains='restart timer starts NOW')
+        assert log_filter(contains='restart timer starts NOW')
 
         # when we trigger tasks the timeout should be cleared
         schd.pool.force_trigger_tasks(['1/one'], {1})
         await asyncio.sleep(0)  # yield control to the main loop
-        assert log_filter(log, contains='restart timer stopped')
+        assert log_filter(contains='restart timer stopped')
 
 
 @pytest.mark.parametrize("signal", ((SIGHUP), (SIGINT), (SIGTERM)))
@@ -387,14 +386,14 @@ async def test_signal_escallation(one, start, signal, log_filter):
 
     See https://github.com/cylc/cylc-flow/pull/6444
     """
-    async with start(one) as log:
+    async with start(one):
         # put the workflow in the stopping state
         one._set_stop(StopMode.REQUEST_CLEAN)
         assert one.stop_mode.name == 'REQUEST_CLEAN'
 
         # one signal should escalate this from CLEAN to NOW
         one._handle_signal(signal, None)
-        assert log_filter(log, contains=signal.name)
+        assert log_filter(contains=signal.name)
         assert one.stop_mode.name == 'REQUEST_NOW'
 
         # two signals should escalate this from NOW to NOW_NOW

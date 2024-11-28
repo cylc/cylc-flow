@@ -18,28 +18,41 @@
 import asyncio
 from collections import deque
 from contextlib import suppress
+import itertools
 import os
 from pathlib import Path
-from queue import Empty, Queue
+from queue import (
+    Empty,
+    Queue,
+)
 from shlex import quote
 import signal
 from socket import gaierror
-from subprocess import DEVNULL, PIPE, Popen
+from subprocess import (
+    DEVNULL,
+    PIPE,
+    Popen,
+)
 import sys
-from threading import Barrier, Thread
-from time import sleep, time
+from threading import (
+    Barrier,
+    Thread,
+)
+from time import (
+    sleep,
+    time,
+)
 import traceback
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncGenerator,
-    Callable,
     Dict,
     Iterable,
     List,
     NoReturn,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Union,
 )
@@ -50,13 +63,14 @@ import psutil
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
+    commands,
     main_loop,
+    workflow_files,
 )
-from cylc.flow import workflow_files
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow import commands
+from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.exceptions import (
     CommandFailedError,
@@ -64,7 +78,12 @@ from cylc.flow.exceptions import (
     InputError,
 )
 import cylc.flow.flags
-from cylc.flow.flow_mgr import FLOW_NEW, FLOW_NONE, FlowMgr
+from cylc.flow.flow_mgr import (
+    FLOW_NEW,
+    FLOW_NONE,
+    FlowMgr,
+    repr_flow_nums,
+)
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -74,8 +93,14 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_platform,
 )
-from cylc.flow.id import Tokens
-from cylc.flow.log_level import verbosity_to_env, verbosity_to_opts
+from cylc.flow.id import (
+    Tokens,
+    quick_relative_id,
+)
+from cylc.flow.log_level import (
+    verbosity_to_env,
+    verbosity_to_opts,
+)
 from cylc.flow.loggingutil import (
     ReferenceLogFileHandler,
     RotatingLogFileHandler,
@@ -108,14 +133,9 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
+from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.simulation import sim_time_check
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.templatevars import eval_var
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_events import WorkflowEventHandler
-from cylc.flow.workflow_status import StopMode, AutoRestartMode
-from cylc.flow.run_modes import RunMode
-from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
@@ -136,7 +156,14 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
 )
-from cylc.flow.templatevars import get_template_vars
+from cylc.flow.taskdef import (
+    TaskDef,
+    generate_graph_children,
+)
+from cylc.flow.templatevars import (
+    eval_var,
+    get_template_vars,
+)
 from cylc.flow.timer import Timer
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
@@ -144,7 +171,14 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode,
 )
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_events import WorkflowEventHandler
+from cylc.flow.workflow_status import (
+    AutoRestartMode,
+    StopMode,
+)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -154,6 +188,7 @@ if TYPE_CHECKING:
     # TO: Python 3.8
     from typing_extensions import Literal
 
+    from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
 
@@ -551,7 +586,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            await commands.run_cmd(commands.set_hold_point, self, holdcp)
+            await commands.run_cmd(commands.set_hold_point(self, holdcp))
 
         if self.options.paused_start:
             self.pause_workflow('Paused on start up')
@@ -641,7 +676,7 @@ class Scheduler:
                 if self.pool.get_tasks():
                     # (If we're not restarting a finished workflow)
                     self.restart_remote_init()
-                    await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
+                    await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
 
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
@@ -956,10 +991,6 @@ class Scheduler:
                 warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
             LOG.warning(warn)
 
-    def get_command_method(self, command_name: str) -> Callable:
-        """Return a command processing method or raise AttributeError."""
-        return getattr(self, f'command_{command_name}')
-
     async def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
@@ -1033,14 +1064,15 @@ class Scheduler:
         unkillable: List[TaskProxy] = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(
-                    # directly reset to failed in sim mode, else let
-                    # task_job_mgr handle it
-                    status=(TASK_STATUS_FAILED if jobless else None),
-                    is_held=True,
-                )
-                self.data_store_mgr.delta_task_state(itask)
+                if itask.state_reset(is_held=True):
+                    self.data_store_mgr.delta_task_state(itask)
                 to_kill.append(itask)
+                if jobless:
+                    # Directly set failed in sim mode:
+                    self.task_events_mgr.process_message(
+                        itask, 'CRITICAL', TASK_STATUS_FAILED,
+                        flag=self.task_events_mgr.FLAG_RECEIVED
+                    )
             else:
                 unkillable.append(itask)
         if warn and unkillable:
@@ -1052,6 +1084,136 @@ class Scheduler:
             self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
 
         return len(unkillable)
+
+    def remove_tasks(
+        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
+    ) -> None:
+        """Remove tasks (`cylc remove` command).
+
+        Args:
+            items: Relative IDs or globs.
+            flow_nums: Flows to remove the tasks from. If empty or None, it
+                means 'all'.
+        """
+        active, inactive, _unmatched = self.pool.filter_task_proxies(
+            items, warn_no_active=False, inactive=True
+        )
+        if not (active or inactive):
+            return
+
+        if flow_nums is None:
+            flow_nums = set()
+        # Mapping of task IDs to removed flow numbers:
+        removed: Dict[str, FlowNums] = {}
+        not_removed: Set[str] = set()
+        to_kill: List[TaskProxy] = []
+
+        for itask in active:
+            fnums_to_remove = itask.match_flows(flow_nums)
+            if not fnums_to_remove:
+                not_removed.add(itask.identity)
+                continue
+            removed[itask.identity] = fnums_to_remove
+            if fnums_to_remove == itask.flow_nums:
+                # Need to remove the task from the pool.
+                # Spawn next occurrence of xtrigger sequential task (otherwise
+                # this would not happen after removing this occurrence):
+                self.pool.check_spawn_psx_task(itask)
+                self.pool.remove(itask, 'request')
+                to_kill.append(itask)
+                itask.removed = True
+            itask.flow_nums.difference_update(fnums_to_remove)
+
+        # All the matched tasks (including inactive & applicable active tasks):
+        matched_task_ids = {
+            *removed.keys(),
+            *(quick_relative_id(cycle, task) for task, cycle in inactive),
+        }
+
+        for id_ in matched_task_ids:
+            point_str, name = id_.split('/', 1)
+            tdef = self.config.taskdefs[name]
+
+            # Go through any tasks downstream of this matched task to see if
+            # any need to stand down as a result of this task being removed:
+            for child in set(itertools.chain.from_iterable(
+                generate_graph_children(tdef, get_point(point_str)).values()
+            )):
+                child_itask = self.pool.get_task(child.point, child.name)
+                if not child_itask:
+                    continue
+                fnums_to_remove = child_itask.match_flows(flow_nums)
+                if not fnums_to_remove:
+                    continue
+                prereqs_changed = False
+                for prereq in (
+                    *child_itask.state.prerequisites,
+                    *child_itask.state.suicide_prerequisites,
+                ):
+                    # Unset any prereqs naturally satisfied by these tasks
+                    # (do not unset those satisfied by `cylc set --pre`):
+                    if prereq.unset_naturally_satisfied(id_):
+                        prereqs_changed = True
+                        removed.setdefault(id_, set()).update(fnums_to_remove)
+                if not prereqs_changed:
+                    continue
+                self.data_store_mgr.delta_task_prerequisite(child_itask)
+                # Check if downstream task is still ready to run:
+                if (
+                    child_itask.state.is_gte(TASK_STATUS_PREPARING)
+                    # Still ready if the task exists in other flows:
+                    or child_itask.flow_nums != fnums_to_remove
+                    or child_itask.state.prerequisites_all_satisfied()
+                ):
+                    continue
+                # No longer ready to run
+                self.pool.unqueue_task(child_itask)
+                # Check if downstream task should remain spawned:
+                if (
+                    # Ignoring tasks we are already dealing with:
+                    child_itask.identity in matched_task_ids
+                    or child_itask.state.any_satisfied_prerequisite_outputs()
+                ):
+                    continue
+                # No longer has reason to be in pool:
+                self.pool.remove(child_itask, self.pool.REMOVED_BY_PREREQ)
+                # Remove this downstream task from flows in DB tables to ensure
+                # it is not skipped if it respawns in future:
+                self.workflow_db_mgr.remove_task_from_flows(
+                    str(child.point), child.name, fnums_to_remove
+                )
+
+            # Remove the matched tasks from the flows in the DB tables:
+            db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
+                point_str, name, flow_nums
+            )
+            if db_removed_fnums:
+                removed.setdefault(id_, set()).update(db_removed_fnums)
+
+        if to_kill:
+            self.kill_tasks(to_kill, warn=False)
+
+        if removed:
+            tasks_str_list = []
+            for task, fnums in removed.items():
+                self.data_store_mgr.delta_remove_task_flow_nums(task, fnums)
+                tasks_str_list.append(
+                    f"{task} {repr_flow_nums(fnums, full=True)}"
+                )
+            LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
+
+        not_removed.update(matched_task_ids.difference(removed))
+        if not_removed:
+            fnums_str = (
+                repr_flow_nums(flow_nums, full=True) if flow_nums else ''
+            )
+            LOG.warning(
+                "Task(s) not removable: "
+                f"{', '.join(sorted(not_removed))} {fnums_str}"
+            )
+
+        if removed and self.pool.compute_runahead():
+            self.pool.release_runahead_tasks()
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1434,8 +1596,8 @@ class Scheduler:
             self.time_next_kill is not None
             and time() > self.time_next_kill
         ):
-            await commands.run_cmd(commands.poll_tasks, self, ['*/*'])
-            await commands.run_cmd(commands.kill_tasks, self, ['*/*'])
+            await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
+            await commands.run_cmd(commands.kill_tasks(self, ['*/*']))
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
@@ -1577,7 +1739,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if all(itask.is_ready_to_run()):
+            if itask.is_ready_to_run():
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.sequential_spawn_next:

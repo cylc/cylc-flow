@@ -151,7 +151,7 @@ def test_detect_old_contact_file_old_run(workflow, caplog, log_filter):
 
     # as a side effect the contact file should have been removed
     assert not workflow.contact_file.exists()
-    assert log_filter(caplog, contains='Removed contact file')
+    assert log_filter(contains='Removed contact file')
 
 
 def test_detect_old_contact_file_none(workflow):
@@ -260,11 +260,9 @@ def test_detect_old_contact_file_removal_errors(
 
     # check the appropriate messages were logged
     assert bool(log_filter(
-        caplog,
         contains='Removed contact file',
     )) is remove_succeeded
     assert bool(log_filter(
-        caplog,
         contains=(
             f'Failed to remove contact file for {workflow.id_}:'
             '\nmocked-os-error'

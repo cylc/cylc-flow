@@ -235,9 +235,7 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
     assert result is True
 
 
-async def test_settings_restart(
-    monkeytime, flow, scheduler, start,validate
-):
+async def test_settings_restart(monkeytime, flow, scheduler, start):
     """Check that simulation mode settings are correctly restored
     upon restart.
 
@@ -312,7 +310,7 @@ async def test_settings_restart(
             ) is False
 
             # Check that the itask.mode_settings is now re-created
-            
+
             assert itask.mode_settings.simulated_run_length == 60.0
             assert itask.mode_settings.sim_task_fails is True
 
@@ -356,7 +354,7 @@ async def test_settings_reload(
             conf_file.read_text().replace('False', 'True'))
 
         # Reload Workflow:
-        await commands.run_cmd(commands.reload_workflow, schd)
+        await commands.run_cmd(commands.reload_workflow(schd))
 
         # Submit second psuedo-job and "run" to success:
         itask = run_simjob(schd, one_1066.point, 'one')
