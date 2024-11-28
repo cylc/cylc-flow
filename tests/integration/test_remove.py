@@ -223,6 +223,16 @@ async def test_not_unset_prereq(
         ]
 
 
+async def test_nothing_to_do(
+    example_workflow, scheduler, start, log_filter
+):
+    """Test removing an invalid task."""
+    schd: Scheduler = scheduler(example_workflow)
+    async with start(schd):
+        await run_cmd(remove_tasks(schd, ['1/doh'], [FLOW_ALL]))
+    assert log_filter(logging.WARNING, "No matching tasks found: doh")
+
+
 async def test_logging(
     flow, scheduler, start, log_filter, caplog: pytest.LogCaptureFixture
 ):
