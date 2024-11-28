@@ -653,12 +653,14 @@ STYLE_CHECKS = {
         FUNCTION: check_wallclock_directives,
     },
     'S015': {
-        'short': 'Task outputs {outputs}: {description}.',
-        FUNCTION: check_skip_mode_outputs
+        'short': (
+            '``=>`` implies line continuation without ``\\``.'
+        ),
+        FUNCTION: re.compile(r'=>\s*\\').findall
     },
     'S016': {
         'short': 'Run mode is not live: This task will only appear to run.',
-        FUNCTION: re.compile(r'run mode\s*=\s*[^l][^i][^v][^e]$').findall
+        FUNCTION: check_skip_mode_outputs
     },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
@@ -826,6 +828,12 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: functools.partial(
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+    },
+    'U017': {
+        'short': (
+            '``&`` and ``|`` imply line continuation without ``\\``'
+        ),
+        FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']
