@@ -121,6 +121,7 @@ class TaskPool:
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
     SUICIDE_MSG = "suicide trigger"
+    REMOVED_BY_PREREQ = "prerequisite task(s) removed"
 
     def __init__(
         self,
@@ -875,6 +876,8 @@ class TaskPool:
             ):
                 level = logging.WARNING
                 msg += " - active job orphaned"
+            elif reason == self.REMOVED_BY_PREREQ:
+                level = logging.INFO
 
             LOG.log(level, f"[{itask}] {msg}")
 

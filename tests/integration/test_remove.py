@@ -362,6 +362,10 @@ async def test_prereqs(
         # Should cause 1/x to be removed from the pool as it no longer has
         # any satisfied prerequisite tasks:
         assert not schd.pool._get_task_by_id('1/x')
+        assert log_filter(
+            logging.INFO,
+            regex=r"1/x.* removed .* prerequisite task\(s\) removed",
+        )
 
 
 async def test_downstream_preparing(flow, scheduler, start):
