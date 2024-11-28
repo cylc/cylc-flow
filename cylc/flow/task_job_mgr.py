@@ -1060,7 +1060,7 @@ class TaskJobManager:
             # Apply task run mode
             if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
                 # Task run mode cannot override workflow run-mode sim or dummy:
-                itask.run_mode: RunMode = workflow_run_mode
+                itask.run_mode = workflow_run_mode
             else:
                 # If workflow mode is skip or live and task mode is set,
                 # override workflow mode, else use workflow mode.
