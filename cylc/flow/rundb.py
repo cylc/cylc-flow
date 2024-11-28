@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the workflow runtime database."""
 
+from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass
 from os.path import expandvars
@@ -23,6 +24,8 @@ import sqlite3
 import traceback
 from typing import (
     TYPE_CHECKING,
+    Any,
+    DefaultDict,
     Dict,
     Iterable,
     List,
@@ -30,11 +33,13 @@ from typing import (
     Set,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformLookupError
 import cylc.flow.flags
+from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.util import (
     deserialise_set,
     serialise_set,
@@ -45,6 +50,13 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from cylc.flow.flow_mgr import FlowNums
+
+
+DbArgDict = Dict[str, Any]
+DbUpdateTuple = Union[
+    Tuple[DbArgDict, DbArgDict],
+    Tuple[str, list]
+]
 
 
 @dataclass
@@ -69,7 +81,7 @@ class CylcWorkflowDAOTable:
 
     def __init__(self, name, column_items):
         self.name = name
-        self.columns = []
+        self.columns: List[CylcWorkflowDAOTableColumn] = []
         for column_item in column_items:
             name = column_item[0]
             attrs = {}
@@ -81,7 +93,7 @@ class CylcWorkflowDAOTable:
                 attrs.get("is_primary_key", False)))
         self.delete_queues = {}
         self.insert_queue = []
-        self.update_queues = {}
+        self.update_queues: DefaultDict[str, list] = defaultdict(list)
 
     def get_create_stmt(self):
         """Return an SQL statement to create this table."""
@@ -150,14 +162,23 @@ class CylcWorkflowDAOTable:
                 args.get(column.name, None) for column in self.columns]
         self.insert_queue.append(stmt_args)
 
-    def add_update_item(self, set_args, where_args):
+    def add_update_item(self, item: DbUpdateTuple) -> None:
         """Queue an UPDATE item.
 
+        If stmt is not a string, it should be a tuple (set_args, where_args) -
         set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
         """
+        if isinstance(item[0], str):
+            stmt = item[0]
+            params = cast('list', item[1])
+            self.update_queues[stmt].extend(params)
+            return
+
+        set_args = item[0]
+        where_args = cast('DbArgDict', item[1])
         set_strs = []
         stmt_args = []
         for column in self.columns:
@@ -177,9 +198,8 @@ class CylcWorkflowDAOTable:
         stmt = self.FMT_UPDATE % {
             "name": self.name,
             "set_str": set_str,
-            "where_str": where_str}
-        if stmt not in self.update_queues:
-            self.update_queues[stmt] = []
+            "where_str": where_str
+        }
         self.update_queues[stmt].append(stmt_args)
 
 
@@ -407,15 +427,18 @@ class CylcWorkflowDAO:
         """
         self.tables[table_name].add_insert_item(args)
 
-    def add_update_item(self, table_name, set_args, where_args=None):
+    def add_update_item(
+        self, table_name: str, item: DbUpdateTuple
+    ) -> None:
         """Queue an UPDATE item for a given table.
 
+        If stmt is not a string, it should be a tuple (set_args, where_args) -
         set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
         """
-        self.tables[table_name].add_update_item(set_args, where_args)
+        self.tables[table_name].add_update_item(item)
 
     def close(self) -> None:
         """Explicitly close the connection."""
@@ -585,10 +608,10 @@ class CylcWorkflowDAO:
                 key, value
             FROM
                 {self.TABLE_WORKFLOW_PARAMS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return self.connect().execute(stmt)
 
-    def select_workflow_flows(self, flow_nums):
+    def select_workflow_flows(self, flow_nums: Iterable[int]):
         """Return flow data for selected flows."""
         stmt = rf'''
             SELECT
@@ -596,8 +619,8 @@ class CylcWorkflowDAO:
             FROM
                 {self.TABLE_WORKFLOW_FLOWS}
             WHERE
-                flow_num in ({','.join(str(f) for f in flow_nums)})
-        '''  # nosec (table name is code constant, flow_nums just integers)
+                flow_num in ({stringify_flow_nums(flow_nums)})
+        '''  # nosec B608 (table name is code constant, flow_nums just ints)
         flows = {}
         for flow_num, start_time, descr in self.connect().execute(stmt):
             flows[flow_num] = {
@@ -613,7 +636,7 @@ class CylcWorkflowDAO:
                 MAX(flow_num)
             FROM
                 {self.TABLE_WORKFLOW_FLOWS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return self.connect().execute(stmt).fetchone()[0]
 
     def select_workflow_params_restart_count(self):
@@ -625,7 +648,7 @@ class CylcWorkflowDAO:
                 {self.TABLE_WORKFLOW_PARAMS}
             WHERE
                 key == 'n_restart'
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         result = self.connect().execute(stmt).fetchone()
         return int(result[0]) if result else 0
 
@@ -641,7 +664,7 @@ class CylcWorkflowDAO:
                         key, value
                     FROM
                         {self.TABLE_WORKFLOW_TEMPLATE_VARS}
-                '''  # nosec (table name is code constant)
+                '''  # nosec B608 (table name is code constant)
         )):
             callback(row_idx, list(row))
 
@@ -658,7 +681,7 @@ class CylcWorkflowDAO:
                 {",".join(attrs)}
             FROM
                 {self.TABLE_TASK_ACTION_TIMERS}
-        '''  # nosec
+        '''  # nosec B608
         # * table name is code constant
         # * attrs are code constants
         for row_idx, row in enumerate(self.connect().execute(stmt)):
@@ -684,7 +707,7 @@ class CylcWorkflowDAO:
                     AND name==?
                 ORDER BY
                     submit_num DESC LIMIT 1
-            '''  # nosec
+            '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name]
@@ -698,7 +721,7 @@ class CylcWorkflowDAO:
                     cycle==?
                     AND name==?
                     AND submit_num==?
-            '''  # nosec
+            '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name, submit_num]
@@ -781,7 +804,7 @@ class CylcWorkflowDAO:
                 platform_name
             FROM
                 {self.TABLE_TASK_JOBS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return {i[0] for i in self.connect().execute(stmt)}
 
     def select_prev_instances(
@@ -794,7 +817,7 @@ class CylcWorkflowDAO:
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
-        stmt = (  # nosec
+        stmt = (  # nosec B608
             r"SELECT flow_nums,submit_num,flow_wait,status FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
@@ -842,7 +865,7 @@ class CylcWorkflowDAO:
                {self.TABLE_TASK_OUTPUTS}
             WHERE
                 name==? AND cycle==?
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return {
             outputs: deserialise_set(flow_nums)
             for flow_nums, outputs in self.connect().execute(
@@ -856,7 +879,7 @@ class CylcWorkflowDAO:
                 signature, results
             FROM
                 {self.TABLE_XTRIGGERS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
@@ -866,7 +889,7 @@ class CylcWorkflowDAO:
                 cycle, name, output
             FROM
                 {self.TABLE_ABS_OUTPUTS}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
@@ -979,7 +1002,7 @@ class CylcWorkflowDAO:
                 cycle == ? AND
                 name == ? AND
                 flow_nums == ?
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         stmt_args = [cycle, name, flow_nums]
         return list(self.connect().execute(stmt, stmt_args))
 
@@ -990,7 +1013,7 @@ class CylcWorkflowDAO:
                 name, cycle
             FROM
                 {self.TABLE_TASKS_TO_HOLD}
-        '''  # nosec (table name is code constant)
+        '''  # nosec B608 (table name is code constant)
         return list(self.connect().execute(stmt))
 
     def select_task_times(self):
@@ -1012,7 +1035,7 @@ class CylcWorkflowDAO:
                 {self.TABLE_TASK_JOBS}
             WHERE
                 run_status = 0
-        """  # nosec (table name is code constant)
+        """  # nosec B608 (table name is code constant)
         columns = (
             'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'

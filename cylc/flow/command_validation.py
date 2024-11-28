@@ -24,19 +24,34 @@ from typing import (
 )
 
 from cylc.flow.exceptions import InputError
-from cylc.flow.id import IDTokens, Tokens
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NEW,
+    FLOW_NONE,
+)
+from cylc.flow.id import (
+    IDTokens,
+    Tokens,
+)
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 
 
-ERR_OPT_FLOW_VAL = "Flow values must be an integer, or 'all', 'new', or 'none'"
+ERR_OPT_FLOW_VAL = (
+    f"Flow values must be integers, or '{FLOW_ALL}', '{FLOW_NEW}', "
+    f"or '{FLOW_NONE}'"
+)
+ERR_OPT_FLOW_VAL_2 = f"Flow values must be integers, or '{FLOW_ALL}'"
 ERR_OPT_FLOW_COMBINE = "Cannot combine --flow={0} with other flow values"
 ERR_OPT_FLOW_WAIT = (
     f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
 )
 
 
-def flow_opts(flows: List[str], flow_wait: bool) -> None:
+def flow_opts(
+    flows: List[str],
+    flow_wait: bool,
+    allow_new_or_none: bool = True
+) -> None:
     """Check validity of flow-related CLI options.
 
     Note the schema defaults flows to [].
@@ -63,6 +78,10 @@ def flow_opts(flows: List[str], flow_wait: bool) -> None:
         cylc.flow.exceptions.InputError: --wait is not compatible with
         --flow=new or --flow=none
 
+        >>> flow_opts(["new"], False, allow_new_or_none=False)
+        Traceback (most recent call last):
+        cylc.flow.exceptions.InputError: ... must be integers, or 'all'
+
     """
     if not flows:
         return
@@ -70,9 +89,12 @@ def flow_opts(flows: List[str], flow_wait: bool) -> None:
     flows = [val.strip() for val in flows]
 
     for val in flows:
+        val = val.strip()
         if val in {FLOW_NONE, FLOW_NEW, FLOW_ALL}:
             if len(flows) != 1:
                 raise InputError(ERR_OPT_FLOW_COMBINE.format(val))
+            if not allow_new_or_none and val in {FLOW_NEW, FLOW_NONE}:
+                raise InputError(ERR_OPT_FLOW_VAL_2)
         else:
             try:
                 int(val)

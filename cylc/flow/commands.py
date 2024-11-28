@@ -53,17 +53,23 @@ For more info see: https://github.com/cylc/cylc-flow/issues/3329
 """
 
 from contextlib import suppress
-from time import sleep, time
+from time import (
+    sleep,
+    time,
+)
 from typing import (
+    TYPE_CHECKING,
     AsyncGenerator,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
-    TYPE_CHECKING,
+    TypeVar,
     Union,
 )
+
+from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import LOG
 import cylc.flow.command_validation as validate
@@ -73,22 +79,24 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
+from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.task_id import TaskID
-from cylc.flow.workflow_status import RunMode, StopMode
+from cylc.flow.workflow_status import (
+    RunMode,
+    StopMode,
+)
 
-from metomi.isodatetime.parsers import TimePointParser
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
 
     # define a type for command implementations
-    Command = Callable[
-        ...,
-        AsyncGenerator,
-    ]
+    Command = Callable[..., AsyncGenerator]
+    # define a generic type needed for the @_command decorator
+    _TCommand = TypeVar('_TCommand', bound=Command)
 
 # a directory of registered commands (populated on module import)
 COMMANDS: 'Dict[str, Command]' = {}
@@ -96,15 +104,15 @@ COMMANDS: 'Dict[str, Command]' = {}
 
 def _command(name: str):
     """Decorator to register a command."""
-    def _command(fcn: 'Command'):
+    def _command(fcn: '_TCommand') -> '_TCommand':
         nonlocal name
         COMMANDS[name] = fcn
-        fcn.command_name = name  # type: ignore
+        fcn.command_name = name  # type: ignore[attr-defined]
         return fcn
     return _command
 
 
-async def run_cmd(fcn, *args, **kwargs):
+async def run_cmd(bound_fcn: AsyncGenerator):
     """Run a command outside of the scheduler's main loop.
 
     Normally commands are run via the Scheduler's command_queue (which is
@@ -119,10 +127,9 @@ async def run_cmd(fcn, *args, **kwargs):
     For these purposes use "run_cmd", otherwise, queue commands via the
     scheduler as normal.
     """
-    cmd = fcn(*args, **kwargs)
-    await cmd.__anext__()  # validate
+    await bound_fcn.__anext__()  # validate
     with suppress(StopAsyncIteration):
-        return await cmd.__anext__()  # run
+        return await bound_fcn.__anext__()  # run
 
 
 @_command('set')
@@ -310,11 +317,15 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
 
 
 @_command('remove_tasks')
-async def remove_tasks(schd: 'Scheduler', tasks: Iterable[str]):
+async def remove_tasks(
+    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+):
     """Remove tasks."""
     validate.is_tasks(tasks)
+    validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
-    yield schd.pool.remove_tasks(tasks)
+    flow_nums = get_flow_nums_set(flow)
+    schd.remove_tasks(tasks, flow_nums)
 
 
 @_command('reload_workflow')

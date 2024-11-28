@@ -112,7 +112,9 @@ def test_operational_error(tmp_path, caplog):
         # stage some stuff
         dao.add_delete_item(CylcWorkflowDAO.TABLE_TASK_JOBS)
         dao.add_insert_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
-        dao.add_update_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+        dao.add_update_item(
+            CylcWorkflowDAO.TABLE_TASK_JOBS, ({'pub': None}, {})
+        )
 
         # connect the to DB
         dao.connect()

@@ -59,7 +59,7 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         assert schd.is_stalled
 
         # the "blocked" recover tasks should remain in the pool
-        assert {t.identity for t in schd.pool.get_tasks()} == {
+        assert schd.pool.get_task_ids() == {
             '1/recover',
             '2/recover',
             '3/recover',
@@ -92,7 +92,7 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         for cycle in range(1, 4):
             itask = schd.pool.get_task(IntegerPoint(str(cycle)), 'recover')
             schd.pool.remove(itask, 'suicide-trigger')
-        assert {t.identity for t in schd.pool.get_tasks()} == {
+        assert schd.pool.get_task_ids() == {
             '4/foo',
             '5/foo',
             '6/foo',

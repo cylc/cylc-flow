@@ -23,9 +23,11 @@ useful testing in the process 😀.)
 import asyncio
 import logging
 from pathlib import Path
+
 import pytest
 
 from cylc.flow import __version__
+from cylc.flow.scheduler import Scheduler
 
 
 async def test_create_flow(flow, run_dir):
@@ -62,9 +64,9 @@ async def test_logging(flow, scheduler, start, one_conf, log_filter):
     # Ensure that the cylc version is logged on startup.
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         # this returns a list of log records containing __version__
-        assert log_filter(log, contains=__version__)
+        assert log_filter(contains=__version__)
 
 
 async def test_scheduler_arguments(flow, scheduler, start, one_conf):
@@ -159,16 +161,12 @@ async def test_exception(one, run, log_filter):
 
     # make sure that this error causes the flow to shutdown
     with pytest.raises(MyException):
-        async with run(one) as log:
+        async with run(one):
             # The `run` fixture's shutdown logic waits for the main loop to run
             pass
 
     # make sure the exception was logged
-    assert len(log_filter(
-        log,
-        level=logging.CRITICAL,
-        contains='mess'
-    )) == 1
+    assert len(log_filter(logging.CRITICAL, contains='mess')) == 1
 
     # make sure the server socket has closed - a good indication of a
     # successful clean shutdown
@@ -290,3 +288,11 @@ async def test_reftest(flow, scheduler, reftest):
         ('1/a', None),
         ('1/b', ('1/a',)),
     }
+
+
+async def test_show(one: Scheduler, start, cylc_show):
+    """Demonstrate the `cylc_show` fixture"""
+    async with start(one):
+        out = await cylc_show(one, '1/one')
+    assert list(out.keys()) == ['1/one']
+    assert out['1/one']['state'] == 'waiting'

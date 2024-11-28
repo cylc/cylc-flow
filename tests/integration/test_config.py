@@ -152,7 +152,6 @@ def test_validate_param_env_templ(
     one_conf,
     validate,
     env_val,
-    caplog,
     log_filter,
 ):
     """It should validate parameter environment templates."""
@@ -167,8 +166,8 @@ def test_validate_param_env_templ(
         }
     })
     validate(id_)
-    assert log_filter(caplog, contains='bad parameter environment template')
-    assert log_filter(caplog, contains=env_val)
+    assert log_filter(contains='bad parameter environment template')
+    assert log_filter(contains=env_val)
 
 
 def test_no_graph(flow, validate):

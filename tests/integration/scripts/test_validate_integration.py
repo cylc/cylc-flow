@@ -247,5 +247,5 @@ def test_log_parent_demoted(flow, validate, monkeypatch, caplog, log_filter):
         }
     })
     validate(id_)
-    assert log_filter(caplog, contains='First parent(s) demoted to secondary')
-    assert log_filter(caplog, contains="FOO as parent of 'foo'")
+    assert log_filter(contains='First parent(s) demoted to secondary')
+    assert log_filter(contains="FOO as parent of 'foo'")

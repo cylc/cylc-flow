@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest.mock import MagicMock
 import pytest
 
+from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
 from cylc.flow.task_trigger import Dependency, TaskTrigger
@@ -118,3 +120,24 @@ def test_task_state_order():
     assert tstate.is_gte(TASK_STATUS_SUBMITTED)
     assert not tstate.is_gt(TASK_STATUS_RUNNING)
     assert not tstate.is_gte(TASK_STATUS_RUNNING)
+
+
+def test_get_resolved_dependencies():
+    prereq1 = Prerequisite(IntegerPoint('2'))
+    prereq1[('1', 'a', 'x')] = True
+    prereq1[('1', 'b', 'x')] = False
+    prereq1[('1', 'c', 'x')] = 'satisfied from database'
+    prereq1[('1', 'd', 'x')] = 'force satisfied'
+    prereq2 = Prerequisite(IntegerPoint('2'))
+    prereq2[('1', 'e', 'succeeded')] = False
+    prereq2[('1', 'e', 'failed')] = True
+    task_state = TaskState(
+        MagicMock(), IntegerPoint('2'), TASK_STATUS_WAITING, False
+    )
+    task_state.prerequisites = [prereq1, prereq2]
+    assert task_state.get_resolved_dependencies() == [
+        '1/a',
+        '1/c',
+        '1/d',
+        '1/e',
+    ]

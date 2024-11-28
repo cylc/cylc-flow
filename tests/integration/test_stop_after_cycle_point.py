@@ -119,10 +119,11 @@ async def test_stop_after_cycle_point(
 
         # override this value whilst the workflow is running
         await commands.run_cmd(
-            commands.stop,
-            schd,
-            cycle_point=IntegerPoint('4'),
-            mode=StopMode.REQUEST_CLEAN,
+            commands.stop(
+                schd,
+                cycle_point=IntegerPoint('4'),
+                mode=StopMode.REQUEST_CLEAN,
+            )
         )
         assert schd.config.stop_point == IntegerPoint('4')
 

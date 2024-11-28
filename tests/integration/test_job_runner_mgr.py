@@ -28,7 +28,7 @@ from cylc.flow.subprocctx import SubProcContext
 
 async def test_kill_error(one, start, test_dir, capsys, log_filter):
     """It should report the failure to kill a job."""
-    async with start(one) as log:
+    async with start(one):
         # make it look like the task is running
         itask = one.pool.get_tasks()[0]
         itask.submit_num += 1
@@ -78,7 +78,6 @@ async def test_kill_error(one, start, test_dir, capsys, log_filter):
 
         # a warning should be logged
         assert log_filter(
-            log,
             regex=r'1/one/01:running.*job kill failed',
             level=logging.WARNING,
         )

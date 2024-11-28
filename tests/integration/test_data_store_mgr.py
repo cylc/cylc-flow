@@ -324,7 +324,7 @@ def test_delta_task_prerequisite(harness):
     schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
-        [t.identity for t in schd.pool.get_tasks()],
+        schd.pool.get_task_ids(),
         [(TASK_STATUS_SUCCEEDED,)],
         [],
         flow=[]
@@ -333,9 +333,8 @@ def test_delta_task_prerequisite(harness):
     for itask in schd.pool.get_tasks():
         # set prereqs as not-satisfied
         for prereq in itask.state.prerequisites:
-            prereq._all_satisfied = False
             for key in prereq:
-                prereq._satisfied[key] = False
+                prereq[key] = False
         schd.data_store_mgr.delta_task_prerequisite(itask)
     assert not any(p.satisfied for p in get_pb_prereqs(schd))
 

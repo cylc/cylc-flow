@@ -99,31 +99,30 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def log_filter():
-    """Filter caplog record_tuples.
+def log_filter(caplog: pytest.LogCaptureFixture):
+    """Filter caplog record_tuples (also discarding the log name entry).
 
     Args:
-        log: The caplog instance.
-        name: Filter out records if they don't match this logger name.
         level: Filter out records if they aren't at this logging level.
         contains: Filter out records if this string is not in the message.
         regex: Filter out records if the message doesn't match this regex.
         exact_match: Filter out records if the message does not exactly match
             this string.
+        log: A caplog instance.
     """
     def _log_filter(
-        log: pytest.LogCaptureFixture,
-        name: Optional[str] = None,
         level: Optional[int] = None,
         contains: Optional[str] = None,
         regex: Optional[str] = None,
         exact_match: Optional[str] = None,
-    ) -> List[Tuple[str, int, str]]:
+        log: Optional[pytest.LogCaptureFixture] = None
+    ) -> List[Tuple[int, str]]:
+        if log is None:
+            log = caplog
         return [
-            (log_name, log_level, log_message)
-            for log_name, log_level, log_message in log.record_tuples
-            if (name is None or name == log_name)
-            and (level is None or level == log_level)
+            (log_level, log_message)
+            for _, log_level, log_message in log.record_tuples
+            if (level is None or level == log_level)
             and (contains is None or contains in log_message)
             and (regex is None or re.search(regex, log_message))
             and (exact_match is None or exact_match == log_message)
