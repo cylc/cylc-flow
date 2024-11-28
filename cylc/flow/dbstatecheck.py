@@ -28,7 +28,7 @@ from cylc.flow.cycling.integer import (
     IntegerPoint,
     IntegerInterval
 )
-from cylc.flow.flow_mgr import stringify_flow_nums
+from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
@@ -318,7 +318,7 @@ class CylcWorkflowDBChecker:
                 if flow_num is not None and flow_num not in flow_nums:
                     # skip result, wrong flow
                     continue
-                fstr = stringify_flow_nums(flow_nums)
+                fstr = repr_flow_nums(flow_nums)
                 if fstr:
                     res.append(fstr)
             db_res.append(res)

@@ -22,8 +22,8 @@ import json
 from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
-    AsyncGenerator,
     Any,
+    AsyncGenerator,
     Dict,
     List,
     Optional,
@@ -34,47 +34,71 @@ from typing import (
 
 import graphene
 from graphene import (
-    Boolean, Field, Float, ID, InputObjectType, Int,
-    Mutation, ObjectType, Schema, String, Argument, Interface
+    ID,
+    Argument,
+    Boolean,
+    Field,
+    Float,
+    InputObjectType,
+    Int,
+    Interface,
+    Mutation,
+    ObjectType,
+    Schema,
+    String,
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 from graphql.type.definition import get_named_type
 
 from cylc.flow import LOG_LEVELS
-from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
-from cylc.flow.data_store_mgr import (
-    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
-    DELTA_ADDED, DELTA_UPDATED
+from cylc.flow.broadcast_mgr import (
+    ALL_CYCLE_POINTS_STRS,
+    addict,
 )
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
+from cylc.flow.data_store_mgr import (
+    DELTA_ADDED,
+    DELTA_UPDATED,
+    FAMILIES,
+    FAMILY_PROXIES,
+    JOBS,
+    TASK_PROXIES,
+    TASKS,
+)
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NEW,
+    FLOW_NONE,
+)
 from cylc.flow.id import Tokens
 from cylc.flow.run_modes import (
     TASK_CONFIG_RUN_MODES, WORKFLOW_RUN_MODES, RunMode)
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
-    TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
-    TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_SUCCEEDED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+    TASK_STATUSES_ORDERED,
 )
 from cylc.flow.util import sstrip
 from cylc.flow.workflow_status import StopMode
+
 
 if TYPE_CHECKING:
     from enum import Enum
     from graphql import ResolveInfo
     from graphql.type.definition import (
-        GraphQLNamedType,
         GraphQLList,
+        GraphQLNamedType,
         GraphQLNonNull,
     )
+
     from cylc.flow.network.resolvers import BaseResolvers
 
 
@@ -2140,6 +2164,19 @@ class Remove(Mutation, TaskMutation):
             Valid for: paused, running workflows.
         ''')
         resolver = partial(mutator, command='remove_tasks')
+
+    class Arguments(TaskMutation.Arguments):
+        flow = graphene.List(
+            graphene.NonNull(Flow),
+            default_value=[FLOW_ALL],
+            description=sstrip(f'''
+                "Remove the task(s) from the specified flows. "
+
+                This should be a list of flow numbers, or '{FLOW_ALL}'
+                to remove the task(s) from all flows they belong to
+                (which is the default).
+            ''')
+        )
 
 
 class SetPrereqsAndOutputs(Mutation, TaskMutation):

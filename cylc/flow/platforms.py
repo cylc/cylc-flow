@@ -268,7 +268,9 @@ def platform_from_name(
 
     # If platform name in run mode and not otherwise defined:
     if platform_name in JOBLESS_MODES:
-        return platforms['localhost']
+        platform_data = deepcopy(platforms['localhost'])
+        platform_data['name'] = 'localhost'
+        return platform_data
 
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")
@@ -652,7 +654,7 @@ def get_install_target_to_platforms_map(
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     ret: Dict[str, List[Dict[str, Any]]] = {}
-    for p_name in set(platform_names) - set(JOBLESS_MODES):
+    for p_name in set(platform_names):
         try:
             platform = platform_from_name(p_name)
         except PlatformLookupError as exc:
@@ -662,10 +664,6 @@ def get_install_target_to_platforms_map(
             install_target = get_install_target_from_platform(platform)
             ret.setdefault(install_target, []).append(platform)
 
-    # Map jobless modes to localhost.
-    ret.setdefault('localhost', []).extend(
-        {'name': mode} for mode in JOBLESS_MODES
-    )
     return ret
 
 

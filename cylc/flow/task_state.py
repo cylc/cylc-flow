@@ -19,9 +19,9 @@
 from typing import (
     TYPE_CHECKING,
     Dict,
-    Optional,
     Iterable,
     List,
+    Optional,
     Set,
 )
 
@@ -30,8 +30,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
     TaskOutputs,
 )
@@ -41,7 +41,7 @@ from cylc.flow.wallclock import get_current_time_string
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
-    from cylc.flow.prerequisite import PrereqMessage
+    from cylc.flow.prerequisite import PrereqTuple
     from cylc.flow.run_modes import RunMode
     from cylc.flow.taskdef import TaskDef
 
@@ -278,33 +278,31 @@ class TaskState:
             ret += '(runahead)'
         return ret
 
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self}>"
+
     def __call__(
-            self, *status, is_held=None, is_queued=None, is_runahead=None):
+        self,
+        *status: Optional[str],
+        is_held: Optional[bool] = None,
+        is_queued: Optional[bool] = None,
+        is_runahead: Optional[bool] = None,
+    ) -> bool:
         """Compare task state attributes.
 
         Args:
-            status (str/list/None):
-                ``str``
-                    Check if the task status is the same as the one provided
-                ``list``
-                    Check if the task status is one of the ones provided
-                ``None``
-                    Do not check the task state.
-            is_held (bool):
-                ``bool``
-                    Check the task is_held attribute is the same as provided
-                ``None``
-                    Do not check the is_held attribute
-            is_queued (bool):
-                ``bool``
-                    Check the task is_queued attribute is the same as provided
-                ``None``
-                    Do not check the is_queued attribute
-            is_runahead (bool):
-                ``bool``
-                    Check the task is_runahead attribute is as provided
-                ``None``
-                    Do not check the is_runahead attribute
+            status:
+                Check if the task status is one of the ones provided, or
+                do not check the task state if None.
+            is_held:
+                Check the task is_held attribute is the same as provided, or
+                do not check the is_held attribute if None.
+            is_queued:
+                Check the task is_queued attribute is the same as provided, or
+                do not check the is_queued attribute if None.
+            is_runahead:
+                Check the task is_runahead attribute is as provided, or
+                do not check the is_runahead attribute if None.
 
         """
         return (
@@ -326,7 +324,8 @@ class TaskState:
     def satisfy_me(
         self,
         outputs: Iterable['Tokens'],
-        mode: "Optional[RunMode]",
+        mode: 'Optional[RunMode]',
+        forced: bool = False,
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
 
@@ -335,7 +334,7 @@ class TaskState:
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
             valid.update(
-                prereq.satisfy_me(outputs, mode)
+                prereq.satisfy_me(outputs, mode=mode, forced=forced)
             )
         return valid
 
@@ -384,7 +383,8 @@ class TaskState:
             prereq.set_satisfied()
 
     def get_resolved_dependencies(self):
-        """Return a list of dependencies which have been met for this task.
+        """Return a list of dependencies which have been met for this task
+        (ignoring the specific output in the depedency).
 
         E.G: ['1/foo', '2/bar']
 
@@ -393,9 +393,10 @@ class TaskState:
 
         """
         return sorted(
-            dep
+            task_output.get_id()
             for prereq in self.prerequisites
-            for dep in prereq.get_resolved_dependencies()
+            for task_output, satisfied in prereq._satisfied.items()
+            if satisfied
         )
 
     def reset(
@@ -498,7 +499,7 @@ class TaskState:
                 cpre[(p_prev, tdef.name, TASK_STATUS_SUCCEEDED)] = (
                     p_prev < tdef.start_point
                 )
-                cpre.set_condition(tdef.name)
+                cpre.set_conditional_expr(tdef.name)
                 prerequisites[cpre.instantaneous_hash()] = cpre
 
         self.suicide_prerequisites = list(suicide_prerequisites.values())
@@ -523,9 +524,18 @@ class TaskState:
             for xtrig_label in xtrig_labels:
                 self.add_xtrigger(xtrig_label)
 
-    def get_unsatisfied_prerequisites(self) -> List['PrereqMessage']:
+    def get_unsatisfied_prerequisites(self) -> List['PrereqTuple']:
         return [
             key
             for prereq in self.prerequisites if not prereq.is_satisfied()
             for key, satisfied in prereq.items() if not satisfied
         ]
+
+    def any_satisfied_prerequisite_outputs(self) -> bool:
+        """Return True if any of this task's prerequisite outputs are
+        satisfied."""
+        return any(
+            satisfied
+            for prereq in self.prerequisites
+            for satisfied in prereq._satisfied.values()
+        )

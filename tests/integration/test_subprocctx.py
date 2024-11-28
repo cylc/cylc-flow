@@ -47,7 +47,7 @@ async def test_log_xtrigger_stdout(
             return True, {}
     """))
     schd = scheduler(id_)
-    async with start(schd, level=DEBUG) as log:
+    async with start(schd, level=DEBUG):
         # Set off check for x-trigger:
         task = schd.pool.get_tasks()[0]
         schd.xtrigger_mgr.call_xtriggers_async(task)
@@ -59,4 +59,4 @@ async def test_log_xtrigger_stdout(
         # Assert that both stderr and out from the print statement
         # in our xtrigger appear in the log.
         for expected in ['Hello World', 'Hello Hades']:
-            assert log_filter(log, contains=expected, level=DEBUG)
+            assert log_filter(DEBUG, expected)

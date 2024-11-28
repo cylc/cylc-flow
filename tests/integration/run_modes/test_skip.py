@@ -177,7 +177,7 @@ async def test_doesnt_release_held_tasks(
     """
     one_conf['runtime'] = {'one': {'run mode': 'skip'}}
     schd = scheduler(flow(one_conf), run_mode='live', paused_start=False)
-    async with start(schd) as log:
+    async with start(schd):
         itask, = schd.pool.get_tasks()
         msg = 'held tasks shoudn\'t {}'
 
@@ -187,16 +187,15 @@ async def test_doesnt_release_held_tasks(
         # Relinquish contol to the main loop.
         schd.release_queued_tasks()
 
-        assert not log_filter(log, contains='=> running'), msg.format('run')
-        assert not log_filter(log, contains='=> succeeded'), msg.format(
-            'succeed')
+        assert not log_filter(contains='=> running'), msg.format('run')
+        assert not log_filter(contains='=> succeeded'), msg.format('succeed')
 
         # Release held task and assert that it now skips successfully:
         schd.pool.release_held_tasks(['1/one'])
         schd.release_queued_tasks()
 
-        assert log_filter(log, contains='=> running'), msg.format('run')
-        assert log_filter(log, contains='=> succeeded'), msg.format('succeed')
+        assert log_filter(contains='=> running'), msg.format('run')
+        assert log_filter(contains='=> succeeded'), msg.format('succeed')
 
 
 async def test_prereqs_marked_satisfied_by_skip_mode(

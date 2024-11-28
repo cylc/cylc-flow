@@ -34,6 +34,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
+from cylc.flow.run_modes import JOBLESS_MODES
 
 
 PLATFORMS = {
@@ -470,10 +471,22 @@ def test_get_install_target_to_platforms_map(
             for install_target in _map:
                 _map[install_target] = sorted(_map[install_target],
                                               key=lambda k: k['name'])
-        expected_map.update(
-            {'localhost': [{'name': 'simulation'}, {'name': 'skip'}]}
-        )
         assert result == expected_map
+
+
+@pytest.mark.parametrize('mode', sorted(JOBLESS_MODES))
+def test_platform_from_name__jobless_modes(mode):
+    result = platform_from_name(mode)
+    assert result['name'] == 'localhost'
+
+
+@pytest.mark.parametrize('mode', sorted(JOBLESS_MODES))
+def test_get_install_target_to_platforms_map__jobless_modes(mode):
+    result = get_install_target_to_platforms_map([mode])
+    assert list(result) == ['localhost']
+    assert len(result['localhost']) == 1
+    assert result['localhost'][0]['hosts'] == ['localhost']
+    assert result['localhost'][0]['install target'] == 'localhost'
 
 
 @pytest.mark.parametrize(

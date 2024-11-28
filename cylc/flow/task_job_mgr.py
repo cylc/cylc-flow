@@ -26,13 +26,13 @@ This module provides logic to:
 
 from contextlib import suppress
 import json
-import os
 from logging import (
     CRITICAL,
     DEBUG,
     INFO,
-    WARNING
+    WARNING,
 )
+import os
 from shutil import rmtree
 from time import time
 from typing import (
@@ -47,7 +47,7 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.job_runner_mgr import JobPollContext
+from cylc.flow.cfgspec.globalcfg import SYSPATH
 from cylc.flow.exceptions import (
     NoHostsError,
     NoPlatformsError,
@@ -57,9 +57,10 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import (
     get_host,
-    is_remote_platform
+    is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
+from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -68,57 +69,62 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.run_modes import (
+    WORKFLOW_ONLY_MODES,
+    RunMode,
+)
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.run_modes import RunMode, WORKFLOW_ONLY_MODES
 from cylc.flow.task_action_timer import (
     TaskActionTimer,
-    TimerFlags
+    TimerFlags,
 )
 from cylc.flow.task_events_mgr import (
     TaskEventsManager,
-    log_task_job_activity
+    log_task_job_activity,
 )
 from cylc.flow.task_job_logs import (
     JOB_LOG_JOB,
     NN,
     get_task_job_activity_log,
     get_task_job_job_log,
-    get_task_job_log
+    get_task_job_log,
 )
 from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED,
     REMOTE_FILE_INSTALL_IN_PROGRESS,
-    REMOTE_INIT_IN_PROGRESS,
     REMOTE_INIT_255,
-    REMOTE_FILE_INSTALL_255,
-    REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
-    TaskRemoteMgr
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED,
+    REMOTE_INIT_IN_PROGRESS,
+    TaskRemoteMgr,
 )
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
 )
+from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time,
-    get_utc_mode
+    get_utc_mode,
 )
-from cylc.flow.cfgspec.globalcfg import SYSPATH
-from cylc.flow.util import serialise_set
+
 
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 class TaskJobManager:
@@ -152,7 +158,7 @@ class TaskJobManager:
                  task_events_mgr, data_store_mgr, bad_hosts):
         self.workflow = workflow
         self.proc_pool = proc_pool
-        self.workflow_db_mgr = workflow_db_mgr
+        self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
         self.task_events_mgr = task_events_mgr
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
@@ -278,7 +284,7 @@ class TaskJobManager:
         """Submission for live tasks and dummy tasks.
         """
         done_tasks: 'List[TaskProxy]' = []
-        # {platform: [itask, ...], ...}
+        # Mapping of platforms to task proxies:
         auth_itasks: 'Dict[str, List[TaskProxy]]' = {}
 
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
@@ -291,9 +297,7 @@ class TaskJobManager:
             return bad_tasks
 
         for itask in prepared_tasks:
-            platform_name = itask.platform['name']
-            auth_itasks.setdefault(platform_name, [])
-            auth_itasks[platform_name].append(itask)
+            auth_itasks.setdefault(itask.platform['name'], []).append(itask)
 
         # Submit task jobs for each platform
         # Non-prepared tasks can be considered done for now:
@@ -1074,14 +1078,7 @@ class TaskJobManager:
                 self, itask, rtconfig, workflow, now
             ):
                 # A submit function returns true if this is a nonlive task:
-                self.workflow_db_mgr.put_insert_task_states(
-                    itask,
-                    {
-                        'submit_num': itask.submit_num,
-                        'flow_nums': serialise_set(itask.flow_nums),
-                        'time_created': itask.summary['submitted_time_string']
-                    }
-                )
+                self.workflow_db_mgr.put_insert_task_states(itask)
                 nonlive_tasks.append(itask)
             else:
                 lively_tasks.append(itask)

@@ -23,38 +23,65 @@ This module provides the logic to:
 * Manage existing run database files on restart.
 """
 
+from collections import defaultdict
 import json
 import os
-from shutil import copy, rmtree
+from shutil import (
+    copy,
+    rmtree,
+)
 from sqlite3 import OperationalError
 from tempfile import mkstemp
 from typing import (
-    Any, AnyStr, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
 )
 
 from packaging.version import parse as parse_version
 
-from cylc.flow import LOG
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.broadcast_report import get_broadcast_change_iter
+from cylc.flow.exceptions import (
+    CylcError,
+    ServiceFileError,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.exceptions import CylcError, ServiceFileError
-from cylc.flow.util import serialise_set, deserialise_set
+from cylc.flow.util import (
+    deserialise_set,
+    serialise_set,
+)
+from cylc.flow.wallclock import (
+    get_current_time_string,
+    get_utc_mode,
+)
+
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from cylc.flow.cycling import PointBase
-    from cylc.flow.scheduler import Scheduler
-    from cylc.flow.task_pool import TaskPool
-    from cylc.flow.task_events_mgr import EventKey
-    from cylc.flow.task_proxy import TaskProxy
 
-Version = Any
-# TODO: narrow down Any (should be str | int) after implementing type
-# annotations in cylc.flow.task_state.TaskState
-DbArgDict = Dict[str, Any]
-DbUpdateTuple = Tuple[DbArgDict, DbArgDict]
+    from packaging.version import Version
+
+    from cylc.flow.cycling import PointBase
+    from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.rundb import (
+        DbArgDict,
+        DbUpdateTuple,
+    )
+    from cylc.flow.scheduler import Scheduler
+    from cylc.flow.task_events_mgr import EventKey
+    from cylc.flow.task_pool import TaskPool
+    from cylc.flow.task_proxy import TaskProxy
 
 
 PERM_PRIVATE = 0o600  # -rw-------
@@ -141,7 +168,9 @@ class WorkflowDatabaseManager:
             self.TABLE_TASKS_TO_HOLD: [],
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
-        self.db_updates_map: Dict[str, List[DbUpdateTuple]] = {}
+        self.db_updates_map: DefaultDict[
+            str, List[DbUpdateTuple]
+        ] = defaultdict(list)
 
     def copy_pri_to_pub(self) -> None:
         """Copy content of primary database file to public database file."""
@@ -232,29 +261,23 @@ class WorkflowDatabaseManager:
         # Record workflow parameters and tasks in pool
         # Record any broadcast settings to be dumped out
         if any(self.db_deletes_map.values()):
-            for table_name, db_deletes in sorted(
-                    self.db_deletes_map.items()):
+            for table_name, db_deletes in sorted(self.db_deletes_map.items()):
                 while db_deletes:
                     where_args = db_deletes.pop(0)
                     self.pri_dao.add_delete_item(table_name, where_args)
                     self.pub_dao.add_delete_item(table_name, where_args)
         if any(self.db_inserts_map.values()):
-            for table_name, db_inserts in sorted(
-                    self.db_inserts_map.items()):
+            for table_name, db_inserts in sorted(self.db_inserts_map.items()):
                 while db_inserts:
                     db_insert = db_inserts.pop(0)
                     self.pri_dao.add_insert_item(table_name, db_insert)
                     self.pub_dao.add_insert_item(table_name, db_insert)
-        if (hasattr(self, 'db_updates_map') and
-                any(self.db_updates_map.values())):
-            for table_name, db_updates in sorted(
-                    self.db_updates_map.items()):
+        if any(self.db_updates_map.values()):
+            for table_name, db_updates in sorted(self.db_updates_map.items()):
                 while db_updates:
-                    set_args, where_args = db_updates.pop(0)
-                    self.pri_dao.add_update_item(
-                        table_name, set_args, where_args)
-                    self.pub_dao.add_update_item(
-                        table_name, set_args, where_args)
+                    db_update = db_updates.pop(0)
+                    self.pri_dao.add_update_item(table_name, db_update)
+                    self.pub_dao.add_update_item(table_name, db_update)
 
         # Previously, we used a separate thread for database writes. This has
         # now been removed. For the private database, there is no real
@@ -426,7 +449,7 @@ class WorkflowDatabaseManager:
                     "signature": sig,
                     "results": json.dumps(res)})
 
-    def put_update_task_state(self, itask):
+    def put_update_task_state(self, itask: 'TaskProxy') -> None:
         """Update task_states table for current state of itask.
 
         NOTE the task_states table is normally updated along with the task pool
@@ -447,9 +470,9 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
-            (set_args, where_args))
+            (set_args, where_args)
+        )
 
     def put_update_task_flow_wait(self, itask):
         """Update flow_wait status of a task, in the task_states table.
@@ -467,7 +490,6 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
         self.db_updates_map[self.TABLE_TASK_STATES].append(
             (set_args, where_args))
 
@@ -495,7 +517,6 @@ class WorkflowDatabaseManager:
                     prereq.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
-                        "flow_nums": serialise_set(itask.flow_nums),
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,
@@ -551,7 +572,6 @@ class WorkflowDatabaseManager:
                     "name": itask.tdef.name,
                     "flow_nums": serialise_set(itask.flow_nums)
                 }
-                self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
                     (set_args, where_args)
                 )
@@ -585,12 +605,25 @@ class WorkflowDatabaseManager:
         """Put INSERT statement for task_jobs table."""
         self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_JOBS, itask, args)
 
-    def put_insert_task_states(self, itask, args):
+    def put_insert_task_states(self, itask: 'TaskProxy') -> None:
         """Put INSERT statement for task_states table."""
-        self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_STATES, itask, args)
+        now = get_current_time_string()
+        self._put_insert_task_x(
+            CylcWorkflowDAO.TABLE_TASK_STATES,
+            itask,
+            {
+                "time_created": now,
+                "time_updated": now,
+                "status": itask.state.status,
+                "flow_nums": serialise_set(itask.flow_nums),
+                "flow_wait": itask.flow_wait,
+                "is_manual_submit": itask.is_manual_submit,
+            },
+        )
 
     def put_insert_task_prerequisites(self, itask, args):
         """Put INSERT statement for task_prerequisites table."""
+        args.setdefault("flow_nums", serialise_set(itask.flow_nums))
         self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
@@ -627,20 +660,23 @@ class WorkflowDatabaseManager:
             }
         )
 
-    def _put_insert_task_x(self, table_name, itask, args):
+    def _put_insert_task_x(
+        self, table_name: str, itask: 'TaskProxy', args: 'DbArgDict'
+    ) -> None:
         """Put INSERT statement for a task_* table."""
         args.update({
             "name": itask.tdef.name,
-            "cycle": str(itask.point)})
-        if "submit_num" not in args:
-            args["submit_num"] = itask.submit_num
-        self.db_inserts_map.setdefault(table_name, [])
-        self.db_inserts_map[table_name].append(args)
+            "cycle": str(itask.point),
+        })
+        args.setdefault("submit_num", itask.submit_num)
+        self.db_inserts_map.setdefault(table_name, []).append(args)
 
-    def put_update_task_jobs(self, itask, set_args):
+    def put_update_task_jobs(self, itask: 'TaskProxy', set_args: dict) -> None:
         """Put UPDATE statement for task_jobs table."""
+        set_args.setdefault('flow_nums', serialise_set(itask.flow_nums))
         self._put_update_task_x(
-            CylcWorkflowDAO.TABLE_TASK_JOBS, itask, set_args)
+            CylcWorkflowDAO.TABLE_TASK_JOBS, itask, set_args
+        )
 
     def put_update_task_outputs(self, itask: 'TaskProxy') -> None:
         """Put UPDATE statement for task_outputs table."""
@@ -654,21 +690,106 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name,
             "flow_nums": serialise_set(itask.flow_nums),
         }
-        self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, []).append(
+        self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
             (set_args, where_args)
         )
 
-    def _put_update_task_x(self, table_name, itask, set_args):
+    def _put_update_task_x(
+        self, table_name: str, itask: 'TaskProxy', set_args: 'DbArgDict'
+    ) -> None:
         """Put UPDATE statement for a task_* table."""
         where_args = {
             "cycle": str(itask.point),
-            "name": itask.tdef.name}
+            "name": itask.tdef.name,
+        }
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
         if "flow_nums" not in set_args:
             where_args["flow_nums"] = serialise_set(itask.flow_nums)
-        self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
+
+    def remove_task_from_flows(
+        self, point: str, name: str, flow_nums: 'FlowNums'
+    ) -> 'FlowNums':
+        """Remove flow numbers for a task in the task_states and task_outputs
+        tables.
+
+        Args:
+            point: Cycle point of the task.
+            name: Name of the task.
+            flow_nums: Flow numbers to remove. If empty, remove all
+                flow numbers.
+
+        Returns the flow numbers that were removed, if any.
+
+        N.B. the task_prerequisites table is automatically updated separately
+        during the main loop.
+        """
+        removed_flow_nums: FlowNums = set()
+        for table in (
+            self.TABLE_TASK_STATES,
+            self.TABLE_TASK_OUTPUTS,
+        ):
+            fnums_select_stmt = rf'''
+                SELECT
+                    flow_nums
+                FROM
+                    {table}
+                WHERE
+                    cycle = ?
+                    AND name = ?
+            '''  # nosec B608 (table name is a code constant)
+            fnums_select_cursor = self.pri_dao.connect().execute(
+                fnums_select_stmt, (point, name)
+            )
+
+            if not flow_nums:
+                for db_fnums_str, *_ in fnums_select_cursor:
+                    removed_flow_nums.update(deserialise_set(db_fnums_str))
+
+                stmt = rf'''
+                    UPDATE OR REPLACE
+                        {table}
+                    SET
+                        flow_nums = ?
+                    WHERE
+                        cycle = ?
+                        AND name = ?
+                '''  # nosec B608 (table name is a code constant)
+                params: List[tuple] = [(serialise_set(), point, name)]
+            else:
+                # Mapping of existing flow nums to what should be left after
+                # removing the specified flow nums:
+                flow_nums_map: Dict[str, FlowNums] = {}
+                for db_fnums_str, *_ in fnums_select_cursor:
+                    db_fnums: FlowNums = deserialise_set(db_fnums_str)
+                    fnums_to_remove = db_fnums.intersection(flow_nums)
+                    if fnums_to_remove:
+                        flow_nums_map[db_fnums_str] = db_fnums.difference(
+                            flow_nums
+                        )
+                        removed_flow_nums.update(fnums_to_remove)
+
+                stmt = rf'''
+                    UPDATE OR REPLACE
+                        {table}
+                    SET
+                        flow_nums = ?
+                    WHERE
+                        cycle = ?
+                        AND name = ?
+                        AND flow_nums = ?
+                '''  # nosec B608 (table name is a code constant)
+                params = [
+                    (serialise_set(new), point, name, old)
+                    for old, new in flow_nums_map.items()
+                ]
+
+            self.db_updates_map[table].append(
+                (stmt, params)
+            )
+
+        return removed_flow_nums
 
     def recover_pub_from_pri(self):
         """Recover public database from private database."""
@@ -694,7 +815,7 @@ class WorkflowDatabaseManager:
             self.process_queued_ops()
 
     @classmethod
-    def _get_last_run_version(cls, pri_dao: CylcWorkflowDAO) -> Version:
+    def _get_last_run_version(cls, pri_dao: CylcWorkflowDAO) -> 'Version':
         """Return the version of Cylc this DB was last run with.
 
         Args:
@@ -710,7 +831,7 @@ class WorkflowDatabaseManager:
                         {cls.TABLE_WORKFLOW_PARAMS}
                     WHERE
                         key == ?
-                ''',  # nosec (table name is a code constant)
+                ''',  # nosec B608 (table name is a code constant)
                 [cls.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except (TypeError, OperationalError) as exc:
@@ -785,7 +906,7 @@ class WorkflowDatabaseManager:
                 cls.upgrade_pre_810(pri_dao)
 
     @classmethod
-    def check_db_compatibility(cls, db_file: Union['Path', str]) -> Version:
+    def check_db_compatibility(cls, db_file: Union['Path', str]) -> 'Version':
         """Check this DB is compatible with this Cylc version.
 
         Raises:

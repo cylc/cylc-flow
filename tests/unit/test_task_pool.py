@@ -21,6 +21,7 @@ from unittest.mock import Mock
 import pytest
 
 from cylc.flow.flow_mgr import FlowNums
+from cylc.flow.prerequisite import SatisfiedState
 from cylc.flow.task_pool import TaskPool
 
 
@@ -55,3 +56,29 @@ def test_get_active_flow_nums(
     )
 
     assert TaskPool._get_active_flow_nums(mock_task_pool) == expected
+
+
+@pytest.mark.parametrize('output_msg, flow_nums, db_flow_nums, expected', [
+    ('foo', set(), {1}, False),
+    ('foo', set(), set(), False),
+    ('foo', {1, 3}, {1}, 'satisfied from database'),
+    ('goo', {1, 3}, {1, 2}, 'satisfied from database'),
+    ('foo', {1, 3}, set(), False),
+    ('foo', {2}, {1}, False),
+    ('foo', {2}, {1, 2}, 'satisfied from database'),
+    ('f', {1}, {1}, False),
+])
+def test_check_output(
+    output_msg: str,
+    flow_nums: set,
+    db_flow_nums: set,
+    expected: SatisfiedState,
+):
+    mock_task_pool = Mock()
+    mock_task_pool.workflow_db_mgr.pri_dao.select_task_outputs.return_value = {
+        '{"f": "foo", "g": "goo"}': db_flow_nums,
+    }
+
+    assert TaskPool.check_task_output(
+        mock_task_pool, '2000', 'haddock', output_msg, flow_nums
+    ) == expected
