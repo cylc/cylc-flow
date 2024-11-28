@@ -659,8 +659,12 @@ STYLE_CHECKS = {
         FUNCTION: re.compile(r'=>\s*\\').findall
     },
     'S016': {
-        'short': 'Run mode is not live: This task will only appear to run.',
+        'short': 'Task outputs {outputs}: {description}.',
         FUNCTION: check_skip_mode_outputs
+    },
+    'S017': {
+        'short': 'Run mode is not live: This task will only appear to run.',
+        FUNCTION: re.compile(r'run mode\s*=\s*[^l][^i][^v][^e]$').findall
     },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the

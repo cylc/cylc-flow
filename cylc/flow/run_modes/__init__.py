@@ -66,17 +66,18 @@ class RunMode(Enum):
         """
         if self == self.LIVE:
             return "Task will run normally."
-        elif self == self.SKIP:
+        if self == self.SKIP:
             return (
                 "Skips job submission; sets required outputs"
                 " (by default) or configured outputs.")
-        elif self == self.DUMMY:
+        if self == self.DUMMY:
             return "Submits real jobs with empty scripts."
-        else:   # self == self.SIMULATION:
-            return (
-                "Simulates job submission with configurable"
-                " exection time and succeeded/failed outcomes"
-                " (but does not submit real jobs).")
+
+        # self == self.SIMULATION:
+        return (
+            "Simulates job submission with configurable"
+            " exection time and succeeded/failed outcomes"
+            " (but does not submit real jobs).")
 
     @staticmethod
     def get(options: 'Values') -> "RunMode":
