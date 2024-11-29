@@ -171,7 +171,10 @@ class TaskPool:
             self.task_name_list,
             self.config.runtime['descendants']
         )
+
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
+        self.tasks_to_trigger_now: Set['TaskProxy'] = set()
+        self.tasks_to_trigger_on_resume: Set['TaskProxy'] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -949,16 +952,9 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)
             self.task_queue_mgr.remove_task(itask)
 
-    def release_queued_tasks(self):
-        """Return list of queue-released tasks awaiting job prep.
+    def count_active_tasks(self):
+        """Count active tasks and identify pre-prep tasks."""
 
-        Note:
-            Tasks can hang about for a while between being released and
-            entering the PREPARING state for various reasons. This method
-            returns tasks which are awaiting job prep irrespective of whether
-            they have been previously returned.
-
-        """
         # count active tasks by name
         # {task_name: number_of_active_instances, ...}
         active_task_counter = Counter()
@@ -983,6 +979,20 @@ class TaskPool:
             ):
                 # an active task
                 active_task_counter.update([itask.tdef.name])
+
+        return active_task_counter, pre_prep_tasks
+
+    def release_queued_tasks(self):
+        """Return list of queue-released tasks awaiting job prep.
+
+        Note:
+            Tasks can hang about for a while between being released and
+            entering the PREPARING state for various reasons. This method
+            returns tasks which are awaiting job prep irrespective of whether
+            they have been previously returned.
+
+        """
+        active_task_counter, pre_prep_tasks = self.count_active_tasks()
 
         # release queued tasks
         released = self.task_queue_mgr.release_tasks(active_task_counter)
@@ -2127,48 +2137,91 @@ class TaskPool:
             for n in flow
         }
 
-    def _force_trigger(self, itask):
-        """Assumes task is in the pool"""
-        # TODO is this flag still needed, and consistent with "cylc set"?
+    def _force_trigger(self, itask: 'TaskProxy', on_resume: bool = False):
+        """Process a manually triggered task, ready for job submission.
+
+        Assumes the task is in the pool.
+
+        Triggering a queued task will:
+          - run it, regardless of queue limiting
+
+        Triggering an unqueued task will:
+          - queue it, if the queue is limiting activity
+          - run it, if the queue is not limiting activity
+
+        After state reset and queue handling:
+        - if on_resume is False, add the task to tasks_to_trigger_now
+        - if on_resume is True, add the task to tasks_to_trigger_on_resume
+
+        The scheduler will release tasks from the tasks_to_trigger sets.
+
+        """
         itask.is_manual_submit = True
         itask.reset_try_timers()
+
         if itask.state_reset(TASK_STATUS_WAITING):
             # (could also be unhandled failed)
             self.data_store_mgr.delta_task_state(itask)
-        # (No need to set prerequisites satisfied here).
-        if itask.state.is_runahead:
-            # Release from runahead, and queue it.
-            self.rh_release_and_queue(itask)
+
+        if itask.state_reset(is_runahead=False):
+            # Can force trigger runahead-limited tasks.
+            self.data_store_mgr.delta_task_state(itask)
             self.spawn_to_rh_limit(
                 itask.tdef,
                 itask.tdef.next_point(itask.point),
                 itask.flow_nums
             )
-        else:
-            # De-queue it to run now.
-            self.task_queue_mgr.force_release_task(itask)
+
+        if not itask.state.is_queued:
+            # queue it if limiting
+            active, _ = self.count_active_tasks()
+            if self.task_queue_mgr.push_task_if_limited(itask, active):
+                itask.state_reset(is_queued=True)
+                self.data_store_mgr.delta_task_state(itask)
+
+        elif self.task_queue_mgr.force_release_task(itask):
+            # else release it from the queue to run now
+            itask.state_reset(is_queued=False)
+            self.data_store_mgr.delta_task_state(itask)
+
+        if not itask.state.is_queued:
+            # If not queued now, record the task as ready to run.
+            itask.waiting_on_job_prep = True
+
+            if on_resume:
+                with suppress(KeyError):
+                    # In case previously triggered without --on-resume.
+                    # (It should have run already, but just in case).
+                    self.tasks_to_trigger_now.remove(itask)
+                self.tasks_to_trigger_on_resume.add(itask)
+            else:
+                with suppress(KeyError):
+                    # In case previously triggered with --on-resume.
+                    self.tasks_to_trigger_on_resume.remove(itask)
+                self.tasks_to_trigger_now.add(itask)
+
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
         self.check_spawn_psx_task(itask)
 
     def force_trigger_tasks(
-        self, items: Iterable[str],
+        self,
+        items: Iterable[str],
         flow: List[str],
         flow_wait: bool = False,
-        flow_descr: Optional[str] = None
+        flow_descr: Optional[str] = None,
+        now: bool = False
     ):
-        """Force a task to trigger (user command).
+        """Manually trigger tasks.
 
-        Always run the task, even if a previous run was flow-waited.
-
-        If the task did not run before in the flow:
-          - run it, and spawn on outputs unless flow-wait is set.
+        If a task did not run before in the flow:
+          - trigger it, and spawn on outputs unless flow-wait is set.
             (but load the previous outputs from the DB)
 
-        Else if the task ran before in the flow:
+        If a task ran before in the flow:
           - load previous outputs
           If the previous run was not flow-wait
-            - run it, and try to spawn on outputs
+            - trigger it, and try to spawn on outputs
           Else if the previous run was flow-wait:
             - just spawn (if not already spawned in this flow)
               unless flow-wait is set.
@@ -2193,12 +2246,13 @@ class TaskPool:
                 LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
             self.merge_flows(itask, flow_nums)
-            self._force_trigger(itask)
+            self._force_trigger(itask, now)
 
         # Spawn and trigger inactive tasks.
         if not flow:
             # default: assign to all active flows
             flow_nums = self._get_active_flow_nums()
+
         for name, point in inactive_ids:
             if not self.can_be_spawned(name, point):
                 continue
@@ -2227,7 +2281,7 @@ class TaskPool:
 
             # run it (or run it again for incomplete flow-wait)
             self.add_to_pool(itask)
-            self._force_trigger(itask)
+            self._force_trigger(itask, now)
 
     def spawn_parentless_sequential_xtriggers(self):
         """Spawn successor(s) of parentless wall clock satisfied tasks."""

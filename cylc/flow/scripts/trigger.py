@@ -17,11 +17,13 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run regardless of prerequisites.
+Manually trigger tasks regardless of prerequisites, even in a paused workflow.
 
-* Triggering an unqueued waiting task queues it, regardless of prerequisites.
-* Triggering a queued task submits it, regardless of queue limiting.
-* Triggering an active task has no effect (it already triggered).
+Triggering an unqueued task queues it, to run when released by the queue.
+Triggering a queued task runs it immediately regardless of queue limiting.
+So you may need to trigger a task twice if queue limiting is in effect.
+
+Attempts to trigger active tasks (submitted or running) will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -74,13 +76,15 @@ mutation (
   $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
+  $onResume: Boolean,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
     flow: $flow,
     flowWait: $flowWait,
-    flowDescr: $flowDescr
+    flowDescr: $flowDescr,
+    onResume: $onResume,
   ) {
     result
   }
@@ -96,7 +100,16 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts(parser)
+
+    parser.add_option(
+        "--on-resume",
+        help=r"Run triggered tasks once a paused workflow is resumed.",
+        action="store_true",
+        default=False,
+        dest="on_resume"
+    )
     return parser
 
 
@@ -114,6 +127,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
+            'onResume': options.on_resume,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)

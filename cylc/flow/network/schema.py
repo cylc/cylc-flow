@@ -2213,20 +2213,24 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
 class Trigger(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Manually trigger tasks.
+            Manually trigger tasks, even in a paused workflow.
 
-            Warning: waiting tasks that are queue-limited will be queued if
-            triggered, to submit as normal when released by the queue; queued
-            tasks will submit immediately if triggered, even if that violates
-            the queue limit (so you may need to trigger a queue-limited task
-            twice to get it to submit immediately).
+            Triggering an unqueued task queues it, to run when queue-released.
+            Triggering a queued task runs it now regardless of queue limiting.
+
+            The "on resume" option waits for a paused workflow to be resumed.
 
             Valid for: paused, running workflows.
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        ...
+        on_resume = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Run triggered tasks once the paused workflow is resumed.
+            ''')
+        )
 
 
 def _mut_field(cls):

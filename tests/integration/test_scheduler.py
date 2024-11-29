@@ -170,7 +170,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         # release runahead/queued tasks
         # (nothing should happen because the scheduler is paused)
         one.pool.release_runahead_tasks()
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
@@ -179,7 +179,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (there should be no change because the task is still held)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # release all tasks
@@ -187,7 +187,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (the task should be submitted)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert len(submitted_tasks) == 1
 
 
@@ -346,6 +346,17 @@ async def test_restart_timeout(
 
     See: https://github.com/cylc/cylc-flow/issues/5078
     """
+    one_conf.update(
+        {
+            'runtime': {
+                'one': {
+                    'simulation': {
+                        'default run length': 'PT5S'
+                    }
+                }
+            }
+        }
+    )
     id_ = flow(one_conf)
 
     # run the workflow to completion
@@ -360,20 +371,35 @@ async def test_restart_timeout(
                 [itask.identity], None, None, ['all'])
 
     # restart the completed workflow
-    schd = scheduler(id_)
-    async with run(schd):
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd) as log:
+        # allow start-up process to complete?
+        # without this we get KeyError from platform['install target']
+        await asyncio.sleep(0)
+
         # it should detect that the workflow has completed and alert the user
         assert log_filter(
+            logging.WARNING,
             contains='This workflow already ran to completion.'
         )
 
         # it should activate a timeout
-        assert log_filter(contains='restart timer starts NOW')
+        assert log_filter(
+            logging.WARNING,
+            contains='restart timer starts NOW'
+        )
 
         # when we trigger tasks the timeout should be cleared
         schd.pool.force_trigger_tasks(['1/one'], {1})
-        await asyncio.sleep(0)  # yield control to the main loop
-        assert log_filter(contains='restart timer stopped')
+        schd.release_tasks_to_run()
+
+        # wait for log to update
+        await asyncio.sleep(3)
+
+        assert log_filter(
+            logging.INFO,
+            contains='restart timer stopped'
+        )
 
 
 @pytest.mark.parametrize("signal", ((SIGHUP), (SIGINT), (SIGTERM)))

@@ -20,7 +20,8 @@
 
 Pause a workflow.
 
-This suspends submission of all tasks in a workflow.
+This suspends submission of all tasks until the workflow is resumed, except
+for tasks manually triggered "now" with `cylc trigger --now`.
 
 Examples:
   # pause my_workflow
