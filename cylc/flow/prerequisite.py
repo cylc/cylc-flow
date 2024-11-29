@@ -262,7 +262,7 @@ class Prerequisite:
         mode: Optional[RunMode] = None,
         forced: bool = False,
     ) -> 'Set[Tokens]':
-        """Set the given outputs as satisfied.
+        """Set the given outputs as satisfied (if they are not already).
 
         Return outputs that match.
 
@@ -280,12 +280,12 @@ class Prerequisite:
             if output_tuple not in self._satisfied:
                 continue
             valid.add(output)
-            msg: SatisfiedState = (
-                'satisfied by skip mode' if mode == RunMode.SKIP
-                else 'satisfied naturally'
-            )
-            if self._satisfied[output_tuple] != msg:
-                self[output_tuple] = 'force satisfied' if forced else msg
+            if not self._satisfied[output_tuple]:
+                self[output_tuple] = (
+                    'force satisfied' if forced
+                    else 'satisfied by skip mode' if mode == RunMode.SKIP
+                    else 'satisfied naturally'
+                )
         return valid
 
     def api_dump(self) -> Optional[PbPrerequisite]:
@@ -328,8 +328,8 @@ class Prerequisite:
     def set_satisfied(self) -> None:
         """Force this prerequisite into the satisfied state.
 
-        State can be overridden by calling `self.satisfy_me`.
-
+        Sets all of the outputs in this prerequisite to satisfied if not
+        already.
         """
         for task_output in self._satisfied:
             if not self._satisfied[task_output]:

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from functools import partial
+from typing import Optional
 
 import pytest
 
@@ -22,6 +23,7 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE, get_point
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.prerequisite import Prerequisite, SatisfiedState
+from cylc.flow.run_modes import RunMode
 
 
 detok = partial(detokenise, selectors=True, relative=True)
@@ -151,6 +153,7 @@ def satisfied_states_prereq():
     prereq[('1', 'b', 'x')] = False
     prereq[('1', 'c', 'x')] = 'satisfied from database'
     prereq[('1', 'd', 'x')] = 'force satisfied'
+    prereq[('1', 'e', 'x')] = 'satisfied by skip mode'
     return prereq
 
 
@@ -162,6 +165,7 @@ def test_unset_naturally_satisfied(satisfied_states_prereq: Prerequisite):
         ('1/b', False),
         ('1/c', True),
         ('1/d', False),
+        ('1/e', True),
     ]:
         assert (
             satisfied_states_prereq.unset_naturally_satisfied(id_) == expected
@@ -173,6 +177,18 @@ def test_unset_naturally_satisfied(satisfied_states_prereq: Prerequisite):
         ('1', 'b', 'x'): False,
         ('1', 'c', 'x'): False,
         ('1', 'd', 'x'): 'force satisfied',
+        ('1', 'e', 'x'): False,
+    }
+
+
+def test_set_satisfied(satisfied_states_prereq: Prerequisite):
+    satisfied_states_prereq.set_satisfied()
+    assert satisfied_states_prereq._satisfied == {
+        ('1', 'a', 'x'): 'satisfied naturally',
+        ('1', 'b', 'x'): 'force satisfied',
+        ('1', 'c', 'x'): 'satisfied from database',
+        ('1', 'd', 'x'): 'force satisfied',
+        ('1', 'e', 'x'): 'satisfied by skip mode',
     }
 
 
@@ -208,24 +224,40 @@ def test_satisfy_me():
     }
 
 
-@pytest.mark.parametrize('forced', [False, True])
-@pytest.mark.parametrize('existing, expected_when_forced', [
-    (False, 'force satisfied'),
-    ('satisfied from database', 'force satisfied'),
-    ('force satisfied', 'force satisfied'),
-    ('satisfied naturally', 'satisfied naturally'),
+@pytest.mark.parametrize('forced, mode, expected', [
+    (False, None, 'satisfied naturally'),
+    (True, None, 'force satisfied'),
+    (True, RunMode.SKIP, 'force satisfied'),
+    (False, RunMode.SKIP, 'satisfied by skip mode'),
 ])
-def test_satisfy_me__override(
+def test_satisfy_me__override_false(
     forced: bool,
-    existing: SatisfiedState,
-    expected_when_forced: SatisfiedState,
+    mode: Optional[RunMode],
+    expected: SatisfiedState,
 ):
-    """Test that satisfying a prereq with a different state works as expected
-    with and without the `forced` arg."""
+    """Test satisfying an unsatisfied prereq with different states."""
+    prereq = Prerequisite(IntegerPoint('2'))
+    prereq[('1', 'a', 'x')] = False
+
+    prereq.satisfy_me([Tokens('//1/a:x')], forced=forced, mode=mode)
+    assert prereq[('1', 'a', 'x')] == expected
+
+
+@pytest.mark.parametrize('mode', [None, RunMode.SKIP])
+@pytest.mark.parametrize('forced', [True, False])
+@pytest.mark.parametrize('existing', [
+    'satisfied from database',
+    'force satisfied',
+    'satisfied naturally',
+])
+def test_satisfy_me__override_truthy(
+    existing: SatisfiedState,
+    forced: bool,
+    mode: Optional[RunMode],
+):
+    """Test that satisfying an already-satisfied prereq doesn't change it."""
     prereq = Prerequisite(IntegerPoint('2'))
     prereq[('1', 'a', 'x')] = existing
 
-    prereq.satisfy_me([Tokens('//1/a:x')], forced=forced)
-    assert prereq[('1', 'a', 'x')] == (
-        expected_when_forced if forced else 'satisfied naturally'
-    )
+    prereq.satisfy_me([Tokens('//1/a:x')], forced=forced, mode=mode)
+    assert prereq[('1', 'a', 'x')] == existing
