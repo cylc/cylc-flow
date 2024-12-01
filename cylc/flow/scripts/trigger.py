@@ -21,7 +21,11 @@ Manually trigger tasks regardless of prerequisites, even in a paused workflow.
 
 Triggering an unqueued task queues it, to run when released by the queue.
 Triggering a queued task runs it immediately regardless of queue limiting.
-So you may need to trigger a task twice if queue limiting is in effect.
+So you may need to trigger tasks twice if queue limiting is in effect.
+
+If the workflow is paused queued waiting tasks will not run (unless manually
+triggered) until the workflow is resumed, even if the queue empties out. This
+includes tasks queued by manual triggering, when queue limits are in effect.
 
 Attempts to trigger active tasks (submitted or running) will be ignored.
 
