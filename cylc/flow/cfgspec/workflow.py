@@ -1359,7 +1359,7 @@ with Conf(
 
                     .. seealso::
 
-                       - :ref:`task-run-modes`
+                       - :ref:`task-run-modes.skip`
                        - :cylc:conf:`flow.cylc[runtime][<namespace>][skip]`
 
                     .. versionadded:: 8.4.0
@@ -1481,7 +1481,7 @@ with Conf(
                 modes.
 
                 For a full description of simulation and dummy run modes see
-                :ref:`SimulationMode`.
+                :ref:`workflow-run-modes.simulation`.
             '''):
                 Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
                      desc='''
