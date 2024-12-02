@@ -1350,6 +1350,12 @@ with Conf(
                     ``{RunMode.SKIP.value}``:
                         {RunMode.SKIP.describe()}
 
+                        .. note::
+
+                           This is primarily intended to be set at runtime via
+                           a broadcast; Cylc will warn you about any tasks
+                           set to run in skip mode in the workflow
+                           configuration at validation time.
 
                     .. seealso::
 
