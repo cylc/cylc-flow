@@ -1398,10 +1398,10 @@ class TaskEventsManager():
             "time_run_exit": event_time,
         })
         # Update mean elapsed time only on task succeeded,
-        # and only if task is running in live mode:
+        # (Don't record skip mode run times)
         if (
             itask.summary['started_time'] is not None
-            and itask.run_mode == RunMode.LIVE.value
+            and itask.run_mode != RunMode.SKIP
         ):
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
