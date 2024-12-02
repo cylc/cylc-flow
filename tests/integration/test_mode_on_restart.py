@@ -56,7 +56,7 @@ async def test_restart_mode(
             assert schd.get_run_mode().value == mode_before
     else:
         # Restarting in a new mode is not:
-        errormsg = f'^This.*{mode_before} mode: Will.*{mode_after} mode.$'
+        errormsg = f'^This.*{mode_before} mode: You.*{mode_after} mode.$'
         with pytest.raises(InputError, match=errormsg):
             async with run(schd):
                 pass

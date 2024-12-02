@@ -475,7 +475,7 @@ class Scheduler:
                 raise InputError(
                     "This workflow was originally run in "
                     f"{og_run_mode.value} mode:"
-                    f" Will not restart in {run_mode.value} mode."
+                    f" You can't restart it in {run_mode.value} mode."
                 )
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")

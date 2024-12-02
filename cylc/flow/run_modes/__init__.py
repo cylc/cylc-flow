@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
             # the task to submit
             'TaskProxy',
             # the task's runtime config (with broadcasts applied)
-            dict,
+            Dict[str, Any],
             # the workflow ID
             str,
             # the current time as (float_unix_time, str_ISO8601)
@@ -46,7 +46,7 @@ class RunMode(Enum):
     """The possible run modes of a task/workflow."""
 
     LIVE = 'live'
-    """Tasks will run normally."""
+    """Tasks will submit their configured jobs."""
 
     SIMULATION = 'simulation'
     """Simulates job submission with configurable exection time
@@ -65,7 +65,7 @@ class RunMode(Enum):
         For use by configuration spec documenter.
         """
         if self == self.LIVE:
-            return "Task will run normally."
+            return "Task will submit their configured jobs."
         if self == self.SKIP:
             return (
                 "Skips job submission; sets required outputs"
@@ -93,19 +93,14 @@ class RunMode(Enum):
         This returns None for live-mode jobs as these use a
         different code pathway for job submission.
         """
+        submit_task_job: 'Optional[SubmissionInterface]' = None
         if self == RunMode.DUMMY:
-            from cylc.flow.run_modes.dummy import (
-                submit_task_job as dummy_submit_task_job)
-            return dummy_submit_task_job
+            from cylc.flow.run_modes.dummy import submit_task_job
         elif self == RunMode.SIMULATION:
-            from cylc.flow.run_modes.simulation import (
-                submit_task_job as simulation_submit_task_job)
-            return simulation_submit_task_job
+            from cylc.flow.run_modes.simulation import submit_task_job
         elif self == RunMode.SKIP:
-            from cylc.flow.run_modes.skip import (
-                submit_task_job as skip_submit_task_job)
-            return skip_submit_task_job
-        return None
+            from cylc.flow.run_modes.skip import submit_task_job
+        return submit_task_job
 
 
 def disable_task_event_handlers(itask: 'TaskProxy'):
