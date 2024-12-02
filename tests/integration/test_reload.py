@@ -24,6 +24,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
 )
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 async def test_reload_waits_for_pending_tasks(
@@ -146,3 +147,52 @@ async def test_reload_failure(
 
         # the config should be unchanged
         assert schd.config.cfg['scheduling']['graph']['R1'] == 'one'
+
+
+async def test_reload_global(
+    flow,
+    one_conf,
+    scheduler,
+    start,
+    log_filter,
+    tmp_path,
+    monkeypatch,
+    ):
+
+    global_config_path = tmp_path / 'global.cylc'
+    monkeypatch.setenv("CYLC_CONF_PATH", str(global_config_path.parent))
+
+    # Original global config file
+    global_config_path.write_text("""
+    [platforms]
+        [[localhost]]
+            [[[meta]]]
+                x = 1
+    """)
+    assert glbl_cfg().get(['platforms','localhost','meta','x']) == '1'
+
+    # Modify the global config file
+    global_config_path.write_text("""
+    [platforms]
+        [[localhost]]
+            [[[meta]]]
+                x = 2
+    """)
+
+    id_ = flow(one_conf)
+    schd = scheduler(id_)
+    async with start(schd) as log:
+
+        # reload the workflow and global config
+        await commands.run_cmd(commands.reload_workflow, schd, reload_global=True)
+
+        # Global config should have been reloaded
+        assert log_filter(
+            log,
+            contains=(
+                'Reloading the global configuration.'
+            )
+        )
+
+        # Task platforms reflect the new config
+        assert schd.pool.get_tasks()[0].platform['meta']['x'] == '2'

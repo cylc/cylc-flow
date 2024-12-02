@@ -180,3 +180,29 @@ def test_platform_ssh_forward_variables(mock_global_config):
     assert glblcfg.get(
         ['platforms', 'foo', 'ssh forward environment variables']
     ) == ["FOO", "BAR"]
+
+def test_reload(mock_global_config, tmp_path):
+    # Load a config
+    glblcfg: GlobalConfig = mock_global_config(f'''
+    [platforms]
+        [[foo]]
+            [[[meta]]]
+                x = 1
+    ''')
+
+    # Update the global config file and reload
+    conf_path = tmp_path / GlobalConfig.CONF_BASENAME
+    conf_path.write_text('''
+    [platforms]
+        [[foo]]
+            [[[meta]]]
+                x = 2
+    ''')
+    glblcfg.load()
+
+    assert glblcfg.get(['platforms','foo','meta','x']) == '2'
+
+    from cylc.flow.platforms import get_platform
+    platform = get_platform("foo")
+
+    assert platform['meta']['x'] == "2"
