@@ -171,17 +171,17 @@ async def test_reload_global(
     """)
     assert glbl_cfg(reload=True).get(['platforms','localhost','meta','x']) == '1'
 
-    # Modify the global config file
-    global_config_path.write_text("""
-    [platforms]
-        [[localhost]]
-            [[[meta]]]
-                x = 2
-    """)
-
     id_ = flow(one_conf)
     schd = scheduler(id_)
     async with start(schd) as log:
+
+        # Modify the global config file
+        global_config_path.write_text("""
+        [platforms]
+            [[localhost]]
+                [[[meta]]]
+                    x = 2
+        """)
 
         # reload the workflow and global config
         await commands.run_cmd(commands.reload_workflow, schd, reload_global=True)
@@ -195,4 +195,26 @@ async def test_reload_global(
         )
 
         # Task platforms reflect the new config
+        assert schd.pool.get_tasks()[0].platform['meta']['x'] == '2'
+
+        # Modify the global config file with an error
+        global_config_path.write_text("""
+        [ERROR]
+            [[localhost]]
+                [[[meta]]]
+                    x = 3
+        """)
+
+        # reload the workflow and global config
+        await commands.run_cmd(commands.reload_workflow, schd, reload_global=True)
+
+        # Error is noted in the log
+        assert log_filter(
+            log,
+            contains=(
+                'This is probably due to an issue with the new configuration.'
+            )
+        )
+
+        # Task platforms should be the last valid value
         assert schd.pool.get_tasks()[0].platform['meta']['x'] == '2'

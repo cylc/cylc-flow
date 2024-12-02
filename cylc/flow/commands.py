@@ -364,7 +364,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # give commands time to complete
         sleep(1)  # give any remove-init's time to complete
 
-
     if reload_global:
         # Reload global config if requested
         LOG.info("Reloading the global configuration.")
@@ -383,7 +382,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
                 '\nOtherwise, fix the configuration and attempt to reload'
                 ' again.'
             )
-
 
     # reload the workflow definition
     schd.reload_pending = 'loading the workflow definition'
