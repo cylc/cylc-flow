@@ -69,10 +69,12 @@ if TYPE_CHECKING:
 
 MUTATION = '''
 mutation (
-  $wFlows: [WorkflowID]!
+  $wFlows: [WorkflowID]!,
+  $reloadGlobal: Boolean,
 ) {
   reload (
     workflows: $wFlows
+    reloadGlobal: $reloadGlobal
   ) {
     result
   }
@@ -87,6 +89,12 @@ def get_option_parser():
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
+
+    parser.add_option(
+            "-g", "--global",
+            help="also reload global configuration.",
+            action="store_true", default=False, dest="reload_global")
+
     return parser
 
 
@@ -97,6 +105,7 @@ async def run(options: 'Values', workflow_id: str):
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow_id],
+            'reloadGlobal': options.reload_global,
         }
     }
 

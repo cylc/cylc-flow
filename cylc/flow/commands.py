@@ -330,7 +330,7 @@ async def remove_tasks(
 
 
 @_command('reload_workflow')
-async def reload_workflow(schd: 'Scheduler', reload_global: bool):
+async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     """Reload workflow configuration."""
     yield
     # pause the workflow if not already

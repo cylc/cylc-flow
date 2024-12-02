@@ -169,7 +169,7 @@ async def test_reload_global(
             [[[meta]]]
                 x = 1
     """)
-    assert glbl_cfg().get(['platforms','localhost','meta','x']) == '1'
+    assert glbl_cfg(reload=True).get(['platforms','localhost','meta','x']) == '1'
 
     # Modify the global config file
     global_config_path.write_text("""
