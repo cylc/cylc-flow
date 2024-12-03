@@ -95,14 +95,11 @@ from cylc.flow.hostuserutil import (
 )
 from cylc.flow.id import (
     Tokens,
-    quick_relative_id,
 )
 from cylc.flow.log_level import (
     verbosity_to_env,
     verbosity_to_opts,
 )
-from cylc.flow.id import Tokens
-from cylc.flow.log_level import verbosity_to_env, verbosity_to_opts
 from cylc.flow.loggingutil import (
     ReferenceLogFileHandler,
     RotatingLogFileHandler,
