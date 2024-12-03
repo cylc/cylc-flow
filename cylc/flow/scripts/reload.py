@@ -91,9 +91,9 @@ def get_option_parser():
     )
 
     parser.add_option(
-            "-g", "--global",
-            help="also reload global configuration.",
-            action="store_true", default=False, dest="reload_global")
+        "-g", "--global",
+        help="also reload global configuration.",
+        action="store_true", default=False, dest="reload_global")
 
     return parser
 
