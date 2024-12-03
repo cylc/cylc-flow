@@ -40,6 +40,7 @@ from cylc.flow.cycling.iso8601 import (
 )
 from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.platforms import get_platform
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
@@ -58,7 +59,7 @@ if TYPE_CHECKING:
         PrereqTuple,
         SatisfiedState,
     )
-    from cylc.flow.simulation import ModeSettings
+    from cylc.flow.run_modes.simulation import ModeSettings
     from cylc.flow.task_action_timer import TaskActionTimer
     from cylc.flow.taskdef import TaskDef
 
@@ -194,6 +195,7 @@ class TaskProxy:
         'point_as_seconds',
         'poll_timer',
         'reload_successor',
+        'run_mode',
         'submit_num',
         'tdef',
         'state',
@@ -303,6 +305,7 @@ class TaskProxy:
             self.graph_children = generate_graph_children(tdef, self.point)
 
         self.mode_settings: Optional['ModeSettings'] = None
+        self.run_mode: Optional[RunMode] = None
 
         if self.tdef.expiration_offset is not None:
             self.expire_time = (
@@ -564,7 +567,10 @@ class TaskProxy:
         return False
 
     def satisfy_me(
-        self, task_messages: 'Iterable[Tokens]', forced: bool = False
+        self,
+        task_messages: 'Iterable[Tokens]',
+        mode: Optional[RunMode] = RunMode.LIVE,
+        forced: bool = False,
     ) -> 'Set[Tokens]':
         """Try to satisfy my prerequisites with given output messages.
 
@@ -574,7 +580,7 @@ class TaskProxy:
         Return a set of unmatched task messages.
 
         """
-        used = self.state.satisfy_me(task_messages, forced)
+        used = self.state.satisfy_me(task_messages, mode=mode, forced=forced)
         return set(task_messages) - used
 
     def clock_expire(self) -> bool:

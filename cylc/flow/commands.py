@@ -83,11 +83,9 @@ from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
-from cylc.flow.workflow_status import (
-    RunMode,
-    StopMode,
-)
+from cylc.flow.workflow_status import StopMode
 
 
 if TYPE_CHECKING:

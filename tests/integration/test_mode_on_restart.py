@@ -20,6 +20,7 @@ import pytest
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.run_modes import RunMode
 
 
 MODES = [('live'), ('simulation'), ('dummy')]
@@ -42,7 +43,7 @@ async def test_restart_mode(
     async with start(schd):
         if not mode_before:
             mode_before = 'live'
-        assert schd.get_run_mode() == mode_before
+        assert schd.get_run_mode().value == mode_before
 
     schd = scheduler(id_, run_mode=mode_after)
 
@@ -52,10 +53,10 @@ async def test_restart_mode(
     ):
         # Restarting in the same mode is fine.
         async with run(schd):
-            assert schd.get_run_mode() == mode_before
+            assert schd.get_run_mode().value == mode_before
     else:
         # Restarting in a new mode is not:
-        errormsg = f'^This.*{mode_before} mode: Will.*{mode_after} mode.$'
+        errormsg = f'^This.*{mode_before} mode: You.*{mode_after} mode.$'
         with pytest.raises(InputError, match=errormsg):
             async with run(schd):
                 pass

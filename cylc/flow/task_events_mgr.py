@@ -68,6 +68,8 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_OUT,
     JOB_LOG_ERR,
 )
+from cylc.flow.run_modes import (
+    JOBLESS_MODES, RunMode, disable_task_event_handlers)
 from cylc.flow.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.flow.task_state import (
@@ -79,7 +81,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING
+    TASK_STATUS_WAITING,
 )
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
@@ -99,7 +101,6 @@ from cylc.flow.workflow_events import (
     get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
-from cylc.flow.workflow_status import RunMode
 
 
 if TYPE_CHECKING:
@@ -774,7 +775,7 @@ class TaskEventsManager():
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
-            if itask.tdef.run_mode != RunMode.SIMULATION:
+            if itask.run_mode != RunMode.SIMULATION:
                 job_tokens = itask.tokens.duplicate(
                     job=str(itask.submit_num)
                 )
@@ -896,7 +897,7 @@ class TaskEventsManager():
         if (
             itask.state(TASK_STATUS_WAITING)
             # Polling in live mode only:
-            and itask.tdef.run_mode == RunMode.LIVE
+            and itask.run_mode == RunMode.LIVE
             and (
                 (
                     # task has a submit-retry lined up
@@ -941,7 +942,7 @@ class TaskEventsManager():
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
-        if itask.tdef.run_mode != RunMode.LIVE:
+        if disable_task_event_handlers(itask):
             return
         msg = ""
         if message != f"job {event}":
@@ -1396,8 +1397,12 @@ class TaskEventsManager():
             "run_status": 0,
             "time_run_exit": event_time,
         })
-        # Update mean elapsed time only on task succeeded.
-        if itask.summary['started_time'] is not None:
+        # Update mean elapsed time only on task succeeded,
+        # (Don't record skip mode run times)
+        if (
+            itask.summary['started_time'] is not None
+            and itask.run_mode != RunMode.SKIP
+        ):
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
@@ -1484,7 +1489,7 @@ class TaskEventsManager():
             )
 
         itask.set_summary_time('submitted', event_time)
-        if itask.tdef.run_mode == RunMode.SIMULATION:
+        if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
@@ -1520,7 +1525,7 @@ class TaskEventsManager():
             'submitted',
             event_time,
         )
-        if itask.tdef.run_mode == RunMode.SIMULATION:
+        if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
             self.data_store_mgr.delta_job_time(
                 job_tokens,
@@ -1553,7 +1558,10 @@ class TaskEventsManager():
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
         # And transient tasks, used for setting outputs and spawning children,
         # do not submit jobs.
-        if (itask.tdef.run_mode == RunMode.SIMULATION) or forced:
+        if (
+            itask.run_mode and itask.run_mode.value in JOBLESS_MODES
+            or forced
+        ):
             job_conf = {"submit_num": itask.submit_num}
         else:
             try:

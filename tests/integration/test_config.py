@@ -17,6 +17,7 @@
 import logging
 from pathlib import Path
 import sqlite3
+from textwrap import dedent
 from typing import Any
 import pytest
 
@@ -274,7 +275,7 @@ def test_parse_special_tasks_families(flow, scheduler, validate, section):
         }
 
 
-def test_queue_treated_as_implicit(flow, validate, caplog):
+def test_queue_treated_as_implicit(flow, validate, caplog, log_filter):
     """Tasks in queues but not in runtime generate a warning.
 
     https://github.com/cylc/cylc-flow/issues/5260
@@ -289,10 +290,7 @@ def test_queue_treated_as_implicit(flow, validate, caplog):
         }
     )
     validate(id_)
-    assert (
-        'Queues contain tasks not defined in runtime'
-        in caplog.records[0].message
-    )
+    assert log_filter(contains='Queues contain tasks not defined in runtime')
 
 
 def test_queue_treated_as_comma_separated(flow, validate):
@@ -596,19 +594,60 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
     assert get_platforms(glbl_cfg()) == {'localhost', 'foo', 'bar'}
 
 
-def test_validate_run_mode(flow: Fixture, validate: Fixture):
+def test_nonlive_mode_validation(flow, validate, caplog, log_filter):
+    """Nonlive tasks return a warning at validation.
+    """
+    msg1 = dedent('The following tasks are set to run in skip mode:\n    * skip')
+
+    wid = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'live => skip => simulation => dummy => default'
+            }
+        },
+        'runtime': {
+            'default': {},
+            'live': {'run mode': 'live'},
+            'skip': {
+                'run mode': 'skip',
+                'skip': {'outputs': 'started, submitted'}
+            },
+        },
+    })
+
+    validate(wid)
+    assert log_filter(contains=msg1)
+
+
+def test_skip_forbidden_as_output(flow, validate):
+    """Run mode names are forbidden as task output names."""
+    wid = flow({
+        'scheduling': {'graph': {'R1': 'task'}},
+        'runtime': {'task': {'outputs': {'skip': 'message for skip'}}}
+    })
+    with pytest.raises(
+        WorkflowConfigError, match='Invalid task output .* cannot be: `skip`'
+    ):
+        validate(wid)
+
+
+def test_validate_workflow_run_mode(flow: Fixture, validate: Fixture, caplog: Fixture):
     """Test that Cylc validate will only check simulation mode settings
     if validate --mode simulation or dummy.
-
     Discovered in:
     https://github.com/cylc/cylc-flow/pull/6213#issuecomment-2225365825
     """
-    wid = flow({
-        'scheduling': {'graph': {'R1': 'mytask'}},
-        'runtime': {'mytask': {'simulation': {'fail cycle points': 'alll'}}}
-    })
+    wid = flow(
+        {
+            'scheduling': {'graph': {'R1': 'mytask'}},
+            'runtime': {
+                'mytask': {
+                    'simulation': {'fail cycle points': 'invalid'},
+                }
+            },
+        }
+    )
 
-    # It's fine with run mode live
     validate(wid)
 
     # It fails with run mode simulation:

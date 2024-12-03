@@ -17,8 +17,8 @@
 import os
 import sys
 from optparse import Values
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
-from pathlib import Path
+from typing import (
+    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
 import pytest
 import logging
 from types import SimpleNamespace
@@ -47,8 +47,9 @@ from cylc.flow.task_outputs import (
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
 
-
-Fixture = Any
+if TYPE_CHECKING:
+    from pathlib import Path
+    Fixture = Any
 
 
 def _tmp_flow_config(tmp_run_dir: Callable):
@@ -60,8 +61,8 @@ def _tmp_flow_config(tmp_run_dir: Callable):
 
     Returns the path to the flow file.
     """
-    def __tmp_flow_config(id_: str, config: str) -> Path:
-        run_dir: Path = tmp_run_dir(id_)
+    def __tmp_flow_config(id_: str, config: str) -> 'Path':
+        run_dir: 'Path' = tmp_run_dir(id_)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
@@ -82,7 +83,7 @@ class TestWorkflowConfig:
     """Test class for the Cylc WorkflowConfig object."""
 
     def test_xfunction_imports(
-            self, mock_glbl_cfg: Fixture, tmp_path: Path):
+            self, mock_glbl_cfg: 'Fixture', tmp_path: 'Path'):
         """Test for a workflow configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -175,7 +176,8 @@ class TestWorkflowConfig:
         with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
                            options=SimpleNamespace())
-        assert "module 'capybara' has no attribute 'capybara'" in str(excinfo.value)
+        assert "module 'capybara' has no attribute 'capybara'" in str(
+            excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function is not callable."""
@@ -358,7 +360,7 @@ def test_process_icp(
     expected_icp: Optional[str],
     expected_eval_icp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
-    monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
+    monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_initial_cycle_point().
 
@@ -445,7 +447,7 @@ def test_process_startcp(
     starttask: Optional[str],
     expected: str,
     expected_err: Optional[Tuple[Type[Exception], str]],
-    monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
+    monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_start_cycle_point().
 
@@ -648,7 +650,7 @@ def test_process_fcp(
     options_fcp: Optional[str],
     expected_fcp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
-    set_cycling_type: Fixture
+    set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_final_cycle_point().
 
@@ -671,7 +673,7 @@ def test_process_fcp(
         initial_point=loader.get_point(
             scheduling_cfg['initial cycle point']
         ).standardise(),
-        final_point = None,
+        final_point=None,
         options=SimpleNamespace(fcp=options_fcp),
     )
 
@@ -812,7 +814,7 @@ def test_stopcp_after_fcp(
     cycle point is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
     id_ = 'cassini'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         allow implicit tasks = True
     [scheduling]
@@ -1325,7 +1327,7 @@ def test_implicit_tasks(
     """
     # Setup
     id_ = 'rincewind'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         {
             f'allow implicit tasks = {allow_implicit_tasks}'
@@ -1427,7 +1429,7 @@ def test_zero_interval(
     """Test that a zero-duration recurrence with >1 repetition gets an
     appropriate warning."""
     id_ = 'ordinary'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         UTC mode = True
         allow implicit tasks = True
@@ -1470,7 +1472,7 @@ def test_chain_expr(
     Note the order matters when "nominal" units (years, months) are used.
     """
     id_ = 'osgiliath'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
         [scheduler]
             UTC mode = True
             allow implicit tasks = True
@@ -1649,7 +1651,7 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
     ]
 )
 def test_cylc_env_at_parsing(
-    tmp_path: Path,
+    tmp_path: 'Path',
     monkeypatch: pytest.MonkeyPatch,
     installed,
     run_dir,

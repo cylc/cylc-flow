@@ -37,6 +37,7 @@ from cylc.flow.util import (
 
 if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef
+    from typing_extensions import Literal
 
 
 # Standard task output strings, used for triggering.
@@ -194,6 +195,7 @@ def get_completion_expression(tdef: 'TaskDef') -> str:
 def get_optional_outputs(
     expression: str,
     outputs: Iterable[str],
+    disable: "Optional[str]" = None
 ) -> Dict[str, Optional[bool]]:
     """Determine which outputs in an expression are optional.
 
@@ -202,6 +204,9 @@ def get_optional_outputs(
             The completion expression.
         outputs:
             All outputs that apply to this task.
+        disable:
+            Disable this output and any others it is joined with by `and`
+            (which will mean they are necessarily optional).
 
     Returns:
         dict: compvar: is_optional
@@ -229,12 +234,30 @@ def get_optional_outputs(
         [('expired', True), ('failed', None), ('succeeded', False),
          ('x', False), ('y', False)]
 
+        >>> sorted(get_optional_outputs(
+        ...     '(succeeded and towel) or (failed and bugblatter)',
+        ...     {'succeeded', 'towel', 'failed', 'bugblatter'},
+        ... ).items())
+        [('bugblatter', True), ('failed', True),
+         ('succeeded', True), ('towel', True)]
+
+        >>> sorted(get_optional_outputs(
+        ...     '(succeeded and towel) or (failed and bugblatter)',
+        ...     {'succeeded', 'towel', 'failed', 'bugblatter'},
+        ...     disable='failed'
+        ... ).items())
+        [('bugblatter', True), ('failed', True),
+         ('succeeded', False), ('towel', False)]
+
     """
     # determine which triggers are used in the expression
     used_compvars = get_variable_names(expression)
 
     # all completion variables which could appear in the expression
     all_compvars = {trigger_to_completion_variable(out) for out in outputs}
+
+    # Allows exclusion of additional outcomes:
+    extra_excludes = {disable: False} if disable else {}
 
     return {  # output: is_optional
         # the outputs that are used in the expression
@@ -247,6 +270,7 @@ def get_optional_outputs(
                     # (pre-conditions are considered separately)
                     'expired': False,
                     'submit_failed': False,
+                    **extra_excludes
                 },
             )
             for output in used_compvars
@@ -609,15 +633,24 @@ class TaskOutputs:
         else:
             raise KeyError(compvar)
 
-    def iter_required_messages(self) -> Iterator[str]:
+    def iter_required_messages(
+        self,
+        disable: 'Optional[Literal["succeeded", "failed"]]' = None
+    ) -> Iterator[str]:
         """Yield task messages that are required for this task to be complete.
 
         Note, in some cases tasks might not have any required messages,
         e.g. "completion = succeeded or failed".
+
+        Args:
+            disable: Consider this output and any others it is joined with by
+                `and` to not exist. In skip mode we only want to check either
+                succeeded or failed, but not both.
         """
         for compvar, is_optional in get_optional_outputs(
             self._completion_expression,
             set(self._message_to_compvar.values()),
+            disable=disable
         ).items():
             if is_optional is False:
                 for message, _compvar in self._message_to_compvar.items():

@@ -367,11 +367,15 @@ class WorkflowDatabaseManager:
             value = getattr(schd.options, key, None)
             value = None if value == 'reload' else value
             self.put_workflow_params_1(key, value)
-        for key in (
+
+        self.put_workflow_params_1(
+            self.KEY_CYCLE_POINT_TIME_ZONE,
+            getattr(schd.options, self.KEY_CYCLE_POINT_TIME_ZONE, None),
+        )
+        self.put_workflow_params_1(
             self.KEY_RUN_MODE,
-            self.KEY_CYCLE_POINT_TIME_ZONE
-        ):
-            self.put_workflow_params_1(key, getattr(schd.options, key, None))
+            schd.get_run_mode().value,
+        )
 
     def put_workflow_params_1(
         self, key: str, value: Union[AnyStr, float, None]

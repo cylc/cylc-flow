@@ -16,7 +16,6 @@
 
 """Task state related logic."""
 
-
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -31,8 +30,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
     TaskOutputs,
 )
@@ -43,6 +42,7 @@ if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqTuple
+    from cylc.flow.run_modes import RunMode
     from cylc.flow.taskdef import TaskDef
 
 
@@ -324,6 +324,7 @@ class TaskState:
     def satisfy_me(
         self,
         outputs: Iterable['Tokens'],
+        mode: 'Optional[RunMode]',
         forced: bool = False,
     ) -> Set['Tokens']:
         """Try to satisfy my prerequisites with given outputs.
@@ -333,7 +334,7 @@ class TaskState:
         valid: Set[Tokens] = set()
         for prereq in (*self.prerequisites, *self.suicide_prerequisites):
             valid.update(
-                prereq.satisfy_me(outputs, forced)
+                prereq.satisfy_me(outputs, mode=mode, forced=forced)
             )
         return valid
 

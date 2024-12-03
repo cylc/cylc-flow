@@ -53,7 +53,7 @@ def test_remove_task_from_flows(
     }
     db_mgr = WorkflowDatabaseManager(tmp_path)
     schd_tokens = Tokens('~asterix/gaul')
-    tdef = TaskDef('a', {}, None, None, None)
+    tdef = TaskDef('a', rtcfg={}, start_point=None, initial_point=None)
     with db_mgr.get_pri_dao() as dao:
         db_mgr.pri_dao = dao
         db_mgr.pub_dao = Mock()

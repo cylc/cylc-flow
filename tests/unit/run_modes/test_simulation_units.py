@@ -20,11 +20,10 @@ from pytest import param
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.simulation import (
-    parse_fail_cycle_points,
-    build_dummy_script,
+from cylc.flow.run_modes.simulation import (
     disable_platforms,
     get_simulated_run_len,
+    parse_fail_cycle_points,
     sim_task_failed,
 )
 
@@ -57,27 +56,6 @@ def test_get_simulated_run_len(
 
 
 @pytest.mark.parametrize(
-    'fail_one_time_only', (True, False)
-)
-def test_set_simulation_script(fail_one_time_only):
-    rtc = {
-        'outputs': {'foo': '1', 'bar': '2'},
-        'simulation': {
-            'fail try 1 only': fail_one_time_only,
-            'fail cycle points': '1',
-        }
-    }
-    result = build_dummy_script(rtc, 60)
-    assert result.split('\n') == [
-        'sleep 60',
-        "cylc message '1'",
-        "cylc message '2'",
-        f"cylc__job__dummy_result {str(fail_one_time_only).lower()}"
-        " 1 || exit 1"
-    ]
-
-
-@pytest.mark.parametrize(
     'rtc, expect', (
         ({'platform': 'skarloey'}, 'localhost'),
         ({'remote': {'host': 'rheneas'}}, 'localhost'),
@@ -97,12 +75,39 @@ def test_disable_platforms(rtc, expect):
                 assert val is None
 
 
-def test_parse_fail_cycle_points(set_cycling_type):
-    before = ['2', '4']
-    set_cycling_type()
-    assert parse_fail_cycle_points(before) == [
-        IntegerPoint(i) for i in before
-    ]
+@pytest.mark.parametrize(
+    'args, cycling, fallback',
+    (
+        param((['2', '4'], ['']), 'integer', False, id='int.valid'),
+        param((['garbage'], []), 'integer', True, id='int.invalid'),
+        param((['20200101T0000Z'], []), 'iso8601', False, id='iso.valid'),
+        param((['garbage'], []), 'iso8601', True, id='iso.invalid'),
+    ),
+)
+def test_parse_fail_cycle_points(
+    caplog, set_cycling_type, args, cycling, fallback
+):
+    """Tests for parse_fail_cycle points.
+    """
+    set_cycling_type(cycling)
+    if fallback:
+        expect = args[1]
+        check_log = True
+    else:
+        expect = args[0]
+        check_log = False
+
+    if cycling == 'integer':
+        assert parse_fail_cycle_points(*args) == [
+            IntegerPoint(i) for i in expect
+        ]
+    else:
+        assert parse_fail_cycle_points(*args) == [
+            ISO8601Point(i) for i in expect
+        ]
+    if check_log:
+        assert "Incompatible" in caplog.messages[0]
+        assert cycling in caplog.messages[0].lower()
 
 
 @pytest.mark.parametrize(

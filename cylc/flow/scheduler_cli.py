@@ -54,6 +54,7 @@ from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
+from cylc.flow.run_modes import WORKFLOW_RUN_MODES
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import (
     SUITERC_DEPR_MSG,
@@ -65,7 +66,6 @@ from cylc.flow.terminal import (
     is_terminal,
     prompt,
 )
-from cylc.flow.workflow_status import RunMode
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -129,9 +129,16 @@ PLAY_ICP_OPTION.sources = {'play'}
 
 RUN_MODE = OptionSettings(
     ["-m", "--mode"],
-    help="Run mode: live, dummy, simulation (default live).",
+    help=(
+        f"Run mode: {sorted(WORKFLOW_RUN_MODES)} (default live)."
+        " Live mode executes the tasks as defined in the runtime"
+        " section."
+        " Simulation and dummy modes ignore task 'script'"
+        " items and related job settings. They are"
+        " designed for testing."
+    ),
     metavar="STRING", action='store', dest="run_mode",
-    choices=[RunMode.LIVE, RunMode.DUMMY, RunMode.SIMULATION],
+    choices=list(WORKFLOW_RUN_MODES),
 )
 
 PLAY_RUN_MODE = deepcopy(RUN_MODE)

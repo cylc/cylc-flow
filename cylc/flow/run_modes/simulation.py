@@ -13,40 +13,105 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Utilities supporting simulation and skip modes
+"""Utilities supporting simulation mode
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from logging import INFO
+from typing import (
+    TYPE_CHECKING, Any, Dict, List, Tuple, Union)
 from time import time
 
 from metomi.isodatetime.parsers import DurationParser
 
 from cylc.flow import LOG
+from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
+from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
     from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-    from cylc.flow.cycling import PointBase
+    from typing_extensions import Literal
+
+
+def submit_task_job(
+    task_job_mgr: 'TaskJobManager',
+    itask: 'TaskProxy',
+    rtconfig: Dict[str, Any],
+    workflow: str,
+    now: Tuple[float, str]
+) -> 'Literal[True]':
+    """Submit a task in simulation mode.
+
+    Returns:
+        True - indicating that TaskJobManager need take no further action.
+    """
+    configure_sim_mode(
+        rtconfig,
+        itask.tdef.rtconfig['simulation']['fail cycle points'])
+    itask.summary['started_time'] = now[0]
+    task_job_mgr._set_retry_timers(itask, rtconfig)
+    itask.mode_settings = ModeSettings(
+        itask,
+        task_job_mgr.workflow_db_mgr,
+        rtconfig
+    )
+    itask.waiting_on_job_prep = False
+    itask.submit_num += 1
+
+    itask.platform = {
+        'name': RunMode.SIMULATION.value,
+        'install target': 'localhost',
+        'hosts': ['localhost'],
+        'submission retry delays': [],
+        'execution retry delays': []
+    }
+    itask.summary['job_runner_name'] = RunMode.SIMULATION.value
+    itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (
+        itask.mode_settings.simulated_run_length
+    )
+    itask.jobs.append(
+        task_job_mgr.get_simulation_job_conf(itask, workflow)
+    )
+    task_job_mgr.task_events_mgr.process_message(
+        itask, INFO, TASK_OUTPUT_SUBMITTED,
+    )
+    task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
+        itask, {
+            'time_submit': now[1],
+            'time_run': now[1],
+            'try_num': itask.get_try_num(),
+            'flow_nums': str(list(itask.flow_nums)),
+            'is_manual_submit': itask.is_manual_submit,
+            'job_runner_name': RunMode.SIMULATION.value,
+            'platform_name': RunMode.SIMULATION.value,
+            'submit_status': 0   # Submission has succeeded
+        }
+    )
+    itask.state.status = TASK_STATUS_RUNNING
+    return True
 
 
 @dataclass
 class ModeSettings:
     """A store of state for simulation modes.
 
-    Used instead of modifying the runtime config.
+    Used instead of modifying the runtime config. We want to leave the
+    config unchanged so that clearing a broadcast change of run mode
+    clears the run mode settings.
 
     Args:
         itask:
@@ -79,20 +144,18 @@ class ModeSettings:
         db_mgr: 'WorkflowDatabaseManager',
         rtconfig: Dict[str, Any]
     ):
-
         # itask.summary['started_time'] and mode_settings.timeout need
         # repopulating from the DB on workflow restart:
         started_time = itask.summary['started_time']
         try_num = None
         if started_time is None:
-            # Get DB info
+            # This is a restart - Get DB info
             db_info = db_mgr.pri_dao.select_task_job(
                 itask.tokens['cycle'],
                 itask.tokens['task'],
                 itask.tokens['job'],
             )
 
-            # Get the started time:
             if db_info['time_submit']:
                 started_time = get_unix_time_from_time_string(
                     db_info["time_submit"])
@@ -100,28 +163,20 @@ class ModeSettings:
             else:
                 started_time = time()
 
-            # Get the try number:
             try_num = db_info["try_num"]
 
         # Parse fail cycle points:
-        if rtconfig != itask.tdef.rtconfig:
-            try:
-                rtconfig["simulation"][
-                    "fail cycle points"
-                ] = parse_fail_cycle_points(
-                    rtconfig["simulation"]["fail cycle points"]
-                )
-            except PointParsingError as exc:
-                # Broadcast Fail CP didn't parse
-                LOG.warning(
-                    'Broadcast fail cycle point was invalid:\n'
-                    f'    {exc.args[0]}'
-                )
-                rtconfig['simulation'][
-                    'fail cycle points'
-                ] = itask.tdef.rtconfig['simulation']['fail cycle points']
+        if not rtconfig:
+            rtconfig = itask.tdef.rtconfig
+        if rtconfig and rtconfig != itask.tdef.rtconfig:
+            rtconfig["simulation"][
+                "fail cycle points"
+            ] = parse_fail_cycle_points(
+                rtconfig["simulation"]["fail cycle points"],
+                itask.tdef.rtconfig['simulation']['fail cycle points']
+            )
 
-        # Calculate simulation info:
+        # Calculate simulation outcome and run-time:
         self.simulated_run_length = (
             get_simulated_run_len(rtconfig))
         self.sim_task_fails = sim_task_failed(
@@ -132,37 +187,47 @@ class ModeSettings:
         self.timeout = started_time + self.simulated_run_length
 
 
-def configure_sim_modes(taskdefs, sim_mode):
-    """Adjust task defs for simulation and dummy mode.
+def configure_sim_mode(rtc, fallback, warnonly: bool = True):
+    """Adjust task defs for simulation mode.
 
+    Example:
+        >>> this = configure_sim_mode
+        >>> rtc = {
+        ...     'submission retry delays': [42, 24, 23],
+        ...     'environment': {'DoNot': '"WantThis"'},
+        ...     'simulation': {'fail cycle points': ['all']}
+        ... }
+        >>> this(rtc, [53])
+        >>> rtc['submission retry delays']
+        [1]
+        >>> rtc['environment']
+        {}
+        >>> rtc['simulation']
+        {'fail cycle points': None}
+        >>> rtc['platform']
+        'localhost'
     """
-    dummy_mode = (sim_mode == RunMode.DUMMY)
-
-    for tdef in taskdefs:
-        # Compute simulated run time by scaling the execution limit.
-        rtc = tdef.rtconfig
-
-        rtc['submission retry delays'] = [1]
-
-        if dummy_mode:
-            # Generate dummy scripting.
-            rtc['init-script'] = ""
-            rtc['env-script'] = ""
-            rtc['pre-script'] = ""
-            rtc['post-script'] = ""
-            rtc['script'] = build_dummy_script(
-                rtc, get_simulated_run_len(rtc))
-
-        disable_platforms(rtc)
-
-        # Disable environment, in case it depends on env-script.
-        rtc['environment'] = {}
-
-        rtc["simulation"][
-            "fail cycle points"
-        ] = parse_fail_cycle_points(
-            rtc["simulation"]["fail cycle points"]
+    if not warnonly:
+        parse_fail_cycle_points(
+            rtc["simulation"]["fail cycle points"],
+            fallback,
+            warnonly
         )
+        return
+    rtc['submission retry delays'] = [1]
+
+    disable_platforms(rtc)
+
+    # Disable environment, in case it depends on env-script.
+    rtc['environment'] = {}
+
+    rtc["simulation"][
+        "fail cycle points"
+    ] = parse_fail_cycle_points(
+        rtc["simulation"]["fail cycle points"],
+        fallback,
+        warnonly
+    )
 
 
 def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
@@ -182,24 +247,6 @@ def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
         ).get_seconds()
 
     return sleep_sec
-
-
-def build_dummy_script(rtc: Dict[str, Any], sleep_sec: int) -> str:
-    """Create fake scripting for dummy mode.
-
-    This is for Dummy mode only.
-    """
-    script = "sleep %d" % sleep_sec
-    # Dummy message outputs.
-    for msg in rtc['outputs'].values():
-        script += "\ncylc message '%s'" % msg
-    if rtc['simulation']['fail try 1 only']:
-        arg1 = "true"
-    else:
-        arg1 = "false"
-    arg2 = " ".join(rtc['simulation']['fail cycle points'])
-    script += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
-    return script
 
 
 def disable_platforms(
@@ -222,33 +269,52 @@ def disable_platforms(
 
 
 def parse_fail_cycle_points(
-    f_pts_orig: List[str]
+    fail_at_points_updated: List[str],
+    fail_at_points_config,
+    warnonly: bool = True
 ) -> 'Union[None, List[PointBase]]':
     """Parse `[simulation][fail cycle points]`.
 
     - None for "fail all points".
     - Else a list of cycle point objects.
 
+    Args:
+        fail_at_points_updated: Fail cycle points from a broadcast.
+        fail_at_points_config:
+            Fail cycle points from original workflow config, which would
+            have caused the scheduler to fail on config parsing. This check is
+            designed to prevent broadcasts from taking the scheduler down.
+
     Examples:
         >>> this = parse_fail_cycle_points
-        >>> this(['all']) is None
+        >>> this(['all'], ['42']) is None
         True
-        >>> this([])
+        >>> this([], ['42'])
         []
-        >>> this(None) is None
+        >>> this(None, ['42']) is None
         True
     """
-    f_pts: 'Optional[List[PointBase]]' = []
+    fail_at_points: 'List[PointBase]' = []
     if (
-        f_pts_orig is None
-        or f_pts_orig and 'all' in f_pts_orig
+        fail_at_points_updated is None
+        or fail_at_points_updated
+        and 'all' in fail_at_points_updated
     ):
-        f_pts = None
-    elif f_pts_orig:
-        f_pts = []
-        for point_str in f_pts_orig:
-            f_pts.append(get_point(point_str).standardise())
-    return f_pts
+        return None
+    elif fail_at_points_updated:
+        for point_str in fail_at_points_updated:
+            if isinstance(point_str, PointBase):
+                fail_at_points.append(point_str)
+            else:
+                try:
+                    fail_at_points.append(get_point(point_str).standardise())
+                except PointParsingError as exc:
+                    if warnonly:
+                        LOG.warning(exc.args[0])
+                        return fail_at_points_config
+                    else:
+                        raise exc
+    return fail_at_points
 
 
 def sim_time_check(
@@ -265,14 +331,24 @@ def sim_time_check(
     """
     now = time()
     sim_task_state_changed: bool = False
+
     for itask in itasks:
-        if itask.state.status != TASK_STATUS_RUNNING:
+        if (
+            itask.state.status != TASK_STATUS_RUNNING
+            or (
+                itask.run_mode
+                and itask.run_mode != RunMode.SIMULATION
+            )
+        ):
             continue
 
         # This occurs if the workflow has been restarted.
         if itask.mode_settings is None:
             rtconfig = task_events_manager.broadcast_mgr.get_updated_rtconfig(
                 itask)
+            rtconfig = configure_sim_mode(
+                rtconfig,
+                itask.tdef.rtconfig['simulation']['fail cycle points'])
             itask.mode_settings = ModeSettings(
                 itask,
                 db_mgr,

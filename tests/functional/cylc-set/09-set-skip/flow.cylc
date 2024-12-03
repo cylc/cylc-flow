@@ -1,0 +1,50 @@
+[meta]
+    test_description = """
+        Test that cylc set <task_id> --out skip satisfies
+        all outputs which are required by the graph.
+    """
+    proposal url = https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
+
+[scheduler]
+    allow implicit tasks = true
+    [[events]]
+        expected task failures = 1/bar
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            # Optional out not created by set --out skip
+            foo:no? => not_this_task
+
+            # set --out skip creates required, started, submitted
+            # and succeeded (unless failed is set):
+            foo:yes => foo_done
+            foo:submitted => foo_done
+            foo:succeeded => foo_done
+            foo:started => do_skip
+
+            # set --out skip creates failed if that is required
+            # by skip mode settings:
+            bar:started => do_skip
+            bar:failed? => bar_failed
+        """
+
+[runtime]
+    [[foo]]
+        script = sleep 100
+        [[[skip]]]
+            outputs = yes
+        [[[outputs]]]
+            no = Don't require this task
+            yes = Require this task
+
+    [[bar]]
+        script = sleep 100
+        [[[skip]]]
+            outputs = failed
+
+    [[do_skip]]
+        script = """
+            cylc set --out skip ${CYLC_WORKFLOW_ID}//1/foo \
+                ${CYLC_WORKFLOW_ID}//1/bar
+        """

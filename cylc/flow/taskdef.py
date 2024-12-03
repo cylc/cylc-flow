@@ -151,7 +151,7 @@ class TaskDef:
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        "run_mode", "rtconfig", "start_point", "initial_point", "sequences",
+        "rtconfig", "start_point", "initial_point", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "sequential", "is_coldstart",
         "workflow_polling_cfg", "expiration_offset",
@@ -162,11 +162,10 @@ class TaskDef:
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
 
-    def __init__(self, name, rtcfg, run_mode, start_point, initial_point):
+    def __init__(self, name, rtcfg, start_point, initial_point):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)
 
-        self.run_mode = run_mode
         self.rtconfig = rtcfg
         self.start_point = start_point
         self.initial_point = initial_point
@@ -410,7 +409,7 @@ class TaskDef:
     def __repr__(self) -> str:
         """
         >>> TaskDef(
-        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     name='oliver', rtcfg={}, start_point='1',
         ...     initial_point='1'
         ... )
         <TaskDef 'oliver'>

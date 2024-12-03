@@ -96,6 +96,10 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED,
+)
 from cylc.flow.terminal import cli_function
 
 
@@ -379,6 +383,36 @@ def check_for_deprecated_task_event_template_vars(
     return None
 
 
+BAD_SKIP_OUTS = re.compile(r'outputs\s*=\s*(.*)')
+
+
+def check_skip_mode_outputs(line: str) -> Dict:
+    """Ensure skip mode output setting doesn't include
+    succeeded _and_ failed, as they are mutually exclusive.
+
+    n.b.
+
+    This should be separable from ``[[outputs]]`` because it's a key
+    value pair not a section heading.
+
+    Examples:
+        >>> this = check_skip_mode_outputs
+        >>> this('outputs = succeeded, failed')
+        {'description': 'are ... together', 'outputs': 'failed...succeeded'}
+    """
+
+    outputs = BAD_SKIP_OUTS.findall(line)
+    if outputs:
+        outputs = [i.strip() for i in outputs[0].split(',')]
+        if TASK_OUTPUT_FAILED in outputs and TASK_OUTPUT_SUCCEEDED in outputs:
+            return {
+                'description':
+                    'are mutually exclusive and cannot be used together',
+                'outputs': f'{TASK_OUTPUT_FAILED} and {TASK_OUTPUT_SUCCEEDED}'
+            }
+    return {}
+
+
 INDENTATION = re.compile(r'^(\s*)(.*)')
 
 
@@ -623,6 +657,14 @@ STYLE_CHECKS = {
             '``=>`` implies line continuation without ``\\``.'
         ),
         FUNCTION: re.compile(r'=>\s*\\').findall
+    },
+    'S016': {
+        'short': 'Task outputs {outputs}: {description}.',
+        FUNCTION: check_skip_mode_outputs
+    },
+    'S017': {
+        'short': 'Run mode is not live: This task will only appear to run.',
+        FUNCTION: re.compile(r'run mode\s*=\s*[^l][^i][^v][^e]$').findall
     },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the

@@ -161,7 +161,7 @@ def test_pre_cylc8(flow, validate, caplog):
         assert warning in caplog.messages
 
 
-def test_graph_upgrade_msg_default(flow, validate, caplog):
+def test_graph_upgrade_msg_default(flow, validate, caplog, log_filter):
     """It lists Cycling definitions which need upgrading."""
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
@@ -174,11 +174,11 @@ def test_graph_upgrade_msg_default(flow, validate, caplog):
         },
     })
     validate(id_)
-    assert '[scheduling][dependencies][X]graph' in caplog.messages[0]
-    assert 'for X in:\n       P1Y, R1' in caplog.messages[0]
+    assert log_filter(contains='[scheduling][dependencies][X]graph')
+    assert log_filter(contains='for X in:\n       P1Y, R1')
 
 
-def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
+def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
     """It gives a more useful message in special case where graph is
     key rather than section:
 
@@ -191,11 +191,12 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
         'scheduling': {'dependencies': {'graph': 'foo => bar'}},
     })
     validate(id_)
-    expect = ('[scheduling][dependencies]graph -> [scheduling][graph]R1')
-    assert expect in caplog.messages[0]
+    assert log_filter(
+        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1'
+    )
 
 
-def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
+def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
     """Both an implicit R1 and explict reccurance exist:
     It appends a note.
     """
@@ -215,7 +216,7 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
         '\n       P1Y, graph'
         '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
     )
-    assert expect in caplog.messages[0]
+    assert log_filter(contains=expect)
 
 
 def test_undefined_parent(flow, validate):

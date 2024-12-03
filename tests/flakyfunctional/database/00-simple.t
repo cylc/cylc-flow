@@ -49,7 +49,7 @@ fcp|
 icp|1
 is_paused|0
 n_restart|0
-run_mode|
+run_mode|live
 startcp|
 stop_clock_time|
 stop_task|

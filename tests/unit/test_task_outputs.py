@@ -274,7 +274,7 @@ def test_iter_required_outputs():
     assert set(outputs.iter_required_messages()) == set()
 
     # the preconditions expiry/submitted are excluded from this logic when
-    # defined as optional
+    # defined as optional:
     outputs = TaskOutputs(
         tdef(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
@@ -284,6 +284,44 @@ def test_iter_required_outputs():
     assert outputs._completion_expression == '(succeeded and x and y) or expired'
     assert set(outputs.iter_required_messages()) == {
         TASK_OUTPUT_SUCCEEDED,
+        'x',
+        'y',
+    }
+
+
+def test_iter_required_outputs__disable():
+    # Get all outputs required for success path (excluding failure, what
+    # is still required):
+    outputs = TaskOutputs(
+        tdef(
+            {},
+            {'a', 'succeeded', 'b', 'y', 'failed', 'x'},
+            '(x and y and failed) or (a and b and succeeded)'
+        )
+    )
+
+    assert set(outputs.iter_required_messages()) == set()
+
+    # Disabling succeeded leaves us with failure required outputs:
+    assert set(
+        outputs.iter_required_messages(disable=TASK_OUTPUT_SUCCEEDED)
+    ) == {
+        TASK_OUTPUT_FAILED,
+        'x',
+        'y',
+    }
+
+    # Disabling failed leaves us with succeeded required outputs:
+    assert set(outputs.iter_required_messages(disable=TASK_OUTPUT_FAILED)) == {
+        TASK_OUTPUT_SUCCEEDED,
+        'a',
+        'b',
+    }
+
+    # Disabling an abitrary output leaves us with required outputs
+    # from another branch:
+    assert set(outputs.iter_required_messages(disable='a')) == {
+        TASK_OUTPUT_FAILED,
         'x',
         'y',
     }

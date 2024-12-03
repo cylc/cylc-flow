@@ -16,10 +16,12 @@
 
 from unittest.mock import MagicMock
 import pytest
+from types import SimpleNamespace
 
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
+from cylc.flow.run_modes import RunMode, disable_task_event_handlers
 from cylc.flow.task_trigger import Dependency, TaskTrigger
 from cylc.flow.task_state import (
     TaskState,
@@ -41,7 +43,7 @@ from cylc.flow.task_state import (
 )
 def test_state_comparison(state, is_held):
     """Test the __call__ method."""
-    tdef = TaskDef('foo', {}, 'live', '123', '123')
+    tdef = TaskDef('foo', {}, '123', '123')
     tstate = TaskState(tdef, '123', state, is_held)
 
     assert tstate(state, is_held=is_held)
@@ -72,7 +74,7 @@ def test_state_comparison(state, is_held):
 )
 def test_reset(state, is_held, should_reset):
     """Test that tasks do or don't have their state changed."""
-    tdef = TaskDef('foo', {}, 'live', '123', '123')
+    tdef = TaskDef('foo', {}, '123', '123')
     # create task state:
     #   * status: waiting
     #   * is_held: true
@@ -96,7 +98,7 @@ def test_task_prereq_duplicates(set_cycling_type):
 
     dep = Dependency([trig], [trig], False)
 
-    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tdef = TaskDef('foo', {}, IntegerPoint("1"), IntegerPoint("1"))
     tdef.add_dependency(dep, seq1)
     tdef.add_dependency(dep, seq2)  # duplicate!
 
@@ -110,7 +112,7 @@ def test_task_prereq_duplicates(set_cycling_type):
 def test_task_state_order():
     """Test is_gt and is_gte methods."""
 
-    tdef = TaskDef('foo', {}, 'live', IntegerPoint("1"), IntegerPoint("1"))
+    tdef = TaskDef('foo', {}, IntegerPoint("1"), IntegerPoint("1"))
     tstate = TaskState(tdef, IntegerPoint("1"), TASK_STATUS_SUBMITTED, False)
 
     assert tstate.is_gt(TASK_STATUS_WAITING)
@@ -141,3 +143,31 @@ def test_get_resolved_dependencies():
         '1/d',
         '1/e',
     ]
+
+
+@pytest.mark.parametrize(
+    'itask_run_mode, disable_handlers, expect',
+    (
+        ('live', True, False),
+        ('live', False, False),
+        ('dummy', True, False),
+        ('dummy', False, False),
+        ('simulation', True, True),
+        ('simulation', False, True),
+        ('skip', True, True),
+        ('skip', False, False),
+    )
+)
+def test_disable_task_event_handlers(itask_run_mode, disable_handlers, expect):
+    """Conditions under which task event handlers should not be used.
+    """
+    # Construct a fake itask object:
+    itask = SimpleNamespace(
+        run_mode=RunMode(itask_run_mode),
+        platform={'disable task event handlers': disable_handlers},
+        tdef=SimpleNamespace(
+            rtconfig={
+                'skip': {'disable task event handlers': disable_handlers}})
+    )
+    # Check method:
+    assert disable_task_event_handlers(itask) is expect

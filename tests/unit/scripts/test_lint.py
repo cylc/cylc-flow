@@ -193,7 +193,10 @@ something\t
             [[[directives]]]
                 -l walltime = 666
     [[baz]]
+        run mode = skip
         platform = `no backticks`
+        [[[skip]]]
+            outputs = succeeded, failed
 ''' + (
     '\nscript = the quick brown fox jumps over the lazy dog until it becomes '
     'clear that this line is longer than the default 130 character limit.'

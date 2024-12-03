@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from itertools import product
 import logging
 from typing import Any as Fixture
 
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.data_store_mgr import (
     JOBS,
-    TASK_STATUSES_ORDERED,
     TASK_STATUS_WAITING,
-    TASK_STATUS_SUBMIT_FAILED,
 )
 
 
@@ -80,17 +78,23 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
     """
     conf = {
         'scheduling': {'graph': {'R1': 'rhenas'}},
-        'runtime': {'rhenas': {'simulation': {
-            'fail cycle points': '1',
-            'fail try 1 only': False,
-    }}}}
+        'runtime': {
+            'rhenas': {
+                'simulation': {
+                    'fail cycle points': '1',
+                    'fail try 1 only': False,
+                }
+            }
+        },
+    }
     id_ = flow(conf)
     schd = scheduler(id_)
     async with start(schd):
         # Set task to running:
-        itask =  schd.pool.get_tasks()[0]
+        itask = schd.pool.get_tasks()[0]
         itask.state.status = 'running'
         itask.submit_num += 1
+        itask.run_mode = RunMode.SIMULATION
 
         # Not run _insert_task_job yet:
         assert not schd.data_store_mgr.added['jobs'].keys()
@@ -152,7 +156,7 @@ async def test__always_insert_task_job(
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir,
-            is_simulation=False
+            run_mode=RunMode('live')
         )
 
         # Both tasks are in a waiting state:

@@ -31,6 +31,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.run_modes import JOBLESS_MODES
 
 if TYPE_CHECKING:
     from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -266,7 +267,7 @@ def platform_from_name(
             return platform_data
 
     # If platform name in run mode and not otherwise defined:
-    if platform_name == 'SIMULATION':
+    if platform_name in JOBLESS_MODES:
         platform_data = deepcopy(platforms['localhost'])
         platform_data['name'] = 'localhost'
         return platform_data
@@ -662,6 +663,7 @@ def get_install_target_to_platforms_map(
         else:
             install_target = get_install_target_from_platform(platform)
             ret.setdefault(install_target, []).append(platform)
+
     return ret
 
 
