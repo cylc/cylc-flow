@@ -44,9 +44,7 @@ class LimitedTaskQueue:
         self, itask: 'TaskProxy', active: Counter[str]
     ) -> bool:
         """Queue task if in my membership and the queue limit is reached."""
-        n_active: int = 0
-        for mem in self.members:
-            n_active += active[mem]
+        n_active = sum(active[mem] for mem in self.members)
         if (
             self.limit and n_active >= self.limit
             and itask.tdef.name in self.members
