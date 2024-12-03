@@ -261,13 +261,17 @@ def view_log(
         print(os.path.dirname(logpath))
         return 0
     if mode == 'list-dir':
-        for entry in sorted(os.listdir(os.path.dirname(logpath))):
+        dirname = os.path.dirname(logpath)
+        if not os.path.exists(dirname):
+            sys.stderr.write(f"Directory not found: {dirname}\n")
+            return 1
+        for entry in sorted(os.listdir(dirname)):
             print(entry)
         return 0
     if not os.path.exists(logpath) and batchview_cmd is None:
         # Note: batchview_cmd may not need to have access to logpath, so don't
         # test for existence of path if it is set.
-        sys.stderr.write('file not found: %s\n' % logpath)
+        sys.stderr.write('File not found: %s\n' % logpath)
         return 1
     if prepend_path:
         from cylc.flow.hostuserutil import get_host
