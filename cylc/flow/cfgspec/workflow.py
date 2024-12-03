@@ -1352,17 +1352,12 @@ with Conf(
 
                         .. note::
 
-                           This is primarily intended for testing and
-                           development; Cylc will warn you about any tasks
-                           set to run in skip mode at validation time.
-                           If you are using skip mode to create a dummy task,
-                           you can ignore this warning.
-                        .. note::
-
                            This is primarily intended to be set at runtime via
                            a broadcast; Cylc will warn you about any tasks
                            set to run in skip mode in the workflow
                            configuration at validation time.
+                           If you are using skip mode to create a dummy task,
+                           you can ignore this warning.
 
                     .. seealso::
 
