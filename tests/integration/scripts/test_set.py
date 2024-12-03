@@ -19,11 +19,21 @@
 Note: see also functional tests
 """
 
+import logging
+
+from cylc.flow.commands import (
+    run_cmd,
+    set_prereqs_and_outputs,
+)
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
+from cylc.flow.task_state import (
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+)
 
 
 async def test_set_parentless_spawning(
@@ -164,3 +174,57 @@ async def test_pre_all(flow, scheduler, run):
         schd.pool.set_prereqs_and_outputs(['1/z'], [], ['all'], ['all'])
         warn_or_higher = [i for i in log.records if i.levelno > 30]
         assert warn_or_higher == []
+
+
+async def test_logging(flow, scheduler, start, log_filter):
+    """Test logging of a mixture of valid and invalid tasks, tasks with
+    some required and no required outputs."""
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduler': {
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '2000',
+                'graph': {
+                    'R3//P1Y': 'a? & a:x & b? => c?',
+                },
+            },
+            'runtime': {
+                'a': {
+                    'outputs': {'x': 'whatever'}
+                }
+            }
+        })
+    )
+    tasks_to_set = [
+        # Tasks with required outputs:
+        '2000/a',
+        # Tasks without required outputs:
+        '2000/b', '2000/c',
+        # Glob that matches future tasks:
+        '2002/*',
+        # Invalid tasks:
+        '2005/a', '2000/doh',
+    ]
+    async with start(schd):
+        await run_cmd(set_prereqs_and_outputs(schd, tasks_to_set, [FLOW_ALL]))
+
+        assert log_filter(
+            logging.WARNING,
+            "Tasks have no required outputs to set: 2000/a, 2000/b, 2002/a, 2002/b",
+        )
+        assert log_filter(
+            logging.WARNING, "Invalid cycle point for task: a, 2005"
+        )
+        assert log_filter(logging.WARNING, "No matching tasks found: doh")
+        assert len(log_filter(logging.WARNING)) == 3
+
+        # Check singular form of the above message
+        await run_cmd(set_prereqs_and_outputs(schd, ['2000/b'], [FLOW_ALL]))
+
+        assert log_filter(
+            logging.WARNING,
+            "Task has no required outputs to set: 2000/b",
+        )
+        assert len(log_filter(logging.WARNING)) == 4

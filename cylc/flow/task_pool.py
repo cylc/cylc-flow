@@ -1943,7 +1943,7 @@ class TaskPool:
 
         """
         # Get matching pool tasks and inactive task definitions.
-        itasks, inactive_tasks, unmatched = self.filter_task_proxies(
+        itasks, inactive_tasks, _unmatched = self.filter_task_proxies(
             items,
             inactive=True,
             warn_no_active=False,
@@ -1951,6 +1951,7 @@ class TaskPool:
 
         flow_nums = self._get_flow_nums(flow, flow_descr)
 
+        nothing_set: Set[str] = set()
         # Set existing task proxies.
         for itask in itasks:
             if flow == ['none'] and itask.flow_nums != set():
@@ -1966,7 +1967,8 @@ class TaskPool:
                 # Spawn as if seq xtrig of parentless task was satisfied,
                 # with associated task producing these outputs.
                 self.check_spawn_psx_task(itask)
-                self._set_outputs_itask(itask, outputs)
+                if not self._set_outputs_itask(itask, outputs):
+                    nothing_set.add(itask.identity)
 
         # Spawn and set inactive tasks.
         if not flow:
@@ -1982,8 +1984,18 @@ class TaskPool:
                     point, tdef, flow_nums,
                     flow_wait=flow_wait, transient=True
                 )
-                if trans is not None:
-                    self._set_outputs_itask(trans, outputs)
+                if trans is not None and self._set_outputs_itask(
+                    trans, outputs
+                ):
+                    nothing_set.add(trans.identity)
+
+        if nothing_set:
+            msg = "Task has" if len(nothing_set) == 1 else "Tasks have"
+            msg += (
+                " no required outputs to set: "
+                f"{', '.join(sorted(nothing_set))}"
+            )
+            LOG.warning(msg)
 
         if self.compute_runahead():
             self.release_runahead_tasks()
@@ -1992,10 +2004,16 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         outputs: List[str],
-    ) -> None:
-        """Set requested outputs on a task proxy and spawn children."""
+    ) -> bool:
+        """Set requested outputs on a task proxy and spawn children.
+
+        Return False if no outputs were specified and the task has no required
+        outputs to set
+        """
         if not outputs:
             outputs = list(itask.state.outputs.iter_required_messages())
+            if not outputs:
+                return False
         else:
             outputs = self._standardise_outputs(
                 itask.point, itask.tdef, outputs
@@ -2018,6 +2036,7 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_state(itask)
         self.workflow_db_mgr.put_update_task_outputs(itask)
         self.workflow_db_mgr.process_queued_ops()
+        return True
 
     def _set_prereqs_itask(
         self,
@@ -2316,7 +2335,8 @@ class TaskPool:
             ids:
                 ID strings.
             warn_no_active:
-                Whether to log a warning if no matching active tasks are found.
+                Whether to log a warning if no matching tasks are found in the
+                pool.
             inactive:
                 If True, unmatched IDs will be checked against taskdefs
                 and cycle, and any matches will be returned in the second
