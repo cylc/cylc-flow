@@ -173,7 +173,7 @@ async def test_reload_global(
 
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
 
         # Modify the global config file
         global_config_path.write_text("""
@@ -184,11 +184,10 @@ async def test_reload_global(
         """)
 
         # reload the workflow and global config
-        await commands.run_cmd(commands.reload_workflow, schd, reload_global=True)
+        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
 
         # Global config should have been reloaded
         assert log_filter(
-            log,
             contains=(
                 'Reloading the global configuration.'
             )
@@ -206,11 +205,10 @@ async def test_reload_global(
         """)
 
         # reload the workflow and global config
-        await commands.run_cmd(commands.reload_workflow, schd, reload_global=True)
+        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
 
         # Error is noted in the log
         assert log_filter(
-            log,
             contains=(
                 'This is probably due to an issue with the new configuration.'
             )
