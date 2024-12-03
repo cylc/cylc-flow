@@ -69,14 +69,6 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def force_release_task(self, itask: 'TaskProxy') -> bool:
-        """Remove a task from whichever queue it belongs to.
-
-        Return True if released, else False
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt tasks with defs removed by scheduler reload or restart."""
         raise NotImplementedError

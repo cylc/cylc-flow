@@ -151,13 +151,6 @@ class IndepQueueManager(TaskQueueManagerBase):
         """Try to remove a task from the queues. Return True if done."""
         return any(queue.remove(itask) for queue in self.queues.values())
 
-    def force_release_task(self, itask: 'TaskProxy') -> bool:
-        """Remove a task from whichever queue it belongs to.
-
-        Return True if released, else False.
-        """
-        return self.remove_task(itask)
-
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt orphaned tasks to the default group."""
         self.queues[self.Q_DEFAULT].adopt(orphans)

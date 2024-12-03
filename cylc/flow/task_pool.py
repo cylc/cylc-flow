@@ -2179,7 +2179,7 @@ class TaskPool:
                 itask.state_reset(is_queued=True)
                 self.data_store_mgr.delta_task_state(itask)
 
-        elif self.task_queue_mgr.force_release_task(itask):
+        elif self.task_queue_mgr.remove_task(itask):
             # else release it from the queue to run now
             itask.state_reset(is_queued=False)
             self.data_store_mgr.delta_task_state(itask)
