@@ -17,7 +17,7 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger tasks regardless of prerequisites, even in a paused workflow.
+Force task(s) to run regardless of prerequisites, even in a paused workflow.
 
 Triggering an unqueued task queues it, to run when released by the queue.
 Triggering a queued task runs it immediately regardless of queue limiting.
@@ -109,7 +109,11 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--on-resume",
-        help=r"Run triggered tasks once a paused workflow is resumed.",
+        help=(
+            "If the workflow is paused, wait until it is resumed before "
+            "running the triggered task(s). DEPRECATED - this will be "
+            "removed at Cylc 8.5."
+        ),
         action="store_true",
         default=False,
         dest="on_resume"

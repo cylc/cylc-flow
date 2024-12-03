@@ -18,9 +18,10 @@
 
 """cylc pause [OPTIONS] ARGS
 
-Suspend all automatic job submission until the workflow is resumed.
+Suspend automatic job submission.
 
-Manual triggering can still run tasks immediately, if the workflow is paused.
+Manual triggering can still run tasks immediately, even if the workflow is
+paused.
 
 Examples:
   # pause my_workflow

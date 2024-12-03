@@ -37,9 +37,6 @@ async def test_trigger_workflow_paused(
 
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': True,
-        },
         'scheduling': {
             'queues': {
                 'default': {

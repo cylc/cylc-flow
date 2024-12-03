@@ -2228,7 +2228,8 @@ class Trigger(Mutation, TaskMutation):
         on_resume = Boolean(
             default_value=False,
             description=sstrip('''
-                Run triggered tasks once the paused workflow is resumed.
+                If the workflow is paused, wait until it is resumed before
+                running the triggered task(s).
             ''')
         )
 
