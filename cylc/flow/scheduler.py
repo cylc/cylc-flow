@@ -1067,7 +1067,7 @@ class Scheduler:
 
         if flow_nums is None:
             flow_nums = set()
-        # Mapping of task IDs to removed flow numbers:
+        # Mapping of *relative* task IDs to removed flow numbers:
         removed: Dict[Tokens, FlowNums] = {}
         not_removed: Set[Tokens] = set()
         to_kill: List[TaskProxy] = []
@@ -1075,9 +1075,9 @@ class Scheduler:
         for itask in active:
             fnums_to_remove = itask.match_flows(flow_nums)
             if not fnums_to_remove:
-                not_removed.add(itask.tokens)
+                not_removed.add(itask.tokens.task)
                 continue
-            removed[itask.tokens] = fnums_to_remove
+            removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
                 # Need to remove the task from the pool.
                 # Spawn next occurrence of xtrigger sequential task (otherwise
@@ -1089,12 +1089,12 @@ class Scheduler:
             itask.flow_nums.difference_update(fnums_to_remove)
 
         # All the matched tasks (including inactive & applicable active tasks):
-        matched_task_ids = {
+        matched_tasks = {
             *removed.keys(),
             *(Tokens(cycle=str(cycle), task=task) for task, cycle in inactive),
         }
 
-        for tokens in matched_task_ids:
+        for tokens in matched_tasks:
             tdef = self.config.taskdefs[tokens['task']]
 
             # Go through any tasks downstream of this matched task to see if
@@ -1138,7 +1138,7 @@ class Scheduler:
                 # Check if downstream task should remain spawned:
                 if (
                     # Ignoring tasks we are already dealing with:
-                    child_itask.identity in matched_task_ids
+                    child_itask.tokens.task in matched_tasks
                     or child_itask.state.any_satisfied_prerequisite_outputs()
                 ):
                     continue
@@ -1171,7 +1171,7 @@ class Scheduler:
                 )
             LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
 
-        not_removed.update(matched_task_ids.difference(removed))
+        not_removed.update(matched_tasks.difference(removed))
         if not_removed:
             fnums_str = (
                 repr_flow_nums(flow_nums, full=True) if flow_nums else ''
