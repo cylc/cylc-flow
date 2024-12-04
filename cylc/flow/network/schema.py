@@ -2161,7 +2161,7 @@ class Remove(Mutation, TaskMutation):
         description = sstrip('''
             Remove one or more task instances from a running workflow.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = partial(mutator, command='remove_tasks')
 
