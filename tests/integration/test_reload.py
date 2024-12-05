@@ -25,6 +25,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.platforms import get_platform
 
 
 async def test_reload_waits_for_pending_tasks(
@@ -174,6 +175,10 @@ async def test_reload_global(
     id_ = flow(one_conf)
     schd = scheduler(id_)
     async with start(schd):
+        # Task platforms reflect the original config
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        platform = get_platform(rtconf)
+        assert platform['meta']['x'] == '1'
 
         # Modify the global config file
         global_config_path.write_text("""
@@ -194,11 +199,14 @@ async def test_reload_global(
         )
 
         # Task platforms reflect the new config
-        assert schd.pool.get_tasks()[0].platform['meta']['x'] == '2'
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        platform = get_platform(rtconf)
+        assert platform['meta']['x'] == '2'
 
         # Modify the global config file with an error
         global_config_path.write_text("""
         [ERROR]
+        [platforms]
             [[localhost]]
                 [[[meta]]]
                     x = 3
@@ -215,4 +223,6 @@ async def test_reload_global(
         )
 
         # Task platforms should be the last valid value
-        assert schd.pool.get_tasks()[0].platform['meta']['x'] == '2'
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        platform = get_platform(rtconf)
+        assert platform['meta']['x'] == '2'
