@@ -31,7 +31,6 @@ from typing import Any, Optional, Union
 from secrets import token_hex
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.run_modes import RunMode
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.scheduler_cli import RunOptions
@@ -56,7 +55,7 @@ def _make_flow(
     test_dir: Path,
     conf: Union[dict, str],
     name: Optional[str] = None,
-    id_: Optional[str] = None,
+    workflow_id: Optional[str] = None,
     defaults: Optional[bool] = True,
     filename: str = WorkflowFiles.FLOW_FILE,
 ) -> str:
@@ -70,14 +69,14 @@ def _make_flow(
 
             Set false for Cylc 7 upgrader tests.
     """
-    if id_:
-        flow_run_dir = (cylc_run_dir / id_)
+    if workflow_id:
+        flow_run_dir = (cylc_run_dir / workflow_id)
     else:
         if name is None:
             name = token_hex(4)
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
-    id_ = str(flow_run_dir.relative_to(cylc_run_dir))
+    workflow_id = str(flow_run_dir.relative_to(cylc_run_dir))
     if isinstance(conf, str):
         conf = {
             'scheduling': {
@@ -100,7 +99,7 @@ def _make_flow(
 
     with open((flow_run_dir / filename), 'w+') as flow_file:
         flow_file.write(flow_config_str(conf))
-    return id_
+    return workflow_id
 
 
 @contextmanager

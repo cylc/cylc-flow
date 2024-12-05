@@ -698,7 +698,7 @@ class WorkflowDatabaseManager:
         self, table_name: str, itask: 'TaskProxy', set_args: 'DbArgDict'
     ) -> None:
         """Put UPDATE statement for a task_* table."""
-        where_args = {
+        where_args: Dict[str, Any] = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
         }
