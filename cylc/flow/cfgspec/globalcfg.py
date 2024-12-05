@@ -108,6 +108,11 @@ Settings for the scheduler.
 
    Not to be confused with :cylc:conf:`flow.cylc[scheduling]`.
 
+.. note::
+
+   Scheduler settings cannot be reloaded, the server must be stopped and
+   restarted for changes to take effect
+
 .. versionchanged:: 8.0.0
 
    {REPLACES}``[cylc]``
@@ -1216,6 +1221,11 @@ with Conf('global.cylc', desc='''
 
             Symlinks from the the standard ``$HOME/cylc-run`` locations will be
             created.
+
+            .. note::
+
+               Once a platform has been installed and symlinks created they
+               cannot be modified for that run.
 
             .. versionadded:: 8.0.0
         """):
