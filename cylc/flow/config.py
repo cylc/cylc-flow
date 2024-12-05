@@ -1543,7 +1543,7 @@ class WorkflowConfig:
                         "script cannot be defined for automatic" +
                         " workflow polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
-        for name, tdef in list(self.taskdefs.items()):
+        for name, tdef in self.taskdefs.items():
             if name not in self.workflow_polling_tasks:
                 continue
             rtc = tdef.rtconfig

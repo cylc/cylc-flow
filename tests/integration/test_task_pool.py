@@ -714,7 +714,7 @@ async def test_restart_prereqs(
 
     # Edit the workflow to add a new dependency on "z"
     conf['scheduling']['graph']['R1'] = graph_2
-    id_ = flow(conf, id_=id_)
+    id_ = flow(conf, workflow_id=id_)
 
     # Restart it
     schd = scheduler(id_, run_mode='simulation', paused_start=False)
@@ -834,7 +834,7 @@ async def test_reload_prereqs(
 
         # Modify flow.cylc to add a new dependency on "z"
         conf['scheduling']['graph']['R1'] = graph_2
-        flow(conf, id_=id_)
+        flow(conf, workflow_id=id_)
 
         # Reload the workflow config
         await commands.run_cmd(commands.reload_workflow(schd))
@@ -953,7 +953,7 @@ async def test_graph_change_prereq_satisfaction(
 
         # shutdown and change the workflow definiton
         conf['scheduling']['graph']['R1'] += '\nb => c'
-        flow(conf, id_=id_)
+        flow(conf, workflow_id=id_)
         schd = scheduler(id_, run_mode='simulation', paused_start=False)
 
         async with start(schd):
@@ -966,7 +966,7 @@ async def test_graph_change_prereq_satisfaction(
 
             # Modify flow.cylc to add a new dependency on "b"
             conf['scheduling']['graph']['R1'] += '\nb => c'
-            flow(conf, id_=id_)
+            flow(conf, workflow_id=id_)
 
             # Reload the workflow config
             await commands.run_cmd(commands.reload_workflow(schd))
@@ -2158,7 +2158,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
         ].replace('@a', '@c')
 
         # reload
-        flow(config, id_=id_)
+        flow(config, workflow_id=id_)
         await commands.run_cmd(commands.reload_workflow(schd))
 
         # check xtrigs post-reload

@@ -70,7 +70,6 @@ from cylc.flow import (
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.exceptions import (
     CommandFailedError,
@@ -93,9 +92,7 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_platform,
 )
-from cylc.flow.id import (
-    Tokens,
-)
+from cylc.flow.id import Tokens
 from cylc.flow.log_level import (
     verbosity_to_env,
     verbosity_to_opts,
@@ -1105,6 +1102,8 @@ class Scheduler:
         # Mapping of *relative* task IDs to removed flow numbers:
         removed: Dict[Tokens, FlowNums] = {}
         not_removed: Set[Tokens] = set()
+        # All the matched tasks (will add applicable active tasks below):
+        matched_tasks = inactive.copy()
         to_kill: List[TaskProxy] = []
 
         for itask in active:
@@ -1113,6 +1112,7 @@ class Scheduler:
                 not_removed.add(itask.tokens.task)
                 continue
             removed[itask.tokens.task] = fnums_to_remove
+            matched_tasks.add((itask.tdef, itask.point))
             if fnums_to_remove == itask.flow_nums:
                 # Need to remove the task from the pool.
                 # Spawn next occurrence of xtrigger sequential task (otherwise
@@ -1123,21 +1123,13 @@ class Scheduler:
                 itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
 
-        # All the matched tasks (including inactive & applicable active tasks):
-        matched_tasks = {
-            *removed.keys(),
-            *(Tokens(cycle=str(cycle), task=task) for task, cycle in inactive),
-        }
-
-        for tokens in matched_tasks:
-            tdef = self.config.taskdefs[tokens['task']]
+        for tdef, point in matched_tasks:
+            tokens = Tokens(cycle=str(point), task=tdef.name)
 
             # Go through any tasks downstream of this matched task to see if
             # any need to stand down as a result of this task being removed:
             for child in set(itertools.chain.from_iterable(
-                generate_graph_children(
-                    tdef, get_point(tokens['cycle'])
-                ).values()
+                generate_graph_children(tdef, point).values()
             )):
                 child_itask = self.pool.get_task(child.point, child.name)
                 if not child_itask:
@@ -1173,7 +1165,7 @@ class Scheduler:
                 # Check if downstream task should remain spawned:
                 if (
                     # Ignoring tasks we are already dealing with:
-                    child_itask.tokens.task in matched_tasks
+                    (child_itask.tdef, child_itask.point) in matched_tasks
                     or child_itask.state.any_satisfied_prerequisite_outputs()
                 ):
                     continue
@@ -1187,10 +1179,13 @@ class Scheduler:
 
             # Remove the matched tasks from the flows in the DB tables:
             db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
-                tokens['cycle'], tokens['task'], flow_nums,
+                str(point), tdef.name, flow_nums,
             )
             if db_removed_fnums:
                 removed.setdefault(tokens, set()).update(db_removed_fnums)
+
+            if tokens not in removed:
+                not_removed.add(tokens)
 
         if to_kill:
             self.kill_tasks(to_kill, warn=False)
@@ -1206,7 +1201,6 @@ class Scheduler:
                 )
             LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
 
-        not_removed.update(matched_tasks.difference(removed))
         if not_removed:
             fnums_str = (
                 repr_flow_nums(flow_nums, full=True) if flow_nums else ''

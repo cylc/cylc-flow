@@ -85,7 +85,7 @@ async def test_stop_after_cycle_point(
 
     # change the configured cycle point to "2"
     config['scheduling']['stop after cycle point'] = '2'
-    id_ = flow(config, id_=id_)
+    id_ = flow(config, workflow_id=id_)
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # the cycle point should be reloaded from the workflow configuration
