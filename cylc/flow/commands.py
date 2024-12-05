@@ -85,6 +85,7 @@ from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.workflow_status import StopMode
 
 
@@ -327,7 +328,7 @@ async def remove_tasks(
 
 
 @_command('reload_workflow')
-async def reload_workflow(schd: 'Scheduler'):
+async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     """Reload workflow configuration."""
     yield
     # pause the workflow if not already
@@ -360,6 +361,25 @@ async def reload_workflow(schd: 'Scheduler'):
         schd.update_data_store()
         # give commands time to complete
         sleep(1)  # give any remove-init's time to complete
+
+    if reload_global:
+        # Reload global config if requested
+        LOG.info("Reloading the global configuration.")
+        try:
+            glbl_cfg(reload=True)
+        except (ParsecError, CylcConfigError) as exc:
+            if cylc.flow.flags.verbosity > 1:
+                # log full traceback in debug mode
+                LOG.exception(exc)
+            LOG.critical(
+                f'Reload failed - {exc.__class__.__name__}: {exc}'
+                '\nThis is probably due to an issue with the new'
+                ' configuration.'
+                '\nTo continue with the pre-reload config, un-pause the'
+                ' workflow.'
+                '\nOtherwise, fix the configuration and attempt to reload'
+                ' again.'
+            )
 
     # reload the workflow definition
     schd.reload_pending = 'loading the workflow definition'
