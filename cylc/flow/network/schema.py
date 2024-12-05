@@ -2215,10 +2215,13 @@ class Trigger(Mutation, TaskMutation):
         description = sstrip('''
             Manually trigger tasks, even in a paused workflow.
 
-            Triggering an unqueued task queues it, to run when queue-released.
-            Triggering a queued task runs it now regardless of queue limiting.
-
-            The "on resume" option waits for a paused workflow to be resumed.
+            Triggering a task that is not yet queued will queue it.
+               
+            Triggering a queued task runs it immediately.
+                        
+            Queues release tasks to run when their active task count
+            drops below the queue limit. So, depending on the task count, you
+            may need to trigger a task twice to make it run immediately. 
 
             Valid for: paused, running workflows.
         ''')

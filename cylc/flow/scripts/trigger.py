@@ -19,13 +19,13 @@
 
 Force task(s) to run regardless of prerequisites, even in a paused workflow.
 
-Triggering an unqueued task queues it, to run when released by the queue.
-Triggering a queued task runs it immediately regardless of queue limiting.
-So you may need to trigger tasks twice if queue limiting is in effect.
+Triggering a task that is not yet queued will queue it.
 
-If the workflow is paused queued waiting tasks will not run (unless manually
-triggered) until the workflow is resumed, even if the queue empties out. This
-includes tasks queued by manual triggering, when queue limits are in effect.
+Triggering a queued task runs it immediately.
+
+Queues release tasks to run when their active task count drops below the queue
+limit. So, depending on the task count, you may need to trigger a task twice to make
+it run immediately. 
 
 Attempts to trigger active tasks (submitted or running) will be ignored.
 
