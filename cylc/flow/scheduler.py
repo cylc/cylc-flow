@@ -677,6 +677,19 @@ class Scheduler:
                     self.restart_remote_init()
                     await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
 
+                    # If we shut down with manually triggered waiting tasks,
+                    # submit them to run now.
+                    pre_prep_tasks = []
+                    for itask in self.pool.get_tasks():
+                        if (
+                            itask.is_manual_submit
+                            and itask.state(TASK_STATUS_WAITING)
+                        ):
+                            itask.waiting_on_job_prep = True
+                            pre_prep_tasks.append(itask)
+
+                    self.start_job_submission(pre_prep_tasks)
+
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -778,10 +791,10 @@ class Scheduler:
                 self.uuid_str = dict(params)['uuid_str']
             else:
                 self.uuid_str = str(uuid4())
+            self.task_events_mgr.uuid_str = self.uuid_str
 
             self._configure_contact()
             await self.configure(params)
-            self.task_events_mgr.uuid_str = self.uuid_str
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
 
@@ -865,6 +878,7 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
+
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
 
@@ -1434,8 +1448,8 @@ class Scheduler:
             return
         self.workflow_event_handler.handle(self, event, str(reason))
 
-    def release_queued_tasks(self) -> bool:
-        """Release queued tasks, and submit jobs.
+    def release_tasks_to_run(self) -> bool:
+        """Release queued or manually submitted tasks, and submit jobs.
 
         The task queue manages references to task proxies in the task pool.
 
@@ -1459,13 +1473,24 @@ class Scheduler:
             submission).
 
         """
+        pre_prep_tasks: Set['TaskProxy'] = set()
         if (
-            not self.is_paused
-            and self.stop_mode is None
+            self.stop_mode is None
             and self.auto_restart_time is None
             and self.reload_pending is False
         ):
-            pre_prep_tasks = self.pool.release_queued_tasks()
+            if self.pool.tasks_to_trigger_now:
+                # manually triggered tasks to run now, workflow paused or not
+                pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
+                self.pool.tasks_to_trigger_now = set()
+
+            if not self.is_paused:
+                # release queued tasks
+                pre_prep_tasks.update(self.pool.release_queued_tasks())
+                if self.pool.tasks_to_trigger_on_resume:
+                    # and manually triggered tasks to run once workflow resumed
+                    pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
+                    self.pool.tasks_to_trigger_on_resume = set()
 
         elif (
             (
@@ -1477,19 +1502,30 @@ class Scheduler:
                 self.reload_pending
             )
         ):
-            # don't release queued tasks, finish processing preparing tasks
-            pre_prep_tasks = [
+            # finish processing preparing tasks first
+            pre_prep_tasks = {
                 itask for itask in self.pool.get_tasks()
                 if itask.state(TASK_STATUS_PREPARING)
-            ]
+            }
 
         # Return, if no tasks to submit.
         else:
             return False
+
         if not pre_prep_tasks:
             return False
 
-        # Start the job submission process.
+        return self.start_job_submission(pre_prep_tasks)
+
+    def start_job_submission(self, itasks: 'Iterable[TaskProxy]') -> bool:
+        """Start the job submission process for some tasks.
+
+        Return True if any were started, else False.
+
+        """
+        if self.stop_mode is not None:
+            return False
+
         self.is_updated = True
         self.reset_inactivity_timer()
 
@@ -1499,9 +1535,10 @@ class Scheduler:
         log = LOG.debug
         if self.options.reftest or self.options.genref:
             log = LOG.info
+
         for itask in self.task_job_mgr.submit_task_jobs(
             self.workflow,
-            pre_prep_tasks,
+            itasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
             run_mode=self.get_run_mode()
@@ -1743,7 +1780,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if itask.is_ready_to_run():
+            if itask.is_ready_to_run() and not itask.is_manual_submit:
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.sequential_spawn_next:
@@ -1752,7 +1789,7 @@ class Scheduler:
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
         self.pool.clock_expire_tasks()
-        self.release_queued_tasks()
+        self.release_tasks_to_run()
 
         if (
             self.get_run_mode() == RunMode.SIMULATION

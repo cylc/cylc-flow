@@ -193,7 +193,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
 
         # wait for the task to submit
         while not a_1.state(TASK_STATUS_WAITING, TASK_STATUS_PREPARING):
-            schd.release_queued_tasks()
+            schd.release_tasks_to_run()
 
         # NOTE: The submit number isn't presently incremented via this code
         # pathway so we have to hack it here. If the task messages in this test
