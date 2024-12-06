@@ -597,7 +597,7 @@ class ParsecValidator:
             # allow trailing commas
             if values[-1] == '':
                 values = values[0:-1]
-        return UserList(values)
+        return values
 
     @classmethod
     def _unquoted_list_parse(cls, keys, value):
@@ -645,11 +645,6 @@ class Range(tuple):
 
     def __str__(self):
         return f'{self[0]} .. {self[1]}'
-
-
-class UserList(list):
-    # distinguish user defined, possibly empty list from automatic defaults
-    pass
 
 
 class CylcConfigValidator(ParsecValidator):

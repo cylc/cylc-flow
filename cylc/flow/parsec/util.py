@@ -212,7 +212,7 @@ def replicate(target, source):
                 target[key].defaults_ = pdeepcopy(val.defaults_)
             replicate(target[key], val)
         elif isinstance(val, list):
-            target[key] = type(val)(val)
+            target[key] = val[:]
         else:
             target[key] = val
 
@@ -247,7 +247,7 @@ def poverride(target, sparse, prepend=False):
                 # Override in-place in the target ordered dict.
                 setitem = target.__setitem__
             if isinstance(val, list):
-                setitem(key, type(val)(val))
+                setitem(key, val[:])
             else:
                 setitem(key, val)
 
@@ -290,21 +290,25 @@ def m_override(target, sparse):
                 stack.append(
                     (val, dest[key], keylist + [key], child_many_defaults))
             else:
-                if not (
-                    key in dest
-                    or '__MANY__' in dest
-                    or key in many_defaults
-                    or '__MANY__' in many_defaults
-                ):
-                    # TODO - validation prevents this, but handle properly
-                    # for completeness.
-                    raise Exception(
-                        "parsec dict override: no __MANY__ placeholder" +
-                        "%s" % (keylist + [key])
-                    )
+                if key not in dest:
+                    if not (
+                        '__MANY__' in dest
+                        or key in many_defaults
+                        or '__MANY__' in many_defaults
+                    ):
+                        # TODO - validation prevents this, but handle properly
+                        # for completeness.
+                        raise Exception(
+                            "parsec dict override: no __MANY__ placeholder" +
+                            "%s" % (keylist + [key])
+                        )
+                    if isinstance(val, list):
+                        dest[key] = val[:]
+                    else:
+                        dest[key] = val
 
                 if isinstance(val, list):
-                    dest[key] = type(val)(val)
+                    dest[key] = val[:]
                 else:
                     dest[key] = val
     for dest_dict, defaults in defaults_list:
