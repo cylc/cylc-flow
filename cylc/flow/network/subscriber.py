@@ -93,6 +93,16 @@ class WorkflowSubscriber(ZMQSocketBase):
         for topic in self.topics:
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
+    def unsubscribe_topic(self, topic):
+        if topic in self.topics:
+            self.socket.setsockopt(zmq.UNSUBSCRIBE, topic)
+            self.topics.discard(topic)
+
+    def subscribe_topic(self, topic):
+        if topic not in self.topics:
+            self.socket.setsockopt(zmq.SUBSCRIBE, topic)
+            self.topics.add(topic)
+
     async def subscribe(self, msg_handler, *args, **kwargs):
         """Subscribe to updates from the provided socket."""
         while True:

@@ -32,8 +32,12 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
             schd.workflow,
             host=schd.host,
             port=schd.server.pub_port,
-            topics=[b'workflow']
+            topics=[b'shutdown']
         )
+
+        subscriber.unsubscribe_topic(b'shutdown')
+        subscriber.subscribe_topic(b'workflow')
+        assert subscriber.topics == {b'workflow'}
 
         async with timeout(2):
             # wait for the first delta from the workflow
