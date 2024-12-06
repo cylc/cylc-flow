@@ -24,6 +24,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest
+from cylc.flow.parsec.validate import UserList
 from cylc.flow.subprocctx import SubProcContext
 
 if TYPE_CHECKING:
@@ -235,7 +236,7 @@ class WorkflowEventHandler():
             glbl_cfg().get(['scheduler', 'mail'])
         ):
             value = getter.get(key)
-            if value is not None:
+            if value not in (None, []) or isinstance(value, UserList):
                 return value
         return default
 

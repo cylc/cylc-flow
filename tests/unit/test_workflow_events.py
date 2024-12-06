@@ -21,6 +21,7 @@ import pytest
 
 from types import SimpleNamespace
 
+from cylc.flow.parsec.validate import UserList
 from cylc.flow.workflow_events import (
     WorkflowEventHandler,
     get_template_variables,
@@ -32,11 +33,11 @@ from cylc.flow.workflow_events import (
     'key, workflow_cfg, glbl_cfg, expected',
     [
         ('handlers', True, True, ['stall']),
-        ('handlers', False, True, []),
-        ('handlers', False, False, []),
+        ('handlers', False, True, None),
+        ('handlers', False, False, None),
         ('mail events', True, True, []),
         ('mail events', False, True, ['abort']),
-        ('mail events', False, False, []),
+        ('mail events', False, False, None),
         ('from', True, True, 'docklands@railway'),
         ('from', False, True, 'highway@mixture'),
         ('from', False, False, None),
@@ -65,7 +66,7 @@ def test_get_events_handler(
     config = SimpleNamespace()
     config.cfg = {
         'scheduler': {
-            'events': {'handlers': ['stall'], 'mail events': []},
+            'events': {'handlers': ['stall'], 'mail events': UserList()},
             'mail': {'from': 'docklands@railway'},
         } if workflow_cfg else {'events': {}}
     }
