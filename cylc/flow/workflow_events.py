@@ -235,7 +235,7 @@ class WorkflowEventHandler():
             glbl_cfg().get(['scheduler', 'mail'])
         ):
             value = getter.get(key)
-            if value is not None and value != []:
+            if value is not None:
                 return value
         return default
 

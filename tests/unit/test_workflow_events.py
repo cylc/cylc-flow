@@ -32,8 +32,11 @@ from cylc.flow.workflow_events import (
     'key, workflow_cfg, glbl_cfg, expected',
     [
         ('handlers', True, True, ['stall']),
-        ('handlers', False, True, None),
-        ('handlers', False, False, None),
+        ('handlers', False, True, []),
+        ('handlers', False, False, []),
+        ('mail events', True, True, []),
+        ('mail events', False, True, ['abort']),
+        ('mail events', False, False, []),
         ('from', True, True, 'docklands@railway'),
         ('from', False, True, 'highway@mixture'),
         ('from', False, False, None),
@@ -55,13 +58,14 @@ def test_get_events_handler(
                     from = highway@mixture
                 [[events]]
                     abort on workflow timeout = True
+                    mail events = abort
             '''
         )
 
     config = SimpleNamespace()
     config.cfg = {
         'scheduler': {
-            'events': {'handlers': ['stall']},
+            'events': {'handlers': ['stall'], 'mail events': []},
             'mail': {'from': 'docklands@railway'},
         } if workflow_cfg else {'events': {}}
     }
