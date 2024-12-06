@@ -198,7 +198,7 @@ def process_mail_footer(
     """
     try:
         return (mail_footer_tmpl + '\n') % template_vars
-    except (KeyError, ValueError):
+    except (KeyError, TypeError, ValueError):
         LOG.warning(
             f'Ignoring bad mail footer template: {mail_footer_tmpl}'
         )
@@ -328,7 +328,7 @@ class WorkflowEventHandler():
             cmd_key = ('%s-%02d' % (self.WORKFLOW_EVENT_HANDLER, i), event)
             try:
                 cmd = handler % (template_variables)
-            except KeyError as exc:
+            except (KeyError, TypeError, ValueError) as exc:
                 message = f'{cmd_key} bad template: {handler}\n{exc}'
                 LOG.error(message)
                 continue
