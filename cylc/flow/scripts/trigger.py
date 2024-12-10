@@ -23,11 +23,11 @@ Triggering a task that is not yet queued will queue it.
 
 Triggering a queued task runs it immediately.
 
-Queues release tasks to run when their active task count drops below the queue
-limit. So, depending on the task count, you may need to trigger a task twice
-to make it run immediately.
+Cylc queues restrict the number of jobs that can be active (submitted or
+running) at once. They release tasks to run when their active task count
+drops below the queue limit.
 
-Attempts to trigger active tasks (submitted or running) will be ignored.
+Attempts to trigger active tasks will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
