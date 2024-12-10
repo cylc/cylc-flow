@@ -60,11 +60,24 @@ from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
+    OptionSettings,
 )
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
+
+
+RELOAD_OPTIONS = [
+    OptionSettings(
+        ['-g', '--global'],
+        help='also reload global configuration.',
+        action="store_true",
+        default=False,
+        dest="reload_global",
+        sources={'reload'}
+    ),
+]
 
 
 MUTATION = '''
@@ -89,11 +102,8 @@ def get_option_parser():
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
-
-    parser.add_option(
-        "-g", "--global",
-        help="also reload global configuration.",
-        action="store_true", default=False, dest="reload_global")
+    for option in RELOAD_OPTIONS:
+        parser.add_option(*option.args, **option.kwargs)
 
     return parser
 
