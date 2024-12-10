@@ -2189,16 +2189,14 @@ class TaskPool:
             itask.waiting_on_job_prep = True
 
             if on_resume:
-                with suppress(KeyError):
-                    # In case previously triggered without --on-resume.
-                    # (It should have run already, but just in case).
-                    self.tasks_to_trigger_now.remove(itask)
                 self.tasks_to_trigger_on_resume.add(itask)
+                # In case previously triggered without --on-resume.
+                # (It should have run already, but just in case).
+                self.tasks_to_trigger_now.discard(itask)
             else:
-                with suppress(KeyError):
-                    # In case previously triggered with --on-resume.
-                    self.tasks_to_trigger_on_resume.remove(itask)
                 self.tasks_to_trigger_now.add(itask)
+                # In case previously triggered with --on-resume.
+                self.tasks_to_trigger_on_resume.discard(itask)
 
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
