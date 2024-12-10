@@ -2145,7 +2145,7 @@ class TaskPool:
         Triggering a queued task will:
           - run it, regardless of queue limiting
 
-        Triggering an unqueued task will:
+        Triggering an non-queued task will:
           - queue it, if the queue is limiting activity
           - run it, if the queue is not limiting activity
 
