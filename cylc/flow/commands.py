@@ -451,6 +451,11 @@ async def force_trigger_tasks(
     """Manual task trigger."""
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
+    if on_resume:
+        LOG.warning(
+            "The --on-resume option is deprecated and will be removed "
+            "at Cylc 8.5."
+        )
     yield
     yield schd.pool.force_trigger_tasks(
         tasks, flow, flow_wait, flow_descr, on_resume
