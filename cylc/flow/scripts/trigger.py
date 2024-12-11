@@ -17,11 +17,17 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run regardless of prerequisites.
+Force task(s) to run regardless of prerequisites, even in a paused workflow.
 
-* Triggering an unqueued waiting task queues it, regardless of prerequisites.
-* Triggering a queued task submits it, regardless of queue limiting.
-* Triggering an active task has no effect (it already triggered).
+Triggering a task that is not yet queued will queue it.
+
+Triggering a queued task runs it immediately.
+
+Cylc queues restrict the number of jobs that can be active (submitted or
+running) at once. They release tasks to run when their active task count
+drops below the queue limit.
+
+Attempts to trigger active tasks will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -74,13 +80,15 @@ mutation (
   $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
+  $onResume: Boolean,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
     flow: $flow,
     flowWait: $flowWait,
-    flowDescr: $flowDescr
+    flowDescr: $flowDescr,
+    onResume: $onResume,
   ) {
     result
   }
@@ -96,7 +104,20 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts(parser)
+
+    parser.add_option(
+        "--on-resume",
+        help=(
+            "If the workflow is paused, wait until it is resumed before "
+            "running the triggered task(s). DEPRECATED - this will be "
+            "removed at Cylc 8.5."
+        ),
+        action="store_true",
+        default=False,
+        dest="on_resume"
+    )
     return parser
 
 
@@ -114,6 +135,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
+            'onResume': options.on_resume,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)

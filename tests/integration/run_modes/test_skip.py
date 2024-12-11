@@ -185,14 +185,14 @@ async def test_doesnt_release_held_tasks(
         itask.state.is_held = True
 
         # Relinquish contol to the main loop.
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
 
         assert not log_filter(contains='=> running'), msg.format('run')
         assert not log_filter(contains='=> succeeded'), msg.format('succeed')
 
         # Release held task and assert that it now skips successfully:
         schd.pool.release_held_tasks(['1/one'])
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
 
         assert log_filter(contains='=> running'), msg.format('run')
         assert log_filter(contains='=> succeeded'), msg.format('succeed')
