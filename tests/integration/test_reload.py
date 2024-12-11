@@ -26,6 +26,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.platforms import get_platform
+from cylc.flow import flags
 
 
 async def test_reload_waits_for_pending_tasks(
@@ -226,3 +227,12 @@ async def test_reload_global(
         rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '2'
+
+        # reload the workflow in verbose mode
+        flags.verbosity = 2
+        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
+
+        # Traceback is shown in the log (match for ERROR, trace is not captured)
+        assert log_filter(
+            exact_match = 'ERROR'
+        )
