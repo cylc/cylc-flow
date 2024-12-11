@@ -41,7 +41,6 @@ from cylc.flow.task_outputs import (
     get_completion_expression,
 )
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
@@ -484,7 +483,7 @@ async def test_removed_taskdef(
                 'R1': 'a'
             }
         }
-    }, id_=id_)
+    }, workflow_id=id_)
 
     # restart the workflow
     schd: 'Scheduler' = scheduler(id_)
