@@ -110,8 +110,10 @@ Settings for the scheduler.
 
 .. note::
 
-   Scheduler settings cannot be reloaded, the server must be stopped and
-   restarted for changes to take effect
+   The majority of scheduler settings affect the server and cannot be reloaded
+   with ``cylc reload --global``, the server must be stopped and restarted for
+   changes to take effect except for the sections [mail] and [events] which
+   provide workflow defaults.
 
 .. versionchanged:: 8.0.0
 
