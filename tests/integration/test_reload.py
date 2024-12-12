@@ -130,7 +130,7 @@ async def test_reload_failure(
     async with start(schd):
         # corrupt the config by removing the scheduling section
         two_conf = {**one_conf, 'scheduling': {}}
-        flow(two_conf, id_=id_)
+        flow(two_conf, workflow_id=id_)
 
         # reload the workflow
         await commands.run_cmd(commands.reload_workflow(schd))

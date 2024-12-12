@@ -165,7 +165,7 @@ class TaskDef:
     def __init__(self, name, rtcfg, start_point, initial_point):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)
-
+        self.name: str = name
         self.rtconfig = rtcfg
         self.start_point = start_point
         self.initial_point = initial_point
@@ -192,7 +192,6 @@ class TaskDef:
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
 
-        self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
         self._add_std_outputs()
         self.has_abs_triggers = False

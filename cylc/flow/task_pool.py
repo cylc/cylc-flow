@@ -32,6 +32,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -1345,9 +1346,9 @@ class TaskPool:
         for itask in itasks:
             self.hold_active_task(itask)
         # Set inactive tasks to be held:
-        for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held(name, cycle, True)
-        self.tasks_to_hold.update(inactive_tasks)
+        for tdef, cycle in inactive_tasks:
+            self.data_store_mgr.delta_task_held(tdef.name, cycle, True)
+            self.tasks_to_hold.add((tdef.name, cycle))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
@@ -1363,9 +1364,9 @@ class TaskPool:
         for itask in itasks:
             self.release_held_active_task(itask)
         # Unhold inactive tasks:
-        for name, cycle in inactive_tasks:
-            self.data_store_mgr.delta_task_held(name, cycle, False)
-        self.tasks_to_hold.difference_update(inactive_tasks)
+        for tdef, cycle in inactive_tasks:
+            self.data_store_mgr.delta_task_held(tdef.name, cycle, False)
+            self.tasks_to_hold.discard((tdef.name, cycle))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
@@ -1989,8 +1990,7 @@ class TaskPool:
         if not flow:
             # default: assign to all active flows
             flow_nums = self._get_active_flow_nums()
-        for name, point in inactive_tasks:
-            tdef = self.config.get_taskdef(name)
+        for tdef, point in inactive_tasks:
             if prereqs:
                 self._set_prereqs_tdef(
                     point, tdef, prereqs, flow_nums, flow_wait)
@@ -2226,7 +2226,7 @@ class TaskPool:
 
         """
         # Get matching tasks proxies, and matching inactive task IDs.
-        existing_tasks, inactive_ids, unmatched = self.filter_task_proxies(
+        existing_tasks, inactive, unmatched = self.filter_task_proxies(
             items, inactive=True, warn_no_active=False,
         )
 
@@ -2251,15 +2251,15 @@ class TaskPool:
             # default: assign to all active flows
             flow_nums = self._get_active_flow_nums()
 
-        for name, point in inactive_ids:
-            if not self.can_be_spawned(name, point):
+        for tdef, point in inactive:
+            if not self.can_be_spawned(tdef.name, point):
                 continue
             submit_num, _, prev_fwait = (
-                self._get_task_history(name, point, flow_nums)
+                self._get_task_history(tdef.name, point, flow_nums)
             )
             itask = TaskProxy(
                 self.tokens,
-                self.config.get_taskdef(name),
+                tdef,
                 point,
                 flow_nums,
                 flow_wait=flow_wait,
@@ -2379,7 +2379,7 @@ class TaskPool:
         ids: Iterable[str],
         warn_no_active: bool = True,
         inactive: bool = False,
-    ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
+    ) -> 'Tuple[List[TaskProxy], Set[Tuple[TaskDef, PointBase]], List[str]]':
         """Return task proxies that match names, points, states in items.
 
         Args:
@@ -2405,7 +2405,7 @@ class TaskPool:
             ids,
             warn=warn_no_active,
         )
-        inactive_matched: 'Set[Tuple[str, PointBase]]' = set()
+        inactive_matched: 'Set[Tuple[TaskDef, PointBase]]' = set()
         if inactive and unmatched:
             inactive_matched, unmatched = self.match_inactive_tasks(
                 unmatched
@@ -2416,7 +2416,7 @@ class TaskPool:
     def match_inactive_tasks(
         self,
         ids: Iterable[str],
-    ) -> Tuple[Set[Tuple[str, 'PointBase']], List[str]]:
+    ) -> 'Tuple[Set[Tuple[TaskDef, PointBase]], List[str]]':
         """Match task IDs against task definitions (rather than the task pool).
 
         IDs will be matched providing the ID:
@@ -2429,7 +2429,7 @@ class TaskPool:
             (matched_tasks, unmatched_tasks)
 
         """
-        matched_tasks: 'Set[Tuple[str, PointBase]]' = set()
+        matched_tasks: 'Set[Tuple[TaskDef, PointBase]]' = set()
         unmatched_tasks: 'List[str]' = []
         for id_ in ids:
             try:
@@ -2456,8 +2456,8 @@ class TaskPool:
                 unmatched_tasks.append(id_)
                 continue
 
-            point_str = tokens['cycle']
-            name_str = tokens['task']
+            point_str = cast('str', tokens['cycle'])
+            name_str = cast('str', tokens['task'])
             if name_str not in self.config.taskdefs:
                 if self.config.find_taskdefs(name_str):
                     # It's a family name; was not matched by active tasks
@@ -2479,7 +2479,7 @@ class TaskPool:
             point = get_point(point_str)
             taskdef = self.config.taskdefs[name_str]
             if taskdef.is_valid_point(point):
-                matched_tasks.add((taskdef.name, point))
+                matched_tasks.add((taskdef, point))
             else:
                 LOG.warning(
                     self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE.format(
