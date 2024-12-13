@@ -251,6 +251,7 @@ class GraphParser:
         rf"""
         (!)?           # suicide mark
         ({_RE_NODE})   # node name
+        (\[.*?\])?     # cycle offset
         ({_RE_QUAL})?  # trigger qualifier
         ({_RE_OPT})?   # optional output indicator
         """,
@@ -469,10 +470,11 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         # Get a set of RH nodes which are not at the LH of another pair:
-        pairs_dict = dict(pairs)
+        pairs_dict = dict([p for p in pairs if p[0] is not None])
         terminals = set(pairs_dict.values()).difference(pairs_dict.keys())
 
-        for pair in pairs:
+        # Sort the pairs so that processing happens in a consistent order:
+        for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, terminals)
 
     @classmethod
@@ -540,16 +542,12 @@ class GraphParser:
             raise GraphParseError(mismatch_msg.format(right))
 
         # Raise error for cycle point offsets at the end of chains
-        if '[' in right:
-            if left and (right in terminals):
-                # This right hand side is at the end of a chain:
-                raise GraphParseError(
-                    'Invalid cycle point offsets only on right hand '
-                    'side of a dependency (must be on left hand side):'
-                    f' {left} => {right}')
-            else:
-                # This RHS is also a LHS in a chain:
-                return
+        if '[' in right and left and right in terminals:
+            # This right hand side is at the end of a chain:
+            raise GraphParseError(
+                'Invalid cycle point offsets only on right hand '
+                'side of a dependency (must be on left hand side):'
+                f' {left} => {right}')
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
@@ -886,7 +884,7 @@ class GraphParser:
                 raise ValueError(  # pragma: no cover
                     f"Unexpected graph expression: '{right}'"
                 )
-            suicide_char, name, output, opt_char = m.groups()
+            suicide_char, name, offset, output, opt_char = m.groups()
             suicide = (suicide_char == self.__class__.SUICIDE)
             optional = (opt_char == self.__class__.OPTIONAL)
             if output:
