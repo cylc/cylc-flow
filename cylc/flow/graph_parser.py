@@ -543,7 +543,6 @@ class GraphParser:
 
         # Raise error for cycle point offsets at the end of chains
         if '[' in right and left and right in terminals:
-            # This right hand side is at the end of a chain:
             raise GraphParseError(
                 'Invalid cycle point offsets only on right hand '
                 'side of a dependency (must be on left hand side):'
