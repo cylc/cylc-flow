@@ -66,7 +66,7 @@ async def test_trigger_workflow_paused(
         schd.release_tasks_to_run()
         assert len(submitted_tasks) == 1
 
-        # manually trigger 1/y - it should not be queued but not submitted
+        # manually trigger 1/y - it should be queued but not submitted
         # (queue limit reached)
         schd.pool.force_trigger_tasks(['1/y'], [1])
         schd.release_tasks_to_run()
@@ -87,3 +87,64 @@ async def test_trigger_workflow_paused(
             level=logging.ERROR,
             contains="ignoring trigger - already active"
         )
+
+
+async def test_trigger_on_resume(
+    flow: 'Fixture',
+    scheduler: 'Fixture',
+    start: 'Fixture',
+    capture_submission: 'Fixture',
+    log_filter: Callable
+):
+    """
+    Test manual triggering on-resume option when the workflow is paused.
+
+    https://github.com/cylc/cylc-flow/issues/6192
+
+    """
+    id_ = flow({
+        'scheduling': {
+            'queues': {
+                'default': {
+                    'limit': 1,
+                },
+            },
+            'graph': {
+                'R1': '''
+                    a => x & y & z
+                ''',
+            },
+        },
+    })
+    schd = scheduler(id_, paused_start=True)
+
+    # start the scheduler (but don't set the main loop running)
+    async with start(schd) as log:
+
+        # capture task submissions (prevents real submissions)
+        submitted_tasks = capture_submission(schd)
+
+        # paused at start-up so no tasks should be submitted
+        assert len(submitted_tasks) == 0
+
+        # manually trigger 1/x - it not should be submitted
+        schd.pool.force_trigger_tasks(['1/x'], [1], on_resume=True)
+        schd.release_tasks_to_run()
+        assert len(submitted_tasks) == 0
+
+        # manually trigger 1/y - it should not be submitted
+        # (queue limit reached)
+        schd.pool.force_trigger_tasks(['1/y'], [1], on_resume=True)
+        schd.release_tasks_to_run()
+        assert len(submitted_tasks) == 0
+
+        # manually trigger 1/y again - it should not be submitted
+        # (triggering a queued task runs it)
+        schd.pool.force_trigger_tasks(['1/y'], [1], on_resume=True)
+        schd.release_tasks_to_run()
+        assert len(submitted_tasks) == 0
+
+        # resume the workflow, both tasks should trigger now.
+        schd.resume_workflow()
+        schd.release_tasks_to_run()
+        assert len(submitted_tasks) == 2

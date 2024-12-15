@@ -2208,7 +2208,7 @@ class TaskPool:
         flow: List[str],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None,
-        now: bool = False
+        on_resume: bool = False
     ):
         """Manually trigger tasks.
 
@@ -2244,7 +2244,7 @@ class TaskPool:
                 LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
             self.merge_flows(itask, flow_nums)
-            self._force_trigger(itask, now)
+            self._force_trigger(itask, on_resume)
 
         # Spawn and trigger inactive tasks.
         if not flow:
@@ -2279,7 +2279,7 @@ class TaskPool:
 
             # run it (or run it again for incomplete flow-wait)
             self.add_to_pool(itask)
-            self._force_trigger(itask, now)
+            self._force_trigger(itask, on_resume)
 
     def spawn_parentless_sequential_xtriggers(self):
         """Spawn successor(s) of parentless wall clock satisfied tasks."""
