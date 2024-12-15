@@ -24,6 +24,7 @@ from typing import Any, Callable
 
 from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
@@ -170,7 +171,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         # release runahead/queued tasks
         # (nothing should happen because the scheduler is paused)
         one.pool.release_runahead_tasks()
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
@@ -179,7 +180,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (there should be no change because the task is still held)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert submitted_tasks == set()
 
         # release all tasks
@@ -187,7 +188,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
         # release queued tasks
         # (the task should be submitted)
-        one.release_queued_tasks()
+        one.release_tasks_to_run()
         assert len(submitted_tasks) == 1
 
 
@@ -331,9 +332,10 @@ async def test_restart_timeout(
     flow,
     one_conf,
     scheduler,
-    start,
     run,
-    log_filter
+    log_filter,
+    complete,
+    capture_submission,
 ):
     """It should wait for user input if there are no tasks in the pool.
 
@@ -349,31 +351,28 @@ async def test_restart_timeout(
     id_ = flow(one_conf)
 
     # run the workflow to completion
-    # (by setting the only task to completed)
-    schd = scheduler(id_, paused_start=False)
-    async with start(schd) as log:
-        for itask in schd.pool.get_tasks():
-            # (needed for job config in sim mode:)
-            schd.task_job_mgr.submit_task_jobs(
-                schd.workflow, [itask], None, None)
-            schd.pool.set_prereqs_and_outputs(
-                [itask.identity], None, None, ['all'])
+    schd: Scheduler = scheduler(id_, paused_start=False)
+    async with run(schd):
+        await complete(schd)
 
     # restart the completed workflow
-    schd = scheduler(id_)
+    schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # it should detect that the workflow has completed and alert the user
         assert log_filter(
+            logging.WARNING,
             contains='This workflow already ran to completion.'
         )
 
         # it should activate a timeout
-        assert log_filter(contains='restart timer starts NOW')
+        assert log_filter(logging.WARNING, contains='restart timer starts NOW')
 
+        capture_submission(schd)
         # when we trigger tasks the timeout should be cleared
-        schd.pool.force_trigger_tasks(['1/one'], {1})
+        schd.pool.force_trigger_tasks(['1/one'], [FLOW_ALL])
+
         await asyncio.sleep(0)  # yield control to the main loop
-        assert log_filter(contains='restart timer stopped')
+        assert log_filter(logging.INFO, contains='restart timer stopped')
 
 
 @pytest.mark.parametrize("signal", ((SIGHUP), (SIGINT), (SIGTERM)))

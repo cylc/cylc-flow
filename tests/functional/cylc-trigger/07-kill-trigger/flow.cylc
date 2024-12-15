@@ -1,0 +1,27 @@
+[scheduler]
+    [[events]]
+        inactivity timeout = PT1M
+        expected task failures = "1/a"
+
+[scheduling]
+    [[graph]]
+        R1 = a
+
+[runtime]
+    [[a]]
+        script = """
+            if [[ $CYLC_TASK_SUBMIT_NUMBER == 1 ]]; then
+                # wait for the scheduler to receive the started message,
+                # then kill the job
+                cylc__job__poll_grep_workflow_log -E '1/a.*running'
+                cylc kill "${CYLC_WORKFLOW_ID}//1/a"
+                # do not succeed immediately after issuing the kill command or the
+                # workflow may shut down as complete before registering task failure
+                # (This polling grep will never complete, but you know what I mean.)
+                cylc__job__poll_grep_workflow_log -E '1/a.*failed'
+            fi
+        """
+        [[[events]]]
+            # when the scheduler receives the failed message, trigger the task
+            # to run again, it should run instantly
+            failed handlers = cylc trigger "%(workflow)s//1/a"

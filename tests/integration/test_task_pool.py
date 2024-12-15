@@ -701,7 +701,7 @@ async def test_restart_prereqs(
     async with start(schd):
         # Release tasks 1/a and 1/b
         schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
         # Mark 1/a as succeeded and spawn 1/z
@@ -824,7 +824,7 @@ async def test_reload_prereqs(
     async with start(schd):
         # Release tasks 1/a and 1/b
         schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
         # Mark 1/a as succeeded and spawn 1/z
@@ -861,7 +861,7 @@ async def _test_restart_prereqs_sat():
 
     # Release tasks 1/a and 1/b
     schd.pool.release_runahead_tasks()
-    schd.release_queued_tasks()
+    schd.release_tasks_to_run()
     assert list_tasks(schd) == [
         ('1', 'a', 'running'),
         ('1', 'b', 'running')
@@ -2170,48 +2170,6 @@ async def test_reload_xtriggers(flow, scheduler, start):
             'b': 'wall_clock(trigger_time=946728000)',
             'c': 'wall_clock(trigger_time=946688400)',
         }
-
-
-async def test_trigger_unqueued(flow, scheduler, start):
-    """Test triggering an unqueued active task.
-
-    It should not add to the force_released list.
-    See https://github.com/cylc/cylc-flow/pull/6337
-
-    """
-    conf = {
-        'scheduler': {'allow implicit tasks': 'True'},
-        'scheduling': {
-            'graph': {
-                'R1': 'a & b => c'
-            }
-        }
-    }
-    schd = scheduler(
-        flow(conf),
-        run_mode='simulation',
-        paused_start=False
-    )
-
-    async with start(schd):
-        # Release tasks 1/a and 1/b
-        schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
-        assert pool_get_task_ids(schd.pool) == ['1/a', '1/b']
-
-        # Mark 1/a as succeeded and spawn 1/c
-        task_a = schd.pool.get_task(IntegerPoint("1"), "a")
-        schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
-        assert pool_get_task_ids(schd.pool) == ['1/b', '1/c']
-
-        # Trigger the partially satisified (and not queued) task 1/c
-        schd.pool.force_trigger_tasks(['1/c'], [FLOW_ALL])
-
-        # It should not add to the queue managers force_released list.
-        assert not schd.pool.task_queue_mgr.force_released, (
-            "Triggering an unqueued task should not affect the force_released list"
-        )
-
 
 @pytest.mark.parametrize('expire_type', ['clock-expire', 'manual'])
 async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):

@@ -2213,20 +2213,32 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
 class Trigger(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Manually trigger tasks.
+            Manually trigger tasks, even in a paused workflow.
 
-            Warning: waiting tasks that are queue-limited will be queued if
-            triggered, to submit as normal when released by the queue; queued
-            tasks will submit immediately if triggered, even if that violates
-            the queue limit (so you may need to trigger a queue-limited task
-            twice to get it to submit immediately).
+            Triggering a task that is not yet queued will queue it.
+
+            Triggering a queued task runs it immediately.
+
+            Cylc queues restrict the number of jobs that can be active
+            (submitted or running) at once. They release tasks to run
+            when their active task count drops below the queue limit.
+            So, depending on the active task count, you may need to
+            trigger a task twice to make it run immediately.
+
+            Attempts to trigger active tasks will be ignored.
 
             Valid for: paused, running workflows.
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        ...
+        on_resume = Boolean(
+            default_value=False,
+            description=sstrip('''
+                If the workflow is paused, wait until it is resumed before
+                running the triggered task(s).
+            ''')
+        )
 
 
 def _mut_field(cls):

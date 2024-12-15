@@ -91,8 +91,8 @@ def test_should_auto_restart_now(
     assert Scheduler.should_auto_restart_now(mock_schd) == expected
 
 
-def test_release_queued_tasks__auto_restart():
-    """Test that Scheduler.release_queued_tasks() works as expected
+def test_release_tasks_to_run__auto_restart():
+    """Test that Scheduler.release_tasks_to_run() works as expected
     during auto restart."""
     mock_schd = Mock(
         auto_restart_time=(time() - 100),
@@ -107,10 +107,12 @@ def test_release_queued_tasks__auto_restart():
         options=RunOptions(),
         task_job_mgr=MagicMock()
     )
-    Scheduler.release_queued_tasks(mock_schd)
+    Scheduler.release_tasks_to_run(mock_schd)
     # Should not actually release any more tasks, just submit the
     # preparing ones
     mock_schd.pool.release_queued_tasks.assert_not_called()
+
+    Scheduler.start_job_submission(mock_schd, mock_schd.pool.get_tasks())
     mock_schd.task_job_mgr.submit_task_jobs.assert_called()
 
 

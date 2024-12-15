@@ -46,7 +46,7 @@ async def test_dump_tasks(flow, scheduler, start):
     })
     schd = scheduler(id_)
     async with start(schd):
-        # schd.release_queued_tasks()
+        # schd.release_tasks_to_run()
         await schd.update_data_structure()
         ret = []
         await dump(
