@@ -108,6 +108,13 @@ Settings for the scheduler.
 
    Not to be confused with :cylc:conf:`flow.cylc[scheduling]`.
 
+.. note::
+
+   The majority of scheduler settings affect the server and cannot be reloaded
+   with ``cylc reload --global``, the server must be stopped and restarted for
+   changes to take effect except for the sections [mail] and [events] which
+   provide workflow defaults.
+
 .. versionchanged:: 8.0.0
 
    {REPLACES}``[cylc]``
@@ -1170,6 +1177,11 @@ with Conf('global.cylc', desc='''
 
             Symlinks from the the standard ``$HOME/cylc-run`` locations will be
             created.
+
+            .. note::
+
+               Once a platform has been installed and symlinks created they
+               cannot be modified for that run.
 
             .. versionadded:: 8.0.0
         """):
