@@ -473,7 +473,7 @@ class GraphParser:
         pairs_dict = dict(pairs)
         terminals = set(pairs_dict.values()).difference(pairs_dict.keys())
 
-        for pair in pairs:
+        for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, terminals)
 
     @classmethod
