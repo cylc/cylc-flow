@@ -470,8 +470,7 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         # Get a set of RH nodes which are not at the LH of another pair:
-        pairs_dict = dict(pairs)
-        terminals = set(pairs_dict.values()).difference(pairs_dict.keys())
+        terminals = {p[1] for p in pairs}.difference({p[0] for p in pairs})
 
         for pair in pairs:
             self._proc_dep_pair(pair, terminals)
