@@ -948,8 +948,8 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
         param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
         # No error if offset in NON-terminal RHS:
         param((('a', 'b[-P42M]'), {}), None),
-        # Don't check the left hand side if this has a non-terminal RHS:
-        param((('a &', 'b[-P42M]'), {}), None),
+        # Check the left hand side if this has a non-terminal RHS:
+        param((('a &', 'b[-P42M]'), {}), 'Null task name in graph'),
     )
 )
 def test_proc_dep_pair(args, err):

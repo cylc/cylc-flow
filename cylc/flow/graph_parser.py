@@ -251,6 +251,7 @@ class GraphParser:
         rf"""
         (!)?           # suicide mark
         ({_RE_NODE})   # node name
+        ({_RE_OFFSET})?  # cycle point offset
         ({_RE_QUAL})?  # trigger qualifier
         ({_RE_OPT})?   # optional output indicator
         """,
@@ -540,16 +541,12 @@ class GraphParser:
             raise GraphParseError(mismatch_msg.format(right))
 
         # Raise error for cycle point offsets at the end of chains
-        if '[' in right:
-            if left and (right in terminals):
-                # This right hand side is at the end of a chain:
-                raise GraphParseError(
-                    'Invalid cycle point offsets only on right hand '
-                    'side of a dependency (must be on left hand side):'
-                    f' {left} => {right}')
-            else:
-                # This RHS is also a LHS in a chain:
-                return
+        if '[' in right and left and (right in terminals):
+            # This right hand side is at the end of a chain:
+            raise GraphParseError(
+                'Invalid cycle point offsets only on right hand '
+                'side of a dependency (must be on left hand side):'
+                f' {left} => {right}')
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
@@ -887,7 +884,7 @@ class GraphParser:
                 raise ValueError(  # pragma: no cover
                     f"Unexpected graph expression: '{right}'"
                 )
-            suicide_char, name, output, opt_char = m.groups()
+            suicide_char, name, offset, output, opt_char = m.groups()
             suicide = (suicide_char == self.__class__.SUICIDE)
             optional = (opt_char == self.__class__.OPTIONAL)
             if output:
@@ -895,7 +892,7 @@ class GraphParser:
 
             if name in self.family_map:
                 fam = True
-                mems = self.family_map[name]
+                rhs_mems = self.family_map[name]
                 if not output:
                     # (Plain family name on RHS).
                     # Make implicit success explicit.
@@ -922,10 +919,13 @@ class GraphParser:
                 else:
                     # Convert to standard output names if necessary.
                     output = TaskTrigger.standardise_name(output)
-                mems = [name]
+                rhs_mems = [name]
                 outputs = [output]
 
-            for mem in mems:
-                self._set_triggers(mem, suicide, trigs, expr, orig_expr)
+            for mem in rhs_mems:
+                if not offset:
+                    # Nodes with offsets on the RHS do not define triggers.
+                    self._set_triggers(mem, suicide, trigs, expr, orig_expr)
                 for output in outputs:
+                    # But they must be consistent with output optionality.
                     self._set_output_opt(mem, output, optional, suicide, fam)
