@@ -161,12 +161,7 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
         ),
         param(
             "foo[-P1]:succeeded? | foo[-P1]:failed? => foo",
-            # Order of processing can result in different error messages
-            # (a) foo:succeeded can't be both optional and required
-            # (b) foo:succeeded and foo:failed most both be optional
-            #     if both are used.
-            # The word "optional" is common to both. Not ideal!
-            'optional',
+            'Output foo:succeeded can\'t be both required and optional',
             id='succeed-or-failed-implies-success-optional'
         ),
     ]
