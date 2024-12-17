@@ -26,9 +26,9 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     initial cycle point = 2000
     [[graph]]
         T00 = """
-            A
-            B
-            A[-PT24H]:fail-any | B[-PT24H]:fail-any => c
+            A?
+            B?
+            A[-PT24H]:fail-any? | B[-PT24H]:fail-any? => c
         """
 [runtime]
     [[A]]
