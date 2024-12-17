@@ -2365,7 +2365,7 @@ async def test_start_tasks(
             ])
         )
 
-        # Check xtriggers and release tasks if ready ot run
+        # Check xtriggers
         for itask in itasks:
             schd.pool.xtrigger_mgr.call_xtriggers_async(itask)
             schd.pool.rh_release_and_queue(itask)
