@@ -891,7 +891,7 @@ class GraphParser:
 
             if name in self.family_map:
                 fam = True
-                rhs_mems = self.family_map[name]
+                rhs_members = self.family_map[name]
                 if not output:
                     # (Plain family name on RHS).
                     # Make implicit success explicit.
@@ -918,10 +918,10 @@ class GraphParser:
                 else:
                     # Convert to standard output names if necessary.
                     output = TaskTrigger.standardise_name(output)
-                rhs_mems = [name]
+                rhs_members = [name]
                 outputs = [output]
 
-            for mem in rhs_mems:
+            for mem in rhs_members:
                 if not offset:
                     # Nodes with offsets on the RHS do not define triggers.
                     self._set_triggers(mem, suicide, trigs, expr, orig_expr)
