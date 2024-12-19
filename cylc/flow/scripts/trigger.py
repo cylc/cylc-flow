@@ -27,7 +27,7 @@ Cylc queues restrict the number of jobs that can be active (submitted or
 running) at once. They release tasks to run when their active task count
 drops below the queue limit.
 
-Attempts to trigger active tasks will be ignored.
+Attempts to trigger active (submitted, running) tasks will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -40,7 +40,7 @@ Examples:
   $ cylc trigger --flow=new test//1234/foo
 
 Flows:
-  Active tasks (in the n=0 window) already belong to a flow.
+  Waiting tasks in the active window (n=0) already belong to a flow.
   * by default, if triggered, they run in the same flow
   * or with --flow=all, they are assigned all active flows
   * or with --flow=INT or --flow=new, the original and new flows are merged
