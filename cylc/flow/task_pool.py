@@ -2189,6 +2189,7 @@ class TaskPool:
         itask.is_manual_submit = True
         itask.reset_try_timers()
 
+        LOG.info(f"[{itask}] - force trigger")
         if itask.state_reset(TASK_STATUS_WAITING):
             # (could also be unhandled failed)
             self.data_store_mgr.delta_task_state(itask)
@@ -2238,6 +2239,7 @@ class TaskPool:
         itask.is_manual_submit = True
         itask.reset_try_timers()
         self.data_store_mgr.delta_task_prerequisite(itask)
+        # TODO this is only called here now
         self._force_trigger(itask, on_resume)
 
     def force_trigger_tasks(
@@ -2274,7 +2276,7 @@ class TaskPool:
             items, inactive=True, warn_no_active=False,
         )
         all_ids = (
-            list(inactive) +
+            [(tdef.name, point) for (tdef, point) in inactive] +
             [(itask.tdef.name, itask.point) for itask in existing_tasks]
         )
 
@@ -2291,6 +2293,7 @@ class TaskPool:
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
+
             for pre in itask.state.prerequisites:
                 # satisfy off-group prerequisites
                 for (
@@ -2298,9 +2301,13 @@ class TaskPool:
                 ), p_state in pre._satisfied.items():
                     if (
                         not p_state and
-                        (p_name, get_point(p_point)) not in all_ids
+                        (p_name, p_point) not in all_ids
                     ):
                         # off-group
+                        LOG.info(
+                            f"[{itask}] - force satisfying off-group"
+                            f" prerequisite {p_point}/{p_name}:{p_out}"
+                        )
                         itask.satisfy_me(
                             [
                                 Tokens(
@@ -2319,6 +2326,7 @@ class TaskPool:
             flow_nums = self._get_active_flow_nums()
 
         for tdef, point in inactive:
+            jtask: Optional[TaskProxy] = None
             if tdef.is_parentless(point):
                 # parentless: set pre=all to spawn into task pool
                 jtask = self._set_prereqs_tdef(
@@ -2330,11 +2338,18 @@ class TaskPool:
                 for pid in tdef.get_triggers(point):
                     p_point = pid.get_point(point)
                     p_name = pid.task_name
-                    if (p_name, get_point(p_point)) not in all_ids:
-                        off_flow_prereqs.append(f"{p_point}/{p_name}")
-                jtask = self._set_prereqs_tdef(
-                    point, tdef, off_flow_prereqs, flow_nums, flow_wait
-                )
+                    p_out = pid.output
+                    if (p_name, p_point) not in all_ids:
+                        off_flow_prereqs.append(f"{p_point}/{p_name}:{p_out}")
+                        LOG.info(
+                            f"[{point}/{tdef.name}] - force satisfying off-"
+                            f"group prerequisite {p_point}/{p_name}:{p_out}"
+                        )
+
+                if off_flow_prereqs:
+                    jtask = self._set_prereqs_tdef(
+                        point, tdef, off_flow_prereqs, flow_nums, flow_wait
+                    )
             if jtask is not None:
                 self._force_trigger_if_ready(jtask, on_resume)
 
