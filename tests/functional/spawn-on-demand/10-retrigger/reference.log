@@ -3,5 +3,5 @@ Final point: 1
 1/foo -triggered off []
 1/oops -triggered off ['1/foo']
 1/triggerer -triggered off ['1/foo']
-1/oops -triggered off []
+1/oops -triggered off ['1/foo']
 1/bar -triggered off ['1/oops']
