@@ -1,0 +1,22 @@
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        expected task failures = 1/fail
+[scheduling]
+    [[graph]]
+        R1 = """
+            x => a  # spawn a into active pool
+            fail => a => b => c
+            fail => b
+        """
+[runtime]
+    [[fail]]
+        script = """
+            # this should automatically set off-flow prerequisites
+            # 1/x (already satisfied) and 1/fail (not satisfied).
+            # But internal deps "a => b => c" should be respected.
+            cylc trigger ${CYLC_WORKFLOW_ID} //1/a //1/b //1/c
+            false
+        """
+    [[c]]
+        script = "cylc stop $CYLC_WORKFLOW_ID"
