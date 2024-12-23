@@ -2301,7 +2301,7 @@ class TaskPool:
                 ), p_state in pre._satisfied.items():
                     if (
                         not p_state and
-                        (p_name, p_point) not in all_ids
+                        (p_name, get_point(p_point)) not in all_ids
                     ):
                         # off-group
                         LOG.info(
@@ -2339,7 +2339,7 @@ class TaskPool:
                     p_point = pid.get_point(point)
                     p_name = pid.task_name
                     p_out = pid.output
-                    if (p_name, p_point) not in all_ids:
+                    if (p_name, get_point(p_point)) not in all_ids:
                         off_flow_prereqs.append(f"{p_point}/{p_name}:{p_out}")
                         LOG.info(
                             f"[{point}/{tdef.name}] - force satisfying off-"
