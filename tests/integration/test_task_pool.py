@@ -348,9 +348,9 @@ async def test_match_taskdefs(
             id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
-            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
-            ["No active tasks in the family FAM matching: 6/FAM"],
-            id="Family names hold active tasks only"
+            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar', '6/bar'],
+            [],
+            id="Family names hold active and future tasks"
         ),
         param(
             ['1/grogu', 'H/foo', '20/foo', '1/pub'], [],
@@ -500,7 +500,7 @@ async def test_trigger_states(
 ):
     """It should only trigger tasks in compatible states."""
 
-    async with start(one):
+    async with start(one):  #, level=logging.DEBUG):
         task = one.pool.filter_task_proxies(['1/one'])[0][0]
 
         # reset task a to the provided state
