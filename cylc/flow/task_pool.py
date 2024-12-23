@@ -1973,9 +1973,6 @@ class TaskPool:
             else:
                 flow_nums = self._get_flow_nums(flow, flow_descr)
 
-        if flow_nums is None:
-            return
-
         # Get matching pool tasks and inactive task definitions.
         itasks, inactive_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -2115,6 +2112,7 @@ class TaskPool:
             taskdef.name, point, flow_nums, flow_wait=flow_wait, force=True
         )
         if itask is None:
+            # TODO is this possible?
             return None
 
         self.db_add_new_flow_rows(itask)
@@ -2547,11 +2545,7 @@ class TaskPool:
 
             point = get_point(point_str)
             for name in [m.name for m in members]:
-                try:
-                    taskdef = self.config.taskdefs[name]
-                except KeyError:
-                    # family name
-                    continue
+                taskdef = self.config.taskdefs[name]
                 if taskdef.is_valid_point(point):
                     matched_tasks.add((taskdef, point))
                 else:
