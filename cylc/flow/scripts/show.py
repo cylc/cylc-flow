@@ -355,7 +355,7 @@ async def prereqs_and_outputs_query(
                 if t_proxy["flowNums"] != "[1]":
                     ansiprint(
                         f"<bold>flows:</bold> "
-                        f"{t_proxy['flowNums'].replace(' ','')}"
+                        f"{t_proxy['flowNums'].replace(' ', '')}"
                     )
 
                 # prerequisites
