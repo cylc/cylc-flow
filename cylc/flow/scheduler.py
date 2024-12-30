@@ -1078,7 +1078,13 @@ class Scheduler:
         to_kill: List[TaskProxy] = []
         unkillable: List[TaskProxy] = []
         for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
+            if itask.state(TASK_STATUS_PREPARING):
+                itask.waiting_on_job_prep = False
+                itask.local_job_file_path = None  # reset for retry
+                self.task_job_mgr._prep_submit_task_job_error(
+                    self.workflow, itask, '(killed in job prep)', ''
+                )
+            elif itask.state(*TASK_STATUSES_ACTIVE):
                 if itask.state_reset(is_held=True):
                     self.data_store_mgr.delta_task_state(itask)
                 to_kill.append(itask)
