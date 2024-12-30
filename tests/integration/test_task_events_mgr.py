@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from itertools import product
 import logging
 from typing import Any as Fixture
 
@@ -22,9 +21,7 @@ from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.data_store_mgr import (
     JOBS,
-    TASK_STATUSES_ORDERED,
     TASK_STATUS_WAITING,
-    TASK_STATUS_SUBMIT_FAILED,
 )
 
 
@@ -79,17 +76,22 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
     with correct submit number.
     """
     conf = {
-        'scheduling': {'graph': {'R1': 'rhenas'}},
-        'runtime': {'rhenas': {'simulation': {
-            'fail cycle points': '1',
-            'fail try 1 only': False,
-    }}}}
+        "scheduling": {"graph": {"R1": "rhenas"}},
+        "runtime": {
+            "rhenas": {
+                "simulation": {
+                    "fail cycle points": "1",
+                    "fail try 1 only": False,
+                }
+            }
+        },
+    }
     id_ = flow(conf)
     schd = scheduler(id_)
     async with start(schd):
         # Set task to running:
-        itask =  schd.pool.get_tasks()[0]
-        itask.state.status = 'running'
+        itask = schd.pool.get_tasks()[0]
+        itask.state.status = "running"
         itask.submit_num += 1
 
         # Not run _insert_task_job yet:
@@ -170,3 +172,44 @@ async def test__always_insert_task_job(
             '1/broken/01': 'submit-failed',
             '1/broken2/01': 'submit-failed'
         }
+
+
+async def test__process_message_failed_with_retry(one, start, log_filter):
+    """Log job failure, even if a retry is scheduled.
+
+    See: https://github.com/cylc/cylc-flow/pull/6169
+
+    """
+
+    async with start(one) as LOG:
+        fail_once = one.pool.get_tasks()[0]
+        # Add retry timers:
+        one.task_job_mgr._set_retry_timers(
+            fail_once, {
+                'execution retry delays': [1],
+                'submission retry delays': [1]
+            })
+
+        # Process submit failed message with and without retries:
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, 1, False)
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.WARNING
+        assert '1/one:waiting(queued)' in last_record.message
+
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, 2, False)
+        failed_record = log_filter(LOG, level=logging.ERROR)[-1]
+        assert 'submission failed' in failed_record[2]
+
+        # Process failed message with and without retries:
+        one.task_events_mgr._process_message_failed(
+            fail_once, None, 'failed', False, 'failed/OOK')
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.WARNING
+        assert 'failed/OOK' in last_record.message
+
+        one.task_events_mgr._process_message_failed(
+            fail_once, None, 'failed', False, 'failed/OOK')
+        failed_record = log_filter(LOG, level=logging.ERROR)[-1]
+        assert 'failed/OOK' in failed_record[2]
