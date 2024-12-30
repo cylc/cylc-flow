@@ -1292,7 +1292,13 @@ class TaskJobManager:
         itask.local_job_file_path = local_job_file_path
         return itask
 
-    def _prep_submit_task_job_error(self, workflow, itask, action, exc):
+    def _prep_submit_task_job_error(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        action: str,
+        exc: Union[Exception, str],
+    ) -> None:
         """Helper for self._prep_submit_task_job. On error."""
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
