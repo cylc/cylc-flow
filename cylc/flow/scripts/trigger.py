@@ -27,7 +27,8 @@ Cylc queues restrict the number of jobs that can be active (submitted or
 running) at once. They release tasks to run when their active task count
 drops below the queue limit.
 
-Attempts to trigger active (submitted, running) tasks will be ignored.
+Attempts to trigger active (preparing, submitted, running)
+tasks will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
