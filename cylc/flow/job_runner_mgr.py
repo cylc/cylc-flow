@@ -568,8 +568,8 @@ class JobRunnerManager():
         # Create NN symbolic link, if necessary
         self._create_nn(job_file_path)
         for name in JOB_LOG_ERR, JOB_LOG_OUT:
-            with suppress(OSError):
-                os.unlink(os.path.join(job_file_path, name))
+            with suppress(FileNotFoundError):
+                os.unlink(os.path.join(os.path.dirname(job_file_path), name))
 
         # Start new status file
         with open(f"{job_file_path}.status", "w") as job_status_file:
