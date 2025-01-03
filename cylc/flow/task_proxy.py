@@ -152,7 +152,7 @@ class TaskProxy:
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
             flows I belong to (if empty, belongs to 'none' flow)
-         flow_wait:
+        .flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
             True whilst task is awaiting job prep, reset to False once the
