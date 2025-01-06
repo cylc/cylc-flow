@@ -17,36 +17,45 @@ jobs:
   test_conda_install:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.7']
+    env:
+      ENV_FILE: conda-environment.yml
     steps:
       - name: checkout cylc-flow
         uses: actions/checkout@v4
 
-      - name: build conda env
+      - name: modify conda env file
         run: |
           # write environment file
-          env_file='conda-environment.yml'
-          echo "  - pip"  >> "$env_file"  # list pip as a dependency
-          echo "  - pip:" >> "$env_file"  # add a pip section
-          echo "    - ."  >> "$env_file"  # install cylc-flow (pip install .)
-          cat "$env_file"
-          # install environment
-          conda env create \
-            -f "$env_file" \
-            --prefix cylc-dev
-          . /usr/share/miniconda/etc/profile.d/conda.sh
-          # check cylc-flow was installed correctly
-          conda run --prefix cylc-dev cylc version --long
+          echo "  - pip"  >> "$ENV_FILE"  # list pip as a dependency
+          echo "  - pip:" >> "$ENV_FILE"  # add a pip section
+          echo "    - ."  >> "$ENV_FILE"  # install cylc-flow (pip install .)
+          cat "$ENV_FILE"
+
+      - name: build conda env
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          environment-file: ${{ env.ENV_FILE }}
+
+      - name: check cylc installation
+        shell: bash -el {0}
+        run: |
+          conda run -n test cylc version --long
 
       - name: check for activate scripts
+        shell : bash -el {0}
         run: |
           # https://github.com/cylc/cylc-flow/issues/3704#issuecomment-897442365
           # locate all activate scripts
-          find ./cylc-dev/ -name "activate.d" | tee > activates.txt
+          find "$CONDA_PREFIX" -name "activate.d" | tee > activates.txt
           # ignore the conda activate script itself
-          sed -i '/cylc-dev\/etc\/conda\/activate.d/d' activates.txt
+          sed -i "\|$CONDA_PREFIX/etc/conda/activate.d|d" activates.txt
           # check to make sure no packages have contributed new activate scripts
           # (we rely on having a conda activate-less environment)
-          if [[ $(cat activates.txt | wc -l) -ne 0 ]]; then
+          if [[ $(wc -l < activates.txt) -ne 0 ]]; then
               echo '::error::Found activate scripts in installation.'
               cat activates.txt >&2
               exit 1
