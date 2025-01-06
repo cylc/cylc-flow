@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        python-version: ['3.7']
+        python-version: ['3.8', '3']
     env:
       ENV_FILE: conda-environment.yml
     steps:
