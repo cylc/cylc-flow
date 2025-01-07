@@ -38,6 +38,8 @@ cylc__job__main() {
         set -x
     fi
     # Init-Script
+    cylc profile &
+    export profiler_pid="$!" &
     cylc__job__run_inst_func 'init_script'
     # Start error and vacation traps
     typeset signal_name=
@@ -139,6 +141,12 @@ cylc__job__main() {
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
+
+    if [[ "${CYLC_PROFILE}" == "True" ]] ; then
+       cylc profile &
+       export profiler_pid="$!"
+    fi
+
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
     # Run user scripts in subshell to protect cylc job script from interference.
     # Waiting on background process allows signal traps to trigger immediately.
@@ -157,12 +165,25 @@ cylc__job__main() {
             cylc__set_return "$ret_code"
         fi
     }
+    # Grab the max rss and cpu_time value before moving directory
+    if [[ -f "max_rss" ]]; then
+      max_rss=$(sed -n '1p' max_rss)
+      rm max_rss
+    fi
+    if [[ -f "cpu_time" ]]; then
+      cpu_time=$(sed -n '1p' cpu_time)
+      rm cpu_time
+    fi
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
+    cylc__kill_profiler
+
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
+
     cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'succeeded' || true
+    cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'max_rss:' "${MAXRSS}" || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
@@ -185,6 +206,20 @@ cylc__job__run_user_scripts() {
 # Set last return code (needed to work around Bash bugs in ERR trapping).
 cylc__set_return() {
     return "${1:-0}"
+}
+
+###############################################################################
+# Save the data using cylc message and exit the profiler
+cylc__kill_profiler() {
+    if [[ -n ${profiler_pid:-} ]]; then
+      kill -s SIGINT "${profiler_pid}"
+    fi
+    if [ -n "${max_rss}" ]; then
+      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
+    fi
+    if [ -n "${cpu_time}" ]; then
+      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
+    fi
 }
 
 ###############################################################################
@@ -261,6 +296,7 @@ cylc__job__run_inst_func() {
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
 cylc__job_finish_err() {
+    cylc__kill_profiler
     CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
     typeset run_err_script="$2"

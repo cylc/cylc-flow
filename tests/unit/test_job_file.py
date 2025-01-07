@@ -399,11 +399,16 @@ def test_write_task_environment():
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
                 'CYLC_TASK_FLOW_NUMBERS=1\n    export '
+                'CYLC_PROFILE=true\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
     job_conf = {
-        "platform": {'communication method': 'ssh'},
+        "platform": {'communication method': 'ssh',
+                     'profile': {
+                         "activate": "true",
+                        }
+                        },
         "job_d": "1/moo/01",
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
@@ -534,3 +539,4 @@ def test_homeless_platform(fixture_get_platform):
         job_sh_txt = job_sh.read()
         if 'HOME' in job_sh_txt:
             raise Exception('$HOME found in job.sh\n{job_sh_txt}')
+
