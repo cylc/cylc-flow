@@ -373,7 +373,7 @@ class JobRunnerManager():
 
     @classmethod
     def _create_nn(cls, job_file_path):
-        """Create NN symbolic link, or remove old job logs if they exist.
+        """Create NN symbolic link if necessary, and remove any old job logs.
 
         If NN => 01, remove numbered dirs with submit numbers greater than 01.
 

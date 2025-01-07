@@ -88,10 +88,9 @@ async def test_kill_error(one, start, test_dir, capsys, log_filter):
 async def test_create_nn_new(one, start, test_dir, capsys, log_filter):
     """Test _create_nn. 
 
-    It should the NN symlink.
+    It should create the NN symlink.
     """
     async with start(one):
-        # make it look like the task is running
         itask = one.pool.get_tasks()[0]
 
         workflow_job_log_dir = Path(get_workflow_run_job_dir(one.workflow))
