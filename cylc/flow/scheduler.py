@@ -837,8 +837,10 @@ class Scheduler:
         """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
         # flow number set in this call:
-        self.pool.force_trigger_tasks(
+        self.pool.set_prereqs_and_outputs(
             self.options.starttask,
+            outputs=[],
+            prereqs=["all"],
             flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )

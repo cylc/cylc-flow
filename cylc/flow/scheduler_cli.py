@@ -196,12 +196,13 @@ PLAY_OPTIONS = [
     OptionSettings(
         ["--start-task", "--starttask", "-t"],
         help=(
-            "Start from this task instance, given by '<cycle>/<name>'."
-            " This can be used multiple times to start from multiple"
-            " tasks at once. Dependence on tasks with cycle points earlier"
-            " than the earliest start-task will be ignored. A"
-            " sub-graph of the workflow will run if selected tasks do"
-            " not lead on to the full graph."),
+            "Start from this task instance instead of the beginning of the"
+            " graph. Dependence on other tasks is ignored but clock and"
+            " xtriggers are respected. Reuse the option for multiple start"
+            " tasks. Any dependence on cycle points prior to the earliest"
+            " start task will be ignored throughout the graph. Check that"
+            " start tasks flow into the full downstream graph, if needed."
+        ),
         metavar="TASK_ID",
         action='append',
         dest="starttask",

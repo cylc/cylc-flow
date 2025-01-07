@@ -314,7 +314,7 @@ async def dump(workflow_id, options, write=print):
                             result += " (" + ",".join(attrs) + ")"
                         if options.show_flows:
                             result += (
-                                f" flows={item['flowNums'].replace(' ','')}"
+                                f" flows={item['flowNums'].replace(' ', '')}"
                             )
                         write(result)
 

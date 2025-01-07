@@ -102,8 +102,8 @@ async def test_over_bracketed(flow, scheduler, reftest):
             'final cycle point': '2013-12-25T12:00Z',
             'graph': {
                 'T12': '''
-                    (a[-P1D]:fail | b[-P1D]:fail | c[-P1D]:fail) => d
-                    a & b & c  # Implied by implicit cycling now...
+                    (a[-P1D]:fail? | b[-P1D]:fail? | c[-P1D]:fail?) => d
+                    a? & b? & c?  # Implied by implicit cycling now...
                 ''',
             },
         },

@@ -1,7 +1,0 @@
-Start task: ['3/bar', '3/war']
-Initial point: 1
-Final point: 3
-3/bar -triggered off []
-3/war -triggered off []
-3/baz -triggered off ['3/bar']
-3/waz -triggered off ['3/war']

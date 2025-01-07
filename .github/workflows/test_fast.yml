@@ -108,12 +108,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # note: exclude python 3.10+ from mypy checks as these produce false
-      # positives in installed libraries for python 3.7
       - name: Configure Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.x
 
       - name: Install
         run: |

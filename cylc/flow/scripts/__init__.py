@@ -14,4 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-_copyright_year = 2024  # This is set by GH Actions update_copyright workflow
+_copyright_year = 2025  # This is set by GH Actions update_copyright workflow

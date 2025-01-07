@@ -2305,3 +2305,80 @@ async def test_job_insert_on_crash(one_conf, flow, scheduler, start):
 
         # and a job entry should be added
         assert len(task_1.jobs) == 1
+
+
+async def test_start_tasks(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+    capture_submission,
+):
+    """Check starting from "start-tasks" with and without clock-triggers.
+
+    """
+    id_ = flow(
+        {
+            'scheduler': {
+                'cycle point format': '%Y',
+            },
+            'scheduling': {
+                'initial cycle point': '2040',
+                'runahead limit': 'P0Y',
+                'xtriggers': {
+                    'wall_clock_satisfied': "wall_clock(offset='-P100Y')"
+                },
+                'graph': {
+                    'P1Y': """
+                        foo
+                        @wall_clock => bar
+                        @wall_clock_satisfied => baz
+                        qux
+                    """
+                }
+            }
+        }
+    )
+    schd = scheduler(
+        id_,
+        starttask=['2050/foo', '2050/bar', '2050/baz'],
+        paused_start=False
+    )
+
+    async with start(schd) as log:
+        # capture any job submissions
+        submitted_tasks = capture_submission(schd)
+        assert submitted_tasks == set()
+
+        # It should start up with:
+        # - 2050/foo and 2051/foo (spawned to runahead limit)
+        # - 2050/bar waiting on its (unsatisfied) clock-trigger
+        # - 2050/baz waiting on its (satisfied) clock-trigger
+        # - no qux instances (not listed as a start-task)
+        itasks = schd.pool.get_tasks()
+        assert (
+            set(itask.identity for itask in itasks) == set([
+                "2050/foo",
+                "2051/foo",
+                "2050/bar",
+                "2050/baz",
+            ])
+        )
+
+        # Check xtriggers
+        for itask in itasks:
+            schd.pool.xtrigger_mgr.call_xtriggers_async(itask)
+            schd.pool.rh_release_and_queue(itask)
+
+        # Release tasks that are ready to run.
+        schd.release_tasks_to_run()
+
+        # It should submit 2050/foo, 2051/foo, 2050/baz
+        # It should not submit 2050/bar (waiting on clock trigger)
+        assert (
+            set(itask.identity for itask in submitted_tasks) == set([
+                "2050/foo",
+                "2051/foo",
+                "2050/baz",
+            ])
+        )
