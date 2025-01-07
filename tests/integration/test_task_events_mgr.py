@@ -195,7 +195,7 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             fail_once, None, 1, False)
         last_record = LOG.records[-1]
         assert last_record.levelno == logging.WARNING
-        assert '1/one:waiting(queued)' in last_record.message
+        assert '1/one:waiting(queued)] retrying in' in last_record.message
 
         one.task_events_mgr._process_message_submit_failed(
             fail_once, None, 2, False)
