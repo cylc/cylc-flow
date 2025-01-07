@@ -85,8 +85,8 @@ async def test_kill_error(one, start, test_dir, capsys, log_filter):
         assert itask.state(TASK_STATUS_RUNNING)
 
 
-async def test_create_nn_new(one, start, test_dir, capsys, log_filter):
-    """Test _create_nn. 
+async def test_create_nn_new(one, start):
+    """Test _create_nn.
 
     It should create the NN symlink.
     """
@@ -99,13 +99,13 @@ async def test_create_nn_new(one, start, test_dir, capsys, log_filter):
         job_log_dir.mkdir(parents=True)
 
         # call _create_nn
-        JobRunnerManager()._create_nn(job_log_dir / 'job.out')
+        JobRunnerManager()._create_nn(job_log_dir / 'job')
 
         # check the symlink exists
         assert (job_log_dir.parent / "NN").is_symlink()
 
 
-async def test_create_nn_old(one, start, test_dir, capsys, log_filter):
+async def test_create_nn_old(one, start):
     """Test _create_nn.
 
     It should remove existing job logs, if the dir already exists.
@@ -127,13 +127,8 @@ async def test_create_nn_old(one, start, test_dir, capsys, log_filter):
         for job_log in job_logs:
             job_log.touch()
 
-        # check they exist
-        for job_log in job_logs:
-            assert job_log.is_file()
-
         # call _create_nn
-        for job_log in job_logs:
-            JobRunnerManager()._create_nn(job_log)
+        JobRunnerManager()._create_nn(job_log_dir / 'job')
 
         # check they were removed
         for job_log in job_logs:
