@@ -44,9 +44,11 @@ def quote(s, safe='/'):
     except KeyError:
         safe_map = _safe_map.copy()
         safe_map.update([(c, c) for c in safe])
+        # modification: quoter = safe_map.__getitem__
         quoter = safe_map.get
         safe = always_safe + safe
         _safe_quoters[cachekey] = (quoter, safe)
     if not s.rstrip(safe):
         return s
+    # modification: return ''.join(map(quoter, s))
     return ''.join([quoter(c, c) for c in s])
