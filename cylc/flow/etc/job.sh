@@ -38,6 +38,8 @@ cylc__job__main() {
         set -x
     fi
     # Init-Script
+    cylc profile &
+    export profiler_pid="$!" &
     cylc__job__run_inst_func 'init_script'
     # Start error and vacation traps
     typeset signal_name=
@@ -160,8 +162,10 @@ cylc__job__main() {
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
+    kill -s SIGINT "$profiler_pid"
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'succeeded' || true
+    cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'max_rss:' "${MAXRSS}" || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
@@ -260,6 +264,7 @@ cylc__job__run_inst_func() {
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
 cylc__job_finish_err() {
+    kill -s SIGINT "$profiler_pid"
     CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
     typeset run_err_script="$2"
