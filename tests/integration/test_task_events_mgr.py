@@ -207,7 +207,7 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             fail_once, None, 'failed', False, 'failed/OOK')
         last_record = LOG.records[-1]
         assert last_record.levelno == logging.WARNING
-        assert 'failed/OOK' in last_record.message
+        assert 'retrying in' in last_record.message
 
         one.task_events_mgr._process_message_failed(
             fail_once, None, 'failed', False, 'failed/OOK')
