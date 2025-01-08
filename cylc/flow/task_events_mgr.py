@@ -1344,10 +1344,7 @@ class TaskEventsManager():
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
             self._retry_task(itask, timer.timeout)
             delay_msg = f"retrying in {timer.delay_timeout_as_str()}"
-            LOG.warning(
-                f'[{itask}] {full_message or self.EVENT_FAILED} - '
-                f'{delay_msg}'
-            )
+            LOG.warning(f'[{itask}] - {delay_msg}')
             msg = f"{self.JOB_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_RETRY, msg)
         self._reset_job_timers(itask)
