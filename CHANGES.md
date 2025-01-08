@@ -11,6 +11,51 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.0 (Released 2025-01-08)__
+
+### ⚠ Breaking Changes
+
+[#6476](https://github.com/cylc/cylc-flow/pull/6476) - Remove support for the EmPy template engine.
+
+### 🚀 Enhancements
+
+[#6039](https://github.com/cylc/cylc-flow/pull/6039) - Added a new task run mode "skip" in which tasks instantly generate their required outputs without actually running. This allows us to configure tasks to "skip" ahead of time, e.g. to skip a cycle of tasks that is no longer needed.
+
+[#6137](https://github.com/cylc/cylc-flow/pull/6137) - New Cylc lint rule: S014: Don't use job runner specific execution time limit directives, use execution time limit.
+
+[#6168](https://github.com/cylc/cylc-flow/pull/6168) - Allow symlinking log/job separately from log
+
+[#6289](https://github.com/cylc/cylc-flow/pull/6289) - Made the errors resulting from Jinja2 `raise` and `assert` statements more straight forward.
+
+[#6440](https://github.com/cylc/cylc-flow/pull/6440) - The "cylc dump" command now prints task IDs. Use "--legacy" if you need the old format.
+
+[#6444](https://github.com/cylc/cylc-flow/pull/6444) - The scheduler now traps the SIGINT, SIGTERM and SIGHUP signals and will respond by shutting down in --now mode. If the workflow is already shutting down in --now mode, it will escalate the shutdown to --now --now mode.
+
+[#6456](https://github.com/cylc/cylc-flow/pull/6456) - `cylc lint` now checks for unnecessary continuation characters in the graph section.
+
+[#6472](https://github.com/cylc/cylc-flow/pull/6472) - `cylc remove` improvements:
+  - It can now remove tasks that are no longer active, making it look like they never ran.
+  - Removing a submitted/running task will kill it.
+  - Added the `--flow` option.
+  - Removed tasks are now demoted to `flow=none` but retained in the workflow database for provenance.
+
+[#6475](https://github.com/cylc/cylc-flow/pull/6475) - Allow easy definition of multiple install targets in `global.cylc[install][symlink dirs]` using comma separated lists.
+
+[#6491](https://github.com/cylc/cylc-flow/pull/6491) - The "cylc show" command now says if the target task is held, queued, or runahead limited.
+
+[#6499](https://github.com/cylc/cylc-flow/pull/6499) - Manually triggered tasks now run immediately even if the workflow is paused.
+
+### 🔧 Fixes
+
+[#6081](https://github.com/cylc/cylc-flow/pull/6081) - Fix job submission when a batch of jobs is submitted to a runner that does
+  not return a newline with the job ID (did not affect built-in job runners).
+
+[#6511](https://github.com/cylc/cylc-flow/pull/6511) - cat-log command list-dir mode: fail gracefully if directory not found.
+
+[#6526](https://github.com/cylc/cylc-flow/pull/6526) - Output optionality validation now checks tasks with cycle offsets.
+
+[#6528](https://github.com/cylc/cylc-flow/pull/6528) - Make start-tasks wait on xtriggers (see "cylc play --start-task").
+
 ## __cylc-8.3.6 (Released 2024-11-07)__
 
 ### 🔧 Fixes
