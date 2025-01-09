@@ -1105,7 +1105,10 @@ class Scheduler:
         return len(unkillable)
 
     def remove_tasks(
-        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
+        self,
+        items: Iterable[str],
+        flow_nums: 'FlowNums',
+        default_remove: bool = False,
     ) -> None:
         """Remove tasks (`cylc remove` command).
 
@@ -1113,15 +1116,19 @@ class Scheduler:
             items: Relative IDs or globs.
             flow_nums: Flows to remove the tasks from. If empty or None, it
                 means 'all'.
+            default_remove: if True, called via `cylc trigger` command to
+                auto-erase flow history of past tasks before triggering
         """
         active, inactive, _unmatched = self.pool.filter_task_proxies(
             items, warn_no_active=False, inactive=True
         )
+        if default_remove:
+            # auto-remove via trigger only applies to past tasks
+            active = []
+
         if not (active or inactive):
             return
 
-        if flow_nums is None:
-            flow_nums = set()
         # Mapping of *relative* task IDs to removed flow numbers:
         removed: Dict[Tokens, FlowNums] = {}
         not_removed: Set[Tokens] = set()
