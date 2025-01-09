@@ -580,11 +580,11 @@ async def test_runahead_after_remove(
     assert int(task_pool.runahead_limit_point) == 4
 
     # No change after removing an intermediate cycle.
-    example_flow.remove_tasks(['3/*'])
+    example_flow.remove_tasks(['3/*'], [1])
     assert int(task_pool.runahead_limit_point) == 4
 
     # Should update after removing the first point.
-    example_flow.remove_tasks(['1/*'])
+    example_flow.remove_tasks(['1/*'], [1])
     assert int(task_pool.runahead_limit_point) == 5
 
 

@@ -2268,6 +2268,9 @@ class TaskPool:
             - just spawn (if not already spawned in this flow)
               unless flow-wait is set.
 
+        flow: [] - default
+              ['none'] - no-flow
+
         """
         # Get matching tasks proxies, and matching inactive task IDs.
         existing_tasks, inactive, unmatched = self.filter_task_proxies(
