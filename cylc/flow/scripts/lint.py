@@ -201,7 +201,7 @@ def get_wallclock_directives():
 WALLCLOCK_DIRECTIVES = get_wallclock_directives()
 
 
-def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
+def check_wallclock_directives(line: str) -> Dict[str, str]:
     """Check for job runner specific directives
     equivalent to exection time limit.
 
@@ -214,20 +214,20 @@ def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
         >>> this('    -W 42:22')
         {'directive': '-W 42:22'}
         >>> this('    -W 42:22/hostname')  # Legit LSF use case
-        False
+        {}
         >>> this('    -W 422')
         {'directive': '-W 422'}
         >>> this('    -W foo=42')  # Legit PBS use case.
-        False
+        {}
         >>> this('    -W foo="Hello World"')  # Legit PBS use case.
-        False
+        {}
         >>> this('    -l walltime whatever')
         {'directive': '-l walltime whatever'}
     """
     for directive in set(WALLCLOCK_DIRECTIVES.values()):
         if directive.findall(line.strip()):
             return {'directive': line.strip()}
-    return False
+    return {}
 
 
 def check_jinja2_no_shebang(
