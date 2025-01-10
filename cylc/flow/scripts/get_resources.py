@@ -42,6 +42,7 @@ Examples:
 import sys
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -74,6 +75,14 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, opts, resource=None, tgt_dir=None):
+
+    # Intercept requests for syntax/cylc.vim:
+    if resource == "syntax/cylc.vim":
+        raise CylcError(
+            'syntax/cylc.vim has been replaced by '
+            'https://github.com/cylc/cylc.vim'
+        )
+
     if cylc.flow.flags.verbosity < 2:
         set_timestamps(LOG, False)
     if not resource or opts.list:

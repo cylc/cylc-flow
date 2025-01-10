@@ -16,6 +16,7 @@
 
 """Extract named resources from the cylc.flow package."""
 
+from ansimarkup import parse
 from contextlib import suppress
 from pathlib import Path
 from random import choice
@@ -39,10 +40,10 @@ EXAMPLE_DIR = RESOURCE_DIR / 'examples'
 RESOURCE_NAMES = {
     'syntax/cylc-mode.el': 'Emacs syntax highlighting.',
     'syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
-    'syntax/cylc.vim': 'Vim syntax highlighting.',
     'syntax/cylc.xml': 'Kate syntax highlighting.',
     'cylc-completion.bash': 'Bash auto-completion for Cylc commands.',
     'cylc': 'Cylc wrapper script.',
+    '!syntax/cylc.vim': 'Deprecated - use https://github.com/cylc/cylc.vim',
 }
 API_KEY = 'api-key'
 
@@ -63,7 +64,15 @@ def list_resources(write=print, headers=True):
         write('Resources:')
     max_len = max(len(res) for res in RESOURCE_NAMES)
     for resource, desc in RESOURCE_NAMES.items():
-        write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
+        if resource[0] == '!':
+            # Use ! to indicated that resource is deprecated:
+            resource = resource[1:]
+            write(parse(
+                f'<yellow>  {resource}  {" " * (max_len - len(resource))}'
+                f'  # {desc}</yellow>'
+            ))
+        else:
+            write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
     if headers:
         write('\nTutorials:')
     for tutorial in tutorials:
