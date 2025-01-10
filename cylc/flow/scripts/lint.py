@@ -189,8 +189,12 @@ def get_wallclock_directives():
             'TIME_LIMIT_DIRECTIVE',
             None
         )
-        if directive:
-            directives[module.name] = directive
+        if directive and directive == '-W':
+            # LSF directive -W needs to have a particular form to
+            # avoid matching PBS directive -W:
+            directives[module.name] = re.compile(r'^-W\s+(\d+:)?\d+$')
+        elif directive:
+            directives[module.name] = re.compile(rf'^{directive}')
     return directives
 
 
@@ -209,9 +213,17 @@ def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
         >>> this = check_wallclock_directives
         >>> this('    -W 42:22')
         {'directive': '-W 42:22'}
+        >>> this('    -W 42:22/hostname')  # Legit LSF use case
+        False
+        >>> this('    -W 422')
+        {'directive': '-W 422'}
+        >>> this('    -W foo=42')  # Legit PBS use case.
+        False
+        >>> this('    -W foo="Hello World"')  # Legit PBS use case.
+        False
     """
     for directive in set(WALLCLOCK_DIRECTIVES.values()):
-        if line.strip().startswith(directive):
+        if directive.findall(line.strip()):
             return {'directive': line.strip()}
     return False
 
