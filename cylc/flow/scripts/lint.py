@@ -194,7 +194,7 @@ def get_wallclock_directives():
             # avoid matching PBS directive -W:
             directives[module.name] = re.compile(r'^-W\s+(\d+:)?\d+$')
         elif directive:
-            directives[module.name] = re.compile(rf'^{directive}')
+            directives[module.name] = re.compile(rf'^{directive}.*')
     return directives
 
 
@@ -221,6 +221,8 @@ def check_wallclock_directives(line: str) -> Union[Dict[str, str], bool]:
         False
         >>> this('    -W foo="Hello World"')  # Legit PBS use case.
         False
+        >>> this('    -l walltime whatever')
+        {'directive': '-l walltime whatever'}
     """
     for directive in set(WALLCLOCK_DIRECTIVES.values()):
         if directive.findall(line.strip()):
