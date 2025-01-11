@@ -49,6 +49,8 @@ pyproject.toml configuration:
    rulesets = ['style', '728']  # Sets default rulesets to check
    max-line-length = 130        # Max line length for linting
 """
+
+from dataclasses import dataclass
 import functools
 import pkgutil
 import re
@@ -1251,6 +1253,92 @@ def no_qa(line: str, index: str):
     return False
 
 
+@dataclass
+class LinterState:
+    """A place to keep linter state"""
+    TRIPLE_QUOTES = re.compile(r'\'{3}|\"{3}')
+    JINJA2_START = re.compile(r'{%')
+    JINJA2_END = re.compile(r'%}')
+    NEW_SECTION_START = re.compile(r'^[^\[]*\[[^\[]')
+    is_metadata_section: bool = False
+    is_multiline_chunk: bool = False
+    is_jinja2_block: bool = False
+    jinja2_shebang: bool = False
+    line_no: int = 1
+
+    def skip_line(self, line):
+        """Is this a line we should skip, according to state we are holding
+        and the line content?
+
+        TODO: Testme
+        """
+        return any((
+            self.skip_metatadata_desc(line),
+            self.skip_jinja2_block(line)
+        ))
+
+    def skip_metatadata_desc(self, line):
+        """Should we skip this line because it's part of a metadata multiline
+        description section.
+
+        TODO: Testme
+        """
+        if '[meta]' in line:
+            self.is_metadata_section = True
+        elif self.is_metadata_section and self.is_end_of_meta_section(line):
+            self.is_metadata_section = False
+
+        if self.is_metadata_section:
+            if self.TRIPLE_QUOTES.findall(line):
+                self.is_multiline_chunk = not self.is_multiline_chunk
+            if self.is_multiline_chunk:
+                return True
+
+        return False
+
+    def skip_jinja2_block(self, line):
+        """Is this line part of a jinja2 block?
+
+        TODO: Testme
+        """
+        if self.jinja2_shebang:
+            if (
+                self.JINJA2_START.findall(line)
+                and not self.JINJA2_END.findall(line)
+            ):
+                self.is_jinja2_block = True
+            elif self.is_jinja2_block and self.JINJA2_END.findall(line):
+                self.is_jinja2_block = False
+                return True
+
+        return self.is_jinja2_block
+
+    @staticmethod
+    def is_end_of_meta_section(line):
+        """Best tests I can think of for end of metadata section.
+
+        Examples:
+            >>> this = LinterState.is_end_of_meta_section
+            >>> this('[scheduler]')   # Likely right answer
+            True
+            >>> this('[garbage]')   # Unreasonable, not worth guarding against
+            True
+            >>> this('')
+            False
+            >>> this('    ')
+            False
+            >>> this('{{NAME}}')
+            False
+            >>> this('    [[custom metadata subsection]]')
+            False
+            >>> this('[[custom metadata subsection]]')
+            False
+            >>> this('arbitrary crud')
+            False
+        """
+        return line and LinterState.NEW_SECTION_START.findall(line)
+
+
 def lint(
     file_rel: Path,
     lines: Iterator[str],
@@ -1280,13 +1368,21 @@ def lint(
         The original file with added comments when `modify is True`.
 
     """
+    state = LinterState()
+
     # get the first line
-    line_no = 1
     line = next(lines)
+    # A few bits of state
     # check if it is a jinja2 shebang
-    jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
+    state.jinja2_shebang = line.strip().lower() == JINJA2_SHEBANG
 
     while True:
+        # Don't check extended text in metadata section.
+        if state.skip_line(line):
+            line = next(lines)
+            state.line_no += 1
+            continue
+
         # run lint checks against the current line
         for index, check_meta in checks.items():
             # Skip commented line unless check says not to.
@@ -1306,7 +1402,7 @@ def lint(
                     check_meta['function'],
                     check_meta=check_meta,
                     file=file_rel,
-                    jinja_shebang=jinja_shebang,
+                    jinja_shebang=state.jinja2_shebang,
                 )
             else:
                 # Just going to pass the line to the check function:
@@ -1335,7 +1431,7 @@ def lint(
                     # write a message to inform the user
                     write(cparse(
                         '<yellow>'
-                        f'[{index_str}] {file_rel}:{line_no}: {msg}'
+                        f'[{index_str}] {file_rel}:{state.line_no}: {msg}'
                         '</yellow>'
                     ))
         if modify:
@@ -1347,7 +1443,7 @@ def lint(
         except StopIteration:
             # end of interator
             return
-        line_no += 1
+        state.line_no += 1
 
 
 def get_cylc_files(
