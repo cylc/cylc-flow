@@ -7,5 +7,5 @@
 [runtime]
     [[task]]
         script = """
-            echo "Hello World" > "${CYLC_SHARE_CYCLE_DIR}/stuff"
+            echo "Hello World" > "${CYLC_TASK_SHARE_CYCLE_DIR}/stuff"
         """
