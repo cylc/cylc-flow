@@ -50,7 +50,6 @@ pyproject.toml configuration:
    max-line-length = 130        # Max line length for linting
 """
 
-from dataclasses import dataclass
 import functools
 import pkgutil
 import re
@@ -91,6 +90,7 @@ from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.job_runner_mgr import JobRunnerManager
+from cylc.flow.lint.state import LinterState
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
@@ -1251,92 +1251,6 @@ def no_qa(line: str, index: str):
     if noqa and (noqa[0] == '' or index in noqa[0]):
         return True
     return False
-
-
-@dataclass
-class LinterState:
-    """A place to keep linter state"""
-    TRIPLE_QUOTES = re.compile(r'\'{3}|\"{3}')
-    JINJA2_START = re.compile(r'{%')
-    JINJA2_END = re.compile(r'%}')
-    NEW_SECTION_START = re.compile(r'^[^\[]*\[[^\[]')
-    is_metadata_section: bool = False
-    is_multiline_chunk: bool = False
-    is_jinja2_block: bool = False
-    jinja2_shebang: bool = False
-    line_no: int = 1
-
-    def skip_line(self, line):
-        """Is this a line we should skip, according to state we are holding
-        and the line content?
-
-        TODO: Testme
-        """
-        return any((
-            self.skip_metatadata_desc(line),
-            self.skip_jinja2_block(line)
-        ))
-
-    def skip_metatadata_desc(self, line):
-        """Should we skip this line because it's part of a metadata multiline
-        description section.
-
-        TODO: Testme
-        """
-        if '[meta]' in line:
-            self.is_metadata_section = True
-        elif self.is_metadata_section and self.is_end_of_meta_section(line):
-            self.is_metadata_section = False
-
-        if self.is_metadata_section:
-            if self.TRIPLE_QUOTES.findall(line):
-                self.is_multiline_chunk = not self.is_multiline_chunk
-            if self.is_multiline_chunk:
-                return True
-
-        return False
-
-    def skip_jinja2_block(self, line):
-        """Is this line part of a jinja2 block?
-
-        TODO: Testme
-        """
-        if self.jinja2_shebang:
-            if (
-                self.JINJA2_START.findall(line)
-                and not self.JINJA2_END.findall(line)
-            ):
-                self.is_jinja2_block = True
-            elif self.is_jinja2_block and self.JINJA2_END.findall(line):
-                self.is_jinja2_block = False
-                return True
-
-        return self.is_jinja2_block
-
-    @staticmethod
-    def is_end_of_meta_section(line):
-        """Best tests I can think of for end of metadata section.
-
-        Examples:
-            >>> this = LinterState.is_end_of_meta_section
-            >>> this('[scheduler]')   # Likely right answer
-            True
-            >>> this('[garbage]')   # Unreasonable, not worth guarding against
-            True
-            >>> this('')
-            False
-            >>> this('    ')
-            False
-            >>> this('{{NAME}}')
-            False
-            >>> this('    [[custom metadata subsection]]')
-            False
-            >>> this('[[custom metadata subsection]]')
-            False
-            >>> this('arbitrary crud')
-            False
-        """
-        return line and LinterState.NEW_SECTION_START.findall(line)
 
 
 def lint(
