@@ -40,7 +40,11 @@ def test_get_resources_one(tmpdir):
 
 @pytest.mark.parametrize(
     'resource',
-    list(RESOURCE_NAMES.keys()) + ['tutorial/runtime-tutorial']
+    [
+        r for r
+        in list(RESOURCE_NAMES.keys())
+        if r[0] != '!'
+    ] + ['tutorial/runtime-tutorial']
 )
 def test_get_resources_all(resource, tmpdir):
     get_resources(resource, tmpdir)
