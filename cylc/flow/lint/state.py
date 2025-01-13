@@ -57,7 +57,9 @@ class LinterState:
             self.is_metadata_section = False
 
         if self.is_metadata_section:
-            if self.TRIPLE_QUOTES.findall(line):
+            # Start quoted section if there is an odd number of triple quotes
+            # i.e. don't match """stuff""".
+            if len(self.TRIPLE_QUOTES.findall(line)) % 2 == 1:
                 self.is_multiline_chunk = not self.is_multiline_chunk
             if self.is_multiline_chunk:
                 return True
