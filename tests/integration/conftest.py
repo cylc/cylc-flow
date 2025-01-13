@@ -55,7 +55,6 @@ from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
 from cylc.flow.workflow_status import StopMode
-from cylc.flow.task_state import TASK_STATUS_SUBMITTED
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
@@ -424,7 +423,7 @@ def capture_submission():
     def _disable_submission(schd: 'Scheduler') -> 'Set[TaskProxy]':
         submitted_tasks: 'Set[TaskProxy]' = set()
 
-        def _submit_task_jobs(_, itasks, *args, **kwargs):
+        def _submit_task_jobs(itasks, *args, **kwargs):
             nonlocal submitted_tasks
             for itask in itasks:
                 itask.state_reset(TASK_STATUS_SUBMITTED)
@@ -456,7 +455,7 @@ def capture_polling():
         polled_tasks: 'Set[TaskProxy]' = set()
 
         def run_job_cmd(
-            _1, _2, itasks, _3, _4=None
+            _1, itasks, _3, _4=None
         ):
             nonlocal polled_tasks
             polled_tasks.update(itasks)
@@ -740,8 +739,8 @@ def capture_live_submissions(capcall, monkeypatch):
     If you call this fixture from a test, it will return a set of tasks that
     would have been submitted had this fixture not been used.
     """
-    def fake_submit(self, _workflow, itasks, *_):
-        self.submit_nonlive_task_jobs(_workflow, itasks, RunMode.SIMULATION)
+    def fake_submit(self, itasks, *_):
+        self.submit_nonlive_task_jobs(itasks, RunMode.SIMULATION)
         for itask in itasks:
             for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
                 self.task_events_mgr.process_message(
@@ -758,13 +757,11 @@ def capture_live_submissions(capcall, monkeypatch):
         'cylc.flow.task_job_mgr.TaskJobManager.submit_livelike_task_jobs',
         fake_submit)
 
-
-
     def get_submissions():
         nonlocal submit_live_calls
         return {
             itask.identity
-            for ((_self, _workflow, itasks, *_), _kwargs) in submit_live_calls
+            for ((_self, itasks, *_), _kwargs) in submit_live_calls
             for itask in itasks
         }
 

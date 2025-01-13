@@ -254,7 +254,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    schd.task_job_mgr.poll_task_jobs(schd.workflow, itasks)
+    schd.task_job_mgr.poll_task_jobs(itasks)
     yield len(bad_items)
 
 

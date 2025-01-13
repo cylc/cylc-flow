@@ -60,7 +60,6 @@ def submit_and_check_db():
     def _inner(schd):
         # Submit task jobs:
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir
@@ -125,7 +124,6 @@ async def test_db_task_states(
     schd = scheduler(flow(conf))
     async with start(schd):
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir
@@ -166,7 +164,6 @@ async def test_mean_task_time(
 
         # Submit two tasks:
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             [itask],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir
