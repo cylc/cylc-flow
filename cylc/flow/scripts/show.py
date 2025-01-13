@@ -145,6 +145,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
     }
     runtime {
       completion
+      runMode
     }
   }
 }
@@ -346,9 +347,15 @@ async def prereqs_and_outputs_query(
                     attrs.append("queued")
                 if t_proxy['isRunahead']:
                     attrs.append("runahead")
+                if (
+                    t_proxy['runtime']['runMode']
+                    and t_proxy['runtime']['runMode'] != 'Live'
+                ):
+                    attrs.append(f"run mode={t_proxy['runtime']['runMode']}")
                 state_msg = state
                 if attrs:
                     state_msg += f" ({','.join(attrs)})"
+
                 ansiprint(f'<bold>state:</bold> {state_msg}')
 
                 # flow numbers, if not just 1

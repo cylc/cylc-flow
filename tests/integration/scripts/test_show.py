@@ -59,8 +59,8 @@ def mod_my_conf():
                         'destroyedtheworldyet.com/'
                     ),
                     'question': 'mutually exclusive',
-                }
-            }
+                },
+            },
         },
     }
 
@@ -128,6 +128,7 @@ async def test_task_meta_query(mod_my_schd, capsys):
     )
     assert ret == 0
     out, err = capsys.readouterr()
+
     assert out.splitlines() == [
         'title: Task Title',
         'question: mutually exclusive',
@@ -199,10 +200,13 @@ async def test_task_instance_query(
     'attributes_bool, flow_nums, expected_state, expected_flows',
     [
         pytest.param(
-            False, [1], 'state: waiting', None,
+            False, [1], 'state: waiting (skip)', None,
         ),
         pytest.param(
-            True, [1, 2], 'state: waiting (held,queued,runahead)', 'flows: [1,2]',
+            True,
+            [1, 2],
+            'state: waiting (held,queued,runahead,skip)',
+            'flows: [1,2]',
         )
     ]
 )
@@ -225,6 +229,9 @@ async def test_task_instance_state_flows(
                'scheduling': {
                    'graph': {'R1': 'a'},
                },
+               'runtime': {
+                   'a': {'run mode': 'skip'}
+               }
            }
         ),
        paused_start=True
