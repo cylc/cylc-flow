@@ -1250,6 +1250,7 @@ class Scheduler:
         """
         fields = workflow_files.ContactFileFields
         proc = psutil.Process()
+        platform = get_platform()
         # fmt: off
         return {
             fields.API:
@@ -1275,11 +1276,11 @@ class Scheduler:
             fields.VERSION:
                 CYLC_VERSION,
             fields.SCHEDULER_SSH_COMMAND:
-                str(get_platform()['ssh command']),
+                str(platform['ssh command']),
             fields.SCHEDULER_CYLC_PATH:
-                str(get_platform()['cylc path']),
+                str(platform['cylc path']),
             fields.SCHEDULER_USE_LOGIN_SHELL:
-                str(get_platform()['use login shell'])
+                str(platform['use login shell'])
         }
         # fmt: on
 

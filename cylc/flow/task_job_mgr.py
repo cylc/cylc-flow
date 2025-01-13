@@ -123,6 +123,11 @@ from cylc.flow.wallclock import (
 
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
@@ -159,7 +164,7 @@ class TaskJobManager:
         self.workflow = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
-        self.task_events_mgr = task_events_mgr
+        self.task_events_mgr: TaskEventsManager = task_events_mgr
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
@@ -220,14 +225,19 @@ class TaskJobManager:
                 self._poll_task_jobs_callback_255
             )
 
-    def prep_submit_task_jobs(self, workflow, itasks, check_syntax=True):
+    def prep_submit_task_jobs(
+        self,
+        workflow: str,
+        itasks: 'Iterable[TaskProxy]',
+        check_syntax: bool = True,
+    ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
         select command to complete. Bad host select command or error writing to
         a job file will cause a bad task - leading to submission failure.
 
-        Return [list, list]: list of good tasks, list of bad tasks
+        Return (good_tasks, bad_tasks)
         """
         prepared_tasks = []
         bad_tasks = []
@@ -244,16 +254,16 @@ class TaskJobManager:
                 prepared_tasks.append(itask)
             elif prep_task is False:
                 bad_tasks.append(itask)
-        return [prepared_tasks, bad_tasks]
+        return (prepared_tasks, bad_tasks)
 
     def submit_task_jobs(
         self,
         workflow,
-        itasks,
+        itasks: 'Iterable[TaskProxy]',
         curve_auth,
         client_pub_key_dir,
         run_mode: RunMode = RunMode.LIVE,
-    ):
+    ) -> 'List[TaskProxy]':
         """Prepare for job submission and submit task jobs.
 
         Preparation (host selection, remote host init, and remote install)
@@ -264,7 +274,7 @@ class TaskJobManager:
         Once preparation has completed or failed, reset .waiting_on_job_prep in
         task instances so the scheduler knows to stop sending them back here.
 
-        This method uses prep_submit_task_job() as helper.
+        This method uses prep_submit_task_jobs() as helper.
 
         Return (list): list of tasks that attempted submission.
         """
@@ -1029,7 +1039,7 @@ class TaskJobManager:
     def submit_nonlive_task_jobs(
         self: 'TaskJobManager',
         workflow: str,
-        itasks: 'List[TaskProxy]',
+        itasks: 'Iterable[TaskProxy]',
         workflow_run_mode: RunMode,
     ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Identify task mode and carry out alternative submission
@@ -1152,7 +1162,7 @@ class TaskJobManager:
         workflow: str,
         itask: 'TaskProxy',
         check_syntax: bool = True
-    ):
+    ) -> 'Union[TaskProxy, None, Literal[False]]':
         """Prepare a task job submission.
 
         Returns:
@@ -1217,7 +1227,7 @@ class TaskJobManager:
         else:
             # host/platform select not ready
             if host_n is None and platform_name is None:
-                return
+                return None
             elif (
                 host_n is None
                 and rtconfig['platform']
@@ -1292,7 +1302,13 @@ class TaskJobManager:
         itask.local_job_file_path = local_job_file_path
         return itask
 
-    def _prep_submit_task_job_error(self, workflow, itask, action, exc):
+    def _prep_submit_task_job_error(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        action: str,
+        exc: Union[Exception, str],
+    ) -> None:
         """Helper for self._prep_submit_task_job. On error."""
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
@@ -1306,11 +1322,12 @@ class TaskJobManager:
         # than submit-failed
         # provide a dummy job config - this info will be added to the data
         # store
+        try_num = itask.get_try_num()
         itask.jobs.append({
             'task_id': itask.identity,
             'platform': itask.platform,
             'submit_num': itask.submit_num,
-            'try_num': itask.get_try_num(),
+            'try_num': try_num,
         })
         # create a DB entry for the submit-failed job
         self.workflow_db_mgr.put_insert_task_jobs(
@@ -1319,7 +1336,7 @@ class TaskJobManager:
                 'flow_nums': serialise_set(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
-                'try_num': itask.get_try_num(),
+                'try_num': try_num,
                 'time_submit': get_current_time_string(),
                 'platform_name': itask.platform['name'],
                 'job_runner_name': itask.summary['job_runner_name'],
