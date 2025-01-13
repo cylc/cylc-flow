@@ -1078,9 +1078,14 @@ class Scheduler:
         to_kill: List[TaskProxy] = []
         unkillable: List[TaskProxy] = []
         for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                if itask.state_reset(is_held=True):
-                    self.data_store_mgr.delta_task_state(itask)
+            if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                unkillable.append(itask)
+                continue
+            if itask.state_reset(is_held=True):
+                self.data_store_mgr.delta_task_state(itask)
+            if itask.state(TASK_STATUS_PREPARING):
+                self.task_job_mgr.kill_prep_task(itask)
+            else:
                 to_kill.append(itask)
                 if jobless:
                     # Directly set failed in sim mode:
@@ -1088,8 +1093,6 @@ class Scheduler:
                         itask, 'CRITICAL', TASK_STATUS_FAILED,
                         flag=self.task_events_mgr.FLAG_RECEIVED
                     )
-            else:
-                unkillable.append(itask)
         if warn and unkillable:
             LOG.warning(
                 "Tasks not killable: "

@@ -161,7 +161,7 @@ class TaskJobManager:
 
     def __init__(self, workflow, proc_pool, workflow_db_mgr,
                  task_events_mgr, data_store_mgr, bad_hosts):
-        self.workflow = workflow
+        self.workflow: str = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
         self.task_events_mgr: TaskEventsManager = task_events_mgr
@@ -199,6 +199,15 @@ class TaskJobManager:
             self.JOBS_KILL, workflow, itasks,
             self._kill_task_jobs_callback,
             self._kill_task_jobs_callback_255
+        )
+
+    def kill_prep_task(self, itask: 'TaskProxy') -> None:
+        """Kill a preparing task."""
+        itask.waiting_on_job_prep = False
+        itask.local_job_file_path = None  # reset for retry
+        self._set_retry_timers(itask)
+        self._prep_submit_task_job_error(
+            self.workflow, itask, '(killed in job prep)', ''
         )
 
     def poll_task_jobs(self, workflow, itasks, msg=None):
