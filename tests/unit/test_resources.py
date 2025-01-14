@@ -79,3 +79,13 @@ def test_backup(tmp_path, caplog):
 
     new_abc = new / 'b' / 'c'
     assert new_abc.exists()
+
+
+def test_vim_deprecated():
+    """It fails, returning a warning if user asks for deprecated syntax file
+    """
+    output = run(
+        ['cylc', 'get-resources', 'syntax/cylc.vim'],
+        capture_output=True
+    )
+    assert 'has been replaced' in output.stderr.decode()

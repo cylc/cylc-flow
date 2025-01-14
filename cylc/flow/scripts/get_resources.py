@@ -75,7 +75,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, opts, resource=None, tgt_dir=None):
-
     # Intercept requests for syntax/cylc.vim:
     if resource == "syntax/cylc.vim":
         raise CylcError(
