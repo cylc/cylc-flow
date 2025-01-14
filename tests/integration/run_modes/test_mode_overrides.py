@@ -96,7 +96,6 @@ async def test_force_trigger_does_not_override_run_mode(
 
         # ... but job submission will always change this to the correct mode:
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             [foo],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)
@@ -158,7 +157,6 @@ async def test_run_mode_override_from_broadcast(
         foo_1001 = schd.pool.get_task(ISO8601Point('1001'), 'foo')
 
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             [foo_1000, foo_1001],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir)

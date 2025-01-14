@@ -31,8 +31,6 @@ if TYPE_CHECKING:
             'TaskProxy',
             # the task's runtime config (with broadcasts applied)
             Dict[str, Any],
-            # the workflow ID
-            str,
             # the current time as (float_unix_time, str_ISO8601)
             Tuple[float, str]
         ],

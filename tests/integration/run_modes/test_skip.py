@@ -52,7 +52,6 @@ async def test_settings_override_from_broadcast(
         foo, = schd.pool.get_tasks()
 
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks(),
             schd.server.curve_auth,
             schd.server.client_pub_key_dir
@@ -216,7 +215,6 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
     async with start(schd):
         foo = schd.pool.get_task(IntegerPoint(1), 'foo')
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             [foo],
             schd.server.curve_auth,
             schd.server.client_pub_key_dir,
@@ -241,7 +239,6 @@ async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate
             ],
         )
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks(),
             None,
             None
@@ -252,7 +249,6 @@ async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate
             ['1'], ['one'], [{'skip': {'outputs': 'succeeded'}}]
         )
         schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
             schd.pool.get_tasks(),
             None,
             None

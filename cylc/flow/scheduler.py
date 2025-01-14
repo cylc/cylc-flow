@@ -995,7 +995,7 @@ class Scheduler:
             if should_poll:
                 to_poll_tasks.append(itask)
         if to_poll_tasks:
-            self.task_job_mgr.poll_task_jobs(self.workflow, to_poll_tasks)
+            self.task_job_mgr.poll_task_jobs(to_poll_tasks)
 
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
@@ -1096,7 +1096,7 @@ class Scheduler:
                 f"{', '.join(sorted(t.identity for t in unkillable))}"
             )
         if not jobless:
-            self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
+            self.task_job_mgr.kill_task_jobs(to_kill)
 
         return len(unkillable)
 
@@ -1536,7 +1536,6 @@ class Scheduler:
             log = LOG.info
 
         for itask in self.task_job_mgr.submit_task_jobs(
-            self.workflow,
             itasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
@@ -1592,7 +1591,7 @@ class Scheduler:
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
         if self.get_run_mode() != RunMode.SIMULATION:
-            self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
+            self.task_job_mgr.check_task_jobs(self.pool)
 
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
