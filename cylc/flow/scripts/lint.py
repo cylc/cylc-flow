@@ -192,7 +192,7 @@ def get_wallclock_directives():
         if directive and directive == '-W':
             # LSF directive -W needs to have a particular form to
             # avoid matching PBS directive -W:
-            directives[module.name] = re.compile(r'^-W\s*=?\s*(\d+:)?\d+$')
+            directives[module.name] = re.compile(r'^-W\s*=?\s*(\d+:)?\d+[^/]*$')
         elif directive:
             directives[module.name] = re.compile(rf'^{directive}.*')
     return directives
