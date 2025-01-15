@@ -14,12 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout
+import sys
 from cylc.flow.network import decode_
 from cylc.flow.network.client import WorkflowRuntimeClient
 import asyncio
 
 import pytest
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 async def test_listener(one, start, ):
