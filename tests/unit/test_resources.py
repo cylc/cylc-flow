@@ -82,7 +82,7 @@ def test_backup(tmp_path, caplog):
 
 
 def test_vim_deprecated():
-    """It fails, returning a warning if user asks for deprecated syntax file
+    """It fails, returning a warning if user asks for obsolete syntax file
     """
     output = run(
         ['cylc', 'get-resources', 'syntax/cylc.vim'],

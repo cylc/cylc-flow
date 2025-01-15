@@ -43,7 +43,7 @@ RESOURCE_NAMES = {
     'syntax/cylc.xml': 'Kate syntax highlighting.',
     'cylc-completion.bash': 'Bash auto-completion for Cylc commands.',
     'cylc': 'Cylc wrapper script.',
-    '!syntax/cylc.vim': 'Deprecated - use https://github.com/cylc/cylc.vim',
+    '!syntax/cylc.vim': 'Obsolete- use https://github.com/cylc/cylc.vim',
 }
 API_KEY = 'api-key'
 
