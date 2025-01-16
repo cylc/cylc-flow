@@ -112,6 +112,7 @@ from cylc.flow.wallclock import (
     TIME_ZONE_UTC_INFO,
     get_utc_mode
 )
+from cylc.flow.xtrigger_mgr import should_run_xtriggers
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -1519,10 +1520,11 @@ class DataStoreMgr:
         for label, satisfied in itask.state.xtriggers.items():
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
+            xtrig = tproxy.xtriggers[sig]  # this creates a new PbTrigger
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
+            xtrig.status = get_xtrigger_status(itask, satisfied)
             self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
 
         if tproxy.state in self.latest_state_tasks:
@@ -2327,6 +2329,10 @@ class DataStoreMgr:
                     self.updated[TASKS].setdefault(
                         t_id,
                         PbTask(id=t_id)).MergeFrom(t_delta)
+
+            for label, satisfied in itask.state.xtriggers.items():
+                sig = self.schd.xtrigger_mgr.get_xtrig_ctx(itask, label).get_signature()
+                tproxy.xtriggers[sig].status = get_xtrigger_status(itask, satisfied)
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
@@ -2539,6 +2545,7 @@ class DataStoreMgr:
             xtrigger.label = label
             xtrigger.satisfied = satisfied
             xtrigger.time = update_time
+            xtrigger.status = 'running' if not satisfied else 'succeeded'
             self.updates_pending = True
 
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
@@ -2791,3 +2798,13 @@ class DataStoreMgr:
                 f'$edge|{left_tokens.relative_id}|{right_tokens.relative_id}'
             )
         ).id
+
+
+def get_xtrigger_status(itask: 'TaskProxy', xtrig_satisfied: bool):
+    if xtrig_satisfied:
+        status = 'satisfied'
+    elif should_run_xtriggers(itask):
+        status = 'running'
+    else:
+        status = 'waiting'
+    return status

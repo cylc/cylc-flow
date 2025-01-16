@@ -173,7 +173,7 @@ from cylc.flow.workflow_status import (
     AutoRestartMode,
     StopMode,
 )
-from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.xtrigger_mgr import XtriggerManager, should_run_xtriggers
 
 
 if TYPE_CHECKING:
@@ -1759,11 +1759,7 @@ class Scheduler:
         # Unqueued tasks with satisfied prerequisites must be waiting on
         # xtriggers or ext_triggers. Check these and queue tasks if ready.
         for itask in self.pool.get_tasks():
-            if (
-                not itask.state(TASK_STATUS_WAITING)
-                or itask.state.is_queued
-                or itask.state.is_runahead
-            ):
+            if not should_run_xtriggers(itask):
                 continue
 
             if (

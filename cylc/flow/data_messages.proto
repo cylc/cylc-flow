@@ -204,6 +204,7 @@ message PbTrigger {
     optional string message = 3;
     optional bool satisfied = 4;
     optional double time = 5;
+    optional string status = 6;
 }
 
 message PbTaskProxy {
