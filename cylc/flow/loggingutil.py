@@ -31,6 +31,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
+from time import time
 from typing import List, Optional, Union
 
 from ansimarkup import parse as cparse, strip as cstrip
@@ -238,15 +239,22 @@ class RotatingLogFileHandler(logging.FileHandler):
             os.dup2(self.stream.fileno(), sys.stderr.fileno())
         # Emit header records (should only do this for subsequent log files)
         for header_record in self.header_records:
+            now = time()
             if self.ROLLOVER_NUM in header_record.__dict__:
                 # A hack to increment the rollover number that gets logged in
                 # the log file. (Rollover number only applies to a particular
                 # workflow run; note this is different from the log count
                 # number in the log filename.)
+
                 header_record.__dict__[self.ROLLOVER_NUM] += 1
                 header_record.args = (
                     header_record.__dict__[self.ROLLOVER_NUM],
                 )
+
+            # patch the record time (otherwise this will be logged with the
+            # original timestamp)
+            header_record.created = now
+
             logging.FileHandler.emit(self, header_record)
 
     def update_log_archive(self, arch_len: int) -> None:
