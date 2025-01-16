@@ -94,7 +94,7 @@ async def test_db_task_jobs(
             'R1': '&'.join(KGO)}},
         'runtime': {
             mode: {'run mode': mode} for mode in KGO}
-    }))
+    }), run_mode='live')
     async with start(schd):
         # Reference all task proxies so we can examine them
         # at the end of the test:
