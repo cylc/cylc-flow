@@ -44,6 +44,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -1231,8 +1232,14 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(
-                    rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                platform = cast(
+                    # We know this is not None because eval_platform() or
+                    # eval_host() called above ensure it is set or else we
+                    # return early if the subshell is still evaluating.
+                    'dict',
+                    get_platform(
+                        rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                    ),
                 )
             except PlatformLookupError as exc:
                 itask.waiting_on_job_prep = False
