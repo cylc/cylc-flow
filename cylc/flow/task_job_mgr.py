@@ -346,7 +346,7 @@ class TaskJobManager:
                     bc_mgr = self.task_events_mgr.broadcast_mgr
                     rtconf = bc_mgr.get_updated_rtconfig(itask)
                     try:
-                        platform = get_platform(
+                        platform = get_platform(  # type: ignore[assignment]
                             rtconf,
                             bad_hosts=self.bad_hosts
                         )
@@ -1278,7 +1278,7 @@ class TaskJobManager:
                     workflow, itask, '(platform not defined)', exc)
                 return False
             else:
-                itask.platform = platform
+                itask.platform = platform  # type: ignore[assignment]
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 
