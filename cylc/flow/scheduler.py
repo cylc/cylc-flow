@@ -19,6 +19,7 @@ import asyncio
 from collections import deque
 from contextlib import suppress
 import itertools
+import logging
 import os
 from pathlib import Path
 from queue import (
@@ -82,6 +83,7 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
     FlowMgr,
     repr_flow_nums,
+    stringify_flow_nums,
 )
 from cylc.flow.host_select import (
     HostSelectException,
@@ -1535,22 +1537,24 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.rsync_includes = (
             self.config.get_validated_rsync_includes())
 
-        log = LOG.debug
-        if self.options.reftest or self.options.genref:
-            log = LOG.info
-
-        for itask in self.task_job_mgr.submit_task_jobs(
+        submitted = self.task_job_mgr.submit_task_jobs(
             self.workflow,
             itasks,
             self.server.curve_auth,
             self.server.client_pub_key_dir,
             run_mode=self.get_run_mode()
-        ):
-            if itask.flow_nums:
-                flow = ','.join(str(i) for i in itask.flow_nums)
-            else:
-                flow = FLOW_NONE
-            log(
+        )
+        if not submitted:
+            return False
+
+        log_lvl = logging.DEBUG
+        if self.options.reftest or self.options.genref:
+            log_lvl = logging.INFO
+
+        for itask in submitted:
+            flow = stringify_flow_nums(itask.flow_nums) or FLOW_NONE
+            LOG.log(
+                log_lvl,
                 f"{itask.identity} -triggered off "
                 f"{itask.state.get_resolved_dependencies()} in flow {flow}"
             )
