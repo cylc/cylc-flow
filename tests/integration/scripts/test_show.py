@@ -289,7 +289,7 @@ async def test_task_instance_state_flows(
         ]
 
 
-async def test_mode_changes(flow, scheduler, start, capsys):
+async def test_task_run_mode_changes(flow, scheduler, start, capsys):
     """Broadcasting a change of run mode changes run mode shown by cylc show.
     """
     opts = SimpleNamespace(
@@ -300,7 +300,6 @@ async def test_mode_changes(flow, scheduler, start, capsys):
     )
     schd = scheduler(
         flow({'scheduling': {'graph': {'R1': 'a'}}}),
-        paused_start=True,
         run_mode='live'
     )
 

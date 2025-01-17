@@ -52,6 +52,7 @@ from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
@@ -349,7 +350,7 @@ async def prereqs_and_outputs_query(
                     attrs.append("runahead")
                 if (
                     t_proxy['runtime']['runMode']
-                    and t_proxy['runtime']['runMode'] != 'Live'
+                    and t_proxy['runtime']['runMode'] != RunMode.LIVE.value
                 ):
                     attrs.append(f"run mode={t_proxy['runtime']['runMode']}")
                 state_msg = state
