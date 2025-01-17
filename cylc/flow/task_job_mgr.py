@@ -946,6 +946,7 @@ class TaskJobManager:
                     f'Unable to run command {cmd_key}: Unable to find'
                     f' platform {platform_name} with accessible hosts.'
                 )
+                continue
             except PlatformLookupError:
                 LOG.error(
                     f'Unable to run command {cmd_key}: Unable to find'
