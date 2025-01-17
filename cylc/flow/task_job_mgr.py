@@ -1239,23 +1239,19 @@ class TaskJobManager:
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(itask)
+                msg = '(platform not defined)'
                 if isinstance(exc, NoPlatformsError):
+                    msg = '(no platforms available)'
                     # Clear all hosts from all platforms in group from
                     # bad_hosts:
                     self.bad_hosts -= exc.hosts_consumed
                     self._set_retry_timers(itask, rtconfig)
-                    self._prep_submit_task_job_error(
-                        itask, '(no platforms available)', exc
-                    )
-                    return False
-                self._prep_submit_task_job_error(
-                    itask, '(platform not defined)', exc
-                )
+                self._prep_submit_task_job_error(itask, msg, exc)
                 return False
-            else:
-                itask.platform = platform
-                # Retry delays, needed for the try_num
-                self._set_retry_timers(itask, rtconfig)
+
+            itask.platform = platform
+            # Retry delays, needed for the try_num
+            self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(
