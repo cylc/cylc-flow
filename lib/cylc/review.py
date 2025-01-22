@@ -47,6 +47,7 @@ from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+from cylc.url import quote
 from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -496,7 +497,7 @@ class CylcReviewService(object):
                 continue
             try:
                 data["entries"].append({
-                    "name": item,
+                    "name": unicode(item, 'UTF-8', errors='ignore'),
                     "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
@@ -548,6 +549,7 @@ class CylcReviewService(object):
         suite = suite.replace('%2F', '/')
         f_name = self._get_user_suite_dir(user, suite, path)
         self._check_file_path(path)
+        self._check_link_path(f_name, suite)
         view_size_max = self.VIEW_SIZE_MAX
         if path_in_tar:
             tar_f = tarfile.open(f_name, "r:gz")
@@ -561,7 +563,7 @@ class CylcReviewService(object):
                 mime = self.MIME_TEXT_PLAIN
             else:
                 mime = mimetypes.guess_type(
-                    urllib.pathname2url(path_in_tar))[0]
+                    quote(path_in_tar))[0]
             handle.seek(0)
             if (mode == "download" or
                     f_size > view_size_max or
@@ -585,7 +587,7 @@ class CylcReviewService(object):
             if open(f_name).read(2) == "#!":
                 mime = self.MIME_TEXT_PLAIN
             else:
-                mime = mimetypes.guess_type(urllib.pathname2url(f_name))[0]
+                mime = mimetypes.guess_type(quote(f_name))[0]
             if not mime:
                 mime = self.MIME_TEXT_PLAIN
             if (mode == "download" or
@@ -596,9 +598,15 @@ class CylcReviewService(object):
                 return cherrypy.lib.static.serve_file(f_name, mime)
             text = open(f_name).read()
         try:
+            text = unicode(text, encoding='UTF-8', errors='replace')
             if mode in [None, "text"]:
-                text = jinja2.escape(text)
-            lines = [unicode(line) for line in text.splitlines()]
+                # escape HTML tags
+                # NOTE: jinja2.escape returns a Markup object which will also
+                # escape future modifications to this string. In order to
+                # allow log file syntax highlighting (DEBUG, INFO, etc) we
+                # must cast this back to a unicode to remove this functionality.
+                text = unicode(jinja2.escape(text))
+            lines = text.splitlines()
         except UnicodeDecodeError:
             if path_in_tar:
                 handle.seek(0)
@@ -910,6 +918,45 @@ class CylcReviewService(object):
 
         """
         if os.path.split(string)[0] != '':
+            raise cherrypy.HTTPError(403)
+
+    @classmethod
+    def _check_link_path(cls, path, suite):
+        """Raise HTTP 403 error if the path is not under cylc-run/<suite>.
+
+        The files "cylc review" is intended to serve may be symlinked to
+        other parts of the filesystem, however, the linked files should
+        always reside in directories managed by Cylc which should always
+        sit under the path "cylc-run/<suite>".
+
+        Examples:
+            # OK
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/cylc-run/elephant'), 'elephant'
+            ... )
+
+            # BAD
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/cylc-run/elephant'), 'shrew'
+            ... )
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+
+            # BAD
+            >>> CylcReviewService._check_link_path(
+            ...     os.path.expanduser('~/anything-else'), 'anything-else'
+            ... )
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+
+        Raises:
+            cherrypy.HTTPError(403)
+
+        """
+        rel = os.path.join('cylc-run', suite)
+        if rel not in os.path.realpath(path):
             raise cherrypy.HTTPError(403)
 
     @classmethod
