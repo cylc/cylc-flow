@@ -596,28 +596,51 @@ def _main(
                 cmd.append('--prepend-path')
             cmd.append(workflow_id)
             # TODO: Add Intelligent Host selection to this
+            proc = None
             with suppress(KeyboardInterrupt):
                 # (Ctrl-C while tailing)
                 # NOTE: This will raise NoHostsError if the platform is not
                 # contactable
-                remote_cylc_cmd(
+                proc = remote_cylc_cmd(
                     cmd,
                     platform,
-                    capture_process=False,
+                    capture_process=(mode == 'list-dir'),
                     manage=(mode == 'tail'),
-                    text=False
+                    text=(mode == 'list-dir'),
                 )
-            if (
-                mode == 'list-dir'
-                and os.path.exists(
-                    os.path.join(
-                        local_log_dir,
-                        'job-activity.log'
-                    )
-                )
-            ):
-                # add the local-only job-activity.log file to the remote-list
-                print('job-activity.log')
+
+            # add and missing items to file listing results
+            if isinstance(proc, Popen):
+                # i.e: if mode=='list-dir' and ctrl+c not pressed
+                out, err = proc.communicate()
+                files = out.splitlines()
+
+                # add files which can be accessed via a tailer
+                if live_job_id is not None:
+                    if (
+                        # NOTE: only list the file if it can be viewed in
+                        # both modes
+                        (platform['out tailer'] and platform['out viewer'])
+                        and 'job.out' not in files
+                    ):
+                        files.append('job.out')
+                    if (
+                        (platform['err tailer'] and platform['err viewer'])
+                        and 'job.err' not in files
+                    ):
+                        files.append('job.err')
+
+                # add the job-activity.log file which is always local
+                if os.path.exists(
+                    os.path.join(local_log_dir, 'job-activity.log')
+                ):
+                    files.append('job-activity.log')
+
+                files.sort()
+                print('\n'.join(files))
+                print(err, file=sys.stderr)
+                sys.exit(proc.returncode)
+
         else:
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)
