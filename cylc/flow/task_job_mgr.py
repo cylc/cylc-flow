@@ -44,6 +44,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -123,6 +124,7 @@ from cylc.flow.wallclock import (
 
 
 if TYPE_CHECKING:
+    from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
@@ -159,8 +161,8 @@ class TaskJobManager:
         self.workflow = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
-        self.task_events_mgr = task_events_mgr
-        self.data_store_mgr = data_store_mgr
+        self.task_events_mgr: TaskEventsManager = task_events_mgr
+        self.data_store_mgr: DataStoreMgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
         self.bad_hosts = bad_hosts
@@ -306,76 +308,10 @@ class TaskJobManager:
         done_tasks = bad_tasks
 
         for _, itasks in sorted(auth_itasks.items()):
-            # Find the first platform where >1 host has not been tried and
-            # found to be unreachable.
-            # If there are no good hosts for a task then the task submit-fails.
-            for itask in itasks:
-                # If there are any hosts left for this platform which we
-                # have not previously failed to contact with a 255 error.
-                if any(
-                    host not in self.task_remote_mgr.bad_hosts
-                    for host in itask.platform['hosts']
-                ):
-                    platform = itask.platform
-                    out_of_hosts = False
-                    break
-                else:
-                    # If there are no hosts left for this platform.
-                    # See if you can get another platform from the group or
-                    # else set task to submit failed.
-
-                    # Get another platform, if task config platform is a group
-                    use_next_platform_in_group = False
-                    bc_mgr = self.task_events_mgr.broadcast_mgr
-                    rtconf = bc_mgr.get_updated_rtconfig(itask)
-                    try:
-                        platform = get_platform(
-                            rtconf,
-                            bad_hosts=self.bad_hosts
-                        )
-                    except PlatformLookupError:
-                        pass
-                    else:
-                        # If were able to select a new platform;
-                        if platform and platform != itask.platform:
-                            use_next_platform_in_group = True
-
-                    if use_next_platform_in_group:
-                        # store the previous platform's hosts so that when
-                        # we record a submit fail we can clear all hosts
-                        # from all platforms from bad_hosts.
-                        for host_ in itask.platform['hosts']:
-                            self.bad_hosts_to_clear.add(host_)
-                        itask.platform = platform
-                        out_of_hosts = False
-                        break
-                    else:
-                        itask.waiting_on_job_prep = False
-                        itask.local_job_file_path = None
-                        self._prep_submit_task_job_error(
-                            itask, '(remote init)', ''
-                        )
-                        # Now that all hosts on all platforms in platform
-                        # group selected in task config are exhausted we clear
-                        # bad_hosts for all the hosts we have
-                        # tried for this platform or group.
-                        self.bad_hosts -= set(itask.platform['hosts'])
-                        self.bad_hosts -= self.bad_hosts_to_clear
-                        self.bad_hosts_to_clear.clear()
-                        LOG.critical(
-                            PlatformError(
-                                (
-                                    f'{PlatformError.MSG_INIT}'
-                                    ' (no hosts were reachable)'
-                                ),
-                                itask.platform['name'],
-                            )
-                        )
-                        out_of_hosts = True
-                        done_tasks.append(itask)
-
-            if out_of_hosts is True:
+            platform = self._get_platform_with_good_host(itasks, done_tasks)
+            if not platform:
                 continue
+
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
 
@@ -451,12 +387,9 @@ class TaskJobManager:
                     )
                 continue
 
-            if (
-                self.job_runner_mgr.is_job_local_to_host(
-                    itask.summary['job_runner_name']
-                ) and
-                not is_remote_platform(platform)
-            ):
+            if self.job_runner_mgr.is_job_local_to_host(
+                itask.summary['job_runner_name']
+            ) and not is_remote_platform(platform):
                 host = get_host()
 
             done_tasks.extend(itasks)
@@ -607,6 +540,66 @@ class TaskJobManager:
                     callback_255=self._submit_task_jobs_callback_255,
                 )
         return done_tasks
+
+    def _get_platform_with_good_host(
+        self, itasks: 'Iterable[TaskProxy]', done_tasks: 'List[TaskProxy]'
+    ) -> Optional[dict]:
+        """Find the first platform with at least one host that has not been
+        tried and found to be unreachable.
+
+        If there are no good hosts for a task then the task submit-fails.
+
+        Returns:
+            The platform with a good host, or None if no such platform is found
+        """
+        for itask in itasks:
+            # If there are any hosts left for this platform which we
+            # have not previously failed to contact with a 255 error.
+            if any(
+                host not in self.task_remote_mgr.bad_hosts
+                for host in itask.platform['hosts']
+            ):
+                return itask.platform
+
+            # If there are no hosts left for this platform.
+            # See if you can get another platform from the group or
+            # else set task to submit failed.
+            platform: Optional[dict] = None
+            rtconf = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+                itask
+            )
+            with suppress(PlatformLookupError):
+                platform = get_platform(rtconf, bad_hosts=self.bad_hosts)
+
+            # If were able to select a new platform;
+            if platform and platform != itask.platform:
+                # store the previous platform's hosts so that when
+                # we record a submit fail we can clear all hosts
+                # from all platforms from bad_hosts.
+                for host_ in itask.platform['hosts']:
+                    self.bad_hosts_to_clear.add(host_)
+                itask.platform = platform
+                return platform
+
+            itask.waiting_on_job_prep = False
+            itask.local_job_file_path = None
+            self._prep_submit_task_job_error(itask, '(remote init)', '')
+            # Now that all hosts on all platforms in platform
+            # group selected in task config are exhausted we
+            # clear bad_hosts for all the hosts we have
+            # tried for this platform or group.
+            self.bad_hosts -= set(itask.platform['hosts'])
+            self.bad_hosts -= self.bad_hosts_to_clear
+            self.bad_hosts_to_clear.clear()
+            LOG.critical(
+                PlatformError(
+                    f"{PlatformError.MSG_INIT} (no hosts were reachable)",
+                    itask.platform['name'],
+                )
+            )
+            done_tasks.append(itask)
+
+        return None
 
     def _create_job_log_path(self, itask):
         """Create job log directory for a task job, etc.
@@ -954,6 +947,7 @@ class TaskJobManager:
                     f'Unable to run command {cmd_key}: Unable to find'
                     f' platform {platform_name} with accessible hosts.'
                 )
+                continue
             except PlatformLookupError:
                 LOG.error(
                     f'Unable to run command {cmd_key}: Unable to find'
@@ -1238,31 +1232,33 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(
-                    rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                platform = cast(
+                    # We know this is not None because eval_platform() or
+                    # eval_host() called above ensure it is set or else we
+                    # return early if the subshell is still evaluating.
+                    'dict',
+                    get_platform(
+                        rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                    ),
                 )
             except PlatformLookupError as exc:
                 itask.waiting_on_job_prep = False
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(itask)
+                msg = '(platform not defined)'
                 if isinstance(exc, NoPlatformsError):
+                    msg = '(no platforms available)'
                     # Clear all hosts from all platforms in group from
                     # bad_hosts:
                     self.bad_hosts -= exc.hosts_consumed
                     self._set_retry_timers(itask, rtconfig)
-                    self._prep_submit_task_job_error(
-                        itask, '(no platforms available)', exc
-                    )
-                    return False
-                self._prep_submit_task_job_error(
-                    itask, '(platform not defined)', exc
-                )
+                self._prep_submit_task_job_error(itask, msg, exc)
                 return False
-            else:
-                itask.platform = platform
-                # Retry delays, needed for the try_num
-                self._set_retry_timers(itask, rtconfig)
+
+            itask.platform = platform
+            # Retry delays, needed for the try_num
+            self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(
