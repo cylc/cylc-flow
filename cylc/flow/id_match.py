@@ -98,7 +98,8 @@ def filter_ids(
             * If IDTokens.Cycle all CyclePoints with any matching tasks will
               be returned.
         warn:
-            Whether to log a warning if no matching tasks are found.
+            Whether to log a warning if no matching tasks are found in the
+            pool.
 
     TODO:
         Consider using wcmatch which would add support for
