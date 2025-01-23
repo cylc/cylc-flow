@@ -1007,22 +1007,30 @@ class CylcConfigValidator(ParsecValidator):
             >>> CylcConfigValidator.coerce_parameter_list('a, b, c', None)
             ['a', 'b', 'c']
 
+            >>> CylcConfigValidator.coerce_parameter_list('084_132', None)
+            ['084_132']
+
+            >>> CylcConfigValidator.coerce_parameter_list('72, a', None)
+            ['72', 'a']
         """
         items = []
         can_only_be = None   # A flag to prevent mixing str and int range
         for item in cls.strip_and_unquote_list(keys, value):
             values = cls.parse_int_range(item)
             if values is not None:
-                if can_only_be == str:
+                if can_only_be is str:
                     raise IllegalValueError(
                         'parameter', keys, value, 'mixing int range and str')
                 can_only_be = int
                 items.extend(values)
             elif cls._REC_NAME_SUFFIX.match(item):  # noqa: SIM106
                 try:
+                    if '_' in item:
+                        raise ValueError(
+                            'Artifical value error undoing PEP-515')
                     int(item)
                 except ValueError:
-                    if can_only_be == int:
+                    if can_only_be is int:
                         raise IllegalValueError(
                             'parameter',
                             keys,
@@ -1034,6 +1042,10 @@ class CylcConfigValidator(ParsecValidator):
             else:
                 raise IllegalValueError(
                     'parameter', keys, value, '%s: bad value' % item)
+
+        if can_only_be is str:
+            return items
+
         try:
             return [int(item) for item in items]
         except ValueError:
