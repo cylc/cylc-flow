@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     ]
 
 
-class RunMode(Enum):
+class RunMode(str, Enum):
     """The possible run modes of a task/workflow."""
 
     LIVE = 'live'
@@ -84,6 +84,14 @@ class RunMode(Enum):
         if run_mode:
             return RunMode(run_mode)
         return RunMode.LIVE
+
+    @classmethod
+    def _missing_(cls, value):
+        value = value.lower()
+        for member in cls:
+            if member.lower() == value:
+                return member
+        return None
 
     def get_submit_method(self) -> 'Optional[SubmissionInterface]':
         """Return the job submission method for this run mode.
