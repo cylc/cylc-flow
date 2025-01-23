@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     ]
 
 
-class RunMode(str, Enum):
+class RunMode(Enum):
     """The possible run modes of a task/workflow."""
 
     LIVE = 'live'
