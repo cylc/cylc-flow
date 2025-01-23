@@ -89,7 +89,7 @@ class RunMode(Enum):
     def _missing_(cls, value):
         value = value.lower()
         for member in cls:
-            if member.lower() == value:
+            if member.value.lower() == value:
                 return member
         return None
 
