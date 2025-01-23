@@ -350,7 +350,8 @@ async def prereqs_and_outputs_query(
                     attrs.append("runahead")
                 if (
                     t_proxy['runtime']['runMode']
-                    and t_proxy['runtime']['runMode'] != RunMode.LIVE.value
+                    and t_proxy['runtime']['runMode'].lower()
+                    != RunMode.LIVE.value
                 ):
                     attrs.append(f"run mode={t_proxy['runtime']['runMode']}")
                 state_msg = state

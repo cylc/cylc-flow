@@ -634,7 +634,6 @@ WorkflowRunMode = graphene.Enum(
 TaskRunMode = graphene.Enum(
     'TaskRunMode',
     [(k.capitalize(), k.lower()) for k in RunMode.__members__.keys()],
-    # [(m.capitalize(), m) for m in TASK_CONFIG_RUN_MODES],
     description=lambda x: RunMode(x.value).describe() if x else None,
 )
 
