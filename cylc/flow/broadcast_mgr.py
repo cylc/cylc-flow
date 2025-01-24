@@ -276,6 +276,7 @@ class BroadcastMgr:
           bad_options is as described in the docstring for self.clear().
         """
         modified_settings = []
+        bad_settings = []
         bad_point_strings = []
         bad_namespaces = []
 
@@ -284,10 +285,15 @@ class BroadcastMgr:
                 # Coerce setting to cylc runtime object,
                 # i.e. str to  DurationFloat.
                 coerced_setting = deepcopy(setting)
-                BroadcastConfigValidator().validate(
-                    coerced_setting,
-                    SPEC['runtime']['__MANY__'],
-                )
+                try:
+                    BroadcastConfigValidator().validate(
+                        coerced_setting,
+                        SPEC['runtime']['__MANY__'],
+                    )
+                except Exception as exc:
+                    LOG.error(exc)
+                    bad_settings.append(setting)
+                    continue
 
                 for point_string in point_strings or []:
                     # Standardise the point and check its validity.
@@ -324,6 +330,8 @@ class BroadcastMgr:
         LOG.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
+        if bad_settings:
+            bad_options["settings"] = bad_settings
         if bad_point_strings:
             bad_options["point_strings"] = bad_point_strings
         if bad_namespaces:
