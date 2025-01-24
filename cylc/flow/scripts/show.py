@@ -348,11 +348,9 @@ async def prereqs_and_outputs_query(
                     attrs.append("queued")
                 if t_proxy['isRunahead']:
                     attrs.append("runahead")
-                if (
-                    t_proxy['runtime']['runMode']
-                    and RunMode(t_proxy['runtime']['runMode']) != RunMode.LIVE
-                ):
-                    attrs.append(f"run mode={t_proxy['runtime']['runMode']}")
+                run_mode = t_proxy['runtime']['runMode']
+                if run_mode and RunMode(run_mode) != RunMode.LIVE:
+                    attrs.append(f"run mode={run_mode}")
                 state_msg = state
                 if attrs:
                     state_msg += f" ({','.join(attrs)})"
