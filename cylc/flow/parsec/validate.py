@@ -1026,8 +1026,8 @@ class CylcConfigValidator(ParsecValidator):
             elif cls._REC_NAME_SUFFIX.match(item):  # noqa: SIM106
                 try:
                     if '_' in item:
-                        raise ValueError(
-                            'Artifical value error undoing PEP-515')
+                        # Disable PEP-515 int coercion; go to except block:
+                        raise ValueError()
                     int(item)
                 except ValueError:
                     if can_only_be is int:
