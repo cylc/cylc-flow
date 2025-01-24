@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansimarkup import strip as cstrip
+
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import Options
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.broadcast import _main, get_option_parser
+from cylc.flow.util import sstrip
 
 
 BroadcastOptions = Options(get_option_parser())
@@ -169,3 +173,144 @@ async def test_broadcast_truncated_datetime(flow, scheduler, start, capsys):
             'Rejected broadcast:'
             ' settings are not compatible with the workflow'
         ) in err
+
+
+async def test_invalid(one, start, capsys, monkeypatch):
+    """It should reject invalid broadcasts.
+
+    * Broadcast operations may contain a mix of valid and invalid
+      cycles/namespaces/settings.
+    * Valid settings are applied and reported.
+    * Invalid settings are rejected and reported.
+    """
+    # disable client side config validation so that we can see invalid
+    # broadcast settings in the CLI output
+    monkeypatch.setattr(
+        'cylc.flow.scripts.broadcast.cylc_config_validate',
+        lambda *args, **kwargs: True,
+    )
+
+    # 1) disable CLI colour output
+    monkeypatch.setattr('cylc.flow.scripts.broadcast.cparse', cstrip)
+
+    async with start(one):
+        # test the GraphQL API
+        client = WorkflowRuntimeClient(one.workflow)
+        response = await client.async_request(
+            'graphql',
+            {
+                'request_string': '''
+                    mutation(
+                        $workflows: [WorkflowID]!,
+                        $cycles: [BroadcastCyclePoint],
+                        $namespaces: [NamespaceName],
+                        $settings: [BroadcastSetting]
+                    ) {
+                      broadcast(
+                        mode: Set
+                        workflows: $workflows
+                        cyclePoints: $cycles
+                        namespaces: $namespaces
+                        settings: $settings
+                      ) {
+                        result
+                      }
+                    }
+                ''',
+                'variables': {
+                    'workflows': [one.workflow],
+                    # valid, invalid
+                    'cycles': ['*', 'invalid'],
+                    'namespaces': ['root', 'invalid'],
+                    'settings': [{'script': 'true'}, {'invalid': 'false'}],
+                }
+            }
+        )
+        modified, rejected = response['broadcast']['result'][0]['response']
+
+        assert modified == [
+            [
+                # cycle
+                '*',
+                # namespace
+                'root',
+                # settings
+                {'script': 'true'},
+            ]
+        ]
+        assert rejected == {
+            'point_strings': ['invalid'],
+            'namespaces': ['invalid'],
+            'settings': [{'invalid': 'false'}],
+        }
+
+        # 2) test the CLI
+        capsys.readouterr()  # flush out any stdout/err
+        await _main(
+            BroadcastOptions(
+                point_strings=['*', 'invalid'],
+                namespaces=['root', 'invalid'],
+                settings=['script=true', 'invalid=false'],
+            ),
+            one.workflow,
+        )
+        out, err = capsys.readouterr()
+        assert out == 'Broadcast set:\n+ [*/root] script=true\n'
+        assert err == sstrip('''
+    ERROR: Rejected broadcast: settings are not compatible with the workflow
+      --namespace=invalid
+      --point=invalid
+      --set=invalid=false
+        ''') + '\n'
+
+
+async def test_internal_error(one, start, capsys, monkeypatch, log_filter):
+    """It should handle internal code errors elegantly."""
+
+    # simulate an internal error
+    # Note: The broadcast "lock" mechanism is an example of how such an error
+    # could arise
+    def put_broadcast(*args, **kwargs):
+        raise Exception('FooBar')
+
+    async with start(one):
+        # issue a broadcast
+        one.broadcast_mgr.put_broadcast = put_broadcast
+        client = WorkflowRuntimeClient(one.workflow)
+        response = await client.async_request(
+            'graphql',
+            {
+                'request_string': '''
+                    mutation(
+                        $workflows: [WorkflowID]!,
+                        $cycles: [BroadcastCyclePoint],
+                        $namespaces: [NamespaceName],
+                        $settings: [BroadcastSetting]
+                    ) {
+                      broadcast(
+                        mode: Set
+                        workflows: $workflows
+                        cyclePoints: $cycles
+                        namespaces: $namespaces
+                        settings: $settings
+                      ) {
+                        result
+                      }
+                    }
+                ''',
+                'variables': {
+                    'workflows': [one.workflow],
+                    'cycles': ['*'],
+                    'namespaces': ['root'],
+                    'settings': [{'script': 'true'}],
+                }
+            }
+        )
+
+        # check it comes back with an error code
+        assert (
+            response['broadcast']['result'][0]
+        )['response']['error']['message'] == 'FooBar'
+
+        # the error should be logged server-side too
+        assert log_filter(contains='FooBar')

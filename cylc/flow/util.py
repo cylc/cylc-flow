@@ -45,6 +45,45 @@ BOOL_SYMBOLS: Dict[bool, str] = {
 _NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
 
 
+def uniq(iterable):
+    """Return a unique collection of the provided items preserving item order.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Examples:
+        >>> uniq([1, 1, 2, 3, 5, 8, 1])
+        [1, 2, 3, 5, 8]
+
+    """
+    ret = []
+    for item in iterable:
+        if item not in ret:
+            ret.append(item)
+    return ret
+
+
+def iter_uniq(iterable):
+    """Iterate over an iterable omitting any duplicate entries.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Note:
+        More efficient than "uniq" for iteration use cases.
+
+    Examples:
+        >>> list(iter_uniq([1, 1, 2, 3, 5, 8, 1]))
+        [1, 2, 3, 5, 8]
+
+    """
+    cache = set()
+    for item in iterable:
+        if item not in cache:
+            cache.add(item)
+            yield item
+
+
 def sstrip(text):
     """Simple function to dedent and strip text.
 
