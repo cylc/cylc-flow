@@ -1010,8 +1010,8 @@ class CylcConfigValidator(ParsecValidator):
             >>> CylcConfigValidator.coerce_parameter_list('084_132', None)
             ['084_132']
 
-            >>> CylcConfigValidator.coerce_parameter_list('72, a', None)
-            ['72', 'a']
+            >>> CylcConfigValidator.coerce_parameter_list('072, a', None)
+            ['072', 'a']
         """
         items = []
         can_only_be = None   # A flag to prevent mixing str and int range
