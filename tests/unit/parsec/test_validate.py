@@ -699,7 +699,7 @@ def test_coerce_parameter_list():
             ('-15, -10, -5, -1..1', [-15, -10, -5, -1, 0, 1])]:
         assert validator.coerce_parameter_list(value, ['whatever']) == result
     # The bad
-    for value in ['foo/bar', 'p1, 1..10', '2..3, 4, p']:
+    for value in ['foo/bar', 'p1, 1..10', '2..3, 4, p', 'x:,']:
         with pytest.raises(IllegalValueError):
             validator.coerce_parameter_list(value, ['whatever'])
 
