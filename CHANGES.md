@@ -25,6 +25,10 @@ management and does not bundle Jinja2.
 
 ## __cylc-7.8.15 (Upcoming)__
 
+[#6569](https://github.com/cylc/cylc-flow/pull/6569) -
+Update PBS job runner to reflect error message change. This change
+continues to support older PBS versions.
+
 
 ## __cylc-7.8.14 (2023-01-15)__
 
