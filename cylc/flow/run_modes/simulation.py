@@ -18,9 +18,15 @@
 
 from dataclasses import dataclass
 from logging import INFO
-from typing import (
-    TYPE_CHECKING, Any, Dict, List, Tuple, Union)
 from time import time
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Tuple,
+    Union,
+)
 
 from metomi.isodatetime.parsers import DurationParser
 
@@ -29,22 +35,26 @@ from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
 from cylc.flow.task_state import (
-    TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_unix_time_from_time_string
-from cylc.flow.run_modes import RunMode
 
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-    from typing_extensions import Literal
 
 
 def submit_task_job(

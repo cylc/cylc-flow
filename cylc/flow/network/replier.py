@@ -15,15 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
+import json
 from queue import Queue
-from typing import TYPE_CHECKING, Optional
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 import zmq
 
-from cylc.flow import LOG
-from cylc.flow.network import encode_, decode_, ZMQSocketBase
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
+from cylc.flow.network import (
+    ZMQSocketBase,
+    load_server_response,
+)
+
 
 if TYPE_CHECKING:
+    from cylc.flow.network import ResponseDict
     from cylc.flow.network.server import WorkflowRuntimeServer
 
 
@@ -69,7 +81,7 @@ class WorkflowReplier(ZMQSocketBase):
         LOG.debug('stopping zmq replier...')
         self.queue.put('STOP')
 
-    def listener(self):
+    def listener(self) -> None:
         """The server main loop, listen for and serve requests.
 
         When called, this method will receive and respond until there are no
@@ -90,7 +102,9 @@ class WorkflowReplier(ZMQSocketBase):
 
             try:
                 # Check for messages
-                msg = self.socket.recv_string(zmq.NOBLOCK)
+                msg = self.socket.recv_string(  # type: ignore[union-attr]
+                    zmq.NOBLOCK
+                )
             except zmq.error.Again:
                 # No messages, break to parent loop/caller.
                 break
@@ -99,27 +113,27 @@ class WorkflowReplier(ZMQSocketBase):
                 continue
             # attempt to decode the message, authenticating the user in the
             # process
+            res: ResponseDict
+            response: bytes
             try:
-                message = decode_(msg)
+                message = load_server_response(msg)
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                LOG.exception('failed to decode message: "%s"', exc)
-                import traceback
-                response = encode_(
-                    {
-                        'error': {
-                            'message': 'failed to decode message: "%s"' % msg,
-                            'traceback': traceback.format_exc(),
-                        }
-                    }
-                ).encode()
+                LOG.exception(exc)
+                LOG.error(f'failed to decode message: "{msg}"')
+                res = {
+                    'error': {'message': str(exc)},
+                    'cylc_version': CYLC_VERSION,
+                }
+                response = json.dumps(res).encode()
             else:
                 # success case - serve the request
                 res = self.server.receiver(message)
+                data = res.get('data')
                 # send back the string to bytes response
-                if isinstance(res.get('data'), bytes):
-                    response = res['data']
+                if isinstance(data, bytes):
+                    response = data
                 else:
-                    response = encode_(res).encode()
-            self.socket.send(response)
+                    response = json.dumps(res).encode()
+            self.socket.send(response)  # type: ignore[union-attr]
