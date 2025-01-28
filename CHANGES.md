@@ -22,18 +22,31 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+## __cylc-7.9.11 (Upcoming)__
 
-## __cylc-7.8.15 (2025-01-28)__
+## __cylc-7.9.10 (2023-01-28)__
 
-[#6569](https://github.com/cylc/cylc-flow/pull/6569) -
-Update PBS job runner to reflect error message change. This change
-continues to support older PBS versions.
+**Requires Python 2.7**
 
-[#6541](https://github.com/cylc/cylc-flow/pull/6541) -
-"cylc review" - handle more special characters.
+This release is cylc-7.8.15 with Jinja2 upgraded to 2.11.1.
+
+#
+## __cylc-7.9.9 (2023-01-15)__
+
+**Requires Python 2.7**
+
+This release is cylc-7.8.14 with Jinja2 upgraded to 2.11.1.
+
+### Fixes
+
+[#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
+2.11.1, fixing Jinja2 error where validation shows incorrect context.
+**This requires Python 2.7**
 
 
 ## __cylc-7.8.14 (2023-01-15)__
+
+### Fixes
 
 [#5751](https://github.com/cylc/cylc-flow/pull/5309) - prevent first
 execution time limit polling delay incrementing for every task where it is
@@ -46,12 +59,14 @@ Review was not returning the correct number of entries in the Cycles page.
 Cylc 8 forward-compat: allow suite-state xtriggers (and the `cylc suite-state`
 command) to read Cylc 8 databases.
 
-
 ## __cylc-7.8.13 (2023-06-13)__
+
+### Fixes
 
 [#5309](https://github.com/cylc/cylc-flow/pull/5309) - Cylc 8 compat for Cylc Review:
   - Allow Cylc Review to see all jobs with different flow nums for Cylc 8.1 workflows
   - Warn that not all jobs for different flows will be visible for Cylc 8.0 workflows
+
 
 ## __cylc-7.8.12 (2022-09-30)__
 
@@ -137,7 +152,6 @@ restarts using the same time zone as the last `cylc run`.
 [#4134](https://github.com/cylc/cylc-flow/pull/4134) - Allow Cylc Review
 to display information about Cylc 8 workflows.
 
-
 -------------------------------------------------------------------------------
 ## __cylc-7.8.7 (2020-12-04)__
 
@@ -170,6 +184,8 @@ on *any* host to complete before restarting.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.6 (2020-05-14)__
+
+Requires Python 2.6 or 2.7.
 
 ### Fixes
 
