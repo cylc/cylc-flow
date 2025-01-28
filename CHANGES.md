@@ -23,11 +23,14 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 
-## __cylc-7.8.15 (Upcoming)__
+## __cylc-7.8.15 (2025-01-28)__
 
 [#6569](https://github.com/cylc/cylc-flow/pull/6569) -
 Update PBS job runner to reflect error message change. This change
 continues to support older PBS versions.
+
+[#6541](https://github.com/cylc/cylc-flow/pull/6541) -
+"cylc review" - handle more special characters.
 
 
 ## __cylc-7.8.14 (2023-01-15)__
