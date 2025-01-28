@@ -439,6 +439,12 @@ class JobRunnerManager():
     def _jobs_poll_status_files(self, job_log_root, job_log_dir):
         """Helper 1 for self.jobs_poll(job_log_root, job_log_dirs)."""
         ctx = JobPollContext(job_log_dir)
+        # If the log directory has been deleted prematurely, return a task
+        # failure and an explanation:
+        if not os.path.exists(os.path.join(job_log_root, ctx.job_log_dir)):
+            ctx.run_status = 1
+            ctx.run_signal = 'ERR/Job files have been removed'
+            return ctx
         try:
             with open(
                 os.path.join(job_log_root, ctx.job_log_dir, JOB_LOG_STATUS)

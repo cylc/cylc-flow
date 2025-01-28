@@ -753,6 +753,15 @@ class TaskJobManager:
             or (ctx.ret_code and ctx.ret_code != 255)
         ):
             LOG.error(ctx)
+        # A polling task lets us know that a task has failed because it's
+        # log folder has been deleted whilst the task was active:
+        if (
+            getattr(ctx, 'out', None)
+            and 'Job files have been removed' in ctx.out
+        ):
+            LOG.error(
+                f'Task {ctx.cmd[-1]} failed because task log directory'
+                f'\n    {"/".join(ctx.cmd[-2:])}\n    has been removed.')
         # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
         #
         # Note for "reload": A TaskProxy instance may be replaced on reload, so

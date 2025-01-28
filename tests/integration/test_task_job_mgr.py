@@ -16,6 +16,7 @@
 
 from contextlib import suppress
 import logging
+from types import SimpleNamespace
 from typing import Any as Fixture
 
 from cylc.flow import CYLC_LOG
@@ -233,3 +234,26 @@ async def test_broadcast_platform_change(
         assert schd.pool.get_tasks()[0].platform['name'] == 'foo'
         # ... and that remote init failed because all hosts bad:
         assert log_filter(regex=r"platform: foo .*\(no hosts were reachable\)")
+
+
+async def test_poll_job_deleted_log_folder(
+    one_conf, flow, scheduler, start, caplog
+):
+    """Capture a task error caused by polling finding the job log dir deleted.
+
+    https://github.com/cylc/cylc-flow/issues/6425
+    """
+    ctx = SimpleNamespace()
+    ctx.out = 'ERR/Job files have been removed'
+    ctx.ret_code = None
+    ctx.cmd = ['foo', 'bar']
+
+    schd = scheduler(flow(one_conf), run_mode='live', paused_start=False)
+    async with start(schd):
+        schd.task_job_mgr._manip_task_jobs_callback(ctx, '', [], '')
+
+    assert (
+        'Task bar failed because task log directory'
+        '\n    foo/bar\n    has been removed.'
+        in caplog.messages
+    )
