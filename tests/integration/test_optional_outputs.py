@@ -288,11 +288,7 @@ def implicit_completion_config(mod_flow, mod_validate):
         },
         'runtime': {
             'root': {
-                'outputs': {
-                    'x': 'xxx',
-                    'y': 'yyy',
-                    'z': 'zzz',
-                }
+                'outputs': {x: f'{x * 3}' for x in 'abcdefghijklxyz'}
             }
         }
     })
