@@ -1844,6 +1844,7 @@ class WorkflowConfig:
 
         triggers = {}
         xtrig_labels = set()
+
         for left in left_nodes:
             if left.startswith('@'):
                 xtrig_labels.add(left[1:])
@@ -2265,6 +2266,17 @@ class WorkflowConfig:
             self.workflow_polling_tasks.update(
                 parser.workflow_state_polling_tasks)
             self._proc_triggers(parser, seq, task_triggers)
+            self.check_outputs(
+                [
+                    task_output
+                    for task_output in parser.task_output_opt
+                    if task_output[0]
+                    in [
+                        task_output.split(':')[0]
+                        for task_output in parser.terminals
+                    ]
+                ]
+            )
 
         self.set_required_outputs(task_output_opt)
 
@@ -2277,6 +2289,26 @@ class WorkflowConfig:
 
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
+
+    def check_outputs(
+        self, tasks_and_outputs: Iterable[Tuple[str, str]]
+    ) -> None:
+        """Check that task outputs have been registered with tasks.
+
+        Args: tasks_and_outputs: ((task, output), ...)
+
+        Raises: WorkflowConfigError is a user has defined a task with a
+        custom output, but has not registered a custom output.
+        """
+        for task, output in tasks_and_outputs:
+            registered_outputs = self.cfg['runtime'][task]['outputs']
+            if (
+                not TaskOutputs.is_valid_std_name(output)
+                and output not in registered_outputs
+            ):
+                raise WorkflowConfigError(
+                    f"Undefined custom output: {task}:{output}"
+                )
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
