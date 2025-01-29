@@ -1175,13 +1175,16 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
         WorkflowConfig__assert_err_raised()
 
 
-def test_undefined_custom_output(tmp_flow_config: Callable):
+@pytest.mark.parametrize(
+    'graph', (('foo:x => bar'), ('foo:x'))
+)
+def test_undefined_custom_output(graph: str, tmp_flow_config: Callable):
     """Test error on undefined custom output referenced in graph."""
     id_ = 'custom_out1'
-    flow_file = tmp_flow_config(id_, """
+    flow_file = tmp_flow_config(id_, f"""
     [scheduling]
         [[graph]]
-            R1 = "foo:x => bar"
+            R1 = "{graph}"
     [runtime]
         [[foo, bar]]
     """)
