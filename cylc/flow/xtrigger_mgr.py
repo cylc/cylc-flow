@@ -36,6 +36,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.subprocctx import add_kwarg_to_sig
 from cylc.flow.subprocpool import get_xtrig_func
+from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.xtriggers.wall_clock import _wall_clock
 from cylc.flow.xtriggers.workflow_state import (
     workflow_state,
@@ -776,3 +777,11 @@ class XtriggerManager:
         LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
         self.sat_xtrig[sig] = results
         self.do_housekeeping = True
+
+
+def should_run_xtriggers(itask: 'TaskProxy'):
+    return (
+        itask.state(TASK_STATUS_WAITING)
+        and not itask.state.is_queued
+        and not itask.state.is_runahead
+    )
