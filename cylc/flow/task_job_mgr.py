@@ -761,7 +761,8 @@ class TaskJobManager:
         ):
             LOG.error(
                 f'Task {ctx.cmd[-1]} failed because task log directory'
-                f'\n    {"/".join(ctx.cmd[-2:])}\n    has been removed.')
+                f'\n{"/".join(ctx.cmd[-2:])}\nhas been removed.'
+            )
         # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
         #
         # Note for "reload": A TaskProxy instance may be replaced on reload, so

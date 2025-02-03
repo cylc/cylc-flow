@@ -254,6 +254,6 @@ async def test_poll_job_deleted_log_folder(
 
     assert (
         'Task bar failed because task log directory'
-        '\n    foo/bar\n    has been removed.'
+        '\nfoo/bar\nhas been removed.'
         in caplog.messages
     )
