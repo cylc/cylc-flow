@@ -787,24 +787,29 @@ class Resolvers(BaseResolvers):
         cutoff: Any = None
     ):
         """Put or clear broadcasts."""
-        if settings is not None:
-            # Convert schema field names to workflow config setting names if
-            # applicable:
-            for i, dict_ in enumerate(settings):
-                settings[i] = runtime_schema_to_cfg(dict_)
+        try:
+            if settings is not None:
+                # Convert schema field names to workflow config setting names if
+                # applicable:
+                for i, dict_ in enumerate(settings):
+                    settings[i] = runtime_schema_to_cfg(dict_)
 
-        if mode == 'put_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
-                cycle_points, namespaces, settings)
-        if mode == 'clear_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
-                point_strings=cycle_points,
-                namespaces=namespaces,
-                cancel_settings=settings)
-        if mode == 'expire_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
-                cutoff)
-        raise ValueError('Unsupported broadcast mode')
+            if mode == 'put_broadcast':
+                return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
+                    cycle_points, namespaces, settings)
+            if mode == 'clear_broadcast':
+                return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
+                    point_strings=cycle_points,
+                    namespaces=namespaces,
+                    cancel_settings=settings)
+            if mode == 'expire_broadcast':
+                return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
+                    cutoff)
+            raise ValueError('Unsupported broadcast mode')
+        except Exception as exc:
+            LOG.error(exc)
+            return {'error': {'message': str(exc)}}
+
 
     def put_ext_trigger(
         self,
