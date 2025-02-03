@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.job_runner_mgr import JobRunnerManager
+from cylc.flow.job_runner_mgr import (
+    JobRunnerManager, JOB_FILES_REMOVED_MESSAGE)
 
 jrm = JobRunnerManager()
 
@@ -63,7 +64,7 @@ def test__job_poll_status_files_deleted_logdir():
     Return the context with the message that the task has failed.
     """
     ctx = jrm._jobs_poll_status_files('foo', 'bar')
-    assert ctx.run_signal == 'ERR/Job files have been removed'
+    assert ctx.run_signal == 'ERR/' + JOB_FILES_REMOVED_MESSAGE
     assert ctx.run_status == 1
 
 

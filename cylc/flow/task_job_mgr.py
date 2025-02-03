@@ -60,7 +60,7 @@ from cylc.flow.hostuserutil import (
     is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.job_runner_mgr import JobPollContext
+from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE, JobPollContext
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -757,7 +757,7 @@ class TaskJobManager:
         # log folder has been deleted whilst the task was active:
         if (
             getattr(ctx, 'out', None)
-            and 'Job files have been removed' in ctx.out
+            and JOB_FILES_REMOVED_MESSAGE in ctx.out
         ):
             LOG.error(
                 f'Task {ctx.cmd[-1]} failed because task log directory'

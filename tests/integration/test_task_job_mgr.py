@@ -20,6 +20,7 @@ from types import SimpleNamespace
 from typing import Any as Fixture
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 
@@ -244,7 +245,7 @@ async def test_poll_job_deleted_log_folder(
     https://github.com/cylc/cylc-flow/issues/6425
     """
     ctx = SimpleNamespace()
-    ctx.out = 'ERR/Job files have been removed'
+    ctx.out = 'ERR/' + JOB_FILES_REMOVED_MESSAGE
     ctx.ret_code = None
     ctx.cmd = ['foo', 'bar']
 

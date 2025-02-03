@@ -46,6 +46,9 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
+JOB_FILES_REMOVED_MESSAGE = 'Job files have been removed'
+
+
 class JobPollContext():
     """Context object for a job poll."""
     CONTEXT_ATTRIBUTES = (
@@ -443,7 +446,7 @@ class JobRunnerManager():
         # failure and an explanation:
         if not os.path.exists(os.path.join(job_log_root, ctx.job_log_dir)):
             ctx.run_status = 1
-            ctx.run_signal = 'ERR/Job files have been removed'
+            ctx.run_signal = 'ERR/' + JOB_FILES_REMOVED_MESSAGE
             return ctx
         try:
             with open(
