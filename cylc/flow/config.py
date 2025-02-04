@@ -99,6 +99,7 @@ from cylc.flow.task_outputs import (
     get_trigger_completion_variable_maps,
     trigger_to_completion_variable,
 )
+from cylc.flow.task_qualifiers import TASK_QUALIFIERS
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
@@ -2266,17 +2267,10 @@ class WorkflowConfig:
             self.workflow_polling_tasks.update(
                 parser.workflow_state_polling_tasks)
             self._proc_triggers(parser, seq, task_triggers)
-            self.check_outputs(
-                [
-                    task_output
-                    for task_output in parser.task_output_opt
-                    if task_output[0]
-                    in [
-                        task_output.split(':')[0]
-                        for task_output in parser.terminals
-                    ]
-                ]
-            )
+
+            # Checking for undefined outputs for terminal tasks. Tasks with
+            # dependencies are checked in generate_triggers:
+            self.check_outputs(parser.terminals)
 
         self.set_required_outputs(task_output_opt)
 
@@ -2290,22 +2284,19 @@ class WorkflowConfig:
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
 
-    def check_outputs(
-        self, tasks_and_outputs: Iterable[Tuple[str, str]]
-    ) -> None:
+    def check_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
-        Args: tasks_and_outputs: ((task, output), ...)
-
-        Raises: WorkflowConfigError is a user has defined a task with a
-        custom output, but has not registered a custom output.
+        Raises: WorkflowConfigError if a custom output is not defined.
         """
-        for task, output in tasks_and_outputs:
-            registered_outputs = self.cfg['runtime'][task]['outputs']
-            if (
-                not TaskOutputs.is_valid_std_name(output)
-                and output not in registered_outputs
-            ):
+        terminal_outputs = [
+            (a[0].strip("!"), b)
+            for a in (t.split(':') for t in terminals if ":" in t)
+            if (b := a[1].strip("?")) not in TASK_QUALIFIERS
+        ]
+
+        for task, output in terminal_outputs:
+            if output not in self.cfg['runtime'][task]['outputs']:
                 raise WorkflowConfigError(
                     f"Undefined custom output: {task}:{output}"
                 )
