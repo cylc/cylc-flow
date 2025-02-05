@@ -405,8 +405,10 @@ class JobRunnerManager():
 
         # Delete old job logs if necessary
         for name in JOB_LOG_ERR, JOB_LOG_OUT:
-            with suppress(FileNotFoundError):
+            try:
                 os.unlink(os.path.join(job_file_dir, name))
+            except FileNotFoundError:
+                pass
 
     @classmethod
     def _filter_submit_output(cls, st_file_path, job_runner, out, err):
