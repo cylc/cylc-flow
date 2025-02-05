@@ -217,7 +217,7 @@ class Prerequisite:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
                 expr = re.sub(
-                    fr"\b{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
+                    fr"{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
                     self.SATISFIED_TEMPLATE % t_output,
                     expr
                 )
