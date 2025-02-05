@@ -313,10 +313,125 @@ async def test_update_data_structure(harness):
     assert TASK_STATUS_FAILED in set(collect_states(data, FAMILY_PROXIES))
     # state totals changed
     assert TASK_STATUS_FAILED in data[WORKFLOW].state_totals
-    # Shows pruning worked
-    # TODO: fixme
-    # https://github.com/cylc/cylc-flow/issues/4175#issuecomment-1025666413
-    # assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
+
+
+async def test_prune_data_store(flow, scheduler, start):
+    """Test prune_data_store. This method will expand and reduce the data-store
+    to invoke pruning.
+
+    Also test rapid addition and removal of families (as happens with suicide
+    triggers):
+    https://github.com/cylc/cylc-ui/issues/1999
+
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo => bar'
+            }
+        },
+        'runtime': {
+            'FOOBAR': {},
+            'FOO': {
+                'inherit': 'FOOBAR'
+            },
+            'foo': {
+                'inherit': 'FOO'
+            },
+            'BAR': {
+                'inherit': 'FOOBAR'
+            },
+            'bar': {
+                'inherit': 'BAR'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+        w_id = schd.data_store_mgr.workflow_id
+        data = schd.data_store_mgr.data[w_id]
+        schd.pool.hold_tasks(['*'])
+        await schd.update_data_structure()
+        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
+
+        # Window size reduction to invoke pruning
+        schd.data_store_mgr.set_graph_window_extent(0)
+        schd.data_store_mgr.update_data_structure()
+        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
+
+        # Test rapid addition and removal
+        # bar/BAR task/family proxies not in .added
+        assert len({
+            t.name
+            for t in schd.data_store_mgr.added[TASK_PROXIES].values()
+            if t.name == 'bar'
+        }) == 0
+        assert len({
+            f.name
+            for f in schd.data_store_mgr.added[FAMILY_PROXIES].values()
+            if f.name == 'BAR'
+        }) == 0
+        # Add bar/BAR on set output of foo
+        for itask in schd.pool.get_tasks():
+            schd.pool.spawn_on_output(itask, TASK_OUTPUT_SUCCEEDED)
+        # bar/BAR now found.
+        assert len({
+            t.name
+            for t in schd.data_store_mgr.added[TASK_PROXIES].values()
+            if t.name == 'bar'
+        }) == 1
+        assert len({
+            f.name
+            for f in schd.data_store_mgr.added[FAMILY_PROXIES].values()
+            if f.name == 'BAR'
+        }) == 1
+        # Before updating the data-store, remove bar/BAR.
+        for itask in schd.pool.get_tasks():
+            if itask.tdef.name == 'bar':
+                schd.pool.remove(itask, 'Test removal')
+        schd.data_store_mgr.update_data_structure()
+        # bar/BAR not found in data or added stores.
+        assert len({
+            t.name
+            for t in data[TASK_PROXIES].values()
+            if t.name == 'bar'
+        }) == 0
+        assert len({
+            t.name
+            for t in schd.data_store_mgr.added[TASK_PROXIES].values()
+            if t.name == 'bar'
+        }) == 0
+        assert len({
+            f.name
+            for f in data[FAMILY_PROXIES].values()
+            if f.name == 'BAR'
+        }) == 0
+        assert len({
+            f.name
+            for f in schd.data_store_mgr.added[FAMILY_PROXIES].values()
+            if f.name == 'BAR'
+        }) == 0
+
+
+async def test_family_ascent_point_prune(harness):
+    """Test _family_ascent_point_prune. This method tries to remove
+    non-existent family."""
+    schd, data = harness
+    fp_id = 'NotAFamilyProxy'
+    parent_ids = {fp_id}
+    checked_ids = set()
+    node_ids = set()
+    schd.data_store_mgr._family_ascent_point_prune(
+        next(iter(parent_ids)),
+        node_ids,
+        parent_ids,
+        checked_ids,
+        schd.data_store_mgr.family_pruned_ids
+    )
+    assert len(checked_ids) == 1
+    assert len(parent_ids) == 0
 
 
 def test_delta_task_prerequisite(harness):
