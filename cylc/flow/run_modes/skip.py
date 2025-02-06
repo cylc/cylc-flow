@@ -80,7 +80,9 @@ def submit_task_job(
     )
     task_job_mgr.workflow_db_mgr.put_update_task_state(itask)
     for output in process_outputs(itask, rtconfig):
-        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
+        task_job_mgr.task_events_mgr.process_message(
+            itask, INFO, output, event_time=now[1]
+        )
 
     return True
 
