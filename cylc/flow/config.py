@@ -2288,6 +2288,7 @@ class WorkflowConfig:
 
         Raises: WorkflowConfigError if a custom output is not defined.
         """
+        from cylc.flow.task_qualifiers import TASK_QUALIFIERS
         terminal_outputs = []
         for terminal in terminals:
             if ':' in terminal:
@@ -2295,18 +2296,12 @@ class WorkflowConfig:
                 qualifier = re.findall(GraphParser._RE_QUAL, terminal)
                 if qualifier:
                     qualifier_str = qualifier[0].strip(':')
-                else:
-                    qualifier_str = ''
-                if qualifier_str in ALT_QUALIFIERS:
-                    qualifier_str = ALT_QUALIFIERS[qualifier_str]
-                terminal_outputs.append((task, qualifier_str))
+                if qualifier_str and qualifier_str not in TASK_QUALIFIERS:
+                    terminal_outputs.append((task, qualifier_str))
 
         for task, output in terminal_outputs:
             registered_outputs = self.cfg['runtime'][task]['outputs']
-            if (
-                not TaskOutputs.is_valid_std_name(output)
-                and output not in registered_outputs
-            ):
+            if output not in registered_outputs:
                 raise WorkflowConfigError(
                     f"Undefined custom output: {task}:{output}"
                 )
