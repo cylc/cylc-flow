@@ -18,9 +18,15 @@
 
 from dataclasses import dataclass
 from logging import INFO
-from typing import (
-    TYPE_CHECKING, Any, Dict, List, Tuple, Union)
 from time import time
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Tuple,
+    Union,
+)
 
 from metomi.isodatetime.parsers import DurationParser
 
@@ -29,22 +35,23 @@ from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
-from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
-from cylc.flow.task_state import (
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_SUCCEEDED,
-)
-from cylc.flow.wallclock import get_unix_time_from_time_string
 from cylc.flow.run_modes import RunMode
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED,
+)
+from cylc.flow.task_state import TASK_STATUS_RUNNING
+from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Literal
+
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-    from typing_extensions import Literal
 
 
 def submit_task_job(
@@ -357,12 +364,12 @@ def sim_time_check(
         if now > itask.mode_settings.timeout:
             if itask.mode_settings.sim_task_fails:
                 task_events_manager.process_message(
-                    itask, 'CRITICAL', TASK_STATUS_FAILED,
+                    itask, 'CRITICAL', TASK_OUTPUT_FAILED,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
             else:
                 task_events_manager.process_message(
-                    itask, 'DEBUG', TASK_STATUS_SUCCEEDED,
+                    itask, 'DEBUG', TASK_OUTPUT_SUCCEEDED,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
             # Simulate message outputs.
