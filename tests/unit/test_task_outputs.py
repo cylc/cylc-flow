@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
 from cylc.flow.task_outputs import (
-    TASK_OUTPUTS,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUTS,
     TaskOutputs,
     get_completion_expression,
     get_trigger_completion_variable_maps,
@@ -332,3 +333,18 @@ def test_get_trigger_completion_variable_maps():
     t2c, c2t = get_trigger_completion_variable_maps(('a', 'b-b', 'c-c-c'))
     assert t2c == {'a': 'a', 'b-b': 'b_b', 'c-c-c': 'c_c_c'}
     assert c2t == {'a': 'a', 'b_b': 'b-b', 'c_c_c': 'c-c-c'}
+
+
+@pytest.mark.parametrize('message, complete, expected', [
+    ('succeeded', [], ['submitted', 'started']),  # order matters!
+    ('failed', [], ['submitted', 'started']),
+    ('started', [], ['submitted']),
+    ('foo', [], []),
+    ('succeeded', ['started'], ['submitted']),
+    ('succeeded', ['started', 'submitted'], []),
+    ('started', ['submitted'], []),
+])
+def test_get_incomplete_implied(message, complete, expected):
+    """It should return an ordered list of incomplete implied messages."""
+    mock_tout = Mock(is_message_complete=lambda x: x in complete)
+    assert TaskOutputs.get_incomplete_implied(mock_tout, message) == expected
