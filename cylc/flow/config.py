@@ -608,8 +608,13 @@ class WorkflowConfig:
             )
 
     def prelim_process_graph(self) -> None:
-        """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
-        for simplest "R1 = foo" type graphs.
+        """Error if graph empty; set integer cycling and icp/fcp = 1,
+        if those settings are omitted and the graph is acyclic graphs.
+
+        Somewhat relevant notes:
+         - The default (if not set) cycling mode, gregorian, requires an ICP.
+         - cycling mode is not stored in the DB, so recompute for restarts.
+
         """
         graphdict = self.cfg['scheduling']['graph']
         if not any(graphdict.values()):
@@ -619,15 +624,20 @@ class WorkflowConfig:
             'cycling mode' not in self.cfg['scheduling'] and
             self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
             all(
-                item in [
-                    'graph', '1', 'R1',
+                seq in [
+                    'R1',
                     str(NOCYCLE_SEQ_ALPHA),
-                    str(NOCYCLE_SEQ_OMEGA)
+                    str(NOCYCLE_SEQ_OMEGA),
+                    'graph',  # Cylc 7 back-compat
+                    '1'  # Cylc 7 back-compat?
                 ]
-                for item in graphdict
+                for seq in graphdict
             )
         ):
-            # Non-cycling graph, assume integer cycling mode with '1' cycle
+            # Pure acyclic graph, assume integer cycling mode with '1' cycle
+            # Note typos in "alpha", "omega", or "R1" will appear as cyclic
+            # here, but will be fatal later during proper recurrance checking.
+
             self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
@@ -2260,6 +2270,7 @@ class WorkflowConfig:
                 seq = get_sequence(section, icp, fcp)
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
                 try:
+                    # is it an alpha or omega graph?
                     seq = NocycleSequence(section)
                 except ValueError:
                     if cylc.flow.flags.verbosity > 1:

@@ -208,7 +208,7 @@ class TaskPool:
             self.active_tasks_changed = True
 
     def load_nocycle_graph(self, seq):
-        """blah """
+        """Load task pool from a no-cycle graph."""
         LOG.info(f"LOADING {seq} GRAPH")
         flow_num = self.flow_mgr.get_flow_num(meta=f"original {seq} flow")
         self.runahead_limit_point = None
@@ -284,7 +284,7 @@ class TaskPool:
         Return True if any tasks are released, else False.
         Call when RH limit changes.
         """
-        if not self.active_tasks or not self.runahead_limit_point:
+        if not self.active_tasks:
             # (At start-up task pool might not exist yet)
             return False
 
@@ -297,10 +297,10 @@ class TaskPool:
             for point, itask_id_map in self.active_tasks.items()
             for itask in itask_id_map.values()
             if (
-                self.runahead_limit_point and
-                point <= self.runahead_limit_point
-                or
                 str(point) in NOCYCLE_POINTS
+                or
+                (self.runahead_limit_point and
+                 point <= self.runahead_limit_point)
             )
             if itask.state.is_runahead
         ]
@@ -351,7 +351,7 @@ class TaskPool:
         base_point: Optional['PointBase'] = None
 
         # First get the runahead base point.
-        if not self.active_tasks:
+        if not self.active_tasks or not self.runahead_limit_point:
             # Find the earliest sequence point beyond the workflow start point.
             base_point = min(
                 (

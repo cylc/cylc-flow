@@ -166,7 +166,7 @@ def _get_graph_nodes_edges(
         edge_sort = sort_integer_edge
     else:
         # datetime sorting
-        node_sort = None
+        node_sort = None  # lexicographically sortable
         edge_sort = sort_datetime_edge
 
     # get nodes

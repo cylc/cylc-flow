@@ -18,9 +18,7 @@
 Cycling logic for isolated non-cycling startup and shutdown graphs.
 """
 
-from cylc.flow.cycling import PointBase, SequenceBase, cmp
-
-# TODO: scheduler check DB to be sure alpha and omega sections have run or not.
+from cylc.flow.cycling import PointBase, SequenceBase
 
 # cycle point values
 NOCYCLE_PT_ALPHA = "alpha"
@@ -34,9 +32,11 @@ NOCYCLE_POINTS = (
 CYCLER_TYPE_NOCYCLE = "nocycle"
 CYCLER_TYPE_SORT_KEY_NOCYCLE = 1
 
+# Unused abstract methods below left to raise NotImplementedError.
+
 
 class NocyclePoint(PointBase):
-    """A string-valued point."""
+    """A non-advancing string-valued cycle point."""
 
     TYPE = CYCLER_TYPE_NOCYCLE
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_NOCYCLE
@@ -44,81 +44,163 @@ class NocyclePoint(PointBase):
     __slots__ = ('value')
 
     def __init__(self, value: str) -> None:
+        """Initialise a nocycle point.
+
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA)
+        alpha
+        >>> NocyclePoint("beta")
+        Traceback (most recent call last):
+        ValueError: Illegal Nocycle value 'beta'
+        """
         if value not in [NOCYCLE_PT_ALPHA, NOCYCLE_PT_OMEGA]:
-            raise ValueError(f"Illegal Nocycle value {value}")
+            raise ValueError(f"Illegal Nocycle value '{value}'")
         self.value = value
 
     def __hash__(self):
+        """Hash it.
+
+        >>> bool(hash(NocyclePoint(NOCYCLE_PT_ALPHA)))
+        True
+        """
         return hash(self.value)
 
     def __eq__(self, other):
-        return str(other) == self.value
+        """Equality.
+
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) == NocyclePoint(NOCYCLE_PT_ALPHA)
+        True
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) == NocyclePoint(NOCYCLE_PT_OMEGA)
+        False
+        """
+        return str(other) == str(self.value)
 
     def __le__(self, other):
-        """less than or equal only if equal."""
+        """Less than or equal (only if equal).
+
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) <= NocyclePoint(NOCYCLE_PT_ALPHA)
+        True
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) <= NocyclePoint(NOCYCLE_PT_OMEGA)
+        False
+        """
         return str(other) == self.value
 
     def __lt__(self, other):
-        """never less than."""
+        """Less than (never).
+
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) < NocyclePoint(NOCYCLE_PT_ALPHA)
+        False
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) < NocyclePoint(NOCYCLE_PT_OMEGA)
+        False
+        """
         return False
 
     def __gt__(self, other):
-        """never greater than."""
+        """Greater than (never).
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) > NocyclePoint(NOCYCLE_PT_ALPHA)
+        False
+        >>> NocyclePoint(NOCYCLE_PT_ALPHA) > NocyclePoint(NOCYCLE_PT_OMEGA)
+        False
+        """
         return False
 
     def __str__(self):
+        """
+        >>> str(NocyclePoint(NOCYCLE_PT_ALPHA))
+        'alpha'
+        >>> str(NocyclePoint(NOCYCLE_PT_OMEGA))
+        'omega'
+        """
         return self.value
 
     def _cmp(self, other):
-        return cmp(int(self), int(other))
+        raise NotImplementedError
 
     def add(self, other):
-        # NOT USED
-        return None
+        # Not used.
+        raise NotImplementedError
 
     def sub(self, other):
-        # NOT USED
-        return None
+        # Not used.
+        raise NotImplementedError
 
 
 class NocycleSequence(SequenceBase):
     """A single point sequence."""
 
     def __init__(self, dep_section, p_context_start=None, p_context_stop=None):
-        """Workflow cycling context is ignored."""
+        """Workflow cycling context is ignored.
+
+        >>> NocycleSequence("alpha").point
+        alpha
+        """
         self.point = NocyclePoint(dep_section)
 
     def __hash__(self):
+        """Hash it.
+
+        >>> bool(hash(NocycleSequence("alpha")))
+        True
+        """
         return hash(str(self.point))
 
     def is_valid(self, point):
-        """Is point on-sequence and in-bounds?"""
-        return str(point) == self.point
+        """Is point on-sequence and in-bounds?
+
+        >>> NocycleSequence("alpha").is_valid("alpha")
+        True
+        >>> NocycleSequence("alpha").is_valid("omega")
+        False
+        """
+        return str(point) == str(self.point)
 
     def get_first_point(self, point):
-        """First point is the only point"""
+        """First point is the only point.
+
+        >>> NocycleSequence("alpha").get_first_point("omega")
+        alpha
+        """
         return self.point
 
     def get_start_point(self, point):
-        """First point is the only point"""
+        """First point is the only point."""
+        # Not used.
+        raise NotImplementedError
         return self.point
 
     def get_next_point(self, point):
-        """There is no next point"""
+        """There is no next point.
+
+        >>> NocycleSequence("alpha").get_next_point("alpha")
+        """
         return None
 
     def get_next_point_on_sequence(self, point):
-        """There is no next point"""
+        """There is no next point.
+
+        >>> NocycleSequence("alpha").get_next_point_on_sequence("alpha")
+        """
         return None
 
     def __eq__(self, other):
+        """Equality.
+
+        >>> NocycleSequence("alpha") == NocycleSequence("alpha")
+        True
+        >>> NocycleSequence("alpha") == NocycleSequence("omega")
+        False
+        """
         try:
-            return other.point == self.point
+            return str(other.point) == str(self.point)
         except AttributeError:
-            # (other is not a nocycle sequence)
+            # (other has not .point)
             return False
 
     def __str__(self):
+        """String.
+
+        >>> str(NocycleSequence("alpha"))
+        'alpha'
+        """
         return str(self.point)
 
     def TYPE(self):

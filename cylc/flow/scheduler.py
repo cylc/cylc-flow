@@ -460,7 +460,7 @@ class Scheduler:
         """Configure the scheduler.
 
         * Load the flow configuration.
-        * Load/write workflow parameters from the DB.
+        * Load/write workflow parameters from/to the DB.
         * Get the data store rolling.
 
         """
@@ -487,8 +487,10 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
-            cfg = self.load_flow_file()
-            self.apply_new_config(cfg, is_reload=False)
+            self.apply_new_config(
+                self.load_flow_file(),
+                is_reload=False
+            )
         except ParsecError as exc:
             # Mark this exc as expected (see docstring for .schd_expected):
             exc.schd_expected = True
@@ -558,17 +560,6 @@ class Scheduler:
                 if start_now:
                     timer.reset()
                 self.timers[event] = timer
-
-        if self.is_restart and not self.pool.get_tasks():
-            # This workflow completed before restart; wait for intervention.
-            with suppress(KeyError):
-                self.timers[self.EVENT_RESTART_TIMEOUT].reset()
-                self.is_restart_timeout_wait = True
-                LOG.warning(
-                    "This workflow already ran to completion."
-                    "\nTo make it continue, trigger new tasks"
-                    " before the restart timeout."
-                )
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
@@ -644,6 +635,11 @@ class Scheduler:
                 extra=RotatingLogFileHandler.header_extra
             )
             LOG.info(
+                "Cycling mode:"
+                f" {self.config.cfg['scheduling']['cycling mode']}",
+                extra=RotatingLogFileHandler.header_extra
+            )
+            LOG.info(
                 f'Initial point: {self.config.initial_point}',
                 extra=RotatingLogFileHandler.header_extra
             )
@@ -662,15 +658,21 @@ class Scheduler:
                     extra=RotatingLogFileHandler.header_extra
                 )
 
-    def _get_graph_loaders(self) -> None:
-        """Get next graphs base on current pool content."""
-        # Check pool points in case this is a restart.
-        # TODO REALLY NEED TO CHECK DB FOR SECTIONS THAT RAN ALREADY.
+    async def _get_graph_loaders(self) -> None:
+        """Tee up one or more graphs to load the task pool.
 
+        In a restart the pool is already loaded - examine it to see which
+        graphs to run next. Otherwise, tee up all the configured graphs.
+
+        Note a "graph loader" load the task pool with initial parentless
+        tasks defined by the graph.
+
+        TODO: post-restart examination of the task pool is fallible, we
+        really need to record graphs finished in the DB.
+
+        """
         points = [p.value for p in self.pool.get_points()]
         if self.is_restart and not points:
-            # Restart with empty pool: only unfinished event handlers.
-            # No graph to load.
             return
 
         if (
@@ -683,8 +685,7 @@ class Scheduler:
             )
 
         if (
-            self.config.sequences
-            and (
+            self.config.sequences and (
                 not points
                 or (
                     not any(p not in NOCYCLE_POINTS for p in points)
@@ -705,66 +706,33 @@ class Scheduler:
             and not self.is_restart
         ):
             # Alpha section exists and hasn't started yet.
-            # (Never in a restart).
+            # (Not in a restart - the pool already loaded from DB!).
             self.graph_loaders.append(
                 partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_ALPHA)
             )
 
     async def run_graphs(self):
         self.graph_loaders = []
+
+        if self.pool.active_tasks:
+            # pool already loaded for integration test!
+            while await self._main_loop():
+                pass
+            return
+
         if self.is_restart:
-            # Restart from DB.
-            self.task_job_mgr.task_remote_mgr.is_restart = True
-            self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_validated_rsync_includes())
-            self._load_pool_from_db()
-            all_tasks = self.pool.get_tasks()
-            if all_tasks:
-                # (If we're not restarting a finished workflow)
-                self.restart_remote_init()
-                # Poll all pollable tasks
-                await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
+            await self._load_pool_from_db()
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
 
-                # If we shut down with manually triggered waiting tasks,
-                # submit them to run now.
-                # NOTE: this will run tasks that were triggered with
-                # the trigger "--on-resume" option, even if the workflow
-                # is restarted as paused. Option to be removed at 8.5.0.
-                pre_prep_tasks = []
-                for itask in all_tasks:
-                    if (
-                        itask.is_manual_submit
-                        and itask.state(TASK_STATUS_WAITING)
-                    ):
-                        itask.waiting_on_job_prep = True
-                        pre_prep_tasks.append(itask)
+        await self._get_graph_loaders()
 
-                self.start_job_submission(pre_prep_tasks)
-
-            # TODO - WHY DOESN'T '*/*' MATCH THE FOLLOWING?
-            await commands.run_cmd(
-                commands.poll_tasks(self, [f"{NOCYCLE_PT_ALPHA}/*"]))
-            await commands.run_cmd(
-                commands.poll_tasks(self, [f"{NOCYCLE_PT_OMEGA}/*"]))
-
-            self._get_graph_loaders()
+        while await self._main_loop():
+            pass
+        while self.graph_loaders:
+            (self.graph_loaders.pop())()
             while await self._main_loop():
                 pass
-            # next graphs depends on content of restart pool
-            while self.graph_loaders:
-                (self.graph_loaders.pop())()
-                while await self._main_loop():
-                    pass
-        elif self.pool.active_tasks:
-            # pool loaded for integration test!
-            while await self._main_loop():
-                pass
-        else:
-            self._get_graph_loaders()
-            while self.graph_loaders:
-                (self.graph_loaders.pop())()
-                while await self._main_loop():
-                    pass
 
     async def run_scheduler(self) -> None:
         """Start the scheduler main loop."""
@@ -940,9 +908,14 @@ class Scheduler:
         LOG.info(msg)
         self.pool.load_from_point()
 
-    def _load_pool_from_db(self):
+    async def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
         LOG.info("LOADING DB FOR RESTART")
+
+        self.task_job_mgr.task_remote_mgr.is_restart = True
+        self.task_job_mgr.task_remote_mgr.rsync_includes = (
+            self.config.get_validated_rsync_includes())
+
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
         self.broadcast_mgr.post_load_db_coerce()
@@ -964,6 +937,48 @@ class Scheduler:
 
         if self.restored_stop_task_id is not None:
             self.pool.set_stop_task(self.restored_stop_task_id)
+
+        self.log_start()
+
+        all_tasks = self.pool.get_tasks()
+        if not all_tasks:
+            # Restart with empty pool: only unfinished event handlers.
+            # This workflow completed before restart; wait for intervention.
+            # TODO - WHAT IF IT SHUT DOWN BETWEEN GRAPHS
+            with suppress(KeyError):
+                self.timers[self.EVENT_RESTART_TIMEOUT].reset()
+                self.is_restart_timeout_wait = True
+                LOG.warning(
+                    "This workflow already ran to completion."
+                    "\nTo make it continue, trigger new tasks"
+                    " before the restart timeout."
+                )
+            return
+
+        self.restart_remote_init()
+        # Poll all pollable tasks
+        await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
+        # TODO - WHY DOESN'T '*/*' MATCH THE FOLLOWING?
+        await commands.run_cmd(
+            commands.poll_tasks(self, [f"{NOCYCLE_PT_ALPHA}/*"]))
+        await commands.run_cmd(
+            commands.poll_tasks(self, [f"{NOCYCLE_PT_OMEGA}/*"]))
+
+        # If we shut down with manually triggered waiting tasks,
+        # submit them to run now.
+        # NOTE: this will run tasks that were triggered with
+        # the trigger "--on-resume" option, even if the workflow
+        # is restarted as paused. Option to be removed at 8.5.0.
+        pre_prep_tasks = []
+        for itask in all_tasks:
+            if (
+                itask.is_manual_submit
+                and itask.state(TASK_STATUS_WAITING)
+            ):
+                itask.waiting_on_job_prep = True
+                pre_prep_tasks.append(itask)
+
+        self.start_job_submission(pre_prep_tasks)
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
@@ -1676,6 +1691,7 @@ class Scheduler:
 
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
+        # from pudb import set_trace; set_trace()
         if self.pool.check_abort_on_task_fails():
             self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
 

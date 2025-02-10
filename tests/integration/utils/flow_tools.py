@@ -119,10 +119,10 @@ def _make_flow(
     return workflow_id
 
 
-def _load_graph(sched):
+async def _load_graph(sched):
     """Get scheduler to load the main graph."""
     if sched.is_restart:
-        sched._load_pool_from_db()
+        await sched._load_pool_from_db()
     elif sched.options.starttask:
         sched._load_pool_from_tasks()
     else:
@@ -170,7 +170,7 @@ async def _start_flow(
         # exception occurs in Scheduler
         try:
             await schd.start()
-            _load_graph(schd)
+            await _load_graph(schd)
         finally:
             # After this `yield`, the `with` block of the context manager
             # is executed:
@@ -202,7 +202,7 @@ async def _run_flow(
         # exception occurs in Scheduler
         try:
             await schd.start()
-            _load_graph(schd)
+            await _load_graph(schd)
             # Do not await as we need to yield control to the main loop:
             task = asyncio.create_task(schd.run_scheduler())
         finally:
