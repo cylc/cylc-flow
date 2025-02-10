@@ -33,7 +33,7 @@ from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 @pytest.fixture
 def _setup_db(tmp_path):
     """Fixture to create old DB."""
-    def _inner(values, db_file_name='sql.db'):
+    def _inner(stmts, db_file_name='sql.db'):
         db_file = tmp_path / db_file_name
         db_file.parent.mkdir(parents=True, exist_ok=True)
         # Note: cannot use CylcWorkflowDAO here as creating outdated DB
@@ -53,8 +53,8 @@ def _setup_db(tmp_path):
             r' job_runner_name TEXT, job_id TEXT,'
             r' PRIMARY KEY(cycle, name, submit_num));'
         ))
-        for value in values:
-            conn.execute(value)
+        for stmt, values in stmts:
+            conn.execute(stmt, values)
         conn.execute((
             r"INSERT INTO task_jobs VALUES"
             r"    ('10090101T0000Z', 'foo', 1, 0, 1, '2022-12-05T14:46:06Z',"
@@ -69,13 +69,21 @@ def _setup_db(tmp_path):
 
 
 def test_upgrade_pre_810_fails_on_multiple_flows(_setup_db):
-    values = [(
-        r'INSERT INTO task_states VALUES'
-        r"    ('foo', '10050101T0000Z', '[1, 3]',"
-        r" '2022-12-05T14:46:33Z',"
-        r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
+    stmts = [(
+        r'INSERT INTO task_states VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (
+            'foo',
+            '10050101T0000Z',
+            '[1, 3]',
+            '2022-12-05T14:46:33Z',
+            '2022-12-05T14:46:40Z',
+            1,
+            'succeeded',
+            0,
+            0,
+        ),
     )]
-    db_file_name = _setup_db(values)
+    db_file_name = _setup_db(stmts)
     with CylcWorkflowDAO(db_file_name) as dao, pytest.raises(
         CylcError,
         match='^Cannot .* 8.0.x to 8.1.0 .* used.$'
@@ -84,13 +92,21 @@ def test_upgrade_pre_810_fails_on_multiple_flows(_setup_db):
 
 
 def test_upgrade_pre_810_pass_on_single_flow(_setup_db):
-    values = [(
-        r'INSERT INTO task_states VALUES'
-        r"    ('foo', '10050101T0000Z', '[1]',"
-        r" '2022-12-05T14:46:33Z',"
-        r" '2022-12-05T14:46:40Z', 1, 'succeeded', 0, 0)"
+    stmts = [(
+        r'INSERT INTO task_states VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (
+            'foo',
+            '10050101T0000Z',
+            '[1]',
+            '2022-12-05T14:46:33Z',
+            '2022-12-05T14:46:40Z',
+            1,
+            'succeeded',
+            0,
+            0,
+        ),
     )]
-    db_file_name = _setup_db(values)
+    db_file_name = _setup_db(stmts)
     with CylcWorkflowDAO(db_file_name) as dao:
         WorkflowDatabaseManager.upgrade_pre_810(dao)
         result = dao.connect().execute(
@@ -104,14 +120,21 @@ def test_check_workflow_db_compat(_setup_db, capsys):
     """
     # Create public and private databases with different cylc versions:
     create = r'CREATE TABLE workflow_params(key TEXT, value TEXT)'
-    insert = (
-        r'INSERT INTO workflow_params VALUES'
-        r'("cylc_version", "{}")'
-    )
+    insert = r'INSERT INTO workflow_params VALUES (?, ?)'
     pri_path = _setup_db(
-        [create, insert.format('7.99.99')], db_file_name='private/db')
+        [
+            (create, tuple()),
+            (insert, ('cylc_version', '7.99.99')),
+        ],
+        db_file_name='private/db',
+    )
     pub_path = _setup_db(
-        [create, insert.format('7.99.98')], db_file_name='public/db')
+        [
+            (create, tuple()),
+            (insert, ('cylc_version', '7.99.98')),
+        ],
+        db_file_name='public/db'
+    )
 
     with pytest.raises(ServiceFileError, match='99.98'):
         WorkflowDatabaseManager.check_db_compatibility(pub_path)
@@ -124,11 +147,11 @@ def test_cylc_7_db_wflow_params_table(_setup_db):
     """Test back-compat needed by workflow state xtrigger for Cylc 7 DBs."""
     ptformat = "CCYY"
     create = r'CREATE TABLE suite_params(key TEXT, value TEXT)'
-    insert = (
-        r'INSERT INTO suite_params VALUES'
-        rf'("cycle_point_format", "{ptformat}")'
-    )
-    db_file_name = _setup_db([create, insert])
+    insert = r'INSERT INTO suite_params VALUES (?, ?)'
+    db_file_name = _setup_db([
+        (create, tuple()),
+        (insert, ('cycle_point_format', ptformat)),
+    ])
     with CylcWorkflowDBChecker('foo', 'bar', db_path=db_file_name) as checker:
         with pytest.raises(
             sqlite3.OperationalError, match="no such table: workflow_params"
@@ -145,29 +168,48 @@ def test_pre_830_task_action_timers(_setup_db):
     index 1. TaskPool.load_db_task_action_timers() should be able to
     discard this field.
     """
-    values = [
-        r'''
-            CREATE TABLE task_action_timers(
-                cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT,
-                num INTEGER, delay TEXT, timeout TEXT,
-                PRIMARY KEY(cycle, name, ctx_key)
-            );
-        ''',
-        r'''
-            INSERT INTO task_action_timers VALUES(
-                '1','foo','[["event-mail", "failed"], 9]',
-                '["TaskEventMailContext", ["event-mail", "event-mail", "notifications@fbc.gov", "jfaden"]]',
-                '[0.0]',1,'0.0','1709229449.61275'
-            );
-        ''',
-        r'''
-            INSERT INTO task_action_timers VALUES(
-                '1','foo','["try_timers", "execution-retry"]', null,
-                '[94608000.0]',1,NULL,NULL
-            );
-        ''',
+    stmts = [
+        (
+            r'''
+                CREATE TABLE task_action_timers(
+                    cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT,
+                    num INTEGER, delay TEXT, timeout TEXT,
+                    PRIMARY KEY(cycle, name, ctx_key)
+                );
+            ''',
+            tuple(),
+        ),
+        (
+            r'INSERT INTO task_action_timers VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (
+                '1',
+                'foo',
+                '[["event-mail", "failed"], 9]',
+                (
+                    '["TaskEventMailContext", ["event-mail", "event-mail",'
+                    ' "notifications@fbc.gov", "jfaden"]]'
+                ),
+                '[0.0]',
+                1,
+                '0.0',
+                '1709229449.61275',
+            )
+        ),
+        (
+            r'INSERT INTO task_action_timers VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (
+                '1',
+                'foo',
+                '["try_timers", "execution-retry"]',
+                None,
+                '[94608000.0]',
+                1,
+                None,
+                None,
+            ),
+        ),
     ]
-    db_file = _setup_db(values)
+    db_file = _setup_db(stmts)
     mock_pool = Mock()
     load_db_task_action_timers = partial(
         TaskPool.load_db_task_action_timers, mock_pool
