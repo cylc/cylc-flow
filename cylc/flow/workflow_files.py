@@ -621,7 +621,6 @@ def get_workflow_srv_dir(id_):
 
 
 def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
-    """Load contact file. Return data as key=value dict."""
     if not run_dir:
         path = Path(get_contact_file_path(id_))
     else:
@@ -630,6 +629,19 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
             WorkflowFiles.Service.DIRNAME,
             WorkflowFiles.Service.CONTACT
         )
+
+    # refresh NFS cache before proceeding, the contact file might magically
+    # appear, see https://github.com/cylc/cylc-flow/issues/6506
+    if not path.exists():
+        # list all directories between ~/cylc-run and the the workflow
+        # run dir (inclusive)
+        cylc_run_dir = get_cylc_run_dir()
+        for subdir in reversed(path.relative_to(cylc_run_dir).parents):
+            try:
+                list((cylc_run_dir / subdir).iterdir())
+            except FileNotFoundError as exc:
+                raise ServiceFileError("Couldn't load contact file") from exc
+
     try:
         with open(path) as f:
             file_content = f.read()
