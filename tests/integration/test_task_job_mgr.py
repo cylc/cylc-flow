@@ -245,7 +245,7 @@ async def test_poll_job_deleted_log_folder(
     https://github.com/cylc/cylc-flow/issues/6425
     """
     ctx = SimpleNamespace()
-    ctx.out = 'ERR/' + JOB_FILES_REMOVED_MESSAGE
+    ctx.out = JOB_FILES_REMOVED_MESSAGE
     ctx.ret_code = None
     ctx.cmd = ['foo', 'bar']
 

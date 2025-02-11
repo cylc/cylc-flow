@@ -446,7 +446,7 @@ class JobRunnerManager():
         # failure and an explanation:
         if not os.path.exists(os.path.join(job_log_root, ctx.job_log_dir)):
             ctx.run_status = 1
-            ctx.run_signal = 'ERR/' + JOB_FILES_REMOVED_MESSAGE
+            ctx.run_signal = JOB_FILES_REMOVED_MESSAGE
             return ctx
         try:
             with open(

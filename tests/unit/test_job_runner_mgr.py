@@ -64,7 +64,7 @@ def test__job_poll_status_files_deleted_logdir():
     Return the context with the message that the task has failed.
     """
     ctx = jrm._jobs_poll_status_files('foo', 'bar')
-    assert ctx.run_signal == 'ERR/' + JOB_FILES_REMOVED_MESSAGE
+    assert ctx.run_signal == JOB_FILES_REMOVED_MESSAGE
     assert ctx.run_status == 1
 
 
