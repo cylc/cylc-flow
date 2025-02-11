@@ -46,7 +46,7 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
-JOB_FILES_REMOVED_MESSAGE = 'Job files have been removed'
+JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
 
 
 class JobPollContext():
