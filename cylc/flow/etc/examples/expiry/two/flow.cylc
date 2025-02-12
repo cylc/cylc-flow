@@ -1,0 +1,46 @@
+[meta]
+    description = """
+        If the workflow runs slowly and the cycle time gets behind the real
+        world (wallclock) time, then it will skip tasks until it catches up.
+
+        A cycle may be skipped part way through to allow the workflow to catch
+        up faster.
+
+        When this workflow starts up, the first cycle will be one minute ahead
+        of the wallclock time. At some point in the cycle, the wallclock time
+        will overtake the cycle time and the next task in the chain will
+        expire. The workflow will then move onto the next cycle.
+    """
+
+[scheduler]
+    allow implicit tasks = True
+
+[scheduling]
+    # start the workflow at 00:00am this morning
+    initial cycle point = PT1M
+
+    # any task in the workflow will "expire" rather than run if the cycle
+    # time falls behind the wallclock time
+    [[special tasks]]
+        clock-expire = start, a, b, c, d, housekeep
+
+    [[graph]]
+        P1D = """
+            # the chain of tasks we want to run
+            start => a => b => c => d => housekeep
+
+            # start the next cycle as soon as the previous cycle has finished
+            # OR and task in the previous cycle has expired
+            housekeep[-P1D]
+                | start[-P1D]:expire?
+                | a[-P1D]:expired?
+                | b[-P1D]:expired?
+                | c[-P1D]:expired?
+                | d[-P1D]:expired?
+                | housekeep[-P1D]:expired?
+            => start
+        """
+
+[runtime]
+    [[root]]
+        script = sleep 12
