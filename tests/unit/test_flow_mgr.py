@@ -48,7 +48,7 @@ def test_all(
 
     db_mgr = WorkflowDatabaseManager()
     flow_mgr = FlowMgr(db_mgr)
-    caplog.set_level(logging.INFO, CYLC_LOG)
+    caplog.set_level(logging.DEBUG, CYLC_LOG)
 
     meta = "the quick brown fox"
     assert flow_mgr.get_flow_num(None, meta) == 1

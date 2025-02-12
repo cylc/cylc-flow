@@ -42,11 +42,12 @@ state: succeeded
 prerequisites: (n/a for past tasks)
 __END__
 
+# Note trigger command satisfies off-flow prerequisites.
 TEST_NAME="${TEST_NAME_BASE}-show.present"
 contains_ok "${WORKFLOW_RUN_DIR}/show-c.txt" <<__END__
 state: running
 prerequisites: ('⨯': not satisfied)
-  ⨯ 1/b succeeded
+  ✓ 1/b succeeded
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}-show.future"
