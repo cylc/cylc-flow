@@ -212,6 +212,7 @@ class TaskJobManager:
 
     def kill_prep_task(self, itask: 'TaskProxy') -> None:
         """Kill a preparing task."""
+        itask.summary['platforms_used'][itask.submit_num] = ''
         itask.waiting_on_job_prep = False
         itask.local_job_file_path = None  # reset for retry
         self._set_retry_timers(itask)
