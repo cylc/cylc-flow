@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check restart in alpha, maind, and omega graphs.
+# Check restart in and between alpha, R1, P1, and omega graphs.
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 8
 
 install_and_validate
 
 SRC_DIR="$TEST_SOURCE_DIR/${TEST_NAME_BASE}"
 RUN_DIR="$WORKFLOW_RUN_DIR"
 
-for RUN in 1 2 3 4; do
+for RUN in $(seq 0 6); do
     cp "${SRC_DIR}/reference.log.$RUN" "${RUN_DIR}/reference.log"
     reftest_run "${TEST_NAME_BASE}-${RUN}"
 done
