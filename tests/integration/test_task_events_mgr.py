@@ -151,13 +151,7 @@ async def test__always_insert_task_job(
     schd = scheduler(id_, run_mode='live')
     schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
     async with start(schd):
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir,
-            run_mode=RunMode('live')
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Both tasks are in a waiting state:
         assert all(

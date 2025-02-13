@@ -159,8 +159,16 @@ class TaskJobManager:
         REMOTE_INIT_IN_PROGRESS: REMOTE_INIT_MSG
     }
 
-    def __init__(self, workflow, proc_pool, workflow_db_mgr,
-                 task_events_mgr, data_store_mgr, bad_hosts):
+    def __init__(
+        self,
+        workflow,
+        proc_pool,
+        workflow_db_mgr,
+        task_events_mgr,
+        data_store_mgr,
+        bad_hosts,
+        server,
+    ):
         self.workflow: str = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
@@ -171,7 +179,8 @@ class TaskJobManager:
         self.bad_hosts = bad_hosts
         self.bad_hosts_to_clear = set()
         self.task_remote_mgr = TaskRemoteMgr(
-            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr)
+            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr, server
+        )
 
     def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.
@@ -267,13 +276,31 @@ class TaskJobManager:
 
     def submit_task_jobs(
         self,
-        workflow,
         itasks: 'Iterable[TaskProxy]',
-        curve_auth,
-        client_pub_key_dir,
-        run_mode: RunMode = RunMode.LIVE,
+        run_mode: RunMode,
     ) -> 'List[TaskProxy]':
         """Prepare for job submission and submit task jobs.
+
+        Return: tasks that attempted submission.
+        """
+        # submit "simulation/skip" mode tasks, modify "dummy" task configs:
+        itasks, submitted_nonlive_tasks = self.submit_nonlive_task_jobs(
+            self.workflow, itasks, run_mode
+        )
+
+        # submit "live" mode tasks (and "dummy" mode tasks)
+        submitted_live_tasks = self.submit_livelike_task_jobs(
+            self.workflow, itasks
+        )
+
+        return submitted_nonlive_tasks + submitted_live_tasks
+
+    def submit_livelike_task_jobs(
+        self,
+        workflow: str,
+        itasks: 'Iterable[TaskProxy]',
+    ) -> 'List[TaskProxy]':
+        """Submission for live tasks and dummy tasks.
 
         Preparation (host selection, remote host init, and remote install)
         is done asynchronously. Newly released tasks may be sent here several
@@ -285,22 +312,7 @@ class TaskJobManager:
 
         This method uses prep_submit_task_jobs() as helper.
 
-        Return (list): list of tasks that attempted submission.
-        """
-        # submit "simulation/skip" mode tasks, modify "dummy" task configs:
-        itasks, submitted_nonlive_tasks = self.submit_nonlive_task_jobs(
-            workflow, itasks, run_mode)
-
-        # submit "live" mode tasks (and "dummy" mode tasks)
-        submitted_live_tasks = self.submit_livelike_task_jobs(
-            workflow, itasks, curve_auth, client_pub_key_dir)
-
-        return submitted_nonlive_tasks + submitted_live_tasks
-
-    def submit_livelike_task_jobs(
-        self, workflow, itasks, curve_auth, client_pub_key_dir
-    ) -> 'List[TaskProxy]':
-        """Submission for live tasks and dummy tasks.
+        Return: tasks that attempted submission.
         """
         done_tasks: 'List[TaskProxy]' = []
         # Mapping of platforms to task proxies:
@@ -404,8 +416,7 @@ class TaskJobManager:
 
                 elif install_target not in ri_map:
                     # Remote init not in progress for target, so start it.
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -433,8 +444,7 @@ class TaskJobManager:
                     # Remote init previously failed because a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -457,8 +467,7 @@ class TaskJobManager:
                 )
             except NoHostsError:
                 del ri_map[install_target]
-                self.task_remote_mgr.remote_init(
-                    platform, curve_auth, client_pub_key_dir)
+                self.task_remote_mgr.remote_init(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(

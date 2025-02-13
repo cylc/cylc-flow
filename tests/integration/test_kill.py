@@ -105,7 +105,7 @@ async def test_kill_preparing(
 
 
 async def test_kill_preparing_pipeline(
-    flow, scheduler, run, monkeypatch: pytest.MonkeyPatch
+    flow, scheduler, start, monkeypatch: pytest.MonkeyPatch
 ):
     """Test killing a preparing task through various stages of the preparing
     pipeline that involve submitting subprocesses and waiting for them to
@@ -120,7 +120,7 @@ async def test_kill_preparing_pipeline(
     schd: Scheduler = scheduler(
         flow('one'), run_mode='live', paused_start=False
     )
-    async with run(schd):
+    async with start(schd):
         remote_mgr = schd.task_job_mgr.task_remote_mgr
         mock_eval_platform = Mock(return_value=None)
         monkeypatch.setattr(remote_mgr, 'eval_platform', mock_eval_platform)
@@ -131,10 +131,12 @@ async def test_kill_preparing_pipeline(
         itask = schd.pool.get_tasks()[0]
 
         # Platform eval:
-        await task_state(itask, TASK_STATUS_PREPARING)
+        schd.submit_task_jobs([itask])
+        assert itask.state(TASK_STATUS_PREPARING)
         assert schd.release_tasks_to_run() is False
         await run_cmd(kill_tasks(schd, [itask.identity]))
-        await task_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        assert itask.state(TASK_STATUS_SUBMIT_FAILED)
+        assert schd.release_tasks_to_run() is False
         # Set to finished:
         mock_eval_platform.return_value = LOCALHOST
         # Should not submit after finish because it was killed:
@@ -142,11 +144,12 @@ async def test_kill_preparing_pipeline(
 
         # Remote init:
         patch_remote_init(schd, REMOTE_INIT_IN_PROGRESS)
-        schd.pool._force_trigger(itask)
-        await task_state(itask, TASK_STATUS_PREPARING)
+        schd.submit_task_jobs([itask])
+        assert itask.state(TASK_STATUS_PREPARING)
         assert schd.release_tasks_to_run() is False
         await run_cmd(kill_tasks(schd, [itask.identity]))
-        await task_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        assert itask.state(TASK_STATUS_SUBMIT_FAILED)
+        assert schd.release_tasks_to_run() is False
         # Set to finished:
         patch_remote_init(schd, REMOTE_INIT_DONE)
         # Should not submit after finish because it was killed:
@@ -155,11 +158,12 @@ async def test_kill_preparing_pipeline(
 
         # Remote file install:
         patch_remote_init(schd, REMOTE_FILE_INSTALL_IN_PROGRESS)
-        schd.pool._force_trigger(itask)
-        await task_state(itask, TASK_STATUS_PREPARING)
+        schd.submit_task_jobs([itask])
+        assert itask.state(TASK_STATUS_PREPARING)
         assert schd.release_tasks_to_run() is False
         await run_cmd(kill_tasks(schd, [itask.identity]))
-        await task_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        assert itask.state(TASK_STATUS_SUBMIT_FAILED)
+        assert schd.release_tasks_to_run() is False
         # Set to finished:
         patch_remote_init(schd, REMOTE_FILE_INSTALL_DONE)
         # Should not submit after finish because it was killed:
