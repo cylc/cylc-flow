@@ -424,14 +424,14 @@ def capture_submission():
     def _disable_submission(schd: 'Scheduler') -> 'Set[TaskProxy]':
         submitted_tasks: 'Set[TaskProxy]' = set()
 
-        def _submit_task_jobs(_, itasks, *args, **kwargs):
+        def _submit_task_jobs(itasks):
             nonlocal submitted_tasks
             for itask in itasks:
                 itask.state_reset(TASK_STATUS_SUBMITTED)
             submitted_tasks.update(itasks)
             return itasks
 
-        schd.task_job_mgr.submit_task_jobs = _submit_task_jobs  # type: ignore
+        schd.submit_task_jobs = _submit_task_jobs  # type: ignore
         return submitted_tasks
 
     return _disable_submission
@@ -564,7 +564,7 @@ def reflog():
     """
 
     def _reflog(schd: 'Scheduler', flow_nums: bool = False) -> Set[tuple]:
-        submit_task_jobs = schd.task_job_mgr.submit_task_jobs
+        submit_task_jobs = schd.submit_task_jobs
         triggers = set()
 
         def _submit_task_jobs(*args, **kwargs):
@@ -580,7 +580,7 @@ def reflog():
                     triggers.add((itask.identity, deps or None))
             return itasks
 
-        schd.task_job_mgr.submit_task_jobs = _submit_task_jobs
+        schd.submit_task_jobs = _submit_task_jobs
 
         return triggers
 

@@ -95,11 +95,7 @@ async def test_force_trigger_does_not_override_run_mode(
         schd.pool.force_trigger_tasks('1/foo', [1])
 
         # ... but job submission will always change this to the correct mode:
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            [foo],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir)
+        schd.submit_task_jobs([foo])
 
         assert foo.run_mode.value == 'skip'
 
@@ -157,10 +153,6 @@ async def test_run_mode_override_from_broadcast(
         foo_1000 = schd.pool.get_task(ISO8601Point('1000'), 'foo')
         foo_1001 = schd.pool.get_task(ISO8601Point('1001'), 'foo')
 
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            [foo_1000, foo_1001],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir)
+        schd.submit_task_jobs([foo_1000, foo_1001])
         assert foo_1000.run_mode.value == 'skip'
         assert capture_live_submissions() == {'1001/foo'}

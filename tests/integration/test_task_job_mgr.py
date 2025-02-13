@@ -223,11 +223,7 @@ async def test_broadcast_platform_change(
         schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
 
         # Attempt job submission:
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir)
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Check that task platform hasn't become "localhost":
         assert schd.pool.get_tasks()[0].platform['name'] == 'foo'

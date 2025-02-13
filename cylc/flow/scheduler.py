@@ -19,6 +19,7 @@ import asyncio
 from collections import deque
 from contextlib import suppress
 import itertools
+import logging
 import os
 from pathlib import Path
 from queue import (
@@ -82,6 +83,7 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
     FlowMgr,
     repr_flow_nums,
+    stringify_flow_nums,
 )
 from cylc.flow.host_select import (
     HostSelectException,
@@ -440,7 +442,8 @@ class Scheduler:
             self.workflow_db_mgr,
             self.task_events_mgr,
             self.data_store_mgr,
-            self.bad_hosts
+            self.bad_hosts,
+            self.server,
         )
 
         self.profiler = Profiler(self, self.options.profile_mode)
@@ -910,9 +913,7 @@ class Scheduler:
             if install_target == get_localhost_install_target():
                 continue
             # set off remote init
-            self.task_job_mgr.task_remote_mgr.remote_init(
-                platform, self.server.curve_auth,
-                self.server.client_pub_key_dir)
+            self.task_job_mgr.task_remote_mgr.remote_init(platform)
             # Remote init/file-install is done via process pool
             self.proc_pool.process()
             # add platform to map (to be picked up on main loop)
@@ -1078,9 +1079,14 @@ class Scheduler:
         to_kill: List[TaskProxy] = []
         unkillable: List[TaskProxy] = []
         for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                if itask.state_reset(is_held=True):
-                    self.data_store_mgr.delta_task_state(itask)
+            if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                unkillable.append(itask)
+                continue
+            if itask.state_reset(is_held=True):
+                self.data_store_mgr.delta_task_state(itask)
+            if itask.state(TASK_STATUS_PREPARING):
+                self.task_job_mgr.kill_prep_task(itask)
+            else:
                 to_kill.append(itask)
                 if jobless:
                     # Directly set failed in sim mode:
@@ -1088,8 +1094,6 @@ class Scheduler:
                         itask, 'CRITICAL', TASK_STATUS_FAILED,
                         flag=self.task_events_mgr.FLAG_RECEIVED
                     )
-            else:
-                unkillable.append(itask)
         if warn and unkillable:
             LOG.warning(
                 "Tasks not killable: "
@@ -1250,6 +1254,7 @@ class Scheduler:
         """
         fields = workflow_files.ContactFileFields
         proc = psutil.Process()
+        platform = get_platform()
         # fmt: off
         return {
             fields.API:
@@ -1275,11 +1280,11 @@ class Scheduler:
             fields.VERSION:
                 CYLC_VERSION,
             fields.SCHEDULER_SSH_COMMAND:
-                str(get_platform()['ssh command']),
+                str(platform['ssh command']),
             fields.SCHEDULER_CYLC_PATH:
-                str(get_platform()['cylc path']),
+                str(platform['cylc path']),
             fields.SCHEDULER_USE_LOGIN_SHELL:
-                str(get_platform()['use login shell'])
+                str(platform['use login shell'])
         }
         # fmt: on
 
@@ -1531,28 +1536,31 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.rsync_includes = (
             self.config.get_validated_rsync_includes())
 
-        log = LOG.debug
-        if self.options.reftest or self.options.genref:
-            log = LOG.info
+        submitted = self.submit_task_jobs(itasks)
+        if not submitted:
+            return False
 
-        for itask in self.task_job_mgr.submit_task_jobs(
-            self.workflow,
-            itasks,
-            self.server.curve_auth,
-            self.server.client_pub_key_dir,
-            run_mode=self.get_run_mode()
-        ):
-            if itask.flow_nums:
-                flow = ','.join(str(i) for i in itask.flow_nums)
-            else:
-                flow = FLOW_NONE
-            log(
+        log_lvl = logging.DEBUG
+        if self.options.reftest or self.options.genref:
+            log_lvl = logging.INFO
+
+        for itask in submitted:
+            flow = stringify_flow_nums(itask.flow_nums) or FLOW_NONE
+            LOG.log(
+                log_lvl,
                 f"{itask.identity} -triggered off "
                 f"{itask.state.get_resolved_dependencies()} in flow {flow}"
             )
 
         # one or more tasks were passed through the submission pipeline
         return True
+
+    def submit_task_jobs(
+        self, itasks: 'Iterable[TaskProxy]'
+    ) -> 'List[TaskProxy]':
+        """Submit task jobs, return tasks that attempted submission."""
+        # Note: keep this as simple wrapper for task job mgr's method
+        return self.task_job_mgr.submit_task_jobs(itasks, self.get_run_mode())
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
