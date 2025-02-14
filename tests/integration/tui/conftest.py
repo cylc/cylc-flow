@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import re
 from time import sleep
-from uuid import uuid1
+from secrets import token_hex
 
 import pytest
 from urwid.display import html_fragment
@@ -211,7 +211,7 @@ class RakiuraSession:
             )
             if exc:
                 msg += f'\n{exc}'
-            self.compare_screenshot(f'fail-{uuid1()}', msg, 1)
+            self.compare_screenshot(f'fail-{token_hex(4)}', msg, 1)
 
 
 @pytest.fixture

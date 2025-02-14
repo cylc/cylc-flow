@@ -15,18 +15,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
+import json
 from pathlib import Path
 import sqlite3
+from types import SimpleNamespace
+from typing import (
+    List,
+    Optional,
+    Tuple,
+)
 import unittest
 from unittest import mock
-from tempfile import mktemp
-from types import SimpleNamespace
 
 import pytest
 
 from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.flow_mgr import FlowNums
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.util import serialise_set
 
 
 GLOBAL_CONFIG = """
@@ -93,10 +99,8 @@ class TestRunDb(unittest.TestCase):
 @contextlib.contextmanager
 def create_temp_db():
     """Create and tidy a temporary database for testing purposes."""
-    temp_db = mktemp()
-    conn = sqlite3.connect(temp_db)
-    yield (temp_db, conn)
-    os.remove(temp_db)
+    conn = sqlite3.connect(':memory:')
+    yield conn
     conn.close()  # doesn't raise error on re-invocation
 
 
@@ -108,7 +112,9 @@ def test_operational_error(tmp_path, caplog):
         # stage some stuff
         dao.add_delete_item(CylcWorkflowDAO.TABLE_TASK_JOBS)
         dao.add_insert_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
-        dao.add_update_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+        dao.add_update_item(
+            CylcWorkflowDAO.TABLE_TASK_JOBS, ({'pub': None}, {})
+        )
 
         # connect the to DB
         dao.connect()
@@ -175,3 +181,53 @@ def test_select_task_pool_for_restart_if_not_platforms(tmp_path):
         match='not defined.*\n.*foo.*\n.*bar'
     ):
         dao.select_task_pool_for_restart(callback)
+
+
+@pytest.mark.parametrize(
+    'values, expected',
+    [
+        pytest.param(
+            [
+                ({1, 2}, '2021-01-01T00:00:00'),
+                ({3, 4}, '2021-01-01T00:00:02'),
+                ({5, 6}, '2021-01-01T00:00:01'),
+            ],
+            {3, 4},
+            id="basic"
+        ),
+        pytest.param(
+            [
+                ({2}, '2021-01-01T00:00:00'),
+                (set(), '2021-01-01T00:00:01'),
+                (set(), '2021-01-01T00:00:02'),
+            ],
+            {2},
+            id="ignore flow=none"
+        ),
+        pytest.param(
+            [
+                (set(), '2021-01-01T00:00:01'),
+                (set(), '2021-01-01T00:00:02'),
+            ],
+            None,
+            id="all flow=none"
+        ),
+    ],
+)
+def test_select_latest_flow_nums(
+    values: List[Tuple[FlowNums, str]], expected: Optional[FlowNums]
+):
+    with CylcWorkflowDAO(':memory:') as dao:
+        conn = dao.connect()
+        conn.execute(
+            "CREATE TABLE task_states (flow_nums TEXT, time_created TEXT)"
+        )
+        for (fnums, timestamp) in values:
+            conn.execute(
+                "INSERT INTO task_states VALUES ("
+                f"{json.dumps(serialise_set(fnums))}, {json.dumps(timestamp)}"
+                ")"
+            )
+        conn.commit()
+
+        assert dao.select_latest_flow_nums() == expected

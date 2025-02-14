@@ -210,12 +210,10 @@ class JobRunnerManager():
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
             # Note: Print STDERR to STDOUT may look a bit strange, but it
             # requires less logic for the workflow to parse the output.
-            if err.strip():
-                for line in err.splitlines(True):
-                    if not line.endswith("\n"):
-                        line += "\n"
-                    sys.stdout.write("%s%s|%s|%s" % (
-                        self.OUT_PREFIX_CMD_ERR, now, job_log_dir, line))
+            for line in err.strip().splitlines():
+                sys.stdout.write(
+                    f"{self.OUT_PREFIX_CMD_ERR}{now}|{job_log_dir}|{line}\n"
+                )
 
     def jobs_poll(self, job_log_root, job_log_dirs):
         """Poll multiple jobs.
@@ -303,13 +301,13 @@ class JobRunnerManager():
             sys.stdout.write("%s%s|%s|%d|%s\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code, job_id))
             for key, value in [("STDERR", err), ("STDOUT", out)]:
-                if value is None or not value.strip():
+                if value is None:
                     continue
-                for line in value.splitlines(True):
-                    if not value.endswith("\n"):
-                        value += "\n"
-                    sys.stdout.write("%s%s|%s|[%s] %s" % (
-                        self.OUT_PREFIX_COMMAND, now, job_log_dir, key, line))
+                for line in value.strip().splitlines():
+                    sys.stdout.write(
+                        f"{self.OUT_PREFIX_COMMAND}{now}"
+                        f"|{job_log_dir}|[{key}] {line}\n"
+                    )
 
     def job_kill(self, st_file_path):
         """Ask job runner to terminate the job specified in "st_file_path".
@@ -375,14 +373,15 @@ class JobRunnerManager():
 
     @classmethod
     def _create_nn(cls, job_file_path):
-        """Create NN symbolic link, if necessary.
+        """Create NN symbolic link if necessary, and remove any old job logs.
 
-        If NN => 01, remove numbered directories with submit numbers greater
-        than 01.
+        If NN => 01, remove numbered dirs with submit numbers greater than 01.
+
         Helper for "self._job_submit_impl".
 
         """
         job_file_dir = os.path.dirname(job_file_path)
+
         source = os.path.basename(job_file_dir)
         task_log_dir = os.path.dirname(job_file_dir)
         nn_path = os.path.join(task_log_dir, "NN")
@@ -395,6 +394,7 @@ class JobRunnerManager():
             old_source = None
         if old_source is None:
             os.symlink(source, nn_path)
+
         # On submit 1, remove any left over digit directories from prev runs
         if source == "01":
             for name in os.listdir(task_log_dir):
@@ -402,6 +402,11 @@ class JobRunnerManager():
                     # Ignore errors, not disastrous if rmtree fails
                     rmtree(
                         os.path.join(task_log_dir, name), ignore_errors=True)
+
+        # Delete old job logs if necessary
+        for name in JOB_LOG_ERR, JOB_LOG_OUT:
+            with suppress(FileNotFoundError):
+                os.unlink(os.path.join(job_file_dir, name))
 
     @classmethod
     def _filter_submit_output(cls, st_file_path, job_runner, out, err):
@@ -569,9 +574,6 @@ class JobRunnerManager():
 
         # Create NN symbolic link, if necessary
         self._create_nn(job_file_path)
-        for name in JOB_LOG_ERR, JOB_LOG_OUT:
-            with suppress(OSError):
-                os.unlink(os.path.join(job_file_path, name))
 
         # Start new status file
         with open(f"{job_file_path}.status", "w") as job_status_file:

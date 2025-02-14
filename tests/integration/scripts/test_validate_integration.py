@@ -18,9 +18,12 @@
 
 """Integration tests for Cylc Validate CLI script."""
 
-from cylc.flow.parsec.exceptions import IllegalItemError
+import logging
+
 import pytest
-from cylc.flow.parsec.exceptions import Jinja2Error
+
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.parsec.exceptions import IllegalItemError, Jinja2Error
 
 
 async def test_validate_against_source_checks_source(
@@ -158,7 +161,7 @@ def test_pre_cylc8(flow, validate, caplog):
         assert warning in caplog.messages
 
 
-def test_graph_upgrade_msg_default(flow, validate, caplog):
+def test_graph_upgrade_msg_default(flow, validate, caplog, log_filter):
     """It lists Cycling definitions which need upgrading."""
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
@@ -171,11 +174,11 @@ def test_graph_upgrade_msg_default(flow, validate, caplog):
         },
     })
     validate(id_)
-    assert '[scheduling][dependencies][X]graph' in caplog.messages[0]
-    assert 'for X in:\n       P1Y, R1' in caplog.messages[0]
+    assert log_filter(contains='[scheduling][dependencies][X]graph')
+    assert log_filter(contains='for X in:\n       P1Y, R1')
 
 
-def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
+def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
     """It gives a more useful message in special case where graph is
     key rather than section:
 
@@ -188,11 +191,12 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog):
         'scheduling': {'dependencies': {'graph': 'foo => bar'}},
     })
     validate(id_)
-    expect = ('[scheduling][dependencies]graph -> [scheduling][graph]R1')
-    assert expect in caplog.messages[0]
+    assert log_filter(
+        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1'
+    )
 
 
-def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
+def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
     """Both an implicit R1 and explict reccurance exist:
     It appends a note.
     """
@@ -212,4 +216,37 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog):
         '\n       P1Y, graph'
         '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
     )
-    assert expect in caplog.messages[0]
+    assert log_filter(contains=expect)
+
+
+def test_undefined_parent(flow, validate):
+    """It should catch tasks which inherit from implicit families."""
+    id_ = flow({
+        'scheduling': {'graph': {'R1': 'foo'}},
+        'runtime': {'foo': {'inherit': 'FOO'}}
+    })
+    with pytest.raises(WorkflowConfigError, match='undefined parent for foo'):
+        validate(id_)
+
+
+def test_log_parent_demoted(flow, validate, monkeypatch, caplog, log_filter):
+    """It should log family "demotion" in verbose mode."""
+    monkeypatch.setattr(
+        'cylc.flow.flags.verbosity',
+        10,
+    )
+    caplog.set_level(logging.DEBUG)
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo'
+            }
+        },
+        'runtime': {
+            'foo': {'inherit': 'None, FOO'},
+            'FOO': {},
+        }
+    })
+    validate(id_)
+    assert log_filter(contains='First parent(s) demoted to secondary')
+    assert log_filter(contains="FOO as parent of 'foo'")

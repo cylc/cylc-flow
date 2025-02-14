@@ -70,7 +70,7 @@ cylc workflow-state "${WORKFLOW_NAME}" \
     --status=running \
     --interval=1 \
     --max-polls=10 1>'/dev/null' 2>&1
-cylc dump -r "${WORKFLOW_NAME}" >'cylc-dump.out'
+cylc dump -l -r "${WORKFLOW_NAME}" >'cylc-dump.out'
 
 test_dump 'cylc-dump.out'
 

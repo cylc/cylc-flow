@@ -50,51 +50,67 @@ pyproject.toml configuration:
    max-line-length = 130        # Max line length for linting
 """
 import functools
-from pathlib import Path
+import pkgutil
 import re
-import sys
 import shutil
+import sys
+from collections import Counter
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Counter as CounterType,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Union,
+)
+
 try:
     # BACK COMPAT: tomli
     #   Support for Python versions before tomllib was added to the
     #   standard library.
     # FROM: Python 3.7
     # TO: Python: 3.10
-    from tomli import (
-        loads as toml_loads,
-        TOMLDecodeError,
-    )
+    from tomli import TOMLDecodeError, loads as toml_loads
 except ImportError:
     from tomllib import (  # type: ignore[no-redef]
         loads as toml_loads,
         TOMLDecodeError,
     )
-from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Union
-)
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import LOG
-from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
+from cylc.flow import LOG, job_runner_handlers
+from cylc.flow.cfgspec.workflow import SPEC, upg
+from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
-    WORKFLOW_ID_OR_PATH_ARG_DOC
 )
-from cylc.flow.cfgspec.workflow import upg, SPEC
-from cylc.flow.id_cli import parse_id
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED,
+)
 from cylc.flow.terminal import cli_function
 
+
 if TYPE_CHECKING:
+    from optparse import Values
+
     # BACK COMPAT: typing_extensions.Literal
     # FROM: Python 3.7
     # TO: Python 3.8
     from typing_extensions import Literal
-    from optparse import Values
+
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
 LINT_SECTION = '.'.join(LINT_TABLE)
@@ -138,15 +154,16 @@ OBSOLETE_ENV_VARS = {
 
 
 DEPRECATED_STRING_TEMPLATES = {
-    'suite': 'workflow',
-    'suite_uuid': 'uuid',
-    'batch_sys_name': 'job_runner_name',
-    'batch_sys_job_id': 'job_id',
-    'user@host': 'platform_name',
-    'task_url': '``URL`` (if set in :cylc:conf:`[meta]URL`)',
-    'workflow_url': (
-        '``workflow_URL`` (if set in '
-        ':cylc:conf:`[runtime][<namespace>][meta]URL`)'),
+    'suite': ['workflow'],
+    'suite_uuid': ['uuid'],
+    'batch_sys_name': ['job_runner_name'],
+    'batch_sys_job_id': ['job_id'],
+    'user@host': ['platform_name'],
+    'task_url': ['URL', '(if set in :cylc:conf:`[meta]URL`)'],
+    'workflow_url': [
+        'workflow_URL',
+        '(if set in :cylc:conf:`[runtime][<namespace>][meta]URL`)',
+    ],
 }
 
 
@@ -160,6 +177,58 @@ deprecated_string_templates = {
     )
     for key, value in DEPRECATED_STRING_TEMPLATES.items()
 }
+
+
+def get_wallclock_directives():
+    """Get a set of directives equivalent to execution time limit"""
+    job_runner_manager = JobRunnerManager()
+    directives = {}
+    for module in pkgutil.iter_modules(job_runner_handlers.__path__):
+        directive = getattr(
+            job_runner_manager._get_sys(module.name),
+            'TIME_LIMIT_DIRECTIVE',
+            None
+        )
+        if directive and directive == '-W':
+            # LSF directive -W needs to have a particular form to
+            # avoid matching PBS directive -W:
+            directives[module.name] = re.compile(
+                r'^-W\s*=?\s*(\d+:)?\d+[^/]*$')
+        elif directive:
+            directives[module.name] = re.compile(rf'^{directive}.*')
+    return directives
+
+
+WALLCLOCK_DIRECTIVES = get_wallclock_directives()
+
+
+def check_wallclock_directives(line: str) -> Dict[str, str]:
+    """Check for job runner specific directives
+    equivalent to exection time limit.
+
+    It's recommended that users prefer execution time limit
+    because it gives the Cylc scheduler awareness should communications
+    with a remote job runner be lost.
+
+    Examples:
+        >>> this = check_wallclock_directives
+        >>> this('    -W 42:22')
+        {'directive': '-W 42:22'}
+        >>> this('    -W 42:22/hostname')  # Legit LSF use case
+        {}
+        >>> this('    -W 422')
+        {'directive': '-W 422'}
+        >>> this('    -W foo=42')  # Legit PBS use case.
+        {}
+        >>> this('    -W foo="Hello World"')  # Legit PBS use case.
+        {}
+        >>> this('    -l walltime whatever')
+        {'directive': '-l walltime whatever'}
+    """
+    for directive in set(WALLCLOCK_DIRECTIVES.values()):
+        if directive.findall(line.strip()):
+            return {'directive': line.strip()}
+    return {}
 
 
 def check_jinja2_no_shebang(
@@ -310,20 +379,53 @@ def check_for_deprecated_task_event_template_vars(
         >>> this('hello = "My name is %(suite)s"')
         {'suggest': '\\n    * %(suite)s ⇒ %(workflow)s'}
 
-        >>> this('hello = "My name is %(suite)s, %(task_url)s"')
-        {'suggest': '\\n    * %(suite)s ⇒ %(workf...cylc:conf:`[meta]URL`)'}
+        >>> this('x = %(user@host)s, %(suite)')
+        {'suggest': '\\n    * %(user@host)s ⇒ %(platform_name)s'}
+
+        >>> this('x = %(task_url)s')
+        {'suggest': '\\n    * %(task_url)s ⇒ %(URL)s (if set in ...)'}
     """
-    result = []
-    for key, (regex, replacement) in deprecated_string_templates.items():
-        search_outcome = regex.findall(line)
-        if search_outcome and ' ' in replacement:
-            result.append(f'%({key})s - get {replacement}')
-        elif search_outcome:
-            result.append(f'%({key})s ⇒ %({replacement})s')
+    result = [
+        f"%({key})s ⇒ %({replacement})s {' '.join(extra)}".rstrip()
+        for key, (
+            regex, (replacement, *extra),
+        ) in deprecated_string_templates.items()
+        if regex.findall(line)
+    ]
 
     if result:
         return {'suggest': LIST_ITEM + LIST_ITEM.join(result)}
     return None
+
+
+BAD_SKIP_OUTS = re.compile(r'outputs\s*=\s*(.*)')
+
+
+def check_skip_mode_outputs(line: str) -> Dict:
+    """Ensure skip mode output setting doesn't include
+    succeeded _and_ failed, as they are mutually exclusive.
+
+    n.b.
+
+    This should be separable from ``[[outputs]]`` because it's a key
+    value pair not a section heading.
+
+    Examples:
+        >>> this = check_skip_mode_outputs
+        >>> this('outputs = succeeded, failed')
+        {'description': 'are ... together', 'outputs': 'failed...succeeded'}
+    """
+
+    outputs = BAD_SKIP_OUTS.findall(line)
+    if outputs:
+        outputs = [i.strip() for i in outputs[0].split(',')]
+        if TASK_OUTPUT_FAILED in outputs and TASK_OUTPUT_SUCCEEDED in outputs:
+            return {
+                'description':
+                    'are mutually exclusive and cannot be used together',
+                'outputs': f'{TASK_OUTPUT_FAILED} and {TASK_OUTPUT_SUCCEEDED}'
+            }
+    return {}
 
 
 INDENTATION = re.compile(r'^(\s*)(.*)')
@@ -368,8 +470,6 @@ FAM_NAME_IGNORE_REGEX = re.compile(
         | <[^>]+>
         # or Jinja2
         | {{.*?}} | {%.*?%} | {\#.*?\#}
-        # or EmPy
-        | (@[\[{\(]).*([\]\}\)])
     ''',
     re.X
 )
@@ -547,7 +647,40 @@ STYLE_CHECKS = {
     'S013': {
         'short': 'Items should be indented in 4 space blocks.',
         FUNCTION: check_indentation
-    }
+    },
+    'S014': {
+        'short': (
+            'Use ``[runtime][TASK]execution time limit``'
+            ' rather than job runner directive: ``{directive}``.'
+        ),
+        'rst': (
+            "Use :cylc:conf:`flow.cylc[runtime][<namespace>]execution "
+            "time limit` rather than directly specifying a timeout "
+            "directive, otherwise Cylc has no way of knowing when the job "
+            "should have finished. Cylc automatically translates the "
+            "execution time limit to the correct timeout directive for the "
+            "particular job runner:\n"
+        )
+        + ''.join((
+            f'\n * ``{directive}`` ({job_runner})'
+            for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
+        )),
+        FUNCTION: check_wallclock_directives,
+    },
+    'S015': {
+        'short': (
+            '``=>`` implies line continuation without ``\\``.'
+        ),
+        FUNCTION: re.compile(r'=>\s*\\').findall
+    },
+    'S016': {
+        'short': 'Task outputs {outputs}: {description}.',
+        FUNCTION: check_skip_mode_outputs
+    },
+    'S017': {
+        'short': 'Run mode is not live: This task will only appear to run.',
+        FUNCTION: re.compile(r'run mode\s*=\s*[^l][^i][^v][^e]$').findall
+    },
 }
 # Subset of deprecations which are tricky (impossible?) to scrape from the
 # upgrader.
@@ -689,12 +822,12 @@ MANUAL_DEPRECATIONS = {
         'short': (
             'Deprecated template variables: {suggest}'),
         'rst': (
-            'The following template variables, mostly used in event handlers,'
-            'are deprecated, and should be replaced:'
-            + ''.join([
-                f'\n * ``{old}`` ⇒ {new}'
-                for old, new in DEPRECATED_STRING_TEMPLATES.items()
-            ])
+            "The following deprecated template variables, mostly used in "
+            "event handlers, should be replaced:\n"
+            + ''.join(
+                f"\n * ``{old}`` ⇒ ``{new}`` {' '.join(extra)}".rstrip()
+                for old, (new, *extra) in DEPRECATED_STRING_TEMPLATES.items()
+            )
         ),
         'url': (
             'https://cylc.github.io/cylc-doc/stable/html/user-guide/'
@@ -714,6 +847,12 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: functools.partial(
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
+    },
+    'U017': {
+        'short': (
+            '``&`` and ``|`` imply line continuation without ``\\``'
+        ),
+        FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']
@@ -819,7 +958,7 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
         try:
             loadeddata = toml_loads(tomlfile.read_text())
         except TOMLDecodeError as exc:
-            raise CylcError(f'pyproject.toml did not load: {exc}')
+            raise CylcError(f'pyproject.toml did not load: {exc}') from None
 
         _tool, _cylc, _lint = LINT_TABLE
         try:
@@ -1073,7 +1212,7 @@ def check_cylc_file(
     file: Path,
     file_rel: Path,
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
@@ -1131,7 +1270,7 @@ def lint(
     file_rel: Path,
     lines: Iterator[str],
     checks: Dict[str, dict],
-    counter: Dict[str, int],
+    counter: CounterType[str],
     modify: bool = False,
     write: Callable = print
 ) -> Iterator[str]:
@@ -1145,7 +1284,7 @@ def lint(
             Iterator which produces one line of text at a time
             e.g. open(file) or iter(['foo\n', 'bar\n', 'baz\n'].
         counter:
-            Dictionary for counting lint hits per category.
+            Counter for counting lint hits per category.
         modify:
             If True, this generator will yield the file one line at a time
             with comments inserted to help users fix their lint.
@@ -1197,7 +1336,6 @@ def lint(
                     msg = check_meta['short'].format(**check)
                 else:
                     msg = check_meta['short']
-                counter.setdefault(check_meta['purpose'], 0)
                 counter[check_meta['purpose']] += 1
                 if modify:
                     # insert a command to help the user
@@ -1432,7 +1570,7 @@ def main(parser: COP, options: 'Values', target=None) -> None:
     )
 
     # Check each file matching a pattern:
-    counter: Dict[str, int] = {}
+    counter: CounterType[str] = Counter()
     for file in get_cylc_files(target, mergedopts[EXCLUDE]):
         LOG.debug(f'Checking {file}')
         check_cylc_file(

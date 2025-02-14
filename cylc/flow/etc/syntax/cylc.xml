@@ -20,7 +20,6 @@
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
         <RegExpr attribute='Keyword' String=' warning handlers '/>
         <RegExpr attribute='Keyword' String=' verbose mode '/>
-        <RegExpr attribute='Keyword' String=' user '/>
         <RegExpr attribute='Keyword' String=' to '/>
         <RegExpr attribute='Keyword' String=' title '/>
         <RegExpr attribute='Keyword' String=' time limit buffer '/>
@@ -43,15 +42,17 @@
         <RegExpr attribute='Keyword' String=' stall handlers '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' special tasks '/>
+        <RegExpr attribute='Keyword' String=' skip '/>
         <RegExpr attribute='Keyword' String=' simulation '/>
         <RegExpr attribute='Keyword' String=' shutdown handlers '/>
+        <RegExpr attribute='Keyword' String=' sequential xtriggers '/>
         <RegExpr attribute='Keyword' String=' sequential '/>
         <RegExpr attribute='Keyword' String=' script '/>
         <RegExpr attribute='Keyword' String=' scheduling '/>
         <RegExpr attribute='Keyword' String=' scheduler '/>
         <RegExpr attribute='Keyword' String=' runtime '/>
         <RegExpr attribute='Keyword' String=' runahead limit '/>
-        <RegExpr attribute='Keyword' String=' run-dir '/>
+        <RegExpr attribute='Keyword' String=' run mode '/>
         <RegExpr attribute='Keyword' String=' retry handlers '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs retry delays '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs max size '/>
@@ -125,10 +126,12 @@
         <RegExpr attribute='Keyword' String=' cycle point format '/>
         <RegExpr attribute='Keyword' String=' custom handlers '/>
         <RegExpr attribute='Keyword' String=' critical handlers '/>
+        <RegExpr attribute='Keyword' String=' completion '/>
         <RegExpr attribute='Keyword' String=' clock-trigger '/>
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>
         <RegExpr attribute='Keyword' String=' batch submit command template '/>
+        <RegExpr attribute='Keyword' String=' alt-cylc-run-dir '/>
         <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
         <RegExpr attribute='Keyword' String=' abort on workflow timeout '/>
         <RegExpr attribute='Keyword' String=' abort on stall timeout '/>

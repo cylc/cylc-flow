@@ -280,7 +280,7 @@ class ParsecValidator:
         try:
             return float(value)
         except ValueError as exc:
-            raise IllegalValueError('float', keys, value, exc=exc)
+            raise IllegalValueError('float', keys, value, exc=exc) from None
 
     @classmethod
     def coerce_float_list(cls, value, keys):
@@ -309,7 +309,7 @@ class ParsecValidator:
         try:
             return int(value)
         except ValueError as exc:
-            raise IllegalValueError('int', keys, value, exc=exc)
+            raise IllegalValueError('int', keys, value, exc=exc) from None
 
     @classmethod
     def coerce_int_list(cls, value, keys):
@@ -480,13 +480,17 @@ class ParsecValidator:
                 try:
                     lvalues.append(type_(item))
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc=exc)
+                    raise IllegalValueError(
+                        'list', keys, item, exc=exc
+                    ) from None
             else:
                 # mult * val
                 try:
                     lvalues += int(mult) * [type_(val)]
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc=exc)
+                    raise IllegalValueError(
+                        'list', keys, item, exc=exc
+                    ) from None
         return lvalues
 
     @classmethod
@@ -832,7 +836,9 @@ class CylcConfigValidator(ParsecValidator):
                     parser.parse(value)
                 return value
             except IsodatetimeError as exc:
-                raise IllegalValueError('cycle point', keys, value, exc=exc)
+                raise IllegalValueError(
+                    'cycle point', keys, value, exc=exc
+                ) from None
         try:
             TimePointParser().parse(value)
         except IsodatetimeError as exc:
@@ -841,7 +847,9 @@ class CylcConfigValidator(ParsecValidator):
                 details = {'msg': "Invalid cycle point"}
             else:
                 details = {'exc': exc}
-            raise IllegalValueError('cycle point', keys, value, **details)
+            raise IllegalValueError(
+                'cycle point', keys, value, **details
+            ) from None
         return value
 
     @classmethod
@@ -883,7 +891,7 @@ class CylcConfigValidator(ParsecValidator):
             except IsodatetimeError as exc:
                 raise IllegalValueError(
                     'cycle point format', keys, value, exc=exc
-                )
+                ) from None
             return value
         if 'X' in value:
             for i in range(1, 101):
@@ -898,7 +906,9 @@ class CylcConfigValidator(ParsecValidator):
         try:
             dumper.dump(test_timepoint, value)
         except IsodatetimeError as exc:
-            raise IllegalValueError('cycle point format', keys, value, exc=exc)
+            raise IllegalValueError(
+                'cycle point format', keys, value, exc=exc
+            ) from None
         return value
 
     @classmethod
@@ -932,7 +942,7 @@ class CylcConfigValidator(ParsecValidator):
         except ValueError as exc:  # not IsodatetimeError as too specific
             raise IllegalValueError(
                 'cycle point time zone format', keys, value, exc=exc
-            )
+            ) from None
         return value
 
     @classmethod
@@ -951,7 +961,9 @@ class CylcConfigValidator(ParsecValidator):
         try:
             interval = DurationParser().parse(value)
         except IsodatetimeError as exc:
-            raise IllegalValueError("ISO 8601 interval", keys, value, exc=exc)
+            raise IllegalValueError(
+                "ISO 8601 interval", keys, value, exc=exc
+            ) from None
         return DurationFloat(interval.get_seconds())
 
     @classmethod
@@ -995,30 +1007,45 @@ class CylcConfigValidator(ParsecValidator):
             >>> CylcConfigValidator.coerce_parameter_list('a, b, c', None)
             ['a', 'b', 'c']
 
+            >>> CylcConfigValidator.coerce_parameter_list('084_132', None)
+            ['084_132']
+
+            >>> CylcConfigValidator.coerce_parameter_list('072, a', None)
+            ['072', 'a']
         """
         items = []
         can_only_be = None   # A flag to prevent mixing str and int range
         for item in cls.strip_and_unquote_list(keys, value):
             values = cls.parse_int_range(item)
             if values is not None:
-                if can_only_be == str:
+                if can_only_be is str:
                     raise IllegalValueError(
                         'parameter', keys, value, 'mixing int range and str')
                 can_only_be = int
                 items.extend(values)
             elif cls._REC_NAME_SUFFIX.match(item):  # noqa: SIM106
                 try:
+                    if '_' in item:
+                        # Disable PEP-515 int coercion; go to except block:
+                        raise ValueError()
                     int(item)
                 except ValueError:
-                    if can_only_be == int:
+                    if can_only_be is int:
                         raise IllegalValueError(
-                            'parameter', keys, value,
-                            'mixing int range and str')
+                            'parameter',
+                            keys,
+                            value,
+                            'mixing int range and str',
+                        ) from None
                     can_only_be = str
                 items.append(item)
             else:
                 raise IllegalValueError(
                     'parameter', keys, value, '%s: bad value' % item)
+
+        if can_only_be is str:
+            return items
+
         try:
             return [int(item) for item in items]
         except ValueError:
@@ -1248,7 +1275,8 @@ class BroadcastConfigValidator(CylcConfigValidator):
                 interval = DurationParser().parse(str(DurationFloat(value)))
             except IsodatetimeError as exc:
                 raise IllegalValueError(
-                    "ISO 8601 interval", keys, value, exc=exc)
+                    "ISO 8601 interval", keys, value, exc=exc
+                ) from None
         return DurationFloat(interval.get_seconds())
 
 

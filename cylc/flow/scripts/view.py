@@ -21,7 +21,7 @@
 Print a processed workflow configuration.
 
 Print workflow configurations as processed before full parsing by Cylc. This
-includes Jinja2 or Empy template processing, and inlining of include-files.
+includes Jinja2 template processing, and inlining of include-files.
 Some explanatory markup may also be requested.
 
 Warning:
@@ -34,6 +34,7 @@ See also `cylc config`, which displays the fully parsed configuration.
 """
 
 import asyncio
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id_async
@@ -42,6 +43,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
 )
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -62,12 +64,6 @@ def get_option_parser():
         default=False, dest="inline")
 
     parser.add_option(
-        "--empy", "-e",
-        help="View after EmPy template processing "
-             "(implies '-i/--inline' as well).",
-        action="store_true", default=False, dest="empy")
-
-    parser.add_option(
         "--jinja2", "-j",
         help="View after Jinja2 template processing "
              "(implies '-i/--inline' as well).",
@@ -75,7 +71,7 @@ def get_option_parser():
 
     parser.add_option(
         "-p", "--process",
-        help="View after all processing (EmPy, Jinja2, inlining, "
+        help="View after all processing (Jinja2, inlining, "
              "line-continuation joining).",
         action="store_true", default=False, dest="process")
 
@@ -122,6 +118,12 @@ async def _main(options: 'Values', workflow_id: str) -> None:
         src=True,
         constraint='workflows',
     )
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if options.against_source:
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
+
     # read in the flow.cylc file
     for line in read_and_proc(
         flow_file,
@@ -130,13 +132,9 @@ async def _main(options: 'Values', workflow_id: str) -> None:
             'mark': options.mark,
             'single': options.single,
             'label': options.label,
-            'empy': options.empy or options.process,
             'jinja2': options.jinja2 or options.process,
             'contin': options.cat or options.process,
-            'inline': (
-                options.jinja2 or options.empy or
-                options.inline or options.process
-            ),
+            'inline': options.jinja2 or options.inline or options.process,
         },
         opts=options,
     ):

@@ -20,8 +20,10 @@ Note: see also functional tests
 """
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.task_state import TASK_STATUS_WAITING, TASK_STATUS_SUCCEEDED
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
 
 
 async def test_set_parentless_spawning(
@@ -45,15 +47,15 @@ async def test_set_parentless_spawning(
             'graph': {'P1': 'a => z'},
         },
     })
-    schd = scheduler(id_, paused_start=False)
+    schd: Scheduler = scheduler(id_, paused_start=False)
     async with run(schd):
         # mark cycle 1 as succeeded
-        schd.pool.set_prereqs_and_outputs(['1/a', '1/z'], ['succeeded'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(
+            ['1/a', '1/z'], ['succeeded'], None, ['1']
+        )
 
         # the parentless task "a" should be spawned out to the runahead limit
-        assert [
-            itask.identity for itask in schd.pool.get_tasks()
-        ] == ['2/a', '3/a']
+        assert schd.pool.get_task_ids() == {'2/a', '3/a'}
 
         # the workflow should run on to the next cycle
         await complete(schd, '2/a', timeout=5)
@@ -106,11 +108,11 @@ async def test_data_store(
             'a': {'outputs': {'x': 'xyz'}},
         },
     })
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         await schd.update_data_structure()
         data = schd.data_store_mgr.data[schd.tokens.id]
-        task_a = data[TASK_PROXIES][
+        task_a: PbTaskProxy = data[TASK_PROXIES][
             schd.pool.get_task(IntegerPoint('1'), 'a').tokens.id
         ]
 
@@ -147,9 +149,9 @@ async def test_incomplete_detection(
 ):
     """It should detect and log finished tasks left with incomplete outputs."""
     schd = scheduler(flow(one_conf))
-    async with start(schd) as log:
+    async with start(schd):
         schd.pool.set_prereqs_and_outputs(['1/one'], ['failed'], None, ['1'])
-    assert log_filter(log, contains='1/one did not complete')
+    assert log_filter(contains='1/one did not complete')
 
 
 async def test_pre_all(flow, scheduler, run):

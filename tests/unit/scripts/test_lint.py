@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests `cylc lint` CLI Utility."""
 
+from collections import Counter
 import logging
 from pathlib import Path
 from pprint import pformat
@@ -44,7 +45,7 @@ from cylc.flow.exceptions import CylcError
 STYLE_CHECKS = parse_checks(['style'])
 UPG_CHECKS = parse_checks(['728'])
 
-TEST_FILE = """
+TEST_FILE = '''
 [visualization]
 
 [cylc]
@@ -97,7 +98,13 @@ TEST_FILE = """
     hold after point = 20220101T0000Z
     [[dependencies]]
         [[[R1]]]
-            graph = MyFaM:finish-all => remote => !mash_theme
+            graph = """
+                MyFaM:finish-all => remote => !mash_theme
+                a & \\
+                b => c
+                c | \\
+                d => e
+            """
 
 [runtime]
     [[root]]
@@ -154,10 +161,10 @@ TEST_FILE = """
             host = `rose host-select thingy`
 
 %include foo.cylc
-"""
+'''
 
 
-LINT_TEST_FILE = """
+LINT_TEST_FILE = '''
 \t[scheduler]
 
  [scheduler]
@@ -167,6 +174,11 @@ LINT_TEST_FILE = """
 {% foo %}
 {{foo}}
 # {{quix}}
+    R1 = """
+        foo & \\
+        bar => \\
+        baz
+    """
 
 [runtime]
     [[this_is_ok]]
@@ -178,9 +190,14 @@ LINT_TEST_FILE = """
 something\t
     [[bar]]
         platform = $(some-script foo)
+            [[[directives]]]
+                -l walltime = 666
     [[baz]]
+        run mode = skip
         platform = `no backticks`
-""" + (
+        [[[skip]]]
+            outputs = succeeded, failed
+''' + (
     '\nscript = the quick brown fox jumps over the lazy dog until it becomes '
     'clear that this line is longer than the default 130 character limit.'
 )
@@ -188,7 +205,7 @@ something\t
 
 def lint_text(text, checks, ignores=None, modify=False):
     checks = parse_checks(checks, ignores)
-    counter = {}
+    counter = Counter()
     messages = []
     outlines = [
         line
@@ -271,7 +288,7 @@ def test_check_cylc_file_line_no():
         'inherit = FOO_BAr',
         # whitespace & trailing commas
         '  inherit  =  a  ,  ',
-        # parameters, jinja2 and empy should be ignored
+        # parameters, templating code should be ignored
         # but any lowercase chars before or after should not
         'inherit = A<x>z',
         'inherit = A{{ x }}z',
@@ -310,8 +327,6 @@ def test_check_lowercase_family_names__true(line):
             'A{{ x }}, {% endfor %}',
             id='jinja2-long'
         ),
-        # empy should be ignored
-        'inherit = A@( a )Z',
         # trailing comments should be ignored
         'inherit = A, B # no, comment',
         'inherit = # a',
@@ -322,13 +337,13 @@ def test_check_lowercase_family_names__true(line):
         'inherit = <a = 1, b - 1>',
         # one really awkward, but valid example
         param(
-            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z, A@(a)Z',
+            'inherit = none, FOO_BAR_0, "<a - 1>", A<a>Z, A{{a}}Z',
             id='awkward'
         ),
     ]
 )
 def test_check_lowercase_family_names__false(line):
-    assert check_lowercase_family_names(line) is False
+    assert check_lowercase_family_names(line) is False 
 
 
 def test_inherit_lowercase_matches():

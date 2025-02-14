@@ -26,19 +26,28 @@ This module provides logic to:
 
 from contextlib import suppress
 import json
-import os
 from logging import (
     CRITICAL,
     DEBUG,
     INFO,
-    WARNING
+    WARNING,
 )
+import os
 from shutil import rmtree
 from time import time
-from typing import TYPE_CHECKING, Any, Union, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from cylc.flow import LOG
-from cylc.flow.job_runner_mgr import JobPollContext
+from cylc.flow.cfgspec.globalcfg import SYSPATH
 from cylc.flow.exceptions import (
     NoHostsError,
     NoPlatformsError,
@@ -48,13 +57,10 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import (
     get_host,
-    is_remote_platform
+    is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.parsec.util import (
-    pdeepcopy,
-    poverride
-)
+from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -63,58 +69,67 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.remote import construct_ssh_cmd
-from cylc.flow.simulation import ModeSettings
+from cylc.flow.run_modes import (
+    WORKFLOW_ONLY_MODES,
+    RunMode,
+)
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_action_timer import (
     TaskActionTimer,
-    TimerFlags
+    TimerFlags,
 )
 from cylc.flow.task_events_mgr import (
     TaskEventsManager,
-    log_task_job_activity
+    log_task_job_activity,
 )
 from cylc.flow.task_job_logs import (
     JOB_LOG_JOB,
     NN,
     get_task_job_activity_log,
     get_task_job_job_log,
-    get_task_job_log
+    get_task_job_log,
 )
 from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUCCEEDED
+    TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED,
     REMOTE_FILE_INSTALL_IN_PROGRESS,
-    REMOTE_INIT_IN_PROGRESS,
     REMOTE_INIT_255,
-    REMOTE_FILE_INSTALL_255,
-    REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
-    TaskRemoteMgr
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED,
+    REMOTE_INIT_IN_PROGRESS,
+    TaskRemoteMgr,
 )
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
-    TASK_STATUSES_ACTIVE
 )
+from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time,
-    get_utc_mode
+    get_utc_mode,
 )
-from cylc.flow.cfgspec.globalcfg import SYSPATH
-from cylc.flow.util import serialise_set
+
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 class TaskJobManager:
@@ -144,19 +159,28 @@ class TaskJobManager:
         REMOTE_INIT_IN_PROGRESS: REMOTE_INIT_MSG
     }
 
-    def __init__(self, workflow, proc_pool, workflow_db_mgr,
-                 task_events_mgr, data_store_mgr, bad_hosts):
-        self.workflow = workflow
+    def __init__(
+        self,
+        workflow,
+        proc_pool,
+        workflow_db_mgr,
+        task_events_mgr,
+        data_store_mgr,
+        bad_hosts,
+        server,
+    ):
+        self.workflow: str = workflow
         self.proc_pool = proc_pool
-        self.workflow_db_mgr = workflow_db_mgr
-        self.task_events_mgr = task_events_mgr
+        self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
+        self.task_events_mgr: TaskEventsManager = task_events_mgr
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
         self.bad_hosts = bad_hosts
         self.bad_hosts_to_clear = set()
         self.task_remote_mgr = TaskRemoteMgr(
-            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr)
+            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr, server
+        )
 
     def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.
@@ -176,24 +200,24 @@ class TaskJobManager:
         if poll_tasks:
             self.poll_task_jobs(workflow, poll_tasks)
 
-    def kill_task_jobs(self, workflow, itasks):
-        """Kill jobs of active tasks, and hold the tasks.
-
-        If items is specified, kill active tasks matching given IDs.
-
-        """
-        to_kill_tasks = []
-        for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(is_held=True)
-                self.data_store_mgr.delta_task_held(itask)
-                to_kill_tasks.append(itask)
-            else:
-                LOG.warning(f"[{itask}] not killable")
+    def kill_task_jobs(
+        self, workflow: str, itasks: 'Iterable[TaskProxy]'
+    ) -> None:
+        """Issue the command to kill jobs of active tasks."""
         self._run_job_cmd(
-            self.JOBS_KILL, workflow, to_kill_tasks,
+            self.JOBS_KILL, workflow, itasks,
             self._kill_task_jobs_callback,
             self._kill_task_jobs_callback_255
+        )
+
+    def kill_prep_task(self, itask: 'TaskProxy') -> None:
+        """Kill a preparing task."""
+        itask.summary['platforms_used'][itask.submit_num] = ''
+        itask.waiting_on_job_prep = False
+        itask.local_job_file_path = None  # reset for retry
+        self._set_retry_timers(itask)
+        self._prep_submit_task_job_error(
+            self.workflow, itask, '(killed in job prep)', ''
         )
 
     def poll_task_jobs(self, workflow, itasks, msg=None):
@@ -220,14 +244,19 @@ class TaskJobManager:
                 self._poll_task_jobs_callback_255
             )
 
-    def prep_submit_task_jobs(self, workflow, itasks, check_syntax=True):
+    def prep_submit_task_jobs(
+        self,
+        workflow: str,
+        itasks: 'Iterable[TaskProxy]',
+        check_syntax: bool = True,
+    ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
         select command to complete. Bad host select command or error writing to
         a job file will cause a bad task - leading to submission failure.
 
-        Return [list, list]: list of good tasks, list of bad tasks
+        Return (good_tasks, bad_tasks)
         """
         prepared_tasks = []
         bad_tasks = []
@@ -244,11 +273,35 @@ class TaskJobManager:
                 prepared_tasks.append(itask)
             elif prep_task is False:
                 bad_tasks.append(itask)
-        return [prepared_tasks, bad_tasks]
+        return (prepared_tasks, bad_tasks)
 
-    def submit_task_jobs(self, workflow, itasks, curve_auth,
-                         client_pub_key_dir, is_simulation=False):
+    def submit_task_jobs(
+        self,
+        itasks: 'Iterable[TaskProxy]',
+        run_mode: RunMode,
+    ) -> 'List[TaskProxy]':
         """Prepare for job submission and submit task jobs.
+
+        Return: tasks that attempted submission.
+        """
+        # submit "simulation/skip" mode tasks, modify "dummy" task configs:
+        itasks, submitted_nonlive_tasks = self.submit_nonlive_task_jobs(
+            self.workflow, itasks, run_mode
+        )
+
+        # submit "live" mode tasks (and "dummy" mode tasks)
+        submitted_live_tasks = self.submit_livelike_task_jobs(
+            self.workflow, itasks
+        )
+
+        return submitted_nonlive_tasks + submitted_live_tasks
+
+    def submit_livelike_task_jobs(
+        self,
+        workflow: str,
+        itasks: 'Iterable[TaskProxy]',
+    ) -> 'List[TaskProxy]':
+        """Submission for live tasks and dummy tasks.
 
         Preparation (host selection, remote host init, and remote install)
         is done asynchronously. Newly released tasks may be sent here several
@@ -258,14 +311,14 @@ class TaskJobManager:
         Once preparation has completed or failed, reset .waiting_on_job_prep in
         task instances so the scheduler knows to stop sending them back here.
 
-        This method uses prep_submit_task_job() as helper.
+        This method uses prep_submit_task_jobs() as helper.
 
-        Return (list): list of tasks that attempted submission.
+        Return: tasks that attempted submission.
         """
-        if is_simulation:
-            return self._simulation_submit_task_jobs(itasks, workflow)
+        done_tasks: 'List[TaskProxy]' = []
+        # Mapping of platforms to task proxies:
+        auth_itasks: 'Dict[str, List[TaskProxy]]' = {}
 
-        # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
 
@@ -275,12 +328,9 @@ class TaskJobManager:
         if not prepared_tasks:
             return bad_tasks
 
-        auth_itasks = {}  # {platform: [itask, ...], ...}
-
         for itask in prepared_tasks:
-            platform_name = itask.platform['name']
-            auth_itasks.setdefault(platform_name, [])
-            auth_itasks[platform_name].append(itask)
+            auth_itasks.setdefault(itask.platform['name'], []).append(itask)
+
         # Submit task jobs for each platform
         # Non-prepared tasks can be considered done for now:
         done_tasks = bad_tasks
@@ -309,7 +359,7 @@ class TaskJobManager:
                     bc_mgr = self.task_events_mgr.broadcast_mgr
                     rtconf = bc_mgr.get_updated_rtconfig(itask)
                     try:
-                        platform = get_platform(
+                        platform = get_platform(  # type: ignore[assignment]
                             rtconf,
                             bad_hosts=self.bad_hosts
                         )
@@ -367,8 +417,7 @@ class TaskJobManager:
 
                 elif install_target not in ri_map:
                     # Remote init not in progress for target, so start it.
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -396,8 +445,7 @@ class TaskJobManager:
                     # Remote init previously failed because a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -420,8 +468,7 @@ class TaskJobManager:
                 )
             except NoHostsError:
                 del ri_map[install_target]
-                self.task_remote_mgr.remote_init(
-                    platform, curve_auth, client_pub_key_dir)
+                self.task_remote_mgr.remote_init(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
@@ -451,6 +498,7 @@ class TaskJobManager:
                     'platform_name': itask.platform['name'],
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
+
                 itask.is_manual_submit = False
 
             if ri_map[install_target] == REMOTE_FILE_INSTALL_255:
@@ -1007,44 +1055,64 @@ class TaskJobManager:
             except KeyError:
                 itask.try_timers[key] = TaskActionTimer(delays=delays)
 
-    def _simulation_submit_task_jobs(self, itasks, workflow):
-        """Simulation mode task jobs submission."""
+    def submit_nonlive_task_jobs(
+        self: 'TaskJobManager',
+        workflow: str,
+        itasks: 'Iterable[TaskProxy]',
+        workflow_run_mode: RunMode,
+    ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
+        """Identify task mode and carry out alternative submission
+        paths if required:
+
+        * Simulation: Job submission.
+        * Skip: Entire job lifecycle happens here!
+        * Dummy: Pre-submission preparation (removing task script's content)
+          before returning to live pathway.
+        * Live: return to main submission pathway without doing anything.
+
+        Returns:
+            lively_tasks:
+                A list of tasks which require subsequent
+                processing **as if** they were live mode tasks.
+                (This includes live and dummy mode tasks)
+            nonlive_tasks:
+                A list of tasks which require no further processing
+                because their apparent execution is done entirely inside
+                the scheduler. (This includes skip and simulation mode tasks).
+        """
+        lively_tasks: 'List[TaskProxy]' = []
+        nonlive_tasks: 'List[TaskProxy]' = []
         now = time()
-        now_str = get_time_string_from_unix_time(now)
+        now = (now, get_time_string_from_unix_time(now))
+
         for itask in itasks:
-            # Handle broadcasts
+            # Get task config with broadcasts applied:
             rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
                 itask)
 
-            itask.summary['started_time'] = now
-            self._set_retry_timers(itask, rtconfig)
-            itask.mode_settings = ModeSettings(
-                itask,
-                self.workflow_db_mgr,
-                rtconfig
-            )
+            # Apply task run mode
+            if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
+                # Task run mode cannot override workflow run-mode sim or dummy:
+                itask.run_mode = workflow_run_mode
+            else:
+                # If workflow mode is skip or live and task mode is set,
+                # override workflow mode, else use workflow mode.
+                itask.run_mode = RunMode(
+                    rtconfig.get('run mode', workflow_run_mode))
 
-            itask.waiting_on_job_prep = False
-            itask.submit_num += 1
+            # Submit nonlive tasks, or add live-like (live or dummy)
+            # tasks to list of tasks to put through live submission pipeline.
+            submit_func = itask.run_mode.get_submit_method()
+            if submit_func and submit_func(
+                self, itask, rtconfig, workflow, now
+            ):
+                # A submit function returns true if this is a nonlive task:
+                self.workflow_db_mgr.put_insert_task_states(itask)
+                nonlive_tasks.append(itask)
+            else:
+                lively_tasks.append(itask)
 
-            itask.platform = {'name': 'SIMULATION'}
-            itask.summary['job_runner_name'] = 'SIMULATION'
-            itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.mode_settings.simulated_run_length
-            )
-            itask.jobs.append(
-                self.get_simulation_job_conf(itask, workflow)
-            )
-            self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED,
-            )
-            self.workflow_db_mgr.put_insert_task_jobs(
-                itask, {
-                    'time_submit': now_str,
-                    'try_num': itask.get_try_num(),
-                }
-            )
-        return itasks
+        return lively_tasks, nonlive_tasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when submit task jobs command exits."""
@@ -1113,7 +1181,7 @@ class TaskJobManager:
         workflow: str,
         itask: 'TaskProxy',
         check_syntax: bool = True
-    ):
+    ) -> 'Union[TaskProxy, None, Literal[False]]':
         """Prepare a task job submission.
 
         Returns:
@@ -1126,14 +1194,9 @@ class TaskJobManager:
             return itask
 
         # Handle broadcasts
-        overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.tokens
+        rtconfig = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+            itask
         )
-        if overrides:
-            rtconfig = pdeepcopy(itask.tdef.rtconfig)
-            poverride(rtconfig, overrides, prepend=True)
-        else:
-            rtconfig = itask.tdef.rtconfig
 
         # BACK COMPAT: host logic
         # Determine task host or platform now, just before job submission,
@@ -1183,7 +1246,7 @@ class TaskJobManager:
         else:
             # host/platform select not ready
             if host_n is None and platform_name is None:
-                return
+                return None
             elif (
                 host_n is None
                 and rtconfig['platform']
@@ -1225,7 +1288,7 @@ class TaskJobManager:
                     workflow, itask, '(platform not defined)', exc)
                 return False
             else:
-                itask.platform = platform
+                itask.platform = platform  # type: ignore[assignment]
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 
@@ -1258,7 +1321,13 @@ class TaskJobManager:
         itask.local_job_file_path = local_job_file_path
         return itask
 
-    def _prep_submit_task_job_error(self, workflow, itask, action, exc):
+    def _prep_submit_task_job_error(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        action: str,
+        exc: Union[Exception, str],
+    ) -> None:
         """Helper for self._prep_submit_task_job. On error."""
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
@@ -1272,11 +1341,12 @@ class TaskJobManager:
         # than submit-failed
         # provide a dummy job config - this info will be added to the data
         # store
+        try_num = itask.get_try_num()
         itask.jobs.append({
             'task_id': itask.identity,
             'platform': itask.platform,
             'submit_num': itask.submit_num,
-            'try_num': itask.get_try_num(),
+            'try_num': try_num,
         })
         # create a DB entry for the submit-failed job
         self.workflow_db_mgr.put_insert_task_jobs(
@@ -1285,7 +1355,7 @@ class TaskJobManager:
                 'flow_nums': serialise_set(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
-                'try_num': itask.get_try_num(),
+                'try_num': try_num,
                 'time_submit': get_current_time_string(),
                 'platform_name': itask.platform['name'],
                 'job_runner_name': itask.summary['job_runner_name'],

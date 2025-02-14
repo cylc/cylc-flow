@@ -92,9 +92,16 @@ class ISO8601Point(PointBase):
             self.value, other.value, CALENDAR.mode
         ))
 
-    def standardise(self):
+    def standardise(self, allow_truncated=True):
         """Reformat self.value into a standard representation."""
         try:
+            point = point_parse(self.value)
+            if not allow_truncated and point.truncated:
+                raise PointParsingError(
+                    type(self),
+                    self.value,
+                    'Truncated ISO8601 dates are not permitted',
+                )
             self.value = str(point_parse(self.value))
         except IsodatetimeError as exc:
             if self.value.startswith("+") or self.value.startswith("-"):
@@ -102,7 +109,7 @@ class ISO8601Point(PointBase):
                     WorkflowSpecifics.NUM_EXPANDED_YEAR_DIGITS)
             else:
                 message = str(exc)
-            raise PointParsingError(type(self), self.value, message)
+            raise PointParsingError(type(self), self.value, message) from None
         return self
 
     def sub(self, other):
@@ -176,7 +183,7 @@ class ISO8601Interval(IntervalBase):
         try:
             self.value = str(interval_parse(self.value))
         except IsodatetimeError:
-            raise IntervalParsingError(type(self), self.value)
+            raise IntervalParsingError(type(self), self.value) from None
         return self
 
     def add(self, other):
@@ -782,7 +789,7 @@ def prev_next(
             raise WorkflowConfigError(
                 f'Invalid offset: {my_time}:'
                 f' Offset lists are semicolon separated, try {suggest}'
-            )
+            ) from None
 
         timepoints.append(parsed_point + now)
 

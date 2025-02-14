@@ -1,0 +1,25 @@
+[scheduler]
+   [[events]]
+       abort on stall timeout = True
+       stall timeout = PT2M
+
+[scheduling]
+    [[graph]]
+        R1 = foo
+
+[runtime]
+    [[foo]]
+        script = """
+            # wait for the started message to be received
+            cylc__job__poll_grep_workflow_log -E 'foo.*running'
+
+            # remove the out/err files
+            rm "${CYLC_TASK_LOG_DIR}/job.out"
+            rm "${CYLC_TASK_LOG_DIR}/job.err"
+
+            # stop the workflow, orphaning this job
+            cylc stop --now --now "${CYLC_WORKFLOW_ID}" 2>/dev/null >/dev/null
+
+            # suppress any subsequent messages
+            rm "${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
+        """

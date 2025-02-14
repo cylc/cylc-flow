@@ -23,8 +23,6 @@ from cylc.flow.id import tokenise
 from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 
 if TYPE_CHECKING:
-    from optparse import Values
-
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
@@ -202,21 +200,3 @@ def _get_earliest_stop_point_status_msg(pool: 'TaskPool') -> Optional[str]:
     if prop is None:
         return None
     return template % prop
-
-
-class RunMode:
-    """The possible run modes of a workflow."""
-
-    LIVE = 'live'
-    """Workflow will run normally."""
-
-    SIMULATION = 'simulation'
-    """Workflow will run in simulation mode."""
-
-    DUMMY = 'dummy'
-    """Workflow will run in dummy mode."""
-
-    @staticmethod
-    def get(options: 'Values') -> str:
-        """Return the run mode from the options."""
-        return getattr(options, 'run_mode', None) or RunMode.LIVE

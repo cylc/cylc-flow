@@ -146,8 +146,7 @@ Workflow IDs:
       $ cylc pause foo/run1
       $ cylc stop foo/run1
 
-    In the case of numbered runs (e.g. "run1", "run2", ...) you can omit
-    the run number, Cylc will infer latest run.
+    If you omit run number ("run1", "run2", ...) Cylc will infer latest run.
       $ cylc play foo
       $ cylc pause foo
       $ cylc stop foo
@@ -164,8 +163,7 @@ Workflow IDs:
     You can omit the user name when working on your own workflows.
 
 Cycle / Family / Task / Job IDs:
-    Just as workflows have IDs, the things within workflows have IDs too.
-    These IDs take the format:
+    Just as workflows have IDs, so do objects within workflows:
       cycle/task_or_family/job
 
     Examples:
@@ -174,8 +172,7 @@ Cycle / Family / Task / Job IDs:
       1/a/1  # The first job of the task "a" in the cycle point "1".
 
 Full ID
-    We join the workflow and cycle/task/job IDs together using //:
-      workflow//cycle/task/job
+    Join workflow and cycle/task/job IDs with //: workflow//cycle/task/job
 
     Examples:
       w//         # The workflow "w"
@@ -201,8 +198,9 @@ Patterns
       workflow//cycle/task/* # All jobs in workflow//cycle/job
 
     Warning:
-      Remember to write IDs inside single quotes when using them on the
-      command line otherwise your shell may expand them.
+      Quote IDs on the command line to protect them from shell expansion.
+      Patterns only match tasks in the n=0 active window (except for the
+      `cylc show` command where they match in the wider n-window).
 
 Filters
     Filters allow you to filter for specific states.
@@ -283,7 +281,8 @@ DEAD_ENDS = {
     'gscan':
         'cylc gscan has been removed, use the web UI',
     'insert':
-        'inserting tasks is now done automatically',
+        'Insertion is no longer required, `cylc set` and `cylc trigger`'
+        ' will insert tasks automatically.',
     'jobscript':
         'cylc jobscript has been removed',
     'nudge':
@@ -605,14 +604,14 @@ def pycoverage(cmd_args):  # pragma: no cover
             data_file=str(cylc_wc / '.coverage'),
             source=[str(cylc_wc / 'cylc')]
         )
-    except coverage.misc.CoverageException:
+    except coverage.misc.CoverageException as exc:
         raise Exception(
             # make sure this exception is visible in the traceback
             '\n\n*****************************\n\n'
             'Could not initiate coverage, likely because Cylc was not '
             'installed in editable mode.'
             '\n\n*****************************\n\n'
-        )
+        ) from exc
 
     # start the coverage running
     cov.start()

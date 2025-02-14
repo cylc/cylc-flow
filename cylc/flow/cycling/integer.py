@@ -145,12 +145,12 @@ class IntegerPoint(PointBase):
             return IntegerInterval.from_integer(int(self) - int(other))
         return IntegerPoint(int(self) - int(other))
 
-    def standardise(self):
+    def standardise(self, allow_truncated=True):
         """Format self.value into a standard representation and check it."""
         try:
             self.value = str(int(self))
         except (TypeError, ValueError) as exc:
-            raise PointParsingError(type(self), self.value, exc)
+            raise PointParsingError(type(self), self.value, exc) from None
         return self
 
     def __int__(self):

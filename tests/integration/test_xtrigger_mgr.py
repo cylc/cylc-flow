@@ -18,41 +18,44 @@
 import asyncio
 from pathlib import Path
 from textwrap import dedent
-from typing import Set
 
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
 
 
-def get_task_ids(schd: Scheduler) -> Set[str]:
-    return {task.identity for task in schd.pool.get_tasks()}
-
-
 async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
-    """Test that if an itask has 2 wall_clock triggers with different
-    offsets that xtrigger manager gets both of them.
+    """Test that if an itask has 4 wall_clock triggers with different
+    offsets that xtrigger manager gets all of them.
 
     https://github.com/cylc/cylc-flow/issues/5783
 
     n.b. Clock 3 exists to check the memoization path is followed,
     and causing this test to give greater coverage.
+    Clock 4 & 5 test higher precision offsets than the CPF.
     """
     task_point = 1588636800                # 2020-05-05
     ten_years_ahead = 1904169600           # 2030-05-05
+    PT2H35M31S_ahead = 1588646131          # 2020-05-05 02:35:31
+    PT2H35M31S_behind = 1588627469         # 2020-05-04 21:24:29
     monkeypatch.setattr(
         'cylc.flow.xtriggers.wall_clock.time',
         lambda: ten_years_ahead - 1
     )
     id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY-MM-DD',
+        },
         'scheduling': {
             'initial cycle point': '2020-05-05',
             'xtriggers': {
                 'clock_1': 'wall_clock()',
                 'clock_2': 'wall_clock(offset=P10Y)',
                 'clock_3': 'wall_clock(offset=P10Y)',
+                'clock_4': 'wall_clock(offset=PT2H35M31S)',
+                'clock_5': 'wall_clock(offset=-PT2H35M31S)',
             },
             'graph': {
-                'R1': '@clock_1 & @clock_2 & @clock_3 => foo'
+                'R1': '@clock_1 & @clock_2 & @clock_3 & @clock_4 & @clock_5 => foo'
             }
         }
     })
@@ -62,16 +65,22 @@ async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
         clock_1_ctx = schd.xtrigger_mgr.get_xtrig_ctx(foo_proxy, 'clock_1')
         clock_2_ctx = schd.xtrigger_mgr.get_xtrig_ctx(foo_proxy, 'clock_2')
         clock_3_ctx = schd.xtrigger_mgr.get_xtrig_ctx(foo_proxy, 'clock_2')
+        clock_4_ctx = schd.xtrigger_mgr.get_xtrig_ctx(foo_proxy, 'clock_4')
+        clock_5_ctx = schd.xtrigger_mgr.get_xtrig_ctx(foo_proxy, 'clock_5')
 
         assert clock_1_ctx.func_kwargs['trigger_time'] == task_point
         assert clock_2_ctx.func_kwargs['trigger_time'] == ten_years_ahead
         assert clock_3_ctx.func_kwargs['trigger_time'] == ten_years_ahead
+        assert clock_4_ctx.func_kwargs['trigger_time'] == PT2H35M31S_ahead
+        assert clock_5_ctx.func_kwargs['trigger_time'] == PT2H35M31S_behind
 
         schd.xtrigger_mgr.call_xtriggers_async(foo_proxy)
         assert foo_proxy.state.xtriggers == {
             'clock_1': True,
             'clock_2': False,
             'clock_3': False,
+            'clock_4': True,
+            'clock_5': True,
         }
 
 
@@ -238,13 +247,13 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
     schd: Scheduler = scheduler(id_)
 
     async with start(schd):
-        start_task_pool = get_task_ids(schd)
+        start_task_pool = schd.pool.get_task_ids()
         assert start_task_pool == {'1990/foo', '1990/bar'}
 
         for _ in range(3):
             await schd._main_loop()
 
-        assert get_task_ids(schd) == start_task_pool.union(
+        assert schd.pool.get_task_ids() == start_task_pool.union(
             f'{year}/{name}'
             for year in range(1991, 1994)
             for name in ('foo', 'bar')

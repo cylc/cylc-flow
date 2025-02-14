@@ -23,7 +23,6 @@ from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 
 
-
 async def test_run_job_cmd_no_hosts_error(
     flow,
     scheduler,
@@ -92,7 +91,6 @@ async def test_run_job_cmd_no_hosts_error(
 
         # ...but the failure should be logged
         assert log_filter(
-            log,
             contains='No available hosts for no-host-platform',
         )
         log.clear()
@@ -105,7 +103,6 @@ async def test_run_job_cmd_no_hosts_error(
 
         # ...but the failure should be logged
         assert log_filter(
-            log,
             contains='No available hosts for no-host-platform',
         )
 
@@ -217,7 +214,7 @@ async def test_broadcast_platform_change(
 
     schd = scheduler(id_, run_mode='live')
 
-    async with start(schd) as log:
+    async with start(schd):
         # Change the task platform with broadcast:
         schd.broadcast_mgr.put_broadcast(
             ['1'], ['mytask'], [{'platform': 'foo'}])
@@ -226,13 +223,9 @@ async def test_broadcast_platform_change(
         schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
 
         # Attempt job submission:
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir)
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Check that task platform hasn't become "localhost":
         assert schd.pool.get_tasks()[0].platform['name'] == 'foo'
         # ... and that remote init failed because all hosts bad:
-        assert log_filter(log, contains="(no hosts were reachable)")
+        assert log_filter(regex=r"platform: foo .*\(no hosts were reachable\)")

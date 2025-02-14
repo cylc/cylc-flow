@@ -258,8 +258,7 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
         'env': A dictionary of environment variables.
         'template_variables': A dictionary of template variables.
         'templating_detected': Where the plugin identifies a templating
-            language this is specified here. Expected values are ``jinja2``
-            or ``empy``.
+            language this is specified here.
 
     args:
         fpath: Path to a config file. Plugin will look at the parent
@@ -446,7 +445,6 @@ def read_and_proc(
         flines = [line.rstrip('\n') for line in f]
 
     do_inline = True
-    do_empy = True
     do_jinja2 = True
     do_contin = True
 
@@ -456,8 +454,6 @@ def read_and_proc(
         template_vars = {}
 
     if viewcfg:
-        if not viewcfg['empy']:
-            do_empy = False
         if not viewcfg['jinja2']:
             do_jinja2 = False
         if not viewcfg['contin']:
@@ -479,25 +475,6 @@ def read_and_proc(
     process_with = hashbang_and_plugin_templating_clash(
         extra_vars[TEMPLATING_DETECTED], flines
     )
-    # process with EmPy
-    if do_empy:
-        if (
-            extra_vars[TEMPLATING_DETECTED] == 'empy' and
-            not process_with and
-            process_with != 'empy'
-        ):
-            flines.insert(0, '#!empy')
-
-        if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
-            LOG.debug('Processing with EmPy')
-            try:
-                from cylc.flow.parsec.empysupport import empyprocess
-            except ImportError:
-                raise ParsecError('EmPy Python package must be installed '
-                                  'to process file: ' + fpath)
-            flines = empyprocess(
-                fpath, flines, fdir, template_vars
-            )
 
     # process with Jinja2
     if do_jinja2:
@@ -513,8 +490,10 @@ def read_and_proc(
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
             except ImportError:
-                raise ParsecError('Jinja2 Python package must be installed '
-                                  'to process file: ' + fpath)
+                raise ParsecError(
+                    'Jinja2 Python package must be installed '
+                    'to process file: ' + fpath
+                ) from None
             flines = jinja2process(
                 fpath, flines, fdir, template_vars
             )
@@ -542,8 +521,7 @@ def hashbang_and_plugin_templating_clash(
         flines: The lines of text from file.
 
     Returns:
-        The hashbang, in lower case, to allow for users using any of
-        ['empy', 'EmPy', 'EMPY'], or similar in other templating languages.
+        The hashbang, in lower case.
 
     Examples:
         - Hashbang and templating_detected match:
@@ -555,7 +533,7 @@ def hashbang_and_plugin_templating_clash(
             >>> thisfunc('', [''])
 
         - Function raises if templating engines clash:
-            >>> thisfunc('empy', ['#!jinja2'])
+            >>> thisfunc('other', ['#!jinja2'])
             Traceback (most recent call last):
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...

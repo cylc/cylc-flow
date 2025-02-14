@@ -261,13 +261,17 @@ def view_log(
         print(os.path.dirname(logpath))
         return 0
     if mode == 'list-dir':
-        for entry in sorted(os.listdir(os.path.dirname(logpath))):
+        dirname = os.path.dirname(logpath)
+        if not os.path.exists(dirname):
+            sys.stderr.write(f"Directory not found: {dirname}\n")
+            return 1
+        for entry in sorted(os.listdir(dirname)):
             print(entry)
         return 0
     if not os.path.exists(logpath) and batchview_cmd is None:
         # Note: batchview_cmd may not need to have access to logpath, so don't
         # test for existence of path if it is set.
-        sys.stderr.write('file not found: %s\n' % logpath)
+        sys.stderr.write('File not found: %s\n' % logpath)
         return 1
     if prepend_path:
         from cylc.flow.hostuserutil import get_host
@@ -495,7 +499,7 @@ def _main(
                     raise InputError(
                         f"--rotation {rotation_number} invalid "
                         f"(max value is {len(logs) - 1})"
-                    )
+                    ) from None
             else:
                 raise InputError('Log file not found.')
         else:
@@ -592,28 +596,51 @@ def _main(
                 cmd.append('--prepend-path')
             cmd.append(workflow_id)
             # TODO: Add Intelligent Host selection to this
+            proc = None
             with suppress(KeyboardInterrupt):
                 # (Ctrl-C while tailing)
                 # NOTE: This will raise NoHostsError if the platform is not
                 # contactable
-                remote_cylc_cmd(
+                proc = remote_cylc_cmd(
                     cmd,
                     platform,
-                    capture_process=False,
+                    capture_process=(mode == 'list-dir'),
                     manage=(mode == 'tail'),
-                    text=False
+                    text=(mode == 'list-dir'),
                 )
-            if (
-                mode == 'list-dir'
-                and os.path.exists(
-                    os.path.join(
-                        local_log_dir,
-                        'job-activity.log'
-                    )
-                )
-            ):
-                # add the local-only job-activity.log file to the remote-list
-                print('job-activity.log')
+
+            # add and missing items to file listing results
+            if isinstance(proc, Popen):
+                # i.e: if mode=='list-dir' and ctrl+c not pressed
+                out, err = proc.communicate()
+                files = out.splitlines()
+
+                # add files which can be accessed via a tailer
+                if live_job_id is not None:
+                    if (
+                        # NOTE: only list the file if it can be viewed in
+                        # both modes
+                        (platform['out tailer'] and platform['out viewer'])
+                        and 'job.out' not in files
+                    ):
+                        files.append('job.out')
+                    if (
+                        (platform['err tailer'] and platform['err viewer'])
+                        and 'job.err' not in files
+                    ):
+                        files.append('job.err')
+
+                # add the job-activity.log file which is always local
+                if os.path.exists(
+                    os.path.join(local_log_dir, 'job-activity.log')
+                ):
+                    files.append('job-activity.log')
+
+                files.sort()
+                print('\n'.join(files))
+                print(err, file=sys.stderr)
+                sys.exit(proc.returncode)
+
         else:
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)

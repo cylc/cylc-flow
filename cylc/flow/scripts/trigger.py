@@ -17,18 +17,18 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run despite unsatisfied prerequisites.
+Force task(s) to run regardless of prerequisites, even in a paused workflow.
 
-* Triggering an unqueued waiting task queues it, regardless of prerequisites.
-* Triggering a queued task submits it, regardless of queue limiting.
-* Triggering an active task has no effect (it already triggered).
+Triggering a task that is not yet queued will queue it.
 
-Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them queues them to run (or rerun) in the same flow.
+Triggering a queued task runs it immediately.
 
-Beyond n=0, triggered tasks get all current active flow numbers by default, or
-specified flow numbers via the --flow option. Those flows - if/when they catch
-up - will see tasks that ran after triggering event as having run already.
+Cylc queues restrict the number of jobs that can be active (submitted or
+running) at once. They release tasks to run when their active task count
+drops below the queue limit.
+
+Attempts to trigger active (preparing, submitted, running)
+tasks will be ignored.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -39,6 +39,21 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+Flows:
+  Waiting tasks in the active window (n=0) already belong to a flow.
+  * by default, if triggered, they run in the same flow
+  * or with --flow=all, they are assigned all active flows
+  * or with --flow=INT or --flow=new, the original and new flows are merged
+  * (--flow=none is ignored for active tasks)
+
+  Inactive tasks (n>0) do not already belong to a flow.
+  * by default they are assigned all active flows
+  * otherwise, they are assigned the --flow value
+
+  Note --flow=new increments the global flow counter with each use. If it
+  takes multiple commands to start a new flow use the actual flow number
+  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
@@ -66,13 +81,15 @@ mutation (
   $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
+  $onResume: Boolean,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
     flow: $flow,
     flowWait: $flowWait,
-    flowDescr: $flowDescr
+    flowDescr: $flowDescr,
+    onResume: $onResume,
   ) {
     result
   }
@@ -88,7 +105,20 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts(parser)
+
+    parser.add_option(
+        "--on-resume",
+        help=(
+            "If the workflow is paused, wait until it is resumed before "
+            "running the triggered task(s). DEPRECATED - this will be "
+            "removed at Cylc 8.5."
+        ),
+        action="store_true",
+        default=False,
+        dest="on_resume"
+    )
     return parser
 
 
@@ -106,6 +136,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
+            'onResume': options.on_resume,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)

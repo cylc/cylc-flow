@@ -11,6 +11,91 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.0 (Released 2025-01-08)__
+
+### ⚠ Breaking Changes
+
+[#6476](https://github.com/cylc/cylc-flow/pull/6476) - Remove support for the EmPy template engine.
+
+### 🚀 Enhancements
+
+[#6039](https://github.com/cylc/cylc-flow/pull/6039) - Added a new task run mode "skip" in which tasks instantly generate their required outputs without actually running. This allows us to configure tasks to "skip" ahead of time, e.g. to skip a cycle of tasks that is no longer needed.
+
+[#6137](https://github.com/cylc/cylc-flow/pull/6137) - New Cylc lint rule: S014: Don't use job runner specific execution time limit directives, use execution time limit.
+
+[#6168](https://github.com/cylc/cylc-flow/pull/6168) - Allow symlinking log/job separately from log
+
+[#6289](https://github.com/cylc/cylc-flow/pull/6289) - Made the errors resulting from Jinja2 `raise` and `assert` statements more straight forward.
+
+[#6440](https://github.com/cylc/cylc-flow/pull/6440) - The "cylc dump" command now prints task IDs. Use "--legacy" if you need the old format.
+
+[#6444](https://github.com/cylc/cylc-flow/pull/6444) - The scheduler now traps the SIGINT, SIGTERM and SIGHUP signals and will respond by shutting down in --now mode. If the workflow is already shutting down in --now mode, it will escalate the shutdown to --now --now mode.
+
+[#6456](https://github.com/cylc/cylc-flow/pull/6456) - `cylc lint` now checks for unnecessary continuation characters in the graph section.
+
+[#6472](https://github.com/cylc/cylc-flow/pull/6472) - `cylc remove` improvements:
+  - It can now remove tasks that are no longer active, making it look like they never ran.
+  - Removing a submitted/running task will kill it.
+  - Added the `--flow` option.
+  - Removed tasks are now demoted to `flow=none` but retained in the workflow database for provenance.
+
+[#6475](https://github.com/cylc/cylc-flow/pull/6475) - Allow easy definition of multiple install targets in `global.cylc[install][symlink dirs]` using comma separated lists.
+
+[#6491](https://github.com/cylc/cylc-flow/pull/6491) - The "cylc show" command now says if the target task is held, queued, or runahead limited.
+
+[#6499](https://github.com/cylc/cylc-flow/pull/6499) - Manually triggered tasks now run immediately even if the workflow is paused.
+
+### 🔧 Fixes
+
+[#6081](https://github.com/cylc/cylc-flow/pull/6081) - Fix job submission when a batch of jobs is submitted to a runner that does
+  not return a newline with the job ID (did not affect built-in job runners).
+
+[#6511](https://github.com/cylc/cylc-flow/pull/6511) - cat-log command list-dir mode: fail gracefully if directory not found.
+
+[#6526](https://github.com/cylc/cylc-flow/pull/6526) - Output optionality validation now checks tasks with cycle offsets.
+
+[#6528](https://github.com/cylc/cylc-flow/pull/6528) - Make start-tasks wait on xtriggers (see "cylc play --start-task").
+
+## __cylc-8.3.6 (Released 2024-11-07)__
+
+### 🔧 Fixes
+
+[#4983](https://github.com/cylc/cylc-flow/pull/4983) - Ensure the runahead limit is recomputed when legacy "suicide-triggers" are used, to prevent erroneous stall in niche cases.
+
+[#6263](https://github.com/cylc/cylc-flow/pull/6263) - Fix bug that prevented changes to user-defined xtriggers taking effect after a reload.
+
+[#6326](https://github.com/cylc/cylc-flow/pull/6326) - Fix a rare issue where missing job records could cause tasks to become stuck in active states.
+
+[#6364](https://github.com/cylc/cylc-flow/pull/6364) - Fixed bug where `cylc clean <workflow> --rm share` would not take care of removing the target of the `share/cycle` symlink directory.
+
+[#6376](https://github.com/cylc/cylc-flow/pull/6376) - Fixes an issue that could cause Cylc to ignore the remaining hosts in a platform in response to an `ssh` error in some niche circumstances.
+
+[#6388](https://github.com/cylc/cylc-flow/pull/6388) - Fix task state filtering in Tui.
+
+[#6414](https://github.com/cylc/cylc-flow/pull/6414) - Broadcast will now reject truncated cycle points to aviod runtime errors.
+
+[#6422](https://github.com/cylc/cylc-flow/pull/6422) - Enabled jumping to the top/bottom of log files in Tui using the "home" and "end" keys.
+
+[#6431](https://github.com/cylc/cylc-flow/pull/6431) - The `cycle point format` was imposing an undesirable constraint on `wall_clock` offsets, this has been fixed.
+
+[#6433](https://github.com/cylc/cylc-flow/pull/6433) - Ignore requests to trigger or set active tasks with --flow=none.
+
+[#6445](https://github.com/cylc/cylc-flow/pull/6445) - Ensure `cylc trigger` does not fall back to `flow=none` when there are no active flows.
+
+[#6448](https://github.com/cylc/cylc-flow/pull/6448) - Fix the non-spawning of parentless sequential xtriggered tasks when outputs are set.
+
+## __cylc-8.3.5 (Released 2024-10-15)__
+
+### 🔧 Fixes
+
+[#6316](https://github.com/cylc/cylc-flow/pull/6316) - Fixed bug in `cylc vr` where an initial cycle point of `now`/`next()`/`previous()` would result in an error.
+
+[#6362](https://github.com/cylc/cylc-flow/pull/6362) - Fixed simulation mode bug where the task submit number would not increment
+
+[#6367](https://github.com/cylc/cylc-flow/pull/6367) - Fix bug where `cylc trigger` and `cylc set` would assign active flows to existing tasks by default.
+
+[#6397](https://github.com/cylc/cylc-flow/pull/6397) - Fix "dictionary changed size during iteration error" which could occur with broadcasts.
+
 ## __cylc-8.3.4 (Released 2024-09-12)__
 
 ### 🚀 Enhancements
@@ -61,8 +146,6 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 ### 🔧 Fixes
 
-[#6178](https://github.com/cylc/cylc-flow/pull/6178) - Fix an issue where Tui could hang when closing.
-
 [#6186](https://github.com/cylc/cylc-flow/pull/6186) - Fixed bug where using flow numbers with `cylc set` would not work correctly.
 
 [#6200](https://github.com/cylc/cylc-flow/pull/6200) - Fixed bug where a stalled paused workflow would be incorrectly reported as running, not paused
@@ -78,6 +161,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 [#6170](https://github.com/cylc/cylc-flow/pull/6170) - Fix an issue where the Cylc logo could appear in the workflow log.
 
 [#6176](https://github.com/cylc/cylc-flow/pull/6176) - Fix bug where jobs which fail to submit are not shown in GUI/TUI if submission retries are set.
+
+[#6178](https://github.com/cylc/cylc-flow/pull/6178) - Fix an issue where Tui could hang when closing.
 
 ## __cylc-8.3.0 (Released 2024-06-18)__
 

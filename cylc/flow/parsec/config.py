@@ -150,10 +150,12 @@ class ParsecConfig:
                         # setting not present in __MANY__ section:
                         key in self.spec.get(*parents)
                     ):
-                        raise ItemNotFoundError(itemstr(parents, key))
+                        raise ItemNotFoundError(
+                            itemstr(parents, key)
+                        ) from None
                     raise InvalidConfigError(
                         itemstr(parents, key), self.spec.name
-                    )
+                    ) from None
                 else:
                     parents.append(key)
 

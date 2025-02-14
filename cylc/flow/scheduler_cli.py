@@ -54,6 +54,7 @@ from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
+from cylc.flow.run_modes import WORKFLOW_RUN_MODES
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import (
     SUITERC_DEPR_MSG,
@@ -65,7 +66,6 @@ from cylc.flow.terminal import (
     is_terminal,
     prompt,
 )
-from cylc.flow.workflow_status import RunMode
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -129,9 +129,16 @@ PLAY_ICP_OPTION.sources = {'play'}
 
 RUN_MODE = OptionSettings(
     ["-m", "--mode"],
-    help="Run mode: live, dummy, simulation (default live).",
+    help=(
+        f"Run mode: {sorted(WORKFLOW_RUN_MODES)} (default live)."
+        " Live mode executes the tasks as defined in the runtime"
+        " section."
+        " Simulation and dummy modes ignore task 'script'"
+        " items and related job settings. They are"
+        " designed for testing."
+    ),
     metavar="STRING", action='store', dest="run_mode",
-    choices=[RunMode.LIVE, RunMode.DUMMY, RunMode.SIMULATION],
+    choices=list(WORKFLOW_RUN_MODES),
 )
 
 PLAY_RUN_MODE = deepcopy(RUN_MODE)
@@ -189,12 +196,13 @@ PLAY_OPTIONS = [
     OptionSettings(
         ["--start-task", "--starttask", "-t"],
         help=(
-            "Start from this task instance, given by '<cycle>/<name>'."
-            " This can be used multiple times to start from multiple"
-            " tasks at once. Dependence on tasks with cycle points earlier"
-            " than the earliest start-task will be ignored. A"
-            " sub-graph of the workflow will run if selected tasks do"
-            " not lead on to the full graph."),
+            "Start from this task instance instead of the beginning of the"
+            " graph. Dependence on other tasks is ignored but clock and"
+            " xtriggers are respected. Reuse the option for multiple start"
+            " tasks. Any dependence on cycle points prior to the earliest"
+            " start task will be ignored throughout the graph. Check that"
+            " start tasks flow into the full downstream graph, if needed."
+        ),
         metavar="TASK_ID",
         action='append',
         dest="starttask",
@@ -655,8 +663,6 @@ async def _run(scheduler: Scheduler) -> int:
     # stop cylc stop
     except SchedulerError:
         ret = 1
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        ret = 2
     except Exception:
         ret = 3
 

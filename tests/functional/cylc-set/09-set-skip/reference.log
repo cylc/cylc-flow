@@ -1,0 +1,5 @@
+1/bar -triggered off [] in flow 1
+1/foo -triggered off [] in flow 1
+1/do_skip -triggered off ['1/bar', '1/foo'] in flow 1
+1/foo_done -triggered off ['1/foo', '1/foo', '1/foo'] in flow 1
+1/bar_failed -triggered off ['1/bar'] in flow 1

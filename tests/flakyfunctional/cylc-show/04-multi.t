@@ -44,7 +44,10 @@ outputs: ('⨯': not completed)
   ⨯ 2016/t1 succeeded
   ⨯ 2016/t1 failed
 output completion: incomplete
-  ⨯ ⦙  succeeded
+    ┆  (
+  ✓ ┆    started
+  ⨯ ┆    and succeeded
+    ┆  )
 
 Task ID: 2017/t1
 title: (not given)
@@ -61,7 +64,10 @@ outputs: ('⨯': not completed)
   ⨯ 2017/t1 succeeded
   ⨯ 2017/t1 failed
 output completion: incomplete
-  ⨯ ⦙  succeeded
+    ┆  (
+  ✓ ┆    started
+  ⨯ ┆    and succeeded
+    ┆  )
 
 Task ID: 2018/t1
 title: (not given)
@@ -78,7 +84,10 @@ outputs: ('⨯': not completed)
   ⨯ 2018/t1 succeeded
   ⨯ 2018/t1 failed
 output completion: incomplete
-  ⨯ ⦙  succeeded
+    ┆  (
+  ✓ ┆    started
+  ⨯ ┆    and succeeded
+    ┆  )
 __TXT__
 
 contains_ok "${RUND}/show2.txt" <<'__TXT__'

@@ -291,8 +291,17 @@ class SubProcPool:
                 )
                 continue
             # Command still running, see if STDOUT/STDERR are readable or not
-            runnings.append([
-                proc, ctx, bad_hosts, callback, callback_args, None, None])
+            runnings.append(
+                [
+                    proc,
+                    ctx,
+                    bad_hosts,
+                    callback,
+                    callback_args,
+                    callback_255,
+                    callback_255_args,
+                ]
+            )
             # Unblock proc's STDOUT/STDERR if necessary. Otherwise, a full
             # STDOUT or STDERR may stop command from proceeding.
             self._poll_proc_pipes(proc, ctx)

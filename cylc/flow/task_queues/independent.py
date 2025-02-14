@@ -40,6 +40,19 @@ class LimitedTaskQueue:
         if itask.tdef.name in self.members:
             self.deque.appendleft(itask)
 
+    def push_task_if_limited(
+        self, itask: 'TaskProxy', active: Counter[str]
+    ) -> bool:
+        """Queue task if in my membership and the queue limit is reached."""
+        n_active = sum(active[mem] for mem in self.members)
+        if (
+            self.limit and n_active >= self.limit
+            and itask.tdef.name in self.members
+        ):
+            self.deque.appendleft(itask)
+            return True
+        return False
+
     def release(self, active: Counter[str]) -> List['TaskProxy']:
         """Release tasks if below the active limit."""
         # The "active" argument counts active tasks by name.
@@ -113,34 +126,30 @@ class IndepQueueManager(TaskQueueManagerBase):
                 config["limit"], config["members"]
             )
 
-        self.force_released: Set['TaskProxy'] = set()
-
     def push_task(self, itask: 'TaskProxy') -> None:
         """Push a task to the appropriate queue."""
         for queue in self.queues.values():
             queue.push_task(itask)
+
+    def push_task_if_limited(
+        self, itask: 'TaskProxy', active: Counter[str]
+    ) -> bool:
+        """Push a task to its queue only if the queue limit is reached."""
+        return any(
+            queue.push_task_if_limited(itask, active)
+            for queue in self.queues.values()
+        )
 
     def release_tasks(self, active: Counter[str]) -> List['TaskProxy']:
         """Release tasks up to the queue limits."""
         released: List['TaskProxy'] = []
         for queue in self.queues.values():
             released += queue.release(active)
-        if self.force_released:
-            released.extend(self.force_released)
-            self.force_released = set()
         return released
 
     def remove_task(self, itask: 'TaskProxy') -> bool:
         """Try to remove a task from the queues. Return True if done."""
         return any(queue.remove(itask) for queue in self.queues.values())
-
-    def force_release_task(self, itask: 'TaskProxy') -> None:
-        """Remove a task from whichever queue it belongs to.
-
-        To be returned when release_tasks() is next called.
-        """
-        if self.remove_task(itask):
-            self.force_released.add(itask)
 
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt orphaned tasks to the default group."""

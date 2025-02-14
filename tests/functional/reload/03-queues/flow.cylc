@@ -28,7 +28,7 @@ cylc__job__poll_grep_workflow_log 'Reload completed'
         script = """
         cylc__job__wait_cylc_message_started
         while true; do
-            RUNNING=$(cylc dump -t "${CYLC_WORKFLOW_ID}" | grep running | wc -l)
+            RUNNING=$(cylc dump -l -t "${CYLC_WORKFLOW_ID}" | grep running | wc -l)
             # Should be max of: monitor plus 3 members of q1
             echo "RUNNING $RUNNING"
             if ((RUNNING > 4)); then

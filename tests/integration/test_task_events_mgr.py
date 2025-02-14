@@ -17,6 +17,7 @@
 import logging
 from typing import Any as Fixture
 
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.data_store_mgr import (
@@ -76,12 +77,12 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
     with correct submit number.
     """
     conf = {
-        "scheduling": {"graph": {"R1": "rhenas"}},
-        "runtime": {
-            "rhenas": {
-                "simulation": {
-                    "fail cycle points": "1",
-                    "fail try 1 only": False,
+        'scheduling': {'graph': {'R1': 'rhenas'}},
+        'runtime': {
+            'rhenas': {
+                'simulation': {
+                    'fail cycle points': '1',
+                    'fail try 1 only': False,
                 }
             }
         },
@@ -91,8 +92,9 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
     async with start(schd):
         # Set task to running:
         itask = schd.pool.get_tasks()[0]
-        itask.state.status = "running"
+        itask.state.status = 'running'
         itask.submit_num += 1
+        itask.run_mode = RunMode.SIMULATION
 
         # Not run _insert_task_job yet:
         assert not schd.data_store_mgr.added['jobs'].keys()
@@ -149,13 +151,7 @@ async def test__always_insert_task_job(
     schd = scheduler(id_, run_mode='live')
     schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
     async with start(schd):
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir,
-            is_simulation=False
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Both tasks are in a waiting state:
         assert all(
@@ -193,14 +189,13 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
         # Process submit failed message with and without retries:
         one.task_events_mgr._process_message_submit_failed(
             fail_once, None, 1, False)
-        last_record = LOG.records[-1]
-        assert last_record.levelno == logging.WARNING
-        assert '1/one:waiting(queued)] retrying in' in last_record.message
+        record = log_filter(contains='1/one:waiting(queued)] retrying in')
+        assert record[0][0] == logging.WARNING
 
         one.task_events_mgr._process_message_submit_failed(
             fail_once, None, 2, False)
-        failed_record = log_filter(LOG, level=logging.ERROR)[-1]
-        assert 'submission failed' in failed_record[2]
+        failed_record = log_filter(level=logging.ERROR)[-1]
+        assert 'submission failed' in failed_record[1]
 
         # Process failed message with and without retries:
         one.task_events_mgr._process_message_failed(
@@ -211,5 +206,5 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
 
         one.task_events_mgr._process_message_failed(
             fail_once, None, 'failed', False, 'failed/OOK')
-        failed_record = log_filter(LOG, level=logging.ERROR)[-1]
-        assert 'failed/OOK' in failed_record[2]
+        failed_record = log_filter(level=logging.ERROR)[-1]
+        assert 'failed/OOK' in failed_record[1]

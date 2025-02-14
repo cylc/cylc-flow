@@ -20,9 +20,10 @@ jobs:
       fail-fast: false # don't stop on first failure
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.7', '3.8', '3.10', '3.11', '3']
+        python-version: ['3.8', '3.10', '3.11', '3']
         include:
-          # mac os test
+          - os: 'ubuntu-22.04'
+            python-version: '3.7'
           - os: 'macos-latest'
             python-version: '3.9'  # oldest supported version
           # non-utc timezone test
@@ -65,9 +66,15 @@ jobs:
           pytest cylc/flow tests/unit
 
       - name: Integration Tests
-        timeout-minutes: 6
+        timeout-minutes: 5
         run: |
-          pytest tests/integration
+          pytest tests/integration --ignore tests/integration/tui/
+
+      - name: Tui Integration Tests
+        timeout-minutes: 5
+        # Re-run failed Tui tests as they can be flaky
+        run: |
+          pytest tests/integration/tui || pytest tests/integration/tui --last-failed
 
       - name: Upload failed tests artifact
         if: failure()
@@ -101,12 +108,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # note: exclude python 3.10+ from mypy checks as these produce false
-      # positives in installed libraries for python 3.7
       - name: Configure Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.x
 
       - name: Install
         run: |
@@ -143,7 +148,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           name: ${{ github.workflow }}
           flags: fast-tests

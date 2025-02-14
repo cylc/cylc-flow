@@ -1,13 +1,15 @@
 # Abort on stall timeout unless we remove unhandled failed and waiting task.
 [scheduler]
     [[events]]
-        stall timeout = PT20S
+        stall timeout = PT30S
         abort on stall timeout = True
         expected task failures = 1/b
 [scheduling]
     [[graph]]
-        R1 = """a => b => c
-                cleaner"""
+        R1 = """
+            a => b => c
+            cleaner
+        """
 [runtime]
     [[a,c]]
         script = true

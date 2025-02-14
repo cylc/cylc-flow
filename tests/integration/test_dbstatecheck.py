@@ -79,27 +79,27 @@ def test_basic(checker):
         ['output', '10010101T0000Z', 'succeeded'],
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
         ['good', '10010101T0000Z', 'waiting', '(flows=2)'], ]
-    assert result == expect
+    assert sorted(result) == sorted(expect)
 
 
 def test_task(checker):
     """Filter by task name"""
     result = checker.workflow_state_query(task='bad')
-    assert result == [
+    assert sorted(result) == ([
         ['bad', '10000101T0000Z', 'failed'],
         ['bad', '10010101T0000Z', 'succeeded']
-    ]
+    ])
 
 
 def test_point(checker):
     """Filter by point"""
     result = checker.workflow_state_query(cycle='10000101T0000Z')
-    assert result == [
+    assert sorted(result) == sorted([
         ['bad', '10000101T0000Z', 'failed'],
         ['good', '10000101T0000Z', 'succeeded'],
         ['output', '10000101T0000Z', 'succeeded'],
         ['good', '10000101T0000Z', 'waiting', '(flows=2)'],
-    ]
+    ])
 
 
 def test_status(checker):

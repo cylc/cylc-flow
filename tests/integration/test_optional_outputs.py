@@ -41,7 +41,6 @@ from cylc.flow.task_outputs import (
     get_completion_expression,
 )
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
@@ -193,7 +192,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
 
         # wait for the task to submit
         while not a_1.state(TASK_STATUS_WAITING, TASK_STATUS_PREPARING):
-            schd.release_queued_tasks()
+            schd.release_tasks_to_run()
 
         # NOTE: The submit number isn't presently incremented via this code
         # pathway so we have to hack it here. If the task messages in this test
@@ -484,7 +483,7 @@ async def test_removed_taskdef(
                 'R1': 'a'
             }
         }
-    }, id_=id_)
+    }, workflow_id=id_)
 
     # restart the workflow
     schd: 'Scheduler' = scheduler(id_)

@@ -28,6 +28,7 @@ use 'cylc view -i,--inline WORKFLOW' for comparison.
 import asyncio
 from ansimarkup import parse as cparse
 from copy import deepcopy
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 
@@ -51,11 +52,12 @@ from cylc.flow.option_parsers import (
     ICP_OPTION,
 )
 from cylc.flow.profiler import Profiler
+from cylc.flow.scheduler_cli import RUN_MODE
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.scheduler_cli import RUN_MODE
-from cylc.flow.workflow_status import RunMode
+from cylc.flow.run_modes import RunMode
+from cylc.flow.workflow_files import get_workflow_run_dir
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Values
@@ -128,7 +130,7 @@ ValidateOptions = Options(
     {
         'check_circular': False,
         'profile_mode': False,
-        'run_mode': RunMode.LIVE
+        'run_mode': RunMode.LIVE.value
     }
 )
 
@@ -153,6 +155,12 @@ async def run(
         src=True,
         constraint='workflows',
     )
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if getattr(options, 'against_source', False):
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
+
     cfg = WorkflowConfig(
         workflow_id,
         flow_file,
@@ -182,7 +190,8 @@ async def run(
             continue
         except Exception as exc:
             raise WorkflowConfigError(
-                'failed to instantiate task %s: %s' % (name, exc))
+                'failed to instantiate task %s: %s' % (name, exc)
+            ) from None
 
         # force trigger evaluation now
         try:
@@ -190,17 +199,21 @@ async def run(
         except TriggerExpressionError as exc:
             err = str(exc)
             if '@' in err:
-                print(f"ERROR, {name}: xtriggers can't be in conditional"
-                      f" expressions: {err}",
-                      file=sys.stderr)
+                print(
+                    f"ERROR, {name}: xtriggers can't be in conditional"
+                    f" expressions: {err}",
+                    file=sys.stderr,
+                )
             else:
-                print('ERROR, %s: bad trigger: %s' % (name, err),
-                      file=sys.stderr)
-            raise WorkflowConfigError("ERROR: bad trigger")
+                print(
+                    'ERROR, %s: bad trigger: %s' % (name, err), file=sys.stderr
+                )
+            raise WorkflowConfigError("ERROR: bad trigger") from None
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             raise WorkflowConfigError(
-                '%s: failed to evaluate triggers.' % name)
+                '%s: failed to evaluate triggers.' % name
+            ) from None
         if cylc.flow.flags.verbosity > 0:
             print('  + %s ok' % itask.identity)
 

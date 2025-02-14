@@ -134,7 +134,11 @@ async def workflow(mod_flow, mod_scheduler, mod_start, standarise_host_and_path)
         # (note the scheduler log doesn't get created in integration tests)
         scheduler_log = Path(schd.workflow_log_dir, '01-start-01.log')
         with open(scheduler_log, 'w+') as logfile:
-            logfile.write('this is the\nscheduler log file')
+            logfile.write(
+                'this is the scheduler log file'
+                + '\n'
+                + '\n'.join(f'line {x}' for x in range(2, 1000))
+            )
 
         # task 1/a
         itask = schd.pool.get_task(IntegerPoint('1'), 'a')
@@ -217,6 +221,20 @@ async def test_scheduler_logs(
         rk.compare_screenshot(
             'scheduler-log-file',
             'the scheduler log file should be open',
+        )
+
+        # jump to the bottom of the file
+        rk.user_input('end')
+        rk.compare_screenshot(
+            'scheduler-log-file-bottom',
+            'we should be looking at the bottom of the file'
+        )
+
+        # jump back to the top of the file
+        rk.user_input('home')
+        rk.compare_screenshot(
+            'scheduler-log-file',
+            'we should be looking at the bottom of the file'
         )
 
         # open the list of log files

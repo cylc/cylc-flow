@@ -87,13 +87,13 @@ async def test_queue_release(
         # (if scheduler is paused we should not have any submissions)
         # (otherwise a number of tasks up to the limit should be released)
         schd.pool.release_runahead_tasks()
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert len(submitted_tasks) == expected_submissions
 
         for _ in range(3):
             # release runahead/queued tasks
             # (no further tasks should be released)
-            schd.release_queued_tasks()
+            schd.release_tasks_to_run()
             assert len(submitted_tasks) == expected_submissions
 
 
@@ -120,18 +120,18 @@ async def test_queue_held_tasks(
 
         # hold all tasks and resume the workflow
         # (nothing should have run yet because the workflow started paused)
-        await commands.run_cmd(commands.hold, schd, ['*/*'])
+        await commands.run_cmd(commands.hold(schd, ['*/*']))
         schd.resume_workflow()
 
         # release queued tasks
         # (no tasks should be released from the queues because they are held)
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert len(submitted_tasks) == 0
 
         # un-hold tasks
-        await commands.run_cmd(commands.release, schd, ['*/*'])
+        await commands.run_cmd(commands.release(schd, ['*/*']))
 
         # release queued tasks
         # (tasks should now be released from the queues)
-        schd.release_queued_tasks()
+        schd.release_tasks_to_run()
         assert len(submitted_tasks) == 1
