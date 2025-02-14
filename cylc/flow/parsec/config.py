@@ -35,6 +35,10 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
+class DefaultList(list):
+    """List subclass to indicate unassigned list values in expanded config."""
+
+
 class ParsecConfig:
     """Object wrapper for parsec functions."""
 
@@ -112,7 +116,7 @@ class ParsecConfig:
                     else:
                         if node.default == ConfigNode.UNSET:
                             if node.vdr and node.vdr.endswith('_LIST'):
-                                defs[node.name] = []
+                                defs[node.name] = DefaultList()
                             else:
                                 defs[node.name] = None
                         else:
