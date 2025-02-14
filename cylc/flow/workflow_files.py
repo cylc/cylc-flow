@@ -25,7 +25,7 @@ See also:
 from contextlib import suppress
 from enum import Enum
 import errno
-from queue import deque
+from collections import deque
 import os
 from pathlib import Path
 import re
