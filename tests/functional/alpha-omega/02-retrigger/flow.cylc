@@ -1,9 +1,7 @@
 
 # 1. alpha graph completes
-# 2. then main graph starts, and triggers alpha/a and omega/x with --flow=none
+# 2. then main graph starts, and triggers alpha/a and omega/x with --flow=9
 # 3. then when all tasks finish, omega graph runs
-
-# TODO alpha and omega graphs need special flow number treatment?
 
 [scheduling]
     [[graph]]
@@ -18,7 +16,7 @@
     [[foo]]
     [[bar]]
         script = """
-            cylc trigger --flow=none $CYLC_WORKFLOW_ID//alpha/a
-            cylc trigger --flow=none $CYLC_WORKFLOW_ID//omega/x
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//alpha/a
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//omega/x
         """
     [[baz]]

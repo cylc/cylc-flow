@@ -659,16 +659,16 @@ class Scheduler:
                 )
 
     async def _get_graph_loaders(self) -> None:
-        """Tee up one or more graphs to load the task pool.
+        """Tee up the loaders for configured graphs (alpha, main, omega).
 
-        In a restart the pool is already loaded - examine it to see which
-        graphs to run next. Otherwise, tee up all the configured graphs.
+        A graph loader loads the task pool with the graph's parentless tasks
+        to get the graph started.
 
-        Note a "graph loader" load the task pool with initial parentless
-        tasks defined by the graph.
+        In a restart the task pool is loaded from the DB before calling this
+        method so we can examine the pool to see what's still to run.
 
-        TODO: post-restart examination of the task pool is fallible, we
-        really need to record graphs finished in the DB.
+        NOTE: always spawn the first task of the next graph if shutting down
+        at the end of a graph, to ensure that restart works correctly.
 
         """
         points = [p.value for p in self.pool.get_points()]
@@ -677,7 +677,9 @@ class Scheduler:
 
         if (
             NOCYCLE_SEQ_OMEGA in self.config.nocycle_sequences
-            and (not points or NOCYCLE_PT_OMEGA not in points)
+            and (
+                not points or NOCYCLE_PT_OMEGA not in points
+            )
         ):
             # Omega section exists and hasn't started yet.
             self.graph_loaders.append(
@@ -693,7 +695,8 @@ class Scheduler:
                 )
             )
         ):
-            # Normal graph exists and hasn't started yet.
+            # Main graph exists, and hasn't started yet.
+            # (And hasn't already run, or the pool would contain omega tasks).
             if self.options.starttask:
                 # Cold start from specified tasks.
                 self.graph_loaders.append(self._load_pool_from_tasks)
@@ -703,10 +706,12 @@ class Scheduler:
 
         if (
             NOCYCLE_SEQ_ALPHA in self.config.nocycle_sequences
-            and not self.is_restart
+            and (
+                not self.is_restart
+            )
         ):
             # Alpha section exists and hasn't started yet.
-            # (Not in a restart - the pool already loaded from DB!).
+            # (Not in a restart - the pool would already be loaded from DB).
             self.graph_loaders.append(
                 partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_ALPHA)
             )
@@ -880,7 +885,7 @@ class Scheduler:
 
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
-        LOG.info(f"LOADING START TASKS: {self.options.starttask}")
+        LOG.info(f"Loading start tasks: {self.options.starttask}")
         # flow number set in this call:
         self.pool.set_prereqs_and_outputs(
             self.options.starttask,
@@ -901,7 +906,7 @@ class Scheduler:
         released from runhead.)
 
         """
-        LOG.info("LOADING MAIN GRAPH")
+        LOG.info("Loading main graph")
         msg = f"start from {self.config.start_point}"
         if self.config.start_point == self.config.initial_point:
             msg = "Cold " + msg
@@ -910,7 +915,7 @@ class Scheduler:
 
     async def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
-        LOG.info("LOADING DB FOR RESTART")
+        LOG.info("Loading from DB for restart")
 
         self.task_job_mgr.task_remote_mgr.is_restart = True
         self.task_job_mgr.task_remote_mgr.rsync_includes = (
@@ -944,7 +949,6 @@ class Scheduler:
         if not all_tasks:
             # Restart with empty pool: only unfinished event handlers.
             # This workflow completed before restart; wait for intervention.
-            # TODO - WHAT IF IT SHUT DOWN BETWEEN GRAPHS
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].reset()
                 self.is_restart_timeout_wait = True
@@ -958,7 +962,7 @@ class Scheduler:
         self.restart_remote_init()
         # Poll all pollable tasks
         await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
-        # TODO - WHY DOESN'T '*/*' MATCH THE FOLLOWING?
+        # Current cycle point globs don't match alpha and omega:
         await commands.run_cmd(
             commands.poll_tasks(self, [f"{NOCYCLE_PT_ALPHA}/*"]))
         await commands.run_cmd(
@@ -1943,7 +1947,7 @@ class Scheduler:
 
         if self.graph_finished() and self.graph_loaders:
             # Return control to load the next graph.
-            print("Graph finished")
+            LOG.debug("Graph finished")
             return False
 
         self.process_workflow_db_queue()

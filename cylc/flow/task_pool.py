@@ -208,9 +208,13 @@ class TaskPool:
             self.active_tasks_changed = True
 
     def load_nocycle_graph(self, seq):
-        """Load task pool from a no-cycle graph."""
-        LOG.info(f"LOADING {seq} GRAPH")
-        flow_num = self.flow_mgr.get_flow_num(meta=f"original {seq} flow")
+        """Load task pool for a no-cycle (alpha or omega) graph."""
+
+        LOG.info(f"Loading {seq} graph")
+        # Always start flow 1 for automatic load from start of a graph.
+        flow_num = self.flow_mgr.get_flow_num(
+            1, meta=f"original {seq} flow",
+        )
         self.runahead_limit_point = None
         for name in self.config.get_task_name_list():
             tdef = self.config.get_taskdef(name)
@@ -230,10 +234,10 @@ class TaskPool:
 
         Add every parentless task out to the runahead limit.
         """
+        # Always start flow 1 for automatic load from start of a graph.
         flow_num = self.flow_mgr.get_flow_num(
-            meta=f"original flow from {self.config.start_point}")
-        # self.runahead_limit_point = None  # reset from nocycle
-
+            1, meta=f"original flow from {self.config.start_point}",
+        )
         self.compute_runahead()
         for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
@@ -1643,7 +1647,6 @@ class TaskPool:
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
                 if (
-                    # TODO NOCYCLE
                     self.runahead_limit_point is not None
                     and c_task.point <= self.runahead_limit_point
                 ):
