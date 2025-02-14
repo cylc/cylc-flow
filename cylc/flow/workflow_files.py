@@ -25,6 +25,7 @@ See also:
 from contextlib import suppress
 from enum import Enum
 import errno
+from queue import deque
 import os
 from pathlib import Path
 import re
@@ -640,7 +641,7 @@ def refresh_nfs_cache(path: Path):
     """
     cylc_run_dir = get_cylc_run_dir()
     for subdir in reversed(path.relative_to(cylc_run_dir).parents):
-        list((cylc_run_dir / subdir).iterdir())
+        deque((cylc_run_dir / subdir).iterdir(), maxlen=0)
 
 
 def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
