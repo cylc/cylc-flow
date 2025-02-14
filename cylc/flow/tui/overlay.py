@@ -38,8 +38,14 @@ Parameters:
 """
 
 from functools import partial
+import os
 import re
+import shlex
+import stat
+from subprocess import Popen
 import sys
+import tempfile
+from time import sleep
 
 import urwid
 
@@ -473,6 +479,56 @@ def log(app, id_=None, list_files=None, get_log=None):
             if close:
                 app.close_topmost()
 
+    def open_in_editor(*_, command):
+        """Suspend Tui, open the file in an external utility, then restore Tui.
+
+        Args:
+            command:
+                The command to run as a list, e.g. 'gvim -f'.
+                This command must be blocking, the tui session will be
+                restored when the command exits.
+
+        """
+        nonlocal text_widget
+
+        with tempfile.NamedTemporaryFile('w+') as temp_file:
+            # write the text into a temp file
+            temp_file.write(text_widget.text)
+            temp_file.seek(0, 0)
+
+            # make the file readonly to avoid confusion
+            os.chmod(temp_file.name, stat.S_IRUSR)
+
+            # suspend Tui
+            app.loop.screen.stop()
+
+            # open the file using the external tool (must be blocking)
+            print(
+                'Launching external tool, Tui will resume once it exits.',
+                file=sys.stderr,
+            )
+            try:
+                Popen(
+                    [*shlex.split(command), temp_file.name]
+                ).wait()  # nosec B603
+                # (this is running a command the user has configured)
+            except OSError as exc:
+                # ensure any critical errors are visible to the user so
+                # that they have a chance to fix them
+                _sleep_time = 5
+                print(
+                    (
+                        f'Error running {command} {temp_file.name}'
+                        f'\n{exc}'
+                        f'\nTui will resume in {_sleep_time} seconds'
+                    ),
+                    file=sys.stderr
+                )
+                sleep(_sleep_time)
+
+            # restore Tui
+            app.loop.screen.start()
+
     # load the default log file
     if id_:
         # NOTE: the kwargs are not provided in the overlay unit tests
@@ -489,6 +545,25 @@ def log(app, id_=None, list_files=None, get_log=None):
                 'Select File',
                 on_press=open_menu,
             ),
+            urwid.Columns([
+                ('pack', urwid.Text('Open in:  ')),
+                *(
+                    (
+                        'pack',
+                        urwid.Button(
+                            label,
+                            align='left',
+                            on_press=partial(open_in_editor, command=command),
+                        ),
+                    )
+                    for label, command in (
+                        ('$EDITOR', os.environ.get('EDITOR', 'vim')),
+                        ('$GEDITOR', os.environ.get('GEDITOR', 'gvim -f')),
+                        ('$PAGER', os.environ.get('PAGER', 'less')),
+                        ('vim', 'vim'),
+                    )
+                ),
+            ]),
             urwid.Divider(),
             text_widget,
         ]),
