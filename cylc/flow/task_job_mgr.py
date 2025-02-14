@@ -44,6 +44,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -1270,7 +1271,8 @@ class TaskJobManager:
                     workflow, itask, '(platform not defined)', exc)
                 return False
             else:
-                itask.platform = platform
+                # (platform is not None here as subshell eval has finished)
+                itask.platform = cast('dict', platform)
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 
