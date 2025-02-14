@@ -1256,6 +1256,10 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
+    descendants = graphene.List(
+        String,
+        description='First-parent descendants.',
+    )
     first_parent = Field(
         lambda: Family,
         description='Family first parent.',
