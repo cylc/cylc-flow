@@ -66,6 +66,7 @@ def test__job_poll_status_files_deleted_logdir():
     ctx = jrm._jobs_poll_status_files('foo', 'bar')
     assert ctx.run_signal == JOB_FILES_REMOVED_MESSAGE
     assert ctx.run_status == 1
+    assert ctx.job_runner_exit_polled == 1
 
 
 def test__job_poll_status_files_ioerror(tmp_path, capsys):
@@ -75,4 +76,3 @@ def test__job_poll_status_files_ioerror(tmp_path, capsys):
     jrm._jobs_poll_status_files(str(tmp_path), 'sub')
     cap = capsys.readouterr()
     assert '[Errno 2] No such file or directory' in cap.err
-

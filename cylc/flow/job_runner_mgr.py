@@ -445,7 +445,11 @@ class JobRunnerManager():
         # If the log directory has been deleted prematurely, return a task
         # failure and an explanation:
         if not os.path.exists(os.path.join(job_log_root, ctx.job_log_dir)):
+            # The job may still be in the job runner and may yet succeed,
+            # but we assume it failed & exited because it's the best we
+            # can do as it is no longer possible to poll it.
             ctx.run_status = 1
+            ctx.job_runner_exit_polled = 1
             ctx.run_signal = JOB_FILES_REMOVED_MESSAGE
             return ctx
         try:

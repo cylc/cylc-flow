@@ -15,14 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import suppress
+import json
 import logging
-from types import SimpleNamespace
 from typing import Any as Fixture
+from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import TASK_STATUS_RUNNING
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+)
 
 
 async def test_run_job_cmd_no_hosts_error(
@@ -238,23 +242,30 @@ async def test_broadcast_platform_change(
 
 
 async def test_poll_job_deleted_log_folder(
-    one_conf, flow, scheduler, start, caplog
+    one_conf, flow, scheduler, start, log_filter
 ):
     """Capture a task error caused by polling finding the job log dir deleted.
 
     https://github.com/cylc/cylc-flow/issues/6425
     """
-    ctx = SimpleNamespace()
-    ctx.out = JOB_FILES_REMOVED_MESSAGE
-    ctx.ret_code = None
-    ctx.cmd = ['foo', 'bar']
-
-    schd = scheduler(flow(one_conf), run_mode='live', paused_start=False)
+    response = {
+        'run_signal': JOB_FILES_REMOVED_MESSAGE,
+        'run_status': 1,
+        'job_runner_exit_polled': 1,
+    }
+    schd: Scheduler = scheduler(flow(one_conf))
     async with start(schd):
-        schd.task_job_mgr._manip_task_jobs_callback(ctx, '', [], '')
+        itask = schd.pool.get_tasks()[0]
+        itask.submit_num = 1
+        job_id = itask.tokens.duplicate(job='01').relative_id
+        schd.task_job_mgr._poll_task_job_callback(
+            schd.workflow,
+            itask,
+            cmd_ctx=Mock(),
+            line=f'2025-02-13T12:08:30Z|{job_id}|{json.dumps(response)}',
+        )
+        assert itask.state(TASK_STATUS_FAILED)
 
-    assert (
-        'Task bar failed because task log directory'
-        '\nfoo/bar\nhas been removed.'
-        in caplog.messages
+    assert log_filter(
+        logging.ERROR, f"job log directory {job_id} no longer exists"
     )
