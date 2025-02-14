@@ -14,6 +14,7 @@ on:
 
 jobs:
   sync:
+    if: github.repository_owner == 'cylc' || github.event_name != 'schedule'
     uses: cylc/release-actions/.github/workflows/branch-sync.yml@v1
     with:
       head_branch: ${{ inputs.head_branch }}

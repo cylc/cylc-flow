@@ -65,10 +65,10 @@ def get_option_parser() -> COP:
         '--comms-timeout',
         metavar='SEC',
         help=(
-            "Set a timeout for network connections"
-            " to the running workflow. The default is 3 seconds."
-            " For task messaging connections see"
-            " site/user config file documentation."
+            # NOTE: Tui overrides the default client timeout
+            "Set the timeout for communication with the running workflow."
+            " The default is 3 seconds, uou may need to increase this in"
+            "order for Tui to keep up with especially busy workflows."
         ),
         action='store',
         default=3,

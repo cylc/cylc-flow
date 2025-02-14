@@ -23,7 +23,7 @@ async def test_prep_submit_task_tries_multiple_platforms(
     task platform setting matches a group, and that after all platforms
     have been tried that the hosts matching that platform group are
     cleared.
-    
+
     See https://github.com/cylc/cylc-flow/pull/6109
     """
     global_conf = '''
@@ -47,7 +47,7 @@ async def test_prep_submit_task_tries_multiple_platforms(
         itask.submit_num = 1
         # simulate failed attempts to contact the job hosts
         schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
-        res = schd.task_job_mgr._prep_submit_task_job(schd.workflow, itask)
+        res = schd.task_job_mgr._prep_submit_task_job(itask)
         assert res is False
         # ensure the bad hosts have been cleared
         assert not schd.task_job_mgr.bad_hosts

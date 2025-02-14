@@ -253,7 +253,7 @@ async def test_set_mutation(
             rk.force_update()
 
             # select the "set" mutation
-            rk.user_input(*(('down',) * 6))  # 6th command down
+            rk.user_input(*(('down',) * 7))  # 7th command down
 
             rk.compare_screenshot(
                 # take a screenshot to ensure we have focused on the mutation
