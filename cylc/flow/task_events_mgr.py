@@ -1427,7 +1427,6 @@ class TaskEventsManager():
         self,
         itask: 'TaskProxy',
         event_time: Optional[str],
-        submit_num: int,
         forced: bool,
     ):
         """Helper for process_message, handle a submit-failed message.

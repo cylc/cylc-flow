@@ -188,12 +188,12 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
 
         # Process submit failed message with and without retries:
         one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, 1, False)
+            fail_once, None, False)
         record = log_filter(contains='1/one:waiting(queued)] retrying in')
         assert record[0][0] == logging.WARNING
 
         one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, 2, False)
+            fail_once, None, False)
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'submission failed' in failed_record[1]
 
