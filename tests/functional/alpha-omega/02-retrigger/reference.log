@@ -1,0 +1,11 @@
+alpha/a -triggered off [] in flow 1
+alpha/b -triggered off ['alpha/a'] in flow 1
+1/foo -triggered off [] in flow 1
+1/bar -triggered off ['1/foo'] in flow 1
+alpha/a -triggered off [] in flow 9
+alpha/b -triggered off ['alpha/a'] in flow 9
+omega/x -triggered off [] in flow 9
+omega/y -triggered off ['omega/x'] in flow 9
+1/baz -triggered off ['1/bar'] in flow 1
+omega/x -triggered off [] in flow 1
+omega/y -triggered off ['omega/x'] in flow 1
