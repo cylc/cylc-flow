@@ -14,12 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
+
 # Test execution time limit polling.
 export REQUIRE_PLATFORM='loc:* comms:poll runner:background'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-set_test_number 4
+
+set_test_number 5
 create_test_global_config '' "
 [platforms]
    [[$CYLC_TEST_PLATFORM]]
@@ -28,51 +28,16 @@ create_test_global_config '' "
         execution time limit polling intervals = PT5S
 "
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
+
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test -v --no-detach "${WORKFLOW_NAME}" --timestamp
-#-------------------------------------------------------------------------------
-# shellcheck disable=SC2317
-cmp_times () {
-    # Test if the times $1 and $2 are within $3 seconds of each other.
-    python3 -u - "$@" <<'__PYTHON__'
-import sys
-from metomi.isodatetime.parsers import TimePointParser
-parser = TimePointParser()
-time_1 = parser.parse(sys.argv[1])
-time_2 = parser.parse(sys.argv[2])
-if abs((time_1 - time_2).get_seconds()) > int(sys.argv[3]):
-    sys.exit("abs(predicted - actual) > tolerance: %s" % sys.argv[1:])
-__PYTHON__
-}
-time_offset () {
-    # Add an ISO8601 duration to an ISO8601 date-time.
-    python3 -u - "$@" <<'__PYTHON__'
-import sys
-from metomi.isodatetime.parsers import TimePointParser, DurationParser
-print(
-    TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2]))
-__PYTHON__
-}
-#-------------------------------------------------------------------------------
-LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
-# Test logging of the "next job poll" message when task starts.
-TEST_NAME="${TEST_NAME_BASE}-log-entry"
-LINE="$(grep '\[1/foo.* execution timeout=None, polling intervals=' "${LOG}")"
-run_ok "${TEST_NAME}" grep -q 'health: execution timeout=None, polling intervals=' <<< "${LINE}"
-# Determine poll times.
-PREDICTED_POLL_TIME=$(time_offset \
-    "$(cut -d ' ' -f 1 <<< "${LINE}")" \
-    "PT10S") # PT5S time limit + PT5S polling interval
-ACTUAL_POLL_TIME=$(sed -n \
-    's|\(.*\) DEBUG - \[1/foo.* (polled)failed .*|\1|p' "${LOG}")
 
-# Test execution timeout polling.
-# Main loop is roughly 1 second, but integer rounding may give an apparent 2
-# seconds delay, so set threshold as 2 seconds.
-run_ok "${TEST_NAME_BASE}-poll-time" \
-    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '10'
-#-------------------------------------------------------------------------------
+LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+
+log_scan "${TEST_NAME_BASE}-log" "${LOG}" 1 0 \
+    "\[1/foo/01:submitted\] => running" \
+    "\[1/foo/01:running\] poll now, (next in PT5S" \
+    "\[1/foo/01:running\] (polled)failed/XCPU"
+
 purge
-exit

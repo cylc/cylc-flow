@@ -44,6 +44,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -159,7 +160,7 @@ class TaskJobManager:
         self.workflow = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
-        self.task_events_mgr = task_events_mgr
+        self.task_events_mgr: TaskEventsManager = task_events_mgr
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
@@ -753,16 +754,6 @@ class TaskJobManager:
             or (ctx.ret_code and ctx.ret_code != 255)
         ):
             LOG.error(ctx)
-        # A polling task lets us know that a task has failed because it's
-        # log folder has been deleted whilst the task was active:
-        if (
-            getattr(ctx, 'out', None)
-            and JOB_FILES_REMOVED_MESSAGE in ctx.out
-        ):
-            LOG.error(
-                f'Task {ctx.cmd[-1]} failed because task log directory'
-                f'\n{"/".join(ctx.cmd[-2:])}\nhas been removed.'
-            )
         # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
         #
         # Note for "reload": A TaskProxy instance may be replaced on reload, so
@@ -845,7 +836,13 @@ class TaskJobManager:
             )
             self.poll_task_jobs(workflow, [itask])
 
-    def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
+    def _poll_task_job_callback(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        cmd_ctx: SubProcContext,
+        line: str,
+    ):
         """Helper for _poll_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
@@ -872,6 +869,13 @@ class TaskJobManager:
         log_lvl = DEBUG if (
             itask.platform.get('communication method') == 'poll'
         ) else INFO
+
+        if jp_ctx.run_signal == JOB_FILES_REMOVED_MESSAGE:
+            LOG.error(
+                f"platform: {itask.platform['name']} - job log directory "
+                f"{job_tokens.relative_id} no longer exists"
+            )
+
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
@@ -879,9 +883,7 @@ class TaskJobManager:
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
-            self.task_events_mgr.process_message(
-                itask, log_lvl, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
+                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}",
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
@@ -1269,7 +1271,8 @@ class TaskJobManager:
                     workflow, itask, '(platform not defined)', exc)
                 return False
             else:
-                itask.platform = platform
+                # (platform is not None here as subshell eval has finished)
+                itask.platform = cast('dict', platform)
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 

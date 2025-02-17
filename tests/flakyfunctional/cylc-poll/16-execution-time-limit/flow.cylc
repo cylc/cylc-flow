@@ -13,14 +13,6 @@
 [runtime]
     [[foo]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        init-script = cylc__job__disable_fail_signals ERR EXIT
-        script = """
-            cylc__job__wait_cylc_message_started
-            # give it a while for the started message to get picked up by
-            # the scheduler
-            sleep 10
-            exit 1
-        """
-        [[[job]]]
-            execution time limit = PT5S
+        script = sleep 20
+        execution time limit = PT10S
     [[bar]]
