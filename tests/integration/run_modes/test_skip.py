@@ -51,12 +51,7 @@ async def test_settings_override_from_broadcast(
 
         foo, = schd.pool.get_tasks()
 
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
         # Run mode has changed:
         assert foo.platform['name'] == 'skip'
         # Output failed emitted:
@@ -215,13 +210,7 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
 
     async with start(schd):
         foo = schd.pool.get_task(IntegerPoint(1), 'foo')
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            [foo],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir,
-            run_mode=schd.get_run_mode()
-        )
+        schd.submit_task_jobs([foo])
         bar = schd.pool.get_task(IntegerPoint(1), 'bar')
         satisfied_message, = bar.state.prerequisites[0]._satisfied.values()
         assert satisfied_message == 'satisfied by skip mode'
@@ -240,20 +229,10 @@ async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate
                 {"skip": {"outputs": "failed"}},
             ],
         )
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            None,
-            None
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Broadcast the task into skip mode, output succeeded and submit it:
         schd.broadcast_mgr.put_broadcast(
             ['1'], ['one'], [{'skip': {'outputs': 'succeeded'}}]
         )
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            None,
-            None
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())

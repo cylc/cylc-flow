@@ -356,7 +356,6 @@ class WorkflowConfig:
 
         # parameter values and templates are normally needed together.
         self.parameters = (parameter_values, parameter_templates)
-
         LOG.debug("Expanding [runtime] namespace lists and parameters")
 
         # Set default parameter expansion templates if necessary.
