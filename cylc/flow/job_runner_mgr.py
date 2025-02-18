@@ -39,6 +39,7 @@ from subprocess import DEVNULL  # nosec
 import sys
 import traceback
 from typing import (
+    TYPE_CHECKING,
     List,
     Optional,
 )
@@ -61,6 +62,10 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 
 
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+
 JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
 
 
@@ -69,9 +74,10 @@ class JobPollContext:
     """Context object for a job poll."""
     job_log_dir: str  # cycle/task/submit_num
     job_runner_name: Optional[str] = None
-    job_id = None  # job id in job runner
-    job_runner_exit_polled: Optional[int] = None  # 0 for false, 1 for true
-    run_status: Optional[int] = None  # 0 for success, 1 for failure
+    job_id: Optional[str] = None  # job id in job runner
+    # Has exited job runner? 0 for false, 1 for true:
+    job_runner_exit_polled: 'Literal[0, 1, None]' = None
+    run_status: 'Literal[0, 1, None]' = None  # 0 for success, 1 for failure
     run_signal: Optional[str] = None  # signal received on run failure
     time_submit_exit: Optional[str] = None  # submit (exit) time
     time_run: Optional[str] = None  # run start time
@@ -79,7 +85,7 @@ class JobPollContext:
     job_runner_call_no_lines = None  # line count in job runner call stdout
 
     def __post_init__(self):
-        self.pid = None
+        self.pid: Optional[str] = None
         self.messages: List[str] = []
 
     def update(self, other: 'JobPollContext') -> None:
@@ -241,8 +247,11 @@ class JobRunnerManager():
             # We can trust:
             # * Jobs previously polled to have exited the job runner.
             # * Jobs succeeded or failed with ERR/EXIT.
-            if (ctx.job_runner_exit_polled or ctx.run_status == 0 or
-                    ctx.run_signal in ["ERR", "EXIT"]):
+            if (
+                ctx.job_runner_exit_polled
+                or ctx.run_status == 0
+                or ctx.run_signal in {"ERR", "EXIT"}
+            ):
                 continue
 
             if ctx.job_runner_name not in ctx_list_by_job_runner:
