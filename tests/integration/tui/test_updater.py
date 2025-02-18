@@ -19,9 +19,9 @@ from copy import deepcopy
 from pathlib import Path
 from queue import Queue
 import re
+import sys
 from time import time
 
-from async_timeout import timeout
 import pytest
 
 from cylc.flow.cycling.integer import IntegerPoint
@@ -31,6 +31,12 @@ from cylc.flow.tui.updater import (
     get_default_filters,
 )
 from cylc.flow.workflow_status import WorkflowStatus
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 @pytest.fixture

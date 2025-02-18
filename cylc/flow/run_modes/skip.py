@@ -40,7 +40,6 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict,
-    _workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in skip mode.
@@ -65,7 +64,7 @@ def submit_task_job(
     }
     itask.summary['job_runner_name'] = RunMode.SKIP.value
     itask.jobs.append(
-        task_job_mgr.get_simulation_job_conf(itask, _workflow)
+        task_job_mgr.get_simulation_job_conf(itask)
     )
     itask.run_mode = RunMode.SKIP
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
