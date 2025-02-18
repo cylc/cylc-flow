@@ -174,7 +174,7 @@ fi
 
 # Set PATH when running cylc hub so that configurable-http-proxy can find node
 if [[ ${0##*/} == "cylc" && ${1:-} == "hub" ]]; then
-    PATH=${CYLC_HOME}/bin:${PATH}
+    PATH=${PATH}:${CYLC_HOME}/bin
 fi
 
 # Run the executable from the selected installation.
