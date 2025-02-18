@@ -94,7 +94,9 @@ def submit_task_job(
         process_outputs(itask, rtconfig),
         key=itask.state.outputs.output_sort_key,
     ):
-        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
+        task_job_mgr.task_events_mgr.process_message(
+            itask, INFO, output, event_time=now[1]
+        )
 
     return True
 

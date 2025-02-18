@@ -782,7 +782,8 @@ class TaskJobManager:
             )
         elif itask.state(TASK_STATUS_RUNNING):
             self.task_events_mgr.process_message(
-                itask, CRITICAL, TASK_OUTPUT_FAILED)
+                itask, CRITICAL, TASK_OUTPUT_FAILED, ctx.timestamp
+            )
         else:
             log_lvl = DEBUG
             log_msg = (
