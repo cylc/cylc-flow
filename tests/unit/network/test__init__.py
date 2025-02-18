@@ -20,7 +20,7 @@ import pytest
 import cylc
 from cylc.flow.exceptions import CylcVersionError
 from cylc.flow.network import get_location
-from cylc.flow.workflow_files import load_contact_file, ContactFileFields
+from cylc.flow.workflow_files import ContactFileFields
 
 
 BASE_CONTACT_DATA = {
@@ -33,7 +33,7 @@ BASE_CONTACT_DATA = {
 def mpatch_get_fqdn_by_host(monkeypatch):
     """Monkeypatch function used the same by all tests."""
     monkeypatch.setattr(
-        cylc.flow.network, 'get_fqdn_by_host', lambda _ : 'myhost.x.y.z'
+        cylc.flow.network, 'get_fqdn_by_host', lambda _: 'myhost.x.y.z'
     )
 
 
@@ -42,7 +42,7 @@ def test_get_location_ok(monkeypatch, mpatch_get_fqdn_by_host):
     contact_data = BASE_CONTACT_DATA.copy()
     contact_data[ContactFileFields.PUBLISH_PORT] = '8042'
     monkeypatch.setattr(
-        cylc.flow.network, 'load_contact_file', lambda _ : contact_data
+        cylc.flow.network, 'load_contact_file', lambda _: contact_data
     )
     assert get_location('_') == (
         'myhost.x.y.z', 42, 8042
@@ -55,7 +55,7 @@ def test_get_location_old_contact_file(monkeypatch, mpatch_get_fqdn_by_host):
     contact_data['CYLC_SUITE_PUBLISH_PORT'] = '8042'
     contact_data['CYLC_VERSION'] = '5.1.2'
     monkeypatch.setattr(
-        cylc.flow.network, 'load_contact_file', lambda _ : contact_data
+        cylc.flow.network, 'load_contact_file', lambda _: contact_data
     )
-    with pytest.raises(CylcVersionError, match=r'.*5.1.2.*') as exc:
+    with pytest.raises(CylcVersionError, match=r'.*5.1.2.*'):
         get_location('_')

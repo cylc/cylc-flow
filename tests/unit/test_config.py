@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 from optparse import Values
 from typing import (
     TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
@@ -50,33 +49,6 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 if TYPE_CHECKING:
     from pathlib import Path
     Fixture = Any
-
-
-def _tmp_flow_config(tmp_run_dir: Callable):
-    """Create a temporary flow config file for use in init'ing WorkflowConfig.
-
-    Args:
-        id_: Workflow name.
-        config: The flow file content.
-
-    Returns the path to the flow file.
-    """
-    def __tmp_flow_config(id_: str, config: str) -> 'Path':
-        run_dir: 'Path' = tmp_run_dir(id_)
-        flow_file = run_dir / WorkflowFiles.FLOW_FILE
-        flow_file.write_text(config)
-        return flow_file
-    return __tmp_flow_config
-
-
-@pytest.fixture
-def tmp_flow_config(tmp_run_dir: Callable):
-    return _tmp_flow_config(tmp_run_dir)
-
-
-@pytest.fixture(scope='module')
-def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
-    return _tmp_flow_config(mod_tmp_run_dir)
 
 
 class TestWorkflowConfig:
@@ -1327,16 +1299,20 @@ def test_implicit_tasks(
     """
     # Setup
     id_ = 'rincewind'
-    flow_file: 'Path' = tmp_flow_config(id_, f"""
-    [scheduler]
-        {
-            f'allow implicit tasks = {allow_implicit_tasks}'
-            if allow_implicit_tasks is not None else ''
-        }
-    [scheduling]
-        [[graph]]
-            R1 = foo
-    """)
+    allow_implicit_str = (
+        f'allow implicit tasks = {allow_implicit_tasks}'
+        if allow_implicit_tasks is not None else ''
+    )
+    flow_file: 'Path' = tmp_flow_config(
+        id_,
+        f"""
+            [scheduler]
+                {allow_implicit_str}
+            [scheduling]
+                [[graph]]
+                    R1 = foo
+        """
+    )
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', cylc7_compat)
     if rose_suite_conf:
         (flow_file.parent / 'rose-suite.conf').touch()

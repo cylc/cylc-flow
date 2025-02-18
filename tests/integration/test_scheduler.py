@@ -74,7 +74,7 @@ async def test_is_paused_after_crash(
         raise asyncio.CancelledError("Mock keyboard interrupt")
     # Patch this part of the main loop
     _schd_workflow_shutdown = schd.workflow_shutdown
-    setattr(schd, 'workflow_shutdown', ctrl_c)
+    schd.workflow_shutdown = ctrl_c
 
     # Run
     with pytest.raises(asyncio.CancelledError):
@@ -84,7 +84,7 @@ async def test_is_paused_after_crash(
     # Stopped
     assert ('is_paused', '1') in db_select(schd, False, 'workflow_params')
     # Reset patched method
-    setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
+    schd.workflow_shutdown = _schd_workflow_shutdown
     # Restart
     schd = scheduler(id_, paused_start=None)
     async with run(schd):
@@ -100,7 +100,7 @@ async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
     # patch the shutdown to raise an error
     async def mock_shutdown(*a, **k):
         raise CylcError("Error on shutdown")
-    setattr(schd, '_shutdown', mock_shutdown)
+    schd._shutdown = mock_shutdown
 
     # run the workflow
     log: pytest.LogCaptureFixture
@@ -126,7 +126,7 @@ async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     # patch the shutdown to raise an error
     async def mock_shutdown(*a, **k):
         raise ValueError("Error on shutdown")
-    setattr(schd, '_shutdown', mock_shutdown)
+    schd._shutdown = mock_shutdown
 
     # run the workflow
     log: pytest.LogCaptureFixture
@@ -376,7 +376,7 @@ async def test_restart_timeout(
 
 
 @pytest.mark.parametrize("signal", ((SIGHUP), (SIGINT), (SIGTERM)))
-async def test_signal_escallation(one, start, signal, log_filter):
+async def test_signal_escalation(one, start, signal, log_filter):
     """Double signal should escalate shutdown.
 
     If a term-like signal is received whilst the workflow is already stopping

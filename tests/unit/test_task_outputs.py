@@ -281,7 +281,9 @@ def test_iter_required_outputs():
             {TASK_OUTPUT_EXPIRED},  # task may expire
         )
     )
-    assert outputs._completion_expression == '(succeeded and x and y) or expired'
+    assert (
+        outputs._completion_expression == '(succeeded and x and y) or expired'
+    )
     assert set(outputs.iter_required_messages()) == {
         TASK_OUTPUT_SUCCEEDED,
         'x',

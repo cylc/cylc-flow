@@ -124,6 +124,11 @@ from cylc.flow.wallclock import (
 
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -156,9 +161,17 @@ class TaskJobManager:
         REMOTE_INIT_IN_PROGRESS: REMOTE_INIT_MSG
     }
 
-    def __init__(self, workflow, proc_pool, workflow_db_mgr,
-                 task_events_mgr, data_store_mgr, bad_hosts):
-        self.workflow = workflow
+    def __init__(
+        self,
+        workflow,
+        proc_pool,
+        workflow_db_mgr,
+        task_events_mgr,
+        data_store_mgr,
+        bad_hosts,
+        server,
+    ):
+        self.workflow: str = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr: WorkflowDatabaseManager = workflow_db_mgr
         self.task_events_mgr: TaskEventsManager = task_events_mgr
@@ -168,7 +181,8 @@ class TaskJobManager:
         self.bad_hosts = bad_hosts
         self.bad_hosts_to_clear = set()
         self.task_remote_mgr = TaskRemoteMgr(
-            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr)
+            workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr, server
+        )
 
     def check_task_jobs(self, task_pool):
         """Check submission and execution timeout and polling timers.
@@ -199,6 +213,14 @@ class TaskJobManager:
             self._kill_task_jobs_callback_255,
         )
 
+    def kill_prep_task(self, itask: 'TaskProxy') -> None:
+        """Kill a preparing task."""
+        itask.summary['platforms_used'][itask.submit_num] = ''
+        itask.waiting_on_job_prep = False
+        itask.local_job_file_path = None  # reset for retry
+        self._set_retry_timers(itask)
+        self._prep_submit_task_job_error(itask, '(killed in job prep)', '')
+
     def poll_task_jobs(self, itasks, msg=None):
         """Poll jobs of specified tasks.
 
@@ -223,14 +245,18 @@ class TaskJobManager:
                 self._poll_task_jobs_callback_255
             )
 
-    def prep_submit_task_jobs(self, itasks, check_syntax=True):
+    def prep_submit_task_jobs(
+        self,
+        itasks: 'Iterable[TaskProxy]',
+        check_syntax: bool = True,
+    ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
         select command to complete. Bad host select command or error writing to
         a job file will cause a bad task - leading to submission failure.
 
-        Return [list, list]: list of good tasks, list of bad tasks
+        Return (good_tasks, bad_tasks)
         """
         prepared_tasks = []
         bad_tasks = []
@@ -248,16 +274,31 @@ class TaskJobManager:
                 prepared_tasks.append(itask)
             elif prep_task is False:
                 bad_tasks.append(itask)
-        return [prepared_tasks, bad_tasks]
+        return (prepared_tasks, bad_tasks)
 
     def submit_task_jobs(
         self,
-        itasks,
-        curve_auth,
-        client_pub_key_dir,
-        run_mode: RunMode = RunMode.LIVE,
-    ):
+        itasks: 'Iterable[TaskProxy]',
+        run_mode: RunMode,
+    ) -> 'List[TaskProxy]':
         """Prepare for job submission and submit task jobs.
+
+        Return: tasks that attempted submission.
+        """
+        # submit "simulation/skip" mode tasks, modify "dummy" task configs:
+        itasks, submitted_nonlive_tasks = self.submit_nonlive_task_jobs(
+            itasks, run_mode
+        )
+
+        # submit "live" mode tasks (and "dummy" mode tasks)
+        submitted_live_tasks = self.submit_livelike_task_jobs(itasks)
+
+        return submitted_nonlive_tasks + submitted_live_tasks
+
+    def submit_livelike_task_jobs(
+        self, itasks: 'Iterable[TaskProxy]'
+    ) -> 'List[TaskProxy]':
+        """Submission for live tasks and dummy tasks.
 
         Preparation (host selection, remote host init, and remote install)
         is done asynchronously. Newly released tasks may be sent here several
@@ -267,26 +308,9 @@ class TaskJobManager:
         Once preparation has completed or failed, reset .waiting_on_job_prep in
         task instances so the scheduler knows to stop sending them back here.
 
-        This method uses prep_submit_task_job() as helper.
+        This method uses prep_submit_task_jobs() as helper.
 
-        Return (list): list of tasks that attempted submission.
-        """
-        # submit "simulation/skip" mode tasks, modify "dummy" task configs:
-        itasks, submitted_nonlive_tasks = self.submit_nonlive_task_jobs(
-            itasks, run_mode
-        )
-
-        # submit "live" mode tasks (and "dummy" mode tasks)
-        submitted_live_tasks = self.submit_livelike_task_jobs(
-            itasks, curve_auth, client_pub_key_dir
-        )
-
-        return submitted_nonlive_tasks + submitted_live_tasks
-
-    def submit_livelike_task_jobs(
-        self, itasks, curve_auth, client_pub_key_dir
-    ) -> 'List[TaskProxy]':
-        """Submission for live tasks and dummy tasks.
+        Return: tasks that attempted submission.
         """
         done_tasks: 'List[TaskProxy]' = []
         # Mapping of platforms to task proxies:
@@ -323,8 +347,7 @@ class TaskJobManager:
 
                 elif install_target not in ri_map:
                     # Remote init not in progress for target, so start it.
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -352,8 +375,7 @@ class TaskJobManager:
                     # Remote init previously failed because a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
-                    self.task_remote_mgr.remote_init(
-                        platform, curve_auth, client_pub_key_dir)
+                    self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
@@ -376,8 +398,7 @@ class TaskJobManager:
                 )
             except NoHostsError:
                 del ri_map[install_target]
-                self.task_remote_mgr.remote_init(
-                    platform, curve_auth, client_pub_key_dir)
+                self.task_remote_mgr.remote_init(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
@@ -1027,7 +1048,7 @@ class TaskJobManager:
 
     def submit_nonlive_task_jobs(
         self: 'TaskJobManager',
-        itasks: 'List[TaskProxy]',
+        itasks: 'Iterable[TaskProxy]',
         workflow_run_mode: RunMode,
     ) -> 'Tuple[List[TaskProxy], List[TaskProxy]]':
         """Identify task mode and carry out alternative submission
@@ -1145,7 +1166,7 @@ class TaskJobManager:
         self,
         itask: 'TaskProxy',
         check_syntax: bool = True
-    ):
+    ) -> 'Union[TaskProxy, None, Literal[False]]':
         """Prepare a task job submission.
 
         Returns:
@@ -1210,7 +1231,7 @@ class TaskJobManager:
         else:
             # host/platform select not ready
             if host_n is None and platform_name is None:
-                return
+                return None
             elif (
                 host_n is None
                 and rtconfig['platform']
@@ -1306,11 +1327,12 @@ class TaskJobManager:
         # than submit-failed
         # provide a dummy job config - this info will be added to the data
         # store
+        try_num = itask.get_try_num()
         itask.jobs.append({
             'task_id': itask.identity,
             'platform': itask.platform,
             'submit_num': itask.submit_num,
-            'try_num': itask.get_try_num(),
+            'try_num': try_num,
         })
         # create a DB entry for the submit-failed job
         self.workflow_db_mgr.put_insert_task_jobs(
@@ -1319,7 +1341,7 @@ class TaskJobManager:
                 'flow_nums': serialise_set(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
-                'try_num': itask.get_try_num(),
+                'try_num': try_num,
                 'time_submit': get_current_time_string(),
                 'platform_name': itask.platform['name'],
                 'job_runner_name': itask.summary['job_runner_name'],

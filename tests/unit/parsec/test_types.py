@@ -48,9 +48,8 @@ def generate_spec():
             cylc.flow.parsec.config.ConfigNode
 
         """
-        with Conf('/') as myconf:
-            with Conf(typ):
-                Conf('<item>', validator)
+        with Conf('/') as myconf, Conf(typ):
+            Conf('<item>', validator)
         return myconf
     return _inner
 

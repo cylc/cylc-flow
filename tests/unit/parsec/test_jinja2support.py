@@ -15,15 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import jinja2
-
+import sys
 import pytest
 
-from cylc.flow.parsec.jinja2support import *
+from cylc.flow.parsec.jinja2support import (
+    Jinja2AssertionError,
+    Jinja2Error,
+    PyModuleLoader,
+    assert_helper,
+    jinja2environment,
+    jinja2process,
+    raise_helper,
+)
 
 
 def test_raise_helper():
     message = 'Ops'
-    error_type = 'CRITICAL'
     with pytest.raises(Jinja2AssertionError) as cm:
         raise_helper(message=message)
 

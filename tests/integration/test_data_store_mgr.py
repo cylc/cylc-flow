@@ -28,7 +28,6 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
@@ -99,7 +98,7 @@ def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
-def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+def get_pb_prereqs(schd: 'Scheduler') -> List[PbPrerequisite]:
     """Get all protobuf prerequisites from the data store task proxies."""
     return [
         p
@@ -181,7 +180,7 @@ def test_increment_graph_window(harness):
 
 def test_initiate_data_model(harness):
     """Test method that generates all data elements in order."""
-    schd: Scheduler
+    schd: 'Scheduler'
     schd, data = harness
     assert len(data[WORKFLOW].task_proxies) == 2
     schd.data_store_mgr.initiate_data_model(reloaded=True)
@@ -218,7 +217,7 @@ async def test_delta_task_state(harness):
 async def test_delta_task_held(harness):
     """Test update_data_structure. This method will generate and
     apply adeltas/updates given."""
-    schd: Scheduler
+    schd: 'Scheduler'
     schd, data = harness
     schd.pool.hold_tasks(['*'])
     await schd.update_data_structure()
@@ -321,7 +320,7 @@ async def test_update_data_structure(harness):
 
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
-    schd: Scheduler
+    schd: 'Scheduler'
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
         schd.pool.get_task_ids(),

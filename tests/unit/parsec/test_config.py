@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
+import pytest
 import tempfile
 
-import pytest
+from typing import TYPE_CHECKING
 
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
@@ -36,42 +36,48 @@ from cylc.flow.parsec.validate import (
 )
 
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
 def test_loadcfg(sample_spec):
-    with tempfile.NamedTemporaryFile() as output_file_name:
-        with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = ParsecConfig(
-                spec=sample_spec,
-                upgrader=None,  # new spec
-                output_fname=output_file_name.name,
-                tvars=None,
-                validator=None  # use default
-            )
-            rcfile.write("""
-                [section1]
-                    value1 = 'test'
-                    value2 = 'test'
-                [section2]
-                    enabled = True
-                [section3]
-                    title = 'Ohm'
-                    [[entries]]
-                        key = 'product'
-                        value = 1, 2, 3, 4
-            """.encode())
-            rcfile.seek(0)
-            parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
+    with (
+        tempfile.NamedTemporaryFile() as output_file_name,
+        tempfile.NamedTemporaryFile() as rcfile
+    ):
+        parsec_config = ParsecConfig(
+            spec=sample_spec,
+            upgrader=None,  # new spec
+            output_fname=output_file_name.name,
+            tvars=None,
+            validator=None  # use default
+        )
+        rcfile.write("""
+            [section1]
+                value1 = 'test'
+                value2 = 'test'
+            [section2]
+                enabled = True
+            [section3]
+                title = 'Ohm'
+                [[entries]]
+                    key = 'product'
+                    value = 1, 2, 3, 4
+        """.encode())
+        rcfile.seek(0)
+        parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
 
-            sparse = parsec_config.sparse
-            value = sparse['section3']['entries']['value']
-            assert [1, 2, 3, 4] == value
+        sparse = parsec_config.sparse
+        value = sparse['section3']['entries']['value']
+        assert [1, 2, 3, 4] == value
 
-            # calling it multiple times should still work
-            parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
-            parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
+        # calling it multiple times should still work
+        parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
+        parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
 
-            sparse = parsec_config.sparse
-            value = sparse['section3']['entries']['value']
-            assert [1, 2, 3, 4] == value
+        sparse = parsec_config.sparse
+        value = sparse['section3']['entries']['value']
+        assert [1, 2, 3, 4] == value
 
 
 def test_loadcfg_override(sample_spec):
@@ -115,33 +121,35 @@ def test_loadcfg_with_upgrade(sample_spec):
         u.obsolete('1.0', ['section3', 'entries'])
         u.upgrade()
 
-    with tempfile.NamedTemporaryFile() as output_file_name:
-        with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = ParsecConfig(
-                spec=sample_spec,
-                upgrader=upg,
-                output_fname=output_file_name.name,
-                tvars=None,
-                validator=None  # use default
-            )
-            rcfile.write("""
-            [section1]
-            value1 = 'test'
-            value2 = 'test'
-            [section2]
-            enabled = True
-            [section3]
-            title = 'Ohm'
-            [[entries]]
-            key = 'product'
-            value = 1, 2, 3, 4
-            """.encode())
-            rcfile.seek(0)
-            parsec_config.loadcfg(rcfile.name, "1.1")
+    with (
+        tempfile.NamedTemporaryFile() as output_file_name,
+        tempfile.NamedTemporaryFile() as rcfile
+    ):
+        parsec_config = ParsecConfig(
+            spec=sample_spec,
+            upgrader=upg,
+            output_fname=output_file_name.name,
+            tvars=None,
+            validator=None  # use default
+        )
+        rcfile.write("""
+        [section1]
+        value1 = 'test'
+        value2 = 'test'
+        [section2]
+        enabled = True
+        [section3]
+        title = 'Ohm'
+        [[entries]]
+        key = 'product'
+        value = 1, 2, 3, 4
+        """.encode())
+        rcfile.seek(0)
+        parsec_config.loadcfg(rcfile.name, "1.1")
 
-            sparse = parsec_config.sparse
-            # removed by the obsolete upgrade
-            assert 'entries' not in sparse['section3']
+        sparse = parsec_config.sparse
+        # removed by the obsolete upgrade
+        assert 'entries' not in sparse['section3']
 
 
 def test_validate():
@@ -185,7 +193,7 @@ def test_validate():
 
 
 @pytest.fixture
-def parsec_config_2(tmp_path: Path):
+def parsec_config_2(tmp_path: 'Path'):
     with Conf('myconf') as spec:
         with Conf('section'):
             Conf('name', VDR.V_STRING)

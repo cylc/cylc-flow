@@ -156,7 +156,12 @@ def test_pre_830_task_action_timers(_setup_db):
         r'''
             INSERT INTO task_action_timers VALUES(
                 '1','foo','[["event-mail", "failed"], 9]',
-                '["TaskEventMailContext", ["event-mail", "event-mail", "notifications@fbc.gov", "jfaden"]]',
+                '["TaskEventMailContext", [
+                    "event-mail",
+                    "event-mail",
+                    "notifications@fbc.gov",
+                    "jfaden"
+                ]]',
                 '[0.0]',1,'0.0','1709229449.61275'
             );
         ''',

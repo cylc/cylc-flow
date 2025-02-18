@@ -264,7 +264,9 @@ def test_init_clean__rm_dirs(
     """
     id_ = 'dagobah'
     run_dir: Path = tmp_run_dir(id_)
-    Path(run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
+    Path(
+        run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB
+    ).touch()
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
     platforms = {'platform_one'}

@@ -75,8 +75,7 @@ class TestOrderedDict(unittest.TestCase):
         d.defaults_ = {
             'surname': 'Wyndham'
         }
-        count = 0
-        for k in d.keys():
+        for count, k in enumerate(d.keys()):
             self.assertTrue(k in ['key', 'len', 'surname'])
             count += 1
         self.assertEqual(3, count)
@@ -89,8 +88,7 @@ class TestOrderedDict(unittest.TestCase):
         d.defaults_ = {
             'surname': 'Wyndham'
         }
-        count = 0
-        for k in d.values():
+        for count, k in enumerate(d.values()):
             self.assertTrue(k in ['Birds', '89', 'Wyndham'])
             count += 1
         self.assertEqual(3, count)
@@ -103,8 +101,7 @@ class TestOrderedDict(unittest.TestCase):
         d.defaults_ = {
             'surname': 'Wyndham'
         }
-        count = 0
-        for k, v in d.items():
+        for count, (k, v) in enumerate(d.items()):
             self.assertTrue(k in ['key', 'len', 'surname'])
             self.assertTrue(v in ['Birds', '89', 'Wyndham'])
             count += 1
