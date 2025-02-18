@@ -17,23 +17,32 @@
 """
 from logging import INFO
 from typing import (
-    TYPE_CHECKING, Dict, List, Tuple)
+    TYPE_CHECKING,
+    Dict,
+    List,
+    Tuple,
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_STARTED
 )
-from cylc.flow.run_modes import RunMode
+
 
 if TYPE_CHECKING:
-    from cylc.flow.taskdef import TaskDef
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
-    from typing_extensions import Literal
+    from cylc.flow.taskdef import TaskDef
 
 
 def submit_task_job(

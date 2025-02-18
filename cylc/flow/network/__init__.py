@@ -18,7 +18,12 @@
 import asyncio
 import getpass
 import json
-from typing import Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import zmq
 import zmq.asyncio
@@ -30,34 +35,71 @@ from cylc.flow.exceptions import (
     CylcError,
     CylcVersionError,
     ServiceFileError,
-    WorkflowStopped
+    WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.workflow_files import (
     ContactFileFields,
-    KeyType,
-    KeyOwner,
     KeyInfo,
+    KeyOwner,
+    KeyType,
+    get_workflow_srv_dir,
     load_contact_file,
-    get_workflow_srv_dir
 )
+
+
+if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.TypedDict
+    # FROM: Python 3.7
+    # TO: Python 3.11
+    from typing_extensions import TypedDict
+
 
 API = 5  # cylc API version
 MSG_TIMEOUT = "TIMEOUT"
 
+if TYPE_CHECKING:
+    class ResponseDict(TypedDict, total=False):
+        """Structure of server response messages.
 
-def encode_(message):
-    """Convert the structure holding a message field from JSON to a string."""
-    try:
-        return json.dumps(message)
-    except TypeError as exc:
-        return json.dumps({'errors': [{'message': str(exc)}]})
+        Confusingly, has similar format to GraphQL execution result.
+        But if we change this now we could break compatibility for
+        issuing commands to/receiving responses from workflows running in
+        different versions of Cylc 8.
+        """
+        data: object
+        """For most Cylc commands that issue GQL mutations, the data field will
+        look like:
+        data: {
+        <mutationName1>: {
+            result: [
+            {
+                id: <workflow/task ID>,
+                response: [<success_bool>, <message>]
+            },
+            ...
+            ]
+        }
+        }
+        but this is not 100% consistent unfortunately
+        """
+        error: Union[Exception, str, dict]
+        """If an error occurred that could not be handled.
+        (usually a dict {message: str, traceback?: str}).
+        """
+        user: str
+        cylc_version: str
+        """Server (i.e. running workflow) Cylc version.
+
+        Going forward, we include this so we can more easily handle any future
+        back-compat issues."""
 
 
-def decode_(message):
-    """Convert an encoded message string to JSON with an added 'user' field."""
+def load_server_response(message: str) -> 'ResponseDict':
+    """Convert a JSON message string to dict with an added 'user' field."""
     msg = json.loads(message)
-    msg['user'] = getpass.getuser()  # assume this is the user
+    if 'user' not in msg:
+        msg['user'] = getpass.getuser()  # assume this is the user
     return msg
 
 

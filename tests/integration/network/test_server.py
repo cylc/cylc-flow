@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from typing import Callable
 from async_timeout import timeout
 from getpass import getuser
 
 import pytest
+from cylc.flow import __version__ as CYLC_VERSION
 
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.scheduler import Scheduler
@@ -89,35 +91,59 @@ async def test_stop(one: Scheduler, start):
             assert one.server.stopped
 
 
-async def test_receiver(one: Scheduler, start):
+async def test_receiver_basic(one: Scheduler, start, log_filter):
     """Test the receiver with different message objects."""
     async with timeout(5):
         async with start(one):
             # start with a message that works
-            msg = {'command': 'api', 'user': '', 'args': {}}
-            assert 'error' not in one.server.receiver(msg)
-            assert 'data' in one.server.receiver(msg)
-
-            # remove the user field - should error
-            msg2 = dict(msg)
-            msg2.pop('user')
-            assert 'error' in one.server.receiver(msg2)
-
-            # remove the command field - should error
-            msg3 = dict(msg)
-            msg3.pop('command')
-            assert 'error' in one.server.receiver(msg3)
-
-            # provide an invalid command - should error
-            msg4 = {**msg, 'command': 'foobar'}
-            assert 'error' in one.server.receiver(msg4)
+            msg = {'command': 'api', 'user': 'bono', 'args': {}}
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert res['data']
+            assert res['cylc_version'] == CYLC_VERSION
 
             # simulate a command failure with the original message
             # (the one which worked earlier) - should error
             def _api(*args, **kwargs):
-                raise Exception('foo')
+                raise Exception('oopsie')
             one.server.api = _api
-            assert 'error' in one.server.receiver(msg)
+            res = one.server.receiver(msg)
+            assert res == {
+                'error': {'message': 'oopsie'},
+                'cylc_version': CYLC_VERSION,
+            }
+            assert log_filter(logging.ERROR, 'oopsie')
+
+
+@pytest.mark.parametrize(
+    'msg, expected',
+    [
+        pytest.param(
+            {'command': 'api', 'args': {}},
+            f"Request missing field 'user' required for Cylc {CYLC_VERSION}",
+            id='missing-user',
+        ),
+        pytest.param(
+            {'user': 'bono', 'args': {}},
+            f"Request missing field 'command' required for Cylc {CYLC_VERSION}",
+            id='missing-command',
+        ),
+        pytest.param(
+            {'command': 'foobar', 'user': 'bono', 'args': {}},
+            f"No method by the name 'foobar' at Cylc {CYLC_VERSION}",
+            id='bad-command',
+        ),
+    ],
+)
+async def test_receiver_bad_requests(one: Scheduler, start, msg, expected):
+    """Test the receiver with different bad requests."""
+    async with timeout(5):
+        async with start(one):
+            res = one.server.receiver(msg)
+            assert res == {
+                'error': {'message': expected},
+                'cylc_version': CYLC_VERSION,
+            }
 
 
 async def test_publish_before_shutdown(
