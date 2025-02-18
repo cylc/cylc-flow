@@ -316,10 +316,21 @@ async def is_active(flow, is_active):
             False to filter for stopped and unregistered flows.
 
     """
-    contact = flow['path'] / SERVICE / CONTACT
-    _is_active = contact.exists()
+    service = flow['path'] / SERVICE
+    # NOTE: We must list the service directory contents rather than checking
+    # for the existence of the contact file directly, because listing the
+    # directory forces NFS filesystems to recompute their local cache.
+    # See https://github.com/cylc/cylc-flow/issues/6506
+    try:
+        contents = await scandir(service)
+    except FileNotFoundError:
+        _is_active = False
+    else:
+        _is_active = any(
+            path.name == WorkflowFiles.Service.CONTACT for path in contents
+        )
     if _is_active:
-        flow['contact'] = contact
+        flow['contact'] = service / CONTACT
     return _is_active == is_active
 
 
