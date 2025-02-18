@@ -168,7 +168,7 @@ def stdinput(monkeypatch):
             try:
                 return lines.pop(0)
             except IndexError:
-                raise Exception('stdinput ran out of lines')
+                raise Exception('stdinput ran out of lines') from None
 
         monkeypatch.setattr(
             'cylc.flow.terminal.input',

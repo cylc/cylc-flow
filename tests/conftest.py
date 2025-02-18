@@ -157,7 +157,8 @@ def log_scan():
                 try:
                     record = next(records)
                 except StopIteration:
-                    raise Exception(f'Reached end of log looking for: {item}')
+                    raise Exception(
+                        f'Reached end of log looking for: {item}') from None
 
     return _log_scan
 

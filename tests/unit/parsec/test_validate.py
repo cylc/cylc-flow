@@ -738,7 +738,8 @@ def test_type_help_examples():
                     coercer(example, [None])
                 except Exception:
                     raise Exception(
-                        f'Example "{example}" failed for type "{vdr}"')
+                        f'Example "{example}" failed for type "{vdr}"'
+                    ) from None
 
 
 @pytest.mark.parametrize('value, expected', [
