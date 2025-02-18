@@ -70,4 +70,4 @@ def test_embedded_url(link):
             # Allowing 403 - just because a site forbids us doesn't mean the
             # link is wrong.
             if exc.code != 403:
-                raise Exception(f'{exc} | {link}')
+                raise Exception(f'{exc} | {link}') from None

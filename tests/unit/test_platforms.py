@@ -280,7 +280,7 @@ def test_platform_name_from_job_info_ordered_dict_comparison():
     remote = {'host': 'hpc1', 'Made up key': 'Arthur'}
     # Set up a fake OrderedDictWith a fake unset default.
     platform = OrderedDictWithDefaults()
-    platform.defaults_ = {k: None for k in PLATFORMS['hpc1-bg'].keys()}
+    platform.defaults_ = dict.fromkeys(PLATFORMS['hpc1-bg'])
     platform.defaults_['Made up key'] = {}
     platform.update(PLATFORMS['hpc1-bg'])
     platforms = {'hpc1-bg': platform, 'dobbie': PLATFORMS['sugar']}

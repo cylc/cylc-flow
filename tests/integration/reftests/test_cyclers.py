@@ -99,7 +99,15 @@ async def test_icp_fcp_notation(flow, scheduler, reftest):
         ('20160101T0000Z/bar', None),
         ('20160101T0100Z/baz', None),
         ('20160101T2300Z/boo', None),
-        ('20160102T0000Z/bot', ('20160101T0000Z/bar', '20160101T0000Z/foo', '20160101T0100Z/baz', '20160101T2300Z/boo')),
+        (
+            '20160102T0000Z/bot',
+            (
+                '20160101T0000Z/bar',
+                '20160101T0000Z/foo',
+                '20160101T0100Z/baz',
+                '20160101T2300Z/boo',
+            ),
+        ),
     }
 
 

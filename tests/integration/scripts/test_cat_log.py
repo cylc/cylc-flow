@@ -19,7 +19,6 @@
 import pytest
 import re
 import shutil
-from types import SimpleNamespace
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options

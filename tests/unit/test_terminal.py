@@ -28,8 +28,8 @@ from cylc.flow.terminal import (
 
 
 # this puts Exception in globals() where we can easily find it later
-Exception = Exception
-SystemExit = SystemExit
+Exception = Exception     # noqa: A001
+SystemExit = SystemExit   # noqa: A001
 
 
 def get_option_parser():
@@ -168,7 +168,7 @@ def stdinput(monkeypatch):
             try:
                 return lines.pop(0)
             except IndexError:
-                raise Exception('stdinput ran out of lines')
+                raise Exception('stdinput ran out of lines') from None
 
         monkeypatch.setattr(
             'cylc.flow.terminal.input',

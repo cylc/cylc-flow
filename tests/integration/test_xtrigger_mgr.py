@@ -55,7 +55,8 @@ async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
                 'clock_5': 'wall_clock(offset=-PT2H35M31S)',
             },
             'graph': {
-                'R1': '@clock_1 & @clock_2 & @clock_3 & @clock_4 & @clock_5 => foo'
+                'R1': '@clock_1 & @clock_2 & @clock_3 &'
+                ' @clock_4 & @clock_5 => foo'
             }
         }
     })

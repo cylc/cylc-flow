@@ -126,62 +126,70 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with two parameters each side of an arrow."""
         self.assertEqual(
             self.graph_expander.expand("bar<i,j>=>baz<i,j>"),
-            set(["bar_i0_j1=>baz_i0_j1",
-                 "bar_i1_j2=>baz_i1_j2",
-                 "bar_i0_j2=>baz_i0_j2",
-                 "bar_i1_j1=>baz_i1_j1",
-                 "bar_i1_j0=>baz_i1_j0",
-                 "bar_i0_j0=>baz_i0_j0"])
+            {
+                "bar_i0_j1=>baz_i0_j1",
+                "bar_i1_j2=>baz_i1_j2",
+                "bar_i0_j2=>baz_i0_j2",
+                "bar_i1_j1=>baz_i1_j1",
+                "bar_i1_j0=>baz_i1_j0",
+                "bar_i0_j0=>baz_i0_j0",
+            },
         )
 
     def test_graph_expand_2(self):
         """Test graph expansion to 'branch and merge' a workflow."""
         self.assertEqual(
             self.graph_expander.expand("pre=>bar<i>=>baz<i,j>=>post"),
-            set(["pre=>bar_i0=>baz_i0_j1=>post",
-                 "pre=>bar_i1=>baz_i1_j2=>post",
-                 "pre=>bar_i0=>baz_i0_j2=>post",
-                 "pre=>bar_i1=>baz_i1_j1=>post",
-                 "pre=>bar_i1=>baz_i1_j0=>post",
-                 "pre=>bar_i0=>baz_i0_j0=>post"])
+            {
+                "pre=>bar_i0=>baz_i0_j1=>post",
+                "pre=>bar_i1=>baz_i1_j2=>post",
+                "pre=>bar_i0=>baz_i0_j2=>post",
+                "pre=>bar_i1=>baz_i1_j1=>post",
+                "pre=>bar_i1=>baz_i1_j0=>post",
+                "pre=>bar_i0=>baz_i0_j0=>post",
+            },
         )
 
     def test_graph_expand_3(self):
         """Test graph expansion -ve integers."""
         self.assertEqual(
             self.graph_expander.expand("bar<a>"),
-            set(["bar_a-1", "bar_a-3"]))
+            {"bar_a-1", "bar_a-3"}
+        )
 
     def test_graph_expand_offset_1(self):
         """Test graph expansion with a -ve offset."""
         self.assertEqual(
             self.graph_expander.expand("bar<i-1,j>=>baz<i,j>"),
-            set(["bar_i-32768_j0=>baz_i0_j0",
-                 "bar_i-32768_j1=>baz_i0_j1",
-                 "bar_i-32768_j2=>baz_i0_j2",
-                 "bar_i0_j0=>baz_i1_j0",
-                 "bar_i0_j1=>baz_i1_j1",
-                 "bar_i0_j2=>baz_i1_j2"])
+            {
+                "bar_i-32768_j0=>baz_i0_j0",
+                "bar_i-32768_j1=>baz_i0_j1",
+                "bar_i-32768_j2=>baz_i0_j2",
+                "bar_i0_j0=>baz_i1_j0",
+                "bar_i0_j1=>baz_i1_j1",
+                "bar_i0_j2=>baz_i1_j2",
+            },
         )
 
     def test_graph_expand_offset_2(self):
         """Test graph expansion with a +ve offset."""
         self.assertEqual(
             self.graph_expander.expand("baz<i>=>baz<i+1>"),
-            set(["baz_i0=>baz_i1",
-                 "baz_i1=>baz_i-32768"])
+            {"baz_i0=>baz_i1", "baz_i1=>baz_i-32768"},
         )
 
     def test_graph_expand_specific(self):
         """Test graph expansion with a specific value."""
         self.assertEqual(
             self.graph_expander.expand("bar<i=1,j>=>baz<i,j>"),
-            set(["bar_i1_j0=>baz_i0_j0",
-                 "bar_i1_j1=>baz_i0_j1",
-                 "bar_i1_j2=>baz_i0_j2",
-                 "bar_i1_j0=>baz_i1_j0",
-                 "bar_i1_j1=>baz_i1_j1",
-                 "bar_i1_j2=>baz_i1_j2"])
+            {
+                "bar_i1_j0=>baz_i0_j0",
+                "bar_i1_j1=>baz_i0_j1",
+                "bar_i1_j2=>baz_i0_j2",
+                "bar_i1_j0=>baz_i1_j0",
+                "bar_i1_j1=>baz_i1_j1",
+                "bar_i1_j2=>baz_i1_j2",
+            },
         )
 
     def test_graph_fail_bare_value(self):
@@ -328,8 +336,7 @@ class TestParamExpand(unittest.TestCase):
     def test_parameter_graph_mixing_offset_and_conditional(self):
         """Test for bug reported in issue #2608 on GitHub."""
         for test_case in self._param_expand_params():
-            params_map, templates, expanded_str, expanded_values = \
-                test_case
+            params_map, templates, expanded_str, expanded_values = test_case
             graph_expander = GraphExpander((params_map, templates))
             # Ignore white spaces.
             expanded = [expanded.replace(' ', '') for expanded in

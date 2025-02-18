@@ -597,7 +597,8 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 def test_nonlive_mode_validation(flow, validate, caplog, log_filter):
     """Nonlive tasks return a warning at validation.
     """
-    msg1 = dedent('The following tasks are set to run in skip mode:\n    * skip')
+    msg1 = dedent(
+        'The following tasks are set to run in skip mode:\n    * skip')
 
     wid = flow({
         'scheduling': {
@@ -631,7 +632,9 @@ def test_skip_forbidden_as_output(flow, validate):
         validate(wid)
 
 
-def test_validate_workflow_run_mode(flow: Fixture, validate: Fixture, caplog: Fixture):
+def test_validate_workflow_run_mode(
+    flow: Fixture, validate: Fixture, caplog: Fixture
+):
     """Test that Cylc validate will only check simulation mode settings
     if validate --mode simulation or dummy.
     Discovered in:

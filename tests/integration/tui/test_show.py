@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow.exceptions import ClientError
-from cylc.flow.tui.data import _show
 
 
 async def test_show(flow, scheduler, start, rakiura, monkeypatch):

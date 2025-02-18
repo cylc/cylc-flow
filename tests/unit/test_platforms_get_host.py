@@ -90,10 +90,14 @@ def test_get_platform_from_group(monkeypatch, expect, bad_hosts):
 
 
 def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
-    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
-        lambda _:{'hosts': {'foo', 'bar', 'baz'}})
+    monkeypatch.setattr(
+        'cylc.flow.platforms.platform_from_name',
+        lambda _: {'hosts': {'foo', 'bar', 'baz'}}
+    )
     with pytest.raises(NoPlatformsError) as err:
-        get_platform_from_group(TEST_GROUP, 'mygroup_name', {'foo', 'bar', 'baz'})
+        get_platform_from_group(
+            TEST_GROUP, 'mygroup_name', {'foo', 'bar', 'baz'}
+        )
     assert err.exconly() == (
         'cylc.flow.exceptions.NoPlatformsError: '
         'Unable to find a platform from group mygroup_name.'
@@ -101,8 +105,10 @@ def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
 
 
 def test_get_platform_from_group_fails_bad_method(monkeypatch):
-    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
-        lambda _:{'hosts': {'foo', 'bar', 'baz'}})
+    monkeypatch.setattr(
+        'cylc.flow.platforms.platform_from_name',
+        lambda _: {'hosts': {'foo', 'bar', 'baz'}}
+    )
     group = TEST_GROUP.copy()
     group['selection']['method'] = 'roulette'
     with pytest.raises(CylcError) as err:

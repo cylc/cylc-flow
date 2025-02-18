@@ -77,7 +77,9 @@ def test_multiple_exclusions_complex1(set_cycling_type):
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
 
     # A sequence that specifies a dep start time
-    sequence = ISO8601Sequence("20000101T01Z/PT1H!20000101T02Z", "20000101T01Z")
+    sequence = ISO8601Sequence(
+        "20000101T01Z/PT1H!20000101T02Z", "20000101T01Z"
+    )
 
     output = []
     point = sequence.get_start_point()
@@ -104,7 +106,7 @@ def test_multiple_exclusions_complex2(set_cycling_type):
 
     # A sequence that specifies a dep start time
     sequence = ISO8601Sequence(
-        "20000101T01Z/PT1H!" "(20000101T02Z,20000101T03Z)",
+        "20000101T01Z/PT1H!(20000101T02Z,20000101T03Z)",
         "20000101T00Z",
         "20000101T05Z",
     )
@@ -129,7 +131,9 @@ def test_multiple_exclusions_complex2(set_cycling_type):
 def test_multiple_exclusions_simple(set_cycling_type):
     """Tests generation of points for sequences with multiple exclusions"""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
-    sequence = ISO8601Sequence("PT1H!(20000101T02Z,20000101T03Z)", "20000101T00Z")
+    sequence = ISO8601Sequence(
+        "PT1H!(20000101T02Z,20000101T03Z)", "20000101T00Z"
+    )
 
     output = []
     point = sequence.get_start_point()
@@ -294,7 +298,7 @@ def test_exclusions_to_string(set_cycling_type):
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     # Check that exclusions are not included where they should not be.
     basic = ISO8601Sequence("PT1H", "2000", "2001")
-    assert not "!" in str(basic)
+    assert "!" not in str(basic)
 
     # Check that exclusions are parsable.
     sequence = ISO8601Sequence("PT1H!(20000101T10Z, PT6H)", "2000", "2001")
@@ -519,7 +523,7 @@ def test_exclusions_sequences_points(set_cycling_type):
     point_3 = ISO8601Point("20000101T03Z")
     point_4 = ISO8601Point("20000101T04Z")
 
-    assert not point_0 in sequence.exclusions
+    assert point_0 not in sequence.exclusions
     assert point_1 in sequence.exclusions
     assert sequence.is_on_sequence(point_2)
     assert sequence.is_on_sequence(point_3)
@@ -530,7 +534,9 @@ def test_exclusions_sequences_points(set_cycling_type):
 def test_exclusions_extensive(set_cycling_type):
     """Test ISO8601Sequence methods for sequences with exclusions"""
     set_cycling_type(ISO8601_CYCLING_TYPE, "+05")
-    sequence = ISO8601Sequence("PT1H!20000101T02+05", "20000101T00", "20000101T05")
+    sequence = ISO8601Sequence(
+        "PT1H!20000101T02+05", "20000101T00", "20000101T05"
+    )
 
     point_0 = ISO8601Point("20000101T0000+05")
     point_1 = ISO8601Point("20000101T0100+05")
@@ -587,7 +593,7 @@ def test_multiple_exclusions_extensive(set_cycling_type):
     # Also note you can change the format of the exclusion list
     # (removing the parentheses)
     sequence = ISO8601Sequence(
-        "PT1H!(20000101T02+05, 20000101T03+05," "20000101T04+05)",
+        "PT1H!(20000101T02+05, 20000101T03+05,20000101T04+05)",
         "20000101T00",
         "20000101T06",
     )
@@ -827,7 +833,6 @@ def test_weeks_days(set_cycling_type):
         "previous(-W40-4)",  # 20091001T0000Z
     )
 
-
     output = []
 
     for point in sequence:
@@ -899,7 +904,7 @@ def test_integer_cycling_is_returned(set_cycling_type):
     returned."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     integer_point = "1"
-    assert integer_point, ingest_time(integer_point == None)
+    assert integer_point, ingest_time(integer_point is None)
 
 
 def test_expanded_dates_are_returned(set_cycling_type):
@@ -907,7 +912,7 @@ def test_expanded_dates_are_returned(set_cycling_type):
     returned."""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     expanded_date = "+0100400101T0000Z"
-    assert expanded_date, ingest_time(expanded_date == None)
+    assert expanded_date, ingest_time(expanded_date is None)
 
 
 def test_timepoint_truncated(set_cycling_type):
@@ -917,7 +922,7 @@ def test_timepoint_truncated(set_cycling_type):
     my_now = "2018-03-14T15:12Z"
     timepoint_truncated = "T15:00Z"  # 20180315T1500Z
     output = ingest_time(timepoint_truncated, my_now)
-    assert "20180315T1500Z" == output
+    assert output == "20180315T1500Z"
 
 
 def test_timepoint(set_cycling_type):
@@ -927,7 +932,7 @@ def test_timepoint(set_cycling_type):
     my_now = "2018-03-14T15:12Z"
     timepoint_truncated = "19951231T0630"  # 19951231T0630
     output = ingest_time(timepoint_truncated, my_now)
-    assert "19951231T0630" == output
+    assert output == "19951231T0630"
 
 
 @pytest.mark.parametrize(
@@ -937,7 +942,9 @@ def test_timepoint(set_cycling_type):
         ("next (wildebeest)", "Invalid ISO 8601 date"),
     ),
 )
-def test_validate_fails_comma_sep_offset_list(_input, errortext, set_cycling_type):
+def test_validate_fails_comma_sep_offset_list(
+    _input, errortext, set_cycling_type
+):
     """It raises an exception if validating a list separated by commas"""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     with pytest.raises(Exception, match=errortext):

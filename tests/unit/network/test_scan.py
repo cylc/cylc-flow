@@ -19,8 +19,6 @@ from pathlib import Path
 import re
 from textwrap import dedent
 
-import pytest
-
 from cylc.flow.network.scan import (
     api_version,
     contact_info,

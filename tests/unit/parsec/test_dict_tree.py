@@ -31,10 +31,10 @@ def test_eq():
 
 def test_nesting():
     """It slices without duplicating data."""
-    this_a = dict(b=1)
-    this = dict(a=this_a)
-    that_a = dict(b=2)
-    that = dict(a=that_a)
+    this_a = {'b': 1}
+    this = {'a': this_a}
+    that_a = {'b': 2}
+    that = {'a': that_a}
     both = DictTree(this, that)
 
     sub = both['a']
@@ -47,17 +47,17 @@ def test_nesting():
 def test_iter():
     """It yields keys from all dictionaries."""
     a = DictTree({'a': 1}, {'a': 2, 'b': 3})
-    assert list(sorted(a)) == ['a', 'b']
+    assert sorted(a) == ['a', 'b']
 
 
 def test_iter_defaults():
     """It doesn't yield keys from defaults."""
     this = ODD(a=1)
     that = ODD(b=2)
-    this.defaults = dict(c=3)
-    that.defaults = dict(d=4)
+    this.defaults = {'c': 3}
+    that.defaults = {'d': 4}
     a = DictTree(this, that)
-    assert list(sorted(a)) == ['a', 'b']
+    assert sorted(a) == ['a', 'b']
 
 
 def test_getitem():
@@ -123,9 +123,9 @@ def test_get_dict():
 def test_odd_getitem():
     """It returns default values if none of the dicts contains the key."""
     this = ODD(a=1)
-    this.defaults_ = dict(c=3)
+    this.defaults_ = {'c': 3}
     that = ODD(b=2)
-    that.defaults_ = dict(d=4)
+    that.defaults_ = {'d': 4}
     both = DictTree(this, that)
 
     # key from this
@@ -148,13 +148,13 @@ def test_defaults_getitem_dict():
     both = DictTree(this, that)
 
     # default in this gets overridden by value in that
-    this.defaults_ = dict(a=1)
-    that.defaults_ = dict()
+    this.defaults_ = {'a': 1}
+    that.defaults_ = {}
     assert both['a'] == 2
 
     # default in first dict gets priority
-    this.defaults_ = dict(b=1)
-    that.defaults_ = dict(b=2)
+    this.defaults_ = {'b': 1}
+    that.defaults_ = {'b': 2}
     assert both['b'] == 1
 
 
@@ -162,14 +162,14 @@ def test_defaults_getitem_nested():
     """It preserves the defaults_ behaviour of ODD in nested dicts."""
     this = ODD()
     that = ODD(a=2)
-    both = DictTree(dict(a=this), dict(a=that))
+    both = DictTree({'a': this}, {'a': that})
 
     # default in this gets overridden by value in that
-    this.defaults_ = dict(a=1)
-    that.defaults_ = dict()
+    this.defaults_ = {'a': 1}
+    that.defaults_ = {}
     assert both['a']['a'] == 2
 
     # default in first dict gets priority
-    this.defaults_ = dict(b=1)
-    that.defaults_ = dict(b=2)
+    this.defaults_ = {'b': 1}
+    that.defaults_ = {'b': 2}
     assert both['a']['b'] == 1

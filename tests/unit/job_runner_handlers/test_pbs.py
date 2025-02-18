@@ -61,7 +61,8 @@ VERY_LONG_STR = 'x' * 240
                 }
             },
             [
-                f'#PBS -N None.{VERY_LONG_STR[:PBSHandler.JOB_NAME_LEN_MAX - 5]}',
+                '#PBS -N '
+                f'None.{VERY_LONG_STR[:PBSHandler.JOB_NAME_LEN_MAX - 5]}',
                 '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
@@ -140,7 +141,6 @@ Job id            Name             User              Time Use S Queue
 abc.456           test-pbs         xxxxxxx                  2 Q romeq
 abcdef            test-pbs         xxxxxxx                  2 Q romeq
     ''') == ['12345', '23456', '34567']
-
 
 
 def test_filter_submit_output(tmp_path):

@@ -333,9 +333,9 @@ def test_tokens():
 
     # test equality with non Tokens objects
     assert Tokens('a') != 'a'
-    assert not Tokens('a') == 'a'
+    assert not Tokens('a') == 'a'   # noqa: SIM201
     assert Tokens('a') != 1
-    assert not Tokens('a') == 1
+    assert not Tokens('a') == 1     # noqa: SIM201
 
     tokens = Tokens('a//b')
     new_tokens = tokens.duplicate(cycle='c', task='d')

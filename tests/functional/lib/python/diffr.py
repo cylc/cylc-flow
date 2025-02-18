@@ -193,17 +193,17 @@ class Diff:
 
     def added(self):
         """Yield items present in this but not in that as (key, value)."""
-        yield from self.filter('+')
+        yield from self._filter('+')
 
     def removed(self):
         """Yield items present in that but not in this as (key, value)."""
-        yield from self.filter('-')
+        yield from self._filter('-')
 
     def modified(self):
         """Yield items change as (key, this_value, that_value)."""
-        yield from self.filter('?')
+        yield from self._filter('?')
 
-    def filter(self, *symbols):
+    def _filter(self, *symbols):
         """Filter items by change status (+,-,?)."""
         for symbol, item in self.changed:
             if symbol in symbols:
@@ -286,7 +286,7 @@ def main(args):
             this, that = that, this
             args.name1, args.name2 = args.name2, args.name1
         diff = Diff(this, that, args.name1, args.name2)
-        for _ in diff.filter('-', '?'):
+        for _ in diff._filter('-', '?'):
             sys.stderr.write(str(diff))
             sys.exit(1)
         sys.exit(0)

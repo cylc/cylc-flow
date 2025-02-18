@@ -18,7 +18,7 @@
 
 from optparse import Values
 import pytest
-from typing import Iterable, Optional, Tuple, Type
+from typing import Optional, Tuple, Type
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options

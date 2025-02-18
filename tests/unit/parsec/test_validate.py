@@ -738,7 +738,8 @@ def test_type_help_examples():
                     coercer(example, [None])
                 except Exception:
                     raise Exception(
-                        f'Example "{example}" failed for type "{vdr}"')
+                        f'Example "{example}" failed for type "{vdr}"'
+                    ) from None
 
 
 @pytest.mark.parametrize('value, expected', [
@@ -748,7 +749,8 @@ def test_type_help_examples():
         a=${a#*have}
         echo "$a" # let's see what happens
         """,
-        "a=\"don't have a cow\"\na=${a#*have}\necho \"$a\" # let's see what happens",
+        "a=\"don't have a cow\"\na=${a#*have}\necho \"$a\" "
+        "# let's see what happens",
         id="multiline"
     ),
     param(

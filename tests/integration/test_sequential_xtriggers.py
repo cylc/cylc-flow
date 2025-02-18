@@ -116,7 +116,7 @@ async def test_set(sequential, start):
     async with start(sequential):
         assert list_cycles(sequential) == ['2000']
 
-        foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
+        sequential.pool.get_task(ISO8601Point('2000'), 'foo')
         # set foo:succeeded it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
             ["2000/foo"], ["succeeded"], None, ['all'])

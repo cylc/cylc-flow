@@ -29,7 +29,11 @@ from cylc.flow.id import Tokens
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNC_CACHE, _XTRIG_MOD_CACHE, get_xtrig_func
+from cylc.flow.subprocpool import (
+    SubProcPool,
+    _XTRIG_FUNC_CACHE,
+    get_xtrig_func,
+)
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
@@ -194,9 +198,11 @@ class TestSubProcPool(unittest.TestCase):
         and successfully imported, we use an invalid module name as per Python
         spec.
         """
-        with TemporaryDirectory() as temp_dir:
-            with self.assertRaises(ModuleNotFoundError):
-                get_xtrig_func("invalid-module-name", "func-name", temp_dir)
+        with (
+            TemporaryDirectory() as temp_dir,
+            self.assertRaises(ModuleNotFoundError)
+        ):
+            get_xtrig_func("invalid-module-name", "func-name", temp_dir)
 
     def test_xfunction_attribute_error(self):
         """Test for error on looking for an attribute in a xtrigger script."""
@@ -266,7 +272,8 @@ def _test_callback_255(ctx, foo=''):
     ]
 )
 def test__run_command_exit(
-    caplog, mock_ctx, expect, ret_code, cmd_key):
+    caplog, mock_ctx, expect, ret_code, cmd_key
+):
     """It runs a callback
     """
     ctx = mock_ctx(ret_code=ret_code, cmd_key=cmd_key, cmd=['ssh'])
@@ -275,7 +282,7 @@ def test__run_command_exit(
     )
     assert expect in caplog.records[0].msg
     if ret_code == 255:
-        assert f'255 callback called.' in caplog.records[1].msg
+        assert '255 callback called.' in caplog.records[1].msg
 
 
 def test__run_command_exit_no_255_callback(caplog, mock_ctx):
@@ -402,8 +409,9 @@ def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
     """
     output = SubProcPool.rsync_255_fail(
         mock_ctx(**ctx_kwargs),
-        {'ssh command': 'ssh',
-         'rsync command': 'rsync command'
+        {
+            'ssh command': 'ssh',
+            'rsync command': 'rsync command'
         }
     )
     assert output == expect

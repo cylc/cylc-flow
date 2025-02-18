@@ -80,9 +80,8 @@ def test_many_setting(many_setting):
 @pytest.fixture(scope='module')
 def many_section():
     """A config containing a user-definable section."""
-    with Conf('file.cylc') as file_:
-        with Conf('<section>'):
-            Conf('setting')
+    with Conf('file.cylc') as file_, Conf('<section>'):
+        Conf('setting')
     return file_
 
 

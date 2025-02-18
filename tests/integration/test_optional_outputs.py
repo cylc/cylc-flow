@@ -57,10 +57,9 @@ def reset_outputs(itask: 'TaskProxy'):
 
     This assumes you haven't completed the task.
     """
-    itask.state.outputs._completed = {
-        message: False
-        for message in itask.state.outputs._completed
-    }
+    itask.state.outputs._completed = dict.fromkeys(
+        itask.state.outputs._completed, False
+    )
     itask.state_reset(
         TASK_STATUS_WAITING,
         is_queued=False,

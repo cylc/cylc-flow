@@ -51,7 +51,7 @@ def test_get_variable_value_definition(in_value, out_value):
     parameter environment templates are handled"""
     param_dict = {'i': 3}
     res = JobFileWriter._get_variable_value_definition(in_value, param_dict)
-    assert(out_value == res)
+    assert out_value == res
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ def test_write(fixture_get_platform):
         size_of_file = os.stat(local_job_file_path).st_size
         # This test only needs to check that the file is created and is
         # non-empty as each section is covered by individual unit tests.
-        assert(size_of_file > 10)
+        assert size_of_file > 10
 
     """Test the header is correctly written"""
 
@@ -138,7 +138,7 @@ def test_write(fixture_get_platform):
 
     with io.StringIO() as fake_file:
         JobFileWriter()._write_header(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 @pytest.mark.parametrize(
@@ -230,7 +230,7 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
         written"""
     with io.StringIO() as fake_file:
         JobFileWriter()._write_directives(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 @pytest.mark.parametrize(
@@ -251,7 +251,7 @@ def test_traps_for_each_job_runner(job_runner: str):
     with io.StringIO() as fake_file:
         JobFileWriter()._write_prelude(fake_file, job_conf)
         output = fake_file.getvalue()
-        assert("CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output)
+        assert "CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output
 
 
 @pytest.mark.parametrize(
@@ -301,7 +301,7 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
     with io.StringIO() as fake_file:
         # copyable environment variables
         JobFileWriter()._write_prelude(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_write_workflow_environment(fixture_get_platform, monkeypatch):
@@ -363,7 +363,7 @@ def test_write_script():
 
     with io.StringIO() as fake_file:
         JobFileWriter()._write_script(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_no_script_section_with_comment_only_script():
@@ -387,7 +387,7 @@ def test_no_script_section_with_comment_only_script():
         JobFileWriter()._write_script(fake_file, job_conf)
         blah = fake_file.getvalue()
         print(blah)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_write_task_environment():
@@ -416,7 +416,7 @@ def test_write_task_environment():
     }
     with io.StringIO() as fake_file:
         JobFileWriter()._write_task_environment(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_write_runtime_environment():
@@ -437,7 +437,7 @@ def test_write_runtime_environment():
     }
     with io.StringIO() as fake_file:
         JobFileWriter()._write_runtime_environment(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_write_epilogue():
@@ -452,7 +452,7 @@ def test_write_epilogue():
     job_conf = {'job_d': "1/moo/01"}
     with io.StringIO() as fake_file:
         JobFileWriter()._write_epilogue(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_write_global_init_scripts(fixture_get_platform):
@@ -475,7 +475,7 @@ def test_write_global_init_scripts(fixture_get_platform):
     ''')
     with io.StringIO() as fake_file:
         JobFileWriter()._write_global_init_script(fake_file, job_conf)
-        assert(fake_file.getvalue() == expected)
+        assert fake_file.getvalue() == expected
 
 
 def test_homeless_platform(fixture_get_platform):
@@ -534,4 +534,3 @@ def test_homeless_platform(fixture_get_platform):
         job_sh_txt = job_sh.read()
         if 'HOME' in job_sh_txt:
             raise Exception('$HOME found in job.sh\n{job_sh_txt}')
-
