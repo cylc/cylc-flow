@@ -1,0 +1,40 @@
+[meta]
+    description = """
+        If the workflow runs slowly and the cycle time gets behind the real
+        world (wallclock) time, then it will skip selected tasks until it
+        catches up.
+
+        In this case, the tasks "b", "c" and "d" will be skipped to help the
+        workflow to catch up more quickly.
+
+        When this workflow starts up, the first cycle will be at 00:00am today
+        so the "start" task will immediately expire. This will cause tasks
+        "b", "c" and "d" to be configured to "skip" rather than run.
+    """
+
+[scheduler]
+    allow implicit tasks = True
+
+[scheduling]
+    # start the workflow at 00:00am this morning
+    initial cycle point = previous(T00)
+    final cycle point = +P0D
+
+    # the "start" task will "expire" if the cycle time falls behind
+    # the wallclock time
+    [[special tasks]]
+        clock-expire = start
+
+    [[graph]]
+        P1D = """
+            # the chain of tasks we want to run
+            start | start:expired? => a => b => c => d => housekeep
+        """
+
+[runtime]
+    [[start]]
+        # if this task expires, configure the tasks "b", "c" and "d" to
+        # "skip" rather than run
+        # Note: This task will also be "skipped" if it expires
+        [[[events]]]
+            expired handlers = cylc broadcast "%(workflow)s" -p "%(point)s" -n b -n c -n d -s "run mode = skip"
