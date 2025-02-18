@@ -28,8 +28,8 @@ from cylc.flow.terminal import (
 
 
 # this puts Exception in globals() where we can easily find it later
-Exception = Exception
-SystemExit = SystemExit
+Exception = Exception     # noqa: A001
+SystemExit = SystemExit   # noqa: A001
 
 
 def get_option_parser():
