@@ -28,6 +28,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_STARTED
 )
 from cylc.flow.run_modes import RunMode
+from cylc.flow.util import serialise_set
 
 if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef
@@ -71,7 +72,7 @@ def submit_task_job(
         itask, {
             'time_submit': now[1],
             'try_num': itask.get_try_num(),
-            'flow_nums': str(list(itask.flow_nums)),
+            'flow_nums': serialise_set(itask.flow_nums),
             'is_manual_submit': itask.is_manual_submit,
             'job_runner_name': RunMode.SKIP.value,
             'platform_name': RunMode.SKIP.value,
@@ -80,7 +81,9 @@ def submit_task_job(
     )
     task_job_mgr.workflow_db_mgr.put_update_task_state(itask)
     for output in process_outputs(itask, rtconfig):
-        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
+        task_job_mgr.task_events_mgr.process_message(
+            itask, INFO, output, event_time=now[1]
+        )
 
     return True
 

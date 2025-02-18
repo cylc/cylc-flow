@@ -14,11 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Iterable, List, TYPE_CHECKING, cast
+from typing import (
+    Iterable,
+    List,
+    cast,
+)
 
 import pytest
 
-from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
+from cylc.flow.data_messages_pb2 import (
+    PbPrerequisite,
+    PbTaskProxy,
+)
 from cylc.flow.data_store_mgr import (
     EDGES,
     FAMILY_PROXIES,
@@ -29,10 +36,9 @@ from cylc.flow.data_store_mgr import (
 )
 from cylc.flow.id import Tokens
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_state import (
@@ -41,10 +47,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
 )
 from cylc.flow.wallclock import get_current_time_string
-
-
-if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
 
 
 # NOTE: Some of these tests mutate the data store, so running them in
@@ -460,7 +462,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
         # satisfy the submitted & started outputs
         # (note started implies submitted)
         one.task_events_mgr.process_message(
-            itask, 'INFO', TaskEventsManager.EVENT_STARTED
+            itask, 'INFO', TASK_OUTPUT_STARTED
         )
 
         # the delta should be populated with the newly satisfied outputs
@@ -480,7 +482,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
 
         # satisfy the succeeded output
         one.task_events_mgr.process_message(
-            itask, 'INFO', TaskEventsManager.EVENT_SUCCEEDED
+            itask, 'INFO', TASK_OUTPUT_SUCCEEDED
         )
 
         # the delta should be populated with ALL satisfied outputs

@@ -95,6 +95,7 @@ from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
@@ -132,6 +133,39 @@ if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+
+
+def _submitted_msgs(jp_ctx: 'JobPollContext') -> Dict[str, Optional[str]]:
+    return {
+        TASK_STATUS_SUBMITTED: jp_ctx.time_submit_exit,
+    }
+
+
+def _submit_failed_msgs(jp_ctx: 'JobPollContext') -> Dict[str, Optional[str]]:
+    return {
+        TASK_OUTPUT_SUBMIT_FAILED: jp_ctx.time_submit_exit,
+    }
+
+
+def _started_msgs(jp_ctx: 'JobPollContext') -> Dict[str, Optional[str]]:
+    return {
+        **_submitted_msgs(jp_ctx),
+        TASK_OUTPUT_STARTED: jp_ctx.time_run,
+    }
+
+
+def _succeeded_msgs(jp_ctx: 'JobPollContext') -> Dict[str, Optional[str]]:
+    return {
+        **_started_msgs(jp_ctx),
+        TASK_OUTPUT_SUCCEEDED: jp_ctx.time_run_exit,
+    }
+
+
+def _failed_msgs(jp_ctx: 'JobPollContext') -> Dict[str, Optional[str]]:
+    return {
+        **_started_msgs(jp_ctx),
+        TASK_OUTPUT_FAILED: jp_ctx.time_run_exit,
+    }
 
 
 class TaskJobManager:
@@ -744,11 +778,12 @@ class TaskJobManager:
             itask.state.kill_failed = True
         elif itask.state(TASK_STATUS_SUBMITTED):
             self.task_events_mgr.process_message(
-                itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                ctx.timestamp)
+                itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED, ctx.timestamp
+            )
         elif itask.state(TASK_STATUS_RUNNING):
             self.task_events_mgr.process_message(
-                itask, CRITICAL, TASK_OUTPUT_FAILED)
+                itask, CRITICAL, TASK_OUTPUT_FAILED, ctx.timestamp
+            )
         else:
             log_lvl = DEBUG
             log_msg = (
@@ -852,7 +887,9 @@ class TaskJobManager:
             )
             self.poll_task_jobs([itask])
 
-    def _poll_task_job_callback(self, itask, cmd_ctx, line):
+    def _poll_task_job_callback(
+        self, itask: 'TaskProxy', cmd_ctx: SubProcContext, line: str
+    ):
         """Helper for _poll_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
@@ -876,53 +913,56 @@ class TaskJobManager:
                 ctx, self.workflow, itask.point, itask.tdef.name
             )
 
-        flag = self.task_events_mgr.FLAG_POLLED
+        if jp_ctx.run_status == 1:
+            if jp_ctx.run_signal in {"ERR", "EXIT"}:
+                # Failed normally
+                messages = _failed_msgs(jp_ctx)
+            elif jp_ctx.job_runner_exit_polled == 1:
+                # Failed by a signal, and no longer in job runner
+                messages = {
+                    **_failed_msgs(jp_ctx),
+                    f'{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}': (
+                        jp_ctx.time_run_exit
+                    ),
+                }
+            else:
+                # The job has terminated, but is still managed by job runner.
+                # Some job runners may restart a job in this state, so don't
+                # mark as failed yet.
+                messages = _started_msgs(jp_ctx)
+        elif jp_ctx.run_status == 0:
+            # The job succeeded
+            messages = _succeeded_msgs(jp_ctx)
+        elif jp_ctx.time_run and jp_ctx.job_runner_exit_polled == 1:
+            # The job has terminated without executing the error trap
+            messages = {
+                **_failed_msgs(jp_ctx),
+                TASK_OUTPUT_FAILED: get_current_time_string(),
+            }
+        elif jp_ctx.time_run:
+            # The job has started, and is still managed by job runner
+            messages = _started_msgs(jp_ctx)
+        elif jp_ctx.job_runner_exit_polled == 1:
+            # The job never ran, and no longer in job runner
+            messages = _submit_failed_msgs(jp_ctx)
+        else:
+            # The job never ran, and is in job runner
+            messages = _submitted_msgs(jp_ctx)
+
         # Only log at INFO level if manually polling
         log_lvl = DEBUG if (
             itask.platform.get('communication method') == 'poll'
         ) else INFO
-        if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
-            # Failed normally
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
-        elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
-            # Failed by a signal, and no longer in job runner
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
-            self.task_events_mgr.process_message(
-                itask, log_lvl, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
-                jp_ctx.time_run_exit,
-                flag)
-        elif jp_ctx.run_status == 1:  # noqa: SIM114
-            # The job has terminated, but is still managed by job runner.
-            # Some job runners may restart a job in this state, so don't
-            # mark as failed yet.
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
-        elif jp_ctx.run_status == 0:
-            # The job succeeded
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_SUCCEEDED, jp_ctx.time_run_exit,
-                flag)
-        elif jp_ctx.time_run and jp_ctx.job_runner_exit_polled == 1:
-            # The job has terminated without executing the error trap
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_FAILED, get_current_time_string(),
-                flag)
-        elif jp_ctx.time_run:
-            # The job has started, and is still managed by job runner
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
-        elif jp_ctx.job_runner_exit_polled == 1:
-            # The job never ran, and no longer in job runner
-            self.task_events_mgr.process_message(
-                itask, log_lvl, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                jp_ctx.time_submit_exit, flag)
-        else:
-            # The job never ran, and is in job runner
-            self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
-                flag)
+
+        for message, event_time in messages.items():
+            if event_time is not None:
+                self.task_events_mgr.process_message(
+                    itask,
+                    log_lvl,
+                    message,
+                    event_time,
+                    flag=self.task_events_mgr.FLAG_POLLED,
+                )
 
     def _poll_task_job_message_callback(self, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""
@@ -1159,8 +1199,8 @@ class TaskJobManager:
                 itask, DEBUG, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
         else:
             self.task_events_mgr.process_message(
-                itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                ctx.timestamp)
+                itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED, ctx.timestamp
+            )
 
     def _prep_submit_task_job(
         self,
@@ -1348,7 +1388,8 @@ class TaskJobManager:
             }
         )
         self.task_events_mgr.process_message(
-            itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
+            itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED
+        )
 
     def _prep_submit_task_job_impl(self, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
