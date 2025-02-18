@@ -2289,10 +2289,12 @@ class WorkflowConfig:
 
         Raises: WorkflowConfigError if a custom output is not defined.
         """
+        # TODO (On drop 3.7): Can be simplified with walrus :=
+        # if (b := a[1].strip("?")) not in TASK_QUALIFIERS
         terminal_outputs = [
-            (a[0].strip("!"), b)
+            (a[0].strip("!"), a[1].strip("?"))
             for a in (t.split(':') for t in terminals if ":" in t)
-            if (b := a[1].strip("?")) not in TASK_QUALIFIERS
+            if (a[1].strip("?")) not in TASK_QUALIFIERS
         ]
 
         for task, output in terminal_outputs:
