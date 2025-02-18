@@ -152,7 +152,7 @@ class TaskProxy:
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
             flows I belong to (if empty, belongs to 'none' flow)
-         flow_wait:
+        .flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
             True whilst task is awaiting job prep, reset to False once the
@@ -316,7 +316,7 @@ class TaskProxy:
             )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} {self.identity}>"
+        return f"<{type(self).__name__} {self.identity} {self.state}>"
 
     def __str__(self) -> str:
         """Stringify with tokens, state, submit_num, and flow_nums.

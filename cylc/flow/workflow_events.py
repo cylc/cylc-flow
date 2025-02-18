@@ -24,6 +24,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest
+from cylc.flow.parsec.config import DefaultList
 from cylc.flow.subprocctx import SubProcContext
 
 if TYPE_CHECKING:
@@ -198,7 +199,7 @@ def process_mail_footer(
     """
     try:
         return (mail_footer_tmpl + '\n') % template_vars
-    except (KeyError, ValueError):
+    except (KeyError, TypeError, ValueError):
         LOG.warning(
             f'Ignoring bad mail footer template: {mail_footer_tmpl}'
         )
@@ -235,7 +236,7 @@ class WorkflowEventHandler():
             glbl_cfg().get(['scheduler', 'mail'])
         ):
             value = getter.get(key)
-            if value is not None and value != []:
+            if value is not None and not isinstance(value, DefaultList):
                 return value
         return default
 
@@ -328,7 +329,7 @@ class WorkflowEventHandler():
             cmd_key = ('%s-%02d' % (self.WORKFLOW_EVENT_HANDLER, i), event)
             try:
                 cmd = handler % (template_variables)
-            except KeyError as exc:
+            except (KeyError, TypeError, ValueError) as exc:
                 message = f'{cmd_key} bad template: {handler}\n{exc}'
                 LOG.error(message)
                 continue

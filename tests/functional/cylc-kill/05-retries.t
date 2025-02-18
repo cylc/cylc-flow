@@ -15,28 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test kill a running simulation job
+# Test retries when killing running/submitted/preparing tasks.
+# As killing tasks puts them in the held state, retries should NOT go ahead.
 
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
+set_test_number 2
 
-set_test_number 3
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+# Create platform that ensures job will be in submitted state for long enough
+create_test_global_config '' "
+[platforms]
+    [[old_street]]
+        job runner = at
+        job runner command template = at now + 5 minutes
+        hosts = localhost
+        install target = localhost
+"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-
-# run workflow in background
-cylc play --debug -m simulation "${WORKFLOW_NAME}" >/dev/null 2>&1
-
-# wait for simulated job start
-poll_grep_workflow_log "1/foo.* running" -E
-
-# kill it
-run_ok killer cylc kill "${WORKFLOW_NAME}//1/foo"
-
-# wait for shut down
-poll_grep_workflow_log "INFO - DONE"
-
-# check the sim job was kiled
-grep_workflow_log_ok killed "1/foo.* failed" -E
+install_and_validate
+reftest_run
 
 purge

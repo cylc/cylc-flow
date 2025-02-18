@@ -1,0 +1,6 @@
+Initial point: 1
+Final point: 1
+1/a -triggered off []
+1/b -triggered off []
+1/killer -triggered off ['1/a', '1/b']
+1/end -triggered off ['1/killer']

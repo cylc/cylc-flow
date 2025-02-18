@@ -19,6 +19,7 @@ from typing import Any, Dict
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.scheduler import Scheduler
 
 
 # Define here to ensure test doesn't just mirror code:
@@ -30,9 +31,11 @@ KGO = {
         'submit_status': 0,
         'run_signal': None,
         'run_status': 0,
+        # capture_live_submissions fixture submits jobs in sim mode
         'platform_name': 'simulation',
         'job_runner_name': 'simulation',
-        'job_id': None},
+        'job_id': None,
+    },
     'skip': {
         'flow_nums': '[1]',
         'is_manual_submit': 0,
@@ -42,7 +45,8 @@ KGO = {
         'run_status': 0,
         'platform_name': 'skip',
         'job_runner_name': 'skip',
-        'job_id': None},
+        'job_id': None,
+    },
 }
 
 
@@ -59,11 +63,7 @@ def submit_and_check_db():
     """
     def _inner(schd):
         # Submit task jobs:
-        schd.task_job_mgr.submit_task_jobs(
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
         # Make sure that db changes are enacted:
         schd.workflow_db_mgr.process_queued_ops()
 
@@ -76,7 +76,7 @@ def submit_and_check_db():
 
             # Check that timestamps have been created:
             for timestamp in [
-                'time_submit', 'time_submit_exit', 'time_run', 'time_run_exit'
+                'time_submit', 'time_submit_exit',  'time_run', 'time_run_exit'
             ]:
                 assert task_jobs[timestamp] is not None
     return _inner
@@ -89,18 +89,24 @@ async def test_db_task_jobs(
     """Ensure that task job data is added to the database correctly
     for each run mode.
     """
-    schd = scheduler(flow({
-        'scheduling': {'graph': {
-            'R1': '&'.join(KGO)}},
-        'runtime': {
-            mode: {'run mode': mode} for mode in KGO}
-    }), run_mode='live')
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'graph': {
+                    'R1': ' & '.join(KGO)
+                }
+            },
+            'runtime': {
+                mode: {'run mode': mode} for mode in KGO
+            },
+        }),
+        run_mode='live'
+    )
     async with start(schd):
         # Reference all task proxies so we can examine them
         # at the end of the test:
         itask_skip = schd.pool.get_task(IntegerPoint('1'), 'skip')
         itask_live = schd.pool.get_task(IntegerPoint('1'), 'live')
-
 
         submit_and_check_db(schd)
 
@@ -109,6 +115,7 @@ async def test_db_task_jobs(
 
         submit_and_check_db(schd)
 
+        # capture_live_submissions fixture submits jobs in sim mode
         assert itask_live.run_mode.value == 'simulation'
         assert itask_skip.run_mode.value == 'skip'
 
@@ -123,11 +130,7 @@ async def test_db_task_states(
     conf['runtime'] = {'one': {'run mode': 'skip'}}
     schd = scheduler(flow(conf))
     async with start(schd):
-        schd.task_job_mgr.submit_task_jobs(
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir
-        )
+        schd.submit_task_jobs(schd.pool.get_tasks())
         schd.workflow_db_mgr.process_queued_ops()
         result = schd.workflow_db_mgr.pri_dao.connect().execute(
             'SELECT * FROM task_states').fetchone()
@@ -163,11 +166,7 @@ async def test_mean_task_time(
         itask.tdef.elapsed_times.extend([133.0, 132.4])
 
         # Submit two tasks:
-        schd.task_job_mgr.submit_task_jobs(
-            [itask],
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir
-        )
+        schd.submit_task_jobs([itask])
 
         # Ensure that the skipped task has succeeded, and that the
         # number of items in the elapsed_times has not changed.

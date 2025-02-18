@@ -123,6 +123,10 @@ class WorkflowRuntimeServer:
 
     """
     endpoints: Dict[str, object]
+    curve_auth: ThreadAuthenticator
+    """The ZMQ authenticator."""
+    client_pub_key_dir: str
+    """Client public key directory, used by the ZMQ authenticator."""
 
     OPERATE_SLEEP_INTERVAL = 0.2
     STOP_SLEEP_INTERVAL = 0.2
@@ -136,8 +140,6 @@ class WorkflowRuntimeServer:
         self.publisher = None
         self.loop = None
         self.thread = None
-        self.curve_auth = None
-        self.client_pub_key_dir = None
 
         self.schd: 'Scheduler' = schd
         self.resolvers = Resolvers(
@@ -184,10 +186,7 @@ class WorkflowRuntimeServer:
         self.client_pub_key_dir = client_pub_keyinfo.key_path
 
         # Initial load for the localhost key.
-        self.curve_auth.configure_curve(
-            domain='*',
-            location=(self.client_pub_key_dir)
-        )
+        self.configure_curve()
 
         min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
         self.replier = WorkflowReplier(self, context=self.zmq_context)
@@ -206,6 +205,11 @@ class WorkflowRuntimeServer:
         self.stopped = False
 
         self.operate()
+
+    def configure_curve(self) -> None:
+        self.curve_auth.configure_curve(
+            domain='*', location=self.client_pub_key_dir
+        )
 
     async def stop(self, reason: Union[BaseException, str]) -> None:
         """Stop the TCP servers, and clean up authentication.
