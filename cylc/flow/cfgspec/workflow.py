@@ -648,10 +648,10 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
             The runahead limit prevents a workflow from getting too far ahead
-            of the oldest cycle with :term:`active tasks <active task>`.
+            of the oldest :term:`active cycle`.
 
             A cycle is considered to be active if it contains any
-            :term:`active` tasks.
+            :term:`active tasks <active task>`.
 
             An integer interval value of ``Pn`` allows up to ``n+1`` cycles
             to be active at once.
