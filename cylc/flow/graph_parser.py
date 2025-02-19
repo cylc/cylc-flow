@@ -489,14 +489,19 @@ class GraphParser:
             {'bar'}
         """
         lefts = []
-        for left, _ in pairs:
+        rights = []
+        for left, right in pairs:
             if left and ('&' in left or '|' in left):
                 # RE used because don't want to have to worry about
                 # mutiple and/or and cleaning whitespace.
                 lefts += GraphParser._RE_ANDOR.split(left)
             else:
                 lefts.append(left)
-        return {p[1] for p in pairs}.difference(set(lefts))
+            if right and ('&' in right or '|' in right):
+                rights += GraphParser._RE_ANDOR.split(right)
+            else:
+                rights.append(right)
+        return set(rights).difference(set(lefts))
 
     @classmethod
     def _report_invalid_lines(cls, lines: List[str]) -> None:

@@ -1018,6 +1018,20 @@ def test_proc_dep_pair(args, err):
             {'foo'},
             id='&-and-|'
         ),
+        param(
+            {
+                (None, 'stop1'),
+                ('stop1', 't3:start&t4:start'),
+                ('t3:start&t4:start', 'stop2?')
+            },
+            {'stop2?'},
+            id='diamond-graph'
+        ),
+        param(
+            {(None, 'stop1'), ('stop1', 't3:start&t4')},
+            {'t3:start', 't4'},
+            id='y-shape-graph'
+        ),
     )
 )
 def test_get_graph_terminals(pairs, terminals):
