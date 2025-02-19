@@ -826,15 +826,51 @@ with Conf('global.cylc', desc='''
                    range.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
-                These hosts will not be used to run jobs.
+                List run hosts that workflows should *not* run on.
 
-                If workflows are already running on
-                condemned hosts, Cylc will shut them down and
-                restart them on different hosts.
+                These hosts will be subtracted from the
+                `available <global.cylc[scheduler][run hosts]>` hosts
+                preventing new workflows from starting on the "condemned" host.
+
+                Any workflows running on these hosts will either migrate
+                to another host, or shutdown according to
+                :py:mod:`the configuration <cylc.flow.main_loop.auto_restart>`.
+
+                This feature requires ``auto restart`` to be listed
+                in `global.cylc[scheduler][main loop]plugins`.
+
+                For more information, see the
+                :py:mod:`auto restart <cylc.flow.main_loop.auto_restart>`
+                plugin.
+
+                .. rubric:: Example:
+
+                .. code-block:: cylc
+
+                   [scheduler]
+                       [[main loop]]
+                           # activate the "auto restart" plugin
+                           plugins = auto restart
+                       [[run hosts]]
+                           # there are three hosts in the "pool"
+                           available = host1, host2, host3
+
+                           # however two have been taken out:
+                           # * workflows running on "host1" will attempt to
+                           #   restart on "host3"
+                           # * workflows running on "host2" will shutdown
+                           condemned = host1, host2!
 
                 .. seealso::
 
+                   :py:mod:`cylc.flow.main_loop.auto_restart`
                    :ref:`auto-stop-restart`
+
+                .. versionchanged:: 8.4.2
+
+                   The "force mode" (activated by a "!" suffix) caused issues
+                   at workflow startup for Cylc versions between 8.0.0 and
+                   8.4.1 inclusive.
 
                 .. versionchanged:: 8.0.0
 
@@ -1345,7 +1381,7 @@ with Conf('global.cylc', desc='''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
-                ..rubric:: Options:
+                .. rubric:: Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
