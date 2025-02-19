@@ -1743,7 +1743,9 @@ def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
     cfg = WorkflowConfig('', tmp_path / 'flow.cylc', '')
     cfg.cfg['runtime']['foo']['outputs'] = registered_outputs
     if fails:
-        with pytest.raises(WorkflowConfigError, match='Undefined custom output'):
-            cfg.check_outputs(tasks_and_outputs)
+        with pytest.raises(
+            WorkflowConfigError, match='Undefined custom output'
+        ):
+            cfg.check_terminal_outputs(tasks_and_outputs)
     else:
-        assert cfg.check_outputs(tasks_and_outputs) is None
+        assert cfg.check_terminal_outputs(tasks_and_outputs) is None

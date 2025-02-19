@@ -601,7 +601,7 @@ class TaskOutputs:
     @staticmethod
     def is_valid_std_name(name: str) -> bool:
         """Check name is a valid standard output name."""
-        return name in TASK_OUTPUTS
+        return name in SORT_ORDERS
 
     @staticmethod
     def output_sort_key(item: Iterable[str]) -> float:

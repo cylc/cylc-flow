@@ -2270,7 +2270,7 @@ class WorkflowConfig:
 
             # Checking for undefined outputs for terminal tasks. Tasks with
             # dependencies are checked in generate_triggers:
-            self.check_outputs(parser.terminals)
+            self.check_terminal_outputs(parser.terminals)
 
         self.set_required_outputs(task_output_opt)
 
@@ -2284,12 +2284,16 @@ class WorkflowConfig:
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
 
-    def check_outputs(self, terminals: Iterable[str]) -> None:
+    def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
+
+
+        Where a "terminal output" is an output for a task at the end of a
+        graph string, such as "end" in `start => middle => end`.
 
         Raises: WorkflowConfigError if a custom output is not defined.
         """
-        # TODO (On drop 3.7): Can be simplified with walrus :=
+        # BACK COMPAT: (On drop 3.7): Can be simplified with walrus :=
         # if (b := a[1].strip("?")) not in TASK_QUALIFIERS
         terminal_outputs = [
             (a[0].strip("!"), a[1].strip("?"))
