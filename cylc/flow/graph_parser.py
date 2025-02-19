@@ -168,6 +168,7 @@ class GraphParser:
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
     _RE_QUAL = QUALIFIER + r'[\w\-]+'  # task or fam trigger
     _RE_OPT = r'\??'  # optional output indicator
+    _RE_ANDOR = re.compile(r'\s*[&|]\s*')
 
     REC_QUAL = re.compile(_RE_QUAL)
 
@@ -470,12 +471,32 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         # Get a set of RH nodes which are not at the LH of another pair:
-        self.terminals = {p[1] for p in pairs}.difference(
-            {p[0] for p in pairs}
-        )
+        self.terminals = self.get_graph_terminals(pairs)
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, self.terminals)
+
+    @staticmethod
+    def get_graph_terminals(pairs):
+        """Get terminating ends of graphs.
+
+        For example in `foo => bar => baz` only `baz` terminates the chain
+        of dependencies.
+
+        Examples:
+            >>> this = GraphParser.get_graph_terminals
+            >>> this({('foo', 'bar')})
+            {'bar'}
+        """
+        lefts = []
+        for left, _ in pairs:
+            if left and ('&' in left or '|' in left):
+                # RE used because don't want to have to worry about
+                # mutiple and/or and cleaning whitespace.
+                lefts += GraphParser._RE_ANDOR.split(left)
+            else:
+                lefts.append(left)
+        return {p[1] for p in pairs}.difference(set(lefts))
 
     @classmethod
     def _report_invalid_lines(cls, lines: List[str]) -> None:

@@ -27,7 +27,6 @@ from cylc.flow.exceptions import GraphParseError, ParamExpandError
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
@@ -810,7 +809,6 @@ def test_cannot_be_required():
         gp.parse_graph('a:submit-failed => b')
 
 
-
 @pytest.mark.parametrize(
     'graph, error',
     [
@@ -987,3 +985,42 @@ def test_proc_dep_pair(args, err):
             gp._proc_dep_pair(*args)
     else:
         assert gp._proc_dep_pair(*args) is None
+
+
+@pytest.mark.parametrize(
+    'pairs, terminals',
+    (
+        param(
+            {
+                (None, 'foo[-P1D]:restart1'),
+                (None, 'bar?'),
+                ('foo[-P1D]:restart1|bar?', 'foo')
+            },
+            {'foo'},
+            id='|'
+        ),
+        param(
+            {
+                (None, 'foo[-P1D]:restart1'),
+                (None, 'bar?'),
+                ('foo[-P1D]:restart1 & bar?', 'foo')
+            },
+            {'foo'},
+            id='&'
+        ),
+        param(
+            {
+                (None, 'foo[-P1D]:restart1'),
+                (None, 'bar?'),
+                (None, 'qux'),
+                ('foo[-P1D]:restart1 &bar? |qux', 'foo')
+            },
+            {'foo'},
+            id='&-and-|'
+        ),
+    )
+)
+def test_get_graph_terminals(pairs, terminals):
+    """It identifies all graph terminals, and no non terminals.
+    """
+    assert GraphParser.get_graph_terminals(pairs) == terminals
