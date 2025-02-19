@@ -826,11 +826,44 @@ with Conf('global.cylc', desc='''
                    range.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
-                These hosts will not be used to run jobs.
+                List run hosts that workflows should *not* run on.
 
-                If workflows are already running on
-                condemned hosts, Cylc will shut them down and
-                restart them on different hosts.
+                Any hosts listed here will be subtracted from the
+                `available <global.cylc[scheduler][run hosts]>`
+                hosts:
+
+                * Workflows will not start on condemned hosts.
+                * Workflows that are running on condemned hosts will attempt
+                  to migrate to an uncondemned host (providing the
+                  `auto restart
+                  <global.cylc[scheduler][main loop][auto restart]>`
+                  plugin is enabled).
+
+                This feature can be used to drain a host for patching, or
+                remove a host that is surplus to requirement.
+
+                Hostnames listed here may be followed by a ``!`` character.
+                This activates "force mode", workflows running on a
+                force-condenmed host will shutdown rather than attempting to
+                migrate (providing the
+                `auto restart
+                <global.cylc[scheduler][main loop][auto restart]>` plugin
+                is enabled).
+
+                .. rubric:: Example:
+
+                .. code-block:: cylc
+
+                   [scheduler]
+                       [[run hosts]]
+                           # there are three hosts in the "pool"
+                           available = host1, host2, host3
+
+                           # however two have been taken out:
+                           # * workflows running on "host1" will attempt to
+                           #   restart on "host3"
+                           # * workflows running on "host2" will shutdown
+                           condemned = host1, host2!
 
                 .. seealso::
 
@@ -1336,7 +1369,7 @@ with Conf('global.cylc', desc='''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
-                ..rubric:: Options:
+                .. rubric:: Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
