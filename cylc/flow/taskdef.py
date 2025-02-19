@@ -183,7 +183,7 @@ class TaskDef:
         self.dependencies: Dict[SequenceBase, List[Dependency]] = {}
         self.outputs = {}  # {output: (message, is_required)}
         self.graph_children: Dict[
-            SequenceBase, Dict[str, List[Tuple[str, TaskTrigger]]]
+            SequenceBase, Dict[str, Set[Tuple[str, TaskTrigger]]]
         ] = {}
         self.graph_parents: Dict[
             SequenceBase, Set[Tuple[str, TaskTrigger]]
@@ -250,8 +250,8 @@ class TaskDef:
         self.graph_children.setdefault(
             sequence, {}
         ).setdefault(
-            trigger.output, []
-        ).append((taskname, trigger))
+            trigger.output, set()
+        ).add((taskname, trigger))
 
     def add_graph_parent(
         self, trigger: 'TaskTrigger', parent: str, sequence: 'SequenceBase'
