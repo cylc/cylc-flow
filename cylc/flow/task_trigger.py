@@ -160,6 +160,10 @@ class TaskTrigger:
             return '%s:%s' % (self.task_name, self.output)
 
     def __repr__(self) -> str:
+        """
+        >>> TaskTrigger('', '', '')
+        <TaskTrigger ...>
+        """
         return f"<{type(self).__name__} {self}>"
 
     def __hash__(self) -> int:
