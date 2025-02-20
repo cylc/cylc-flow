@@ -42,11 +42,11 @@ class TaskTrigger:
     """Class representing an upstream dependency.
 
     Args:
-        task_name (str): The name of the upstream task.
-        cycle_point_offset (str): String representing the offset of the
+        task_name: The name of the upstream task.
+        cycle_point_offset: String representing the offset of the
             upstream task (e.g. -P1D) if this dependency is not an absolute
             one. Else None.
-        output (str): The task state / output for this trigger e.g. succeeded.
+        output: The task state / output for this trigger e.g. succeeded.
 
     """
 
@@ -57,7 +57,7 @@ class TaskTrigger:
     def __init__(
         self,
         task_name: str,
-        cycle_point_offset: str,
+        cycle_point_offset: Optional[str],
         output: str,
         offset_is_irregular: bool = False,
         offset_is_absolute: bool = False,
@@ -75,9 +75,10 @@ class TaskTrigger:
         #   2000, 20000101T0600Z, 2000-01-01T06:00+00:00, ...
         # AND NON-ABSOLUTE IRREGULAR:
         #   -PT6H+P1D, T00, ...
-        if (self.offset_is_irregular and any(
-                self.cycle_point_offset.startswith(c)
-                for c in ['P', '+', '-', 'T'])):
+        if self.offset_is_irregular and any(
+            self.cycle_point_offset.startswith(c)  # type: ignore[union-attr]
+            for c in ['P', '+', '-', 'T']
+        ):
             self.offset_is_absolute = False
 
     def get_parent_point(self, from_point):
