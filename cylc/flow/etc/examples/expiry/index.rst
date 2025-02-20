@@ -21,8 +21,8 @@ execution. In this situation, it might be necessary to skip a few tasks in
 order for the workflow to catch up with the real-world time.
 
 Cylc has a concept called :ref:`expiry <ClockExpireTasks>` which allows tasks
-to be automatcially "expired" if they are running behind schedule. The expiry
-can be configred as an offset from the cycle time.
+to be automatically "expired" if they are running behind schedule. The expiry
+can be configured as an offset from the cycle time.
 
 .. seealso::
 
