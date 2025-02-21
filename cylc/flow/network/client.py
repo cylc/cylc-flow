@@ -20,7 +20,6 @@ from abc import (
     abstractmethod,
 )
 import asyncio
-import json
 import os
 from shutil import which
 import socket
@@ -51,7 +50,8 @@ from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
     ZMQSocketBase,
     get_location,
-    load_server_response,
+    deserialize,
+    serialize,
 )
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
@@ -284,7 +284,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         args: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
         req_meta: Optional[Dict[str, Any]] = None
-    ) -> Union[bytes, object]:
+    ) -> object:
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -306,7 +306,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if req_meta:
             msg['meta'].update(req_meta)
         LOG.debug('zmq:send %s', msg)
-        message = json.dumps(msg)
+        message = serialize(msg)
         self.socket.send_string(message)
 
         # receive response
@@ -326,7 +326,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if command in PB_METHOD_MAP:
             return res
 
-        response: ResponseDict = load_server_response(res.decode())
+        response: ResponseDict = deserialize(res.decode())
 
         try:
             return response['data']
@@ -338,7 +338,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                     f"{response}"
                 )
                 wflow_cylc_ver = response.get('cylc_version')
-                if wflow_cylc_ver:
+                if wflow_cylc_ver and wflow_cylc_ver != CYLC_VERSION:
                     error += (
                         f"\n(Workflow is running in Cylc {wflow_cylc_ver})"
                     )

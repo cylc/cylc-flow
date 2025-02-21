@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
-import json
 from queue import Queue
 from typing import (
     TYPE_CHECKING,
@@ -30,7 +29,8 @@ from cylc.flow import (
 )
 from cylc.flow.network import (
     ZMQSocketBase,
-    load_server_response,
+    deserialize,
+    serialize,
 )
 
 
@@ -116,7 +116,7 @@ class WorkflowReplier(ZMQSocketBase):
             res: ResponseDict
             response: bytes
             try:
-                message = load_server_response(msg)
+                message = deserialize(msg)
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
@@ -126,7 +126,7 @@ class WorkflowReplier(ZMQSocketBase):
                     'error': {'message': str(exc)},
                     'cylc_version': CYLC_VERSION,
                 }
-                response = json.dumps(res).encode()
+                response = serialize(res).encode()
             else:
                 # success case - serve the request
                 res = self.server.receiver(message)
@@ -135,5 +135,5 @@ class WorkflowReplier(ZMQSocketBase):
                 if isinstance(data, bytes):
                     response = data
                 else:
-                    response = json.dumps(res).encode()
+                    response = serialize(res).encode()
             self.socket.send(response)  # type: ignore[union-attr]

@@ -95,11 +95,19 @@ if TYPE_CHECKING:
         back-compat issues."""
 
 
-def load_server_response(message: str) -> 'ResponseDict':
+def serialize(data: object) -> str:
+    """Convert the structure holding a message to a JSON message string."""
+    # Abstract out the transport format in order to allow it to be changed
+    # in future.
+    return json.dumps(data)
+
+
+def deserialize(message: str) -> 'ResponseDict':
     """Convert a JSON message string to dict with an added 'user' field."""
+    # Abstract out the transport format in order to allow it to be changed
+    # in future.
     msg = json.loads(message)
-    if 'user' not in msg:
-        msg['user'] = getpass.getuser()  # assume this is the user
+    msg['user'] = getpass.getuser()  # assume this is the user
     return msg
 
 

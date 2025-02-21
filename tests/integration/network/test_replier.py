@@ -21,7 +21,7 @@ from async_timeout import timeout
 import pytest
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.network import load_server_response
+from cylc.flow.network import deserialize
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.scheduler import Scheduler
 
@@ -33,7 +33,7 @@ async def test_listener(one: Scheduler, start):
         # (without directly calling listener):
         client = WorkflowRuntimeClient(one.workflow)
         client.socket.send_string(r'Not JSON')
-        res = load_server_response(
+        res = deserialize(
             (await client.socket.recv()).decode()
         )
         assert res['error']
