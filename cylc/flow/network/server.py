@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP: Dict[str, Any] = {
     'pb_entire_workflow': PbEntireWorkflow,
+    'pb_workflow_only': PbEntireWorkflow,
     'pb_data_elements': DELTAS_MAP
 }
 
@@ -418,6 +419,16 @@ class WorkflowRuntimeServer:
 
         """
         pb_msg = self.schd.data_store_mgr.get_entire_workflow()
+        return pb_msg.SerializeToString()
+
+    @authorise()
+    @expose
+    def pb_workflow_only(self, **_kwargs) -> bytes:
+        """Send only the workflow data, not tasks etc.
+
+        Returns serialised Protobuf message
+        """
+        pb_msg = self.schd.data_store_mgr.get_workflow_only()
         return pb_msg.SerializeToString()
 
     @authorise()

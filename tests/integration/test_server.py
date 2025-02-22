@@ -85,6 +85,17 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
+def test_pb_workflow_only(myflow):
+    """Test Protobuf workflow only endpoint method."""
+    data = PB_METHOD_MAP['pb_workflow_only']()
+    data.ParseFromString(
+        call_server_method(
+            myflow.server.pb_workflow_only
+        )
+    )
+    assert data.workflow.id == myflow.id
+
+
 async def test_stop(one: Scheduler, start):
     """Test stop."""
     async with start(one):

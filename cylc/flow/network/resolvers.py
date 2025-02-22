@@ -348,9 +348,14 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_workflow_by_id(self, args):
         """Return a workflow store by ID."""
         try:
-            if 'sub_id' in args and args['delta_store']:
-                return self.delta_store[args['sub_id']][args['id']][
-                    args['delta_type']][WORKFLOW]
+            if 'sub_id' in args:
+                if args['delta_store']:
+                    return self.delta_store[args['sub_id']][args['id']][
+                        args['delta_type']][WORKFLOW]
+            else:
+                await self.data_store_mgr.set_query_sync_levels(
+                    [self.data_store_mgr.data[args['id']][WORKFLOW].id]
+                )
             return self.data_store_mgr.data[args['id']][WORKFLOW]
         except KeyError:
             return None
@@ -358,12 +363,21 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_workflows_data(self, args: Dict[str, Any]):
         """Return list of data from workflows."""
         # Both cases just as common so 'if' not 'try'
-        if 'sub_id' in args and args['delta_store']:
-            return [
-                delta[args['delta_type']]
-                for key, delta in self.delta_store[args['sub_id']].items()
-                if workflow_filter(self.data_store_mgr.data[key], args)
-            ]
+        if 'sub_id' in args:
+            if args['delta_store']:
+                return [
+                    delta[args['delta_type']]
+                    for key, delta in self.delta_store[args['sub_id']].items()
+                    if workflow_filter(self.data_store_mgr.data[key], args)
+                ]
+        else:
+            await self.data_store_mgr.set_query_sync_levels(
+                [
+                    workflow[WORKFLOW].id
+                    for workflow in self.data_store_mgr.data.values()
+                    if workflow_filter(workflow, args)
+                ]
+            )
         return [
             workflow
             for workflow in self.data_store_mgr.data.values()
@@ -376,6 +390,22 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             [flow[WORKFLOW]
              for flow in await self.get_workflows_data(args)],
             args)
+
+    async def get_flow_data_from_ids(self, data_store, native_ids):
+        """Return workflow data by id."""
+        w_ids = []
+        for native_id in native_ids:
+            w_ids.append(
+                Tokens(native_id).workflow_id
+            )
+        await self.data_store_mgr.set_query_sync_levels(
+            set(w_ids)
+        )
+        return [
+            data_store[w_id]
+            for w_id in iter_uniq(w_ids)
+            if w_id in data_store
+        ]
 
     # nodes
     def get_node_state(self, node, node_type):
@@ -416,14 +446,18 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         """Return protobuf node objects for given id."""
         nat_ids = uniq(args.get('native_ids', []))
         # Both cases just as common so 'if' not 'try'
-        if 'sub_id' in args and args['delta_store']:
-            flow_data = [
-                delta[args['delta_type']]
-                for delta in get_flow_data_from_ids(
-                    self.delta_store[args['sub_id']], nat_ids)
-            ]
+        if 'sub_id' in args:
+            if args['delta_store']:
+                flow_data = [
+                    delta[args['delta_type']]
+                    for delta in get_flow_data_from_ids(
+                        self.delta_store[args['sub_id']], nat_ids)
+                ]
+            else:
+                flow_data = get_flow_data_from_ids(
+                    self.data_store_mgr.data, nat_ids)
         else:
-            flow_data = get_flow_data_from_ids(
+            flow_data = await self.get_flow_data_from_ids(
                 self.data_store_mgr.data, nat_ids)
 
         if node_type == PROXY_NODES:
@@ -452,10 +486,14 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         w_id = Tokens(n_id).workflow_id
         # Both cases just as common so 'if' not 'try'
         try:
-            if 'sub_id' in args and args.get('delta_store'):
-                flow = self.delta_store[
-                    args['sub_id']][w_id][args['delta_type']]
+            if 'sub_id' in args:
+                if args.get('delta_store'):
+                    flow = self.delta_store[
+                        args['sub_id']][w_id][args['delta_type']]
+                else:
+                    flow = self.data_store_mgr.data[w_id]
             else:
+                await self.data_store_mgr.set_query_sync_levels([w_id])
                 flow = self.data_store_mgr.data[w_id]
         except KeyError:
             return None
@@ -477,14 +515,18 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
         nat_ids = uniq(args.get('native_ids', []))
-        if 'sub_id' in args and args['delta_store']:
-            flow_data = [
-                delta[args['delta_type']]
-                for delta in get_flow_data_from_ids(
-                    self.delta_store[args['sub_id']], nat_ids)
-            ]
+        if 'sub_id' in args:
+            if args['delta_store']:
+                flow_data = [
+                    delta[args['delta_type']]
+                    for delta in get_flow_data_from_ids(
+                        self.delta_store[args['sub_id']], nat_ids)
+                ]
+            else:
+                flow_data = get_flow_data_from_ids(
+                    self.data_store_mgr.data, nat_ids)
         else:
-            flow_data = get_flow_data_from_ids(
+            flow_data = await self.get_flow_data_from_ids(
                 self.data_store_mgr.data, nat_ids)
 
         return sort_elements(
@@ -504,6 +546,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         edge_ids = set()
         # Setup for edgewise search.
         new_nodes = root_nodes
+        is_sub = 'sub_id' in args
         for _ in range(args['distance']):
             # Gather edges.
             # Edges should be unique (graph not circular),
@@ -514,10 +557,19 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 for e_id in n.edges
             }.difference(edge_ids)
             edge_ids.update(new_edge_ids)
+            if is_sub:
+                flow_data = get_flow_data_from_ids(
+                    self.data_store_mgr.data,
+                    new_edge_ids
+                )
+            else:
+                flow_data = await self.get_flow_data_from_ids(
+                    self.data_store_mgr.data,
+                    new_edge_ids
+                )
             new_edges = [
                 edge
-                for flow in get_flow_data_from_ids(
-                    self.data_store_mgr.data, new_edge_ids)
+                for flow in flow_data
                 for edge in get_data_elements(flow, new_edge_ids, EDGES)
             ]
             edges += new_edges
@@ -532,10 +584,19 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             if not new_node_ids:
                 break
             node_ids.update(new_node_ids)
+            if is_sub:
+                flow_data = get_flow_data_from_ids(
+                    self.data_store_mgr.data,
+                    new_node_ids
+                )
+            else:
+                flow_data = await self.get_flow_data_from_ids(
+                    self.data_store_mgr.data,
+                    new_node_ids
+                )
             new_nodes = [
                 node
-                for flow in get_flow_data_from_ids(
-                    self.data_store_mgr.data, new_node_ids)
+                for flow in flow_data
                 for node in get_data_elements(flow, new_node_ids, TASK_PROXIES)
             ]
             nodes += new_nodes
@@ -571,6 +632,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue: DeltaQueue = queue.Queue()
 
+        self.data_store_mgr.graphql_sub_interrogate(sub_id, info)
+
         counters: Dict[str, int] = {}
         delta_yield_queue: DeltaQueue = queue.Queue()
         flow_delta_queues: Dict[str, queue.Queue[Tuple[str, dict]]] = {}
@@ -593,6 +656,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                     if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:
                             delta_queues[w_id][sub_id] = deltas_queue
+                            await self.data_store_mgr.graphql_sub_data_match(
+                                w_id, sub_id
+                            )
                             # On new yield workflow data-store as added delta
                             if args.get('initial_burst'):
                                 delta_store = create_delta_store(
@@ -660,6 +726,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             import traceback
             logger.warning(traceback.format_exc())
         finally:
+            await self.data_store_mgr.graphql_sub_discard(sub_id)
             for w_id in w_ids:
                 if delta_queues.get(w_id, {}).get(sub_id):
                     del delta_queues[w_id][sub_id]
@@ -704,8 +771,11 @@ class Resolvers(BaseResolvers):
         meta: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Mutate workflow."""
-        w_ids = [flow[WORKFLOW].id
-                 for flow in await self.get_workflows_data(w_args)]
+        w_ids = [
+            workflow[WORKFLOW].id
+            for workflow in self.data_store_mgr.data.values()
+            if workflow_filter(workflow, w_args)
+        ]
         if not w_ids:
             workflows = list(self.data_store_mgr.data.keys())
             return [{
