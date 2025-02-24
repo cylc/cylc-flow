@@ -417,9 +417,10 @@ class WorkflowRuntimeServer:
         )
         if executed.errors:
             for error in executed.errors:
-                LOG.warning(error)
-            if not executed.data:
-                raise Exception(executed.errors[0])
+                LOG.warning(f"GraphQL: {error}")
+            # If there are execution errors, it means there was an unexpected
+            # error, so fail the command.
+            raise Exception(*executed.errors)
         return executed.data
 
     # UIServer Data Commands
