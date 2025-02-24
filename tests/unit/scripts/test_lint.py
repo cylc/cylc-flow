@@ -429,7 +429,7 @@ def test_get_reference_rst(monkeypatch):
         '\n7 to 8 upgrades\n---------------\n\n'
         '`U042 <https://cylc.github.io/cylc-doc/stable'
         '/html/7-to-8/some url or other>`_'
-        f'\n{ "^" * 78 }'
+        f'\n{"^" * 78}'
         '\nsection ``[vizualization]`` has been '
         'removed.\n\n\n'
     )

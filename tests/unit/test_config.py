@@ -20,6 +20,7 @@ from typing import (
     TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
 import pytest
 import logging
+from textwrap import dedent
 from types import SimpleNamespace
 from contextlib import suppress
 
@@ -1299,16 +1300,19 @@ def test_implicit_tasks(
     """
     # Setup
     id_ = 'rincewind'
-    flow_file: 'Path' = tmp_flow_config(id_, f"""
-    [scheduler]
-        {
-            f'allow implicit tasks = {allow_implicit_tasks}'
-            if allow_implicit_tasks is not None else ''
-        }
-    [scheduling]
-        [[graph]]
-            R1 = foo
-    """)
+    flow_file: 'Path' = tmp_flow_config(
+        id_,
+        dedent(f"""
+            [scheduler]
+                {
+                    f'allow implicit tasks = {allow_implicit_tasks}'
+                    if allow_implicit_tasks is not None else ''
+                }
+            [scheduling]
+                [[graph]]
+                    R1 = foo
+        """)
+    )
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', cylc7_compat)
     if rose_suite_conf:
         (flow_file.parent / 'rose-suite.conf').touch()
