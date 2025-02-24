@@ -36,10 +36,6 @@ defaults:
   run:
     shell: bash -c "exec $CONDA_PREFIX/bin/bash -elo pipefail {0}"
 
-env:
-  FORCE_COLOR: 2
-  PIP_PROGRESS_BAR: off
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}

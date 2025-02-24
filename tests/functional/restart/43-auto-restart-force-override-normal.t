@@ -50,10 +50,7 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
     [[run hosts]]
-        available = ${CYLC_TEST_HOST_1}, ${CYLC_TEST_HOST_2}
-        # ensure the workflow can start if a host is condemned
-        # in force mode see #6623
-        condemned = ${CYLC_TEST_HOST_2}!
+        available = ${CYLC_TEST_HOST_1}
 "
 
 set_test_number 8

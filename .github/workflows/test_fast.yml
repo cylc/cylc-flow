@@ -16,9 +16,6 @@ defaults:
   run:
     shell: bash -c "exec $CONDA_PREFIX/bin/bash -elo pipefail {0}"
 
-env:
-  PIP_PROGRESS_BAR: off
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -35,9 +32,11 @@ jobs:
           - os: 'ubuntu-latest'
             python-version: '3'
             time-zone: 'XXX-09:35'
+
     env:
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -112,8 +111,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3']
-    env:
-      FORCE_COLOR: 2
     steps:
       - name: Checkout
         uses: actions/checkout@v6
