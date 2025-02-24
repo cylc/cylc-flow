@@ -38,8 +38,8 @@ VERY_LONG_STR = 'x' * 240
                 'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
-                    'job name length maximum': 100
-                }
+                    'job name length maximum': 100,
+                },
             },
             [
                 '#PBS -N axe.1.chop',
@@ -47,7 +47,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='basic'
+            id='basic',
         ),
         pytest.param(
             {
@@ -58,15 +58,16 @@ VERY_LONG_STR = 'x' * 240
                 'task_id': VERY_LONG_STR,
                 'platform': {
                     'job runner': 'pbs',
-                }
+                },
             },
             [
-                f'#PBS -N None.{VERY_LONG_STR[:PBSHandler.JOB_NAME_LEN_MAX - 5]}',
+                '#PBS -N '
+                f'None.{VERY_LONG_STR[: PBSHandler.JOB_NAME_LEN_MAX - 5]}',
                 '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='long-job-name'
+            id='long-job-name',
         ),
         pytest.param(
             {
@@ -77,8 +78,8 @@ VERY_LONG_STR = 'x' * 240
                 'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
-                    'job name length maximum': 6
-                }
+                    'job name length maximum': 6,
+                },
             },
             [
                 '#PBS -N axe.1.',
@@ -86,7 +87,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
                 '#PBS -l walltime=180',
             ],
-            id='truncate-job-name'
+            id='truncate-job-name',
         ),
         pytest.param(
             {
@@ -101,8 +102,8 @@ VERY_LONG_STR = 'x' * 240
                 'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
-                    'job name length maximum': 100
-                }
+                    'job name length maximum': 100,
+                },
             },
             [
                 '#PBS -N axe.1.chop',
@@ -113,7 +114,7 @@ VERY_LONG_STR = 'x' * 240
                 '#PBS -V',
                 '#PBS -l mem=256gb',
             ],
-            id='custom-directives'
+            id='custom-directives',
         ),
     ],
 )
@@ -140,7 +141,6 @@ Job id            Name             User              Time Use S Queue
 abc.456           test-pbs         xxxxxxx                  2 Q romeq
 abcdef            test-pbs         xxxxxxx                  2 Q romeq
     ''') == ['12345', '23456', '34567']
-
 
 
 def test_filter_submit_output(tmp_path):

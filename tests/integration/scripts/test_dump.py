@@ -56,23 +56,24 @@ async def test_dump_tasks(flow, scheduler, start):
         )
         assert ret == ['a, 1, waiting, not-held, queued, not-runahead']
 
+
 @pytest.mark.parametrize(
     'attributes_bool, flow_nums, dump_str',
     [
         pytest.param(
             True,
-            [1,2],
+            [1, 2],
             '1/a:waiting (held,queued,runahead) flows=[1,2]',
             id='1'
         ),
         pytest.param(
             False,
-            [1,2],
+            [1, 2],
             '1/a:waiting',
             id='2'
         )
     ]
- )
+)
 async def test_dump_format(
     flow, scheduler, start, attributes_bool, flow_nums, dump_str
 ):
