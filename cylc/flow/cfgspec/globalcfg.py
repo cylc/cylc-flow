@@ -828,23 +828,22 @@ with Conf('global.cylc', desc='''
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
                 List run hosts that workflows should *not* run on.
 
-                Any hosts listed here will be subtracted from the
-                `available <global.cylc[scheduler][run hosts]>`
-                hosts:
+                These will be subtracted from the
+                `available <global.cylc[scheduler][run hosts]>`:
 
                 * Workflows will not start on condemned hosts.
                 * Workflows that are running on condemned hosts will attempt
-                  to migrate to an uncondemned host (providing the
+                  to migrate to an available host (providing the
                   `auto restart
                   <global.cylc[scheduler][main loop][auto restart]>`
                   plugin is enabled).
 
                 This feature can be used to drain a host for patching, or
-                remove a host that is surplus to requirement.
+                remove a host that is surplus to requirements.
 
-                Hostnames listed here may be followed by a ``!`` character.
-                This activates "force mode", workflows running on a
-                force-condenmed host will shutdown rather than attempting to
+                If a hostname listed here is followed by a ``!`` character
+                ("force mode"), workflows running on it
+                will shutdown rather than attempting to
                 migrate (providing the
                 `auto restart
                 <global.cylc[scheduler][main loop][auto restart]>` plugin
@@ -871,7 +870,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.4.2
 
-                   The "force-condemn" option caused issues at workflow
+                   The force-condemn ("!") option caused issues at workflow
                    startup for Cylc versions between 8.0.0 and 8.4.1
                    inclusive.
 
