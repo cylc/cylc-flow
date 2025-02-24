@@ -1284,11 +1284,11 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             ''')
-            # Conf('profile', VDR.V_BOOLEAN, True, desc='''
-            #     A Boolean that sets if the cylc profiler will be used
-            #
-            #     .. versionadded:: 8.0.0
-            # ''')
+            Conf('profile', VDR.V_BOOLEAN, True, desc='''
+                A Boolean that sets if the cylc profiler will be used
+
+                .. versionadded:: 8.0.0
+            ''')
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
                 The system used to run jobs on the platform.
 
