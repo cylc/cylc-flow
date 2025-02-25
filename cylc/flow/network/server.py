@@ -19,28 +19,45 @@ import asyncio
 from queue import Queue
 from textwrap import dedent
 from time import sleep
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
 
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
-from cylc.flow import LOG, workflow_files
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+    workflow_files,
+)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.data_messages_pb2 import PbEntireWorkflow
+from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
-    CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
+    CylcGraphQLBackend,
+    IgnoreFieldMiddleware,
+    instantiate_middleware,
 )
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.replier import WorkflowReplier
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
-from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.data_messages_pb2 import PbEntireWorkflow
+
 
 if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
     from graphql.execution import ExecutionResult
+
+    from cylc.flow.network import ResponseDict
+    from cylc.flow.scheduler import Scheduler
 
 
 # maps server methods to the protobuf message (for client/UIS import)
@@ -271,7 +288,7 @@ class WorkflowRuntimeServer:
             articles = self.publish_queue.get()
             await self.publisher.publish(*articles)
 
-    def receiver(self, message):
+    def receiver(self, message) -> 'ResponseDict':
         """Process incoming messages and coordinate response.
 
         Wrap incoming messages, dispatch them to exposed methods and/or
@@ -289,26 +306,44 @@ class WorkflowRuntimeServer:
             args.update({'user': message['user']})
             if 'meta' in message:
                 args['meta'] = message['meta']
-        except KeyError:
+        except KeyError as exc:
             # malformed message
-            return {'error': {
-                'message': 'Request missing required field(s).'}}
+            return {
+                'error': {
+                    'message': (
+                        f"Request missing field {exc} required for "
+                        f"Cylc {CYLC_VERSION}"
+                    )
+                },
+                'cylc_version': CYLC_VERSION,
+            }
         except AttributeError:
             # no exposed method by that name
-            return {'error': {
-                'message': 'No method by the name "%s"' % message['command']}}
+            return {
+                'error': {
+                    'message': (
+                        f"No method by the name '{message['command']}' "
+                        f"at Cylc {CYLC_VERSION}"
+                    )
+                },
+                'cylc_version': CYLC_VERSION,
+            }
 
         # generate response
         try:
-            response = method(**args)
+            data = method(**args)
         except Exception as exc:
             # includes incorrect arguments (TypeError)
-            LOG.exception(exc)  # note the error server side
-            import traceback
-            return {'error': {
-                'message': str(exc), 'traceback': traceback.format_exc()}}
+            LOG.exception(exc)  # log the error server side
+            return {
+                'error': {'message': str(exc)},
+                'cylc_version': CYLC_VERSION,
+            }
 
-        return {'data': response}
+        return {
+            'data': data,
+            'cylc_version': CYLC_VERSION,
+        }
 
     def register_endpoints(self):
         """Register all exposed methods."""
@@ -361,7 +396,7 @@ class WorkflowRuntimeServer:
         variables: Optional[Dict[str, Any]] = None,
         meta: Optional[Dict[str, Any]] = None
     ):
-        """Return the GraphQL schema execution result.
+        """Return the data field of the GraphQL schema execution result.
 
         Args:
             request_string: GraphQL request passed to Graphene.
@@ -371,41 +406,25 @@ class WorkflowRuntimeServer:
         Returns:
             object: Execution result, or a list with errors.
         """
-        try:
-            executed: 'ExecutionResult' = schema.execute(
-                request_string,
-                variable_values=variables,
-                context_value={
-                    'resolvers': self.resolvers,
-                    'meta': meta or {},
-                },
-                backend=CylcGraphQLBackend(),
-                middleware=list(instantiate_middleware(self.middleware)),
-                executor=AsyncioExecutor(),
-                validate=True,  # validate schema (dev only? default is True)
-                return_promise=False,
-            )
-        except Exception as exc:
-            return 'ERROR: GraphQL execution error \n%s' % exc
+        executed: 'ExecutionResult' = schema.execute(
+            request_string,
+            variable_values=variables,
+            context_value={
+                'resolvers': self.resolvers,
+                'meta': meta or {},
+            },
+            backend=CylcGraphQLBackend(),
+            middleware=list(instantiate_middleware(self.middleware)),
+            executor=AsyncioExecutor(),
+            validate=True,  # validate schema (dev only? default is True)
+            return_promise=False,
+        )
         if executed.errors:
-            errors: List[Any] = []
             for error in executed.errors:
-                LOG.error(error)
-                if hasattr(error, '__traceback__'):
-                    import traceback
-                    formatted_tb = traceback.format_exception(
-                        type(error), error, error.__traceback__
-                    )
-                    LOG.error("".join(formatted_tb))
-                    errors.append({
-                        'error': {
-                            'message': str(error),
-                            'traceback': formatted_tb
-                        }
-                    })
-                    continue
-                errors.append(getattr(error, 'message', None))
-            return errors
+                LOG.warning(f"GraphQL: {error}")
+            # If there are execution errors, it means there was an unexpected
+            # error, so fail the command.
+            raise Exception(*executed.errors)
         return executed.data
 
     # UIServer Data Commands

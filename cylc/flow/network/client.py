@@ -15,37 +15,51 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Client for workflow runtime API."""
 
-from abc import ABCMeta, abstractmethod
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 import asyncio
 import os
 from shutil import which
 import socket
 import sys
-from typing import Any, Optional, Union, Dict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Optional,
+    Union,
+)
 
 import zmq
 import zmq.asyncio
 
-from cylc.flow import LOG
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.exceptions import (
-    ClientError,
     ClientTimeout,
     ContactFileExists,
     CylcError,
+    RequestError,
     WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
-    encode_,
-    decode_,
+    ZMQSocketBase,
+    deserialize,
     get_location,
-    ZMQSocketBase
+    serialize,
 )
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
-from cylc.flow.workflow_files import (
-    detect_old_contact_file,
-)
+from cylc.flow.workflow_files import detect_old_contact_file
+
+
+if TYPE_CHECKING:
+    from cylc.flow.network import ResponseDict
 
 
 class WorkflowRuntimeClientBase(metaclass=ABCMeta):
@@ -292,12 +306,12 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if req_meta:
             msg['meta'].update(req_meta)
         LOG.debug('zmq:send %s', msg)
-        message = encode_(msg)
+        message = serialize(msg)
         self.socket.send_string(message)
 
         # receive response
         if self.poller.poll(timeout):
-            res = await self.socket.recv()
+            res: bytes = await self.socket.recv()
         else:
             self.timeout_handler()
             raise ClientTimeout(
@@ -307,25 +321,26 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                 ' --comms-timeout option;'
                 '\n* or check the workflow log.'
             )
+        LOG.debug('zmq:recv %s', res)
 
-        if msg['command'] in PB_METHOD_MAP:
-            response = {'data': res}
-        else:
-            response = decode_(
-                res.decode() if isinstance(res, bytes) else res
-            )
-        LOG.debug('zmq:recv %s', response)
+        if command in PB_METHOD_MAP:
+            return res
+
+        response: ResponseDict = deserialize(res.decode())
 
         try:
             return response['data']
         except KeyError:
-            error = response.get(
-                'error',
-                {'message': f'Received invalid response: {response}'},
-            )
-            raise ClientError(
-                error.get('message'),  # type: ignore
-                error.get('traceback'),  # type: ignore
+            error = response.get('error')
+            if isinstance(error, dict):
+                error = error.get('message', error)
+            if not error:
+                error = (
+                    f"Received invalid response for Cylc {CYLC_VERSION}: "
+                    f"{response}"
+                )
+            raise RequestError(
+                str(error), response.get('cylc_version')
             ) from None
 
     def get_header(self) -> dict:

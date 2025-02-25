@@ -55,7 +55,6 @@ from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
 from cylc.flow.workflow_status import StopMode
-from cylc.flow.task_state import TASK_STATUS_SUBMITTED
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
