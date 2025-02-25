@@ -95,15 +95,18 @@ def test_process_outputs(outputs, required, expect):
     # Create a mocked up task-proxy:
     rtconf = {'skip': {'outputs': outputs}}
     itask = SimpleNamespace(
-        tdef=SimpleNamespace(
-            rtconfig=rtconf),
+        tdef=SimpleNamespace(rtconfig=rtconf),
         state=SimpleNamespace(
             outputs=SimpleNamespace(
                 iter_required_messages=lambda *a, **k: iter(required),
-                _message_to_trigger={v: v for v in required}
-            )))
+                _message_to_trigger={v: v for v in required},
+            )
+        ),
+    )
 
-    assert process_outputs(itask, rtconf) == ['submitted', 'started'] + expect
+    assert process_outputs(itask, rtconf) == {'submitted', 'started'}.union(
+        expect
+    )
 
 
 def test_skip_mode_validate(caplog, log_filter):

@@ -48,7 +48,7 @@ async def test_show(flow, scheduler, start, rakiura, monkeypatch):
             rk.user_input('down', 'down', 'enter')
 
             # select the "show" context option
-            rk.user_input(*(['down'] * 7), 'enter')
+            rk.user_input(*(['down'] * 8), 'enter')
             rk.compare_screenshot(
                 'success',
                 'the show output should be displayed',
@@ -63,7 +63,7 @@ async def test_show(flow, scheduler, start, rakiura, monkeypatch):
             )
 
             # select the "show" context option
-            rk.user_input('q', 'enter', *(['down'] * 7), 'enter')
+            rk.user_input('q', 'enter', *(['down'] * 8), 'enter')
             rk.compare_screenshot(
                 'fail',
                 'the error should be displayed',

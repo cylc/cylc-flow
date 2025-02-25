@@ -14,16 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-from typing import Callable
-from async_timeout import timeout
 from getpass import getuser
+import logging
+import sys
+from typing import Callable
 
 import pytest
-from cylc.flow import __version__ as CYLC_VERSION
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.scheduler import Scheduler
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 @pytest.fixture(scope='module')

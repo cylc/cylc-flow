@@ -108,13 +108,13 @@ async def test_skip_mode_outputs(
     Skip mode proposal point 2
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
     """
-    graph = """
+    graph = r"""
         # By default, all required outputs will be generated
         # plus succeeded if success is optional:
         foo? & foo:required_out => success_if_optional & required_outs
 
         # The outputs submitted and started are always produced
-        # and do not need to be defined in outputs:
+        # and do not need to be defined in [runtime][X][skip]outputs:
         foo:submitted => submitted_always
         foo:started => started_always
 
