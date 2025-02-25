@@ -59,21 +59,21 @@ from typing import (
     cast,
 )
 
-from packaging.version import parse as parse_version
 from packaging.specifiers import SpecifierSet
+from packaging.version import parse as parse_version
 
 from cylc.flow import LOG
 from cylc.flow.async_util import (
     pipe,
-    scandir
+    scandir,
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import WorkflowStopped
-from cylc.flow.network.client import (
+from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
-    WorkflowRuntimeClient,
+    WorkflowStopped,
 )
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import (
     get_cylc_run_dir,
     get_workflow_run_dir,
