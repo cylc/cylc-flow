@@ -40,17 +40,17 @@ from cylc.flow import (
     __version__ as CYLC_VERSION,
 )
 from cylc.flow.exceptions import (
-    ClientError,
     ClientTimeout,
     ContactFileExists,
     CylcError,
+    RequestError,
     WorkflowStopped,
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
     ZMQSocketBase,
-    get_location,
     deserialize,
+    get_location,
     serialize,
 )
 from cylc.flow.network.client_factory import CommsMeth
@@ -332,17 +332,16 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
             return response['data']
         except KeyError:
             error = response.get('error')
+            if isinstance(error, dict):
+                error = error.get('message', error)
             if not error:
                 error = (
                     f"Received invalid response for Cylc {CYLC_VERSION}: "
                     f"{response}"
                 )
-                wflow_cylc_ver = response.get('cylc_version')
-                if wflow_cylc_ver and wflow_cylc_ver != CYLC_VERSION:
-                    error += (
-                        f"\n(Workflow is running in Cylc {wflow_cylc_ver})"
-                    )
-            raise ClientError(str(error)) from None
+            raise RequestError(
+                str(error), response.get('cylc_version')
+            ) from None
 
     def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.

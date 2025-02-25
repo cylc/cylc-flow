@@ -804,7 +804,7 @@ class Resolvers(BaseResolvers):
         if mode == 'expire_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                 cutoff)
-        raise ValueError('Unsupported broadcast mode')
+        raise ValueError(f"Unsupported broadcast mode: '{mode}'")
 
     def put_ext_trigger(
         self,
