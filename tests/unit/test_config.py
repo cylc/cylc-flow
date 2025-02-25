@@ -1300,14 +1300,16 @@ def test_implicit_tasks(
     """
     # Setup
     id_ = 'rincewind'
+
+    allow_implicit_tasks_text = (
+        f'allow implicit tasks = {allow_implicit_tasks}'
+        if allow_implicit_tasks is not None else ''
+    )
     flow_file: 'Path' = tmp_flow_config(
         id_,
         dedent(f"""
             [scheduler]
-                {
-                    f'allow implicit tasks = {allow_implicit_tasks}'
-                    if allow_implicit_tasks is not None else ''
-                }
+                {allow_implicit_tasks_text}
             [scheduling]
                 [[graph]]
                     R1 = foo
