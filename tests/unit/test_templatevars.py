@@ -118,21 +118,25 @@ def _setup_db(tmp_path_factory):
     db_path = logfolder / WorkflowFiles.LogDir.DB
     with CylcWorkflowDAO(db_path, create_tables=True) as dao:
         dao.connect().execute(
-            rf'''
+            r'''
                 INSERT INTO workflow_params
                 VALUES
-                    ("cylc_version", "{cylc_version}")
-            '''
+                    (?, ?)
+            ''',
+            ("cylc_version", cylc_version),
         )
-        dao.connect().execute(
+        dao.connect().executemany(
             r'''
                 INSERT INTO workflow_template_vars
                 VALUES
-                    ("FOO", "42"),
-                    ("BAR", "'hello world'"),
-                    ("BAZ", "'foo', 'bar', 48"),
-                    ("QUX", "['foo', 'bar', 21]")
-            '''
+                    (?, ?)
+            ''',
+            [
+                ("FOO", "42"),
+                ("BAR", "'hello world'"),
+                ("BAZ", "'foo', 'bar', 48"),
+                ("QUX", "['foo', 'bar', 21]"),
+            ],
         )
         dao.connect().commit()
     yield get_template_vars_from_db(tmp_path)

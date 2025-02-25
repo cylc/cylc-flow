@@ -71,11 +71,11 @@ def db_remove_column(schd: 'Scheduler', table: str, column: str) -> None:
             [fields[1] for fields in desc if fields[1] != column]
         )
         # Copy table data to a temporary table, and rename it back.
-        conn.execute(rf'CREATE TABLE "tmp"({c_names})')
+        conn.execute(rf"CREATE TABLE 'tmp'({c_names})")
         conn.execute(
-            rf'INSERT INTO "tmp"({c_names}) SELECT {c_names} FROM {table}')
-        conn.execute(rf'DROP TABLE "{table}"')
-        conn.execute(rf'ALTER TABLE "tmp" RENAME TO "{table}"')
+            rf"INSERT INTO 'tmp'({c_names}) SELECT {c_names} FROM {table}")
+        conn.execute(rf"DROP TABLE '{table}'")
+        conn.execute(rf"ALTER TABLE 'tmp' RENAME TO '{table}'")
         conn.commit()
 
 
