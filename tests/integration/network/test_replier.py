@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-import getpass
 import sys
 
 import pytest
@@ -46,7 +45,6 @@ async def test_listener(one: Scheduler, start):
         assert 'data' not in res
         # Check other fields are present:
         assert res['cylc_version'] == CYLC_VERSION
-        assert res['user'] == getpass.getuser()
 
         one.server.replier.queue.put('STOP')
         async with timeout(2):

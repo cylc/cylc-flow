@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from getpass import getuser
 import logging
 import sys
 from typing import Callable
@@ -40,16 +39,6 @@ async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         yield schd
 
 
-def run_server_method(schd, method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return getattr(schd.server, method)(*args, **kwargs)
-
-
-def call_server_method(method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return method(*args, **kwargs)
-
-
 def test_graphql(myflow):
     """Test GraphQL endpoint method."""
     request_string = f'''
@@ -59,7 +48,7 @@ def test_graphql(myflow):
             }}
         }}
     '''
-    data = call_server_method(myflow.server.graphql, request_string)
+    data = myflow.server.graphql(request_string)
     assert myflow.id == data['workflows'][0]['id']
 
 
@@ -68,10 +57,7 @@ def test_pb_data_elements(myflow):
     element_type = 'workflow'
     data = PB_METHOD_MAP['pb_data_elements'][element_type]()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_data_elements,
-            element_type
-        )
+        myflow.server.pb_data_elements(element_type)
     )
     assert data.added.id == myflow.id
 
@@ -80,9 +66,7 @@ def test_pb_entire_workflow(myflow):
     """Test Protobuf entire workflow endpoint method."""
     data = PB_METHOD_MAP['pb_entire_workflow']()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_entire_workflow
-        )
+        myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
 
@@ -124,11 +108,6 @@ async def test_receiver_basic(one: Scheduler, start, log_filter):
 @pytest.mark.parametrize(
     'msg, expected',
     [
-        pytest.param(
-            {'command': 'api', 'args': {}},
-            f"Request missing field 'user' required for Cylc {CYLC_VERSION}",
-            id='missing-user',
-        ),
         pytest.param(
             {'user': 'bono', 'args': {}},
             f"Request missing field 'command' required for Cylc {CYLC_VERSION}",
