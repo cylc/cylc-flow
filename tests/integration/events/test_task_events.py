@@ -84,7 +84,9 @@ async def test_event_email_body(
     ctx = SimpleNamespace(mail_to=None, mail_from=None)
     async with start(mod_one):
         # send a custom task message with the warning severity level
-        id_keys = [EventKey('none', 'warning', 'warning message', Tokens('//1/a/01'))]
+        id_keys = [
+            EventKey('none', 'warning', 'warning message', Tokens('//1/a/01'))
+        ]
         mod_one.task_events_mgr._process_event_email(mod_one, ctx, id_keys)
 
     # test the email which would have been sent for this message

@@ -93,7 +93,9 @@ async def test_tui_basics(rakiura):
             rk.user_input('q')
 
 
-async def test_subscribe_unsubscribe(one_conf, flow, scheduler, start, rakiura):
+async def test_subscribe_unsubscribe(
+    one_conf, flow, scheduler, start, rakiura
+):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
@@ -457,7 +459,7 @@ async def test_states(flow, scheduler, start, rakiura):
 
         # set task flow numbers
         assert a.flow_nums == {1}
-        b.flow_nums = {1,2}
+        b.flow_nums = {1, 2}
         c.flow_nums = {}
 
         # set task state

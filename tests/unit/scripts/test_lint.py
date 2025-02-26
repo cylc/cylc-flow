@@ -207,17 +207,17 @@ def lint_text(text, checks, ignores=None, modify=False):
     checks = parse_checks(checks, ignores)
     counter = Counter()
     messages = []
-    outlines = [
-        line
-        for line in lint(
+    outlines = list(
+        lint(
             Path('flow.cylc'),
             iter(text.splitlines()),
             checks,
             counter,
             modify=modify,
-            write=messages.append
+            write=messages.append,
         )
-    ]
+    )
+
     return SimpleNamespace(
         counter=counter,
         messages=messages,
@@ -250,6 +250,7 @@ def assert_contains(items, contains, instances=None):
 EXPECT_INSTANCES_OF_ERR = {
     16: 3,
 }
+
 
 @pytest.mark.parametrize(
     # 11 won't be tested because there is no jinja2 shebang
@@ -343,7 +344,7 @@ def test_check_lowercase_family_names__true(line):
     ]
 )
 def test_check_lowercase_family_names__false(line):
-    assert check_lowercase_family_names(line) is False 
+    assert check_lowercase_family_names(line) is False
 
 
 def test_inherit_lowercase_matches():
@@ -428,7 +429,7 @@ def test_get_reference_rst(monkeypatch):
         '\n7 to 8 upgrades\n---------------\n\n'
         '`U042 <https://cylc.github.io/cylc-doc/stable'
         '/html/7-to-8/some url or other>`_'
-        f'\n{ "^" * 78 }'
+        f'\n{"^" * 78}'
         '\nsection ``[vizualization]`` has been '
         'removed.\n\n\n'
     )

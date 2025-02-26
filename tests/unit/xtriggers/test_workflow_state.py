@@ -243,7 +243,12 @@ def test__workflow_state_backcompat(tmp_run_dir: 'Callable'):
         conn.execute(r"""
             INSERT INTO "task_outputs" VALUES(
                 '2012','arrakis','[1]',
-                '{"submitted": "submitted", "started": "started", "succeeded": "succeeded", "paul": "lisan al-gaib"}'
+                '{
+                    "submitted": "submitted",
+                    "started": "started",
+                    "succeeded": "succeeded",
+                    "paul": "lisan al-gaib"
+                }'
             );
         """)
         conn.commit()

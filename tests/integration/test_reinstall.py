@@ -121,11 +121,15 @@ async def test_no_changes_needed(one_src, one_run, capsys, interactive):
     from expectation so this is a nice-to-have, not expected to work 100%
     of the time.
     """
-    assert not await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    assert not await reinstall_cli(
+        opts=ReInstallOptions(), workflow_id=one_run.id
+    )
     assert 'up to date with' in capsys.readouterr().out
 
 
-async def test_non_interactive(one_src, one_run, capsys, capcall, non_interactive):
+async def test_non_interactive(
+    one_src, one_run, capsys, capcall, non_interactive
+):
     """It should not perform a dry-run or prompt in non-interactive mode."""
     # capture reinstall calls
     reinstall_calls = capcall(
@@ -163,7 +167,10 @@ async def test_interactive(
         'cylc.flow.scripts.reinstall._input',
         lambda x: 'n'
     )
-    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id) is False
+    assert (
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+        is False
+    )
 
     # only one rsync call should have been made (i.e. the --dry-run)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [True]
@@ -233,7 +240,9 @@ async def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
     assert not (one_run.path / 'c').exists()
 
 
-async def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
+async def test_rose_warning(
+    one_src, one_run, capsys, interactive, monkeypatch
+):
     """It should warn that Rose installed files will be deleted.
 
     See https://github.com/cylc/cylc-rose/issues/149

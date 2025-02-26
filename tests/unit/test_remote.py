@@ -16,7 +16,6 @@
 """Test the cylc.flow.remote module."""
 
 import os
-from unittest import mock
 
 import pytest
 
@@ -113,12 +112,27 @@ def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
     }
 
     # Variable isn't set, no change to command
-    expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'cylc', 'play']
+    expect = [
+        'ssh',
+        host,
+        'env',
+        f'CYLC_VERSION={cylc.flow.__version__}',
+        'cylc',
+        'play',
+    ]
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect
 
     # Variable is set, appears in `env` list
     monkeypatch.setenv('FOO', 'BAR')
-    expect = ['ssh', host, 'env', f'CYLC_VERSION={cylc.flow.__version__}', 'FOO=BAR', 'cylc', 'play']
+    expect = [
+        'ssh',
+        host,
+        'env',
+        f'CYLC_VERSION={cylc.flow.__version__}',
+        'FOO=BAR',
+        'cylc',
+        'play',
+    ]
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect

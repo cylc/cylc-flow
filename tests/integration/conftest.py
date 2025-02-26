@@ -573,7 +573,11 @@ def reflog():
                 deps = tuple(sorted(itask.state.get_resolved_dependencies()))
                 if flow_nums:
                     triggers.add(
-                        (itask.identity, serialise_set(itask.flow_nums), deps or None)
+                        (
+                            itask.identity,
+                            serialise_set(itask.flow_nums),
+                            deps or None,
+                        )
                     )
                 else:
                     triggers.add((itask.identity, deps or None))

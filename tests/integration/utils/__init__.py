@@ -21,8 +21,6 @@ Use the fixtures provided in the conftest instead.
 
 """
 
-import asyncio
-
 
 def _rm_if_empty(path):
     """Convenience wrapper for removing empty directories."""

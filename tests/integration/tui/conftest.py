@@ -63,7 +63,7 @@ def format_test_failure(expected, got, description):
             </table>
             <br />
             <h4>Diff:</h4>
-            <pre>{ diff }</pre>
+            <pre>{diff}</pre>
         </html>
     '''
 
