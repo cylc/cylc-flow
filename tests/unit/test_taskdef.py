@@ -14,49 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-from typing import TYPE_CHECKING
-
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.workflow_files import WorkflowFiles
 
 
-if TYPE_CHECKING:
-    from types import Callable
-    from pathlib import Path
+from .test_config import tmp_flow_config   # noqa: F401
 
 
-def _tmp_flow_config(tmp_run_dir: 'Callable'):
-    """Create a temporary flow config file for use in init'ing WorkflowConfig.
-
-    Args:
-        id_: Workflow name.
-        config: The flow file content.
-
-    Returns the path to the flow file.
-    """
-    def __tmp_flow_config(id_: str, config: str) -> 'Path':
-        run_dir: 'Path' = tmp_run_dir(id_)
-        flow_file = run_dir / WorkflowFiles.FLOW_FILE
-        flow_file.write_text(config)
-        return flow_file
-    return __tmp_flow_config
-
-
-@pytest.fixture
-def tmp_flow_config(tmp_run_dir: 'Callable'):
-    return _tmp_flow_config(tmp_run_dir)
-
-
-@pytest.fixture(scope='module')
-def mod_tmp_flow_config(mod_tmp_run_dir: 'Callable'):
-    return _tmp_flow_config(mod_tmp_run_dir)
-
-
-def test_generate_graph_parents_1(tmp_flow_config):
+def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
     """Test that parents are only generated from valid recurrences."""
     id_ = 'pan-galactic'
     flow_file = tmp_flow_config(
@@ -97,7 +64,7 @@ def test_generate_graph_parents_1(tmp_flow_config):
         ]
 
 
-def test_generate_graph_parents_2(tmp_flow_config):
+def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     """Test inferred parents are valid w.r.t to their own recurrences."""
     id_ = 'gargle-blaster'
     flow_file = tmp_flow_config(
