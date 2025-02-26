@@ -41,7 +41,7 @@ import re
 import json
 import sys
 from textwrap import indent
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from ansimarkup import ansiprint
 
@@ -62,7 +62,7 @@ from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
     Options,
 )
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import DIM, cli_function
 from cylc.flow.util import BOOL_SYMBOLS
 
 
@@ -142,6 +142,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
       id
       label
       satisfied
+      status
     }
     runtime {
       completion
@@ -153,13 +154,16 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
 
 SATISFIED = BOOL_SYMBOLS[True]
 UNSATISFIED = BOOL_SYMBOLS[False]
+PENDING = 'o'
 
 
-def print_msg_state(msg, state):
-    if state:
+def print_msg_state(msg, state: Optional[bool]):
+    if state is False:
         ansiprint(f'<green>  {SATISFIED} {msg}</green>')
-    else:
+    elif state is True:
         ansiprint(f'<red>  {UNSATISFIED} {msg}</red>')
+    else:
+        ansiprint(f'<{DIM}>  {PENDING} {msg}</{DIM}>')
 
 
 def print_completion_state(t_proxy):
@@ -391,7 +395,8 @@ async def prereqs_and_outputs_query(
                 ):
                     ansiprint(
                         "<bold>other:</bold>"
-                        f" ('<red>{UNSATISFIED}</red>': not satisfied)"
+                        f" ('<red>{UNSATISFIED}</red>': not satisfied,"
+                        f" '<{DIM}>{PENDING}</{DIM}>': not yet evaluated)"
                     )
                     for ext_trig in t_proxy['externalTriggers']:
                         state = ext_trig['satisfied']
@@ -400,11 +405,15 @@ async def prereqs_and_outputs_query(
                             state)
                     for xtrig in t_proxy['xtriggers']:
                         label = get_wallclock_label(xtrig) or xtrig['id']
-                        state = xtrig['satisfied']
+                        satisfied = xtrig['satisfied']
+                        status = xtrig.get(
+                            'status',
+                            'succeeded' if satisfied else 'running'
+                        )
                         print_msg_state(
                             f'xtrigger "{xtrig["label"]} = {label}"',
-                            state)
-
+                            None if status == 'waiting' else satisfied == 'succeeded'
+                        )
                 print_completion_state(t_proxy)
 
     if not task_proxies:

@@ -1079,6 +1079,7 @@ class XTrigger(ObjectType):
     message = String()
     satisfied = Boolean()
     time = Float()
+    status = String()
 
 
 class TaskProxy(ObjectType):
