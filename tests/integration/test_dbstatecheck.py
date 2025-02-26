@@ -45,7 +45,7 @@ async def checker(
         },
         'runtime': {
             'bad': {'simulation': {'fail cycle points': '1000'}},
-            'output': {'outputs': {'trigger': 'message'}}
+            'output': {'outputs': {'trigger': 'message', 'custom_output': 'foo'}}
         }
     })
     schd: Scheduler = mod_scheduler(wid, paused_start=False)
@@ -119,13 +119,13 @@ def test_output(checker):
             'output',
             '10000101T0000Z',
             "{'submitted': 'submitted', 'started': 'started', 'succeeded': "
-            "'succeeded', 'trigger': 'message'}",
+            "'succeeded', 'trigger': 'message', 'custom_output': 'foo'}",
         ],
         [
             'output',
             '10010101T0000Z',
             "{'submitted': 'submitted', 'started': 'started', 'succeeded': "
-            "'succeeded', 'trigger': 'message'}",
+            "'succeeded', 'trigger': 'message', 'custom_output': 'foo'}",
         ],
     ]
     assert result == expect
