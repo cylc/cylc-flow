@@ -471,37 +471,24 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         # Get a set of RH nodes which are not at the LH of another pair:
-        self.terminals = self.get_graph_terminals(pairs)
+        # terminals = {p[1] for p in pairs}.difference({p[0] for p in pairs})
+
+        check_terminals = {}
+        lefts = set()
+        rights = set()
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
-            self._proc_dep_pair(pair, self.terminals)
+            self._proc_dep_pair(pair, check_terminals, lefts, rights)
 
-    @staticmethod
-    def get_graph_terminals(pairs):
-        """Get terminating ends of graphs.
-
-        For example in `foo => bar => baz` only `baz` terminates the chain
-        of dependencies.
-
-        Examples:
-            >>> this = GraphParser.get_graph_terminals
-            >>> this({('foo', 'bar')})
-            {'bar'}
-        """
-        lefts = []
-        rights = []
-        for left, right in pairs:
-            if left and ('&' in left or '|' in left):
-                # RE used because don't want to have to worry about
-                # mutiple and/or and cleaning whitespace.
-                lefts += GraphParser._RE_ANDOR.split(left)
-            else:
-                lefts.append(left)
-            if right and ('&' in right or '|' in right):
-                rights += GraphParser._RE_ANDOR.split(right)
-            else:
-                rights.append(right)
-        return set(rights).difference(set(lefts))
+        self.terminals = rights.difference(lefts)
+        for right in self.terminals:
+            left = check_terminals.get(right)
+            if left:
+                raise GraphParseError(
+                    'Invalid cycle point offsets only on right hand'
+                    ' side of dependency (must be on left hand side):'
+                    f'{left} => {right}'
+                )
 
     @classmethod
     def _report_invalid_lines(cls, lines: List[str]) -> None:
@@ -532,7 +519,9 @@ class GraphParser:
     def _proc_dep_pair(
         self,
         pair: Tuple[Optional[str], str],
-        terminals: Set[str],
+        check_terminals: Dict[str, str],
+        _lefts: Set[str],
+        _rights: Set[str],
     ) -> None:
         """Process a single dependency pair 'left => right'.
 
@@ -568,12 +557,8 @@ class GraphParser:
             raise GraphParseError(mismatch_msg.format(right))
 
         # Raise error for cycle point offsets at the end of chains
-        if '[' in right and left and (right in terminals):
-            # This right hand side is at the end of a chain:
-            raise GraphParseError(
-                'Invalid cycle point offsets only on right hand '
-                'side of a dependency (must be on left hand side):'
-                f' {left} => {right}')
+        if '[' in right and left:
+            check_terminals[right] = left
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
@@ -594,12 +579,15 @@ class GraphParser:
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
 
+        _rights.update(*([rights] or []))
+
         for left in lefts:
             # Extract information about all nodes on the left.
 
             if left:
                 info = self.__class__.REC_NODES.findall(left)
                 expr = left
+                _lefts.add(left)
 
             else:
                 # There is no left-hand-side task.

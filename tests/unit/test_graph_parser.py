@@ -967,13 +967,13 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
 @pytest.mark.parametrize(
     'args, err',
     (
-        # Error if offset in terminal RHS:
-        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
         # No error if offset in NON-terminal RHS:
-        param((('a', 'b[-P42M]'), {}), None),
+        param((('a', 'b[-P42M]'), {}, set(), set()), None),
         # Check the left hand side if this has a non-terminal RHS:
-        param((('a &', 'b[-P42M]'), {}), 'Null task name in graph'),
-    )
+        param(
+            (('a &', 'b[-P42M]'), {}, set(), set()), 'Null task name in graph'
+        ),
+    ),
 )
 def test_proc_dep_pair(args, err):
     """
@@ -985,56 +985,3 @@ def test_proc_dep_pair(args, err):
             gp._proc_dep_pair(*args)
     else:
         assert gp._proc_dep_pair(*args) is None
-
-
-@pytest.mark.parametrize(
-    'pairs, terminals',
-    (
-        param(
-            {
-                (None, 'foo[-P1D]:restart1'),
-                (None, 'bar?'),
-                ('foo[-P1D]:restart1|bar?', 'foo')
-            },
-            {'foo'},
-            id='|'
-        ),
-        param(
-            {
-                (None, 'foo[-P1D]:restart1'),
-                (None, 'bar?'),
-                ('foo[-P1D]:restart1 & bar?', 'foo')
-            },
-            {'foo'},
-            id='&'
-        ),
-        param(
-            {
-                (None, 'foo[-P1D]:restart1'),
-                (None, 'bar?'),
-                (None, 'qux'),
-                ('foo[-P1D]:restart1 &bar? |qux', 'foo')
-            },
-            {'foo'},
-            id='&-and-|'
-        ),
-        param(
-            {
-                (None, 'stop1'),
-                ('stop1', 't3:start&t4:start'),
-                ('t3:start&t4:start', 'stop2?')
-            },
-            {'stop2?'},
-            id='diamond-graph'
-        ),
-        param(
-            {(None, 'stop1'), ('stop1', 't3:start&t4')},
-            {'t3:start', 't4'},
-            id='y-shape-graph'
-        ),
-    )
-)
-def test_get_graph_terminals(pairs, terminals):
-    """It identifies all graph terminals, and no non terminals.
-    """
-    assert GraphParser.get_graph_terminals(pairs) == terminals
