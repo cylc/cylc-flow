@@ -473,9 +473,9 @@ class GraphParser:
         # Get a set of RH nodes which are not at the LH of another pair:
         # terminals = {p[1] for p in pairs}.difference({p[0] for p in pairs})
 
-        check_terminals = {}
-        lefts = set()
-        rights = set()
+        check_terminals: Dict[str, str] = {}
+        lefts: Set[str] = set()
+        rights: Set[str] = set()
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, check_terminals, lefts, rights)
