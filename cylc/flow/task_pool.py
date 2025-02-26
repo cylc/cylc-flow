@@ -408,8 +408,11 @@ class TaskPool:
             self._prev_runahead_base_point = base_point
 
         if count_cycles:
-            # (len(list) may be less than ilimit due to sequence end)
-            limit_point = sorted(sequence_points)[:ilimit + 1][-1]
+            if not sequence_points:
+                limit_point = base_point
+            else:
+                # (len(list) may be less than ilimit due to sequence end)
+                limit_point = sorted(sequence_points)[:ilimit + 1][-1]
         else:
             limit_point = max(sequence_points)
 
