@@ -85,6 +85,14 @@ class RunMode(Enum):
             return RunMode(run_mode)
         return RunMode.LIVE
 
+    @classmethod
+    def _missing_(cls, value):
+        value = value.lower()
+        for member in cls:
+            if member.value.lower() == value:
+                return member
+        return None
+
     def get_submit_method(self) -> 'Optional[SubmissionInterface]':
         """Return the job submission method for this run mode.
 

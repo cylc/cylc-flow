@@ -52,6 +52,7 @@ from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import TaskOutputs
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
@@ -145,6 +146,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
     }
     runtime {
       completion
+      runMode
     }
   }
 }
@@ -346,9 +348,13 @@ async def prereqs_and_outputs_query(
                     attrs.append("queued")
                 if t_proxy['isRunahead']:
                     attrs.append("runahead")
+                run_mode = t_proxy['runtime']['runMode']
+                if run_mode and RunMode(run_mode) != RunMode.LIVE:
+                    attrs.append(f"run mode={run_mode}")
                 state_msg = state
                 if attrs:
                     state_msg += f" ({','.join(attrs)})"
+
                 ansiprint(f'<bold>state:</bold> {state_msg}')
 
                 # flow numbers, if not just 1
