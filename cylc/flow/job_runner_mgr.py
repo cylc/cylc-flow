@@ -46,6 +46,9 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
+JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
+
+
 class JobPollContext():
     """Context object for a job poll."""
     CONTEXT_ATTRIBUTES = (
@@ -439,6 +442,16 @@ class JobRunnerManager():
     def _jobs_poll_status_files(self, job_log_root, job_log_dir):
         """Helper 1 for self.jobs_poll(job_log_root, job_log_dirs)."""
         ctx = JobPollContext(job_log_dir)
+        # If the log directory has been deleted prematurely, return a task
+        # failure and an explanation:
+        if not os.path.exists(os.path.join(job_log_root, ctx.job_log_dir)):
+            # The job may still be in the job runner and may yet succeed,
+            # but we assume it failed & exited because it's the best we
+            # can do as it is no longer possible to poll it.
+            ctx.run_status = 1
+            ctx.job_runner_exit_polled = 1
+            ctx.run_signal = JOB_FILES_REMOVED_MESSAGE
+            return ctx
         try:
             with open(
                 os.path.join(job_log_root, ctx.job_log_dir, JOB_LOG_STATUS)

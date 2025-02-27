@@ -40,7 +40,11 @@ def test_get_resources_one(tmpdir):
 
 @pytest.mark.parametrize(
     'resource',
-    list(RESOURCE_NAMES.keys()) + ['tutorial/runtime-tutorial']
+    [
+        r for r
+        in list(RESOURCE_NAMES.keys())
+        if r[0] != '!'
+    ] + ['tutorial/runtime-tutorial']
 )
 def test_get_resources_all(resource, tmpdir):
     get_resources(resource, tmpdir)
@@ -75,3 +79,13 @@ def test_backup(tmp_path, caplog):
 
     new_abc = new / 'b' / 'c'
     assert new_abc.exists()
+
+
+def test_vim_deprecated():
+    """It fails, returning a warning if user asks for obsolete syntax file
+    """
+    output = run(
+        ['cylc', 'get-resources', 'syntax/cylc.vim'],
+        capture_output=True
+    )
+    assert 'has been replaced' in output.stderr.decode()

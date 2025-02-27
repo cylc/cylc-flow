@@ -250,6 +250,7 @@ class TuiApp:
         ('header', 'dark gray', BACK),
         ('header_key', 'dark gray, bold', BACK),
         ('overlay', 'black', 'light gray'),
+        ('diminished', 'dark gray', BACK),
         # cylc logo colours
         ('R', 'light red, bold', BACK),
         ('Y', 'yellow, bold', BACK),

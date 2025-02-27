@@ -18,22 +18,31 @@
 Dummy mode shares settings with simulation mode.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Tuple,
+)
 
+from cylc.flow.platforms import get_platform
+from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.simulation import (
     ModeSettings,
     disable_platforms,
     get_simulated_run_len,
-    parse_fail_cycle_points
+    parse_fail_cycle_points,
 )
-from cylc.flow.run_modes import RunMode
-from cylc.flow.platforms import get_platform
 
 
 if TYPE_CHECKING:
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
+    from typing_extensions import Literal
+
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
-    from typing_extensions import Literal
 
 
 CLEAR_THESE_SCRIPTS = [

@@ -21,6 +21,7 @@ from typing import (
 
 import logging
 
+
 async def test_trigger_workflow_paused(
     flow: 'Fixture',
     scheduler: 'Fixture',
@@ -53,7 +54,7 @@ async def test_trigger_workflow_paused(
     schd = scheduler(id_, paused_start=True)
 
     # start the scheduler (but don't set the main loop running)
-    async with start(schd) as log:
+    async with start(schd):
 
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
@@ -119,7 +120,7 @@ async def test_trigger_on_resume(
     schd = scheduler(id_, paused_start=True)
 
     # start the scheduler (but don't set the main loop running)
-    async with start(schd) as log:
+    async with start(schd):
 
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)

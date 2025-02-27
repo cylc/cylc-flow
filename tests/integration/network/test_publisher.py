@@ -13,13 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from async_timeout import timeout
-import pytest
+import sys
 
 from cylc.flow.network.subscriber import (
     WorkflowSubscriber,
-    process_delta_msg
+    process_delta_msg,
 )
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 async def test_publisher(flow, scheduler, run, one_conf, port_range):

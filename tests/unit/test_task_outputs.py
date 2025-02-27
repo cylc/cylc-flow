@@ -15,16 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from types import SimpleNamespace
+from typing import (
+    Optional,
+    Set,
+)
 
 import pytest
 
 from cylc.flow.task_outputs import (
-    TASK_OUTPUTS,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUTS,
     TaskOutputs,
     get_completion_expression,
     get_trigger_completion_variable_maps,
@@ -247,46 +251,66 @@ def test_format_completion_status():
     )
 
 
-def test_iter_required_outputs():
-    """It should yield required outputs only."""
-    # this task has three required outputs and one optional output
-    outputs = TaskOutputs(
-        tdef(
+@pytest.mark.parametrize(
+    'required, optional, expected_required, expected_expression', [
+        # this task has three required outputs and one optional output
+        pytest.param(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
-            {'z'}
-        )
-    )
-    assert set(outputs.iter_required_messages()) == {
-        TASK_OUTPUT_SUCCEEDED,
-        'x',
-        'y',
-    }
-
-    # this task does not have any required outputs (besides the implicitly
-    # required submitted/started outputs)
-    outputs = TaskOutputs(
-        tdef(
-            # Note: validation should prevent this at the config level
+            {'z'},
+            {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
+            None,
+            id="3-required-1-optional",
+        ),
+        # this task does not have any required outputs (besides the implicitly
+        # required submitted/started outputs)
+        # Note: validation should prevent this at the config level
+        pytest.param(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
             {TASK_OUTPUT_FAILED},  # task may fail
-        )
-    )
-    assert set(outputs.iter_required_messages()) == set()
-
-    # the preconditions expiry/submitted are excluded from this logic when
-    # defined as optional:
-    outputs = TaskOutputs(
-        tdef(
+            set(),
+            None,
+            id="no-required-outputs",
+        ),
+        # the preconditions expiry/submitted are excluded from this logic when
+        # defined as optional:
+        pytest.param(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
             {TASK_OUTPUT_EXPIRED},  # task may expire
-        )
-    )
-    assert outputs._completion_expression == '(succeeded and x and y) or expired'
-    assert set(outputs.iter_required_messages()) == {
-        TASK_OUTPUT_SUCCEEDED,
-        'x',
-        'y',
-    }
+            {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
+            '(succeeded and x and y) or expired',
+            id="expiry-submitted",
+        ),
+        # NOTE: a required output might not be required!
+        # If success is optional, then apparently-required outputs are made
+        # implicitly optional. See
+        # https://github.com/cylc/cylc-flow/pull/6505#issuecomment-2517781523
+        pytest.param(
+            {'x'},
+            {TASK_OUTPUT_SUCCEEDED},
+            set(),
+            '(x and succeeded) or failed',
+            id="implicit-optional",
+        ),
+        pytest.param(
+            set(),
+            {'x', TASK_OUTPUT_SUCCEEDED},
+            set(),
+            'succeeded or failed',
+            id="all-optional",
+        ),
+    ]
+)
+def test_iter_required_outputs(
+    required: Set[str],
+    optional: Set[str],
+    expected_required: Set[str],
+    expected_expression: Optional[str],
+):
+    """It should yield required outputs only."""
+    outputs = TaskOutputs(tdef(required, optional))
+    if expected_expression:
+        assert outputs._completion_expression == expected_expression
+    assert set(outputs.iter_required_messages()) == expected_required
 
 
 def test_iter_required_outputs__disable():

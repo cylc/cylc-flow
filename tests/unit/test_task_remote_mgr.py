@@ -90,7 +90,7 @@ def test_remote_init_skip(
             'get_dirs_to_symlink'):
         monkeypatch.setattr(f'cylc.flow.task_remote_mgr.{item}', MagicMock())
 
-    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform, None, '')
+    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform)
     call_expected = not skip_expected
     assert mock_task_remote_mgr._remote_init_items.called is call_expected
     assert mock_construct_ssh_cmd.called is call_expected
@@ -115,7 +115,7 @@ def test_get_log_file_name(tmp_path: Path,
                            install_target: str,
                            load_type: Optional[str],
                            expected: str):
-    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None)
+    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None, None)
     if load_type == 'restart':
         task_remote_mgr.is_restart = True
     elif load_type == 'reload':
@@ -285,7 +285,8 @@ def task_remote_mgr_eval(monkeypatch: pytest.MonkeyPatch):
             workflow='usg_ishimura',
             proc_pool=Mock(),
             bad_hosts=[],
-            db_mgr=None
+            db_mgr=None,
+            server=None
         )
         task_remote_mgr.remote_command_map = remote_cmd_map
         return task_remote_mgr

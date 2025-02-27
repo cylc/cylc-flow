@@ -125,7 +125,8 @@ def get_platform(
     Returns:
         platform: A platform definition dictionary. Uses either
             get_platform() or platform_name_from_job_info(), but to the
-            user these look the same.
+            user these look the same. This will be None if the platform
+            definition uses a subshell.
 
     Raises:
         NoPlatformsError:
@@ -142,7 +143,7 @@ def get_platform(
 
     # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
     # https://github.com/cylc/cylc-flow/pull/4975
-    elif 'platform' in task_conf and task_conf['platform']:
+    if 'platform' in task_conf and task_conf['platform']:
         # Check whether task has conflicting Cylc7 items.
         fail_if_platform_and_host_conflict(task_conf, task_name)
 
@@ -155,24 +156,22 @@ def get_platform(
         # If platform name exists and doesn't clash with Cylc7 Config items.
         return platform_from_name(task_conf['platform'], bad_hosts=bad_hosts)
 
-    else:
-        if get_platform_deprecated_settings(task_conf) == []:
-            # No deprecated items; platform is localhost
-            return platform_from_name()
-        else:
-            # Need to calculate platform
-            # NOTE: Do NOT use .get() on OrderedDictWithDefaults - see above
-            task_job_section = task_conf['job'] if 'job' in task_conf else {}
-            task_remote_section = (
-                task_conf['remote'] if 'remote' in task_conf else {})
-            return platform_from_name(
-                platform_name_from_job_info(
-                    glbl_cfg().get(['platforms']),
-                    task_job_section,
-                    task_remote_section
-                ),
-                bad_hosts=bad_hosts
-            )
+    if get_platform_deprecated_settings(task_conf) == []:
+        # No deprecated items; platform is localhost
+        return platform_from_name()
+
+    # Need to calculate platform
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults - see above
+    task_job_section = task_conf['job'] if 'job' in task_conf else {}
+    task_remote_section = task_conf['remote'] if 'remote' in task_conf else {}
+    return platform_from_name(
+        platform_name_from_job_info(
+            glbl_cfg().get(['platforms']),
+            task_job_section,
+            task_remote_section,
+        ),
+        bad_hosts=bad_hosts,
+    )
 
 
 def platform_from_name(

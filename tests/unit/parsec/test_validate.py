@@ -699,7 +699,7 @@ def test_coerce_parameter_list():
             ('-15, -10, -5, -1..1', [-15, -10, -5, -1, 0, 1])]:
         assert validator.coerce_parameter_list(value, ['whatever']) == result
     # The bad
-    for value in ['foo/bar', 'p1, 1..10', '2..3, 4, p']:
+    for value in ['foo/bar', 'p1, 1..10', '2..3, 4, p', 'x:,']:
         with pytest.raises(IllegalValueError):
             validator.coerce_parameter_list(value, ['whatever'])
 
@@ -738,24 +738,25 @@ def test_type_help_examples():
                     coercer(example, [None])
                 except Exception:
                     raise Exception(
-                        f'Example "{example}" failed for type "{vdr}"')
+                        f'Example "{example}" failed for type "{vdr}"'
+                    )
 
 
-@pytest.mark.parametrize('value, expected', [
-    param(
-        """
+@pytest.mark.parametrize(
+    'value, expected',
+    [
+        param(
+            """
         a="don't have a cow"
         a=${a#*have}
         echo "$a" # let's see what happens
         """,
-        "a=\"don't have a cow\"\na=${a#*have}\necho \"$a\" # let's see what happens",
-        id="multiline"
-    ),
-    param(
-        '"sleep 30 # ja!"  ',
-        'sleep 30 # ja!',
-        id="quoted"
-    ),
-])
+            "a=\"don't have a cow\"\na=${a#*have}\necho \"$a\""
+            " # let's see what happens",
+            id="multiline",
+        ),
+        param('"sleep 30 # ja!"  ', 'sleep 30 # ja!', id="quoted"),
+    ],
+)
 def test_broadcast_coerce_str(value: str, expected: str):
     assert BroadcastConfigValidator.coerce_str(value, ['whatever']) == expected

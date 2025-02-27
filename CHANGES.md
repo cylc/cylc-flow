@@ -11,6 +11,31 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.1 (Released 2025-02-25)__
+
+### 🔧 Fixes
+
+[#6480](https://github.com/cylc/cylc-flow/pull/6480) - `cat-log`: List log files which are available via a configured tailer/viewer command.
+
+[#6506](https://github.com/cylc/cylc-flow/pull/6506) - Work around caching behaviour observed on NFS filesystems which could cause workflows to appear to be stopped or even to not exist, when they are running.
+
+[#6518](https://github.com/cylc/cylc-flow/pull/6518) - Allow setting empty values in `flow.cylc[scheduler][events]` to override the global configuration.
+
+[#6535](https://github.com/cylc/cylc-flow/pull/6535) - Ensure tasks can be killed while in the preparing state.
+
+[#6551](https://github.com/cylc/cylc-flow/pull/6551) - Fix bug in `cylc lint` S014 where it warned about use of legitimate `-W` directive for PBS.
+
+[#6571](https://github.com/cylc/cylc-flow/pull/6571) - Disabled PEP-515-style integer coercion of task parameters containing underscores (e.g. `084_132` was becoming `84132`). This fix returns older behaviour seen in Cylc 7.
+
+[#6577](https://github.com/cylc/cylc-flow/pull/6577) - Fixed a bug where if you prematurely deleted the job log directory, it would leave tasks permanently in the submitted or running states.
+
+[#6578](https://github.com/cylc/cylc-flow/pull/6578) - Improved handling of any internal errors when executing commands against a running workflow.
+
+[#6586](https://github.com/cylc/cylc-flow/pull/6586) - Update PBS job runner to reflect error message change. This change
+  continues to support older PBS versions.
+
+[#6616](https://github.com/cylc/cylc-flow/pull/6616) - Fixed wrapper script `PATH` override preventing selection of Cylc version in the GUI when running Cylc Hub.
+
 ## __cylc-8.4.0 (Released 2025-01-08)__
 
 ### ⚠ Breaking Changes

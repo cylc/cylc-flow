@@ -433,8 +433,10 @@ grep_workflow_log_ok() {
     local TEST_NAME="$1"
     local PATTERN="$2"
     shift 2
+    OPTS="$*"
     local LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
-    if grep "$@" -s -e "$PATTERN" "$LOG_FILE"; then
+    # shellcheck disable=SC2086
+    if grep ${OPTS} -s -e "$PATTERN" "$LOG_FILE"; then
         ok "${TEST_NAME}"
         return
     fi

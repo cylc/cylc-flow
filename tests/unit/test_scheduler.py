@@ -67,7 +67,7 @@ def test_check_startup_opts(
         mocked_scheduler.options = SimpleNamespace(**{opt: 'reload'})
         with pytest.raises(InputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
-        assert(err_msg.format(opt) in str(excinfo))
+        assert err_msg.format(opt) in str(excinfo)
 
 
 @pytest.mark.parametrize(
@@ -94,7 +94,7 @@ def test_should_auto_restart_now(
 def test_release_tasks_to_run__auto_restart():
     """Test that Scheduler.release_tasks_to_run() works as expected
     during auto restart."""
-    mock_schd = Mock(
+    mock_schd = MagicMock(
         auto_restart_time=(time() - 100),
         auto_restart_mode=AutoRestartMode.RESTART_NORMAL,
         is_paused=False,
@@ -113,7 +113,7 @@ def test_release_tasks_to_run__auto_restart():
     mock_schd.pool.release_queued_tasks.assert_not_called()
 
     Scheduler.start_job_submission(mock_schd, mock_schd.pool.get_tasks())
-    mock_schd.task_job_mgr.submit_task_jobs.assert_called()
+    mock_schd.submit_task_jobs.assert_called()
 
 
 def test_auto_restart_DNS_error(monkeypatch, caplog, log_filter):

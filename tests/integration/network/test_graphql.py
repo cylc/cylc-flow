@@ -287,6 +287,7 @@ async def test_edges(harness):
         'graphql',
         {'request_string': 'query { edges { id } }'}
     )
+    ret['edges'].sort(key=lambda x: x['id'])
     assert ret == {
         'edges': [
             {'id': id_}

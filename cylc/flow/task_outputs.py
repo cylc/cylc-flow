@@ -18,12 +18,12 @@
 import ast
 import re
 from typing import (
+    TYPE_CHECKING,
     Dict,
     Iterable,
     Iterator,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Union,
 )
@@ -35,9 +35,14 @@ from cylc.flow.util import (
     restricted_evaluator,
 )
 
+
 if TYPE_CHECKING:
-    from cylc.flow.taskdef import TaskDef
+    # BACK COMPAT: typing_extensions.Literal
+    # FROM: Python 3.7
+    # TO: Python 3.8
     from typing_extensions import Literal
+
+    from cylc.flow.taskdef import TaskDef
 
 
 # Standard task output strings, used for triggering.

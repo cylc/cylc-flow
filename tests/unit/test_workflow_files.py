@@ -312,9 +312,6 @@ def test_get_symlink_dirs(
     assert get_symlink_dirs(id_, cylc_run_dir / id_) == expected
 
 
-
-
-
 @pytest.mark.parametrize(
     'flow_file_exists, suiterc_exists, expected_file',
     [(True, False, WorkflowFiles.FLOW_FILE),

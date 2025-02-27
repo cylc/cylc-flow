@@ -59,6 +59,7 @@ from cylc.flow.tui.data import (
 )
 from cylc.flow.tui.util import (
     ListBoxPlus,
+    format_flow_nums,
     get_task_icon,
     get_text_dimensions,
 )
@@ -154,7 +155,7 @@ def filter_task_state(app):
 
     checkboxes = [
         urwid.CheckBox(
-            get_task_icon(state)
+            get_task_icon(state, colour='overlay')
             + [' ' + state],
             state=is_on,
             on_state_change=partial(_toggle_filter, app, 'tasks', state)
@@ -237,7 +238,7 @@ def help_info(app):
     for state in TASK_STATUSES_ORDERED:
         items.append(
             urwid.Text(
-                get_task_icon(state)
+                get_task_icon(state, colour='overlay')
                 + [' ', state]
             )
         )
@@ -245,19 +246,27 @@ def help_info(app):
     items.append(urwid.Text('Special States:'))
     items.append(
         urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_held=True)
+            get_task_icon(TASK_STATUS_WAITING, is_held=True, colour='overlay')
             + [' ', 'held']
         )
     )
     items.append(
         urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_queued=True)
+            get_task_icon(
+                TASK_STATUS_WAITING,
+                is_queued=True,
+                colour='overlay',
+            )
             + [' ', 'queued']
         )
     )
     items.append(
         urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_runahead=True)
+            get_task_icon(
+                TASK_STATUS_WAITING,
+                is_runahead=True,
+                colour='overlay',
+            )
             + [' ', 'runahead']
         )
     )
@@ -317,11 +326,36 @@ def context(app):
 
     # determine the ID to display for the context menu
     display_id = _get_display_id(value['id_'])
+    header = [f'id: {display_id}']
+    attrs = []
+
+    # workflow state info
+    if value['data'].get('status'):
+        attrs.append(value['data']['status'])
+
+    # task state info
+    if value['data'].get('state'):
+        attrs.append(
+            value['data']['state']
+            + (
+                ' (held)' if value['data'].get('isHeld')
+                else ' (queued)' if value['data'].get('isQueued')
+                else '(runahead)' if value['data'].get('isRunahead')
+                else ''
+            )
+        )
+
+    # task flow info
+    if value['data'].get('flowNums', '[1]') != '[1]':
+        attrs.append(f'flows={format_flow_nums(value["data"]["flowNums"])}')
+
+    if attrs:
+        header.append(', '.join(attrs))
 
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(
             [
-                urwid.Text(f'id: {display_id}'),
+                urwid.Text('\n'.join(header)),
                 urwid.Divider(),
                 urwid.Text('Action'),
                 urwid.Button(

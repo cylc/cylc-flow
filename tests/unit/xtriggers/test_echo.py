@@ -28,10 +28,13 @@ def test_validate_good():
 
 
 @pytest.mark.parametrize(
-    'all_args', (
+    'all_args',
+    (
         param({'args': (False,), 'kwargs': {}}, id='no-kwarg'),
-        param({'args': (), 'kwargs': {'spud': 'mashed'}}, id='no-succeed-kwarg'),
-    )
+        param(
+            {'args': (), 'kwargs': {'spud': 'mashed'}}, id='no-succeed-kwarg'
+        ),
+    ),
 )
 def test_validate_exceptions(all_args):
     with pytest.raises(WorkflowConfigError, match='^Requires'):

@@ -843,6 +843,11 @@ with Conf('global.cylc', desc='''
             Conf('ranking', VDR.V_STRING, desc=f'''
                 Rank and filter run hosts based on system information.
 
+                By default, when a workflow is started, Cylc will pick a host
+                for it to run on at random from :cylc:conf:`[..]available`.
+                If no hosts are specified in  :cylc:conf:`[..]available` it
+                will start the scheduler locally.
+
                 Ranking can be used to provide load balancing to ensure no
                 single run host is overloaded. It also provides thresholds
                 beyond which Cylc will not attempt to start new schedulers on
@@ -866,6 +871,11 @@ with Conf('global.cylc', desc='''
 
                    # rank hosts by 15min average of server load
                    getloadavg()[2]
+
+                   # rank hosts by the amount of available RAM (multiply by -1
+                   # to make it choose the host with the most available memory
+                   # rather than the least)
+                   -1 * virtual_memory().available
 
                    # rank hosts by the number of cores
                    # (multiple by -1 because the lowest value is chosen)

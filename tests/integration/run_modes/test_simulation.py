@@ -33,10 +33,20 @@ async def test_started_trigger(flow, reftest, scheduler):
     Long standing Bug discovered in Skip Mode work.
     https://github.com/cylc/cylc-flow/pull/6039#issuecomment-2321147445
     """
-    schd = scheduler(flow({
-        'scheduler': {'events': {'stall timeout': 'PT0S', 'abort on stall timeout': True}},
-        'scheduling': {'graph': {'R1': 'a:started => b'}}
-    }), paused_start=False)
+    schd = scheduler(
+        flow(
+            {
+                'scheduler': {
+                    'events': {
+                        'stall timeout': 'PT0S',
+                        'abort on stall timeout': True,
+                    }
+                },
+                'scheduling': {'graph': {'R1': 'a:started => b'}},
+            }
+        ),
+        paused_start=False,
+    )
     assert await reftest(schd) == {
         ('1/a', None),
         ('1/b', ('1/a',))
@@ -286,7 +296,7 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
 
     # Stop and restart the  scheduler:
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         for itask in schd.pool.get_tasks():
             # Check that we haven't got mode settings back:
             assert itask.mode_settings is None
@@ -301,10 +311,8 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
                 )
                 schd.workflow_db_mgr.process_queued_ops()
                 monkeytime(42)
-                expected_timeout = 102.0
             else:
                 monkeytime(og_timeouts[itask.identity] - 1)
-                expected_timeout = float(int(og_timeouts[itask.identity]))
 
             assert sim_time_check(
                 schd.task_events_mgr, [itask], schd.workflow_db_mgr

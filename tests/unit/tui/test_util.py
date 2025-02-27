@@ -36,7 +36,7 @@ from cylc.flow.wallclock import (
 )
 
 
-def testrender_node__job_info():
+def test_render_node__job_info():
     """It renders job information nodes."""
     assert render_node(
         None,
@@ -48,7 +48,7 @@ def testrender_node__job_info():
     ]
 
 
-def testrender_node__job():
+def test_render_node__job():
     """It renders job nodes."""
     assert render_node(
         None,
@@ -60,7 +60,7 @@ def testrender_node__job():
     ]
 
 
-def testrender_node__task__succeeded():
+def test_render_node__task__succeeded():
     """It renders tasks."""
     node = Mock()
     node.get_child_node = lambda _: None
@@ -71,17 +71,18 @@ def testrender_node__task__succeeded():
             'state': 'succeeded',
             'isHeld': False,
             'isQueued': False,
-            'isRunahead': False
+            'isRunahead': False,
+            'flowNums': '[1]',
         },
         'task'
     ) == [
-        TASK_ICONS['succeeded'],
+        ('body', TASK_ICONS['succeeded']),
         ' ',
-        'foo'
+        ('body', 'foo'),
     ]
 
 
-def testrender_node__task__running():
+def test_render_node__task__running():
     """It renders running tasks."""
     child = Mock()
     child.get_value = lambda: {'data': {
@@ -98,19 +99,20 @@ def testrender_node__task__running():
             'isHeld': False,
             'isQueued': False,
             'isRunahead': False,
+            'flowNums': '[1]',
             'task': {'meanElapsedTime': 100}
         },
         'task'
     ) == [
-        TASK_ICONS['running'],
+        ('body', TASK_ICONS['running']),
         ' ',
         ('job_running', JOB_ICON),
         ' ',
-        'foo'
+        ('body', 'foo'),
     ]
 
 
-def testrender_node__family():
+def test_render_node__family():
     """It renders families."""
     assert render_node(
         None,
@@ -123,13 +125,13 @@ def testrender_node__family():
         },
         'family'
     ) == [
-        [TASK_ICONS['succeeded']],
+        [('body', TASK_ICONS['succeeded'])],
         ' ',
         'myid'
     ]
 
 
-def testrender_node__cycle_point():
+def test_render_node__cycle_point():
     """It renders cycle points."""
     assert render_node(
         None,
@@ -172,12 +174,18 @@ def test_get_task_icon(
             datetime.utcnow() - timedelta(seconds=start_offset)
         )
     assert (
-        get_task_icon(
-            status, is_held=is_held, is_queued=is_queued,
-            is_runahead=is_runahead, start_time=start_time,
-            mean_time=mean_time
+        (
+            get_task_icon(
+                status,
+                is_held=is_held,
+                is_queued=is_queued,
+                is_runahead=is_runahead,
+                colour='custom',
+                start_time=start_time,
+                mean_time=mean_time,
+            )
         )
-    ) == expected
+    ) == [('custom', char) for char in expected]
 
 
 def test_compute_tree():

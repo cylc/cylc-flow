@@ -66,7 +66,10 @@ def test_all(
     assert flow_mgr.get_flow_num(2, meta) == 2
     msg3 = f"flow: 2 ({meta}) {FAKE_NOW_ISO}"
     assert f"New {msg3}" not in caplog.messages
-    assert f"Ignoring flow metadata \"{meta}\": 2 is not a new flow" in caplog.messages
+    assert (
+        f"Ignoring flow metadata \"{meta}\": 2 is not a new flow"
+        in caplog.messages
+    )
 
     # give flow 4: new flow
     meta = "jumped over the cheese"

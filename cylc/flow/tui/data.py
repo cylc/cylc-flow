@@ -47,6 +47,7 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        flowNums
         firstParent {
           id
           name
@@ -116,6 +117,7 @@ MUTATIONS = {
         'trigger',
         'poll',
         'set',
+        'remove',
     ],
     'job': [
         'kill',

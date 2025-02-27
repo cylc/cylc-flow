@@ -81,7 +81,7 @@ from cylc.flow.workflow_files import (
 )
 
 if TYPE_CHECKING:
-    from zmq.auth.thread import ThreadAuthenticator
+    from cylc.flow.network.server import WorkflowRuntimeServer
 
 # Remote installation literals
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
@@ -103,7 +103,7 @@ class RemoteTidyQueueTuple(NamedTuple):
 class TaskRemoteMgr:
     """Manage task remote initialisation, tidy, selection."""
 
-    def __init__(self, workflow, proc_pool, bad_hosts, db_mgr):
+    def __init__(self, workflow, proc_pool, bad_hosts, db_mgr, server):
         self.workflow = workflow
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|PlatformError|None}
@@ -117,6 +117,7 @@ class TaskRemoteMgr:
         self.is_reload = False
         self.is_restart = False
         self.db_mgr = db_mgr
+        self.server: WorkflowRuntimeServer = server
 
     def _subshell_eval(
         self, eval_str: str, command_pattern: re.Pattern
@@ -207,9 +208,7 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def remote_init(
-            self, platform: Dict[str, Any], curve_auth: 'ThreadAuthenticator',
-            client_pub_key_dir: str) -> None:
+    def remote_init(self, platform: Dict[str, Any]) -> None:
         """Initialise a remote host if necessary.
 
         Call "cylc remote-init" to install workflow items to remote:
@@ -219,9 +218,6 @@ class TaskRemoteMgr:
         Args:
             platform: A dict containing settings relating to platform used in
                 this remote installation.
-            curve_auth: The ZMQ authenticator.
-            client_pub_key_dir: Client public key directory, used by the
-                ZMQ authenticator.
 
         """
         install_target = platform['install target']
@@ -277,18 +273,13 @@ class TaskRemoteMgr:
             cmd = construct_ssh_cmd(cmd, platform, host)
             self.proc_pool.put_command(
                 SubProcContext(
-                    'remote-init',
-                    cmd,
-                    stdin_files=[tmphandle],
-                    host=host
+                    'remote-init', cmd, stdin_files=[tmphandle], host=host
                 ),
                 bad_hosts=self.bad_hosts,
                 callback=self._remote_init_callback,
-                callback_args=[
-                    platform, tmphandle, curve_auth, client_pub_key_dir
-                ],
+                callback_args=[platform, tmphandle],
                 callback_255=self._remote_init_callback_255,
-                callback_255_args=[platform]
+                callback_255_args=[platform],
             )
 
     def construct_remote_tidy_ssh_cmd(
@@ -485,9 +476,7 @@ class TaskRemoteMgr:
         self.ready = True
         return
 
-    def _remote_init_callback(
-            self, proc_ctx, platform, tmphandle,
-            curve_auth, client_pub_key_dir):
+    def _remote_init_callback(self, proc_ctx, platform, tmphandle):
         """Callback when "cylc remote-init" exits.
 
         Write public key for install target into client public key
@@ -518,8 +507,7 @@ class TaskRemoteMgr:
             # configure_curve must be called every time certificates are
             # added or removed, in order to update the Authenticator's
             # state.
-            curve_auth.configure_curve(
-                domain='*', location=(client_pub_key_dir))
+            self.server.configure_curve()
             self.remote_init_map[install_target] = REMOTE_INIT_DONE
             self.ready = True
             return

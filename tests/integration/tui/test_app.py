@@ -27,6 +27,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
 from cylc.flow.workflow_status import StopMode
 
@@ -92,7 +93,9 @@ async def test_tui_basics(rakiura):
             rk.user_input('q')
 
 
-async def test_subscribe_unsubscribe(one_conf, flow, scheduler, start, rakiura):
+async def test_subscribe_unsubscribe(
+    one_conf, flow, scheduler, start, rakiura
+):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
@@ -429,4 +432,90 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
             rk.compare_screenshot(
                 '3-workflow-restarted',
                 'the restarted workflow should be expanded',
+            )
+
+
+async def test_states(flow, scheduler, start, rakiura):
+    """It should dim no-flow tasks and display state summary in context menus.
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': 'a & b & c',
+                },
+            },
+        },
+        name='one',
+    )
+    from cylc.flow.scheduler import Scheduler
+    schd: Scheduler = scheduler(id_)
+
+    async with start(schd):
+        a = schd.pool.get_task(IntegerPoint('1'), 'a')
+        b = schd.pool.get_task(IntegerPoint('1'), 'b')
+        c = schd.pool.get_task(IntegerPoint('1'), 'c')
+        assert a and b and c
+
+        # set task flow numbers
+        assert a.flow_nums == {1}
+        b.flow_nums = {1, 2}
+        c.flow_nums = {}
+
+        # set task state
+        a.state_reset(TASK_STATUS_SUCCEEDED, is_held=True)
+        b.state_reset(TASK_STATUS_WAITING, is_queued=True)
+        c.state_reset(TASK_STATUS_WAITING, is_queued=False, is_runahead=True)
+
+        # update data store
+        for task in (a, b, c):
+            schd.data_store_mgr.delta_task_state(task)
+            schd.data_store_mgr.delta_task_flow_nums(task)
+        await schd.update_data_structure()
+
+        with rakiura(schd.tokens.id, size='80,15') as rk:
+            rk.compare_screenshot(
+                'on-load',
+                'the workflow should be expanded,'
+                ' no-flow task 1/c should be dimmed'
+            )
+
+            # workflow node
+            rk.user_input('down', 'enter')
+            rk.compare_screenshot(
+                'workflow-context--paused',
+                'the workflow should show as paused in the context menu',
+            )
+
+            # cycle: 1
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'cycle-context--waiting',
+                'the cycle should show as waiting in the context menu'
+
+
+            )
+
+            # task:a
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--succeeded+held',
+                'the task should show as succeeded+held in the context menu,'
+                ' no flow numbers should be displayed',
+            )
+
+            # task:b
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--waiting+queued',
+                'the task should show as waiting+queued in the context menu,'
+                ' the flow numbers 1,2 should be displayed',
+            )
+
+            # task:c
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--waiting+runahead',
+                'the task should show as waiting+runahead in the context menu,'
+                ' the task should be marked as flows=None'
             )

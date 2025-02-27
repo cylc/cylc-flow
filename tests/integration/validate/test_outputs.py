@@ -252,7 +252,7 @@ def test_messages(messages, valid, flow, validate):
             '\nInvalid expression',
             id='Non-whitelisted syntax used in completion expression',
         ),
-      ]
+    ]
 )
 def test_completion_expression_invalid(
     flow,

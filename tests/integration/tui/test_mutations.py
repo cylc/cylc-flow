@@ -130,6 +130,7 @@ def standardise_cli_cmds(monkeypatch):
     stable, this
     """
     from cylc.flow.tui.data import extract_context
+
     def _extract_context(selection):
         context = extract_context(selection)
         if 'workflow' in context:
@@ -142,6 +143,7 @@ def standardise_cli_cmds(monkeypatch):
         'cylc.flow.tui.data.extract_context',
         _extract_context,
     )
+
 
 @pytest.fixture
 def capture_commands(monkeypatch):
@@ -176,7 +178,7 @@ async def test_offline_mutation(
     capture_commands,
     standardise_cli_cmds,
 ):
-    id_ = flow(one_conf, name='one')
+    flow(one_conf, name='one')
     commands, returncode = capture_commands
 
     with rakiura(size='80,15') as rk:
@@ -253,7 +255,7 @@ async def test_set_mutation(
             rk.force_update()
 
             # select the "set" mutation
-            rk.user_input(*(('down',) * 6))  # 6th command down
+            rk.user_input(*(('down',) * 7))  # 7th command down
 
             rk.compare_screenshot(
                 # take a screenshot to ensure we have focused on the mutation

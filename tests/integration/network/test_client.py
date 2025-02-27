@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Test cylc.flow.client.WorkflowRuntimeClient."""
+import json
+from unittest.mock import Mock
 import pytest
 
+from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
 
@@ -88,3 +91,36 @@ async def test_command_validation_failure(harness):
             'response': [False, '--pre=all must be used alone'],
         }
     ]
+
+
+@pytest.mark.parametrize(
+    'sock_response, expected',
+    [
+        pytest.param({'error': 'message'}, r"^message$", id="basic"),
+        pytest.param(
+            {'foo': 1},
+            r"^Received invalid response for"
+            r" Cylc 8\.[\w.]+: \{'foo': 1[^}]*\}$",
+            id="no-err-field",
+        ),
+        pytest.param(
+            {'cylc_version': '8.x.y'},
+            r"^Received invalid.+\n\(Workflow is running in Cylc 8.x.y\)$",
+            id="no-err-field-with-version",
+        ),
+    ],
+)
+async def test_async_request_err(
+    one, start, monkeypatch: pytest.MonkeyPatch, sock_response, expected
+):
+    async def mock_recv():
+        return json.dumps(sock_response).encode()
+
+    async with start(one):
+        client = WorkflowRuntimeClient(one.workflow)
+        with monkeypatch.context() as mp:
+            mp.setattr(client, 'socket', Mock(recv=mock_recv))
+            mp.setattr(client, 'poller', Mock())
+
+            with pytest.raises(ClientError, match=expected):
+                await client.async_request('graphql')

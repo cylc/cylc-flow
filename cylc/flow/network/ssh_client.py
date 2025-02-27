@@ -14,17 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout as asyncto
 import asyncio
 import json
 import os
-from typing import Any, List, Optional, Tuple, Union, Dict
+import sys
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
-from cylc.flow.exceptions import ClientError, ClientTimeout
+from cylc.flow.exceptions import (
+    ClientError,
+    ClientTimeout,
+)
 from cylc.flow.network.client import WorkflowRuntimeClientBase
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.remote import remote_cylc_cmd
-from cylc.flow.workflow_files import load_contact_file, ContactFileFields
+from cylc.flow.workflow_files import (
+    ContactFileFields,
+    load_contact_file,
+)
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as asyncto
+else:
+    from async_timeout import timeout as asyncto
 
 
 class WorkflowRuntimeClient(WorkflowRuntimeClientBase):

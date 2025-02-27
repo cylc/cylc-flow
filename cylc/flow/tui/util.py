@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional, Set, Tuple
 import urwid
 
 from cylc.flow import LOG
+from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
@@ -36,6 +37,7 @@ from cylc.flow.tui import (
     TASK_ICONS,
     TASK_MODIFIERS
 )
+from cylc.flow.util import deserialise_set
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
@@ -69,8 +71,9 @@ def get_task_icon(
     is_held=False,
     is_queued=False,
     is_runahead=False,
+    colour='body',
     start_time=None,
-    mean_time=None
+    mean_time=None,
 ):
     """Return a Unicode string to represent a task.
 
@@ -83,6 +86,9 @@ def get_task_icon(
             True if the task is queued.
         is_runahead (bool):
             True if the task is runahead limited.
+        colour (str):
+            Set the icon colour. If not provided, the default foreground text
+            colour will be used.
         start_time (str):
             Start date time string.
         mean_time (int):
@@ -95,11 +101,11 @@ def get_task_icon(
     """
     ret = []
     if is_held:
-        ret.append(TASK_MODIFIERS['held'])
+        ret.append((colour, TASK_MODIFIERS['held']))
     elif is_runahead:
-        ret.append(TASK_MODIFIERS['runahead'])
+        ret.append((colour, TASK_MODIFIERS['runahead']))
     elif is_queued:
-        ret.append(TASK_MODIFIERS['queued'])
+        ret.append((colour, TASK_MODIFIERS['queued']))
     if (
         status == TASK_STATUS_RUNNING
         and start_time
@@ -115,7 +121,7 @@ def get_task_icon(
             status = f'{TASK_STATUS_RUNNING}:25'
         else:
             status = f'{TASK_STATUS_RUNNING}:0'
-    ret.append(TASK_ICONS[status])
+    ret.append((colour, TASK_ICONS[status]))
     return ret
 
 
@@ -517,12 +523,20 @@ def _render_task(node, data):
         start_time = first_child.get_value()['data']['startedTime']
         mean_time = data['task']['meanElapsedTime']
 
+    if data['flowNums'] == '[]':
+        # grey out no-flow tasks
+        colour = 'diminished'
+    else:
+        # default foreground colour for everything else
+        colour = 'body'
+
     # the task icon
     ret = get_task_icon(
         data['state'],
         is_held=data['isHeld'],
         is_queued=data['isQueued'],
         is_runahead=data['isRunahead'],
+        colour=colour,
         start_time=start_time,
         mean_time=mean_time
     )
@@ -534,7 +548,7 @@ def _render_task(node, data):
         ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
 
     # the task name
-    ret.append(f'{data["name"]}')
+    ret.append((colour, f'{data["name"]}'))
     return ret
 
 
@@ -690,3 +704,16 @@ class ListBoxPlus(urwid.ListBox):
                 target = new_target
         else:
             return super().keypress(size, key)
+
+
+def format_flow_nums(serialised_flow_nums: str) -> str:
+    """Return a user-facing representation of task serialised flow nums.
+
+    Examples:
+        >>> format_flow_nums('[1,2]')
+        '1,2'
+        >>> format_flow_nums('[]')
+        'None'
+
+    """
+    return stringify_flow_nums(deserialise_set(serialised_flow_nums)) or 'None'

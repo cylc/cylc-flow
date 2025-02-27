@@ -22,8 +22,10 @@ See also:
 
 """
 
+from contextlib import suppress
 from enum import Enum
 import errno
+from collections import deque
 import os
 from pathlib import Path
 import re
@@ -620,8 +622,29 @@ def get_workflow_srv_dir(id_):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
+def refresh_nfs_cache(path: Path):
+    """Refresh NFS cache for dirs between ~/cylc-run and <path> inclusive.
+
+    On NFS filesystems, the non-existence of files/directories may become
+    cashed. To work around this, we can list the contents of these directories
+    which refreshes the NFS cache.
+
+    See: https://github.com/cylc/cylc-flow/issues/6506
+
+    Arguments:
+        path: The directory to refresh.
+
+    Raises:
+        FileNotFoundError: If any of the directories between ~/cylc-run and
+        this directory (inclsive) are not present.
+
+    """
+    cylc_run_dir = get_cylc_run_dir()
+    for subdir in reversed(path.relative_to(cylc_run_dir).parents):
+        deque((cylc_run_dir / subdir).iterdir(), maxlen=0)
+
+
 def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
-    """Load contact file. Return data as key=value dict."""
     if not run_dir:
         path = Path(get_contact_file_path(id_))
     else:
@@ -630,6 +653,14 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
             WorkflowFiles.Service.DIRNAME,
             WorkflowFiles.Service.CONTACT
         )
+
+    if not path.exists():
+        # work around NFS caching issues
+        try:
+            refresh_nfs_cache(path)
+        except FileNotFoundError as exc:
+            raise ServiceFileError("Couldn't load contact file") from exc
+
     try:
         with open(path) as f:
             file_content = f.read()
@@ -918,6 +949,11 @@ def infer_latest_run(
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory") from None
+
+    if not path.exists():
+        # work around NFS caching issues
+        with suppress(FileNotFoundError):
+            refresh_nfs_cache(path)
 
     if not path.exists():
         raise InputError(
