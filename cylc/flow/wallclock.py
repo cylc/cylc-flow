@@ -17,6 +17,7 @@
 
 from calendar import timegm
 from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
 
 from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
@@ -74,8 +75,9 @@ def set_utc_mode(mode):
     _FLAGS['utc_mode'] = bool(mode)
 
 
-def now(override_use_utc=None):
-    """Return a current-time datetime.datetime and a UTC timezone flag.
+def now(override_use_utc: Optional[bool] = None) -> Tuple[datetime, bool]:
+    """Return a current-time, timezone-aware datetime.datetime and a flag
+    indicating whether it is UTC or not.
 
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
@@ -85,9 +87,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
-        return datetime.utcnow(), False
+        return datetime.now(timezone.utc), False
     else:
-        return datetime.now(), True
+        return datetime.now().astimezone(), True
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
