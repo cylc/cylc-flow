@@ -67,7 +67,7 @@ def test_check_startup_opts(
         mocked_scheduler.options = SimpleNamespace(**{opt: 'reload'})
         with pytest.raises(InputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
-        assert(err_msg.format(opt) in str(excinfo))
+        assert err_msg.format(opt) in str(excinfo)
 
 
 @pytest.mark.parametrize(

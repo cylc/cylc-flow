@@ -302,4 +302,4 @@ def test_null(null_config):
         grouping=False,
         show_suicide=False
     )
-    assert get_nodes_and_edges(opts, None, 1, 2, '')  == ([], [])
+    assert get_nodes_and_edges(opts, None, 1, 2, '') == ([], [])

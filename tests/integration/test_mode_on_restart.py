@@ -20,7 +20,6 @@ import pytest
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.run_modes import RunMode
 
 
 MODES = [('live'), ('simulation'), ('dummy')]

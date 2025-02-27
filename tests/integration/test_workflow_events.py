@@ -82,8 +82,8 @@ async def test_startup_and_shutdown(test_scheduler, run):
     """Test the startup and shutdown events.
 
     * "statup" should fire every time a scheduler is started.
-    * "shutdown" should fire every time a scheduler exits in a controlled fassion
-      (i.e. excluding aborts on unexpected internal errors).
+    * "shutdown" should fire every time a scheduler exits in a controlled
+      fashion (i.e. excluding aborts on unexpected internal errors).
     """
     schd = test_scheduler()
     async with run(schd):

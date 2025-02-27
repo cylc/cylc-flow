@@ -66,12 +66,12 @@ def get_deltas(schd):
         {
             # updated
             Tokens(tb_task_proxy.id)['task']: tb_task_proxy.graph_depth
-            for tb_task_proxy in schd.data_store_mgr.deltas[TASK_PROXIES].updated
+            for tb_task_proxy in schd.data_store_mgr.deltas[
+                TASK_PROXIES
+            ].updated
             # only include those updated nodes whose depths have been set
-            if 'graph_depth' in {
-                sub_field.name
-                for sub_field, _ in tb_task_proxy.ListFields()
-            }
+            if 'graph_depth'
+            in {sub_field.name for sub_field, _ in tb_task_proxy.ListFields()}
         },
         {
             # pruned

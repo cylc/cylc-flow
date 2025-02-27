@@ -505,7 +505,7 @@ def test_parse_cli_sym_dirs(
     if err_msg is not None:
         with pytest.raises(InputError) as exc:
             parse_cli_sym_dirs(symlink_dirs)
-            assert(err_msg) in str(exc)
+            assert err_msg in str(exc)
 
     else:
         actual = parse_cli_sym_dirs(symlink_dirs)
