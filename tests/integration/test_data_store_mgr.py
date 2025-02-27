@@ -36,7 +36,6 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_STARTED,
@@ -104,7 +103,7 @@ def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
-def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     """Get all protobuf prerequisites from the data store task proxies."""
     return [
         p
