@@ -551,19 +551,23 @@ def log(app, id_=None, list_files=None, get_log=None):
                     (
                         'pack',
                         urwid.Button(
-                            label,
+                            command,
                             align='left',
                             on_press=partial(open_in_editor, command=command),
                         ),
                     )
-                    for label, command in (
-                        ('$EDITOR', os.environ.get('EDITOR', 'vim')),
-                        ('$GEDITOR', os.environ.get('GEDITOR', 'gvim -f')),
-                        ('$PAGER', os.environ.get('PAGER', 'less')),
-                        ('vim', 'vim'),
-                    )
+                    for command in [
+                        opt for opt in (
+                            os.environ.get('EDITOR', 'vim'),
+                            os.environ.get('GEDITOR', 'gvim -f'),
+                            os.environ.get('PAGER', 'less'),
+                        )
+                    ]
                 ),
             ]),
+            urwid.Text(
+                "(Configure apps to open logs via $EDITOR, $GEDITOR, $PAGER)"
+            ),
             urwid.Divider(),
             text_widget,
         ]),
