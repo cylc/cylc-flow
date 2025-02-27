@@ -452,7 +452,9 @@ class CylcWorkflowDAO:
     def connect(self) -> sqlite3.Connection:
         """Connect to the database."""
         if self.conn is None:
-            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+            self.conn = sqlite3.connect(
+                self.db_file_name, timeout=self.CONN_TIMEOUT
+            )
         return self.conn
 
     def create_tables(self):
