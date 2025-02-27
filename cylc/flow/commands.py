@@ -322,8 +322,10 @@ async def remove_tasks(
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
-    flow_nums = get_flow_nums_set(flow)
-    schd.remove_tasks(tasks, flow_nums)
+    schd.remove_tasks(
+        tasks,
+        get_flow_nums_set(flow)
+    )
 
 
 @_command('reload_workflow')
@@ -457,6 +459,17 @@ async def force_trigger_tasks(
             "at Cylc 8.5."
         )
     yield
+
+    if not flow:
+        # default case: erase flow history before trigger
+        schd.remove_tasks(
+            tasks,
+            get_flow_nums_set(flow),
+            default_remove=True
+        )
+        # make sure the removal gets stored before triggering
+        schd.workflow_db_mgr.process_queued_ops()
+
     yield schd.pool.force_trigger_tasks(
         tasks, flow, flow_wait, flow_descr, on_resume
     )

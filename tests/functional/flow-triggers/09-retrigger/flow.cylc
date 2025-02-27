@@ -14,7 +14,8 @@
       script = """
          cylc trigger --wait ${CYLC_WORKFLOW_ID}//1/baz
          cylc__job__poll_grep_workflow_log "1/baz/01:running.*succeeded"
-         cylc trigger --wait ${CYLC_WORKFLOW_ID}//1/baz
+	 # Use --flow=all to avoid erasing flow history of the first trigger.
+         cylc trigger --flow=all --wait ${CYLC_WORKFLOW_ID}//1/baz
          cylc__job__poll_grep_workflow_log "1/baz/02:running.*succeeded"
       """
    [[baz]]
