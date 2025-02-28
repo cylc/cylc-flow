@@ -18,7 +18,6 @@ from typing import Iterable, List, TYPE_CHECKING, cast
 
 import pytest
 
-from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
 from cylc.flow.data_store_mgr import (
     EDGES,
     FAMILY_PROXIES,
@@ -28,7 +27,6 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
@@ -45,6 +43,7 @@ from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
 
 
 # NOTE: Some of these tests mutate the data store, so running them in
@@ -99,7 +98,7 @@ def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
-def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     """Get all protobuf prerequisites from the data store task proxies."""
     return [
         p

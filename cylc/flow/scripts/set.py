@@ -20,7 +20,8 @@
 
 Command to manually set task prerequisites and outputs in running workflows.
 
-By default, it sets all required outputs (note "succeeded" may be optional).
+By default, it sets all required outputs (including "submitted", "started" and
+"succeeded" even if they are optional).
 
 Setting task prerequisites:
   - contributes to the task's readiness to run, and
@@ -35,14 +36,15 @@ Setting task outputs:
   - contributes to a task's completion, and
   - spawns downstream tasks that depend on those outputs
 
-Note setting final outputs (succeeded, failed, expired) also sets task state.
-Setting the started and submitted outputs spawns downstream tasks that depend
-on them but does not affect task state, because there is no running job.
+Note setting final outputs ("succeeded", "failed", "expired") also sets task
+state. Setting the "started" and "submitted" outputs spawns downstream tasks
+that depend on them but does not affect task state, because there is no
+running job.
 
 Implied outputs are set automatically:
-  - started implies submitted
-  - succeeded and failed imply started
-  - custom outputs and expired do not imply other outputs
+  - "started" implies "submitted"
+  - "succeeded" and "failed" imply "started"
+  - custom outputs and "expired" do not imply other outputs
 
 For custom outputs, use the output names not the associated task messages:
 [runtime]

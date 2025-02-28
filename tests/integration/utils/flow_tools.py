@@ -22,21 +22,38 @@ Use the fixtures provided in the conftest instead.
 """
 
 import asyncio
-from pathlib import Path
-from async_timeout import timeout
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import (
+    asynccontextmanager,
+    contextmanager,
+)
 import logging
-import pytest
-from typing import Any, Optional, Union
+from pathlib import Path
 from secrets import token_hex
+import sys
+from typing import (
+    Any,
+    Optional,
+    Union,
+)
+
+import pytest
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.workflow_files import WorkflowFiles
-from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerStop,
+)
 from cylc.flow.scheduler_cli import RunOptions
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.workflow_status import StopMode
 
 from .flow_writer import flow_config_str
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 def _make_src_flow(src_path, conf, filename=WorkflowFiles.FLOW_FILE):

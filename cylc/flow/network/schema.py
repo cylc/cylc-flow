@@ -2185,7 +2185,8 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
         description = sstrip("""
             Set task prerequisites or outputs.
 
-            By default, set all required outputs for target task(s).
+            By default, set all required outputs for target task(s) (including
+            `submitted`, `started` and `succeeded` even if they are optional).
 
             Setting prerequisites contributes to the task's readiness to run.
 

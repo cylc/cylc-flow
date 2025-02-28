@@ -318,10 +318,13 @@ class CylcOptionParser(OptionParser):
         OptionSettings(
             ['--comms-timeout'], metavar='SEC',
             help=(
-                "Set a timeout for network connections"
-                " to the running workflow. The default is no timeout."
-                " For task messaging connections see"
-                " site/user config file documentation."
+                "Set the timeout for communication with the running workflow."
+                " The default is determined by the setup, 5 seconds for"
+                " TCP comms and 300 for SSH."
+                " If connections timeout, it likely means either, a complex"
+                " request has been issued (e.g. cylc tui); there is a network"
+                " issue; or a problem with the scheduler. Increasing the"
+                " timeout will help with the first case."
             ),
             action='store', default=None, dest='comms_timeout', useif='comms'),
         OptionSettings(

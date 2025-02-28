@@ -167,12 +167,12 @@ async def test_task_instance_query(
     schd = scheduler(
         flow(
             {
-               'scheduling': {
-                   'graph': {'R1': 'zed & dog & cat & ant'},
-               },
-           }
+                'scheduling': {
+                    'graph': {'R1': 'zed & dog & cat & ant'},
+                },
+            }
         ),
-       paused_start=False
+        paused_start=False
     )
     async with start(schd):
         await schd.update_data_structure()
@@ -185,8 +185,8 @@ async def test_task_instance_query(
 
     out, _ = capsys.readouterr()
     assert [
-         line for line in out.splitlines()
-         if line.startswith("Task ID")
+        line for line in out.splitlines()
+        if line.startswith("Task ID")
     ] == [  # results should be sorted
         'Task ID: 1/ant',
         'Task ID: 1/cat',
@@ -202,13 +202,16 @@ async def test_task_instance_query(
             False, [1], 'state: waiting', None,
         ),
         pytest.param(
-            True, [1, 2], 'state: waiting (held,queued,runahead)', 'flows: [1,2]',
+            True,
+            [1, 2],
+            'state: waiting (held,queued,runahead)',
+            'flows: [1,2]',
         )
     ]
 )
 async def test_task_instance_state_flows(
     flow, scheduler, start, capsys,
-    attributes_bool, flow_nums, expected_state, expected_flows 
+    attributes_bool, flow_nums, expected_state, expected_flows
 ):
     """It should print task instance state, attributes, and flows."""
 
@@ -222,12 +225,12 @@ async def test_task_instance_state_flows(
     schd = scheduler(
         flow(
             {
-               'scheduling': {
-                   'graph': {'R1': 'a'},
-               },
-           }
+                'scheduling': {
+                    'graph': {'R1': 'a'},
+                },
+            }
         ),
-       paused_start=True
+        paused_start=True
     )
     async with start(schd):
 
@@ -254,15 +257,16 @@ async def test_task_instance_state_flows(
 
     out, _ = capsys.readouterr()
     assert [
-         line for line in out.splitlines()
-         if line.startswith("state:")
+        line for line in out.splitlines()
+        if line.startswith("state:")
     ] == [
         expected_state,
     ]
+
     if expected_flows is not None:
         assert [
-             line for line in out.splitlines()
-             if line.startswith("flows:")
+            line for line in out.splitlines()
+            if line.startswith("flows:")
         ] == [
             expected_flows,
         ]
