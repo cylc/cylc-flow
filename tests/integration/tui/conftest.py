@@ -284,6 +284,11 @@ def _rakiura(test_dir, request, monkeypatch):
         get_display_id,
     )
 
+    # standardise environment for tests
+    monkeypatch.setenv('EDITOR', 'nvim')
+    monkeypatch.setenv('GEDITOR', 'gvim -f')
+    monkeypatch.setenv('PAGER', 'less')
+
     # filter Tui so that only workflows created within our test show up
     id_base = str(test_dir.relative_to(Path("~/cylc-run").expanduser()))
     workflow_filter = re.escape(id_base) + r'/.*'
