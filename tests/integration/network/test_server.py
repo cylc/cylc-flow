@@ -63,9 +63,9 @@ def test_graphql_error(myflow):
             }}
         }}
     '''
-    errors = call_server_method(myflow.server.graphql, request_string)
+    errors = myflow.server.graphql(request_string)
     for error in errors:
-        assert 'error' in error
+        assert 'notafield' in f'{error}'
 
 
 def test_pb_data_elements(myflow):

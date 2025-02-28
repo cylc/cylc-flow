@@ -34,7 +34,7 @@ from graphql import (
     visit,
     get_argument_values,
     get_named_type,
-    introspection_types,
+    is_introspection_type,
 )
 from graphql.pyutils import AwaitableOrValue, is_awaitable
 
@@ -47,10 +47,6 @@ STRIP_ARG = 'strip_null'
 NULL_VALUE = None
 EMPTY_VALUES: Tuple[list, dict] = ([], {})
 STRIP_OPS = {'query', 'subscription'}
-INTROSPECTS = {
-    k.lower()
-    for k in introspection_types
-}
 
 U = TypeVar("U")
 
@@ -241,12 +237,13 @@ class IgnoreFieldMiddleware:
     def resolve(self, next_, root, info, **args):
         """Middleware resolver; handles field according to operation."""
         # GraphiQL introspection is 'query' but not async
-        if INTROSPECTS.intersection({f'{p}' for p in info.path.as_list()}):
+        if is_introspection_type(get_named_type(info.return_type)):
             return next_(root, info, **args)
 
         if info.operation.operation.value in STRIP_OPS:
             path_list = info.path.as_list()
             path_string = f'{path_list}'
+            parent_path_string = f'{path_list[:-1:]}'
             # Needed for child fields that resolve without args.
             # Store arguments of parents as leaves of schema tree from path
             # to respective field.
@@ -282,7 +279,6 @@ class IgnoreFieldMiddleware:
                 ):
 
                     # Gather fields set in root
-                    parent_path_string = f'{path_list[:-1:]}'
                     stamp = getattr(root, 'stamp', '')
                     if (
                         parent_path_string not in self.field_sets
