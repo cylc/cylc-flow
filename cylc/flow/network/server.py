@@ -45,7 +45,8 @@ from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.network.graphql import (
     CylcExecutionContext,
     IgnoreFieldMiddleware,
-    instantiate_middleware
+    execution_result_to_dict,
+    instantiate_middleware,
 )
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.replier import WorkflowReplier
@@ -414,14 +415,15 @@ class WorkflowRuntimeServer:
             execution_context_class=CylcExecutionContext,
         )
         if is_awaitable(executed):
-            result = self.loop.run_until_complete(executed)
-        if result.errors:
-            for error in result.errors:
+            executed = self.loop.run_until_complete(executed)
+        result = execution_result_to_dict(executed)
+        if result.get('errors'):
+            # If there are execution errors log and return the errors,
+            # don't raise them and end the server over a bad query.
+            for error in result['errors']:
                 LOG.warning(f"GraphQL: {error}")
-            # If there are execution errors, it means there was an unexpected
-            # error, so fail the command.
-            raise Exception(*result.errors)
-        return result.data
+            return result['errors']
+        return result.get('data')
 
     # UIServer Data Commands
     @expose
