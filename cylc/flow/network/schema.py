@@ -1653,9 +1653,11 @@ class NamespaceName(String):
 
 
 class NamespaceIDGlob(String):
-    """A glob search for an active task or family.
+    """A task or family ID e.g. `2000/foo`.
 
-    Can use the wildcard character (`*`), e.g `foo*` might match `foot`.
+    Globs can be used to match active tasks or families.
+
+    E.g `2*/foo*` might match `2000/foot`.
     """
 
 
