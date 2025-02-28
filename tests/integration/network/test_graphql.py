@@ -220,16 +220,16 @@ async def test_task_proxies(harness):
         'taskProxy': {'id': ids[0].id}
     }
 
-
     # query "taskProxies" fragment with null stripping
     ret = await client.async_request(
         'graphql',
-        {'request_string': '''
-            fragment wf on Workflow {
-                taskProxies (ids: ["%s"], stripNull: true) { id }
-            }
-            query { workflows (ids: ["%s"]) { ...wf } }
-        ''' % (ids[0].relative_id, ids[0].workflow_id)
+        {
+            'request_string': '''
+                fragment wf on Workflow {
+                    taskProxies (ids: ["%s"], stripNull: true) { id }
+                }
+                query { workflows (ids: ["%s"]) { ...wf } }
+            ''' % (ids[0].relative_id, ids[0].workflow_id)
         }
     )
     assert ret == {'workflows': [{'taskProxies': [{'id': ids[0].id}]}]}

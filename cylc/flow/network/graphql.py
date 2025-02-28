@@ -82,6 +82,50 @@ def grow_tree(tree, path, leaves=None):
         tree_loc[len(path) % 2].update({'leaves': leaves})
 
 
+# Part of the graphql subscriptions infrastructure,
+# used currently with UIS graphql-ws, will use with
+# zeromq subscriptions eventually.
+async def resolve(
+    data,
+    _container=None,
+    _key=None,
+):
+    """
+    Wait on any awaitable children of a data element.
+    """
+    stack = [(data, _container, _key)]
+
+    while stack:
+        _data, _container, _key = stack.pop()
+
+        if is_awaitable(_data):
+            _data = await _data
+            if _container is not None:
+                _container[_key] = _data
+        if isinstance(_data, dict):
+            items = _data.items()
+        elif isinstance(_data, list):
+            items = enumerate(_data)
+        else:
+            items = None
+        if items is not None:
+            stack.extend([
+                (child, _data, key)
+                for key, child in items
+            ])
+
+
+def execution_result_to_dict(execution_result):
+    result = {}
+    if execution_result.data:
+        result["data"] = execution_result.data
+    if execution_result.errors:
+        result["errors"] = [
+            error.formatted for error in execution_result.errors
+        ]
+    return result
+
+
 def instantiate_middleware(middlewares):
     """Take iterable of middlewares and instantiate.
 
