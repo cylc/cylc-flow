@@ -689,10 +689,13 @@ class DataStoreMgr:
             else:
                 user_defined_meta[key] = val
         workflow.meta.user_defined = json.dumps(user_defined_meta)
-        workflow.tree_depth = max([
+        workflow.tree_depth = max(
             len(val)
-            for val in config.get_first_parent_ancestors(pruned=True).values()
-        ]) - 1
+            for val in (
+                config.get_first_parent_ancestors(pruned=True).values()
+                or (1,)
+            )
+        ) - 1
 
         if get_utc_mode():
             time_zone_info = TIME_ZONE_UTC_INFO
