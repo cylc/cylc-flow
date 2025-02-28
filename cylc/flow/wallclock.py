@@ -45,8 +45,6 @@ TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
 TIME_ZONE_STRING_UTC = "Z"
 TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
 TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
-TIME_ZONE_LOCAL_UTC_OFFSET_HOURS = TIME_ZONE_LOCAL_UTC_OFFSET[0]
-TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES = TIME_ZONE_LOCAL_UTC_OFFSET[1]
 
 TIME_ZONE_LOCAL_INFO = {
     "hours": TIME_ZONE_LOCAL_UTC_OFFSET[0],
@@ -151,8 +149,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         else:
             custom_string = custom_time_zone_info["string_extended"]
         if date_time_is_local:
-            date_time_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            date_time_hours, date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET
         else:
             date_time_hours, date_time_minutes = (0, 0)
         diff_hours = custom_hours - date_time_hours
@@ -163,18 +160,15 @@ def get_time_string(date_time, display_sub_seconds=False,
     elif override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
-            date_time = date_time - timedelta(
-                hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
-                minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
-            )
+            h, m = TIME_ZONE_LOCAL_UTC_OFFSET
+            date_time = date_time - timedelta(hours=h, minutes=m)
     else:
         if use_basic_format:
             time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
         else:
             time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
         if not date_time_is_local:
-            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            diff_hours, diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:
