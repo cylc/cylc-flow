@@ -519,8 +519,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         # NOTE: we don't expect workflows to be returned in definition order
         # so it is ok to use `set` here
         workflow_ids = set(args.get('workflows', args.get('ids', ())))
+
         sub_id = uuid4()
-        info.variable_values['backend_sub_id'] = sub_id
+        info.context['sub_id'] = sub_id
         self.delta_store[sub_id] = {}
 
         op_id = root
