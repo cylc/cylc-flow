@@ -17,6 +17,7 @@
 
 from calendar import timegm
 from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
 
 from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
@@ -44,8 +45,6 @@ TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
 TIME_ZONE_STRING_UTC = "Z"
 TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
 TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
-TIME_ZONE_LOCAL_UTC_OFFSET_HOURS = TIME_ZONE_LOCAL_UTC_OFFSET[0]
-TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES = TIME_ZONE_LOCAL_UTC_OFFSET[1]
 
 TIME_ZONE_LOCAL_INFO = {
     "hours": TIME_ZONE_LOCAL_UTC_OFFSET[0],
@@ -74,8 +73,9 @@ def set_utc_mode(mode):
     _FLAGS['utc_mode'] = bool(mode)
 
 
-def now(override_use_utc=None):
-    """Return a current-time datetime.datetime and a UTC timezone flag.
+def now(override_use_utc: Optional[bool] = None) -> Tuple[datetime, bool]:
+    """Return a current-time, timezone-aware datetime.datetime and a flag
+    indicating whether it is UTC or not.
 
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
@@ -85,9 +85,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
-        return datetime.utcnow(), False
+        return datetime.now(timezone.utc), False
     else:
-        return datetime.now(), True
+        return datetime.now().astimezone(), True
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
@@ -149,8 +149,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         else:
             custom_string = custom_time_zone_info["string_extended"]
         if date_time_is_local:
-            date_time_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            date_time_hours, date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET
         else:
             date_time_hours, date_time_minutes = (0, 0)
         diff_hours = custom_hours - date_time_hours
@@ -161,18 +160,15 @@ def get_time_string(date_time, display_sub_seconds=False,
     elif override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
-            date_time = date_time - timedelta(
-                hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
-                minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
-            )
+            h, m = TIME_ZONE_LOCAL_UTC_OFFSET
+            date_time = date_time - timedelta(hours=h, minutes=m)
     else:
         if use_basic_format:
             time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
         else:
             time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
         if not date_time_is_local:
-            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            diff_hours, diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:
