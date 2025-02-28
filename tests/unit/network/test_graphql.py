@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Type
-
 import pytest
 from pytest import param
-from graphql import parse, TypeInfo, TypeInfoVisitor, visit
+from graphql import (
+    TypeInfo,
+    TypeInfoVisitor,
+    get_operation_ast,
+    parse,
+    visit
+)
 
 from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
 from cylc.flow.network.graphql import (
@@ -132,14 +136,14 @@ def test_query_variables(
     def test():
         """Inner function to avoid duplication in if/else"""
         document = parse(query)
-        type_info = TypeInfo(self.schema)
+        type_info = TypeInfo(schema)
         cylc_visitor = CylcVisitor(
             type_info,
             variables,
             search_arg
         )
         visit(
-            self.operation,
+            get_operation_ast(document),
             TypeInfoVisitor(
                 type_info,
                 cylc_visitor
