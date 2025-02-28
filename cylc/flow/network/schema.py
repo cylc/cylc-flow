@@ -160,6 +160,7 @@ STRIP_NULL_DEFAULT = Argument(
 DELTA_STORE_DEFAULT = Boolean(default_value=False)
 DELTA_TYPE_DEFAULT = String(default_value='added')
 
+# Note: "ex" prefix means "exclude"
 JOB_ARGS = {
     'ids': graphene.List(ID, default_value=[]),
     'exids': graphene.List(ID, default_value=[]),
@@ -1514,7 +1515,7 @@ async def mutator(
             cylc.flow.network.resolvers.Resolvers or Scheduler command_<name>
             method). If None, uses mutation class name converted to snake_case.
         workflows: List of workflow IDs.
-        exworkflows: List of workflow IDs.
+        exworkflows: List of workflow IDs to exclude.
 
     """
     if command is None:
