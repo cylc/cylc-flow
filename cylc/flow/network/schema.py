@@ -48,6 +48,8 @@ from graphene import (
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
+from graphene.types.schema import identity_resolve
+
 from graphql.type.definition import get_named_type
 
 from cylc.flow import LOG_LEVELS
@@ -70,8 +72,7 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.run_modes import (
-    TASK_CONFIG_RUN_MODES, WORKFLOW_RUN_MODES, RunMode)
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_STATUS_DESC,
@@ -309,8 +310,8 @@ def process_resolver_info(
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
     # to know which delta-store to use."""
-    if 'backend_sub_id' in info.variable_values:
-        args['sub_id'] = info.variable_values['backend_sub_id']
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
 
     field_name: str = to_snake_case(info.field_name)
     # root is the parent data object.
@@ -620,19 +621,18 @@ class TimeZone(ObjectType):
     string_extended = String()
 
 
-# The run mode for the workflow.
-WorkflowRunMode = graphene.Enum(
-    'WorkflowRunMode',
-    [(m.capitalize(), m) for m in WORKFLOW_RUN_MODES],
-    description=lambda x: RunMode(x.value).describe() if x else None,
-)
+class TaskRunMode(graphene.Enum):
+    """The mode used to run a task."""
 
-# The run mode for the task.
-TaskRunMode = graphene.Enum(
-    'TaskRunMode',
-    [(m.capitalize(), m) for m in TASK_CONFIG_RUN_MODES],
-    description=lambda x: RunMode(x.value).describe() if x else None,
-)
+    # NOTE: using a different enum because:
+    # * We only want to offer a subset of run modes (REQUEST_* only).
+
+    Live = cast('Enum', RunMode.LIVE)  # type: graphene.Enum
+    Skip = cast('Enum', RunMode.SKIP)  # type: graphene.Enum
+
+    @property
+    def description(self):
+        return RunMode(self.value).describe()
 
 
 class Workflow(ObjectType):
@@ -862,7 +862,7 @@ class Runtime(ObjectType):
     directives = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     environment = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     outputs = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
-    run_mode = TaskRunMode(default_value=TaskRunMode.Live.name)
+    run_mode = TaskRunMode(default_value=TaskRunMode.Live)
 
 
 RUNTIME_FIELD_TO_CFG_MAP = {
@@ -1694,6 +1694,21 @@ LogLevels = graphene.Enum(
 )
 
 
+class WorkflowRunMode(graphene.Enum):
+    """The mode used to run a workflow."""
+
+    # NOTE: using a different enum because:
+    # * We only want to offer a subset of run modes (REQUEST_* only).
+
+    Live = cast('Enum', RunMode.LIVE)  # type: graphene.Enum
+    Dummy = cast('Enum', RunMode.DUMMY)  # type: graphene.Enum
+    Simulation = cast('Enum', RunMode.SIMULATION)  # type: graphene.Enum
+
+    @property
+    def description(self):
+        return RunMode(self.value).describe()
+
+
 class WorkflowStopMode(graphene.Enum):
     """The mode used to stop a running workflow."""
 
@@ -1984,7 +1999,7 @@ class Stop(Mutation):
             submitted immediately if the workflow is restarted.
             Remaining task event handlers, job poll and kill commands, will
             be executed prior to shutdown, unless
-            the stop mode is `{WorkflowStopMode.Now.name}`.
+            the stop mode is `{WorkflowStopMode.Now}`.
 
             Valid for: paused, running, stopping workflows.
         ''')
@@ -2509,6 +2524,27 @@ class Deltas(ObjectType):
     )
 
 
+# TODO: Change to use subscribe arg/default graphql-core has a subscribe field
+# for both Meta and Field, graphene at v3.4.3 does not.. As a workaround
+# the subscribe function is looked up via the following mapping:
+SUB_RESOLVER_MAPPING = {
+    'deltas': delta_subs,
+    'workflows': delta_subs,
+    'job': delta_subs,
+    'jobs': delta_subs,
+    'task': delta_subs,
+    'tasks': delta_subs,
+    'taskProxy': delta_subs,
+    'taskProxies': delta_subs,
+    'family': delta_subs,
+    'families': delta_subs,
+    'familyProxy': delta_subs,
+    'familyProxies': delta_subs,
+    'edges': delta_subs,
+    'nodesEdges': delta_subs,
+}
+
+
 class Subscriptions(ObjectType):
     """Defines the subscriptions available in the schema."""
     class Meta:
@@ -2523,7 +2559,7 @@ class Subscriptions(ObjectType):
         strip_null=Boolean(default_value=False),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     workflows = graphene.List(
         Workflow,
@@ -2536,7 +2572,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=2.5),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     job = Field(
         Job,
@@ -2547,7 +2583,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     jobs = graphene.List(
         Job,
@@ -2558,7 +2594,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task = Field(
         Task,
@@ -2569,7 +2605,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     tasks = graphene.List(
         Task,
@@ -2580,7 +2616,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task_proxy = Field(
         TaskProxy,
@@ -2591,7 +2627,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task_proxies = graphene.List(
         TaskProxy,
@@ -2602,7 +2638,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family = Field(
         Family,
@@ -2613,7 +2649,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     families = graphene.List(
         Family,
@@ -2624,7 +2660,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family_proxy = Field(
         FamilyProxy,
@@ -2635,7 +2671,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family_proxies = graphene.List(
         FamilyProxy,
@@ -2646,7 +2682,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     edges = graphene.List(
         Edge,
@@ -2657,7 +2693,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     nodes_edges = Field(
         NodesEdges,
@@ -2668,7 +2704,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
 
 

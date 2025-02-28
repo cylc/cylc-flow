@@ -5,7 +5,7 @@ dependencies:
   - ansimarkup >=1.0.0
   - async-timeout>=3.0.0 # [py<3.11]
   - colorama >=0.4,<1.0
-  - graphene >=3.4.3,<4
+  - graphene ==3.4.3
   - graphviz  # for static graphing
   # Note: can't pin jinja2 any higher than this until we give up on Cylc 7 back-compat
   - jinja2 >=3.0,<3.1
