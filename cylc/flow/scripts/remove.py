@@ -98,6 +98,7 @@ def get_option_parser() -> COP:
         action='append',
         dest='flow',
         metavar='FLOW',
+        default=[],
         help=(
             "Remove the task(s) from the specified flow. "
             "Reuse the option to remove the task(s) from multiple flows. "

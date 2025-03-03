@@ -27,7 +27,8 @@ from pathlib import Path
 import re
 from time import sleep
 import pytest
-import urllib
+from urllib import request
+from urllib.error import HTTPError
 
 EXCLUDE = [
     r'*//www.gnu.org/licenses/',
@@ -60,13 +61,13 @@ def test_embedded_url(link):
     to run in parallel
     """
     try:
-        urllib.request.urlopen(link).getcode()
-    except urllib.error.HTTPError:
+        request.urlopen(link).getcode()
+    except HTTPError:
         # Sleep and retry to reduce risk of flakiness:
         sleep(10)
         try:
-            urllib.request.urlopen(link).getcode()
-        except urllib.error.HTTPError as exc:
+            request.urlopen(link).getcode()
+        except HTTPError as exc:
             # Allowing 403 - just because a site forbids us doesn't mean the
             # link is wrong.
             if exc.code != 403:
