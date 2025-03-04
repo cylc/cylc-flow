@@ -102,7 +102,9 @@ def write_messages(workflow, job_id, messages, event_time):
     _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(workflow, job_id, messages, event_time):
+def send_messages(
+    workflow: str, job_id: str, messages: List[list], event_time: str
+) -> None:
     workflow = os.path.normpath(workflow)
     try:
         pclient = get_client(workflow)
@@ -111,23 +113,24 @@ def send_messages(workflow, job_id, messages, event_time):
         # either the workflow is stopped or the contact file is not present
         # on the job host (i.e. comms method is polling)
         # eitherway don't try messaging
-        pass
-    except Exception:
-        # Backward communication not possible
+        return
+    except Exception as exc:
+        print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()
-    else:
-        mutation_kwargs = {
-            'request_string': MUTATION,
-            'variables': {
-                'wFlows': [workflow],
-                'taskJob': job_id,
-                'eventTime': event_time,
-                'messages': messages,
-            }
+        # cylc message shouldn't fail if the client can't initialize.
+        return
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [workflow],
+            'taskJob': job_id,
+            'eventTime': event_time,
+            'messages': messages,
         }
-        pclient('graphql', mutation_kwargs)
+    }
+    pclient('graphql', mutation_kwargs)
 
 
 def _append_job_status_file(workflow, job_id, event_time, messages):
@@ -138,7 +141,8 @@ def _append_job_status_file(workflow, job_id, event_time, messages):
     try:
         job_status_file = open(job_log_name + '.status', 'a')  # noqa: SIM115
         # TODO: niceify read/write/appending messages to this file
-    except IOError:
+    except IOError as exc:
+        print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()

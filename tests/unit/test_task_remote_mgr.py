@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import suppress
 from pathlib import Path
 from time import sleep
 import pytest
@@ -89,7 +90,7 @@ def test_remote_init_skip(
             'get_dirs_to_symlink'):
         monkeypatch.setattr(f'cylc.flow.task_remote_mgr.{item}', MagicMock())
 
-    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform, None, '')
+    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform)
     call_expected = not skip_expected
     assert mock_task_remote_mgr._remote_init_items.called is call_expected
     assert mock_construct_ssh_cmd.called is call_expected
@@ -114,7 +115,7 @@ def test_get_log_file_name(tmp_path: Path,
                            install_target: str,
                            load_type: Optional[str],
                            expected: str):
-    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None)
+    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None, None, None)
     if load_type == 'restart':
         task_remote_mgr.is_restart = True
     elif load_type == 'reload':
@@ -229,6 +230,9 @@ def test_map_platforms_used_for_install_targets(
     install_targets_map = TaskRemoteMgr._get_remote_tidy_targets(
         set(platform_names), set(install_targets))
 
+    with suppress(KeyError):
+        install_targets_map.pop('localhost')
+
     assert (
         expect['targets'] == flatten_install_targets_map(install_targets_map))
 
@@ -281,7 +285,8 @@ def task_remote_mgr_eval(monkeypatch: pytest.MonkeyPatch):
             workflow='usg_ishimura',
             proc_pool=Mock(),
             bad_hosts=[],
-            db_mgr=None
+            db_mgr=None,
+            server=None
         )
         task_remote_mgr.remote_command_map = remote_cmd_map
         return task_remote_mgr

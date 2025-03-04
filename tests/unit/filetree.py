@@ -27,14 +27,19 @@ A filetree is represented by a dict like so:
                 'file.txt': None
             }
         },
-        # Symlinks are represented by pathlib.Path, with the target represented
-        # by the relative path from the tmp_path directory:
-        'symlink': Path('dir/another-dir')
+        # Symlinks are represented by the Symlink class, with the target
+        # represented by the relative path from the tmp_path directory:
+        'symlink': Symlink('dir/another-dir')
     }
 """
 
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Any, Dict, List
+
+
+class Symlink(PosixPath):
+    """A class to represent a symlink target."""
+    ...
 
 
 def create_filetree(
@@ -53,10 +58,9 @@ def create_filetree(
         if isinstance(entry, dict):
             path.mkdir(exist_ok=True)
             create_filetree(entry, path, root)
-        elif isinstance(entry, Path):
+        elif isinstance(entry, Symlink):
             path.symlink_to(root / entry)
         else:
-
             path.touch()
 
 
@@ -79,89 +83,155 @@ def get_filetree_as_list(
 
 
 FILETREE_1 = {
-    'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'log': Path('sym/cylc-run/foo/bar/log'),
-        'mirkwood': Path('you-shall-not-pass/mirkwood'),
-        'rincewind.txt': Path('you-shall-not-pass/rincewind.txt')
-    }}},
-    'sym': {'cylc-run': {'foo': {'bar': {
-        'log': {
-            'darmok': Path('you-shall-not-pass/darmok'),
-            'temba.txt': Path('you-shall-not-pass/temba.txt'),
-            'bib': {
-                'fortuna.txt': None
-            }
-        }
-    }}}},
+    'cylc-run': {
+        'foo': {
+            'bar': {
+                '.service': {
+                    'db': None,
+                },
+                'flow.cylc': None,
+                'log': Symlink('sym/cylc-run/foo/bar/log'),
+                'mirkwood': Symlink('you-shall-not-pass/mirkwood'),
+                'rincewind.txt': Symlink('you-shall-not-pass/rincewind.txt'),
+            },
+        },
+    },
+    'sym': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    'log': {
+                        'darmok': Symlink('you-shall-not-pass/darmok'),
+                        'temba.txt': Symlink('you-shall-not-pass/temba.txt'),
+                        'bib': {
+                            'fortuna.txt': None,
+                        },
+                    },
+                },
+            },
+        },
+    },
     'you-shall-not-pass': {  # Nothing in here should get deleted
         'darmok': {
-            'jalad.txt': None
+            'jalad.txt': None,
         },
         'mirkwood': {
-            'spiders.txt': None
+            'spiders.txt': None,
         },
         'rincewind.txt': None,
-        'temba.txt': None
-    }
+        'temba.txt': None,
+    },
 }
 
 FILETREE_2 = {
-    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
-    'sym-run': {'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': Path('sym-share/cylc-run/foo/bar/share')
-    }}}},
-    'sym-share': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'macklunkey.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
+    'cylc-run': {'foo': {'bar': Symlink('sym-run/cylc-run/foo/bar')}},
+    'sym-run': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    '.service': {
+                        'db': None,
+                    },
+                    'flow.cylc': None,
+                    'share': Symlink('sym-share/cylc-run/foo/bar/share'),
+                },
+            },
+        },
+    },
+    'sym-share': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    'share': {
+                        'cycle': Symlink(
+                            'sym-cycle/cylc-run/foo/bar/share/cycle'
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    'sym-cycle': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    'share': {
+                        'cycle': {
+                            'macklunkey.txt': None,
+                        },
+                    },
+                },
+            },
+        },
+    },
+    'you-shall-not-pass': {},
 }
 
 FILETREE_3 = {
-    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
-    'sym-run': {'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'sokath.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
+    'cylc-run': {
+        'foo': {
+            'bar': Symlink('sym-run/cylc-run/foo/bar'),
+        },
+    },
+    'sym-run': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    '.service': {
+                        'db': None,
+                    },
+                    'flow.cylc': None,
+                    'share': {
+                        'cycle': Symlink(
+                            'sym-cycle/cylc-run/foo/bar/share/cycle'
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    'sym-cycle': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    'share': {
+                        'cycle': {
+                            'sokath.txt': None,
+                        },
+                    },
+                },
+            },
+        },
+    },
+    'you-shall-not-pass': {},
 }
 
 FILETREE_4 = {
-    'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'kiazi.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
+    'cylc-run': {
+        'foo': {
+            'bar': {
+                '.service': {
+                    'db': None,
+                },
+                'flow.cylc': None,
+                'share': {
+                    'cycle': Symlink('sym-cycle/cylc-run/foo/bar/share/cycle'),
+                },
+            },
+        },
+    },
+    'sym-cycle': {
+        'cylc-run': {
+            'foo': {
+                'bar': {
+                    'share': {
+                        'cycle': {
+                            'kiazi.txt': None,
+                        },
+                    },
+                },
+            },
+        },
+    },
+    'you-shall-not-pass': {},
 }

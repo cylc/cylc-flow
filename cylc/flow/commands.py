@@ -53,17 +53,23 @@ For more info see: https://github.com/cylc/cylc-flow/issues/3329
 """
 
 from contextlib import suppress
-from time import sleep, time
+from time import (
+    sleep,
+    time,
+)
 from typing import (
+    TYPE_CHECKING,
     AsyncGenerator,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
-    TYPE_CHECKING,
+    TypeVar,
     Union,
 )
+
+from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import LOG
 import cylc.flow.command_validation as validate
@@ -73,23 +79,22 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
+from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
-from cylc.flow.workflow_status import RunMode, StopMode
+from cylc.flow.workflow_status import StopMode
 
-from metomi.isodatetime.parsers import TimePointParser
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
 
     # define a type for command implementations
-    Command = Callable[
-        ...,
-        AsyncGenerator,
-    ]
+    Command = Callable[..., AsyncGenerator]
+    # define a generic type needed for the @_command decorator
+    _TCommand = TypeVar('_TCommand', bound=Command)
 
 # a directory of registered commands (populated on module import)
 COMMANDS: 'Dict[str, Command]' = {}
@@ -97,15 +102,15 @@ COMMANDS: 'Dict[str, Command]' = {}
 
 def _command(name: str):
     """Decorator to register a command."""
-    def _command(fcn: 'Command'):
+    def _command(fcn: '_TCommand') -> '_TCommand':
         nonlocal name
         COMMANDS[name] = fcn
-        fcn.command_name = name  # type: ignore
+        fcn.command_name = name  # type: ignore[attr-defined]
         return fcn
     return _command
 
 
-async def run_cmd(fcn, *args, **kwargs):
+async def run_cmd(bound_fcn: AsyncGenerator):
     """Run a command outside of the scheduler's main loop.
 
     Normally commands are run via the Scheduler's command_queue (which is
@@ -120,10 +125,9 @@ async def run_cmd(fcn, *args, **kwargs):
     For these purposes use "run_cmd", otherwise, queue commands via the
     scheduler as normal.
     """
-    cmd = fcn(*args, **kwargs)
-    await cmd.__anext__()  # validate
+    await bound_fcn.__anext__()  # validate
     with suppress(StopAsyncIteration):
-        return await cmd.__anext__()  # run
+        return await bound_fcn.__anext__()  # run
 
 
 @_command('set')
@@ -211,7 +215,7 @@ async def stop(
         try:
             mode = StopMode(mode)
         except ValueError:
-            raise CommandFailedError(f"Invalid stop mode: '{mode}'")
+            raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
         if mode is StopMode.REQUEST_KILL:
             schd.time_next_kill = time()
@@ -256,19 +260,16 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 
 @_command('kill_tasks')
 async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
-    """Kill all tasks or a task/family if options are provided."""
+    """Kill tasks.
+
+    Args:
+        tasks: Tasks/families/globs to kill.
+    """
     validate.is_tasks(tasks)
     yield
-    itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    if schd.get_run_mode() == RunMode.SIMULATION:
-        for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state_reset(TASK_STATUS_FAILED)
-                schd.data_store_mgr.delta_task_state(itask)
-        yield len(bad_items)
-    else:
-        schd.task_job_mgr.kill_task_jobs(schd.workflow, itasks)
-        yield len(bad_items)
+    active, _, unmatched = schd.pool.filter_task_proxies(tasks)
+    num_unkillable = schd.kill_tasks(active)
+    yield len(unmatched) + num_unkillable
 
 
 @_command('hold')
@@ -308,17 +309,21 @@ async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
         lvl = int(level)
         LOG.setLevel(lvl)
     except (TypeError, ValueError) as exc:
-        raise CommandFailedError(exc)
+        raise CommandFailedError(exc) from None
     cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
     yield
 
 
 @_command('remove_tasks')
-async def remove_tasks(schd: 'Scheduler', tasks: Iterable[str]):
+async def remove_tasks(
+    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+):
     """Remove tasks."""
     validate.is_tasks(tasks)
+    validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
-    yield schd.pool.remove_tasks(tasks)
+    flow_nums = get_flow_nums_set(flow)
+    schd.remove_tasks(tasks, flow_nums)
 
 
 @_command('reload_workflow')
@@ -333,7 +338,7 @@ async def reload_workflow(schd: 'Scheduler'):
 
     # flush out preparing tasks before attempting reload
     schd.reload_pending = 'waiting for pending tasks to submit'
-    while schd.release_queued_tasks():
+    while schd.release_tasks_to_run():
         # Run the subset of main-loop functionality required to push
         # preparing through the submission pipeline and keep the workflow
         # responsive (e.g. to the `cylc stop` command).
@@ -413,7 +418,7 @@ async def reload_workflow(schd: 'Scheduler'):
         # Reset the remote init map to trigger fresh file installation
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
         schd.task_job_mgr.task_remote_mgr.is_reload = True
-        schd.pool.reload_taskdefs(config)
+        schd.pool.reload(config)
         # Load jobs from DB
         schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             schd.data_store_mgr.insert_db_job
@@ -441,9 +446,17 @@ async def force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
+    on_resume: bool = False
 ):
     """Manual task trigger."""
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
+    if on_resume:
+        LOG.warning(
+            "The --on-resume option is deprecated and will be removed "
+            "at Cylc 8.5."
+        )
     yield
-    yield schd.pool.force_trigger_tasks(tasks, flow, flow_wait, flow_descr)
+    yield schd.pool.force_trigger_tasks(
+        tasks, flow, flow_wait, flow_descr, on_resume
+    )

@@ -17,7 +17,10 @@
 
 import ast
 from contextlib import suppress
-from functools import partial
+from functools import (
+    lru_cache,
+    partial,
+)
 import json
 import re
 from textwrap import dedent
@@ -26,9 +29,11 @@ from typing import (
     Callable,
     Dict,
     List,
+    Optional,
     Sequence,
     Tuple,
 )
+
 
 BOOL_SYMBOLS: Dict[bool, str] = {
     # U+2A2F (vector cross product)
@@ -148,25 +153,37 @@ def cli_format(cmd: List[str]):
     return ' '.join(cmd)
 
 
-def serialise_set(flow_nums: set) -> str:
+def serialise_set(flow_nums: Optional[set] = None) -> str:
     """Convert set to json, sorted.
 
     For use when a sorted result is needed for consistency.
 
-    Example:
-    >>> serialise_set({'3','2'})
-    '["2", "3"]'
+    Examples:
+        >>> serialise_set({'b', 'a'})
+        '["a", "b"]'
+        >>> serialise_set({3, 2})
+        '[2, 3]'
+        >>> serialise_set()
+        '[]'
 
     """
-    return json.dumps(sorted(flow_nums))
+    return _serialise_set(tuple(sorted(flow_nums or ())))
 
 
+@lru_cache(maxsize=100)
+def _serialise_set(flow_nums: tuple) -> str:
+    return json.dumps(flow_nums)
+
+
+@lru_cache(maxsize=100)
 def deserialise_set(flow_num_str: str) -> set:
     """Convert json string to set.
 
     Example:
-    >>> sorted(deserialise_set('[2, 3]'))
-    [2, 3]
+    >>> deserialise_set('[2, 3]') == {2, 3}
+    True
+    >>> deserialise_set('[]')
+    set()
 
     """
     return set(json.loads(flow_num_str))
@@ -281,7 +298,7 @@ def restricted_evaluator(
                 error_class,
                 f'{exc.msg}: {exc.text}',
                 {'expr': expr}
-            )
+            ) from None
 
         # check against whitelisted types
         try:
@@ -302,7 +319,7 @@ def restricted_evaluator(
                     'error_node': error_node,
                     'error_type': error_node.__class__.__name__,
                 },
-            )
+            ) from None
 
         # run the expresion
         # Note: this may raise runtime errors

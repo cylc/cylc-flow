@@ -1,0 +1,40 @@
+#!Jinja2
+
+{%
+    set DATES = [
+        '2000-01-01T00:00Z',
+        '2000-01-01T06:00Z',
+        '2000-03-05T12:00Z',
+        '2000-05-28T13:36Z',
+        '2001-01-05T23:24',
+        '2002-04-30T04:20',
+    ]
+%}
+
+[meta]
+    title = Irregular cycling example
+    description = """
+        A workflow that runs a group of tasks on arbitrary dates.
+    """
+
+[scheduling]
+    # start cycling at the first date
+    initial cycle point = {{ DATES[0] }}
+    [[graph]]
+        # define the tasks you want to run on startup
+        R1 = install
+
+{# loop over the list of dates #}
+{% for date in DATES %}
+        # schedule the tasks to run at each date
+        R1/{{ date }} = """
+            # NOTE: install[^] references the task "install" in the first cycle
+            install[^] => prep => run_model => plot
+        """
+{% endfor %}
+
+[runtime]
+    [[install]]
+    [[prep]]
+    [[run_model]]
+    [[plot]]

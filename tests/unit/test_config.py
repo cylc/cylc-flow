@@ -17,8 +17,8 @@
 import os
 import sys
 from optparse import Values
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
-from pathlib import Path
+from typing import (
+    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
 import pytest
 import logging
 from types import SimpleNamespace
@@ -35,7 +35,7 @@ from cylc.flow.exceptions import (
     WorkflowConfigError,
     XtriggerConfigError,
 )
-from cylc.flow.parsec.exceptions import Jinja2Error, EmPyError
+from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.workflow_files import WorkflowFiles
@@ -47,8 +47,9 @@ from cylc.flow.task_outputs import (
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
 
-
-Fixture = Any
+if TYPE_CHECKING:
+    from pathlib import Path
+    Fixture = Any
 
 
 def _tmp_flow_config(tmp_run_dir: Callable):
@@ -60,8 +61,8 @@ def _tmp_flow_config(tmp_run_dir: Callable):
 
     Returns the path to the flow file.
     """
-    def __tmp_flow_config(id_: str, config: str) -> Path:
-        run_dir: Path = tmp_run_dir(id_)
+    def __tmp_flow_config(id_: str, config: str) -> 'Path':
+        run_dir: 'Path' = tmp_run_dir(id_)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
@@ -82,7 +83,7 @@ class TestWorkflowConfig:
     """Test class for the Cylc WorkflowConfig object."""
 
     def test_xfunction_imports(
-            self, mock_glbl_cfg: Fixture, tmp_path: Path):
+            self, mock_glbl_cfg: 'Fixture', tmp_path: 'Path'):
         """Test for a workflow configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -175,7 +176,8 @@ class TestWorkflowConfig:
         with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
                            options=SimpleNamespace())
-        assert "module 'capybara' has no attribute 'capybara'" in str(excinfo.value)
+        assert "module 'capybara' has no attribute 'capybara'" in str(
+            excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function is not callable."""
@@ -358,7 +360,7 @@ def test_process_icp(
     expected_icp: Optional[str],
     expected_eval_icp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
-    monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
+    monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_initial_cycle_point().
 
@@ -445,7 +447,7 @@ def test_process_startcp(
     starttask: Optional[str],
     expected: str,
     expected_err: Optional[Tuple[Type[Exception], str]],
-    monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
+    monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_start_cycle_point().
 
@@ -648,7 +650,7 @@ def test_process_fcp(
     options_fcp: Optional[str],
     expected_fcp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
-    set_cycling_type: Fixture
+    set_cycling_type: 'Fixture'
 ) -> None:
     """Test WorkflowConfig.process_final_cycle_point().
 
@@ -671,7 +673,7 @@ def test_process_fcp(
         initial_point=loader.get_point(
             scheduling_cfg['initial cycle point']
         ).standardise(),
-        final_point = None,
+        final_point=None,
         options=SimpleNamespace(fcp=options_fcp),
     )
 
@@ -812,7 +814,7 @@ def test_stopcp_after_fcp(
     cycle point is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
     id_ = 'cassini'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         allow implicit tasks = True
     [scheduling]
@@ -1074,47 +1076,6 @@ def test_jinja2_cylc_vars(tmp_flow_config, cylc_var, expected_err):
         assert expected_err[1] in str(exc)
 
 
-@pytest.mark.parametrize(
-    'cylc_var, expected_err',
-    [
-        ["CYLC_WORKFLOW_NAME", None],
-        ["CYLC_BEEF_WELLINGTON", (EmPyError, "is not defined")],
-    ]
-)
-def test_empy_cylc_vars(tmp_flow_config, cylc_var, expected_err):
-    """Defined CYLC_ variables should be available to empy during parsing.
-
-    This test is not located in the empy_support unit test module because
-    CYLC_ variables are only defined during workflow config parsing.
-    """
-    reg = 'nodule'
-    flow_file = tmp_flow_config(reg, """#!empy
-    # @(""" + cylc_var + """)
-    [scheduler]
-        allow implicit tasks = True
-    [scheduling]
-        [[graph]]
-            R1 = foo
-    """)
-
-    # empy replaces sys.stdout with a "proxy". And pytest needs it for capture?
-    # (clue: "pytest --capture=no" avoids the error)
-    stdout = sys.stdout
-    sys.stdout._testProxy = lambda: ''
-    sys.stdout.pop = lambda _: ''
-    sys.stdout.push = lambda _: ''
-    sys.stdout.clear = lambda _: ''
-
-    if expected_err is None:
-        WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
-    else:
-        with pytest.raises(expected_err[0]) as exc:
-            WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
-        assert expected_err[1] in str(exc)
-
-    sys.stdout = stdout
-
-
 def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
     """Test that the rsync includes in the correct """
     id_ = 'rsynctest'
@@ -1366,7 +1327,7 @@ def test_implicit_tasks(
     """
     # Setup
     id_ = 'rincewind'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         {
             f'allow implicit tasks = {allow_implicit_tasks}'
@@ -1400,7 +1361,7 @@ def test_implicit_tasks(
 
 @pytest.mark.parametrize('workflow_meta', [True, False])
 @pytest.mark.parametrize('url_type', ['good', 'bad', 'ugly', 'broken'])
-def test_process_urls(caplog, log_filter, workflow_meta, url_type):
+def test_process_urls(log_filter, workflow_meta, url_type):
 
     if url_type == 'good':
         # valid cylc 8 syntax
@@ -1436,7 +1397,6 @@ def test_process_urls(caplog, log_filter, workflow_meta, url_type):
     elif url_type == 'ugly':
         WorkflowConfig.process_metadata_urls(config)
         assert log_filter(
-            caplog,
             contains='Detected deprecated template variables',
         )
 
@@ -1464,13 +1424,12 @@ def test_zero_interval(
     should_warn: bool,
     opts: Values,
     tmp_flow_config: Callable,
-    caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
 ):
     """Test that a zero-duration recurrence with >1 repetition gets an
     appropriate warning."""
     id_ = 'ordinary'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
     [scheduler]
         UTC mode = True
         allow implicit tasks = True
@@ -1482,7 +1441,6 @@ def test_zero_interval(
     """)
     WorkflowConfig(id_, flow_file, options=opts)
     logged = log_filter(
-        caplog,
         level=logging.WARNING,
         contains="Cannot have more than 1 repetition for zero-duration"
     )
@@ -1514,7 +1472,7 @@ def test_chain_expr(
     Note the order matters when "nominal" units (years, months) are used.
     """
     id_ = 'osgiliath'
-    flow_file: Path = tmp_flow_config(id_, f"""
+    flow_file: 'Path' = tmp_flow_config(id_, f"""
         [scheduler]
             UTC mode = True
             allow implicit tasks = True
@@ -1693,7 +1651,7 @@ def test__warn_if_queues_have_implicit_tasks(caplog):
     ]
 )
 def test_cylc_env_at_parsing(
-    tmp_path: Path,
+    tmp_path: 'Path',
     monkeypatch: pytest.MonkeyPatch,
     installed,
     run_dir,

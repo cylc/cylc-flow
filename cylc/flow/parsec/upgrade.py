@@ -110,7 +110,7 @@ class upgrader:
                 raise UpgradeError(
                     f'{self.show_keys(keys[:-1], True)}'
                     f' ("{keys[-2]}" should be a [section] not a setting)'
-                )
+                ) from None
         return item
 
     def put_item(self, keys, val):

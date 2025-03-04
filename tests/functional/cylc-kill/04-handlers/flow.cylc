@@ -1,0 +1,39 @@
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        expected task failures = 1/a, 1/b, 1/c
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    [[graph]]
+        R1 = """
+            a:started => killer
+            a:failed => end
+
+            b:submitted? => killer
+            b:submit-failed? => end
+
+            c:submit-failed? => end
+
+            c:submitted? => nope
+        """
+[runtime]
+    [[a, b, c]]
+        [[[events]]]
+            failed handlers = echo %(id)s
+            submission failed handlers = echo %(id)s
+    [[a]]
+        script = sleep 40
+    [[b]]
+        platform = old_street
+    [[c]]
+        platform = $(sleep 40; echo localhost)
+    [[killer]]
+        script = """
+            cylc kill "$CYLC_WORKFLOW_ID//1/a" "$CYLC_WORKFLOW_ID//1/b"
+
+            cylc__job__poll_grep_workflow_log -E '1\/c.* => preparing'
+            cylc kill "$CYLC_WORKFLOW_ID//1/c"
+        """
+    [[end]]
+        script = cylc stop "$CYLC_WORKFLOW_ID" --now --now

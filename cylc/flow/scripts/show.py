@@ -60,6 +60,7 @@ from cylc.flow.task_state import (
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     ID_MULTI_ARG_DOC,
+    Options,
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.util import BOOL_SYMBOLS
@@ -103,6 +104,10 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
     name
     cyclePoint
     state
+    isHeld
+    isQueued
+    isRunahead
+    flowNums
     task {
       meta {
         title
@@ -246,6 +251,9 @@ def get_option_parser():
     return parser
 
 
+ShowOptions = Options(get_option_parser())
+
+
 async def workflow_meta_query(workflow_id, pclient, options, json_filter):
     query = WORKFLOW_META_QUERY
     query_kwargs = {
@@ -330,7 +338,25 @@ async def prereqs_and_outputs_query(
                         f'<bold>{key}:</bold>'
                         f' {value or "<m>(not given)</m>"}')
 
-                ansiprint(f'<bold>state:</bold> {state}')
+                # state and state attributes
+                attrs = []
+                if t_proxy['isHeld']:
+                    attrs.append("held")
+                if t_proxy['isQueued']:
+                    attrs.append("queued")
+                if t_proxy['isRunahead']:
+                    attrs.append("runahead")
+                state_msg = state
+                if attrs:
+                    state_msg += f" ({','.join(attrs)})"
+                ansiprint(f'<bold>state:</bold> {state_msg}')
+
+                # flow numbers, if not just 1
+                if t_proxy["flowNums"] != "[1]":
+                    ansiprint(
+                        f"<bold>flows:</bold> "
+                        f"{t_proxy['flowNums'].replace(' ', '')}"
+                    )
 
                 # prerequisites
                 pre_txt = "<bold>prerequisites:</bold>"
@@ -383,8 +409,10 @@ async def prereqs_and_outputs_query(
 
     if not task_proxies:
         ansiprint(
-            f"<red>No matching active tasks found: {', '.join(ids_list)}",
-            file=sys.stderr)
+            "<red>No matching active tasks found: "
+            f"{', '.join(ids_list)}</red>",
+            file=sys.stderr,
+        )
         return 1
     return 0
 
@@ -492,7 +520,7 @@ def main(_, options: 'Values', *ids) -> None:
         constraint='mixed',
         max_workflows=1,
     )
-    workflow_id = list(workflow_args)[0]
+    workflow_id = next(iter(workflow_args))
     tokens_list = workflow_args[workflow_id]
 
     if tokens_list and options.task_defs:

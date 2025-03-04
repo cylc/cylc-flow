@@ -10,7 +10,7 @@
  /usr/share/gtksourceview-2.0/language-specs/
 
  If your installation uses GNOME 3, the '2.0' in the paths will need
- to be '3.0'.
+ to be '3.0'. If your installation uses GNOME 4, '2.0' will become '4'.
 
  If using gedit, gedit will need to be totally closed down and reloaded.
 
@@ -93,7 +93,6 @@
         <keyword>work sub-directory</keyword>
         <keyword>warning handlers</keyword>
         <keyword>verbose mode</keyword>
-        <keyword>user</keyword>
         <keyword>to</keyword>
         <keyword>title</keyword>
         <keyword>time limit buffer</keyword>
@@ -116,15 +115,17 @@
         <keyword>stall handlers</keyword>
         <keyword>speedup factor</keyword>
         <keyword>special tasks</keyword>
+        <keyword>skip</keyword>
         <keyword>simulation</keyword>
         <keyword>shutdown handlers</keyword>
+        <keyword>sequential xtriggers</keyword>
         <keyword>sequential</keyword>
         <keyword>script</keyword>
         <keyword>scheduling</keyword>
         <keyword>scheduler</keyword>
         <keyword>runtime</keyword>
         <keyword>runahead limit</keyword>
-        <keyword>run-dir</keyword>
+        <keyword>run mode</keyword>
         <keyword>retry handlers</keyword>
         <keyword>retrieve job logs retry delays</keyword>
         <keyword>retrieve job logs max size</keyword>
@@ -198,10 +199,12 @@
         <keyword>cycle point format</keyword>
         <keyword>custom handlers</keyword>
         <keyword>critical handlers</keyword>
+        <keyword>completion</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>
         <keyword>batch submit command template</keyword>
+        <keyword>alt-cylc-run-dir</keyword>
         <keyword>allow implicit tasks</keyword>
         <keyword>abort on workflow timeout</keyword>
         <keyword>abort on stall timeout</keyword>
@@ -219,7 +222,7 @@
       <end>#\}</end>
     </context>
     <context id="jinja2-substitution" style-ref="template">
-      <match>\{\{.*\}\}</match>
+      <match>\{\{.*?\}\}</match>
     </context>
     <context id="jinja2-block" style-ref="template" end-at-line-end="false">
       <start>\{%</start>

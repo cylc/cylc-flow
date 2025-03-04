@@ -25,8 +25,8 @@ from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 @pytest.mark.parametrize(
     'templating, hashbang',
     [
-        ['empy', 'jinja2'],
-        ['jinja2', 'empy']
+        ['other', 'jinja2'],
+        ['jinja2', 'other']
     ]
 )
 def test_read_and_proc_raises_TemplateVarLanguageClash(

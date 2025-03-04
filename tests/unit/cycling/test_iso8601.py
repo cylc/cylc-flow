@@ -498,6 +498,15 @@ def test_advanced_exclusions_sequences_implied_start_point(set_cycling_type):
     ]
 
 
+def test_point_init():
+    """It should error if inited with anything other than a string."""
+    ISO8601Point('1000')
+    with pytest.raises(TypeError):
+        ISO8601Point(1000)
+    with pytest.raises(TypeError):
+        ISO8601Interval(1000)
+
+
 def test_exclusions_sequences_points(set_cycling_type):
     """Test ISO8601Sequence methods for sequences with exclusions"""
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
@@ -601,12 +610,12 @@ def test_exclusion_zero_duration_warning(set_cycling_type, caplog, log_filter):
     set_cycling_type(ISO8601_CYCLING_TYPE, "+05")
     with pytest.raises(Exception):
         ISO8601Sequence('3000', '2999')
-    assert log_filter(caplog, contains='zero-duration')
+    assert log_filter(contains='zero-duration')
 
     # parsing a point in an exclusion should not
     caplog.clear()
     ISO8601Sequence('P1Y ! 3000', '2999')
-    assert not log_filter(caplog, contains='zero-duration')
+    assert not log_filter(contains='zero-duration')
 
 
 def test_simple(set_cycling_type):

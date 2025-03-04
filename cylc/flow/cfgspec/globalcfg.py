@@ -18,7 +18,7 @@
 import os
 from pathlib import Path
 from sys import stderr
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
@@ -30,6 +30,7 @@ from cylc.flow.platforms import validate_platforms
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
+from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
@@ -587,6 +588,47 @@ task_event_handling.template_variables`.
     '''
 }
 
+
+def comma_sep_section_note(version_changed: str = '') -> str:
+    note_text = "This section can be a comma separated list."
+    if version_changed:
+        note_text = (
+            f".. versionchanged:: {version_changed}\n\n" +
+            indent(note_text, 3 * ' ')
+        )
+
+    example = dedent('''
+
+    .. spoiler:: Example
+
+       For example:
+
+       .. code-block:: cylc
+
+          [a, b]
+              setting = x
+          [a]
+              another_setting = y
+
+       Will become:
+
+       .. code-block:: cylc
+
+          [a]
+              setting = x
+          [b]
+              setting = x
+          [a]
+              another_setting = y
+
+       Which will then be combined according to
+       :ref:`the rules for Cylc config syntax<syntax>`.
+
+    ''')
+
+    return "\n\n.. note::\n\n" + indent(note_text + example, 3 * ' ')
+
+
 # ----------------------------------------------------------------------------
 
 
@@ -801,6 +843,11 @@ with Conf('global.cylc', desc='''
             Conf('ranking', VDR.V_STRING, desc=f'''
                 Rank and filter run hosts based on system information.
 
+                By default, when a workflow is started, Cylc will pick a host
+                for it to run on at random from :cylc:conf:`[..]available`.
+                If no hosts are specified in  :cylc:conf:`[..]available` it
+                will start the scheduler locally.
+
                 Ranking can be used to provide load balancing to ensure no
                 single run host is overloaded. It also provides thresholds
                 beyond which Cylc will not attempt to start new schedulers on
@@ -824,6 +871,11 @@ with Conf('global.cylc', desc='''
 
                    # rank hosts by 15min average of server load
                    getloadavg()[2]
+
+                   # rank hosts by the amount of available RAM (multiply by -1
+                   # to make it choose the host with the most available memory
+                   # rather than the least)
+                   -1 * virtual_memory().available
 
                    # rank hosts by the number of cores
                    # (multiple by -1 because the lowest value is chosen)
@@ -1131,9 +1183,12 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         """):
-            with Conf('<install target>', desc="""
+            with Conf('<install target>', desc=dedent("""
                 :ref:`Host <Install targets>` on which to create the symlinks.
-            """):
+
+                .. versionadded:: 8.0.0
+
+            """) + comma_sep_section_note(version_changed='8.4.0')):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
 
@@ -1148,55 +1203,21 @@ with Conf('global.cylc', desc='''
 
                     .. versionadded:: 8.0.0
                 """)
-                Conf('log', VDR.V_STRING, None, desc="""
-                    Alternative location for the log dir.
+                for folder, versionadded in SYMLINKABLE_LOCATIONS.items():
+                    Conf(folder, VDR.V_STRING, None, desc=f"""
+                        Alternative location for the {folder} dir.
 
-                    If specified the workflow log directory will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/log`` and a
-                    symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/log``. If not specified
-                    the workflow log directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/log``.
+                        If specified the workflow {folder} directory will
+                        be created in
+                        ``<this-path>/cylc-run/<workflow-id>/{folder}``
+                        and a symbolic link will be created from
+                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
+                        If not specified the workflow log directory will
+                        be created in
+                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
 
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('share', VDR.V_STRING, None, desc="""
-                    Alternative location for the share dir.
-
-                    If specified the workflow share directory will be
-                    created in ``<this-path>/cylc-run/<workflow-id>/share``
-                    and a symbolic link will be created from
-                    ``<$HOME/cylc-run/<workflow-id>/share``. If not specified
-                    the workflow share directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/share``.
-
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('share/cycle', VDR.V_STRING, None, desc="""
-                    Alternative directory for the share/cycle dir.
-
-                    If specified the workflow share/cycle directory
-                    will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/share/cycle``
-                    and a symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/share/cycle``. If not
-                    specified the workflow share/cycle directory will be
-                    created in ``$HOME/cylc-run/<workflow-id>/share/cycle``.
-
-                    .. versionadded:: 8.0.0
-                """)
-                Conf('work', VDR.V_STRING, None, desc="""
-                    Alternative directory for the work dir.
-
-                    If specified the workflow work directory will be created in
-                    ``<this-path>/cylc-run/<workflow-id>/work`` and a
-                    symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>/work``. If not specified
-                    the workflow work directory will be created in
-                    ``$HOME/cylc-run/<workflow-id>/work``.
-
-                    .. versionadded:: 8.0.0
-                """)
+                        .. versionadded:: {versionadded}
+                    """)
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
         site.
@@ -1209,7 +1230,9 @@ with Conf('global.cylc', desc='''
 
         .. versionadded:: 8.0.0
     '''):
-        with Conf('<platform name>', desc='''
+        with Conf(
+            '<platform name>',
+            desc=dedent('''
             Configuration defining a platform.
 
             Many of these settings have replaced those of the same name from
@@ -1253,8 +1276,10 @@ with Conf('global.cylc', desc='''
                - :ref:`AdminGuide.PlatformConfigs`, an administrator's guide to
                  platform configurations.
 
-            .. versionadded:: 8.0.0
-        ''') as Platform:
+        ''')
+            + comma_sep_section_note()
+            + ".. versionadded:: 8.0.0",
+        ) as Platform:
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
@@ -1311,7 +1336,7 @@ with Conf('global.cylc', desc='''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
-                Options:
+                ..rubric:: Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
@@ -1319,6 +1344,8 @@ with Conf('global.cylc', desc='''
                    The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
+
+                For more information, see :ref:`TaskComms`.
 
                 .. versionchanged:: 8.0.0
 
@@ -2018,6 +2045,7 @@ class GlobalConfig(ParsecConfig):
         self.dense.clear()
         LOG.debug("Loading site/user config files")
         conf_path_str = os.getenv("CYLC_CONF_PATH")
+
         if conf_path_str:
             # Explicit config file override.
             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
@@ -2030,7 +2058,7 @@ class GlobalConfig(ParsecConfig):
 
         # Expand platforms needs to be performed first because it
         # manipulates the sparse config.
-        self._expand_platforms()
+        self._expand_commas()
 
         # Flesh out with defaults
         self.expand()
@@ -2074,8 +2102,8 @@ class GlobalConfig(ParsecConfig):
                     msg += f'\n * {name}'
                 raise GlobalConfigError(msg)
 
-    def _expand_platforms(self):
-        """Expand comma separated platform names.
+    def _expand_commas(self):
+        """Expand comma separated section headers.
 
         E.G. turn [platforms][foo, bar] into [platforms][foo] and
         platforms[bar].
@@ -2083,6 +2111,12 @@ class GlobalConfig(ParsecConfig):
         if self.sparse.get('platforms'):
             self.sparse['platforms'] = expand_many_section(
                 self.sparse['platforms']
+            )
+        if (
+            self.sparse.get("install", {}).get("symlink dirs")
+        ):
+            self.sparse["install"]["symlink dirs"] = expand_many_section(
+                self.sparse["install"]["symlink dirs"]
             )
 
     def platform_dump(

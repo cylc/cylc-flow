@@ -330,7 +330,7 @@ def install_workflow(
         # This occurs when the file exists but is _not_ a directory.
         raise WorkflowFilesError(
             f"Cannot install as there is an existing file at {rundir}."
-        )
+        ) from None
     if relink:
         link_runN(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
@@ -531,7 +531,7 @@ def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
                 'There is an error in --symlink-dirs option:'
                 f' {pair}. Try entering option in the form '
                 '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
-            )
+            ) from None
         if key not in possible_symlink_dirs:
             dirs = ', '.join(possible_symlink_dirs)
             raise InputError(

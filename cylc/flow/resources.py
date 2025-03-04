@@ -18,7 +18,7 @@
 
 from contextlib import suppress
 from pathlib import Path
-from random import shuffle
+from random import choice
 import shutil
 import sys
 from typing import Optional
@@ -205,12 +205,9 @@ def get_api_key() -> str:
     load over a larger number of keys to prevent hitting the cap with group
     sessions.
     """
-    keys = []
     with open((TUTORIAL_DIR / 'api-keys'), 'r') as api_keys:
-        for api_key in api_keys:
-            keys.append(api_key)
-    shuffle(keys)
-    return keys[0].strip()
+        return choice(list(api_keys)).strip()  # nosec
+        # (the randomness of this choice is not a security concern)
 
 
 def set_api_key(tgt):

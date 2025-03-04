@@ -38,6 +38,8 @@ from jinja2 import (
     TemplateSyntaxError)
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import InputError
+import cylc.flow.flags
 from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.parsec.fileparse import get_cylc_env_vars
 
@@ -75,7 +77,7 @@ class PyModuleLoader(BaseLoader):
         try:
             mdict = __import__(name, fromlist=['*']).__dict__
         except ImportError:
-            raise TemplateNotFound(name)
+            raise TemplateNotFound(name) from None
 
         # inject module dict into the context of an empty template
         def root_render_func(context, *args, **kwargs):
@@ -91,16 +93,19 @@ class PyModuleLoader(BaseLoader):
         return templ
 
 
-def raise_helper(message, error_type='Error'):
+class Jinja2AssertionError(Exception):
+    """Exception raised by the Jinja2 "raise" and "assert" functions."""
+
+
+def raise_helper(message):
     """Provides a Jinja2 function for raising exceptions."""
-    # TODO - this more nicely
-    raise Exception('Jinja2 %s: %s' % (error_type, message))
+    raise Jinja2AssertionError(message)
 
 
 def assert_helper(logical, message):
     """Provides a Jinja2 function for asserting logical expressions."""
     if not logical:
-        raise_helper(message, 'Assertion Error')
+        raise_helper(message)
     return ''  # Prevent None return value polluting output.
 
 
@@ -297,12 +302,25 @@ def jinja2process(
             exc,
             lines=get_error_lines(fpath, flines),
             filename=filename
-        )
+        ) from None
+    except Jinja2AssertionError as exc:
+        if cylc.flow.flags.verbosity < 1:
+            # raise a user-friently representation of this assertion error
+            raise InputError(
+                f'{str(exc)}'
+                '\n(add --verbose for more context)'
+            ) from None
+
+        # raise the full form of the error in verbose mode
+        raise Jinja2Error(
+            exc,
+            lines=get_error_lines(fpath, flines),
+        ) from None
     except Exception as exc:
         raise Jinja2Error(
             exc,
             lines=get_error_lines(fpath, flines),
-        )
+        ) from None
 
     # Ignore blank lines (lone Jinja2 statements leave blank lines behind)
     return [line for line in lines if line.strip()]

@@ -1,0 +1,112 @@
+#!/bin/bash
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -euxo pipefail
+
+test_one () {
+    ID="$(< /dev/urandom tr -dc A-Za-z | head -c6 || true)"
+
+    # start the workflow
+    cylc vip \
+        --check-circular \
+        --no-detach \
+        --final-cycle-point=P0D \
+        --no-run-name \
+        --workflow-name "$ID" \
+        ./one
+
+    # the start task should have expired
+    grep 'start.*(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+
+    # the following task(s) should not have run
+    grep 'a.*running' "$HOME/cylc-run/$ID/log/scheduler/log" && exit 1
+    grep 'b.*running' "$HOME/cylc-run/$ID/log/scheduler/log" && exit 1
+
+    # lint
+    cylc lint "$ID"
+
+    # clean up
+    cylc clean "$ID"
+}
+
+
+test_two () {
+    ID="$(< /dev/urandom tr -dc A-Za-z | head -c6 || true)"
+
+    # start the workflow
+    cylc vip \
+        --check-circular \
+        --no-detach \
+        --final-cycle-point=P0D \
+        --no-run-name \
+        --workflow-name "$ID" \
+        ./two
+
+    # the start task should run
+    grep 'start.*running' "$HOME/cylc-run/$ID/log/scheduler/log"
+
+    # some other task in the chain should expire
+    grep '(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+
+    # the housekeep task at the end of the cycle should not run
+    grep 'housekeep.*running' "$HOME/cylc-run/$ID/log/scheduler/log" && exit 1
+
+    # lint
+    cylc lint "$ID"
+
+    # clean up
+    cylc clean "$ID"
+}
+
+
+test_three () {
+    ID="$(< /dev/urandom tr -dc A-Za-z | head -c6 || true)"
+
+    # start the workflow
+    cylc vip \
+        --check-circular \
+        --no-detach \
+        --final-cycle-point=P0D \
+        --no-run-name \
+        --workflow-name "$ID" \
+        ./three
+
+    # the start task should expire
+    grep 'start.*(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+    # shellcheck disable=SC2125 # could only ever be one matching file
+    local job_file="$HOME/cylc-run/$ID/log/job/"*"/a/NN/job"
+    [[ ! -f "$job_file" ]]
+
+    # only the "a" and "housekeep" tasks should run
+    [[ $(cd "$HOME/cylc-run/$ID/log/job/"*; echo *) == 'a housekeep' ]]
+
+    # tasks b, c and d should skip
+    grep '\/b.*run mode=skip' "$HOME/cylc-run/$ID/log/scheduler/log"
+    grep '\/c.*run mode=skip' "$HOME/cylc-run/$ID/log/scheduler/log"
+    grep '\/d.*run mode=skip' "$HOME/cylc-run/$ID/log/scheduler/log"
+
+    # lint
+    cylc lint "$ID"
+
+    # clean up
+    cylc clean "$ID"
+}
+
+
+test_one
+test_two
+test_three

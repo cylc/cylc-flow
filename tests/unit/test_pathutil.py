@@ -40,6 +40,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_test_log_path,
+    is_relative_to,
     make_localhost_symlinks,
     make_workflow_run_tree,
     parse_rm_dirs,
@@ -203,6 +204,7 @@ def test_make_workflow_run_tree(
                     run = $DEE
                     work = $DAH
                     log = $DUH
+                    log/job =$RAY
                     share = $DOH
                     share/cycle = $DAH
             ''',
@@ -210,6 +212,7 @@ def test_make_workflow_run_tree(
                 'run': '$DEE/cylc-run/morpheus',
                 'work': '$DAH/cylc-run/morpheus/work',
                 'log': '$DUH/cylc-run/morpheus/log',
+                'log/job': '$RAY/cylc-run/morpheus/log/job',
                 'share': '$DOH/cylc-run/morpheus/share',
                 'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
             },
@@ -576,3 +579,18 @@ def test_get_workflow_name_from_id(
 
     result = get_workflow_name_from_id(id_)
     assert result == name
+
+
+@pytest.mark.parametrize('abs_path', [True, False])
+@pytest.mark.parametrize('path1, path2, expected', [
+    param('/foo/bar/baz', '/foo/bar', True, id="child"),
+    param('/foo/bar', '/foo/bar/baz', False, id="parent"),
+    param('/foo/bar', '/foo/bar', True, id="same-path"),
+    param('/cat/dog', '/hat/bog', False, id="different"),
+    param('/a/b/c/../x/y', '/a/b/x', True, id="trickery"),
+])
+def test_is_relative_to(abs_path, path1, path2, expected):
+    if not abs_path:  # absolute & relative versions of same test
+        path1.lstrip('/')
+        path2.lstrip('/')
+    assert is_relative_to(path1, path2) == expected

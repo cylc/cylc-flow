@@ -364,7 +364,7 @@ async def run(options: 'Values', workflow_id):
                 # TODO validate showtask?
                 raise InputError(
                     'TASK_ID_GLOB must be in the format: cycle/task'
-                )
+                ) from None
         result = await pclient.async_request('graphql', query_kwargs)
         for wflow in result['workflows']:
             settings = wflow['broadcasts']

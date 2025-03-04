@@ -48,12 +48,12 @@ def workflow_state(
             e.g. PT1H (1 hour) or P1 (1 integer cycle)
         flow_num:
             Flow number of the target task.
-        is_message:
-            Interpret the task:selector as a task output message
-            (the default is a task status or trigger)
         is_trigger:
-            Interpret the task:selector as a task trigger name
-            (only needed if it is also a valid status name)
+            Interpret the task:selector as a task trigger name rather than a
+            task status.
+        is_message:
+            Interpret the task:selector as a task output message rather than a
+            task status.
         alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
 

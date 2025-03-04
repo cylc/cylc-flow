@@ -26,6 +26,7 @@ from cylc.flow.network.schema import (
     RUNTIME_FIELD_TO_CFG_MAP,
     Mutations,
     Runtime,
+    runtime_schema_to_cfg,
     sort_elements,
     SortArgs,
 )
@@ -103,6 +104,20 @@ def test_runtime_field_to_cfg_map(field_name: str):
     cfg_name = RUNTIME_FIELD_TO_CFG_MAP[field_name]
     assert field_name in Runtime.__dict__
     assert WORKFLOW_SPEC.get('runtime', '__MANY__', cfg_name)
+
+
+@pytest.mark.parametrize('runtime_dict,expected', [
+    pytest.param(
+        {'run_mode': 'Skip'}, {'run mode': 'skip'}, id='edit-runtime'
+    ),
+    pytest.param(
+        {'run mode': 'skip'}, {'run mode': 'skip'}, id='broadcast'
+    ),
+])
+def test_runtime_schema_to_cfg(runtime_dict, expected):
+    """Test this function can handle Edit Runtime submitted values as well
+    as normal broadcast values."""
+    assert runtime_schema_to_cfg(runtime_dict) == expected
 
 
 @pytest.mark.parametrize('mutation', (

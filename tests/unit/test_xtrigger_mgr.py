@@ -178,7 +178,6 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     tdef = TaskDef(
         name="foo",
         rtcfg={'completion': None},
-        run_mode="live",
         start_point=1,
         initial_point=1,
     )
@@ -232,7 +231,6 @@ def test__call_xtriggers_async(xtrigger_mgr):
     tdef = TaskDef(
         name="foo",
         rtcfg={'completion': None},
-        run_mode="live",
         start_point=1,
         initial_point=1
     )

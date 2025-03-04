@@ -18,9 +18,10 @@
 
 """cylc pause [OPTIONS] ARGS
 
-Pause a workflow.
+Suspend automatic job submission.
 
-This suspends submission of all tasks in a workflow.
+Manual triggering can still run tasks immediately, even if the workflow is
+paused.
 
 Examples:
   # pause my_workflow

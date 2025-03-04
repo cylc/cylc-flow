@@ -157,7 +157,7 @@ def parse_timeout(opts: 'Values') -> None:
                 raise InputError(
                     f"Invalid timeout: {opts.remote_timeout}. Must be "
                     "an ISO 8601 duration or number of seconds."
-                )
+                ) from None
         opts.remote_timeout = str(timeout)
 
 
@@ -227,17 +227,17 @@ async def run(*ids: str, opts: 'Values') -> None:
         if multi_mode and not opts.skip_interactive:
             prompt(workflows)  # prompt for approval or exit
 
-    failed = {}
+    failed = False
     for workflow in workflows:
         try:
             init_clean(workflow, opts)
         except Exception as exc:
-            failed[workflow] = exc
+            failed = True
+            LOG.error(f"Failed to clean {workflow}\nError: {exc}")
+            if cylc.flow.flags.verbosity > 0:
+                LOG.exception(exc)
     if failed:
-        msg = "Clean failed:"
-        for workflow, exc_message in failed.items():
-            msg += f"\nWorkflow: {workflow}\nError: {exc_message}"
-        raise CylcError(msg)
+        raise CylcError("Clean failed")
 
 
 @cli_function(get_option_parser)

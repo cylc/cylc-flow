@@ -17,29 +17,50 @@
 """Task definition."""
 
 from collections import deque
-from typing import TYPE_CHECKING
-
-import cylc.flow.flags
-from cylc.flow.exceptions import TaskDefError
-from cylc.flow.task_id import TaskID
-from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED,
-    SORT_ORDERS
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    List,
+    NamedTuple,
+    Set,
+    Tuple,
 )
 
+from cylc.flow.exceptions import TaskDefError
+import cylc.flow.flags
+from cylc.flow.task_id import TaskID
+from cylc.flow.task_outputs import (
+    SORT_ORDERS,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED,
+)
+
+
 if TYPE_CHECKING:
-    from cylc.flow.cycling import PointBase
+    from cylc.flow.cycling import (
+        PointBase,
+        SequenceBase,
+    )
+    from cylc.flow.task_trigger import (
+        Dependency,
+        TaskTrigger,
+    )
 
 
-def generate_graph_children(tdef, point):
+class TaskTuple(NamedTuple):
+    name: str
+    point: 'PointBase'
+    is_abs: bool
+
+
+def generate_graph_children(
+    tdef: 'TaskDef', point: 'PointBase'
+) -> Dict[str, List[TaskTuple]]:
     """Determine graph children of this task at point."""
-    graph_children = {}
+    graph_children: Dict[str, List[TaskTuple]] = {}
     for seq, dout in tdef.graph_children.items():
         for output, downs in dout.items():
-            if output not in graph_children:
-                graph_children[output] = []
             for name, trigger in downs:
                 child_point = trigger.get_child_point(point, seq)
                 is_abs = (
@@ -53,7 +74,9 @@ def generate_graph_children(tdef, point):
                     # E.g.: foo should trigger only on T06:
                     #   PT6H = "waz"
                     #   T06 = "waz[-PT6H] => foo"
-                    graph_children[output].append((name, child_point, is_abs))
+                    graph_children.setdefault(output, []).append(
+                        TaskTuple(name, child_point, is_abs)
+                    )
 
     if tdef.sequential:
         # Add next-instance child.
@@ -64,20 +87,21 @@ def generate_graph_children(tdef, point):
                 # Within sequence bounds.
                 nexts.append(nxt)
         if nexts:
-            if TASK_OUTPUT_SUCCEEDED not in graph_children:
-                graph_children[TASK_OUTPUT_SUCCEEDED] = []
-            graph_children[TASK_OUTPUT_SUCCEEDED].append(
-                (tdef.name, min(nexts), False))
+            graph_children.setdefault(TASK_OUTPUT_SUCCEEDED, []).append(
+                TaskTuple(tdef.name, min(nexts), False)
+            )
 
     return graph_children
 
 
-def generate_graph_parents(tdef, point, taskdefs):
+def generate_graph_parents(
+    tdef: 'TaskDef', point: 'PointBase', taskdefs: Dict[str, 'TaskDef']
+) -> Dict['SequenceBase', List[TaskTuple]]:
     """Determine concrete graph parents of task tdef at point.
 
     Infer parents be reversing upstream triggers that lead to point/task.
     """
-    graph_parents = {}
+    graph_parents: Dict['SequenceBase', List[TaskTuple]] = {}
     for seq, triggers in tdef.graph_parents.items():
         if not seq.is_valid(point):
             # Don't infer parents if the trigger belongs to a sequence that
@@ -102,7 +126,9 @@ def generate_graph_parents(tdef, point, taskdefs):
                 # TODO ideally validation would flag this as an error.
                 continue
             is_abs = trigger.offset_is_absolute or trigger.offset_is_from_icp
-            graph_parents[seq].append((parent_name, parent_point, is_abs))
+            graph_parents[seq].append(
+                TaskTuple(parent_name, parent_point, is_abs)
+            )
 
     if tdef.sequential:
         # Add implicit previous-instance parent.
@@ -113,9 +139,9 @@ def generate_graph_parents(tdef, point, taskdefs):
                 # Within sequence bounds.
                 prevs.append(prev)
         if prevs:
-            if seq not in graph_parents:
-                graph_parents[seq] = []
-            graph_parents[seq].append((tdef.name, min(prevs), False))
+            graph_parents.setdefault(seq, []).append(
+                TaskTuple(tdef.name, min(prevs), False)
+            )
 
     return graph_parents
 
@@ -125,7 +151,7 @@ class TaskDef:
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        "run_mode", "rtconfig", "start_point", "initial_point", "sequences",
+        "rtconfig", "start_point", "initial_point", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "sequential", "is_coldstart",
         "workflow_polling_cfg", "expiration_offset",
@@ -136,16 +162,15 @@ class TaskDef:
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
 
-    def __init__(self, name, rtcfg, run_mode, start_point, initial_point):
+    def __init__(self, name, rtcfg, start_point, initial_point):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)
-
-        self.run_mode = run_mode
+        self.name: str = name
         self.rtconfig = rtcfg
         self.start_point = start_point
         self.initial_point = initial_point
 
-        self.sequences = []
+        self.sequences: List[SequenceBase] = []
         self.used_in_offset_trigger = False
 
         # some defaults
@@ -155,15 +180,18 @@ class TaskDef:
 
         self.expiration_offset = None
         self.namespace_hierarchy = []
-        self.dependencies = {}
+        self.dependencies: Dict[SequenceBase, List[Dependency]] = {}
         self.outputs = {}  # {output: (message, is_required)}
-        self.graph_children = {}
-        self.graph_parents = {}
+        self.graph_children: Dict[
+            SequenceBase, Dict[str, List[Tuple[str, TaskTrigger]]]
+        ] = {}
+        self.graph_parents: Dict[
+            SequenceBase, Set[Tuple[str, TaskTrigger]]
+        ] = {}
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
 
-        self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
         self._add_std_outputs()
         self.has_abs_triggers = False
@@ -209,7 +237,9 @@ class TaskDef:
             ]:
                 self.set_required_output(output, True)
 
-    def add_graph_child(self, trigger, taskname, sequence):
+    def add_graph_child(
+        self, trigger: 'TaskTrigger', taskname: str, sequence: 'SequenceBase'
+    ) -> None:
         """Record child task instances that depend on my outputs.
           {sequence:
               {
@@ -218,18 +248,20 @@ class TaskDef:
           }
         """
         self.graph_children.setdefault(
-            sequence, {}).setdefault(
-                trigger.output, []).append((taskname, trigger))
+            sequence, {}
+        ).setdefault(
+            trigger.output, []
+        ).append((taskname, trigger))
 
-    def add_graph_parent(self, trigger, parent, sequence):
+    def add_graph_parent(
+        self, trigger: 'TaskTrigger', parent: str, sequence: 'SequenceBase'
+    ) -> None:
         """Record task instances that I depend on.
           {
              sequence: set([(a,t1), (b,t2), ...])  # (task-name, trigger)
           }
         """
-        if sequence not in self.graph_parents:
-            self.graph_parents[sequence] = set()
-        self.graph_parents[sequence].add((parent, trigger))
+        self.graph_parents.setdefault(sequence, set()).add((parent, trigger))
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.
@@ -376,7 +408,7 @@ class TaskDef:
     def __repr__(self) -> str:
         """
         >>> TaskDef(
-        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     name='oliver', rtcfg={}, start_point='1',
         ...     initial_point='1'
         ... )
         <TaskDef 'oliver'>

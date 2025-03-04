@@ -268,7 +268,7 @@ async def _run(
     if int(options.max_polls) > 0 and not await spoller.poll():
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         raise CylcError(
-            f'Workflow did not shut down after {options.max_poll} polls'
+            f'Workflow did not shut down after {options.max_polls} polls'
         )
     return ret
 

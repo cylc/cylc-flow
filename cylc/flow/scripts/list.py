@@ -31,11 +31,14 @@ To visualize the full multiple inheritance hierarchy use:
 """
 
 import asyncio
+from copy import copy
 import os
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.exceptions import InputError
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
     AGAINST_SOURCE_OPTION,
@@ -43,6 +46,8 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     icp_option,
 )
+from cylc.flow.print_tree import print_tree
+from cylc.flow.workflow_files import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -107,10 +112,51 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    asyncio.run(_main(parser, options, workflow_id))
+    asyncio.run(_main(options, workflow_id))
 
 
-async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
+def define_inheritance_tree(tree, hierarchy):
+    """Combine inheritance hierarchies into a tree structure."""
+    for rt_ in hierarchy:
+        hier = copy(hierarchy[rt_])
+        hier.reverse()
+        cur_tree = tree
+        for item in hier:
+            if item not in cur_tree:
+                cur_tree[item] = {}
+            cur_tree = cur_tree[item]
+
+
+def print_first_parent_tree(config, pretty=False, titles=False):
+    # find task namespaces (no descendants)
+    tasks = []
+    for ns in config.cfg['runtime']:
+        if ns not in config.runtime['descendants']:
+            tasks.append(ns)
+
+    pruned_ancestors = config.get_first_parent_ancestors(pruned=True)
+    tree = {}
+    define_inheritance_tree(tree, pruned_ancestors)
+    padding = ''
+    if titles:
+        config.add_tree_titles(tree)
+        # compute pre-title padding
+        maxlen = 0
+        for namespace in pruned_ancestors:
+            items = copy(pruned_ancestors[namespace])
+            items.reverse()
+            for itt, item in enumerate(items):
+                tmp = 2 * itt + 1 + len(item)
+                if itt == 0:
+                    tmp -= 1
+                if tmp > maxlen:
+                    maxlen = tmp
+        padding = maxlen * ' '
+
+    print_tree(tree, padding=padding, use_unicode=pretty)
+
+
+async def _main(options: 'Values', workflow_id: str) -> None:
     workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
         src=True,
@@ -119,7 +165,14 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
     template_vars = get_template_vars(options)
 
     if options.all_tasks and options.all_namespaces:
-        parser.error("Choose either -a or -n")
+        raise InputError("Choose either -a or -n")
+    if (options.all_tasks or options.all_namespaces) and options.prange:
+        raise InputError(
+            '--points cannot be used with --all-tasks or --all-namespaces'
+        )
+    if options.box and not options.tree:
+        options.tree = True
+
     if options.all_tasks:
         which = "all tasks"
     elif options.all_namespaces:
@@ -145,12 +198,18 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
         options.tree = False
 
     if options.titles and options.mro:
-        parser.error("Please choose --mro or --title, not both")
+        raise InputError("Please choose --mro or --title, not both")
 
     if options.tree and any(
             [options.all_tasks, options.all_namespaces, options.mro]):
         print("WARNING: -t chosen, ignoring non-tree options.",
               file=sys.stderr)
+
+    # Save the location of the existing workflow run dir in the
+    # against source option:
+    if options.against_source:
+        options.against_source = Path(get_workflow_run_dir(workflow_id))
+
     config = WorkflowConfig(
         workflow_id,
         flow_file,
@@ -158,8 +217,11 @@ async def _main(parser: COP, options: 'Values', workflow_id: str) -> None:
         template_vars
     )
     if options.tree:
-        config.print_first_parent_tree(
-            pretty=options.box, titles=options.titles)
+        print_first_parent_tree(
+            config,
+            pretty=options.box,
+            titles=options.titles,
+        )
     elif options.prange:
         for node in sorted(config.get_node_labels(tr_start, tr_stop)):
             print(node)

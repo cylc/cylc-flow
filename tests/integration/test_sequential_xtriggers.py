@@ -49,7 +49,7 @@ def sequential(flow, scheduler):
     return scheduler(id_)
 
 
-async def test_remove(sequential, start):
+async def test_remove(sequential: Scheduler, start):
     """It should spawn the next instance when a task is removed.
 
     Ensure that removing a task with a sequential xtrigger does not break the
@@ -74,7 +74,7 @@ async def test_remove(sequential, start):
         ]
 
         # remove all tasks in the pool
-        sequential.pool.remove_tasks(['*'])
+        sequential.remove_tasks(['*'])
 
         # the next cycle should be automatically spawned
         assert list_cycles(sequential) == ['2004']
@@ -104,6 +104,26 @@ async def test_trigger(sequential, start):
         assert list_cycles(sequential) == ['2000', '2001']
 
 
+async def test_set(sequential, start):
+    """It should spawn its next instance if outputs are set ahead of time.
+
+    If you set outputs of a sequentially spawned task before its xtriggers
+    have become satisfied, then the sequential spawning chain is broken.
+
+    The task pool should defend against this to ensure that setting outputs
+    doesn't cancel it's future instances and their downstream tasks.
+    """
+    async with start(sequential):
+        assert list_cycles(sequential) == ['2000']
+
+        foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
+        # set foo:succeeded it should spawn next instance
+        sequential.pool.set_prereqs_and_outputs(
+            ["2000/foo"], ["succeeded"], None, ['all'])
+
+        assert list_cycles(sequential) == ['2001']
+
+
 async def test_reload(sequential, start):
     """It should set the is_xtrigger_sequential flag on reload.
 
@@ -116,7 +136,7 @@ async def test_reload(sequential, start):
         assert pre_reload.is_xtrigger_sequential is True
 
         # reload the workflow
-        sequential.pool.reload_taskdefs(sequential.config)
+        sequential.pool.reload(sequential.config)
 
         # the original task proxy should have been replaced
         post_reload = sequential.pool.get_task(ISO8601Point('2000'), 'foo')

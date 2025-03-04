@@ -34,6 +34,9 @@ from cylc.flow.workflow_events import (
         ('handlers', True, True, ['stall']),
         ('handlers', False, True, None),
         ('handlers', False, False, None),
+        ('mail events', True, True, []),
+        ('mail events', False, True, ['abort']),
+        ('mail events', False, False, None),
         ('from', True, True, 'docklands@railway'),
         ('from', False, True, 'highway@mixture'),
         ('from', False, False, None),
@@ -46,22 +49,25 @@ def test_get_events_handler(
     mock_glbl_cfg, key, workflow_cfg, glbl_cfg, expected
 ):
     """Test order of precedence for getting event handler configuration."""
-    if glbl_cfg:
-        mock_glbl_cfg(
-            'cylc.flow.workflow_events.glbl_cfg',
+    mock_glbl_cfg(
+        'cylc.flow.workflow_events.glbl_cfg',
+        (
             '''
             [scheduler]
                 [[mail]]
                     from = highway@mixture
                 [[events]]
                     abort on workflow timeout = True
+                    mail events = abort
             '''
-        )
+            if glbl_cfg else ''
+        ),
+    )
 
     config = SimpleNamespace()
     config.cfg = {
         'scheduler': {
-            'events': {'handlers': ['stall']},
+            'events': {'handlers': ['stall'], 'mail events': []},
             'mail': {'from': 'docklands@railway'},
         } if workflow_cfg else {'events': {}}
     }
@@ -83,13 +89,13 @@ def test_process_mail_footer(caplog, log_filter):
     assert process_mail_footer(
         '%(host)s|%(port)s|%(owner)s|%(suite)s|%(workflow)s', template_vars
     ) == 'myhost|42|me|my_workflow|my_workflow\n'
-    assert not log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert not log_filter(contains='Ignoring bad mail footer template')
 
     # test invalid variable
     assert process_mail_footer('%(invalid)s', template_vars) == ''
-    assert log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert log_filter(contains='Ignoring bad mail footer template')
 
     # test broken template
     caplog.clear()
     assert process_mail_footer('%(invalid)s', template_vars) == ''
-    assert log_filter(caplog, contains='Ignoring bad mail footer template')
+    assert log_filter(contains='Ignoring bad mail footer template')

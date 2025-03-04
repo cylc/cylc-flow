@@ -28,7 +28,7 @@ from cylc.flow.cycling.integer import (
     IntegerPoint,
     IntegerInterval
 )
-from cylc.flow.flow_mgr import stringify_flow_nums
+from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
@@ -90,7 +90,7 @@ class CylcWorkflowDBChecker:
             except sqlite3.OperationalError:
                 with suppress(Exception):
                     self.conn.close()
-                raise exc  # original error
+                raise exc from None  # original error
 
     def __enter__(self):
         return self
@@ -141,7 +141,7 @@ class CylcWorkflowDBChecker:
             raise InputError(
                 f'Cycle point "{cycle}" is not compatible'
                 f' with DB point format "{self.db_point_fmt}"'
-            )
+            ) from None
         return cycle
 
     @staticmethod
@@ -318,7 +318,7 @@ class CylcWorkflowDBChecker:
                 if flow_num is not None and flow_num not in flow_nums:
                     # skip result, wrong flow
                     continue
-                fstr = stringify_flow_nums(flow_nums)
+                fstr = repr_flow_nums(flow_nums)
                 if fstr:
                     res.append(fstr)
             db_res.append(res)
@@ -378,7 +378,7 @@ def check_polling_config(selector, is_trigger, is_message):
         try:
             trigger = TASK_STATE_MAP[selector]
         except KeyError:
-            raise InputError(f'No such task state "{selector}"')
+            raise InputError(f'No such task state "{selector}"') from None
         else:
             if trigger is None:
                 raise InputError(

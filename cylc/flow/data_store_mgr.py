@@ -67,7 +67,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    Union,
 )
 import zlib
 
@@ -85,6 +84,7 @@ from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
 )
+from cylc.flow.run_modes import RunMode
 from cylc.flow.workflow_status import (
     get_workflow_status,
     get_workflow_status_msg,
@@ -116,6 +116,7 @@ from cylc.flow.wallclock import (
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
 
 EDGES = 'edges'
@@ -259,6 +260,7 @@ def runtime_from_config(rtconfig):
         pre_script=rtconfig['pre-script'],
         post_script=rtconfig['post-script'],
         work_sub_dir=rtconfig['work sub-directory'],
+        run_mode=rtconfig['run mode'],
         execution_time_limit=str(rtconfig['execution time limit'] or ''),
         execution_polling_intervals=listjoin(
             rtconfig['execution polling intervals']
@@ -698,8 +700,7 @@ class DataStoreMgr:
             time_zone_info = TIME_ZONE_LOCAL_INFO
         for key, val in time_zone_info.items():
             setbuff(workflow.time_zone_info, key, val)
-
-        workflow.run_mode = config.run_mode()
+        workflow.run_mode = RunMode.get(config.options).value
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.workflow_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))
@@ -947,7 +948,7 @@ class DataStoreMgr:
                             )
                         for items in graph_children.values():
                             for child_name, child_point, _ in items:
-                                if child_point > final_point:
+                                if final_point and child_point > final_point:
                                     continue
                                 child_tokens = self.id_.duplicate(
                                     cycle=str(child_point),
@@ -977,7 +978,7 @@ class DataStoreMgr:
                             taskdefs
                         ).values():
                             for parent_name, parent_point, _ in items:
-                                if parent_point > final_point:
+                                if final_point and parent_point > final_point:
                                     continue
                                 parent_tokens = self.id_.duplicate(
                                     cycle=str(parent_point),
@@ -1136,6 +1137,7 @@ class DataStoreMgr:
             self.prune_flagged_nodes.update(
                 self.n_window_node_walks[tp_id]['walk_ids']
             )
+        self.update_window_depths = True
         self.updates_pending = True
 
     def add_pool_node(self, name, point):
@@ -1418,7 +1420,7 @@ class DataStoreMgr:
             itask, is_parent = self.db_load_task_proxies[relative_id]
             itask.submit_num = submit_num
             flow_nums = deserialise_set(flow_nums_str)
-            # Do not set states and outputs for future tasks in flow.
+            # Do not set states and outputs for inactive tasks in flow.
             if (
                     itask.flow_nums and
                     flow_nums != itask.flow_nums and
@@ -1443,7 +1445,7 @@ class DataStoreMgr:
             prereq_ids.add(f'{relative_id}/{flow_nums_str}')
 
         # Batch load prerequisites of tasks according to flow.
-        prereqs_map = {}
+        prereqs_map: Dict[str, dict] = {}
         for (
                 cycle, name, prereq_name,
                 prereq_cycle, prereq_output, satisfied
@@ -1457,16 +1459,14 @@ class DataStoreMgr:
             ] = satisfied if satisfied != '0' else False
 
         for ikey, prereqs in prereqs_map.items():
+            itask_prereq: Prerequisite
             for itask_prereq in (
-                    self.db_load_task_proxies[ikey][0].state.prerequisites
+                self.db_load_task_proxies[ikey][0].state.prerequisites
             ):
-                for key in itask_prereq.satisfied.keys():
-                    try:
-                        itask_prereq.satisfied[key] = prereqs[key]
-                    except KeyError:
-                        # This prereq is not in the DB: new dependencies
-                        # added to an already-spawned task before restart.
-                        itask_prereq.satisfied[key] = False
+                for key in itask_prereq:
+                    itask_prereq[key] = prereqs.get(key, False)
+                    # (False if prereq is not in the DB: new dependencies
+                    # added to an already-spawned task before restart.)
 
         # Extract info from itasks to data-store.
         for task_info in self.db_load_task_proxies.values():
@@ -2251,7 +2251,9 @@ class DataStoreMgr:
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
         cfg = self.schd.config.cfg
-        for node_id, node in node_data.items():
+        # NOTE: node_data may change during operation so make a copy
+        # see https://github.com/cylc/cylc-flow/pull/6397
+        for node_id, node in list(node_data.items()):
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
@@ -2273,7 +2275,7 @@ class DataStoreMgr:
     # -----------
     # Task Deltas
     # -----------
-    def delta_task_state(self, itask):
+    def delta_task_state(self, itask: 'TaskProxy') -> None:
         """Create delta for change in task proxy state.
 
         Args:
@@ -2289,34 +2291,47 @@ class DataStoreMgr:
         update_time = time()
 
         # update task instance
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta: PbTaskProxy = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        tp_delta.state = itask.state.status
+        for field in ('is_held', 'is_queued', 'is_runahead'):
+            val = getattr(itask.state, field)
+            if (
+                # only update the fields that have changed compared to store:
+                getattr(tproxy, field) != val
+                # or changed since earlier delta that is not yet sent:
+                or getattr(tp_delta, field) != val
+            ):
+                setattr(tp_delta, field, val)
+        if (
+            tproxy.state != itask.state.status
+            or tp_delta.state != itask.state.status
+        ):
+            tp_delta.state = itask.state.status
+            if tp_delta.state in self.latest_state_tasks:
+                tp_ref = itask.identity
+                tp_queue = self.latest_state_tasks[tp_delta.state]
+                if tp_ref in tp_queue:
+                    tp_queue.remove(tp_ref)
+                self.latest_state_tasks[tp_delta.state].appendleft(tp_ref)
+            # if state is final work out new task mean.
+            if tp_delta.state in TASK_STATUSES_FINAL:
+                elapsed_time = task_mean_elapsed_time(itask.tdef)
+                if elapsed_time:
+                    t_id = self.definition_id(tproxy.name)
+                    t_delta = PbTask(
+                        stamp=f'{t_id}@{update_time}',
+                        mean_elapsed_time=elapsed_time
+                    )
+                    self.updated[TASKS].setdefault(
+                        t_id,
+                        PbTask(id=t_id)).MergeFrom(t_delta)
         self.state_update_families.add(tproxy.first_parent)
-        if tp_delta.state in self.latest_state_tasks:
-            tp_ref = itask.identity
-            tp_queue = self.latest_state_tasks[tp_delta.state]
-            if tp_ref in tp_queue:
-                tp_queue.remove(tp_ref)
-            self.latest_state_tasks[tp_delta.state].appendleft(tp_ref)
-        # if state is final work out new task mean.
-        if tp_delta.state in TASK_STATUSES_FINAL:
-            elapsed_time = task_mean_elapsed_time(itask.tdef)
-            if elapsed_time:
-                t_id = self.definition_id(tproxy.name)
-                t_delta = PbTask(
-                    stamp=f'{t_id}@{update_time}',
-                    mean_elapsed_time=elapsed_time
-                )
-                self.updated[TASKS].setdefault(
-                    t_id,
-                    PbTask(id=t_id)).MergeFrom(t_delta)
         self.updates_pending = True
 
     def delta_task_held(
-        self,
-        itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
+        self, name: str, cycle: 'PointBase', is_held: bool
     ) -> None:
         """Create delta for change in task proxy held state.
 
@@ -2326,15 +2341,10 @@ class DataStoreMgr:
                 (name, cycle, is_held).
 
         """
-        if isinstance(itask, TaskProxy):
-            tokens = itask.tokens
-            is_held = itask.state.is_held
-        else:
-            name, cycle, is_held = itask
-            tokens = self.id_.duplicate(
-                task=name,
-                cycle=str(cycle),
-            )
+        tokens = self.id_.duplicate(
+            task=name,
+            cycle=str(cycle),
+        )
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tokens)
         if not tproxy:
@@ -2346,63 +2356,43 @@ class DataStoreMgr:
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
-    def delta_task_queued(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy queued state.
-
-        Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
-        """
-        tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
-        if not tproxy:
-            return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.is_queued = itask.state.is_queued
-        self.state_update_families.add(tproxy.first_parent)
-        self.updates_pending = True
-
     def delta_task_flow_nums(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy flow_nums.
+        """Create delta for change in task proxy flow numbers.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
+            itask: TaskProxy with updated flow numbers.
         """
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(itask.tokens)
         if not tproxy:
             return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.flow_nums = serialise_set(itask.flow_nums)
-        self.updates_pending = True
+        self._delta_task_flow_nums(tp_id, itask.flow_nums)
 
-    def delta_task_runahead(self, itask: TaskProxy) -> None:
-        """Create delta for change in task proxy runahead state.
+    def delta_remove_task_flow_nums(
+        self, task: str, removed: 'FlowNums'
+    ) -> None:
+        """Create delta for removal of flow numbers from a task proxy.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-
+            task: Relative ID of task.
+            removed: Flow numbers to remove from the task proxy in the
+                data store.
         """
         tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        tp_id, tproxy = self.store_node_fetcher(
+            Tokens(task, relative=True).duplicate(**self.id_)
+        )
         if not tproxy:
             return
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
+        new_flow_nums = deserialise_set(tproxy.flow_nums).difference(removed)
+        self._delta_task_flow_nums(tp_id, new_flow_nums)
+
+    def _delta_task_flow_nums(self, tp_id: str, flow_nums: 'FlowNums') -> None:
+        tp_delta: PbTaskProxy = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
         tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.is_runahead = itask.state.is_runahead
-        self.state_update_families.add(tproxy.first_parent)
+        tp_delta.flow_nums = serialise_set(flow_nums)
         self.updates_pending = True
 
     def delta_task_output(
@@ -2418,23 +2408,27 @@ class DataStoreMgr:
                 objects from the workflow task pool.
 
         """
-        tproxy: Optional[PbTaskProxy]
-        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
-        if not tproxy:
-            return
-        outputs = itask.state.outputs
-        label = outputs.get_trigger(message)
-        # update task instance
-        update_time = time()
-        tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{update_time}'
-        output = tp_delta.outputs[label]
-        output.label = label
-        output.message = message
-        output.satisfied = outputs.is_message_complete(message)
-        output.time = update_time
-        self.updates_pending = True
+        # TODO: Restore incremental update when we have a protocol to do so
+        # https://github.com/cylc/cylc-flow/issues/6307
+        return self.delta_task_outputs(itask)
+
+        # tproxy: Optional[PbTaskProxy]
+        # tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        # if not tproxy:
+        #     return
+        # outputs = itask.state.outputs
+        # label = outputs.get_trigger(message)
+        # # update task instance
+        # update_time = time()
+        # tp_delta = self.updated[TASK_PROXIES].setdefault(
+        #     tp_id, PbTaskProxy(id=tp_id))
+        # tp_delta.stamp = f'{tp_id}@{update_time}'
+        # output = tp_delta.outputs[label]
+        # output.label = label
+        # output.message = message
+        # output.satisfied = outputs.is_message_complete(message)
+        # output.time = update_time
+        # self.updates_pending = True
 
     def delta_task_outputs(self, itask: TaskProxy) -> None:
         """Create delta for change in all task proxy outputs.

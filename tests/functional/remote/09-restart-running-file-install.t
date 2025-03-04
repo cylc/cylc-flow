@@ -27,7 +27,7 @@
 #   updated which is verified by checking task messaging works (checks for
 #   "(received)succeeded" in the logs).
 
-export REQUIRE_PLATFORM='loc:remote comms:tcp'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 set_test_number 6
 

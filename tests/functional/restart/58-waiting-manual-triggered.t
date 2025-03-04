@@ -40,6 +40,7 @@ __EOF__
 
 # It should restart and shut down normally, not stall with 2/foo waiting on 1/foo.
 workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --no-detach "${WORKFLOW_NAME}"
+
 # Check that 2/foo job 02 did run before shutdown.
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "\[2\/foo\/02:running\] => succeeded"
 

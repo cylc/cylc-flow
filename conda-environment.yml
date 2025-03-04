@@ -21,7 +21,6 @@ dependencies:
   - tomli >=2 # [py<3.11]
 
 # optional dependencies
-  #- empy >=3.3,<3.4
   #- pandas >=1.0,<2
   #- pympler
   #- matplotlib-base

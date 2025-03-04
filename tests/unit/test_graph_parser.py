@@ -139,6 +139,31 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
             'Invalid cycle point offsets only on right',
             id='no-cycle-point-RHS'
         ),
+        # See https://github.com/cylc/cylc-flow/issues/6523
+        # For the next 4 tests:
+        param(
+            # Yes I know it's circular, but it's here to
+            # demonstrate that the test below is broken:
+            "foo:finished => foo",
+            'Output foo:succeeded can\'t be both required and optional',
+            id='finish-implies-success-optional'
+        ),
+        param(
+            "foo[-P1]:finish => foo",
+            'Output foo:succeeded can\'t be both required and optional',
+            id='finish-implies-success-optional-offset'
+        ),
+        param(
+            "foo[-P1]:succeeded | foo[-P1]:failed => bar",
+            # order of outputs varies in the error message
+            'must both be optional if both are used',
+            id='succeed-or-failed-mustbe-optional'
+        ),
+        param(
+            "foo[-P1]:succeeded? | foo[-P1]:failed? => foo",
+            'Output foo:succeeded can\'t be both required and optional',
+            id='succeed-or-failed-implies-success-optional'
+        ),
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
@@ -948,8 +973,8 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
         param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
         # No error if offset in NON-terminal RHS:
         param((('a', 'b[-P42M]'), {}), None),
-        # Don't check the left hand side if this has a non-terminal RHS:
-        param((('a &', 'b[-P42M]'), {}), None),
+        # Check the left hand side if this has a non-terminal RHS:
+        param((('a &', 'b[-P42M]'), {}), 'Null task name in graph'),
     )
 )
 def test_proc_dep_pair(args, err):

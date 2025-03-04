@@ -83,6 +83,7 @@ class LoadlevelerHandler():
         re.compile("^llsubmit: Processed command file through Submit Filter:")]
     SUBMIT_CMD_TMPL = "llsubmit '%(job)s'"
     VACATION_SIGNAL = "USR1"
+    TIME_LIMIT_DIRECTIVE = "wall_clock_limit"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
@@ -96,8 +97,8 @@ class LoadlevelerHandler():
         directives["output"] = job_file_path + ".out"
         directives["error"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
-                directives.get("wall_clock_limit") is None):
-            directives["wall_clock_limit"] = "%d,%d" % (
+                directives.get(self.TIME_LIMIT_DIRECTIVE) is None):
+            directives[self.TIME_LIMIT_DIRECTIVE] = "%d,%d" % (
                 job_conf["execution_time_limit"] + 60,
                 job_conf["execution_time_limit"])
         for key, value in list(job_conf["directives"].items()):

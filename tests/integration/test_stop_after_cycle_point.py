@@ -85,7 +85,7 @@ async def test_stop_after_cycle_point(
 
     # change the configured cycle point to "2"
     config['scheduling']['stop after cycle point'] = '2'
-    id_ = flow(config, id_=id_)
+    id_ = flow(config, workflow_id=id_)
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # the cycle point should be reloaded from the workflow configuration
@@ -119,10 +119,11 @@ async def test_stop_after_cycle_point(
 
         # override this value whilst the workflow is running
         await commands.run_cmd(
-            commands.stop,
-            schd,
-            cycle_point=IntegerPoint('4'),
-            mode=StopMode.REQUEST_CLEAN,
+            commands.stop(
+                schd,
+                cycle_point=IntegerPoint('4'),
+                mode=StopMode.REQUEST_CLEAN,
+            )
         )
         assert schd.config.stop_point == IntegerPoint('4')
 

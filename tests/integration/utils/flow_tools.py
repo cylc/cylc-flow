@@ -28,7 +28,7 @@ from contextlib import asynccontextmanager, contextmanager
 import logging
 import pytest
 from typing import Any, Optional, Union
-from uuid import uuid1
+from secrets import token_hex
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.workflow_files import WorkflowFiles
@@ -39,13 +39,13 @@ from cylc.flow.workflow_status import StopMode
 from .flow_writer import flow_config_str
 
 
-def _make_src_flow(src_path, conf):
+def _make_src_flow(src_path, conf, filename=WorkflowFiles.FLOW_FILE):
     """Construct a workflow on the filesystem"""
-    flow_src_dir = (src_path / str(uuid1()))
+    flow_src_dir = (src_path / token_hex(4))
     flow_src_dir.mkdir(parents=True, exist_ok=True)
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
-    with open((flow_src_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
+    with open((flow_src_dir / filename), 'w+') as flow_file:
         flow_file.write(conf)
     return flow_src_dir
 
@@ -53,27 +53,38 @@ def _make_src_flow(src_path, conf):
 def _make_flow(
     cylc_run_dir: Union[Path, str],
     test_dir: Path,
-    conf: dict,
+    conf: Union[dict, str],
     name: Optional[str] = None,
-    id_: Optional[str] = None,
+    workflow_id: Optional[str] = None,
     defaults: Optional[bool] = True,
+    filename: str = WorkflowFiles.FLOW_FILE,
 ) -> str:
     """Construct a workflow on the filesystem.
 
     Args:
+        conf: Either a workflow config dictionary, or a graph string to be
+            used as the R1 graph in the workflow config.
         defaults: Set up a common defaults.
             * [scheduling]allow implicit tasks = true
 
             Set false for Cylc 7 upgrader tests.
     """
-    if id_:
-        flow_run_dir = (cylc_run_dir / id_)
+    if workflow_id:
+        flow_run_dir = (cylc_run_dir / workflow_id)
     else:
         if name is None:
-            name = str(uuid1())
+            name = token_hex(4)
         flow_run_dir = (test_dir / name)
     flow_run_dir.mkdir(parents=True, exist_ok=True)
-    id_ = str(flow_run_dir.relative_to(cylc_run_dir))
+    workflow_id = str(flow_run_dir.relative_to(cylc_run_dir))
+    if isinstance(conf, str):
+        conf = {
+            'scheduling': {
+                'graph': {
+                    'R1': conf
+                }
+            }
+        }
     if defaults:
         # set the default simulation runtime to zero (can be overridden)
         (
@@ -86,9 +97,9 @@ def _make_flow(
         conf.setdefault('scheduler', {}).setdefault(
             'allow implicit tasks', 'True')
 
-    with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
+    with open((flow_run_dir / filename), 'w+') as flow_file:
         flow_file.write(flow_config_str(conf))
-    return id_
+    return workflow_id
 
 
 @contextmanager

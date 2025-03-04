@@ -34,12 +34,12 @@ async def test_restart_number(
         """(Re)start the workflow and check the restart number is as expected.
         """
         schd: 'Scheduler' = scheduler(id_, paused_start=True)
-        async with start(schd) as log:
+        async with start(schd):
             if do_reload:
-                await commands.run_cmd(commands.reload_workflow, schd)
+                await commands.run_cmd(commands.reload_workflow(schd))
             assert schd.workflow_db_mgr.n_restart == expected_restart_num
             assert log_filter(
-                log, contains=f"(re)start number={expected_restart_num + 1}"
+                contains=f"(re)start number={expected_restart_num + 1}"
                 # (In the log, it's 1 higher than backend value)
             )
         assert ('n_restart', f'{expected_restart_num}') in db_select(
@@ -71,11 +71,11 @@ def db_remove_column(schd: 'Scheduler', table: str, column: str) -> None:
             [fields[1] for fields in desc if fields[1] != column]
         )
         # Copy table data to a temporary table, and rename it back.
-        conn.execute(rf'CREATE TABLE "tmp"({c_names})')
+        conn.execute(rf"CREATE TABLE 'tmp'({c_names})")
         conn.execute(
-            rf'INSERT INTO "tmp"({c_names}) SELECT {c_names} FROM {table}')
-        conn.execute(rf'DROP TABLE "{table}"')
-        conn.execute(rf'ALTER TABLE "tmp" RENAME TO "{table}"')
+            rf"INSERT INTO 'tmp'({c_names}) SELECT {c_names} FROM {table}")
+        conn.execute(rf"DROP TABLE '{table}'")
+        conn.execute(rf"ALTER TABLE 'tmp' RENAME TO '{table}'")
         conn.commit()
 
 

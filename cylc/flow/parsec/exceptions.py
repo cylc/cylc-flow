@@ -141,10 +141,6 @@ class TemplateVarLanguageClash(FileParseError):
     """Multiple workflow configuration templating engines configured."""
 
 
-class EmPyError(FileParseError):
-    """Wrapper class for EmPy exceptions."""
-
-
 class Jinja2Error(FileParseError):
     """Wrapper class for Jinja2 exceptions.
 

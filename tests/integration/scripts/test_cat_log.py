@@ -92,6 +92,22 @@ def test_bad_workflow2(run_dir, brokendir, capsys):
             BAD_NAME
         )
     msg = (
-        f'file not found: {run_dir}'
+        f'File not found: {run_dir}'
         '/NONEXISTENTWORKFLOWNAME/log/j\n')
+    assert capsys.readouterr().err == msg
+
+
+def test_bad_task_dir(run_dir, brokendir, capsys):
+    """Check a non existent job log dir in a valid workflow results in error.
+    """
+    parser = cat_log_gop()
+    with pytest.raises(SystemExit, match='1'):
+        cat_log(
+            parser,
+            Options(parser)(mode='list-dir'),
+            BAD_NAME + "//1/foo"
+        )
+    msg = (
+        f'Directory not found: {run_dir}'
+        '/NONEXISTENTWORKFLOWNAME/log/job/1/foo/NN\n')
     assert capsys.readouterr().err == msg

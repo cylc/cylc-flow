@@ -193,3 +193,76 @@ async def test_task_instance_query(
         'Task ID: 1/dog',
         'Task ID: 1/zed',
     ]
+
+
+@pytest.mark.parametrize(
+    'attributes_bool, flow_nums, expected_state, expected_flows',
+    [
+        pytest.param(
+            False, [1], 'state: waiting', None,
+        ),
+        pytest.param(
+            True, [1, 2], 'state: waiting (held,queued,runahead)', 'flows: [1,2]',
+        )
+    ]
+)
+async def test_task_instance_state_flows(
+    flow, scheduler, start, capsys,
+    attributes_bool, flow_nums, expected_state, expected_flows 
+):
+    """It should print task instance state, attributes, and flows."""
+
+    colour_init(strip=True, autoreset=True)
+    opts = SimpleNamespace(
+        comms_timeout=5,
+        json=False,
+        task_defs=None,
+        list_prereqs=False,
+    )
+    schd = scheduler(
+        flow(
+            {
+               'scheduling': {
+                   'graph': {'R1': 'a'},
+               },
+           }
+        ),
+       paused_start=True
+    )
+    async with start(schd):
+
+        [itask] = schd.pool.get_tasks()
+        itask.state_reset(
+            is_held=attributes_bool,
+            is_queued=attributes_bool,
+            is_runahead=attributes_bool
+        )
+        itask.flow_nums = set(flow_nums)
+
+        schd.pool.data_store_mgr.delta_task_held(
+            itask.tdef.name, itask.point, itask.state.is_held)
+        schd.pool.data_store_mgr.delta_task_state(itask)
+        schd.pool.data_store_mgr.delta_task_flow_nums(itask)
+        await schd.update_data_structure()
+
+        ret = await show(
+            schd.workflow,
+            [Tokens('//1/*')],
+            opts,
+        )
+        assert ret == 0
+
+    out, _ = capsys.readouterr()
+    assert [
+         line for line in out.splitlines()
+         if line.startswith("state:")
+    ] == [
+        expected_state,
+    ]
+    if expected_flows is not None:
+        assert [
+             line for line in out.splitlines()
+             if line.startswith("flows:")
+        ] == [
+            expected_flows,
+        ]

@@ -59,7 +59,7 @@ async def test_online_mutation(
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
     with rakiura(size='80,15') as rk:
-        async with start(schd) as schd_log:
+        async with start(schd):
             await schd.update_data_structure()
             assert schd.command_queue.empty()
 
@@ -91,7 +91,7 @@ async def test_online_mutation(
 
             # the mutation should be in the scheduler's command_queue
             await asyncio.sleep(0)
-            assert log_filter(schd_log, contains="hold(tasks=['1/one'])")
+            assert log_filter(contains="hold(tasks=['1/one'])")
 
         # close the dialogue and re-run the hold mutation
         rk.user_input('q', 'q', 'enter')
@@ -127,7 +127,7 @@ def standardise_cli_cmds(monkeypatch):
     """This remove the variable bit of the workflow ID from CLI commands.
 
     The workflow ID changes from run to run. In order to make screenshots
-    stable, this 
+    stable, this
     """
     from cylc.flow.tui.data import extract_context
     def _extract_context(selection):

@@ -51,6 +51,7 @@ from cylc.flow.tui.data import (
     QUERY
 )
 from cylc.flow.tui.util import (
+    NaturalSort,
     compute_tree,
     suppress_logging,
 )
@@ -257,7 +258,10 @@ class Updater():
             )
         )
 
-        return compute_tree(data)
+        # are any task state filters active?
+        task_filters_active = not all(self.filters['tasks'].values())
+
+        return compute_tree(data, prune_families=task_filters_active)
 
     async def _update_workflow(self, w_id, client, data):
         if not client:
@@ -363,5 +367,5 @@ class Updater():
                 'stateTotals': {},
             })
 
-        data['workflows'].sort(key=lambda x: x['id'])
+        data['workflows'].sort(key=lambda x: NaturalSort(x['id']))
         return data

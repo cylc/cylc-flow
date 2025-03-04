@@ -18,15 +18,17 @@
 
 from textwrap import wrap
 from typing import (
+    TYPE_CHECKING,
     Dict,
     Optional,
     Sequence,
     Set,
     Union,
-    TYPE_CHECKING,
 )
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.util import format_cmd
+
 
 if TYPE_CHECKING:
     from cylc.flow.subprocctx import SubFuncContext
@@ -283,6 +285,24 @@ class ClientError(CylcError):
             # append server-side traceback
             ret += '\n' + self.traceback
         return ret
+
+
+class RequestError(ClientError):
+    """Represents an error handling a request, returned by the server."""
+
+    def __init__(
+        self, message: str, workflow_cylc_version: Optional[str] = None
+    ):
+        ClientError.__init__(
+            self,
+            message,
+            traceback=(
+                f"(Workflow is running in Cylc {workflow_cylc_version})"
+                if workflow_cylc_version
+                and workflow_cylc_version != CYLC_VERSION
+                else None
+            ),
+        )
 
 
 class WorkflowStopped(ClientError):

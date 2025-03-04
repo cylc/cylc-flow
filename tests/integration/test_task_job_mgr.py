@@ -15,13 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import suppress
+import json
 import logging
 from typing import Any as Fixture
+from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import TASK_STATUS_RUNNING
-
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+)
 
 
 async def test_run_job_cmd_no_hosts_error(
@@ -92,7 +97,6 @@ async def test_run_job_cmd_no_hosts_error(
 
         # ...but the failure should be logged
         assert log_filter(
-            log,
             contains='No available hosts for no-host-platform',
         )
         log.clear()
@@ -105,7 +109,6 @@ async def test_run_job_cmd_no_hosts_error(
 
         # ...but the failure should be logged
         assert log_filter(
-            log,
             contains='No available hosts for no-host-platform',
         )
 
@@ -217,7 +220,7 @@ async def test_broadcast_platform_change(
 
     schd = scheduler(id_, run_mode='live')
 
-    async with start(schd) as log:
+    async with start(schd):
         # Change the task platform with broadcast:
         schd.broadcast_mgr.put_broadcast(
             ['1'], ['mytask'], [{'platform': 'foo'}])
@@ -226,13 +229,39 @@ async def test_broadcast_platform_change(
         schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
 
         # Attempt job submission:
-        schd.task_job_mgr.submit_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks(),
-            schd.server.curve_auth,
-            schd.server.client_pub_key_dir)
+        schd.submit_task_jobs(schd.pool.get_tasks())
 
         # Check that task platform hasn't become "localhost":
         assert schd.pool.get_tasks()[0].platform['name'] == 'foo'
         # ... and that remote init failed because all hosts bad:
-        assert log_filter(log, contains="(no hosts were reachable)")
+        assert log_filter(regex=r"platform: foo .*\(no hosts were reachable\)")
+
+
+async def test_poll_job_deleted_log_folder(
+    one_conf, flow, scheduler, start, log_filter
+):
+    """Capture a task error caused by polling finding the job log dir deleted.
+
+    https://github.com/cylc/cylc-flow/issues/6425
+    """
+    response = {
+        'run_signal': JOB_FILES_REMOVED_MESSAGE,
+        'run_status': 1,
+        'job_runner_exit_polled': 1,
+    }
+    schd: Scheduler = scheduler(flow(one_conf))
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        itask.submit_num = 1
+        job_id = itask.tokens.duplicate(job='01').relative_id
+        schd.task_job_mgr._poll_task_job_callback(
+            schd.workflow,
+            itask,
+            cmd_ctx=Mock(),
+            line=f'2025-02-13T12:08:30Z|{job_id}|{json.dumps(response)}',
+        )
+        assert itask.state(TASK_STATUS_FAILED)
+
+    assert log_filter(
+        logging.ERROR, f"job log directory {job_id} no longer exists"
+    )

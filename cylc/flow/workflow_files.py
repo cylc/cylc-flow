@@ -22,8 +22,10 @@ See also:
 
 """
 
+from contextlib import suppress
 from enum import Enum
 import errno
+from collections import deque
 import os
 from pathlib import Path
 import re
@@ -59,6 +61,7 @@ from cylc.flow.hostuserutil import (
     is_remote_host,
 )
 from cylc.flow.pathutil import (
+    SYMLINKABLE_LOCATIONS,
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
@@ -203,6 +206,11 @@ class WorkflowFiles:
         DB = 'db'
         """The public database"""
 
+        JOB = 'job'
+        """The job log directory."""
+
+    LOG_JOB_DIR = os.path.join(LogDir.DIRNAME, LogDir.JOB)
+
     SHARE_DIR = 'share'
     """Workflow share directory."""
 
@@ -258,9 +266,7 @@ class WorkflowFiles:
     RESERVED_NAMES = frozenset([FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES])
     """Reserved filenames that cannot be used as run names."""
 
-    SYMLINK_DIRS = frozenset([
-        SHARE_CYCLE_DIR, SHARE_DIR, LogDir.DIRNAME, WORK_DIR, ''
-    ])
+    SYMLINK_DIRS = frozenset(list(SYMLINKABLE_LOCATIONS) + [''])
     """The paths of the symlink dirs that may be set in
     global.cylc[install][symlink dirs], relative to the run dir
     ('' represents the run dir)."""
@@ -340,12 +346,11 @@ CONTACT_FILE_EXISTS_MSG = r"""workflow contact file exists: %(fname)s
 
 Workflow "%(workflow)s" is already running, listening at "%(host)s:%(port)s".
 
-To start a new run, stop the old one first with one or more of these:
+If you like, you can stop it with one or more of the following commands:
 * cylc stop %(workflow)s              # wait for active tasks/event handlers
 * cylc stop --kill %(workflow)s       # kill active tasks and wait
-
 * cylc stop --now %(workflow)s        # don't wait for active tasks
-* cylc stop --now --now %(workflow)s  # don't wait
+* cylc stop --now --now %(workflow)s  # don't wait for tasks or handlers
 * ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
@@ -426,7 +431,7 @@ def _is_process_running(
         raise CylcError(
             f'Attempt to determine whether workflow is running on {host}'
             ' timed out after 10 seconds.'
-        )
+        ) from None
 
     if proc.returncode == 2:
         # the psutil call failed to gather metrics on the process
@@ -505,7 +510,7 @@ def detect_old_contact_file(
         # this can happen if contact file is from an outdated version of Cylc
         raise ServiceFileError(
             f'Found contact file with incomplete data:\n{exc}.'
-        )
+        ) from None
 
     # check if the workflow process is running ...
     # NOTE: can raise CylcError
@@ -617,8 +622,29 @@ def get_workflow_srv_dir(id_):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
+def refresh_nfs_cache(path: Path):
+    """Refresh NFS cache for dirs between ~/cylc-run and <path> inclusive.
+
+    On NFS filesystems, the non-existence of files/directories may become
+    cashed. To work around this, we can list the contents of these directories
+    which refreshes the NFS cache.
+
+    See: https://github.com/cylc/cylc-flow/issues/6506
+
+    Arguments:
+        path: The directory to refresh.
+
+    Raises:
+        FileNotFoundError: If any of the directories between ~/cylc-run and
+        this directory (inclsive) are not present.
+
+    """
+    cylc_run_dir = get_cylc_run_dir()
+    for subdir in reversed(path.relative_to(cylc_run_dir).parents):
+        deque((cylc_run_dir / subdir).iterdir(), maxlen=0)
+
+
 def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
-    """Load contact file. Return data as key=value dict."""
     if not run_dir:
         path = Path(get_contact_file_path(id_))
     else:
@@ -627,11 +653,19 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
             WorkflowFiles.Service.DIRNAME,
             WorkflowFiles.Service.CONTACT
         )
+
+    if not path.exists():
+        # work around NFS caching issues
+        try:
+            refresh_nfs_cache(path)
+        except FileNotFoundError as exc:
+            raise ServiceFileError("Couldn't load contact file") from exc
+
     try:
         with open(path) as f:
             file_content = f.read()
-    except IOError:
-        raise ServiceFileError("Couldn't load contact file")
+    except IOError as exc:
+        raise ServiceFileError("Couldn't load contact file") from exc
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
@@ -914,7 +948,12 @@ def infer_latest_run(
     try:
         id_ = str(path.relative_to(cylc_run_dir))
     except ValueError:
-        raise ValueError(f"{path} is not in the cylc-run directory")
+        raise ValueError(f"{path} is not in the cylc-run directory") from None
+
+    if not path.exists():
+        # work around NFS caching issues
+        with suppress(FileNotFoundError):
+            refresh_nfs_cache(path)
 
     if not path.exists():
         raise InputError(

@@ -145,7 +145,7 @@ def main(
             LOG.exception(exc)
             LOG.info(MSG_SEND_FAILED, i_try + 1, max_n_tries)
             if i_try == max_n_tries - 1:  # final attempt
-                raise CylcError('send failed')
+                raise CylcError('send failed') from None
             LOG.info(MSG_SEND_RETRY, retry_intvl_secs, options.comms_timeout)
             sleep(retry_intvl_secs)
         else:

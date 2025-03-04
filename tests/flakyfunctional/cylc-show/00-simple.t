@@ -64,10 +64,10 @@ outputs: ('⨯': not completed)
   ⨯ 20141106T0900Z/foo succeeded
   ⨯ 20141106T0900Z/foo failed
 output completion: incomplete
-    ⦙  (
-  ✓ ⦙    started
-  ⨯ ⦙    and succeeded
-    ⦙  )
+    ┆  (
+  ✓ ┆    started
+  ⨯ ┆    and succeeded
+    ┆  )
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"
@@ -99,6 +99,10 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
         "id": "~${USER}/${WORKFLOW_NAME}//20141106T0900Z/foo",
         "cyclePoint": "20141106T0900Z",
         "state": "running",
+	"isHeld": false,
+	"isQueued": false,
+	"isRunahead": false,
+	"flowNums": "[1]",
         "task": {
             "meta": {
                 "title": "a task",

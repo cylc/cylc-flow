@@ -1,4 +1,4 @@
-# Expire a future task, so it won't run.
+# Expire an inactive task, so it won't run.
 
 [scheduler]
     [[events]]
