@@ -94,7 +94,7 @@ async def test_drop(flow, scheduler, reftest):
     }
 
 
-async def test_over_bracketed(flow, scheduler, reftest):
+async def test_over_bracketed(flow, scheduler, reftest, validate):
     """Test nested conditional simplification for pre-initial cycling."""
     wid = flow({
         'scheduling': {
@@ -108,6 +108,7 @@ async def test_over_bracketed(flow, scheduler, reftest):
             },
         },
     })
+    validate(wid)
     schd = scheduler(wid, paused_start=False)
 
     assert await reftest(schd) == {

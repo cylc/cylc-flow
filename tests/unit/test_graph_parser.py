@@ -27,7 +27,6 @@ from cylc.flow.exceptions import GraphParseError, ParamExpandError
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
@@ -810,7 +809,6 @@ def test_cannot_be_required():
         gp.parse_graph('a:submit-failed => b')
 
 
-
 @pytest.mark.parametrize(
     'graph, error',
     [
@@ -969,13 +967,13 @@ def test_RHS_AND(graph: str, expected_triggers: Dict[str, List[str]]):
 @pytest.mark.parametrize(
     'args, err',
     (
-        # Error if offset in terminal RHS:
-        param((('a', 'b[-P42M]'), {'b[-P42M]'}), 'Invalid cycle point offset'),
         # No error if offset in NON-terminal RHS:
-        param((('a', 'b[-P42M]'), {}), None),
+        param((('a', 'b[-P42M]'), {}, set(), set()), None),
         # Check the left hand side if this has a non-terminal RHS:
-        param((('a &', 'b[-P42M]'), {}), 'Null task name in graph'),
-    )
+        param(
+            (('a &', 'b[-P42M]'), {}, set(), set()), 'Null task name in graph'
+        ),
+    ),
 )
 def test_proc_dep_pair(args, err):
     """
