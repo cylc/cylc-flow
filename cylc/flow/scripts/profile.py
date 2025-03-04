@@ -35,7 +35,6 @@ INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 
 
-
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
@@ -46,12 +45,9 @@ def get_option_parser() -> COP:
         "-i", type=int, help="interval between query cycles in seconds",
         default=10, dest="delay")
     parser.add_option(
-        "-o", type=str, help="output directory for json file",
-        default=os.environ['DATADIR'], dest="output_dir")
-    parser.add_option(
-        "-m", type=str, help="Location of memory process files",
+        "-m", type=str, help="Location of cgroups directory",
         default="/sys/fs/cgroup",
-        dest="memory")
+        dest="cgroup_location")
 
     return parser
 
@@ -70,7 +66,6 @@ class Process:
     """Class for representing CPU and Memory usage of a process"""
     cgroup_memory_path: str
     cgroup_cpu_path: str
-    job_id: str
 
 
 def stop_profiler(*args):
@@ -88,24 +83,28 @@ def parse_memory_file(process):
         return int(line)
 
 
-def parse_cpu_file(process):
-    """Open the memory stat file and copy the appropriate data"""
+def parse_cpu_file(process, cgroup_version):
+    """Open the memory stat file and return the appropriate data"""
     memory_stats = {}
 
-    for line in open(process.cgroup_cpu_path):
-        if "usage_usec" in line:
-            return int(re.findall(r'\d+', line)[0])
+    if cgroup_version == 1:
+        for line in open(process.cgroup_cpu_path):
+            if "usage_usec" in line:
+                return int(re.findall(r'\d+', line)[0]) / 1000
+    elif cgroup_version == 2:
+        for line in open(process.cgroup_cpu_path):
+            # Cgroups v2 uses nanoseconds
+            return int(line) / 1000000
+    else:
+        raise FileNotFoundError("cpu usage files not found")
 
 
-def write_data(process, data, output_dir, data_type, filename):
-
-    # Build the output file path
-    path = os.path.join(output_dir, process.job_id + data_type)
+def write_data(data, filename):
     try:
         with open(filename, 'w') as f:
             f.write(data + "\n")
     except IOError:
-        raise IOError("Unable to write memory data to file")
+        raise IOError("Unable to write data to file:" + filename)
 
 
 def get_cgroup_dir():
@@ -119,31 +118,41 @@ def get_cgroup_dir():
 
 
 def profile(args):
-
+    # Find the cgroup that this process is running in.
+    # Cylc will put this profiler in the same cgroup as the job it is profiling
     cgroup_name = get_cgroup_dir()
 
-    # AZURE SPICE CGROUP LOCATION
-    cgroup_location = "/sys/fs/cgroup/" + cgroup_name
+    # HPC uses cgroups v2 and SPICE uses cgroups v1
+    cgroup_version = None
+
+    if Path.exists(Path(args.cgroup_location + cgroup_name)):
+        cgroup_version = 1
+    elif Path.exists(Path(args.cgroup_location + "/memory" + cgroup_name)):
+        cgroup_version = 2
+    else:
+        raise FileNotFoundError("cgroups not found:" + cgroup_name)
+
     peak_memory = 0
     processes = []
-    # last_system_usage = None
-    # last_cpu_usage = None
-    # Find the correct memory_stat file for the process
-    if not Path.exists(Path(cgroup_location)):
-        raise FileNotFoundError("cgroups not found:" + cgroup_location)
-    try:
-        # Find memory.stat files
-        for job_id in os.listdir(cgroup_location):
-            if "memory.peak" in job_id:
-                processes.append(Process(
-                    cgroup_memory_path=cgroup_location + "/" + job_id,
-                    cgroup_cpu_path=cgroup_location + "/" + "cpu.stat",
-                    job_id=job_id))
-    except FileNotFoundError as e:
-        print(e)
-        raise FileNotFoundError("cgroups not found:" + cgroup_location)
 
-    # cpu_count = get_host_num_cpus(args.cpuset_path, processes)
+    if cgroup_version == 1:
+        try:
+            processes.append(Process(
+                cgroup_memory_path=args.cgroup_location + cgroup_name + "/" + "memory.peak",
+                cgroup_cpu_path=args.cgroup_location + cgroup_name + "/" + "cpu.stat"))
+        except FileNotFoundError as e:
+            print(e)
+            raise FileNotFoundError("cgroups not found:" + args.cgroup_location)
+
+    elif cgroup_version == 2:
+        try:
+            processes.append(Process(
+                cgroup_memory_path=args.cgroup_location + "/memory" + cgroup_name + "/memory.max_usage_in_bytes",
+                cgroup_cpu_path=args.cgroup_location + "/cpu" + cgroup_name + "/cpuacct.usage"))
+        except FileNotFoundError as e:
+            print(e)
+            raise FileNotFoundError("cgroups not found:" + args.cgroup_location)
+
     while True:
         # Write memory usage data
         for process in processes:
@@ -152,19 +161,12 @@ def profile(args):
                 memory = parse_memory_file(process)
                 if memory > peak_memory:
                     peak_memory = memory
-                    write_data(process, str(peak_memory), args.output_dir, ".memory", "max_rss")
-                cpu_time = parse_cpu_file(process)
-                write_data(process, str(cpu_time), args.output_dir, ".cpu", "cpu_time")
+                    write_data(str(peak_memory), "max_rss")
+                cpu_time = parse_cpu_file(process, cgroup_version)
+                write_data(str(cpu_time), "cpu_time")
 
             except (OSError, IOError, ValueError) as error:
                 print(error)
-
-            # process, usage_percent = get_cpu_percent(
-            #     cpu_count, args.proc_path,
-            #     process, last_system_usage, last_cpu_usage)
-            #
-            # write_data(process, usage_percent,
-            #            args.output_dir, ".cpu")
 
             time.sleep(args.delay)
 
