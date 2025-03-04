@@ -557,11 +557,9 @@ def log(app, id_=None, list_files=None, get_log=None):
                         ),
                     )
                     for command in [
-                        opt for opt in (
-                            os.environ.get('EDITOR', 'vim'),
-                            os.environ.get('GEDITOR', 'gvim -f'),
-                            os.environ.get('PAGER', 'less'),
-                        )
+                        os.environ.get('EDITOR', 'vim'),
+                        os.environ.get('GEDITOR', 'gvim -f'),
+                        os.environ.get('PAGER', 'less'),
                     ]
                 ),
             ]),
