@@ -479,7 +479,6 @@ class GraphParser:
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, check_terminals, lefts, rights)
-
         self.terminals = rights.difference(lefts)
         for right in self.terminals:
             left = check_terminals.get(right)
@@ -583,11 +582,11 @@ class GraphParser:
 
         for left in lefts:
             # Extract information about all nodes on the left.
-
             if left:
                 info = self.__class__.REC_NODES.findall(left)
                 expr = left
-                _lefts.add(left)
+                for _left in info:
+                    _lefts.add(''.join(_left))
 
             else:
                 # There is no left-hand-side task.
