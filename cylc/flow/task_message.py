@@ -102,7 +102,9 @@ def write_messages(workflow, job_id, messages, event_time):
     _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(workflow, job_id, messages, event_time):
+def send_messages(
+    workflow: str, job_id: str, messages: List[list], event_time: str
+) -> None:
     workflow = os.path.normpath(workflow)
     try:
         pclient = get_client(workflow)
