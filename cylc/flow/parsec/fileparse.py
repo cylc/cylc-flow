@@ -233,7 +233,16 @@ def multiline(flines, value, index, maxline):
         index += 1
         newvalue += '\n'
         line = flines[index]
-        if line.find(quot) == -1:
+        if (
+            # Line should not start with a comment:
+            line.strip()[0] == '#'
+            or line.find(quot) == -1
+            # Line after comment ought to be ignored:
+            or (
+                line.split('#', maxsplit=2)
+                and line.split('#')[0].find(quot) == -1
+            )
+        ):
             newvalue += line
         else:
             # end of multiline, process it
