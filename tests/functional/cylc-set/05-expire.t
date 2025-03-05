@@ -26,14 +26,14 @@ install_and_validate
 reftest_run
 
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT status FROM task_states WHERE name is \"bar\"" > db-bar.1
+   "SELECT status FROM task_states WHERE name is 'bar'" > db-bar.1
 
 cmp_ok "db-bar.1" - << __OUT__
 expired
 __OUT__
 
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT outputs FROM task_outputs WHERE name is \"bar\"" > db-bar.2
+   "SELECT outputs FROM task_outputs WHERE name is 'bar'" > db-bar.2
 
 cmp_ok "db-bar.2" - << __OUT__
 {"expired": "(manually completed)"}

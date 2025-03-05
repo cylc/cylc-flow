@@ -48,7 +48,7 @@ cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 DB_FILE="${RUN_DIR}/${WORKFLOW_NAME}/log/db"
 NAME='database-entry'
 sqlite3 "${DB_FILE}" \
-    'SELECT value FROM workflow_params WHERE key=="startcp"' >"${NAME}"
+    "SELECT value FROM workflow_params WHERE key=='startcp'" >"${NAME}"
 cmp_ok "${NAME}" <<<'20130101T12'
 #-------------------------------------------------------------------------------
 purge
