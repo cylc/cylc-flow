@@ -46,94 +46,6 @@ from cylc.flow.parsec.fileparse import (
 )
 
 
-def get_multiline():
-    """Data provider for multiline tests. Returned values are:
-
-    file_lines, value, index, maxline, error_message, expected
-    """
-    r = [
-        ([], "'''single line'''", 0, 0, None, ("'''single line'''", 0)),
-        (
-            ["'''single line"],
-            "'''single line",  # missing closing quote
-            0,
-            0,
-            FileParseError,
-            {
-                'reason': 'Multiline string not closed',
-                'line': "'''single line"
-            }
-        ),
-        (
-            ["'''", "single line"],
-            "'''\n   '''single line",  # missing closing quote
-            0,
-            0,
-            FileParseError,
-            {
-                'reason': 'Invalid line',
-                'line': "'''"
-            }
-        ),
-        (
-            ["", "another value"],  # multiline, but we forgot to close quotes
-            "'''a\n#b",
-            0,
-            1,
-            FileParseError,
-            {
-                'reason': "Multiline string not closed"
-            }
-        ),
-        (
-            ["", "c'''"],
-            "'''a\n#b",
-            0,
-            1,
-            None,
-            ("'''a\n#b\nc'''", 1)
-        ),
-        (
-            ["", "c'''"],  # multiline, but we forgot to close quotes
-            "'''a\n#b",
-            0,
-            10000,  # no error. The function will stop before on the quotes
-            None,
-            ("'''a\n#b\nc'''", 1)
-        ),
-        (
-            ["", "c", "hello", ""],  # quotes out of balance
-            "'''a\n#b",
-            0,
-            3,
-            FileParseError,
-            {
-                'reason': "Multiline string not closed"
-            }
-        ),
-        (
-            ["", "c", "hello", ""],
-            "'''a\n#b",
-            0,
-            4,  # one too many
-            IndexError,
-            None
-        ),
-        (
-            ["", "a'''c", "hello", ""],
-            "'''a\n#b",
-            0,
-            3,
-            FileParseError,
-            {
-                'reason': 'Invalid line',
-                'line': "a'''c"
-            }
-        )
-    ]
-    return r
-
-
 def test_file_parse_error():
     error = FileParseError(reason="No reason")
     assert str(error) == "No reason"
@@ -267,18 +179,106 @@ def test_addict_replace_value_1():
     assert cfg['scheduling']['graph']['team']['graph'] == ['ABC', 'test']
 
 
-def test_multiline():
-    for flines, value, index, maxline, exc, expected in get_multiline():
-        if exc is not None:
-            with pytest.raises(exc) as cm:
-                multiline(flines, value, index, maxline)
-            if isinstance(cm.value, FileParseError):
-                exc = cm.value
-                for key, attr in expected.items():
-                    assert getattr(exc, key) == attr
-        else:
-            r = multiline(flines, value, index, maxline)
-            assert r == expected
+@pytest.mark.parametrize(
+    'flines, value, index, maxline, exc, expected',
+    (
+        param(
+            [],
+            "'''single line'''",
+            0,
+            0,
+            None,
+            ("'''single line'''", 0),
+            id='single-line',
+        ),
+        param(
+            ["'''single line"],
+            "'''single line",  # missing closing quote
+            0,
+            0,
+            FileParseError,
+            {
+                'reason': 'Multiline string not closed',
+                'line': "'''single line",
+            },
+            id='missing-closing-quote',
+        ),
+        param(
+            ["'''", "single line"],
+            "'''\n   '''single line",  # missing closing quote
+            0,
+            0,
+            FileParseError,
+            {'reason': 'Invalid line', 'line': "'''"},
+            id='missing-closing-quote2',
+        ),
+        param(
+            ["", "another value"],  # multiline, but we forgot to close quotes
+            "'''a\n#b",
+            0,
+            1,
+            FileParseError,
+            {'reason': "Multiline string not closed"},
+            id='multiline-missing-closing-quote',
+        ),
+        param(
+            ["", "c'''"],
+            "'''a\n#b",
+            0,
+            1,
+            None,
+            ("'''a\n#b\nc'''", 1),
+            id='good-path',
+        ),
+        param(
+            ["", "c'''"],  # multiline, but we forgot to close quotes
+            "'''a\n#b",
+            0,
+            10000,  # no error. The function will stop before on the quotes
+            None,
+            ("'''a\n#b\nc'''", 1),
+            id='multiline-missing-closing-quote2',
+        ),
+        param(
+            ["", "c", "hello", ""],  # quotes out of balance
+            "'''a\n#b",
+            0,
+            3,
+            FileParseError,
+            {'reason': "Multiline string not closed"},
+            id='unbalanced-quotes',
+        ),
+        param(
+            ["", "c", "hello", ""],
+            "'''a\n#b",
+            0,
+            4,  # one too many
+            IndexError,
+            None,
+            id='one-too-many',
+        ),
+        param(
+            ["", "a'''c", "hello", ""],
+            "'''a\n#b",
+            0,
+            3,
+            FileParseError,
+            {'reason': 'Invalid line', 'line': "a'''c"},
+            id='invalid-quotes',
+        ),
+    ),
+)
+def test_multiline(flines, value, index, maxline, exc, expected):
+    if exc is not None:
+        with pytest.raises(exc) as cm:
+            multiline(flines, value, index, maxline)
+        if isinstance(cm.value, FileParseError):
+            exc = cm.value
+            for key, attr in expected.items():
+                assert getattr(exc, key) == attr
+    else:
+        r = multiline(flines, value, index, maxline)
+        assert r == expected
 
 
 def test_read_and_proc_no_template_engine():
