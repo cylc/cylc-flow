@@ -28,7 +28,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach --abort-if
 CYLC_WORKFLOW_RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
 for DB_NAME in 'log/db' '.service/db'; do
     sqlite3 "${CYLC_WORKFLOW_RUN_DIR}/${DB_NAME}" \
-        'UPDATE task_jobs SET platform_name="garbage" WHERE name=="t-remote";'
+        "UPDATE task_jobs SET platform_name='garbage' WHERE name=='t-remote';"
 done
 workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 grep_ok PlatformLookupError "${CYLC_WORKFLOW_RUN_DIR}/log/scheduler/log"

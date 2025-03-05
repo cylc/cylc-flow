@@ -36,7 +36,7 @@ workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "$
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-platform
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'select platform_name from task_jobs where name=="foo"' >'foo-host.txt'
+    "SELECT platform_name FROM task_jobs WHERE name=='foo'" >'foo-host.txt'
 cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 #-------------------------------------------------------------------------------
 # Check that the remote job has actually been run on the correct remote by

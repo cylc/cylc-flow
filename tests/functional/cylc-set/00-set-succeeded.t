@@ -28,12 +28,12 @@ reftest_run
 for TASK in foo bar
 do
     sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-       "SELECT status FROM task_states WHERE name is \"$TASK\"" > "${TASK}.1"
+       "SELECT status FROM task_states WHERE name is '$TASK'" > "${TASK}.1"
 
     cmp_ok ${TASK}.1 - <<<succeeded
 
     sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-       "SELECT outputs FROM task_outputs WHERE name is \"$TASK\"" > "${TASK}.2"
+       "SELECT outputs FROM task_outputs WHERE name is '$TASK'" > "${TASK}.2"
 
     cmp_json \
         "check-${TASK}-outputs" \

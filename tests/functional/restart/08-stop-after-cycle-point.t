@@ -22,7 +22,7 @@
 
 dumpdbtables() {
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT value FROM workflow_params WHERE key=="stopcp";' > db_stopcp.out
+        "SELECT value FROM workflow_params WHERE key=='stopcp';" > db_stopcp.out
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' > db_taskpool.out.out
 }

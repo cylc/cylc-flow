@@ -27,16 +27,16 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 DB_FILE="$RUN_DIR/${WORKFLOW_NAME}/log/db"
 
 NAME='select-task-events.out'
-sqlite3 "${DB_FILE}" '
+sqlite3 "${DB_FILE}" "
     SELECT
         cycle, name, event, message
     FROM
         task_events
     WHERE
-        event GLOB "message *"
+        event GLOB 'message *'
     ORDER BY
         event
-' >"${NAME}"
+" >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
 1|t1|message critical|You are being critical
 1|t1|message info|You are normal

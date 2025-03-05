@@ -44,7 +44,7 @@ run_tests() {
     poll_grep_workflow_log 'vacated/USR1'
     sleep 1  # a bit of extra time for workflow db update to complete
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT status FROM task_states WHERE name=="t1";' \
+        "SELECT status FROM task_states WHERE name=='t1';" \
         >"${TEST_NAME}-db-t1" 2>'/dev/null'
     grep_ok "^\(submitted\|running\)$" "${TEST_NAME}-db-t1"
     # Start the job again and see what happens
@@ -55,7 +55,7 @@ run_tests() {
     poll_workflow_stopped
     # Test t1 status in DB
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT status FROM task_states WHERE name=="t1";' >"${TEST_NAME}-db-t1"
+        "SELECT status FROM task_states WHERE name=='t1';" >"${TEST_NAME}-db-t1"
     cmp_ok "${TEST_NAME}-db-t1" - <<<'succeeded'
     # Test reference
     grep_ok 'WORKFLOW REFERENCE TEST PASSED' "${WORKFLOW_RUN_DIR}/log/scheduler/log"

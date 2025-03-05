@@ -42,7 +42,7 @@ cylc stop --now --now --interval=2 --max-polls=5 "${WORKFLOW_NAME}"
 
 # Check the DB records all the outputs.
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT outputs FROM task_outputs WHERE name is \"foo\"" > db-foo.1
+   "SELECT outputs FROM task_outputs WHERE name is 'foo'" > db-foo.1
 
 # Json string list of outputs from the db may not be ordered correctly.
 python3 - << __END__ > db-foo.2

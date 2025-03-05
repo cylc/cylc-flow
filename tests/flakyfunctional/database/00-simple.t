@@ -38,8 +38,8 @@ cmp_ok "${NAME}" "${SORTED_ORIG}"
 
 NAME='select-workflow-params.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT key, value FROM workflow_params
-    WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
+    "SELECT key, value FROM workflow_params
+    WHERE key != 'uuid_str' AND key != 'cycle_point_tz' ORDER BY key" \
     >"${NAME}"
 cmp_ok "${NAME}" << __EOF__
 UTC_mode|0
