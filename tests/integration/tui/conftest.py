@@ -63,7 +63,7 @@ def format_test_failure(expected, got, description):
             </table>
             <br />
             <h4>Diff:</h4>
-            <pre>{ diff }</pre>
+            <pre>{diff}</pre>
         </html>
     '''
 
@@ -283,6 +283,11 @@ def _rakiura(test_dir, request, monkeypatch):
         'cylc.flow.tui.overlay._get_display_id',
         get_display_id,
     )
+
+    # standardise environment for tests
+    monkeypatch.setenv('EDITOR', 'nvim')
+    monkeypatch.setenv('GEDITOR', 'gvim -f')
+    monkeypatch.setenv('PAGER', 'less')
 
     # filter Tui so that only workflows created within our test show up
     id_base = str(test_dir.relative_to(Path("~/cylc-run").expanduser()))

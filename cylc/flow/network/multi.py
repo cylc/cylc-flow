@@ -16,15 +16,34 @@
 
 import asyncio
 import sys
-from typing import Callable, Dict, List, Tuple, Optional, Union, Type
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from ansimarkup import ansiprint
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.async_util import unordered_map
-from cylc.flow.exceptions import CylcError, WorkflowStopped
+from cylc.flow.exceptions import (
+    CylcError,
+    WorkflowStopped,
+)
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.terminal import DIM
+
+
+# Known error messages for incompatibilites between this version of Cylc (that
+# is running the command) and the version of Cylc running the workflow:
+KNOWN_INCOMPAT = {
+    'Unknown argument "onResume" on field "trigger" of type "Mutations".',
+}
 
 
 def call_multi(*args, **kwargs):
@@ -220,14 +239,15 @@ def _process_response(
 
 
 def _report(
-    response: dict,
+    response: Union[dict, list],
 ) -> Tuple[Optional[str], Optional[str], bool]:
     """Report the result of a GraphQL operation.
 
     This analyses GraphQL mutation responses to determine the outcome.
 
     Args:
-        response: The GraphQL response.
+        response: The workflow server response (NOT necessarily conforming to
+        GraphQL execution result spec).
 
     Returns:
         (stdout, stderr, outcome)
@@ -235,6 +255,20 @@ def _report(
     """
     try:
         ret: List[Tuple[Optional[str], Optional[str], bool]] = []
+        if not isinstance(response, dict):
+            if isinstance(response, list) and response[0].get('error'):
+                # If operating on workflow running in older Cylc version,
+                # may get a error response like [{'error': '...'}]
+                if response[0]['error'].get('message') in KNOWN_INCOMPAT:
+                    raise Exception(
+                        "This command is no longer compatible with the "
+                        "version of Cylc running the workflow. Please stop & "
+                        f"restart the workflow with Cylc {CYLC_VERSION} "
+                        "or higher."
+                        f"\n\n{response}"
+                    )
+                raise Exception(response)
+            raise Exception(f"Unexpected response: {response}")
         for mutation_response in response.values():
             # extract the result of each mutation result in the response
             success, msg = mutation_response['result'][0]['response']
@@ -268,7 +302,7 @@ def _report(
         # response returned is not in the expected format - this shouldn't
         # happen but we need to protect against it
         err_msg = ''
-        if cylc.flow.flags.verbosity > 1:  # debug mode
+        if cylc.flow.flags.verbosity > 0:  # verbose mode
             # print the full result to stderr
             err_msg += f'\n    <{DIM}>response={response}</{DIM}>'
         return (

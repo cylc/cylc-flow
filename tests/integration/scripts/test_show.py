@@ -172,12 +172,12 @@ async def test_task_instance_query(
     schd = scheduler(
         flow(
             {
-               'scheduling': {
-                   'graph': {'R1': 'zed & dog & cat & ant'},
-               },
-           },
+                'scheduling': {
+                    'graph': {'R1': 'zed & dog & cat & ant'},
+                },
+            },
         ),
-       paused_start=False,
+        paused_start=False,
     )
     async with start(schd):
         await schd.update_data_structure()
@@ -190,8 +190,8 @@ async def test_task_instance_query(
 
     out, _ = capsys.readouterr()
     assert [
-         line for line in out.splitlines()
-         if line.startswith("Task ID")
+        line for line in out.splitlines()
+        if line.startswith("Task ID")
     ] == [  # results should be sorted
         'Task ID: 1/ant',
         'Task ID: 1/cat',
@@ -239,13 +239,13 @@ async def test_task_instance_state_flows(
     schd = scheduler(
         flow(
             {
-               'scheduling': {
-                   'graph': {'R1': 'a'},
-               },
-               'runtime': {
-                   'a': {'run mode': 'skip'}
-               }
-           },
+                'scheduling': {
+                    'graph': {'R1': 'a'},
+                },
+                'runtime': {
+                    'a': {'run mode': 'skip'}
+                }
+            },
         ),
         paused_start=True,
         run_mode=workflow_run_mode,
@@ -275,15 +275,16 @@ async def test_task_instance_state_flows(
 
     out, _ = capsys.readouterr()
     assert [
-         line for line in out.splitlines()
-         if line.startswith("state:")
+        line for line in out.splitlines()
+        if line.startswith("state:")
     ] == [
         expected_state.format(run_mode_info),
     ]
+
     if expected_flows is not None:
         assert [
-             line for line in out.splitlines()
-             if line.startswith("flows:")
+            line for line in out.splitlines()
+            if line.startswith("flows:")
         ] == [
             expected_flows,
         ]

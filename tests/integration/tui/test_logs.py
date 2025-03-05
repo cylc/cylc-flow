@@ -114,7 +114,9 @@ def wait_log_loaded(monkeypatch):
 
 
 @pytest.fixture(scope='module')
-async def workflow(mod_flow, mod_scheduler, mod_start, standarise_host_and_path):
+async def workflow(
+    mod_flow, mod_scheduler, mod_start, standarise_host_and_path
+):
     """Test fixture providing a workflow with some log files to poke at."""
     id_ = mod_flow({
         'scheduling': {
@@ -378,4 +380,112 @@ async def test_errors(
         rk.compare_screenshot(
             'list-error',
             'the error message should be displayed in a pop up',
+        )
+
+
+async def test_external_editor(
+    workflow,
+    mod_rakiura,
+    wait_log_loaded,
+    monkeypatch,
+    capsys,
+):
+    """Test the "open in external editor" functionality.
+
+    This test covers the relevant code about as well as we can in an
+    integration test.
+
+    * The integration tests write HTML fragments to a file rather ANSI to a
+      terminal.
+    * Suspending / restoring the Tui session involves shell interaction that
+      we cannot simulate here.
+    * We're also not testing subprocesses in this integration test.
+
+    But this test passing tells us that the relevant code does indeed run
+    without falling over in a heap, so it will detect interface breakages and
+    the like which is useful.
+    """
+    fake_popen_instances = []
+
+    class FakePopen:
+        def __init__(self, cmd, *args, raises=None, **kwargs):
+            nonlocal fake_popen_instances
+            fake_popen_instances.append(self)
+            self.cmd = cmd
+            self.args = args
+            self.kwargs = kwargs
+            self.raises = raises
+
+        def wait(self):
+            if self.raises:
+                raise self.raises()
+            return 0
+
+    # mock out subprocess.Popen
+    monkeypatch.setattr(
+        'cylc.flow.tui.overlay.Popen',
+        FakePopen,
+    )
+    # mock out time.sleep
+    monkeypatch.setattr(
+        'cylc.flow.tui.overlay.sleep',
+        lambda x: None,
+    )
+
+    with mod_rakiura(size='80,30') as rk:
+        # wait for the workflow to appear (collapsed)
+        rk.wait_until_loaded('#spring')
+
+        # open the log view on scheduler
+        rk.user_input('down', 'enter', 'down', 'down', 'enter')
+
+        # it will fail to open
+        await wait_log_loaded()
+
+        assert len(fake_popen_instances) == 0
+        assert capsys.readouterr()[1] == ''
+
+        # select the open in "$EDITOR" option
+        rk.user_input('down', 'left', 'left', 'left')
+
+        # make a note of what the screen looks like
+        rk.compare_screenshot(
+            'before-opening-editor',
+            'The open in $EDITOR option should be selected',
+        )
+
+        # launch the external tool
+        rk.user_input('enter')
+
+        # the subprocess should be started and a message logged to stderr
+        assert len(fake_popen_instances) == 1
+        assert 'launching external tool' in capsys.readouterr()[1].lower()
+
+        # once the subprocess exist, the Tui session should be restored
+        # exactly as it was before
+        rk.compare_screenshot(
+            'before-opening-editor',
+            'The Tui session should restore exactly as it was before',
+        )
+
+        # get the subprocess to fail in a nasty way
+        from functools import partial
+        monkeypatch.setattr(
+            'cylc.flow.tui.overlay.Popen',
+            partial(FakePopen, raises=OSError),
+        )
+
+        # launch the external tool
+        rk.user_input('enter')
+
+        # the subprocess should be started, the error should be logged
+        # to stderr
+        assert len(fake_popen_instances) == 2
+        assert 'error running' in capsys.readouterr()[1].lower()
+
+        # once the subprocess exist, the Tui session should be restored
+        # exactly as it was before
+        rk.compare_screenshot(
+            'before-opening-editor',
+            'The Tui session should restore exactly as it was before',
         )

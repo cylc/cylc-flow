@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import os
 
 from cylc.flow.job_runner_handlers.slurm_packjob import JOB_RUNNER_HANDLER
 

@@ -108,13 +108,13 @@ async def test_skip_mode_outputs(
     Skip mode proposal point 2
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
     """
-    graph = """
+    graph = r"""
         # By default, all required outputs will be generated
         # plus succeeded if success is optional:
         foo? & foo:required_out => success_if_optional & required_outs
 
         # The outputs submitted and started are always produced
-        # and do not need to be defined in outputs:
+        # and do not need to be defined in [runtime][X][skip]outputs:
         foo:submitted => submitted_always
         foo:started => started_always
 
@@ -216,10 +216,11 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
         assert satisfied_message == 'satisfied by skip mode'
 
 
-async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate):
-
+async def test_outputs_can_be_changed(
+    one_conf, flow, start, scheduler, validate
+):
     schd = scheduler(flow(one_conf), run_mode='live')
-    async with start(schd) as log:
+    async with start(schd):
         # Broadcast the task into skip mode, output failed and submit it:
         schd.broadcast_mgr.put_broadcast(
             ["1"],

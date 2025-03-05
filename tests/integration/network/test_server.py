@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from getpass import getuser
+import logging
 import sys
 from typing import Callable
 
 import pytest
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.scheduler import Scheduler
 
@@ -38,16 +39,6 @@ async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         yield schd
 
 
-def run_server_method(schd, method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return getattr(schd.server, method)(*args, **kwargs)
-
-
-def call_server_method(method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return method(*args, **kwargs)
-
-
 def test_graphql(myflow):
     """Test GraphQL endpoint method."""
     request_string = f'''
@@ -57,7 +48,7 @@ def test_graphql(myflow):
             }}
         }}
     '''
-    data = call_server_method(myflow.server.graphql, request_string)
+    data = myflow.server.graphql(request_string)
     assert myflow.id == data['workflows'][0]['id']
 
 
@@ -66,10 +57,7 @@ def test_pb_data_elements(myflow):
     element_type = 'workflow'
     data = PB_METHOD_MAP['pb_data_elements'][element_type]()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_data_elements,
-            element_type
-        )
+        myflow.server.pb_data_elements(element_type)
     )
     assert data.added.id == myflow.id
 
@@ -78,9 +66,7 @@ def test_pb_entire_workflow(myflow):
     """Test Protobuf entire workflow endpoint method."""
     data = PB_METHOD_MAP['pb_entire_workflow']()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_entire_workflow
-        )
+        myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
 
@@ -95,35 +81,55 @@ async def test_stop(one: Scheduler, start):
             assert one.server.stopped
 
 
-async def test_receiver(one: Scheduler, start):
+async def test_receiver_basic(one: Scheduler, start, log_filter):
     """Test the receiver with different message objects."""
     async with timeout(5):
         async with start(one):
             # start with a message that works
-            msg = {'command': 'api', 'user': '', 'args': {}}
-            assert 'error' not in one.server.receiver(msg)
-            assert 'data' in one.server.receiver(msg)
-
-            # remove the user field - should error
-            msg2 = dict(msg)
-            msg2.pop('user')
-            assert 'error' in one.server.receiver(msg2)
-
-            # remove the command field - should error
-            msg3 = dict(msg)
-            msg3.pop('command')
-            assert 'error' in one.server.receiver(msg3)
-
-            # provide an invalid command - should error
-            msg4 = {**msg, 'command': 'foobar'}
-            assert 'error' in one.server.receiver(msg4)
+            msg = {'command': 'api', 'user': 'bono', 'args': {}}
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert res['data']
+            assert res['cylc_version'] == CYLC_VERSION
 
             # simulate a command failure with the original message
             # (the one which worked earlier) - should error
             def _api(*args, **kwargs):
-                raise Exception('foo')
+                raise Exception('oopsie')
             one.server.api = _api
-            assert 'error' in one.server.receiver(msg)
+            res = one.server.receiver(msg)
+            assert res == {
+                'error': {'message': 'oopsie'},
+                'cylc_version': CYLC_VERSION,
+            }
+            assert log_filter(logging.ERROR, 'oopsie')
+
+
+@pytest.mark.parametrize(
+    'msg, expected',
+    [
+        pytest.param(
+            {'user': 'bono', 'args': {}},
+            "Request missing field 'command' required for"
+            f" Cylc {CYLC_VERSION}",
+            id='missing-command',
+        ),
+        pytest.param(
+            {'command': 'foobar', 'user': 'bono', 'args': {}},
+            f"No method by the name 'foobar' at Cylc {CYLC_VERSION}",
+            id='bad-command',
+        ),
+    ],
+)
+async def test_receiver_bad_requests(one: Scheduler, start, msg, expected):
+    """Test the receiver with different bad requests."""
+    async with timeout(5):
+        async with start(one):
+            res = one.server.receiver(msg)
+            assert res == {
+                'error': {'message': expected},
+                'cylc_version': CYLC_VERSION,
+            }
 
 
 async def test_publish_before_shutdown(

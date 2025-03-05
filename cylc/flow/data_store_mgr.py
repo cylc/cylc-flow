@@ -642,6 +642,7 @@ class DataStoreMgr:
                     id=f_id,
                     name=name,
                     depth=len(ancestors[name]) - 1,
+                    descendants=list(descendants.get(name, [])),
                 )
                 famcfg = config.cfg['runtime'][name]
                 user_defined_meta = {}

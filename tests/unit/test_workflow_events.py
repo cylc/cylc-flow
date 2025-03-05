@@ -49,9 +49,9 @@ def test_get_events_handler(
     mock_glbl_cfg, key, workflow_cfg, glbl_cfg, expected
 ):
     """Test order of precedence for getting event handler configuration."""
-    if glbl_cfg:
-        mock_glbl_cfg(
-            'cylc.flow.workflow_events.glbl_cfg',
+    mock_glbl_cfg(
+        'cylc.flow.workflow_events.glbl_cfg',
+        (
             '''
             [scheduler]
                 [[mail]]
@@ -60,7 +60,9 @@ def test_get_events_handler(
                     abort on workflow timeout = True
                     mail events = abort
             '''
-        )
+            if glbl_cfg else ''
+        ),
+    )
 
     config = SimpleNamespace()
     config.cfg = {

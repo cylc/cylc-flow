@@ -28,7 +28,7 @@ from cylc.flow.scripts.install import (
     install_cli
 )
 
-from .test_scan import init_flows
+from .network.test_scan import init_flows
 from .utils.entry_points import EntryPointWrapper
 
 SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
