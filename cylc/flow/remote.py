@@ -180,9 +180,14 @@ def get_includes_to_rsync(rsync_includes=None):
 DEFAULT_RSYNC_OPTS = [
     '-a',
     '--checksum',
-    '--out-format=%o %n%L',
+    '--out-format=%o %i %n%L',  # see comment below
     '--no-t'
 ]
+# %o: the operation (send or del.)
+# %i: itemized changes (needed for rsync to report files with
+#     changed permissions
+# %n: filename
+# %L: "-> symlink_target" if applicable
 
 DEFAULT_INCLUDES = [
     '/ana/***',  # Rose ana analysis modules
