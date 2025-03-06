@@ -445,7 +445,7 @@ class TuiApp:
             # if task filters are active, display short help
             header.extend([
                 ('header', '   tasks filtered ('),
-                ('header_key', 'F'),
+                ('header_key', 'T'),
                 ('header', ' - edit, '),
                 ('header_key', 'R'),
                 ('header', ' - reset)'),
