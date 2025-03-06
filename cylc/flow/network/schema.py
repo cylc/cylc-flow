@@ -72,7 +72,7 @@ from cylc.flow.flow_mgr import (
 )
 from cylc.flow.id import Tokens
 from cylc.flow.run_modes import (
-    TASK_CONFIG_RUN_MODES, WORKFLOW_RUN_MODES, RunMode)
+    WORKFLOW_RUN_MODES, RunMode)
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_STATUS_DESC,
@@ -634,7 +634,7 @@ WorkflowRunMode = graphene.Enum(
 # The run mode for the task.
 TaskRunMode = graphene.Enum(
     'TaskRunMode',
-    [(m.capitalize(), m) for m in TASK_CONFIG_RUN_MODES],
+    [(k.capitalize(), k.lower()) for k in RunMode.__members__.keys()],
     description=lambda x: RunMode(x.value).describe() if x else None,
 )
 
