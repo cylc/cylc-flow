@@ -514,12 +514,14 @@ async def test_remove_added_jobs_of_pruned_task(one: Scheduler, start):
     """When a task is pruned, any of its jobs added in the same batch
     must be removed from the batch.
 
-    See https://github.com/cylc/cylc-ui/issues/1999#issuecomment-2701024180
+    See https://github.com/cylc/cylc-flow/pull/6656
     """
     async with start(one):
         itask = one.pool.get_tasks()[0]
         itask.state_reset(TASK_STATUS_PREPARING)
         one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_SUCCEEDED)
+        assert not one.data_store_mgr.data[one.id][JOBS]
         assert len(one.data_store_mgr.added[JOBS]) == 1
         one.data_store_mgr.update_data_structure()
         assert not one.data_store_mgr.data[one.id][JOBS]
+        assert not one.data_store_mgr.added[JOBS]
