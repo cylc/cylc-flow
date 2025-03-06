@@ -388,9 +388,7 @@ async def test_prune_data_store(flow, scheduler, start):
             if f.name == 'BAR'
         }) == 1
         # Before updating the data-store, remove bar/BAR.
-        for itask in schd.pool.get_tasks():
-            if itask.tdef.name == 'bar':
-                schd.pool.remove(itask, 'Test removal')
+        schd.pool.remove(schd.pool._get_task_by_id('1/bar'), 'Test removal')
         schd.data_store_mgr.update_data_structure()
         # bar/BAR not found in data or added stores.
         assert len({
