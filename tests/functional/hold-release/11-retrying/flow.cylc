@@ -18,7 +18,7 @@ t-retry-able => t-analyse
     [[t-hold-release]]
         script = """
             cylc__job__poll_grep_workflow_log -E \
-                '1/t-retry-able/01:running.* \(received\)failed'
+                '\[1/t-retry-able:waiting\] - retrying'
 
             cylc__job__poll_grep_workflow_log -E \
                 '1/t-retry-able/01:running.* => waiting'
