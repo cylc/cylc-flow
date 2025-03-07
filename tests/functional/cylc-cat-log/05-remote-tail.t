@@ -35,8 +35,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
-"
+    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh"
 #-------------------------------------------------------------------------------
 # Run detached.
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"

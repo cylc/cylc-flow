@@ -21,7 +21,7 @@
 
 dumpdbtables() {
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT * FROM workflow_params WHERE key=="stop_clock_time";' \
+        "SELECT * FROM workflow_params WHERE key=='stop_clock_time';" \
         >'stopclocktime.out'
 }
 

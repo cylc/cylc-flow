@@ -24,7 +24,7 @@ WORKFLOWD="$RUN_DIR/${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
 sqlite3 "${WORKFLOWD}/log/db" \
-    'SELECT COUNT(*) FROM task_action_timers WHERE ctx_key GLOB "*event-handler-00*"' \
+    "SELECT COUNT(*) FROM task_action_timers WHERE ctx_key GLOB '*event-handler-00*'" \
     >"${TEST_NAME_BASE}-db-n-entries"
 cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'
 workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --debug --no-detach

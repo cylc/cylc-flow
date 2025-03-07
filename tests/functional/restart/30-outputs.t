@@ -27,7 +27,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT outputs FROM task_outputs WHERE name IS "t1"' >'sqlite3.out'
+    "SELECT outputs FROM task_outputs WHERE name IS 't1'" >'sqlite3.out'
 cmp_json 'sqlite3.out' 'sqlite3.out' <<<'{"submitted": "submitted", "started": "started", "succeeded": "succeeded", "hello": "hi there"}'
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'task-pool.out'

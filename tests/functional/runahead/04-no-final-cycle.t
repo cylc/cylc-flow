@@ -30,7 +30,7 @@ run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB="$RUN_DIR/${WORKFLOW_NAME}/log/db"
-TASKS=$(sqlite3 "${DB}" 'select count(*) from task_states where status=="failed"')
+TASKS=$(sqlite3 "${DB}" "SELECT COUNT(*) FROM task_states WHERE status=='failed'")
 # manual comparison for the test
 if ((TASKS==2)); then
     ok "${TEST_NAME}"
