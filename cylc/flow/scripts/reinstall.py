@@ -303,7 +303,7 @@ async def reinstall(
             return False
 
         # display rsync output
-        write('\n'.join(changes), file=sys.stderr)
+        write('\n'.join(changes), file=sys.stdout)
 
     if not dry_run:
         # run post_install plugins
