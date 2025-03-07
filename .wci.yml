@@ -1,0 +1,51 @@
+# name: <workflow_system_name> # will use GitHub repository name if not provided
+name: Cylc
+
+# icon: <url_to_workflow_system_logo> # will use GitHub organization icon if not provided
+
+# headline: <brief_description> # will use GitHub repository description if not provided
+headline: A general purpose workflow engine with a particular gift for cycling.
+
+# description: <long_description> # will use GitHub repository description if not provided
+description: Cylc is a decentralised, distributed, DAG/DCG workflow scheduler.
+
+# language: <workflow_system_language> # will attempt to fetch GitHub repository main language if not provided
+language: Python
+
+# release: # will attempt to fetch latest release from GitHub repository if not provided
+#   version: <release_name>
+#   date: <release_date> # format: YYYY-MM-DD
+#   url: <release_url>
+
+# documentation: # nothing will be used if not provided
+#   general: <documentation_url>
+#   installation: <installation_url>
+#   tutorial: <tutorial_url>
+documentation:
+  general: https://cylc.github.io/cylc-doc/stable/html/index.html
+  installation: https://cylc.github.io/cylc-doc/stable/html/installation.html
+  tutorial: https://cylc.github.io/cylc-doc/stable/html/tutorial/index.html
+
+# social: # nothing will be used if not provided
+#  twitter: <twitter_name>
+#  youtube: <youtube_channel_url>
+
+# execution_environment: # nothing will be used if not provided
+#  interfaces: # list of interfaces
+#    - <interface_1>
+#    - <interface_2>
+
+# resource_managers: # list of supported resource managers
+#   - <resource_manager_1>
+#   - <resource_manager_2>
+resource_managers: # list of supported resource managers
+    - PBS
+    - Slurm
+    - Moab
+    - LSF
+    - atd
+    - background
+
+# transfer_protocols: # list of supported transfer protocols
+#   - <transfer_protocol_1>
+#   - <transfer_protocol_2>
