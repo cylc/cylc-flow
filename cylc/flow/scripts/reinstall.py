@@ -68,10 +68,16 @@ How to prevent reinstall deleting files:
   "cylc install" even if present in the source directory.
 """
 
-from pathlib import Path
-import sys
-from typing import Optional, TYPE_CHECKING, List, Callable
 from functools import partial
+from pathlib import Path
+import re
+import sys
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    List,
+    Optional,
+)
 
 from ansimarkup import parse as cparse
 
@@ -79,22 +85,26 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowFilesError,
 )
-from cylc.flow.install import (
-    reinstall_workflow,
-)
+import cylc.flow.flags
+from cylc.flow.install import reinstall_workflow
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
+    ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
     OptionSettings,
-    ID_MULTI_ARG_DOC
 )
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.plugins import run_plugins_async
+from cylc.flow.terminal import (
+    DIM,
+    cli_function,
+    is_terminal,
+)
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     load_contact_file,
 )
-from cylc.flow.terminal import cli_function, DIM, is_terminal
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -269,9 +279,8 @@ async def reinstall(
         update anything, else returns True.
 
     """
-    # run pre_configure plugins
     if not dry_run:
-        # don't run plugins in dry-mode
+        # run pre_configure plugins
         async for _entry_point, _plugin_result in run_plugins_async(
             'cylc.pre_configure',
             srcdir=src_dir,
@@ -287,18 +296,17 @@ async def reinstall(
         dry_run=dry_run,
     )
 
-    # display changes
     if dry_run:
-        if not stdout or stdout == 'send ./':
-            # no rsync output == no changes => exit
+        # display changes
+        changes = format_reinstall_output(stdout)
+        if not changes:
             return False
 
         # display rsync output
-        write('\n'.join(format_rsync_out(stdout)), file=sys.stderr)
+        write('\n'.join(changes), file=sys.stderr)
 
-    # run post_install plugins
     if not dry_run:
-        # don't run plugins in dry-mode
+        # run post_install plugins
         async for _entry_point, _plugin_result in run_plugins_async(
             'cylc.post_install',
             srcdir=src_dir,
@@ -311,15 +319,15 @@ async def reinstall(
     return True
 
 
-def format_rsync_out(out: str) -> List[str]:
+def format_reinstall_output(out: str) -> List[str]:
     r"""Format rsync stdout for presenting to users.
 
     Note: Output formats of different rsync implementations may differ so keep
           this code simple and robust.
 
     Example:
-        >>> format_rsync_out(
-        ...     'send foo\ndel. bar\nbaz'
+        >>> format_reinstall_output(
+        ...     '>f+++++++++ send foo\n*deleting   del. bar\nbaz'
         ...     '\ncannot delete non-empty directory: opt'
         ... ) == [
         ...     cparse('<green>send foo</green>'),
@@ -331,20 +339,23 @@ def format_rsync_out(out: str) -> List[str]:
     """
     lines = []
     for line in out.splitlines():
-        if line[0:4] == 'send':
-            # file added or updated
-            lines.append(cparse(f'<green>{line}</green>'))
-        elif line[0:4] == 'del.':
-            # file deleted
-            lines.append(cparse(f'<red>{line}</red>'))
-        elif line == 'cannot delete non-empty directory: opt':
-            # These "cannot delete non-empty directory" messages can arise
-            # as a result of excluding files within sub-directories.
-            # This opt dir message is likely to occur when a rose-suit.conf
+        if not line or line.startswith('cannot delete non-empty directory:'):
+            # This can arise as a result of deleting a subdir when we are
+            # excluding files within the subdir.
+            # This is likely to occur for the opt dir when a rose-suite.conf
             # file is present.
+            # Skip this line as nothing will happen to this dir.
             continue
+        match = re.match(r'^(.{11}) (send|del\.) (.*)$', line)
+        if match:
+            summary, operation, file = match.groups()
+            color = 'green' if operation == 'send' else 'red'
+            formatted_line = f"<{color}>{operation} {file}</{color}>"
+            if cylc.flow.flags.verbosity > 0:
+                formatted_line = f"<{DIM}>{summary}</{DIM}> {formatted_line}"
+            lines.append(cparse(formatted_line))
         else:
-            # other uncategorised log line
+            # shouldn't happen; tolerate unknown rsync implementation?
             lines.append(line)
     return lines
 

@@ -68,7 +68,8 @@ def non_interactive(monkeypatch):
 
 @pytest.fixture
 def one_src(tmp_path):
-    src_dir = tmp_path
+    src_dir = tmp_path / 'src'
+    src_dir.mkdir()
     (src_dir / 'flow.cylc').touch()
     (src_dir / 'rose-suite.conf').touch()
     return SimpleNamespace(path=src_dir)
