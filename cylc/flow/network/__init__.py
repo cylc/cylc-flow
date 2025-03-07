@@ -16,7 +16,6 @@
 """Package for network interfaces to Cylc scheduler objects."""
 
 import asyncio
-import getpass
 import json
 from typing import (
     TYPE_CHECKING,
@@ -106,9 +105,7 @@ def deserialize(message: str) -> 'ResponseDict':
     """Convert a JSON message string to dict with an added 'user' field."""
     # Abstract out the transport format in order to allow it to be changed
     # in future.
-    msg = json.loads(message)
-    msg['user'] = getpass.getuser()  # assume this is the user
-    return msg
+    return json.loads(message)
 
 
 def get_location(workflow: str) -> Tuple[str, int, int]:

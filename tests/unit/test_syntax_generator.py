@@ -47,7 +47,7 @@ def test_update_cylc_lang_new_section(tmp_path):
         "some stuff"
         "<!--END_TAG_FOR_AUTO_UPDATE-->"
     ))
-    result = syntax.update_cylc_lang(
+    syntax.update_cylc_lang(
         ['gamma', 'nu'], test_file, '#kword#{word}#kword# - '
     )
     assert test_file.read_text() == (

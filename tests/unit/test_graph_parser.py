@@ -27,7 +27,6 @@ from cylc.flow.exceptions import GraphParseError, ParamExpandError
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
@@ -808,7 +807,6 @@ def test_cannot_be_required():
         gp.parse_graph('a:expired => b')
     with pytest.raises(GraphParseError, match='must be optional'):
         gp.parse_graph('a:submit-failed => b')
-
 
 
 @pytest.mark.parametrize(

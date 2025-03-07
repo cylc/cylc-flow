@@ -1227,7 +1227,7 @@ class Family(ObjectType):
     depth = Int()
     proxies = graphene.List(
         lambda: FamilyProxy,
-        description='Associated cycle point proxies.',
+        description='Associated family proxy instances.',
         args=PROXY_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -1235,7 +1235,7 @@ class Family(ObjectType):
         resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
-        description='Family definition parent.',
+        description='Families that this family directly inherits from.',
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -1243,7 +1243,7 @@ class Family(ObjectType):
         resolver=get_nodes_by_ids)
     child_tasks = graphene.List(
         Task,
-        description='Descendant definition tasks.',
+        description='Tasks that inherit from this family.',
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
@@ -1251,12 +1251,26 @@ class Family(ObjectType):
         resolver=get_nodes_by_ids)
     child_families = graphene.List(
         lambda: Family,
-        description='Descendant desc families.',
+        description='Families that inherit from this family.',
         args=DEF_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
+    descendants = graphene.List(
+        String,
+        description=sstrip('''
+            Linearised first-parent descendants.
+
+            Inheritance in Cylc provides two functions:
+            * Allowing tasks to inherit common configurations.
+            * Defining a family/task hierarchy for visualisation purposes.
+              (the linearised first-parent hierarchy).
+
+            The visual hierarchy follows the first-parent of a family which
+            may differ from the full inheritance hierarchy.
+        '''),
+    )
     first_parent = Field(
         lambda: Family,
         description='Family first parent.',
@@ -2187,7 +2201,8 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
         description = sstrip("""
             Set task prerequisites or outputs.
 
-            By default, set all required outputs for target task(s).
+            By default, set all required outputs for target task(s) (including
+            `submitted`, `started` and `succeeded` even if they are optional).
 
             Setting prerequisites contributes to the task's readiness to run.
 

@@ -15,11 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import sys
 
-from async_timeout import timeout as async_timeout
 import pytest
 
 from cylc.flow.scheduler import SchedulerError
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as async_timeout
+else:
+    from async_timeout import timeout as async_timeout
 
 
 EVENTS = (
@@ -76,8 +82,8 @@ async def test_startup_and_shutdown(test_scheduler, run):
     """Test the startup and shutdown events.
 
     * "statup" should fire every time a scheduler is started.
-    * "shutdown" should fire every time a scheduler exits in a controlled fassion
-      (i.e. excluding aborts on unexpected internal errors).
+    * "shutdown" should fire every time a scheduler exits in a controlled
+      fashion (i.e. excluding aborts on unexpected internal errors).
     """
     schd = test_scheduler()
     async with run(schd):
