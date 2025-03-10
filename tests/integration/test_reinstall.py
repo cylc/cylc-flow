@@ -19,27 +19,22 @@
 import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
+from secrets import token_hex
 from types import SimpleNamespace
-from uuid import uuid1
 
 import pytest
 
-from cylc.flow.exceptions import (
-    WorkflowFilesError,
-)
-from cylc.flow.install import (
-    reinstall_workflow,
-)
+from cylc.flow.exceptions import WorkflowFilesError
+from cylc.flow.install import reinstall_workflow
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.reinstall import (
     get_option_parser as reinstall_gop,
     reinstall_cli,
 )
-from cylc.flow.workflow_files import (
-    WorkflowFiles,
-)
+from cylc.flow.workflow_files import WorkflowFiles
 
 from .utils.entry_points import EntryPointWrapper
+
 
 ReInstallOptions = Options(reinstall_gop())
 
@@ -67,6 +62,18 @@ def non_interactive(monkeypatch):
 
 
 @pytest.fixture
+def answer_prompt(monkeypatch: pytest.MonkeyPatch):
+    """Answer reinstall prompt."""
+
+    def inner(answer: str):
+        monkeypatch.setattr(
+            'cylc.flow.scripts.reinstall._input', lambda x: answer
+        )
+
+    return inner
+
+
+@pytest.fixture
 def one_src(tmp_path):
     src_dir = tmp_path / 'src'
     src_dir.mkdir()
@@ -77,7 +84,7 @@ def one_src(tmp_path):
 
 @pytest.fixture
 def one_run(one_src, test_dir, run_dir):
-    w_run_dir = test_dir / str(uuid1())
+    w_run_dir = test_dir / token_hex(4)
     w_run_dir.mkdir()
     (w_run_dir / 'flow.cylc').touch()
     (w_run_dir / 'rose-suite.conf').touch()
@@ -148,7 +155,7 @@ async def test_interactive(
     capsys,
     capcall,
     interactive,
-    monkeypatch
+    answer_prompt
 ):
     """It should perform a dry-run and prompt in interactive mode."""
     # capture reinstall calls
@@ -159,23 +166,18 @@ async def test_interactive(
     # give it something to reinstall
     (one_src.path / 'a').touch()
 
-    # reinstall answering "no" to any prompt
-    monkeypatch.setattr(
-        'cylc.flow.scripts.reinstall._input',
-        lambda x: 'n'
+    answer_prompt('n')
+    assert (
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+        is False
     )
-    assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id) is False
 
     # only one rsync call should have been made (i.e. the --dry-run)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [True]
     assert 'Reinstall canceled, no changes made.' in capsys.readouterr().out
     reinstall_calls.clear()
 
-    # reinstall answering "yes" to any prompt
-    monkeypatch.setattr(
-        'cylc.flow.scripts.reinstall._input',
-        lambda x: 'y'
-    )
+    answer_prompt('y')
     assert await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
 
     # two rsync calls should have been made (i.e. the --dry-run and the real)
@@ -234,7 +236,9 @@ async def test_rsync_stuff(one_src, one_run, capsys, non_interactive):
     assert not (one_run.path / 'c').exists()
 
 
-async def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
+async def test_rose_warning(
+    one_src, one_run, capsys, interactive, answer_prompt
+):
     """It should warn that Rose installed files will be deleted.
 
     See https://github.com/cylc/cylc-rose/issues/149
@@ -244,11 +248,7 @@ async def test_rose_warning(one_src, one_run, capsys, interactive, monkeypatch):
         'Files created by Rose file installation will show as deleted'
     )
 
-    # reinstall answering "no" to any prompt
-    monkeypatch.setattr(
-        'cylc.flow.scripts.reinstall._input',
-        lambda x: 'n'
-    )
+    answer_prompt('n')
     (one_src.path / 'a').touch()  # give it something to install
 
     # reinstall (with rose-suite.conf file)
@@ -301,6 +301,35 @@ async def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     assert 'An error occurred reinstalling' in str(exc_ctx.value)
+
+
+async def test_permissions_change(
+    one_src,
+    one_run,
+    interactive,
+    answer_prompt,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+):
+    """It detects permissions changes."""
+    # Add script file:
+    script_path: Path = one_src.path / 'myscript'
+    script_path.touch()
+    await reinstall_cli(
+        opts=ReInstallOptions(skip_interactive=True), workflow_id=one_run.id
+    )
+    assert (one_run.path / 'myscript').is_file()
+    capsys.readouterr()  # clears capsys
+
+    # Change permissions (e.g. user forgot to make it executable before)
+    script_path.chmod(0o777)
+    # Answer "no" to reinstall prompt (we just want to test dry run)
+    answer_prompt('n')
+    await reinstall_cli(
+        opts=ReInstallOptions(), workflow_id=one_run.id
+    )
+    out, _ = capsys.readouterr()
+    assert "send myscript" in out
 
 
 @pytest.fixture
