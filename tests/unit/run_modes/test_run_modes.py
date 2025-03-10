@@ -36,3 +36,12 @@ def test_get_default_live():
 def test__missing_(str_):
     """The RunMode enumeration works when fed a string in the wrong case"""
     assert RunMode(str_).value == str_.lower()
+
+
+def test__missing_still_doesnt_work():
+    """
+    The RunMode enumeration raises an error when fed a string
+    that is not a mode.
+    """
+    with pytest.raises(ValueError):
+        RunMode('garbage')
