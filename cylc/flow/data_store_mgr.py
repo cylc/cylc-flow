@@ -1735,7 +1735,7 @@ class DataStoreMgr:
             self.update_workflow()
 
             # Don't process updated deltas of pruned nodes
-            self.prune_pruned_updated_nodes()
+            self.dedupe_pruned_updated_task_proxies()
 
             # Gather deltas
             self.batch_deltas()
@@ -1959,8 +1959,8 @@ class DataStoreMgr:
         if fp_id in parent_ids:
             parent_ids.remove(fp_id)
 
-    def prune_pruned_updated_nodes(self):
-        """Remove updated nodes that will also be pruned this batch.
+    def dedupe_pruned_updated_task_proxies(self):
+        """Remove updated task proxies that will also be pruned in this batch.
 
         This will avoid processing and sending deltas that will immediately
         be pruned. Kept separate from other pruning to allow for update
@@ -1970,19 +1970,19 @@ class DataStoreMgr:
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
         tp_updated = self.updated[TASK_PROXIES]
-        j_updated = self.updated[JOBS]
         for tp_id in self.pruned_task_proxies:
             if tp_id in tp_updated:
                 if tp_id in tp_data:
-                    node = tp_data[tp_id]
+                    node: PbTaskProxy = tp_data[tp_id]
                 elif tp_id in tp_added:
                     node = tp_added[tp_id]
                 else:
                     continue
-                update_node = tp_updated.pop(tp_id)
-                for j_id in list(node.jobs) + list(update_node.jobs):
-                    if j_id in j_updated:
-                        del j_updated[j_id]
+                update_node: PbTaskProxy = tp_updated.pop(tp_id)
+                # Remove this task's added/updated jobs in this batch too:
+                for j_id in set(node.jobs).union(update_node.jobs):
+                    for record in (self.added, self.updated):
+                        record[JOBS].pop(j_id, None)
                 self.n_window_edges.difference_update(update_node.edges)
                 self.deltas[EDGES].pruned.extend(update_node.edges)
         self.pruned_task_proxies.clear()

@@ -14,10 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Iterable, List, TYPE_CHECKING, cast
+from logging import INFO
+from typing import (
+    Iterable,
+    List,
+    cast,
+)
 
 import pytest
 
+from cylc.flow.data_messages_pb2 import (
+    PbPrerequisite,
+    PbTaskProxy,
+)
 from cylc.flow.data_store_mgr import (
     EDGES,
     FAMILY_PROXIES,
@@ -27,23 +36,20 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
 from cylc.flow.wallclock import get_current_time_string
-
-
-if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
-    from cylc.flow.data_messages_pb2 import PbPrerequisite, PbTaskProxy
 
 
 # NOTE: Some of these tests mutate the data store, so running them in
@@ -502,3 +508,20 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
             TASK_OUTPUT_SUCCEEDED,
         }
         assert get_delta_outputs() is None
+
+
+async def test_remove_added_jobs_of_pruned_task(one: Scheduler, start):
+    """When a task is pruned, any of its jobs added in the same batch
+    must be removed from the batch.
+
+    See https://github.com/cylc/cylc-flow/pull/6656
+    """
+    async with start(one):
+        itask = one.pool.get_tasks()[0]
+        itask.state_reset(TASK_STATUS_PREPARING)
+        one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_SUCCEEDED)
+        assert not one.data_store_mgr.data[one.id][JOBS]
+        assert len(one.data_store_mgr.added[JOBS]) == 1
+        one.data_store_mgr.update_data_structure()
+        assert not one.data_store_mgr.data[one.id][JOBS]
+        assert not one.data_store_mgr.added[JOBS]
