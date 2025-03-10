@@ -16,6 +16,7 @@
 
 """Test the workings of simulation mode"""
 
+import logging
 from pathlib import Path
 import pytest
 from pytest import param
@@ -371,7 +372,7 @@ async def test_settings_reload(
 
 
 async def test_settings_broadcast(
-    flow, scheduler, start, monkeytime
+    flow, scheduler, start, monkeytime, log_filter
 ):
     """Assert that broadcasting a change in the settings for a task
     affects subsequent psuedo-submissions.
@@ -415,11 +416,21 @@ async def test_settings_broadcast(
         # Change a setting using broadcast:
         schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
-                'simulation': {'fail cycle points': ''}
+                'simulation': {'fail cycle points': ''},
             }])
         # Submit again - result is different:
         schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is False
+
+        # Assert that setting run mode on a simulation mode task fails with
+        # warning:
+        schd.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'run mode': 'live',
+            }])
+        record = log_filter(contains='will not be actioned')[0]
+        assert record[0] == logging.WARNING
+        assert 'run mode' not in schd.broadcast_mgr.broadcasts
 
         # Assert Clearing the broadcast works
         schd.broadcast_mgr.clear_broadcast()
