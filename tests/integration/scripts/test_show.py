@@ -22,7 +22,9 @@ from types import SimpleNamespace
 from colorama import init as colour_init
 
 from cylc.flow.id import Tokens
+from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.show import (
+    get_option_parser,
     show,
 )
 
@@ -293,12 +295,7 @@ async def test_task_instance_state_flows(
 async def test_task_run_mode_changes(flow, scheduler, start, capsys):
     """Broadcasting a change of run mode changes run mode shown by cylc show.
     """
-    opts = SimpleNamespace(
-        comms_timeout=5,
-        json=False,
-        task_defs=None,
-        list_prereqs=False,
-    )
+    opts = Options(get_option_parser())()
     schd = scheduler(
         flow({'scheduling': {'graph': {'R1': 'a'}}}),
         run_mode='live'
