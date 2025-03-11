@@ -146,10 +146,9 @@ jobs:
 
       - name: Add .github/bin/ to PATH
         # Sets up mocked mail command & any other custom executables
-        # run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
+        # Adding to $GITHUB_PATH does not work when using setup-micromamba and/or login shell
         run: |
           echo "export PATH=\"${{ github.workspace }}/.github/bin:$PATH\"" >> ~/.bash_profile
-          cat ~/.bash_profile
 
       - name: Install
         run: |
