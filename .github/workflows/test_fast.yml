@@ -51,6 +51,7 @@ jobs:
             python=${{ matrix.python-version }}
             pip
             bash
+            subversion
             sqlite
 
       - name: Install Python Dependencies

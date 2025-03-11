@@ -115,10 +115,11 @@ jobs:
             pip
             bash
             coreutils
-            sed
             grep
-            tree
+            sed
             sqlite
+            subversion
+            tree
 
       - name: Create global config
         run: |
