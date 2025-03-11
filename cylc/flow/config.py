@@ -81,6 +81,7 @@ from cylc.flow.pathutil import (
     is_relative_to,
 )
 from cylc.flow.task_qualifiers import ALT_QUALIFIERS
+from cylc.flow.run_modes import WORKFLOW_ONLY_MODES
 from cylc.flow.run_modes.simulation import configure_sim_mode
 from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
@@ -2447,6 +2448,13 @@ class WorkflowConfig:
 
         try:
             rtcfg = self.cfg['runtime'][name]
+
+            # If the workflow mode is simulation or dummy always
+            # override the task config:
+            workflow_run_mode = RunMode.get(self.options)
+            if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
+                rtcfg['run mode'] = workflow_run_mode.value
+
         except KeyError:
             raise WorkflowConfigError("Task not defined: %s" % name) from None
         # We may want to put in some handling for cases of changing the
