@@ -24,7 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
+    "SELECT status FROM task_pool WHERE cycle=='1' AND NAME=='t1'" \
         >'t1-status.out'
 cmp_ok 't1-status.out' <<<'running'
 run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}"
@@ -35,7 +35,7 @@ cylc kill "${WORKFLOW_NAME}//1/t1"
 poll_workflow_stopped
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
+    "SELECT status FROM task_pool WHERE cycle=='1' AND NAME=='t1'" \
         >'t1-status.out'
 cmp_ok 't1-status.out' <<<'failed'
 purge

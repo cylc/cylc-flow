@@ -21,9 +21,9 @@
 
 dumpdbtables() {
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT * FROM workflow_params WHERE key=="fcp";' >'fcp.out'
+        "SELECT * FROM workflow_params WHERE key=='fcp';" >'fcp.out'
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        "SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;" >'taskpool.out'
 }
 
 set_test_number 13

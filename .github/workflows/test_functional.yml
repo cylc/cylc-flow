@@ -32,6 +32,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -c "exec $CONDA_PREFIX/bin/bash -elo pipefail {0}"
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -56,20 +60,20 @@ jobs:
             platform: '_local_background*'
           # tests/k
           - name: 'flaky'
-            os: 'ubuntu-22.04'
+            os: 'ubuntu-latest'
             python-version: '3.7'
             test-base: 'tests/k'
             chunk: '1/1'
             platform: '_local_background* _local_at*'
           # remote platforms
           - name: '_remote_background_indep_poll'
-            os: 'ubuntu-22.04'
+            os: 'ubuntu-latest'
             python-version: '3.7'
             test-base: 'tests/f tests/k'
             chunk: '1/1'
             platform: '_remote_background_indep_poll _remote_at_indep_poll'
           - name: '_remote_background_indep_tcp'
-            os: 'ubuntu-22.04'
+            os: 'ubuntu-latest'
             test-base: 'tests/f tests/k'
             python-version: '3.7'
             chunk: '1/1'
@@ -77,13 +81,13 @@ jobs:
           # macos
           - name: 'macos 1/5'
             os: 'macos-latest'
-            python-version: '3.9'
+            python-version: '3.8'  # oldest available
             test-base: 'tests/f'
             chunk: '1/5'
             platform: '_local_background*'
           - name: 'macos 2/5'
             os: 'macos-latest'
-            python-version: '3.9'
+            python-version: '3'  # newest available
             test-base: 'tests/f'
             chunk: '2/5'
             platform: '_local_background*'
@@ -101,9 +105,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Python
-        uses: actions/setup-python@v5
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          cache-environment: true
+          post-cleanup: 'all'
+          environment-name: cylc-functional-test
+          create-args: >-
+            python=${{ matrix.python-version }}
+            pip
+            bash
+            coreutils
+            grep
+            sed
+            sqlite
+            subversion
+            tree
 
       - name: Create global config
         run: |
@@ -128,36 +144,11 @@ jobs:
           __HERE__
           cat "$GLOBAL_CFG_PATH"
 
-      - name: Brew Install
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          # install system deps
-          brew update
-          brew install bash coreutils gnu-sed grep
-
-          # add GNU coreutils and sed to the user PATH
-          # (see instructions in brew install output)
-          echo "$(brew --prefix)/opt/coreutils/libexec/gnubin" >> "${GITHUB_PATH}"
-          echo "$(brew --prefix)/opt/grep/libexec/gnubin" >> "${GITHUB_PATH}"
-          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> "${GITHUB_PATH}"
-
-          # add coreutils to the bashrc too (for jobs)
-          cat >> "${HOME}/.bashrc" <<__HERE__
-          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:$PATH"
-          PATH="$(brew --prefix)/opt/grep/libexec/gnubin:$PATH"
-          PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
-          export PATH
-          __HERE__
-
-      - name: Apt-Get Install
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sqlite3 tree at
-
       - name: Add .github/bin/ to PATH
         # Sets up mocked mail command & any other custom executables
-        run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
+        # Adding to $GITHUB_PATH does not work when using setup-micromamba and/or login shell
+        run: |
+          echo "export PATH=\"${{ github.workspace }}/.github/bin:$PATH\"" >> ~/.bash_profile
 
       - name: Install
         run: |
@@ -167,6 +158,8 @@ jobs:
       - name: Configure Atrun
         if: contains(matrix.platform, '_local_at')
         run: |
+          sudo apt-get update
+          sudo apt-get install -y at
           cat >> "$GLOBAL_CFG_PATH" << __HERE__
             [platforms]
                 [[_local_at_indep_tcp]]
