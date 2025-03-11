@@ -148,8 +148,8 @@ jobs:
         # Sets up mocked mail command & any other custom executables
         # run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
         run: |
-          echo "export PATH=\"${{ github.workspace }}/.github/bin:$PATH\"" >> ~/.bashrc
-          cat ~/.bashrc
+          echo "export PATH=\"${{ github.workspace }}/.github/bin:$PATH\"" >> ~/.bash_profile
+          cat ~/.bash_profile
 
       - name: Install
         run: |
