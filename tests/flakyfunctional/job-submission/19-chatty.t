@@ -70,7 +70,7 @@ done
 # Task pool in database contains the correct states
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
 DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
-QUERY='SELECT cycle, name, status FROM task_states WHERE name LIKE "nh%"'
+QUERY="SELECT cycle, name, status FROM task_states WHERE name LIKE 'nh%'"
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 sort "${TEST_NAME}.stdout" > "${TEST_NAME}.stdout.sorted"
 cmp_ok "${TEST_NAME}.stdout.sorted" << '__OUT__'

@@ -43,7 +43,7 @@ cylc stop "${WORKFLOW_NAME}"
 poll_workflow_stopped
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT * FROM workflow_params WHERE key=="cycle_point_tz";' > 'dump.out'
+    "SELECT * FROM workflow_params WHERE key=='cycle_point_tz';" > 'dump.out'
 cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
 
 # Simulate DST change

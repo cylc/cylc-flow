@@ -28,7 +28,7 @@ reftest_run
 # The branch-point task foo should be recorded as succeeded.
 
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT status FROM task_states WHERE name is \"foo\"" > db-foo.2
+   "SELECT status FROM task_states WHERE name is 'foo'" > db-foo.2
 
 cmp_ok "db-foo.2" - << __OUT__
 succeeded
@@ -40,7 +40,7 @@ __OUT__
 #   submitted, started
 
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT outputs FROM task_outputs WHERE name is \"foo\"" > db-foo.1
+   "SELECT outputs FROM task_outputs WHERE name is 'foo'" > db-foo.1
 
 # Json string list of outputs from the db may not be ordered correctly.
 python3 - << __END__ > db-foo.2

@@ -27,7 +27,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-1" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-    'SELECT cycle, name, status FROM task_pool WHERE cycle=="20140102T0000Z" ORDER BY name' \
+    "SELECT cycle, name, status FROM task_pool WHERE cycle=='20140102T0000Z' ORDER BY name" \
     >'taskpool.out'
 cmp_ok 'taskpool.out' <<'__OUT__'
 20140102T0000Z|foo|waiting

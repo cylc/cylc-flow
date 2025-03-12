@@ -32,7 +32,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 sqlite3 \
     "$RUN_DIR/${WORKFLOW_NAME}/log/db" \
-    'SELECT submit_num,submit_status FROM task_jobs WHERE name=="t1"' \
+    "SELECT submit_num,submit_status FROM task_jobs WHERE name=='t1'" \
     >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__OUT__'
 1|1
