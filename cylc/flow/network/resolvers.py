@@ -112,24 +112,6 @@ def collate_workflow_atts(workflow):
     }
 
 
-def uniq(iterable):
-    """Return a unique collection of the provided items preserving item order.
-
-    Useful for unhashable things like dicts, relies on __eq__ for testing
-    equality.
-
-    Examples:
-        >>> uniq([1, 1, 2, 3, 5, 8, 1])
-        [1, 2, 3, 5, 8]
-
-    """
-    ret = []
-    for item in iterable:
-        if item not in ret:
-            ret.append(item)
-    return ret
-
-
 def iter_uniq(iterable):
     """Iterate over an iterable omitting any duplicate entries.
 
