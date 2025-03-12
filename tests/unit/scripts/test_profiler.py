@@ -51,7 +51,8 @@ def test_parse_cpu_file(mocker):
     mock_file = mocker.mock_open(read_data="usage_usec 1000000")
     mocker.patch("builtins.open", mock_file)
 
-    assert parse_cpu_file("mocked_file.txt", 1) == 1000
+    assert parse_cpu_file(
+        "mocked_file.txt", 1) == 1000
     mock_file.assert_called_once_with("mocked_file.txt", "r")
 
     mock_file = mocker.mock_open(read_data="1000000")
@@ -103,8 +104,9 @@ def test_get_cgroup_version(mocker):
 
     # Mock the Path.exists function call to return False
     mocker.patch("pathlib.Path.exists", return_value=False)
-    assert get_cgroup_version('stuff/in/other/place',
-                              'things') is None
+    with pytest.raises(FileNotFoundError):
+        get_cgroup_version('stuff/in/other/place',
+                           'things')
 
 
 def test_get_cgroup_paths():
@@ -137,6 +139,13 @@ def test_profile_cpu(mocker):
     mock_file.assert_called_with("cpu_time", "w")
 
 
+def test_stop_profiler():
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        stop_profiler()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 0
+
+
 def test_profile_max_rss(mocker):
     process = get_cgroup_paths(1,
                                "test_location/",
@@ -153,8 +162,35 @@ def test_profile_max_rss(mocker):
     mock_file.assert_called_with("max_rss", "w")
 
 
-def test_stop_profiler():
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        stop_profiler()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 0
+def test_profile_1(mocker):
+    process = get_cgroup_paths(
+        1, "test_location/", "test_name")
+
+    mock_file = mocker.mock_open(read_data="")
+    mocker.patch("builtins.open", mock_file)
+    mocker.patch(
+        "cylc.flow.scripts.profiler.parse_memory_file", return_value=1024)
+    mocker.patch(
+        "cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+    run_once = mock.Mock(side_effect=[True, False])
+
+    profile(process, 1, 1, run_once)
+    mock_file.assert_called_with("max_rss", "w")
+
+
+def test_profile_2(mocker):
+    # assert_called_with only shows the last call to open().
+    # Setting peak memory to zero stops the memory call to open
+    process = get_cgroup_paths(
+        1, "test_location/", "test_name")
+
+    mock_file = mocker.mock_open(read_data="")
+    mocker.patch("builtins.open", mock_file)
+    mocker.patch(
+        "cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+    mocker.patch(
+        "cylc.flow.scripts.profiler.parse_memory_file", return_value=0)
+    run_once = mock.Mock(side_effect=[True, False])
+
+    profile(process, 1, 1, run_once)
+    mock_file.assert_called_with("cpu_time", "w")

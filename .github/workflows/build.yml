@@ -10,6 +10,20 @@ on:
       - 'MANIFEST.in'     # check packaging
       - 'pyproject.toml'  # check build config
       - 'setup.cfg'       # check deps and project config
+      - '.gitignore'
+      - '.github/workflows/build.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
+env:
+  FORCE_COLOR: 2
+  PIP_PROGRESS_BAR: off
 
 jobs:
   test:
@@ -19,25 +33,54 @@ jobs:
       fail-fast: false
       matrix:
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         os: ['ubuntu-latest', 'macos-latest']
         python: ['3.12', '3']
 =======
+=======
+>>>>>>> 38c31f56d (Fail gracefully if cgroups cannot be found)
         os: ['ubuntu-latest']
         python: ['3.8', '3.9', '3.10', '3.11']
         include:
           - os: 'ubuntu-22.04'
+<<<<<<< HEAD
             python: '3.7'
           - os: 'macos-latest'
             python: '3.8'
 >>>>>>> 9727be9e5 (CPU/Memory Logging working)
+=======
+        os: ['ubuntu-latest', 'macos-latest']
+        python: ['3.7', '3.8', '3.9', '3.10', '3']
+        exclude:
+          - os: 'macos-latest'
+            python: '3.7'
+>>>>>>> 171f7ee1d (GH Actions: use explicit `bash` shell & other defaults)
+=======
+            python: '3.7'
+          - os: 'macos-latest'
+            python: '3.8'
+>>>>>>> 38c31f56d (Fail gracefully if cgroups cannot be found)
+=======
+        os: ['ubuntu-latest', 'macos-latest']
+        python: ['3.7', '3.8', '3.9', '3.10', '3']
+        exclude:
+          - os: 'macos-latest'
+            python: '3.7'
+>>>>>>> ad6b3a133 (Fixing my terrible rebasing)
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ matrix.python }}
+          cache-environment: true
+          post-cleanup: 'all'
+          environment-name: cylc-build
+          create-args: >-
+            python=${{ matrix.python }}
 
       - name: Build
         uses: cylc/release-actions/build-python-package@v1
@@ -45,7 +88,7 @@ jobs:
       - name: Inspect
         run: |
           unzip -l dist/*.whl | tee files
-          grep 'cylc_flow.*.dist-info/COPYING' files
+          grep -E 'cylc_flow.*.dist-info/.*COPYING' files
           grep 'cylc/flow/py.typed' files
           grep 'cylc/flow/etc' files
           grep 'cylc/flow/etc/cylc-completion.bash' files

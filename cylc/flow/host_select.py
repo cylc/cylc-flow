@@ -143,6 +143,13 @@ def select_workflow_host(cached=True):
     # be returned with the up-to-date configuration.
     global_config = glbl_cfg(cached=cached)
 
+    # condemned hosts may be suffixed with an "!" to activate "force mode"
+    blacklist = []
+    for host in global_config.get(['scheduler', 'run hosts', 'condemned'], []):
+        if host.endswith('!'):
+            host = host[:-1]
+        blacklist.append(host)
+
     return select_host(
         # list of workflow hosts
         global_config.get([
@@ -153,9 +160,7 @@ def select_workflow_host(cached=True):
             'scheduler', 'run hosts', 'ranking'
         ]),
         # list of condemned hosts
-        blacklist=global_config.get(
-            ['scheduler', 'run hosts', 'condemned']
-        ),
+        blacklist=blacklist,
         blacklist_name='condemned host'
     )
 

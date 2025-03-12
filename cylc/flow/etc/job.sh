@@ -208,14 +208,14 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
-    if [[ -n ${profiler_pid:-} ]]; then
-      kill -s SIGINT "${profiler_pid}"
+    if [[ -n "${cpu_time:-}" ]]; then
+      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
     fi
-    if [ -n "${max_rss}" ]; then
+    if [[ -n "${max_rss:-}" ]]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
     fi
-    if [ -n "${cpu_time}" ]; then
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
+    if [[ -f "proc/${profiler_pid}" ]]; then
+      kill -s SIGINT "${profiler_pid}" || true
     fi
 }
 
@@ -293,7 +293,6 @@ cylc__job__run_inst_func() {
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
 cylc__job_finish_err() {
-    cylc__kill_profiler
     CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
     typeset run_err_script="$2"
@@ -301,6 +300,7 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    cylc__kill_profiler
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
