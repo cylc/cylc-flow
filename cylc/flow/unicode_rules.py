@@ -45,7 +45,7 @@ def regex_chars_to_text(chars):
         >>> regex_chars_to_text([r'\-', r'\.', r'\/'])
         ['``-``', '``.``', '``/``']
         >>> regex_chars_to_text([r'\w'])
-        ['alphanumeric (regex word characters - ``\w``)']
+        ['alphanumeric (regex word characters - ``\\w``)']
         >>> regex_chars_to_text(['not_in_map'])
         ['``not_in_map``']
 
