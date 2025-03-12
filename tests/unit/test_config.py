@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 from optparse import Values
 from typing import (
     TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
 import pytest
 import logging
+from textwrap import dedent
 from types import SimpleNamespace
 from contextlib import suppress
 
@@ -46,6 +46,10 @@ from cylc.flow.task_outputs import (
 )
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
+
+
+param = pytest.param
+
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -1175,13 +1179,16 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
         WorkflowConfig__assert_err_raised()
 
 
-def test_undefined_custom_output(tmp_flow_config: Callable):
+@pytest.mark.parametrize(
+    'graph', (('foo:x => bar'), ('foo:x'))
+)
+def test_undefined_custom_output(graph: str, tmp_flow_config: Callable):
     """Test error on undefined custom output referenced in graph."""
     id_ = 'custom_out1'
-    flow_file = tmp_flow_config(id_, """
+    flow_file = tmp_flow_config(id_, f"""
     [scheduling]
         [[graph]]
-            R1 = "foo:x => bar"
+            R1 = "{graph}"
     [runtime]
         [[foo, bar]]
     """)
@@ -1700,7 +1707,6 @@ def test_cylc_env_at_parsing(
 
 def test_force_workflow_compat_mode(tmp_path):
     fpath = (tmp_path / 'flow.cylc')
-    from textwrap import dedent
     fpath.write_text(dedent("""
         [scheduler]
             allow implicit tasks = true
@@ -1713,3 +1719,33 @@ def test_force_workflow_compat_mode(tmp_path):
         WorkflowConfig('foo', str(fpath), {})
     # It succeeds with compat mode:
     WorkflowConfig('foo', str(fpath), {}, force_compat_mode=True)
+
+
+@pytest.mark.parametrize(
+    'registered_outputs, tasks_and_outputs, fails',
+    (
+        param([], ['foo:x'], True, id='output-unregistered'),
+        param([], ['foo:x?'], True, id='optional-output-unregistered'),
+        param([], ['foo'], False, id='no-modifier-unregistered'),
+        param(['x'], ['foo:x'], False, id='output-registered'),
+        param([], ['foo:succeed'], False, id='alt-default-ok'),
+        param([], ['foo:failed'], False, id='default-ok'),
+    )
+)
+def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
+    (tmp_path / 'flow.cylc').write_text(dedent("""
+        [scheduler]
+            allow implicit tasks = true
+        [scheduling]
+            [[graph]]
+                R1 = foo
+    """))
+    cfg = WorkflowConfig('', tmp_path / 'flow.cylc', '')
+    cfg.cfg['runtime']['foo']['outputs'] = registered_outputs
+    if fails:
+        with pytest.raises(
+            WorkflowConfigError, match='Undefined custom output'
+        ):
+            cfg.check_terminal_outputs(tasks_and_outputs)
+    else:
+        assert cfg.check_terminal_outputs(tasks_and_outputs) is None
