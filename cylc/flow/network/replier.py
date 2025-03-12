@@ -37,6 +37,7 @@ from cylc.flow.network import (
 if TYPE_CHECKING:
     from cylc.flow.network import ResponseDict
     from cylc.flow.network.server import WorkflowRuntimeServer
+    from zmq.asyncio import Context
 
 
 class WorkflowReplier(ZMQSocketBase):
@@ -64,7 +65,7 @@ class WorkflowReplier(ZMQSocketBase):
     def __init__(
         self,
         server: 'WorkflowRuntimeServer',
-        context: Optional[zmq.Context] = None
+        context: 'Optional[Context]' = None
     ):
         super().__init__(
             zmq.REP, server.schd.workflow, bind=True, context=context
