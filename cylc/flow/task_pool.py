@@ -1764,17 +1764,22 @@ class TaskPool:
 
         if prev_status in TASK_STATUSES_FINAL:
             # Task finished previously.
-            msg = f"[{point}/{name}:{prev_status}] already finished"
             if itask.is_complete():
-                msg += " and completed"
+                msg = "and completed"
                 itask.transient = True
             else:
                 # revive as incomplete.
-                msg += " incomplete"
+                msg = "incomplete"
 
-            LOG.info(
-                f"{msg} {repr_flow_nums(flow_nums, full=True)})"
-            )
+            if cylc.flow.flags.verbosity >= 1:
+                # avoid unnecessary compute when we are not in debug mode
+                id_ = itask.tokens.duplicate(
+                    task_sel=prev_status
+                ).relative_id_with_selectors
+                LOG.debug(
+                    f"[{id_}] already finished {msg}"
+                    f" {repr_flow_nums(flow_nums, full=True)})"
+                )
             if prev_flow_wait:
                 self._spawn_after_flow_wait(itask)
 
