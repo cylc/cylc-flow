@@ -27,7 +27,7 @@ from cylc.flow.task_qualifiers import TASK_QUALIFIERS
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 
 ENGLISH_REGEX_MAP = {
-    r'\w': 'alphanumeric (regex word characters - ``\w``),
+    r'\w': 'alphanumeric (regex word characters - ``\w``'),
     r'a-zA-Z0-9': 'latin letters and numbers',
     r'\d': 'numbers',
     r'\-': '``-``',
