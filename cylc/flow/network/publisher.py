@@ -16,12 +16,16 @@
 """Publisher for workflow runtime API."""
 
 import asyncio
-from typing import Callable, Optional, Set, Union
+from typing import Callable, Optional, Set, TYPE_CHECKING, Union
 
 import zmq
 
 from cylc.flow import LOG
 from cylc.flow.network import ZMQSocketBase
+
+
+if TYPE_CHECKING:
+    from zmq.asyncio import Context
 
 
 def serialize_data(
@@ -45,7 +49,7 @@ class WorkflowPublisher(ZMQSocketBase):
 
     """
 
-    def __init__(self, workflow: str, context: Optional[zmq.Context] = None):
+    def __init__(self, workflow: str, context: 'Optional[Context]' = None):
         super().__init__(zmq.PUB, workflow, bind=True, context=context)
         self.topics: Set[bytes] = set()
 
