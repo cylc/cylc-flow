@@ -55,7 +55,7 @@ from cylc.flow.network.schema import (
     runtime_schema_to_cfg,
     sort_elements,
 )
-from cylc.flow.util import uniq, iter_uniq
+from cylc.flow.util import iter_uniq
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -133,7 +133,7 @@ def workflow_ids_filter(workflow_tokens, items) -> bool:
                 or workflow_tokens['workflow_sel'] == item['workflow_sel']
             )
         )
-        for item in uniq(items)
+        for item in iter_uniq(items)
     )
 
 
@@ -376,7 +376,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
-        nat_ids = uniq(args.get('native_ids', []))
+        nat_ids = list(iter_uniq(args.get('native_ids', [])))
         # Both cases just as common so 'if' not 'try'
         if 'sub_id' in args and args['delta_store']:
             flow_data = [
@@ -438,7 +438,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
 
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
-        nat_ids = uniq(args.get('native_ids', []))
+        nat_ids = list(iter_uniq(args.get('native_ids', [])))
         if 'sub_id' in args and args['delta_store']:
             flow_data = [
                 delta[args['delta_type']]
