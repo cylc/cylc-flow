@@ -80,7 +80,7 @@ def parse_memory_file(process):
     memory_stats = {}
 
     for line in open(process.cgroup_memory_path):
-        return int(line)
+        return int(line) // 1024
 
 
 def parse_cpu_file(process, cgroup_version):
