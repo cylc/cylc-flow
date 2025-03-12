@@ -9,7 +9,7 @@
 [runtime]
     [[t0]]
         script = """
-            cylc broadcast "${CYLC_WORKFLOW_ID}" '--name=t1' '--set=script="true"'
+            cylc broadcast "${CYLC_WORKFLOW_ID}" --name=t1 --set=script="true"
         """
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[t1]]

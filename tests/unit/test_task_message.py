@@ -14,27 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-[pytest]
-addopts = --verbose
-    --doctest-modules
-    # default to running tests in one process
-    -n=1
-    # group tests by module or class
-    --dist=loadscope
-    # ignore files which cause issues with test collection
-    --ignore=cylc/flow/data_messages_pb2.py
-    --ignore=cylc/flow/parsec/example
-    # disable pytest-tornasync because it conflicts with pytest-asyncio's auto mode
-    -p no:tornado
-    -m "not linkcheck"
-verbosity_assertions = 2
-testpaths =
-    cylc/flow/
-    tests/unit/
-    tests/integration/
-doctest_optionflags =
-    NORMALIZE_WHITESPACE
-    ELLIPSIS
-asyncio_mode = auto
-markers=
-    linkcheck: Test links
+from socket import gaierror
+
+import pytest
+
+from cylc.flow.task_message import send_messages
+
+
+def test_send_messages_err(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """If an error occurs while initializing the client, it should be printed.
+    """
+    exc_msg = 'Relic malfunction detected'
+
+    def mock_get_client(*a, **k):
+        raise gaierror(-2, exc_msg)
+
+    monkeypatch.setattr('cylc.flow.task_message.get_client', mock_get_client)
+    send_messages(
+        'arasaka', '1/v/01', [['INFO', 'silverhand']], '2077-01-01T00:00:00Z'
+    )
+    assert f"gaierror: [Errno -2] {exc_msg}" in capsys.readouterr().err

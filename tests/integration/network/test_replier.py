@@ -14,28 +14,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout
-from cylc.flow.network import decode_
-from cylc.flow.network.client import WorkflowRuntimeClient
 import asyncio
+import getpass
 
+from async_timeout import timeout
 import pytest
 
+from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.network import deserialize
+from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.scheduler import Scheduler
 
-async def test_listener(one, start, ):
+
+async def test_listener(one: Scheduler, start):
     """Test listener."""
     async with start(one):
+        # Test listener handles an invalid message from client
+        # (without directly calling listener):
         client = WorkflowRuntimeClient(one.workflow)
         client.socket.send_string(r'Not JSON')
-        res = await client.socket.recv()
-        assert 'error' in decode_(res.decode())
+        res = deserialize(
+            (await client.socket.recv()).decode()
+        )
+        assert res['error']
+        assert 'data' not in res
+        # Check other fields are present:
+        assert res['cylc_version'] == CYLC_VERSION
+        assert res['user'] == getpass.getuser()
 
         one.server.replier.queue.put('STOP')
         async with timeout(2):
             # wait for the server to consume the STOP item from the queue
-            while True:
-                if one.server.replier.queue.empty():
-                    break
+            while not one.server.replier.queue.empty():
                 await asyncio.sleep(0.01)
         # ensure the server is "closed"
         one.server.replier.queue.put('foobar')

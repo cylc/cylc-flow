@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import json
 from pathlib import Path
 import sqlite3
 from types import SimpleNamespace
@@ -224,9 +223,8 @@ def test_select_latest_flow_nums(
         )
         for (fnums, timestamp) in values:
             conn.execute(
-                "INSERT INTO task_states VALUES ("
-                f"{json.dumps(serialise_set(fnums))}, {json.dumps(timestamp)}"
-                ")"
+                'INSERT INTO task_states VALUES (?, ?)',
+                (serialise_set(fnums), timestamp)
             )
         conn.commit()
 

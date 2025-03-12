@@ -44,6 +44,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from cylc.flow import LOG
@@ -60,7 +61,7 @@ from cylc.flow.hostuserutil import (
     is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.job_runner_mgr import JobPollContext
+from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE, JobPollContext
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -864,7 +865,13 @@ class TaskJobManager:
             )
             self.poll_task_jobs(workflow, [itask])
 
-    def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
+    def _poll_task_job_callback(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        cmd_ctx: SubProcContext,
+        line: str,
+    ):
         """Helper for _poll_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
@@ -891,6 +898,13 @@ class TaskJobManager:
         log_lvl = DEBUG if (
             itask.platform.get('communication method') == 'poll'
         ) else INFO
+
+        if jp_ctx.run_signal == JOB_FILES_REMOVED_MESSAGE:
+            LOG.error(
+                f"platform: {itask.platform['name']} - job log directory "
+                f"{job_tokens.relative_id} no longer exists"
+            )
+
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
@@ -898,9 +912,7 @@ class TaskJobManager:
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, log_lvl, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
-            self.task_events_mgr.process_message(
-                itask, log_lvl, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
+                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}",
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
@@ -1288,7 +1300,8 @@ class TaskJobManager:
                     workflow, itask, '(platform not defined)', exc)
                 return False
             else:
-                itask.platform = platform  # type: ignore[assignment]
+                # (platform is not None here as subshell eval has finished)
+                itask.platform = cast('dict', platform)
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 
