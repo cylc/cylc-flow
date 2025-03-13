@@ -81,7 +81,7 @@ def test_run_command_writes_to_err():
     """Test basic usage, command writes to STDERR"""
     ctx = SubProcContext(
         'parrot2',
-        ['bash', '-noprofile', '-c', 'echo pirate errrr >&2']
+        ['bash', '--noprofile', '-c', 'echo pirate errrr >&2']
     )
     SubProcPool.run_command(ctx)
     assert ctx.err == 'pirate errrr\n'
