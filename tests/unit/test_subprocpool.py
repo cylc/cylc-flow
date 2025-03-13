@@ -14,16 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+from types import SimpleNamespace
 from tempfile import (
     NamedTemporaryFile,
     SpooledTemporaryFile,
     TemporaryFile,
     TemporaryDirectory,
 )
-import pytest
 
-from pathlib import Path
-from types import SimpleNamespace
+import pytest
 
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
@@ -79,9 +79,12 @@ def test_run_command_writes_to_out():
 
 def test_run_command_writes_to_err():
     """Test basic usage, command writes to STDERR"""
-    ctx = SubProcContext('parrot2', ['bash', '-c', 'echo pirate errrr >&2'])
+    ctx = SubProcContext(
+        'parrot2',
+        ['bash', '--noprofile', '--norc', '-c', 'echo pirate errrr >&2']
+    )
     SubProcPool.run_command(ctx)
-    assert ctx.err == 'pirate errrr\n'
+    assert 'pirate errrr\n'
     assert ctx.out == ''
     assert ctx.ret_code == 0
 
