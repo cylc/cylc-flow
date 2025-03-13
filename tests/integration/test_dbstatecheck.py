@@ -45,7 +45,9 @@ async def checker(
         },
         'runtime': {
             'bad': {'simulation': {'fail cycle points': '1000'}},
-            'output': {'outputs': {'trigger': 'message', 'custom_output': 'foo'}}
+            'output': {
+                'outputs': {'trigger': 'message', 'custom_output': 'foo'}
+            }
         }
     })
     schd: Scheduler = mod_scheduler(wid, paused_start=False)
