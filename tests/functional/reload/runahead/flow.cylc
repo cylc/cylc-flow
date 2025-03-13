@@ -20,7 +20,7 @@
         script = true
     [[reloader]]
         script = """
-            cylc__job__poll_grep_workflow_log -E "${CYLC_TASK_CYCLE_POINT}/foo/01:running.*\(received\)failed"
+            cylc__job__poll_grep_workflow_log -E "${CYLC_TASK_CYCLE_POINT}/foo/01:running.*failed"
             perl -pi -e 's/(runahead limit = )P1( # marker)/\1 P3\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
             cylc reload $CYLC_WORKFLOW_ID
         """

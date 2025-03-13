@@ -168,3 +168,43 @@ async def test__always_insert_task_job(
             '1/broken/01': 'submit-failed',
             '1/broken2/01': 'submit-failed'
         }
+
+
+async def test__process_message_failed_with_retry(one, start, log_filter):
+    """Log job failure, even if a retry is scheduled.
+
+    See: https://github.com/cylc/cylc-flow/pull/6169
+
+    """
+
+    async with start(one) as LOG:
+        fail_once = one.pool.get_tasks()[0]
+        # Add retry timers:
+        one.task_job_mgr._set_retry_timers(
+            fail_once, {
+                'execution retry delays': [1],
+                'submission retry delays': [1]
+            })
+
+        # Process submit failed message with and without retries:
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, False)
+        record = log_filter(contains='1/one:waiting(queued)] retrying in')
+        assert record[0][0] == logging.WARNING
+
+        one.task_events_mgr._process_message_submit_failed(
+            fail_once, None, False)
+        failed_record = log_filter(level=logging.ERROR)[-1]
+        assert 'submission failed' in failed_record[1]
+
+        # Process failed message with and without retries:
+        one.task_events_mgr._process_message_failed(
+            fail_once, None, 'failed', False, 'failed/OOK')
+        last_record = LOG.records[-1]
+        assert last_record.levelno == logging.WARNING
+        assert 'retrying in' in last_record.message
+
+        one.task_events_mgr._process_message_failed(
+            fail_once, None, 'failed', False, 'failed/OOK')
+        failed_record = log_filter(level=logging.ERROR)[-1]
+        assert 'failed/OOK' in failed_record[1]
