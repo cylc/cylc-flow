@@ -11,6 +11,13 @@ on:
       - 'pyproject.toml'  # check build config
       - 'setup.cfg'       # check deps and project config
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  FORCE_COLOR: 2
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
