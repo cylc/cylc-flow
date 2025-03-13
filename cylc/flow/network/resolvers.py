@@ -112,24 +112,6 @@ def collate_workflow_atts(workflow):
     }
 
 
-def uniq(iterable):
-    """Return a unique collection of the provided items preserving item order.
-
-    Useful for unhashable things like dicts, relies on __eq__ for testing
-    equality.
-
-    Examples:
-        >>> uniq([1, 1, 2, 3, 5, 8, 1])
-        [1, 2, 3, 5, 8]
-
-    """
-    ret = []
-    for item in iterable:
-        if item not in ret:
-            ret.append(item)
-    return ret
-
-
 def iter_uniq(iterable):
     """Iterate over an iterable omitting any duplicate entries.
 
@@ -171,7 +153,7 @@ def workflow_ids_filter(workflow_tokens, items) -> bool:
                 or workflow_tokens['workflow_sel'] == item['workflow_sel']
             )
         )
-        for item in uniq(items)
+        for item in iter_uniq(items)
     )
 
 
@@ -414,7 +396,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
-        nat_ids = uniq(args.get('native_ids', []))
+        nat_ids = list(iter_uniq(args.get('native_ids', [])))
         # Both cases just as common so 'if' not 'try'
         if 'sub_id' in args and args['delta_store']:
             flow_data = [
