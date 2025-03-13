@@ -75,14 +75,14 @@ class TestSubProcPool(unittest.TestCase):
         self.assertEqual(ctx.out, 'pirate urrrr\n')
         self.assertEqual(ctx.ret_code, 0)
 
-    def test_run_command_writes_to_err(self):
-        """Test basic usage, command writes to STDERR"""
-        ctx = SubProcContext(
-            'parrot2', ['bash', '-c', 'echo pirate errrr >&2'])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, 'pirate errrr\n')
-        self.assertEqual(ctx.out, '')
-        self.assertEqual(ctx.ret_code, 0)
+
+def test_run_command_writes_to_err():
+    """Test basic usage, command writes to STDERR"""
+    ctx = SubProcContext('parrot2', ['bash', '-c', 'echo pirate errrr >&2'])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == 'pirate errrr\n'
+    assert ctx.out == ''
+    assert ctx.ret_code == 0
 
     def test_run_command_with_stdin_from_str(self):
         """Test STDIN from string"""
