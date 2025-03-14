@@ -1937,7 +1937,7 @@ class WorkflowConfig:
                 )
 
             self.xtrigger_collator.add_trig(label, xtrig, self.fdir)
-            self.taskdefs[right].add_xtrig_label(label, seq)
+            self.taskdefs[right].add_xtrig_label(label, seq, xtrig.func_name)
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the workflow
@@ -2679,4 +2679,4 @@ class WorkflowConfig:
             # Add it to the task, for each sequence that the task appears in.
             taskdef = self.get_taskdef(task_name)
             for seq in taskdef.sequences:
-                taskdef.add_xtrig_label(label, seq)
+                taskdef.add_xtrig_label(label, seq, xtrig.func_name)
