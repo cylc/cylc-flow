@@ -21,7 +21,12 @@ import contextlib
 import re
 
 from cylc.flow.cycling import (
-    PointBase, IntervalBase, SequenceBase, ExclusionBase, parse_exclusion, cmp
+    PointBase,
+    IntervalBase,
+    SequenceBase,
+    ExclusionBase,
+    parse_exclusion,
+    cmp
 )
 from cylc.flow.exceptions import (
     CylcMissingContextPointError,
