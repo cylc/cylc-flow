@@ -72,6 +72,7 @@ import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
+from cylc.flow.cycling.nocycle import NOCYCLE_POINTS
 from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
@@ -979,7 +980,11 @@ class DataStoreMgr:
                             taskdefs
                         ).values():
                             for parent_name, parent_point, _ in items:
-                                if final_point and parent_point > final_point:
+                                if (
+                                    str(parent_point) not in NOCYCLE_POINTS
+                                    and final_point
+                                    and (parent_point > final_point)
+                                ):
                                     continue
                                 parent_tokens = self.id_.duplicate(
                                     cycle=str(parent_point),
