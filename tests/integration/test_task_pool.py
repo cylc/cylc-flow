@@ -338,9 +338,9 @@ async def test_match_taskdefs(
             id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
-            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
-            ["No active tasks in the family FAM matching: 6/FAM"],
-            id="Family names hold active tasks only"
+            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar', '6/bar'],
+            [],
+            id="Family names hold active and future tasks"
         ),
         param(
             ['1/grogu', 'H/foo', '20/foo', '1/pub'], [],
@@ -573,11 +573,11 @@ async def test_runahead_after_remove(
     assert int(task_pool.runahead_limit_point) == 4
 
     # No change after removing an intermediate cycle.
-    example_flow.remove_tasks(['3/*'])
+    example_flow.remove_tasks(['3/*'], [1])
     assert int(task_pool.runahead_limit_point) == 4
 
     # Should update after removing the first point.
-    example_flow.remove_tasks(['1/*'])
+    example_flow.remove_tasks(['1/*'], [1])
     assert int(task_pool.runahead_limit_point) == 5
 
 

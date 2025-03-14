@@ -1,4 +1,4 @@
 Initial point: 1
 Final point: 1
 1/foo -triggered off []
-1/bar -triggered off []
+1/bar -triggered off ['1/foo']
