@@ -1484,6 +1484,17 @@ class DataStoreMgr:
 
         self.db_load_task_proxies.clear()
 
+    def _populate_xtriggers(self, itask, tproxy):
+        """Transfer xtriggers from the itask onto the PbTaskProxy."""
+        for label, (satisfied, _) in itask.state.xtriggers.items():
+            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
+                itask, label).get_signature()
+            xtrig = tproxy.xtriggers[sig]
+            xtrig.id = sig
+            xtrig.label = label
+            xtrig.satisfied = satisfied
+            self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
+
     def _process_internal_task_proxy(
         self,
         itask: 'TaskProxy',
@@ -1517,14 +1528,7 @@ class DataStoreMgr:
             ext_trig.id = trig
             ext_trig.satisfied = satisfied
 
-        for label, satisfied in itask.state.xtriggers.items():
-            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
-                itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
-            xtrig.id = sig
-            xtrig.label = label
-            xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
+        self._populate_xtriggers(itask, tproxy)
 
         if tproxy.state in self.latest_state_tasks:
             tp_ref = itask.identity
@@ -2034,6 +2038,7 @@ class DataStoreMgr:
             if child_fam_id in self.updated_state_families:
                 continue
             self._family_ascent_point_update(child_fam_id)
+        # TODO: consider accumulating attribute statuses onto the families
         if fp_id in self.state_update_families:
             fp_updated = self.updated[FAMILY_PROXIES]
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
@@ -2296,7 +2301,14 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id)
         )
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for field in ('is_held', 'is_queued', 'is_runahead'):
+        for field in (
+            'is_held',
+            'is_queued',
+            'is_runahead',
+            'is_retry',
+            'is_wallclock',
+            'is_xtriggered',
+        ):
             val = getattr(itask.state, field)
             if (
                 # only update the fields that have changed compared to store:
@@ -2518,7 +2530,7 @@ class DataStoreMgr:
         ext_trigger.time = update_time
         self.updates_pending = True
 
-    def delta_task_xtrigger(self, sig, satisfied):
+    def delta_task_xtrigger(self, itask):
         """Create delta for change in task proxy xtrigger.
 
         Args:
@@ -2529,18 +2541,15 @@ class DataStoreMgr:
             satisfied (bool): Trigger message.
 
         """
-        update_time = time()
-        for tp_id, label in self.xtrigger_tasks.get(sig, set()):
-            # update task instance
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            xtrigger = tp_delta.xtriggers[sig]
-            xtrigger.id = sig
-            xtrigger.label = label
-            xtrigger.satisfied = satisfied
-            xtrigger.time = update_time
-            self.updates_pending = True
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        if not tproxy:
+            return
+
+        # refresh all xtriggers (we can't support incremental update on this
+        # field at present see https://github.com/cylc/cylc-flow/issues/6307)
+        self._populate_xtriggers(itask, tproxy)
+
+        self.updates_pending = True
 
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
         """Create delta from existing pool task proxy.

@@ -304,7 +304,7 @@ class PbTrigger(_message.Message):
     def __init__(self, id: _Optional[str] = ..., label: _Optional[str] = ..., message: _Optional[str] = ..., satisfied: bool = ..., time: _Optional[float] = ...) -> None: ...
 
 class PbTaskProxy(_message.Message):
-    __slots__ = ("stamp", "id", "task", "state", "cycle_point", "depth", "job_submits", "outputs", "namespace", "prerequisites", "jobs", "first_parent", "name", "is_held", "edges", "ancestors", "flow_nums", "external_triggers", "xtriggers", "is_queued", "is_runahead", "flow_wait", "runtime", "graph_depth")
+    __slots__ = ("stamp", "id", "task", "state", "cycle_point", "depth", "job_submits", "outputs", "namespace", "prerequisites", "jobs", "first_parent", "name", "is_held", "edges", "ancestors", "flow_nums", "external_triggers", "xtriggers", "is_queued", "is_runahead", "flow_wait", "runtime", "graph_depth", "is_retry", "is_wallclock", "is_xtriggered")
     class OutputsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -350,6 +350,9 @@ class PbTaskProxy(_message.Message):
     FLOW_WAIT_FIELD_NUMBER: _ClassVar[int]
     RUNTIME_FIELD_NUMBER: _ClassVar[int]
     GRAPH_DEPTH_FIELD_NUMBER: _ClassVar[int]
+    IS_RETRY_FIELD_NUMBER: _ClassVar[int]
+    IS_WALLCLOCK_FIELD_NUMBER: _ClassVar[int]
+    IS_XTRIGGERED_FIELD_NUMBER: _ClassVar[int]
     stamp: str
     id: str
     task: str
@@ -374,7 +377,10 @@ class PbTaskProxy(_message.Message):
     flow_wait: bool
     runtime: PbRuntime
     graph_depth: int
-    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., task: _Optional[str] = ..., state: _Optional[str] = ..., cycle_point: _Optional[str] = ..., depth: _Optional[int] = ..., job_submits: _Optional[int] = ..., outputs: _Optional[_Mapping[str, PbOutput]] = ..., namespace: _Optional[_Iterable[str]] = ..., prerequisites: _Optional[_Iterable[_Union[PbPrerequisite, _Mapping]]] = ..., jobs: _Optional[_Iterable[str]] = ..., first_parent: _Optional[str] = ..., name: _Optional[str] = ..., is_held: bool = ..., edges: _Optional[_Iterable[str]] = ..., ancestors: _Optional[_Iterable[str]] = ..., flow_nums: _Optional[str] = ..., external_triggers: _Optional[_Mapping[str, PbTrigger]] = ..., xtriggers: _Optional[_Mapping[str, PbTrigger]] = ..., is_queued: bool = ..., is_runahead: bool = ..., flow_wait: bool = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., graph_depth: _Optional[int] = ...) -> None: ...
+    is_retry: bool
+    is_wallclock: bool
+    is_xtriggered: bool
+    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., task: _Optional[str] = ..., state: _Optional[str] = ..., cycle_point: _Optional[str] = ..., depth: _Optional[int] = ..., job_submits: _Optional[int] = ..., outputs: _Optional[_Mapping[str, PbOutput]] = ..., namespace: _Optional[_Iterable[str]] = ..., prerequisites: _Optional[_Iterable[_Union[PbPrerequisite, _Mapping]]] = ..., jobs: _Optional[_Iterable[str]] = ..., first_parent: _Optional[str] = ..., name: _Optional[str] = ..., is_held: bool = ..., edges: _Optional[_Iterable[str]] = ..., ancestors: _Optional[_Iterable[str]] = ..., flow_nums: _Optional[str] = ..., external_triggers: _Optional[_Mapping[str, PbTrigger]] = ..., xtriggers: _Optional[_Mapping[str, PbTrigger]] = ..., is_queued: bool = ..., is_runahead: bool = ..., flow_wait: bool = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., graph_depth: _Optional[int] = ..., is_retry: bool = ..., is_wallclock: bool = ..., is_xtriggered: bool = ...) -> None: ...
 
 class PbFamily(_message.Message):
     __slots__ = ("stamp", "id", "name", "meta", "depth", "proxies", "parents", "child_tasks", "child_families", "first_parent", "runtime", "descendants")

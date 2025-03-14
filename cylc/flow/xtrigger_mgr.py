@@ -668,14 +668,17 @@ class XtriggerManager:
                 # Special case: quick synchronous clock check.
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
-                    itask.state.xtriggers[label] = True
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     if self.all_task_seq_xtriggers_satisfied(itask):
                         self.sequential_spawn_next.add(itask.identity)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
-                    itask.state.xtriggers[label] = True
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     self.sat_xtrig[sig] = {}
-                    self.data_store_mgr.delta_task_xtrigger(sig, True)
+                    # self.data_store_mgr.delta_task_xtrigger(sig, True)
+                    self.data_store_mgr.delta_task_xtrigger(itask)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
                     if self.all_task_seq_xtriggers_satisfied(itask):
@@ -686,7 +689,8 @@ class XtriggerManager:
             if sig in self.sat_xtrig:
                 # Already satisfied, just update the task
                 if not itask.state.xtriggers[label]:
-                    itask.state.xtriggers[label] = True
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     res = {}
                     for key, val in self.sat_xtrig[sig].items():
                         res["%s_%s" % (label, key)] = val
@@ -771,7 +775,8 @@ class XtriggerManager:
             return
 
         # Newly satisfied
-        self.data_store_mgr.delta_task_xtrigger(sig, True)
+        # self.data_store_mgr.delta_task_xtrigger(sig, True)
+        self.data_store_mgr.delta_task_xtrigger(ctx.itask)
         self.workflow_db_mgr.put_xtriggers({sig: results})
         LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
         self.sat_xtrig[sig] = results
