@@ -1560,7 +1560,7 @@ class Scheduler:
                     f"{itask.state.get_resolved_dependencies()}"
                     f" in flow {flow}"
                 )
-            log(f"{itask.identity} -triggered off {off}")
+            LOG.log(log_lvl, f"{itask.identity} -triggered off {off}")
 
         # one or more tasks were passed through the submission pipeline
         return True
