@@ -493,7 +493,7 @@ async def test_trigger_states(
 ):
     """It should only trigger tasks in compatible states."""
 
-    async with start(one):  #, level=logging.DEBUG):
+    async with start(one):
         task = one.pool.filter_task_proxies(['1/one'])[0][0]
 
         # reset task a to the provided state
