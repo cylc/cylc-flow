@@ -349,7 +349,11 @@ class SequenceBase(metaclass=ABCMeta):
     @classmethod
     @abstractmethod  # Note: stacked decorator not strictly enforced in Py2.x
     def get_async_expr(cls, start_point=0):
-        """Express a one-off sequence at the initial cycle point."""
+        """Express a one-off sequence at the initial cycle point.
+
+        Note "async" has nothing to do with asyncio. It was a (bad)
+        name for one-off (non-cycling) graphs in early Cylc versions.
+        """
         pass
 
     @abstractmethod

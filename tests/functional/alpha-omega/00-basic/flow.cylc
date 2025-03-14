@@ -1,0 +1,12 @@
+
+[scheduling]
+    cycling mode = integer
+    final cycle point = 2
+    [[graph]]
+        alpha = "a => b"
+        omega = "x => y"
+        R1 = "foo => bar"
+        P1 = "bar => baz"
+[runtime]
+    [[a, b, x, y]]
+    [[foo, bar, baz]]
