@@ -25,7 +25,6 @@ import re
 import sys
 import time
 import signal
-import subprocess
 from pathlib import Path
 from dataclasses import dataclass
 from cylc.flow.terminal import cli_function
@@ -34,6 +33,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
+
 
 
 def get_option_parser() -> COP:
@@ -116,11 +116,9 @@ def get_cgroup_dir():
     # Get the PID of the current process
     pid = os.getpid()
     # Get the cgroup information for the current process
-    result = subprocess.run(['cat', '/proc/' + str(pid) + '/cgroup'],
-                            capture_output=True, text=True, shell=False)
-    if result.stderr:
-        print(result.stderr, file=sys.stderr)
-    result = PID_REGEX.search(result.stdout).group()
+    with open('/proc/' + str(pid) + '/cgroup', 'r') as f:
+        result = f.read()
+    result = PID_REGEX.search(result).group()
     return result
 
 
@@ -154,7 +152,6 @@ def profile(args):
             print(err)
             raise FileNotFoundError("cgroups not found:"
                                     + args.cgroup_location) from err
-
     elif cgroup_version == 2:
         try:
             processes.append(Process(
@@ -191,4 +188,4 @@ def profile(args):
 if __name__ == "__main__":
 
     arg_parser = get_option_parser()
-    profile(arg_parser.parse_args())
+    profile(arg_parser.parse_args([]))
