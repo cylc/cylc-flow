@@ -65,11 +65,13 @@ def fixture_get_platform():
     Returns:
         platforms dictionary.
     """
+
     def inner_func(custom_settings=None):
         platform = platform_from_name()
         if custom_settings is not None:
             platform.update(custom_settings)
         return platform
+
     yield inner_func
 
 
@@ -159,9 +161,9 @@ def test_write(fixture_get_platform):
                 "execution_time_limit": 60
             },
             ('\n\n# DIRECTIVES:\n# @ job_name = farm_noises.baa.1'
-                '\n# @ output = directory/job.out\n# @ error = directory/'
-                'job.err\n# @ wall_clock_limit = 120,60\n# @ moo = foo'
-                '\n# @ cluck = bar\n# @ queue')
+             '\n# @ output = directory/job.out\n# @ error = directory/'
+             'job.err\n# @ wall_clock_limit = 120,60\n# @ moo = foo'
+             '\n# @ cluck = bar\n# @ queue')
 
         ),
         (  # Check no directives is correctly written
@@ -217,7 +219,6 @@ def test_write(fixture_get_platform):
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "$HOME/directory/job",
                 "execution_time_limit": 1000
-
             },
             ('\n\n# DIRECTIVES:\n#$ -N farm_noises.baa.1\n#$ -o directory/'
              'job.out\n#$ -e directory/job.err\n#$ -l h_rt=0:16:40\n#$ -V\n#'
@@ -383,7 +384,6 @@ def test_no_script_section_with_comment_only_script():
     }
 
     with io.StringIO() as fake_file:
-
         JobFileWriter()._write_script(fake_file, job_conf)
         blah = fake_file.getvalue()
         print(blah)
@@ -404,7 +404,8 @@ def test_write_task_environment():
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
     job_conf = {
-        "platform": {'communication method': 'ssh',
+        "platform": {
+            'communication method': 'ssh',
                      'profile': {
                          "activate": "true",
                         }
@@ -539,4 +540,3 @@ def test_homeless_platform(fixture_get_platform):
         job_sh_txt = job_sh.read()
         if 'HOME' in job_sh_txt:
             raise Exception('$HOME found in job.sh\n{job_sh_txt}')
-
