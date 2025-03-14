@@ -282,16 +282,19 @@ class TaskDef:
         ):
             self.has_abs_triggers = True
 
-    def add_xtrig_label(self, xtrig_label, sequence):
+    def add_xtrig_label(self, xtrig_label, sequence, func_name):
         """Add an xtrigger to a named sequence.
 
         Args:
             xtrig_label: The xtrigger label to add.
             sequence (cylc.cycling.SequenceBase): The sequence for which this
                 xtrigger applies.
+            func_name: The xtrigger function name (e.g. `wall_clock`).
 
         """
-        self.xtrig_labels.setdefault(sequence, []).append(xtrig_label)
+        self.xtrig_labels.setdefault(sequence, []).append(
+            (xtrig_label, func_name)
+        )
 
     def add_sequence(self, sequence):
         """Add a sequence."""

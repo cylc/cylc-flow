@@ -203,6 +203,13 @@ class TaskState:
         .is_runahead (bool):
             True if the task is runahead limited else False.
             Automatically true until released by the scheduler.
+        .is_retry (bool):
+            True if the task has an automatic retry lined up.
+        .is_wallclock (bool):
+            True if the task has an unsatisfied wallclock trigger.
+        .is_xtriggered (bool):
+            True if the task has an unsatisfied xtrigger
+            (excluding wallclock and retry xtriggers).
         .is_updated (boolean):
             Has the status been updated since previous update?
         .kill_failed (boolean):
@@ -218,7 +225,7 @@ class TaskState:
         .time_updated (str):
             Time string of latest update time.
         .xtriggers (dict):
-            xtriggers as {trigger (str): satisfied (boolean), ...}.
+            xtriggers as {trigger (str): [satisfied (boolean), label (str)]}.
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -228,6 +235,9 @@ class TaskState:
         "is_queued",
         "is_runahead",
         "is_updated",
+        "is_retry",
+        "is_wallclock",
+        "is_xtriggered",
         "kill_failed",
         "outputs",
         "prerequisites",
@@ -242,6 +252,9 @@ class TaskState:
         self.is_held = is_held
         self.is_queued = False
         self.is_runahead = True
+        self.is_retry = False
+        self.is_wallclock = False
+        self.is_xtriggered = False
         self.is_updated = False
         self.time_updated = None
 
@@ -259,7 +272,7 @@ class TaskState:
             # set unsatisfied
             self.external_triggers[ext] = False
 
-        # xtriggers (represented by labels) satisfied or not
+        # xtriggers: {label: [satisfied, func_name]}
         self.xtriggers = {}
         self._add_xtriggers(point, tdef)
 
@@ -276,6 +289,12 @@ class TaskState:
             ret += '(queued)'
         if self.is_runahead:
             ret += '(runahead)'
+        if self.is_retry:
+            ret += '(retry scheduled)'
+        if self.is_wallclock:
+            ret += '(wallclock triggereed)'
+        if self.is_xtriggered:
+            ret += '(xtriggered)'
         return ret
 
     def __repr__(self) -> str:
@@ -287,6 +306,9 @@ class TaskState:
         is_held: Optional[bool] = None,
         is_queued: Optional[bool] = None,
         is_runahead: Optional[bool] = None,
+        is_retry: Optional[bool] = None,
+        is_wallclock: Optional[bool] = None,
+        is_xtriggered: Optional[bool] = None,
     ) -> bool:
         """Compare task state attributes.
 
@@ -303,6 +325,15 @@ class TaskState:
             is_runahead:
                 Check the task is_runahead attribute is as provided, or
                 do not check the is_runahead attribute if None.
+            is_retry:
+                Check the task is_retry attribute is as provided, or
+                do not check the is_retry attribute if None.
+            is_wallclock:
+                Check the task is_wallclock attribute is as provided, or
+                do not check the is_wallclock attribute if None.
+            is_xtriggered:
+                Check the task is_xtriggered attribute is as provided, or
+                do not check the is_xtriggered attribute if None.
 
         """
         return (
@@ -318,6 +349,15 @@ class TaskState:
             ) and (
                 is_runahead is None
                 or self.is_runahead == is_runahead
+            ) and (
+                is_retry is None
+                or self.is_retry == is_retry
+            ) and (
+                is_wallclock is None
+                or self.is_wallclock == is_wallclock
+            ) and (
+                is_xtriggered is None
+                or self.is_xtriggered == is_xtriggered
             )
         )
 
@@ -340,7 +380,7 @@ class TaskState:
 
     def xtriggers_all_satisfied(self):
         """Return True if all xtriggers are satisfied."""
-        return all(self.xtriggers.values())
+        return all(xtrig[0] for xtrig in self.xtriggers.values())
 
     def external_triggers_all_satisfied(self):
         """Return True if all external triggers are satisfied."""
@@ -400,8 +440,15 @@ class TaskState:
         )
 
     def reset(
-        self, status=None, is_held=None, is_queued=None, is_runahead=None,
-        forced=False
+        self,
+        status=None,
+        is_held=None,
+        is_queued=None,
+        is_runahead=None,
+        is_retry=None,
+        is_wallclock=None,
+        is_xtriggered=None,
+        forced=False,
     ):
         """Change status.
 
@@ -411,11 +458,26 @@ class TaskState:
             is_held (bool):
                 Set the task to be held or not, or None to leave this property
                 unchanged.
+            is_queued (bool):
+                Set the task to be queued or not, or None to leave this
+                property unchanged.
+            is_runahead (bool):
+                Set the task to be runahead or not, or None to leave this
+                property unchanged.
+            is_retry (bool):
+                Set the task to be retry or not, or None to leave this
+                property unchanged.
+            is_wallclock (bool):
+                Set the task to be wallclock or not, or None to leave this
+                property unchanged.
+            is_xtriggered (bool):
+                Set the task to be xtriggered or not, or None to leave this
+                property unchanged.
             forced (bool):
-                If called as a result of a forced change (via "cylc set")
+                If called as a result of a forced change (via "cylc set").
 
         Returns:
-            Whether state changed or not (bool)
+            Whether state changed or not (bool).
 
         """
         req = status
@@ -428,20 +490,34 @@ class TaskState:
             self.status,
             self.is_held,
             self.is_queued,
-            self.is_runahead
+            self.is_runahead,
+            self.is_retry,
+            self.is_wallclock,
+            self.is_xtriggered,
         )
         requested_status = (
             status if status is not None else self.status,
             is_held if is_held is not None else self.is_held,
             is_queued if is_queued is not None else self.is_queued,
-            is_runahead if is_runahead is not None else self.is_runahead
+            is_runahead if is_runahead is not None else self.is_runahead,
+            is_retry if is_retry is not None else self.is_retry,
+            is_wallclock if is_wallclock is not None else self.is_wallclock,
+            is_xtriggered if is_xtriggered is not None else self.is_xtriggered,
         )
         if current_status == requested_status:
             # no change - do nothing
             return False
 
         # perform the state change
-        self.status, self.is_held, self.is_queued, self.is_runahead = (
+        (
+            self.status,
+            self.is_held,
+            self.is_queued,
+            self.is_runahead,
+            self.is_retry,
+            self.is_wallclock,
+            self.is_xtriggered,
+        ) = (
             requested_status
         )
 
@@ -505,11 +581,34 @@ class TaskState:
         self.suicide_prerequisites = list(suicide_prerequisites.values())
         self.prerequisites = list(prerequisites.values())
 
-    def add_xtrigger(self, label, satisfied=False):
-        self.xtriggers[label] = satisfied
+    def _update_xtrigger_derived_status(self):
+        self.is_retry = False
+        self.is_wallclock = False
+        self.is_xtriggered = False
+        for satisfied, func_name in self.xtriggers.values():
+            if satisfied:
+                continue
+            if func_name.startswith('_cylc_retry'):
+                # an execution or submission retry xtrigger
+                self.is_retry = True
+            elif func_name == 'wall_clock':
+                # a wallclock xtrigger or legacy clock-trigger
+                self.is_wallclock = True
+            else:
+                # any other xtrigger
+                self.is_xtriggered = True
+
+    def add_xtrigger(self, label, func_name, satisfied=False, update=True):
+        self.xtriggers[label] = [satisfied, func_name]
+        if update:
+            self._update_xtrigger_derived_status()
 
     def get_xtrigger(self, label):
         return self.xtriggers[label]
+
+    def update_xtrigger(self, label, satisfied):
+        self.xtriggers[label][0] = satisfied
+        self._update_xtrigger_derived_status()
 
     def _add_xtriggers(self, point, tdef):
         """Add task xtriggers valid for the current sequence.
@@ -521,8 +620,9 @@ class TaskState:
         for sequence, xtrig_labels in tdef.xtrig_labels.items():
             if not sequence.is_valid(point):
                 continue
-            for xtrig_label in xtrig_labels:
-                self.add_xtrigger(xtrig_label)
+            for (xtrig_label, func_name) in xtrig_labels:
+                self.add_xtrigger(xtrig_label, func_name, update=False)
+        self._update_xtrigger_derived_status()
 
     def get_unsatisfied_prerequisites(self) -> List['PrereqTuple']:
         return [
