@@ -47,6 +47,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         flowNums
         firstParent {
           id
