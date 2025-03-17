@@ -72,7 +72,7 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.run_modes import RunMode
+from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_STATUS_DESC,
@@ -622,20 +622,11 @@ class TimeZone(ObjectType):
 
 
 # The run mode for the workflow.
-class WorkflowRunMode(graphene.Enum):
-    """The mode used to run a workflow."""
-
-    # NOTE: using a different enum because:
-    # * We only want to offer a subset of run modes (REQUEST_* only).
-
-    Live = cast('Enum', RunMode.LIVE)  # type: graphene.Enum
-    Dummy = cast('Enum', RunMode.DUMMY)  # type: graphene.Enum
-    Simulation = cast('Enum', RunMode.SIMULATION)  # type: graphene.Enum
-
-    @property
-    def description(self):
-        return RunMode(self.value).describe()
-
+WorkflowRunMode = graphene.Enum(
+    'WorkflowRunMode',
+    [(m.capitalize(), m) for m in WORKFLOW_RUN_MODES],
+    description=lambda x: RunMode(x.value).describe() if x else None,
+)
 
 # The run mode for the task.
 TaskRunMode = graphene.Enum(
@@ -1671,7 +1662,7 @@ class TaskStatus(graphene.Enum):
 
     @property
     def description(self):
-        return TASK_STATUS_DESC.get(self.value, '')
+        return TASK_STATUS_DESC.get(cast('Enum', self).value, '')
 
 
 class TaskState(InputObjectType):
@@ -1739,14 +1730,14 @@ class WorkflowStopMode(graphene.Enum):
     # NOTE: using a different enum because:
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
-    Clean = cast('Enum', StopMode.REQUEST_CLEAN)  # type: graphene.Enum
-    Kill = cast('Enum', StopMode.REQUEST_KILL)  # type: graphene.Enum
-    Now = cast('Enum', StopMode.REQUEST_NOW)  # type: graphene.Enum
-    NowNow = cast('Enum', StopMode.REQUEST_NOW_NOW)  # type: graphene.Enum
+    Clean = cast('Enum', StopMode.REQUEST_CLEAN.value)
+    Kill = cast('Enum', StopMode.REQUEST_KILL.value)
+    Now = cast('Enum', StopMode.REQUEST_NOW.value)
+    NowNow = cast('Enum', StopMode.REQUEST_NOW_NOW.value)
 
     @property
     def description(self):
-        return StopMode(self.value).describe()
+        return StopMode(cast('Enum', self).value).describe()
 
 
 class Flow(String):
@@ -2017,7 +2008,7 @@ class Stop(Mutation):
             submitted immediately if the workflow is restarted.
             Remaining task event handlers, job poll and kill commands, will
             be executed prior to shutdown, unless
-            the stop mode is `{WorkflowStopMode.Now}`.
+            the stop mode is `{WorkflowStopMode.Now.name}`.
 
             Valid for: paused, running, stopping workflows.
         ''')
