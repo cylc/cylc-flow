@@ -693,11 +693,14 @@ class Resolvers(BaseResolvers):
         else:
             log_user = f" from {user}"
 
-        log1 = f'Command "{command}" received{log_user}.'
-        log2 = (
+        received_msg = f'Command "{command}" received{log_user}.'
+        signature_str = (
             f"{command}("
             + ", ".join(
-                f"{key}={value}" for key, value in kwargs.items())
+                f"{key}={getattr(value, 'value', value)}"
+                for key, value in kwargs.items()
+                if value is not None
+            )
             + ")"
         )
 
@@ -708,7 +711,7 @@ class Resolvers(BaseResolvers):
                 or user != self.schd.owner
             ):
                 # Logging task messages as commands is overkill.
-                LOG.info(f"{log1}\n{log2}")
+                LOG.info(f"{received_msg}\n{signature_str}")
             return method(**kwargs)
 
         try:
@@ -725,14 +728,14 @@ class Resolvers(BaseResolvers):
         except Exception as exc:
             # NOTE: keep this exception vague to prevent a bad command taking
             # down the scheduler
-            LOG.warning(f'{log1}\n{exc.__class__.__name__}: {exc}')
+            LOG.warning(f'{received_msg}\n{exc.__class__.__name__}: {exc}')
             if cylc.flow.flags.verbosity > 1:
                 LOG.exception(exc)  # log full traceback in debug mode
             return (False, str(exc))
 
         # Queue the command to the scheduler, with a unique command ID
         cmd_uuid = str(uuid4())
-        LOG.info(f"{log1} ID={cmd_uuid}\n{log2}")
+        LOG.info(f"{received_msg} ID={cmd_uuid}\n{signature_str}")
         self.schd.command_queue.put(
             (
                 cmd_uuid,

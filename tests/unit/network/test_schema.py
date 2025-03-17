@@ -26,11 +26,12 @@ from cylc.flow.network.schema import (
     RUNTIME_FIELD_TO_CFG_MAP,
     Mutations,
     Runtime,
+    WorkflowStopMode,
     runtime_schema_to_cfg,
     sort_elements,
     SortArgs,
 )
-from cylc.flow.workflow_status import WorkflowStatus
+from cylc.flow.workflow_status import StopMode, WorkflowStatus
 
 
 @dataclass
@@ -138,3 +139,10 @@ def test_mutations_valid_for(mutation):
     valid_states = set(match.group(1).split(', '))
     assert valid_states
     assert not valid_states.difference(i.value for i in WorkflowStatus)
+
+
+@pytest.mark.parametrize('wflow_stop_mode', list(WorkflowStopMode))
+def test_stop_mode_enum(wflow_stop_mode):
+    """Check that WorkflowStopMode is a subset of StopMode."""
+    assert StopMode(wflow_stop_mode.value)
+    assert wflow_stop_mode.description

@@ -240,10 +240,8 @@ async def _run(
             options.max_polls,
         )
 
-    # mode defaults to 'Clean'
-    mode = None
     if stop_task or stop_cycle:
-        pass
+        mode: Optional[str] = None
     elif options.kill:
         mode = WorkflowStopMode.Kill.name
     elif options.now > 1:
