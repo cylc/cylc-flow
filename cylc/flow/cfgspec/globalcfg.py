@@ -833,7 +833,7 @@ with Conf('global.cylc', desc='''
                 preventing new workflows from starting on the "condemned" host.
 
                 Any workflows running on these hosts will either migrate
-                to another host, or shutdown according to
+                to another host, or shut down according to
                 :py:mod:`the configuration <cylc.flow.main_loop.auto_restart>`.
 
                 This feature requires ``auto restart`` to be listed
