@@ -13,6 +13,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  FORCE_COLOR: 2
+
 jobs:
   test_conda_install:
     runs-on: ubuntu-latest
