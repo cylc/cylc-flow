@@ -47,9 +47,8 @@ from graphene import (
     String,
 )
 from graphene.types.generic import GenericScalar
-from graphene.utils.str_converters import to_snake_case
 from graphene.types.schema import identity_resolve
-
+from graphene.utils.str_converters import to_snake_case
 from graphql.type.definition import get_named_type
 
 from cylc.flow import LOG_LEVELS
@@ -72,30 +71,23 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
 )
 from cylc.flow.id import Tokens
-from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
-from cylc.flow.task_outputs import SORT_ORDERS
-from cylc.flow.task_state import (
-    TASK_STATUS_DESC,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING,
-    TASK_STATUSES_ORDERED,
+from cylc.flow.run_modes import (
+    WORKFLOW_RUN_MODES,
+    RunMode,
 )
+from cylc.flow.task_outputs import SORT_ORDERS
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.util import sstrip
 from cylc.flow.workflow_status import StopMode
 
 
 if TYPE_CHECKING:
     from enum import Enum
+
     from graphql import GraphQLResolveInfo
     from graphql.type.definition import (
-        GraphQLType,
         GraphQLNamedType,
+        GraphQLType,
     )
 
     from cylc.flow.network.resolvers import BaseResolvers
@@ -1643,41 +1635,6 @@ class BroadcastSetting(GenericScalar):
 class BroadcastCyclePoint(graphene.String):
     """A cycle point or `*`."""
     # (broadcast supports either of those two but not cycle point globs)
-
-
-class TaskStatus(graphene.Enum):
-    """The status of a task in a workflow."""
-
-    # NOTE: this is an enumeration purely for the GraphQL schema
-    # TODO: the task statuses should be formally declared in a Python
-    #       enumeration rendering this class unnecessary
-    Waiting = TASK_STATUS_WAITING
-    Expired = TASK_STATUS_EXPIRED
-    Preparing = TASK_STATUS_PREPARING
-    SubmitFailed = TASK_STATUS_SUBMIT_FAILED
-    Submitted = TASK_STATUS_SUBMITTED
-    Running = TASK_STATUS_RUNNING
-    Failed = TASK_STATUS_FAILED
-    Succeeded = TASK_STATUS_SUCCEEDED
-
-    @property
-    def description(self):
-        return TASK_STATUS_DESC.get(cast('Enum', self).value, '')
-
-
-class TaskState(InputObjectType):
-    """The state of a task, a combination of status and other fields."""
-
-    status = TaskStatus()
-    is_held = Boolean(description=sstrip('''
-        If a task is held no new job submissions will be made.
-    '''))
-    is_queued = Boolean(description=sstrip('''
-        Task is queued for job submission.
-    '''))
-    is_runahead = Boolean(description=sstrip('''
-        Task is runahead limited.
-    '''))
 
 
 class TaskName(String):
