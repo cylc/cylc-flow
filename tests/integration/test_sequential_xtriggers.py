@@ -74,7 +74,7 @@ async def test_remove(sequential: Scheduler, start):
         ]
 
         # remove all tasks in the pool
-        sequential.remove_tasks(['*'])
+        sequential.remove_tasks(['*'], [1])
 
         # the next cycle should be automatically spawned
         assert list_cycles(sequential) == ['2004']
