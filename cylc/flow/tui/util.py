@@ -589,7 +589,7 @@ def _render_task(node, data):
         start_time=start_time,
         mean_time=mean_time,
         **{
-            modifier_attr: data[data_attr]
+            modifier_attr: data.get(data_attr, False)
             for _, (modifier_attr, data_attr) in MODIFIER_ATTR_MAPPING.items()
         }
     )
