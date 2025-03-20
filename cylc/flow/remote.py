@@ -183,6 +183,9 @@ DEFAULT_RSYNC_OPTS = [
     '--out-format=%o %n%L',
     '--no-t'
 ]
+# %o: the operation (send or del.)
+# %n: filename
+# %L: "-> symlink_target" if applicable
 
 DEFAULT_INCLUDES = [
     '/ana/***',  # Rose ana analysis modules
