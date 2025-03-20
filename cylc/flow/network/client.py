@@ -69,6 +69,14 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
     method ``async_request()``. This base class provides a ``serial_request()``
     method based on the ``async_request()`` method, callable by ``__call__``.
     It also provides a comms timeout handler method.
+
+    Attributes:
+        workflow: Workflow ID as a string.
+        host: Scheduler host.
+        port: The port being used by this client.
+        timeout: Round trip call-response timeout in seconds.
+        scheduler_version: The Cylc version used by the scheduler.
+
     """
 
     DEFAULT_TIMEOUT = 5  # seconds
@@ -82,11 +90,12 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
     ):
         self.workflow = workflow
         if not host or not port:
-            host, port, _ = get_location(workflow)
+            host, port, _, scheduler_version = get_location(workflow)
         else:
             port = int(port)
         self.host = self._orig_host = host
         self.port = self._orig_port = port
+        self.scheduler_version = scheduler_version
         self.timeout = (
             float(timeout) if timeout is not None else self.DEFAULT_TIMEOUT
         )
@@ -146,7 +155,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
-        contact_host, contact_port, _ = get_location(self.workflow)
+        contact_host, contact_port, *_ = get_location(self.workflow)
         if (
             contact_host != get_fqdn_by_host(self._orig_host)
             or contact_port != self._orig_port
