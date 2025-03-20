@@ -1995,12 +1995,18 @@ class TaskPool:
                 self._set_prereqs_tdef(
                     point, tdef, prereqs, flow_nums, flow_wait)
             else:
+                # If we were able to work out whether these outputs should
+                #  be actioned here we could avoid touching the db.
                 trans = self._get_task_proxy_db_outputs(
                     point, tdef, flow_nums,
                     flow_wait=flow_wait, transient=True
                 )
+                # Consider whether we should be getting the itask status here.
                 if trans is not None:
-                    self._set_outputs_itask(trans, outputs)
+                    if trans.state.outputs.is_complete():
+                        LOG.warning('You can\'t set outputs on a completed task.')
+                    else:
+                        self._set_outputs_itask(trans, outputs)
 
         if self.compute_runahead():
             self.release_runahead_tasks()
@@ -2030,6 +2036,16 @@ class TaskPool:
             ).union(skips)
 
         for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
+            # Don't allow outputs which return task to non-final status.
+
+            # from cylc.flow.task_state import TASK_STATUSES_NEVER_ACTIVE
+                
+            
+            # breakpoint(header=f'=== {output} ===')
+            # if itask.state.status in TASK_STATUSES_FINAL and output in TASK_STATUSES_ACTIVE + TASK_STATUSES_NEVER_ACTIVE:
+            #     outputs.pop(output)
+            #     continue
+
             if itask.state.outputs.is_message_complete(output):
                 LOG.info(f"output {itask.identity}:{output} completed already")
                 continue
