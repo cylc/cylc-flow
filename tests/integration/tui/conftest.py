@@ -275,6 +275,7 @@ def _rakiura(test_dir, request, monkeypatch):
             ).id
         )
     monkeypatch.setattr('cylc.flow.tui.util.ME', 'cylc')
+    monkeypatch.setattr('cylc.flow.tui.app.CYLC_VERSION', '1.2.3')
     monkeypatch.setattr(
         'cylc.flow.tui.util._display_workflow_id',
         lambda data: data['name'].rsplit('/', 1)[-1]
