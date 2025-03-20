@@ -2004,7 +2004,9 @@ class TaskPool:
                 # Consider whether we should be getting the itask status here.
                 if trans is not None:
                     if trans.state.outputs.is_complete():
-                        LOG.warning('You can\'t set outputs on a completed task.')
+                        LOG.warning(
+                            'You can\'t set outputs on a completed task.'
+                        )
                     else:
                         self._set_outputs_itask(trans, outputs)
 
@@ -2036,16 +2038,6 @@ class TaskPool:
             ).union(skips)
 
         for output in sorted(outputs, key=itask.state.outputs.output_sort_key):
-            # Don't allow outputs which return task to non-final status.
-
-            # from cylc.flow.task_state import TASK_STATUSES_NEVER_ACTIVE
-                
-            
-            # breakpoint(header=f'=== {output} ===')
-            # if itask.state.status in TASK_STATUSES_FINAL and output in TASK_STATUSES_ACTIVE + TASK_STATUSES_NEVER_ACTIVE:
-            #     outputs.pop(output)
-            #     continue
-
             if itask.state.outputs.is_message_complete(output):
                 LOG.info(f"output {itask.identity}:{output} completed already")
                 continue
