@@ -675,6 +675,9 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
+        # For back compat, with gql-v3 None will not use default_value.
+        if 'flow' in kwargs:
+            kwargs['flow'] = kwargs['flow'] or []
         result = await self._mutation_mapper(command, kwargs, meta)
         return [{'id': w_id, 'response': result}]
 
