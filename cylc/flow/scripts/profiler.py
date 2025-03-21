@@ -35,7 +35,6 @@ PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
 
 
-
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,

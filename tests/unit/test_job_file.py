@@ -404,11 +404,12 @@ def test_write_task_environment():
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
     job_conf = {
-        "platform": {'communication method': 'ssh',
-                     'profile': {
-                         "activate": "true",
-                        }
-                        },
+        "platform": {
+            'communication method': 'ssh',
+            'profile': {
+                "activate": "true",
+            }
+        },
         "job_d": "1/moo/01",
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
