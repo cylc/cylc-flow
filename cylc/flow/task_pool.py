@@ -772,7 +772,7 @@ class TaskPool:
                 xtrig_label in (
                     self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels)
                 for sequence, xtrig_labels in tdef.xtrig_labels.items()
-                for xtrig_label in xtrig_labels
+                for (xtrig_label, _) in xtrig_labels
                 if sequence.is_valid(point)
             ):
                 is_xtrig_sequential = True

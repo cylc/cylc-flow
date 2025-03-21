@@ -89,7 +89,10 @@ TASK_ICONS = {
 TASK_MODIFIERS = {
     'held': '\u030E',
     'queued': '\u033F',
-    'runahead': '\u030A'
+    'runahead': '\u0340',
+    'xtriggered': '\u1DC9',
+    'wallclock': '\u135D',
+    'retry': '\u20D7',
 }
 
 # unicode job icon
