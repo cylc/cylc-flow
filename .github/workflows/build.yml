@@ -56,7 +56,7 @@ jobs:
       - name: Inspect
         run: |
           unzip -l dist/*.whl | tee files
-          grep 'cylc_flow.*.dist-info/COPYING' files
+          grep -E 'cylc_flow.*.dist-info/.*COPYING' files
           grep 'cylc/flow/py.typed' files
           grep 'cylc/flow/etc' files
           grep 'cylc/flow/etc/cylc-completion.bash' files
