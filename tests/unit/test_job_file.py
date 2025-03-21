@@ -406,10 +406,10 @@ def test_write_task_environment():
     job_conf = {
         "platform": {
             'communication method': 'ssh',
-                     'profile': {
-                         "activate": "true",
-                        }
-                        },
+            'profile': {
+                "activate": "true",
+            }
+        },
         "job_d": "1/moo/01",
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
