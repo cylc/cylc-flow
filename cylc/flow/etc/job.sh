@@ -209,7 +209,7 @@ cylc__set_return() {
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
     if [[ -n ${profiler_pid:-} ]]; then
-      kill -s SIGINT "${profiler_pid}"
+      kill -s SIGINT "${profiler_pid}" || true
     fi
     if [ -n "${max_rss}" ]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
