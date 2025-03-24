@@ -214,7 +214,7 @@ cylc__kill_profiler() {
     if [[ -n "${max_rss:-}" ]]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
     fi
-    if [[ -n ${profiler_pid:-} ]]; then
+    if [[ -f "proc/${profiler_pid}" ]]; then
       kill -s SIGINT "${profiler_pid}" || true
     fi
 }
