@@ -211,10 +211,10 @@ cylc__kill_profiler() {
     if [[ -n ${profiler_pid:-} ]]; then
       kill -s SIGINT "${profiler_pid}" || true
     fi
-    if [ -n "${max_rss}" ]; then
+    if [[ -n "${max_rss}" ]]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
     fi
-    if [ -n "${cpu_time}" ]; then
+    if [[ -n "${cpu_time}" ]]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
     fi
 }
