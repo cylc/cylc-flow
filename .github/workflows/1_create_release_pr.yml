@@ -11,19 +11,6 @@ on:
         required: false
         default: 'master'
 
-concurrency:
-  # Only let this run 1 at a time
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
-
-defaults:
-  run:
-    shell: bash
-
-env:
-  FORCE_COLOR: 2
-  PIP_PROGRESS_BAR: off
-
 jobs:
   create-release-pr:
     runs-on: ubuntu-latest
