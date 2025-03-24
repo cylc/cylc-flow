@@ -120,13 +120,9 @@ def get_cgroup_dir():
             result = f.read()
         result = PID_REGEX.search(result).group()
         return result
-    except FileNotFoundError as err:
-        print(err, file=sys.stderr)
-        print('/proc/' + str(pid) + '/cgroup not found', file=sys.stderr)
-        exit()
     except AttributeError as err:
-        print(err, file=sys.stderr)
-        print("No cgroup found for process", file=sys.stderr)
+        print(err)
+        print("No cgroup found for process")
         exit()
 
 
