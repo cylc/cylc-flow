@@ -114,11 +114,16 @@ def get_cgroup_dir():
     """Get the cgroup directory for the current process"""
     # Get the PID of the current process
     pid = os.getpid()
-    # Get the cgroup information for the current process
-    with open('/proc/' + str(pid) + '/cgroup', 'r') as f:
-        result = f.read()
-    result = PID_REGEX.search(result).group()
-    return result
+    try:
+        # Get the cgroup information for the current process
+        with open('/proc/' + str(pid) + '/cgroup', 'r') as f:
+            result = f.read()
+        result = PID_REGEX.search(result).group()
+        return result
+    except FileNotFoundError as err:
+        print('/proc/' + str(pid) + '/cgroup not found')
+        exit()
+
 
 
 def profile(args):
