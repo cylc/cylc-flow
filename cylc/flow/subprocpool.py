@@ -365,16 +365,22 @@ class SubProcPool:
             )
 
     @classmethod
-    def run_command(cls, ctx):
+    def run_command(cls, ctx, timeout: Optional[float] = None):
         """Execute command in ctx and capture its output and exit status.
+
+        Raises subprocess.TimeoutExpired (via subprocess.communicate) if
+        the command gets killed for exceeding a given timeout.
 
         Arguments:
             ctx (cylc.flow.subprocctx.SubProcContext):
                 A context object containing the command to run and its status.
+            timeout:
+                Timeout in seconds, after which to kill the command.
         """
         proc = cls._run_command_init(ctx)
         if proc:
-            ctx.out, ctx.err = (f.decode() for f in proc.communicate())
+            ctx.out, ctx.err = (
+                f.decode() for f in proc.communicate(timeout=timeout))
             ctx.ret_code = proc.wait()
             cls._run_command_exit(ctx)
 
