@@ -293,7 +293,6 @@ cylc__job__run_inst_func() {
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
 cylc__job_finish_err() {
-    cylc__kill_profiler
     CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
     typeset run_err_script="$2"
@@ -301,6 +300,7 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    cylc__kill_profiler
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi

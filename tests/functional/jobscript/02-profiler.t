@@ -42,6 +42,4 @@ create_test_global_config '
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-#grep_ok 'max_rss' "${WORKFLOW_RUN_DIR}/log/scheduler/log"
-
 purge
