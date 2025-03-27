@@ -668,6 +668,10 @@ class TaskEventsManager():
             True: if polling is required to confirm a reversal of status.
 
         """
+        if itask.transient:
+            # This task is not in the task pool. Probably got here by job poll
+            # callback from a delayed poll result, after the task completed.
+            return None
 
         # Log messages
         if event_time is None:

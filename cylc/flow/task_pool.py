@@ -891,6 +891,9 @@ class TaskPool:
             # https://github.com/cylc/cylc-flow/issues/6315
             self.workflow_db_mgr.process_queued_ops()
 
+            # Mark task as transient now, so any remaining references can be
+            # identified as non task pool (e.g. for late job poll results).
+            itask.transient = True
             del itask
 
             # removing this task could nudge the runahead limit forward
