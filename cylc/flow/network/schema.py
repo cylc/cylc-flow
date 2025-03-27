@@ -742,8 +742,8 @@ class Workflow(ObjectType):
             update relates to a workflow reload.
         '''),
     )
-    run_mode = WorkflowRunMode(
-        description="The scheduler's run-mode e.g. `Live`.",
+    run_mode = String(
+        description="The scheduler's run-mode e.g. `live`.",
     )
     is_held_total = Int(
         description='The number of "held" tasks.',

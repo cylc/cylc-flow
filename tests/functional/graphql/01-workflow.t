@@ -96,7 +96,7 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
             "newestActiveCyclePoint": "20210101T0000Z",
             "oldestActiveCyclePoint": "20210101T0000Z",
             "reloaded": false,
-            "runMode": "Live",
+            "runMode": "live",
             "nEdgeDistance": 1,
             "stateTotals": {
                 "waiting": 1,
