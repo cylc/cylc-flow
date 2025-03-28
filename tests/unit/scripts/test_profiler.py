@@ -18,7 +18,9 @@
 from cylc.flow.scripts.profiler import (parse_memory_file,
                                         parse_cpu_file,
                                         write_data,
-                                        get_cgroup_dir)
+                                        get_cgroup_dir,
+                                        get_cgroup_version)
+from unittest.mock import patch
 import pytest
 
 
@@ -73,3 +75,17 @@ def test_get_cgroup_dir(mocker):
     mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
     mocker.patch("builtins.open", mock_file)
     assert get_cgroup_dir() == "good/cgroup/place/2222222"
+
+
+def test_get_cgroup_version(mocker):
+
+    # Mock the Path.exists function call to return True
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    assert get_cgroup_version('stuff/in/place', 'more_stuff') == 1
+
+    with patch('pathlib.Path.exists', side_effect=[False, True]):
+        assert get_cgroup_version('stuff/in/place', 'more_stuff') == 2
+
+    # Mock the Path.exists function call to return False
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    assert get_cgroup_version('stuff/in/other/place', 'things') is None

@@ -101,11 +101,16 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
 
 
 def write_data(data, filename):
-    try:
-        with open(filename, 'w') as f:
-            f.write(data + "\n")
-    except IOError as err:
-        raise IOError("Unable to write data to file:" + filename) from err
+    with open(filename, 'w') as f:
+        f.write(data + "\n")
+
+
+def get_cgroup_version(cgroup_location, cgroup_name):
+    # HPC uses cgroups v2 and SPICE uses cgroups v1
+    if Path.exists(Path(cgroup_location + cgroup_name)):
+        return 1
+    elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
+        return 2
 
 
 def get_cgroup_dir():
@@ -132,13 +137,7 @@ def profile(args):
     # as the job it is profiling
     cgroup_name = get_cgroup_dir()
 
-    # HPC uses cgroups v2 and SPICE uses cgroups v1
-    if Path.exists(Path(args.cgroup_location + cgroup_name)):
-        cgroup_version = 1
-    elif Path.exists(Path(args.cgroup_location + "/memory" + cgroup_name)):
-        cgroup_version = 2
-    else:
-        raise FileNotFoundError("cgroups not found:" + cgroup_name)
+    cgroup_version = get_cgroup_version(args.cgroup_location, cgroup_name)
 
     peak_memory = 0
     processes = []
