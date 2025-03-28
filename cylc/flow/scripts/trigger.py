@@ -17,18 +17,30 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Force task(s) to run, even in a paused workflow.
 
-Triggering a task that is not yet queued will queue it.
+Triggering a task that is not yet queued will queue it; triggering a queued
+task will run it - so un-queued tasks may need to be triggered twice.
 
-Triggering a queued task runs it immediately.
+Tasks can't be triggered if already active (preparing, submitted, running).
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+Triggering a group of tasks at once:
+  Dependence on tasks beyond the group ("off-group prerequisites") will be
+  satisfied automatically; in-group prerequisites will be left to the flow.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+Triggering a sub-graph:
+  * Group approach: trigger all sub-graph tasks as a group. The forced
+  satisfaction of off-group prerequisites will automatically avoid a stall.
+  * Fundamental approach: trigger the initial tasks of the sub-graph to start
+  the flow, and manually set off-flow prerequisites to prevent a stall.
+
+Triggering past tasks:
+  If flows are not specified (i.e., no use of --flow) the flow-history of
+  target tasks will be erased (see also "cylc remove") so that the graph can
+  be re-traversed without starting a new flow.
+  Rarely, you may want to retain flow history even if not starting a new flow.
+  If so, use `--flow=all` avoid the erasure. Example: triggering a task twice
+  with `--wait` to complete different outputs.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -39,6 +51,11 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+Cylc queues:
+  Queues limit how many tasks can be active (preparing, submitted, running) at
+  once. Tasks that are ready to run will remained queued until the active task
+  count drops below the queue limit.
 
 Flows:
   Waiting tasks in the active window (n=0) already belong to a flow.

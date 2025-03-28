@@ -420,7 +420,7 @@ async def test_clock_expiry(
         two.state_reset(TASK_STATUS_PREPARING)
 
         # the third task (force-triggered)
-        schd.pool.force_trigger_tasks(['20100101T0000Z/x'], ['1'])
+        schd.force_trigger_tasks(['20100101T0000Z/x'], ['1'])
         three = schd.pool.get_task(ISO8601Point('20100101T0000Z'), 'x')
         assert three
 
