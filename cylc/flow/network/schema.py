@@ -1124,6 +1124,18 @@ class TaskProxy(ObjectType):
     is_runahead = Boolean(
         description='True if this task is held back by the "runahead limit".',
     )
+    is_retry = Boolean(
+        description='True if this task has a scheduled retry.',
+    )
+    is_wallclock = Boolean(
+        description='True if this task has an unsatisfied wallclock trigger.',
+    )
+    is_xtriggered = Boolean(
+        description=sstrip(
+            'True if this task has an unsatisfied xtrigger'
+            ' (excluding retry and wallclock xtriggers).'
+        ),
+    )
     flow_nums = String(
         description='The flows this task instance belongs to.',
     )
@@ -1304,6 +1316,23 @@ class FamilyProxy(ObjectType):
     is_queued_total = Int()
     is_runahead = Boolean()
     is_runahead_total = Int()
+    is_retry = Boolean(
+        description=(
+            'True if this family contains a task that has a scheduled retry.'
+        ),
+    )
+    is_wallclock = Boolean(
+        description=(
+            'True if this family contains a task that has an'
+            ' unsatisfied wallclock trigger.'
+        ),
+    )
+    is_xtriggered = Boolean(
+        description=sstrip(
+            'True if this family contains a task that has an unsatisfied'
+            ' xtrigger (excluding retry and wallclock xtriggers).'
+        ),
+    )
     depth = Int()
     graph_depth = Int(
         description=sstrip('''

@@ -27,6 +27,14 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.xtrigger_mgr import RE_STR_TMPL, XtriggerCollator
 
 
+@pytest.fixture()
+def disable_data_store_mgr(monkeypatch):
+    monkeypatch.setattr(
+        'cylc.flow.data_store_mgr.DataStoreMgr.delta_task_xtrigger',
+        lambda self, itask: True,
+    )
+
+
 def test_extract_templates():
     """Test escaped templates in xtrigger arg string.
 
@@ -159,7 +167,10 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
     assert not xtrigger_mgr.sat_xtrig
 
 
-def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
+def test_housekeeping_with_xtrigger_satisfied(
+    xtrigger_mgr,
+    disable_data_store_mgr,
+):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
 
@@ -184,14 +195,14 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
 
     init()
     sequence = ISO8601Sequence('P1D', '2019')
-    tdef.xtrig_labels[sequence] = ["get_name"]
+    tdef.xtrig_labels[sequence] = [("get_name", "echo")]
     start_point = ISO8601Point('2019')
     itask = TaskProxy(Tokens('~user/workflow'), tdef, start_point)
     # pretend the function has been activated
 
     xtrigger_mgr.active.append(xtrig.get_signature())
 
-    xtrigger_mgr.callback(xtrig)
+    xtrigger_mgr.callback(None, xtrig)
     assert xtrigger_mgr.sat_xtrig
 
     xtrigger_mgr.housekeep([itask])
@@ -199,7 +210,7 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     assert xtrigger_mgr.sat_xtrig
 
 
-def test__call_xtriggers_async(xtrigger_mgr):
+def test__call_xtriggers_async(xtrigger_mgr, disable_data_store_mgr):
     """Test _call_xtriggers_async"""
 
     xtriggers = XtriggerCollator()
@@ -236,7 +247,10 @@ def test__call_xtriggers_async(xtrigger_mgr):
     )
     init()
     sequence = ISO8601Sequence('P1D', '2000')
-    tdef.xtrig_labels[sequence] = ["echo1", "echo2"]
+    tdef.xtrig_labels[sequence] = [
+        ("echo1", "echo"),
+        ("echo2", "echo")
+    ]
     # cycle point for task proxy
     init()
     start_point = ISO8601Point('2019')
@@ -259,8 +273,8 @@ def test__call_xtriggers_async(xtrigger_mgr):
 
     # now we call callback manually as the proc_pool we passed is a mock
     # then both should be satisfied
-    xtrigger_mgr.callback(echo1_xtrig)
-    xtrigger_mgr.callback(echo2_xtrig)
+    xtrigger_mgr.callback(None, echo1_xtrig)
+    xtrigger_mgr.callback(None, echo2_xtrig)
     # so both were satisfied, and nothing is active
     assert len(xtrigger_mgr.sat_xtrig) == 2
     assert len(xtrigger_mgr.active) == 0
@@ -271,7 +285,7 @@ def test__call_xtriggers_async(xtrigger_mgr):
     assert len(xtrigger_mgr.active) == 0
 
 
-def test_callback_not_active(xtrigger_mgr):
+def test_callback_not_active(xtrigger_mgr, disable_data_store_mgr):
     """Test callback with no active contexts."""
     # calling callback with a SubFuncContext with none active
     # results in a ValueError
@@ -283,10 +297,10 @@ def test_callback_not_active(xtrigger_mgr):
         func_kwargs={}
     )
     with pytest.raises(ValueError):
-        xtrigger_mgr.callback(get_name)
+        xtrigger_mgr.callback(None, get_name)
 
 
-def test_callback_invalid_json(xtrigger_mgr):
+def test_callback_invalid_json(xtrigger_mgr, disable_data_store_mgr):
     """Test callback with invalid JSON."""
     get_name = SubFuncContext(
         label="get_name",
@@ -296,14 +310,14 @@ def test_callback_invalid_json(xtrigger_mgr):
     )
     get_name.out = "{no_quotes: \"mom!\"}"
     xtrigger_mgr.active.append(get_name.get_signature())
-    xtrigger_mgr.callback(get_name)
+    xtrigger_mgr.callback(None, get_name)
     # this means that the xtrigger was not satisfied
     # TODO: this means site admins are only aware of this if they
     #       look at the debug log. Is that OK?
     assert not xtrigger_mgr.sat_xtrig
 
 
-def test_callback(xtrigger_mgr):
+def test_callback(xtrigger_mgr, disable_data_store_mgr):
     """Test callback."""
     get_name = SubFuncContext(
         label="get_name",
@@ -313,6 +327,6 @@ def test_callback(xtrigger_mgr):
     )
     get_name.out = "[\"True\", \"1\"]"
     xtrigger_mgr.active.append(get_name.get_signature())
-    xtrigger_mgr.callback(get_name)
+    xtrigger_mgr.callback(None, get_name)
     # this means that the xtrigger was satisfied
     assert xtrigger_mgr.sat_xtrig

@@ -17,7 +17,7 @@
 
 import pytest
 
-import cylc
+import cylc.flow
 from cylc.flow.exceptions import CylcVersionError
 from cylc.flow.network import get_location
 from cylc.flow.workflow_files import ContactFileFields
@@ -41,11 +41,12 @@ def test_get_location_ok(monkeypatch, mpatch_get_fqdn_by_host):
     """It passes when information is available."""
     contact_data = BASE_CONTACT_DATA.copy()
     contact_data[ContactFileFields.PUBLISH_PORT] = '8042'
+    contact_data[ContactFileFields.VERSION] = cylc.flow.__version__
     monkeypatch.setattr(
         cylc.flow.network, 'load_contact_file', lambda _: contact_data
     )
     assert get_location('_') == (
-        'myhost.x.y.z', 42, 8042
+        'myhost.x.y.z', 42, 8042, cylc.flow.__version__
     )
 
 

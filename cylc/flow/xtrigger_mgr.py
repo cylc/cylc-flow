@@ -16,6 +16,7 @@
 
 from contextlib import suppress
 from enum import Enum
+from functools import partial
 from inspect import signature
 import json
 import re
@@ -591,7 +592,7 @@ class XtriggerManager:
                 label, signature, function context, and flag for satisfied.
         """
         res = []
-        for label, satisfied in itask.state.xtriggers.items():
+        for label, (satisfied, _) in itask.state.xtriggers.items():
             if unsat_only and satisfied:
                 continue
             ctx = self.get_xtrig_ctx(itask, label)
@@ -668,14 +669,16 @@ class XtriggerManager:
                 # Special case: quick synchronous clock check.
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
-                    itask.state.xtriggers[label] = True
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     if self.all_task_seq_xtriggers_satisfied(itask):
                         self.sequential_spawn_next.add(itask.identity)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
-                    itask.state.xtriggers[label] = True
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     self.sat_xtrig[sig] = {}
-                    self.data_store_mgr.delta_task_xtrigger(sig, True)
+                    self.data_store_mgr.delta_task_xtrigger(itask)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
                     if self.all_task_seq_xtriggers_satisfied(itask):
@@ -685,8 +688,9 @@ class XtriggerManager:
             # General case: potentially slow asynchronous function call.
             if sig in self.sat_xtrig:
                 # Already satisfied, just update the task
-                if not itask.state.xtriggers[label]:
-                    itask.state.xtriggers[label] = True
+                if not itask.state.xtriggers[label][0]:
+                    itask.state.update_xtrigger(label, True)
+                    self.data_store_mgr.delta_task_state(itask)
                     res = {}
                     for key, val in self.sat_xtrig[sig].items():
                         res["%s_%s" % (label, key)] = val
@@ -713,7 +717,10 @@ class XtriggerManager:
             self.t_next_call[sig] = now + ctx.intvl
             # Queue to the process pool, and record as active.
             self.active.append(sig)
-            self.proc_pool.put_command(ctx, callback=self.callback)
+            self.proc_pool.put_command(
+                ctx,
+                callback=partial(self.callback, itask)
+            )
 
     def housekeep(self, itasks):
         """Forget satisfied xtriggers no longer needed by any task.
@@ -734,12 +741,12 @@ class XtriggerManager:
     def all_task_seq_xtriggers_satisfied(self, itask: 'TaskProxy') -> bool:
         """Check if all sequential xtriggers are satisfied for a task."""
         return itask.is_xtrigger_sequential and all(
-            itask.state.xtriggers[label]
+            itask.state.xtriggers[label][0]
             for label in itask.state.xtriggers
             if label in self.xtriggers.sequential_xtrigger_labels
         )
 
-    def callback(self, ctx: 'SubFuncContext'):
+    def callback(self, itask: 'TaskProxy', ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
 
         Record satisfaction status and function results dict.
@@ -771,7 +778,8 @@ class XtriggerManager:
             return
 
         # Newly satisfied
-        self.data_store_mgr.delta_task_xtrigger(sig, True)
+        itask.state.update_xtrigger(ctx.label, True)
+        self.data_store_mgr.delta_task_xtrigger(itask)
         self.workflow_db_mgr.put_xtriggers({sig: results})
         LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
         self.sat_xtrig[sig] = results
