@@ -15,7 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
-from cylc.flow.scripts.profiler import parse_memory_file, parse_cpu_file
+from cylc.flow.scripts.profiler import (parse_memory_file,
+                                        parse_cpu_file,
+                                        write_data,
+                                        get_cgroup_dir)
 import pytest
 
 
@@ -50,3 +53,23 @@ def test_parse_cpu_file(mocker):
     mocker.patch("builtins.open", mock_file)
     assert parse_cpu_file("mocked_file.txt", 2) == 1
     mock_file.assert_called_once_with("mocked_file.txt", "r")
+
+
+def test_write_data(tmpdir):
+    # Create tmp file
+    file = tmpdir.join('output.txt')
+
+    write_data('test_data', file.strpath)
+    assert file.read() == 'test_data\n'
+
+
+def test_get_cgroup_dir(mocker):
+
+    mock_file = mocker.mock_open(read_data="0::bad/test/cgroup/place")
+    mocker.patch("builtins.open", mock_file)
+    with pytest.raises(AttributeError):
+        get_cgroup_dir()
+
+    mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
+    mocker.patch("builtins.open", mock_file)
+    assert get_cgroup_dir() == "good/cgroup/place/2222222"

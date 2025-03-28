@@ -98,8 +98,6 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
             for line in f:
                 # Cgroups v2 uses nanoseconds
                 return int(line) / 1000000
-    else:
-        raise FileNotFoundError("cpu usage files not found")
 
 
 def write_data(data, filename):
@@ -123,11 +121,9 @@ def get_cgroup_dir():
     except FileNotFoundError as err:
         print(err)
         print('/proc/' + str(pid) + '/cgroup not found')
-        exit()
+
     except AttributeError as err:
-        print(err)
-        print("No cgroup found for process")
-        exit()
+        raise AttributeError("No cgroup found for process:", pid) from err
 
 
 def profile(args):
@@ -137,8 +133,6 @@ def profile(args):
     cgroup_name = get_cgroup_dir()
 
     # HPC uses cgroups v2 and SPICE uses cgroups v1
-    cgroup_version = None
-
     if Path.exists(Path(args.cgroup_location + cgroup_name)):
         cgroup_version = 1
     elif Path.exists(Path(args.cgroup_location + "/memory" + cgroup_name)):
@@ -181,7 +175,8 @@ def profile(args):
                 if memory > peak_memory:
                     peak_memory = memory
                     write_data(str(peak_memory), "max_rss")
-                cpu_time = parse_cpu_file(process.cgroup_cpu_path, cgroup_version)
+                cpu_time = parse_cpu_file(process.cgroup_cpu_path,
+                                          cgroup_version)
                 write_data(str(cpu_time), "cpu_time")
 
             except (OSError, ValueError) as error:
