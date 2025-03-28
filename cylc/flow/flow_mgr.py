@@ -160,7 +160,7 @@ class FlowMgr:
 
         if flow_num in self.flows:
             if meta is not None:
-                LOG.warning(
+                LOG.debug(
                     f'Ignoring flow metadata "{meta}":'
                     f' {flow_num} is not a new flow'
                 )
