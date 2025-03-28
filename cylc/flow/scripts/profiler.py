@@ -77,24 +77,24 @@ def stop_profiler(*args):
     sys.exit(0)
 
 
-def parse_memory_file(process):
+def parse_memory_file(cgroup_memory_path):
     """Open the memory stat file and copy the appropriate data"""
 
-    with open(process.cgroup_memory_path, 'r') as f:
+    with open(cgroup_memory_path, 'r') as f:
         for line in f:
             return int(line) // 1024
 
 
-def parse_cpu_file(process, cgroup_version):
+def parse_cpu_file(cgroup_cpu_path, cgroup_version):
     """Open the memory stat file and return the appropriate data"""
 
     if cgroup_version == 1:
-        with open(process.cgroup_cpu_path, 'r') as f:
+        with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 if "usage_usec" in line:
                     return int(RE_INT.findall(line)[0]) // 1000
     elif cgroup_version == 2:
-        with open(process.cgroup_cpu_path, 'r') as f:
+        with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 # Cgroups v2 uses nanoseconds
                 return int(line) / 1000000
@@ -173,22 +173,19 @@ def profile(args):
                                     args.cgroup_location) from err
 
     while True:
-        failures = 0
         # Write memory usage data
         for process in processes:
             # Only save Max RSS to disk if it is above the previous value
             try:
-                memory = parse_memory_file(process)
+                memory = parse_memory_file(process.cgroup_memory_path)
                 if memory > peak_memory:
                     peak_memory = memory
                     write_data(str(peak_memory), "max_rss")
-                cpu_time = parse_cpu_file(process, cgroup_version)
+                cpu_time = parse_cpu_file(process.cgroup_cpu_path, cgroup_version)
                 write_data(str(cpu_time), "cpu_time")
 
             except (OSError, ValueError) as error:
-                failures += 1
-                if failures > 5:
-                    raise OSError("cgroup polling failure", error) from error
+                raise OSError("cgroup polling failure", error) from error
 
             time.sleep(args.delay)
 
