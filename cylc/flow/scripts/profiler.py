@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc profiler [OPTIONS]
 
-Profiler which periodically polls PBS cgroups to track
+Profiler which periodically polls cgroups to track
 the resource usage of jobs running on the node.
 """
 
@@ -53,14 +53,14 @@ def get_option_parser() -> COP:
 
 
 @cli_function(get_option_parser)
-def main(parser, options):
+def main(parser: COP, options) -> None:
     """CLI main."""
     # Register the stop_profiler function with the signal library
     signal.signal(signal.SIGINT, stop_profiler)
     signal.signal(signal.SIGHUP, stop_profiler)
     signal.signal(signal.SIGTERM, stop_profiler)
 
-    profile(options)
+    get_config(options)
 
 
 @dataclass
@@ -77,40 +77,43 @@ def stop_profiler(*args):
     sys.exit(0)
 
 
-def parse_memory_file(process):
+def parse_memory_file(cgroup_memory_path):
     """Open the memory stat file and copy the appropriate data"""
 
-    with open(process.cgroup_memory_path, 'r') as f:
+    with open(cgroup_memory_path, 'r') as f:
         for line in f:
             return int(line) // 1024
 
 
-def parse_cpu_file(process, cgroup_version):
+def parse_cpu_file(cgroup_cpu_path, cgroup_version):
     """Open the memory stat file and return the appropriate data"""
 
     if cgroup_version == 1:
-        with open(process.cgroup_cpu_path, 'r') as f:
+        with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 if "usage_usec" in line:
                     return int(RE_INT.findall(line)[0]) // 1000
     elif cgroup_version == 2:
-        with open(process.cgroup_cpu_path, 'r') as f:
+        with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 # Cgroups v2 uses nanoseconds
                 return int(line) / 1000000
-    else:
-        raise FileNotFoundError("cpu usage files not found")
 
 
 def write_data(data, filename):
-    try:
-        with open(filename, 'w') as f:
-            f.write(data + "\n")
-    except IOError as err:
-        raise IOError("Unable to write data to file:" + filename) from err
+    with open(filename, 'w') as f:
+        f.write(data + "\n")
 
 
-def get_cgroup_dir():
+def get_cgroup_version(cgroup_location: Path, cgroup_name: Path) -> int:
+    # HPC uses cgroups v2 and SPICE uses cgroups v1
+    if Path.exists(Path(cgroup_location + cgroup_name)):
+        return 1
+    elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
+        return 2
+
+
+def get_cgroup_name():
     """Get the cgroup directory for the current process"""
     # Get the PID of the current process
     pid = os.getpid()
@@ -121,79 +124,62 @@ def get_cgroup_dir():
         result = PID_REGEX.search(result).group()
         return result
     except FileNotFoundError as err:
-        print(err)
-        print('/proc/' + str(pid) + '/cgroup not found')
-        exit()
+        raise FileNotFoundError(
+            '/proc/' + str(pid) + '/cgroup not found') from err
+
     except AttributeError as err:
-        print(err)
-        print("No cgroup found for process")
-        exit()
+        raise AttributeError("No cgroup found for process:", pid) from err
 
 
-def profile(args):
+def get_cgroup_paths(version, location, name):
+
+    if version == 1:
+        return Process(
+            cgroup_memory_path=location +
+            name + "/" + "memory.peak",
+            cgroup_cpu_path=location +
+            name + "/" + "cpu.stat")
+
+    elif version == 2:
+        return Process(
+            cgroup_memory_path=location + "/memory" +
+            name + "/memory.max_usage_in_bytes",
+            cgroup_cpu_path=location + "/cpu" +
+            name + "/cpuacct.usage")
+
+
+def profile(process, version, delay, keep_looping=lambda: True):
+    # The infinite loop that will constantly poll the cgroup
+    # The lambda function is used to allow the loop to be stopped in unit tests
+    peak_memory = 0
+    while keep_looping():
+        # Write cpu / memory usage data to disk
+        cpu_time = parse_cpu_file(process.cgroup_cpu_path, version)
+        write_data(str(cpu_time), "cpu_time")
+
+        memory = parse_memory_file(process.cgroup_memory_path)
+        # Only save Max RSS to disk if it is above the previous value
+        if memory > peak_memory:
+            peak_memory = memory
+            write_data(str(peak_memory), "max_rss")
+
+        time.sleep(delay)
+
+
+def get_config(args):
     # Find the cgroup that this process is running in.
     # Cylc will put this profiler in the same cgroup
     # as the job it is profiling
-    cgroup_name = get_cgroup_dir()
+    cgroup_name = get_cgroup_name()
+    cgroup_version = get_cgroup_version(args.cgroup_location, cgroup_name)
+    process = get_cgroup_paths(cgroup_version,
+                               args.cgroups_location,
+                               cgroup_name)
 
-    # HPC uses cgroups v2 and SPICE uses cgroups v1
-    cgroup_version = None
-
-    if Path.exists(Path(args.cgroup_location + cgroup_name)):
-        cgroup_version = 1
-    elif Path.exists(Path(args.cgroup_location + "/memory" + cgroup_name)):
-        cgroup_version = 2
-    else:
-        raise FileNotFoundError("cgroups not found:" + cgroup_name)
-
-    peak_memory = 0
-    processes = []
-
-    if cgroup_version == 1:
-        try:
-            processes.append(Process(
-                cgroup_memory_path=args.cgroup_location +
-                cgroup_name + "/" + "memory.peak",
-                cgroup_cpu_path=args.cgroup_location +
-                cgroup_name + "/" + "cpu.stat"))
-        except FileNotFoundError as err:
-            print(err)
-            raise FileNotFoundError("cgroups not found:"
-                                    + args.cgroup_location) from err
-    elif cgroup_version == 2:
-        try:
-            processes.append(Process(
-                cgroup_memory_path=args.cgroup_location + "/memory" +
-                cgroup_name + "/memory.max_usage_in_bytes",
-                cgroup_cpu_path=args.cgroup_location + "/cpu" +
-                cgroup_name + "/cpuacct.usage"))
-        except FileNotFoundError as err:
-            print(err)
-            raise FileNotFoundError("cgroups not found:" +
-                                    args.cgroup_location) from err
-
-    while True:
-        failures = 0
-        # Write memory usage data
-        for process in processes:
-            # Only save Max RSS to disk if it is above the previous value
-            try:
-                memory = parse_memory_file(process)
-                if memory > peak_memory:
-                    peak_memory = memory
-                    write_data(str(peak_memory), "max_rss")
-                cpu_time = parse_cpu_file(process, cgroup_version)
-                write_data(str(cpu_time), "cpu_time")
-
-            except (OSError, ValueError) as error:
-                failures += 1
-                if failures > 5:
-                    raise OSError("cgroup polling failure", error) from error
-
-            time.sleep(args.delay)
+    profile(process, cgroup_version, args.delay)
 
 
 if __name__ == "__main__":
 
     arg_parser = get_option_parser()
-    profile(arg_parser.parse_args([]))
+    get_config(arg_parser.parse_args([]))
