@@ -574,6 +574,7 @@ class XtriggerManager:
             LOG.info("LOADING satisfied xtriggers")
         sig, results = row
         self.sat_xtrig[sig] = json.loads(results)
+        self.data_store_mgr.delta_task_xtrigger(sig, True)
 
     def _get_xtrigs(self, itask: 'TaskProxy', unsat_only: bool = False,
                     sigs_only: bool = False):
@@ -753,7 +754,9 @@ class XtriggerManager:
             ValueError: if the context given is not active
         """
         sig = ctx.get_signature()
-        self.active.remove(sig)
+        if sig in self.active:
+            # (call in progress, waiting on response)
+            self.active.remove(sig)
 
         if ctx.ret_code != 0:
             msg = f"ERROR in xtrigger {sig}"
@@ -762,17 +765,43 @@ class XtriggerManager:
             LOG.warning(msg)
 
         try:
-            satisfied, results = json.loads(ctx.out)
+            satisfied, results = json.loads(str(ctx.out))
         except (ValueError, TypeError):
             return
 
         LOG.debug('%s: returned %s', sig, results)
         if not satisfied:
+            LOG.info('xtrigger not satisfied: %s = %s', ctx.label, sig)
             return
 
         # Newly satisfied
-        self.data_store_mgr.delta_task_xtrigger(sig, True)
+        self.data_store_mgr.delta_task_xtrigger(sig, satisfied)
         self.workflow_db_mgr.put_xtriggers({sig: results})
         LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
         self.sat_xtrig[sig] = results
         self.do_housekeeping = True
+
+    def force_satsify(self, itask: 'TaskProxy', label: str, satisfied: bool):
+        """Force an xtrigger to be satisfied, or unsatisfied.
+
+        Dependent tasks must be able to handle an empty result dict.
+
+        Args:
+            itask: task proxy.
+            label: the xtrigger to set or unset on this task.
+            satisfied: True to set xtrigger satisfied, False to unset.
+        """
+        ctx = self.get_xtrig_ctx(itask, label)
+
+        if satisfied:
+            ctx.ret_code = 0
+            # Set satisfied with an empty results dict.
+            ctx.out = json.dumps((True, {}))
+            self.callback(ctx)
+        else:
+            sig = ctx.get_signature()
+            self.data_store_mgr.delta_task_xtrigger(sig, False)
+            with suppress(KeyError):
+                del self.sat_xtrig[sig]
+            self.workflow_db_mgr.put_delete_xtrigger(sig)
+            LOG.info('xtrigger unsatisfied: %s = %s', ctx.label, sig)
