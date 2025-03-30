@@ -2181,33 +2181,24 @@ class TaskPool:
             for n in flow
         }
 
-    def trigger_now(self, itask, on_resume):
-        """Trigger an already-satisfied task now instead of via the main loop.
+    def queue_or_trigger(self, itask: 'TaskProxy', on_resume: bool = False):
+        """Handle state, queues, and runahead for a manually triggered task.
 
-        Used by manual trigger command.
+        Triggering a non-queued task:
+          - queue it, if the queue is full
+          - run it, if the queue is not full
+
+        Triggering a queued task:
+          - run it, regardless of the queue limit
+
+        If ready, add itask to the tasks_to_trigger_(now/on_resume) lists.
 
         Assumes the task is in the pool.
 
-        Triggering a queued task will:
-          - run it, regardless of queue limiting
-
-        Triggering an non-queued task will:
-          - queue it, if the queue is limiting activity
-          - run it, if the queue is not limiting activity
-
-        After state reset and queue handling:
-        - if on_resume is False, add the task to tasks_to_trigger_now
-        - if on_resume is True, add the task to tasks_to_trigger_on_resume
-
-        The scheduler will release tasks from the tasks_to_trigger sets.
-
         """
-        # TODO - type hints
-        # TODO - do we need to force-satisfy xtriggers
-        #        or do they just get ignored once the task triggers?
-
         if not itask.prereqs_are_satisfied():
-            # (Manual trigger now works by satisfying prerequisites)
+            # (Guard against misuse of the method.)
+            # (Manual trigger now works by satisfying prerequisites.)
             LOG.error("Can't trigger an unsatisfied task")
             return
 

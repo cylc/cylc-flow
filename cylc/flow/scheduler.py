@@ -1286,10 +1286,7 @@ s       TODO: xtriggers need to be ignored within the group (currently only
 
             is_group_start_task = True
             for pid in itask.tdef.get_triggers(itask.point):
-                p_point = pid.get_point(itask.point)
-                p_name = pid.task_name
-                p_out = pid.output
-                if (p_name, p_point) in group_ids:
+                if (pid.task_name, pid.get_point(itask.point)) in group_ids:
                     is_group_start_task = False
                     break
 
@@ -1308,16 +1305,16 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                     LOG.error(f"[{itask}] ignoring trigger - already active")
 
                 elif itask.state(TASK_STATUS_WAITING):
-                    # satisfy off-group prereqs of waiting group start task
-                    # these are the only prereqs by definition, so set all.
+                    # Satisfy off-group prereqs of waiting group start task.
+                    # These are the only prereqs, by definition, so set all.
                     LOG.info(
                         f"[{itask}] - force satisfying prerequisites of"
                         " group start task"
                     )
-                    for prereq in itask.state.prerequisites:
-                        prereq.set_satisfied()
+                    itask.state.set_prerequisites_all_satisfied()
+
                     self.pool.merge_flows(itask, flow_nums)
-                    self.pool.trigger_now(itask, on_resume)
+                    self.pool.queue_or_trigger(itask, on_resume)
                 else:
                     active_tasks_to_remove.append(itask)
             else:
@@ -1353,10 +1350,10 @@ s       TODO: xtriggers need to be ignored within the group (currently only
             else:
                 # set off-group prerequisites
                 off_flow_prereqs = []
-                for pid in tdef.get_triggers(point):
-                    p_point = pid.get_point(point)
-                    p_name = pid.task_name
-                    p_out = pid.output
+                for (p_point, p_name, p_out) in [
+                    (pid.get_point(point), pid.task_name, pid.output)
+                    for pid in tdef.get_triggers(point)
+                ]:
                     if (p_name, p_point) not in group_ids:
                         off_flow_prereqs.append(f"{p_point}/{p_name}:{p_out}")
                         LOG.info(
@@ -1371,7 +1368,8 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                         point, tdef, off_flow_prereqs, flow_nums, flow_wait
                     )
             if jtask is not None and is_group_start_task:
-                self.pool.trigger_now(jtask, on_resume)
+                self.pool.queue_or_trigger(jtask, on_resume)
+        self.pool.release_runahead_tasks()
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
