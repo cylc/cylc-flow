@@ -57,7 +57,6 @@ async def cylc_list(mod_flow, mod_scheduler, mod_start):
     schd = mod_scheduler(id_)
 
     async def _list(capsys, **kwargs):
-        nonlocal schd
         capsys.readouterr()
         await _main(ListOptions(**kwargs), schd.workflow)
         out, err = capsys.readouterr()

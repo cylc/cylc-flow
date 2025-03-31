@@ -58,7 +58,6 @@ def pipe_poller(proc, *files, chunk_size=4096):
 
     def _read(timeout=1.0):
         # read any data from files
-        nonlocal chunk_size, files
         for file in select(list(files), [], [], timeout)[0]:
             buffer = file.read(chunk_size)
             if len(buffer) > 0:

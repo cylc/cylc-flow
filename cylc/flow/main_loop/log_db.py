@@ -63,7 +63,6 @@ def _patch_db_connect(db_connect_method):
     are also patched.
     """
     def _inner(*args, **kwargs):
-        nonlocal db_connect_method
         conn = db_connect_method(*args, **kwargs)
         conn.set_trace_callback(_log)
         return conn

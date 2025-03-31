@@ -52,7 +52,6 @@ def mute(monkeypatch: pytest.MonkeyPatch) -> List[str]:
     items = []
 
     def _clean(id_, *_):
-        nonlocal items
         items.append(id_)
 
     monkeypatch.setattr('cylc.flow.scripts.clean.init_clean', _clean)

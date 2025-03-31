@@ -81,7 +81,6 @@ def capload(monkeypatch):
     files = []
 
     def _capload(glblcfg, fname, _):
-        nonlocal files
         if 'invalid' not in fname:
             # if the file is called invalid skip it
             # this is to replicate the behaviour of skipping files that

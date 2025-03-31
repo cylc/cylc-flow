@@ -313,11 +313,8 @@ def my_install_plugin(monkeypatch):
     @EntryPointWrapper
     def post_install_basic(*_, **__):
         """Simple plugin that returns one env var and one template var."""
-        nonlocal progress
-
         async def my_async():
             # the async task
-            nonlocal progress
             await asyncio.sleep(2)
             progress.append('end')
 

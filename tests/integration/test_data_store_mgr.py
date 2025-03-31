@@ -420,7 +420,6 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
 
     def get_data_outputs():
         """Return satisfied outputs from the *data* store."""
-        nonlocal one, itask
         return {
             output.label
             for output in one.data_store_mgr.data[one.id][TASK_PROXIES][
@@ -434,7 +433,6 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
 
         Or return None if there's nothing there.
         """
-        nonlocal one, itask
         try:
             return {
                 output.label

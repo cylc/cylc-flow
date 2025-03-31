@@ -27,7 +27,6 @@ import pytest
 def flow_cylc(tmp_path):
     """Write a flow.cylc file containing the provided text."""
     def _inner(text):
-        nonlocal tmp_path
         (tmp_path / 'flow.cylc').write_text(dedent(text).strip())
         return tmp_path
 
