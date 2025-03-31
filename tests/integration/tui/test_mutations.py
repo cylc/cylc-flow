@@ -150,7 +150,6 @@ def capture_commands(monkeypatch):
 
     class _Popen:
         def __init__(self, *args, **kwargs):
-            nonlocal ret
             ret.append(args)
 
         def communicate(self):
@@ -158,7 +157,6 @@ def capture_commands(monkeypatch):
 
         @property
         def returncode(self):
-            nonlocal returncode
             return returncode[0]
 
     monkeypatch.setattr(

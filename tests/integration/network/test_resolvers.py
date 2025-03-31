@@ -269,7 +269,6 @@ async def test_command_validation_failure(
 
     # submit a command with invalid arguments:
     async def submit_invalid_command(verbosity=0):
-        nonlocal caplog, mock_flow, flow_args
         monkeypatch.setattr('cylc.flow.flags.verbosity', verbosity)
         caplog.clear()
         return await mock_flow.resolvers.mutator(

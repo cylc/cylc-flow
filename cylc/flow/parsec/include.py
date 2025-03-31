@@ -16,24 +16,23 @@
 
 import os
 import re
+from typing import List
 
 from cylc.flow.parsec.exceptions import (
     FileParseError, IncludeFileNotFoundError)
 
 
-done = []
-flist = []
+done: List[str] = []
+flist: List[str] = []
 
 include_re = re.compile(r'\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
 
 
 def inline(lines, dir_, filename, for_grep=False, viewcfg=None, level=None):
     """Recursive inlining of parsec include-files"""
-
-    global flist
     if level is None:
         # avoid being affected by multiple *different* calls to this function
-        flist = [filename]
+        flist[:] = [filename]
     else:
         flist.append(filename)
     single = False
@@ -45,8 +44,6 @@ def inline(lines, dir_, filename, for_grep=False, viewcfg=None, level=None):
         label = viewcfg['label']
     else:
         viewcfg = {}
-
-    global done
 
     outf = []
     initial_line_index = 0

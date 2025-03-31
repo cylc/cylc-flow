@@ -424,7 +424,6 @@ def capture_submission():
         submitted_tasks: 'Set[TaskProxy]' = set()
 
         def _submit_task_jobs(itasks):
-            nonlocal submitted_tasks
             for itask in itasks:
                 itask.state_reset(TASK_STATUS_SUBMITTED)
             submitted_tasks.update(itasks)
@@ -457,7 +456,6 @@ def capture_polling():
         def run_job_cmd(
             _1, _2, itasks, _3, _4=None
         ):
-            nonlocal polled_tasks
             polled_tasks.update(itasks)
             return itasks
 
@@ -567,7 +565,6 @@ def reflog():
         triggers = set()
 
         def _submit_task_jobs(*args, **kwargs):
-            nonlocal submit_task_jobs, triggers, flow_nums
             itasks = submit_task_jobs(*args, **kwargs)
             for itask in itasks:
                 deps = tuple(sorted(itask.state.get_resolved_dependencies()))
@@ -631,7 +628,6 @@ async def _complete(
     remove_if_complete = schd.pool.remove_if_complete
 
     def _remove_if_complete(itask, output=None):
-        nonlocal tokens_list
         ret = remove_if_complete(itask)
         if ret and itask.tokens.task in tokens_list:
             tokens_list.remove(itask.tokens.task)
@@ -642,7 +638,7 @@ async def _complete(
     stop_requested = False
 
     def _set_stop(mode=None):
-        nonlocal stop_requested, stop_mode
+        nonlocal stop_requested
         if mode == stop_mode:
             stop_requested = True
             return set_stop(mode)
@@ -760,7 +756,6 @@ def capture_live_submissions(capcall, monkeypatch):
 
 
     def get_submissions():
-        nonlocal submit_live_calls
         return {
             itask.identity
             for ((_self, _workflow, itasks, *_), _kwargs) in submit_live_calls

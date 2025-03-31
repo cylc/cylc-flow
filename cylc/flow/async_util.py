@@ -393,7 +393,6 @@ def pipe(func=None, preproc=None):
     if preproc and not func:
         # @pipe(preproc=x)
         def _pipe(func):
-            nonlocal preproc
             return _PipeFunction(func, preproc)
         return _pipe
     elif func:
@@ -433,7 +432,6 @@ def wrap_exception(coroutine):
 
     """
     async def _inner(*args, **kwargs):
-        nonlocal coroutine
         try:
             return await coroutine(*args, **kwargs)
         except Exception as exc:
@@ -503,7 +501,6 @@ def make_async(fcn):
     """
     @wraps(fcn)
     async def _fcn(*args, executor=None, **kwargs):
-        nonlocal fcn
         return await asyncio.get_event_loop().run_in_executor(
             executor,
             partial(fcn, *args, **kwargs),

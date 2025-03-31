@@ -101,7 +101,7 @@ def wait_log_loaded(monkeypatch):
             delay: The delay between retries.
 
         """
-        nonlocal before, count
+        nonlocal before
         for _try in range(tries):
             if count > before:
                 await asyncio.sleep(0)

@@ -548,7 +548,6 @@ class TaskOutputs:
         _gutter: str = ' ' * gutter
 
         def color_wrap(string, is_complete):
-            nonlocal ansimarkup
             if ansimarkup == 0:
                 return string
             if is_complete:

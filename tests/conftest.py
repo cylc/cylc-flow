@@ -82,14 +82,12 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """
     # TODO: modify Parsec so we can use StringIO rather than a temp file.
     def _mock_glbl_cfg(pypath: str, global_config: str) -> None:
-        nonlocal tmp_path, monkeypatch
         global_config_path = tmp_path / 'global.cylc'
         global_config_path.write_text(global_config)
         glbl_cfg = ParsecConfig(SPEC, validator=cylc_config_validate)
         glbl_cfg.loadcfg(global_config_path)
 
         def _inner(cached=False):
-            nonlocal glbl_cfg
             return glbl_cfg
 
         monkeypatch.setattr(pypath, _inner)
@@ -196,8 +194,6 @@ def capcall(monkeypatch):
         calls = []
 
         def _call(*args, **kwargs):
-            nonlocal calls
-            nonlocal substitute_function
             calls.append((args, kwargs))
             if substitute_function:
                 return substitute_function(*args, **kwargs)

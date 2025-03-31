@@ -296,7 +296,6 @@ async def test_log_config_error(caplog, log_filter, monkeypatch, exc_class):
     """
     # make the global config raise an error
     def global_config_load_error(*args, **kwargs):
-        nonlocal exc_class
         raise exc_class('something even more bizarrely inexplicable')
 
     monkeypatch.setattr(

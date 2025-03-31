@@ -41,7 +41,6 @@ async def test_scheduler(flow, scheduler, capcall):
     )
 
     def get_events():
-        nonlocal events
         return {e[0][1] for e in events}
 
     def _schd(config=None, **opts):

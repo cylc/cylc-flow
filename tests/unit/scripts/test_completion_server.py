@@ -54,7 +54,6 @@ def setify(coro):
     Convenience function to use when you want to test output not order.
     """
     async def _coro(*args, **kwargs):
-        nonlocal coro
         ret = await coro(*args, **kwargs)
         if isinstance(ret, list):
             return set(ret)
@@ -86,7 +85,6 @@ def dummy_workflow(tmp_path, monkeypatch, mock_glbl_cfg):
     # patch scan for list_workflows
     @pipe
     async def _scan(*args, **kwargs):
-        nonlocal tmp_path
         kwargs['run_dir'] = tmp_path
         async for flow in scan(*args, **kwargs):
             yield flow
@@ -319,7 +317,6 @@ async def test_complete_argument(monkeypatch):
     # register two fake commands with their own special completions
     def _complete_arg(x):
         async def __complete_arg(*args):
-            nonlocal x
             return x
         return __complete_arg
 
