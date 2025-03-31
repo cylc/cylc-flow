@@ -172,6 +172,9 @@ class Prerequisite:
     def items(self) -> ItemsView[PrereqTuple, SatisfiedState]:
         return self._satisfied.items()
 
+    def get_tuples(self) -> Iterable[PrereqTuple]:
+        return self._satisfied.keys()
+
     def get_raw_conditional_expression(self):
         """Return a representation of this prereq as a string.
 

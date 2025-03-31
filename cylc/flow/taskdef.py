@@ -325,6 +325,21 @@ class TaskDef:
                         parent_points.add(trig.get_parent_point(point))
         return parent_points
 
+    def get_prereqs(self, point):
+        """Return my prereqs, at point."""
+        prereqs = set()
+        for seq in self.sequences:
+            if not seq.is_valid(point):
+                continue
+            if seq in self.dependencies:
+                # task has prereqs in this sequence
+                for dep in self.dependencies[seq]:
+                    # TODO?
+                    if dep.suicide:
+                        continue
+                    prereqs.add(dep.get_prerequisite(point, self))
+        return prereqs
+
     def has_only_abs_triggers(self, point):
         """Return whether I have only absolute triggers at point."""
         if not self.has_abs_triggers:

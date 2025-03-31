@@ -1931,6 +1931,8 @@ class TaskPool:
         - spawn the task (if not spawned)
         - update its prerequisites
 
+        Prerequisite format: "cycle/task:output" or "all".
+
         Set outputs:
         - update task outputs in the DB
         - (implied outputs are handled by the event manager)
@@ -1953,7 +1955,7 @@ class TaskPool:
 
         Args:
             items: task ID match patterns
-            prereqs: prerequisites to set
+            prereqs: prerequisites to set ([pre1, pre2,...], ['all'] or [])
             outputs: outputs to set
             flow: flow numbers for spawned or merged tasks
             flow_wait: wait for flows to catch up before continuing
@@ -1967,6 +1969,7 @@ class TaskPool:
             warn_no_active=False,
         )
 
+        no_op = True
         flow_nums = self._get_flow_nums(flow, flow_descr)
 
         # Set existing task proxies.
@@ -1977,33 +1980,90 @@ class TaskPool:
                     f" {repr_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
-            self.merge_flows(itask, flow_nums)
+
             if prereqs:
-                self._set_prereqs_itask(itask, prereqs, flow_nums)
+                if prereqs == ['all']:
+                    set_all = True
+                    prereqs_valid: 'Iterable[Tokens]' = []
+                else:
+                    set_all = False
+                    prereqs_valid = self._get_valid_prereqs(
+                        prereqs, itask.tdef, itask.point)
+                    if not prereqs_valid:
+                        continue
+                self.merge_flows(itask, flow_nums)
+                self._set_prereqs_itask(itask, prereqs_valid, set_all)
+                no_op = False
             else:
+                # Outputs (may be empty list)
                 # Spawn as if seq xtrig of parentless task was satisfied,
                 # with associated task producing these outputs.
+                self.merge_flows(itask, flow_nums)
                 self.check_spawn_psx_task(itask)
                 self._set_outputs_itask(itask, outputs)
+                no_op = False
 
-        # Spawn and set inactive tasks.
         if not flow:
             # default: assign to all active flows
             flow_nums = self._get_active_flow_nums()
+
+        # Spawn and set inactive tasks.
         for tdef, point in inactive_tasks:
             if prereqs:
+                if prereqs == ['all']:
+                    set_all = True
+                    prereqs_valid = []
+                else:
+                    set_all = False
+                    prereqs_valid = self._get_valid_prereqs(
+                        prereqs, tdef, point)
+                    if not prereqs_valid:
+                        continue
                 self._set_prereqs_tdef(
-                    point, tdef, prereqs, flow_nums, flow_wait)
+                    point, tdef, prereqs_valid, flow_nums, flow_wait, set_all)
+                no_op = False
             else:
+                # Outputs (may be empty list)
                 trans = self._get_task_proxy_db_outputs(
                     point, tdef, flow_nums,
                     flow_wait=flow_wait, transient=True
                 )
                 if trans is not None:
                     self._set_outputs_itask(trans, outputs)
+                    no_op = False
 
-        if self.compute_runahead():
+        if not no_op and self.compute_runahead():
             self.release_runahead_tasks()
+
+    def _get_valid_prereqs(
+            self, prereqs: List[str], tdef: 'TaskDef', point: 'PointBase'
+    ) -> 'Iterable[Tokens]':
+        """
+        From requested trigger-based prerequisites for tdef at point, return
+        valid task message based outputs for satisfying prerequisites.
+
+        Args:
+           prereqs: list of prerequisites point/task:output (not ['all'])
+        """
+        valid: 'Set[Tuple[str, str, str]]' = set()
+        for pre in tdef.get_prereqs(point):
+            valid.update(list(pre.get_tuples()))
+
+        # Get prereq tuples in terms of task messages not triggers.
+        requested = {
+            (k["cycle"], k["task"], k["task_sel"])
+            for k in self._standardise_prereqs(prereqs).keys()
+        }
+        for prereq in requested - valid:
+            trg = self.config.get_taskdef(str(prereq[1])).get_output(prereq[2])
+            LOG.warning(
+                f'{point}/{tdef.name} does not depend on '
+                f'"{prereq[0]}/{prereq[1]}:{trg}"'
+            )
+        return {
+            Tokens(cycle=pre[0], task=pre[1], task_sel=pre[2])
+            for pre in valid & requested
+        }
 
     def _set_outputs_itask(
         self,
@@ -2050,31 +2110,15 @@ class TaskPool:
     def _set_prereqs_itask(
         self,
         itask: 'TaskProxy',
-        prereqs: 'List[str]',
-        flow_nums: 'Set[int]',
-    ) -> bool:
-        """Set prerequisites on a task proxy.
-
-        Prerequisite format: "cycle/task:output" or "all".
-
-        Return True if any prereqs are valid, else False.
-
-        """
-        if prereqs == ["all"]:
+        prereqs: 'Iterable[Tokens]',
+        set_all: bool = False
+    ):
+        """Set prerequisites on a task proxy."""
+        # (No need to check for unmatched - prereqs already validated)
+        if set_all:
             itask.state.set_prerequisites_all_satisfied()
         else:
-            # Attempt to set the given presrequisites.
-            # Log any that aren't valid for the task.
-            presus = self._standardise_prereqs(prereqs)
-            unmatched = itask.satisfy_me(presus.keys(), forced=True)
-            for task_msg in unmatched:
-                LOG.warning(
-                    f"{itask.identity} does not depend on"
-                    f' "{presus[task_msg]}"'
-                )
-            if len(unmatched) == len(prereqs):
-                # No prereqs matched.
-                return False
+            itask.satisfy_me(prereqs, forced=True)
         if (
             self.runahead_limit_point is not None
             and itask.point <= self.runahead_limit_point
@@ -2084,17 +2128,17 @@ class TaskPool:
         return True
 
     def _set_prereqs_tdef(
-        self, point, taskdef, prereqs, flow_nums, flow_wait
+        self, point, taskdef, prereqs, flow_nums, flow_wait, set_all
     ):
         """Spawn an inactive task and set prerequisites on it."""
-
         itask = self.spawn_task(
             taskdef.name, point, flow_nums, flow_wait=flow_wait
         )
         if itask is None:
             return
-        if self._set_prereqs_itask(itask, prereqs, flow_nums):
-            self.add_to_pool(itask)
+
+        self._set_prereqs_itask(itask, prereqs, set_all)
+        self.add_to_pool(itask)
 
     def _get_active_flow_nums(self) -> 'FlowNums':
         """Return all active flow numbers.
