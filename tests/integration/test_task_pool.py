@@ -2114,7 +2114,6 @@ async def test_reload_xtriggers(flow, scheduler, start):
 
     def list_xtrig_mgr():
         """List xtrigs from the xtrigger_mgr."""
-        nonlocal schd
         return {
             key: repr(value)
             for key, value in schd.xtrigger_mgr.xtriggers.functx_map.items()
@@ -2122,7 +2121,6 @@ async def test_reload_xtriggers(flow, scheduler, start):
 
     async def list_data_store():
         """List xtrigs from the data_store_mgr."""
-        nonlocal schd
         await schd.update_data_structure()
         return {
             value.label: key

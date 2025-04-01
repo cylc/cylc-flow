@@ -35,7 +35,6 @@ def stopped_workflow_db(tmp_path):
 
     """
     def _stopped_workflow_db(version):
-        nonlocal tmp_path
         db_file = tmp_path / 'db'
         conn = sqlite3.connect(db_file)
         conn.execute('''
@@ -66,7 +65,6 @@ def set_cylc_version(monkeypatch):
 
     """
     def _set_cylc_version(version):
-        nonlocal monkeypatch
         monkeypatch.setattr(
             'cylc.flow.scheduler_cli.__version__',
             version,
@@ -87,11 +85,10 @@ def answer(monkeypatch):
     """
     @contextmanager
     def _answer(response):
-        nonlocal monkeypatch
         calls = 0
 
         def prompt(*args, **kwargs):
-            nonlocal response, calls
+            nonlocal calls
             calls += 1
             return response
 

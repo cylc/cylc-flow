@@ -96,7 +96,6 @@ def test_conflicting_items():
     }
 
     def get_upgrader():
-        nonlocal cfg
         upg = upgrader(cfg, 'test file')
         upg.deprecate('1.3', ['item one'], ['item two'])
         return upg

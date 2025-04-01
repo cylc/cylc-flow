@@ -81,7 +81,6 @@ async def workflow(flow, scheduler, one_conf, run_dir):
     )
 
     def dump_contact(**kwargs):
-        nonlocal contact_data, id_
         dump_contact_file(
             id_,
             {
@@ -208,8 +207,6 @@ def test_detect_old_contact_file_removal_errors(
     """
     # patch the is_process_running method
     def mocked_is_process_running(*args):
-        nonlocal workflow
-        nonlocal process_running
         if not contact_present_after:
             # remove the contact file midway through detect_old_contact_file
             unlink(workflow.contact_file)
@@ -284,7 +281,6 @@ def test_is_process_running_dirty_output(monkeypatch, caplog):
             self.returncode = 0
 
         def communicate(self, *args, **kwargs):
-            nonlocal stdout
             return (stdout, '')
 
     monkeypatch.setattr(

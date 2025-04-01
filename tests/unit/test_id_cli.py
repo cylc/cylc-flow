@@ -284,7 +284,6 @@ def patch_expand_workflow_tokens(monkeypatch):
     def _patch_expand_workflow_tokens(_ids):
 
         async def _expand_workflow_tokens_impl(tokens, match_active=True):
-            nonlocal _ids
             for id_ in _ids:
                 yield tokens.duplicate(workflow=id_)
 
