@@ -2087,6 +2087,11 @@ class GlobalConfig(ParsecConfig):
             LOG.error(f'bad {conf_type} {fname}')
             raise
 
+    @classmethod
+    def set_cache(cls, cfg: "GlobalConfig") -> None:
+        """Set the cached config"""
+        cls._DEFAULT = cfg
+
     def load(self) -> None:
         """Load configuration from files."""
         self.sparse.clear()
