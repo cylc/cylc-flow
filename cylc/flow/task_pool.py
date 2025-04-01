@@ -1863,29 +1863,24 @@ class TaskPool:
         return itask
 
     def _standardise_prereqs(
-        self, prereqs: 'List[str]'
-    ) -> 'Dict[Tokens, str]':
-        """Convert prerequisites to a map of task messages: outputs.
-
-        (So satsify_me logs failures)
-
-        """
-        _prereqs = {}
+            self, prereqs: 'List[str]'
+    ) -> 'Set[Tuple[str,str,str]]':
+        """Convert trigger prerequisites to task messages."""
+        _prereqs = set()
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
-            # add implicit "succeeded"; convert "succeed" to "succeeded" etc.
+            # Convert "succeed" to "succeeded" etc.
             output = TaskTrigger.standardise_name(
                 pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
             # Convert outputs to task messages.
             try:
                 msg = self.config.get_taskdef(
-                    pre['task']
+                    str(pre['task'])
                 ).outputs[output][0]
                 cycle = standardise_point_string(pre['cycle'])
             except KeyError:
-                # The task does not have this output.
                 LOG.warning(
-                    f"output {pre.relative_id_with_selectors} not found")
+                    f"Output {pre.relative_id_with_selectors} not found")
                 continue
             except WorkflowConfigError as exc:
                 LOG.warning(
@@ -1894,7 +1889,7 @@ class TaskPool:
                 LOG.warning(
                     f'Invalid prerequisite cycle point:\n{exc.args[0]}')
             else:
-                _prereqs[pre.duplicate(task_sel=msg, cycle=cycle)] = prereq
+                _prereqs.add((cycle, pre["task"], msg))
         return _prereqs
 
     def _standardise_outputs(
@@ -1909,10 +1904,25 @@ class TaskPool:
                 msg = tdef.outputs[output][0]
             except KeyError:
                 LOG.warning(
-                    f"output {point}/{tdef.name}:{output} not found")
+                    f"Output {point}/{tdef.name}:{output} not found")
                 continue
             _outputs.append(msg)
         return _outputs
+
+    def _get_prereq_params(
+        self, prereqs: 'List[str]', tdef: 'TaskDef', point: 'PointBase'
+    ) -> Tuple[bool, 'Iterable[Tokens]']:
+        """Convert input prerequisites to Tokens of just the valid ones.
+
+        And convert the "['all']" prerequisite shortcut to a bool.
+        """
+        if prereqs != ['all']:
+            set_all = False
+            prereqs_valid = self._get_valid_prereqs(prereqs, tdef, point)
+        else:
+            set_all = True
+            prereqs_valid = []
+        return set_all, prereqs_valid
 
     def set_prereqs_and_outputs(
         self,
@@ -1963,7 +1973,7 @@ class TaskPool:
 
         """
         # Get matching pool tasks and inactive task definitions.
-        itasks, inactive_tasks, unmatched = self.filter_task_proxies(
+        itasks, inactive_tasks, _ = self.filter_task_proxies(
             items,
             inactive=True,
             warn_no_active=False,
@@ -1982,15 +1992,11 @@ class TaskPool:
                 continue
 
             if prereqs:
-                if prereqs == ['all']:
-                    set_all = True
-                    prereqs_valid: 'Iterable[Tokens]' = []
-                else:
-                    set_all = False
-                    prereqs_valid = self._get_valid_prereqs(
-                        prereqs, itask.tdef, itask.point)
-                    if not prereqs_valid:
-                        continue
+                set_all, prereqs_valid = (
+                    self._get_prereq_params(prereqs, itask.tdef, itask.point)
+                )
+                if not (set_all or prereqs_valid):
+                    continue
                 self.merge_flows(itask, flow_nums)
                 self._set_prereqs_itask(itask, prereqs_valid, set_all)
                 no_op = False
@@ -2010,15 +2016,11 @@ class TaskPool:
         # Spawn and set inactive tasks.
         for tdef, point in inactive_tasks:
             if prereqs:
-                if prereqs == ['all']:
-                    set_all = True
-                    prereqs_valid = []
-                else:
-                    set_all = False
-                    prereqs_valid = self._get_valid_prereqs(
-                        prereqs, tdef, point)
-                    if not prereqs_valid:
-                        continue
+                set_all, prereqs_valid = (
+                    self._get_prereq_params(prereqs, tdef, point)
+                )
+                if not (set_all or prereqs_valid):
+                    continue
                 self._set_prereqs_tdef(
                     point, tdef, prereqs_valid, flow_nums, flow_wait, set_all)
                 no_op = False
@@ -2038,23 +2040,27 @@ class TaskPool:
     def _get_valid_prereqs(
             self, prereqs: List[str], tdef: 'TaskDef', point: 'PointBase'
     ) -> 'Iterable[Tokens]':
-        """
-        From requested trigger-based prerequisites for tdef at point, return
-        valid task message based outputs for satisfying prerequisites.
+        """Validate prerequisite triggers and return associated task messages.
+
+        To set prerequisites, the user gives triggers, but we need to use the
+        associated task messages to satisfy the prerequisites of target tasks.
 
         Args:
-           prereqs: list of prerequisites point/task:output (not ['all'])
+            prereqs:
+                list of string prerequisites of the form "point/task:output"
+        Returns:
+            set of tokens {(cycle, task, task_message),}
+
         """
         valid: 'Set[Tuple[str, str, str]]' = set()
         for pre in tdef.get_prereqs(point):
             valid.update(list(pre.get_tuples()))
 
-        # Get prereq tuples in terms of task messages not triggers.
-        requested = {
-            (k["cycle"], k["task"], k["task_sel"])
-            for k in self._standardise_prereqs(prereqs).keys()
-        }
+        # Get prerequisite tuples in terms of task messages not triggers.
+        requested = self._standardise_prereqs(prereqs)
+
         for prereq in requested - valid:
+            # But log bad ones in using triggers, not messages.
             trg = self.config.get_taskdef(str(prereq[1])).get_output(prereq[2])
             LOG.warning(
                 f'{point}/{tdef.name} does not depend on '
@@ -2111,7 +2117,7 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         prereqs: 'Iterable[Tokens]',
-        set_all: bool = False
+        set_all: bool
     ):
         """Set prerequisites on a task proxy."""
         # (No need to check for unmatched - prereqs already validated)
@@ -2128,7 +2134,13 @@ class TaskPool:
         return True
 
     def _set_prereqs_tdef(
-        self, point, taskdef, prereqs, flow_nums, flow_wait, set_all
+        self,
+        point: 'PointBase',
+        taskdef: 'TaskDef',
+        prereqs: 'Iterable[Tokens]',
+        flow_nums: 'FlowNums',
+        flow_wait: bool,
+        set_all: bool
     ):
         """Spawn an inactive task and set prerequisites on it."""
         itask = self.spawn_task(
