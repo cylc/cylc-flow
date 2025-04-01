@@ -367,6 +367,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     if reload_global:
         # Reload global config if requested
         LOG.info("Reloading the global configuration.")
+        schd.reload_pending = 'reloading the global configuration'
+        schd.update_data_store()  # update workflow status msg
+        await schd.update_data_structure()
         try:
             glbl_cfg(reload=True)
         except (ParsecError, CylcConfigError) as exc:
