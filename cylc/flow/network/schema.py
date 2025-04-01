@@ -2493,6 +2493,7 @@ class Deltas(ObjectType):
 # TODO: Change to use subscribe arg/default. graphql-core has a subscribe field
 # for both Meta and Field, graphene at v3.4.3 does not.. As a workaround
 # the subscribe function is looked up via the following mapping:
+# See https://github.com/cylc/cylc-flow/issues/6688
 SUB_RESOLVER_MAPPING = {
     'deltas': delta_subs,
     'workflows': delta_subs,
