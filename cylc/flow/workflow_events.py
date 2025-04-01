@@ -322,7 +322,7 @@ class WorkflowEventHandler():
             try:
                 self.proc_pool.run_command(ctx, float(self.proc_timeout))
             except TimeoutExpired:
-                ctx.ret_code = -9
+                ctx.ret_code = 124
                 ctx.err = f"killed on timeout ({self.proc_timeout})"
             callback(ctx)
 
