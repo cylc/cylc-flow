@@ -18,6 +18,7 @@ import asyncio
 import sys
 
 import pytest
+from types import MethodType
 
 from cylc.flow.scheduler import SchedulerError
 
@@ -80,9 +81,9 @@ async def test_scheduler(flow, scheduler, capcall):
 async def test_startup_and_shutdown(test_scheduler, run):
     """Test the startup and shutdown events.
 
-    * "statup" should fire every time a scheduler is started.
-    * "shutdown" should fire every time a scheduler exits in a controlled
-      fashion (i.e. excluding aborts on unexpected internal errors).
+    * "startup" should fire every time a scheduler is started.
+    * "shutdown" should fire every time a scheduler does a controlled exit.
+      (i.e. excluding aborts on unexpected internal errors).
     """
     schd = test_scheduler()
     async with run(schd):
@@ -191,3 +192,48 @@ async def test_restart_timeout(test_scheduler, scheduler, run, complete):
     async with run(schd2):
         await asyncio.sleep(0.1)
     assert schd2.get_events() == {'startup', 'restart timeout', 'shutdown'}
+
+
+async def test_shutdown_handler_timeout_kill(
+    test_scheduler, run, monkeypatch, mock_glbl_cfg, caplog
+):
+    """Test shutdown handlers get killed on the process pool timeout.
+
+    Has to be done differently as the process pool is closed during shutdown.
+    See GitHub #6639
+
+    """
+    def mock_run_event_handlers(self, event, reason=""):
+        """To replace scheduler.run_event_handlers(...).
+
+        Run workflow event handlers even in simulation mode.
+
+        """
+        self.workflow_event_handler.handle(self, event, str(reason))
+
+    # Configure a long-running shutdown handler.
+    schd = test_scheduler({'shutdown handlers': 'sleep 10; echo'})
+
+    # Set a low process pool timeout value.
+    mock_glbl_cfg(
+        'cylc.flow.subprocpool.glbl_cfg',
+        '''
+        [scheduler]
+            process pool timeout = PT1S
+        '''
+    )
+
+    async with async_timeout(30):
+        async with run(schd):
+            # Replace a scheduler method, to call handlers in simulation mode.
+            monkeypatch.setattr(
+                schd,
+                'run_event_handlers',
+                MethodType(mock_run_event_handlers, schd),
+            )
+            await asyncio.sleep(0.1)
+
+    assert (
+        "[('workflow-event-handler-00', 'shutdown') err] killed on timeout (PT1S)"
+        in caplog.text
+    )
