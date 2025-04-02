@@ -482,7 +482,6 @@ def log(app, id_=None, list_files=None, get_log=None):
                 restored when the command exits.
 
         """
-        nonlocal text_widget
 
         with tempfile.NamedTemporaryFile('w+') as temp_file:
             # write the text into a temp file

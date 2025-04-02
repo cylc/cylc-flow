@@ -409,7 +409,6 @@ async def test_external_editor(
 
     class FakePopen:
         def __init__(self, cmd, *args, raises=None, **kwargs):
-            nonlocal fake_popen_instances
             fake_popen_instances.append(self)
             self.cmd = cmd
             self.args = args
