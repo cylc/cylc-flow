@@ -83,6 +83,19 @@ RELOAD_OPTIONS = [
 MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
+) {
+  reload (
+    workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
+
+# Separate mutation for backwards compatibility
+MUTATION_GLOBAL = '''
+mutation (
+  $wFlows: [WorkflowID]!,
   $reloadGlobal: Boolean,
 ) {
   reload (
@@ -111,13 +124,21 @@ def get_option_parser():
 async def run(options: 'Values', workflow_id: str):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    mutation_kwargs = {
-        'request_string': MUTATION,
-        'variables': {
-            'wFlows': [workflow_id],
-            'reloadGlobal': options.reload_global,
+    if options.reload_global:
+        mutation_kwargs = {
+            'request_string': MUTATION_GLOBAL,
+            'variables': {
+                'wFlows': [workflow_id],
+                'reloadGlobal': options.reload_global,
+            }
         }
-    }
+    else:
+        mutation_kwargs = {
+            'request_string': MUTATION,
+            'variables': {
+                'wFlows': [workflow_id],
+            }
+        }
 
     return await pclient.async_request('graphql', mutation_kwargs)
 

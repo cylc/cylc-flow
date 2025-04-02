@@ -1938,7 +1938,8 @@ class Reload(Mutation):
 
         reload_global = Boolean(
             default_value=False,
-            description="Also reload global config")
+            required=False,
+            description="Reload global config as well as the workflow config")
 
     result = GenericScalar()
 

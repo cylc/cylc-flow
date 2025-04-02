@@ -365,6 +365,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         sleep(1)  # give any remove-init's time to complete
 
     try:
+        # Back up the current config in case workflow reload errors
+        global_cfg_old = glbl_cfg()
+
         if reload_global:
             # Reload global config if requested
             schd.reload_pending = 'reloading the global configuration'
@@ -372,8 +375,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
             await schd.update_data_structure()
             LOG.info("Reloading the global configuration.")
 
-            # Back up the current config in case workflow reload errors
-            global_cfg_old = glbl_cfg()
             glbl_cfg(reload=True)
 
         # reload the workflow definition
