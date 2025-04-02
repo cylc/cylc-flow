@@ -338,9 +338,9 @@ async def test_match_taskdefs(
             id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
-            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
-            ["No active tasks in the family FAM matching: 6/FAM"],
-            id="Family names hold active tasks only"
+            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar', '6/bar'],
+            [],
+            id="Family names hold active and future tasks"
         ),
         param(
             ['1/grogu', 'H/foo', '20/foo', '1/pub'], [],
@@ -500,7 +500,10 @@ async def test_trigger_states(
         task.state.reset(status)
 
         # try triggering the task
-        one.pool.force_trigger_tasks(['1/one'], [FLOW_ALL])
+        one.force_trigger_tasks(['1/one'], [])
+
+        # retrieve the task again - the original may have been removed
+        task = one.pool.filter_task_proxies(['1/one'])[0][0]
 
         # check whether the task triggered
         assert task.is_manual_submit == should_trigger
@@ -573,11 +576,11 @@ async def test_runahead_after_remove(
     assert int(task_pool.runahead_limit_point) == 4
 
     # No change after removing an intermediate cycle.
-    example_flow.remove_tasks(['3/*'])
+    example_flow.remove_tasks(['3/*'], [1])
     assert int(task_pool.runahead_limit_point) == 4
 
     # Should update after removing the first point.
-    example_flow.remove_tasks(['1/*'])
+    example_flow.remove_tasks(['1/*'], [1])
     assert int(task_pool.runahead_limit_point) == 5
 
 
@@ -1990,7 +1993,7 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        schd.force_trigger_tasks(['1/b'], ['1'])
         assert log_filter(
             regex='1/b.*added to active task pool',
         )
@@ -2005,7 +2008,7 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.pool.force_trigger_tasks(['1/b'], ['1'])
+        schd.force_trigger_tasks(['1/b'], ['1'])
         assert log_filter(
             regex='1/b.*added to active task pool',
         )
@@ -2078,7 +2081,7 @@ async def test_trigger_queue(one, run, db_select, complete):
         assert task.flow_nums == {1}
 
         # trigger this task even though is already queued in flow 1
-        one.pool.force_trigger_tasks([task.identity], '2')
+        one.force_trigger_tasks([task.identity], '2')
 
         # the merged flow should continue
         one.resume_workflow()

@@ -1,0 +1,33 @@
+# Group trigger proposal example.
+#   1. task b fails first run, then on stall event
+#   2. group-trigger a, f<m>, g<m>, b to rerun in same flow
+#
+#  Result:
+#   Off-group prerequisites are satisfied immediately,
+#   in-group prerequisites are left to be satisfied by the flow.
+#   Task b should rerun and flow on to complete the workflow. 
+
+[scheduler]
+    [[events]]
+        expected task failures = 1/b
+        stall handlers = \
+            "cylc trigger %(workflow)s \
+             //1/a //1/f_m1 //1/f_m2 //1/f_m3 //1/g_m1 //1/g_m2 //1/g_m3 //1/b"
+[scheduling]
+    [[graph]]
+        R1 = """
+            start => a
+            x => f_m1
+            a => f_m1 => g_m1 => b
+            a => f_m2 => g_m2 => b
+            a => f_m3 => g_m3 => b
+            b => end
+            g_m3 => y
+       """
+[runtime]
+    [[b]]
+        script = [[ "${CYLC_TASK_SUBMIT_NUMBER}" != '1' ]]
+    [[FAMILY]]
+    [[a, f_m1, f_m2, f_m3, g_m1, g_m2, g_m3, b]]
+        inherit = FAMILY
+    [[start, x, end, y]]

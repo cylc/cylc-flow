@@ -129,7 +129,7 @@ async def test_specific_flow(
 
     async with start(schd):
         a1 = schd.pool._get_task_by_id('1/a1')
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+        schd.force_trigger_tasks(['1/a1'], ['1', '2'])
         schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
         await schd.update_data_structure()
 
@@ -282,7 +282,7 @@ async def test_logging_flow_nums(
     """Test logging of task removals involving flow numbers."""
     schd: Scheduler = scheduler(example_workflow)
     async with start(schd):
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+        schd.force_trigger_tasks(['1/a1'], ['1', '2'])
         # Removing from flow that doesn't exist doesn't work:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['3']))
         assert log_filter(
@@ -400,7 +400,7 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
     )
     async with run(schd):
         await complete(schd, '1/a')
-        schd.pool.force_trigger_tasks(['1/c'], ['2'])
+        schd.force_trigger_tasks(['1/c'], ['2'])
         c = schd.pool._get_task_by_id('1/c')
         schd.pool.spawn_on_output(c, TASK_OUTPUT_SUCCEEDED)
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
