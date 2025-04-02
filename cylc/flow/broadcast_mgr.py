@@ -33,7 +33,7 @@ from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import listjoin, pdeepcopy, poverride
 from cylc.flow.parsec.validate import BroadcastConfigValidator
 from cylc.flow.run_modes import WORKFLOW_ONLY_MODES
-
+from cylc.flow.util import uniq
 
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
@@ -146,7 +146,7 @@ class BroadcastMgr:
             LOG.error(get_broadcast_bad_options_report(bad_options))
         if modified_settings:
             self.data_store_mgr.delta_broadcast()
-        return modified_settings, bad_options
+        return uniq(modified_settings), bad_options
 
     def expire_broadcast(self, cutoff=None, **kwargs):
         """Clear all broadcasts targeting cycle points earlier than cutoff."""
@@ -279,18 +279,24 @@ class BroadcastMgr:
           bad_options is as described in the docstring for self.clear().
         """
         modified_settings = []
-        bad_point_strings = []
-        bad_namespaces = []
+        bad_settings = []
+        bad_point_strings = set()
+        bad_namespaces = set()
 
         with self.lock:
             for setting in settings or []:
                 # Coerce setting to cylc runtime object,
                 # i.e. str to  DurationFloat.
                 coerced_setting = deepcopy(setting)
-                BroadcastConfigValidator().validate(
-                    coerced_setting,
-                    SPEC['runtime']['__MANY__'],
-                )
+                try:
+                    BroadcastConfigValidator().validate(
+                        coerced_setting,
+                        SPEC['runtime']['__MANY__'],
+                    )
+                except Exception as exc:
+                    LOG.error(exc)
+                    bad_settings.append(setting)
+                    continue
 
                 # Skip and warn if a run mode is broadcast to a workflow
                 # running in simulation or dummy mode.
@@ -303,6 +309,7 @@ class BroadcastMgr:
                         f' running in {self.workflow_run_mode.value} mode'
                         ' will have no effect, and will not be actioned.'
                     )
+                    bad_settings.append(setting)
                     continue
 
                 for point_string in point_strings or []:
@@ -310,15 +317,16 @@ class BroadcastMgr:
                     bad_point = False
                     try:
                         point_string = standardise_point_string(point_string)
+
                     except PointParsingError:
                         if point_string != '*':
-                            bad_point_strings.append(point_string)
+                            bad_point_strings.add(point_string)
                             bad_point = True
                     if not bad_point and point_string not in self.broadcasts:
                         self.broadcasts[point_string] = {}
                     for namespace in namespaces or []:
                         if namespace not in self.linearized_ancestors:
-                            bad_namespaces.append(namespace)
+                            bad_namespaces.add(namespace)
                         elif not bad_point:
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
@@ -340,13 +348,15 @@ class BroadcastMgr:
         LOG.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
+        if bad_settings:
+            bad_options["settings"] = uniq(bad_settings)
         if bad_point_strings:
-            bad_options["point_strings"] = bad_point_strings
+            bad_options["point_strings"] = sorted(bad_point_strings)
         if bad_namespaces:
-            bad_options["namespaces"] = bad_namespaces
+            bad_options["namespaces"] = sorted(bad_namespaces)
         if modified_settings:
             self.data_store_mgr.delta_broadcast()
-        return modified_settings, bad_options
+        return uniq(modified_settings), bad_options
 
     @staticmethod
     def _cancel_keys_in_prunes(prunes, cancel_keys):
