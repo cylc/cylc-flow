@@ -105,12 +105,14 @@ def write_data(data, filename):
         f.write(data + "\n")
 
 
-def get_cgroup_version(cgroup_location: Path, cgroup_name: Path) -> int:
+def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
     # HPC uses cgroups v2 and SPICE uses cgroups v1
     if Path.exists(Path(cgroup_location + cgroup_name)):
         return 1
     elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
         return 2
+    else:
+        raise FileNotFoundError("Cgroup not found")
 
 
 def get_cgroup_name():

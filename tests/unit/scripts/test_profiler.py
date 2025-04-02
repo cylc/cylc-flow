@@ -104,8 +104,9 @@ def test_get_cgroup_version(mocker):
 
     # Mock the Path.exists function call to return False
     mocker.patch("pathlib.Path.exists", return_value=False)
-    assert get_cgroup_version('stuff/in/other/place',
-                              'things') is None
+    with pytest.raises(FileNotFoundError):
+        get_cgroup_version('stuff/in/other/place',
+                           'things')
 
 
 def test_get_cgroup_paths():
