@@ -245,7 +245,7 @@ message PbFamily {
     repeated string child_families = 9;
     optional string first_parent = 10;
     optional PbRuntime runtime = 11;
-    repeated string descendants = 12;
+    repeated string ancestors = 12;
 }
 
 message PbFamilyProxy {
