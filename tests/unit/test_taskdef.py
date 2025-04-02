@@ -118,7 +118,7 @@ def test_generate_graph_parents_2(tmp_flow_config):
         param(
             'multiple_pre',
             IntegerPoint("2"),
-            ['2/food', '2/fool', '2/foolhardy'],
+            ['2/food', '2/fool', '2/foolhardy', '2/foolish'],
             id='it.gets-multiple-prerequisites',
         ),
         param(
