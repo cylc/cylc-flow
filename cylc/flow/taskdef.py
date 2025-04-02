@@ -334,7 +334,6 @@ class TaskDef:
             if seq in self.dependencies:
                 # task has prereqs in this sequence
                 for dep in self.dependencies[seq]:
-                    # TODO?
                     if dep.suicide:
                         continue
                     prereqs.add(dep.get_prerequisite(point, self))
