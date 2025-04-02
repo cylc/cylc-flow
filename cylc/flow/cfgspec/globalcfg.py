@@ -108,13 +108,6 @@ Settings for the scheduler.
 
    Not to be confused with :cylc:conf:`flow.cylc[scheduling]`.
 
-.. note::
-
-   The majority of scheduler settings affect the server and cannot be reloaded
-   with ``cylc reload --global``, the server must be stopped and restarted for
-   changes to take effect except for the sections `[mail]` and `[events]` which
-   provide workflow defaults.
-
 .. versionchanged:: 8.0.0
 
    {REPLACES}``[cylc]``
@@ -717,6 +710,20 @@ with Conf('global.cylc', desc='''
 
        The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
+
+    .. note::
+
+       Most of the global settings can be changed while a workflow is running
+       using ``cylc reload --global``. Exceptions are:
+       
+       `[scheduler]`: The majority of these settings affect the server and
+       cannot be reloaded while the server is running. The server must be
+       stopped and restarted for changes to take effect except for the sections
+       `[scheduler][mail]` and `[scheduler][events]` which provide workflow
+       defaults.
+
+       `[install][symlink dirs]`: These settings create files on disk, once a
+       task has started on a remote host these can't be changed for that host.
 
     .. versionchanged:: 8.0.0
 
