@@ -160,7 +160,8 @@ def test_get_prereqs(tmp_flow_config, task, point, expected):
     taskdef = cfg.taskdefs[task]
     point = IntegerPoint(point)
     res = sorted([
-        td.api_dump().conditions[0].task_proxy
-        for td in taskdef.get_prereqs(point)
+        condition.task_proxy
+        for pre in taskdef.get_prereqs(point)
+        for condition in pre.api_dump().conditions
     ])
     assert res == expected
