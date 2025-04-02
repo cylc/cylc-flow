@@ -1264,12 +1264,12 @@ class Family(ObjectType):
 
             Each family in this list is the first parent of the one before.
 
-            Inheritance in Cylc provides two functions:
+            Inheritance in Cylc fulfils two purposes:
             * Allowing tasks to inherit common configurations.
-            * Defining a family/task hierarchy for visualisation purposes.
+            * Defining a hierarchy for visualisation purposes.
               (the linearised first-parent hierarchy).
 
-            The visual hierarchy follows the first-parent of a family which
+            The visual hierarchy follows the first-parent of a family, and it
             may differ from the full inheritance hierarchy.
         '''),
     )
