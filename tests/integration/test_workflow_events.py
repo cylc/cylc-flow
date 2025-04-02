@@ -190,7 +190,7 @@ async def test_restart_timeout(test_scheduler, scheduler, run, complete):
 
 
 async def test_shutdown_handler_timeout_kill(
-    test_scheduler, run, monkeypatch, caplog
+    test_scheduler, run, monkeypatch, mock_glbl_cfg, caplog
 ):
     """Test shutdown handlers get killed on the process pool timeout.
 
@@ -209,13 +209,17 @@ async def test_shutdown_handler_timeout_kill(
     # Configure a long-running shutdown handler.
     schd = test_scheduler({'shutdown handlers': 'sleep 10; echo'})
 
+    # Set a low process pool timeout value.
+    mock_glbl_cfg(
+        'cylc.flow.subprocpool.glbl_cfg',
+        '''
+        [scheduler]
+            process pool timeout = PT1S
+        '''
+    )
+
     async with async_timeout(30):
         async with run(schd):
-            # (schd doesn't have a workflow_event_handler prior to this)
-            # Set a low timeout value.
-            monkeypatch.setattr(
-                schd.workflow_event_handler, 'proc_timeout', 0.0
-            )
             # Replace a scheduler method, to call handlers in simulation mode.
             monkeypatch.setattr(
                 schd,
@@ -225,6 +229,6 @@ async def test_shutdown_handler_timeout_kill(
             await asyncio.sleep(0.1)
 
     assert (
-        "[('workflow-event-handler-00', 'shutdown') err] killed on timeout (0.0)"
+        "[('workflow-event-handler-00', 'shutdown') err] killed on timeout (PT1S)"
         in caplog.text
     )

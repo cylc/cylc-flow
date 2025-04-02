@@ -25,7 +25,7 @@ import shlex
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
-from subprocess import DEVNULL, run  # nosec
+from subprocess import DEVNULL, TimeoutExpired, run  # nosec
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
 
 from cylc.flow import LOG, iter_entry_points
@@ -365,24 +365,38 @@ class SubProcPool:
             )
 
     @classmethod
-    def run_command(cls, ctx, timeout: Optional[float] = None):
+    def run_command(cls, ctx, callback: Optional[Callable] = None):
         """Execute command in ctx and capture its output and exit status.
 
-        Raises subprocess.TimeoutExpired (via subprocess.communicate) if
-        the command gets killed for exceeding a given timeout.
+        Kills the subprocess if it exceeds the subprocess pool timeout.
 
         Arguments:
             ctx (cylc.flow.subprocctx.SubProcContext):
                 A context object containing the command to run and its status.
-            timeout:
-                Timeout in seconds, after which to kill the command.
+            callback:
+                Optional callback function.
         """
+        timeout = glbl_cfg().get(['scheduler', 'process pool timeout'])
+
         proc = cls._run_command_init(ctx)
-        if proc:
+        if not proc:
+            return
+
+        try:
             ctx.out, ctx.err = (
-                f.decode() for f in proc.communicate(timeout=timeout))
+                f.decode()
+                for f in proc.communicate(timeout=float(timeout))
+            )
+        except TimeoutExpired:
+            if _killpg(proc, SIGKILL):
+                ctx.err = f"killed on timeout ({timeout})"
             ctx.ret_code = proc.wait()
-            cls._run_command_exit(ctx)
+        else:
+            ctx.ret_code = proc.wait()
+
+        if callback is not None:
+            callback(ctx)
+        cls._run_command_exit(ctx)
 
     def set_stopping(self):
         """Stop job submission."""

@@ -18,7 +18,6 @@
 from enum import Enum
 import os
 from shlex import quote
-from subprocess import TimeoutExpired
 from typing import Any, Dict, List, Union, TYPE_CHECKING
 
 from cylc.flow import LOG
@@ -224,8 +223,6 @@ class WorkflowEventHandler():
 
     def __init__(self, proc_pool):
         self.proc_pool = proc_pool
-        self.proc_timeout = (
-            glbl_cfg().get(['scheduler', 'process pool timeout']))
 
     @staticmethod
     def get_events_conf(
@@ -310,21 +307,16 @@ class WorkflowEventHandler():
     def _run_cmd(self, ctx, callback):
         """Queue or directly run a command and its callback.
 
-        Queue the command to the subprocess pool if possible, or otherwise
-        run it in the foreground but subject to the subprocess pool timeout.
+        Queue the command to the subprocess pool if possible, or else run it
+        in the foreground (but still subject to the subprocess pool timeout).
 
         """
         if not self.proc_pool.closed:
             # Queue it to the subprocess pool.
             self.proc_pool.put_command(ctx, callback=callback)
         else:
-            # Run it in the foreground, but use the subprocess pool timeout.
-            try:
-                self.proc_pool.run_command(ctx, float(self.proc_timeout))
-            except TimeoutExpired:
-                ctx.ret_code = 124
-                ctx.err = f"killed on timeout ({self.proc_timeout})"
-            callback(ctx)
+            # Run it in the foreground.
+            self.proc_pool.run_command(ctx, callback=callback)
 
     def _run_event_custom_handlers(self, schd, template_variables, event):
         """Helper for "run_event_handlers", custom event handlers."""
