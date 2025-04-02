@@ -160,3 +160,31 @@ def test_profile_max_rss(mocker):
     run_once = mock.Mock(side_effect=[True, False])
     profile(process, 1, 1, run_once)
     mock_file.assert_called_with("max_rss", "w")
+
+
+def test_profile_1(mocker):
+    process = get_cgroup_paths(1, "test_location/", "test_name")
+
+    mock_file = mocker.mock_open(read_data="")
+    mocker.patch("builtins.open", mock_file)
+    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file", return_value=1024)
+    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+    run_once = mock.Mock(side_effect=[True, False])
+
+    profile(process, 1, 1, run_once)
+    mock_file.assert_called_with("max_rss", "w")
+
+
+def test_profile_2(mocker):
+    # assert_called_with only shows the last call to open().
+    # Setting peak memory to zero stops the memory call to open
+    process = get_cgroup_paths(1, "test_location/", "test_name")
+
+    mock_file = mocker.mock_open(read_data="")
+    mocker.patch("builtins.open", mock_file)
+    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file", return_value=0)
+    run_once = mock.Mock(side_effect=[True, False])
+
+    profile(process, 1, 1, run_once)
+    mock_file.assert_called_with("cpu_time", "w")
