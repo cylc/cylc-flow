@@ -23,7 +23,6 @@ from tempfile import (
     TemporaryDirectory,
 )
 
-
 import pytest
 
 from cylc.flow import LOG
@@ -46,36 +45,36 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_proxy import TaskProxy
 
 
-class TestSubProcPool(unittest.TestCase):
+def test_get_temporary_file():
+    """Test SubProcPool.get_temporary_file."""
+    assert isinstance(SubProcPool.get_temporary_file(), SpooledTemporaryFile)
 
-    def test_get_temporary_file(self):
-        """Test SubProcPool.get_temporary_file."""
-        self.assertIsInstance(
-            SubProcPool.get_temporary_file(), SpooledTemporaryFile)
 
-    def test_run_command_returns_0(self):
-        """Test basic usage, command returns 0"""
-        ctx = SubProcContext('truth', ['true'])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, '')
-        self.assertEqual(ctx.ret_code, 0)
+def test_run_command_returns_0():
+    """Test basic usage, command returns 0"""
+    ctx = SubProcContext('truth', ['true'])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == ''
+    assert ctx.ret_code == 0
 
-    def test_run_command_returns_1(self):
-        """Test basic usage, command returns 1"""
-        ctx = SubProcContext('lies', ['false'])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, '')
-        self.assertEqual(ctx.ret_code, 1)
 
-    def test_run_command_writes_to_out(self):
-        """Test basic usage, command writes to STDOUT"""
-        ctx = SubProcContext('parrot', ['echo', 'pirate', 'urrrr'])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'pirate urrrr\n')
-        self.assertEqual(ctx.ret_code, 0)
+def test_run_command_returns_1():
+    """Test basic usage, command returns 1"""
+    ctx = SubProcContext('lies', ['false'])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == ''
+    assert ctx.ret_code == 1
+
+
+def test_run_command_writes_to_out():
+    """Test basic usage, command writes to STDOUT"""
+    ctx = SubProcContext('parrot', ['echo', 'pirate', 'urrrr'])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'pirate urrrr\n'
+    assert ctx.ret_code == 0
 
 
 def test_run_command_writes_to_err():
@@ -89,148 +88,158 @@ def test_run_command_writes_to_err():
     assert ctx.out == ''
     assert ctx.ret_code == 0
 
-    def test_run_command_with_stdin_from_str(self):
-        """Test STDIN from string"""
-        ctx = SubProcContext('meow', ['cat'], stdin_str='catches mice.\n')
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'catches mice.\n')
-        self.assertEqual(ctx.ret_code, 0)
 
-    def test_run_command_with_stdin_from_unicode(self):
-        """Test STDIN from string with Unicode"""
-        ctx = SubProcContext('meow', ['cat'], stdin_str='喵\n')
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, '喵\n')
-        self.assertEqual(ctx.ret_code, 0)
+def test_run_command_with_stdin_from_str():
+    """Test STDIN from string"""
+    ctx = SubProcContext('meow', ['cat'], stdin_str='catches mice.\n')
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'catches mice.\n'
+    assert ctx.ret_code == 0
 
-    def test_run_command_with_stdin_from_handle(self):
-        """Test STDIN from a single opened file handle"""
+
+def test_run_command_with_stdin_from_unicode():
+    """Test STDIN from string with Unicode"""
+    ctx = SubProcContext('meow', ['cat'], stdin_str='喵\n')
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == '喵\n'
+    assert ctx.ret_code == 0
+
+
+def test_run_command_with_stdin_from_handle():
+    """Test STDIN from a single opened file handle"""
+    handle = TemporaryFile()
+    handle.write('catches mice.\n'.encode('UTF-8'))
+    handle.seek(0)
+    ctx = SubProcContext('meow', ['cat'], stdin_files=[handle])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'catches mice.\n'
+    assert ctx.ret_code == 0
+    handle.close()
+
+
+def test_run_command_with_stdin_from_path():
+    """Test STDIN from a single file path"""
+    handle = NamedTemporaryFile()
+    handle.write('catches mice.\n'.encode('UTF-8'))
+    handle.seek(0)
+    ctx = SubProcContext('meow', ['cat'], stdin_files=[handle.name])
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'catches mice.\n'
+    assert ctx.ret_code == 0
+    handle.close()
+
+
+def test_run_command_with_stdin_from_handles():
+    """Test STDIN from multiple file handles"""
+    handles = []
+    for txt in ['catches mice.\n', 'eat fish.\n']:
         handle = TemporaryFile()
-        handle.write('catches mice.\n'.encode('UTF-8'))
+        handle.write(txt.encode('UTF-8'))
         handle.seek(0)
-        ctx = SubProcContext('meow', ['cat'], stdin_files=[handle])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'catches mice.\n')
-        self.assertEqual(ctx.ret_code, 0)
+        handles.append(handle)
+    ctx = SubProcContext('meow', ['cat'], stdin_files=handles)
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'catches mice.\neat fish.\n'
+    assert ctx.ret_code == 0
+    for handle in handles:
         handle.close()
 
-    def test_run_command_with_stdin_from_path(self):
-        """Test STDIN from a single file path"""
+
+def test_run_command_with_stdin_from_paths():
+    """Test STDIN from multiple file paths"""
+    handles = []
+    for txt in ['catches mice.\n', 'eat fish.\n']:
         handle = NamedTemporaryFile()
-        handle.write('catches mice.\n'.encode('UTF-8'))
+        handle.write(txt.encode('UTF-8'))
         handle.seek(0)
-        ctx = SubProcContext('meow', ['cat'], stdin_files=[handle.name])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'catches mice.\n')
-        self.assertEqual(ctx.ret_code, 0)
+        handles.append(handle)
+    ctx = SubProcContext(
+        'meow', ['cat'], stdin_files=[handle.name for handle in handles]
+    )
+    SubProcPool.run_command(ctx)
+    assert ctx.err == ''
+    assert ctx.out == 'catches mice.\neat fish.\n'
+    assert ctx.ret_code == 0
+    for handle in handles:
         handle.close()
 
-    def test_run_command_with_stdin_from_handles(self):
-        """Test STDIN from multiple file handles"""
-        handles = []
-        for txt in ['catches mice.\n', 'eat fish.\n']:
-            handle = TemporaryFile()
-            handle.write(txt.encode('UTF-8'))
-            handle.seek(0)
-            handles.append(handle)
-        ctx = SubProcContext('meow', ['cat'], stdin_files=handles)
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'catches mice.\neat fish.\n')
-        self.assertEqual(ctx.ret_code, 0)
-        for handle in handles:
-            handle.close()
 
-    def test_run_command_with_stdin_from_paths(self):
-        """Test STDIN from multiple file paths"""
-        handles = []
-        for txt in ['catches mice.\n', 'eat fish.\n']:
-            handle = NamedTemporaryFile()
-            handle.write(txt.encode('UTF-8'))
-            handle.seek(0)
-            handles.append(handle)
-        ctx = SubProcContext(
-            'meow', ['cat'], stdin_files=[handle.name for handle in handles])
-        SubProcPool.run_command(ctx)
-        self.assertEqual(ctx.err, '')
-        self.assertEqual(ctx.out, 'catches mice.\neat fish.\n')
-        self.assertEqual(ctx.ret_code, 0)
-        for handle in handles:
-            handle.close()
+def test_xfunction():
+    """Test xtrigger function import."""
+    with TemporaryDirectory() as temp_dir:
+        python_dir = Path(temp_dir, "lib", "python")
+        python_dir.mkdir(parents=True)
+        the_answer_file = python_dir / "the_answer.py"
+        with the_answer_file.open(mode="w") as f:
+            f.write("""the_answer = lambda: 42""")
+            f.flush()
+            f_name = "the_answer"
+        fn = get_xtrig_func(f_name, f_name, temp_dir)
+        result = fn()
+        assert 42 == result
 
-    def test_xfunction(self):
-        """Test xtrigger function import."""
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(temp_dir, "lib", "python")
-            python_dir.mkdir(parents=True)
-            the_answer_file = python_dir / "the_answer.py"
-            with the_answer_file.open(mode="w") as f:
-                f.write("""the_answer = lambda: 42""")
-                f.flush()
-                f_name = "the_answer"
-            fn = get_xtrig_func(f_name, f_name, temp_dir)
-            result = fn()
-            self.assertEqual(42, result)
 
-    def test_xfunction_cache(self):
-        """Test xtrigger function import cache."""
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(temp_dir, "lib", "python")
-            python_dir.mkdir(parents=True)
-            amandita_file = python_dir / "amandita.py"
-            with amandita_file.open(mode="w") as f:
-                f.write("""choco = lambda: 'chocolate'""")
-                f.flush()
-            m_name = "amandita"  # module
-            f_name = "choco"  # function
-            fn = get_xtrig_func(m_name, f_name, temp_dir)
-            result = fn()
-            self.assertEqual('chocolate', result)
+def test_xfunction_cache():
+    """Test xtrigger function import cache."""
+    with TemporaryDirectory() as temp_dir:
+        python_dir = Path(temp_dir, "lib", "python")
+        python_dir.mkdir(parents=True)
+        amandita_file = python_dir / "amandita.py"
+        with amandita_file.open(mode="w") as f:
+            f.write("""choco = lambda: 'chocolate'""")
+            f.flush()
+        m_name = "amandita"  # module
+        f_name = "choco"  # function
+        fn = get_xtrig_func(m_name, f_name, temp_dir)
+        result = fn()
+        assert 'chocolate' == result
 
-            # is in the cache
-            self.assertTrue((m_name, f_name) in _XTRIG_FUNC_CACHE)
-            # returned from cache
-            self.assertEqual(fn, get_xtrig_func(m_name, f_name, temp_dir))
+        # is in the cache
+        assert (m_name, f_name) in _XTRIG_FUNC_CACHE
+        # returned from cache
+        assert fn, get_xtrig_func(m_name, f_name == temp_dir)
 
-    def test_xfunction_import_error(self):
-        """Test for error on importing a xtrigger function.
 
-        To prevent the test eventually failing if the test function is added
-        and successfully imported, we use an invalid module name as per Python
-        spec.
-        """
-        with TemporaryDirectory() as temp_dir, self.assertRaises(
-            ModuleNotFoundError
-        ):
-            get_xtrig_func("invalid-module-name", "func-name", temp_dir)
+def test_xfunction_import_error():
+    """Test for error on importing a xtrigger function.
 
-    def test_xfunction_attribute_error(self):
-        """Test for error on looking for an attribute in a xtrigger script."""
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(temp_dir, "lib", "python")
-            python_dir.mkdir(parents=True)
-            the_answer_file = python_dir / "the_sword.py"
-            with the_answer_file.open(mode="w") as f:
-                f.write("""the_droid = lambda: 'excalibur'""")
-                f.flush()
-            f_name = "the_sword"
-            with self.assertRaises(AttributeError):
-                get_xtrig_func(f_name, f_name, temp_dir)
+    To prevent the test eventually failing if the test function is added
+    and successfully imported, we use an invalid module name as per Python
+    spec.
+    """
+    with TemporaryDirectory() as temp_dir, pytest.raises(ModuleNotFoundError):
+        get_xtrig_func("invalid-module-name", "func-name", temp_dir)
+
+
+def test_xfunction_attribute_error():
+    """Test for error on looking for an attribute in a xtrigger script."""
+    with TemporaryDirectory() as temp_dir:
+        python_dir = Path(temp_dir, "lib", "python")
+        python_dir.mkdir(parents=True)
+        the_answer_file = python_dir / "the_sword.py"
+        with the_answer_file.open(mode="w") as f:
+            f.write("""the_droid = lambda: 'excalibur'""")
+            f.flush()
+        f_name = "the_sword"
+        with pytest.raises(AttributeError):
+            get_xtrig_func(f_name, f_name, temp_dir)
 
 
 @pytest.fixture
 def mock_ctx():
     def inner_(ret_code=None, host=None, cmd_key=None, cmd=None):
-        """Provide a SimpleNamespace which looks like a ctx object.
-        """
+        """Provide a SimpleNamespace which looks like a ctx object."""
         inputs = locals()
         defaults = {
-            'ret_code': 255, 'host': 'mouse', 'cmd_key': 'my-command',
-            'cmd': ['bistromathic', 'take-off']
+            'ret_code': 255,
+            'host': 'mouse',
+            'cmd_key': 'my-command',
+            'cmd': ['bistromathic', 'take-off'],
         }
         for key in inputs:
             if inputs[key] is None:
@@ -240,9 +249,10 @@ def mock_ctx():
             timestamp=None,
             ret_code=inputs['ret_code'],
             host=inputs['host'],
-            cmd_key=inputs['cmd_key']
+            cmd_key=inputs['cmd_key'],
         )
         return ctx
+
     yield inner_
 
 
@@ -265,21 +275,18 @@ def _test_callback_255(ctx, foo=''):
             'platform: None - Could not connect to mouse.',
             255,
             'ssh',
-            id="return 255"
+            id="return 255",
         ),
         pytest.param(
             'platform: localhost - Could not connect to mouse.',
             255,
             TaskJobLogsRetrieveContext(['ssh', 'something'], None, None),
-            id="return 255 (log-ret)"
-        )
-    ]
+            id="return 255 (log-ret)",
+        ),
+    ],
 )
-def test__run_command_exit(
-    caplog, mock_ctx, expect, ret_code, cmd_key
-):
-    """It runs a callback
-    """
+def test__run_command_exit(caplog, mock_ctx, expect, ret_code, cmd_key):
+    """It runs a callback"""
     ctx = mock_ctx(ret_code=ret_code, cmd_key=cmd_key, cmd=['ssh'])
     SubProcPool._run_command_exit(
         ctx, callback=_test_callback, callback_255=_test_callback_255
@@ -298,9 +305,7 @@ def test__run_command_exit_no_255_callback(caplog, mock_ctx):
 def test__run_command_exit_no_gettable_platform(caplog, mock_ctx):
     """It logs being unable to select a platform"""
     ret_ctx = TaskJobLogsRetrieveContext(
-        platform_name='rhenas',
-        max_size=256,
-        key='rhenas'
+        platform_name='rhenas', max_size=256, key='rhenas'
     )
     ctx = mock_ctx(cmd_key=ret_ctx, cmd=['ssh'], ret_code=255)
     SubProcPool._run_command_exit(ctx, callback=_test_callback)
@@ -315,20 +320,19 @@ def test__run_command_exit_no_255_args(caplog, mock_ctx):
         mock_ctx(cmd=['ssh', 'Zaphod']),
         callback=_test_callback,
         callback_args=['Zaphod'],
-        callback_255=_test_callback_255
+        callback_255=_test_callback_255,
     )
     assert '255' in caplog.records[1].msg
 
 
 def test__run_command_exit_add_to_badhosts(mock_ctx):
-    """It updates the list of badhosts
-    """
+    """It updates the list of badhosts"""
     badhosts = {'foo', 'bar'}
     SubProcPool._run_command_exit(
         mock_ctx(cmd=['ssh']),
         bad_hosts=badhosts,
         callback=print,
-        callback_args=['Welcome to Magrathea']
+        callback_args=['Welcome to Magrathea'],
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
 
@@ -340,32 +344,36 @@ def test__run_command_exit_add_to_badhosts_log(caplog, mock_ctx):
         mock_ctx(cmd=['ssh']),
         bad_hosts=badhosts,
         callback=lambda x, t: print(str(x)),
-        callback_args=[TaskProxy(
-            Tokens('~u/w//c/t/2'),
-            SimpleNamespace(
-                name='t', dependencies={}, sequential='',
-                external_triggers=[], xtrig_labels={},
-                expiration_offset=None,
-                outputs={
-                    TASK_OUTPUT_SUBMITTED: [None, None],
-                    TASK_OUTPUT_SUBMIT_FAILED: [None, None],
-                    TASK_OUTPUT_SUCCEEDED: [None, None],
-                    TASK_OUTPUT_FAILED: [None, None],
-                    TASK_OUTPUT_EXPIRED: [None, None],
-                },
-                graph_children={}, rtconfig={'platform': 'foo'}
-
-            ),
-            ISO8601Point('1990')
-        )]
+        callback_args=[
+            TaskProxy(
+                Tokens('~u/w//c/t/2'),
+                SimpleNamespace(
+                    name='t',
+                    dependencies={},
+                    sequential='',
+                    external_triggers=[],
+                    xtrig_labels={},
+                    expiration_offset=None,
+                    outputs={
+                        TASK_OUTPUT_SUBMITTED: [None, None],
+                        TASK_OUTPUT_SUBMIT_FAILED: [None, None],
+                        TASK_OUTPUT_SUCCEEDED: [None, None],
+                        TASK_OUTPUT_FAILED: [None, None],
+                        TASK_OUTPUT_EXPIRED: [None, None],
+                    },
+                    graph_children={},
+                    rtconfig={'platform': 'foo'},
+                ),
+                ISO8601Point('1990'),
+            )
+        ],
     )
     assert 'platform: foo' in caplog.records[0].message
     assert badhosts == {'foo', 'bar', 'mouse'}
 
 
 def test__run_command_exit_rsync_fails(mock_ctx):
-    """It updates the list of badhosts
-    """
+    """It updates the list of badhosts"""
     badhosts = {'foo', 'bar'}
     ctx = mock_ctx(cmd=['rsync'], ret_code=42, cmd_key='file-install')
     SubProcPool._run_command_exit(
@@ -376,10 +384,10 @@ def test__run_command_exit_rsync_fails(mock_ctx):
             {
                 'name': 'Magrathea',
                 'ssh command': 'ssh',
-                'rsync command': 'rsync command'
+                'rsync command': 'rsync command',
             },
             'Welcome to Magrathea',
-        ]
+        ],
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
 
@@ -389,12 +397,11 @@ def test__run_command_exit_rsync_fails(mock_ctx):
     [
         (True, {'cmd': ['ssh'], 'ret_code': 255}),
         (False, {'cmd': ['foo'], 'ret_code': 255}),
-        (False, {'cmd': ['ssh'], 'ret_code': 42})
-    ]
+        (False, {'cmd': ['ssh'], 'ret_code': 42}),
+    ],
 )
 def test_ssh_255_fail(mock_ctx, expect, ctx_kwargs):
-    """It knows when a ctx has failed
-    """
+    """It knows when a ctx has failed"""
     output = SubProcPool.ssh_255_fail(mock_ctx(**ctx_kwargs))
     assert output == expect
 
@@ -406,11 +413,10 @@ def test_ssh_255_fail(mock_ctx, expect, ctx_kwargs):
         (True, {'cmd': ['rsync'], 'ret_code': 255, 'host': 'not_local'}),
         (False, {'cmd': ['make it-so'], 'ret_code': 255, 'host': 'not_local'}),
         (False, {'cmd': ['rsync'], 'ret_code': 125, 'host': 'localhost'}),
-    ]
+    ],
 )
 def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
-    """It knows when a ctx has failed
-    """
+    """It knows when a ctx has failed"""
     output = SubProcPool.rsync_255_fail(
         mock_ctx(**ctx_kwargs),
         {'ssh command': 'ssh', 'rsync command': 'rsync command'},

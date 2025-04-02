@@ -7,7 +7,18 @@ on:
     # NOTE: While this is too generic, we use the `if` condition of the job to narrow it down
     # NOTE: Don't use `branches` as we might create release on any branch
 
+concurrency:
+  # Only let this run 1 at a time
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
 env:
+  FORCE_COLOR: 2
+  PIP_PROGRESS_BAR: off
   # Best not to include the GH token here, only do it for the steps that need it
   MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
   CHANGELOG_FILE: CHANGES.md
