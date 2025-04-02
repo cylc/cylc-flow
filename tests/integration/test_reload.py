@@ -159,8 +159,7 @@ async def test_reload_global_platform(
     log_filter,
     tmp_path,
     monkeypatch,
-    ):
-
+):
     global_config_path = tmp_path / 'global.cylc'
     monkeypatch.setenv("CYLC_CONF_PATH", str(global_config_path.parent))
 
@@ -172,13 +171,15 @@ async def test_reload_global_platform(
                 x = 1
     """)
     glbl_cfg(reload=True)
-    assert glbl_cfg().get(['platforms','localhost','meta','x']) == '1'
+    assert glbl_cfg().get(['platforms', 'localhost', 'meta', 'x']) == '1'
 
     id_ = flow(one_conf)
     schd = scheduler(id_)
     async with start(schd):
         # Task platforms reflect the original config
-        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(
+            schd.pool.get_tasks()[0]
+        )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '1'
 
@@ -191,17 +192,17 @@ async def test_reload_global_platform(
         """)
 
         # reload the workflow and global config
-        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
-
-        # Global config should have been reloaded
-        assert log_filter(
-            contains=(
-                'Reloading the global configuration.'
-            )
+        await commands.run_cmd(
+            commands.reload_workflow(schd, reload_global=True)
         )
 
+        # Global config should have been reloaded
+        assert log_filter(contains=('Reloading the global configuration.'))
+
         # Task platforms reflect the new config
-        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(
+            schd.pool.get_tasks()[0]
+        )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '2'
 
@@ -215,7 +216,9 @@ async def test_reload_global_platform(
         """)
 
         # reload the workflow and global config
-        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
+        await commands.run_cmd(
+            commands.reload_workflow(schd, reload_global=True)
+        )
 
         # Error is noted in the log
         assert log_filter(
@@ -225,18 +228,21 @@ async def test_reload_global_platform(
         )
 
         # Task platforms should be the last valid value
-        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(
+            schd.pool.get_tasks()[0]
+        )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '2'
 
         # reload the workflow in verbose mode
         flags.verbosity = 2
-        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
-
-        # Traceback is shown in the log (match for ERROR, trace is not captured)
-        assert log_filter(
-            exact_match = 'ERROR'
+        await commands.run_cmd(
+            commands.reload_workflow(schd, reload_global=True)
         )
+
+        # Traceback is shown in the log
+        # (match for ERROR, trace is not captured)
+        assert log_filter(exact_match='ERROR')
 
 
 async def test_reload_global_platform_group(
@@ -246,8 +252,7 @@ async def test_reload_global_platform_group(
     log_filter,
     tmp_path,
     monkeypatch,
-    ):
-
+):
     global_config_path = tmp_path / 'global.cylc'
     monkeypatch.setenv("CYLC_CONF_PATH", str(global_config_path.parent))
 
@@ -265,14 +270,8 @@ async def test_reload_global_platform_group(
 
     # Task using the platform group
     conf = {
-        'scheduler': {
-            'allow implicit tasks': True
-        },
-        'scheduling': {
-            'graph': {
-                'R1': 'one'
-            }
-        },
+        'scheduler': {'allow implicit tasks': True},
+        'scheduling': {'graph': {'R1': 'one'}},
         'runtime': {
             'one': {
                 'platform': 'pg',
@@ -284,7 +283,9 @@ async def test_reload_global_platform_group(
     schd = scheduler(id_)
     async with start(schd):
         # Task platforms reflect the original config
-        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(
+            schd.pool.get_tasks()[0]
+        )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '1'
 
@@ -300,16 +301,16 @@ async def test_reload_global_platform_group(
         """)
 
         # reload the workflow and global config
-        await commands.run_cmd(commands.reload_workflow(schd, reload_global=True))
-
-        # Global config should have been reloaded
-        assert log_filter(
-            contains=(
-                'Reloading the global configuration.'
-            )
+        await commands.run_cmd(
+            commands.reload_workflow(schd, reload_global=True)
         )
 
+        # Global config should have been reloaded
+        assert log_filter(contains=('Reloading the global configuration.'))
+
         # Task platforms reflect the new config
-        rtconf = schd.broadcast_mgr.get_updated_rtconfig(schd.pool.get_tasks()[0])
+        rtconf = schd.broadcast_mgr.get_updated_rtconfig(
+            schd.pool.get_tasks()[0]
+        )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '2'

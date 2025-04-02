@@ -715,7 +715,7 @@ with Conf('global.cylc', desc='''
 
        Most of the global settings can be changed while a workflow is running
        using ``cylc reload --global``. Exceptions are:
-       
+
        `[scheduler]`: The majority of these settings affect the server and
        cannot be reloaded while the server is running. The server must be
        stopped and restarted for changes to take effect except for the sections
