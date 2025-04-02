@@ -22,6 +22,7 @@ import pytest
 from cylc.flow.cfgspec.globalcfg import GlobalConfig, SPEC
 from cylc.flow.parsec.exceptions import ValidationError
 from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
@@ -182,7 +183,7 @@ def test_platform_ssh_forward_variables(mock_global_config):
     ) == ["FOO", "BAR"]
 
 
-def test_reload(mock_global_config, tmp_path):
+def test_reload(mock_global_config, tmp_path: 'Path', monkeypatch: pytest.MonkeyPatch):
     # Load a config
     glblcfg: GlobalConfig = mock_global_config('''
     [platforms]
@@ -200,6 +201,9 @@ def test_reload(mock_global_config, tmp_path):
                 x = 2
     ''')
     glblcfg.load()
+
+    # Mock the global config singleton
+    monkeypatch.setattr(glbl_cfg, "__call__", lambda *a,**kw: glblcfg)
 
     assert glblcfg.get(['platforms', 'foo', 'meta', 'x']) == '2'
 
