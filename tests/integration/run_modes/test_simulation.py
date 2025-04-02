@@ -16,6 +16,7 @@
 
 """Test the workings of simulation mode"""
 
+import logging
 from pathlib import Path
 import pytest
 from pytest import param
@@ -33,10 +34,20 @@ async def test_started_trigger(flow, reftest, scheduler):
     Long standing Bug discovered in Skip Mode work.
     https://github.com/cylc/cylc-flow/pull/6039#issuecomment-2321147445
     """
-    schd = scheduler(flow({
-        'scheduler': {'events': {'stall timeout': 'PT0S', 'abort on stall timeout': True}},
-        'scheduling': {'graph': {'R1': 'a:started => b'}}
-    }), paused_start=False)
+    schd = scheduler(
+        flow(
+            {
+                'scheduler': {
+                    'events': {
+                        'stall timeout': 'PT0S',
+                        'abort on stall timeout': True,
+                    }
+                },
+                'scheduling': {'graph': {'R1': 'a:started => b'}},
+            }
+        ),
+        paused_start=False,
+    )
     assert await reftest(schd) == {
         ('1/a', None),
         ('1/b', ('1/a',))
@@ -63,8 +74,7 @@ def run_simjob(monkeytime):
         itask = schd.pool.get_task(point, task)
         itask.state.is_queued = False
         monkeytime(0)
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         monkeytime(itask.mode_settings.timeout + 1)
 
         # Run Time Check
@@ -171,8 +181,7 @@ def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
 
     for i, result in enumerate(results):
         itask.try_timers['execution-retry'].num = i
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is result
 
 
@@ -192,7 +201,8 @@ def test_task_finishes(sim_time_check_setup, monkeytime, caplog):
     fail_all_1066.state.status = 'running'
     fail_all_1066.state.is_queued = False
     schd.task_job_mgr.submit_nonlive_task_jobs(
-        schd.workflow, [fail_all_1066], RunMode.SIMULATION)
+        [fail_all_1066], RunMode.SIMULATION
+    )
 
     # For the purpose of the test delete the started time set by
     # submit_nonlive_task_jobs.
@@ -222,7 +232,8 @@ def test_task_sped_up(sim_time_check_setup, monkeytime):
     # Run the job submission method:
     monkeytime(0)
     schd.task_job_mgr.submit_nonlive_task_jobs(
-        schd.workflow, [fast_forward_1066], RunMode.SIMULATION)
+        [fast_forward_1066], RunMode.SIMULATION
+    )
     fast_forward_1066.state.is_queued = False
 
     result = sim_time_check(schd.task_events_mgr, [fast_forward_1066], '')
@@ -273,7 +284,8 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
         og_timeouts = {}
         for itask in schd.pool.get_tasks():
             schd.task_job_mgr.submit_nonlive_task_jobs(
-                schd.workflow, [itask], RunMode.SIMULATION)
+                [itask], RunMode.SIMULATION
+            )
 
             og_timeouts[itask.identity] = itask.mode_settings.timeout
 
@@ -285,7 +297,7 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
 
     # Stop and restart the  scheduler:
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         for itask in schd.pool.get_tasks():
             # Check that we haven't got mode settings back:
             assert itask.mode_settings is None
@@ -300,10 +312,8 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
                 )
                 schd.workflow_db_mgr.process_queued_ops()
                 monkeytime(42)
-                expected_timeout = 102.0
             else:
                 monkeytime(og_timeouts[itask.identity] - 1)
-                expected_timeout = float(int(og_timeouts[itask.identity]))
 
             assert sim_time_check(
                 schd.task_events_mgr, [itask], schd.workflow_db_mgr
@@ -362,7 +372,7 @@ async def test_settings_reload(
 
 
 async def test_settings_broadcast(
-    flow, scheduler, start, monkeytime
+    flow, scheduler, start, monkeytime, log_filter
 ):
     """Assert that broadcasting a change in the settings for a task
     affects subsequent psuedo-submissions.
@@ -391,8 +401,7 @@ async def test_settings_broadcast(
         itask.state.is_queued = False
 
         # Submit the first - the sim task will fail:
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
 
         # Let task finish.
@@ -407,17 +416,25 @@ async def test_settings_broadcast(
         # Change a setting using broadcast:
         schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
-                'simulation': {'fail cycle points': ''}
+                'simulation': {'fail cycle points': ''},
             }])
         # Submit again - result is different:
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is False
+
+        # Assert that setting run mode on a simulation mode task fails with
+        # warning:
+        schd.broadcast_mgr.put_broadcast(
+            ['1066'], ['one'], [{
+                'run mode': 'live',
+            }])
+        record = log_filter(contains='will not be actioned')[0]
+        assert record[0] == logging.WARNING
+        assert 'run mode' not in schd.broadcast_mgr.broadcasts
 
         # Assert Clearing the broadcast works
         schd.broadcast_mgr.clear_broadcast()
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
 
         # Assert that list of broadcasts doesn't change if we submit
@@ -427,8 +444,7 @@ async def test_settings_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': 'higadfuhasgiurguj'}
             }])
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert (
             'Invalid ISO 8601 date representation: higadfuhasgiurguj'
             in log.messages[-1])
@@ -441,8 +457,7 @@ async def test_settings_broadcast(
             ['1066'], ['one'], [{
                 'simulation': {'fail cycle points': '1'}
             }])
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert (
             'Invalid ISO 8601 date representation: 1'
             in log.messages[-1])
@@ -453,8 +468,7 @@ async def test_settings_broadcast(
                 'simulation': {'fail cycle points': '1945, 1977, 1066'},
                 'execution retry delays': '3*PT2S'
             }])
-        schd.task_job_mgr.submit_nonlive_task_jobs(
-            schd.workflow, [itask], RunMode.SIMULATION)
+        schd.task_job_mgr.submit_nonlive_task_jobs([itask], RunMode.SIMULATION)
         assert itask.mode_settings.sim_task_fails is True
         assert itask.try_timers['execution-retry'].delays == [2.0, 2.0, 2.0]
         # n.b. rtconfig should remain unchanged, lest we cancel broadcasts:

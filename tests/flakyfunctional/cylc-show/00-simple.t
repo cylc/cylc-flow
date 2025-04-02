@@ -113,7 +113,10 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 }
             }
         },
-        "runtime": {"completion": "(started and succeeded)"},
+        "runtime": {
+            "completion": "(started and succeeded)",
+            "runMode": "Live"
+        },
         "prerequisites": [
             {
                 "expression": "0",

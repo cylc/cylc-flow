@@ -31,8 +31,6 @@ if TYPE_CHECKING:
             'TaskProxy',
             # the task's runtime config (with broadcasts applied)
             Dict[str, Any],
-            # the workflow ID
-            str,
             # the current time as (float_unix_time, str_ISO8601)
             Tuple[float, str]
         ],
@@ -86,6 +84,14 @@ class RunMode(Enum):
         if run_mode:
             return RunMode(run_mode)
         return RunMode.LIVE
+
+    @classmethod
+    def _missing_(cls, value):
+        value = value.lower()
+        for member in cls:
+            if member.value.lower() == value:
+                return member
+        return None
 
     def get_submit_method(self) -> 'Optional[SubmissionInterface]':
         """Return the job submission method for this run mode.

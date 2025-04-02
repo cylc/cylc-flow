@@ -15,14 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for the Cylc GlobalConfig object."""
 
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
 from cylc.flow.cfgspec.globalcfg import GlobalConfig, SPEC
 from cylc.flow.parsec.exceptions import ValidationError
 from cylc.flow.parsec.validate import cylc_config_validate
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 TEST_CONF = '''
@@ -39,7 +42,7 @@ TEST_CONF = '''
 
 
 @pytest.fixture
-def mock_global_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def mock_global_config(tmp_path: 'Path', monkeypatch: pytest.MonkeyPatch):
     """Create a mock GlobalConfig object, given the global.cylc contents as
     a string."""
     def _mock_global_config(cfg: str) -> GlobalConfig:
@@ -74,7 +77,7 @@ def test_dump_platform_details(capsys, mock_global_config):
     assert expected == out
 
 
-def test_expand_commas(tmp_path: Path, mock_global_config: Callable):
+def test_expand_commas(tmp_path: 'Path', mock_global_config: Callable):
     """It should expand comma separated platform and install target
     definitions."""
     glblcfg: GlobalConfig = mock_global_config('''
@@ -152,7 +155,7 @@ def test_expand_commas(tmp_path: Path, mock_global_config: Callable):
 )
 def test_source_dir_validation(
     src_dir: str, err_expected: bool,
-    tmp_path: Path, mock_global_config: Callable
+    tmp_path: 'Path', mock_global_config: Callable
 ):
     glblcfg: GlobalConfig = mock_global_config(f'''
     [install]
@@ -165,6 +168,7 @@ def test_source_dir_validation(
     else:
         glblcfg.load()
 
+
 def test_platform_ssh_forward_variables(mock_global_config):
 
     glblcfg: GlobalConfig = mock_global_config('''
@@ -173,4 +177,6 @@ def test_platform_ssh_forward_variables(mock_global_config):
             ssh forward environment variables = "FOO", "BAR"
     ''')
 
-    assert glblcfg.get(['platforms','foo','ssh forward environment variables']) == ["FOO", "BAR"]
+    assert glblcfg.get(
+        ['platforms', 'foo', 'ssh forward environment variables']
+    ) == ["FOO", "BAR"]

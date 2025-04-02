@@ -14,9 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.cycling.loader import get_point, get_sequence
-from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.loader import (
+    get_point,
+    get_sequence,
+)
 from cylc.flow.task_outputs import TaskOutputs
+from cylc.flow.task_trigger import (
+    Dependency,
+    TaskTrigger,
+)
 
 
 def test_check_with_cycle_point():
@@ -171,3 +178,11 @@ def test_str(set_cycling_type):
 
     trigger = TaskTrigger('name', None, 'output')
     assert str(trigger) == 'name:output'
+
+
+def test_eq():
+    args = ('foo', '+P1', 'succeeded')
+    assert TaskTrigger(*args) == TaskTrigger(*args)
+    assert TaskTrigger(*args) != TaskTrigger(
+        *args, initial_point=IntegerPoint('1')
+    )

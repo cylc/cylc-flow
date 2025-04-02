@@ -90,10 +90,7 @@ async def test_run_job_cmd_no_hosts_error(
         schd.task_job_mgr.bad_hosts.add('no-host-platform')
 
         # polling the task should not result in an error...
-        schd.task_job_mgr.poll_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks()
-        )
+        schd.task_job_mgr.poll_task_jobs(schd.pool.get_tasks())
 
         # ...but the failure should be logged
         assert log_filter(
@@ -102,10 +99,7 @@ async def test_run_job_cmd_no_hosts_error(
         log.clear()
 
         # killing the task should not result in an error...
-        schd.task_job_mgr.kill_task_jobs(
-            schd.workflow,
-            schd.pool.get_tasks()
-        )
+        schd.task_job_mgr.kill_task_jobs(schd.pool.get_tasks())
 
         # ...but the failure should be logged
         assert log_filter(
@@ -125,7 +119,6 @@ async def test__run_job_cmd_logs_platform_lookup_fail(
         from types import SimpleNamespace
         schd.task_job_mgr._run_job_cmd(
             schd.task_job_mgr.JOBS_POLL,
-            'foo',
             [SimpleNamespace(platform={'name': 'culdee fell summit'})],
             None,
             None
@@ -169,14 +162,16 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
         # in the summary state.
         with suppress(FileExistsError):
             schd.task_job_mgr._prep_submit_task_job_impl(
-                schd.workflow, task_a, task_a.tdef.rtconfig)
+                task_a, task_a.tdef.rtconfig
+            )
         assert task_a.summary['execution_time_limit'] == 5.0
 
         # If we delete the etl it gets deleted in the summary:
         task_a.tdef.rtconfig['execution time limit'] = None
         with suppress(FileExistsError):
             schd.task_job_mgr._prep_submit_task_job_impl(
-                schd.workflow, task_a, task_a.tdef.rtconfig)
+                task_a, task_a.tdef.rtconfig
+            )
         assert not task_a.summary.get('execution_time_limit', '')
 
         # put everything back and test broadcast too.
@@ -187,8 +182,7 @@ async def test__prep_submit_task_job_impl_handles_execution_time_limit(
         with suppress(FileExistsError):
             # We run a higher level function here to ensure
             # that the broadcast is applied.
-            schd.task_job_mgr._prep_submit_task_job(
-                schd.workflow, task_a)
+            schd.task_job_mgr._prep_submit_task_job(task_a)
         assert not task_a.summary.get('execution_time_limit', '')
 
 
@@ -255,7 +249,6 @@ async def test_poll_job_deleted_log_folder(
         itask.submit_num = 1
         job_id = itask.tokens.duplicate(job='01').relative_id
         schd.task_job_mgr._poll_task_job_callback(
-            schd.workflow,
             itask,
             cmd_ctx=Mock(),
             line=f'2025-02-13T12:08:30Z|{job_id}|{json.dumps(response)}',
