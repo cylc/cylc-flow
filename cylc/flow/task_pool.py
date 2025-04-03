@@ -1869,22 +1869,26 @@ class TaskPool:
 
     def _standardise_prereqs(
         self, prereqs: 'List[str]'
-    ) -> 'Dict[Tokens, str]':
-        """Convert prerequisites to a map of task messages: outputs.
+    ) -> Tuple['Dict[Tokens, str]', 'Dict[Tokens, str]']:
+        """Convert manually set prerequisites to {task messages: outputs}.
 
-        (So satsify_me logs failures)
+        Similarly for xtriggers.
 
         """
         _prereqs = {}
+        _xtrigs = {}
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
             # add implicit "succeeded"; convert "succeed" to "succeeded" etc.
             output = TaskTrigger.standardise_name(
                 pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
+            if pre['cycle'] == "xtrigger":
+                _xtrigs[pre.duplicate(task_sel=output)] = prereq
+                continue
             # Convert outputs to task messages.
             try:
                 msg = self.config.get_taskdef(
-                    pre['task']
+                    str(pre['task'])
                 ).outputs[output][0]
                 cycle = standardise_point_string(pre['cycle'])
             except KeyError:
@@ -1900,7 +1904,7 @@ class TaskPool:
                     f'Invalid prerequisite cycle point:\n{exc.args[0]}')
             else:
                 _prereqs[pre.duplicate(task_sel=msg, cycle=cycle)] = prereq
-        return _prereqs
+        return _prereqs, _xtrigs
 
     def _standardise_outputs(
         self, point: 'PointBase', tdef: 'TaskDef', outputs: Iterable[str]
@@ -1966,7 +1970,7 @@ class TaskPool:
 
         """
         # Get matching pool tasks and inactive task definitions.
-        itasks, inactive_tasks, unmatched = self.filter_task_proxies(
+        itasks, inactive_tasks, _ = self.filter_task_proxies(
             items,
             inactive=True,
             warn_no_active=False,
@@ -2063,6 +2067,10 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_outputs(itask)
         self.workflow_db_mgr.process_queued_ops()
 
+    def _log_unmatched(self, itask, sus, unmatched):
+        for item in unmatched:
+            LOG.warning(f'{itask.identity} does not depend on "{sus[item]}"')
+
     def _set_prereqs_itask(
         self,
         itask: 'TaskProxy',
@@ -2079,16 +2087,15 @@ class TaskPool:
         if prereqs == ["all"]:
             itask.state.set_prerequisites_all_satisfied()
         else:
-            # Attempt to set the given presrequisites.
+            # Attempt to set the given prerequisites.
             # Log any that aren't valid for the task.
-            presus = self._standardise_prereqs(prereqs)
+            presus, xsus = self._standardise_prereqs(prereqs)
             unmatched = itask.satisfy_me(presus.keys(), forced=True)
-            for task_msg in unmatched:
-                LOG.warning(
-                    f"{itask.identity} does not depend on"
-                    f' "{presus[task_msg]}"'
-                )
-            if len(unmatched) == len(prereqs):
+            self._log_unmatched(itask, presus, unmatched)
+            unmatched_x = itask.satisfy_xtriggers(
+                xsus.keys(), self.xtrigger_mgr.force_satsify)
+            self._log_unmatched(itask, xsus, unmatched_x)
+            if len(unmatched) + len(unmatched_x) == len(prereqs):
                 # No prereqs matched.
                 return False
         if (
@@ -2097,6 +2104,7 @@ class TaskPool:
         ):
             self.rh_release_and_queue(itask)
         self.data_store_mgr.delta_task_prerequisite(itask)
+
         return True
 
     def _set_prereqs_tdef(

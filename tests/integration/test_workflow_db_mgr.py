@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+import re
 import sqlite3
 from typing import TYPE_CHECKING
 
@@ -133,15 +134,18 @@ async def test_workflow_param_rapid_toggle(
         assert w_params['is_paused'] == '0'
 
 
-async def test_record_only_non_clock_triggers(
+async def test_record_xtriggers(
     flow, run, scheduler, complete, db_select
 ):
-    """Database does not record wall_clock xtriggers.
+    """Database records all (non retry) xtriggers.
+
+    We do now record wall_clock xtriggers, to allow unsetting them
+    in group trigger: https://github.com/cylc/cylc-flow/pull/6695
 
     https://github.com/cylc/cylc-flow/issues/5911
 
     Includes:
-        - Not in DB: A normal wall clock xtrigger (wall_clock).
+        - In DB: A normal wall clock xtrigger (wall_clock).
         - In DB: An xrandom mis-labelled as wall_clock trigger  DB).
         - Not in DB: An execution retry xtrigger.
 
@@ -174,7 +178,11 @@ async def test_record_only_non_clock_triggers(
     async with run(schd):
         await complete(schd, timeout=20)
 
-    # Assert that (only) the real clock trigger is not in the db:
-    assert db_select(schd, False, 'xtriggers', 'signature') == [
-        ('xrandom(100)',),
-        ('xrandom(100, _=Not a real wall clock trigger)',)]
+    redacted = [
+        re.sub("trigger_time=-[0-9]+", "trigger_time=REDACTED", item[0])
+        for item in db_select(schd, False, 'xtriggers', 'signature')
+    ]
+    assert redacted == [
+        'wall_clock(trigger_time=REDACTED)',
+        'xrandom(100)',
+        'xrandom(100, _=Not a real wall clock trigger)']
