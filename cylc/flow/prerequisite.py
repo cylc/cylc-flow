@@ -23,6 +23,7 @@ from typing import (
     ItemsView,
     Iterable,
     Iterator,
+    KeysView,
     NamedTuple,
     Optional,
     Set,
@@ -172,7 +173,7 @@ class Prerequisite:
     def items(self) -> ItemsView[PrereqTuple, SatisfiedState]:
         return self._satisfied.items()
 
-    def get_tuples(self) -> Iterable[PrereqTuple]:
+    def keys(self) -> KeysView[PrereqTuple]:
         return self._satisfied.keys()
 
     def get_raw_conditional_expression(self):
