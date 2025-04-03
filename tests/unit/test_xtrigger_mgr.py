@@ -271,21 +271,6 @@ def test__call_xtriggers_async(xtrigger_mgr):
     assert len(xtrigger_mgr.active) == 0
 
 
-def test_callback_not_active(xtrigger_mgr):
-    """Test callback with no active contexts."""
-    # calling callback with a SubFuncContext with none active
-    # results in a ValueError
-
-    get_name = SubFuncContext(
-        label="get_name",
-        func_name="get_name",
-        func_args=[],
-        func_kwargs={}
-    )
-    with pytest.raises(ValueError):
-        xtrigger_mgr.callback(get_name)
-
-
 def test_callback_invalid_json(xtrigger_mgr):
     """Test callback with invalid JSON."""
     get_name = SubFuncContext(

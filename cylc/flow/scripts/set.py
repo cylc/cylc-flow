@@ -27,10 +27,15 @@ Setting task prerequisites:
   - contributes to the task's readiness to run, and
   - promotes it to the scheduler's active task pool
 
-Note --pre=all also promotes parentless tasks (with no task-prerequisites) to
-the active pool where clock and xtriggers become active. This is needed to
-start a new flow that continues to future cycle points, if you need the first
-parentless tasks in the new flow to wait on clock or xtriggers before running.
+Format for prerequisite tasks: <cycle>/<task>[:output], or --pre=all
+  - you cannot unsatisfy a task prerequisite
+
+Note "--pre=all" promotes all tasks, including parentless tasks, to the active
+task pool where the schedule can beging checking clock and xtriggers. Use this
+instead of "trigger" to start a flow from tasks that first wait on xtriggers.
+
+Format for prerequisite xtriggers: xtrigger/<label>[:(succeeded or waiting)
+  - you can both set (succeeded, the default) and unset (waiting) xtriggers
 
 Setting task outputs:
   - contributes to a task's completion, and
@@ -78,6 +83,14 @@ Examples:
   # satisfy all prerequisites (if any) of 3/bar and promote it to
   # the active window (and start checking its xtriggers, if any):
   $ cylc set --pre=all my_workflow//3/bar
+
+  # satisfy the clock-trigger @clock1 of 3000/bar:
+  $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
+  #   or:
+  $ cylc set --pre=xtrigger/clock1:succeeded my_worklfow//3000/bar
+
+  # unsatisfy (to start checking again) the xtrigger @data of 3000/bar:
+  $ cylc set --pre=xtrigger/data:waiting my_worklfow//3000/bar
 
   # complete the "file1" custom output of 3/bar:
   $ cylc set --out=file1 my_workflow//3/bar

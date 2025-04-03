@@ -750,8 +750,6 @@ class XtriggerManager:
 
         Args:
             ctx (SubFuncContext): function context
-        Raises:
-            ValueError: if the context given is not active
         """
         sig = ctx.get_signature()
         if sig in self.active:
