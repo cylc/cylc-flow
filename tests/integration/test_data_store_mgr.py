@@ -36,6 +36,7 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_STARTED,

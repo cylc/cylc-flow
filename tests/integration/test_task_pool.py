@@ -42,6 +42,7 @@ from cylc.flow.task_outputs import (
 )
 
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_PREPARING,
@@ -1255,7 +1256,7 @@ async def test_set_failed_complete(
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
+    async with start(schd, level=logging.DEBUG):
         one = schd.pool.get_tasks()[0]
         one.state_reset(is_queued=False)
 
@@ -1312,7 +1313,7 @@ async def test_set_prereqs(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
+    async with start(schd):
 
         # it should start up with foo, bar, baz
         assert (
@@ -1392,7 +1393,7 @@ async def test_set_bad_prereqs(
         schd.pool.set_prereqs_and_outputs(
             ["2040/bar"], None, prereqs, ['all'])
 
-    async with start(schd) as log:
+    async with start(schd):
         # Invalid: task name wildcard:
         set_prereqs(["2040/*"])
         assert log_filter(contains='Invalid prerequisite task name')
@@ -1434,7 +1435,7 @@ async def test_set_outputs_live(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
+    async with start(schd):
 
         # it should start up with just 1/foo
         assert pool_get_task_ids(schd.pool) == ["1/foo"]

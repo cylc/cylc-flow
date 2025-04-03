@@ -757,8 +757,6 @@ def capture_live_submissions(capcall, monkeypatch):
         'cylc.flow.task_job_mgr.TaskJobManager.submit_livelike_task_jobs',
         fake_submit)
 
-
-
     def get_submissions():
         return {
             itask.identity
