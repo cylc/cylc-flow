@@ -1888,7 +1888,7 @@ class TaskPool:
                 LOG.warning(
                     f'Invalid prerequisite cycle point:\n{exc.args[0]}')
             else:
-                _prereqs.add(PrereqTuple(str(cycle), str(pre.task), msg))
+                _prereqs.add(PrereqTuple(str(cycle), str(pre["task"]), msg))
         return _prereqs
 
     def _standardise_outputs(
@@ -2049,7 +2049,7 @@ class TaskPool:
             set of tokens {(cycle, task, task_message),}
 
         """
-        valid = {pre.keys() for pre in tdef.get_prereqs(point)}
+        valid = {key for pre in tdef.get_prereqs(point) for key in pre.keys()}
 
         # Get prerequisite tuples in terms of task messages not triggers.
         requested = self._standardise_prereqs(prereqs)
@@ -2064,7 +2064,7 @@ class TaskPool:
                 f'"{prereq.get_id()}:{trg}"'
             )
         return {
-            Tokens(cycle=pre.cycle, task=pre.task, task_sel=pre.output)
+            Tokens(cycle=pre.point, task=pre.task, task_sel=pre.output)
             for pre in valid & requested
         }
 
