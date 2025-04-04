@@ -268,6 +268,15 @@ def test_check_cylc_file_7to8_has_shebang():
     assert not lint.counter
 
 
+def test_check_ignores_jinja2_middle():
+    """Only the badly indented section outside the jinja2 block should
+    return a lint."""
+    lint = lint_text(
+        '#!jinja2\n{%\n    [scheduler]\n%}\n    [scheduler]', ['style']
+    )
+    len(lint.messages) == 1
+
+
 def test_check_cylc_file_line_no():
     """It prints the correct line numbers"""
     lint = lint_text(TEST_FILE, ['728'])
