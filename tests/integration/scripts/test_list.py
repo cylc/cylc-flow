@@ -152,7 +152,6 @@ async def test_mro(cylc_list, supports_utf8, capsys):
         await cylc_list(capsys, titles=True, mro=True)
 
 
-
 async def test_tree(cylc_list, supports_utf8, capsys):
     """Test the --tree option."""
     assert (

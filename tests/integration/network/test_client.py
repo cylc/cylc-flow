@@ -99,7 +99,8 @@ async def test_command_validation_failure(harness):
         pytest.param({'error': 'message'}, r"^message$", id="basic"),
         pytest.param(
             {'foo': 1},
-            r"^Received invalid response for Cylc 8\.[\w.]+: \{'foo': 1[^}]*\}$",
+            r"^Received invalid response for"
+            r" Cylc 8\.[\w.]+: \{'foo': 1[^}]*\}$",
             id="no-err-field",
         ),
         pytest.param(

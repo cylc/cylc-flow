@@ -114,7 +114,9 @@ def wait_log_loaded(monkeypatch):
 
 
 @pytest.fixture(scope='module')
-async def workflow(mod_flow, mod_scheduler, mod_start, standarise_host_and_path):
+async def workflow(
+    mod_flow, mod_scheduler, mod_start, standarise_host_and_path
+):
     """Test fixture providing a workflow with some log files to poke at."""
     id_ = mod_flow({
         'scheduling': {

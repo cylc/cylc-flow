@@ -16,7 +16,7 @@
 
 import unittest
 
-from cylc.flow.c3mro import *
+from cylc.flow.c3mro import C3
 
 
 class TestC3mro(unittest.TestCase):

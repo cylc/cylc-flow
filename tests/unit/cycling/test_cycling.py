@@ -23,21 +23,6 @@ from cylc.flow.cycling import (
     parse_exclusion,
 )
 
-from cylc.flow.cycling.integer import (
-    IntegerPoint,
-    IntegerSequence,
-)
-
-from cylc.flow.cycling.iso8601 import (
-    ISO8601Point,
-    ISO8601Sequence,
-)
-
-from cylc.flow.cycling.loader import (
-    INTEGER_CYCLING_TYPE,
-    ISO8601_CYCLING_TYPE,
-)
-
 
 def test_simple_abstract_class_test():
     """Cannot instantiate abstract classes, they must be defined in

@@ -104,7 +104,7 @@ def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
-def get_pb_prereqs(schd: Scheduler) -> List[PbPrerequisite]:
+def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     """Get all protobuf prerequisites from the data store task proxies."""
     return [
         p

@@ -216,10 +216,11 @@ async def test_prereqs_marked_satisfied_by_skip_mode(
         assert satisfied_message == 'satisfied by skip mode'
 
 
-async def test_outputs_can_be_changed(one_conf, flow, start, scheduler, validate):
-
+async def test_outputs_can_be_changed(
+    one_conf, flow, start, scheduler, validate
+):
     schd = scheduler(flow(one_conf), run_mode='live')
-    async with start(schd) as log:
+    async with start(schd):
         # Broadcast the task into skip mode, output failed and submit it:
         schd.broadcast_mgr.put_broadcast(
             ["1"],

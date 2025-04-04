@@ -16,13 +16,16 @@
 
 """Test logic in cylc-stop script."""
 
-from optparse import Values
 import pytest
-from typing import Iterable, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Optional, Tuple, Type
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.stop import get_option_parser, _validate
+
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 Opts = Options(get_option_parser())
@@ -76,7 +79,7 @@ Opts = Options(get_option_parser())
     ]
 )
 def test_validate(
-        options: Values,
+        options: 'Values',
         stop_task: str,
         stop_cycle: str,
         globs: str,

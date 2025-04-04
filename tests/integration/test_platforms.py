@@ -23,7 +23,7 @@ async def test_prep_submit_task_tries_multiple_platforms(
     task platform setting matches a group, and that after all platforms
     have been tried that the hosts matching that platform group are
     cleared.
-    
+
     See https://github.com/cylc/cylc-flow/pull/6109
     """
     global_conf = '''

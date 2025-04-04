@@ -125,7 +125,8 @@ async def test_receiver_basic(one: Scheduler, start, log_filter):
         ),
         pytest.param(
             {'user': 'bono', 'args': {}},
-            f"Request missing field 'command' required for Cylc {CYLC_VERSION}",
+            "Request missing field 'command' required for"
+            f" Cylc {CYLC_VERSION}",
             id='missing-command',
         ),
         pytest.param(

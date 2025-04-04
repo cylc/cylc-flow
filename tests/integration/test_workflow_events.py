@@ -228,6 +228,6 @@ async def test_shutdown_handler_timeout_kill(
             await asyncio.sleep(0.1)
 
     assert (
-        "[('workflow-event-handler-00', 'shutdown') err] killed on timeout (PT1S)"
-        in caplog.text
-    )
+        "[('workflow-event-handler-00', 'shutdown') err] killed on "
+        "timeout (PT1S)"
+    ) in caplog.text
