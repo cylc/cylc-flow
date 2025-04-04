@@ -449,8 +449,6 @@ class DataStoreMgr:
                 cylc.flow.data_messages_pb2.PbTaskProxy by internal ID.
             .workflow (cylc.flow.data_messages_pb2.PbWorkflow)
                 Message containing the global information of the workflow.
-        .descendants (dict):
-            Local store of config.get_first_parent_descendants()
         .n_edge_distance (int):
             Maximum distance of the data-store graph from the active pool.
         .parents (dict):
@@ -478,7 +476,6 @@ class DataStoreMgr:
         )  # TODO: rename and move to scheduler
         self.workflow_id = self.id_.workflow_id
         self.ancestors = {}
-        self.descendants = {}
         self.parents = {}
         self.state_update_families = set()
         self.updated_state_families = set()
@@ -594,7 +591,6 @@ class DataStoreMgr:
             )
 
         ancestors = config.get_first_parent_ancestors()
-        descendants = config.get_first_parent_descendants()
         parents = config.get_parent_lists()
 
         # Create definition elements for graphed tasks.
@@ -642,7 +638,7 @@ class DataStoreMgr:
                     id=f_id,
                     name=name,
                     depth=len(ancestors[name]) - 1,
-                    descendants=list(descendants.get(name, [])),
+                    ancestors=ancestors[name][1:],
                 )
                 famcfg = config.cfg['runtime'][name]
                 user_defined_meta = {}
@@ -713,7 +709,6 @@ class DataStoreMgr:
         workflow.families.extend(list(families))
 
         self.ancestors = ancestors
-        self.descendants = descendants
         self.parents = parents
 
     def increment_graph_window(
