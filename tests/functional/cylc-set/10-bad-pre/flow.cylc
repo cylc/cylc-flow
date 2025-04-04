@@ -1,0 +1,23 @@
+[scheduler]
+    [[events]]
+        inactivity timeout = PT1M
+        abort on inactivity timeout = True
+        stall timeout = PT0S
+        abort on stall timeout = True
+
+[scheduling]
+    [[graph]]
+    R1 = "foo => bar => baz"
+[runtime]
+  [[foo]]
+    script = """
+      # set an invalid prerequisite...
+      cylc set --pre=1/foo ${CYLC_WORKFLOW_ID}//1/baz
+      cylc__job__poll_grep_workflow_log '1/baz does not depend on "1/foo:succeeded"'
+
+      # ...it should not stop us from successfully setting a valid one
+      cylc set --pre=1/bar ${CYLC_WORKFLOW_ID}//1/baz
+      cylc__job__poll_grep_workflow_log -E '1/baz.* => succeeded'
+    """
+  [[bar]]
+  [[baz]]

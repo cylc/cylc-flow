@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
+
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -22,12 +24,15 @@ from cylc.flow.cycling.integer import IntegerPoint
 from .test_config import tmp_flow_config
 
 
+param = pytest.param
+
+
 def test_generate_graph_parents_1(tmp_flow_config):
     """Test that parents are only generated from valid recurrences."""
     id_ = 'pan-galactic'
     flow_file = tmp_flow_config(
         id_,
-        f"""
+        """
             [scheduler]
                 UTC mode = True
             [scheduling]
@@ -68,7 +73,7 @@ def test_generate_graph_parents_2(tmp_flow_config):
     id_ = 'gargle-blaster'
     flow_file = tmp_flow_config(
         id_,
-        f"""
+        """
             [scheduling]
                 cycling mode = integer
                 [[graph]]
@@ -98,3 +103,65 @@ def test_generate_graph_parents_2(tmp_flow_config):
             )
         ]
     ]
+
+
+
+@pytest.mark.parametrize(
+    "task, point, expected",
+    [
+        param(
+            'foo',
+            IntegerPoint("1"),
+            ['0/foo'],
+            id='it.gets-prerequisites',
+        ),
+        param(
+            'multiple_pre',
+            IntegerPoint("2"),
+            ['2/food', '2/fool', '2/foolhardy', '2/foolish'],
+            id='it.gets-multiple-prerequisites',
+        ),
+        param(
+            'foo',
+            IntegerPoint("3"),
+            [],
+            id='it.only-returns-for-valid-points',
+        ),
+        param(
+            'bar',
+            IntegerPoint("2"),
+            [],
+            id='it.does-not-return-suicide-triggers',
+        ),
+    ],
+)
+def test_get_prereqs(tmp_flow_config, task, point, expected):
+    """Test that get_prereqs() returns the correct prerequisites
+    for a task."""
+    id_ = 'gargle-blaster'
+    flow_file = tmp_flow_config(
+        id_,
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                final cycle point = 2
+                cycling mode = integer
+                [[graph]]
+                    P1 = '''
+                        foo[-P1] => foo
+                        bar:fail? => !bar
+                        food & fool => multiple_pre
+                        foolish | foolhardy => multiple_pre
+                    '''
+        """
+    )
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
+    taskdef = cfg.taskdefs[task]
+    point = IntegerPoint(point)
+    res = sorted([
+        condition.task_proxy
+        for pre in taskdef.get_prereqs(point)
+        for condition in pre.api_dump().conditions
+    ])
+    assert res == expected
