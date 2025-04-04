@@ -184,7 +184,7 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
 
     init()
     sequence = ISO8601Sequence('P1D', '2019')
-    tdef.xtrig_labels[sequence] = ["get_name"]
+    tdef.xtrig_labels[sequence] = [("get_name", "echo")]
     start_point = ISO8601Point('2019')
     itask = TaskProxy(Tokens('~user/workflow'), tdef, start_point)
     # pretend the function has been activated
@@ -236,7 +236,10 @@ def test__call_xtriggers_async(xtrigger_mgr):
     )
     init()
     sequence = ISO8601Sequence('P1D', '2000')
-    tdef.xtrig_labels[sequence] = ["echo1", "echo2"]
+    tdef.xtrig_labels[sequence] = [
+        ("echo1", "echo"),
+        ("echo2", "echo")
+    ]
     # cycle point for task proxy
     init()
     start_point = ISO8601Point('2019')
