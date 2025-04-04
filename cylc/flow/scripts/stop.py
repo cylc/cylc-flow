@@ -240,16 +240,16 @@ async def _run(
             options.max_polls,
         )
 
-    # mode defaults to 'Clean'
-    mode = None
     if stop_task or stop_cycle:
-        pass
+        mode: Optional[str] = None
     elif options.kill:
         mode = WorkflowStopMode.Kill.name
     elif options.now > 1:
         mode = WorkflowStopMode.NowNow.name
     elif options.now:
         mode = WorkflowStopMode.Now.name
+    else:
+        mode = WorkflowStopMode.Clean.name
 
     mutation_kwargs = {
         'request_string': MUTATION,
@@ -259,7 +259,10 @@ async def _run(
             'cyclePoint': stop_cycle,
             'clockTime': options.wall_clock,
             'task': stop_task,
-            'flowNum': options.flow_num
+            'flowNum': (
+                int(options.flow_num)
+                if options.flow_num is not None else None
+            )
         }
     }
 
