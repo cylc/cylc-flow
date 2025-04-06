@@ -1917,11 +1917,11 @@ class TaskPool:
         """
         if prereqs != ['all']:
             set_all = False
-            prereqs_valid = self._get_valid_prereqs(prereqs, tdef, point)
+            valid_prereqs = self._get_valid_prereqs(prereqs, tdef, point)
         else:
             set_all = True
-            prereqs_valid = []
-        return set_all, prereqs_valid
+            valid_prereqs = []
+        return set_all, valid_prereqs
 
     def set_prereqs_and_outputs(
         self,
@@ -1989,13 +1989,13 @@ class TaskPool:
                 continue
 
             if prereqs:
-                set_all, prereqs_valid = (
+                set_all, valid_prereqs = (
                     self._get_prereq_params(prereqs, itask.tdef, itask.point)
                 )
-                if not (set_all or prereqs_valid):
+                if not (set_all or valid_prereqs):
                     continue
                 self.merge_flows(itask, flow_nums)
-                self._set_prereqs_itask(itask, prereqs_valid, set_all)
+                self._set_prereqs_itask(itask, valid_prereqs, set_all)
                 no_op = False
             else:
                 # Outputs (may be empty list)
@@ -2013,13 +2013,13 @@ class TaskPool:
         # Spawn and set inactive tasks.
         for tdef, point in inactive_tasks:
             if prereqs:
-                set_all, prereqs_valid = (
+                set_all, valid_prereqs = (
                     self._get_prereq_params(prereqs, tdef, point)
                 )
-                if not (set_all or prereqs_valid):
+                if not (set_all or valid_prereqs):
                     continue
                 self._set_prereqs_tdef(
-                    point, tdef, prereqs_valid, flow_nums, flow_wait, set_all)
+                    point, tdef, valid_prereqs, flow_nums, flow_wait, set_all)
                 no_op = False
             else:
                 # Outputs (may be empty list)
@@ -2055,7 +2055,7 @@ class TaskPool:
         requested = self._standardise_prereqs(prereqs)
 
         for prereq in requested - valid:
-            # But log bad ones in using triggers, not messages.
+            # But log bad ones with triggers, not messages.
             trg = self.config.get_taskdef(
                 prereq.task
             ).get_output(prereq.output)
@@ -2118,7 +2118,7 @@ class TaskPool:
         itask: 'TaskProxy',
         prereqs: 'Iterable[Tokens]',
         set_all: bool
-    ):
+    ) -> None:
         """Set prerequisites on a task proxy.
 
         Designated flows should already be merged to the task proxy.
@@ -2133,7 +2133,6 @@ class TaskPool:
         ):
             self.rh_release_and_queue(itask)
         self.data_store_mgr.delta_task_prerequisite(itask)
-        return True
 
     def _set_prereqs_tdef(
         self,
