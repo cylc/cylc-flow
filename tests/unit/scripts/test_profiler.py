@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
-import unittest.mock
-
 from cylc.flow.scripts.profiler import (parse_memory_file,
                                         parse_cpu_file,
                                         write_data,
@@ -214,8 +212,10 @@ def test_get_config(mocker):
                  return_value=1024)
     mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
 
-    # Mock the write_data function to simulate writing data. It will error out on the 3rd call
-    mock_write = mock.Mock(side_effect=[None, None, FileNotFoundError('Carpe Diem')])
+    # Mock the write_data function to simulate writing data.
+    # It will error out on the 3rd call
+    mock_write = mock.Mock(
+        side_effect=[None, None, FileNotFoundError('Carpe Diem')])
     mocker.patch("cylc.flow.scripts.profiler.write_data", mock_write)
 
     parser = argparse.ArgumentParser()

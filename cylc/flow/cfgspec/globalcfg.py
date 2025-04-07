@@ -1341,7 +1341,7 @@ with Conf('global.cylc', desc='''
                      default='/sys/fs/cgroup',
                      desc='''
                      The path to the cgroups filesystem. The default value
-                     (/sys/fs/cgroup) is the standard location for cgroups on 
+                     (/sys/fs/cgroup) is the standard location for cgroups on
                      linux and should work in most circumstances''')
 
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
