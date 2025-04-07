@@ -4,7 +4,15 @@
 [runtime]
     [[foo]]
         platform = localhost
+        init-script = """
+echo "HELLO FROM INIT-SCRIPT"
+# define a variable
+export VAR_IS=is"""
         pre-script = """
+echo "HELLO FROM PRE-SCRIPT"
+# init-script must be done:
+echo VAR_IS is $VAR_IS
+# user environment must be done:
 echo E_ONE is $E_ONE
 echo E_TWO is $E_TWO
 echo E_THR is $E_THR

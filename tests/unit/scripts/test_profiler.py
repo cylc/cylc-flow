@@ -210,7 +210,8 @@ def test_get_config(mocker):
     # Mock the parse functions so they return valid values
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
                  return_value=1024)
-    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
+                 return_value=2048)
 
     # Mock the write_data function to simulate writing data.
     # It will error out on the 3rd call
