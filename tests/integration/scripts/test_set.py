@@ -19,11 +19,16 @@
 Note: see also functional tests
 """
 
+import logging
+import pytest
+
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
+
+from typing import Callable
 
 
 async def test_set_parentless_spawning(
@@ -51,7 +56,7 @@ async def test_set_parentless_spawning(
     async with run(schd):
         # mark cycle 1 as succeeded
         schd.pool.set_prereqs_and_outputs(
-            ['1/a', '1/z'], ['succeeded'], None, ['1']
+            ['1/a', '1/z'], ['succeeded'], [], ['1']
         )
 
         # the parentless task "a" should be spawned out to the runahead limit
@@ -81,7 +86,7 @@ async def test_rerun_incomplete(
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # generate 1/a:x but do not complete 1/a
-        schd.pool.set_prereqs_and_outputs(['1/a'], ['x'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(['1/a'], ['x'], [], ['1'])
         triggers = reflog(schd)
         await complete(schd)
 
@@ -118,7 +123,7 @@ async def test_data_store(
 
         # set the 1/a:succeeded prereq of 1/z
         schd.pool.set_prereqs_and_outputs(
-            ['1/z'], None, ['1/a:succeeded'], ['1'])
+            ['1/z'], [], ['1/a:succeeded'], ['1'])
         task_z = data[TASK_PROXIES][
             schd.pool.get_task(IntegerPoint('1'), 'z').tokens.id
         ]
@@ -126,14 +131,14 @@ async def test_data_store(
         assert task_z.prerequisites[0].satisfied is True
 
         # set 1/a:x the task should be waiting with output x satisfied
-        schd.pool.set_prereqs_and_outputs(['1/a'], ['x'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(['1/a'], ['x'], [], ['1'])
         await schd.update_data_structure()
         assert task_a.state == TASK_STATUS_WAITING
         assert task_a.outputs['x'].satisfied is True
         assert task_a.outputs['succeeded'].satisfied is False
 
         # set 1/a:succeeded the task should be succeeded with output x sat
-        schd.pool.set_prereqs_and_outputs(['1/a'], ['succeeded'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(['1/a'], ['succeeded'], [], ['1'])
         await schd.update_data_structure()
         assert task_a.state == TASK_STATUS_SUCCEEDED
         assert task_a.outputs['x'].satisfied is True
@@ -150,7 +155,7 @@ async def test_incomplete_detection(
     """It should detect and log finished tasks left with incomplete outputs."""
     schd = scheduler(flow(one_conf))
     async with start(schd):
-        schd.pool.set_prereqs_and_outputs(['1/one'], ['failed'], None, ['1'])
+        schd.pool.set_prereqs_and_outputs(['1/one'], ['failed'], [], ['1'])
     assert log_filter(contains='1/one did not complete')
 
 
@@ -164,3 +169,32 @@ async def test_pre_all(flow, scheduler, run):
         schd.pool.set_prereqs_and_outputs(['1/z'], [], ['all'], ['all'])
         warn_or_higher = [i for i in log.records if i.levelno > 30]
         assert warn_or_higher == []
+
+
+async def test_bad_prereq(
+    flow: 'Callable',
+    scheduler: 'Callable',
+    run: 'Callable',
+    complete: 'Callable',
+    caplog: 'pytest.LogCaptureFixture'
+):
+    """Attempting to set an invalid prerequisite should not leave a trace in
+    the DB that prevents the target task from spawning. later on.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': 'a => b => c'},
+        },
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        schd.pool.set_prereqs_and_outputs(['1/c'], [], ['1/a'], [])
+        assert schd.pool.get_task_ids() == {'1/a'}
+        assert '1/c does not depend on "1/a:succeeded"' in caplog.text
+
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # This will fail if the previous set left 1/c in the DB:
+        schd.pool.set_prereqs_and_outputs(['1/c'], [], ['1/b'], [])
+        assert schd.pool.get_task_ids() == {'1/a', '1/c'}
+        await complete(schd, '1/c', timeout=5)
