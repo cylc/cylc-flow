@@ -1,15 +1,3 @@
-[meta]
-    title = "job script torture test"
-
-    description = """Any task job script may fail regardless of user runtime
-settings if changes to cylc re-order the job script sections badly: e.g.
-"cylc task started" must be called after the CYLC_ environment variables
-are exported. Additionally, users may rely on the order of variable
-definition in each environment and script section: e.g. workflow
-bin directory must go in PATH before the task runtime environment is
-defined because workflow bin commands could be used in variable assignment
-expressions."""
-
 [scheduling]
     [[graph]]
         R1 = "foo"

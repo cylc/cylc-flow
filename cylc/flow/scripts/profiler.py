@@ -46,7 +46,6 @@ def get_option_parser() -> COP:
         default=10, dest="delay")
     parser.add_option(
         "-m", type=str, help="Location of cgroups directory",
-        default="/sys/fs/cgroup",
         dest="cgroup_location")
 
     return parser
@@ -102,7 +101,7 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
 
 def write_data(data, filename):
     with open(filename, 'w') as f:
-        f.write(data + "\n")
+        f.write(data)
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
@@ -175,7 +174,7 @@ def get_config(args):
     cgroup_name = get_cgroup_name()
     cgroup_version = get_cgroup_version(args.cgroup_location, cgroup_name)
     process = get_cgroup_paths(cgroup_version,
-                               args.cgroups_location,
+                               args.cgroup_location,
                                cgroup_name)
 
     profile(process, cgroup_version, args.delay)
