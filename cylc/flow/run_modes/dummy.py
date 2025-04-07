@@ -59,7 +59,6 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict[str, Any],
-    workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[False]':
     """Submit a task in dummy mode.
@@ -86,7 +85,7 @@ def submit_task_job(
     itask.summary[task_job_mgr.KEY_EXECUTE_TIME_LIMIT] = (
         itask.mode_settings.simulated_run_length)
     itask.jobs.append(
-        task_job_mgr.get_simulation_job_conf(itask, workflow))
+        task_job_mgr.get_simulation_job_conf(itask))
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],

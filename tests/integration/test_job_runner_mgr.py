@@ -73,7 +73,6 @@ async def test_kill_error(one, start, test_dir, capsys, log_filter):
                 out=out,
                 err=err,
             ),
-            one.workflow,
             [itask],
         )
 

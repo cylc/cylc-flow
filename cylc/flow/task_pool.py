@@ -1765,17 +1765,22 @@ class TaskPool:
 
         if prev_status in TASK_STATUSES_FINAL:
             # Task finished previously.
-            msg = f"[{point}/{name}:{prev_status}] already finished"
             if itask.is_complete():
-                msg += " and completed"
+                msg = "and completed"
                 itask.transient = True
             else:
                 # revive as incomplete.
-                msg += " incomplete"
+                msg = "incomplete"
 
-            LOG.info(
-                f"{msg} {repr_flow_nums(flow_nums, full=True)})"
-            )
+            if cylc.flow.flags.verbosity >= 1:
+                # avoid unnecessary compute when we are not in debug mode
+                id_ = itask.tokens.duplicate(
+                    task_sel=prev_status
+                ).relative_id_with_selectors
+                LOG.debug(
+                    f"[{id_}] already finished {msg}"
+                    f" {repr_flow_nums(flow_nums, full=True)})"
+                )
             if prev_flow_wait:
                 self._spawn_after_flow_wait(itask)
 
@@ -2075,15 +2080,26 @@ class TaskPool:
     ) -> None:
         """Set requested outputs on a task proxy and spawn children.
 
+        If no outputs were specified and the task has no required outputs to
+        set, set the "success pathway" outputs in the same way that skip mode
+        does.
+
         Designated flows should already be merged to the task proxy.
         """
+        outputs = set(outputs)
+
         if not outputs:
-            outputs = itask.state.outputs.iter_required_messages()
+            outputs = set(
+                # Set required outputs by default
+                itask.state.outputs.iter_required_messages()
+            ) or (
+                # Set success pathway outputs
+                get_skip_mode_outputs(itask)
+            )
         else:
             # --out=skip is a shortcut to setting all the outputs that
             # skip mode would.
-            outputs = set(outputs)
-            skips = []
+            skips: Set[str] = set()
             if RunMode.SKIP.value in outputs:
                 # Check for broadcasts to task:
                 outputs.remove(RunMode.SKIP.value)
@@ -2450,7 +2466,8 @@ class TaskPool:
             ids:
                 ID strings.
             warn_no_active:
-                Whether to log a warning if no matching active tasks are found.
+                Whether to log a warning if no matching tasks are found in the
+                pool.
             inactive:
                 If True, unmatched IDs will be checked against taskdefs
                 and cycle, and any matches will be returned in the second

@@ -32,6 +32,8 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import listjoin, pdeepcopy, poverride
 from cylc.flow.parsec.validate import BroadcastConfigValidator
+from cylc.flow.run_modes import WORKFLOW_ONLY_MODES
+
 
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
@@ -62,7 +64,8 @@ class BroadcastMgr:
 
     REC_SECTION = re.compile(r"\[([^\]]+)\]")
 
-    def __init__(self, workflow_db_mgr, data_store_mgr):
+    def __init__(self, workflow_db_mgr, data_store_mgr, run_mode):
+        self.workflow_run_mode = run_mode
         self.workflow_db_mgr = workflow_db_mgr
         self.data_store_mgr = data_store_mgr
         self.linearized_ancestors = {}
@@ -288,6 +291,19 @@ class BroadcastMgr:
                     coerced_setting,
                     SPEC['runtime']['__MANY__'],
                 )
+
+                # Skip and warn if a run mode is broadcast to a workflow
+                # running in simulation or dummy mode.
+                if (
+                    'run mode' in coerced_setting
+                    and self.workflow_run_mode.value in WORKFLOW_ONLY_MODES
+                ):
+                    LOG.warning(
+                        f'Broadcasting {coerced_setting} to a workflow'
+                        f' running in {self.workflow_run_mode.value} mode'
+                        ' will have no effect, and will not be actioned.'
+                    )
+                    continue
 
                 for point_string in point_strings or []:
                     # Standardise the point and check its validity.
