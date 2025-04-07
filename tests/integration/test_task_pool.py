@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from json import loads
 import logging
 from typing import (
     TYPE_CHECKING,
@@ -22,36 +23,40 @@ from typing import (
     Iterable,
     List,
     Tuple,
-    Union
+    Union,
 )
 
 import pytest
 from pytest import param
-from json import loads
 
-from cylc.flow import CYLC_LOG
-from cylc.flow import commands
+from cylc.flow import (
+    CYLC_LOG,
+    commands,
+)
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NONE,
+)
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+)
+from cylc.flow.task_state import (
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
 
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
-from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUBMIT_FAILED,
-)
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase

@@ -15,16 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from pytest import param
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.taskdef import generate_graph_parents
-from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.cycling.integer import IntegerPoint
-
-
-from .test_config import tmp_flow_config   # noqa: F401
-
-param = pytest.param
+from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.taskdef import generate_graph_parents
 
 
 def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
