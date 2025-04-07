@@ -141,7 +141,7 @@ cylc__job__main() {
     cd "${CYLC_TASK_WORK_DIR}"
 
     if [[ "${CYLC_PROFILE}" == "True" ]] ; then
-       cylc profile &
+       cylc profile -m "${CYLC_CGROUP}" -i "${CYLC_POLLING_INTERVAL}" &
        export profiler_pid="$!"
     fi
 
@@ -163,20 +163,12 @@ cylc__job__main() {
             cylc__set_return "$ret_code"
         fi
     }
-    # Grab the max rss and cpu_time value before moving directory
-    if [[ -f "max_rss" ]]; then
-      max_rss=$(sed -n '1p' max_rss)
-      rm max_rss
-    fi
-    if [[ -f "cpu_time" ]]; then
-      cpu_time=$(sed -n '1p' cpu_time)
-      rm cpu_time
-    fi
+    # Grab the max rss and cpu_time and clean up before changing directory
+    cylc__kill_profiler
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
-    cylc__kill_profiler
 
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
 
@@ -208,13 +200,7 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
-    if [[ -n "${cpu_time:-}" ]]; then
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
-    fi
-    if [[ -n "${max_rss:-}" ]]; then
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: max_rss $max_rss" || true
-    fi
-    if [[ -f "proc/${profiler_pid}" ]]; then
+    if [[ -n "${profiler_pid:-}" ]] && ps -p "$profiler_pid" > /dev/null; then
       kill -s SIGINT "${profiler_pid}" || true
     fi
 }
@@ -300,7 +286,9 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+
     cylc__kill_profiler
+
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
