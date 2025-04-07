@@ -103,7 +103,6 @@ def test_generate_graph_parents_2(tmp_flow_config):
     ]
 
 
-
 @pytest.mark.parametrize(
     "task, point, expected",
     [

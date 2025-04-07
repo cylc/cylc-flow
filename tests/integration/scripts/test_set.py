@@ -19,16 +19,18 @@
 Note: see also functional tests
 """
 
-import logging
+from typing import Callable
+
 import pytest
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
-
-from typing import Callable
+from cylc.flow.task_state import (
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+)
 
 
 async def test_set_parentless_spawning(
