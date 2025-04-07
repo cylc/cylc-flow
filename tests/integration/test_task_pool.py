@@ -1788,6 +1788,37 @@ async def test_compute_runahead_with_no_tasks(flow, scheduler, run):
         assert schd.pool.get_tasks() == []
 
 
+async def test_compute_runahead_with_no_sequences(
+    flow, scheduler, start, run, complete
+):
+    """It should handle no sequences within the start-stop cycle range.
+
+    See https://github.com/cylc/cylc-flow/issues/6154
+    """
+    cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': '1',
+            'graph': {
+                'P1': 'foo[-P1] => foo',
+            },
+        },
+    }
+    id_ = flow(cfg)
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        await complete(schd, '2/foo')
+
+    cfg['scheduling']['graph']['R1'] = cfg['scheduling']['graph']['P1']
+    cfg['scheduling']['graph'].pop('P1')
+    flow(cfg, workflow_id=id_)
+
+    schd = scheduler(id_, paused_start=False)
+    async with start(schd):
+        schd.pool.compute_runahead()
+        assert schd.pool.runahead_limit_point == IntegerPoint('3')
+
+
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
 @pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 async def test_runahead_future_trigger(

@@ -1,1 +1,0 @@
-Ensure that job submit/failure is logged, even when retries are planned.

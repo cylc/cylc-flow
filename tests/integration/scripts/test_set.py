@@ -19,15 +19,15 @@
 Note: see also functional tests
 """
 
-import pytest
 from secrets import token_hex
 from typing import Callable
+
+import pytest
 
 from cylc.flow.commands import (
     run_cmd,
     set_prereqs_and_outputs,
 )
-
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
