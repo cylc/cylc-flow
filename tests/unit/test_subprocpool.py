@@ -212,9 +212,8 @@ def test_xfunction_import_error():
     and successfully imported, we use an invalid module name as per Python
     spec.
     """
-    with TemporaryDirectory() as temp_dir:
-        with pytest.raises(ModuleNotFoundError):
-            get_xtrig_func("invalid-module-name", "func-name", temp_dir)
+    with TemporaryDirectory() as temp_dir, pytest.raises(ModuleNotFoundError):
+        get_xtrig_func("invalid-module-name", "func-name", temp_dir)
 
 
 def test_xfunction_attribute_error():

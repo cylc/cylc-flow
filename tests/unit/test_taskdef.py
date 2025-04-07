@@ -17,11 +17,9 @@
 import pytest
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.taskdef import generate_graph_parents
-from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.cycling.integer import IntegerPoint
-
-from .test_config import tmp_flow_config
+from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.taskdef import generate_graph_parents
 
 
 param = pytest.param

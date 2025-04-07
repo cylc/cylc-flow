@@ -42,6 +42,7 @@ from cylc.flow.task_outputs import (
 )
 
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_PREPARING,
@@ -56,7 +57,6 @@ from cylc.flow.task_state import (
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.scheduler import Scheduler
-    from cylc.flow.task_proxy import TaskProxy
 
 # NOTE: foo and bar have no parents so at start-up (even with the workflow
 # paused) they get spawned out to the runahead limit. 2/pub spawns
@@ -364,7 +364,10 @@ async def test_match_taskdefs(
             ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
              "No active tasks matching: 6/bar:waiting"],
-            id="Specifying task state works for active tasks, not inactive tasks"
+            id=(
+                "Specifying task state works for active tasks,"
+                " not inactive tasks"
+            )
         )
     ]
 )
@@ -1187,7 +1190,7 @@ async def test_detect_incomplete_tasks(
         }
     })
     schd = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
+    async with start(schd, level=logging.DEBUG):
         itasks = schd.pool.get_tasks()
         for itask in itasks:
             itask.state_reset(is_queued=False)
@@ -1231,7 +1234,7 @@ async def test_future_trigger_final_point(
         }
     )
     schd = scheduler(id_)
-    async with start(schd) as log:
+    async with start(schd):
         for itask in schd.pool.get_tasks():
             schd.pool.spawn_on_output(itask, "succeeded")
         assert log_filter(
@@ -1253,7 +1256,7 @@ async def test_set_failed_complete(
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
+    async with start(schd, level=logging.DEBUG):
         one = schd.pool.get_tasks()[0]
         one.state_reset(is_queued=False)
 
@@ -1310,7 +1313,7 @@ async def test_set_prereqs(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
+    async with start(schd):
 
         # it should start up with foo, bar, baz
         assert (
@@ -1324,7 +1327,9 @@ async def test_set_prereqs(
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/qux"], None, ["20400101T0000Z/foo:a"], ['all'])
         assert log_filter(
-            contains='20400101T0000Z/qux does not depend on "20400101T0000Z/foo:a"'
+            contains=(
+                '20400101T0000Z/qux does not depend on "20400101T0000Z/foo:a"'
+            )
         )
 
         # it should not add 20400101T0000Z/qux to the pool
@@ -1388,7 +1393,7 @@ async def test_set_bad_prereqs(
         schd.pool.set_prereqs_and_outputs(
             ["2040/bar"], None, prereqs, ['all'])
 
-    async with start(schd) as log:
+    async with start(schd):
         # Invalid: task name wildcard:
         set_prereqs(["2040/*"])
         assert log_filter(contains='Invalid prerequisite task name')
@@ -1430,7 +1435,7 @@ async def test_set_outputs_live(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
+    async with start(schd):
 
         # it should start up with just 1/foo
         assert pool_get_task_ids(schd.pool) == ["1/foo"]
@@ -1492,8 +1497,8 @@ async def test_set_outputs_live2(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
-        schd.pool.set_prereqs_and_outputs(["1/foo"], None, None, ['all'])
+    async with start(schd):
+        schd.pool.set_prereqs_and_outputs(["1/foo"], [], [], ['all'])
         assert not log_filter(
             contains="did not complete required outputs: ['a', 'b']"
         )
@@ -1527,7 +1532,7 @@ async def test_set_outputs_future(
     )
     schd = scheduler(id_)
 
-    async with start(schd) as log:
+    async with start(schd):
 
         # it should start up with just 1/a
         assert pool_get_task_ids(schd.pool) == ["1/a"]
@@ -2051,22 +2056,33 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         },
     })
     schd: 'Scheduler' = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
-
-        assert schd.pool.get_task(IntegerPoint("1"), "b") is not None, '1/b should be spawned on startup'
+    async with start(schd, level=logging.DEBUG):
+        assert schd.pool.get_task(IntegerPoint("1"), "b") is not None, (
+            '1/b should be spawned on startup'
+        )
 
         # set b, c1, c2 succeeded in flow 1
-        schd.pool.set_prereqs_and_outputs(['1/b', '1/c1', '1/c2'], prereqs=[], outputs=[], flow=[1])
+        schd.pool.set_prereqs_and_outputs(
+            ['1/b', '1/c1', '1/c2'], prereqs=[], outputs=[], flow=[1]
+        )
         schd.workflow_db_mgr.process_queued_ops()
 
         # set task c1:succeeded in flow 2
-        schd.pool.set_prereqs_and_outputs(['1/c1'], prereqs=[], outputs=[], flow=[2])
+        schd.pool.set_prereqs_and_outputs(
+            ['1/c1'], prereqs=[], outputs=[], flow=[2]
+        )
         schd.workflow_db_mgr.process_queued_ops()
 
         # set b:succeeded in flow 2 and check downstream spawning
-        schd.pool.set_prereqs_and_outputs(['1/b'], prereqs=[], outputs=[], flow=[2])
-        assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
-        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, '1/c2 (flow 2) should be spawned after 1/b:succeeded'
+        schd.pool.set_prereqs_and_outputs(
+            ['1/b'], prereqs=[], outputs=[], flow=[2]
+        )
+        assert schd.pool.get_task(IntegerPoint("1"), "c1") is None, (
+            '1/c1 (flow 2) should not be spawned after 1/b:succeeded'
+        )
+        assert schd.pool.get_task(IntegerPoint("1"), "c2") is not None, (
+            '1/c2 (flow 2) should be spawned after 1/b:succeeded'
+        )
 
 
 async def test_trigger_queue(one, run, db_select, complete):
@@ -2089,7 +2105,10 @@ async def test_trigger_queue(one, run, db_select, complete):
         # the merged flow should continue
         one.resume_workflow()
         await complete(one, timeout=2)
-        assert db_select(one, False, 'task_outputs', 'flow_nums') == [('[1, 2]',), ('[1]',)]
+        assert db_select(one, False, 'task_outputs', 'flow_nums') == [
+            ('[1, 2]',),
+            ('[1]',),
+        ]
 
 
 async def test_reload_xtriggers(flow, scheduler, start):
@@ -2169,8 +2188,11 @@ async def test_reload_xtriggers(flow, scheduler, start):
             'c': 'wall_clock(trigger_time=946688400)',
         }
 
+
 @pytest.mark.parametrize('expire_type', ['clock-expire', 'manual'])
-async def test_expire_dequeue_with_retries(flow, scheduler, start, expire_type):
+async def test_expire_dequeue_with_retries(
+    flow, scheduler, start, expire_type
+):
     """An expired waiting task should be removed from any queues.
 
     See https://github.com/cylc/cylc-flow/issues/6284
@@ -2343,7 +2365,7 @@ async def test_start_tasks(
         paused_start=False
     )
 
-    async with start(schd) as log:
+    async with start(schd):
         # capture any job submissions
         submitted_tasks = capture_submission(schd)
         assert submitted_tasks == set()

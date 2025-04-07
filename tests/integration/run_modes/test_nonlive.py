@@ -76,7 +76,7 @@ def submit_and_check_db():
 
             # Check that timestamps have been created:
             for timestamp in [
-                'time_submit', 'time_submit_exit',  'time_run', 'time_run_exit'
+                'time_submit', 'time_submit_exit', 'time_run', 'time_run_exit'
             ]:
                 assert task_jobs[timestamp] is not None
     return _inner
