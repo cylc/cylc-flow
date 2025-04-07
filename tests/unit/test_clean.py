@@ -21,6 +21,7 @@ from glob import iglob
 from pathlib import Path
 from subprocess import Popen
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -57,7 +58,6 @@ from cylc.flow.workflow_files import (
     get_symlink_dirs,
 )
 
-from .conftest import MonkeyMock
 from .filetree import (
     FILETREE_1,
     FILETREE_2,
@@ -67,6 +67,10 @@ from .filetree import (
     create_filetree,
     get_filetree_as_list,
 )
+
+
+if TYPE_CHECKING:
+    from .conftest import MonkeyMock
 
 
 NonCallableFixture = Any
@@ -153,7 +157,7 @@ def test_init_clean(
     opts: Dict[str, Any],
     clean_called: bool,
     remote_clean_called: bool,
-    monkeypatch: pytest.MonkeyPatch, monkeymock: MonkeyMock,
+    monkeypatch: pytest.MonkeyPatch, monkeymock: 'MonkeyMock',
     tmp_run_dir: Callable
 ) -> None:
     """Test the init_clean() function logic.
@@ -178,7 +182,7 @@ def test_init_clean(
 
 
 def test_init_clean__no_dir(
-    monkeymock: MonkeyMock, tmp_run_dir: Callable,
+    monkeymock: 'MonkeyMock', tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test init_clean() when the run dir doesn't exist"""
@@ -193,7 +197,7 @@ def test_init_clean__no_dir(
 
 
 def test_init_clean__no_db(
-    monkeymock: MonkeyMock, tmp_run_dir: Callable,
+    monkeymock: 'MonkeyMock', tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test init_clean() when the workflow database doesn't exist"""
@@ -211,7 +215,7 @@ def test_init_clean__no_db(
 
 
 def test_init_clean__remote_only_no_db(
-    monkeymock: MonkeyMock, tmp_run_dir: Callable
+    monkeymock: 'MonkeyMock', tmp_run_dir: Callable
 ) -> None:
     """Test remote-only init_clean() when the workflow DB doesn't exist"""
     tmp_run_dir('hoth')
@@ -251,7 +255,7 @@ def test_init_clean__rm_dirs(
     rm_dirs: Optional[List[str]],
     expected_clean: Set[str],
     expected_remote_clean: List[str],
-    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
+    monkeymock: 'MonkeyMock', monkeypatch: pytest.MonkeyPatch,
     tmp_run_dir: Callable
 ) -> None:
     """Test init_clean() with the --rm option.
@@ -264,7 +268,9 @@ def test_init_clean__rm_dirs(
     """
     id_ = 'dagobah'
     run_dir: Path = tmp_run_dir(id_)
-    Path(run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
+    Path(
+        run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB
+    ).touch()
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
     platforms = {'platform_one'}
@@ -775,7 +781,7 @@ def test_clean__targeted(
 def test_init_clean__targeted_bad(
     rm_dirs: List[str],
     tmp_run_dir: Callable,
-    monkeymock: MonkeyMock
+    monkeymock: 'MonkeyMock'
 ):
     """Test init_clean() fails when abusing --rm option."""
     tmp_run_dir('chalmers')
@@ -891,7 +897,7 @@ def test_remote_clean(
     expected_platforms: Optional[List[str]],
     exc_expected: bool,
     expected_err_msgs: List[str],
-    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
+    monkeymock: 'MonkeyMock', monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture, log_filter: Callable
 ) -> None:
     """Test remote_clean() logic.
@@ -958,7 +964,7 @@ def test_remote_clean(
 
 
 def test_remote_clean__timeout(
-    monkeymock: MonkeyMock,
+    monkeymock: 'MonkeyMock',
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -998,7 +1004,7 @@ def test_remote_clean__timeout(
 def test_remote_clean_cmd(
     rm_dirs: Optional[List[str]],
     expected_args: List[str],
-    monkeymock: MonkeyMock
+    monkeymock: 'MonkeyMock'
 ) -> None:
     """Test _remote_clean_cmd()
 

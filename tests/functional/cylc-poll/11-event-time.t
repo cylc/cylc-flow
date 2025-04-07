@@ -27,9 +27,9 @@ workflow_run_ok "${TEST_NAME_BASE}" \
 
 RUND="$RUN_DIR/${WORKFLOW_NAME}"
 sed -n 's/CYLC_JOB_EXIT_TIME=//p' "${RUND}/log/job/1/w1/NN/job.status" >'st-time.txt'
-sqlite3 "${RUND}/log/db" '
+sqlite3 "${RUND}/log/db" "
     SELECT time_run_exit FROM task_jobs
-    WHERE cycle=="1" AND name=="w1" AND submit_num=="1"' >'db-time.txt'
+    WHERE cycle=='1' AND name=='w1' AND submit_num=='1'" >'db-time.txt'
 run_ok "${TEST_NAME_BASE}-time-run-exit" diff -u 'st-time.txt' 'db-time.txt'
 
 purge

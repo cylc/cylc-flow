@@ -99,6 +99,7 @@ from cylc.flow.task_outputs import (
     get_trigger_completion_variable_maps,
     trigger_to_completion_variable,
 )
+from cylc.flow.task_qualifiers import TASK_QUALIFIERS
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
@@ -1844,6 +1845,7 @@ class WorkflowConfig:
 
         triggers = {}
         xtrig_labels = set()
+
         for left in left_nodes:
             if left.startswith('@'):
                 xtrig_labels.add(left[1:])
@@ -2266,6 +2268,10 @@ class WorkflowConfig:
                 parser.workflow_state_polling_tasks)
             self._proc_triggers(parser, seq, task_triggers)
 
+            # Checking for undefined outputs for terminal tasks. Tasks with
+            # dependencies are checked in generate_triggers:
+            self.check_terminal_outputs(parser.terminals)
+
         self.set_required_outputs(task_output_opt)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
@@ -2277,6 +2283,29 @@ class WorkflowConfig:
 
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
+
+    def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
+        """Check that task outputs have been registered with tasks.
+
+
+        Where a "terminal output" is an output for a task at the end of a
+        graph string, such as "end" in `start => middle => end`.
+
+        Raises: WorkflowConfigError if a custom output is not defined.
+        """
+        # BACK COMPAT: (On drop 3.7): Can be simplified with walrus :=
+        # if (b := a[1].strip("?")) not in TASK_QUALIFIERS
+        terminal_outputs = [
+            (a[0].strip("!"), a[1].strip("?"))
+            for a in (t.split(':') for t in terminals if ":" in t)
+            if (a[1].strip("?")) not in TASK_QUALIFIERS
+        ]
+
+        for task, output in terminal_outputs:
+            if output not in self.cfg['runtime'][task]['outputs']:
+                raise WorkflowConfigError(
+                    f"Undefined custom output: {task}:{output}"
+                )
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""

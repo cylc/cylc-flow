@@ -72,9 +72,9 @@ def test_wrapper_calls_function():
     flag = False
 
     async def test_coro(arg1, arg2):
+        nonlocal flag
         assert arg1 == 'arg1'
         assert arg2 == 'arg2'
-        nonlocal flag
         flag = True
 
     coro = _wrapper(
@@ -152,7 +152,6 @@ def basic_plugins():
     calls = []
 
     def capture(*args):
-        nonlocal calls
         calls.append(args)
 
     plugins = {

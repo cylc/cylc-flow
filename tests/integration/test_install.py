@@ -169,7 +169,6 @@ async def test_install_gets_back_compat_mode_for_plugins(
     @EntryPointWrapper
     def failIfDeprecated(*args, **kwargs):
         """A fake Cylc Plugin entry point"""
-        nonlocal check_deprecation_calls
         # print the number of times the check_deprecation method has been
         # called
         print(f'CALLS={len(check_deprecation_calls)}')

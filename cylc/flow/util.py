@@ -288,8 +288,6 @@ def restricted_evaluator(
     visitor = RestrictedNodeVisitor(whitelist)
 
     def _eval(expr, **variables):
-        nonlocal visitor
-
         # parse the expression
         try:
             expr_node = ast.parse(expr.strip(), mode='eval')

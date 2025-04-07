@@ -129,11 +129,15 @@ async def test_no_changes_needed(one_src, one_run, capsys, interactive):
     from expectation so this is a nice-to-have, not expected to work 100%
     of the time.
     """
-    assert not await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
+    assert not await reinstall_cli(
+        opts=ReInstallOptions(), workflow_id=one_run.id
+    )
     assert 'up to date with' in capsys.readouterr().out
 
 
-async def test_non_interactive(one_src, one_run, capsys, capcall, non_interactive):
+async def test_non_interactive(
+    one_src, one_run, capsys, capcall, non_interactive
+):
     """It should not perform a dry-run or prompt in non-interactive mode."""
     # capture reinstall calls
     reinstall_calls = capcall(
@@ -343,11 +347,8 @@ def my_install_plugin(monkeypatch):
     @EntryPointWrapper
     def post_install_basic(*_, **__):
         """Simple plugin that returns one env var and one template var."""
-        nonlocal progress
-
         async def my_async():
             # the async task
-            nonlocal progress
             await asyncio.sleep(2)
             progress.append('end')
 

@@ -130,6 +130,7 @@ def standardise_cli_cmds(monkeypatch):
     stable, this
     """
     from cylc.flow.tui.data import extract_context
+
     def _extract_context(selection):
         context = extract_context(selection)
         if 'workflow' in context:
@@ -143,6 +144,7 @@ def standardise_cli_cmds(monkeypatch):
         _extract_context,
     )
 
+
 @pytest.fixture
 def capture_commands(monkeypatch):
     ret = []
@@ -150,7 +152,6 @@ def capture_commands(monkeypatch):
 
     class _Popen:
         def __init__(self, *args, **kwargs):
-            nonlocal ret
             ret.append(args)
 
         def communicate(self):
@@ -158,7 +159,6 @@ def capture_commands(monkeypatch):
 
         @property
         def returncode(self):
-            nonlocal returncode
             return returncode[0]
 
     monkeypatch.setattr(
@@ -176,7 +176,7 @@ async def test_offline_mutation(
     capture_commands,
     standardise_cli_cmds,
 ):
-    id_ = flow(one_conf, name='one')
+    flow(one_conf, name='one')
     commands, returncode = capture_commands
 
     with rakiura(size='80,15') as rk:

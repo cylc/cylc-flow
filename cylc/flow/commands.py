@@ -103,7 +103,6 @@ COMMANDS: 'Dict[str, Command]' = {}
 def _command(name: str):
     """Decorator to register a command."""
     def _command(fcn: '_TCommand') -> '_TCommand':
-        nonlocal name
         COMMANDS[name] = fcn
         fcn.command_name = name  # type: ignore[attr-defined]
         return fcn

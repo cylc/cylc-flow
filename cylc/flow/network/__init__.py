@@ -53,6 +53,7 @@ if TYPE_CHECKING:
     # FROM: Python 3.7
     # TO: Python 3.11
     from typing_extensions import TypedDict
+    from zmq.asyncio import Context
 
 
 API = 5  # cylc API version
@@ -165,11 +166,11 @@ class ZMQSocketBase:
         pattern,
         workflow: str,
         bind: bool = False,
-        context: Optional[zmq.Context] = None,
+        context: 'Optional[Context]' = None,
     ):
         self.bind = bind
         if context is None:
-            self.context: zmq.Context = zmq.asyncio.Context()
+            self.context: 'Context' = zmq.asyncio.Context()
         else:
             self.context = context
         self.pattern = pattern

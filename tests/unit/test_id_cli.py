@@ -284,7 +284,6 @@ def patch_expand_workflow_tokens(monkeypatch):
     def _patch_expand_workflow_tokens(_ids):
 
         async def _expand_workflow_tokens_impl(tokens, match_active=True):
-            nonlocal _ids
             for id_ in _ids:
                 yield tokens.duplicate(workflow=id_)
 
@@ -589,10 +588,13 @@ def test_validate_number():
         _validate_number(t1, t2, max_tasks=1)
     _validate_number(t1, max_tasks=1)
     _validate_number(Tokens('a//1'), Tokens('a//2'), max_workflows=1)
-    _validate_number(Tokens('a'), Tokens('//2'), Tokens('//3'), max_workflows=1)
+    _validate_number(
+        Tokens('a'), Tokens('//2'), Tokens('//3'), max_workflows=1
+    )
     with pytest.raises(InputError):
         _validate_number(Tokens('a//1'), Tokens('b//1'), max_workflows=1)
     _validate_number(Tokens('a//1'), Tokens('b//1'), max_workflows=2)
+
 
 @pytest.fixture
 def no_scan(monkeypatch):

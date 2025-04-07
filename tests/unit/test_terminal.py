@@ -164,7 +164,6 @@ def stdinput(monkeypatch):
         lines = list(lines)
 
         def __input(_message):
-            nonlocal lines
             try:
                 return lines.pop(0)
             except IndexError:

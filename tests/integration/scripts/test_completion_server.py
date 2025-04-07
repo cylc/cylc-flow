@@ -28,7 +28,6 @@ def setify(coro):
     Convenience function to use when you want to test output not order.
     """
     async def _coro(*args, **kwargs):
-        nonlocal coro
         ret = await coro(*args, **kwargs)
         if isinstance(ret, list):
             return set(ret)

@@ -107,7 +107,6 @@ def filter_workflow_state(app):
     workflow_id_prompt = 'id (regex)'
 
     def update_id_filter(widget, value):
-        nonlocal app
         try:
             # ensure the filter is value before updating the filter
             re.compile(value)
@@ -301,8 +300,6 @@ def context(app):
         is_running = False
 
     def _mutate(mutation, _):
-        nonlocal app, selection
-
         app.open_overlay(partial(progress, text='Running Command'))
         overlay_fcn = None
         try:
@@ -381,12 +378,10 @@ def log(app, id_=None, list_files=None, get_log=None):
 
     def open_menu(*_args, **_kwargs):
         """Open an overlay for selecting a log file."""
-        nonlocal app, id_
         app.open_overlay(select_log)
 
     def select_log(*_args, **_kwargs):
         """Create an overlay for selecting a log file."""
-        nonlocal list_files, id_
         try:
             files = list_files()
         except Exception as exc:
@@ -424,8 +419,6 @@ def log(app, id_=None, list_files=None, get_log=None):
                 selected. Use this to close the "select_log" overlay.
 
         """
-
-        nonlocal host_widget, file_widget, text_widget
         try:
             host, path, text = get_log(filename)
         except Exception as exc:

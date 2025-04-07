@@ -57,7 +57,6 @@ async def cylc_list(mod_flow, mod_scheduler, mod_start):
     schd = mod_scheduler(id_)
 
     async def _list(capsys, **kwargs):
-        nonlocal schd
         capsys.readouterr()
         await _main(ListOptions(**kwargs), schd.workflow)
         out, err = capsys.readouterr()
@@ -151,7 +150,6 @@ async def test_mro(cylc_list, supports_utf8, capsys):
 
     with pytest.raises(InputError):
         await cylc_list(capsys, titles=True, mro=True)
-
 
 
 async def test_tree(cylc_list, supports_utf8, capsys):

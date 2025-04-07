@@ -17,6 +17,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  FORCE_COLOR: 2
+  PIP_PROGRESS_BAR: off
+
 jobs:
   test:
     strategy:

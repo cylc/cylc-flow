@@ -11,6 +11,19 @@ on:
         required: false
         default: 'master'
 
+concurrency:
+  # Only let this run 1 at a time
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  FORCE_COLOR: 2
+  PIP_PROGRESS_BAR: off
+
 jobs:
   create-release-pr:
     runs-on: ubuntu-latest
@@ -54,6 +67,6 @@ jobs:
       - name: Create pull request
         uses: cylc/release-actions/stage-1/create-release-pr@v1
         with:
-          test-workflows: test_fast.yml, test_functional.yml, bash.yml, test_manylinux.yml, test_conda-build.yml
+          test-workflows: test_fast.yml, test_functional.yml, bash.yml, test_conda-build.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
