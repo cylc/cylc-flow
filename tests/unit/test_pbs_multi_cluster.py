@@ -16,7 +16,9 @@
 
 import unittest
 
-from cylc.flow.job_runner_handlers.pbs_multi_cluster import *
+from cylc.flow.job_runner_handlers.pbs_multi_cluster import (
+    PBSMulticlusterHandler,
+)
 
 
 def get_test_filter_poll_many_output():

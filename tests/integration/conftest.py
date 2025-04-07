@@ -454,7 +454,7 @@ def capture_polling():
         polled_tasks: 'Set[TaskProxy]' = set()
 
         def run_job_cmd(
-            _1, _2, itasks, _3, _4=None
+            _1, itasks, _3, _4=None
         ):
             polled_tasks.update(itasks)
             return itasks
@@ -570,7 +570,11 @@ def reflog():
                 deps = tuple(sorted(itask.state.get_resolved_dependencies()))
                 if flow_nums:
                     triggers.add(
-                        (itask.identity, serialise_set(itask.flow_nums), deps or None)
+                        (
+                            itask.identity,
+                            serialise_set(itask.flow_nums),
+                            deps or None,
+                        )
                     )
                 else:
                     triggers.add((itask.identity, deps or None))
@@ -735,8 +739,8 @@ def capture_live_submissions(capcall, monkeypatch):
     If you call this fixture from a test, it will return a set of tasks that
     would have been submitted had this fixture not been used.
     """
-    def fake_submit(self, _workflow, itasks, *_):
-        self.submit_nonlive_task_jobs(_workflow, itasks, RunMode.SIMULATION)
+    def fake_submit(self, itasks, *_):
+        self.submit_nonlive_task_jobs(itasks, RunMode.SIMULATION)
         for itask in itasks:
             for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
                 self.task_events_mgr.process_message(
@@ -753,12 +757,10 @@ def capture_live_submissions(capcall, monkeypatch):
         'cylc.flow.task_job_mgr.TaskJobManager.submit_livelike_task_jobs',
         fake_submit)
 
-
-
     def get_submissions():
         return {
             itask.identity
-            for ((_self, _workflow, itasks, *_), _kwargs) in submit_live_calls
+            for ((_self, itasks, *_), _kwargs) in submit_live_calls
             for itask in itasks
         }
 

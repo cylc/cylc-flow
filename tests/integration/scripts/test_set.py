@@ -21,12 +21,37 @@ Note: see also functional tests
 
 import logging
 import pytest
+from secrets import token_hex
+
+from cylc.flow.commands import (
+    run_cmd,
+    set_prereqs_and_outputs,
+)
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED,
+)
+from cylc.flow.task_state import (
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+)
+
+
+def outputs_section(*names: str) -> dict:
+    """Create outputs section with random messages for the given output names.
+    """
+    return {
+        'outputs': {
+            name: token_hex() for name in names
+        }
+    }
 
 from typing import Callable
 
@@ -198,3 +223,77 @@ async def test_bad_prereq(
         schd.pool.set_prereqs_and_outputs(['1/c'], [], ['1/b'], [])
         assert schd.pool.get_task_ids() == {'1/a', '1/c'}
         await complete(schd, '1/c', timeout=5)
+
+        
+async def test_no_outputs_given(flow, scheduler, start):
+    """Test `cylc set` without providing any outputs.
+
+    It should set the "success pathway" outputs.
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'graph': {
+                    'R1': r"""
+                        foo? => alpha
+                        foo:submitted? => bravo
+                        foo:started? => charlie
+                        foo:x => xray
+                        # Optional custom outputs not emitted:
+                        foo:y? => yankee
+                        # Non-success-pathway outputs not emitted:
+                        foo:submit-failed? => delta
+                    """,
+                },
+            },
+            'runtime': {
+                'foo': outputs_section('x', 'y'),
+            },
+        })
+    )
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+        await run_cmd(
+            set_prereqs_and_outputs(schd, [foo.identity], [FLOW_ALL])
+        )
+        assert set(foo.state.outputs.get_completed_outputs()) == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+            TASK_OUTPUT_SUCCEEDED,
+            'x'
+        }
+        assert schd.pool.get_task_ids() == {
+            '1/alpha',
+            '1/bravo',
+            '1/charlie',
+            '1/xray',
+        }
+
+
+async def test_completion_expr(flow, scheduler, start):
+    """Test `cylc set` without providing any outputs on a task that has a
+    custom completion expression."""
+    conf = {
+        'scheduling': {
+            'graph': {
+                'R1': 'foo? | foo:x? => bar'
+            },
+        },
+        'runtime': {
+            'foo': {
+                **outputs_section('x'),
+                'completion': '(succeeded or x) or failed'
+            },
+        },
+    }
+    schd: Scheduler = scheduler(flow(conf))
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+        await run_cmd(
+            set_prereqs_and_outputs(schd, [foo.identity], [FLOW_ALL])
+        )
+        assert set(foo.state.outputs.get_completed_outputs()) == {
+            TASK_OUTPUT_SUBMITTED,
+            TASK_OUTPUT_STARTED,
+            TASK_OUTPUT_SUCCEEDED,
+        }

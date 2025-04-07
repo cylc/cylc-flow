@@ -15,12 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import sys
 
-from async_timeout import timeout as async_timeout
 import pytest
 from types import MethodType
 
 from cylc.flow.scheduler import SchedulerError
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as async_timeout
+else:
+    from async_timeout import timeout as async_timeout
 
 
 EVENTS = (
@@ -228,6 +234,7 @@ async def test_shutdown_handler_timeout_kill(
             await asyncio.sleep(0.1)
 
     assert (
-        "[('workflow-event-handler-00', 'shutdown') err] killed on timeout (PT1S)"
+        "[('workflow-event-handler-00', 'shutdown') err]"
+        " killed on timeout (PT1S)"
         in caplog.text
     )
