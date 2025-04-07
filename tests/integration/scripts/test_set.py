@@ -19,11 +19,16 @@
 Note: see also functional tests
 """
 
+import logging
+import pytest
+
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import TASK_STATUS_SUCCEEDED, TASK_STATUS_WAITING
+
+from typing import Callable
 
 
 async def test_set_parentless_spawning(
@@ -164,3 +169,32 @@ async def test_pre_all(flow, scheduler, run):
         schd.pool.set_prereqs_and_outputs(['1/z'], [], ['all'], ['all'])
         warn_or_higher = [i for i in log.records if i.levelno > 30]
         assert warn_or_higher == []
+
+
+async def test_bad_prereq(
+    flow: 'Callable',
+    scheduler: 'Callable',
+    run: 'Callable',
+    complete: 'Callable',
+    caplog: 'pytest.LogCaptureFixture'
+):
+    """Attempting to set an invalid prerequisite should not leave a trace in
+    the DB that prevents the target task from spawning. later on.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': 'a => b => c'},
+        },
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        schd.pool.set_prereqs_and_outputs(['1/c'], [], ['1/a'], [])
+        assert schd.pool.get_task_ids() == {'1/a'}
+        assert '1/c does not depend on "1/a:succeeded"' in caplog.text
+
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # This will fail if the previous set left 1/c in the DB:
+        schd.pool.set_prereqs_and_outputs(['1/c'], [], ['1/b'], [])
+        assert schd.pool.get_task_ids() == {'1/a', '1/c'}
+        await complete(schd, '1/c', timeout=5)
