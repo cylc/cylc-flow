@@ -1528,7 +1528,7 @@ async def test_set_outputs_future(
             prereqs=[],
             flow=['all']
         )
-        assert log_filter(contains="output 1/a:cheese not found")
+        assert log_filter(contains="Output 1/a:cheese not found")
         assert log_filter(contains="completed output x")
         assert log_filter(contains="completed output y")
 
