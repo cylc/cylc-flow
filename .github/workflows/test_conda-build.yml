@@ -22,6 +22,7 @@ env:
 
 jobs:
   test_conda_install:
+    if: github.repository_owner == 'cylc' || github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:

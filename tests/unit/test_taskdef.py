@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from pytest import param
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.integer import IntegerPoint
@@ -22,10 +23,7 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.taskdef import generate_graph_parents
 
 
-param = pytest.param
-
-
-def test_generate_graph_parents_1(tmp_flow_config):
+def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
     """Test that parents are only generated from valid recurrences."""
     id_ = 'pan-galactic'
     flow_file = tmp_flow_config(
@@ -66,7 +64,7 @@ def test_generate_graph_parents_1(tmp_flow_config):
         ]
 
 
-def test_generate_graph_parents_2(tmp_flow_config):
+def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     """Test inferred parents are valid w.r.t to their own recurrences."""
     id_ = 'gargle-blaster'
     flow_file = tmp_flow_config(
@@ -132,7 +130,8 @@ def test_generate_graph_parents_2(tmp_flow_config):
         ),
     ],
 )
-def test_get_prereqs(tmp_flow_config, task, point, expected):
+def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
+
     """Test that get_prereqs() returns the correct prerequisites
     for a task."""
     id_ = 'gargle-blaster'

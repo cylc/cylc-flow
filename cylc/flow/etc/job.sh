@@ -95,6 +95,7 @@ cylc__job__main() {
         CYLC_TASK_WORK_DIR_BASE="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     fi
     export CYLC_TASK_WORK_DIR="${CYLC_WORKFLOW_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
+    export CYLC_TASK_SHARE_CYCLE_DIR="${CYLC_WORKFLOW_SHARE_DIR}/cycle/${CYLC_TASK_CYCLE_POINT}"
     typeset contact="${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
     if [[ -f "${contact}" ]]; then
         # (contact file not present for polled platforms)
@@ -134,7 +135,7 @@ cylc__job__main() {
     export PATH="${CYLC_WORKFLOW_RUN_DIR}/share/bin:${CYLC_WORKFLOW_RUN_DIR}/bin:${PATH}"
     export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
-    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}" || true
+    mkdir -p "${CYLC_TASK_SHARE_CYCLE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
