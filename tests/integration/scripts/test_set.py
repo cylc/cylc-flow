@@ -19,9 +19,9 @@
 Note: see also functional tests
 """
 
-import logging
 import pytest
 from secrets import token_hex
+from typing import Callable
 
 from cylc.flow.commands import (
     run_cmd,
@@ -52,8 +52,6 @@ def outputs_section(*names: str) -> dict:
             name: token_hex() for name in names
         }
     }
-
-from typing import Callable
 
 
 async def test_set_parentless_spawning(
@@ -224,7 +222,7 @@ async def test_bad_prereq(
         assert schd.pool.get_task_ids() == {'1/a', '1/c'}
         await complete(schd, '1/c', timeout=5)
 
-        
+
 async def test_no_outputs_given(flow, scheduler, start):
     """Test `cylc set` without providing any outputs.
 

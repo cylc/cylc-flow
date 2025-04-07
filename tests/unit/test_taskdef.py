@@ -105,7 +105,6 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     ]
 
 
-
 @pytest.mark.parametrize(
     "task, point, expected",
     [
@@ -135,7 +134,8 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
         ),
     ],
 )
-def test_get_prereqs(tmp_flow_config, task, point, expected):
+def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
+
     """Test that get_prereqs() returns the correct prerequisites
     for a task."""
     id_ = 'gargle-blaster'
