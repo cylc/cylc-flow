@@ -228,6 +228,9 @@ class JobFileWriter:
         handle.write(
             "\n    export CYLC_PROFILE="
             f"{job_conf['platform']['profile']['activate']}")
+        handle.write(
+            "\n    export CYLC_CGROUP="
+            f"{job_conf['platform']['profile']['cgroups path']}")
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))

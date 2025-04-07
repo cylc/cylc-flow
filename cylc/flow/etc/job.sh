@@ -141,7 +141,7 @@ cylc__job__main() {
     cd "${CYLC_TASK_WORK_DIR}"
 
     if [[ "${CYLC_PROFILE}" == "True" ]] ; then
-       cylc profile &
+       cylc profile -m "${CYLC_CGROUP}" &
        export profiler_pid="$!"
     fi
 
@@ -163,20 +163,20 @@ cylc__job__main() {
             cylc__set_return "$ret_code"
         fi
     }
+    cylc__kill_profiler
     # Grab the max rss and cpu_time value before moving directory
     if [[ -f "max_rss" ]]; then
-      max_rss=$(sed -n '1p' max_rss)
+      max_rss=$(sed -n 'p' max_rss)
       rm max_rss
     fi
     if [[ -f "cpu_time" ]]; then
-      cpu_time=$(sed -n '1p' cpu_time)
+      cpu_time=$(sed -n 'p' cpu_time)
       rm cpu_time
     fi
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
-    cylc__kill_profiler
 
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
 

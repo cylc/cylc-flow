@@ -15,15 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
+import unittest.mock
+
 from cylc.flow.scripts.profiler import (parse_memory_file,
                                         parse_cpu_file,
                                         write_data,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
+                                        get_config,
                                         stop_profiler,
                                         profile)
 import pytest
+import argparse
 from unittest import mock
 
 
@@ -194,3 +198,31 @@ def test_profile_2(mocker):
 
     profile(process, 1, 1, run_once)
     mock_file.assert_called_with("cpu_time", "w")
+
+
+def test_get_config(mocker):
+
+    # Mock the 'open' function call to return a valid string.
+    mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
+    mocker.patch("builtins.open", mock_file)
+
+    # Mock the get_cgroup_version function so it says the cgroup path is valid
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
+                 return_value=1)
+    # Mock the parse functions so they return valid values
+    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
+                 return_value=1024)
+    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
+
+    # Mock the write_data function to simulate writing data. It will error out on the 3rd call
+    mock_write = mock.Mock(side_effect=[None, None, FileNotFoundError('Carpe Diem')])
+    mocker.patch("cylc.flow.scripts.profiler.write_data", mock_write)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-i", type=int, default=10, dest="delay")
+    parser.add_argument(
+        "-m", type=str, default="test_location/",
+        dest="cgroup_location")
+    with pytest.raises(FileNotFoundError):
+        get_config(parser.parse_args())
