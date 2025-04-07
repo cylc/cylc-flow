@@ -206,7 +206,10 @@ async def test_shutdown_handler_timeout_kill(
         self.workflow_event_handler.handle(self, event, str(reason))
 
     # Configure a long-running shutdown handler.
-    schd = test_scheduler({'shutdown handlers': 'sleep 10; echo'})
+    schd = test_scheduler({
+        'shutdown handlers': 'sleep 10; echo',
+        'mail events': [],
+    })
 
     # Set a low process pool timeout value.
     mock_glbl_cfg(
