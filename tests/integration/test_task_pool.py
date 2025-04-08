@@ -41,7 +41,6 @@ from cylc.flow.flow_mgr import (
     FLOW_ALL,
     FLOW_NONE,
 )
-from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
@@ -1172,27 +1171,26 @@ async def test_detect_incomplete_tasks(
     incomplete_final_task_states = {
         # final task states that would leave a task with
         # completion=succeeded incomplete
-        TASK_STATUS_FAILED: TaskEventsManager.EVENT_FAILED,
-        TASK_STATUS_EXPIRED: TaskEventsManager.EVENT_EXPIRED,
-        TASK_STATUS_SUBMIT_FAILED: TaskEventsManager.EVENT_SUBMIT_FAILED
+        TASK_STATUS_FAILED,
+        TASK_STATUS_EXPIRED,
+        TASK_STATUS_SUBMIT_FAILED,
     }
     id_ = flow({
         'scheduling': {
             'graph': {
                 # a workflow with one task for each of the final task states
-                'R1': '\n'.join(incomplete_final_task_states.keys())
+                'R1': '\n'.join(incomplete_final_task_states)
             }
         }
     })
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd, level=logging.DEBUG):
         itasks = schd.pool.get_tasks()
         for itask in itasks:
             itask.state_reset(is_queued=False)
             # spawn the output corresponding to the task
             schd.pool.task_events_mgr.process_message(
-                itask, 1,
-                incomplete_final_task_states[itask.tdef.name]
+                itask, 1, message=itask.tdef.name
             )
             # ensure that it is correctly identified as incomplete
             assert not itask.state.outputs.is_complete()

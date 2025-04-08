@@ -37,7 +37,6 @@ from cylc.flow.data_store_mgr import (
 )
 from cylc.flow.id import Tokens
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
@@ -576,7 +575,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
         # satisfy the submitted & started outputs
         # (note started implies submitted)
         one.task_events_mgr.process_message(
-            itask, 'INFO', TaskEventsManager.EVENT_STARTED
+            itask, 'INFO', TASK_OUTPUT_STARTED
         )
 
         # the delta should be populated with the newly satisfied outputs
@@ -596,7 +595,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
 
         # satisfy the succeeded output
         one.task_events_mgr.process_message(
-            itask, 'INFO', TaskEventsManager.EVENT_SUCCEEDED
+            itask, 'INFO', TASK_OUTPUT_SUCCEEDED
         )
 
         # the delta should be populated with ALL satisfied outputs
