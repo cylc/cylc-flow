@@ -28,22 +28,31 @@ import json
 import os
 from pathlib import Path
 import shlex
-import stat
-import sys
-import traceback
 from shutil import rmtree
 from signal import SIGKILL
+import stat
 from subprocess import DEVNULL  # nosec
+import sys
+import traceback
+from typing import Optional
 
-from cylc.flow.task_message import (
-    CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
-    CYLC_MESSAGE)
 from cylc.flow.cylc_subproc import procopen
+from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow.task_job_logs import (
-    JOB_LOG_ERR, JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_STATUS)
+    JOB_LOG_ERR,
+    JOB_LOG_JOB,
+    JOB_LOG_OUT,
+    JOB_LOG_STATUS,
+)
+from cylc.flow.task_message import (
+    CYLC_JOB_EXIT,
+    CYLC_JOB_EXIT_TIME,
+    CYLC_JOB_INIT_TIME,
+    CYLC_JOB_PID,
+    CYLC_MESSAGE,
+)
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
 JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
@@ -71,15 +80,15 @@ class JobPollContext():
 
     def __init__(self, job_log_dir, **attrs):
         self.job_log_dir = job_log_dir
-        self.job_runner_name = None
+        self.job_runner_name: Optional[str] = None
         self.job_id = None
-        self.job_runner_exit_polled = None
+        self.job_runner_exit_polled: Optional[int] = None
         self.pid = None
-        self.run_status = None
-        self.run_signal = None
-        self.time_submit_exit = None
-        self.time_run = None
-        self.time_run_exit = None
+        self.run_status: Optional[int] = None
+        self.run_signal: Optional[str] = None
+        self.time_submit_exit: Optional[str] = None
+        self.time_run: Optional[str] = None
+        self.time_run_exit: Optional[str] = None
         self.job_runner_call_no_lines = None
         self.messages = []
 
