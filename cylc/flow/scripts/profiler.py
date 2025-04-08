@@ -100,8 +100,8 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
 
 
 def write_data(data, filename):
-        with open(filename, 'w') as f:
-            f.write(data + "\n")
+    with open(filename, 'w') as f:
+        f.write(data + "\n")
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
