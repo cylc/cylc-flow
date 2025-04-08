@@ -166,11 +166,11 @@ cylc__job__main() {
     cylc__kill_profiler
     # Grab the max rss and cpu_time value before moving directory
     if [[ -f "max_rss" ]]; then
-      max_rss=$(sed -n 'p' max_rss)
+      max_rss=$(cat max_rss)
       rm max_rss
     fi
     if [[ -f "cpu_time" ]]; then
-      cpu_time=$(sed -n 'p' cpu_time)
+      cpu_time=$(cat cpu_time)
       rm cpu_time
     fi
     # Empty work directory remove
