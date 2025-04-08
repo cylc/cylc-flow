@@ -17,30 +17,27 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run, even in a paused workflow.
+Force tasks to run, even in a paused workflow.
+
+For a group of tasks, off-group prerequisites will be satisfied automatically
+to prevent a stall, and in-group prerequisites will respected by the flow.
+
+By default flow history of target tasks will be removed to allow rerun in the
+same flow. Use the `--flow` option to trigger a new flow.
 
 Triggering a task that is not yet queued will queue it; triggering a queued
 task will run it - so un-queued tasks may need to be triggered twice.
 
 Tasks can't be triggered if already active (preparing, submitted, running).
 
-Triggering a group of tasks at once:
-  Dependence on tasks beyond the group ("off-group prerequisites") will be
-  satisfied automatically; in-group prerequisites will be left to the flow.
+Group trigger is normally the easiest way to manually (re)run a sub-graph.
 
-Triggering a sub-graph:
-  * Group approach: trigger all sub-graph tasks as a group. The forced
-  satisfaction of off-group prerequisites will automatically avoid a stall.
-  * Fundamental approach: trigger the initial tasks of the sub-graph to start
-  the flow, and manually set off-flow prerequisites to prevent a stall.
+Otherwise, use `cylc set` to manually satisfy all off-flow prerequisites (or
+trigger initial tasks and set other off-flow prerequisites) after erasing
+(to rerun in the same flow) flow history with `cylc remove`.
 
-Triggering past tasks:
-  If flows are not specified (i.e., no use of --flow) the flow-history of
-  target tasks will be erased (see also "cylc remove") so that the graph can
-  be re-traversed without starting a new flow.
-  Rarely, you may want to retain flow history even if not starting a new flow.
-  If so, use `--flow=all` avoid the erasure. Example: triggering a task twice
-  with `--wait` to complete different outputs.
+Use `-flow=all` to trigger without erasing flow history or starting a new flow,
+e.g. to trigger a task twice with `--wait` to complete different outputs.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -51,6 +48,14 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+  # rerun (same flow) `a => b & c` ignoring off-group prerequisite `off => b`
+  $ cylc trigger test //1234/a //1234/b //1234/c
+
+  # rerun (same flow) `a => b & c` ignoring `off => b`, the flow-native way
+  $ cylc remove test //1234/a //1234/b //1234/c  # erase flow history
+  $ cylc trigger test//1234/a  # trigger initial task
+  $ cylc set --pre=1234/off test//1234/b  # satisfy off-flow prerequisites
 
 Cylc queues:
   Queues limit how many tasks can be active (preparing, submitted, running) at
@@ -68,8 +73,8 @@ Flows:
   * by default they are assigned all active flows
   * otherwise, they are assigned the --flow value
 
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
+  Note --flow=new increments the global flow counter with each use. If it takes
+  multiple commands to start a new flow use the actual flow number
   after the first command (you can read it from the scheduler log).
 """
 
