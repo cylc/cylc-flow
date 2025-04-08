@@ -14,9 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime, timedelta
+import os
 import pytest
 import sqlite3
+import time
 from typing import TYPE_CHECKING
+
+from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import commands
 
@@ -178,3 +183,36 @@ async def test_record_only_non_clock_triggers(
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
         ('xrandom(100, _=Not a real wall clock trigger)',)]
+
+
+async def test_time_zone_writing(one_conf, flow, scheduler, run, complete):
+    """Don't store scheduler startup timezone forever.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    # Set the timezone to something other than the system time zone:
+    load_time_tz = get_local_time_zone()
+    os.environ['TZ'] = 'Australia/Eucla'
+    time.tzset()
+    new_tz = get_local_time_zone()
+    assert new_tz != load_time_tz
+
+    wid = flow(one_conf)
+    schd = scheduler(wid, paused_start=False)
+    async with run(schd):
+        await complete(schd, timeout=20)
+
+        # Check the db time_submit (defective) against time_submit_exit
+        # which was ok:
+        conn = schd.workflow_db_mgr.pub_dao.connect()
+        time_submit, time_submit_exit = conn.execute(
+            r'SELECT time_submit, time_submit_exit FROM task_jobs'
+        ).fetchone()
+        time_submit = datetime.strptime(time_submit, '%Y-%m-%dT%H:%M:%S%z')
+        time_submit_exit = datetime.strptime(
+            time_submit_exit, '%Y-%m-%dT%H:%M:%S%z'
+        )
+
+        # If submission time is > 20 seconds we may have other problems:
+        assert time_submit_exit >= time_submit
+        assert time_submit_exit < time_submit + timedelta(seconds=10)
