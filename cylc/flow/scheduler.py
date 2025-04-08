@@ -85,6 +85,7 @@ from cylc.flow.flow_mgr import (
     repr_flow_nums,
     stringify_flow_nums,
 )
+
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -1104,7 +1105,9 @@ class Scheduler:
         return len(unkillable)
 
     def remove_tasks(
-        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
+        self,
+        items: Iterable[str],
+        flow_nums: 'FlowNums',
     ) -> None:
         """Remove tasks (`cylc remove` command).
 
@@ -1113,14 +1116,13 @@ class Scheduler:
             flow_nums: Flows to remove the tasks from. If empty or None, it
                 means 'all'.
         """
-        active, inactive, _unmatched = self.pool.filter_task_proxies(
+        active, inactive, _ = self.pool.filter_task_proxies(
             items, warn_no_active=False, inactive=True
         )
-        if not (active or inactive):
-            return
+        if active or inactive:
+            self.remove_matched_tasks(active, inactive, flow_nums)
 
-        if flow_nums is None:
-            flow_nums = set()
+    def remove_matched_tasks(self, active, inactive, flow_nums):
         # Mapping of *relative* task IDs to removed flow numbers:
         removed: Dict[Tokens, FlowNums] = {}
         not_removed: Set[Tokens] = set()
@@ -1234,6 +1236,144 @@ class Scheduler:
 
         if removed and self.pool.compute_runahead():
             self.pool.release_runahead_tasks()
+
+    def force_trigger_tasks(
+        self,
+        items: Iterable[str],
+        flow: List[str],
+        flow_wait: bool = False,
+        flow_descr: Optional[str] = None,
+        on_resume: bool = False
+    ):
+        """Manually trigger a selected group of tasks.
+
+        Satisfy any off-group prerequisites. Group start tasks (parentless,
+        or only off-group prerequisites) will run immediately. In-group
+        prerequisites will be respected.
+
+s       TODO: xtriggers need to be ignored within the group (currently only
+        works for group start tasks).
+        """
+        active, inactive, _ = self.pool.filter_task_proxies(
+            items, inactive=True, warn_no_active=False,
+        )
+
+        group_ids = (
+            [(tdef.name, str(point)) for (tdef, point) in inactive] +
+            [(itask.tdef.name, str(itask.point)) for itask in active]
+        )
+
+        flow_nums = self.pool.get_flow_nums(flow, flow_descr)
+
+        # Record off-group prerequisites, and active tasks to be removed.
+        active_tasks_to_remove = []
+
+        for itask in active:
+            # Find active group start tasks (parentless, or only off-group
+            # prerequisites) and set all of their prerequisites (trigger now).
+
+            # Compute prerequisites from the tdef in case active tasks were
+            # spawned before a reload (which could alter prerequisites).
+
+            # Non group start tasks, and final-status group start tasks, will
+            # be removed and triggered from scratch (so only the tdef matters).
+
+            # Waiting group start tasks are not removed, but a reload would
+            # replace them, so using the tdef is fine.
+            # Preparing, submitted, or running group start tasks are already
+            # already active, so we leave them be.
+            if not any(
+                (trg.task_name, str(trg.get_point(itask.point))) in group_ids
+                for trg in itask.tdef.get_triggers(itask.point)
+            ):
+                # No in-group prereqs: this is a group start task.
+                if flow == ['none'] and itask.flow_nums != set():
+                    LOG.error(
+                        f"[{itask}] ignoring 'flow=none' trigger: task already"
+                        f" has {repr_flow_nums(itask.flow_nums, full=True)}"
+                    )
+                    continue
+
+                if itask.state(
+                    TASK_STATUS_PREPARING,
+                    *TASK_STATUSES_ACTIVE
+                ):
+                    LOG.error(f"[{itask}] ignoring trigger - already active")
+                    # Just merge the flows.
+                    self.pool.merge_flows(itask, flow_nums)
+
+                elif itask.state(TASK_STATUS_WAITING):
+                    # Satisfy off-group prereqs of waiting group start task.
+                    # These are the only prereqs, by definition, so set all.
+                    LOG.info(
+                        f"Satisfying all off-group prerequisites of {itask}")
+                    itask.state.set_prerequisites_all_satisfied()
+                    self.pool.merge_flows(itask, flow_nums)
+                    # LOG.info(f"Triggering group start task {itask.identity}")
+                    self.pool.queue_or_trigger(itask, on_resume)
+                else:
+                    active_tasks_to_remove.append(itask)
+            else:
+                active_tasks_to_remove.append(itask)
+
+        # remove all inactive and selected active group members
+        self.remove_matched_tasks(active_tasks_to_remove, inactive, flow)
+
+        # store removal results before moving on
+        self.workflow_db_mgr.process_queued_ops()
+
+        # satisfy off-group prerequisites in inactive and removed active tasks
+        if not flow:
+            flow_nums = self.pool._get_active_flow_nums()
+
+        stuff = inactive
+        if active_tasks_to_remove:
+            stuff.update(
+                {
+                    (itask.tdef, itask.point)
+                    for itask in active_tasks_to_remove
+                }
+            )
+
+        for tdef, point in stuff:
+            in_flow_prereqs = False
+            jtask: Optional[TaskProxy] = None
+            if tdef.is_parentless(point):
+                # parentless: set pre=all to spawn into task pool
+                jtask = self.pool._set_prereqs_tdef(
+                    point, tdef, [], flow_nums, flow_wait, set_all=True
+                )
+            else:
+                off_flow_prereqs = {
+                    Tokens(cycle=key.point, task=key.task, task_sel=key.output)
+                    for pre in tdef.get_prereqs(point)
+                    for key in pre.keys()
+                    if (key.task, str(key.point)) not in group_ids
+                }
+                in_flow_prereqs = any(
+                    {
+                        key
+                        for pre in tdef.get_prereqs(point)
+                        for key in pre.keys()
+                        if (key.task, str(key.point)) in group_ids
+                    }
+                )
+                if off_flow_prereqs:
+                    msg = (
+                        "Satisfying off-group prerequisites"
+                        f" of {point}/{tdef.name}:"
+                    )
+                    for p in off_flow_prereqs:
+                        msg += f"\n * {p['cycle']}/{p['task']}:{p['task_sel']}"
+                    LOG.info(msg)
+                    jtask = self.pool._set_prereqs_tdef(
+                        point, tdef, off_flow_prereqs, flow_nums, flow_wait,
+                        set_all=False
+                    )
+            if jtask is not None and not in_flow_prereqs:
+                # LOG.info(f"Triggering group start task {jtask.identity}")
+                self.pool.queue_or_trigger(jtask, on_resume)
+        self.pool.release_runahead_tasks()
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1545,11 +1685,14 @@ class Scheduler:
 
         for itask in submitted:
             flow = stringify_flow_nums(itask.flow_nums) or FLOW_NONE
-            LOG.log(
-                log_lvl,
-                f"{itask.identity} -triggered off "
-                f"{itask.state.get_resolved_dependencies()} in flow {flow}"
-            )
+            if itask.is_manual_submit:
+                off = f"[] in flow {flow}"
+            else:
+                off = (
+                    f"{itask.state.get_resolved_dependencies()}"
+                    f" in flow {flow}"
+                )
+            LOG.log(log_lvl, f"{itask.identity} -triggered off {off}")
 
         # one or more tasks were passed through the submission pipeline
         return True
