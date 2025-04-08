@@ -19,6 +19,7 @@ import re
 from pathlib import Path
 from shutil import rmtree
 from typing import Callable, List, Optional, Tuple
+import time
 
 import pytest
 
@@ -269,3 +270,17 @@ def import_object_from_string(string):
         obj = getattr(obj, part)
 
     return obj
+@pytest.fixture
+def set_timezone(monkeypatch):
+    """Fixture to temporarily set a timezone.
+
+    Will use a very implausible timezone if none is provided.
+    """
+    def patch(time_zone: str = 'XXX-19:17'):
+        monkeypatch.setenv('TZ', time_zone)
+        time.tzset()
+
+    try:
+        yield patch
+    finally:
+        time.tzset()  # Reset to the original time zone after the test
