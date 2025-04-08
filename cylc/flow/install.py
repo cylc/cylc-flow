@@ -224,6 +224,10 @@ def reinstall_workflow(
     # * command is constructed via internal interface
     stdout, stderr = (i.strip() for i in proc.communicate())
 
+    reinstall_log.info(
+        f"Copying files from {source} to {rundir}"
+        f"\n{stdout}"
+    )
     if proc.returncode != 0:
         raise WorkflowFilesError(
             f'An error occurred reinstalling from {source} to {rundir}'
