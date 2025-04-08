@@ -55,6 +55,7 @@ from cylc.flow.network.schema import (
     runtime_schema_to_cfg,
     sort_elements,
 )
+from cylc.flow.util import uniq, iter_uniq
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -110,45 +111,6 @@ def collate_workflow_atts(workflow):
         'workflow': workflow.name,
         'workflow_sel': workflow.status,
     }
-
-
-def uniq(iterable):
-    """Return a unique collection of the provided items preserving item order.
-
-    Useful for unhashable things like dicts, relies on __eq__ for testing
-    equality.
-
-    Examples:
-        >>> uniq([1, 1, 2, 3, 5, 8, 1])
-        [1, 2, 3, 5, 8]
-
-    """
-    ret = []
-    for item in iterable:
-        if item not in ret:
-            ret.append(item)
-    return ret
-
-
-def iter_uniq(iterable):
-    """Iterate over an iterable omitting any duplicate entries.
-
-    Useful for unhashable things like dicts, relies on __eq__ for testing
-    equality.
-
-    Note:
-        More efficient than "uniq" for iteration use cases.
-
-    Examples:
-        >>> list(iter_uniq([1, 1, 2, 3, 5, 8, 1]))
-        [1, 2, 3, 5, 8]
-
-    """
-    cache = set()
-    for item in iterable:
-        if item not in cache:
-            cache.add(item)
-            yield item
 
 
 def workflow_ids_filter(workflow_tokens, items) -> bool:
@@ -787,24 +749,31 @@ class Resolvers(BaseResolvers):
         cutoff: Any = None
     ):
         """Put or clear broadcasts."""
-        if settings is not None:
-            # Convert schema field names to workflow config setting names if
-            # applicable:
-            for i, dict_ in enumerate(settings):
-                settings[i] = runtime_schema_to_cfg(dict_)
+        try:
+            if settings is not None:
+                # Convert schema field names to workflow config setting names
+                # if applicable:
+                for i, dict_ in enumerate(settings):
+                    settings[i] = runtime_schema_to_cfg(dict_)
 
-        if mode == 'put_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
-                cycle_points, namespaces, settings)
-        if mode == 'clear_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
-                point_strings=cycle_points,
-                namespaces=namespaces,
-                cancel_settings=settings)
-        if mode == 'expire_broadcast':
-            return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
-                cutoff)
-        raise ValueError(f"Unsupported broadcast mode: '{mode}'")
+            if mode == 'put_broadcast':
+                return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
+                    cycle_points, namespaces, settings)
+            if mode == 'clear_broadcast':
+                return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
+                    point_strings=cycle_points,
+                    namespaces=namespaces,
+                    cancel_settings=settings)
+            if mode == 'expire_broadcast':
+                return (
+                    self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
+                        cutoff
+                    )
+                )
+            raise ValueError(f'Unsupported broadcast mode: {mode}')
+        except Exception as exc:
+            LOG.error(exc)
+            return {'error': {'message': str(exc)}}
 
     def put_ext_trigger(
         self,
