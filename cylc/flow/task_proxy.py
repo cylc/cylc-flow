@@ -483,7 +483,7 @@ class TaskProxy:
             and self.state.xtriggers_all_satisfied()
         )
 
-    def set_summary_time(self, event_key, time_str=None):
+    def set_summary_time(self, event_key: str, time_str: Optional[str] = None):
         """Set an event time in self.summary
 
         Set values of both event_key + "_time" and event_key + "_time_string".
@@ -541,8 +541,13 @@ class TaskProxy:
         )
 
     def state_reset(
-        self, status=None, is_held=None, is_queued=None, is_runahead=None,
-        silent=False, forced=False
+        self,
+        status: Optional[str] = None,
+        is_held: Optional[bool] = None,
+        is_queued: Optional[bool] = None,
+        is_runahead: Optional[bool] = None,
+        silent: bool = False,
+        forced: bool = False,
     ) -> bool:
         """Set new state and log the change. Return whether it changed.
 

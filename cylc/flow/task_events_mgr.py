@@ -644,7 +644,7 @@ class TaskEventsManager():
             severity:
                 Message severity, should be a recognised logging level.
             message:
-                Message content.
+                Message content (usually a task output).
             event_time:
                 Event time stamp. Expect ISO8601 date time string.
                 If not specified, use current time.
@@ -738,7 +738,7 @@ class TaskEventsManager():
             self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED)
 
         elif message == self.EVENT_EXPIRED:
-            self._process_message_expired(itask, event_time, forced)
+            self._process_message_expired(itask, forced)
             self.spawn_children(itask, TASK_OUTPUT_EXPIRED)
 
         elif message == self.EVENT_FAILED:
@@ -1362,7 +1362,9 @@ class TaskEventsManager():
         self._reset_job_timers(itask)
         return no_retries
 
-    def _process_message_started(self, itask, event_time, forced):
+    def _process_message_started(
+        self, itask: 'TaskProxy', event_time: Optional[str], forced: bool
+    ):
         """Helper for process_message, handle a started message."""
         if itask.job_vacated:
             itask.job_vacated = False
@@ -1371,8 +1373,9 @@ class TaskEventsManager():
         self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "time_run": itask.summary['started_time_string']})
+        self.workflow_db_mgr.put_update_task_jobs(
+            itask, {"time_run": event_time}
+        )
         if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
@@ -1383,7 +1386,7 @@ class TaskEventsManager():
         if TimerFlags.SUBMISSION_RETRY in itask.try_timers:
             itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
 
-    def _process_message_expired(self, itask, event_time, forced):
+    def _process_message_expired(self, itask: 'TaskProxy', forced: bool):
         """Helper for process_message, handle task expiry."""
         if not itask.state_reset(TASK_STATUS_EXPIRED, forced=forced):
             return
@@ -1394,7 +1397,9 @@ class TaskEventsManager():
             "Task expired: will not submit job."
         )
 
-    def _process_message_succeeded(self, itask, event_time, forced):
+    def _process_message_succeeded(
+        self, itask: 'TaskProxy', event_time: Optional[str], forced: bool
+    ):
         """Helper for process_message, handle a succeeded message.
 
         Ignore forced.

@@ -1270,8 +1270,7 @@ async def test_set_failed_complete(
             contains=f'[{one}] removed from active task pool: completed')
 
         db_outputs = db_select(
-            schd, True, 'task_outputs', 'outputs',
-            **{'name': 'one'}
+            schd, True, 'task_outputs', 'outputs', name='one'
         )
         assert (
             sorted(loads((db_outputs[0])[0])) == [
