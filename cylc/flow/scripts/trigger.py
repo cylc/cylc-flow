@@ -17,18 +17,27 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Force tasks to run, even in a paused workflow.
 
-Triggering a task that is not yet queued will queue it.
+For a group of tasks, off-group prerequisites will be satisfied automatically
+to prevent a stall, and in-group prerequisites will respected by the flow.
 
-Triggering a queued task runs it immediately.
+By default flow history of target tasks will be removed to allow rerun in the
+same flow. Use the `--flow` option to trigger a new flow.
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+Triggering a task that is not yet queued will queue it; triggering a queued
+task will run it - so un-queued tasks may need to be triggered twice.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+Tasks can't be triggered if already active (preparing, submitted, running).
+
+Group trigger is normally the easiest way to manually (re)run a sub-graph.
+
+Otherwise, use `cylc set` to manually satisfy all off-flow prerequisites (or
+trigger initial tasks and set other off-flow prerequisites) after erasing
+(to rerun in the same flow) flow history with `cylc remove`.
+
+Use `-flow=all` to trigger without erasing flow history or starting a new flow,
+e.g. to trigger a task twice with `--wait` to complete different outputs.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -39,6 +48,19 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
+
+  # rerun (same flow) `a => b & c` ignoring off-group prerequisite `off => b`
+  $ cylc trigger test //1234/a //1234/b //1234/c
+
+  # rerun (same flow) `a => b & c` ignoring `off => b`, the flow-native way
+  $ cylc remove test //1234/a //1234/b //1234/c  # erase flow history
+  $ cylc trigger test//1234/a  # trigger initial task
+  $ cylc set --pre=1234/off test//1234/b  # satisfy off-flow prerequisites
+
+Cylc queues:
+  Queues limit how many tasks can be active (preparing, submitted, running) at
+  once. Tasks that are ready to run will remained queued until the active task
+  count drops below the queue limit.
 
 Flows:
   Waiting tasks in the active window (n=0) already belong to a flow.
@@ -51,8 +73,8 @@ Flows:
   * by default they are assigned all active flows
   * otherwise, they are assigned the --flow value
 
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
+  Note --flow=new increments the global flow counter with each use. If it takes
+  multiple commands to start a new flow use the actual flow number
   after the first command (you can read it from the scheduler log).
 """
 
