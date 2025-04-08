@@ -14,10 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import pytest
+import time
 
 from metomi.isodatetime.data import CALENDAR
-from cylc.flow.wallclock import get_unix_time_from_time_string
+from cylc.flow.wallclock import (
+    get_unix_time_from_time_string,
+    get_current_time_string,
+)
 
 
 @pytest.mark.parametrize(
@@ -60,3 +65,16 @@ def test_get_unix_time_from_time_string_360(time_str, time_sec):
 def test_get_unix_time_from_time_string_error(value, error):
     with pytest.raises(error):
         get_unix_time_from_time_string(value)
+
+
+def test_get_current_time_string():
+    """Now doesn't change timezones if system time is
+    different to scheduler's timezone.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    # Not likely to be local dev/user here:
+    os.environ['TZ'] = 'Australia/Eucla'
+    time.tzset()
+    res = get_current_time_string()
+    assert res[-6:] == '+08:45'
