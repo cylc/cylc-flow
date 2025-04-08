@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 9
+set_test_number 13
 
 # Need to override any symlink dirs set in global.cylc:
 create_test_global_config "" "
@@ -41,6 +41,7 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 mkdir .git .svn dir1 dir2-be-removed
 touch .git/file1 .svn/file1 dir1/file1 dir2-be-removed/file1 file1 file2
+echo '01-*' > .cylcignore  # filter out test files
 run_ok "${TEST_NAME}" cylc install
 
 tree_excludes='*.log|01-file-transfer*|rose-suite*.conf|opt'
@@ -68,12 +69,12 @@ touch new_dir/new_file1 new_dir/new_file2
 rm -rf dir2-be-removed file2
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run2"
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run2/log/install" -type f -name '*reinstall.log')"
-grep_ok "
-del. dir2-be-removed/file1
-del. file2
-send new_dir/
-send new_dir/new_file1
-send new_dir/new_file2" "${REINSTALL_LOG}"
+log_scan "${TEST_NAME_BASE}-reinstall-log" "$REINSTALL_LOG" 1 0 \
+  'del. dir2-be-removed/file1' \
+  'del. file2' \
+  'send new_dir/$' \
+  'send new_dir/new_file1' \
+  'send new_dir/new_file2'
 
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
