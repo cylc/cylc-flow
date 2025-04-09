@@ -24,7 +24,6 @@ from time import time
 from typing import (
     Any,
     Dict,
-    Iterable,
     Optional,
     Set,
     Tuple,
@@ -51,7 +50,6 @@ if TYPE_CHECKING:
     from cylc.flow.subprocctx import SubFuncContext
     from cylc.flow.subprocpool import SubProcPool
     from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.id import Tokens
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
@@ -782,8 +780,8 @@ class XtriggerManager:
         self.do_housekeeping = True
 
     def force_satisfy(
-        self, itask: 'TaskProxy', xtriggers: 'Iterable[Tokens]'
-    ) -> 'Set[Tokens]':
+        self, itask: 'TaskProxy', xtriggers: 'Dict[str, str]'
+    ) -> None:
         """Force un/satisfy some xtriggers in itask, via the set command.
 
         Dependent tasks must be able to handle an empty result dict.
@@ -798,22 +796,16 @@ class XtriggerManager:
             itask: task proxy.
             xtriggers: xtriggers to un/satisfy, in Tokens format,
 
-        Returns: unmatched xtriggers
-
         """
-        used = set()
-        for xtrigger in xtriggers:
-            if xtrigger["task"] not in itask.state.xtriggers:
+        for label, state in xtriggers.items():
+            if label not in itask.state.xtriggers:
                 # itask does not depend on this xtrigger.
                 continue
 
-            label = xtrigger["task"]
-            used.update({xtrigger})
-
-            ctx = self.get_xtrig_ctx(itask, str(label))
+            ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
 
-            if xtrigger["task_sel"] == "succeeded":
+            if state == "succeeded":
                 if itask.state.xtriggers[label]:
                     LOG.info('xtrigger already satisfied: %s = %s', label, sig)
                 else:
@@ -824,7 +816,8 @@ class XtriggerManager:
                     self.callback(ctx)
             else:
                 if not itask.state.xtriggers[label]:
-                    LOG.info('xtrigger already unsatisfied: %s = %s', label, sig)
+                    LOG.info(
+                        'xtrigger already unsatisfied: %s = %s', label, sig)
                 else:
                     itask.state.xtriggers[label] = False
                     self.data_store_mgr.delta_task_xtrigger(sig, False)
@@ -832,5 +825,3 @@ class XtriggerManager:
                         del self.sat_xtrig[sig]
                     self.workflow_db_mgr.put_delete_xtrigger(sig)
                     LOG.info('xtrigger unsatisfied: %s = %s', label, sig)
-
-        return set(xtriggers) - used
