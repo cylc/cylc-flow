@@ -781,7 +781,7 @@ class XtriggerManager:
         self.sat_xtrig[sig] = results
         self.do_housekeeping = True
 
-    def force_satsify(
+    def force_satisfy(
         self, itask: 'TaskProxy', xtriggers: 'Iterable[Tokens]'
     ) -> 'Set[Tokens]':
         """Force un/satisfy some xtriggers in itask, via the set command.

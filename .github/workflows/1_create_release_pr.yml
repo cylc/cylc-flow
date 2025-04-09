@@ -67,6 +67,6 @@ jobs:
       - name: Create pull request
         uses: cylc/release-actions/stage-1/create-release-pr@v1
         with:
-          test-workflows: test_fast.yml, test_functional.yml, bash.yml, test_manylinux.yml, test_conda-build.yml
+          test-workflows: test_fast.yml, test_functional.yml, bash.yml, test_conda-build.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

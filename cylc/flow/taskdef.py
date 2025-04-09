@@ -36,7 +36,6 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED,
 )
 
-
 if TYPE_CHECKING:
     from cylc.flow.cycling import (
         PointBase,
@@ -324,6 +323,31 @@ class TaskDef:
                     for trig in dep.task_triggers:
                         parent_points.add(trig.get_parent_point(point))
         return parent_points
+
+    def get_prereqs(self, point):
+        """Return my prereqs, at point."""
+        prereqs = set()
+        for seq in self.sequences:
+            if not seq.is_valid(point):
+                continue
+            if seq in self.dependencies:
+                # task has prereqs in this sequence
+                for dep in self.dependencies[seq]:
+                    if dep.suicide:
+                        continue
+                    prereqs.add(dep.get_prerequisite(point, self))
+        return prereqs
+
+    def get_xtrigs(self, point):
+        """Return my xtrigger labels, at point."""
+        xlabels = set()
+        for seq in self.sequences:
+            if not seq.is_valid(point):
+                continue
+            if seq in self.xtrig_labels:
+                # task has xtriggers in this sequence
+                xlabels.update(self.xtrig_labels[seq])
+        return xlabels
 
     def has_only_abs_triggers(self, point):
         """Return whether I have only absolute triggers at point."""

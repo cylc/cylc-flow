@@ -11,6 +11,35 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.2 (Released 2025-04-07)__
+
+### 🔧 Fixes
+
+[#6169](https://github.com/cylc/cylc-flow/pull/6169) - Ensure that job submit/failure is logged, even when retries are planned.
+
+[#6583](https://github.com/cylc/cylc-flow/pull/6583) - Fix bug where undefined outputs were missed by validation if no tasks trigger off of them.
+
+[#6589](https://github.com/cylc/cylc-flow/pull/6589) - Fix potential accumulation of old families in UI.
+
+[#6623](https://github.com/cylc/cylc-flow/pull/6623) - Auto restart: The option to condemn a host in "force" mode (that tells
+  workflows running on a server to shutdown as opposed to migrate) hasn't worked
+  with the host-selection mechanism since Cylc 8.0.0. This has now been fixed.
+
+[#6638](https://github.com/cylc/cylc-flow/pull/6638) - Fixed possible crash when restarting a workflow after changing the graph.
+
+[#6639](https://github.com/cylc/cylc-flow/pull/6639) - Ensure that shutdown event handlers are killed if they exceed the process pool timeout.
+
+[#6645](https://github.com/cylc/cylc-flow/pull/6645) - Fixed a typo in stop.py which caused a different exception to be raised than was desired
+
+[#6647](https://github.com/cylc/cylc-flow/pull/6647) - Ensure `cylc message` exceptions are printed to `job.err`.
+
+[#6656](https://github.com/cylc/cylc-flow/pull/6656) - Fix bug where old cycle points could accumulate in the UI.
+
+[#6658](https://github.com/cylc/cylc-flow/pull/6658) - Fixed `cylc reinstall` not picking up file permissions changes.
+
+[#6691](https://github.com/cylc/cylc-flow/pull/6691) - Fix bug in the `cylc set` command: attempting to set invalid prerequisites on
+  a future task could prevent it from spawning later on.
+
 ## __cylc-8.4.1 (Released 2025-02-25)__
 
 ### 🔧 Fixes

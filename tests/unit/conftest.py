@@ -17,15 +17,23 @@
 """Standard pytest fixtures for unit tests."""
 
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
-from unittest.mock import create_autospec, Mock
+from typing import (
+    Any,
+    Callable,
+    Optional,
+    Union,
+)
+from unittest.mock import (
+    Mock,
+    create_autospec,
+)
 
 import pytest
 
 from cylc.flow.cycling.iso8601 import init as iso8601_init
 from cylc.flow.cycling.loader import (
+    INTEGER_CYCLING_TYPE,
     ISO8601_CYCLING_TYPE,
-    INTEGER_CYCLING_TYPE
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.install import (
@@ -33,9 +41,7 @@ from cylc.flow.install import (
     unlink_runN,
 )
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.workflow_files import (
-    WorkflowFiles,
-)
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
@@ -219,3 +225,28 @@ def prevent_symlinking(monkeypatch: pytest.MonkeyPatch):
         'cylc.flow.pathutil.make_symlink_dir',
         lambda *_, **__: {}
     )
+
+
+def _tmp_flow_config(tmp_run_dir: Callable):
+    """Create a temporary flow config file for use in init'ing WorkflowConfig.
+    Args:
+        id_: Workflow name.
+        config: The flow file content.
+    Returns the path to the flow file.
+    """
+    def __tmp_flow_config(id_: str, config: str) -> 'Path':
+        run_dir: 'Path' = tmp_run_dir(id_)
+        flow_file = run_dir / WorkflowFiles.FLOW_FILE
+        flow_file.write_text(config)
+        return flow_file
+    return __tmp_flow_config
+
+
+@pytest.fixture
+def tmp_flow_config(tmp_run_dir: Callable):
+    return _tmp_flow_config(tmp_run_dir)
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
+    return _tmp_flow_config(mod_tmp_run_dir)

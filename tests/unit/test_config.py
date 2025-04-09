@@ -56,31 +56,6 @@ if TYPE_CHECKING:
     Fixture = Any
 
 
-def _tmp_flow_config(tmp_run_dir: Callable):
-    """Create a temporary flow config file for use in init'ing WorkflowConfig.
-    Args:
-        id_: Workflow name.
-        config: The flow file content.
-    Returns the path to the flow file.
-    """
-    def __tmp_flow_config(id_: str, config: str) -> 'Path':
-        run_dir: 'Path' = tmp_run_dir(id_)
-        flow_file = run_dir / WorkflowFiles.FLOW_FILE
-        flow_file.write_text(config)
-        return flow_file
-    return __tmp_flow_config
-
-
-@pytest.fixture
-def tmp_flow_config(tmp_run_dir: Callable):
-    return _tmp_flow_config(tmp_run_dir)
-
-
-@pytest.fixture(scope='module')
-def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
-    return _tmp_flow_config(mod_tmp_run_dir)
-
-
 class TestWorkflowConfig:
     """Test class for the Cylc WorkflowConfig object."""
 
