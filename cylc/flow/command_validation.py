@@ -148,14 +148,17 @@ def prereqs(prereqs: Optional[List[str]]):
 
     prereqs2 = []
     bad_pre: List[str] = []
-    bad_xtrig: List[str] = []
+    bad_xtrig_1: List[str] = []
+    bad_xtrig_2: List[str] = []
     for pre in prereqs:
         p = prereq(pre)
         if p is not None:
             prereqs2.append(p)
         else:
             if pre.startswith("xtrigger"):
-                bad_xtrig.append(pre)
+                bad_xtrig_1.append(pre)
+            if pre.startswith("XTRIGGER"):
+                bad_xtrig_2.append(pre)
             else:
                 bad_pre.append(pre)
     bad_msg = []
@@ -164,15 +167,20 @@ def prereqs(prereqs: Optional[List[str]]):
             "Use prerequisite format <cycle>/<task>:output\n  * "
             + "\n  * ".join(bad_pre)
         )
-    if bad_xtrig:
+    if bad_xtrig_1:
         bad_msg.append(
             "Use xtrigger format xtrigger/<label>"
             "[:(succeeded or waiting)]\n  * "
-            + "\n  * ".join(bad_xtrig)
+            + "\n  * ".join(bad_xtrig_1)
+        )
+    if bad_xtrig_2:
+        bad_msg.append(
+            "Use xtrigger format XTRIGGER/<label>"
+            "[:(succeeded or waiting)]\n  * "
+            + "\n  * ".join(bad_xtrig_2)
         )
     if bad_msg:
         raise InputError('\n'.join(bad_msg))
-
 
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
         if "all" in prereqs:
@@ -188,7 +196,7 @@ def prereq(prereq: str) -> Optional[str]:
 
     Format:
     - task prerequisite: cycle/task[:output]
-    - xtrigger prerequisites: "xtrigger"/label
+    - xtrigger prerequisites: "xtrigger"/label or "XTRIGGER"/label
 
     Examples:
         >>> prereq('1/foo:succeeded')
@@ -212,6 +220,9 @@ def prereq(prereq: str) -> Optional[str]:
         >>> prereq('xtrigger/wall_clock:waiting')
         'xtrigger/wall_clock:waiting'
 
+        >>> prereq('XTRIGGER/get_data:waiting')
+        'XTRIGGER/get_data:waiting'
+
         # Error
         >>> prereq('xtrigger/wall_clock:other')
 
@@ -225,7 +236,7 @@ def prereq(prereq: str) -> Optional[str]:
         return None
 
     if (
-        tokens["cycle"] == "xtrigger"
+        tokens["cycle"] in ("xtrigger", "XTRIGGER")
         and tokens["task_sel"] not in [
             None, TASK_OUTPUT_SUCCEEDED, "succeed", TASK_STATUS_WAITING]
     ):
@@ -242,7 +253,7 @@ def prereq(prereq: str) -> Optional[str]:
     if (
         prereq != "all"
         and tokens["task_sel"] is None
-        and tokens['cycle'] != 'xtrigger'
+        and tokens['cycle'] != 'xtrigger'  # TODO default xtrigger here too?
     ):
         prereq += f":{TASK_OUTPUT_SUCCEEDED}"
 

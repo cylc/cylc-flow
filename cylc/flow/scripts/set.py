@@ -18,46 +18,59 @@
 
 """cylc set [OPTIONS] ARGS
 
-Command to manually set task prerequisites and outputs in running workflows.
+Command to manually set task prerequisites and outputs, and xtriggers.
 
-By default, it sets all required outputs (including "submitted", "started" and
-"succeeded" even if they are optional).
+By default, this command sets all required outputs, plus "submitted", "started"
+and "succeeded" even if they are optional.
 
-Setting task prerequisites:
-  - contributes to the task's readiness to run, and
-  - promotes it to the scheduler's active task pool
+Outputs:
+  Outputs contribute to a task's completion, and spawn downstream activity.
 
-Format for prerequisite tasks: <cycle>/<task>[:output], or --pre=all
-  - you cannot unsatisfy a task prerequisite
+  You cannot un-complete an output (downstream activity occurs on demand).
 
-Note "--pre=all" promotes all tasks, including parentless tasks, to the active
-task pool where the schedule can beging checking clock and xtriggers. Use this
-instead of "trigger" to start a flow from tasks that first wait on xtriggers.
+  Output Format:
+    * --out=<output>  # output trigger name (not message) of the target task
 
-Format for prerequisite xtriggers: xtrigger/<label>[:(succeeded or waiting)
-  - you can both set (succeeded, the default) and unset (waiting) xtriggers
+  Setting final outputs ("succeeded", "failed", "expired") affects task state.
+  Setting "started", "submitted", and custom outputs will spawn downstream
+  activity but does not affect state, because there is no running job.
 
-Setting task outputs:
-  - contributes to a task's completion, and
-  - spawns downstream tasks that depend on those outputs
+  Implied outputs are set automatically:
+    - "started" implies "submitted"
+    - "succeeded" and "failed" imply "started"
+    - custom outputs and "expired" do not imply other outputs
 
-Note setting final outputs ("succeeded", "failed", "expired") also sets task
-state. Setting the "started" and "submitted" outputs spawns downstream tasks
-that depend on them but does not affect task state, because there is no
-running job.
+  For custom outputs, use the trigger names not the associated task messages:
+  [runtime]
+    [[my-task]]
+      # ...
+      [[[outputs]]]
+        # <trigger> = <task-message>
+        x = "file x completed and archived"
 
-Implied outputs are set automatically:
-  - "started" implies "submitted"
-  - "succeeded" and "failed" imply "started"
-  - custom outputs and "expired" do not imply other outputs
+Prerequisites:
+  Prerequisites contribute to a task's readiness to run and promote it to the
+  n=0 active window, where xtrigger checking commences.
 
-For custom outputs, use the output names not the associated task messages:
-[runtime]
-  [[my-task]]
-    # ...
-    [[[outputs]]]
-      # <output-name> = <task-message>
-      x = "file x completed and archived"
+  You cannot unsatisfy a task prerequisite.
+
+  Prerequisite format:
+    * --pre=<cycle>/<task>[:output]  # single prerequiste
+    * --pre=all  # all prerequisites
+
+  Note "--pre=all":
+    * promotes even parentless tasks to the n=0 active window
+    * does not satisfy dependence on xtriggers (see below for that)
+
+Xtriggers:
+    An xtrigger can be set (by default, or use state "succeeded") or unset (use
+    state "waiting") by targeting a task that depend on it.
+
+    Xtrigger format:
+      * --pre=xtrigger/<label>[:state] - set only the target task's dependence
+        on the xtrigger
+      * --pre=XTRIGGER/<label>[:state] - set the xtrigger itself. This
+        satisfies all tasks (current and future) that depend on the xtrigger.
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
@@ -84,16 +97,21 @@ Examples:
   # the active window (and start checking its xtriggers, if any):
   $ cylc set --pre=all my_workflow//3/bar
 
-  # satisfy the clock-trigger @clock1 of 3000/bar:
+  # satisfy the dependence of 3000/bar on clock-trigger @clock1:
   $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
   #   or:
   $ cylc set --pre=xtrigger/clock1:succeeded my_worklfow//3000/bar
 
-  # unsatisfy (to start checking again) the xtrigger @data of 3000/bar:
+  # unsatisfy (to start checking again) the dependence of 3000/bar
+  # on xtrigger @data:
   $ cylc set --pre=xtrigger/data:waiting my_worklfow//3000/bar
 
-  # complete the "file1" custom output of 3/bar:
-  $ cylc set --out=file1 my_workflow//3/bar
+  # set the xtrigger @data to succeeded, for all tasks that depend on it:
+  # (by targetting one of those tasks, 3/bar):
+  $ cylc set --out=xtrigger/data my_workflow//3/bar
+
+  # unset the same:
+  $ cylc set --out=xtrigger/data:waiting my_workflow//3/bar
 
   # satisfy the "3/bar:file1" prerequisite of 3/qux:
   $ cylc set --pre=3/bar:file1 my_workflow//3/qux

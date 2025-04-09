@@ -527,6 +527,15 @@ class WorkflowDatabaseManager:
                         "prereq_output": p_output,
                         "satisfied": satisfied_state
                     })
+            for x_label, x_satisfied in itask.state.xtriggers.items():
+                if x_satisfied:
+                    self.put_insert_task_prerequisites(itask, {
+                        "prereq_name": x_label,
+                        "prereq_cycle": "xtrigger",
+                        "prereq_output": "cheese",
+                        "satisfied": True
+                    })
+
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),

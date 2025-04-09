@@ -576,9 +576,9 @@ class TaskPool:
             # Update prerequisite satisfaction status from DB
             sat = {}
             for prereq_name, prereq_cycle, prereq_output_msg, satisfied in (
-                    self.workflow_db_mgr.pri_dao.select_task_prerequisites(
-                        cycle, name, flow_nums,
-                    )
+                self.workflow_db_mgr.pri_dao.select_task_prerequisites(
+                    cycle, name, flow_nums,
+                )
             ):
                 # Prereq satisfaction as recorded in the DB.
                 sat[
@@ -603,6 +603,11 @@ class TaskPool:
                                 itask.flow_nums,
                             )
                         )
+            # TODO an output ("cheese") is required here to prevent duplicate
+            # DB rows. We need it one other place too. Use "none" or similar?
+            for xtrigger_label in itask.state.xtriggers:
+                if ("xtrigger", xtrigger_label, "cheese") in sat:
+                    itask.state.xtriggers[xtrigger_label] = True
 
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_state(itask)
@@ -1872,7 +1877,7 @@ class TaskPool:
 
     def _standardise_xtrigs(
             self, prereqs: 'Iterable[str]'
-    ) -> 'Dict[str, str]':
+    ) -> 'Dict[str, Tuple[bool, bool]]':
         """Extract xtriggers from user input and standardise.
 
         Args:
@@ -1884,11 +1889,14 @@ class TaskPool:
         _xtrigs = {}
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
-            if pre['cycle'] != "xtrigger":
+            if pre['cycle'] not in ["xtrigger", "XTRIGGER"]:
                 continue
             state = TaskTrigger.standardise_name(
                 pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
-            _xtrigs[pre['task']] = state
+            _xtrigs[pre['task']] = (
+                state == TASK_OUTPUT_SUCCEEDED,
+                pre['cycle'] == "XTRIGGER"
+            )
         return _xtrigs
 
     def _standardise_prereqs(self, prereqs: 'Iterable[str]') -> 'Set[Tokens]':
@@ -1903,7 +1911,7 @@ class TaskPool:
         _prereqs = set()
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
-            if pre['cycle'] == "xtrigger":
+            if pre['cycle'] in ["xtrigger", "XTRIGGER"]:
                 continue
             output = TaskTrigger.standardise_name(
                 pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
@@ -1946,7 +1954,7 @@ class TaskPool:
 
     def _get_prereq_params(
         self, prereqs: 'Iterable[str]', tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Tuple[bool, Set[Tokens], Dict[str, str]]':
+    ) -> 'Tuple[bool, Set[Tokens], Dict[str, Tuple[bool, bool]]]':
         """Convert input prerequisites to Tokens of just the valid ones.
 
         And convert the (mutually exclusive) "['all']" shortcut to a bool.
@@ -2112,7 +2120,7 @@ class TaskPool:
 
     def _get_valid_xtrigs(
             self, prereqs: Iterable[str], tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Dict[str, str]':
+    ) -> 'Dict[str, Tuple[bool, bool]]':
         """Validate prerequisite triggers and return associated task messages.
 
         To set prerequisites, the user gives triggers, but we need to use the
@@ -2205,7 +2213,7 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         prereqs: 'Iterable[Tokens]',
-        xtrigs: 'Dict[str, str]',
+        xtrigs: 'Dict[str, Tuple[bool, bool]]',
         set_all: bool
     ) -> None:
         """Set prerequisites on a task proxy.
@@ -2230,7 +2238,7 @@ class TaskPool:
         point: 'PointBase',
         taskdef: 'TaskDef',
         prereqs: 'Iterable[Tokens]',
-        xtrigs: 'Dict[str, str]',
+        xtrigs: 'Dict[str, Tuple[bool, bool]]',
         flow_nums: 'FlowNums',
         flow_wait: bool,
         set_all: bool

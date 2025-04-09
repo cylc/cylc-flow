@@ -2549,6 +2549,35 @@ class DataStoreMgr:
             xtrigger.time = update_time
             self.updates_pending = True
 
+    def delta_task_xtrigger_one(self, itask, label, sig, satisfied):
+        """Create delta for change in task proxy xtrigger.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+            sig (str): Context of function call (name, args).
+            satisfied (bool): Trigger message.
+
+        """
+        update_time = time()
+
+        tp_id = self.id_.duplicate(
+            cycle=str(itask.point),
+            task=itask.tdef.name,
+        ).id
+
+        # update task instance
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+        xtrigger = tp_delta.xtriggers[sig]
+        xtrigger.id = sig
+        xtrigger.label = label
+        xtrigger.satisfied = satisfied
+        xtrigger.time = update_time
+        self.updates_pending = True
+
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
         """Create delta from existing pool task proxy.
 

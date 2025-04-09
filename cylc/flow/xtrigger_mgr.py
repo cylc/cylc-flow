@@ -726,7 +726,8 @@ class XtriggerManager:
         """
         all_xtrig = []
         for itask in itasks:
-            all_xtrig += self._get_xtrigs(itask, sigs_only=True)
+            all_xtrig += self._get_xtrigs(
+                itask, sigs_only=True, unsat_only=True)
         for sig in list(self.sat_xtrig):
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
@@ -740,7 +741,7 @@ class XtriggerManager:
             if label in self.xtriggers.sequential_xtrigger_labels
         )
 
-    def callback(self, ctx: 'SubFuncContext'):
+    def callback(self, ctx: 'SubFuncContext', full=True):
         """Callback for asynchronous xtrigger functions.
 
         Record satisfaction status and function results dict.
@@ -752,7 +753,7 @@ class XtriggerManager:
             ctx (SubFuncContext): function context
         """
         sig = ctx.get_signature()
-        if sig in self.active:
+        if full and sig in self.active:
             # (call in progress, waiting on response)
             self.active.remove(sig)
 
@@ -773,31 +774,29 @@ class XtriggerManager:
             return
 
         # Newly satisfied
-        self.data_store_mgr.delta_task_xtrigger(sig, satisfied)
-        self.workflow_db_mgr.put_xtriggers({sig: results})
-        LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
-        self.sat_xtrig[sig] = results
+        if full:
+            self.data_store_mgr.delta_task_xtrigger(sig, satisfied)
+            self.workflow_db_mgr.put_xtriggers({sig: results})
+            LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
+            self.sat_xtrig[sig] = results
+        else:
+            LOG.info('xtrigger PREREQ satisfied: %s = %s', ctx.label, sig)
+
         self.do_housekeeping = True
 
     def force_satisfy(
-        self, itask: 'TaskProxy', xtriggers: 'Dict[str, str]'
+        self, itask: 'TaskProxy', xtriggers: 'Dict[str, Tuple[bool, bool]]'
     ) -> None:
         """Force un/satisfy some xtriggers in itask, via the set command.
 
         Dependent tasks must be able to handle an empty result dict.
 
-        Incoming xtriggers format:
-            Tokens(cycle="xtrigger", task=label, task_sel=state)
-            with state "succeeded" (set satisfied), "waiting" (set unsatisfied)
-
-        No need to check for Tokens(cycle="xtrigger") - triaged by the caller.
-
         Args:
-            itask: task proxy.
-            xtriggers: xtriggers to un/satisfy, in Tokens format,
+            itask: task proxy
+            xtriggers: xtriggers to un/satisfy
 
         """
-        for label, state in xtriggers.items():
+        for label, (satisfied, full) in xtriggers.items():
             if label not in itask.state.xtriggers:
                 # itask does not depend on this xtrigger.
                 continue
@@ -805,7 +804,7 @@ class XtriggerManager:
             ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
 
-            if state == "succeeded":
+            if satisfied:
                 if itask.state.xtriggers[label]:
                     LOG.info('xtrigger already satisfied: %s = %s', label, sig)
                 else:
@@ -813,7 +812,9 @@ class XtriggerManager:
                     ctx.ret_code = 0
                     # Set satisfied with an empty results dict.
                     ctx.out = json.dumps((True, {}))
-                    self.callback(ctx)
+                    self.callback(ctx, full=full)
+                    self.data_store_mgr.delta_task_xtrigger_one(
+                        itask, label, sig, True)
             else:
                 if not itask.state.xtriggers[label]:
                     LOG.info(
