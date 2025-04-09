@@ -17,7 +17,7 @@
 """Tests for Broadcast Manager."""
 
 
-async def test_reject_invalid_broadcast_is_remote_clash(
+async def test_reject_valid_broadcast_is_remote_clash_with_config(
     one_conf, flow, start, scheduler, log_filter
 ):
     """`put_broadcast` gracefully rejects invalid broadcast:
@@ -37,5 +37,33 @@ async def test_reject_invalid_broadcast_is_remote_clash(
             point_strings=['1'],
             namespaces=['one'],
             settings=[{'remote': {'host': 'bar'}}]
+        )
+        assert log_filter(contains='Cannot apply broadcast')
+
+
+async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
+    one_conf, flow, start, scheduler, log_filter
+):
+    """`put_broadcast` gracefully rejects invalid broadcast:
+
+    Existing Broadcast = [task][remote]host = foo
+    New Broadcast      = [task]platform = bar
+
+    https://github.com/cylc/cylc-flow/pull/6711/files#r2033457964
+    """
+    schd = scheduler(flow(one_conf))
+    async with start(schd):
+        bc_mgr = schd.broadcast_mgr
+        bc_mgr.put_broadcast(
+            point_strings=['1'],
+            namespaces=['one'],
+            settings=[{'remote': {'host': 'bar'}}]
+        )
+        # this should not be allowed, if it is the scheduler will crash
+        # when unpaused:
+        bc_mgr.put_broadcast(
+            point_strings=['1'],
+            namespaces=['one'],
+            settings=[{'platform': 'foo'}]
         )
         assert log_filter(contains='Cannot apply broadcast')
