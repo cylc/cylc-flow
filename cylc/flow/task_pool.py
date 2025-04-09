@@ -2092,8 +2092,7 @@ class TaskPool:
             presus, xsus = self._standardise_prereqs(prereqs)
             unmatched = itask.satisfy_me(presus.keys(), forced=True)
             self._log_unmatched(itask, presus, unmatched)
-            unmatched_x = itask.satisfy_xtriggers(
-                xsus.keys(), self.xtrigger_mgr.force_satsify)
+            unmatched_x = self.xtrigger_mgr.force_satsify(itask, xsus.keys())
             self._log_unmatched(itask, xsus, unmatched_x)
             if len(unmatched) + len(unmatched_x) == len(prereqs):
                 # No prereqs matched.

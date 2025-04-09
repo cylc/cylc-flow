@@ -24,6 +24,7 @@ from time import time
 from typing import (
     Any,
     Dict,
+    Iterable,
     Optional,
     Set,
     Tuple,
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
     from cylc.flow.subprocctx import SubFuncContext
     from cylc.flow.subprocpool import SubProcPool
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.id import Tokens
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
@@ -779,27 +781,56 @@ class XtriggerManager:
         self.sat_xtrig[sig] = results
         self.do_housekeeping = True
 
-    def force_satsify(self, itask: 'TaskProxy', label: str, satisfied: bool):
-        """Force an xtrigger to be satisfied, or unsatisfied.
+    def force_satsify(
+        self, itask: 'TaskProxy', xtriggers: 'Iterable[Tokens]'
+    ) -> 'Set[Tokens]':
+        """Force un/satisfy some xtriggers in itask, via the set command.
 
         Dependent tasks must be able to handle an empty result dict.
 
+        Incoming xtriggers format:
+            Tokens(cycle="xtrigger", task=label, task_sel=state)
+            with state "succeeded" (set satisfied), "waiting" (set unsatisfied)
+
+        No need to check for Tokens(cycle="xtrigger") - triaged by the caller.
+
         Args:
             itask: task proxy.
-            label: the xtrigger to set or unset on this task.
-            satisfied: True to set xtrigger satisfied, False to unset.
-        """
-        ctx = self.get_xtrig_ctx(itask, label)
+            xtriggers: xtriggers to un/satisfy, in Tokens format,
 
-        if satisfied:
-            ctx.ret_code = 0
-            # Set satisfied with an empty results dict.
-            ctx.out = json.dumps((True, {}))
-            self.callback(ctx)
-        else:
+        Returns: unmatched xtriggers
+
+        """
+        used = set()
+        for xtrigger in xtriggers:
+            if xtrigger["task"] not in itask.state.xtriggers:
+                # itask does not depend on this xtrigger.
+                continue
+
+            label = xtrigger["task"]
+            used.update({xtrigger})
+
+            ctx = self.get_xtrig_ctx(itask, str(label))
             sig = ctx.get_signature()
-            self.data_store_mgr.delta_task_xtrigger(sig, False)
-            with suppress(KeyError):
-                del self.sat_xtrig[sig]
-            self.workflow_db_mgr.put_delete_xtrigger(sig)
-            LOG.info('xtrigger unsatisfied: %s = %s', ctx.label, sig)
+
+            if xtrigger["task_sel"] == "succeeded":
+                if itask.state.xtriggers[label]:
+                    LOG.info('xtrigger already satisfied: %s = %s', label, sig)
+                else:
+                    itask.state.xtriggers[label] = True
+                    ctx.ret_code = 0
+                    # Set satisfied with an empty results dict.
+                    ctx.out = json.dumps((True, {}))
+                    self.callback(ctx)
+            else:
+                if not itask.state.xtriggers[label]:
+                    LOG.info('xtrigger already unsatisfied: %s = %s', label, sig)
+                else:
+                    itask.state.xtriggers[label] = False
+                    self.data_store_mgr.delta_task_xtrigger(sig, False)
+                    with suppress(KeyError):
+                        del self.sat_xtrig[sig]
+                    self.workflow_db_mgr.put_delete_xtrigger(sig)
+                    LOG.info('xtrigger unsatisfied: %s = %s', label, sig)
+
+        return set(xtriggers) - used

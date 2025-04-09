@@ -579,29 +579,6 @@ class TaskProxy:
         used = self.state.satisfy_me(task_messages, mode=mode, forced=forced)
         return set(task_messages) - used
 
-    def satisfy_xtriggers(
-        self,
-        outputs: 'Iterable[Tokens]',
-        callback: Callable
-    ) -> 'Set[Tokens]':
-        """
-        Manually satisfy or unsatisfy xtriggers via the set command.
-        """
-        used = set()
-        for output in outputs:
-            if not (
-                output["cycle"] == "xtrigger"  # TODO not needed?
-                and output["task"] in self.state.xtriggers  # TODO needed?
-            ):
-                continue
-            label = output["task"]
-            state = (output["task_sel"] == "succeeded")
-            used.update({output})
-            self.state.xtriggers[label] = state
-            callback(self, label, state)
-
-        return set(outputs) - used
-
     def clock_expire(self) -> bool:
         """Return True if clock expire time is up, else False."""
         if (
