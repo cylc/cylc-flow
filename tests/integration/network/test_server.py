@@ -15,15 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import sys
 from typing import Callable
-from async_timeout import timeout
-from getpass import getuser
 
 import pytest
-from cylc.flow import __version__ as CYLC_VERSION
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.scheduler import Scheduler
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout
+else:
+    from async_timeout import timeout
 
 
 @pytest.fixture(scope='module')
@@ -32,16 +37,6 @@ async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     schd = mod_scheduler(id_)
     async with mod_run(schd):
         yield schd
-
-
-def run_server_method(schd, method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return getattr(schd.server, method)(*args, **kwargs)
-
-
-def call_server_method(method, *args, **kwargs):
-    kwargs['user'] = getuser()
-    return method(*args, **kwargs)
 
 
 def test_graphql(myflow):
@@ -53,7 +48,7 @@ def test_graphql(myflow):
             }}
         }}
     '''
-    data = call_server_method(myflow.server.graphql, request_string)
+    data = myflow.server.graphql(request_string)
     assert myflow.id == data['workflows'][0]['id']
 
 
@@ -62,10 +57,7 @@ def test_pb_data_elements(myflow):
     element_type = 'workflow'
     data = PB_METHOD_MAP['pb_data_elements'][element_type]()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_data_elements,
-            element_type
-        )
+        myflow.server.pb_data_elements(element_type)
     )
     assert data.added.id == myflow.id
 
@@ -74,9 +66,7 @@ def test_pb_entire_workflow(myflow):
     """Test Protobuf entire workflow endpoint method."""
     data = PB_METHOD_MAP['pb_entire_workflow']()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_entire_workflow
-        )
+        myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
 
@@ -118,11 +108,6 @@ async def test_receiver_basic(one: Scheduler, start, log_filter):
 @pytest.mark.parametrize(
     'msg, expected',
     [
-        pytest.param(
-            {'command': 'api', 'args': {}},
-            f"Request missing field 'user' required for Cylc {CYLC_VERSION}",
-            id='missing-user',
-        ),
         pytest.param(
             {'user': 'bono', 'args': {}},
             "Request missing field 'command' required for"

@@ -20,6 +20,8 @@ from typing import (
     TYPE_CHECKING,
     Dict,
     List,
+    Optional,
+    Set,
     Tuple,
 )
 
@@ -49,7 +51,6 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict,
-    _workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in skip mode.
@@ -74,7 +75,7 @@ def submit_task_job(
     }
     itask.summary['job_runner_name'] = RunMode.SKIP.value
     itask.jobs.append(
-        task_job_mgr.get_simulation_job_conf(itask, _workflow)
+        task_job_mgr.get_simulation_job_conf(itask)
     )
     itask.run_mode = RunMode.SKIP
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
@@ -89,13 +90,18 @@ def submit_task_job(
         }
     )
     task_job_mgr.workflow_db_mgr.put_update_task_state(itask)
-    for output in process_outputs(itask, rtconfig):
+    for output in sorted(
+        process_outputs(itask, rtconfig),
+        key=itask.state.outputs.output_sort_key,
+    ):
         task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
 
     return True
 
 
-def process_outputs(itask: 'TaskProxy', rtconfig: Dict) -> List[str]:
+def process_outputs(
+    itask: 'TaskProxy', rtconfig: Optional[dict] = None
+) -> Set[str]:
     """Process Skip Mode Outputs:
 
     * By default, all required outputs will be generated plus succeeded
@@ -106,13 +112,13 @@ def process_outputs(itask: 'TaskProxy', rtconfig: Dict) -> List[str]:
       succeeded or failed then succeeded will be produced.
 
     Return:
-        A list of outputs to emit.
+        A set of outputs to emit.
 
     """
     # Always produce `submitted` & `started` outputs first:
-    result: List[str] = [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]
+    result: Set[str] = {TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED}
 
-    conf_outputs = list(rtconfig['skip']['outputs'])
+    conf_outputs = list(rtconfig['skip']['outputs']) if rtconfig else []
 
     # Send the rest of our outputs, unless they are succeeded or failed,
     # which we hold back, to prevent warnings about pre-requisites being
@@ -127,26 +133,22 @@ def process_outputs(itask: 'TaskProxy', rtconfig: Dict) -> List[str]:
         trigger = itask.state.outputs._message_to_trigger[message]
         # Send message unless it be succeeded/failed.
         if (
-            trigger not in {
-                TASK_OUTPUT_SUCCEEDED,
-                TASK_OUTPUT_FAILED,
-                TASK_OUTPUT_SUBMITTED,
-                TASK_OUTPUT_STARTED,
-            }
+            trigger not in {TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED}
             and (not conf_outputs or trigger in conf_outputs)
         ):
-            result.append(message)
+            result.add(message)
 
     # Add optional outputs specified in skip settings:
-    for message, trigger in itask.state.outputs._message_to_trigger.items():
-        if trigger in conf_outputs and trigger not in result:
-            result.append(message)
+    result.update(
+        message
+        for message, trigger in itask.state.outputs._message_to_trigger.items()
+        if trigger in conf_outputs
+    )
 
-    # Send succeeded/failed last.
     if TASK_OUTPUT_FAILED in conf_outputs:
-        result.append(TASK_OUTPUT_FAILED)
-    elif TASK_OUTPUT_SUCCEEDED not in result:
-        result.append(TASK_OUTPUT_SUCCEEDED)
+        result.add(TASK_OUTPUT_FAILED)
+    else:
+        result.add(TASK_OUTPUT_SUCCEEDED)
 
     return result
 
