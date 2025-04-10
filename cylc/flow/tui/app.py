@@ -22,13 +22,8 @@ from multiprocessing import Process
 import re
 
 import urwid
-try:
-    from urwid.widget import SelectableIcon
-except ImportError:
-    # BACK COMPAT: urwid.wimp
-    # From: urwid 2.0
-    # To: urwid 2.2
-    from urwid.wimp import SelectableIcon
+from urwid.canvas import CanvasCache
+from urwid.widget import SelectableIcon
 
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
@@ -540,6 +535,11 @@ class TuiApp:
         # schedule the next run of this update method
         if self.loop:
             self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+
+        # NOTE: prevent a memory leak by clearing out any caches that urwid
+        # may have accumulated for the previous TuiNode instance
+        # (and its child widgets)
+        CanvasCache.clear()
 
         return True
 
