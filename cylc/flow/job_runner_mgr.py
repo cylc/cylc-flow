@@ -34,10 +34,13 @@ import stat
 from subprocess import DEVNULL  # nosec
 import sys
 import traceback
-from typing import Optional
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Optional,
+)
 
 from cylc.flow.cylc_subproc import procopen
-from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow.task_job_logs import (
     JOB_LOG_ERR,
     JOB_LOG_JOB,
@@ -55,22 +58,27 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 
 
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+
 JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
 
 
-class JobPollContext():
+class JobPollContext:
     """Context object for a job poll."""
+    # TODO: When dropping support for Python 3.9 we can simplify this with
+    # @dataclass(slots=True)
     CONTEXT_ATTRIBUTES = (
-        'job_log_dir',  # cycle/task/submit_num
+        'job_log_dir',
         'job_runner_name',
-        'job_id',  # job id in job runner
-        'job_runner_exit_polled',  # 0 for false, 1 for true
-        'run_status',  # 0 for success, 1 for failure
-        'run_signal',  # signal received on run failure
-        'time_submit_exit',  # submit (exit) time
-        'time_run',  # run start time
-        'time_run_exit',  # run exit time
-        'job_runner_call_no_lines',  # line count in job runner call stdout
+        'job_id',
+        'job_runner_exit_polled',
+        'run_status',
+        'run_signal',
+        'time_submit_exit',
+        'time_run',
+        'time_run_exit',
     )
 
     __slots__ = CONTEXT_ATTRIBUTES + (
@@ -78,19 +86,25 @@ class JobPollContext():
         'messages'
     )
 
-    def __init__(self, job_log_dir, **attrs):
-        self.job_log_dir = job_log_dir
+    def __init__(self, job_log_dir: str, **attrs):
+        self.job_log_dir: str = job_log_dir
         self.job_runner_name: Optional[str] = None
         self.job_id = None
-        self.job_runner_exit_polled: Optional[int] = None
-        self.pid = None
-        self.run_status: Optional[int] = None
+        """Job ID in job runner."""
+        self.job_runner_exit_polled: 'Literal[0, 1, None]' = None
+        """Has exited job runner? 0 for false, 1 for true."""
+        self.pid: Optional[str] = None
+        self.run_status: 'Literal[0, 1, None]' = None
+        """0 for success, 1 for failure."""
         self.run_signal: Optional[str] = None
+        """Signal received on run failure."""
         self.time_submit_exit: Optional[str] = None
+        """Time when the job runner finished submitting the job."""
         self.time_run: Optional[str] = None
+        """Time when the job started running."""
         self.time_run_exit: Optional[str] = None
-        self.job_runner_call_no_lines = None
-        self.messages = []
+        """Time when the job finished running."""
+        self.messages: List[str] = []
 
         if attrs:
             for key, value in attrs.items():
@@ -98,14 +112,14 @@ class JobPollContext():
                     raise ValueError('Invalid kwarg "%s"' % key)
                 setattr(self, key, value)
 
-    def update(self, other):
+    def update(self, other: 'JobPollContext') -> None:
         """Update my data from given file context."""
         for i in self.__slots__:
             setattr(self, i, getattr(other, i))
 
-    def get_summary_str(self):
+    def get_summary_str(self) -> str:
         """Return the poll context as a summary string delimited by "|"."""
-        ret = OrderedDict()
+        ret = {}
         for key in self.CONTEXT_ATTRIBUTES:
             value = getattr(self, key)
             if key == 'job_log_dir' or value is None:
@@ -238,7 +252,7 @@ class JobRunnerManager():
             job_log_root = os.path.expandvars(job_log_root)
         self.configure_workflow_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
-        ctx_list = []  # Contexts for all relevant jobs
+        ctx_list: List[JobPollContext] = []  # Contexts for all relevant jobs
         ctx_list_by_job_runner = {}  # {job_runner_name1: [ctx1, ...], ...}
 
         for job_log_dir in job_log_dirs:
@@ -258,8 +272,11 @@ class JobRunnerManager():
             # We can trust:
             # * Jobs previously polled to have exited the job runner.
             # * Jobs succeeded or failed with ERR/EXIT.
-            if (ctx.job_runner_exit_polled or ctx.run_status == 0 or
-                    ctx.run_signal in ["ERR", "EXIT"]):
+            if (
+                ctx.job_runner_exit_polled
+                or ctx.run_status == 0
+                or ctx.run_signal in {"ERR", "EXIT"}
+            ):
                 continue
 
             if ctx.job_runner_name not in ctx_list_by_job_runner:
