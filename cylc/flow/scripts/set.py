@@ -142,9 +142,14 @@ if TYPE_CHECKING:
     from cylc.flow.id import Tokens
 
 
+# Constants used for setting xtriggers with --pre:
+# 1. (un)satisify just the target task xtrigger prerequisite:
 XTRIGGER_PREREQ_PREFIX = "xtrigger"
+# 2. (un)satisify the xtrigger itself (i.e., its output) for all tasks:
 XTRIGGER_OUTPUT_PREFIX = "XTRIGGER"
 XTRIGGER_SET_PREFIXES = (XTRIGGER_PREREQ_PREFIX, XTRIGGER_OUTPUT_PREFIX)
+
+# To fill out xtriggers in the DB prerequisites table:
 XTRIGGER_FAKE_OUTPUT = "not-used"
 
 

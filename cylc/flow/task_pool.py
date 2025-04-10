@@ -1882,19 +1882,31 @@ class TaskPool:
     ) -> 'Dict[str, Tuple[bool, bool]]':
         """Extract xtriggers from user input and standardise.
 
+        Weed out any task prerequisites.
+
+        Note command validation has already failed illegal state suffixes,
+        and added the default ":succeeded".
+
+        Standardisation handles ":succeed" -> ":succeeded".
+
         Args:
             prereqs: prerequisites and xtriggers in string form
+                xtriggers format "xtrigger/label:state"
 
-        Returns: {xtrigger-label: (requested-state, set-output)}
+        Returns: {label: (requested-state, set-output)}
+            (set-output means set the xtrigger output for all dependent tasks)
 
         """
         _xtrigs = {}
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
+
             if pre['cycle'] not in XTRIGGER_SET_PREFIXES:
+                # weed out task prerequisites
                 continue
-            state = TaskTrigger.standardise_name(
-                pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
+
+            state = TaskTrigger.standardise_name(pre['task_sel'])
+
             _xtrigs[pre['task']] = (
                 # requested state to set:
                 state == TASK_OUTPUT_SUCCEEDED,
@@ -1910,6 +1922,7 @@ class TaskPool:
 
         Args:
             prereqs: prerequisites and xtriggers in string form
+                prequisite format "cycle/task:output"
 
         Returns: {prerequisite-tokens}
 
@@ -1918,7 +1931,7 @@ class TaskPool:
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
             if pre['cycle'] in XTRIGGER_SET_PREFIXES:
-                # weed out xtriggers
+                # weed out xtrigger prerequisites
                 continue
             output = TaskTrigger.standardise_name(
                 pre['task_sel'] or TASK_OUTPUT_SUCCEEDED)
