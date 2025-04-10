@@ -310,19 +310,18 @@ class BroadcastMgr:
                         if namespace not in self.linearized_ancestors:
                             bad_namespaces.append(namespace)
                         elif not bad_point:
-                            # Check broadcast against config:
-                            self.check_for_old_and_new_platform_settings(
-                                self.schd.config.get_config(
-                                    ['runtime', namespace]
-                                ).copy(),
-                                namespace,
-                                coerced_setting,
-                            )
-                            # Check broadcast against existing broadcasts:
-                            self.check_for_old_and_new_platform_settings(
+                            # Check broadcast against config and against
+                            # existing broadcasts:
+                            newconfig = pdeepcopy(self.schd.config.get_config(
+                                ['runtime', namespace]
+                            ))
+                            poverride(
+                                newconfig,
                                 self.broadcasts.get(point_string, {})
                                 .get(namespace, {})
-                                .copy(),
+                            )
+                            self.check_for_old_and_new_platform_settings(
+                                newconfig,
                                 namespace,
                                 coerced_setting,
                             )
