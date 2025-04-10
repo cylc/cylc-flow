@@ -163,7 +163,6 @@ cylc__job__main() {
             cylc__set_return "$ret_code"
         fi
     }
-    cylc__kill_profiler
     # Grab the max rss and cpu_time value before moving directory
     if [[ -f "max_rss" ]]; then
       max_rss=$(cat max_rss)
@@ -173,6 +172,7 @@ cylc__job__main() {
       cpu_time=$(cat cpu_time)
       rm cpu_time
     fi
+    cylc__kill_profiler
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
