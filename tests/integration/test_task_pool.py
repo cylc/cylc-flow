@@ -1280,7 +1280,7 @@ async def test_set_failed_complete(
         )
 
 
-async def test_set_prereqs(
+async def test_set_prereqs_and_xtrigs(
     flow,
     scheduler,
     start,
@@ -1293,8 +1293,14 @@ async def test_set_prereqs(
         {
             'scheduling': {
                 'initial cycle point': '2040',
+                'xtriggers': {
+                    'x': 'xrandom(0)'
+                },
                 'graph': {
-                    'R1': "foo & bar & baz => qux"
+                    'R1': """
+                        foo & bar & baz => qux",
+                        @x => bar
+                    """
                 }
             },
             'runtime': {
@@ -1339,6 +1345,30 @@ async def test_set_prereqs(
             "20400101T0000Z/baz",
             "20400101T0000Z/foo",
         }
+
+        # set an xtrigger (see also test_xtrigger_mgr)
+        bar = schd.pool._get_task_by_id('20400101T0000Z/bar')
+        assert bar.state.prerequisites_all_satisfied()
+        assert not bar.state.xtriggers_all_satisfied()
+        schd.pool.set_prereqs_and_outputs(
+            ["20400101T0000Z/bar"],
+            [],
+            ["xtrigger/x:succeeded"],
+            ['all']
+        )
+        assert bar.state.xtriggers_all_satisfied()
+        assert log_filter(
+            contains='xtrigger prerequisite satisfied: x = xrandom(0)')
+
+        # set xtrigger in the wrong task
+        schd.pool.set_prereqs_and_outputs(
+            ["20400101T0000Z/baz"],
+            [],
+            ["xtrigger/x:succeeded"],
+            ['all']
+        )
+        assert log_filter(
+            contains='20400101T0000Z/baz does not depend on xtrigger "x"')
 
         # set one prereq of inactive task 20400101T0000Z/qux
         schd.pool.set_prereqs_and_outputs(

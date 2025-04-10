@@ -474,7 +474,6 @@ async def test_family_ascent_point_prune(harness):
 
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
-    # TODO this is broken?
     schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
@@ -515,7 +514,7 @@ def test_delta_task_xtrigger(xharness):
     assert foo.state.xtriggers['x']  # satisfied
     assert not bar.state.xtriggers['x']  # not satisfied
 
-    # data store show have one update task proxy with satisfied xtrigger x
+    # data store should have one updated task proxy with satisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
     xtrig = pbfoo.xtriggers['xrandom(0)']

@@ -18,7 +18,10 @@
 import asyncio
 from pathlib import Path
 from textwrap import dedent
+from typing import cast, Iterable
 
+from cylc.flow.data_messages_pb2 import PbTaskProxy
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
 
@@ -128,39 +131,36 @@ async def test_1_xtrigger_2_tasks(flow, start, scheduler, mocker):
 
 
 async def test_xtriggers_restart(flow, start, scheduler, db_select):
-    """It should write xtrigger results to the DB and load them on restart."""
-    # define a workflow which uses a custom xtrigger
+    """It should write satisfied xtriggers to the DB and load on restart.
+
+    This checks persistence of xtrigger function results across restarts.
+
+    See also test_set_xtriggers_restart for task dependence on xtriggers.
+
+    """
     id_ = flow({
         'scheduling': {
             'xtriggers': {
-                'mytrig': 'mytrig()'
+                'x100': 'xrandom(100)',  # always succeeds
+                'x0': 'xrandom(0)'  # never succeeds
             },
             'graph': {
-                'R1': '@mytrig => foo'
+                'R1': '''
+                    @x100 => foo
+                    @x0 = > bar
+                '''
             },
         }
     })
-
-    # add a custom xtrigger to the workflow
-    run_dir = Path(get_workflow_run_dir(id_))
-    xtrig_dir = run_dir / 'lib/python'
-    xtrig_dir.mkdir(parents=True)
-    (xtrig_dir / 'mytrig.py').write_text(dedent('''
-        from random import random
-
-        def mytrig(*args, **kwargs):
-            # return a different random number each time
-            return True, {"x": str(random())}
-    '''))
-
     # start the workflow & run the xtrigger
     schd = scheduler(id_)
     async with start(schd):
         # run all xtriggers
         for task in schd.pool.get_tasks():
             schd.xtrigger_mgr.call_xtriggers_async(task)
-        # one xtrigger should have been scheduled to run
-        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 1
+        # two xtriggers should have been scheduled to run
+        # and x100 should succeed
+        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 2
         # wait for it to return
         for _ in range(50):
             await asyncio.sleep(0.1)
@@ -170,11 +170,11 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
         else:
             raise Exception('Process pool did not clear')
 
-    # the xtrigger should be written to the DB
+    # the satisfied x100 should be written to the DB
     db_xtriggers = db_select(schd, True, 'xtriggers')
     assert len(db_xtriggers) == 1
-    assert db_xtriggers[0][0] == 'mytrig()'
-    assert db_xtriggers[0][1].startswith('{"x":')
+    assert db_xtriggers[0][0] == 'xrandom(100)'
+    assert db_xtriggers[0][1].startswith('{"COLOR":')  # (xrandom result dict)
 
     # restart the workflow, the xtrigger should *not* run again
     schd = scheduler(id_)
@@ -182,12 +182,113 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
         # run all xtriggers
         for task in schd.pool.get_tasks():
             schd.xtrigger_mgr.call_xtriggers_async(task)
-        # the xtrigger should have been loaded from the DB
-        # (so no xtriggers should be scheduled to run)
-        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 0
+        # satisfied x100 should have been loaded from the DB
+        # so only one xtrigger should be scheduled to run now
+        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 1
+
+        # x0 should not be satisfied
+        bar = schd.pool._get_task_by_id('1/bar')
+        assert not bar.state.xtriggers["x0"]
+
+        # x100 should now be satisfied in the task pool and the datastore
+        foo = schd.pool._get_task_by_id('1/foo')
+        assert foo.state.xtriggers["x100"]
+
+        await schd.update_data_structure()
+        [xtrig] = [
+            p
+            for t in cast(
+                'Iterable[PbTaskProxy]',
+                schd.data_store_mgr.data[
+                    schd.data_store_mgr.workflow_id
+                ][
+                    TASK_PROXIES
+                ].values()
+            )
+            for p in t.xtriggers.values()
+            if p.label == "x100"
+        ]
+        assert xtrig.id == "xrandom(100)"
+        assert xtrig.satisfied
 
     # check the DB to ensure no additional entries have been created
     assert db_select(schd, True, 'xtriggers') == db_xtriggers
+
+
+async def test_set_xtriggers_restart(flow, start, scheduler, db_select):
+    """It should write satisfied xtrig prerequisites to the DB for restart.
+
+    This checks that individual task dependence on xtriggers, which can be
+    artificially satisfied by "cylc set" persists across restart.
+
+    See also test_xtriggers_restart, for persistence of xtrigger results.
+
+    """
+    id_ = flow({
+        'scheduling': {
+            'xtriggers': {
+                'x0': 'xrandom(0)'  # never succeeds naturally
+            },
+            'graph': {
+                'R1': '''
+                    @x0 = > foo & bar
+                '''
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # artificially set dependence of foo on x0
+        schd.pool.set_prereqs_and_outputs(
+            ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
+        )
+
+    # the satisfied x0 prerequisite should be written to the DB
+    [db_pre] = db_select(schd, True, 'task_prerequisites')
+    assert db_pre == ('1', 'foo', '[1]', 'x0', 'xtrigger', 'not-used', '1')
+
+    # restart the workflow
+    schd = scheduler(id_)
+    async with start(schd):
+        # run all xtriggers
+        for task in schd.pool.get_tasks():
+            schd.xtrigger_mgr.call_xtriggers_async(task)
+
+        # foo's dependence on x0 should be satisfied from the DB
+        # but bar still depends on it so the scheduler should still call it.
+        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 1
+
+        # "@x0 => bar" should not be satisfied
+        bar = schd.pool._get_task_by_id('1/bar')
+        assert not bar.state.xtriggers["x0"]
+
+        # but "x0 => foo" should be, in the task pool and the datastore
+        foo = schd.pool._get_task_by_id('1/foo')
+        assert foo.state.xtriggers["x0"]
+
+        await schd.update_data_structure()
+        xtrigs = [
+            (t.id, p)
+            for t in cast(
+                'Iterable[PbTaskProxy]',
+                schd.data_store_mgr.data[
+                    schd.data_store_mgr.workflow_id
+                ][
+                    TASK_PROXIES
+                ].values()
+            )
+            for p in t.xtriggers.values()
+        ]
+        assert len(xtrigs) == 2
+        for (id, xtrig) in xtrigs:
+            if id.endswith('foo'):
+                assert xtrig.id == "xrandom(0)"
+                assert xtrig.satisfied
+            elif id.endswith('bar'):
+                assert xtrig.id == "xrandom(0)"
+                assert not xtrig.satisfied
+            else:
+                assert False
 
 
 async def test_error_in_xtrigger(flow, start, scheduler):
@@ -261,3 +362,53 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
             for year in range(1991, 1994)
             for name in ('foo', 'bar')
         )
+
+
+async def test_force_satisfy(flow, start, scheduler, log_filter):
+    """It should satisfy valid xtriggers and ignore invalid ones."""
+    id_ = flow({
+        'scheduling': {
+            'xtriggers': {
+                'x': 'xrandom(0)'
+            },
+            'graph': {
+                'R1': '@x => foo'
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+
+        # check x not satisfied yet
+        assert not foo.state.xtriggers['x']  # not satisified
+
+        # force satisfy it
+        xtrigs = {
+            "x": True,  # it should satisfy this one
+            "y": True  # it should just ignore this one
+        }
+        schd.xtrigger_mgr.force_satisfy(foo, xtrigs)
+
+        assert foo.state.xtriggers['x']  # satisified
+        assert log_filter(
+            contains='xtrigger prerequisite satisfied: x = xrandom(0)')
+
+        # force satisfy it again
+        schd.xtrigger_mgr.force_satisfy(foo, xtrigs)
+        assert foo.state.xtriggers['x']  # satisified
+        assert log_filter(
+            contains='xtrigger prerequisite already satisfied: x = xrandom(0)')
+
+        # force unsatisfy it
+        schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
+        assert not foo.state.xtriggers['x']  # not satisified
+        assert log_filter(
+            contains='xtrigger prerequisite unsatisfied: x = xrandom(0)')
+
+        # force unsatisfy it again
+        schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
+        assert not foo.state.xtriggers['x']  # not satisified
+        assert log_filter(contains=(
+            'xtrigger prerequisite already unsatisfied: x = xrandom(0)'
+        ))

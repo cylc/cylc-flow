@@ -783,6 +783,9 @@ class XtriggerManager:
     ) -> None:
         """Force un/satisfy some xtriggers in itask, via the set command.
 
+        Ignore invalid xtriggers, i.e., that itask does not depend on.
+        (In fact these are weeded out by the caller).
+
         Dependent tasks must be able to handle an empty result dict.
 
         Args:
@@ -792,7 +795,6 @@ class XtriggerManager:
         """
         for label, satisfied in xtriggers.items():
             if label not in itask.state.xtriggers:
-                # itask does not depend on this xtrigger.
                 continue
 
             ctx = self.get_xtrig_ctx(itask, label)
