@@ -515,8 +515,11 @@ class TuiApp:
         _, old_node = self.listbox.body.get_focus()
 
         # nuke the tree
-        self.tree_walker = urwid.TreeWalker(topnode)
-        self.listbox.body = self.tree_walker
+        if not (self.tree_walker):
+            self.tree_walker = urwid.TreeWalker(topnode)
+            self.listbox.body = self.tree_walker
+        else:
+            self.tree_walker.set_focus(topnode)
 
         # get the new focus
         _, new_node = self.listbox.body.get_focus()
