@@ -68,7 +68,7 @@ def test_write_data(tmpdir):
     file = tmpdir.join('output.txt')
 
     write_data('test_data', file.strpath)
-    assert file.read() == 'test_data\n'
+    assert file.read() == 'test_data'
 
 
 def test_get_cgroup_name(mocker):
