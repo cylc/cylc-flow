@@ -36,6 +36,12 @@ from cylc.flow.id import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import TASK_STATUS_WAITING
 
+from cylc.flow.scripts.set import (
+    XTRIGGER_PREREQ_PREFIX,
+    XTRIGGER_OUTPUT_PREFIX,
+    XTRIGGER_SET_PREFIXES
+)
+
 
 ERR_OPT_FLOW_VAL = (
     f"Flow values must be integers, or '{FLOW_ALL}', '{FLOW_NEW}', "
@@ -155,9 +161,9 @@ def prereqs(prereqs: Optional[List[str]]):
         if p is not None:
             prereqs2.append(p)
         else:
-            if pre.startswith("xtrigger"):
+            if pre.startswith(XTRIGGER_PREREQ_PREFIX):
                 bad_xtrig_1.append(pre)
-            if pre.startswith("XTRIGGER"):
+            if pre.startswith(XTRIGGER_OUTPUT_PREFIX):
                 bad_xtrig_2.append(pre)
             else:
                 bad_pre.append(pre)
@@ -169,13 +175,13 @@ def prereqs(prereqs: Optional[List[str]]):
         )
     if bad_xtrig_1:
         bad_msg.append(
-            "Use xtrigger format xtrigger/<label>"
+            f"Use xtrigger format {XTRIGGER_PREREQ_PREFIX}/<label>"
             "[:(succeeded or waiting)]\n  * "
             + "\n  * ".join(bad_xtrig_1)
         )
     if bad_xtrig_2:
         bad_msg.append(
-            "Use xtrigger format XTRIGGER/<label>"
+            "Use xtrigger format {XTRIGGER_OUTPUT_PREFIX}/<label>"
             "[:(succeeded or waiting)]\n  * "
             + "\n  * ".join(bad_xtrig_2)
         )
@@ -190,17 +196,21 @@ def prereqs(prereqs: Optional[List[str]]):
 
 
 def prereq(prereq: str) -> Optional[str]:
-    """Return standardised task or xtrigger prerequisite if valid, else None.
+    """Return standardised task and xtrigger prerequisites if valid, else None.
 
-    For tasks prerequisites, default to ":succeeded" suffix.
+    Default to the ":succeeded" suffix.
 
-    Format:
-    - task prerequisite: cycle/task[:output]
-    - xtrigger prerequisites: "xtrigger"/label or "XTRIGGER"/label
+    (Standardisation of "start" -> "started" etc. is done later).
+
+    Format: cycle/task[:output]
+      (xtrigger cycle is "xtrigger" or "XTRIGGER", task is xtrigger label)
 
     Examples:
         >>> prereq('1/foo:succeeded')
         '1/foo:succeeded'
+
+        >>> prereq('1/foo:other')
+        '1/foo:other'
 
         >>> prereq('1/foo')
         '1/foo:succeeded'
@@ -209,7 +219,7 @@ def prereq(prereq: str) -> Optional[str]:
         'all'
 
         >>> prereq('xtrigger/wall_clock')
-        'xtrigger/wall_clock'
+        'xtrigger/wall_clock:succeeded'
 
         >>> prereq('xtrigger/wall_clock:succeeded')
         'xtrigger/wall_clock:succeeded'
@@ -223,7 +233,7 @@ def prereq(prereq: str) -> Optional[str]:
         >>> prereq('XTRIGGER/get_data:waiting')
         'XTRIGGER/get_data:waiting'
 
-        # Error
+        # Error:
         >>> prereq('xtrigger/wall_clock:other')
 
         # Error:
@@ -236,9 +246,9 @@ def prereq(prereq: str) -> Optional[str]:
         return None
 
     if (
-        tokens["cycle"] in ("xtrigger", "XTRIGGER")
+        tokens["cycle"] in XTRIGGER_SET_PREFIXES
         and tokens["task_sel"] not in [
-            None, TASK_OUTPUT_SUCCEEDED, "succeed", TASK_STATUS_WAITING]
+            None, TASK_STATUS_WAITING, TASK_OUTPUT_SUCCEEDED, "succeed"]
     ):
         # Error: xtrigger status must be default, succeeded, or waiting.
         return None
@@ -253,7 +263,6 @@ def prereq(prereq: str) -> Optional[str]:
     if (
         prereq != "all"
         and tokens["task_sel"] is None
-        and tokens['cycle'] != 'xtrigger'  # TODO default xtrigger here too?
     ):
         prereq += f":{TASK_OUTPUT_SUCCEEDED}"
 

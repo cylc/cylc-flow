@@ -65,7 +65,10 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_utc_mode,
 )
-
+from cylc.flow.scripts.set import (
+    XTRIGGER_FAKE_OUTPUT,
+    XTRIGGER_PREREQ_PREFIX
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -531,8 +534,8 @@ class WorkflowDatabaseManager:
                 if x_satisfied:
                     self.put_insert_task_prerequisites(itask, {
                         "prereq_name": x_label,
-                        "prereq_cycle": "xtrigger",
-                        "prereq_output": "cheese",
+                        "prereq_cycle": XTRIGGER_PREREQ_PREFIX,
+                        "prereq_output": XTRIGGER_FAKE_OUTPUT,
                         "satisfied": True
                     })
 
