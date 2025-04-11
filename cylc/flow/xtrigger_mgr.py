@@ -738,7 +738,7 @@ class XtriggerManager:
             if label in self.xtriggers.sequential_xtrigger_labels
         )
 
-    def callback(self, ctx: 'SubFuncContext', full=True):
+    def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
 
         Record satisfaction status and function results dict.
@@ -750,7 +750,7 @@ class XtriggerManager:
             ctx (SubFuncContext): function context
         """
         sig = ctx.get_signature()
-        if full and sig in self.active:
+        if sig in self.active:
             # (call in progress, waiting on response)
             self.active.remove(sig)
 
@@ -771,18 +771,37 @@ class XtriggerManager:
             return
 
         # Newly satisfied
-        if full:
-            self.data_store_mgr.delta_xtrigger(sig, satisfied)
-            self.workflow_db_mgr.put_xtriggers({sig: results})
-            LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
-            self.sat_xtrig[sig] = results
-        else:
-            LOG.info('xtrigger PREREQ satisfied: %s = %s', ctx.label, sig)
+        self.data_store_mgr.delta_xtrigger(sig, satisfied)
+        self.workflow_db_mgr.put_xtriggers({sig: results})
+        LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
+        self.sat_xtrig[sig] = results
 
         self.do_housekeeping = True
 
+    def fake_callback(self, ctx: 'SubFuncContext'):
+        """Used for manually setting xtriggers
+
+        Record satisfaction status and function results dict.
+
+        Args:
+            ctx (SubFuncContext): function context
+        """
+        sig = ctx.get_signature()
+
+        try:
+            satisfied, results = json.loads(str(ctx.out))
+        except (ValueError, TypeError):
+            return
+
+        LOG.debug('%s: returned %s', sig, results)
+        if not satisfied:
+            LOG.info('xtrigger not satisfied: %s = %s', ctx.label, sig)
+            return
+
+        LOG.info('xtrigger PREREQ satisfied: %s = %s', ctx.label, sig)
+
     def force_satisfy(
-        self, itask: 'TaskProxy', xtriggers: 'Dict[str, Tuple[bool, bool]]'
+        self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
     ) -> None:
         """Force un/satisfy some xtriggers in itask, via the set command.
 
@@ -793,7 +812,7 @@ class XtriggerManager:
             xtriggers: xtriggers to un/satisfy
 
         """
-        for label, (satisfied, full) in xtriggers.items():
+        for label, satisfied in xtriggers.items():
             if label not in itask.state.xtriggers:
                 # itask does not depend on this xtrigger.
                 continue
@@ -803,23 +822,29 @@ class XtriggerManager:
 
             if satisfied:
                 if itask.state.xtriggers[label]:
-                    LOG.info('xtrigger already satisfied: %s = %s', label, sig)
+                    LOG.info(
+                        f"[{itask}] - xtrigger prerequisite already"
+                        f" satisfied: {label} = {sig}"
+                    )
                 else:
                     itask.state.xtriggers[label] = True
-                    ctx.ret_code = 0
-                    # Set satisfied with an empty results dict.
-                    ctx.out = json.dumps((True, {}))
-                    self.callback(ctx, full=full)
                     self.data_store_mgr.delta_task_xtrigger(
                         itask, label, sig, True)
+                    LOG.info(
+                        f"[{itask}] - xtrigger prerequisite"
+                        f" satisfied: {label} = {sig}"
+                    )
             else:
                 if not itask.state.xtriggers[label]:
                     LOG.info(
-                        'xtrigger already unsatisfied: %s = %s', label, sig)
+                        f"[{itask}] - xtrigger prerequisite already"
+                        f" unsatisfied: {label} = {sig}"
+                    )
                 else:
                     itask.state.xtriggers[label] = False
-                    self.data_store_mgr.delta_xtrigger(sig, False)
-                    with suppress(KeyError):
-                        del self.sat_xtrig[sig]
-                    self.workflow_db_mgr.put_delete_xtrigger(sig)
-                    LOG.info('xtrigger unsatisfied: %s = %s', label, sig)
+                    self.data_store_mgr.delta_task_xtrigger(
+                        itask, label, sig, False)
+                    LOG.info(
+                        f"[{itask}] - xtrigger prerequisite"
+                        f" unsatisfied: {label} = {sig}"
+                    )

@@ -97,8 +97,7 @@ from cylc.flow.util import deserialise_set
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.scripts.set import (
     XTRIGGER_FAKE_OUTPUT,
-    XTRIGGER_OUTPUT_PREFIX,
-    XTRIGGER_SET_PREFIXES
+    XTRIGGER_PREREQ_PREFIX
 )
 
 if TYPE_CHECKING:
@@ -124,7 +123,7 @@ Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 def _standardise_xtrigs(
     prereqs: 'Iterable[str]'
-) -> 'Dict[str, Tuple[bool, bool]]':
+) -> 'Dict[str, bool]':
     """Extract xtriggers from user input and standardise.
 
     Weed out any task prerequisites.
@@ -146,28 +145,24 @@ def _standardise_xtrigs(
         {}
 
         >>> _standardise_xtrigs(["1/foo:started", "xtrigger/x1:succeed"])
-        {'x1': (True, False)}
+        {'x1': True}
 
-        >>> _standardise_xtrigs(["xtrigger/x1:waiting", "XTRIGGER/x2:succeed"])
-        {'x1': (False, False), 'x2': (True, True)}
+        >>> _standardise_xtrigs(["xtrigger/x1:waiting", "xtrigger/x2:succeed"])
+        {'x1': False, 'x2': True}
 
     """
     _xtrigs = {}
     for prereq in prereqs:
         pre = Tokens(prereq, relative=True)
 
-        if pre['cycle'] not in XTRIGGER_SET_PREFIXES:
+        if pre['cycle'] != XTRIGGER_PREREQ_PREFIX:
             # weed out task prerequisites
             continue
 
         state = TaskTrigger.standardise_name(pre['task_sel'])
 
-        _xtrigs[pre['task']] = (
-            # requested state to set:
-            state == TASK_OUTPUT_SUCCEEDED,
-            # True: set output; False: set prereq:
-            pre['cycle'] == XTRIGGER_OUTPUT_PREFIX
-        )
+        # requested state to set:
+        _xtrigs[pre['task']] = (state == TASK_OUTPUT_SUCCEEDED)
     return _xtrigs
 
 
@@ -1941,7 +1936,7 @@ class TaskPool:
         _prereqs = set()
         for prereq in prereqs:
             pre = Tokens(prereq, relative=True)
-            if pre['cycle'] in XTRIGGER_SET_PREFIXES:
+            if pre['cycle'] == XTRIGGER_PREREQ_PREFIX:
                 # weed out xtrigger prerequisites
                 continue
             output = TaskTrigger.standardise_name(
@@ -1985,7 +1980,7 @@ class TaskPool:
 
     def _get_prereq_params(
         self, prereqs: 'Iterable[str]', tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Tuple[bool, Set[Tokens], Dict[str, Tuple[bool, bool]]]':
+    ) -> 'Tuple[bool, Set[Tokens], Dict[str, bool]]':
         """Convert input prerequisites to Tokens of just the valid ones.
 
         And convert the (mutually exclusive) "['all']" shortcut to a bool.
@@ -2153,7 +2148,7 @@ class TaskPool:
 
     def _get_valid_xtrigs(
             self, prereqs: Iterable[str], tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Dict[str, Tuple[bool, bool]]':
+    ) -> 'Dict[str, bool]':
         """Validate and standardise xtrigger prerequisites from the CLI.
 
         Weed out any task prerequisites.
@@ -2161,9 +2156,7 @@ class TaskPool:
         Args:
             prereqs: [point/task:output, "xtrigger"/label:state, ... ]
 
-        Returns: dict {xtrigger-label: [state, set-xtrigger],}
-            (state: True succeeded, False waiting)
-            (set-xtrigger: True set the xtrigger, False set dependence on it)
+        Returns: dict {xtrigger-label: xtrigger-state, }
 
         """
         valid_x_labels = tdef.get_xtrigs(point)
@@ -2244,7 +2237,7 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         prereqs: 'Iterable[Tokens]',
-        xtrigs: 'Dict[str, Tuple[bool, bool]]',
+        xtrigs: 'Dict[str, bool]',
         set_all: bool
     ) -> None:
         """Set prerequisites on a task proxy.
@@ -2269,7 +2262,7 @@ class TaskPool:
         point: 'PointBase',
         taskdef: 'TaskDef',
         prereqs: 'Iterable[Tokens]',
-        xtrigs: 'Dict[str, Tuple[bool, bool]]',
+        xtrigs: 'Dict[str, bool]',
         flow_nums: 'FlowNums',
         flow_wait: bool,
         set_all: bool

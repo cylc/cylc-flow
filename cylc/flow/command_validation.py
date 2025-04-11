@@ -36,7 +36,7 @@ from cylc.flow.id import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import TASK_STATUS_WAITING
 
-from cylc.flow.scripts.set import XTRIGGER_SET_PREFIXES
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 
 ERR_OPT_FLOW_VAL = (
@@ -115,8 +115,8 @@ def prereqs(prereqs: Optional[List[str]]):
 
     Examples:
         # Set multiple at once, prereq and xtriggers:
-        >>> prereqs(['1/foo:bar', 'xtrigger/x1', 'XTRIGGER/x2:waiting'])
-        ['1/foo:bar', 'xtrigger/x1:succeeded', 'XTRIGGER/x2:waiting']
+        >>> prereqs(['1/foo:bar', 'xtrigger/x1'])
+        ['1/foo:bar', 'xtrigger/x1:succeeded']
 
         # --pre=all
         >>> prereqs(["all"])
@@ -182,7 +182,7 @@ def prereq(prereq: str) -> Optional[str]:
     (Standardisation of "start" -> "started" etc. is done later).
 
     Format: cycle/task[:output]
-      (xtrigger cycle is "xtrigger" or "XTRIGGER", task is xtrigger label)
+      (xtriggers: cycle is "xtrigger", task is xtrigger label)
 
     Examples:
         >>> prereq('1/foo:succeeded')
@@ -209,9 +209,6 @@ def prereq(prereq: str) -> Optional[str]:
         >>> prereq('xtrigger/wall_clock:waiting')
         'xtrigger/wall_clock:waiting'
 
-        >>> prereq('XTRIGGER/get_data:waiting')
-        'XTRIGGER/get_data:waiting'
-
         # Error, xtrigger state must be succeeded or waiting:
         >>> prereq('xtrigger/wall_clock:other')
 
@@ -225,7 +222,7 @@ def prereq(prereq: str) -> Optional[str]:
         return None
 
     if (
-        tokens["cycle"] in XTRIGGER_SET_PREFIXES
+        tokens["cycle"] == XTRIGGER_PREREQ_PREFIX
         and tokens["task_sel"] not in [
             None, TASK_STATUS_WAITING, TASK_OUTPUT_SUCCEEDED, "succeed"]
     ):

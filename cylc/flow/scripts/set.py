@@ -61,16 +61,15 @@ Prerequisites:
     * does not satisfy dependence on xtriggers (see below for that)
 
 Xtriggers:
-    Set or reset an xtrigger by targetting a task that depends on it. The
-    default ":succeeded" state means the xtrigger succeeded and the scheduler
-    can stop checking it (unless other tasks still depend on it), and
-    ":waiting" means go back to waiting on an unsatisified xtrigger.
+    To satisfy or unsatisfy xtriggers in target tasks use --pre with
+    "xtrigger" as the cycle point, xtrigger label as task name, and
+    ":succeeded" (the default) or ":waiting" as output. This tells target
+    tasks their dependence on the xtrigger is satisfied (succeeded) or
+    unatisfied (waiting). If satisfied, and no other tasks depend on the
+    same xtrigger function signature, the scheduler will stop calling it.
 
     Xtrigger format:
       * --pre=xtrigger/<label>[:succeeded or :waiting]
-        set just the target task's dependence on the xtrigger
-      * --pre=XTRIGGER/<label>[:succeeded or :waiting]
-        set the xtrigger itself, to affect all tasks that depend on it
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
@@ -101,12 +100,6 @@ Examples:
   $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
     # or reset it back to waiting:
   $ cylc set --pre=xtrigger/data:waiting my_worklfow//3000/bar
-
-  # set the xtrigger @data to succeeded, for all dependendent tasks, by
-  # targetting one of the tasks that depend on it (in this case, 3/bar):
-  $ cylc set --out=XTRIGGER/data my_workflow//3/bar
-    # or reset it it back to waiting:
-  $ cylc set --out=XTRIGGER/data:waiting my_workflow//3/bar
 
   # satisfy the "3/bar:file1" prerequisite of 3/qux:
   $ cylc set --pre=3/bar:file1 my_workflow//3/qux
@@ -142,14 +135,9 @@ if TYPE_CHECKING:
     from cylc.flow.id import Tokens
 
 
-# Constants used for setting xtriggers with --pre:
-# 1. (un)satisify just the target task xtrigger prerequisite:
+# For setting xtriggers with --pre:
 XTRIGGER_PREREQ_PREFIX = "xtrigger"
-# 2. (un)satisify the xtrigger itself (i.e., its output) for all tasks:
-XTRIGGER_OUTPUT_PREFIX = "XTRIGGER"
-XTRIGGER_SET_PREFIXES = (XTRIGGER_PREREQ_PREFIX, XTRIGGER_OUTPUT_PREFIX)
-
-# To fill out xtriggers in the DB prerequisites table:
+# For xtriggers in the DB prerequisites table:
 XTRIGGER_FAKE_OUTPUT = "not-used"
 
 

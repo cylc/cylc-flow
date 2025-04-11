@@ -444,18 +444,13 @@ class WorkflowDatabaseManager:
                 })
             task_events_mgr.event_timers_updated = False
 
-    def put_xtriggers(self, xtrig):
+    def put_xtriggers(self, sat_xtrig):
         """Put statements to update xtriggers table."""
-        for sig, res in xtrig.items():
-            self.db_inserts_map[self.TABLE_XTRIGGERS].append({
-                "signature": sig,
-                "results": json.dumps(res)})
-
-    def put_delete_xtrigger(self, xtrig_sig):
-        """Put statements to update xtriggers table."""
-        if not xtrig_sig.startswith('wall_clock('):
-            self.db_deletes_map[self.TABLE_XTRIGGERS].append(
-                {"signature": xtrig_sig})
+        for sig, res in sat_xtrig.items():
+            if not sig.startswith('wall_clock('):
+                self.db_inserts_map[self.TABLE_XTRIGGERS].append({
+                    "signature": sig,
+                    "results": json.dumps(res)})
 
     def put_update_task_state(self, itask: 'TaskProxy') -> None:
         """Update task_states table for current state of itask.
