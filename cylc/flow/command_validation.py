@@ -34,6 +34,9 @@ from cylc.flow.id import (
     Tokens,
 )
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.task_state import TASK_STATUS_WAITING
+
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 
 ERR_OPT_FLOW_VAL = (
@@ -111,9 +114,9 @@ def prereqs(prereqs: Optional[List[str]]):
     Comma-separated lists should be split already, client-side.
 
     Examples:
-        # Set multiple at once:
-        >>> prereqs(['1/foo:bar', '2/foo:baz'])
-        ['1/foo:bar', '2/foo:baz']
+        # Set multiple at once, prereq and xtriggers:
+        >>> prereqs(['1/foo:bar', 'xtrigger/x1'])
+        ['1/foo:bar', 'xtrigger/x1:succeeded']
 
         # --pre=all
         >>> prereqs(["all"])
@@ -136,6 +139,12 @@ def prereqs(prereqs: Optional[List[str]]):
         cylc.flow.exceptions.InputError: ...
           * 1/foo::bar
 
+        # Error: invalid format:
+        >>> prereqs(["xtrigger/x1::bar"])
+        Traceback (most recent call last):
+        cylc.flow.exceptions.InputError: ...
+          * xtrigger/x1::bar
+
         # Error: "all" must be used alone:
         >>> prereqs(["all", "2/foo:baz"])
         Traceback (most recent call last):
@@ -146,19 +155,18 @@ def prereqs(prereqs: Optional[List[str]]):
         return []
 
     prereqs2 = []
-    bad: List[str] = []
+    bad_pre: List[str] = []
     for pre in prereqs:
         p = prereq(pre)
         if p is not None:
             prereqs2.append(p)
         else:
-            bad.append(pre)
-    if bad:
+            bad_pre.append(pre)
+    if bad_pre:
         raise InputError(
-            "Use prerequisite format <cycle>/<task>:output\n  * "
-            + "\n  * ".join(bad)
+            "Bad prerequisite format, see command help:\n * "
+            + "\n * ".join(bad_pre)
         )
-
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
         if "all" in prereqs:
             raise InputError("--pre=all must be used alone")
@@ -167,13 +175,21 @@ def prereqs(prereqs: Optional[List[str]]):
 
 
 def prereq(prereq: str) -> Optional[str]:
-    """Return prereq (with :succeeded) if valid, else None.
+    """Return standardised task and xtrigger prerequisites if valid, else None.
+
+    Default to the ":succeeded" suffix.
+
+    (Standardisation of "start" -> "started" etc. is done later).
 
     Format: cycle/task[:output]
+      (xtriggers: cycle is "xtrigger", task is xtrigger label)
 
     Examples:
         >>> prereq('1/foo:succeeded')
         '1/foo:succeeded'
+
+        >>> prereq('1/foo:other')
+        '1/foo:other'
 
         >>> prereq('1/foo')
         '1/foo:succeeded'
@@ -181,7 +197,22 @@ def prereq(prereq: str) -> Optional[str]:
         >>> prereq('all')
         'all'
 
-        # Error:
+        >>> prereq('xtrigger/wall_clock')
+        'xtrigger/wall_clock:succeeded'
+
+        >>> prereq('xtrigger/wall_clock:succeeded')
+        'xtrigger/wall_clock:succeeded'
+
+        >>> prereq('xtrigger/wall_clock:succeed')
+        'xtrigger/wall_clock:succeed'
+
+        >>> prereq('xtrigger/wall_clock:waiting')
+        'xtrigger/wall_clock:waiting'
+
+        # Error, xtrigger state must be succeeded or waiting:
+        >>> prereq('xtrigger/wall_clock:other')
+
+        # Error, just a task name:
         >>> prereq('fish')
 
     """
@@ -189,6 +220,15 @@ def prereq(prereq: str) -> Optional[str]:
         tokens = Tokens(prereq, relative=True)
     except ValueError:
         return None
+
+    if (
+        tokens["cycle"] == XTRIGGER_PREREQ_PREFIX
+        and tokens["task_sel"] not in [
+            None, TASK_STATUS_WAITING, TASK_OUTPUT_SUCCEEDED, "succeed"]
+    ):
+        # Error: xtrigger status must be default, succeeded, or waiting.
+        return None
+
     if (
         tokens["cycle"] == prereq
         and prereq != "all"
@@ -196,7 +236,10 @@ def prereq(prereq: str) -> Optional[str]:
         # Error: --pre=<word> other than "all"
         return None
 
-    if prereq != "all" and tokens["task_sel"] is None:
+    if (
+        prereq != "all"
+        and tokens["task_sel"] is None
+    ):
         prereq += f":{TASK_OUTPUT_SUCCEEDED}"
 
     return prereq
