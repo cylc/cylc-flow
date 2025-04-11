@@ -1284,7 +1284,7 @@ class TaskEventsManager():
         if label in itask.state.xtriggers:
             # retry xtrigger already exists from a previous retry, modify it
             self.xtrigger_mgr.mutate_trig(label, kwargs)
-            itask.state.xtriggers[label] = False
+            itask.state.update_xtrigger(label, False)
         else:
             # create a new retry xtrigger
             xtrig = SubFuncContext(
@@ -1298,7 +1298,16 @@ class TaskEventsManager():
                 xtrig,
                 os.getenv("CYLC_WORKFLOW_RUN_DIR")
             )
-            itask.state.add_xtrigger(label)
+            itask.state.add_xtrigger(label, label, False)
+
+        sig = label
+
+        (
+            self.data_store_mgr.xtrigger_tasks
+            .setdefault(sig, set())
+            .add((itask.identity, label))
+        )
+        self.data_store_mgr.delta_task_xtrigger(itask)
 
         if itask.state_reset(TASK_STATUS_WAITING):
             self.data_store_mgr.delta_task_state(itask)

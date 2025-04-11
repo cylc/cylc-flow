@@ -1484,6 +1484,17 @@ class DataStoreMgr:
 
         self.db_load_task_proxies.clear()
 
+    def _populate_xtriggers(self, itask, tproxy):
+        """Transfer xtriggers from the itask onto the PbTaskProxy."""
+        for label, (satisfied, _) in itask.state.xtriggers.items():
+            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
+                itask, label).get_signature()
+            xtrig = tproxy.xtriggers[sig]
+            xtrig.id = sig
+            xtrig.label = label
+            xtrig.satisfied = satisfied
+            self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
+
     def _process_internal_task_proxy(
         self,
         itask: 'TaskProxy',
@@ -1517,14 +1528,7 @@ class DataStoreMgr:
             ext_trig.id = trig
             ext_trig.satisfied = satisfied
 
-        for label, satisfied in itask.state.xtriggers.items():
-            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
-                itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
-            xtrig.id = sig
-            xtrig.label = label
-            xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
+        self._populate_xtriggers(itask, tproxy)
 
         if tproxy.state in self.latest_state_tasks:
             tp_ref = itask.identity
@@ -2041,6 +2045,7 @@ class DataStoreMgr:
             if child_fam_id in self.updated_state_families:
                 continue
             self._family_ascent_point_update(child_fam_id)
+
         if fp_id in self.state_update_families:
             fp_updated = self.updated[FAMILY_PROXIES]
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
@@ -2051,6 +2056,9 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            is_retry = False
+            is_wallclock = False
+            is_xtriggered = False
             graph_depth = self.n_edge_distance
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
@@ -2089,11 +2097,37 @@ class DataStoreMgr:
                     is_queued_total += 1
 
                 tp_runahead = tp_delta
-                if (tp_runahead is None
-                        or not tp_runahead.HasField('is_runahead')):
+                if (
+                    tp_runahead is None
+                    or not tp_runahead.HasField('is_runahead')
+                ):
                     tp_runahead = tp_node
                 if tp_runahead.is_runahead:
                     is_runahead_total += 1
+
+                tp_retry = tp_delta
+                if tp_retry is None or not tp_retry.HasField('is_retry'):
+                    tp_retry = tp_node
+                if tp_retry.is_retry:
+                    is_retry = True
+
+                tp_wallclock = tp_delta
+                if (
+                    tp_wallclock is None
+                    or not tp_wallclock.HasField('is_wallclock')
+                ):
+                    tp_wallclock = tp_node
+                if tp_wallclock.is_wallclock:
+                    is_wallclock = True
+
+                tp_xtriggered = tp_delta
+                if (
+                    tp_xtriggered is None
+                    or not tp_xtriggered.HasField('is_xtriggered')
+                ):
+                    tp_xtriggered = tp_node
+                if tp_xtriggered.is_xtriggered:
+                    is_xtriggered = True
 
                 tp_depth = tp_delta
                 if tp_depth is None or not tp_depth.HasField('graph_depth'):
@@ -2113,7 +2147,10 @@ class DataStoreMgr:
                 is_queued_total=is_queued_total,
                 is_runahead=(is_runahead_total > 0),
                 is_runahead_total=is_runahead_total,
-                graph_depth=graph_depth
+                is_retry=is_retry,
+                is_wallclock=is_wallclock,
+                is_xtriggered=is_xtriggered,
+                graph_depth=graph_depth,
             )
             fp_delta.states[:] = state_counter.keys()
             # Use all states to clean up pruned counts
@@ -2303,7 +2340,14 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id)
         )
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for field in ('is_held', 'is_queued', 'is_runahead'):
+        for field in (
+            'is_held',
+            'is_queued',
+            'is_runahead',
+            'is_retry',
+            'is_wallclock',
+            'is_xtriggered',
+        ):
             val = getattr(itask.state, field)
             if (
                 # only update the fields that have changed compared to store:
@@ -2525,7 +2569,7 @@ class DataStoreMgr:
         ext_trigger.time = update_time
         self.updates_pending = True
 
-    def delta_task_xtrigger(self, sig, satisfied):
+    def delta_task_xtrigger(self, itask):
         """Create delta for change in task proxy xtrigger.
 
         Args:
@@ -2536,18 +2580,23 @@ class DataStoreMgr:
             satisfied (bool): Trigger message.
 
         """
+        tp_id, tproxy = self.store_node_fetcher(itask.tokens)
+        if not tproxy:
+            return
+
+        # refresh all xtriggers (we can't support incremental update on this
+        # field at present see https://github.com/cylc/cylc-flow/issues/6307)
+        self._populate_xtriggers(itask, tproxy)
+
+        # create an updated delta
         update_time = time()
-        for tp_id, label in self.xtrigger_tasks.get(sig, set()):
-            # update task instance
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            xtrigger = tp_delta.xtriggers[sig]
-            xtrigger.id = sig
-            xtrigger.label = label
-            xtrigger.satisfied = satisfied
-            xtrigger.time = update_time
-            self.updates_pending = True
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
+        tp_delta.MergeFrom(tproxy)
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+
+        self.updates_pending = True
 
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
         """Create delta from existing pool task proxy.
