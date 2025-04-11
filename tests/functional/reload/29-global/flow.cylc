@@ -1,0 +1,30 @@
+[scheduling]
+    cycling mode = integer
+    [[graph]]
+        R1 = a => reload-global => b & c
+[runtime]
+    [[root]]
+        script = true
+    [[a,b]]
+        platform = localhost
+    [[c]]
+        platform = $CYLC_TEST_PLATFORM
+    [[reload-global]]
+        platform = localhost
+        script = """
+            # Append to global config
+            cat >> "$CYLC_CONF_PATH/global.cylc" <<EOF 
+                [platforms]
+                    [[localhost,${CYLC_TEST_PLATFORM}]]
+                        global init-script = echo "global init-script reloaded!"
+                [task events]
+                    handlers = echo "!!EVENT!! %(event)s %(id)s"
+                    handler events = succeeded
+EOF
+
+            # Log the new config
+            cylc config
+
+            # Reload the global config
+            cylc reload --global "${CYLC_WORKFLOW_ID}"
+            """
