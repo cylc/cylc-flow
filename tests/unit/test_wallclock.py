@@ -66,8 +66,7 @@ def test_get_unix_time_from_time_string_error(value, error):
 
 
 def test_get_current_time_string(set_nonexistent_timezone):
-    """Now doesn't change timezones if system time is
-    different to scheduler's timezone.
+    """It reacts to local time zone changes.
 
     https://github.com/cylc/cylc-flow/issues/6701
     """

@@ -136,7 +136,7 @@ def get_time_string(date_time, display_sub_seconds=False,
 
     """
     time_zone_string = None
-    hours, minutes = get_local_time_zone()
+    local_tz = get_local_time_zone()
     if custom_time_zone_info is not None:
         custom_hours = custom_time_zone_info["hours"]
         custom_minutes = custom_time_zone_info["minutes"]
@@ -145,8 +145,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         else:
             custom_string = custom_time_zone_info["string_extended"]
         if date_time_is_local:
-            date_time_hours = hours
-            date_time_minutes = minutes
+            date_time_hours, date_time_minutes = local_tz
         else:
             date_time_hours, date_time_minutes = (0, 0)
         diff_hours = custom_hours - date_time_hours
@@ -158,8 +157,8 @@ def get_time_string(date_time, display_sub_seconds=False,
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
             date_time = date_time - timedelta(
-                hours=hours,
-                minutes=minutes
+                hours=local_tz[0],
+                minutes=local_tz[1]
             )
     else:
         if use_basic_format:
@@ -169,8 +168,7 @@ def get_time_string(date_time, display_sub_seconds=False,
             time_zone_string = get_local_time_zone_format(
                 TimeZoneFormatMode.extended)
         if not date_time_is_local:
-            diff_hours = hours
-            diff_minutes = minutes
+            diff_hours, diff_minutes = local_tz
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:

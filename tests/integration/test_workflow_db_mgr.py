@@ -209,6 +209,6 @@ async def test_time_zone_writing(
         time_submit_exit, '%Y-%m-%dT%H:%M:%S%z'
     )
 
-    # If submission time is > 10 seconds we may have other problems:
     assert time_submit_exit >= time_submit
+    # The two times should be approx the same:
     assert time_submit_exit < time_submit + timedelta(seconds=10)
