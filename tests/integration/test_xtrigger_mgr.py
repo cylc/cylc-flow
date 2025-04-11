@@ -18,7 +18,10 @@
 import asyncio
 from pathlib import Path
 from textwrap import dedent
+from typing import cast, Iterable
 
+from cylc.flow.data_messages_pb2 import PbTaskProxy
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
 
@@ -127,7 +130,7 @@ async def test_1_xtrigger_2_tasks(flow, start, scheduler, mocker):
         # loop doesn't run in this test.
 
 
-async def test_xtriggers_restart(flow, start, scheduler, db_select):
+async def test_xtriggers_restart(flow, start, scheduler, db_select, capsys):
     """It should write xtrigger results to the DB and load them on restart."""
     # define a workflow which uses a custom xtrigger
     id_ = flow({
@@ -185,6 +188,25 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
         # the xtrigger should have been loaded from the DB
         # (so no xtriggers should be scheduled to run)
         assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 0
+
+        # the xtrigger should be recorded as satisfied in the datastore task
+        # instance, after the restart
+        await schd.update_data_structure()
+        [xtrig] = [
+            p
+            for t in cast(
+                'Iterable[PbTaskProxy]',
+                schd.data_store_mgr.data[
+                    schd.data_store_mgr.workflow_id
+                ][
+                    TASK_PROXIES
+                ].values()
+            )
+            for p in t.xtriggers.values()
+        ]
+        assert xtrig.id == "mytrig()"
+        assert xtrig.label == "mytrig"
+        assert xtrig.satisfied
 
     # check the DB to ensure no additional entries have been created
     assert db_select(schd, True, 'xtriggers') == db_xtriggers
