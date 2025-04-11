@@ -36,11 +36,7 @@ from cylc.flow.id import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import TASK_STATUS_WAITING
 
-from cylc.flow.scripts.set import (
-    XTRIGGER_PREREQ_PREFIX,
-    XTRIGGER_OUTPUT_PREFIX,
-    XTRIGGER_SET_PREFIXES
-)
+from cylc.flow.scripts.set import XTRIGGER_SET_PREFIXES
 
 
 ERR_OPT_FLOW_VAL = (
@@ -118,9 +114,9 @@ def prereqs(prereqs: Optional[List[str]]):
     Comma-separated lists should be split already, client-side.
 
     Examples:
-        # Set multiple at once:
-        >>> prereqs(['1/foo:bar', '2/foo:baz'])
-        ['1/foo:bar', '2/foo:baz']
+        # Set multiple at once, prereq and xtriggers:
+        >>> prereqs(['1/foo:bar', 'xtrigger/x1', 'XTRIGGER/x2:waiting'])
+        ['1/foo:bar', 'xtrigger/x1:succeeded', 'XTRIGGER/x2:waiting']
 
         # --pre=all
         >>> prereqs(["all"])
@@ -143,6 +139,12 @@ def prereqs(prereqs: Optional[List[str]]):
         cylc.flow.exceptions.InputError: ...
           * 1/foo::bar
 
+        # Error: invalid format:
+        >>> prereqs(["xtrigger/x1::bar"])
+        Traceback (most recent call last):
+        cylc.flow.exceptions.InputError: ...
+          * xtrigger/x1::bar
+
         # Error: "all" must be used alone:
         >>> prereqs(["all", "2/foo:baz"])
         Traceback (most recent call last):
@@ -154,40 +156,17 @@ def prereqs(prereqs: Optional[List[str]]):
 
     prereqs2 = []
     bad_pre: List[str] = []
-    bad_xtrig_1: List[str] = []
-    bad_xtrig_2: List[str] = []
     for pre in prereqs:
         p = prereq(pre)
         if p is not None:
             prereqs2.append(p)
         else:
-            if pre.startswith(XTRIGGER_PREREQ_PREFIX):
-                bad_xtrig_1.append(pre)
-            if pre.startswith(XTRIGGER_OUTPUT_PREFIX):
-                bad_xtrig_2.append(pre)
-            else:
-                bad_pre.append(pre)
-    bad_msg = []
+            bad_pre.append(pre)
     if bad_pre:
-        bad_msg.append(
-            "Use prerequisite format <cycle>/<task>:output\n  * "
-            + "\n  * ".join(bad_pre)
+        raise InputError(
+            "Bad prerequisite format, see command help:\n * "
+            + "\n * ".join(bad_pre)
         )
-    if bad_xtrig_1:
-        bad_msg.append(
-            f"Use xtrigger format {XTRIGGER_PREREQ_PREFIX}/<label>"
-            "[:(succeeded or waiting)]\n  * "
-            + "\n  * ".join(bad_xtrig_1)
-        )
-    if bad_xtrig_2:
-        bad_msg.append(
-            "Use xtrigger format {XTRIGGER_OUTPUT_PREFIX}/<label>"
-            "[:(succeeded or waiting)]\n  * "
-            + "\n  * ".join(bad_xtrig_2)
-        )
-    if bad_msg:
-        raise InputError('\n'.join(bad_msg))
-
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
         if "all" in prereqs:
             raise InputError("--pre=all must be used alone")
@@ -233,10 +212,10 @@ def prereq(prereq: str) -> Optional[str]:
         >>> prereq('XTRIGGER/get_data:waiting')
         'XTRIGGER/get_data:waiting'
 
-        # Error:
+        # Error, xtrigger state must be succeeded or waiting:
         >>> prereq('xtrigger/wall_clock:other')
 
-        # Error:
+        # Error, just a task name:
         >>> prereq('fish')
 
     """
