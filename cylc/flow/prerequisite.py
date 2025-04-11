@@ -207,6 +207,16 @@ class Prerequisite:
             ['bool(self._satisfied[("1", "foo", "succeeded")])',
             'bool(self._satisfied[("1", "xfoo", "succeeded")])']
 
+            # GH #6588 integer offset "x[-P2] | a" gives a negative cycle point
+            # during validation, for evaluation at the initial cycle point 1.
+            >>> preq = Prerequisite(1)
+            >>> preq[(-1, 'x', 'succeeded')] = False
+            >>> preq[(1, 'a', 'succeeded')] = False
+            >>> preq.set_conditional_expr("-1/x succeeded|1/a succeeded")
+            >>> expr = preq.conditional_expression
+            >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
+            ['bool(self._satisfied[("-1", "x", "succeeded")])',
+            'bool(self._satisfied[("1", "a", "succeeded")])']
         """
         self._cached_satisfied = None
         if '|' in expr:
@@ -215,7 +225,7 @@ class Prerequisite:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
                 expr = re.sub(
-                    fr"\b{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
+                    fr"{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
                     self.SATISFIED_TEMPLATE % t_output,
                     expr
                 )
