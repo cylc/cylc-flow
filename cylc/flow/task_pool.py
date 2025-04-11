@@ -122,6 +122,55 @@ if TYPE_CHECKING:
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 
+def _standardise_xtrigs(
+    prereqs: 'Iterable[str]'
+) -> 'Dict[str, Tuple[bool, bool]]':
+    """Extract xtriggers from user input and standardise.
+
+    Weed out any task prerequisites.
+
+    Note command validation has already failed illegal state suffixes,
+    and added the default ":succeeded".
+
+    Standardisation handles ":succeed" -> ":succeeded".
+
+    Args:
+        prereqs: prerequisites and xtriggers in string form
+            xtriggers format "xtrigger/label:state"
+
+    Returns: {label: (succeeded, set-output)}
+        (set-output means set the xtrigger output for all dependent tasks)
+
+    Examples:
+        >>> _standardise_xtrigs(["1/foo:started"])
+        {}
+
+        >>> _standardise_xtrigs(["1/foo:started", "xtrigger/x1:succeed"])
+        {'x1': (True, False)}
+
+        >>> _standardise_xtrigs(["xtrigger/x1:waiting", "XTRIGGER/x2:succeed"])
+        {'x1': (False, False), 'x2': (True, True)}
+
+    """
+    _xtrigs = {}
+    for prereq in prereqs:
+        pre = Tokens(prereq, relative=True)
+
+        if pre['cycle'] not in XTRIGGER_SET_PREFIXES:
+            # weed out task prerequisites
+            continue
+
+        state = TaskTrigger.standardise_name(pre['task_sel'])
+
+        _xtrigs[pre['task']] = (
+            # requested state to set:
+            state == TASK_OUTPUT_SUCCEEDED,
+            # True: set output; False: set prereq:
+            pre['cycle'] == XTRIGGER_OUTPUT_PREFIX
+        )
+    return _xtrigs
+
+
 class TaskPool:
     """Task pool of a workflow."""
 
@@ -1877,44 +1926,6 @@ class TaskPool:
         self._load_historical_outputs(itask)
         return itask
 
-    def _standardise_xtrigs(
-            self, prereqs: 'Iterable[str]'
-    ) -> 'Dict[str, Tuple[bool, bool]]':
-        """Extract xtriggers from user input and standardise.
-
-        Weed out any task prerequisites.
-
-        Note command validation has already failed illegal state suffixes,
-        and added the default ":succeeded".
-
-        Standardisation handles ":succeed" -> ":succeeded".
-
-        Args:
-            prereqs: prerequisites and xtriggers in string form
-                xtriggers format "xtrigger/label:state"
-
-        Returns: {label: (requested-state, set-output)}
-            (set-output means set the xtrigger output for all dependent tasks)
-
-        """
-        _xtrigs = {}
-        for prereq in prereqs:
-            pre = Tokens(prereq, relative=True)
-
-            if pre['cycle'] not in XTRIGGER_SET_PREFIXES:
-                # weed out task prerequisites
-                continue
-
-            state = TaskTrigger.standardise_name(pre['task_sel'])
-
-            _xtrigs[pre['task']] = (
-                # requested state to set:
-                state == TASK_OUTPUT_SUCCEEDED,
-                # True: set output; False: set prereq:
-                pre['cycle'] == XTRIGGER_OUTPUT_PREFIX
-            )
-        return _xtrigs
-
     def _standardise_prereqs(self, prereqs: 'Iterable[str]') -> 'Set[Tokens]':
         """Extract task prerequistes from user input and standardise.
 
@@ -2158,7 +2169,7 @@ class TaskPool:
         valid_x_labels = tdef.get_xtrigs(point)
 
         # standardise, convert to bools, and weed out task prerequisites
-        req_x = self._standardise_xtrigs(prereqs)
+        req_x = _standardise_xtrigs(prereqs)
 
         for xtrig in set(req_x.keys()) - valid_x_labels:
             LOG.warning(
