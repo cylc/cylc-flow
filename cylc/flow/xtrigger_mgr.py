@@ -697,7 +697,6 @@ class XtriggerManager:
                     if res:
                         xtrigger_env = [{'environment': {key: str(val)}} for
                                         key, val in res.items()]
-                        LOG.critical(f'# broadcast {itask.point} {itask.tdef.name} {xtrigger_env}')
                         self.broadcast_mgr.put_broadcast(
                             [str(itask.point)],
                             [itask.tdef.name],
