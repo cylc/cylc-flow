@@ -18,6 +18,7 @@ import logging
 import re
 from pathlib import Path
 from shutil import rmtree
+import time
 from typing import List, Optional, Tuple
 
 import pytest
@@ -202,3 +203,15 @@ def capcall(monkeypatch):
         return calls
 
     return _capcall
+
+
+@pytest.fixture
+def set_nonexistent_timezone(monkeypatch):
+    """Fixture to temporarily set a non-existent time zone."""
+    try:
+        with monkeypatch.context() as mp:
+            mp.setenv('TZ', 'XXX-19:17')  # Set to a non-existent time zone
+            time.tzset()
+            yield
+    finally:
+        time.tzset()  # Reset to the original time zone after the test

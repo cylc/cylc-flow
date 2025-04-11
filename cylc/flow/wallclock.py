@@ -37,21 +37,16 @@ TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
 TIME_FORMAT_EXTENDED = "%H:%M:%S"
 TIME_FORMAT_EXTENDED_SUB_SECOND = "%H:%M:%S.%f"
 
-TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(
-    TimeZoneFormatMode.reduced)
-TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
-    TimeZoneFormatMode.extended)
 TIME_ZONE_STRING_UTC = "Z"
 TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
-TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
-TIME_ZONE_LOCAL_UTC_OFFSET_HOURS = TIME_ZONE_LOCAL_UTC_OFFSET[0]
-TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES = TIME_ZONE_LOCAL_UTC_OFFSET[1]
 
 TIME_ZONE_LOCAL_INFO = {
-    "hours": TIME_ZONE_LOCAL_UTC_OFFSET[0],
-    "minutes": TIME_ZONE_LOCAL_UTC_OFFSET[1],
-    "string_basic": TIME_ZONE_STRING_LOCAL_BASIC,
-    "string_extended": TIME_ZONE_STRING_LOCAL_EXTENDED
+    "hours": get_local_time_zone()[0],
+    "minutes": get_local_time_zone()[1],
+    "string_basic": get_local_time_zone_format(
+        TimeZoneFormatMode.reduced),
+    "string_extended": get_local_time_zone_format(
+        TimeZoneFormatMode.extended)
 }
 
 TIME_ZONE_UTC_INFO = {
@@ -141,6 +136,7 @@ def get_time_string(date_time, display_sub_seconds=False,
 
     """
     time_zone_string = None
+    local_tz = get_local_time_zone()
     if custom_time_zone_info is not None:
         custom_hours = custom_time_zone_info["hours"]
         custom_minutes = custom_time_zone_info["minutes"]
@@ -149,8 +145,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         else:
             custom_string = custom_time_zone_info["string_extended"]
         if date_time_is_local:
-            date_time_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            date_time_hours, date_time_minutes = local_tz
         else:
             date_time_hours, date_time_minutes = (0, 0)
         diff_hours = custom_hours - date_time_hours
@@ -162,17 +157,18 @@ def get_time_string(date_time, display_sub_seconds=False,
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
             date_time = date_time - timedelta(
-                hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
-                minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+                hours=local_tz[0],
+                minutes=local_tz[1]
             )
     else:
         if use_basic_format:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.reduced)
         else:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.extended)
         if not date_time_is_local:
-            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            diff_hours, diff_minutes = local_tz
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:

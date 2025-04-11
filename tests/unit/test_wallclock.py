@@ -17,7 +17,10 @@
 import pytest
 
 from metomi.isodatetime.data import CALENDAR
-from cylc.flow.wallclock import get_unix_time_from_time_string
+from cylc.flow.wallclock import (
+    get_unix_time_from_time_string,
+    get_current_time_string,
+)
 
 
 @pytest.mark.parametrize(
@@ -60,3 +63,12 @@ def test_get_unix_time_from_time_string_360(time_str, time_sec):
 def test_get_unix_time_from_time_string_error(value, error):
     with pytest.raises(error):
         get_unix_time_from_time_string(value)
+
+
+def test_get_current_time_string(set_nonexistent_timezone):
+    """It reacts to local time zone changes.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    res = get_current_time_string()
+    assert res[-6:] == '+19:17'

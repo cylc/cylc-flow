@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime, timedelta
 import pytest
 import sqlite3
 from typing import TYPE_CHECKING
@@ -178,3 +179,36 @@ async def test_record_only_non_clock_triggers(
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
         ('xrandom(100, _=Not a real wall clock trigger)',)]
+
+
+async def test_time_zone_writing(
+    one_conf,
+    flow,
+    scheduler,
+    run,
+    complete,
+    set_nonexistent_timezone,
+    db_select,
+):
+    """Don't store scheduler startup timezone forever.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    wid = flow(one_conf)
+    schd = scheduler(wid, paused_start=False, run_mode='live')
+    async with run(schd):
+        await complete(schd, timeout=20)
+
+    # Check the db time_submit (defective) against time_submit_exit
+    # which was ok:
+    (time_submit, time_submit_exit), = db_select(
+        schd, False, 'task_jobs', 'time_submit', 'time_submit_exit'
+    )
+    time_submit = datetime.strptime(time_submit, '%Y-%m-%dT%H:%M:%S%z')
+    time_submit_exit = datetime.strptime(
+        time_submit_exit, '%Y-%m-%dT%H:%M:%S%z'
+    )
+
+    assert time_submit_exit >= time_submit
+    # The two times should be approx the same:
+    assert time_submit_exit < time_submit + timedelta(seconds=10)
