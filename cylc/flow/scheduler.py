@@ -402,8 +402,7 @@ class Scheduler:
 
         """
         self.data_store_mgr = DataStoreMgr(self)
-        self.broadcast_mgr = BroadcastMgr(
-            self.workflow_db_mgr, self.data_store_mgr)
+        self.broadcast_mgr = BroadcastMgr(self)
 
         self.server = WorkflowRuntimeServer(self)
 
