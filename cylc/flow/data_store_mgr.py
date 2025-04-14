@@ -295,6 +295,15 @@ def runtime_from_config(rtconfig):
     )
 
 
+def reset_protobuf_object(msg_class, msg_orig):
+    """Reset object to clear memory build-up."""
+    # See: https://github.com/protocolbuffers/protobuf/issues/19674
+    # The new message instantiation needs happen on a separate line.
+    new_msg = msg_class()
+    new_msg.CopyFrom(msg_orig)
+    return new_msg
+
+
 def apply_delta(key, delta, data):
     """Apply delta to specific data-store workflow and type."""
     # Assimilate new data
@@ -330,6 +339,9 @@ def apply_delta(key, delta, data):
                         'on update application: %s' % str(exc)
                     )
                     continue
+    # Clear memory accumulation
+    if key == WORKFLOW:
+        data[key] = reset_protobuf_object(PbWorkflow, data[key])
     # Prune data elements
     if hasattr(delta, 'pruned'):
         # UIS flag to prune workflow, set externally.
