@@ -1,0 +1,60 @@
+# Group trigger proposal example.
+#   1. task b fails first run, then on stall event
+#   2. group-trigger a, f<m>, g<m>, b to rerun in same flow
+#
+#  Result:
+#   Off-group prerequisites are satisfied immediately,
+#   in-group prerequisites are left to be satisfied by the flow.
+#   Task b should rerun and flow on to complete the workflow.
+
+[scheduler]
+    [[events]]
+        expected task failures = 1/b
+        stall handlers = \
+            "cylc trigger %(workflow)s \
+             //1/a //1/f_m1 //1/f_m2 //1/f_m3 //1/g_m1 //1/g_m2 //1/g_m3 //1/b"
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+[scheduling]
+    [[graph]]
+        R1 = """
+            start => junk1 => junk2
+            start => a
+            x => f_m1
+            a => f_m1 => g_m1 => b
+            a => f_m2 => g_m2 => b
+            a => f_m3 => g_m3 => b
+            b => end
+            g_m3 => y
+       """
+[runtime]
+    [[b]]
+        script = [[ "${CYLC_TASK_SUBMIT_NUMBER}" != '1' ]]
+    [[FAMILY]]
+    [[a, f_m1, f_m2, f_m3, g_m1, g_m2, g_m3, b]]
+        inherit = FAMILY
+    [[x, end, y, junk1, junk2]]
+    [[start]]
+        script = """
+            # Fill some additional coverage holes.
+            # Requires debug logging.
+
+            # check that --flow=none is ignored for active tasks.
+            cylc trigger --flow=none $CYLC_WORKFLOW_ID//$CYLC_TASK_ID
+            cylc__job__poll_grep_workflow_log "ignoring 'flow=none' trigger"
+
+            # try to trigger a non-existent task
+            cylc trigger $CYLC_WORKFLOW_ID//1/nosuchtask
+            cylc__job__poll_grep_workflow_log "No matching tasks found: nosuchtask"
+
+            # create an active waiting task to remove.
+            cylc hold $CYLC_WORKFLOW_ID//1/junk2
+            cylc__job__poll_grep_workflow_log -E "Tasks to hold:.*junk2"
+            cylc set --pre=all $CYLC_WORKFLOW_ID//1/junk2
+            cylc__job__poll_grep_workflow_log -E "1/junk2.* added to active task pool"
+            cylc trigger $CYLC_WORKFLOW_ID //1/junk1 //1/junk2
+            cylc__job__poll_grep_workflow_log -E "not removable: 1/junk1"
+            cylc__job__poll_grep_workflow_log -E "1/junk2.* removed from active task pool: request"
+            cylc release $CYLC_WORKFLOW_ID//1/junk2
+        """
+
