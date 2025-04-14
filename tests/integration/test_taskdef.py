@@ -14,11 +14,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.workflow_files import WorkflowFiles
+
+
+async def test_almost_self_suicide(flow, scheduler, start):
+    """Suicide triggers should not count as upstream tasks when looking
+    to spawn parentless tasks.
+
+    https://github.com/cylc/cylc-flow/issues/6594
+
+    For the example under test, pre-requisites for ``!a`` should not be
+    considered the same as pre-requisites for ``a``. If the are then then
+    is parentless return false for all cases of ``a`` not in the inital cycle
+    and subsequent cycles never run.
+    """
+    wid = flow({
+        'scheduler': {'cycle point format': '%Y'},
+        'scheduling': {
+            'initial cycle point': 1990,
+            'final cycle point': 1992,
+            'graph': {
+                'R1': 'install_cold',
+                'P1Y': 'install_cold[^] => a? => b?\nb:fail? => !a?'
+            }
+        }
+    })
+    schd = scheduler(wid)
+    async with start(schd):
+        tasks = [str(t) for t in schd.pool.get_tasks()]
+        for task in ['1990/a:waiting', '1991/a:waiting', '1992/a:waiting']:
+            assert task in tasks
 
 
 def test_graph_children(flow):

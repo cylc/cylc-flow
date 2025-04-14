@@ -182,6 +182,7 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
         # run all xtriggers
         for task in schd.pool.get_tasks():
             schd.xtrigger_mgr.call_xtriggers_async(task)
+
         # satisfied x100 should have been loaded from the DB
         # so only one xtrigger should be scheduled to run now
         assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 1

@@ -98,9 +98,10 @@ def generate_graph_parents(
 ) -> Dict['SequenceBase', List[TaskTuple]]:
     """Determine concrete graph parents of task tdef at point.
 
-    Infer parents be reversing upstream triggers that lead to point/task.
+    Infer parents by reversing upstream triggers that lead to point/task.
     """
     graph_parents: Dict['SequenceBase', List[TaskTuple]] = {}
+
     for seq, triggers in tdef.graph_parents.items():
         if not seq.is_valid(point):
             # Don't infer parents if the trigger belongs to a sequence that
@@ -363,8 +364,8 @@ class TaskDef:
                     if (
                         trig.offset_is_absolute or
                         trig.offset_is_from_icp or
-                        # Don't count self-suicide as a normal trigger.
-                        dep.suicide and trig.task_name == self.name
+                        # Don't count suicide as a normal trigger:
+                        dep.suicide
                     ):
                         has_abs = True
                     else:

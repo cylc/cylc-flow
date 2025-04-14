@@ -561,6 +561,9 @@ class XtriggerManager:
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
         """Load satisfied xtrigger results from workflow DB.
 
+        Note this is for satisfied xtriggers, not individual task dependence
+        on xtriggers which can be manually set.
+
         Args:
             row_idx (int): row index (used for logging)
             row (Tuple[str, str]): tuple with the signature and results (json)
