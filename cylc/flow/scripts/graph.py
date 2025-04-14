@@ -45,6 +45,7 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.cycling.nocycle import NOCYCLE_PT_ALPHA
 from cylc.flow.exceptions import InputError, CylcError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id_async
@@ -68,10 +69,20 @@ def sort_integer_node(id_):
     Example:
         >>> sort_integer_node('11/foo')
         ('foo', 11)
-
+        >>> sort_integer_node('alpha/foo')
+        ('foo', 0)
+        >>> sort_integer_node('omega/foo')
+        ('foo', 1)
     """
     tokens = Tokens(id_, relative=True)
-    return (tokens['task'], int(tokens['cycle']))
+    try:
+        return (tokens['task'], int(tokens['cycle']))
+    except ValueError:
+        # nocycle point
+        if tokens['cycle'] == NOCYCLE_PT_ALPHA:
+            return (tokens['task'], 0)
+        else:
+            return (tokens['task'], 1)
 
 
 def sort_integer_edge(id_):
