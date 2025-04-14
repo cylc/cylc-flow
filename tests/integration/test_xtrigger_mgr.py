@@ -19,6 +19,7 @@ import asyncio
 from pathlib import Path
 from textwrap import dedent
 
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
 
@@ -79,11 +80,11 @@ async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
 
         schd.xtrigger_mgr.call_xtriggers_async(foo_proxy)
         assert foo_proxy.state.xtriggers == {
-            'clock_1': True,
-            'clock_2': False,
-            'clock_3': False,
-            'clock_4': True,
-            'clock_5': True,
+            'clock_1': [True, 'wall_clock'],
+            'clock_2': [False, 'wall_clock'],
+            'clock_3': [False, 'wall_clock'],
+            'clock_4': [True, 'wall_clock'],
+            'clock_5': [True, 'wall_clock'],
         }
 
 
@@ -115,7 +116,7 @@ async def test_1_xtrigger_2_tasks(flow, start, scheduler, mocker):
             schd.xtrigger_mgr.call_xtriggers_async(task)
 
         # It should now be satisfied.
-        assert task.state.xtriggers == {'wall_clock': True}
+        assert task.state.xtriggers == {'wall_clock': [True, 'wall_clock']}
 
         # Check one put_xtriggers call only, not two.
         assert spy.call_count == 1
@@ -261,3 +262,42 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
             for year in range(1991, 1994)
             for name in ('foo', 'bar')
         )
+
+
+async def test_data_store(flow, start, scheduler):
+    """It should update the data store with xtrigger state."""
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': 'previous(T00)',
+            'graph': {
+                'R1': '@wall_clock => foo',
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        await schd.update_data_structure()
+        itask = schd.pool.get_tasks()[0]
+
+        # extract xtrigger entry from the data store
+        xtriggers = schd.data_store_mgr.data[
+            schd.tokens.id
+        ][TASK_PROXIES][itask.tokens.id].xtriggers
+        label, *_ = [x for x in xtriggers if 'wall_clock' in x]
+        xtrigger = xtriggers[label]
+
+        # it should not be satisfied (yet)
+        assert xtrigger.label == 'wall_clock'
+        assert xtrigger.satisfied is False
+
+        # execute the xtrigger
+        schd.xtrigger_mgr.call_xtriggers_async(itask)
+
+        # it should now be satisfied
+        assert xtrigger.label == 'wall_clock'
+        assert xtrigger.satisfied is True
+
+        # and an update delta should have been produced
+        assert schd.data_store_mgr.updated[
+            TASK_PROXIES
+        ][itask.tokens.id].xtriggers[label].satisfied is True
