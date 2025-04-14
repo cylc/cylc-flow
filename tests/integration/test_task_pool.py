@@ -1319,10 +1319,17 @@ async def test_set_prereqs(
 
         # try to set an invalid prereq of qux
         schd.pool.set_prereqs_and_outputs(
-            ["20400101T0000Z/qux"], [], ["20400101T0000Z/foo:a"], ['all'])
+            ["20400101T0000Z/qux"], [],
+            ["20400101T0000Z/foo:a", "xtrigger/x"], ['all']
+        )
         assert log_filter(
             contains=(
                 '20400101T0000Z/qux does not depend on "20400101T0000Z/foo:a"'
+            )
+        )
+        assert log_filter(
+            contains=(
+                '20400101T0000Z/qux does not depend on xtrigger "x"'
             )
         )
 

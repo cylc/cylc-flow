@@ -35,7 +35,6 @@ from cylc.flow.id import (
 )
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import TASK_STATUS_WAITING
-
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 
@@ -115,8 +114,8 @@ def prereqs(prereqs: Optional[List[str]]):
 
     Examples:
         # Set multiple at once, prereq and xtriggers:
-        >>> prereqs(['1/foo:bar', 'xtrigger/x1'])
-        ['1/foo:bar', 'xtrigger/x1:succeeded']
+        >>> prereqs(['1/foo:bar', '2/foo:baz', 'xtrigger/x1'])
+        ['1/foo:bar', '2/foo:baz', 'xtrigger/x1:succeeded']
 
         # --pre=all
         >>> prereqs(["all"])
@@ -155,17 +154,17 @@ def prereqs(prereqs: Optional[List[str]]):
         return []
 
     prereqs2 = []
-    bad_pre: List[str] = []
+    bad: List[str] = []
     for pre in prereqs:
         p = prereq(pre)
         if p is not None:
             prereqs2.append(p)
         else:
-            bad_pre.append(pre)
-    if bad_pre:
+            bad.append(pre)
+    if bad:
         raise InputError(
             "Bad prerequisite format, see command help:\n * "
-            + "\n * ".join(bad_pre)
+            + "\n * ".join(bad)
         )
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
         if "all" in prereqs:
@@ -236,10 +235,7 @@ def prereq(prereq: str) -> Optional[str]:
         # Error: --pre=<word> other than "all"
         return None
 
-    if (
-        prereq != "all"
-        and tokens["task_sel"] is None
-    ):
+    if prereq != "all" and tokens["task_sel"] is None:
         prereq += f":{TASK_OUTPUT_SUCCEEDED}"
 
     return prereq

@@ -2166,7 +2166,8 @@ class TaskPool:
 
         for xtrig in set(req_x.keys()) - valid_x_labels:
             LOG.warning(
-                f'{point}/{tdef.name} does not depend on "{xtrig}"')
+                f'{point}/{tdef.name} does not depend on'
+                f' xtrigger "{xtrig}"')
 
         return {
             k: v for k, v in req_x.items()
@@ -2228,10 +2229,6 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_state(itask)
         self.workflow_db_mgr.put_update_task_outputs(itask)
         self.workflow_db_mgr.process_queued_ops()
-
-    def _log_unmatched(self, itask, sus, unmatched):
-        for item in unmatched:
-            LOG.warning(f'{itask.identity} does not depend on "{sus[item]}"')
 
     def _set_prereqs_itask(
         self,

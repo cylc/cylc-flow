@@ -116,6 +116,18 @@ def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     ]
 
 
+def get_pb_xtriggers(schd: 'Scheduler') -> 'List[str]':
+    """Get all protobuf xtriggers from the data store task proxies."""
+    return [
+        x
+        for t in cast(
+            'Iterable[PbTaskProxy]',
+            schd.data_store_mgr.updated[TASK_PROXIES].values()
+        )
+        for x in t.xtriggers
+    ]
+
+
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_start):
     flow_def = {
@@ -125,6 +137,29 @@ async def harness(mod_flow, mod_scheduler, mod_start):
         'scheduling': {
             'graph': {
                 'R1': 'foo => bar'
+            }
+        }
+    }
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
+    async with mod_start(schd):
+        await schd.update_data_structure()
+        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+        yield schd, data
+
+
+@pytest.fixture(scope='module')
+async def xharness(mod_flow, mod_scheduler, mod_start):
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'xtriggers': {
+                'x': 'xrandom(0)'
+            },
+            'graph': {
+                'R1': '@x => foo & bar'
             }
         }
     }
@@ -439,6 +474,7 @@ async def test_family_ascent_point_prune(harness):
 
 def test_delta_task_prerequisite(harness):
     """Test delta_task_prerequisites."""
+    # TODO this is broken?
     schd: Scheduler
     schd, data = harness
     schd.pool.set_prereqs_and_outputs(
@@ -455,6 +491,36 @@ def test_delta_task_prerequisite(harness):
                 prereq[key] = False
         schd.data_store_mgr.delta_task_prerequisite(itask)
     assert not any(p.satisfied for p in get_pb_prereqs(schd))
+
+
+def test_delta_task_xtrigger(xharness):
+    """Test delta_task_xtrigger."""
+    schd: Scheduler
+    schd, data = xharness
+    foo = schd.pool._get_task_by_id('1/foo')
+    bar = schd.pool._get_task_by_id('1/bar')
+
+    assert not foo.state.xtriggers['x']  # not satisfied
+    assert not bar.state.xtriggers['x']  # not satisfied
+
+    # satisfy foo's dependence on x
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:succeeded'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert not bar.state.xtriggers['x']  # not satisfied
+
+    # data store show have one update task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['xrandom(0)']
+    assert xtrig.label == 'x'
+    assert xtrig.satisfied
 
 
 async def test_absolute_graph_edges(flow, scheduler, start):

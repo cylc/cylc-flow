@@ -20,14 +20,15 @@
 
 Command to manually set task prerequisites and outputs, and xtriggers.
 
-By default, this command sets all required outputs, plus "submitted", "started"
-and "succeeded" even if they are optional.
+By default, this sets all required outputs plus the "submitted", "started",
+and "succeeded" outputs even if they are optional.
 
 Outputs:
-  Outputs contribute to a task's completion, and spawn downstream activity.
+  Outputs contribute to a task's completion.
 
-  Task outputs cannot be unsatisfied, because any downstream activity that
-  depends on them will have already occurred.
+  Setting an output spawns tasks that depend on it into the active window.
+
+  Outputs cannot be unsatisfied (dependent activity will have spawned already).
 
   Output Format:
     * --out=<output>  # output trigger name (not message) of the target task
@@ -47,10 +48,12 @@ Outputs:
       x = "file x completed"
 
 Prerequisites:
-  Prerequisites contribute to a task's readiness to run and promote it to the
-  n=0 active window, where xtrigger checking commences.
+  Prerequisites contribute to a task's readiness to run.
 
-  Task prerequisites cannot currently be unsatisfied.
+  Setting prerequisites on an inactive task promotes it to the active window
+  where xtrigger checking commences (if the task has any xtriggers).
+
+  Task prerequisites cannot be unsatisfied (however xtriggers can be, below).
 
   Prerequisite format:
     * --pre=<cycle>/<task>[:output]  # single prerequiste
@@ -61,12 +64,10 @@ Prerequisites:
     * does not satisfy dependence on xtriggers (see below for that)
 
 Xtriggers:
-    To satisfy or unsatisfy xtriggers in target tasks use --pre with
-    "xtrigger" as the cycle point, xtrigger label as task name, and
-    ":succeeded" (the default) or ":waiting" as output. This tells target
-    tasks their dependence on the xtrigger is satisfied (succeeded) or
-    unatisfied (waiting). If satisfied, and no other tasks depend on the
-    same xtrigger function signature, the scheduler will stop calling it.
+    To satisfy or unsatisfy a task's dependence on an xtrigger use the --pre
+    option as follows, with ":succeeded" (default) to satisfy and ":waiting"
+    to unsatisfy. If no other task depends on the xtrigger, the scheduler will
+    stop calling it.
 
     Xtrigger format:
       * --pre=xtrigger/<label>[:succeeded or :waiting]

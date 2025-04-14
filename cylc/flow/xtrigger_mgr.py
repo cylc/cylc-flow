@@ -750,9 +750,7 @@ class XtriggerManager:
             ctx (SubFuncContext): function context
         """
         sig = ctx.get_signature()
-        if sig in self.active:
-            # (call in progress, waiting on response)
-            self.active.remove(sig)
+        self.active.remove(sig)
 
         if ctx.ret_code != 0:
             msg = f"ERROR in xtrigger {sig}"
@@ -761,7 +759,7 @@ class XtriggerManager:
             LOG.warning(msg)
 
         try:
-            satisfied, results = json.loads(str(ctx.out))
+            satisfied, results = json.loads(ctx.out)
         except (ValueError, TypeError):
             return
 
@@ -777,28 +775,6 @@ class XtriggerManager:
         self.sat_xtrig[sig] = results
 
         self.do_housekeeping = True
-
-    def fake_callback(self, ctx: 'SubFuncContext'):
-        """Used for manually setting xtriggers
-
-        Record satisfaction status and function results dict.
-
-        Args:
-            ctx (SubFuncContext): function context
-        """
-        sig = ctx.get_signature()
-
-        try:
-            satisfied, results = json.loads(str(ctx.out))
-        except (ValueError, TypeError):
-            return
-
-        LOG.debug('%s: returned %s', sig, results)
-        if not satisfied:
-            LOG.info('xtrigger not satisfied: %s = %s', ctx.label, sig)
-            return
-
-        LOG.info('xtrigger PREREQ satisfied: %s = %s', ctx.label, sig)
 
     def force_satisfy(
         self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
