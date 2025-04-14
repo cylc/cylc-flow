@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
+import pytest_asyncio
 
 from cylc.flow.parsec.config import ConfigNode as Conf
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def basic_config():
     """A basic config with a file, section and setting."""
     with Conf('file.cylc') as file_:
@@ -60,7 +60,7 @@ def test_config_repr(basic_config):
     assert repr(setting) == 'file.cylc[section]setting'
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def many_setting():
     """A config containing a user-definable setting."""
     with Conf('file.cylc') as file_:
@@ -77,7 +77,7 @@ def test_many_setting(many_setting):
     assert repr(setting) == 'file.cylc|<setting>'
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def many_section():
     """A config containing a user-definable section."""
     with Conf('file.cylc') as file_:
@@ -98,7 +98,7 @@ def test_many_section(many_section):
     assert repr(setting) == 'file.cylc[<section>]setting'
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def meta_conf():
     """A config with an inherited section."""
     with Conf('Foo') as spec:

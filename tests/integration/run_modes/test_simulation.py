@@ -18,8 +18,10 @@
 
 import logging
 from pathlib import Path
+
 import pytest
 from pytest import param
+import pytest_asyncio
 
 from cylc.flow import commands
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -88,7 +90,7 @@ def run_simjob(monkeytime):
     return _run_simjob
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def sim_time_check_setup(
     mod_flow, mod_scheduler, mod_start, mod_one_conf,
 ):

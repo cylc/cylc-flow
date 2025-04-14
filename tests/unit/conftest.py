@@ -29,6 +29,7 @@ from unittest.mock import (
 )
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.cycling.iso8601 import init as iso8601_init
 from cylc.flow.cycling.loader import (
@@ -126,7 +127,7 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return _tmp_run_dir(tmp_path, monkeypatch)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
     """Module-scoped version of tmp_run_dir()"""
     tmp_path = tmp_path_factory.getbasetemp()
@@ -161,7 +162,7 @@ def tmp_src_dir(tmp_path: Path):
     return _tmp_src_dir(tmp_path)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_tmp_src_dir(tmp_path_factory: pytest.TempPathFactory):
     """Module-scoped version of tmp_src_dir()"""
     tmp_path = tmp_path_factory.getbasetemp()
@@ -247,6 +248,6 @@ def tmp_flow_config(tmp_run_dir: Callable):
     return _tmp_flow_config(tmp_run_dir)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_tmp_flow_config(mod_tmp_run_dir: Callable):
     return _tmp_flow_config(mod_tmp_run_dir)

@@ -15,11 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-import pytest
 import re
 from types import SimpleNamespace
 
 from colorama import init as colour_init
+import pytest
+import pytest_asyncio
 
 from cylc.flow.id import Tokens
 from cylc.flow.scripts.show import (
@@ -31,7 +32,7 @@ from cylc.flow.scripts.show import (
 RE_STATE = re.compile('state:.*')
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_my_conf():
     """A workflow configuration with some workflow metadata."""
     return {
@@ -70,7 +71,7 @@ def mod_my_conf():
     }
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def mod_my_schd(mod_flow, mod_scheduler, mod_start, mod_my_conf):
     """A "started" workflow."""
     id_ = mod_flow(mod_my_conf)

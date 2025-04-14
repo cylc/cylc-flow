@@ -25,6 +25,7 @@ from itertools import combinations
 from typing import TYPE_CHECKING
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -243,7 +244,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
         assert not schd.pool.is_stalled()
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def implicit_completion_config(mod_flow, mod_validate):
     id_ = mod_flow({
         'scheduling': {

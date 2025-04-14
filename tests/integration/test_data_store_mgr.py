@@ -22,6 +22,7 @@ from typing import (
 )
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.data_messages_pb2 import (
     PbPrerequisite,
@@ -116,7 +117,7 @@ def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     ]
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_start):
     flow_def = {
         'scheduler': {

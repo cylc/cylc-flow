@@ -22,6 +22,7 @@ from typing import List
 
 import pytest
 from pytest import param
+import pytest_asyncio
 
 import cylc.flow.flags
 from cylc.flow.option_parsers import (
@@ -37,7 +38,7 @@ SOURCES = 'sources'
 USEIF = 'useif'
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def parser():
     return COP(
         USAGE_WITH_COMMENT,

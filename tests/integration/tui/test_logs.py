@@ -29,6 +29,7 @@ from cylc.flow.task_state import (
 from cylc.flow.tui.data import _get_log
 
 import pytest
+import pytest_asyncio
 
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
@@ -51,7 +52,7 @@ def get_job_log(tokens: 'Tokens', suffix: str) -> Path:
     ))
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def standarise_host_and_path(mod_monkeypatch):
     """Replace variable content in the log view.
 
@@ -113,7 +114,7 @@ def wait_log_loaded(monkeypatch):
     return _wait_log_loaded
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def workflow(
     mod_flow, mod_scheduler, mod_start, standarise_host_and_path
 ):

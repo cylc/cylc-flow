@@ -22,6 +22,7 @@ from textwrap import dedent
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import (
@@ -39,7 +40,7 @@ from cylc.flow.workflow_files import (
 )
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     id_ = mod_flow(mod_one_conf)
     schd = mod_scheduler(id_)

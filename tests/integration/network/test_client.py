@@ -15,16 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Test cylc.flow.client.WorkflowRuntimeClient."""
+
 import json
 from unittest.mock import Mock
+
 import pytest
+import pytest_asyncio
 
 from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     id_ = mod_flow(mod_one_conf)
     schd = mod_scheduler(id_)

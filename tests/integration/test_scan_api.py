@@ -22,7 +22,7 @@ from shutil import (
     rmtree
 )
 
-import pytest
+import pytest_asyncio
 
 from cylc.flow.scripts.scan import (
     main,
@@ -36,7 +36,7 @@ from cylc.flow.workflow_files import (
 )
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     """Three workflows in different states.
 
