@@ -401,6 +401,7 @@ def test_write_task_environment():
                 'CYLC_TASK_FLOW_NUMBERS=1\n    export '
                 'CYLC_PROFILE=true\n    export '
                 'CYLC_CGROUP=exit_light\n    export '
+                'CYLC_POLLING_INTERVAL=1\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -409,7 +410,8 @@ def test_write_task_environment():
             'communication method': 'ssh',
             'profile': {
                 "activate": "true",
-                "cgroups path": 'exit_light'
+                "cgroups path": 'exit_light',
+                "polling interval": 1
             }
         },
         "job_d": "1/moo/01",
