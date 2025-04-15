@@ -42,8 +42,8 @@ def get_option_parser() -> COP:
         ],
     )
     parser.add_option(
-        "-i", type=int, help="interval between query cycles in seconds",
-        default=10, dest="delay")
+        "-i", type=int,
+        help="interval between query cycles in seconds", dest="delay")
     parser.add_option(
         "-m", type=str, help="Location of cgroups directory",
         dest="cgroup_location")
