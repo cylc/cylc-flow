@@ -784,12 +784,9 @@ class XtriggerManager:
     def force_satisfy(
         self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
     ) -> None:
-        """Force un/satisfy some xtriggers in itask, via the set command.
+        """Force un/satisfy dependence of itask on given or all xtriggers.
 
-        Ignore invalid xtriggers, i.e., that itask does not depend on.
-        (In fact these are weeded out by the caller).
-
-        Dependent tasks must be able to handle an empty result dict.
+        Ignores xtriggers called only with valid xtriggers for itask.
 
         Args:
             itask: task proxy
@@ -797,6 +794,10 @@ class XtriggerManager:
 
         """
         for label, satisfied in xtriggers.items():
+            if label == "all":
+                itask.set_all_xtriggers(satisfied)
+                continue
+
             if label not in itask.state.xtriggers:
                 continue
 

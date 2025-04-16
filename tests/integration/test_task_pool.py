@@ -1353,7 +1353,7 @@ async def test_set_prereqs_and_xtrigs(
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/bar"],
             [],
-            ["xtrigger/x:succeeded"],
+            ["xtrigger/x:satisfied"],
             ['all']
         )
         assert bar.state.xtriggers_all_satisfied()

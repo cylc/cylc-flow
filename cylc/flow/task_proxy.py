@@ -540,6 +540,11 @@ class TaskProxy:
             f"{','.join(str(f) for f in flow_nums)}"
         )
 
+    def set_all_xtriggers(self, satisfied: bool) -> None:
+        """Set my dependence on all xtriggers un/satsified."""
+        for label in self.state.xtriggers.keys():
+            self.state.xtriggers[label] = satisfied
+
     def state_reset(
         self, status=None, is_held=None, is_queued=None, is_runahead=None,
         silent=False, forced=False

@@ -97,7 +97,8 @@ from cylc.flow.util import deserialise_set
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.scripts.set import (
     XTRIGGER_FAKE_OUTPUT,
-    XTRIGGER_PREREQ_PREFIX
+    XTRIGGER_PREREQ_PREFIX,
+    XTRIGGER_SATISFIED
 )
 
 if TYPE_CHECKING:
@@ -121,34 +122,30 @@ if TYPE_CHECKING:
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 
-def _standardise_xtrigs(
+def _get_xtrigs(
     prereqs: 'Iterable[str]'
 ) -> 'Dict[str, bool]':
-    """Extract xtriggers from user input and standardise.
+    """Extract xtriggers from user prerequisite input, convert state to bool.
 
-    Weed out any task prerequisites.
-
-    Note command validation has already failed illegal state suffixes,
-    and added the default ":succeeded".
-
-    Standardisation handles ":succeed" -> ":succeeded".
+    Command validation has handled state suffixes, and default ":satisfied".
 
     Args:
         prereqs: prerequisites and xtriggers in string form
-            xtriggers format "xtrigger/label:state"
+            xtriggers: "xtrigger/<label>:<state>" or "xtrigger/all:<state>"
 
-    Returns: {label: (succeeded, set-output)}
-        (set-output means set the xtrigger output for all dependent tasks)
+    Returns: {<label> or "all": satisfied}
 
     Examples:
-        >>> _standardise_xtrigs(["1/foo:started"])
+        >>> _get_xtrigs(["1/foo:started"])
         {}
 
-        >>> _standardise_xtrigs(["1/foo:started", "xtrigger/x1:succeed"])
+        >>> _get_xtrigs(["1/foo:started", "xtrigger/x1:satisfied"])
         {'x1': True}
 
-        >>> _standardise_xtrigs(["xtrigger/x1:waiting", "xtrigger/x2:succeed"])
+        >>> _get_xtrigs(["xtrigger/x1:unsatisfied", "xtrigger/x2:satisfied"])
         {'x1': False, 'x2': True}
+
+        (No need to test "all" - it just looks like an xtrigger label.)
 
     """
     _xtrigs = {}
@@ -159,10 +156,8 @@ def _standardise_xtrigs(
             # weed out task prerequisites
             continue
 
-        state = TaskTrigger.standardise_name(pre['task_sel'])
-
         # requested state to set:
-        _xtrigs[pre['task']] = (state == TASK_OUTPUT_SUCCEEDED)
+        _xtrigs[pre['task']] = (pre['task_sel'] == XTRIGGER_SATISFIED)
     return _xtrigs
 
 
@@ -1617,7 +1612,7 @@ class TaskPool:
         If completed_only is True:
            Used to retroactively spawn on already-completed outputs when a flow
            merges into a force-triggered no-flow task. In this case, do set the
-           associated prerequisites of spawned children to satisifed.
+           associated prerequisites of spawned children to satisfied.
 
         """
         if not itask.flow_nums:
@@ -2161,17 +2156,18 @@ class TaskPool:
         """
         valid_x_labels = tdef.get_xtrigs(point)
 
-        # standardise, convert to bools, and weed out task prerequisites
-        req_x = _standardise_xtrigs(prereqs)
+        # weed out task prerequisites and convert state to bool
+        req_x = _get_xtrigs(prereqs)
 
         for xtrig in set(req_x.keys()) - valid_x_labels:
-            LOG.warning(
-                f'{point}/{tdef.name} does not depend on'
-                f' xtrigger "{xtrig}"')
+            if xtrig != "all":
+                LOG.warning(
+                    f'{point}/{tdef.name} does not depend on'
+                    f' xtrigger "{xtrig}"')
 
         return {
             k: v for k, v in req_x.items()
-            if k in valid_x_labels
+            if k in valid_x_labels or k == "all"
         }
 
     def _set_outputs_itask(

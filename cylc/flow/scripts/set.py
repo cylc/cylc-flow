@@ -18,7 +18,7 @@
 
 """cylc set [OPTIONS] ARGS
 
-Command to manually set task prerequisites and outputs, and xtriggers.
+Manually set task prerequisites and outputs, and xtrigger prerequisites.
 
 By default, this sets all required outputs plus the "submitted", "started",
 and "succeeded" outputs even if they are optional.
@@ -65,12 +65,12 @@ Prerequisites:
 
 Xtriggers:
     To satisfy or unsatisfy a task's dependence on an xtrigger use the --pre
-    option as follows, with ":succeeded" (default) to satisfy and ":waiting"
-    to unsatisfy. If no other task depends on the xtrigger, the scheduler will
-    stop calling it.
+    option as follows, with ":satisfied" (default) or ":unsatisfied". If no
+    tasks depends on an xtrigger anymore, the scheduler will stop calling it.
 
     Xtrigger format:
-      * --pre=xtrigger/<label>[:succeeded or :waiting]
+      * --pre=xtrigger/<label>[:satisfied or :unsatisfied]
+      * --pre=xtrigger/all  # all of a task's xtrigger prerequisites
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
@@ -99,8 +99,8 @@ Examples:
 
   # satisfy the dependence of 3000/bar on clock-trigger @clock1:
   $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
-    # or reset it back to waiting:
-  $ cylc set --pre=xtrigger/data:waiting my_worklfow//3000/bar
+    # or reset it back to unsatisfied:
+  $ cylc set --pre=xtrigger/data:unsatisfied my_worklfow//3000/bar
 
   # satisfy the "3/bar:file1" prerequisite of 3/qux:
   $ cylc set --pre=3/bar:file1 my_workflow//3/qux
@@ -140,7 +140,8 @@ if TYPE_CHECKING:
 XTRIGGER_PREREQ_PREFIX = "xtrigger"
 # For xtriggers in the DB prerequisites table:
 XTRIGGER_FAKE_OUTPUT = "not-used"
-
+XTRIGGER_SATISFIED = "satisfied"
+XTRIGGER_UNSATISFIED = "unsatisfied"
 
 MUTATION = '''
 mutation (
@@ -200,8 +201,11 @@ def get_option_parser() -> COP:
             "Satisfy task prerequisites. For multiple prerequisites"
             " re-use the option, or give a comma-separated list, or"
             ' use "--pre=all" to satisfy all prerequisites, if any.'
-            " PREREQUISITE format: 'cycle/task[:OUTPUT]', where"
-            " :OUTPUT defaults to :succeeded."
+            " PREREQUISITE format:"
+            " '<cycle>/<task>[:<OUTPUT>]' or 'all'"
+            " where <OUTPUT> defaults to succeeded; or"
+            " xtrigger/<label>[:<STATE>]' or 'xtrigger/all'"
+            " where <STATE> is 'satisfied' (default) or 'unsatisfied'."
         ),
         action="append", default=None, dest="prerequisites"
     )
