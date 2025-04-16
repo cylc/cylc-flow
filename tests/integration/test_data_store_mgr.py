@@ -506,7 +506,7 @@ def test_delta_task_xtrigger(xharness):
     schd.pool.set_prereqs_and_outputs(
         ['1/foo'],
         [],
-        ['xtrigger/x:succeeded'],
+        ['xtrigger/x:satisfied'],
         flow=[]
     )
 

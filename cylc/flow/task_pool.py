@@ -139,7 +139,7 @@ def _get_xtrigs(
         >>> _get_xtrigs(["1/foo:started"])
         {}
 
-        >>> _get_xtrigs(["1/foo:started", "xtrigger/x1:satisfied"])
+        >>> _get_xtrigs({"1/foo:started", "xtrigger/x1:satisfied"})
         {'x1': True}
 
         >>> _get_xtrigs(["xtrigger/x1:unsatisfied", "xtrigger/x2:satisfied"])
@@ -1999,37 +1999,36 @@ class TaskPool:
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ):
-        """Set prerequisites or outputs of target tasks.
+        """Complete outputs or satisfy prerequisites and xtriggers, of tasks.
 
-        Default: set all required outputs.
+        This is the back end of the "cylc set" command.
 
-        Set prerequisites:
-        - spawn the task (if not spawned)
-        - update its prerequisites
+        Defaults to completing all required outputs.
 
-        Prerequisite format: "cycle/task:output" or "all".
+        On setting prerequisites or xtriggers: spawn the task into n=0.
+
+        Prerequisites: <cycle>/<task>[:<output>] or "all"
+        Xtriggers: "xtrigger"/(<label> or "all")[:<state>]
 
         Prerequisite validity is checked via the taskdef prior to spawning
         so we can easily back out it if no valid prerequisites are given.
 
-        Set outputs:
+        On setting outputs:
         - update task outputs in the DB
         - (implied outputs are handled by the event manager)
-        - spawn children of the outputs (if not spawned)
-        - update the child prerequisites
+        - spawn children of the outputs with associated prerequisites satisfied
 
-        Uses a transient task proxy to spawn children. (Even if parent was
-        previously spawned in this flow its children might not have been).
-
-        Note transient tasks are a subset of forced tasks (you can
-        force-trigger a task that is already in the pool).
+         Transient task proxies used to spawn children of outputs- even if the
+         parent was previously spawned in this flow its children might not have
+         been. ("Transient" just means not intended for the task pool - just
+         a convient way to use task proxy methods).
 
         A forced output cannot cause a state change to submitted or running,
         but it can complete a task so that it doesn't need to run.
 
         Args:
             items: task ID match patterns
-            prereqs: prerequisites to set ([pre1, pre2,...], ['all'] or [])
+            prereqs: prerequisites and xtriggers to set, as described above
             outputs: outputs to set
             flow: flow numbers for spawned or merged tasks
             flow_wait: wait for flows to catch up before continuing

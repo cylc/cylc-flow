@@ -20,8 +20,8 @@
 
 Manually set task prerequisites and outputs, and xtrigger prerequisites.
 
-By default, this sets all required outputs plus the "submitted", "started",
-and "succeeded" outputs even if they are optional.
+By default, this sets all required outputs  of target tasks, plus the
+"submitted", "started", and "succeeded" outputs even if they are optional.
 
 Outputs:
   Outputs contribute to a task's completion.
