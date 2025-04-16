@@ -411,7 +411,7 @@ def _is_process_running(
     from cylc.flow.terminal import parse_dirty_json
 
     # See if the process is still running or not.
-    metric = f'[["Process", {pid}]]'
+    metric = f'[["Process.cmdline", {pid}]]'
     if is_remote_host(host):
         cmd = ['psutil']
         cmd = construct_cylc_server_ssh_cmd(cmd, host)
@@ -459,7 +459,7 @@ def _is_process_running(
             f'\n{command}'
         )
 
-    return cli_format(process['cmdline']) == command
+    return cli_format(process) == command
 
 
 def detect_old_contact_file(

@@ -46,25 +46,48 @@ def get_option_parser():
     return OptionParser(__doc__)
 
 
+def _call_psutil_interface(interface, *args):
+    """Call a psutil interface with the provided arguments.
+
+    Args:
+        interface:
+            The psutil method we want to call, e.g. "cpu_percent".
+
+            In the case of objects, this may include attribures, e.g.
+            "Process.cmdline".
+        args:
+            The arguments to provide to the psutil method.
+
+    Returns:
+        The result of the psutil method call.
+
+    """
+    result = psutil
+    is_first = True
+    for fcn in interface.split('.'):
+        try:
+            method = getattr(result, fcn)
+        except AttributeError as exc:
+            # error obtaining interfaces from psutil e.g:
+            # * requesting a method which does not exist
+            print(exc, file=sys.stderr)
+            sys.exit(2)
+
+        if is_first:
+            args = args
+            is_first = False
+        else:
+            args = ()
+
+        result = method(*args)
+    return result
+
+
 def _psutil(metrics_json):
     metrics = parse_dirty_json(metrics_json)
 
     try:
-        methods = [
-            getattr(psutil, key[0])
-            for key in metrics
-        ]
-    except AttributeError as exc:
-        # error obtaining interfaces from psutil e.g:
-        # * requesting a method which does not exist
-        print(exc, file=sys.stderr)
-        sys.exit(2)
-
-    try:
-        ret = [
-            method(*key[1:])
-            for key, method in zip(metrics, methods)
-        ]
+        ret = [_call_psutil_interface(*key) for key in metrics]
     except Exception as exc:
         # error extracting metrics from psutil e.g:
         # * requesting information on a resource which does not exist
