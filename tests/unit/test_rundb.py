@@ -25,6 +25,7 @@ from typing import (
 )
 import unittest
 from unittest import mock
+import sys
 
 import pytest
 
@@ -132,6 +133,13 @@ def test_operational_error(tmp_path, caplog):
     assert 'DELETE FROM task_jobs' in message
     assert 'INSERT OR REPLACE INTO task_jobs' in message
     assert 'UPDATE task_jobs' in message
+    assert 'The error was: no such table: task_jobs' in message
+    if sys.version_info.major == 3 and sys.version_info.minor >= 11:
+        assert 'SQLite error code: 1' in message
+        assert 'SQLite error name: SQLITE_ERROR' in message
+    else:
+        assert 'SQLite error code: Not available' in message
+        assert 'SQLite error name: Not available' in message
 
 
 def test_table_creation(tmp_path: Path):
