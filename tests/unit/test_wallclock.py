@@ -14,12 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 import pytest
+from pytest import param
 
 from metomi.isodatetime.data import CALENDAR
 from cylc.flow.wallclock import (
-    get_unix_time_from_time_string,
     get_current_time_string,
+    get_time_string,
+    get_unix_time_from_time_string,
 )
 
 
@@ -73,3 +76,65 @@ def test_get_current_time_string(set_timezone):
     set_timezone()
     res = get_current_time_string()
     assert res[-6:] == '+19:17'
+
+
+@pytest.mark.parametrize(
+    'arg, kwargs, expect',
+    (
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {},
+            '2000-12-14T10:47:12+19:17',
+            id='good',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {'date_time_is_local': True},
+            '2000-12-13T15:30:12+19:17',
+            id='dt_is_local',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {
+                'custom_time_zone_info': {
+                    'hours': 0,
+                    'minutes': -20,
+                    'string_basic': 'XXX+00:20',
+                },
+                'use_basic_format': True
+            },
+            '20001213T151012XXX+00:20',
+            id='custom_time_zone_info_string_basic',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {
+                'custom_time_zone_info': {
+                    'hours': 0,
+                    'minutes': -20,
+                    'string_extended': ':UK/Exeter',
+                },
+                'use_basic_format': False
+            },
+            '2000-12-13T15:10:12:UK/Exeter',
+            id='custom_time_zone_info_string_extended',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {
+                'custom_time_zone_info': {
+                    'hours': 0,
+                    'minutes': -20,
+                    'string_extended': ':UK/Exeter',
+                },
+                'use_basic_format': False,
+                'date_time_is_local': True,
+            },
+            '2000-12-12T19:53:12:UK/Exeter',
+            id='date_time_is_local',
+        ),
+    ),
+)
+def test_get_time_string(set_timezone, arg, kwargs, expect):
+    set_timezone()
+    assert get_time_string(arg, **kwargs) == expect
