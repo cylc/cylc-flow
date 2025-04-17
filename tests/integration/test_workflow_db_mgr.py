@@ -193,25 +193,18 @@ async def test_time_zone_writing(
 
     https://github.com/cylc/cylc-flow/issues/6701
     """
-    set_timezone('XXX')
-    wid = flow(one_conf)
-    schd = scheduler(wid, paused_start=False, run_mode='live')
+    set_timezone('XXX-19:00')
+    schd = scheduler(flow(one_conf), paused_start=False, run_mode='live')
     async with start(schd):
         itask = schd.pool.get_tasks()[0]
+        now = datetime.now().astimezone()
+        set_timezone('XXX-19:17')
         schd.submit_task_jobs([itask])
-        set_timezone()
-        schd.task_events_mgr.process_message(itask, 'INFO', 'submitted')
 
-    # Check the db time_submit (defective) against time_submit_exit
-    # which was ok:
-    (time_submit, time_submit_exit), = db_select(
-        schd, False, 'task_jobs', 'time_submit', 'time_submit_exit'
-    )
+    # Check the db time_submit:
+    (time_submit,) = db_select(schd, False, 'task_jobs', 'time_submit')[0]
     time_submit = datetime.strptime(time_submit, '%Y-%m-%dT%H:%M:%S%z')
-    time_submit_exit = datetime.strptime(
-        time_submit_exit, '%Y-%m-%dT%H:%M:%S%z'
-    )
-
-    assert time_submit_exit >= time_submit
-    # The two times should be approx the same:
-    assert time_submit_exit < time_submit + timedelta(seconds=10)
+    # The submit time should be approx correct:
+    assert (
+        abs(time_submit - now) < timedelta(seconds=10)
+    ), f"{time_submit} ~= {now}"

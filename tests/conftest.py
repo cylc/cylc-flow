@@ -283,4 +283,6 @@ def set_timezone(monkeypatch):
     try:
         yield patch
     finally:
-        time.tzset()  # Reset to the original time zone after the test
+        # Reset to the original time zone after the test
+        monkeypatch.undo()
+        time.tzset()
