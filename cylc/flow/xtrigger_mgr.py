@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    List,
     TYPE_CHECKING
 )
 
@@ -578,8 +579,10 @@ class XtriggerManager:
         # Tell the datastore this xtrigger is satisfied.
         self.data_store_mgr.delta_xtrigger(sig, True)
 
-    def _get_xtrigs(self, itask: 'TaskProxy', unsat_only: bool = False,
-                    sigs_only: bool = False):
+    def _get_xtrigs(
+        self, itask: 'TaskProxy', unsat_only: bool = False,
+        sigs_only: bool = False
+    ) -> 'List[Any]':
         """(Internal helper method.)
 
         Args:
@@ -593,7 +596,7 @@ class XtriggerManager:
                 with either signature (if sigs_only True) or with tuples of
                 label, signature, function context, and flag for satisfied.
         """
-        res = []
+        res: 'List[Any]' = []
         for label, satisfied in itask.state.xtriggers.items():
             if unsat_only and satisfied:
                 continue
@@ -709,6 +712,11 @@ class XtriggerManager:
             if sig in self.active:
                 # Already waiting on this result.
                 continue
+
+            if sig not in self.t_next_call:
+                # Log at first call only.
+                LOG.info(f"Commencing xtrigger, {ctx.get_description(True)}")
+
             now = time()
             if sig in self.t_next_call and now < self.t_next_call[sig]:
                 # Too soon to call this one again.
@@ -770,13 +778,12 @@ class XtriggerManager:
 
         LOG.debug('%s: returned %s', sig, results)
         if not satisfied:
-            LOG.info('xtrigger not satisfied: %s = %s', ctx.label, sig)
             return
 
         # Newly satisfied
         self.data_store_mgr.delta_xtrigger(sig, satisfied)
         self.workflow_db_mgr.put_xtriggers({sig: results})
-        LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
+        LOG.info(f"xtrigger satisfied: {ctx.get_description()}")
         self.sat_xtrig[sig] = results
 
         self.do_housekeeping = True
@@ -786,49 +793,39 @@ class XtriggerManager:
     ) -> None:
         """Force un/satisfy dependence of itask on given or all xtriggers.
 
-        Ignores xtriggers called only with valid xtriggers for itask.
+        Ignores xtriggers not valid for itask.
+        (However, these are now weeded out by the caller).
 
         Args:
             itask: task proxy
             xtriggers: xtriggers to un/satisfy
 
         """
-        for label, satisfied in xtriggers.items():
-            if label == "all":
-                itask.set_all_xtriggers(satisfied)
-                continue
+        # [(label, satisfied), ]
+        xtrigs = list(xtriggers.items())
 
+        if len(xtrigs) == 1 and xtrigs[0][0] == 'all':
+            xtrigs = [(x, xtrigs[0][1]) for x in itask.state.xtriggers.keys()]
+
+        for label, satisfied in xtrigs:
             if label not in itask.state.xtriggers:
                 continue
 
             ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
 
-            if satisfied:
-                if itask.state.xtriggers[label]:
-                    LOG.info(
-                        f"[{itask}] - xtrigger prerequisite already"
-                        f" satisfied: {label} = {sig}"
-                    )
-                else:
-                    itask.state.xtriggers[label] = True
-                    self.data_store_mgr.delta_task_xtrigger(
-                        itask, label, sig, True)
-                    LOG.info(
-                        f"[{itask}] - xtrigger prerequisite"
-                        f" satisfied: {label} = {sig}"
-                    )
-            else:
-                if not itask.state.xtriggers[label]:
-                    LOG.info(
-                        f"[{itask}] - xtrigger prerequisite already"
-                        f" unsatisfied: {label} = {sig}"
-                    )
-                else:
-                    itask.state.xtriggers[label] = False
-                    self.data_store_mgr.delta_task_xtrigger(
-                        itask, label, sig, False)
-                    LOG.info(
-                        f"[{itask}] - xtrigger prerequisite"
-                        f" unsatisfied: {label} = {sig}"
-                    )
+            # Un/satisfy the xtrigger prerequisite and log what we did.
+            # (Say "prerequisite": the xtrigger itself is not touched).
+
+            prefix = f"[{itask}] - xtrigger prerequisite"
+            suffix = ctx.get_description()
+            state = "satisfied" if satisfied else "unsatisfied"
+
+            if itask.state.xtriggers[label] == satisfied:
+                LOG.info(f"{prefix} already {state}: {suffix}")
+                continue
+
+            itask.state.xtriggers[label] = satisfied
+            self.data_store_mgr.delta_task_xtrigger(
+                itask, label, sig, satisfied)
+            LOG.info(f"{prefix} {state} (forced): {suffix}")
