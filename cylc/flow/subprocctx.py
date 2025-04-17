@@ -199,12 +199,19 @@ class SubFuncContext(SubProcContext):
                     json.dumps(self.func_kwargs),
                     workflow_run_dir]
 
-    def get_signature(self):
-        """Return the function call signature (as a string)."""
+    def get_signature(self) -> str:
+        """Return the function call signature."""
         skeys = sorted(self.func_kwargs.keys())
         args = self.func_args + [
             "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
         return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
+
+    def get_description(self, show_intvl: bool = False) -> str:
+        """Return a complete description of the function."""
+        descr = f"{self.label} = {self.get_signature()}"
+        if show_intvl:
+            descr = f"call interval {self.intvl}s: {descr}"
+        return descr
 
     def dump(self) -> str:
         """Output for logging."""

@@ -60,6 +60,7 @@ from cylc.flow.id import (
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
 from cylc.flow.platforms import get_platform
+from cylc.flow.prerequisite import PrereqTuple
 from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.skip import process_outputs as get_skip_mode_outputs
 from cylc.flow.task_action_timer import (
@@ -1916,7 +1917,9 @@ class TaskPool:
         self._load_historical_outputs(itask)
         return itask
 
-    def _standardise_prereqs(self, prereqs: 'Iterable[str]') -> 'Set[Tokens]':
+    def _standardise_prereqs(
+            self, prereqs: 'Iterable[str]'
+    ) -> 'Set[PrereqTuple]':
         """Extract task prerequistes from user input and standardise.
 
         Weed out any xtrigger prerequisites.
@@ -1953,7 +1956,7 @@ class TaskPool:
                 LOG.warning(
                     f'Invalid prerequisite cycle point:\n{exc.args[0]}')
             else:
-                _prereqs.add(pre.duplicate(task_sel=msg, cycle=cycle))
+                _prereqs.add(PrereqTuple(str(cycle), str(pre['task']), msg))
         return _prereqs
 
     def _standardise_outputs(
@@ -1975,7 +1978,7 @@ class TaskPool:
 
     def _get_prereq_params(
         self, prereqs: 'Iterable[str]', tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Tuple[bool, Set[Tokens], Dict[str, bool]]':
+    ) -> 'Tuple[bool, Set[PrereqTuple], Dict[str, bool]]':
         """Convert input prerequisites to Tokens of just the valid ones.
 
         And convert the (mutually exclusive) "['all']" shortcut to a bool.
@@ -2104,7 +2107,7 @@ class TaskPool:
 
     def _get_valid_prereqs(
             self, prereqs: Iterable[str], tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Set[Tokens]':
+    ) -> 'Set[PrereqTuple]':
         """Validate CLI prerequisites and return associated task messages.
 
         To set prerequisites, the user gives trigger names, but we need the
@@ -2120,24 +2123,23 @@ class TaskPool:
         """
         # Valid prerequisites as tokens (outputs as task messages).
         valid_pre = {
-            Tokens(f"{key.point}/{key.task}:{key.output}", relative=True)
+            PrereqTuple(key.point, key.task, key.output)
             for pre in tdef.get_prereqs(point)
             for key in pre.keys()
         }
 
-        # standardise, tokenise, and weed out xtrigger prerequisites
+        # standardise and weed out xtrigger prerequisites
         req_pre = self._standardise_prereqs(prereqs)
 
         for prereq in req_pre - valid_pre:
             # But log bad ones with triggers, not messages.
             trg = self.config.get_taskdef(
-                str(prereq["task"])
-            ).get_output(prereq["task_sel"])
+                str(prereq.task)
+            ).get_output(prereq.output)
             LOG.warning(
                 f'{point}/{tdef.name} does not depend on '
-                f'"{prereq["cycle"]}/{prereq["task"]}:{trg}"'
+                f'"{prereq.point}/{prereq.task}:{trg}"'
             )
-
         return valid_pre & req_pre
 
     def _get_valid_xtrigs(
@@ -2228,7 +2230,7 @@ class TaskPool:
     def _set_prereqs_itask(
         self,
         itask: 'TaskProxy',
-        prereqs: 'Iterable[Tokens]',
+        prereqs: 'Iterable[PrereqTuple]',
         xtrigs: 'Dict[str, bool]',
         set_all: bool
     ) -> None:
@@ -2237,9 +2239,12 @@ class TaskPool:
         Designated flows should already be merged to the task proxy.
         """
         if set_all:
-            itask.state.set_prerequisites_all_satisfied()
+            # (task prerequisites, not xtriggers)
+            itask.force_satisfy_all()
         else:
-            itask.satisfy_me(prereqs, forced=True)
+            # task prerequisites
+            itask.force_satisfy(prereqs)
+            # xtriggers, including "all"
             self.xtrigger_mgr.force_satisfy(itask, xtrigs)
 
         if (
@@ -2253,7 +2258,7 @@ class TaskPool:
         self,
         point: 'PointBase',
         taskdef: 'TaskDef',
-        prereqs: 'Iterable[Tokens]',
+        prereqs: 'Iterable[PrereqTuple]',
         xtrigs: 'Dict[str, bool]',
         flow_nums: 'FlowNums',
         flow_wait: bool,

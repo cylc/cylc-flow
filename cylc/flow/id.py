@@ -529,7 +529,11 @@ LEGACY_CYCLE_SLASH_TASK = re.compile(
 )
 
 
-def quick_relative_id(cycle: Union[str, int, 'PointBase'], task: str) -> str:
+def quick_relative_id(
+    cycle: Union[str, int, 'PointBase'],
+    task: str,
+    output: Optional[str] = None
+) -> str:
     """Generate a relative ID for a task.
 
     This is a more efficient solution to `Tokens` for cases where
@@ -541,7 +545,10 @@ def quick_relative_id(cycle: Union[str, int, 'PointBase'], task: str) -> str:
         True
 
     """
-    return f'{cycle}/{task}'
+    if output is None:
+        return f'{cycle}/{task}'
+    else:
+        return f'{cycle}/{task}:{output}'
 
 
 def _dict_strip(dictionary):
