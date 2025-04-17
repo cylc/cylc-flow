@@ -49,6 +49,7 @@ pyproject.toml configuration:
    rulesets = ['style', '728']  # Sets default rulesets to check
    max-line-length = 130        # Max line length for linting
 """
+
 import functools
 import pkgutil
 import re
@@ -89,6 +90,7 @@ from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.job_runner_mgr import JobRunnerManager
+from cylc.flow.lint.state import LinterState
 from cylc.flow.loggingutil import set_timestamps
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_OR_PATH_ARG_DOC,
@@ -1295,13 +1297,21 @@ def lint(
         The original file with added comments when `modify is True`.
 
     """
+    state = LinterState()
+
     # get the first line
-    line_no = 1
     line = next(lines)
+    # A few bits of state
     # check if it is a jinja2 shebang
-    jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
+    state.jinja2_shebang = line.strip().lower() == JINJA2_SHEBANG
 
     while True:
+        # Don't check extended text in metadata section.
+        if state.skip_line(line):
+            line = next(lines)
+            state.line_no += 1
+            continue
+
         # run lint checks against the current line
         for index, check_meta in checks.items():
             # Skip commented line unless check says not to.
@@ -1321,7 +1331,7 @@ def lint(
                     check_meta['function'],
                     check_meta=check_meta,
                     file=file_rel,
-                    jinja_shebang=jinja_shebang,
+                    jinja_shebang=state.jinja2_shebang,
                 )
             else:
                 # Just going to pass the line to the check function:
@@ -1350,7 +1360,7 @@ def lint(
                     # write a message to inform the user
                     write(cparse(
                         '<yellow>'
-                        f'[{index_str}] {file_rel}:{line_no}: {msg}'
+                        f'[{index_str}] {file_rel}:{state.line_no}: {msg}'
                         '</yellow>'
                     ))
         if modify:
@@ -1362,7 +1372,7 @@ def lint(
         except StopIteration:
             # end of interator
             return
-        line_no += 1
+        state.line_no += 1
 
 
 def get_cylc_files(
