@@ -32,6 +32,11 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.parsec.util import listjoin, pdeepcopy, poverride
 from cylc.flow.parsec.validate import BroadcastConfigValidator
+from cylc.flow.platforms import (
+    fail_if_platform_and_host_conflict,
+    PlatformLookupError,
+)
+
 
 if TYPE_CHECKING:
     from cylc.flow.id import Tokens
@@ -62,9 +67,10 @@ class BroadcastMgr:
 
     REC_SECTION = re.compile(r"\[([^\]]+)\]")
 
-    def __init__(self, workflow_db_mgr, data_store_mgr):
-        self.workflow_db_mgr = workflow_db_mgr
-        self.data_store_mgr = data_store_mgr
+    def __init__(self, schd):
+        self.schd = schd
+        self.workflow_db_mgr = schd.workflow_db_mgr
+        self.data_store_mgr = schd.data_store_mgr
         self.linearized_ancestors = {}
         self.broadcasts = {}
         self.ext_triggers = {}  # Can use collections.Counter in future
@@ -304,6 +310,23 @@ class BroadcastMgr:
                         if namespace not in self.linearized_ancestors:
                             bad_namespaces.append(namespace)
                         elif not bad_point:
+                            # Check broadcast against config and against
+                            # existing broadcasts:
+                            newconfig = pdeepcopy(self.schd.config.get_config(
+                                ['runtime', namespace]
+                            ))
+                            poverride(
+                                newconfig,
+                                self.broadcasts.get(point_string, {})
+                                .get(namespace, {})
+                            )
+                            if self.bc_mixes_old_and_new_platform_settings(
+                                newconfig,
+                                namespace,
+                                coerced_setting,
+                            ):
+                                continue
+
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
 
@@ -331,6 +354,23 @@ class BroadcastMgr:
         if modified_settings:
             self.data_store_mgr.delta_broadcast()
         return modified_settings, bad_options
+
+    @staticmethod
+    def bc_mixes_old_and_new_platform_settings(
+        task_config, namespace, coerced_setting
+    ):
+        """Check for combination of old ([remote]host) and new (platform)
+        settings in the task config as it will be after merger.
+        """
+        task_config.update(coerced_setting)
+        try:
+            fail_if_platform_and_host_conflict(
+                task_config, namespace
+            )
+            return False
+        except PlatformLookupError as exc:
+            LOG.error('Cannot apply broadcast:\n' + '\n    '.join(exc.args))
+            return True
 
     @staticmethod
     def _cancel_keys_in_prunes(prunes, cancel_keys):
