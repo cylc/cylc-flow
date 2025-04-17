@@ -28,6 +28,7 @@ from typing import (
 
 import pytest
 from pytest import param
+import pytest_asyncio
 
 from cylc.flow import (
     CYLC_LOG,
@@ -130,7 +131,7 @@ def assert_expected_log(
     return logged_messages
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def mod_example_flow(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
 ) -> AsyncGenerator['Scheduler', None]:
@@ -166,7 +167,7 @@ async def example_flow(
         yield schd
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def mod_example_flow_2(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
 ) -> AsyncGenerator['Scheduler', None]:
@@ -1865,7 +1866,7 @@ async def test_runahead_future_trigger(
         assert str(schd.pool.runahead_limit_point) == '20010104'
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def mod_blah(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
 ) -> 'Scheduler':

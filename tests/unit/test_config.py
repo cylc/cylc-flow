@@ -17,12 +17,15 @@
 import os
 from optparse import Values
 from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
-import pytest
+    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type
+)
 import logging
 from textwrap import dedent
 from types import SimpleNamespace
 from contextlib import suppress
+
+import pytest
+import pytest_asyncio
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
@@ -1517,7 +1520,7 @@ def test_check_for_owner(runtime_cfg):
         assert WorkflowConfig.check_for_owner(runtime_cfg) is None
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def awe_config(mod_tmp_flow_config: Callable) -> WorkflowConfig:
     """Return a workflow config object."""
     id_ = 'awe'

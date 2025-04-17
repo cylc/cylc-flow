@@ -16,13 +16,13 @@
 
 """Tests for the backend method of workflow_state"""
 
-import pytest
+import pytest_asyncio
 
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.scheduler import Scheduler
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def checker(
     mod_flow, mod_scheduler, mod_run, mod_complete
 ):

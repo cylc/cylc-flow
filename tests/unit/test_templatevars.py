@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-import pytest
-from pytest import param
 import tempfile
 import unittest
+
+import pytest
+from pytest import param
+import pytest_asyncio
 
 from cylc.flow import __version__ as cylc_version
 from cylc.flow.exceptions import ServiceFileError, InputError
@@ -110,7 +112,7 @@ class TestTemplatevars(unittest.TestCase):
         self.assertEqual(expected, load_template_vars(template_vars=pairs))
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def _setup_db(tmp_path_factory):
     tmp_path: Path = tmp_path_factory.mktemp('test_get_old_tvars')
     logfolder = tmp_path / WorkflowFiles.LogDir.DIRNAME
