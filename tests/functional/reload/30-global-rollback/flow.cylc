@@ -1,0 +1,31 @@
+[scheduling]
+    cycling mode = integer
+    [[graph]]
+        R1 = """
+            a => reload-global-error-workflow? => b & c
+            """
+[runtime]
+    [[root]]
+        script = true
+    [[a,b]]
+        platform = localhost
+    [[c]]
+        platform = $CYLC_TEST_PLATFORM
+    [[reload-global-error-workflow]]
+        platform = localhost
+        script = """
+            # Append to global config
+            cat >> "$CYLC_CONF_PATH/global.cylc" <<EOF 
+                [platforms]
+                    [[localhost,${CYLC_TEST_PLATFORM}]]
+                        global init-script = echo "global init-script reloaded!"
+EOF
+
+            # Append to workflow config, with an error
+            cat >> "$CYLC_WORKFLOW_RUN_DIR/flow.cylc" <<EOF
+                [garbage-workflow]
+EOF
+
+            # Reload the global config - should fail reloading the workflow and roll back
+            cylc reload --global "${CYLC_WORKFLOW_ID}"
+            """
