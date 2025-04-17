@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    List,
     TYPE_CHECKING
 )
 
@@ -450,31 +451,28 @@ class XtriggerManager:
                 @wall_clock = baz  # pre-defined zero-offset clock
             '''
 
-    Task proxies only store xtriggers labels: clock_0, workflow_x, etc. above.
-    These are mapped to the defined function calls. Dependence on xtriggers
-    is satisfied by calling these functions asynchronously in the task pool
-    (except clock triggers which are called synchronously as they're quick).
+    Task proxies store xtriggers labels: clock_0, workflow_x, etc. above, and
+    record whether or not their dependence on xtriggers is satisfied.
 
-    A unique call is defined by a unique function call signature, i.e. the
-    function name and all arguments. So workflow_x above defines a different
-    xtrigger for each cycle point. A new call will not be made before the
-    previous one has returned via the xtrigger callback. The interval (in
-    "name(args):INTVL") determines frequency of calls (default PT10S).
+    Labels are mapped to the defined function call signatures.
 
-    Delete satisfied xtriggers no longer needed by any current tasks.
+    The interval ("name(args):INTVL") determines call frequency.
 
-    Clock triggers are treated separately and called synchronously in the main
-    process, because they are guaranteed to be quick (but they are still
-    managed uniquely - i.e. many tasks depending on the same clock trigger
-    (with same offset from cycle point) get satisfied by the same call.
+    This XtriggerManager class handles all xtrigger execution logic centrally,
+    to avoid duplication when multiple tasks depend on the same xtrigger.
 
-    Parentless tasks with xtrigger(s) are, by default, spawned out to the
-    runahead limit. This results in non-sequential, and potentially
-    unnecessary, checking out to this limit (and may introduce clutter to
-    user interfaces). An option to make this sequential is now available,
-    by changing the default for all xtriggers in a workflow, and a way to
-    override this default with a (reserved) keyword function argument
-    (i.e. "sequential=True/False"):
+    Uniqueness is determined by function signature (name and arguments). So
+    workflow_x above defines a different xtrigger for each cycle point. A new
+    call will not be made before the previous one has returned.
+
+    Xtrigger functions are called asynchronously in the subprocess pool,
+    except for clock triggers, called synchronously because they're quick.
+
+    If parentless tasks have xtriggers that are fundamentally sequential in
+    nature, spawning them out to the runahead limit can result in unnecessary
+    xtrigger activity and UI clutter, so clock-triggered tasks get spawned
+    sequentially (as each xtrigger completes) by default, and other xtriggers
+    can optionally be configured to spawn sequentially.
 
     # Example:
     [scheduling]
@@ -564,6 +562,9 @@ class XtriggerManager:
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
         """Load satisfied xtrigger results from workflow DB.
 
+        Note this is for satisfied xtriggers, not individual task dependence
+        on xtriggers which can be manually set.
+
         Args:
             row_idx (int): row index (used for logging)
             row (Tuple[str, str]): tuple with the signature and results (json)
@@ -574,11 +575,14 @@ class XtriggerManager:
             LOG.info("LOADING satisfied xtriggers")
         sig, results = row
         self.sat_xtrig[sig] = json.loads(results)
-        # Tell the datastore this xtrigger is satisfied.
-        self.data_store_mgr.delta_task_xtrigger(sig, True)
 
-    def _get_xtrigs(self, itask: 'TaskProxy', unsat_only: bool = False,
-                    sigs_only: bool = False):
+        # Tell the datastore this xtrigger is satisfied.
+        self.data_store_mgr.delta_xtrigger(sig, True)
+
+    def _get_xtrigs(
+        self, itask: 'TaskProxy', unsat_only: bool = False,
+        sigs_only: bool = False
+    ) -> 'List[Any]':
         """(Internal helper method.)
 
         Args:
@@ -592,7 +596,7 @@ class XtriggerManager:
                 with either signature (if sigs_only True) or with tuples of
                 label, signature, function context, and flag for satisfied.
         """
-        res = []
+        res: 'List[Any]' = []
         for label, satisfied in itask.state.xtriggers.items():
             if unsat_only and satisfied:
                 continue
@@ -677,7 +681,7 @@ class XtriggerManager:
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
-                    self.data_store_mgr.delta_task_xtrigger(sig, True)
+                    self.data_store_mgr.delta_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
                     if self.all_task_seq_xtriggers_satisfied(itask):
@@ -708,6 +712,11 @@ class XtriggerManager:
             if sig in self.active:
                 # Already waiting on this result.
                 continue
+
+            if sig not in self.t_next_call:
+                # Log at first call only.
+                LOG.info(f"Commencing xtrigger, {ctx.get_description(True)}")
+
             now = time()
             if sig in self.t_next_call and now < self.t_next_call[sig]:
                 # Too soon to call this one again.
@@ -727,7 +736,8 @@ class XtriggerManager:
         """
         all_xtrig = []
         for itask in itasks:
-            all_xtrig += self._get_xtrigs(itask, sigs_only=True)
+            all_xtrig += self._get_xtrigs(
+                itask, sigs_only=True, unsat_only=True)
         for sig in list(self.sat_xtrig):
             if sig not in all_xtrig:
                 del self.sat_xtrig[sig]
@@ -751,8 +761,6 @@ class XtriggerManager:
 
         Args:
             ctx (SubFuncContext): function context
-        Raises:
-            ValueError: if the context given is not active
         """
         sig = ctx.get_signature()
         self.active.remove(sig)
@@ -773,8 +781,51 @@ class XtriggerManager:
             return
 
         # Newly satisfied
-        self.data_store_mgr.delta_task_xtrigger(sig, True)
+        self.data_store_mgr.delta_xtrigger(sig, satisfied)
         self.workflow_db_mgr.put_xtriggers({sig: results})
-        LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
+        LOG.info(f"xtrigger satisfied: {ctx.get_description()}")
         self.sat_xtrig[sig] = results
+
         self.do_housekeeping = True
+
+    def force_satisfy(
+        self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
+    ) -> None:
+        """Force un/satisfy dependence of itask on given or all xtriggers.
+
+        Ignores xtriggers not valid for itask.
+        (However, these are now weeded out by the caller).
+
+        Args:
+            itask: task proxy
+            xtriggers: xtriggers to un/satisfy
+
+        """
+        # [(label, satisfied), ]
+        xtrigs = list(xtriggers.items())
+
+        if len(xtrigs) == 1 and xtrigs[0][0] == 'all':
+            xtrigs = [(x, xtrigs[0][1]) for x in itask.state.xtriggers.keys()]
+
+        for label, satisfied in xtrigs:
+            if label not in itask.state.xtriggers:
+                continue
+
+            ctx = self.get_xtrig_ctx(itask, label)
+            sig = ctx.get_signature()
+
+            # Un/satisfy the xtrigger prerequisite and log what we did.
+            # (Say "prerequisite": the xtrigger itself is not touched).
+
+            prefix = f"[{itask}] - xtrigger prerequisite"
+            suffix = ctx.get_description()
+            state = "satisfied" if satisfied else "unsatisfied"
+
+            if itask.state.xtriggers[label] == satisfied:
+                LOG.info(f"{prefix} already {state}: {suffix}")
+                continue
+
+            itask.state.xtriggers[label] = satisfied
+            self.data_store_mgr.delta_task_xtrigger(
+                itask, label, sig, satisfied)
+            LOG.info(f"{prefix} {state} (forced): {suffix}")

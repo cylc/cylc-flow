@@ -199,10 +199,9 @@ def test_satisfy_me():
     assert not prereq.is_satisfied()
     assert prereq._cached_satisfied is False
 
-    valid = prereq.satisfy_me(
+    prereq.satisfy_me(
         [Tokens('//1/a:x'), Tokens('//1/d:x'), Tokens('//1/c:y')],
     )
-    assert {detok(tokens) for tokens in valid} == {'1/a:x'}
     assert prereq._satisfied == {
         ('1', 'a', 'x'): 'satisfied naturally',
         ('1', 'b', 'x'): False,
@@ -211,11 +210,10 @@ def test_satisfy_me():
     # should have reset cached satisfaction state
     assert prereq._cached_satisfied is None
 
-    valid = prereq.satisfy_me(
+    prereq.satisfy_me(
         [Tokens('//1/a:x'), Tokens('//1/b:x')],
         forced=True,
     )
-    assert {detok(tokens) for tokens in valid} == {'1/a:x', '1/b:x'}
     assert prereq._satisfied == {
         # 1/a:x unaffected as already satisfied
         ('1', 'a', 'x'): 'satisfied naturally',

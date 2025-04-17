@@ -26,7 +26,6 @@ from typing import (
     KeysView,
     NamedTuple,
     Optional,
-    Set,
     Tuple,
     Union,
 )
@@ -57,9 +56,12 @@ class PrereqTuple(NamedTuple):
     task: str
     output: str
 
-    def get_id(self) -> str:
+    def get_id(self, show_output=False) -> str:
         """Get the relative ID of the task in this prereq output."""
-        return quick_relative_id(self.point, self.task)
+        if show_output:
+            return quick_relative_id(self.point, self.task, self.output)
+        else:
+            return quick_relative_id(self.point, self.task)
 
     @staticmethod
     def coerce(tuple_: AnyPrereqTuple) -> 'PrereqTuple':
@@ -265,10 +267,8 @@ class Prerequisite:
         outputs: Iterable['Tokens'],
         mode: Optional[RunMode] = None,
         forced: bool = False,
-    ) -> 'Set[Tokens]':
+    ) -> None:
         """Set the given outputs as satisfied (if they are not already).
-
-        Return outputs that match.
 
         Args:
             outputs: List of outputs to satisfy.
@@ -276,21 +276,18 @@ class Prerequisite:
             forced: If True, records that this should not be undone by
                 `cylc remove`.
         """
-        valid = set()
         for output in outputs:
             output_tuple = PrereqTuple(
                 output['cycle'], output['task'], output['task_sel']
             )
             if output_tuple not in self._satisfied:
                 continue
-            valid.add(output)
             if not self._satisfied[output_tuple]:
                 self[output_tuple] = (
                     'force satisfied' if forced
                     else 'satisfied by skip mode' if mode == RunMode.SKIP
                     else 'satisfied naturally'
                 )
-        return valid
 
     def api_dump(self) -> Optional[PbPrerequisite]:
         """Return list of populated Protobuf data objects."""
