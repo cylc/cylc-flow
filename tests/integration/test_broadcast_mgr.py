@@ -27,9 +27,8 @@ async def test_reject_valid_broadcast_is_remote_clash_with_config(
 
     https://github.com/cylc/cylc-flow/issues/6693
     """
-    conf = one_conf.copy()
-    conf.update({'runtime': {'root': {'platform': 'foo'}}})
-    wid = flow(conf)
+    one_conf.update({'runtime': {'root': {'platform': 'foo'}}})
+    wid = flow(one_conf)
     schd = scheduler(wid)
     async with start(schd):
         bc_mgr = schd.broadcast_mgr
@@ -39,6 +38,7 @@ async def test_reject_valid_broadcast_is_remote_clash_with_config(
             settings=[{'remote': {'host': 'bar'}}]
         )
         assert log_filter(contains='Cannot apply broadcast')
+        assert bc_mgr.broadcasts == {'1': {}}
 
 
 async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
@@ -67,3 +67,4 @@ async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
             settings=[{'platform': 'foo'}]
         )
         assert log_filter(contains='Cannot apply broadcast')
+        assert bc_mgr.broadcasts == {'1': {'one': {'remote': {'host': 'bar'}}}}

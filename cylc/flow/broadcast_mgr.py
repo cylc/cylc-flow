@@ -320,11 +320,12 @@ class BroadcastMgr:
                                 self.broadcasts.get(point_string, {})
                                 .get(namespace, {})
                             )
-                            self.check_for_old_and_new_platform_settings(
+                            if self.bc_mixes_old_and_new_platform_settings(
                                 newconfig,
                                 namespace,
                                 coerced_setting,
-                            )
+                            ):
+                                continue
 
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
@@ -355,7 +356,7 @@ class BroadcastMgr:
         return modified_settings, bad_options
 
     @staticmethod
-    def check_for_old_and_new_platform_settings(
+    def bc_mixes_old_and_new_platform_settings(
         task_config, namespace, coerced_setting
     ):
         """Check for combination of old ([remote]host) and new (platform)
@@ -366,8 +367,10 @@ class BroadcastMgr:
             fail_if_platform_and_host_conflict(
                 task_config, namespace
             )
+            return False
         except PlatformLookupError as exc:
             LOG.error('Cannot apply broadcast:\n' + '\n    '.join(exc.args))
+            return True
 
     @staticmethod
     def _cancel_keys_in_prunes(prunes, cancel_keys):
