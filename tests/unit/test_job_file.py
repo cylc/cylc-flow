@@ -411,7 +411,7 @@ def test_write_task_environment():
             'communication method': 'ssh',
             'profile': {
                 "activate": "true",
-                "cgroups path": 'exit_light'
+                "cgroups path": 'exit_light',
                 "polling interval": 1
             }
         },
