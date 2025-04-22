@@ -15,31 +15,75 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# cylc profile test
+# Cylc profile test
+# NOTE: This test will run the Cylc profiler on the given test platform.
+# The test platform may need to be configured for this to work (e.g.
+# "cgroups path" may need to be set).
+REQUIRE_PLATFORM='runner:?(pbs|slurm) comms:tcp'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
+set_test_number 12
 
-if [[ -n "${PYTHONPATH:-}" ]]; then
-    export PYTHONPATH="${PWD}/lib:${PYTHONPATH}"
-else
-    export PYTHONPATH="${PWD}/lib"
-fi
-
-export PATH_TO_CYLC_BIN="/path/to/cylc/bin"
-create_test_global_config '
+create_test_global_config "
 [platforms]
+  [[${CYLC_TEST_PLATFORM}]]
+    [[[profile]]]
+      activate = True
+      # TODO: set the interval to something like 1s
   [[localhost]]
     [[[profile]]]
-      activate = true
-'
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+      activate = True
+      cgroups path = /no/such/path
+"
+
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+#!Jinja2
+
+[scheduling]
+    [[graph]]
+        R1 = the_good & the_bad? & the_ugly
+
+[runtime]
+    [[the_good]]
+        # this task should succeeded normally
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        script = sleep 1
+    [[the_bad]]
+        # this task should fail (it should still send profiling info)
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        script = false
+    [[the_ugly]]
+        # this task should succeed despite the broken profiler configuration
+        platform = localhost
+        script = sleep 1
+__FLOW_CONFIG__
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
+
+# ensure the cpu and memory messages were received and that these messages
+# were received before the succeeded message
+log_scan "${TEST_NAME_BASE}-task-succeeded" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
+    '1/the_good.*(received)cpu_time.*' \
+    '1/the_good.*(received)succeeded'
+log_scan "${TEST_NAME_BASE}-task-succeeded" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
+    '1/the_good.*(received)max_rss.*' \
+    '1/the_good.*(received)succeeded'
+
+# ensure the cpu and memory messages were received and that these messages
+# were received before the failed message
+log_scan "${TEST_NAME_BASE}-task-succeeded" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
+    '1/the_bad.*(received)cpu_time.*' \
+    '1/the_bad.*(received)failed'
+log_scan "${TEST_NAME_BASE}-task-succeeded" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
+    '1/the_bad.*(received)max_rss.*' \
+    '1/the_bad.*(received)failed'
+
+# ensure this task succeeded despite the broken profiler configuration
+grep_workflow_log_ok "${TEST_NAME_BASE}-broken" '1/the_ugly.*(received)succeeded'
+grep_ok 'FileNotFoundError: Cgroup not found' "$(cylc cat-log "${WORKFLOW_NAME}//1/the_ugly" -f e -m p)"
 
 purge
