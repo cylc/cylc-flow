@@ -1300,6 +1300,15 @@ class TaskEventsManager():
             )
             itask.state.add_xtrigger(label)
 
+        # add the retry xtrigger to the data store
+        sig = self.xtrigger_mgr.get_xtrig_ctx(itask, label).get_signature()
+        (
+            self.data_store_mgr.xtrigger_tasks
+            .setdefault(sig, set())
+            .add((itask.tokens.id, label))
+        )
+        self.data_store_mgr.delta_xtrigger(sig, False)
+
         if itask.state_reset(TASK_STATUS_WAITING):
             self.data_store_mgr.delta_task_state(itask)
 
