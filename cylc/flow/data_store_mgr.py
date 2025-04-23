@@ -2522,18 +2522,45 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def _delta_xtrigger(
-        self, tp_id: str, label: str, sig: str, satisfied: bool,
-        t_update: float
+        self,
+        tp_id: str,
+        label: str,
+        sig: str,
+        satisfied: bool,
+        update_time: float,
     ) -> None:
         """Helper for the two xtrigger delta methods."""
+        # fetch the task from the store
+        tp_id, tproxy = self.store_node_fetcher(Tokens(tp_id))
+        if not tproxy:
+            return
+
+        # create or fetch the updated delta
         tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{t_update}'
+            tp_id, PbTaskProxy(id=tp_id)
+        )
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+
+        # populate all xtriggers on the delta if not already present
+        if not tp_delta.xtriggers:
+            # NOTE: if one xtrigger changes, we must include all in the
+            # delta, see https://github.com/cylc/cylc-flow/issues/6307
+            for _sig, xtrigger in tproxy.xtriggers.items():
+                if _sig == sig:
+                    # don't copy the xtrigger we are changing
+                    continue
+                _xtrigger = tp_delta.xtriggers[_sig]
+                _xtrigger.id = xtrigger.id
+                _xtrigger.label = xtrigger.label
+                _xtrigger.satisfied = xtrigger.satisfied
+                _xtrigger.time = xtrigger.time
+
+        # modify the xtrigger that has changed
         xtrigger = tp_delta.xtriggers[sig]
         xtrigger.id = sig
         xtrigger.label = label
         xtrigger.satisfied = satisfied
-        xtrigger.time = t_update
+        xtrigger.time = update_time
         self.updates_pending = True
 
     def delta_xtrigger(self, sig: str, succeeded: bool) -> None:

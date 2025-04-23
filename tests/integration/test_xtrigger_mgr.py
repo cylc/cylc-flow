@@ -485,3 +485,51 @@ async def test_force_satisfy(flow, start, scheduler, log_filter):
         assert log_filter(contains=(
             'xtrigger prerequisite already unsatisfied: x = xrandom(0)'
         ))
+
+
+async def test_data_store(flow, start, scheduler):
+    """It should update the data store with xtrigger state."""
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': 'previous(T00)',
+            'xtriggers': {
+                'clock1': 'wall_clock()',
+                'clock2': 'wall_clock(offset="P1Y")',
+            },
+            'graph': {
+                'R1': '''
+                    @clock1 => foo
+                    @clock2 => foo
+                '''
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        await schd.update_data_structure()
+        itask = schd.pool.get_tasks()[0]
+
+        # extract xtrigger entry from the data store
+        xtriggers = schd.data_store_mgr.data[
+            schd.tokens.id
+        ][TASK_PROXIES][itask.tokens.id].xtriggers
+        clock1, clock2 = sorted(x for x in xtriggers if 'wall_clock' in x)
+
+        # it should not be satisfied (yet)
+        assert xtriggers[clock1].label == 'clock1'
+        assert xtriggers[clock1].satisfied is False
+
+        # execute the xtrigger
+        schd.xtrigger_mgr.call_xtriggers_async(itask)
+
+        # an update delta should be produced
+        # NOTE: both xtriggers should be present in the update
+        # (see https://github.com/cylc/cylc-flow/issues/6307)
+        task_delta = schd.data_store_mgr.updated[TASK_PROXIES][itask.tokens.id]
+        assert task_delta.xtriggers[clock1].satisfied is True
+        assert task_delta.xtriggers[clock2].satisfied is False
+
+        # the xtrigger should be satisfied in the data store
+        await schd.update_data_structure()
+        assert xtriggers[clock1].label == 'clock1'
+        assert xtriggers[clock1].satisfied is True
