@@ -1358,7 +1358,8 @@ async def test_set_prereqs_and_xtrigs(
         )
         assert bar.state.xtriggers_all_satisfied()
         assert log_filter(
-            contains='xtrigger prerequisite satisfied: x = xrandom(0)')
+            contains=(
+                'xtrigger prerequisite satisfied (forced): x = xrandom(0)'))
 
         # set xtrigger in the wrong task
         schd.pool.set_prereqs_and_outputs(

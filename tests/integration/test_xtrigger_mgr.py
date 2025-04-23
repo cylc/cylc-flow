@@ -393,19 +393,22 @@ async def test_force_satisfy(flow, start, scheduler, log_filter):
 
         assert foo.state.xtriggers['x']  # satisified
         assert log_filter(
-            contains='xtrigger prerequisite satisfied: x = xrandom(0)')
+            contains=(
+                'xtrigger prerequisite satisfied (forced): x = xrandom(0)'))
 
         # force satisfy it again
         schd.xtrigger_mgr.force_satisfy(foo, xtrigs)
         assert foo.state.xtriggers['x']  # satisified
         assert log_filter(
-            contains='xtrigger prerequisite already satisfied: x = xrandom(0)')
+            contains=(
+                'xtrigger prerequisite already satisfied: x = xrandom(0)'))
 
         # force unsatisfy it
         schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
         assert not foo.state.xtriggers['x']  # not satisified
         assert log_filter(
-            contains='xtrigger prerequisite unsatisfied: x = xrandom(0)')
+            contains=(
+                'xtrigger prerequisite unsatisfied (forced): x = xrandom(0)'))
 
         # force unsatisfy it again
         schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
