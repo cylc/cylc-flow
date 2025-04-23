@@ -1346,7 +1346,7 @@ async def test_set_prereqs_and_xtrigs(
             "20400101T0000Z/foo",
         }
 
-        # set an xtrigger (see also test_xtrigger_mgr)
+        # set an xtrigger (see also test_xtrigger_mgr, and test_data_store_mgr)
         bar = schd.pool._get_task_by_id('20400101T0000Z/bar')
         assert bar.state.prerequisites_all_satisfied()
         assert not bar.state.xtriggers_all_satisfied()

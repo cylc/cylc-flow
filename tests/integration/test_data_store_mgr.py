@@ -116,18 +116,6 @@ def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     ]
 
 
-def get_pb_xtriggers(schd: 'Scheduler') -> 'List[str]':
-    """Get all protobuf xtriggers from the data store task proxies."""
-    return [
-        x
-        for t in cast(
-            'Iterable[PbTaskProxy]',
-            schd.data_store_mgr.updated[TASK_PROXIES].values()
-        )
-        for x in t.xtriggers
-    ]
-
-
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_start):
     flow_def = {
@@ -150,16 +138,22 @@ async def harness(mod_flow, mod_scheduler, mod_start):
 
 @pytest.fixture(scope='module')
 async def xharness(mod_flow, mod_scheduler, mod_start):
+    """Like harness, but add xtriggers."""
     flow_def = {
         'scheduler': {
             'allow implicit tasks': True
         },
         'scheduling': {
             'xtriggers': {
-                'x': 'xrandom(0)'
+                'x': 'xrandom(0)',
+                'y': 'xrandom(0, _=1)'
             },
             'graph': {
-                'R1': '@x => foo & bar'
+                'R1': """
+                    @x => foo
+                    @y => foo
+                    @x => bar
+                """
             }
         }
     }
@@ -495,11 +489,12 @@ def test_delta_task_prerequisite(harness):
 def test_delta_task_xtrigger(xharness):
     """Test delta_task_xtrigger."""
     schd: Scheduler
-    schd, data = xharness
+    schd, _ = xharness
     foo = schd.pool._get_task_by_id('1/foo')
     bar = schd.pool._get_task_by_id('1/bar')
 
     assert not foo.state.xtriggers['x']  # not satisfied
+    assert not foo.state.xtriggers['y']  # not satisfied
     assert not bar.state.xtriggers['x']  # not satisfied
 
     # satisfy foo's dependence on x
@@ -512,6 +507,7 @@ def test_delta_task_xtrigger(xharness):
 
     # check the task pool
     assert foo.state.xtriggers['x']  # satisfied
+    assert not foo.state.xtriggers['y']  # satisfied
     assert not bar.state.xtriggers['x']  # not satisfied
 
     # data store should have one updated task proxy with satisfied xtrigger x
@@ -520,6 +516,48 @@ def test_delta_task_xtrigger(xharness):
     xtrig = pbfoo.xtriggers['xrandom(0)']
     assert xtrig.label == 'x'
     assert xtrig.satisfied
+
+    # unsatisfy it again
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:unsatisfied'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert not foo.state.xtriggers['x']  # not satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['xrandom(0)']
+    assert xtrig.label == 'x'
+    assert not xtrig.satisfied
+
+    # satisfy both of foo's xtriggers at once
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/all:satisfied'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert foo.state.xtriggers['y']  # satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+
+    xtrig_x = pbfoo.xtriggers['xrandom(0)']
+    assert xtrig_x.label == 'x'
+    assert xtrig_x.satisfied
+
+    xtrig_y = pbfoo.xtriggers['xrandom(0, _=1)']
+    assert xtrig_y.label == 'y'
+    assert xtrig_y.satisfied
 
 
 async def test_absolute_graph_edges(flow, scheduler, start):
