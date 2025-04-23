@@ -1395,8 +1395,20 @@ async def test_set_prereqs_and_xtrigs(
         schd.pool.set_prereqs_and_outputs(
             ["2040/qux"], [], ["2040/bar", "2040/baz:succeed"], ['all'])
 
+        assert log_filter(
+            contains=('prerequisite satisfied (forced): 20400101T0000Z/bar'))
+        assert log_filter(
+            contains=('prerequisite satisfied (forced): 20400101T0000Z/baz'))
+
         # it should now be fully satisfied
         assert qux.state.prerequisites_all_satisfied()
+
+        # set one again
+        schd.pool.set_prereqs_and_outputs(
+            ["2040/qux"], [], ["2040/bar"], ['all'])
+
+        assert log_filter(
+            contains=('prerequisite already satisfied: 20400101T0000Z/bar'))
 
 
 async def test_set_bad_prereqs(

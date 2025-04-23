@@ -540,11 +540,6 @@ class TaskProxy:
             f"{','.join(str(f) for f in flow_nums)}"
         )
 
-    def set_all_xtriggers(self, satisfied: bool) -> None:
-        """Set my dependence on all xtriggers un/satsified."""
-        for label in self.state.xtriggers.keys():
-            self.state.xtriggers[label] = satisfied
-
     def state_reset(
         self, status=None, is_held=None, is_queued=None, is_runahead=None,
         silent=False, forced=False
@@ -583,7 +578,10 @@ class TaskProxy:
         ):
             prereq.satisfy_me(outputs, mode=mode, forced=forced)
 
-    def force_satisfy(self, prereqs: 'Iterable[PrereqTuple]') -> None:
+    def force_satisfy(
+        self, prereqs: 'Iterable[PrereqTuple]',
+        set_all: bool = False
+    ) -> None:
         """Force satisfy given task prerequisites.
 
         Only called via "cylc set" command so no need to record run mode.
@@ -592,29 +590,8 @@ class TaskProxy:
         for prereq in self.state.prerequisites:
             for pre, state in prereq.items():
                 # (PrereqTuple, False or "satisfied naturally" etc.)
-                if pre not in prereqs:
+                if not set_all and pre not in prereqs:
                     continue
-                if not state:
-                    prereq[pre] = "force satisfied"
-                    LOG.info(
-                        f"[{self}] prerequisite satisfied (forced):"
-                        f" {pre.get_id(True)}"
-                    )
-                else:
-                    LOG.info(
-                        f"[{self}] prerequisite already satisfied:"
-                        f" {pre.get_id(True)}"
-                    )
-
-    def force_satisfy_all(self):
-        """Force satisfy all task prerequisites.
-
-        Only called via "cylc set" command so no need to record run mode.
-
-        """
-        for prereq in self.state.prerequisites:
-            for pre, state in prereq.items():
-                # (PrereqTuple, False or "satisfied naturally" etc.)
                 if not state:
                     prereq[pre] = "force satisfied"
                     LOG.info(

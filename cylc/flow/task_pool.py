@@ -2238,14 +2238,10 @@ class TaskPool:
 
         Designated flows should already be merged to the task proxy.
         """
-        if set_all:
-            # (task prerequisites, not xtriggers)
-            itask.force_satisfy_all()
-        else:
-            # task prerequisites
-            itask.force_satisfy(prereqs)
-            # xtriggers, including "all"
-            self.xtrigger_mgr.force_satisfy(itask, xtrigs)
+        # task prerequisites
+        itask.force_satisfy(prereqs, set_all)
+        # xtriggers, including "all"
+        self.xtrigger_mgr.force_satisfy(itask, xtrigs)
 
         if (
             self.runahead_limit_point is not None
