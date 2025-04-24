@@ -2572,11 +2572,14 @@ class DataStoreMgr:
     # -----------
     # Job Deltas
     # -----------
-    def delta_job_msg(self, tokens: Tokens, msg: str) -> None:
-        """Add message to job."""
+    def delta_job_msg(self, tokens: Tokens, msg: str) -> bool:
+        """Add message to job.
+
+        Returns False if the job was not found in the data store.
+        """
         j_id, job = self.store_node_fetcher(tokens)
         if not job:
-            return
+            return False
         j_delta = self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
@@ -2589,6 +2592,7 @@ class DataStoreMgr:
             j_delta.messages[:] = job.messages
             j_delta.messages.append(msg)
         self.updates_pending = True
+        return True
 
     def delta_job_attr(
         self,
