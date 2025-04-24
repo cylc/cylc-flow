@@ -291,9 +291,7 @@ def test_is_process_running_dirty_output(monkeypatch, caplog):
     # respond with something Cylc should be able to make sense of
     stdout = dedent('''
         % simulated stdout pollution %
-        [{
-            "cmdline": ["expected", "command"]
-        }]
+        [["expected", "command"]]
     ''')
 
     caplog.set_level(logging.WARN, logger=CYLC_LOG)
