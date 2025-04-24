@@ -1332,7 +1332,7 @@ with Conf('global.cylc', desc='''
             ''')
 
             with Conf('profile'):
-                Conf('activate', VDR.V_BOOLEAN, True, desc='''
+                Conf('activate', VDR.V_BOOLEAN, False, desc='''
                 A Boolean that sets if the cylc profiler will be used
 
                 .. versionadded:: 8.0.0
