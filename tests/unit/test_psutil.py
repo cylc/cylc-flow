@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import os
+
+from psutil import Process
 
 from cylc.flow.scripts.psutil import _psutil
 
@@ -38,3 +41,11 @@ def test_psutil_basic():
         assert key in mem
         # all of which should be integers
         assert isinstance(mem[key], int)
+
+
+def test_psutil_object():
+    """It should call object methods."""
+    # obtain the commandline for this test process
+    ret = _psutil(f'[["Process.cmdline", {os.getpid()}]]')
+
+    assert ret[0] == Process().cmdline()
