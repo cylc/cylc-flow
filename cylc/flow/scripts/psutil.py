@@ -53,7 +53,7 @@ def _call_psutil_interface(interface, *args):
         interface:
             The psutil method we want to call, e.g. "cpu_percent".
 
-            In the case of objects, this may include attribures, e.g.
+            In the case of objects, this may include attributes, e.g.
             "Process.cmdline".
         args:
             The arguments to provide to the psutil method.
@@ -74,7 +74,6 @@ def _call_psutil_interface(interface, *args):
             sys.exit(2)
 
         if is_first:
-            args = args
             is_first = False
         else:
             args = ()
