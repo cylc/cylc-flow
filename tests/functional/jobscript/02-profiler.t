@@ -28,7 +28,7 @@ create_test_global_config "
   [[${CYLC_TEST_PLATFORM}]]
     [[[profile]]]
       activate = True
-      # TODO: set the interval to something like 1s
+      polling interval = 1
   [[localhost]]
     [[[profile]]]
       activate = True
@@ -50,7 +50,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[the_bad]]
         # this task should fail (it should still send profiling info)
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        script = false
+        script = sleep 5; false
     [[the_ugly]]
         # this task should succeed despite the broken profiler configuration
         platform = localhost

@@ -164,14 +164,6 @@ cylc__job__main() {
         fi
     }
     # Grab the max rss and cpu_time value before moving directory
-    if [[ -f "max_rss" ]]; then
-      max_rss=$(cat max_rss)
-      rm max_rss
-    fi
-    if [[ -f "cpu_time" ]]; then
-      cpu_time=$(cat cpu_time)
-      rm cpu_time
-    fi
     cylc__kill_profiler
     # Empty work directory remove
     cd
@@ -208,6 +200,14 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
+    if [[ -f "max_rss" ]]; then
+      max_rss=$(cat max_rss)
+      rm max_rss
+    fi
+    if [[ -f "cpu_time" ]]; then
+      cpu_time=$(cat cpu_time)
+      rm cpu_time
+    fi
     if [[ -n "${cpu_time:-}" ]]; then
       cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time" || true
     fi
