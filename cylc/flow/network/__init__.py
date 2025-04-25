@@ -117,7 +117,7 @@ def get_location(workflow: str) -> Tuple[str, int, int, str]:
     Args:
         workflow: workflow ID
     Returns:
-        Tuple (host name, port number, publish port number, scheduler veresion)
+        Tuple (host name, port number, publish port number, scheduler version)
     Raises:
         WorkflowStopped: if the workflow is not running.
         CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
