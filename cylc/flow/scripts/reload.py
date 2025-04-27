@@ -60,6 +60,7 @@ from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
+    OptionSettings,
 )
 from cylc.flow.terminal import cli_function
 
@@ -67,12 +68,39 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
+RELOAD_OPTIONS = [
+    OptionSettings(
+        ['-g', '--global'],
+        help='also reload global configuration.',
+        action="store_true",
+        default=False,
+        dest="reload_global",
+        sources={'reload'}
+    ),
+]
+
+
 MUTATION = '''
 mutation (
-  $wFlows: [WorkflowID]!
+  $wFlows: [WorkflowID]!,
 ) {
   reload (
     workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
+
+# Separate mutation for backwards compatibility
+MUTATION_GLOBAL = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $reloadGlobal: Boolean,
+) {
+  reload (
+    workflows: $wFlows
+    reloadGlobal: $reloadGlobal
   ) {
     result
   }
@@ -87,18 +115,30 @@ def get_option_parser():
         multiworkflow=True,
         argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
+    for option in RELOAD_OPTIONS:
+        parser.add_option(*option.args, **option.kwargs)
+
     return parser
 
 
 async def run(options: 'Values', workflow_id: str):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    mutation_kwargs = {
-        'request_string': MUTATION,
-        'variables': {
-            'wFlows': [workflow_id],
+    if options.reload_global:
+        mutation_kwargs = {
+            'request_string': MUTATION_GLOBAL,
+            'variables': {
+                'wFlows': [workflow_id],
+                'reloadGlobal': options.reload_global,
+            }
         }
-    }
+    else:
+        mutation_kwargs = {
+            'request_string': MUTATION,
+            'variables': {
+                'wFlows': [workflow_id],
+            }
+        }
 
     return await pclient.async_request('graphql', mutation_kwargs)
 
