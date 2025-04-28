@@ -2126,16 +2126,20 @@ class TaskPool:
 
         # standardise and weed out xtrigger prerequisites
         req_pre = self._standardise_prereqs(prereqs)
+        invalid = req_pre - valid_pre
 
-        for prereq in req_pre - valid_pre:
-            # But log bad ones with triggers, not messages.
-            trg = self.config.get_taskdef(
-                prereq.task
-            ).get_output(prereq.output)
-            LOG.warning(
-                f'{point}/{tdef.name} does not depend on '
-                f'"{prereq.point}/{prereq.task}:{trg}"'
-            )
+        if invalid:
+            task = quick_relative_id(point, tdef.name)
+            for prereq in invalid:
+                # But log bad ones with triggers, not messages.
+                trg = self.config.get_taskdef(
+                    prereq.task
+                ).get_output(prereq.output)
+                LOG.warning(
+                    f'{task} does not depend on'
+                    f' "{quick_relative_id(prereq.point, prereq.task, trg)}"'
+                )
+
         return valid_pre & req_pre
 
     def _get_valid_xtrigs(
@@ -2153,14 +2157,16 @@ class TaskPool:
         """
         valid_x_labels = tdef.get_xtrigs(point)
 
-        # weed out task prerequisites and convert state to bool
+        # weed out task prerequisites and convert satisfaction status to bool
         req_x = _get_xtrig_prereqs(prereqs)
+        invalid = set(req_x) - valid_x_labels
 
-        for xtrig in set(req_x) - valid_x_labels:
-            if xtrig != "all":
-                LOG.warning(
-                    f'{point}/{tdef.name} does not depend on'
-                    f' xtrigger "{xtrig}"')
+        if invalid:
+            task = quick_relative_id(point, tdef.name)
+            for xtrig in invalid:
+                if xtrig != "all":
+                    LOG.warning(
+                        f'{task} does not depend on xtrigger "{xtrig}"')
 
         return {
             k: v for k, v in req_x.items()
