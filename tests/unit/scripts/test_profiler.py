@@ -67,8 +67,8 @@ def test_write_data(tmpdir):
     # Create tmp file
     file = tmpdir.join('output.txt')
 
-    write_data('test_data', file.strpath)
-    assert file.read() == 'test_data'
+    write_data('test_memory', 'test_cpu', file.strpath)
+    assert file.read() == '{\n    "max_rss": "test_memory",\n    "cpu_time": "test_cpu"\n}'
 
 
 def test_get_cgroup_name(mocker):
@@ -126,7 +126,7 @@ def test_get_cgroup_paths():
             "test_location/cpu/test_name/cpuacct.usage")
 
 
-def test_profile_cpu(mocker):
+def test_profile_data(mocker):
     process = get_cgroup_paths(1, "test_location/",
                                "test_name")
 
@@ -138,7 +138,7 @@ def test_profile_cpu(mocker):
                  return_value=2048)
     run_once = mock.Mock(side_effect=[True, False])
     profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("cpu_time", "w")
+    mock_file.assert_called_with("profiler.json", "w")
 
 
 def test_stop_profiler():
@@ -146,22 +146,6 @@ def test_stop_profiler():
         stop_profiler()
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == 0
-
-
-def test_profile_max_rss(mocker):
-    process = get_cgroup_paths(1,
-                               "test_location/",
-                               "test_name")
-
-    mock_file = mocker.mock_open(read_data="")
-    mocker.patch("builtins.open", mock_file)
-    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
-                 return_value=1024)
-    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
-                 return_value=2048)
-    run_once = mock.Mock(side_effect=[True, False])
-    profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("max_rss", "w")
 
 
 def test_profile_1(mocker):
@@ -177,7 +161,7 @@ def test_profile_1(mocker):
     run_once = mock.Mock(side_effect=[True, False])
 
     profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("max_rss", "w")
+    mock_file.assert_called_with("profiler.json", "w")
 
 
 def test_profile_2(mocker):
@@ -195,7 +179,7 @@ def test_profile_2(mocker):
     run_once = mock.Mock(side_effect=[True, False])
 
     profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("cpu_time", "w")
+    mock_file.assert_called_with("profiler.json", "w")
 
 
 def test_get_config(mocker):
