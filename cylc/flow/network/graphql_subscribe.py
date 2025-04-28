@@ -1,10 +1,33 @@
-# Taken from:
-# https://github.com/graphql-python/graphql-core/blob/v3.2.6/src/graphql
-# /execution/subscribe.py
-# Modified to include `execution_context_class` and `middleware` in
+# MIT License
+#
+# Copyright (c) GraphQL Contributors (GraphQL.js)
+# Copyright (c) Syrus Akbary (GraphQL-core 2)
+# Copyright (c) Christoph Zwerschke (GraphQL-core 3)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# ----------------------------------------------------------------------------
+#
+# The code in this file originates from graphql-core
+# https://github.com/graphql-python/graphql-core/blob/v3.2.6/src/graphql/execution/subscribe.py
+#
+# It was modified to include `execution_context_class` and `middleware` in
 # the execution of GraphQL subscriptions.
 # This should not be necessary with some unspecified future releases as
 # the head of graphql-core has these included.
+#
+# BACK COMPAT: graphql_subscribe.py
+# FROM: graphql-core 3.2
+# TO: graphql-core 3.3
+# URL: https://github.com/cylc/cylc-flow/issues/6688
 
 
 from inspect import isawaitable
