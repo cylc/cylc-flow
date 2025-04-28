@@ -802,7 +802,7 @@ class XtriggerManager:
         xtrigs = list(xtriggers.items())
 
         if len(xtrigs) == 1 and xtrigs[0][0] == 'all':
-            xtrigs = [(x, xtrigs[0][1]) for x in itask.state.xtriggers.keys()]
+            xtrigs = [(x, xtrigs[0][1]) for x in itask.state.xtriggers]
 
         for label, satisfied in xtrigs:
             if label not in itask.state.xtriggers:

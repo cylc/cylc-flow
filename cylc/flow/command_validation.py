@@ -232,7 +232,7 @@ def prereq(prereq: str) -> Optional[str]:
 
     if tokens["cycle"] == XTRIGGER_PREREQ_PREFIX:
         if (
-            tokens["task_sel"] not in [None, TASK_OUTPUT_SUCCEEDED]
+            tokens["task_sel"] not in {None, TASK_OUTPUT_SUCCEEDED}
         ):
             # Error: xtrigger status must be default or succeeded.
             return None

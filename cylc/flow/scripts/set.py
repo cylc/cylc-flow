@@ -57,13 +57,13 @@ Task Prerequisites:
       It does not automatically satisfy xtrigger prerequisites.
 
 Xtrigger prerequisites:
-    To satisfy or unsatisfy a task's dependence on an xtrigger use the --pre
-    option with the word "xtrigger" in place of the cycle point, and the
-    task name replaced by the xtrigger name.
+  To satisfy a task's dependence on an xtrigger use the --pre
+  option with the word "xtrigger" in place of the cycle point, and the
+  task name replaced by the xtrigger name.
 
-    Format:
-      * --pre=xtrigger/<xtrigger>[:succeeded]
-      * --pre=xtrigger/all[:succeeded]
+  Format:
+    * --pre=xtrigger/<xtrigger>[:succeeded]
+    * --pre=xtrigger/all[:succeeded]
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you

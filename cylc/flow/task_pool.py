@@ -2130,7 +2130,7 @@ class TaskPool:
         for prereq in req_pre - valid_pre:
             # But log bad ones with triggers, not messages.
             trg = self.config.get_taskdef(
-                str(prereq.task)
+                prereq.task
             ).get_output(prereq.output)
             LOG.warning(
                 f'{point}/{tdef.name} does not depend on '
@@ -2156,7 +2156,7 @@ class TaskPool:
         # weed out task prerequisites and convert state to bool
         req_x = _get_xtrig_prereqs(prereqs)
 
-        for xtrig in set(req_x.keys()) - valid_x_labels:
+        for xtrig in set(req_x) - valid_x_labels:
             if xtrig != "all":
                 LOG.warning(
                     f'{point}/{tdef.name} does not depend on'
