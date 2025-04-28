@@ -24,8 +24,8 @@ By default this command completes required outputs, plus the "submitted",
 "started", and "succeeded" outputs even if they are optional.
 
 Task Outputs:
-  Completing a task's output may affect the task's state and it satisfies
-  the prerequisites of any tasks that depend on the output.
+  Completing task outputs may affect its state, and it will satisfy the
+  prerequisites of any other tasks that depend on those outputs.
 
   Format:
     * --out=<output>  # output name (not message) of the target task
@@ -39,31 +39,32 @@ Task Outputs:
     - "succeeded" and "failed" imply "started"
     - custom outputs and "expired" do not imply other outputs
 
-  For custom outputs, use the output name not the associated task message:
-  [runtime][my-task][outputs]
-      # <name> = <task-message>
-      x = "file x completed"
+  For custom outputs, use the output name not the associated task message.
+  In [runtime][my-task][outputs]:
+    # <name> = <message>
+    x = "file x completed"
 
 Task Prerequisites:
   Satisfying a task's prerequisite contributes to its readiness to run.
 
   Satisfying any prerequisite of an inactive task promotes it to the active
   window where xtrigger checking commences (if the task has any xtriggers).
+  The --pre=all option even promotes parentless tasks to the active window.
 
   Format:
-    * --pre=<cycle>/<task>[:output]  # single prerequisite
-    * --pre=all  # all prerequisites
-      This promotes even parentless tasks to the active window.
-      It does not automatically satisfy xtrigger prerequisites.
+    * --pre=<cycle>/<task-name>[:output]  # satisfy a single prerequisite
+    * --pre=all  # satisfy all task (not xtrigger) prerequisites
 
 Xtrigger prerequisites:
-  To satisfy a task's dependence on an xtrigger use the --pre
-  option with the word "xtrigger" in place of the cycle point, and the
-  task name replaced by the xtrigger name.
+  To satisfy an xtrigger prerequisite use --pre with the word "xtrigger" in
+  place of the cycle point, and the xtrigger name in place of the task name.
 
   Format:
-    * --pre=xtrigger/<xtrigger>[:succeeded]
-    * --pre=xtrigger/all[:succeeded]
+    * --pre=xtrigger/<xtrigger-name>  # satisfy one xtrigger prerequisite
+    * --pre=xtrigger/all  # satisfy all xtrigger prerequisites
+
+  (The full format is "xtrigger/<xtrigger-name>[:succeeded]" but "succeeded"
+  is the only xtrigger output and the default, so it can be omitted.)
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you

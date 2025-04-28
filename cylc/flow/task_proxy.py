@@ -564,9 +564,8 @@ class TaskProxy:
 
     def satisfy_me(
         self,
-        outputs: 'Iterable[Tokens]',
+        task_messages: 'Iterable[Tokens]',
         mode: Optional[RunMode] = RunMode.LIVE,
-        forced: bool = False,  # TODO forced no longer needed here
     ) -> None:
         """Try to satisfy my prerequisites with given task output messages.
 
@@ -576,11 +575,10 @@ class TaskProxy:
         for prereq in (
             *self.state.prerequisites, *self.state.suicide_prerequisites
         ):
-            prereq.satisfy_me(outputs, mode=mode, forced=forced)
+            prereq.satisfy_me(task_messages, mode=mode)
 
     def force_satisfy(
-        self, prereqs: 'Iterable[PrereqTuple]',
-        set_all: bool = False
+        self, prereqs: 'Iterable[PrereqTuple]', set_all: bool = False
     ) -> None:
         """Force satisfy given task prerequisites.
 
