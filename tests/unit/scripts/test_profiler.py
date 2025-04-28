@@ -68,7 +68,8 @@ def test_write_data(tmpdir):
     file = tmpdir.join('output.txt')
 
     write_data('test_memory', 'test_cpu', file.strpath)
-    assert file.read() == '{\n    "max_rss": "test_memory",\n    "cpu_time": "test_cpu"\n}'
+    assert file.read() == ('{\n    "max_rss": "test_memory",\n'
+                           '    "cpu_time": "test_cpu"\n}')
 
 
 def test_get_cgroup_name(mocker):
