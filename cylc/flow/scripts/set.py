@@ -79,7 +79,7 @@ CLI Completion:
 Examples:
   # complete all required outputs of 3/bar:
   $ cylc set my_workflow//3/bar
-  #   or:
+  # or:
   $ cylc set --out=required my_workflow//3/bar
 
   # complete the succeeded output of 3/bar:
@@ -90,7 +90,7 @@ Examples:
 
   # satisfy the 3/foo:succeeded prerequisite of 3/bar:
   $ cylc set --pre=3/foo my_workflow//3/bar
-    # or:
+  # or:
   $ cylc set --pre=3/foo:succeeded my_workflow//3/bar
 
   # satisfy all prerequisites (if any) of 3/bar and promote it to
@@ -99,7 +99,7 @@ Examples:
 
   # satisfy the dependence of 3000/bar on clock-trigger @clock1:
   $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
-    # or reset it back to unsatisfied:
+  # or reset it back to unsatisfied:
   $ cylc set --pre=xtrigger/data:unsatisfied my_worklfow//3000/bar
 
   # satisfy the "3/bar:file1" prerequisite of 3/qux:
