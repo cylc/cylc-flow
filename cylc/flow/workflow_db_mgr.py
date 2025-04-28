@@ -57,6 +57,7 @@ from cylc.flow.exceptions import (
     ServiceFileError,
 )
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.util import (
     deserialise_set,
     serialise_set,
@@ -65,10 +66,7 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_utc_mode,
 )
-from cylc.flow.scripts.set import (
-    XTRIGGER_FAKE_OUTPUT,
-    XTRIGGER_PREREQ_PREFIX
-)
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -530,7 +528,7 @@ class WorkflowDatabaseManager:
                     self.put_insert_task_prerequisites(itask, {
                         "prereq_name": x_label,
                         "prereq_cycle": XTRIGGER_PREREQ_PREFIX,
-                        "prereq_output": XTRIGGER_FAKE_OUTPUT,
+                        "prereq_output": TASK_OUTPUT_SUCCEEDED,
                         "satisfied": True
                     })
 

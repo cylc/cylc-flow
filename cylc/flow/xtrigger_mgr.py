@@ -512,7 +512,7 @@ class XtriggerManager:
     ):
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
-        # Satisfied triggers and their function results, by signature.
+        # Succeeded triggers and their function results, by signature.
         self.sat_xtrig: dict = {}
         # Signatures of active functions (waiting on callback).
         self.active: list = []
@@ -560,10 +560,10 @@ class XtriggerManager:
         self.xtriggers.functx_map[label].func_kwargs.update(kwargs)
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
-        """Load satisfied xtrigger results from workflow DB.
+        """Load succeeded xtrigger results from workflow DB.
 
-        Note this is for satisfied xtriggers, not individual task dependence
-        on xtriggers which can be manually set.
+        Note this is succeeded xtriggers, not task xtrigger prerequisites
+        (which can be manually satisfied independently of the xtrigger).
 
         Args:
             row_idx (int): row index (used for logging)
@@ -572,10 +572,10 @@ class XtriggerManager:
             ValueError: if the row cannot be parsed as JSON
         """
         if row_idx == 0:
-            LOG.info("LOADING satisfied xtriggers")
+            LOG.info("LOADING succeeded xtriggers")
         sig, results = row
         self.sat_xtrig[sig] = json.loads(results)
-        # Tell the datastore this xtrigger is satisfied.
+        # Tell the datastore this xtrigger succeeded.
         self.data_store_mgr.delta_xtrigger(sig, True)
 
     def _get_xtrigs(
@@ -585,11 +585,10 @@ class XtriggerManager:
         """(Internal helper method.)
 
         Args:
-            itask (TaskProxy): TaskProxy
-            unsat_only (bool): whether to retrieve only unsatisfied xtriggers
-                or not
-            sigs_only (bool): whether to append only the function signature
-                or not
+            itask: the task instance
+            unsat_only: retrieve only unsatisfied xtrigger prerequisites
+            sigs_only: append only the xtrigger function signature
+
         Returns:
             List[Union[str, Tuple[str, str, SubFuncContext, bool]]]: a list
                 with either signature (if sigs_only True) or with tuples of
@@ -682,7 +681,7 @@ class XtriggerManager:
                     self.sat_xtrig[sig] = {}
                     self.data_store_mgr.delta_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
-                    LOG.info('xtrigger satisfied: %s = %s', label, sig)
+                    LOG.info('xtrigger succeeded: %s = %s', label, sig)
                     if self.all_task_seq_xtriggers_satisfied(itask):
                         self.sequential_spawn_next.add(itask.identity)
                     self.do_housekeeping = True
@@ -707,7 +706,7 @@ class XtriggerManager:
                         self.sequential_spawn_next.add(itask.identity)
                 continue
 
-            # Call the function to check the unsatisfied xtrigger.
+            # Call the function to check the xtrigger.
             if sig in self.active:
                 # Already waiting on this result.
                 continue
@@ -726,7 +725,7 @@ class XtriggerManager:
             self.proc_pool.put_command(ctx, callback=self.callback)
 
     def housekeep(self, itasks):
-        """Forget satisfied xtriggers no longer needed by any task.
+        """Forget succeeded xtriggers no longer needed by any task.
 
         Check self.do_housekeeping before calling this method.
 
@@ -753,10 +752,10 @@ class XtriggerManager:
     def callback(self, ctx: 'SubFuncContext'):
         """Callback for asynchronous xtrigger functions.
 
-        Record satisfaction status and function results dict.
+        Record completion status (succeeded) and function results dict.
 
         Log a warning if the xtrigger functions errors, to distinguish
-        errors from not-satisfied.
+        errors from not-succeeded.
 
         Args:
             ctx (SubFuncContext): function context
@@ -771,18 +770,17 @@ class XtriggerManager:
             LOG.warning(msg)
 
         try:
-            satisfied, results = json.loads(ctx.out)
+            succeeded, results = json.loads(ctx.out)
         except (ValueError, TypeError):
             return
 
         LOG.debug('%s: returned %s', sig, results)
-        if not satisfied:
+        if not succeeded:
             return
 
-        # Newly satisfied
-        self.data_store_mgr.delta_xtrigger(sig, satisfied)
+        self.data_store_mgr.delta_xtrigger(sig, succeeded)
         self.workflow_db_mgr.put_xtriggers({sig: results})
-        LOG.info(f"xtrigger satisfied: {ctx.get_description()}")
+        LOG.info(f"xtrigger succeeded: {ctx.get_description()}")
         self.sat_xtrig[sig] = results
 
         self.do_housekeeping = True
@@ -790,14 +788,14 @@ class XtriggerManager:
     def force_satisfy(
         self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
     ) -> None:
-        """Force un/satisfy dependence of itask on given or all xtriggers.
+        """Force un/satisfy one or all xtrigger prerequisites of itask.
 
         Ignores xtriggers not valid for itask.
         (However, these are now weeded out by the caller).
 
         Args:
             itask: task proxy
-            xtriggers: xtriggers to un/satisfy
+            xtriggers: xtrigger prerequisites to un/satisfy
 
         """
         # [(label, satisfied), ]

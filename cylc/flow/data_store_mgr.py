@@ -2536,26 +2536,26 @@ class DataStoreMgr:
         xtrigger.time = t_update
         self.updates_pending = True
 
-    def delta_xtrigger(self, sig: str, satisfied: bool) -> None:
-        """Create delta for an xtrigger, which multiple tasks might depend on.
+    def delta_xtrigger(self, sig: str, succeeded: bool) -> None:
+        """Create delta for xtrigger completion.
 
         Args:
             sig: xtrigger function call signature.
-            satisfied: xtrigger satisfied or not.
+            succeeded: xtrigger completed successfully or not.
 
         """
         update_time = time()
         # update all dependent task instances
         for tp_id, label in self.xtrigger_tasks.get(sig, set()):
-            self._delta_xtrigger(tp_id, label, sig, satisfied, update_time)
+            self._delta_xtrigger(tp_id, label, sig, succeeded, update_time)
 
     def delta_task_xtrigger(
         self, itask: 'TaskProxy', label: str, sig: str, satisfied: bool
     ) -> None:
-        """Create delta for a change in a task's xtrigger satisfaction status.
+        """Create delta for a change in xtrigger prerequisite satisfaction.
 
         (Xtrigger satisfaction is normally handled by the xtrigger_mgr for all
-        dependent tasks, but "cylc set" can set individual task dependence).
+        dependent tasks, but "cylc set" can satisfy individual prerequisites).
 
         Args:
             itask: scheduler trask proxy that has changed status.

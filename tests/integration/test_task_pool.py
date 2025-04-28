@@ -1280,13 +1280,13 @@ async def test_set_failed_complete(
         )
 
 
-async def test_set_prereqs_and_xtrigs(
+async def test_set_prereqs(
     flow,
     scheduler,
     start,
     log_filter,
 ):
-    """Check manual setting of prerequisites.
+    """Check manual setting of prerequisites (task and xtrigger).
 
     """
     id_ = flow(
@@ -1353,7 +1353,7 @@ async def test_set_prereqs_and_xtrigs(
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/bar"],
             [],
-            ["xtrigger/x:satisfied"],
+            ["xtrigger/x:succeeded"],
             ['all']
         )
         assert bar.state.xtriggers_all_satisfied()

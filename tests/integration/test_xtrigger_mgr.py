@@ -241,12 +241,12 @@ async def test_set_xtriggers_restart(flow, start, scheduler, db_select):
     async with start(schd):
         # artificially set dependence of foo on x0
         schd.pool.set_prereqs_and_outputs(
-            ['1/foo'], [], ['xtrigger/x0:satisfied'], ['all']
+            ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
         )
 
     # the satisfied x0 prerequisite should be written to the DB
     [db_pre] = db_select(schd, True, 'task_prerequisites')
-    assert db_pre == ('1', 'foo', '[1]', 'x0', 'xtrigger', 'not-used', '1')
+    assert db_pre == ('1', 'foo', '[1]', 'x0', 'xtrigger', 'succeeded', '1')
 
     # restart the workflow
     schd = scheduler(id_)
