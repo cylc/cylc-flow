@@ -21,7 +21,7 @@
 # "cgroups path" may need to be set).
 REQUIRE_PLATFORM='runner:?(pbs|slurm) comms:tcp'
 . "$(dirname "$0")/test_header"
-set_test_number 12
+set_test_number 8
 
 create_test_global_config "
 [platforms]
@@ -64,22 +64,14 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLO
 # were received before the succeeded message
 log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_good.*(received)cpu_time.*' \
-    '1/the_good.*(received)succeeded'
-log_scan "${TEST_NAME_BASE}-task-succeeded" \
-    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_good.*(received)max_rss.*' \
+    '1/the_good.*(received)cpu_time.*max_rss*' \
     '1/the_good.*(received)succeeded'
 
 # ensure the cpu and memory messages were received and that these messages
 # were received before the failed message
 log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_bad.*(received)cpu_time.*' \
-    '1/the_bad.*(received)failed'
-log_scan "${TEST_NAME_BASE}-task-succeeded" \
-    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_bad.*(received)max_rss.*' \
+    '1/the_bad.*(received)cpu_time.*max_rss*' \
     '1/the_bad.*(received)failed'
 
 # ensure this task succeeded despite the broken profiler configuration

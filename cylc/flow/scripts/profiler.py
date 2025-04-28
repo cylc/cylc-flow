@@ -24,6 +24,7 @@ import os
 import re
 import sys
 import time
+import json
 import signal
 from pathlib import Path
 from dataclasses import dataclass
@@ -99,9 +100,11 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
                 return int(line) / 1000000
 
 
-def write_data(data, filename):
+def write_data(peak_memory, cpu_time, filename):
+    data = {'max_rss': peak_memory,
+            'cpu_time': cpu_time}
     with open(filename, 'w') as f:
-        f.write(data)
+        json.dump(data, f, indent=4)
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
@@ -156,13 +159,11 @@ def profile(process, version, delay, keep_looping=lambda: True):
     while keep_looping():
         # Write cpu / memory usage data to disk
         cpu_time = parse_cpu_file(process.cgroup_cpu_path, version)
-        write_data(str(cpu_time), "cpu_time")
-
         memory = parse_memory_file(process.cgroup_memory_path)
         # Only save Max RSS to disk if it is above the previous value
         if memory > peak_memory:
             peak_memory = memory
-            write_data(str(peak_memory), "max_rss")
+        write_data(str(peak_memory), cpu_time, "profiler.json")
 
         time.sleep(delay)
 
