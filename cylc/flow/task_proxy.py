@@ -380,6 +380,12 @@ class TaskProxy:
                     check_output(*k, self.flow_nums)
                 )
 
+        # Carry over any satisfied xtrigger prerequisites.
+        for xtrig in reload_successor.state.xtriggers:
+            reload_successor.state.xtriggers[xtrig] = (
+                self.state.xtriggers.get(xtrig, False)
+            )
+
         reload_successor.state.xtriggers.update({
             # Copy across any auto-defined "_cylc" xtriggers runtime (retries),
             # but avoid "_cylc_wallclock" xtriggers which are user-defined.

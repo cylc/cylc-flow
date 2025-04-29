@@ -20,6 +20,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import cast, Iterable
 
+from cylc.flow import commands
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -363,6 +364,81 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
             for year in range(1991, 1994)
             for name in ('foo', 'bar')
         )
+
+
+async def test_set_xtriggers_reload(flow, start, scheduler, db_select):
+    """Satisfied xtrigger prerequisites should persist across reload.
+
+    (Task prerequisites can be artificially satisfied by "cylc set").
+
+    """
+    id_ = flow({
+        'scheduling': {
+            'xtriggers': {
+                'x0': 'xrandom(0)'  # never succeeds naturally
+            },
+            'graph': {
+                'R1': '''
+                    @x0 = > foo & bar
+                '''
+            },
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # artificially set dependence of foo on x0
+        schd.pool.set_prereqs_and_outputs(
+            ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
+        )
+        schd.workflow_db_mgr.put_task_pool(schd.pool)  # for the db write
+
+        # the satisfied x0 prerequisite should be written to the DB
+        [db_pre] = db_select(schd, True, 'task_prerequisites')
+        assert db_pre == ('1', 'foo', '[1]', 'x0', 'xtrigger', 'succeeded', '1')
+
+        # reload the workflow
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        # run all xtriggers
+        for task in schd.pool.get_tasks():
+            schd.xtrigger_mgr.call_xtriggers_async(task)
+
+        # foo's dependence on x0 should remain satisfied, but bar still depends
+        # on it so the function should still be called by the scheduler.
+        assert len(schd.proc_pool.queuings) + len(schd.proc_pool.runnings) == 1
+
+        # "@x0 => bar" should not be satisfied
+        bar = schd.pool._get_task_by_id('1/bar')
+        assert not bar.state.xtriggers["x0"]
+
+        # but "x0 => foo" should be, in the task pool and the datastore
+        foo = schd.pool._get_task_by_id('1/foo')
+        print(foo.state.xtriggers, '<<<<<<')
+        assert foo.state.xtriggers["x0"]
+
+        await schd.update_data_structure()
+        xtrigs = [
+            (t.id, p)
+            for t in cast(
+                'Iterable[PbTaskProxy]',
+                schd.data_store_mgr.data[
+                    schd.data_store_mgr.workflow_id
+                ][
+                    TASK_PROXIES
+                ].values()
+            )
+            for p in t.xtriggers.values()
+        ]
+        assert len(xtrigs) == 2
+        for (id, xtrig) in xtrigs:
+            if id.endswith('foo'):
+                assert xtrig.id == "xrandom(0)"
+                assert xtrig.satisfied
+            elif id.endswith('bar'):
+                assert xtrig.id == "xrandom(0)"
+                assert not xtrig.satisfied
+            else:
+                assert False
 
 
 async def test_force_satisfy(flow, start, scheduler, log_filter):
