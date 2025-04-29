@@ -217,11 +217,10 @@ async def test_xtriggers_restart(flow, start, scheduler, db_select):
     assert db_select(schd, True, 'xtriggers') == db_xtriggers
 
 
-async def test_set_xtriggers_restart(flow, start, scheduler, db_select):
-    """It should write satisfied xtrig prerequisites to the DB for restart.
+async def test_set_xtrig_prereq_restart(flow, start, scheduler, db_select):
+    """Satisfied xtrigger prerequisites should persist across restart.
 
-    This checks that individual task dependence on xtriggers, which can be
-    artificially satisfied by "cylc set" persists across restart.
+    (Task prerequisites can be artificially satisfied by "cylc set").
 
     See also test_xtriggers_restart, for persistence of xtrigger results.
 
@@ -366,7 +365,7 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
         )
 
 
-async def test_set_xtriggers_reload(flow, start, scheduler, db_select):
+async def test_set_xtrig_prereq_reload(flow, start, scheduler, db_select):
     """Satisfied xtrigger prerequisites should persist across reload.
 
     (Task prerequisites can be artificially satisfied by "cylc set").
@@ -390,11 +389,6 @@ async def test_set_xtriggers_reload(flow, start, scheduler, db_select):
         schd.pool.set_prereqs_and_outputs(
             ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
         )
-        schd.workflow_db_mgr.put_task_pool(schd.pool)  # for the db write
-
-        # the satisfied x0 prerequisite should be written to the DB
-        [db_pre] = db_select(schd, True, 'task_prerequisites')
-        assert db_pre == ('1', 'foo', '[1]', 'x0', 'xtrigger', 'succeeded', '1')
 
         # reload the workflow
         await commands.run_cmd(commands.reload_workflow(schd))
