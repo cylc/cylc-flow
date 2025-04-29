@@ -1915,7 +1915,7 @@ class TaskPool:
         return itask
 
     def _standardise_prereqs(
-            self, prereqs: 'Iterable[str]'
+        self, prereqs: 'Iterable[str]'
     ) -> 'Set[PrereqTuple]':
         """Extract task prerequisites from user input and standardise.
 
@@ -1977,23 +1977,6 @@ class TaskPool:
             _outputs.append(msg)
         return _outputs
 
-    def _get_prereq_params(
-        self, prereqs: 'Iterable[str]', tdef: 'TaskDef', point: 'PointBase'
-    ) -> 'Tuple[bool, Set[PrereqTuple], Dict[str, bool]]':
-        """Convert input prerequisites to Tokens of just the valid ones.
-
-        And convert the (mutually exclusive) "['all']" shortcut to a bool.
-        """
-        if prereqs != ['all']:
-            set_all = False
-            valid_prereqs = self._get_valid_prereqs(prereqs, tdef, point)
-            valid_xtrigs = self._get_valid_xtrigs(prereqs, tdef, point)
-        else:
-            set_all = True
-            valid_prereqs = set()
-            valid_xtrigs = {}
-        return (set_all, valid_prereqs, valid_xtrigs)
-
     def set_prereqs_and_outputs(
         self,
         items: Iterable[str],
@@ -2044,6 +2027,20 @@ class TaskPool:
         no_op = True
         flow_nums = self._get_flow_nums(flow, flow_descr)
 
+        # Clean and separate requested prerequisite and xtrigger specs.
+        if prereqs != ['all']:
+            set_all = False
+            clean_pre = self._standardise_prereqs(prereqs)
+            clean_xtr = _get_xtrig_prereqs(prereqs)
+        else:
+            set_all = True
+            clean_pre = set()
+            clean_xtr = {}
+
+        if prereqs and not (set_all or clean_pre or clean_xtr):
+            # Nothing to do!
+            return
+
         # Set existing task proxies.
         for itask in itasks:
             if flow == ['none'] and itask.flow_nums != set():
@@ -2054,11 +2051,13 @@ class TaskPool:
                 continue
 
             if prereqs:
-                set_all, valid_prereqs, valid_xtrigs = (
-                    self._get_prereq_params(prereqs, itask.tdef, itask.point)
-                )
+                valid_prereqs = self._get_valid_prereqs(
+                    clean_pre, itask.tdef, itask.point)
+                valid_xtrigs = self._get_valid_xtrigs(
+                    clean_xtr, itask.tdef, itask.point)
                 if not (set_all or valid_prereqs or valid_xtrigs):
                     continue
+
                 self.merge_flows(itask, flow_nums)
                 self._set_prereqs_itask(
                     itask, valid_prereqs, valid_xtrigs, set_all)
@@ -2079,11 +2078,12 @@ class TaskPool:
         # Spawn and set inactive tasks.
         for tdef, point in inactive_tasks:
             if prereqs:
-                set_all, valid_prereqs, valid_xtrigs = (
-                    self._get_prereq_params(prereqs, tdef, point)
-                )
+                valid_prereqs = self._get_valid_prereqs(
+                    clean_pre, tdef, point)
+                valid_xtrigs = self._get_valid_xtrigs(clean_xtr, tdef, point)
                 if not (set_all or valid_prereqs or valid_xtrigs):
                     continue
+
                 self._set_prereqs_tdef(
                     point, tdef, valid_prereqs, valid_xtrigs, flow_nums,
                     flow_wait, set_all)
@@ -2102,19 +2102,11 @@ class TaskPool:
             self.release_runahead_tasks()
 
     def _get_valid_prereqs(
-            self, prereqs: Iterable[str], tdef: 'TaskDef', point: 'PointBase'
+        self, prereqs: Set[PrereqTuple], tdef: 'TaskDef', point: 'PointBase'
     ) -> 'Set[PrereqTuple]':
-        """Validate CLI prerequisites and return associated task messages.
+        """Weed out prerequisites not valid for this task.
 
-        To set prerequisites, the user gives trigger names, but we need the
-        associated task messages to satisfy the prerequisites of target tasks.
-
-        Weed out any xtrigger prerequisites.
-
-        Args:
-            prereqs: [point/task:output, "xtrigger"/label:state, ... ]
-
-        Returns: set {Tokens(cycle, task, task_message), }
+        And convert outputs to messages, for satisfying task prerequisites.
 
         """
         # Valid prerequisites as tokens (outputs as task messages).
@@ -2125,8 +2117,7 @@ class TaskPool:
         }
 
         # standardise and weed out xtrigger prerequisites
-        req_pre = self._standardise_prereqs(prereqs)
-        invalid = req_pre - valid_pre
+        invalid = prereqs - valid_pre
 
         if invalid:
             task = quick_relative_id(point, tdef.name)
@@ -2140,26 +2131,16 @@ class TaskPool:
                     f' "{quick_relative_id(prereq.point, prereq.task, trg)}"'
                 )
 
-        return valid_pre & req_pre
+        return valid_pre & prereqs
 
     def _get_valid_xtrigs(
-            self, prereqs: Iterable[str], tdef: 'TaskDef', point: 'PointBase'
+        self, xtrigs: Dict[str, bool], tdef: 'TaskDef', point: 'PointBase'
     ) -> 'Dict[str, bool]':
-        """Validate and standardise xtrigger prerequisites from the CLI.
+        """Weed out xtriggers not valid for this task."""
 
-        Weed out any task prerequisites.
-
-        Args:
-            prereqs: [point/task:output, "xtrigger"/label:succeeded, ... ]
-
-        Returns: {xtrigger: satisfied, }
-
-        """
         valid_x_labels = tdef.get_xtrigs(point)
 
-        # weed out task prerequisites and convert satisfaction status to bool
-        req_x = _get_xtrig_prereqs(prereqs)
-        invalid = set(req_x) - valid_x_labels
+        invalid = set(xtrigs.keys()) - valid_x_labels
 
         if invalid:
             task = quick_relative_id(point, tdef.name)
@@ -2169,7 +2150,7 @@ class TaskPool:
                         f'{task} does not depend on xtrigger "{xtrig}"')
 
         return {
-            k: v for k, v in req_x.items()
+            k: v for k, v in xtrigs.items()
             if k in valid_x_labels or k == "all"
         }
 

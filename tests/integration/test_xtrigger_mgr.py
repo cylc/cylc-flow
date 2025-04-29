@@ -407,7 +407,6 @@ async def test_set_xtrig_prereq_reload(flow, start, scheduler, db_select):
 
         # but "x0 => foo" should be, in the task pool and the datastore
         foo = schd.pool._get_task_by_id('1/foo')
-        print(foo.state.xtriggers, '<<<<<<')
         assert foo.state.xtriggers["x0"]
 
         await schd.update_data_structure()
