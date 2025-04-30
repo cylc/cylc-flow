@@ -2285,6 +2285,8 @@ class WorkflowConfig:
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
 
+        self.xtrigger_collator.report_duplicates()
+
     def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
