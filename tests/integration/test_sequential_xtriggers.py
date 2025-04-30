@@ -104,7 +104,7 @@ async def test_trigger(sequential, start):
         assert list_cycles(sequential) == ['2000', '2001']
 
 
-async def test_set(sequential, start):
+async def test_set_outputs(sequential, start):
     """It should spawn its next instance if outputs are set ahead of time.
 
     If you set outputs of a sequentially spawned task before its xtriggers
@@ -122,6 +122,20 @@ async def test_set(sequential, start):
             ["2000/foo"], ["succeeded"], [], ['all'])
 
         assert list_cycles(sequential) == ['2001']
+
+
+async def test_set_prereqs(sequential, start):
+    """It should spawn next after manual xtrigger prereq satisfaction."""
+    async with start(sequential):
+        assert list_cycles(sequential) == ['2000']
+
+        sequential.pool.get_task(ISO8601Point('2000'), 'foo')
+        # satisfy foo's xtriggers - it should spawn next instance
+        sequential.pool.set_prereqs_and_outputs(
+            ["2000/foo"], [], ['xtrigger/all:succeeded'], ['all'])
+        sequential.pool.spawn_parentless_sequential_xtriggers()
+
+        assert list_cycles(sequential) == ['2000', '2001']
 
 
 async def test_reload(sequential, start):

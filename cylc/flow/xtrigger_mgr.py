@@ -845,6 +845,9 @@ class XtriggerManager:
                 continue
 
             itask.state.xtriggers[label] = satisfied
+            if satisfied and self.all_task_seq_xtriggers_satisfied(itask):
+                self.sequential_spawn_next.add(itask.identity)
+
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
             LOG.info(f"{prefix} {state} (forced): {suffix}")
