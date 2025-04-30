@@ -2140,6 +2140,11 @@ class TaskPool:
 
         valid_x_labels = tdef.get_xtrigs(point)
 
+        # And allow any dynamically xtriggers, such as retries.
+        itask = self.get_task(point, tdef.name)
+        if itask is not None:
+            valid_x_labels.update(itask.state.xtriggers.keys())
+
         invalid = set(xtrigs.keys()) - valid_x_labels
 
         if invalid:

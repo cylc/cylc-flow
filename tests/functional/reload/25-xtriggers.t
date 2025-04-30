@@ -72,7 +72,7 @@ log_scan "${TEST_NAME_BASE}-scan" \
 log_scan "${TEST_NAME_BASE}-scan" \
     "$(cylc cat-log -m p "${WORKFLOW_NAME}")" \
     1 1 \
-    'xtrigger succeeded: _cylc_retry_1/broken' \
+    'xtrigger succeeded: _cylc_retry_1_broken' \
     '1/broken.* => succeeded'
 
 purge
