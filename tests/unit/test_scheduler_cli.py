@@ -277,6 +277,7 @@ def test_distribute_colour(
     _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
     _is_terminal.return_value = is_terminal
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    _cylc_server_cmd.return_value = 0
     opts = RunOptions(host='myhost', color=cli_colour)
     with pytest.raises(SystemExit) as excinfo:
         _distribute('foo', 'foo/run1', opts)
@@ -294,6 +295,7 @@ def test_distribute_upgrade(
         'sys.argv', ['cylc', 'play', 'foo']  # no upgrade option here
     )
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    _cylc_server_cmd.return_value = 0
     opts = RunOptions(
         host='myhost',
         upgrade=True,  # added by interactive upgrade
