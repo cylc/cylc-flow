@@ -70,6 +70,13 @@ import random
 from time import sleep
 import token
 from tokenize import tokenize
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+)
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -78,8 +85,14 @@ from cylc.flow.exceptions import (
     HostSelectException,
     NoHostsError,
 )
-from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
-from cylc.flow.remote import run_cmd, cylc_server_cmd
+from cylc.flow.hostuserutil import (
+    get_fqdn_by_host,
+    is_remote_host,
+)
+from cylc.flow.remote import (
+    cylc_server_cmd,
+    run_cmd,
+)
 from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.util import restricted_evaluator
 
@@ -213,8 +226,6 @@ def select_host(
         for host in hosts
     }
     hosts = list(hostname_map)
-    if blacklist:
-        blacklist = list(set(map(get_fqdn_by_host, blacklist)))
 
     # dict of conditions and whether they have been met (for error reporting)
     data = {
@@ -224,7 +235,8 @@ def select_host(
 
     # filter out `filter_hosts` if provided
     if blacklist:
-        hosts, data = _filter_by_hostname(
+        blacklist = list(set(map(get_fqdn_by_host, blacklist)))
+        _filter_by_hostname(
             hosts,
             blacklist,
             blacklist_name,
@@ -250,8 +262,8 @@ def select_host(
 
     # filter and sort by rankings
     metrics = list({x for x, _ in rankings})  # required metrics
-    results, data = _get_metrics(  # get data from each host
-        hosts, metrics, data)
+    # get data from each host
+    results = _get_metrics(hosts, metrics, data)
     hosts = list(results)  # some hosts might not be contactable
 
     # stop here if we don't need to proceed
@@ -261,7 +273,7 @@ def select_host(
     if not rankings and len(hosts) == 1:
         return hostname_map[hosts[0]], hosts[0]
 
-    hosts, data = _filter_by_ranking(
+    hosts = _filter_by_ranking(
         # filter by rankings, sort by ranking
         hosts,
         rankings,
@@ -277,47 +289,54 @@ def select_host(
 
 
 def _filter_by_hostname(
-    hosts,
-    blacklist,
-    blacklist_name=None,
-    data=None
-):
-    """Filter out any hosts present in `blacklist`.
+    hosts: List[str],
+    blacklist: Iterable[str],
+    blacklist_name: Optional[str],
+    data: Dict[str, Any],
+) -> None:
+    """Filter out (in-place) any hosts present in `blacklist`.
 
     Args:
-        hosts (list):
+        hosts:
             List of host fqdns.
-        blacklist (list):
+        blacklist:
             List of blacklisted host fqdns.
-        blacklist_name (str):
-            The reason for blacklisting these hosts
-            (used for exceptions).
-        data (dict):
+        data:
             Dict of the form {host: {}}
+            (used for exceptions).
+        blacklist_name:
+            The reason for blacklisting these hosts
             (used for exceptions).
 
     Examples
-        >>> _filter_by_hostname(['a'], [], 'meh')
-        (['a'], {'a': {'blacklisted(meh)': False}})
-        >>> _filter_by_hostname(['a', 'b'], ['a'])
-        (['b'], {'a': {'blacklisted': True}, 'b': {'blacklisted': False}})
+        >>> hosts, data = ['a'], {}
+        >>> _filter_by_hostname(hosts, [], 'meh', data)
+        >>> hosts
+        ['a']
+        >>> data
+        {'a': {'blacklisted(meh)': False}}
+
+        >>> hosts, data = ['a', 'b'], {}
+        >>> _filter_by_hostname(hosts, ['a'], None, data)
+        >>> hosts
+        ['b']
+        >>> data
+        {'a': {'blacklisted': True}, 'b': {'blacklisted': False}}
 
     """
-    if not data:
-        data = {host: {} for host in hosts}
+    key = 'blacklisted'
+    if blacklist_name:
+        key = f'{key}({blacklist_name})'
     for host in list(hosts):
-        key = 'blacklisted'
-        if blacklist_name:
-            key = f'{key}({blacklist_name})'
+        data.setdefault(host, {})
         if host in blacklist:
             hosts.remove(host)
             data[host][key] = True
         else:
             data[host][key] = False
-    return hosts, data
 
 
-def _filter_by_ranking(hosts, rankings, results, data=None):
+def _filter_by_ranking(hosts, rankings, results, data):
     """Filter and rank by the provided rankings.
 
     Args:
@@ -335,32 +354,42 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
 
     Examples:
         # ranking
+        >>> data = {}
         >>> _filter_by_ranking(
         ...     ['a', 'b'],
         ...     [('X', 'RESULT')],
-        ...     {'a': {'X': 123}, 'b': {'X': 234}}
+        ...     {'a': {'X': 123}, 'b': {'X': 234}},
+        ...     data,
         ... )
-        (['a', 'b'], {'a': {}, 'b': {}})
+        ['a', 'b']
+        >>> data
+        {}
 
         # rankings
+        >>> data = {}
         >>> _filter_by_ranking(
         ...     ['a', 'b'],
         ...     [('X', 'RESULT < 200')],
-        ...     {'a': {'X': 123}, 'b': {'X': 234}}
+        ...     {'a': {'X': 123}, 'b': {'X': 234}},
+        ...     data,
         ... )
-        (['a'], {'a': {'X() < 200': True}, 'b': {'X() < 200': False}})
+        ['a']
+        >>> data
+        {'a': {'X() < 200': True}, 'b': {'X() < 200': False}}
 
         # no matching hosts
+        >>> data = {}
         >>> _filter_by_ranking(
         ...     ['a'],
         ...     [('X', 'RESULT > 1')],
-        ...     {'a': {'X': 0}}
+        ...     {'a': {'X': 0}},
+        ...    data,
         ... )
-        ([], {'a': {'X() > 1': False}})
+        []
+        >>> data
+        {'a': {'X() > 1': False}}
 
     """
-    if not data:
-        data = {host: {} for host in hosts}
     good = []
     for host in hosts:
         host_rankings = {}
@@ -381,7 +410,7 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
                 ) from None
             if isinstance(result, bool):
                 host_rankings[item] = result
-                data[host][item] = result
+                data.setdefault(host, {})[item] = result
             else:
                 host_rank.append(result)
         if all(host_rankings.values()):
@@ -396,12 +425,8 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
         # no ranking, randomise
         random.shuffle(good)
 
-    return (
-        # list of all hosts which passed rankings (sorted by ranking)
-        [host for _, host in good],
-        # data
-        data
-    )
+    # list of all hosts which passed rankings (sorted by ranking)
+    return [host for _, host in good]
 
 
 def _get_rankings(string):
@@ -512,7 +537,7 @@ def _deserialise(metrics, data):
     return data
 
 
-def _get_metrics(hosts, metrics, data=None):
+def _get_metrics(hosts, metrics, data):
     """Retrieve host metrics using SSH if necessary.
 
     Note hosts will not appear in the returned results if:
@@ -529,8 +554,11 @@ def _get_metrics(hosts, metrics, data=None):
 
     Examples:
         Command failure (no such attribute of psutil):
-        >>> _get_metrics(['localhost'], [['elephant']])
-        ({}, {'localhost': {'returncode': 2}})
+        >>> data = {}
+        >>> _get_metrics(['localhost'], [['elephant']], data)
+        {}
+        >>> data
+        {'localhost': {'returncode': 2}}
 
     Returns:
         dict - {host: {(function, arg1, arg2, ...): result}}
@@ -538,8 +566,6 @@ def _get_metrics(hosts, metrics, data=None):
     """
     host_stats = {}
     proc_map = {}
-    if not data:
-        data = {host: {} for host in hosts}
 
     # Start up commands on hosts
     cmd = ['psutil']
@@ -576,9 +602,9 @@ def _get_metrics(hosts, metrics, data=None):
                     # convert JSON dicts -> namedtuples
                     _deserialise(metrics, parse_dirty_json(out))
                 ))
-            data[host]['returncode'] = proc.returncode
+            data.setdefault(host, {})['returncode'] = proc.returncode
         sleep(0.01)
-    return host_stats, data
+    return host_stats
 
 
 def _reformat_expr(key, expression):
