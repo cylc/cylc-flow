@@ -255,10 +255,12 @@ def select_host(
 
     if not rankings:
         # no metrics or ranking required, pick host at random
-        hosts = [random.choice(list(hosts))]  # nosec
-
-    if not rankings and len(hosts) == 1:
-        return hostname_map[hosts[0]], hosts[0]
+        random.shuffle(hosts)
+        for host in hosts:
+            # check host is contactable
+            if _get_metrics([host], [], data):
+                return hostname_map[host], host
+        raise HostSelectException(data)
 
     # filter and sort by rankings
     metrics = list({x for x, _ in rankings})  # required metrics
@@ -592,10 +594,11 @@ def _get_metrics(hosts, metrics, data):
             out, err = (stream.strip() for stream in proc.communicate())
             if proc.wait():
                 # Command failed
-                LOG.warning(
-                    'Error evaluating ranking expression on'
-                    f' {host}: \n{err}'
+                msg = (
+                    'Could not contact' if proc.returncode == 255
+                    else 'Error evaluating ranking expression on'
                 )
+                LOG.warning(f'{msg} {host}:\n{err}')
             else:
                 host_stats[host] = dict(zip(
                     metrics,
