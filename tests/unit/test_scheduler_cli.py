@@ -14,13 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sqlite3
 from contextlib import contextmanager
+from secrets import token_hex
+import sqlite3
 
 import pytest
 
 from cylc.flow.exceptions import ServiceFileError
-from cylc.flow.scheduler_cli import RunOptions, _distribute, _version_check
+from cylc.flow.scheduler_cli import (
+    RunOptions,
+    _distribute,
+    _version_check,
+)
 
 from .conftest import MonkeyMock
 
@@ -304,3 +309,22 @@ def test_distribute_upgrade(
         _distribute('foo', 'foo/run1', opts)
     assert excinfo.value.code == 0
     assert '--upgrade' in _cylc_server_cmd.call_args[0][0]
+
+
+def test_distribute_invalid_host(
+    mock_glbl_cfg, caplog: pytest.LogCaptureFixture
+):
+    """It handles a socket error when the host is invalid."""
+    mock_glbl_cfg(
+        'cylc.flow.host_select.glbl_cfg',
+        f'''
+            [scheduler]
+                [[run hosts]]
+                    available = non_exist_{token_hex(4)}
+        '''
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        _distribute('foo', 'foo/run1', RunOptions())
+    assert excinfo.value.code != 0
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message.startswith("Host selection failed: ")
