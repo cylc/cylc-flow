@@ -22,7 +22,6 @@ from functools import lru_cache
 from itertools import zip_longest
 from pathlib import Path
 from shlex import quote
-from socket import gaierror
 import sys
 from typing import TYPE_CHECKING, Tuple
 
@@ -609,11 +608,7 @@ def _distribute(
 
     """
     # Check whether a run host is explicitly specified, else select one.
-    try:
-        host = options.host or select_workflow_host()[0]
-    except gaierror as exc:
-        LOG.error(f"Host selection failed: {exc}")
-        sys.exit(1)
+    host = options.host or select_workflow_host()[0]
     if is_remote_host(host):
         # Protect command args from second shell interpretation
         cmd = list(map(quote, sys.argv[1:]))

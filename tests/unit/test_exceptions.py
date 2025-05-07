@@ -39,15 +39,14 @@ def test_host_select_exception():
 
     """
     # it should format the selection results nicely
-    assert str(HostSelectException({
-        'ranking': 'virtual_memory().available > 1',
-        'host-1': {
-            'returncode': 1
+    exc = HostSelectException(
+        {
+            'host-1': {'returncode': 1},
+            'host-2': {'returncode': 1},
         },
-        'host-2': {
-            'returncode': 1
-        },
-    })) == dedent('''
+        ranking='virtual_memory().available > 1',
+    )
+    assert str(exc) == dedent('''
         Could not select host from:
             host-1:
                 returncode: 1
@@ -68,13 +67,12 @@ def test_host_select_exception():
     ]
 )
 def test_host_select_exception_returncodes(ret_code, expect):
-    assert expect in (
-        str(HostSelectException({
-            'ranking': 'virtual_memory().available > 1',
-            'host-1': {
-                'returncode': ret_code
+    assert expect in str(
+        HostSelectException(
+            {
+                'host-1': {'returncode': ret_code},
+                'host-2': {'returncode': ret_code},
             },
-            'host-2': {
-                'returncode': ret_code
-            },
-        })))
+            ranking='virtual_memory().available > 1',
+        )
+    )
