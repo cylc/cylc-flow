@@ -64,9 +64,9 @@ ${BASE_GLOBAL_CONFIG}
 FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'The Cylc workflow host will soon become un-available' \
-    'Workflow cannot automatically restart because:' \
+    'Workflow cannot automatically restart: No alternative host' \
     'No alternative host to restart workflow on.' \
-    'Workflow cannot automatically restart because:' \
+    'Workflow cannot automatically restart: No alternative host' \
     'No alternative host to restart workflow on.'
 
 cylc stop --kill --max-polls=10 --interval=2 "${WORKFLOW_NAME}"

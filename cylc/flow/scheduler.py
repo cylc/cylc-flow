@@ -28,7 +28,6 @@ from queue import (
 )
 from shlex import quote
 import signal
-from socket import gaierror
 from subprocess import (
     DEVNULL,
     PIPE,
@@ -1706,7 +1705,7 @@ class Scheduler:
             proc = None
             try:
                 new_host = select_workflow_host(cached=False)[0]
-            except (gaierror, HostSelectException) as exc:
+            except HostSelectException as exc:
                 error = str(exc)
             else:
                 LOG.info(f'Attempting to restart on "{new_host}"')

@@ -67,15 +67,17 @@ from functools import lru_cache
 from io import BytesIO
 import json
 import random
+from socket import gaierror
 from time import sleep
 import token
 from tokenize import tokenize
 from typing import (
-    Any,
     Dict,
     Iterable,
     List,
     Optional,
+    Set,
+    Tuple,
 )
 
 from cylc.flow import LOG
@@ -133,8 +135,6 @@ def select_workflow_host(cached=True):
     Raises:
         HostSelectException:
             See `select_host` for details.
-        socket.gaierror:
-            See `select_host` for details.
 
     """
     # get the global config, if cached = False a new config instance will
@@ -164,11 +164,11 @@ def select_workflow_host(cached=True):
 
 
 def select_host(
-    hosts,
-    ranking_string=None,
-    blacklist=None,
-    blacklist_name=None
-):
+    hosts: List[str],
+    ranking_string: Optional[str] = None,
+    blacklist: Optional[Iterable[str]] = None,
+    blacklist_name: Optional[str] = None,
+) -> Tuple[str, str]:
     """Select a host from the provided list.
 
     If no ranking is provided (in `ranking_string`) then random selection
@@ -196,10 +196,10 @@ def select_host(
                getloadavg()
 
             Comments are allowed using `#` but not inline comments.
-        blacklist (list):
+        blacklist:
             List of host names to filter out.
             Can be short host names (do not have to be fqdn values)
-        blacklist_name (str):
+        blacklist_name:
             The reason for blacklisting these hosts
             (used for exceptions).
 
@@ -207,38 +207,42 @@ def select_host(
         HostSelectException:
             In the event that no hosts are available / meet the specified
             criterion.
-        socket.gaierror:
-            This may be raised in the event of unknown host names
-            for some installations or not for others.
+            This may also be raised in the event of unknown host names.
 
     Returns:
         tuple - (hostname, fqdn) the chosen host
 
-        hostname (str):
+        hostname:
             The hostname as provided to this function.
-        fqdn (str):
+        fqdn:
             The fully qualified domain name of this host.
 
     """
-    # standardise host names - remove duplicate items
-    hostname_map = {  # note dictionary keys filter out duplicates
-        get_fqdn_by_host(host): host
-        for host in hosts
-    }
-    hosts = list(hostname_map)
-
     # dict of conditions and whether they have been met (for error reporting)
-    data = {
-        host: {}
-        for host in hosts
-    }
+    data: Dict[str, dict] = {}
+
+    # standardise host names - remove duplicate items
+    hostname_map = {}  # note dictionary keys filter out duplicates
+    for host in hosts:
+        try:
+            hostname_map[get_fqdn_by_host(host)] = host
+        except gaierror as exc:
+            data.setdefault(host, {})[type(exc).__name__] = str(exc)
+    hosts = list(hostname_map)
 
     # filter out `filter_hosts` if provided
     if blacklist:
-        blacklist = list(set(map(get_fqdn_by_host, blacklist)))
-        _filter_by_hostname(
+        blacklist_fqdns: Set[str] = set()
+        for host in blacklist:
+            try:
+                blacklist_fqdns.add(get_fqdn_by_host(host))
+            except gaierror as exc:
+                LOG.warning(
+                    f'Could not resolve blacklisted host {host}: {exc}'
+                )
+        hosts = _filter_by_hostname(
             hosts,
-            blacklist,
+            blacklist_fqdns,
             blacklist_name,
             data=data
         )
@@ -251,7 +255,6 @@ def select_host(
     if ranking_string:
         # parse rankings
         rankings = list(_get_rankings(ranking_string))
-        data['ranking'] = ranking_string
 
     if not rankings:
         # no metrics or ranking required, pick host at random
@@ -271,7 +274,7 @@ def select_host(
     # stop here if we don't need to proceed
     if not hosts:
         # no hosts provided / left after filtering
-        raise HostSelectException(data)
+        raise HostSelectException(data, ranking_string)
     if not rankings and len(hosts) == 1:
         return hostname_map[hosts[0]], hosts[0]
 
@@ -285,18 +288,18 @@ def select_host(
 
     if not hosts:
         # no hosts provided / left after filtering
-        raise HostSelectException(data)
+        raise HostSelectException(data, ranking_string)
 
     return hostname_map[hosts[0]], hosts[0]
 
 
 def _filter_by_hostname(
-    hosts: List[str],
+    hosts: Iterable[str],
     blacklist: Iterable[str],
     blacklist_name: Optional[str],
-    data: Dict[str, Any],
-) -> None:
-    """Filter out (in-place) any hosts present in `blacklist`.
+    data: Dict[str, dict],
+) -> List[str]:
+    """Return hosts, having filtered out any present in `blacklist`.
 
     Args:
         hosts:
@@ -313,14 +316,12 @@ def _filter_by_hostname(
     Examples
         >>> hosts, data = ['a'], {}
         >>> _filter_by_hostname(hosts, [], 'meh', data)
-        >>> hosts
         ['a']
         >>> data
         {'a': {'blacklisted(meh)': False}}
 
         >>> hosts, data = ['a', 'b'], {}
         >>> _filter_by_hostname(hosts, ['a'], None, data)
-        >>> hosts
         ['b']
         >>> data
         {'a': {'blacklisted': True}, 'b': {'blacklisted': False}}
@@ -329,13 +330,16 @@ def _filter_by_hostname(
     key = 'blacklisted'
     if blacklist_name:
         key = f'{key}({blacklist_name})'
-    for host in list(hosts):
+
+    ret = []
+    for host in hosts:
         data.setdefault(host, {})
         if host in blacklist:
-            hosts.remove(host)
             data[host][key] = True
         else:
+            ret.append(host)
             data[host][key] = False
+    return ret
 
 
 def _filter_by_ranking(hosts, rankings, results, data):

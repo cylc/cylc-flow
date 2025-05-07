@@ -20,7 +20,7 @@ import sqlite3
 
 import pytest
 
-from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.exceptions import HostSelectException, ServiceFileError
 from cylc.flow.scheduler_cli import (
     RunOptions,
     _distribute,
@@ -323,8 +323,5 @@ def test_distribute_invalid_host(
                     available = non_exist_{token_hex(4)}
         '''
     )
-    with pytest.raises(SystemExit) as excinfo:
+    with pytest.raises(HostSelectException):
         _distribute('foo', 'foo/run1', RunOptions())
-    assert excinfo.value.code != 0
-    assert len(caplog.records) == 1
-    assert caplog.records[0].message.startswith("Host selection failed: ")
