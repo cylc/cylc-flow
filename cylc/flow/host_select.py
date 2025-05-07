@@ -260,8 +260,10 @@ def select_host(
         # no metrics or ranking required, pick host at random
         random.shuffle(hosts)
         for host in hosts:
-            # check host is contactable
-            if _get_metrics([host], [], data):
+            if (not is_remote_host(host)) or (
+                # check host is contactable
+                _get_metrics([host], [], data)
+            ):
                 return hostname_map[host], host
         raise HostSelectException(data)
 
