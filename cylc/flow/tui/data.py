@@ -47,6 +47,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         flowNums
         firstParent {
           id
@@ -74,6 +77,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         firstParent {
           id
           name
@@ -87,6 +93,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         firstParent {
           id
           name
@@ -95,6 +104,24 @@ QUERY = '''
     }
   }
 '''
+
+# BACK COMPAT: isRetry, isWallclock, isXtriggered
+# url:
+#     https://github.com/cylc/cylc-flow/pull/6671
+# from:
+#     Cylc 8.4.0
+# to:
+#     Cylc 8.5.0
+# remove at:
+#     Cylc 8.7.0
+#     * set min Cylc version requirement in the updater scan pipeline
+#     * replace `data.get('isRetry', False)` with 1data['isRetry']`, etc
+COMPAT_QUERY = (
+    QUERY
+    .replace('isRetry', '')
+    .replace('isWallclock', '')
+    .replace('isXtriggered', '')
+)
 
 # the list of mutations we can call on a running scheduler
 MUTATIONS = {
