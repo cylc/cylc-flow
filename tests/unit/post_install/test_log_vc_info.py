@@ -17,13 +17,15 @@
 import json
 import logging
 from pathlib import Path
-import pytest
-from pytest import MonkeyPatch, TempPathFactory
-from secrets import token_hex
 import shutil
 import subprocess
 from typing import Any, Callable, Tuple
 from unittest.mock import Mock
+
+import pytest
+from pytest import MonkeyPatch, TempPathFactory
+import pytest_asyncio
+from secrets import token_hex
 
 from cylc.flow.install_plugins.log_vc_info import (
     INFO_FILENAME,
@@ -64,7 +66,7 @@ require_svn = pytest.mark.skipif(
 )
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
     """Init a git repo for a workflow source dir.
 
@@ -93,7 +95,7 @@ def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
     return (str(source_dir), commit_sha)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def svn_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str, str]:
     """Init an svn repo & working copy for a workflow source dir.
 

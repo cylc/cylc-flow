@@ -17,6 +17,7 @@
 """Test the "cylc list" command."""
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
@@ -29,7 +30,7 @@ from cylc.flow.scripts.list import (
 ListOptions = Options(get_option_parser())
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def cylc_list(mod_flow, mod_scheduler, mod_start):
     id_ = mod_flow(
         {

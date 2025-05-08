@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+import pytest_asyncio
 import zmq
 
 from cylc.flow.exceptions import CylcError
@@ -23,7 +24,7 @@ from cylc.flow.network import ZMQSocketBase
 from .key_setup import setup_keys
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def myflow(mod_flow, mod_one_conf):
     return mod_flow(mod_one_conf)
 

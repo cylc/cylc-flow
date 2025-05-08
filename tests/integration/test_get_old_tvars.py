@@ -16,6 +16,7 @@
 
 import pytest
 from pytest import param
+import pytest_asyncio
 
 from cylc.flow.option_parsers import Options
 
@@ -41,7 +42,7 @@ from cylc.flow.scripts.list import (
 )
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def _setup(mod_scheduler, mod_flow):
     """Provide an installed flow with a database to try assorted
     simple Cylc scripts against.
