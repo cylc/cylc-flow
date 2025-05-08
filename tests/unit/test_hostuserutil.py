@@ -16,17 +16,24 @@
 
 import os
 import re
+from secrets import token_hex
+import socket
 
 import pytest
 
 from cylc.flow.hostuserutil import (
+    HostUtil,
     get_fqdn_by_host,
     get_host,
+    get_host_ip_by_name,
     get_user,
     get_user_home,
     is_remote_host,
-    is_remote_user
+    is_remote_user,
 )
+
+
+LOCALHOST_ALIASES = socket.gethostbyname_ex('localhost')[1]
 
 
 def test_is_remote_user_on_current_user():
@@ -35,13 +42,21 @@ def test_is_remote_user_on_current_user():
     assert not is_remote_user(os.getenv('USER'))
 
 
-def test_is_remote_host_on_localhost(monkeypatch):
+@pytest.mark.parametrize(
+    'host',
+    [
+        None,
+        'localhost',
+        pytest.param(os.getenv('HOSTNAME'), id="HOSTNAME-env-var"),
+        pytest.param(get_host(), id="get_host()"),
+        pytest.param(get_host_ip_by_name('localhost'), id="localhost-ip"),
+        pytest.param(get_host_ip_by_name(get_host()), id="get_host-ip"),
+        *LOCALHOST_ALIASES,
+    ],
+)
+def test_is_remote_host__localhost(host):
     """is_remote_host with localhost."""
-    assert not is_remote_host(None)
-    assert not is_remote_host('localhost')
-    assert not is_remote_host('localhost4.localhost42')
-    assert not is_remote_host(os.getenv('HOSTNAME'))
-    assert not is_remote_host(get_host())
+    assert not is_remote_host(host)
 
 
 def test_get_fqdn_by_host_on_bad_host():
@@ -73,3 +88,16 @@ def test_get_user():
 def test_get_user_home():
     """get_user_home."""
     assert os.getenv('HOME') == get_user_home()
+
+
+def test_get_host_info__basic():
+    hu = HostUtil(expire=3600)
+    assert hu._get_host_info() == socket.gethostbyname_ex(socket.getfqdn())
+    # Check it handles IP address:
+    ip = get_host_ip_by_name('localhost')
+    assert hu._get_host_info(ip) == socket.gethostbyname_ex('localhost')
+    # Check raised exception for bad host:
+    bad_host = f'nonexist{token_hex(8)}.com'
+    with pytest.raises(IOError) as exc:
+        hu._get_host_info(bad_host)
+    assert bad_host in str(exc.value)
