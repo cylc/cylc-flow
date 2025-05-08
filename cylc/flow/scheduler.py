@@ -130,6 +130,7 @@ from cylc.flow.platforms import (
     get_platform,
     is_platform_with_target_in_list,
 )
+from cylc.flow.prerequisite import PrereqTuple
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.run_modes import RunMode
@@ -1341,11 +1342,11 @@ s       TODO: xtriggers need to be ignored within the group (currently only
             if tdef.is_parentless(point):
                 # parentless: set pre=all to spawn into task pool
                 jtask = self.pool._set_prereqs_tdef(
-                    point, tdef, [], flow_nums, flow_wait, set_all=True
+                    point, tdef, [], {}, flow_nums, flow_wait, set_all=True
                 )
             else:
                 off_flow_prereqs = {
-                    Tokens(cycle=key.point, task=key.task, task_sel=key.output)
+                    PrereqTuple(str(key.point), str(key.task), key.output)
                     for pre in tdef.get_prereqs(point)
                     for key in pre.keys()
                     if (key.task, str(key.point)) not in group_ids
@@ -1364,11 +1365,11 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                         f" of {point}/{tdef.name}:"
                     )
                     for p in off_flow_prereqs:
-                        msg += f"\n * {p['cycle']}/{p['task']}:{p['task_sel']}"
+                        msg += f"\n * {p.point}/{p.task}:{p.output}"
                     LOG.info(msg)
                     jtask = self.pool._set_prereqs_tdef(
-                        point, tdef, off_flow_prereqs, flow_nums, flow_wait,
-                        set_all=False
+                        point, tdef, off_flow_prereqs, {},
+                        flow_nums, flow_wait, set_all=False
                     )
             if jtask is not None and not in_flow_prereqs:
                 # LOG.info(f"Triggering group start task {jtask.identity}")

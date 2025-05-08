@@ -2238,6 +2238,7 @@ class TaskPool:
         """
         # task prerequisites
         itask.force_satisfy(prereqs, set_all)
+
         # xtriggers, including "all"
         self.xtrigger_mgr.force_satisfy(itask, xtrigs)
 
