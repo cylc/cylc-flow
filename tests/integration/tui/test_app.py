@@ -376,7 +376,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
                 schd.pool.set_prereqs_and_outputs(
                     items=[f"1/{task}"],
                     outputs=[TASK_OUTPUT_SUCCEEDED],
-                    prereqs=None,
+                    prereqs=[],
                     flow=['all']
                 )
 

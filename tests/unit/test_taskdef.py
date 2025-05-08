@@ -161,3 +161,37 @@ def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
         for condition in pre.keys()
     ])
     assert res == expected
+
+
+def test_get_xtrigs(tmp_flow_config):
+    id = 'foo'
+    flow_file = tmp_flow_config(
+        id,
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                initial cycle point = 1
+                final cycle point = 16
+                cycling mode = integer
+                [[xtriggers]]
+                    xt_once = xrandom(1)
+                    xt_every = xrandom(1)
+                    xt_odd = xrandom(1)
+                    xt_final = xrandom(1)
+
+                [[graph]]
+                    R1 = @xt_once => foo
+                    P1 = @xt_every => foo
+                    P2 = @xt_odd => foo
+                    R1/$ = @xt_final => foo
+        """
+    )
+    cfg = WorkflowConfig(workflow=id, fpath=flow_file, options=None)
+    taskdef = cfg.taskdefs['foo']
+    assert taskdef.get_xtrigs(IntegerPoint('1')) == {
+        'xt_once', 'xt_odd', 'xt_every'
+    }
+    assert taskdef.get_xtrigs(IntegerPoint('2')) == {'xt_every'}
+    assert taskdef.get_xtrigs(IntegerPoint('3')) == {'xt_odd', 'xt_every'}
+    assert taskdef.get_xtrigs(IntegerPoint('16')) == {'xt_final', 'xt_every'}

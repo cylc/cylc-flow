@@ -56,7 +56,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 # ensure the following order of events
 # 1. "1/broken" fails
 # 2. workflow is reloaded (by "1/reload")
-# 3. the retry xtrigger for "1/broken" becomes satisfied (after the reload)
+# 3. the retry xtrigger for "1/broken" is succeeded (after the reload)
 #    (thus proving that the xtrigger survived the reload)
 # 4. "1/broken" succeeds
 
@@ -72,7 +72,7 @@ log_scan "${TEST_NAME_BASE}-scan" \
 log_scan "${TEST_NAME_BASE}-scan" \
     "$(cylc cat-log -m p "${WORKFLOW_NAME}")" \
     1 1 \
-    'xtrigger satisfied: _cylc_retry_1/broken' \
+    'xtrigger succeeded: _cylc_retry_1_broken' \
     '1/broken.* => succeeded'
 
 purge

@@ -57,6 +57,7 @@ from cylc.flow.exceptions import (
     ServiceFileError,
 )
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.util import (
     deserialise_set,
     serialise_set,
@@ -65,7 +66,7 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_utc_mode,
 )
-
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -442,7 +443,7 @@ class WorkflowDatabaseManager:
             task_events_mgr.event_timers_updated = False
 
     def put_xtriggers(self, sat_xtrig):
-        """Put statements to update external triggers table."""
+        """Put statements to update xtriggers table."""
         for sig, res in sat_xtrig.items():
             if not sig.startswith('wall_clock('):
                 self.db_inserts_map[self.TABLE_XTRIGGERS].append({
@@ -522,6 +523,15 @@ class WorkflowDatabaseManager:
                         "prereq_output": p_output,
                         "satisfied": satisfied_state
                     })
+            for x_label, x_satisfied in itask.state.xtriggers.items():
+                if x_satisfied:
+                    self.put_insert_task_prerequisites(itask, {
+                        "prereq_name": x_label,
+                        "prereq_cycle": XTRIGGER_PREREQ_PREFIX,
+                        "prereq_output": TASK_OUTPUT_SUCCEEDED,
+                        "satisfied": True
+                    })
+
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),

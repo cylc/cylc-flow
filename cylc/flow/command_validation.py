@@ -34,6 +34,7 @@ from cylc.flow.id import (
     Tokens,
 )
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 
 ERR_OPT_FLOW_VAL = (
@@ -106,14 +107,14 @@ def flow_opts(
 
 
 def prereqs(prereqs: Optional[List[str]]):
-    """Validate a list of prerequisites, add implicit ":succeeded".
+    """Validate prerequisites, add implicit ":succeeded".
 
     Comma-separated lists should be split already, client-side.
 
     Examples:
-        # Set multiple at once:
-        >>> prereqs(['1/foo:bar', '2/foo:baz'])
-        ['1/foo:bar', '2/foo:baz']
+        # Set multiple at once, prereq and xtriggers:
+        >>> prereqs(['1/foo:bar', '2/foo:baz', 'xtrigger/x1'])
+        ['1/foo:bar', '2/foo:baz', 'xtrigger/x1:succeeded']
 
         # --pre=all
         >>> prereqs(["all"])
@@ -122,6 +123,10 @@ def prereqs(prereqs: Optional[List[str]]):
         # implicit ":succeeded"
         >>> prereqs(["1/foo"])
         ['1/foo:succeeded']
+
+        # implicit ":satisifed"
+        >>> prereqs(["xtrigger/foo"])
+        ['xtrigger/foo:succeeded']
 
         # Error: invalid format:
         >>> prereqs(["fish", "dog"])
@@ -135,6 +140,12 @@ def prereqs(prereqs: Optional[List[str]]):
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ...
           * 1/foo::bar
+
+        # Error: invalid format:
+        >>> prereqs(["xtrigger/x1::bar"])
+        Traceback (most recent call last):
+        cylc.flow.exceptions.InputError: ...
+          * xtrigger/x1::bar
 
         # Error: "all" must be used alone:
         >>> prereqs(["all", "2/foo:baz"])
@@ -155,10 +166,9 @@ def prereqs(prereqs: Optional[List[str]]):
             bad.append(pre)
     if bad:
         raise InputError(
-            "Use prerequisite format <cycle>/<task>:output\n  * "
-            + "\n  * ".join(bad)
+            "Bad prerequisite format, see command help:\n * "
+            + "\n * ".join(bad)
         )
-
     if len(prereqs2) > 1:  # noqa SIM102 (anticipates "cylc set --pre=cycle")
         if "all" in prereqs:
             raise InputError("--pre=all must be used alone")
@@ -167,21 +177,47 @@ def prereqs(prereqs: Optional[List[str]]):
 
 
 def prereq(prereq: str) -> Optional[str]:
-    """Return prereq (with :succeeded) if valid, else None.
+    """Return standardised task and xtrigger prerequisites if valid, else None.
+
+    Default to suffix ":succeeded" (task and xtrigger prerequisites).
+
+    (Standardisation of "start" -> "started" etc. is done later).
 
     Format: cycle/task[:output]
+      (xtriggers: cycle is "xtrigger", task is xtrigger label)
 
     Examples:
         >>> prereq('1/foo:succeeded')
         '1/foo:succeeded'
 
+        >>> prereq('1/foo:succeed')
+        '1/foo:succeed'
+
         >>> prereq('1/foo')
         '1/foo:succeeded'
+
+        >>> prereq('1/foo:other_output')
+        '1/foo:other_output'
 
         >>> prereq('all')
         'all'
 
-        # Error:
+        >>> prereq('xtrigger/wall_clock')
+        'xtrigger/wall_clock:succeeded'
+
+        >>> prereq('xtrigger/wall_clock:succeeded')
+        'xtrigger/wall_clock:succeeded'
+
+        >>> prereq('xtrigger/all')
+        'xtrigger/all:succeeded'
+
+        >>> prereq('xtrigger/all:succeeded')
+        'xtrigger/all:succeeded'
+
+        # Error, xtrigger state must be succeeded or waiting:
+        >>> prereq('xtrigger/wall_clock:other')
+
+        # Error, just a task name:
         >>> prereq('fish')
 
     """
@@ -189,15 +225,24 @@ def prereq(prereq: str) -> Optional[str]:
         tokens = Tokens(prereq, relative=True)
     except ValueError:
         return None
-    if (
-        tokens["cycle"] == prereq
-        and prereq != "all"
-    ):
+
+    if tokens["cycle"] == prereq and prereq != "all":
         # Error: --pre=<word> other than "all"
         return None
 
-    if prereq != "all" and tokens["task_sel"] is None:
-        prereq += f":{TASK_OUTPUT_SUCCEEDED}"
+    if tokens["cycle"] == XTRIGGER_PREREQ_PREFIX:
+        if (
+            tokens["task_sel"] not in {None, TASK_OUTPUT_SUCCEEDED}
+        ):
+            # Error: xtrigger status must be default or succeeded.
+            return None
+        if tokens["task_sel"] is None:
+            # Default to succeeded
+            prereq += f":{TASK_OUTPUT_SUCCEEDED}"
+    else:
+        if prereq != "all" and tokens["task_sel"] is None:
+            # Default to succeeded
+            prereq += f":{TASK_OUTPUT_SUCCEEDED}"
 
     return prereq
 

@@ -2493,11 +2493,7 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def delta_task_ext_trigger(
-        self,
-        itask: TaskProxy,
-        trig: str,
-        message: str,
-        satisfied: bool,
+        self, itask: TaskProxy, trig: str, message: str, satisfied: bool,
     ) -> None:
         """Create delta for change in task proxy external_trigger.
 
@@ -2525,29 +2521,53 @@ class DataStoreMgr:
         ext_trigger.time = update_time
         self.updates_pending = True
 
-    def delta_task_xtrigger(self, sig, satisfied):
-        """Create delta for change in task proxy xtrigger.
+    def _delta_xtrigger(
+        self, tp_id: str, label: str, sig: str, satisfied: bool,
+        t_update: float
+    ) -> None:
+        """Helper for the two xtrigger delta methods."""
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{t_update}'
+        xtrigger = tp_delta.xtriggers[sig]
+        xtrigger.id = sig
+        xtrigger.label = label
+        xtrigger.satisfied = satisfied
+        xtrigger.time = t_update
+        self.updates_pending = True
+
+    def delta_xtrigger(self, sig: str, succeeded: bool) -> None:
+        """Create delta for xtrigger completion.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-            sig (str): Context of function call (name, args).
-            satisfied (bool): Trigger message.
+            sig: xtrigger function call signature.
+            succeeded: xtrigger completed successfully or not.
 
         """
         update_time = time()
+        # update all dependent task instances
         for tp_id, label in self.xtrigger_tasks.get(sig, set()):
-            # update task instance
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            xtrigger = tp_delta.xtriggers[sig]
-            xtrigger.id = sig
-            xtrigger.label = label
-            xtrigger.satisfied = satisfied
-            xtrigger.time = update_time
-            self.updates_pending = True
+            self._delta_xtrigger(tp_id, label, sig, succeeded, update_time)
+
+    def delta_task_xtrigger(
+        self, itask: 'TaskProxy', label: str, sig: str, satisfied: bool
+    ) -> None:
+        """Create delta for a change in xtrigger prerequisite satisfaction.
+
+        (Xtrigger satisfaction is normally handled by the xtrigger_mgr for all
+        dependent tasks, but "cylc set" can satisfy individual prerequisites).
+
+        Args:
+            itask: scheduler trask proxy that has changed status.
+            sig: xtrigger function call signature.
+            satisfied: satisfied or not.
+
+        """
+        tp_id = self.id_.duplicate(
+            cycle=str(itask.point),
+            task=itask.tdef.name,
+        ).id
+        self._delta_xtrigger(tp_id, label, sig, satisfied, time())
 
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
         """Create delta from existing pool task proxy.
