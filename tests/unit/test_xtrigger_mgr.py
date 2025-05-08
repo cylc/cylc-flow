@@ -357,6 +357,6 @@ def test_report_duplicates(
     xtriggers.report_duplicates()
 
     assert caplog.messages == [
-        "Duplicate xtriggers: x1,x2 = echo(succeed=False)",
+        "Duplicate xtriggers: x1, x2 = echo(succeed=False)",
         XTRIG_DUP_WARNING
     ]

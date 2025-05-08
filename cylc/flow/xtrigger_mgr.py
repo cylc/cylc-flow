@@ -260,7 +260,7 @@ class XtriggerCollator:
             dups[sig].append(label)
 
         for sig, labels in dups.items():
-            LOG.info(f"Duplicate xtriggers: {','.join(labels)} = {sig}")
+            LOG.info(f"Duplicate xtriggers: {', '.join(labels)} = {sig}")
         if dups:
             LOG.warning(XTRIG_DUP_WARNING)
 
