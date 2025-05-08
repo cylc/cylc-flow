@@ -17,15 +17,30 @@
 from contextlib import suppress
 from pathlib import Path
 from time import sleep
+from typing import (
+    Any,
+    Optional,
+)
+from unittest.mock import (
+    MagicMock,
+    Mock,
+)
+
 import pytest
-from typing import (Any, Optional)
-from unittest.mock import MagicMock, Mock
 
 from cylc.flow.exceptions import PlatformError
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.task_remote_mgr import (
-    REMOTE_FILE_INSTALL_DONE, REMOTE_INIT_IN_PROGRESS, TaskRemoteMgr)
-from cylc.flow.workflow_files import WorkflowFiles, get_workflow_srv_dir
+    REMOTE_FILE_INSTALL_DONE,
+    REMOTE_INIT_IN_PROGRESS,
+    TaskRemoteMgr,
+)
+from cylc.flow.workflow_files import (
+    WorkflowFiles,
+    get_workflow_srv_dir,
+)
+
+from .test_hostuserutil import LOCALHOST_ALIASES
 
 
 Fixture = Any
@@ -325,8 +340,9 @@ def test_eval_platform_bad(task_remote_mgr_eval):
     'eval_str, remote_cmd_map, expected',
     [
         *shared_eval_params,
-        pytest.param(
-            'localhost4.localdomain4', {}, 'localhost', id="localhost_variant"
+        *(
+            pytest.param(alias, {}, 'localhost', id=alias)
+            for alias in LOCALHOST_ALIASES
         ),
         pytest.param(
             '`other cmd`', {'other cmd': 'nicole brennan'}, 'nicole brennan',

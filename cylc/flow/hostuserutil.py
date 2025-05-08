@@ -50,7 +50,12 @@ import pwd
 import socket
 import sys
 from time import time
-from typing import List, Optional, Tuple
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -81,13 +86,21 @@ class HostUtil:
             cls._instance = cls(expire)
         return cls._instance
 
-    def __init__(self, expire):
+    def __init__(self, expire: float):
         self.expire_time = time() + expire
-        self._host = None  # preferred name of localhost
-        self._host_exs = {}  # host: socket.gethostbyname_ex(host), ...
-        self._remote_hosts = {}  # host: is_remote, ...
-        self.user_pwent = None
-        self.remote_users = {}
+        self._host: Optional[str] = None  # preferred name of localhost
+        self._host_exs: Dict[  # host: socket.gethostbyname_ex(host), ...
+            str, Tuple[str, List[str], List[str]]
+        ] = {}
+        self._remote_hosts: Dict[str, bool] = {}  # host: is_remote, ...
+        self.user_pwent: Optional[pwd.struct_passwd] = None
+        self.remote_users: Dict[str, bool] = {}
+
+        # On MacOS we have seen different results of socket.gethostbyname_ex()
+        # before and after calling socket.getfqdn() for the 1st time. See
+        # https://github.com/actions/runner-images/issues/8649#issuecomment-1855919367
+        # Call it here at init to ensure we get consistent results from now on.
+        socket.getfqdn()
 
     @staticmethod
     def get_local_ip_address(target):
@@ -117,23 +130,31 @@ class HostUtil:
     def _get_host_info(
         self, target: Optional[str] = None
     ) -> Tuple[str, List[str], List[str]]:
-        """Return the extended info of the current host."""
+        """Return the extended info of the current host.
+
+        This should return the same result for all possible names or
+        IP addresses of the same host, as well as caching the results,
+        unlike socket.gethostbyname_ex() alone.
+        """
         if target is None:
             target = socket.getfqdn()
-        if IS_MAC_OS and target in {
-            '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
-            '0.0.0.0.0.0.ip6.arpa',
-            '1.0.0.127.in-addr.arpa',
-        }:
-            # Python's socket bindings don't play nicely with mac os
-            # so by default we get the above ip6.arpa address from
-            # socket.getfqdn, note this does *not* match `hostname -f`.
-            # https://github.com/cylc/cylc-flow/issues/2689
-            # https://github.com/cylc/cylc-flow/issues/3595
-            target = socket.gethostname()
         if target not in self._host_exs:
             try:
-                self._host_exs[target] = socket.gethostbyname_ex(target)
+                if IS_MAC_OS and target in {
+                    '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
+                    '0.0.0.0.0.0.ip6.arpa',
+                    '1.0.0.127.in-addr.arpa',
+                }:
+                    # Python's socket bindings don't play nicely with mac os
+                    # so by default we get the above ip6.arpa address from
+                    # socket.getfqdn, note this does *not* match `hostname -f`.
+                    # https://github.com/cylc/cylc-flow/issues/2689
+                    # https://github.com/cylc/cylc-flow/issues/3595
+                    name = socket.gethostname()
+                else:
+                    # Normalise the name or IP address to a FQDN
+                    name = socket.getfqdn(socket.gethostbyaddr(target)[0])
+                self._host_exs[target] = socket.gethostbyname_ex(name)
             except IOError as exc:
                 if exc.filename is None:
                     exc.filename = target
@@ -190,26 +211,32 @@ class HostUtil:
             self.remote_users.update(((self.user_pwent.pw_name, False),))
         return self.user_pwent
 
-    def is_remote_host(self, name):
-        """Return True if name has different IP address than the current host.
+    def is_remote_host(self, host: Optional[str]) -> bool:
+        """Return True if the host is not the current host.
+
+        If the given host's primary name does not match the current host's or
+        'localhost', the host is considered remote.
+
+        Args:
+            host: Either a host name or an IP address.
 
         Return False if name is None.
         Return True if host is unknown.
 
         """
-        if name not in self._remote_hosts:
-            if not name or name.startswith("localhost"):
-                # e.g. localhost4.localdomain4
-                self._remote_hosts[name] = False
+        if not host:
+            return False
+        if host not in self._remote_hosts:
+            try:
+                host_name = self._get_host_info(host)[0].lower()
+            except IOError:
+                self._remote_hosts[host] = True
             else:
-                try:
-                    host_info = self._get_host_info(name)
-                except IOError:
-                    self._remote_hosts[name] = True
-                else:
-                    self._remote_hosts[name] = (
-                        host_info != self._get_host_info())
-        return self._remote_hosts[name]
+                this_name = self._get_host_info()[0].lower()
+                self._remote_hosts[host] = (
+                    host_name not in {this_name, 'localhost'}
+                )
+        return self._remote_hosts[host]
 
     def is_remote_user(self, name):
         """Return True if name is not a name of the current user.
@@ -281,9 +308,9 @@ def is_remote_platform(platform):
     return HostUtil.get_inst()._is_remote_platform(platform)
 
 
-def is_remote_host(name):
+def is_remote_host(host: Optional[str]) -> bool:
     """Shorthand for HostUtil.get_inst().is_remote_host(name)."""
-    return HostUtil.get_inst().is_remote_host(name)
+    return HostUtil.get_inst().is_remote_host(host)
 
 
 def is_remote_user(name):
