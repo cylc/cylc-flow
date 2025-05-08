@@ -1274,7 +1274,7 @@ class TaskEventsManager():
         label = '_'.join((
             '_cylc',
             'submit_retry' if submit_retry else 'retry',
-            itask.identity
+            itask.identity.replace('/', '_')
         ))
         kwargs = {
             'trigger_time': wallclock_time

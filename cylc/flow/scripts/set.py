@@ -18,41 +18,53 @@
 
 """cylc set [OPTIONS] ARGS
 
-Command to manually set task prerequisites and outputs in running workflows.
+Satisfy task (including xtrigger) prerequisites and complete task outputs.
 
-By default, it sets all required outputs (including "submitted", "started" and
-"succeeded" even if they are optional).
+By default this command completes required outputs, plus the "submitted",
+"started", and "succeeded" outputs even if they are optional.
 
-Setting task prerequisites:
-  - contributes to the task's readiness to run, and
-  - promotes it to the scheduler's active task pool
+Task Outputs:
+  Completing task outputs may affect its state, and it will satisfy the
+  prerequisites of any other tasks that depend on those outputs.
 
-Note --pre=all also promotes parentless tasks (with no task-prerequisites) to
-the active pool where clock and xtriggers become active. This is needed to
-start a new flow that continues to future cycle points, if you need the first
-parentless tasks in the new flow to wait on clock or xtriggers before running.
+  Format:
+    * --out=<output>  # output name (not message) of the target task
 
-Setting task outputs:
-  - contributes to a task's completion, and
-  - spawns downstream tasks that depend on those outputs
+  Completing a final output ("succeeded", "failed", or "expired") sets the
+  state of the target task accordingly. Completing "started", "submitted",
+  or custom outputs does not affect state because no job is actually running.
 
-Note setting final outputs ("succeeded", "failed", "expired") also sets task
-state. Setting the "started" and "submitted" outputs spawns downstream tasks
-that depend on them but does not affect task state, because there is no
-running job.
+  Implied outputs will be completed automatically:
+    - "started" implies "submitted"
+    - "succeeded" and "failed" imply "started"
+    - custom outputs and "expired" do not imply other outputs
 
-Implied outputs are set automatically:
-  - "started" implies "submitted"
-  - "succeeded" and "failed" imply "started"
-  - custom outputs and "expired" do not imply other outputs
+  For custom outputs, use the output name not the associated task message.
+  In [runtime][my-task][outputs]:
+    # <name> = <message>
+    x = "file x completed"
 
-For custom outputs, use the output names not the associated task messages:
-[runtime]
-  [[my-task]]
-    # ...
-    [[[outputs]]]
-      # <output-name> = <task-message>
-      x = "file x completed and archived"
+Task Prerequisites:
+  Satisfying a task's prerequisite contributes to its readiness to run.
+
+  Satisfying any prerequisite of an inactive task promotes it to the active
+  window where xtrigger checking commences (if the task has any xtriggers).
+  The --pre=all option even promotes parentless tasks to the active window.
+
+  Format:
+    * --pre=<cycle>/<task-name>[:output]  # satisfy a single prerequisite
+    * --pre=all  # satisfy all task (not xtrigger) prerequisites
+
+Xtrigger prerequisites:
+  To satisfy an xtrigger prerequisite use --pre with the word "xtrigger" in
+  place of the cycle point, and the xtrigger name in place of the task name.
+
+  Format:
+    * --pre=xtrigger/<xtrigger-name>  # satisfy one xtrigger prerequisite
+    * --pre=xtrigger/all  # satisfy all xtrigger prerequisites
+
+  (The full format is "xtrigger/<xtrigger-name>[:succeeded]" but "succeeded"
+  is the only xtrigger output and the default, so it can be omitted.)
 
 CLI Completion:
   Cylc can auto-complete prerequisites and outputs for active tasks if you
@@ -61,7 +73,7 @@ CLI Completion:
 Examples:
   # complete all required outputs of 3/bar:
   $ cylc set my_workflow//3/bar
-  #   or:
+  # or:
   $ cylc set --out=required my_workflow//3/bar
 
   # complete the succeeded output of 3/bar:
@@ -71,24 +83,22 @@ Examples:
   $ cylc set --out=skip my_workflow//3/bar
 
   # satisfy the 3/foo:succeeded prerequisite of 3/bar:
-  $ cylc set --pre=3/foo my_workflow//3/bar
-  #   or:
+  $ cylc set --pre=3/foo my_workflow//3/bar  # or,
   $ cylc set --pre=3/foo:succeeded my_workflow//3/bar
 
-  # satisfy all prerequisites (if any) of 3/bar and promote it to
-  # the active window (and start checking its xtriggers, if any):
+  # satisfy all prerequisites (if any) of 3/bar:
   $ cylc set --pre=all my_workflow//3/bar
 
-  # complete the "file1" custom output of 3/bar:
-  $ cylc set --out=file1 my_workflow//3/bar
+  # satisfy clock trigger prerequisite @clock1 3000/bar:
+  $ cylc set --pre=xtrigger/clock1 my_worklfow//3000/bar
 
   # satisfy the "3/bar:file1" prerequisite of 3/qux:
   $ cylc set --pre=3/bar:file1 my_workflow//3/qux
 
-  # set multiple outputs at once:
+  # complete multiple outputs at once:
   $ cylc set --out=a --out=b,c my_workflow//3/bar
 
-  # set multiple prerequisites at once:
+  # satisfy multiple prerequisites at once:
   $ cylc set --pre=3/foo:x --pre=3/foo:y,3/foo:z my_workflow//3/bar
 
 """
@@ -115,6 +125,9 @@ if TYPE_CHECKING:
     from optparse import Values
     from cylc.flow.id import Tokens
 
+
+# For setting xtriggers with --pre:
+XTRIGGER_PREREQ_PREFIX = "xtrigger"
 
 MUTATION = '''
 mutation (
@@ -148,7 +161,7 @@ SELECTOR_ERROR = (
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__,
+        str(__doc__),
         comms=True,
         multitask=True,
         multiworkflow=True,
@@ -174,8 +187,10 @@ def get_option_parser() -> COP:
             "Satisfy task prerequisites. For multiple prerequisites"
             " re-use the option, or give a comma-separated list, or"
             ' use "--pre=all" to satisfy all prerequisites, if any.'
-            " PREREQUISITE format: 'cycle/task[:OUTPUT]', where"
-            " :OUTPUT defaults to :succeeded."
+            " PREREQUISITE format:"
+            " '<cycle>/<task>[:<OUTPUT>]' or 'all'"
+            " where <OUTPUT> defaults to succeeded; or"
+            " xtrigger/<label>[:succeeded]' or 'xtrigger/all'"
         ),
         action="append", default=None, dest="prerequisites"
     )
