@@ -17,27 +17,29 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force tasks to run, even in a paused workflow.
+Force a group of tasks to run, respecting any dependencies within the group.
 
-For a group of tasks, off-group prerequisites will be satisfied automatically
-to prevent a stall, and in-group prerequisites will respected by the flow.
+This command automatically identifies and satisfies the task (and xtrigger)
+prerequisites of group start tasks, to start the flow; and the off-group
+task (and xtrigger) prerequisites of other group members, to prevent a stall.
+It leaves in-group prerequisites to be satisfied by the flow.
 
-By default flow history of target tasks will be removed to allow rerun in the
-same flow. Use the `--flow` option to trigger a new flow.
+By default, it removes the flow history of target tasks to allow rerun in the
+same flow. Alternatively, use the `--flow` option to trigger a new flow.
 
 Triggering a task that is not yet queued will queue it; triggering a queued
 task will run it - so un-queued tasks may need to be triggered twice.
 
-Tasks can't be triggered if already active (preparing, submitted, running).
+Tasks can't be triggered if already preparing, submitted, or running a job.
 
-Group trigger is normally the easiest way to manually (re)run a sub-graph.
-
-Otherwise, use `cylc set` to manually satisfy all off-flow prerequisites (or
-trigger initial tasks and set other off-flow prerequisites) after erasing
-(to rerun in the same flow) flow history with `cylc remove`.
+If the workflow is paused, group start tasks will run immediately. The rest
+of the group will run when the workflow is unpaused.
 
 Use `-flow=all` to trigger without erasing flow history or starting a new flow,
 e.g. to trigger a task twice with `--wait` to complete different outputs.
+
+Group trigger automatically handles flow history and off-group prerequisites.
+For a lower-level way to rerun a sub-graph of tasks, see `cylc set`.
 
 Examples:
   # trigger task foo in cycle 1234 in test
