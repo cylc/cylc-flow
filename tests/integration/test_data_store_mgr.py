@@ -34,6 +34,7 @@ from cylc.flow.data_store_mgr import (
     TASK_PROXIES,
     TASKS,
     WORKFLOW,
+    XTRIGGER_DELIM,
 )
 from cylc.flow.id import Tokens
 from cylc.flow.scheduler import Scheduler
@@ -513,7 +514,7 @@ def test_delta_task_xtrigger(xharness):
     # data store should have one updated task proxy with satisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers[f'xrandom(0){XTRIGGER_DELIM}x']
     assert xtrig.label == 'x'
     assert xtrig.satisfied
 
@@ -531,7 +532,7 @@ def test_delta_task_xtrigger(xharness):
     # data store should have one updated task proxy with satisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers[f'xrandom(0){XTRIGGER_DELIM}x']
     assert xtrig.label == 'x'
     assert not xtrig.satisfied
 
@@ -551,11 +552,11 @@ def test_delta_task_xtrigger(xharness):
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
 
-    xtrig_x = pbfoo.xtriggers['xrandom(0)']
+    xtrig_x = pbfoo.xtriggers[f'xrandom(0){XTRIGGER_DELIM}x']
     assert xtrig_x.label == 'x'
     assert xtrig_x.satisfied
 
-    xtrig_y = pbfoo.xtriggers['xrandom(0, _=1)']
+    xtrig_y = pbfoo.xtriggers[f'xrandom(0, _=1){XTRIGGER_DELIM}y']
     assert xtrig_y.label == 'y'
     assert xtrig_y.satisfied
 
