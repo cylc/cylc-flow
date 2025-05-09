@@ -1304,13 +1304,17 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                     self.pool.merge_flows(itask, flow_nums)
 
                 elif itask.state(TASK_STATUS_WAITING):
-                    # Satisfy off-group prereqs of waiting group start task.
-                    # These are the only prereqs, by definition, so set all.
+                    # This is a waiting active group start task.
+                    #   Satisfy off-group (i.e. all) prerequisites:
                     LOG.info(
-                        f"Satisfying all off-group prerequisites of {itask}")
-                    itask.state.set_prerequisites_all_satisfied()
+                        f"Satisfying off-group prerequisites of {itask}")
+                    itask.state.set_all_task_prerequisites_satisfied()
+
+                    #   and satisfy all xtrigger prerequisites.
+                    self.pool.xtrigger_mgr.force_satisfy(itask, {"all": True})
                     self.pool.merge_flows(itask, flow_nums)
-                    # LOG.info(f"Triggering group start task {itask.identity}")
+
+                    # Trigger group start task.
                     self.pool.queue_or_trigger(itask, on_resume)
                 else:
                     active_tasks_to_remove.append(itask)
@@ -1342,7 +1346,11 @@ s       TODO: xtriggers need to be ignored within the group (currently only
             if tdef.is_parentless(point):
                 # parentless: set pre=all to spawn into task pool
                 jtask = self.pool._set_prereqs_tdef(
-                    point, tdef, [], {}, flow_nums, flow_wait, set_all=True
+                    point, tdef,
+                    [],  # prerequisites
+                    {"all": True},  # xtriggers
+                    flow_nums, flow_wait,
+                    set_all=True  # prerequisites
                 )
             else:
                 off_flow_prereqs = {
@@ -1367,13 +1375,17 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                     for p in off_flow_prereqs:
                         msg += f"\n * {p.point}/{p.task}:{p.output}"
                     LOG.info(msg)
-                    jtask = self.pool._set_prereqs_tdef(
-                        point, tdef, off_flow_prereqs, {},
-                        flow_nums, flow_wait, set_all=False
-                    )
+                # (call this even with no off-flow prereqs, for xtriggers)
+                jtask = self.pool._set_prereqs_tdef(
+                    point, tdef,
+                    off_flow_prereqs,
+                    {"all": True},  # xtriggers
+                    flow_nums, flow_wait, set_all=False
+                )
             if jtask is not None and not in_flow_prereqs:
-                # LOG.info(f"Triggering group start task {jtask.identity}")
+                # Trigger group start task.
                 self.pool.queue_or_trigger(jtask, on_resume)
+
         self.pool.release_runahead_tasks()
 
     def get_restart_num(self) -> int:
