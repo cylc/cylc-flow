@@ -850,4 +850,4 @@ class XtriggerManager:
 
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
-            LOG.info(f"{prefix} {state} (forced): {suffix}")
+            LOG.info(f"{prefix} force-{state}: {suffix}")

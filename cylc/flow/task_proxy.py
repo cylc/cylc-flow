@@ -608,7 +608,7 @@ class TaskProxy:
                 if not state:
                     prereq[pre] = "force satisfied"
                     LOG.info(
-                        f"[{self}] prerequisite satisfied (forced):"
+                        f"[{self}] prerequisite force-satisfied:"
                         f" {pre.get_id(True)}"
                     )
                 else:

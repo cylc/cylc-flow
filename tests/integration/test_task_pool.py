@@ -1287,7 +1287,7 @@ async def test_set_prereqs(
         )
         assert bar.state.xtriggers_all_satisfied()
         assert log_filter(
-            contains=('prerequisite satisfied (forced): x = xrandom(0)'))
+            contains=('prerequisite force-satisfied: x = xrandom(0)'))
 
         # set xtrigger in the wrong task
         schd.pool.set_prereqs_and_outputs(
@@ -1324,9 +1324,9 @@ async def test_set_prereqs(
             ["2040/qux"], [], ["2040/bar", "2040/baz:succeed"], ['all'])
 
         assert log_filter(
-            contains=('prerequisite satisfied (forced): 20400101T0000Z/bar'))
+            contains=('prerequisite force-satisfied: 20400101T0000Z/bar'))
         assert log_filter(
-            contains=('prerequisite satisfied (forced): 20400101T0000Z/baz'))
+            contains=('prerequisite force-satisfied: 20400101T0000Z/baz'))
 
         # it should now be fully satisfied
         assert qux.state.prerequisites_all_satisfied()
