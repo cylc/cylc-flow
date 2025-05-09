@@ -1233,7 +1233,8 @@ class Scheduler:
             tasks_str = ', '.join(
                 sorted(tokens.relative_id for tokens in not_removed)
             )
-            LOG.warning(f"Task(s) not removable: {tasks_str} {fnums_str}")
+            # This often does not indicate an error - e.g. for group trigger.
+            LOG.debug(f"Task(s) not removable: {tasks_str} {fnums_str}")
 
         if removed and self.pool.compute_runahead():
             self.pool.release_runahead_tasks()
@@ -1306,8 +1307,6 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                 elif itask.state(TASK_STATUS_WAITING):
                     # This is a waiting active group start task.
                     #   Satisfy off-group (i.e. all) prerequisites:
-                    LOG.info(
-                        f"Satisfying off-group prerequisites of {itask}")
                     itask.state.set_all_task_prerequisites_satisfied()
 
                     #   and satisfy all xtrigger prerequisites.
@@ -1367,14 +1366,6 @@ s       TODO: xtriggers need to be ignored within the group (currently only
                         if (key.task, str(key.point)) in group_ids
                     }
                 )
-                if off_flow_prereqs:
-                    msg = (
-                        "Satisfying off-group prerequisites"
-                        f" of {point}/{tdef.name}:"
-                    )
-                    for p in off_flow_prereqs:
-                        msg += f"\n * {p.point}/{p.task}:{p.output}"
-                    LOG.info(msg)
                 # (call this even with no off-flow prereqs, for xtriggers)
                 jtask = self.pool._set_prereqs_tdef(
                     point, tdef,

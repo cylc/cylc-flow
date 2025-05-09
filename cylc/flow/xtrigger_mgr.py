@@ -836,7 +836,7 @@ class XtriggerManager:
             # Un/satisfy the xtrigger prerequisite and log what we did.
             # (Say "prerequisite": the xtrigger itself is not touched).
 
-            prefix = f"[{itask}] - xtrigger prerequisite"
+            prefix = f"[{itask}] prerequisite"
             suffix = ctx.get_description()
             state = "satisfied" if satisfied else "unsatisfied"
 
