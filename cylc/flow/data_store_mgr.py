@@ -1889,11 +1889,12 @@ class DataStoreMgr:
             if tp_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(tp_id)
             for sig in node.xtriggers:
-                self.xtrigger_tasks[sig].remove(
-                    (tp_id, node.xtriggers[sig].label)
-                )
-                if not self.xtrigger_tasks[sig]:
-                    del self.xtrigger_tasks[sig]
+                with suppress(KeyError):
+                    self.xtrigger_tasks[sig].remove(
+                        (tp_id, node.xtriggers[sig].label)
+                    )
+                    if not self.xtrigger_tasks[sig]:
+                        del self.xtrigger_tasks[sig]
 
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)
