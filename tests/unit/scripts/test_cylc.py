@@ -133,6 +133,9 @@ def test_pythonpath_manip(monkeypatch):
 
     and adds items from CYLC_PYTHONPATH
     """
+
+    # TODO - this test fails if the user's environment adds to CYLC_PYTHONPATH!
+
     monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
     monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
     pythonpath_manip()
