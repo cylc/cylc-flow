@@ -1520,7 +1520,7 @@ class DataStoreMgr:
         for label, satisfied in itask.state.xtriggers.items():
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
+            xtrig = tproxy.xtriggers[f'{label}={sig}']
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
@@ -1890,10 +1890,9 @@ class DataStoreMgr:
                 del self.n_window_node_walks[tp_id]
             if tp_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(tp_id)
-            for sig in node.xtriggers:
-                self.xtrigger_tasks[sig].remove(
-                    (tp_id, node.xtriggers[sig].label)
-                )
+            for xid in node.xtriggers:
+                label, sig = xid.split('=', 1)
+                self.xtrigger_tasks[sig].remove((tp_id, label))
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
 
@@ -2573,23 +2572,24 @@ class DataStoreMgr:
             tp_id, PbTaskProxy(id=tp_id)
         )
         tp_delta.stamp = f'{tp_id}@{update_time}'
+        xid = f'{label}={sig}'
 
         # populate all xtriggers on the delta if not already present
         if not tp_delta.xtriggers:
             # NOTE: if one xtrigger changes, we must include all in the
             # delta, see https://github.com/cylc/cylc-flow/issues/6307
-            for _sig, xtrigger in tproxy.xtriggers.items():
-                if _sig == sig:
+            for _xid, xtrigger in tproxy.xtriggers.items():
+                if _xid == xid:
                     # don't copy the xtrigger we are changing
                     continue
-                _xtrigger = tp_delta.xtriggers[_sig]
+                _xtrigger = tp_delta.xtriggers[_xid]
                 _xtrigger.id = xtrigger.id
                 _xtrigger.label = xtrigger.label
                 _xtrigger.satisfied = xtrigger.satisfied
                 _xtrigger.time = xtrigger.time
 
         # modify the xtrigger that has changed
-        xtrigger = tp_delta.xtriggers[sig]
+        xtrigger = tp_delta.xtriggers[xid]
         xtrigger.id = sig
         xtrigger.label = label
         xtrigger.satisfied = satisfied
