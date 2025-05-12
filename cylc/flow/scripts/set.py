@@ -67,8 +67,8 @@ Xtrigger prerequisites:
   is the only xtrigger output and the default, so it can be omitted.)
 
 CLI Completion:
-  Cylc can auto-complete prerequisites and outputs for active tasks if you
-  specify the task in the command before attempting TAB-completion.
+  Cylc can auto-complete prerequisite and output names for tasks in the n=0
+  window, if you type the task name before attempting TAB-completion.
 
 Examples:
   # complete all required outputs of 3/bar:
