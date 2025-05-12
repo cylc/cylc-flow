@@ -276,7 +276,7 @@ class TaskPool:
         self.active_tasks.setdefault(itask.point, {})
         self.active_tasks[itask.point][itask.identity] = itask
         self.active_tasks_changed = True
-        LOG.debug(f"[{itask}] added to active task pool")
+        LOG.debug(f"[{itask}] added to the n=0 window")
 
         self.create_data_store_elements(itask)
 
@@ -893,7 +893,7 @@ class TaskPool:
                 itask.flow_nums
             )
 
-        msg = f"removed from active task pool: {reason or 'completed'}"
+        msg = f"removed from the n=0 window: {reason or 'completed'}"
 
         if itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)

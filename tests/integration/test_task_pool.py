@@ -1267,7 +1267,7 @@ async def test_set_failed_complete(
         schd.pool.set_prereqs_and_outputs([one.identity], [], [], ['all'])
 
         assert log_filter(
-            contains=f'[{one}] removed from active task pool: completed')
+            contains=f'[{one}] removed from the n=0 window: completed')
 
         db_outputs = db_select(
             schd, True, 'task_outputs', 'outputs',
@@ -2032,7 +2032,7 @@ async def test_remove_active_task(
 
     assert log_filter(
         regex=(
-            "1/foo.*removed from active task pool:"
+            "1/foo.*removed from the n=0 window:"
             " request - active job orphaned"
         ),
         level=logging.WARNING
@@ -2070,7 +2070,7 @@ async def test_remove_by_suicide(
         # mark 1/a as failed and ensure 1/b is removed by suicide trigger
         schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
         assert log_filter(
-            regex="1/b.*removed from active task pool: suicide trigger"
+            regex="1/b.*removed from the n=0 window: suicide trigger"
         )
         assert schd.pool.get_task_ids() == {"1/a"}
 
@@ -2078,7 +2078,7 @@ async def test_remove_by_suicide(
         log.clear()
         schd.pool.force_trigger_tasks(['1/b'], ['1'])
         assert log_filter(
-            regex='1/b.*added to active task pool',
+            regex='1/b.*added to the n=0 window',
         )
 
         # remove 1/b by request (cylc remove)
@@ -2086,15 +2086,13 @@ async def test_remove_by_suicide(
             commands.remove_tasks(schd, ['1/b'], [FLOW_ALL])
         )
         assert log_filter(
-            regex='1/b.*removed from active task pool: request',
+            regex='1/b.*removed from the n=0 window: request',
         )
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
         schd.pool.force_trigger_tasks(['1/b'], ['1'])
-        assert log_filter(
-            regex='1/b.*added to active task pool',
-        )
+        assert log_filter(regex='1/b.*added to the n=0 window',)
 
 
 async def test_set_future_flow(flow, scheduler, start, log_filter):
