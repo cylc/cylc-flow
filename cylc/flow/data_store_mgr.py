@@ -131,7 +131,6 @@ DELTA_ADDED = 'added'
 DELTA_UPDATED = 'updated'
 DELTA_PRUNED = 'pruned'
 LATEST_STATE_TASKS_QUEUE_SIZE = 5
-XTRIGGER_DELIM = '|-|'
 
 MESSAGE_MAP = {
     EDGES: PbEdge,
@@ -1521,7 +1520,7 @@ class DataStoreMgr:
         for label, satisfied in itask.state.xtriggers.items():
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
-            xtrig = tproxy.xtriggers[f'{sig}{XTRIGGER_DELIM}{label}']
+            xtrig = tproxy.xtriggers[f'{label}={sig}']
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
@@ -1890,7 +1889,7 @@ class DataStoreMgr:
             if tp_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(tp_id)
             for xid in node.xtriggers:
-                sig, label = xid.split(XTRIGGER_DELIM)
+                label, sig = xid.split('=', 1)
                 self.xtrigger_tasks[sig].remove((tp_id, label))
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
@@ -2529,7 +2528,7 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{t_update}'
-        xtrigger = tp_delta.xtriggers[f'{sig}{XTRIGGER_DELIM}{label}']
+        xtrigger = tp_delta.xtriggers[f'{label}={sig}']
         xtrigger.id = sig
         xtrigger.label = label
         xtrigger.satisfied = satisfied
