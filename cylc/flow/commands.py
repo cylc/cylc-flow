@@ -197,7 +197,7 @@ async def stop(
         # schedule shutdown after wallclock time passes provided time
         parser = TimePointParser()
         schd.set_stop_clock(
-            int(parser.parse(clock_time).seconds_since_unix_epoch)
+            parser.parse(clock_time).seconds_since_unix_epoch
         )
         schd._update_workflow_state()
     elif task is not None:
