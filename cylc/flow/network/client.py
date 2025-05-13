@@ -69,6 +69,14 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
     method ``async_request()``. This base class provides a ``serial_request()``
     method based on the ``async_request()`` method, callable by ``__call__``.
     It also provides a comms timeout handler method.
+
+    Attributes:
+        workflow: Workflow ID as a string.
+        host: Scheduler host.
+        port: The port being used by this client.
+        timeout: Round trip call-response timeout in seconds.
+        scheduler_version: The Cylc version used by the scheduler.
+
     """
 
     DEFAULT_TIMEOUT = 5  # seconds
@@ -78,15 +86,19 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         workflow: str,
         host: Optional[str] = None,
         port: Union[int, str, None] = None,
+        scheduler_version: Optional[str] = None,
         timeout: Union[float, str, None] = None
     ):
         self.workflow = workflow
-        if not host or not port:
-            host, port, _ = get_location(workflow)
+        if not host or not port or not scheduler_version:
+            host, port, _, scheduler_version = get_location(workflow)
         else:
+            # optimisation: don't need to load the contact file if we
+            # already know all the required information
             port = int(port)
         self.host = self._orig_host = host
         self.port = self._orig_port = port
+        self.scheduler_version = scheduler_version
         self.timeout = (
             float(timeout) if timeout is not None else self.DEFAULT_TIMEOUT
         )
@@ -146,7 +158,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
-        contact_host, contact_port, _ = get_location(self.workflow)
+        contact_host, contact_port, *_ = get_location(self.workflow)
         if (
             contact_host != get_fqdn_by_host(self._orig_host)
             or contact_port != self._orig_port
@@ -252,11 +264,19 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         host: Optional[str] = None,
         port: Union[int, str, None] = None,
         timeout: Union[float, str, None] = None,
+        scheduler_version: Optional[str] = None,
         context: Optional[zmq.asyncio.Context] = None,
         srv_public_key_loc: Optional[str] = None
     ):
         ZMQSocketBase.__init__(self, zmq.REQ, workflow, context=context)
-        WorkflowRuntimeClientBase.__init__(self, workflow, host, port, timeout)
+        WorkflowRuntimeClientBase.__init__(
+            self,
+            workflow,
+            host,
+            port,
+            scheduler_version,
+            timeout
+        )
         # convert to milliseconds:
         self.timeout *= 1000
         self.poller: Any = None
