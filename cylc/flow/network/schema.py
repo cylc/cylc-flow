@@ -639,6 +639,11 @@ TaskRunMode = graphene.Enum(
 )
 
 
+class LogRecord(ObjectType):
+    level = String()
+    message = String()
+
+
 class Workflow(ObjectType):
     class Meta:
         description = 'Global workflow info.'
@@ -828,6 +833,18 @@ class Workflow(ObjectType):
             The maximum graph distance (n) from an active node
             of the data-store graph window.
         '''),
+    )
+    log_records = graphene.List(
+        LogRecord,
+        description=sstrip('''
+            Scheduler log messages of level WARNING and above.
+
+            Warning: This is an incrementally updated field. Each update
+            contains a list of **new** log messages, not a list of all
+            messages. It is down to the client to store / preserve previous
+            records.
+        '''),
+        default_value=[],
     )
 
 

@@ -73,9 +73,25 @@ import zlib
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
-    PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
-    PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
-    FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
+    AllDeltas,
+    EDeltas,
+    FDeltas,
+    FPDeltas,
+    JDeltas,
+    PbEdge,
+    PbEntireWorkflow,
+    PbFamily,
+    PbFamilyProxy,
+    PbJob,
+    PbLogRecord,
+    PbRuntime,
+    PbTask,
+    PbTaskProxy,
+    PbWorkflow,
+    TDeltas,
+    TPDeltas,
+    WDeltas,
+)
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
@@ -114,6 +130,7 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
+    from logging import LogRecord
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
@@ -2279,6 +2296,20 @@ class DataStoreMgr:
                 node_delta = self.updated[node_type].setdefault(
                     node_id, MESSAGE_MAP[node_type](id=node_id))
                 node_delta.runtime.CopyFrom(new_runtime)
+
+    def delta_log_record(self, record: 'LogRecord') -> None:
+        w_delta = self.updated[WORKFLOW]
+        w_delta.id = self.workflow_id
+        w_delta.last_updated = time()
+        w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+        if not hasattr(w_delta, 'log_records'):
+            w_delta.log_records = []
+        w_delta.log_records.append(
+            PbLogRecord(level=record.levelname, message=record.message)
+        )
+
+        self.updates_pending = True
 
     # -----------
     # Task Deltas
