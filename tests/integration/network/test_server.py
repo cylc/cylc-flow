@@ -63,9 +63,10 @@ def test_graphql_error(myflow):
             }}
         }}
     '''
-    errors = myflow.server.graphql(request_string)
-    for error in errors:
-        assert 'notafield' in f'{error}'
+    with pytest.raises(Exception) as excinfo:
+        myflow.server.graphql(request_string)
+        assert "Cannot query field 'notafield'" in excinfo
+        assert "Cannot query field 'alsonotafield'" in excinfo
 
 
 def test_pb_data_elements(myflow):
