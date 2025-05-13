@@ -2207,7 +2207,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
         """List xtrigs from the data_store_mgr."""
         await schd.update_data_structure()
         return {
-            value.label: key
+            value.label: value.id
             for key, value in schd.data_store_mgr.data[schd.tokens.id][
                 TASK_PROXIES
             ][

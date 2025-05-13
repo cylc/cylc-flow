@@ -146,11 +146,13 @@ async def xharness(mod_flow, mod_scheduler, mod_start):
         'scheduling': {
             'xtriggers': {
                 'x': 'xrandom(0)',
+                'x2': 'xrandom(0)',
                 'y': 'xrandom(0, _=1)'
             },
             'graph': {
                 'R1': """
                     @x => foo
+                    @x2 => foo
                     @y => foo
                     @x => bar
                 """
@@ -493,9 +495,10 @@ def test_delta_task_xtrigger(xharness):
     foo = schd.pool._get_task_by_id('1/foo')
     bar = schd.pool._get_task_by_id('1/bar')
 
-    assert not foo.state.xtriggers['x']  # not satisfied
-    assert not foo.state.xtriggers['y']  # not satisfied
-    assert not bar.state.xtriggers['x']  # not satisfied
+    assert not foo.state.xtriggers['x']   # not satisfied
+    assert not foo.state.xtriggers['x2']  # not satisfied
+    assert not foo.state.xtriggers['y']   # not satisfied
+    assert not bar.state.xtriggers['x']   # not satisfied
 
     # satisfy foo's dependence on x
     schd.pool.set_prereqs_and_outputs(
@@ -513,7 +516,7 @@ def test_delta_task_xtrigger(xharness):
     # data store should have one updated task proxy with satisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig.label == 'x'
     assert xtrig.satisfied
 
@@ -528,10 +531,10 @@ def test_delta_task_xtrigger(xharness):
     # check the task pool
     assert not foo.state.xtriggers['x']  # not satisfied
 
-    # data store should have one updated task proxy with satisfied xtrigger x
+    # data store should have one updated task proxy with unsatisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig.label == 'x'
     assert not xtrig.satisfied
 
@@ -551,11 +554,16 @@ def test_delta_task_xtrigger(xharness):
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
 
-    xtrig_x = pbfoo.xtriggers['xrandom(0)']
+    xtrig_x = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig_x.label == 'x'
     assert xtrig_x.satisfied
 
-    xtrig_y = pbfoo.xtriggers['xrandom(0, _=1)']
+    # updated task proxy should also contain duplicate xtrigger labels
+    xtrig_x2 = pbfoo.xtriggers['x2=xrandom(0)']
+    assert xtrig_x2.label == 'x2'
+    assert xtrig_x2.satisfied
+
+    xtrig_y = pbfoo.xtriggers['y=xrandom(0, _=1)']
     assert xtrig_y.label == 'y'
     assert xtrig_y.satisfied
 
