@@ -32,8 +32,6 @@ from typing import (
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
-from graphql.pyutils import is_awaitable
-
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
@@ -45,7 +43,6 @@ from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.network.graphql import (
     CylcExecutionContext,
     IgnoreFieldMiddleware,
-    execution_result_to_dict,
     instantiate_middleware,
 )
 from cylc.flow.network.publisher import WorkflowPublisher
@@ -55,8 +52,6 @@ from cylc.flow.network.schema import schema
 
 
 if TYPE_CHECKING:
-    from graphql.execution import ExecutionResult
-
     from cylc.flow.network import ResponseDict
     from cylc.flow.scheduler import Scheduler
 
@@ -404,26 +399,25 @@ class WorkflowRuntimeServer:
         Returns:
             object: Execution result, or a list with errors.
         """
-        executed: 'ExecutionResult' = schema.execute_async(
-            request_string,
-            variable_values=variables,
-            context_value={
-                'resolvers': self.resolvers,
-                'meta': meta or {},
-            },
-            middleware=list(instantiate_middleware(self.middleware)),
-            execution_context_class=CylcExecutionContext,
+        executed = self.loop.run_until_complete(
+            schema.execute_async(
+                request_string,
+                variable_values=variables,
+                context_value={
+                    'resolvers': self.resolvers,
+                    'meta': meta or {},
+                },
+                middleware=list(instantiate_middleware(self.middleware)),
+                execution_context_class=CylcExecutionContext,
+            )
         )
-        if is_awaitable(executed):
-            executed = self.loop.run_until_complete(executed)
-        result = execution_result_to_dict(executed)
-        if result.get('errors'):
-            # If there are execution errors log and return the errors,
-            # don't raise them and end the server over a bad query.
-            for error in result['errors']:
+        if executed.errors:
+            for error in executed.errors:
                 LOG.warning(f"GraphQL: {error}")
-            return result['errors']
-        return result.get('data')
+            # If there are execution errors, it means there was an unexpected
+            # error, so fail the command.
+            raise Exception(*(error.message for error in executed.errors))
+        return executed.data
 
     # UIServer Data Commands
     @expose
