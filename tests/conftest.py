@@ -21,6 +21,7 @@ from shutil import rmtree
 from typing import List, Optional, Tuple
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow import LOG, flags
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -40,7 +41,7 @@ def before_each():
     GraphNodeParser.get_inst().clear()
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_monkeypatch():
     """A module-scoped version of the monkeypatch fixture."""
     from _pytest.monkeypatch import MonkeyPatch
@@ -160,7 +161,7 @@ def log_scan():
     return _log_scan
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def port_range():
     return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
 

@@ -25,6 +25,7 @@ import logging
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow import __version__
 from cylc.flow.scheduler import Scheduler
@@ -173,7 +174,7 @@ async def test_exception(one, run, log_filter):
     assert one.server.replier.socket.closed
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def myflow(mod_flow, mod_scheduler, mod_one_conf):
     """You can save setup/teardown time by reusing fixtures
 

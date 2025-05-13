@@ -19,6 +19,7 @@ import sys
 from typing import Callable
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.server import PB_METHOD_MAP
@@ -31,7 +32,7 @@ else:
     from async_timeout import timeout
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     id_ = mod_flow(mod_one_conf)
     schd = mod_scheduler(id_)
