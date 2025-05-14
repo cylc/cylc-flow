@@ -70,6 +70,15 @@ CLI Completion:
   Cylc can auto-complete prerequisite and output names for tasks in the n=0
   window, if you type the task name before attempting TAB-completion.
 
+The `cylc trigger` command provides an easy way to rerun a sub-graph of tasks.
+To do the same thing with lower-level `cylc set` commands takes more effort:
+  * Identify start tasks and off-group prerequisites by examining the graph;
+  * Use `cylc remove` to erase flow history and allow rerun in the same flow
+    (or else use `--flow` options to start a new flow, in the next steps);
+  * Use `cylc set` to satisfy off-group prerequisites (including those of the
+    start tasks), to start the flow and prevent a stall; or trigger just the
+    start tasks and use `cylc set` to satisfy other off-group prerequisites.
+
 Examples:
   # complete all required outputs of 3/bar:
   $ cylc set my_workflow//3/bar

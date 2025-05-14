@@ -57,7 +57,7 @@ async def checker(
         await mod_complete(schd)
 
         # trigger a new task in flow 2
-        schd.pool.force_trigger_tasks(['1000/good'], ['2'])
+        schd.force_trigger_tasks(['1000/good'], ['2'])
 
         # update the database
         schd.process_workflow_db_queue()

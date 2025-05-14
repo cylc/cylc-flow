@@ -356,8 +356,8 @@ class TaskState:
             for preq in preqs:
                 preq.is_satisfied()
 
-    def set_prerequisites_all_satisfied(self):
-        """Set prerequisites to all satisfied."""
+    def set_all_task_prerequisites_satisfied(self):
+        """Set all task prerequisites satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
 
