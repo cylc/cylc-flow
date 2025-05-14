@@ -251,7 +251,12 @@ async def _run(
     else:
         mode = WorkflowStopMode.Clean.name
 
-    if options.flow_num is not None and options.flow_num.isdigit():
+    if (
+        options.flow_num is not None
+        and hasattr(options.flow_num, 'isdigit')
+        and options.flow_num.isdigit()
+    ):
+        # flow num gql type is int
         options.flow_num = int(options.flow_num)
 
     mutation_kwargs = {

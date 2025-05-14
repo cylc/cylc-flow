@@ -209,6 +209,12 @@ async def stop(
     else:
         # immediate shutdown
         try:
+            # BACK COMPAT: mode=None
+            #     the mode can be `None` for commands issued from older Cylc
+            #     versions
+            # From: 8.4
+            # To: 8.5
+            # Remove at: 8.x
             mode = StopMode(mode.value) if mode else StopMode.REQUEST_CLEAN
         except ValueError:
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
