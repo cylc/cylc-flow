@@ -675,6 +675,11 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
+        # BACK COMPAT: transform "None" to "[]"
+        # url: https://github.com/cylc/cylc-flow/pull/6478
+        # from: <8.5.0
+        # to: >=8.5.0
+        # remove at: 8.x
         # For back compat, with gql-v3 None will not use default_value.
         if 'flow' in kwargs:
             kwargs['flow'] = kwargs['flow'] or []
