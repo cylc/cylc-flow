@@ -26,6 +26,13 @@ CHANGE_PREFIX_SET = "+"
 CHANGE_TITLE_CANCEL = "Broadcast cancelled:"
 CHANGE_TITLE_SET = "Broadcast set:"
 
+CLI_OPT_MAP = {
+    # broadcast field: cli option
+    'point_strings': 'point',
+    'namespaces': 'namespace',
+    'settings': 'set',
+}
+
 
 def get_broadcast_bad_options_report(bad_options, is_set=False):
     """Return a string to report bad options for broadcast cancel/clear."""
@@ -48,7 +55,11 @@ def get_broadcast_bad_options_report(bad_options, is_set=False):
                         value_str += val
             else:
                 value_str = value
-            msg += BAD_OPTIONS_FMT % (key, value_str)
+            if isinstance(value, dict):
+                value_str = ', '.join(
+                    f'{key}={val}' for key, val in value.items()
+                )
+            msg += BAD_OPTIONS_FMT % (CLI_OPT_MAP.get(key, key), value_str)
     return msg
 
 
