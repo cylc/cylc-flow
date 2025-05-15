@@ -21,6 +21,7 @@ NOTE: these are functional tests, for unit tests see the docstrings in
 
 """
 import logging
+from secrets import token_hex
 import socket
 
 import pytest
@@ -75,9 +76,18 @@ def test_filter():
         select_host(
             [localhost],
             blacklist=[localhost],
-            blacklist_name='Localhost not allowed'
+            blacklist_name=message
         )
     assert message in str(excinfo.value)
+
+
+def test_filter_invalid_blacklist(log_filter):
+    """Test that invalid blacklist doesn't bring down the program."""
+    result = select_host(
+        [localhost], blacklist=[f'non_exist_{token_hex(4)}']
+    )
+    assert result[0] == localhost
+    assert log_filter(logging.WARNING, "Could not resolve blacklisted host")
 
 
 def test_rankings():
@@ -211,7 +221,8 @@ def test_get_metrics_no_hosts_error(caplog):
     If a host is not contactable then it should be shipped.
     """
     caplog.set_level(logging.WARN, CYLC_LOG)
-    host_stats, data = _get_metrics(['not-a-host'], None)
+    data = {}
+    host_stats = _get_metrics(['not-a-host'], None, data)
     # a warning should be logged
     assert len(caplog.records) == 1
     # no data for the host should be returned

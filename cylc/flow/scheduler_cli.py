@@ -608,7 +608,7 @@ def _distribute(
 
     """
     # Check whether a run host is explicitly specified, else select one.
-    host = options.host or select_workflow_host()[0]
+    host = options.host or select_workflow_host()[1]
     if is_remote_host(host):
         # Protect command args from second shell interpretation
         cmd = list(map(quote, sys.argv[1:]))
@@ -641,8 +641,9 @@ def _distribute(
         # Re-invoke the command
         # NOTE: has the potential to raise NoHostsError, however, this will
         # most likely have been raised during host-selection
-        cylc_server_cmd(cmd, host=host)
-        sys.exit(0)
+        sys.exit(
+            cylc_server_cmd(cmd, host=host)
+        )
 
 
 async def _setup(scheduler: Scheduler) -> None:
