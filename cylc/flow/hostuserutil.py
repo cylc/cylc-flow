@@ -206,8 +206,11 @@ class HostUtil:
 
         """
         if name not in self._remote_hosts:
-            if not name or name.startswith("localhost"):
-                # e.g. localhost4.localdomain4
+            if (
+                not name
+                or name.startswith("localhost")  # e.g. localhost4.localdomain4
+                or name == self.get_host()
+            ):
                 self._remote_hosts[name] = False
             else:
                 try:
