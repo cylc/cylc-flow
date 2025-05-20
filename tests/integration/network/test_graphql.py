@@ -16,8 +16,10 @@
 
 """Test the top-level (root) GraphQL queries."""
 
-import pytest
 from typing import TYPE_CHECKING
+
+import pytest
+import pytest_asyncio
 
 from cylc.flow.id import Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
@@ -68,7 +70,7 @@ def job_db_row():
     ]
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     flow_def = {
         'scheduler': {

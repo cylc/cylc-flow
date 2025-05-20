@@ -23,6 +23,7 @@ from tempfile import TemporaryDirectory
 from typing import List
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.network.scan import (
     filter_name,
@@ -81,7 +82,7 @@ def init_flows(tmp_run_path=None, running=None, registered=None,
         make_src(name)
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def sample_run_dir():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
@@ -111,7 +112,7 @@ def badly_messed_up_cylc_run_dir(
     return tmp_path
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def run_dir_with_symlinks():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
@@ -133,7 +134,7 @@ def run_dir_with_symlinks():
     rmtree(tmp_path)
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def run_dir_with_nasty_symlinks():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
@@ -148,7 +149,7 @@ def run_dir_with_nasty_symlinks():
     rmtree(tmp_path)
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def nested_dir():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()

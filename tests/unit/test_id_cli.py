@@ -17,8 +17,10 @@
 import logging
 import os
 from pathlib import Path
-import pytest
 from shutil import copytree, rmtree
+
+import pytest
+import pytest_asyncio
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.async_util import pipe
@@ -42,7 +44,7 @@ def mock_exists(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr('pathlib.Path.exists', lambda *a, **k: True)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def abc_src_dir(tmp_path_factory):
     """Src dir containing three workflows, a, b & c."""
     cwd_before = Path.cwd()
