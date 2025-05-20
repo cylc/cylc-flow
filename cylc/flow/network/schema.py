@@ -1954,6 +1954,11 @@ class Reload(Mutation):
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
 
+        reload_global = Boolean(
+            default_value=False,
+            required=False,
+            description="Reload global config as well as the workflow config")
+
     result = GenericScalar()
 
 
