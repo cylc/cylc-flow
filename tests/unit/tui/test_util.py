@@ -161,7 +161,7 @@ def test_render_node__cycle_point():
         # is-queued modifier
         ('waiting', False, True, False, None, None, ['\u033F', '○']),
         # is-runahead modifier
-        ('waiting', False, False, True, None, None, ['\u030A', '○'])
+        ('waiting', False, False, True, None, None, ['\u0340', '○']),
     ]
 )
 def test_get_task_icon(

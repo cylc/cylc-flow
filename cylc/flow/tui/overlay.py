@@ -65,7 +65,8 @@ from cylc.flow.tui.data import (
 )
 from cylc.flow.tui.util import (
     ListBoxPlus,
-    format_flow_nums,
+    MODIFIER_ATTR_MAPPING,
+    get_status_str,
     get_task_icon,
     get_text_dimensions,
 )
@@ -219,6 +220,7 @@ def help_info(app):
             keystr = ' '.join(binding['keys'])
             items.append(
                 urwid.Text([
+                    ('  '),
                     ('key', keystr),
                     (' ' * (10 - len(keystr))),
                     binding['desc']
@@ -243,38 +245,26 @@ def help_info(app):
     for state in TASK_STATUSES_ORDERED:
         items.append(
             urwid.Text(
-                get_task_icon(state, colour='overlay')
+                ['  ']
+                + get_task_icon(state, colour='overlay')
                 + [' ', state]
             )
         )
+
     items.append(urwid.Divider())
     items.append(urwid.Text('Special States:'))
-    items.append(
-        urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_held=True, colour='overlay')
-            + [' ', 'held']
-        )
-    )
-    items.append(
-        urwid.Text(
-            get_task_icon(
-                TASK_STATUS_WAITING,
-                is_queued=True,
-                colour='overlay',
+    for modifier_text, (modifier_attr, _) in MODIFIER_ATTR_MAPPING.items():
+        items.append(
+            urwid.Text(
+                ['  ']
+                + get_task_icon(
+                    TASK_STATUS_WAITING,
+                    **{modifier_attr: True},
+                    colour='overlay'
+                )
+                + [' ', modifier_text]
             )
-            + [' ', 'queued']
         )
-    )
-    items.append(
-        urwid.Text(
-            get_task_icon(
-                TASK_STATUS_WAITING,
-                is_runahead=True,
-                colour='overlay',
-            )
-            + [' ', 'runahead']
-        )
-    )
 
     # list job states
     items.append(urwid.Divider())
@@ -283,6 +273,7 @@ def help_info(app):
         items.append(
             urwid.Text(
                 [
+                    '  ',
                     (f'overlay_job_{state}', JOB_ICON),
                     ' ',
                     state
@@ -329,31 +320,10 @@ def context(app):
 
     # determine the ID to display for the context menu
     display_id = _get_display_id(value['id_'])
-    header = [f'id: {display_id}']
-    attrs = []
-
-    # workflow state info
-    if value['data'].get('status'):
-        attrs.append(value['data']['status'])
-
-    # task state info
-    if value['data'].get('state'):
-        attrs.append(
-            value['data']['state']
-            + (
-                ' (held)' if value['data'].get('isHeld')
-                else ' (queued)' if value['data'].get('isQueued')
-                else '(runahead)' if value['data'].get('isRunahead')
-                else ''
-            )
-        )
-
-    # task flow info
-    if value['data'].get('flowNums', '[1]') != '[1]':
-        attrs.append(f'flows={format_flow_nums(value["data"]["flowNums"])}')
-
-    if attrs:
-        header.append(', '.join(attrs))
+    header = [
+        f'id: {display_id}',
+        get_status_str(value['data']),
+    ]
 
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(

@@ -1526,6 +1526,8 @@ class DataStoreMgr:
             xtrig.satisfied = satisfied
             self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
 
+        self._set_task_xtrigger_modifiers(tproxy)
+
         if tproxy.state in self.latest_state_tasks:
             tp_ref = itask.identity
             tp_queue = self.latest_state_tasks[tproxy.state]
@@ -2013,6 +2015,15 @@ class DataStoreMgr:
         if self.updated_state_families:
             self.state_update_follow_on = True
 
+    @staticmethod
+    def from_delta_or_node(tp_delta, tp_node, label):
+        """Get an item from task proxy delta if available, falling back to
+        node otherwise."""
+        this = tp_delta
+        if this is None or not this.HasField(label):
+            this = tp_node
+        return getattr(this, label) or None
+
     def _family_ascent_point_update(self, fp_id):
         """Updates the given family and children recursively.
 
@@ -2051,6 +2062,9 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            is_retry = False
+            is_wallclock = False
+            is_xtriggered = False
             graph_depth = self.n_edge_distance
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
@@ -2070,30 +2084,27 @@ class DataStoreMgr:
                 tp_delta = tp_updated.get(tp_id)
                 tp_node = tp_added.get(tp_id, tp_data.get(tp_id))
 
-                tp_state = tp_delta
-                if tp_state is None or not tp_state.HasField('state'):
-                    tp_state = tp_node
-                if tp_state.state:
-                    task_states.append(tp_state.state)
+                tp_state = self.from_delta_or_node(tp_delta, tp_node, 'state')
+                if tp_state:
+                    task_states.append(tp_state)
 
-                tp_held = tp_delta
-                if tp_held is None or not tp_held.HasField('is_held'):
-                    tp_held = tp_node
-                if tp_held.is_held:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_held'):
                     is_held_total += 1
 
-                tp_queued = tp_delta
-                if tp_queued is None or not tp_queued.HasField('is_queued'):
-                    tp_queued = tp_node
-                if tp_queued.is_queued:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
                     is_queued_total += 1
 
-                tp_runahead = tp_delta
-                if (tp_runahead is None
-                        or not tp_runahead.HasField('is_runahead')):
-                    tp_runahead = tp_node
-                if tp_runahead.is_runahead:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_runahead'):
                     is_runahead_total += 1
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_retry'):
+                    is_retry = True
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_wallclock'):
+                    is_wallclock = True
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_xtriggered'):
+                    is_xtriggered = True
 
                 tp_depth = tp_delta
                 if tp_depth is None or not tp_depth.HasField('graph_depth'):
@@ -2113,7 +2124,10 @@ class DataStoreMgr:
                 is_queued_total=is_queued_total,
                 is_runahead=(is_runahead_total > 0),
                 is_runahead_total=is_runahead_total,
-                graph_depth=graph_depth
+                is_retry=is_retry,
+                is_wallclock=is_wallclock,
+                is_xtriggered=is_xtriggered,
+                graph_depth=graph_depth,
             )
             fp_delta.states[:] = state_counter.keys()
             # Use all states to clean up pruned counts
@@ -2521,19 +2535,72 @@ class DataStoreMgr:
         ext_trigger.time = update_time
         self.updates_pending = True
 
+    @staticmethod
+    def _set_task_xtrigger_modifiers(node_or_delta):
+        # update the xtrigger task modifiers
+        node_or_delta.is_retry = False
+        node_or_delta.is_wallclock = False
+        node_or_delta.is_xtriggered = False
+        for xtrigger in node_or_delta.xtriggers.values():
+            if xtrigger.satisfied:
+                continue
+            if (
+                xtrigger.label.startswith('_cylc_retry')
+                or xtrigger.label.startswith('_cylc_submit_retry')
+            ):
+                node_or_delta.is_retry = True
+            elif xtrigger.id.startswith('wall_clock'):
+                node_or_delta.is_wallclock = True
+            else:
+                node_or_delta.is_xtriggered = True
+
     def _delta_xtrigger(
-        self, tp_id: str, label: str, sig: str, satisfied: bool,
-        t_update: float
+        self,
+        tp_id: str,
+        label: str,
+        sig: str,
+        satisfied: bool,
+        update_time: float,
     ) -> None:
         """Helper for the two xtrigger delta methods."""
+        # fetch the task from the store
+        tp_id, tproxy = self.store_node_fetcher(Tokens(tp_id))
+        if not tproxy:
+            return
+
+        # create or fetch the updated delta
         tp_delta = self.updated[TASK_PROXIES].setdefault(
-            tp_id, PbTaskProxy(id=tp_id))
-        tp_delta.stamp = f'{tp_id}@{t_update}'
+            tp_id, PbTaskProxy(id=tp_id)
+        )
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+
+        # populate all xtriggers on the delta if not already present
+        if not tp_delta.xtriggers:
+            # NOTE: if one xtrigger changes, we must include all in the
+            # delta, see https://github.com/cylc/cylc-flow/issues/6307
+            for _sig, xtrigger in tproxy.xtriggers.items():
+                if _sig == sig:
+                    # don't copy the xtrigger we are changing
+                    continue
+                _xtrigger = tp_delta.xtriggers[_sig]
+                _xtrigger.id = xtrigger.id
+                _xtrigger.label = xtrigger.label
+                _xtrigger.satisfied = xtrigger.satisfied
+                _xtrigger.time = xtrigger.time
+
+        # modify the xtrigger that has changed
         xtrigger = tp_delta.xtriggers[sig]
         xtrigger.id = sig
         xtrigger.label = label
         xtrigger.satisfied = satisfied
-        xtrigger.time = t_update
+        xtrigger.time = update_time
+
+        # update the xtrigger task modifiers
+        self._set_task_xtrigger_modifiers(tp_delta)
+
+        # ensure family modifier counts are updated
+        self.state_update_families.add(tproxy.first_parent)
+
         self.updates_pending = True
 
     def delta_xtrigger(self, sig: str, succeeded: bool) -> None:

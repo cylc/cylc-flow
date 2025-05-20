@@ -478,7 +478,8 @@ async def graphql_query(flow: dict, fields: Iterable, filters=None):
             flow['name'],
             # use contact_info data if present for efficiency
             host=flow.get('CYLC_WORKFLOW_HOST'),
-            port=flow.get('CYLC_WORKFLOW_PORT')
+            port=flow.get('CYLC_WORKFLOW_PORT'),
+            scheduler_version=flow.get('CYLC_VERSION'),
         )
     except WorkflowStopped:
         LOG.warning(f'Workflow not running: {flow["name"]}')
