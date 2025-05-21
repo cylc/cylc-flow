@@ -56,8 +56,8 @@ from cylc.flow.cycling.loader import (
 )
 from cylc.flow.cycling.nocycle import (
     NocycleSequence,
-    NOCYCLE_SEQ_ALPHA,
-    NOCYCLE_SEQ_OMEGA
+    NOCYCLE_SEQ_STARTUP,
+    NOCYCLE_SEQ_SHUTDOWN
 )
 from cylc.flow.id import Tokens
 from cylc.flow.cycling.integer import IntegerInterval
@@ -628,16 +628,16 @@ class WorkflowConfig:
             all(
                 seq in [
                     'R1',
-                    str(NOCYCLE_SEQ_ALPHA),
-                    str(NOCYCLE_SEQ_OMEGA),
+                    str(NOCYCLE_SEQ_STARTUP),
+                    str(NOCYCLE_SEQ_SHUTDOWN),
                     'graph',  # Cylc 7 back-compat
                     '1'  # Cylc 7 back-compat?
                 ]
                 for seq in graphdict
             )
         ):
-            # Pure acyclic graph, assume integer cycling mode with '1' cycle
-            # Note typos in "alpha", "omega", or "R1" will appear as cyclic
+            # Non-cycling graph, assume integer cycling mode with '1' cycle.
+            # Typos in "startup", "shutdown", or "R1" will appear as cycling
             # here, but will be fatal later during proper recurrance checking.
 
             self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
@@ -2273,7 +2273,7 @@ class WorkflowConfig:
                 seq = get_sequence(section, icp, fcp)
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
                 try:
-                    # is it an alpha or omega graph?
+                    # is it a startup or shutdown graph?
                     seq = NocycleSequence(section)
                 except ValueError:
                     if cylc.flow.flags.verbosity > 1:

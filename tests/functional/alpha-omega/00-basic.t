@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check basic separate triggering of alpha, omega, and main graphs.
+# Check basic separate triggering of startup, shutdown, and main graphs.
 . "$(dirname "$0")/test_header"
 set_test_number 3
 

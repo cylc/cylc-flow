@@ -3,10 +3,10 @@
     cycling mode = integer
     final cycle point = 2
     [[graph]]
-        alpha = "a => b"
+        startup = "a => b"
         R1 = "foo => bar"
         P1 = "bar[-P1] => bar => baz"
-        omega = "x => y"
+        shutdown = "x => y"
 [runtime]
     [[STOP]]
         script = cylc stop $CYLC_WORKFLOW_ID

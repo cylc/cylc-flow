@@ -249,7 +249,7 @@ class TaskPool:
             self.active_tasks_changed = True
 
     def load_nocycle_graph(self, seq):
-        """Load task pool for a no-cycle (alpha or omega) graph."""
+        """Load task pool for a no-cycle (startup or shutdown) graph."""
 
         LOG.info(f"Loading {seq} graph")
         # Always start flow 1 for automatic load from start of a graph.

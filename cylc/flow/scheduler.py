@@ -75,10 +75,10 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.nocycle import (
     NOCYCLE_POINTS,
-    NOCYCLE_PT_ALPHA,
-    NOCYCLE_PT_OMEGA,
-    NOCYCLE_SEQ_ALPHA,
-    NOCYCLE_SEQ_OMEGA
+    NOCYCLE_PT_STARTUP,
+    NOCYCLE_PT_SHUTDOWN,
+    NOCYCLE_SEQ_STARTUP,
+    NOCYCLE_SEQ_SHUTDOWN
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.exceptions import (
@@ -661,7 +661,7 @@ class Scheduler:
                 )
 
     async def _get_graph_loaders(self) -> None:
-        """Tee up the loaders for configured graphs (alpha, main, omega).
+        """Tee up the loaders for configured graphs (startup, main, shutdown).
 
         A graph loader loads the task pool with the graph's parentless tasks
         to get the graph started.
@@ -678,14 +678,14 @@ class Scheduler:
             return
 
         if (
-            NOCYCLE_SEQ_OMEGA in self.config.nocycle_sequences
+            NOCYCLE_SEQ_SHUTDOWN in self.config.nocycle_sequences
             and (
-                not points or NOCYCLE_PT_OMEGA not in points
+                not points or NOCYCLE_PT_SHUTDOWN not in points
             )
         ):
-            # Omega section exists and hasn't started yet.
+            # shutdown section exists and hasn't started yet.
             self.graph_loaders.append(
-                partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_OMEGA)
+                partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_SHUTDOWN)
             )
 
         if (
@@ -693,12 +693,12 @@ class Scheduler:
                 not points
                 or (
                     not any(p not in NOCYCLE_POINTS for p in points)
-                    and NOCYCLE_PT_OMEGA not in points
+                    and NOCYCLE_PT_SHUTDOWN not in points
                 )
             )
         ):
-            # Main graph exists, and hasn't started yet.
-            # (And hasn't already run, or the pool would contain omega tasks).
+            # Main graph exists, and hasn't started yet (and hasn't
+            # already run, or the pool would contain shutdown tasks.
             if self.options.starttask:
                 # Cold start from specified tasks.
                 self.graph_loaders.append(self._load_pool_from_tasks)
@@ -707,15 +707,15 @@ class Scheduler:
                 self.graph_loaders.append(self._load_pool_from_point)
 
         if (
-            NOCYCLE_SEQ_ALPHA in self.config.nocycle_sequences
+            NOCYCLE_SEQ_STARTUP in self.config.nocycle_sequences
             and (
                 not self.is_restart
             )
         ):
-            # Alpha section exists and hasn't started yet.
+            # startup section exists and hasn't started yet.
             # (Not in a restart - the pool would already be loaded from DB).
             self.graph_loaders.append(
-                partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_ALPHA)
+                partial(self.pool.load_nocycle_graph, NOCYCLE_SEQ_STARTUP)
             )
 
     async def run_graphs(self):
@@ -964,11 +964,11 @@ class Scheduler:
         self.restart_remote_init()
         # Poll all pollable tasks
         await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
-        # Current cycle point globs don't match alpha and omega:
+        # Current cycle point globs don't match startup and shutdown:
         await commands.run_cmd(
-            commands.poll_tasks(self, [f"{NOCYCLE_PT_ALPHA}/*"]))
+            commands.poll_tasks(self, [f"{NOCYCLE_PT_STARTUP}/*"]))
         await commands.run_cmd(
-            commands.poll_tasks(self, [f"{NOCYCLE_PT_OMEGA}/*"]))
+            commands.poll_tasks(self, [f"{NOCYCLE_PT_SHUTDOWN}/*"]))
 
         # If we shut down with manually triggered waiting tasks,
         # submit them to run now.

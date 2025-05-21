@@ -21,12 +21,12 @@ Cycling logic for isolated non-cycling startup and shutdown graphs.
 from cylc.flow.cycling import PointBase, SequenceBase
 
 # cycle point values
-NOCYCLE_PT_ALPHA = "alpha"
-NOCYCLE_PT_OMEGA = "omega"
+NOCYCLE_PT_STARTUP = "startup"
+NOCYCLE_PT_SHUTDOWN = "shutdown"
 
 NOCYCLE_POINTS = (
-    NOCYCLE_PT_ALPHA,
-    NOCYCLE_PT_OMEGA
+    NOCYCLE_PT_STARTUP,
+    NOCYCLE_PT_SHUTDOWN
 )
 
 CYCLER_TYPE_NOCYCLE = "nocycle"
@@ -46,20 +46,20 @@ class NocyclePoint(PointBase):
     def __init__(self, value: str) -> None:
         """Initialise a nocycle point.
 
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA)
-        alpha
+        >>> NocyclePoint(NOCYCLE_PT_STARTUP)
+        startup
         >>> NocyclePoint("beta")
         Traceback (most recent call last):
         ValueError: Illegal Nocycle value 'beta'
         """
-        if value not in [NOCYCLE_PT_ALPHA, NOCYCLE_PT_OMEGA]:
+        if value not in [NOCYCLE_PT_STARTUP, NOCYCLE_PT_SHUTDOWN]:
             raise ValueError(f"Illegal Nocycle value '{value}'")
         self.value = value
 
     def __hash__(self):
         """Hash it.
 
-        >>> bool(hash(NocyclePoint(NOCYCLE_PT_ALPHA)))
+        >>> bool(hash(NocyclePoint(NOCYCLE_PT_STARTUP)))
         True
         """
         return hash(self.value)
@@ -67,9 +67,11 @@ class NocyclePoint(PointBase):
     def __eq__(self, other):
         """Equality.
 
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) == NocyclePoint(NOCYCLE_PT_ALPHA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) ==
+        ... NocyclePoint(NOCYCLE_PT_STARTUP))
         True
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) == NocyclePoint(NOCYCLE_PT_OMEGA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) ==
+        ... NocyclePoint(NOCYCLE_PT_SHUTDOWN))
         False
         """
         return str(other) == str(self.value)
@@ -77,9 +79,11 @@ class NocyclePoint(PointBase):
     def __le__(self, other):
         """Less than or equal (only if equal).
 
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) <= NocyclePoint(NOCYCLE_PT_ALPHA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) <=
+        ... NocyclePoint(NOCYCLE_PT_STARTUP))
         True
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) <= NocyclePoint(NOCYCLE_PT_OMEGA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) <=
+        ... NocyclePoint(NOCYCLE_PT_SHUTDOWN))
         False
         """
         return str(other) == self.value
@@ -87,28 +91,32 @@ class NocyclePoint(PointBase):
     def __lt__(self, other):
         """Less than (never).
 
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) < NocyclePoint(NOCYCLE_PT_ALPHA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) <
+        ... NocyclePoint(NOCYCLE_PT_STARTUP))
         False
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) < NocyclePoint(NOCYCLE_PT_OMEGA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) <
+        ... NocyclePoint(NOCYCLE_PT_SHUTDOWN))
         False
         """
         return False
 
     def __gt__(self, other):
         """Greater than (never).
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) > NocyclePoint(NOCYCLE_PT_ALPHA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) >
+        ... NocyclePoint(NOCYCLE_PT_STARTUP))
         False
-        >>> NocyclePoint(NOCYCLE_PT_ALPHA) > NocyclePoint(NOCYCLE_PT_OMEGA)
+        >>> (NocyclePoint(NOCYCLE_PT_STARTUP) >
+        ... NocyclePoint(NOCYCLE_PT_SHUTDOWN))
         False
         """
         return False
 
     def __str__(self):
         """
-        >>> str(NocyclePoint(NOCYCLE_PT_ALPHA))
-        'alpha'
-        >>> str(NocyclePoint(NOCYCLE_PT_OMEGA))
-        'omega'
+        >>> str(NocyclePoint(NOCYCLE_PT_STARTUP))
+        'startup'
+        >>> str(NocyclePoint(NOCYCLE_PT_SHUTDOWN))
+        'shutdown'
         """
         return self.value
 
@@ -130,15 +138,15 @@ class NocycleSequence(SequenceBase):
     def __init__(self, dep_section, p_context_start=None, p_context_stop=None):
         """Workflow cycling context is ignored.
 
-        >>> NocycleSequence("alpha").point
-        alpha
+        >>> NocycleSequence("startup").point
+        startup
         """
         self.point = NocyclePoint(dep_section)
 
     def __hash__(self):
         """Hash it.
 
-        >>> bool(hash(NocycleSequence("alpha")))
+        >>> bool(hash(NocycleSequence("startup")))
         True
         """
         return hash(str(self.point))
@@ -146,9 +154,9 @@ class NocycleSequence(SequenceBase):
     def is_valid(self, point):
         """Is point on-sequence and in-bounds?
 
-        >>> NocycleSequence("alpha").is_valid("alpha")
+        >>> NocycleSequence("startup").is_valid("startup")
         True
-        >>> NocycleSequence("alpha").is_valid("omega")
+        >>> NocycleSequence("startup").is_valid("shutdown")
         False
         """
         return str(point) == str(self.point)
@@ -156,8 +164,8 @@ class NocycleSequence(SequenceBase):
     def get_first_point(self, point):
         """First point is the only point.
 
-        >>> NocycleSequence("alpha").get_first_point("omega")
-        alpha
+        >>> NocycleSequence("startup").get_first_point("shutdown")
+        startup
         """
         return self.point
 
@@ -170,23 +178,23 @@ class NocycleSequence(SequenceBase):
     def get_next_point(self, point):
         """There is no next point.
 
-        >>> NocycleSequence("alpha").get_next_point("alpha")
+        >>> NocycleSequence("startup").get_next_point("startup")
         """
         return None
 
     def get_next_point_on_sequence(self, point):
         """There is no next point.
 
-        >>> NocycleSequence("alpha").get_next_point_on_sequence("alpha")
+        >>> NocycleSequence("startup").get_next_point_on_sequence("startup")
         """
         return None
 
     def __eq__(self, other):
         """Equality.
 
-        >>> NocycleSequence("alpha") == NocycleSequence("alpha")
+        >>> NocycleSequence("startup") == NocycleSequence("startup")
         True
-        >>> NocycleSequence("alpha") == NocycleSequence("omega")
+        >>> NocycleSequence("startup") == NocycleSequence("shutdown")
         False
         """
         try:
@@ -198,8 +206,8 @@ class NocycleSequence(SequenceBase):
     def __str__(self):
         """String.
 
-        >>> str(NocycleSequence("alpha"))
-        'alpha'
+        >>> str(NocycleSequence("startup"))
+        'startup'
         """
         return str(self.point)
 
@@ -241,5 +249,5 @@ class NocycleSequence(SequenceBase):
         raise NotImplementedError
 
 
-NOCYCLE_SEQ_ALPHA = NocycleSequence(NOCYCLE_PT_ALPHA)
-NOCYCLE_SEQ_OMEGA = NocycleSequence(NOCYCLE_PT_OMEGA)
+NOCYCLE_SEQ_STARTUP = NocycleSequence(NOCYCLE_PT_STARTUP)
+NOCYCLE_SEQ_SHUTDOWN = NocycleSequence(NOCYCLE_PT_SHUTDOWN)

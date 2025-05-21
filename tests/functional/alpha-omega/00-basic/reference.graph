@@ -1,10 +1,10 @@
-edge "alpha/a" "alpha/b"
+edge "startup/a" "startup/b"
 edge "1/bar" "1/baz"
 edge "2/bar" "2/baz"
 edge "1/foo" "1/bar"
 graph
-node "alpha/a" "a\nalpha"
-node "alpha/b" "b\nalpha"
+node "startup/a" "a\nstartup"
+node "startup/b" "b\nstartup"
 node "1/bar" "bar\n1"
 node "2/bar" "bar\n2"
 node "1/baz" "baz\n1"

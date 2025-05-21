@@ -1,12 +1,12 @@
 
-# 1. alpha graph completes
-# 2. then main graph starts, and triggers alpha/a and omega/x with --flow=9
-# 3. then when all tasks finish, omega graph runs
+# 1. startup graph completes
+# 2. then main graph starts, and triggers startup/a and shutdown/x with --flow=9
+# 3. then when all tasks finish, shutdown graph runs
 
 [scheduling]
     [[graph]]
-        alpha = "a => b"
-        omega = "x => y"
+        startup = "a => b"
+        shutdown = "x => y"
         R1 = "foo => bar => baz"
 [runtime]
     [[a]]
@@ -16,7 +16,7 @@
     [[foo]]
     [[bar]]
         script = """
-            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//alpha/a
-            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//omega/x
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//startup/a
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//shutdown/x
         """
     [[baz]]

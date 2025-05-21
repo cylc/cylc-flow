@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check restart in and between alpha, R1, P1, and omega graphs.
+# Check restart in and between startup, R1, P1, and shutdown graphs.
 
 . "$(dirname "$0")/test_header"
 set_test_number 8
