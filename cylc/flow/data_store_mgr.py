@@ -295,6 +295,15 @@ def runtime_from_config(rtconfig):
     )
 
 
+def reset_protobuf_object(msg_class, msg_orig):
+    """Reset object to clear memory build-up."""
+    # See: https://github.com/protocolbuffers/protobuf/issues/19674
+    # The new message instantiation needs happen on a separate line.
+    new_msg = msg_class()
+    new_msg.CopyFrom(msg_orig)
+    return new_msg
+
+
 def apply_delta(key, delta, data):
     """Apply delta to specific data-store workflow and type."""
     # Assimilate new data
@@ -322,6 +331,12 @@ def apply_delta(key, delta, data):
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
+                    # Clear memory accumulation
+                    if key in (TASKS, FAMILIES):
+                        data[key][element.id] = reset_protobuf_object(
+                            MESSAGE_MAP[key],
+                            data_element
+                        )
                 except KeyError as exc:
                     # Ensure data-sync doesn't fail with
                     # network issues, sync reconcile/validate will catch.
@@ -330,6 +345,9 @@ def apply_delta(key, delta, data):
                         'on update application: %s' % str(exc)
                     )
                     continue
+    # Clear memory accumulation
+    if key == WORKFLOW:
+        data[key] = reset_protobuf_object(PbWorkflow, data[key])
     # Prune data elements
     if hasattr(delta, 'pruned'):
         # UIS flag to prune workflow, set externally.
