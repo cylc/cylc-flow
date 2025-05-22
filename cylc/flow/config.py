@@ -914,7 +914,7 @@ class WorkflowConfig:
         """Check for circular dependence in graph."""
         if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
                 not getattr(self.options, 'check_circular', False)):
-            LOG.warning(
+            LOG.info(
                 f"Number of tasks is > {self.CHECK_CIRCULAR_LIMIT}; will not "
                 "check graph for circular dependencies. To enforce this "
                 "check, use the option --check-circular.")
