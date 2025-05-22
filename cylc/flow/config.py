@@ -914,10 +914,10 @@ class WorkflowConfig:
         """Check for circular dependence in graph."""
         if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
                 not getattr(self.options, 'check_circular', False)):
-            LOG.warning(
+            LOG.info(
                 f"Number of tasks is > {self.CHECK_CIRCULAR_LIMIT}; will not "
-                "check graph for circular dependencies. To enforce this "
-                "check, use the option --check-circular.")
+                "check graph for circular dependencies. To run this check"
+                " anyway use the option --check-circular.")
             return
         start_point_str = self.cfg['scheduling']['initial cycle point']
         raw_graph = self.get_graph_raw(start_point_str,
