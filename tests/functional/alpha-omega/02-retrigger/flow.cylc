@@ -1,0 +1,22 @@
+
+# 1. startup graph completes
+# 2. then main graph starts, and triggers startup/a and shutdown/x with --flow=9
+# 3. then when all tasks finish, shutdown graph runs
+
+[scheduling]
+    [[graph]]
+        startup = "a => b"
+        shutdown = "x => y"
+        R1 = "foo => bar => baz"
+[runtime]
+    [[a]]
+    [[b]]
+    [[x]]
+    [[y]]
+    [[foo]]
+    [[bar]]
+        script = """
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//startup/a
+            cylc trigger --flow=9 $CYLC_WORKFLOW_ID//shutdown/x
+        """
+    [[baz]]

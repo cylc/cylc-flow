@@ -233,7 +233,7 @@ async def test_no_outputs_given(flow, scheduler, start):
             'scheduling': {
                 'graph': {
                     'R1': r"""
-                        foo? => alpha
+                        foo? => startup
                         foo:submitted? => bravo
                         foo:started? => charlie
                         foo:x => xray
@@ -261,7 +261,7 @@ async def test_no_outputs_given(flow, scheduler, start):
             'x'
         }
         assert schd.pool.get_task_ids() == {
-            '1/alpha',
+            '1/startup',
             '1/bravo',
             '1/charlie',
             '1/xray',
