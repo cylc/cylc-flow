@@ -17,43 +17,51 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Force one or more tasks to run, respecting dependencies within the group.
 
-Triggering a task that is not yet queued will queue it.
+This command provides a convenient way to rerun a past sub-graph. It erases
+the flow history of the group (by default) to allow rerun in the same flow;
+it satisfies off-group task and xtrigger prerequisites to start the flow and
+prevent a stall; and it leaves in-group prerequisites to the triggered flow.
 
-Triggering a queued task runs it immediately.
+Triggering a task that is not yet queued, queues it. Triggering a queued task
+runs it. You many need to trigger unqueued tasks twice to run them immediately.
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+Preparing, submitted, or running tasks will be ignored: they already triggered.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+If you trigger tasks when the workflow is paused, only group start tasks will
+run immediately. The flow will continue when you resume the workflow.
+
+Note that the flow will only continue from group start tasks if you erase the
+original flow (the default) or use `--flow` options to start a new flow.
+
+See `cylc set` for the lower-level flow-based approach to rerunning sub-graphs.
 
 Examples:
-  # trigger task foo in cycle 1234 in test
-  $ cylc trigger test//1234/foo
+  # trigger task foo in cycle 1, in workflow "test"
+  $ cylc trigger test//1/foo
 
-  # trigger all failed tasks in test
-  $ cylc trigger 'test//*:failed'
+  # trigger all failed tasks in workfow "test"
+  $ cylc trigger 'test//*:failed'  # (quotes required)
 
-  # start a new flow by triggering 1234/foo in test
-  $ cylc trigger --flow=new test//1234/foo
+  # start a new flow from 1/foo
+  # (beware of off-flow prerequisites downstream of 1/foo)
+  $ cylc trigger --flow=new test//1/foo
 
-Flows:
-  Waiting tasks in the active window (n=0) already belong to a flow.
-  * by default, if triggered, they run in the same flow
-  * or with --flow=all, they are assigned all active flows
-  * or with --flow=INT or --flow=new, the original and new flows are merged
-  * (--flow=none is ignored for active tasks)
+  # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
+  $ cylc trigger test //1/a //1/b //1/c
 
-  Inactive tasks (n>0) do not already belong to a flow.
+Triggering and flow numbers:
+  Waiting n=0 tasks already belong to a flow; if triggered:
+  * by default, they run in the same flow, or
+  * with --flow=all, they will be assigned all active flows, or
+  * with --flow=INT or --flow=new, the original and new flows will be merged
+  * (--flow=none is ignored for n=0 tasks)
+
+  Inactive tasks (n>0) do not already belong to a flow; if triggered:
   * by default they are assigned all active flows
   * otherwise, they are assigned the --flow value
 
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
-  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial

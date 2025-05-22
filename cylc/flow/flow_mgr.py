@@ -47,6 +47,7 @@ def add_flow_opts(parser):
              f' or a specific flow (e.g. "2"). The default is "{FLOW_ALL}".'
              ' Specific flow numbers can be new or existing.'
              ' Reuse the option to assign multiple flow numbers.'
+             ' Warning: each use of "--flow=new" increments the flow count.'
     )
 
     parser.add_option(
