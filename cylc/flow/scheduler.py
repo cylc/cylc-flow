@@ -1968,7 +1968,7 @@ class Scheduler:
 
         # cancel signal handlers
         def _handle_signal(sig, frame):
-            LOG.warning(
+            LOG.info(
                 f'Signal {signal.Signals(sig).name} received,'
                 ' already shutting down'
             )
