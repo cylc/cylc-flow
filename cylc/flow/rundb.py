@@ -601,7 +601,10 @@ class CylcWorkflowDAO:
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
-            LOG.info(err_log)
+            if self.is_public:
+                LOG.info(err_log)
+            else:
+                LOG.warning(err_log)
             raise
 
     def pre_select_broadcast_states(self, order=None):

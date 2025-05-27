@@ -887,7 +887,7 @@ class TaskEventsManager():
             timestamp = ""
         if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
             # Ignore received messages from old jobs
-            LOG.info(
+            LOG.warning(
                 f"[{itask}] "
                 f"{self.FLAG_RECEIVED_IGNORED}{message}{timestamp} "
                 f"for job({submit_num:02d}) != job({itask.submit_num:02d})"
@@ -917,13 +917,13 @@ class TaskEventsManager():
             # Ignore messages if task has a retry lined up
             # (caused by polling overlapping with task failure)
             if flag == self.FLAG_RECEIVED:
-                LOG.info(
+                LOG.warning(
                     f"[{itask}] "
                     f"{self.FLAG_RECEIVED_IGNORED}{message}{timestamp}"
                 )
 
             else:
-                LOG.info(
+                LOG.warning(
                     f"[{itask}] "
                     f"{self.FLAG_POLLED_IGNORED}{message}{timestamp}"
                 )
