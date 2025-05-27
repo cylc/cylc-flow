@@ -19,6 +19,7 @@ from typing import AsyncGenerator, Callable
 from unittest.mock import Mock
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
 from cylc.flow.id import Tokens
@@ -50,7 +51,7 @@ def node_args():
     }
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def mock_flow(
     mod_flow: Callable[..., str],
     mod_scheduler: Callable[..., Scheduler],
