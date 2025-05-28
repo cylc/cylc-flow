@@ -16,11 +16,21 @@
 
 """Test the top-level (root) GraphQL queries."""
 
+from contextlib import suppress
 import pytest
 from typing import TYPE_CHECKING
 
+from graphql import parse, MiddlewareManager
+
 from cylc.flow.id import Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.schema import schema, SUB_RESOLVER_MAPPING
+from cylc.flow.network.graphql import (
+    CylcExecutionContext,
+    IgnoreFieldMiddleware,
+    instantiate_middleware,
+)
+from cylc.flow.network.graphql_subscribe import subscribe
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -199,14 +209,14 @@ async def test_task_proxies(harness):
         w_tokens.duplicate(
             cycle='1',
             task=namespace,
-        ).id
+        )
         # NOTE: task "d" is not in the n=1 window yet
         for namespace in ('a', 'b', 'c')
     ]
     ret['taskProxies'].sort(key=lambda x: x['id'])
     assert ret == {
         'taskProxies': [
-            {'id': id_}
+            {'id': id_.id}
             for id_ in ids
         ]
     }
@@ -214,11 +224,25 @@ async def test_task_proxies(harness):
     # query "task"
     ret = await client.async_request(
         'graphql',
-        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0]}
+        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0].id}
     )
     assert ret == {
-        'taskProxy': {'id': ids[0]}
+        'taskProxy': {'id': ids[0].id}
     }
+
+    # query "taskProxies" fragment with null stripping
+    ret = await client.async_request(
+        'graphql',
+        {
+            'request_string': '''
+                fragment wf on Workflow {
+                    taskProxies (ids: ["%s"], stripNull: true) { id }
+                }
+                query { workflows (ids: ["%s"]) { ...wf } }
+            ''' % (ids[0].relative_id, ids[0].workflow_id)
+        }
+    )
+    assert ret == {'workflows': [{'taskProxies': [{'id': ids[0].id}]}]}
 
 
 async def test_family_proxies(harness):
@@ -348,3 +372,40 @@ async def test_jobs(harness):
     assert ret == {
         'job': {'id': f'{j_id}'}
     }
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_subscription(harness):
+    """Test the GraphQL subscription infrastructure.
+
+    (currently only used at UIS)
+    """
+    schd, client, w_tokens = harness
+
+    request_string = 'subscription { workflows (stripNull: true) { id } }'
+    kwargs = {
+        "variable_values": {},
+        "operation_name": None,
+        "context_value": {
+            'op_id': 1,
+            'resolvers': schd.server.resolvers,
+            'meta': {},
+        },
+        "subscribe_resolver_map": SUB_RESOLVER_MAPPING,
+        "middleware": MiddlewareManager(
+            instantiate_middleware(
+                [IgnoreFieldMiddleware]
+            )
+        ),
+        "execution_context_class": CylcExecutionContext,
+    }
+    document = parse(request_string)
+    result = await subscribe(
+        schema.graphql_schema,
+        document,
+        **kwargs
+    )
+    with suppress(GeneratorExit):
+        async for item in result:
+            assert item.data['workflows'][0]['id'] == w_tokens.id
+            await result.aclose()
