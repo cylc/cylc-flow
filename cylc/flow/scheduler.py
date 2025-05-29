@@ -1361,7 +1361,12 @@ class Scheduler:
                     # and manually triggered tasks to run once workflow resumed
                     pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
                     self.pool.tasks_to_trigger_on_resume = set()
-
+            else:
+                # finish processing preparing tasks
+                pre_prep_tasks.update({
+                    itask for itask in self.pool.get_tasks()
+                    if itask.state(TASK_STATUS_PREPARING)
+                })
         elif (
             (
                 # Need to get preparing tasks to submit before auto restart
