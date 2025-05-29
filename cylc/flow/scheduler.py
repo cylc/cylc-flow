@@ -1343,44 +1343,30 @@ class Scheduler:
             submission).
 
         """
-        pre_prep_tasks: Set['TaskProxy'] = set()
+        # Always follow preparing tasks through to job submission.
+        pre_prep_tasks: Set['TaskProxy'] = {
+            itask for itask in self.pool.get_tasks()
+            if itask.state(TASK_STATUS_PREPARING)
+        }
+
+        # Release more tasks if not stopping, auto-restarting, or reloading.
         if (
             self.stop_mode is None
             and self.auto_restart_time is None
             and self.reload_pending is False
         ):
+            # Release force-triggered tasks, workflow paused or not.
             if self.pool.tasks_to_trigger_now:
-                # manually triggered tasks to run now, workflow paused or not
                 pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
                 self.pool.tasks_to_trigger_now = set()
 
             if not self.is_paused:
-                # release queued tasks
+                # Release queued tasks.
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
+                # Release force-triggered tasks to run once workflow resumed.
                 if self.pool.tasks_to_trigger_on_resume:
-                    # and manually triggered tasks to run once workflow resumed
                     pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
                     self.pool.tasks_to_trigger_on_resume = set()
-
-        elif (
-            (
-                # Need to get preparing tasks to submit before auto restart
-                self.should_auto_restart_now()
-                and self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL
-            ) or (
-                # Need to get preparing tasks to submit before reload
-                self.reload_pending
-            )
-        ):
-            # finish processing preparing tasks first
-            pre_prep_tasks = {
-                itask for itask in self.pool.get_tasks()
-                if itask.state(TASK_STATUS_PREPARING)
-            }
-
-        # Return, if no tasks to submit.
-        else:
-            return False
 
         if not pre_prep_tasks:
             return False
