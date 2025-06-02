@@ -205,7 +205,7 @@ def test_infer_latest_run_warns_for_runN(
     runN_path.symlink_to('run1')
     infer_latest_run(runN_path, warn_runN=warn_arg)
     filtered_log = log_filter(
-        logging.WARNING, "You do not need to include runN in the workflow ID"
+        logging.INFO, "You do not need to include runN in the workflow ID"
     )
     assert filtered_log if warn_arg else not filtered_log
 
