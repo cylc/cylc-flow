@@ -186,7 +186,7 @@ class GraphParser:
 
     # Match @xtriggers.
     REC_XTRIG = re.compile(r'@[\w\-+%]+')
-    REC_XTRIG_OR = re.compile(r'@.*\s*\|\s*@.*')
+    REC_XTRIG_OR = re.compile(r'@.*\|.*|.*\|.*@.*')
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
