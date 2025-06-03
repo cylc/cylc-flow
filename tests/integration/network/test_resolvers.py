@@ -244,7 +244,8 @@ async def test_command_logging(mock_flow, caplog, log_filter):
     }
     meta["auth_user"] = mock_flow.owner
     await mock_flow.resolvers._mutation_mapper("put_messages", kwargs, meta)
-    assert not log_filter(contains='Command "put_messages" received:')
+    assert not log_filter(
+        contains=f'Command "put_messages" received from {mock_flow.owner}')
 
     meta["auth_user"] = "Dr Spock"
     await mock_flow.resolvers._mutation_mapper("put_messages", kwargs, meta)

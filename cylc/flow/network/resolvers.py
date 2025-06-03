@@ -725,7 +725,7 @@ class Resolvers(BaseResolvers):
         """
         user = meta.get('auth_user', self.schd.owner)
         if user == self.schd.owner:
-            log_user = ""  # don't log user name if owner
+            log_user = f" from {self.schd.owner}"
         else:
             log_user = f" from {user}"
 
