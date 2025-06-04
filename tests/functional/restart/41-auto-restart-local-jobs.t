@@ -21,7 +21,7 @@ export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 export CYLC_TEST_HOST2="${CYLC_TEST_HOST}"
 export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
-set_test_number 12
+set_test_number 13
 #-------------------------------------------------------------------------------
 BASE_GLOBAL_CONFIG="
 [scheduler]
@@ -62,7 +62,8 @@ cylc play "${WORKFLOW_NAME}"
 #     ensure the workflow WAITS for local jobs to complete before restarting
 TEST_NAME="${TEST_NAME_BASE}-normal-mode"
 
-cylc workflow-state "${WORKFLOW_NAME}//1/foo:running" --interval=1 --max-polls=20 >& $ERR
+cylc workflow-state "${WORKFLOW_NAME}//1/foo:started" \
+  --triggers --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
@@ -72,6 +73,7 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST1}
 "
 
+UUID="$(get_workflow_uuid)"
 LOG_FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
 log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
@@ -83,7 +85,7 @@ log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
 # have waited for them to complete
 grep_fail 'orphaned task' "$LOG_FILE"
 
-poll_workflow_restart
+run_ok "${TEST_NAME_BASE}-restart" poll_workflow_restart 10 "$UUID"
 log_scan "${TEST_NAME}-restart-log-scan" "$LOG_FILE" 20 1 \
     "Workflow now running on \"${CYLC_TEST_HOST2}\""
 #-------------------------------------------------------------------------------
@@ -92,8 +94,8 @@ log_scan "${TEST_NAME}-restart-log-scan" "$LOG_FILE" 20 1 \
 TEST_NAME="${TEST_NAME_BASE}-force-mode"
 
 cylc trigger "${WORKFLOW_NAME}//1/bar"
-cylc workflow-state "${WORKFLOW_NAME}//1/bar:running" --point=1 \
-    --interval=1 --max-polls=20 >& $ERR
+cylc workflow-state "${WORKFLOW_NAME}//1/bar:started" \
+  --triggers --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
