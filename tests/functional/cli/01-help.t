@@ -73,7 +73,7 @@ cmp_ok "${TEST_NAME_BASE}-broadcast-h.stdout" "${TEST_NAME_BASE}-bcast-h.stdout"
 # Dead end
 run_fail "${TEST_NAME_BASE}-broadcast-h" cylc check-software
 
-# Misc
+# Help with IDs and the Licence
 run_ok "${TEST_NAME_BASE}-help-id" cylc help id
 grep_ok 'Every Installed Cylc workflow has an ID' "${TEST_NAME_BASE}-help-id.stdout"
 run_ok "${TEST_NAME_BASE}-help-licence" cylc help licence
