@@ -17,13 +17,13 @@
 """Some integration tests running on live workflows to test filtering properly.
 """
 
-import pytest
+import pytest_asyncio
 
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.id_cli import parse_ids_async
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 async def harness(
     mod_run,
     mod_scheduler,
