@@ -54,6 +54,7 @@ from functools import partial
 import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -98,7 +99,6 @@ def get_option_parser() -> COP:
         action='append',
         dest='flow',
         metavar='FLOW',
-        default=[],
         help=(
             "Remove the task(s) from the specified flow. "
             "Reuse the option to remove the task(s) from multiple flows. "
@@ -120,7 +120,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ],
-            'flow': options.flow,
+            'flow': options.flow or [FLOW_ALL],
         }
     }
 
