@@ -641,8 +641,9 @@ def _distribute(
         # Re-invoke the command
         # NOTE: has the potential to raise NoHostsError, however, this will
         # most likely have been raised during host-selection
-        cylc_server_cmd(cmd, host=host)
-        sys.exit(0)
+        sys.exit(
+            cylc_server_cmd(cmd, host=host)
+        )
 
 
 async def _setup(scheduler: Scheduler) -> None:

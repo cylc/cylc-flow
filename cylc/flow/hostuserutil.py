@@ -50,7 +50,12 @@ import pwd
 import socket
 import sys
 from time import time
-from typing import List, Optional, Tuple
+from typing import (
+    List,
+    Optional,
+    Tuple,
+    cast,
+)
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -141,11 +146,14 @@ class HostUtil:
         return self._host_exs[target]
 
     @staticmethod
-    def _get_identification_cfg(key):
+    def _get_identification_cfg(key) -> str:
         """Return the [workflow host self-identification]key global conf."""
-        return glbl_cfg().get(['scheduler', 'host self-identification', key])
+        return cast(
+            'str',  # Possible keys: method, target, host are all strings
+            glbl_cfg().get(['scheduler', 'host self-identification', key])
+        )
 
-    def get_host(self):
+    def get_host(self) -> str:
         """Return the preferred identifier for the workflow (or current) host.
 
         As specified by the "[scheduler][host self-identification]" settings in
@@ -198,8 +206,11 @@ class HostUtil:
 
         """
         if name not in self._remote_hosts:
-            if not name or name.startswith("localhost"):
-                # e.g. localhost4.localdomain4
+            if (
+                not name
+                or name.startswith("localhost")  # e.g. localhost4.localdomain4
+                or name == self.get_host()
+            ):
                 self._remote_hosts[name] = False
             else:
                 try:

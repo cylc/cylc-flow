@@ -113,10 +113,7 @@ def test_remote_exclude(monkeypatch):
     than one host is provided to choose from."""
     def mocked_get_metrics(hosts, metrics, _=None):
         # pretend that ssh to remote_platform failed
-        return (
-            {f'{local_host_fqdn}': {('cpu_count',): 123}},
-            {}
-        )
+        return {f'{local_host_fqdn}': {('cpu_count',): 123}}
     monkeypatch.setattr(
         'cylc.flow.host_select._get_metrics',
         mocked_get_metrics
