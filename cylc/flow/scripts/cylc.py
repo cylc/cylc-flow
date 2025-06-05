@@ -65,7 +65,7 @@ else:
 
 import argparse
 from contextlib import contextmanager
-from typing import Iterator, NoReturn, Optional, Tuple
+from typing import Iterator, Optional, Tuple
 
 from ansimarkup import parse as cparse
 
@@ -320,7 +320,7 @@ DEAD_ENDS = {
 # fmt: on
 
 
-def execute_cmd(cmd: str, *args: str) -> NoReturn:
+def execute_cmd(cmd: str, *args: str) -> int:
     """Execute a sub-command.
 
     Args:
@@ -334,8 +334,8 @@ def execute_cmd(cmd: str, *args: str) -> NoReturn:
     except ModuleNotFoundError as exc:
         msg = handle_missing_dependency(entry_point, exc)
         print(msg, file=sys.stderr)
-        sys.exit(1)
-    sys.exit()
+        return 1
+    return 0
 
 
 def match_command(command):
@@ -474,7 +474,6 @@ def cli_help():
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
-    sys.exit(0)
 
 
 def cli_version(long_fmt=False):
@@ -482,7 +481,6 @@ def cli_version(long_fmt=False):
     print(get_version(long_fmt))
     if long_fmt:
         print(cparse(list_plugins()))
-    sys.exit(0)
 
 
 def list_plugins():
@@ -646,60 +644,70 @@ def get_arg_parser():
     return parser
 
 
-def main():
+def main() -> None:  # pragma: no cover
     opts, cmd_args = get_arg_parser().parse_known_args()
     with pycoverage(cmd_args):
-        if not cmd_args:
-            if opts.version:
-                cli_version()
-            else:
-                cli_help()
+        ret = _main(opts, cmd_args)
+    sys.exit(ret)
+
+
+def _main(opts, cmd_args) -> int:
+    """Implemnent the Cylc CLI.
+
+    Returns the exit code as an integer.
+    """
+    if not cmd_args:
+        if opts.version:
+            cli_version()
+            return 0
         else:
-            cmd_args = list(cmd_args)
-            command = cmd_args.pop(0)
+            cli_help()
+            return 0
+    else:
+        cmd_args = list(cmd_args)
+        command = cmd_args.pop(0)
 
-            if command == "version":
-                cli_version("--long" in cmd_args)
+        if command == "version":
+            cli_version("--long" in cmd_args)
+            return 0
 
-            if command == "help":
-                opts.help_ = True
-                if not len(cmd_args):
-                    cli_help()
-                elif cmd_args == ['all']:
-                    print_command_list()
-                    sys.exit(0)
-                elif cmd_args == ['id']:
-                    print_id_help()
-                    sys.exit(0)
-                if cmd_args in (['license'], ['licence']):
-                    print_license()
-                    sys.exit(0)
-                else:
-                    command = cmd_args.pop(0)
-
-            # this is an alias to a command
-            if command in ALIASES:
-                command = ALIASES.get(command)
-
-            if command in DEAD_ENDS:
-                # this command has been removed but not aliased
-                # display a helpful message and move on#
-                print(
-                    cparse(
-                        f'<red>{DEAD_ENDS[command]}</red>'
-                    )
-                )
-                sys.exit(42)
-
-            if command not in COMMANDS:
-                # check if this is a command abbreviation or exit
-                command = match_command(command)
-            if opts.help_:
-                execute_cmd(command, *cmd_args, "--help")
+        if command == "help":
+            opts.help_ = True
+            if not len(cmd_args):
+                cli_help()
+                return 0
+            elif cmd_args == ['all']:
+                print_command_list()
+                return 0
+            elif cmd_args == ['id']:
+                print_id_help()
+                return 0
+            if cmd_args in (['license'], ['licence']):
+                print_license()
+                return 0
             else:
-                if opts.version:
-                    cmd_args.append("--version")
-                execute_cmd(command, *cmd_args)
+                command = cmd_args.pop(0)
+
+        # this is an alias to a command
+        if command in ALIASES:
+            command = ALIASES.get(command)
+
+        if command in DEAD_ENDS:
+            # this command has been removed but not aliased
+            # display a helpful message and move on#
+            print(
+                cparse(
+                    f'<red>{DEAD_ENDS[command]}</red>'
+                )
+            )
+            return 42
+
+        if command not in COMMANDS:
+            # check if this is a command abbreviation or exit
+            command = match_command(command)
+        if opts.help_:
+            cmd_args.append('--help')
+        return execute_cmd(command, *cmd_args)
 
 
 def handle_missing_dependency(
