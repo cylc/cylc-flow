@@ -46,6 +46,7 @@ from cylc.flow.data_store_mgr import (
     DELTA_ADDED, create_delta_store
 )
 import cylc.flow.flags
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
@@ -58,8 +59,9 @@ from cylc.flow.network.schema import (
 from cylc.flow.util import uniq, iter_uniq
 
 if TYPE_CHECKING:
+    from enum import Enum
     from uuid import UUID
-    from graphql import ResolveInfo
+    from graphql import GraphQLResolveInfo
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
 
@@ -507,7 +509,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             edges=sort_elements(edges, args))
 
     async def subscribe_delta(
-        self, root, info: 'ResolveInfo', args
+        self, root, info: 'GraphQLResolveInfo', args
     ) -> AsyncGenerator[Any, None]:
         """Delta subscription async generator.
 
@@ -518,8 +520,9 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         # NOTE: we don't expect workflows to be returned in definition order
         # so it is ok to use `set` here
         workflow_ids = set(args.get('workflows', args.get('ids', ())))
+
         sub_id = uuid4()
-        info.variable_values['backend_sub_id'] = sub_id
+        info.context['sub_id'] = sub_id
         self.delta_store[sub_id] = {}
 
         op_id = root
@@ -638,7 +641,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     @abstractmethod
     async def mutator(
         self,
-        info: 'ResolveInfo',
+        info: 'GraphQLResolveInfo',
         command: str,
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
@@ -659,7 +662,7 @@ class Resolvers(BaseResolvers):
     # Mutations
     async def mutator(
         self,
-        _info: 'ResolveInfo',
+        _info: 'GraphQLResolveInfo',
         command: str,
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
@@ -673,6 +676,17 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
+        # BACK COMPAT: transform "None" to "[]"
+        # url: https://github.com/cylc/cylc-flow/pull/6478
+        # from: <8.5.0
+        # to: >=8.5.0
+        # remove at: 8.x
+        # For back compat, with gql-v3 None will not use default_value.
+        if 'flow' in kwargs:
+            kwargs['flow'] = (
+                kwargs['flow']
+                or ([FLOW_ALL] if command == 'remove_tasks' else [])
+            )
         result = await self._mutation_mapper(command, kwargs, meta)
         return [{'id': w_id, 'response': result}]
 
@@ -691,11 +705,14 @@ class Resolvers(BaseResolvers):
         else:
             log_user = f" from {user}"
 
-        log1 = f'Command "{command}" received{log_user}.'
-        log2 = (
+        received_msg = f'Command "{command}" received{log_user}.'
+        signature_str = (
             f"{command}("
             + ", ".join(
-                f"{key}={value}" for key, value in kwargs.items())
+                f"{key}={getattr(value, 'value', value)}"
+                for key, value in kwargs.items()
+                if value is not None
+            )
             + ")"
         )
 
@@ -706,7 +723,7 @@ class Resolvers(BaseResolvers):
                 or user != self.schd.owner
             ):
                 # Logging task messages as commands is overkill.
-                LOG.info(f"{log1}\n{log2}")
+                LOG.info(f"{received_msg}\n{signature_str}")
             return method(**kwargs)
 
         try:
@@ -723,14 +740,14 @@ class Resolvers(BaseResolvers):
         except Exception as exc:
             # NOTE: keep this exception vague to prevent a bad command taking
             # down the scheduler
-            LOG.warning(f'{log1}\n{exc.__class__.__name__}: {exc}')
+            LOG.warning(f'{received_msg}\n{exc.__class__.__name__}: {exc}')
             if cylc.flow.flags.verbosity > 1:
                 LOG.exception(exc)  # log full traceback in debug mode
             return (False, str(exc))
 
         # Queue the command to the scheduler, with a unique command ID
         cmd_uuid = str(uuid4())
-        LOG.info(f"{log1} ID={cmd_uuid}\n{log2}")
+        LOG.info(f"{received_msg} ID={cmd_uuid}\n{signature_str}")
         self.schd.command_queue.put(
             (
                 cmd_uuid,
@@ -742,7 +759,7 @@ class Resolvers(BaseResolvers):
 
     def broadcast(
         self,
-        mode: str,
+        mode: 'Enum',
         cycle_points: Optional[List[str]] = None,
         namespaces: Optional[List[str]] = None,
         settings: Optional[List[Dict[str, str]]] = None,
@@ -756,15 +773,15 @@ class Resolvers(BaseResolvers):
                 for i, dict_ in enumerate(settings):
                     settings[i] = runtime_schema_to_cfg(dict_)
 
-            if mode == 'put_broadcast':
+            if mode.value == 'put_broadcast':
                 return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
                     cycle_points, namespaces, settings)
-            if mode == 'clear_broadcast':
+            if mode.value == 'clear_broadcast':
                 return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
                     point_strings=cycle_points,
                     namespaces=namespaces,
                     cancel_settings=settings)
-            if mode == 'expire_broadcast':
+            if mode.value == 'expire_broadcast':
                 return (
                     self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                         cutoff
