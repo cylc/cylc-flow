@@ -25,12 +25,12 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
 # Ensure that DB statement and its args are printed to STDERR
-grep -A 3 -F 'WARNING - cannot execute database statement:' \
+grep -A 3 -F 'INFO - cannot execute database statement:' \
     "${TEST_NAME_BASE}-run.stderr" > "${TEST_NAME_BASE}-run.stderr.grep"
 # The following "sed" turns the value for "time_submit_exit" to "?"
 sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" "${TEST_NAME_BASE}-run.stderr.grep"
 # Cannot use cmp_ok as the error message is prefixed by a timestamp.
-grep_ok "WARNING - cannot execute database statement:" \
+grep_ok "INFO - cannot execute database statement:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
 DB_FILE="$RUN_DIR/${WORKFLOW_NAME}/log/db"

@@ -963,10 +963,9 @@ def infer_latest_run(
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
         if warn_runN:
-            LOG.warning(
-                f"You do not need to include {WorkflowFiles.RUN_N} in the "
-                "workflow ID; Cylc will select the latest run if just the "
-                "workflow name is used"
+            LOG.info(
+                f"You need only include {WorkflowFiles.RUN_N} in the"
+                " workflow id if the target is not the most recent run."
             )
     elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N
