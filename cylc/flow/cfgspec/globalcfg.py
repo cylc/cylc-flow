@@ -893,7 +893,10 @@ with Conf('global.cylc', desc='''
 
                 This should be a multiline string containing Python expressions
                 to rank and/or filter hosts. All `psutil`_ attributes are
-                available for use in these expressions.
+                available for use in these expressions, e.g, ``cpu_percent``.
+                You can supply these with positional arguments e.g,
+                ``cpu_percent(1)``, however, keyword arguments will not work
+                e.g, ``cpu_percent(interval=1)``.
 
                 .. rubric:: Ranking
 
