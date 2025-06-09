@@ -42,11 +42,16 @@ FLOW_NONE = "none"
 def add_flow_opts(parser):
     parser.add_option(
         "--flow", action="append", dest="flow", metavar="FLOW",
-        help=f'Assign new tasks to all active flows ("{FLOW_ALL}");'
-             f' no flow ("{FLOW_NONE}"); a new flow ("{FLOW_NEW}");'
-             f' or a specific flow (e.g. "2"). The default is "{FLOW_ALL}".'
-             ' Specific flow numbers can be new or existing.'
-             ' Reuse the option to assign multiple flow numbers.'
+        help=(
+            f"Assign the task(s) to all active flows using '{FLOW_ALL}'; "
+            f"no flow using '{FLOW_NONE}'; a new flow using '{FLOW_NEW}'; "
+            f"or a specific flow number, e.g. '2' (can be new or "
+            "pre-existing). "
+            "By default, tasks already in the active window will keep their "
+            "existing flow(s), whereas tasks outside the active window will "
+            "be assigned to all active flows. "
+            "Reuse the option to assign multiple flow numbers."
+        )
     )
 
     parser.add_option(
