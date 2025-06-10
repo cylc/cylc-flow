@@ -535,7 +535,7 @@ class CylcWorkflowDAO:
                 )
                 raise
             self.n_tries += 1
-            LOG.warning(
+            LOG.info(
                 "%(file)s: write attempt (%(attempt)d)"
                 " did not complete: %(error)s\n"
                 " SQLite error code: %(error_code)s\n"
@@ -560,7 +560,7 @@ class CylcWorkflowDAO:
                 table.update_queues.clear()
             # Report public database retry recovery if necessary
             if self.n_tries:
-                LOG.warning(
+                LOG.info(
                     "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
@@ -601,7 +601,10 @@ class CylcWorkflowDAO:
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
-            LOG.warning(err_log)
+            if self.is_public:
+                LOG.info(err_log)
+            else:
+                LOG.warning(err_log)
             raise
 
     def pre_select_broadcast_states(self, order=None):
