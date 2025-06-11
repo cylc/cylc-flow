@@ -1048,15 +1048,6 @@ class Scheduler:
 
             self.command_queue.task_done()
 
-    def info_get_graph_raw(self, cto, ctn, grouping=None):
-        """Return raw graph."""
-        return (
-            self.config.get_graph_raw(cto, ctn, grouping),
-            self.config.workflow_polling_tasks,
-            self.config.leaves,
-            self.config.feet
-        )
-
     def _set_stop(self, stop_mode: Optional[StopMode] = None) -> None:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
