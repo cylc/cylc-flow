@@ -1057,7 +1057,7 @@ with Conf('global.cylc', desc='''
                     if item == "stall timeout":
                         default = DurationFloat(3600)
                     elif item == "restart timeout":
-                        default = DurationFloat(120)
+                        default = DurationFloat(300)
                     else:
                         default = None
                 Conf(item, vdr_type, default, desc=desc)
