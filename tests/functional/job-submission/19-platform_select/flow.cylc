@@ -45,7 +45,7 @@ purpose = """
 
     [[localhost_subshell]]
         [[[remote]]]
-            host = $(echo "localhost4.localdomain4")
+            host = $(echo "localhost")
 
     [[fin_platform]]
         script = cylc remove "${CYLC_WORKFLOW_ID}//1/platform_*"
