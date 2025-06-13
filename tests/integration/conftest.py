@@ -30,6 +30,7 @@ from typing import (
 )
 
 import pytest
+import pytest_asyncio
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id import Tokens
@@ -112,7 +113,7 @@ def _pytest_passed(request: pytest.FixtureRequest) -> bool:
     ))
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def run_dir():
     """The cylc run directory for this host."""
     path = Path(get_cylc_run_dir())
@@ -120,7 +121,7 @@ def run_dir():
     yield path
 
 
-@pytest.fixture(scope='session')
+@pytest_asyncio.fixture(scope='session')
 def ses_test_dir(request, run_dir):
     """The root run dir for test flows in this test session."""
     timestamp = get_current_time_string(use_basic_format=True)
@@ -131,7 +132,7 @@ def ses_test_dir(request, run_dir):
     _rm_if_empty(path)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_test_dir(request, ses_test_dir):
     """The root run dir for test flows in this test module."""
     path = Path(
@@ -163,7 +164,7 @@ def test_dir(request, mod_test_dir):
         _rm_if_empty(path)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_flow(run_dir, mod_test_dir):
     """A function for creating module-level flows."""
     yield partial(_make_flow, run_dir, mod_test_dir)
@@ -175,7 +176,7 @@ def flow(run_dir, test_dir):
     yield partial(_make_flow, run_dir, test_dir)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_scheduler():
     """Return a Scheduler object for a flow.
 
@@ -197,7 +198,7 @@ def scheduler():
         yield _scheduler
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_start():
     """Start a scheduler but don't set it running (module scope)."""
     return partial(_start_flow, None)
@@ -209,7 +210,7 @@ def start(caplog: pytest.LogCaptureFixture):
     return partial(_start_flow, caplog)
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_run():
     """Start a scheduler and set it running (module scope)."""
     return partial(_run_flow, None)
@@ -235,7 +236,7 @@ def one_conf():
     }
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_one_conf():
     return {
         'scheduler': {
@@ -257,36 +258,37 @@ def one(one_conf, flow, scheduler):
     return schd
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_one(mod_one_conf, mod_flow, mod_scheduler):
     id_ = mod_flow(mod_one_conf)
     schd = mod_scheduler(id_)
     return schd
 
 
-@pytest.fixture(scope='module')
-def event_loop():
-    """This fixture defines the event loop used for each test.
-
-    The default scoping for this fixture is "function" which means that all
-    async fixtures must have "function" scoping.
-
-    Defining `event_loop` as a module scoped fixture opens the door to
-    module scoped fixtures but means all tests in a module will run in the same
-    event loop. This is fine, it's actually an efficiency win but also
-    something to be aware of.
-
-    See: https://github.com/pytest-dev/pytest-asyncio/issues/171
-
-    """
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    # gracefully exit async generators
-    loop.run_until_complete(loop.shutdown_asyncgens())
-    # cancel any tasks still running in this event loop
-    for task in asyncio.all_tasks(loop):
-        task.cancel()
-    loop.close()
+if pytest_asyncio.__version__.startswith('0.21'):
+    # BACK COMPAT: event_loop
+    # FROM: python 3
+    # TO: python 3.7
+    # URL: https://github.com/cylc/cylc-flow/pull/6726
+    @pytest_asyncio.fixture(scope='module')
+    def event_loop():
+        """This fixture defines the event loop used for each test.
+        The default scoping for this fixture is "function" which means that all
+        async fixtures must have "function" scoping.
+        Defining `event_loop` as a module scoped fixture opens the door to
+        module scoped fixtures but means all tests in a module will run in the
+        same event loop. This is fine, it's actually an efficiency win but also
+        something to be aware of.
+        See: https://github.com/pytest-dev/pytest-asyncio/issues/171
+        """
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+        yield loop
+        # gracefully exit async generators
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        # cancel any tasks still running in this event loop
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+        loop.close()
 
 
 @pytest.fixture
@@ -382,7 +384,7 @@ def validate(run_dir):
     return _validate
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_validate(run_dir):
     """Provides a function for validating workflow configurations.
 
@@ -465,7 +467,7 @@ def capture_polling():
     return _disable_polling
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_workflow_source(mod_flow, tmp_path_factory):
     """Create a workflow source directory.
 
@@ -686,7 +688,7 @@ def complete():
     return _complete
 
 
-@pytest.fixture(scope='module')
+@pytest_asyncio.fixture(scope='module')
 def mod_complete():
     return _complete
 
