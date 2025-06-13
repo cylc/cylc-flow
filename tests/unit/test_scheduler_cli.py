@@ -14,13 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sqlite3
 from contextlib import contextmanager
+from secrets import token_hex
+import sqlite3
 
 import pytest
 
-from cylc.flow.exceptions import ServiceFileError
-from cylc.flow.scheduler_cli import RunOptions, _distribute, _version_check
+from cylc.flow.exceptions import HostSelectException, ServiceFileError
+from cylc.flow.scheduler_cli import (
+    RunOptions,
+    _distribute,
+    _version_check,
+)
 
 from .conftest import MonkeyMock
 
@@ -277,6 +282,7 @@ def test_distribute_colour(
     _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
     _is_terminal.return_value = is_terminal
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    _cylc_server_cmd.return_value = 0
     opts = RunOptions(host='myhost', color=cli_colour)
     with pytest.raises(SystemExit) as excinfo:
         _distribute('foo', 'foo/run1', opts)
@@ -294,6 +300,7 @@ def test_distribute_upgrade(
         'sys.argv', ['cylc', 'play', 'foo']  # no upgrade option here
     )
     _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
+    _cylc_server_cmd.return_value = 0
     opts = RunOptions(
         host='myhost',
         upgrade=True,  # added by interactive upgrade
@@ -302,3 +309,19 @@ def test_distribute_upgrade(
         _distribute('foo', 'foo/run1', opts)
     assert excinfo.value.code == 0
     assert '--upgrade' in _cylc_server_cmd.call_args[0][0]
+
+
+def test_distribute_invalid_host(
+    mock_glbl_cfg, caplog: pytest.LogCaptureFixture
+):
+    """It handles a socket error when the host is invalid."""
+    mock_glbl_cfg(
+        'cylc.flow.host_select.glbl_cfg',
+        f'''
+            [scheduler]
+                [[run hosts]]
+                    available = non_exist_{token_hex(4)}
+        '''
+    )
+    with pytest.raises(HostSelectException):
+        _distribute('foo', 'foo/run1', RunOptions())
