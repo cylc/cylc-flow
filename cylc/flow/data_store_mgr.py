@@ -980,11 +980,7 @@ class DataStoreMgr:
                                     None,
                                     n_depth
                                 )
-                                self.generate_edge(
-                                    node_tokens,
-                                    child_tokens,
-                                    active_id
-                                )
+                                self.generate_edge(node_tokens, child_tokens)
                                 nc_ids.add(child_tokens.id)
 
                     # Parents/upstream nodes
@@ -1011,11 +1007,7 @@ class DataStoreMgr:
                                     n_depth
                                 )
                                 # reverse for parent
-                                self.generate_edge(
-                                    parent_tokens,
-                                    node_tokens,
-                                    active_id
-                                )
+                                self.generate_edge(parent_tokens, node_tokens)
                                 np_ids.add(parent_tokens.id)
 
                     # Register new walk
@@ -1052,6 +1044,27 @@ class DataStoreMgr:
 
         self.n_window_completed_walks.add(active_id)
         self.n_window_nodes[active_id].update(active_walk['walk_ids'])
+
+        # Generate internal edges > self.n_edge_distance
+        # Only nodes at max allowable depth may have missing edges going to
+        # other nodes within the window, and these other window nodes will also
+        # be on the boundary (otherwise they would've been in a walk).
+        outer_nodes = active_walk['depths'].get(self.n_edge_distance, set())
+        for outer_id in outer_nodes:
+            outer_tokens = Tokens(outer_id)
+            tdef = taskdefs[outer_tokens['task']]
+            graph_children = generate_graph_children(
+                tdef,
+                get_point(outer_tokens['cycle'])
+            )
+            for items in graph_children.values():
+                for child_name, child_point, _ in items:
+                    child_tokens = self.id_.duplicate(
+                        cycle=str(child_point),
+                        task=child_name,
+                    )
+                    if child_tokens.id in outer_nodes:
+                        self.generate_edge(outer_tokens, child_tokens)
 
         # This part is vital to constructing a set of boundary nodes
         # associated with the n=0 window of current active node.
@@ -1104,7 +1117,6 @@ class DataStoreMgr:
         self,
         parent_tokens: Tokens,
         child_tokens: Tokens,
-        active_id: str,
     ) -> None:
         """Construct edge of child and parent task proxy node."""
         # Initiate edge element.
