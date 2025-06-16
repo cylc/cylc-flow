@@ -16,25 +16,49 @@
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
 import os
-from shlex import quote
 from pathlib import Path
 from posix import WIFSIGNALED
 import shlex
+from shlex import quote
 import signal
+
 # CODACY ISSUE:
 #   Consider possible security implications associated with Popen module.
 # REASON IGNORED:
 #   Subprocess is needed, but we use it with security in mind.
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import (
+    DEVNULL,
+    PIPE,
+    Popen,
+)
 import sys
 from time import sleep
-from typing import Any, Dict, List, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    overload,
+)
 
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 import cylc.flow.flags
-from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.log_level import verbosity_to_opts
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import (
+    get_host_from_platform,
+    get_platform,
+)
 from cylc.flow.util import format_cmd
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
 
 def get_proc_ancestors():
@@ -102,11 +126,11 @@ def run_cmd(
             with subprocess.
 
     Return:
-        * If capture_process=True, the Popen[str] object if created
+        * If capture_process=True: the Popen[str|bytes] object if created
           successfully.
-        * Else True if the remote command is executed successfully, or
-          if unsuccessful and capture_status=True the remote command exit code.
-        * Otherwise exit with an error message.
+        * Else if capture_status=True: the remote command exit code.
+        * Else if the remote command is executed successfully: 0.
+        * Else exits with an error message instead of returning.
 
     Exits with code 1 in the event of certain command errors.
 
@@ -146,20 +170,20 @@ def run_cmd(
 
     if capture_process:
         return proc
-    else:
-        if manage:
-            watch_and_kill(proc)
-        res = proc.wait()
-        if WIFSIGNALED(res):
-            sys.exit(r'ERROR: command terminated by signal %d: %s' % (
-                res, ' '.join(quote(item) for item in command)))
-        elif res and capture_status:
-            return res
-        elif res:
-            sys.exit(r'ERROR: command returns %d: %s' % (
-                res, ' '.join(quote(item) for item in command)))
-        else:
-            return True
+    if manage:
+        watch_and_kill(proc)
+    res = proc.wait()
+    if WIFSIGNALED(res):
+        sys.exit(
+            r'ERROR: command terminated by signal %d: %s'
+            % (res, ' '.join(quote(item) for item in command))
+        )
+    if capture_status or not res:
+        return res
+    sys.exit(
+        r'ERROR: command returns %d: %s'
+        % (res, ' '.join(quote(item) for item in command))
+    )
 
 
 def get_includes_to_rsync(rsync_includes=None):
@@ -415,7 +439,46 @@ def remote_cylc_cmd(
     )
 
 
-def cylc_server_cmd(cmd, host=None, **kwargs):
+@overload
+def cylc_server_cmd(
+    cmd,
+    host: Optional[str] = None,
+    *,
+    capture_process: 'Literal[False]' = False,
+    **kwargs,
+) -> int:
+    ...
+
+
+@overload
+def cylc_server_cmd(
+    cmd,
+    host: Optional[str] = None,
+    *,
+    capture_process: 'Literal[True]',
+    **kwargs,
+) -> Popen:
+    ...
+
+
+@overload
+def cylc_server_cmd(
+    cmd,
+    host: Optional[str] = None,
+    *,
+    capture_process: bool,
+    **kwargs,
+) -> Union[int, Popen]:
+    ...
+
+
+def cylc_server_cmd(
+    cmd,
+    host: Optional[str] = None,
+    *,
+    capture_process: bool = False,
+    **kwargs,
+) -> Union[int, Popen]:
     """Convenience function for running commands on remote Cylc servers.
 
     Executes a Cylc command on the specified host using localhost platform
@@ -442,5 +505,6 @@ def cylc_server_cmd(cmd, host=None, **kwargs):
         cmd,
         get_platform(),  # use localhost settings
         host=host,
+        capture_process=capture_process,
         **kwargs,
     )

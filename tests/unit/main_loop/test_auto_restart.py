@@ -64,7 +64,9 @@ def test_can_auto_restart_fail(monkeypatch, caplog):
         assert 'No alternative host to restart workflow on' in msg
 
 
-def test_can_auto_restart_fail_horribly(monkeypatch, caplog):
+def test_can_auto_restart_fail_horribly(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
     """Test can_auto_restart for really unsuccessful host selection."""
     def select_workflow_host(**_):
         raise Exception('Unexpected error in host selection')
@@ -72,11 +74,10 @@ def test_can_auto_restart_fail_horribly(monkeypatch, caplog):
         'cylc.flow.main_loop.auto_restart.select_workflow_host',
         select_workflow_host
     )
-    with caplog.at_level(level=logging.DEBUG, logger=CYLC_LOG):
+    with caplog.at_level(level=logging.ERROR, logger=CYLC_LOG):
         assert not _can_auto_restart()
-        [(_, level, msg)] = caplog.record_tuples
-        assert level == logging.CRITICAL
-        assert 'Error in host selection' in msg
+        assert 'Error in host selection' in caplog.text
+        assert "Traceback (most recent call last):" in caplog.text
 
 
 @pytest.mark.parametrize(
