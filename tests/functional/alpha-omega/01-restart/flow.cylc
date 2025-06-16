@@ -1,0 +1,26 @@
+# Test stop and restart after every task in every type of graph.
+[scheduling]
+    cycling mode = integer
+    final cycle point = 2
+    [[graph]]
+        startup = "a => b"
+        R1 = "foo => bar"
+        P1 = "bar[-P1] => bar => baz"
+        shutdown = "x => y"
+[runtime]
+    [[STOP]]
+        script = cylc stop $CYLC_WORKFLOW_ID
+    [[a, b, x, y, foo]]
+        inherit = STOP
+    [[bar]]
+        script = """
+            if ((CYLC_TASK_CYCLE_POINT == 1)); then
+                cylc stop $CYLC_WORKFLOW_ID
+            fi
+        """
+    [[baz]]
+        script = """
+            if ((CYLC_TASK_CYCLE_POINT == 2)); then
+                cylc stop $CYLC_WORKFLOW_ID
+            fi
+        """
