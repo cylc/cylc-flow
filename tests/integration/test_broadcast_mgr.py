@@ -32,13 +32,23 @@ async def test_reject_valid_broadcast_is_remote_clash_with_config(
     schd = scheduler(wid)
     async with start(schd):
         bc_mgr = schd.broadcast_mgr
-        bc_mgr.put_broadcast(
+        good, bad = bc_mgr.put_broadcast(
             point_strings=['1'],
             namespaces=['one'],
             settings=[{'remote': {'host': 'bar'}}]
         )
+
+        # the error should be reported in the workflow log
         assert log_filter(contains='Cannot apply broadcast')
         assert bc_mgr.broadcasts == {'1': {}}
+
+        # the bad setting should be reported
+        assert good == []
+        assert bad == {
+            'settings': [
+                {'remote': {'host': 'bar'}},
+            ]
+        }
 
 
 async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
@@ -54,17 +64,29 @@ async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
     schd = scheduler(flow(one_conf))
     async with start(schd):
         bc_mgr = schd.broadcast_mgr
-        bc_mgr.put_broadcast(
+        _, bad = bc_mgr.put_broadcast(
             point_strings=['1'],
             namespaces=['one'],
             settings=[{'remote': {'host': 'bar'}}]
         )
+        assert bad == {}  # broadcast should be successful
+
         # this should not be allowed, if it is the scheduler will crash
         # when unpaused:
-        bc_mgr.put_broadcast(
+        good, bad = bc_mgr.put_broadcast(
             point_strings=['1'],
             namespaces=['one'],
             settings=[{'platform': 'foo'}]
         )
+
+        # the error should be reported in the workflow log
         assert log_filter(contains='Cannot apply broadcast')
         assert bc_mgr.broadcasts == {'1': {'one': {'remote': {'host': 'bar'}}}}
+
+        # the bad setting should be reported
+        assert good == []
+        assert bad == {
+            'settings': [
+                {'platform': 'foo'},
+            ]
+        }

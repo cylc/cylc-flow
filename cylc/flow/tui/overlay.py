@@ -38,8 +38,14 @@ Parameters:
 """
 
 from functools import partial
+import os
 import re
+import shlex
+import stat
+from subprocess import Popen
 import sys
+import tempfile
+from time import sleep
 
 import urwid
 
@@ -59,6 +65,8 @@ from cylc.flow.tui.data import (
 )
 from cylc.flow.tui.util import (
     ListBoxPlus,
+    MODIFIER_ATTR_MAPPING,
+    get_status_str,
     get_task_icon,
     get_text_dimensions,
 )
@@ -153,7 +161,7 @@ def filter_task_state(app):
 
     checkboxes = [
         urwid.CheckBox(
-            get_task_icon(state)
+            get_task_icon(state, colour='overlay')
             + [' ' + state],
             state=is_on,
             on_state_change=partial(_toggle_filter, app, 'tasks', state)
@@ -212,6 +220,7 @@ def help_info(app):
             keystr = ' '.join(binding['keys'])
             items.append(
                 urwid.Text([
+                    ('  '),
                     ('key', keystr),
                     (' ' * (10 - len(keystr))),
                     binding['desc']
@@ -236,30 +245,26 @@ def help_info(app):
     for state in TASK_STATUSES_ORDERED:
         items.append(
             urwid.Text(
-                get_task_icon(state)
+                ['  ']
+                + get_task_icon(state, colour='overlay')
                 + [' ', state]
             )
         )
+
     items.append(urwid.Divider())
     items.append(urwid.Text('Special States:'))
-    items.append(
-        urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_held=True)
-            + [' ', 'held']
+    for modifier_text, (modifier_attr, _) in MODIFIER_ATTR_MAPPING.items():
+        items.append(
+            urwid.Text(
+                ['  ']
+                + get_task_icon(
+                    TASK_STATUS_WAITING,
+                    **{modifier_attr: True},
+                    colour='overlay'
+                )
+                + [' ', modifier_text]
+            )
         )
-    )
-    items.append(
-        urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_queued=True)
-            + [' ', 'queued']
-        )
-    )
-    items.append(
-        urwid.Text(
-            get_task_icon(TASK_STATUS_WAITING, is_runahead=True)
-            + [' ', 'runahead']
-        )
-    )
 
     # list job states
     items.append(urwid.Divider())
@@ -268,6 +273,7 @@ def help_info(app):
         items.append(
             urwid.Text(
                 [
+                    '  ',
                     (f'overlay_job_{state}', JOB_ICON),
                     ' ',
                     state
@@ -314,11 +320,15 @@ def context(app):
 
     # determine the ID to display for the context menu
     display_id = _get_display_id(value['id_'])
+    header = [
+        f'id: {display_id}',
+        get_status_str(value['data']),
+    ]
 
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(
             [
-                urwid.Text(f'id: {display_id}'),
+                urwid.Text('\n'.join(header)),
                 urwid.Divider(),
                 urwid.Text('Action'),
                 urwid.Button(
@@ -432,6 +442,55 @@ def log(app, id_=None, list_files=None, get_log=None):
             if close:
                 app.close_topmost()
 
+    def open_in_editor(*_, command):
+        """Suspend Tui, open the file in an external utility, then restore Tui.
+
+        Args:
+            command:
+                The command to run as a list, e.g. 'gvim -f'.
+                This command must be blocking, the tui session will be
+                restored when the command exits.
+
+        """
+
+        with tempfile.NamedTemporaryFile('w+') as temp_file:
+            # write the text into a temp file
+            temp_file.write(text_widget.text)
+            temp_file.seek(0, 0)
+
+            # make the file readonly to avoid confusion
+            os.chmod(temp_file.name, stat.S_IRUSR)
+
+            # suspend Tui
+            app.loop.screen.stop()
+
+            # open the file using the external tool (must be blocking)
+            print(
+                'Launching external tool, Tui will resume once it exits.',
+                file=sys.stderr,
+            )
+            try:
+                Popen(
+                    [*shlex.split(command), temp_file.name]
+                ).wait()  # nosec B603
+                # (this is running a command the user has configured)
+            except OSError as exc:
+                # ensure any critical errors are visible to the user so
+                # that they have a chance to fix them
+                _sleep_time = 5
+                print(
+                    (
+                        f'Error running {command} {temp_file.name}'
+                        f'\n{exc}'
+                        f'\nTui will resume in {_sleep_time} seconds'
+                    ),
+                    file=sys.stderr
+                )
+                sleep(_sleep_time)
+
+            # restore Tui
+            app.loop.screen.start()
+
     # load the default log file
     if id_:
         # NOTE: the kwargs are not provided in the overlay unit tests
@@ -447,6 +506,27 @@ def log(app, id_=None, list_files=None, get_log=None):
             urwid.Button(
                 'Select File',
                 on_press=open_menu,
+            ),
+            urwid.Columns([
+                ('pack', urwid.Text('Open in:  ')),
+                *(
+                    (
+                        'pack',
+                        urwid.Button(
+                            command,
+                            align='left',
+                            on_press=partial(open_in_editor, command=command),
+                        ),
+                    )
+                    for command in [
+                        os.environ.get('EDITOR', 'vim'),
+                        os.environ.get('GEDITOR', 'gvim -f'),
+                        os.environ.get('PAGER', 'less'),
+                    ]
+                ),
+            ]),
+            urwid.Text(
+                "(Configure apps to open logs via $EDITOR, $GEDITOR, $PAGER)"
             ),
             urwid.Divider(),
             text_widget,

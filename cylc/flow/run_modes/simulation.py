@@ -61,7 +61,6 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict[str, Any],
-    workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in simulation mode.
@@ -94,7 +93,7 @@ def submit_task_job(
         itask.mode_settings.simulated_run_length
     )
     itask.jobs.append(
-        task_job_mgr.get_simulation_job_conf(itask, workflow)
+        task_job_mgr.get_simulation_job_conf(itask)
     )
     task_job_mgr.task_events_mgr.process_message(
         itask, INFO, TASK_OUTPUT_SUBMITTED,

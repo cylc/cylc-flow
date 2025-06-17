@@ -62,7 +62,8 @@ def test_interface(overlay_functions):
                                         'id_': '~u/a',
                                         'type_': 'workflow',
                                         'data': {
-                                            'status': WorkflowStatus.RUNNING,
+                                            'status':
+                                                WorkflowStatus.RUNNING.value,
                                         },
                                     }
                                 )

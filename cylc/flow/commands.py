@@ -86,6 +86,7 @@ from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.workflow_status import StopMode
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
@@ -253,7 +254,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    schd.task_job_mgr.poll_task_jobs(schd.workflow, itasks)
+    schd.task_job_mgr.poll_task_jobs(itasks)
     yield len(bad_items)
 
 
@@ -326,7 +327,7 @@ async def remove_tasks(
 
 
 @_command('reload_workflow')
-async def reload_workflow(schd: 'Scheduler'):
+async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     """Reload workflow configuration."""
     yield
     # pause the workflow if not already
@@ -360,12 +361,24 @@ async def reload_workflow(schd: 'Scheduler'):
         # give commands time to complete
         sleep(1)  # give any remove-init's time to complete
 
-    # reload the workflow definition
-    schd.reload_pending = 'loading the workflow definition'
-    schd.update_data_store()  # update workflow status msg
-    schd._update_workflow_state()
-    LOG.info("Reloading the workflow definition.")
     try:
+        # Back up the current config in case workflow reload errors
+        global_cfg_old = glbl_cfg()
+
+        if reload_global:
+            # Reload global config if requested
+            schd.reload_pending = 'reloading the global configuration'
+            schd.update_data_store()  # update workflow status msg
+            await schd.update_data_structure()
+            LOG.info("Reloading the global configuration.")
+
+            glbl_cfg(reload=True)
+
+        # reload the workflow definition
+        schd.reload_pending = 'loading the workflow definition'
+        schd.update_data_store()  # update workflow status msg
+        schd._update_workflow_state()
+        LOG.info("Reloading the workflow definition.")
         config = schd.load_flow_file(is_reload=True)
     except (ParsecError, CylcConfigError) as exc:
         if cylc.flow.flags.verbosity > 1:
@@ -380,6 +393,9 @@ async def reload_workflow(schd: 'Scheduler'):
             '\nOtherwise, fix the configuration and attempt to reload'
             ' again.'
         )
+
+        # Rollback global config
+        glbl_cfg().set_cache(global_cfg_old)
     else:
         schd.reload_pending = 'applying the new config'
         old_tasks = set(schd.config.get_task_name_list())
