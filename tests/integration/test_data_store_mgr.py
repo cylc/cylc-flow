@@ -137,6 +137,30 @@ async def harness(mod_flow, mod_scheduler, mod_start):
 
 
 @pytest.fixture(scope='module')
+async def edgeharness(mod_flow, mod_scheduler, mod_start):
+    """Graph with > n in window edge at n=1."""
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'graph': {
+                'R1': """
+                    b1 & b2 => c1 & c2
+                    c1 => c2
+                """
+            }
+        }
+    }
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
+    async with mod_start(schd):
+        await schd.update_data_structure()
+        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+        yield schd, data
+
+
+@pytest.fixture(scope='module')
 async def xharness(mod_flow, mod_scheduler, mod_start):
     """Like harness, but add xtriggers."""
     flow_def = {
@@ -213,6 +237,13 @@ def test_increment_graph_window(harness):
     schd, data = harness
     assert schd.data_store_mgr.prune_trigger_nodes
     assert len(data[TASK_PROXIES]) == 2
+
+
+def test_in_window_extra_edges(edgeharness):
+    """Test edges beyond walk but within window are generated."""
+    schd, data = edgeharness
+    w_id = schd.data_store_mgr.workflow_id
+    assert f'{w_id}//$edge|1/c1|1/c2' in data[EDGES]
 
 
 def test_initiate_data_model(harness):

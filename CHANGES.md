@@ -11,6 +11,32 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.3 (Released 2025-06-17)__
+
+### 🚀 Enhancements
+
+[#6730](https://github.com/cylc/cylc-flow/pull/6730) - Add SQLite detailed error codes to error logs
+
+### 🔧 Fixes
+
+[#6602](https://github.com/cylc/cylc-flow/pull/6602) - Fix a bug where suicide triggers could prevent initial cycle point tasks spawning.
+
+[#6710](https://github.com/cylc/cylc-flow/pull/6710) - Restore `rsync` output into the workflow reinstallation log.
+
+[#6711](https://github.com/cylc/cylc-flow/pull/6711) - Stop broadcast allowing `[remote]host` if `platform` set, or vice-versa
+
+[#6721](https://github.com/cylc/cylc-flow/pull/6721) - Fixed a bug that could mark satisfied xtriggers as unsatisfied after a restart, in task queries.
+
+[#6722](https://github.com/cylc/cylc-flow/pull/6722) - Fix a slow memory leak in Tui.
+
+[#6727](https://github.com/cylc/cylc-flow/pull/6727) - Fixed a memory leak affecting both scheduler and UI server.
+
+[#6733](https://github.com/cylc/cylc-flow/pull/6733) - Fix an issue where the message "Cannot tell if the workflow is running" error could appear erroneously.
+
+[#6745](https://github.com/cylc/cylc-flow/pull/6745) - Fixed a bug affecting `cylc play` with run hosts specified in the global config, but no ranking expression specified.
+
+[#6758](https://github.com/cylc/cylc-flow/pull/6758) - Fixes an issue where not all in-window graph edges were being generated.
+
 ## __cylc-8.4.2 (Released 2025-04-07)__
 
 ### 🔧 Fixes
