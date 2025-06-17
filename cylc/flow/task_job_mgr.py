@@ -42,6 +42,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     cast,
@@ -178,8 +179,8 @@ class TaskJobManager:
         self.data_store_mgr: DataStoreMgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
-        self.bad_hosts = bad_hosts
-        self.bad_hosts_to_clear = set()
+        self.bad_hosts: Set[str] = bad_hosts
+        self.bad_hosts_to_clear: Set[str] = set()
         self.task_remote_mgr = TaskRemoteMgr(
             workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr, server
         )
@@ -393,8 +394,7 @@ class TaskJobManager:
             # workflow host.
             try:
                 host = get_host_from_platform(
-                    platform,
-                    bad_hosts=self.task_remote_mgr.bad_hosts
+                    platform, bad_hosts=self.bad_hosts
                 )
             except NoHostsError:
                 del ri_map[install_target]
@@ -555,7 +555,7 @@ class TaskJobManager:
                         job_log_dirs=job_log_dirs,
                         host=host
                     ),
-                    bad_hosts=self.task_remote_mgr.bad_hosts,
+                    bad_hosts=self.bad_hosts,
                     callback=self._submit_task_jobs_callback,
                     callback_args=[itasks_batch],
                     callback_255=self._submit_task_jobs_callback_255,
@@ -568,7 +568,13 @@ class TaskJobManager:
         """Find the first platform with at least one host that has not been
         tried and found to be unreachable.
 
-        If there are no good hosts for a task then the task submit-fails.
+        If there are no good hosts for the tasks then we set them to
+        submit-failed.
+
+        Args:
+            itasks: tasks that share the same platform/platform group.
+            done_tasks: list in which to put tasks that we could not find a
+                platform for.
 
         Returns:
             The platform with a good host, or None if no such platform is found
@@ -577,7 +583,7 @@ class TaskJobManager:
             # If there are any hosts left for this platform which we
             # have not previously failed to contact with a 255 error.
             if any(
-                host not in self.task_remote_mgr.bad_hosts
+                host not in self.bad_hosts
                 for host in itask.platform['hosts']
             ):
                 return itask.platform
@@ -597,8 +603,7 @@ class TaskJobManager:
                 # store the previous platform's hosts so that when
                 # we record a submit fail we can clear all hosts
                 # from all platforms from bad_hosts.
-                for host_ in itask.platform['hosts']:
-                    self.bad_hosts_to_clear.add(host_)
+                self.bad_hosts_to_clear.update(itask.platform['hosts'])
                 itask.platform = platform
                 return platform
 
@@ -716,10 +721,7 @@ class TaskJobManager:
         """Helper for _kill_task_jobs_callback, on one task job."""
         with suppress(NoHostsError):
             # if there is another host to kill on, try again, otherwise fail
-            get_host_from_platform(
-                itask.platform,
-                bad_hosts=self.task_remote_mgr.bad_hosts
-            )
+            get_host_from_platform(itask.platform, bad_hosts=self.bad_hosts)
             self.kill_task_jobs([itask])
 
     def _kill_task_job_callback(self, itask, cmd_ctx, line):
@@ -846,10 +848,7 @@ class TaskJobManager:
     def _poll_task_job_callback_255(self, itask, cmd_ctx, line):
         with suppress(NoHostsError):
             # if there is another host to poll on, try again, otherwise fail
-            get_host_from_platform(
-                itask.platform,
-                bad_hosts=self.task_remote_mgr.bad_hosts
-            )
+            get_host_from_platform(itask.platform, bad_hosts=self.bad_hosts)
             self.poll_task_jobs([itask])
 
     def _poll_task_job_callback(
@@ -964,10 +963,7 @@ class TaskJobManager:
         # sort itasks into lists based upon where they were run.
         auth_itasks = {}
         for itask in itasks:
-            platform_name = itask.platform['name']
-            if platform_name not in auth_itasks:
-                auth_itasks[platform_name] = []
-            auth_itasks[platform_name].append(itask)
+            auth_itasks.setdefault(itask.platform['name'], []).append(itask)
 
         # Go through each list of itasks and carry out commands as required.
         for platform_name, itasks in sorted(auth_itasks.items()):
@@ -1002,7 +998,7 @@ class TaskJobManager:
             if remote_mode:
                 try:
                     host = get_host_from_platform(
-                        platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                        platform, bad_hosts=self.bad_hosts
                     )
                     cmd = construct_ssh_cmd(
                         cmd, platform, host
@@ -1025,7 +1021,7 @@ class TaskJobManager:
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
                 ctx,
-                bad_hosts=self.task_remote_mgr.bad_hosts,
+                bad_hosts=self.bad_hosts,
                 callback=callback,
                 callback_args=[itasks],
                 callback_255=callback_255,
