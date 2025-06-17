@@ -579,13 +579,12 @@ class TaskJobManager:
         Returns:
             The platform with a good host, or None if no such platform is found
         """
+        out_of_hosts = False
         for itask in itasks:
             # If there are any hosts left for this platform which we
             # have not previously failed to contact with a 255 error.
-            if any(
-                host not in self.bad_hosts
-                for host in itask.platform['hosts']
-            ):
+            out_of_hosts |= self.bad_hosts.issuperset(itask.platform['hosts'])
+            if not out_of_hosts:
                 return itask.platform
 
             # If there are no hosts left for this platform.
