@@ -156,6 +156,10 @@ def test_query_variables(
             'foo'
         ),
         (
+            [],
+            NULL_VALUE
+        ),
+        (
             {},
             NULL_VALUE
         ),
@@ -195,10 +199,6 @@ def test_null_setter(pre_result, expected_result):
             TASK_PROXY_PREREQS.prerequisites,
             TASK_PROXY_PREREQS.prerequisites
         ),
-        (
-            [NULL_VALUE],
-            [],
-        )
     ]
 )
 async def test_strip_null(pre_result, expected_result):
