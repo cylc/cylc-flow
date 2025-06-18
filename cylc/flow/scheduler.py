@@ -78,6 +78,7 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
+    FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
     FlowMgr,
@@ -1329,8 +1330,23 @@ class Scheduler:
                 f"trigger:\n  * {msg}"
             )
 
-        # remove all inactive and selected active group members
-        self.remove_matched_tasks(active_tasks_to_remove, inactive, flow_nums)
+        # Remove all inactive and selected active group members - separately
+        # because default flow inactive semantics is different for the remove
+        # command (ALL flows) then for the trigger command (ALL ACTIVE flows).
+        if flow != ["none"]:
+            # (No need to remove for no-flow triggering)
+            if active_tasks_to_remove:
+                empty_i: Set[Tuple[TaskDef, PointBase]] = set()
+                self.remove_matched_tasks(
+                    active_tasks_to_remove, empty_i, flow_nums)
+            if inactive:
+                empty_a: List[TaskProxy] = []
+                if not flow_nums:
+                    # remove for all active flows, not all flows.
+                    self.remove_matched_tasks(
+                        empty_a, inactive, self.pool.get_flow_nums([FLOW_ALL]))
+                else:
+                    self.remove_matched_tasks(empty_a, inactive, flow_nums)
 
         # store removal results before moving on
         self.workflow_db_mgr.process_queued_ops()
