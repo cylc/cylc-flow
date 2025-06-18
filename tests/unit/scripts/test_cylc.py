@@ -125,9 +125,8 @@ def test_pythonpath_manip(monkeypatch):
     and adds items from CYLC_PYTHONPATH
     """
 
-    # CYLC_PYTHONPATH needs to be unset for this test.
-    with suppress(KeyError):
-        del os.environ["CYLC_PYTHONPATH"]
+    # Local CYLC_PYTHONPATH can mess with this test.
+    monkeypatch.delenv('CYLC_PYTHONPATH', raising=False)
 
     monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
     monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
