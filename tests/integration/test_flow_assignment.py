@@ -27,7 +27,6 @@ from cylc.flow.flow_mgr import (
     FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
-    repr_flow_nums
 )
 from cylc.flow.scheduler import Scheduler
 
@@ -137,11 +136,8 @@ async def test_flow_assignment(
         do_command([active_a.identity], flow=[FLOW_NONE])
         assert active_a.flow_nums == {1, 2}
         assert log_filter(
-            contains=(
-                f'[{active_a}] ignoring \'flow=none\' {command}: '
-                f'task already has {repr_flow_nums(active_a.flow_nums)}'
-            ),
-            level=logging.ERROR
+            contains=("Tasks already flow-assigned - ignoring"),
+            level=logging.WARNING
         )
 
         do_command([active_a.identity], flow=[FLOW_NEW])
