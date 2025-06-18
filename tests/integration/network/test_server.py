@@ -52,6 +52,23 @@ def test_graphql(myflow):
     assert myflow.id == data['workflows'][0]['id']
 
 
+def test_graphql_error(myflow):
+    """Test GraphQL endpoint method."""
+    request_string = f'''
+        query {{
+            workflows(ids: ["{myflow.id}"]) {{
+                id
+                notafield
+                alsonotafield
+            }}
+        }}
+    '''
+    with pytest.raises(Exception) as excinfo:
+        myflow.server.graphql(request_string)
+        assert "Cannot query field 'notafield'" in excinfo
+        assert "Cannot query field 'alsonotafield'" in excinfo
+
+
 def test_pb_data_elements(myflow):
     """Test Protobuf elements endpoint method."""
     element_type = 'workflow'
