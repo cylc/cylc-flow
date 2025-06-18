@@ -1345,7 +1345,7 @@ class Scheduler:
                 {
                     (itask.tdef, itask.point)
                     for itask in active_tasks_to_remove
-               }
+                }
             )
 
         for tdef, point in to_remove:

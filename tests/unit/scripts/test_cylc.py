@@ -17,7 +17,6 @@
 
 import os
 import sys
-from contextlib import suppress
 from types import SimpleNamespace
 from typing import Callable
 from unittest.mock import Mock
