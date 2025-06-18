@@ -93,8 +93,8 @@ async def test_trigger_workflow_paused(
         schd.release_tasks_to_run()
         assert len(submitted_tasks) == 2
         assert log_filter(
-            level=logging.ERROR,
-            contains="ignoring trigger - already active"
+            level=logging.WARNING,
+            contains="Tasks already active - ignoring"
         )
 
 
@@ -174,15 +174,21 @@ async def test_trigger_group(
             },
             'graph': {
                 'R1': """
-                    # sub-graph for group trigger: a => b & c => d
-                    x => a => b & c => d => e => y
+                    # upstream:
+                    x => a
+
+                    # sub-graph for group trigger:
+                    a => b & c => d
+
+                    # downstream:
+                    d => e => y
 
                     # off-group prerequisites:
                     @xr => x  # stop the flow starting
                     @xr => c  # off-group xtrigger prerequisite
                     @xr => off => b  # off-group task prerequisite
 
-                    # and stop the flow from ending without intervention:
+                    # stop the flow from ending without intervention:
                     @xr => y
                 """
             },
