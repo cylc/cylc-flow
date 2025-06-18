@@ -1264,6 +1264,8 @@ class Scheduler:
         # Record off-group prerequisites, and active tasks to be removed.
         active_tasks_to_remove = []
 
+        warnings_flow_none = []
+        warnings_active = []
         for itask in active:
             # Find active group start tasks (parentless, or only off-group
             # prerequisites) and set all of their prerequisites (trigger now).
@@ -1294,7 +1296,7 @@ class Scheduler:
                     TASK_STATUS_PREPARING,
                     *TASK_STATUSES_ACTIVE
                 ):
-                    LOG.error(f"[{itask}] ignoring trigger - already active")
+                    warnings_active.append(str(itask))
                     # Just merge the flows.
                     self.pool.merge_flows(itask, flow_nums)
 
@@ -1313,6 +1315,19 @@ class Scheduler:
                     active_tasks_to_remove.append(itask)
             else:
                 active_tasks_to_remove.append(itask)
+
+        if warnings_flow_none:
+            msg = '\n  * '.join(warnings_flow_none)
+            LOG.warning(
+                "Tasks already flow-assigned - ignoring "
+                f'"trigger --flow=none": \n  * {msg}'
+            )
+        if warnings_active:
+            msg = '\n  * '.join(warnings_active)
+            LOG.warning(
+                "Tasks already active - ignoring "
+                f"trigger:\n  * {msg}"
+            )
 
         # remove all inactive and selected active group members
         self.remove_matched_tasks(active_tasks_to_remove, inactive, flow_nums)
