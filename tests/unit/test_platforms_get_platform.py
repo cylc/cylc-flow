@@ -246,18 +246,18 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
         'cylc.flow.platforms.glbl_cfg',
         '''
         [platforms]
-            [[aleph, bet, alpha, beta]]
+            [[aleph, bet, startup, beta]]
 
         [platform groups]
             [[hebrew_letters]]
-                platforms = alpha, beta
+                platforms = startup, beta
                 [[[selection]]]
                     method = definition order
             [[aleph]]
             # Group with same name as platform to try and
             # trip up the platform selection logic after it
             # has processed [[.*_letters]] below
-                platforms = alpha
+                platforms = startup
             [[.*_letters]]
                 platforms = aleph, bet
                 [[[selection]]]
