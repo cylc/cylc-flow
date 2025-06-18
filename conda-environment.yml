@@ -17,7 +17,7 @@ dependencies:
   - python
   - pyzmq >=22
   - importlib_metadata >=5.0 # [py<3.12]
-  - urwid >=2,<3,!=2.6.2,!=2.6.3
+  - urwid >=2.2,<3,!=2.6.2,!=2.6.3
   - tomli >=2 # [py<3.11]
 
 # optional dependencies
