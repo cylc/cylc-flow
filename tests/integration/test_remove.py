@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.commands import (
     force_trigger_tasks,
     reload_workflow,
@@ -129,7 +129,7 @@ async def test_specific_flow(
 
     async with start(schd):
         a1 = schd.pool._get_task_by_id('1/a1')
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+        schd.force_trigger_tasks(['1/a1'], ['1', '2'])
         schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
         await schd.update_data_structure()
 
@@ -261,14 +261,15 @@ async def test_logging(
         # Invalid tasks:
         '2005/a', '2000/doh',
     ]
-    async with start(schd):
+    async with start(schd) as log:
+        log.set_level(logging.DEBUG, CYLC_LOG)
         await run_cmd(remove_tasks(schd, tasks_to_remove, [FLOW_ALL]))
 
     assert log_filter(
         logging.INFO, "Removed task(s): 2000/a (flows=1), 2000/b (flows=1)"
     )
 
-    assert log_filter(logging.WARNING, "Task(s) not removable: 2001/a, 2001/b")
+    assert log_filter(logging.DEBUG, "Task(s) not removable: 2001/a, 2001/b")
     assert log_filter(logging.WARNING, "No active tasks matching: 2002/*")
     assert log_filter(logging.WARNING, "Invalid cycle point for task: a, 2005")
     assert log_filter(logging.WARNING, "No matching tasks found: doh")
@@ -281,12 +282,13 @@ async def test_logging_flow_nums(
 ):
     """Test logging of task removals involving flow numbers."""
     schd: Scheduler = scheduler(example_workflow)
-    async with start(schd):
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+    async with start(schd) as log:
+        log.set_level(logging.DEBUG, CYLC_LOG)
+        schd.force_trigger_tasks(['1/a1'], ['1', '2'])
         # Removing from flow that doesn't exist doesn't work:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['3']))
         assert log_filter(
-            logging.WARNING, "Task(s) not removable: 1/a1 (flows=3)"
+            logging.DEBUG, "Task(s) not removable: 1/a1 (flows=3)"
         )
 
         # But if a valid flow is included, it will be removed from that flow:
@@ -400,7 +402,7 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
     )
     async with run(schd):
         await complete(schd, '1/a')
-        schd.pool.force_trigger_tasks(['1/c'], ['2'])
+        schd.force_trigger_tasks(['1/c'], ['2'])
         c = schd.pool._get_task_by_id('1/c')
         schd.pool.spawn_on_output(c, TASK_OUTPUT_SUCCEEDED)
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
