@@ -2045,13 +2045,14 @@ class TaskPool:
             return
 
         # For active tasks, default to the task's current flow assignment.
+        warnings_flow_none = []
         if itasks:
             flow_nums = self.get_flow_nums(flow, flow_descr)
             for itask in itasks:
                 if flow == ['none'] and itask.flow_nums != set():
-                    LOG.error(
-                        f"[{itask}] ignoring 'flow=none' set: task already has"
-                        f" {repr_flow_nums(itask.flow_nums, full=True)}"
+                    warnings_flow_none.append(
+                        f"{itask.identity}: "
+                        f"{repr_flow_nums(itask.flow_nums, full=True)}"
                     )
                     continue
 
@@ -2075,6 +2076,13 @@ class TaskPool:
                     self.check_spawn_psx_task(itask)
                     self._set_outputs_itask(itask, outputs)
                     no_op = False
+
+        if warnings_flow_none:
+            msg = '\n  * '.join(warnings_flow_none)
+            LOG.warning(
+                "Tasks already flow-assigned - ignoring "
+                f'"trigger --flow=none": \n  * {msg}'
+            )
 
         # For inactive tasks, default to all current flows.
         if inactive_tasks:
