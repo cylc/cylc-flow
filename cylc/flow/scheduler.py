@@ -1339,16 +1339,16 @@ class Scheduler:
         if not flow:
             flow_nums = self.pool._get_active_flow_nums()
 
-        stuff = inactive
+        to_remove = inactive
         if active_tasks_to_remove:
-            stuff.update(
+            to_remove.update(
                 {
                     (itask.tdef, itask.point)
                     for itask in active_tasks_to_remove
-                }
+               }
             )
 
-        for tdef, point in stuff:
+        for tdef, point in to_remove:
             in_flow_prereqs = False
             jtask: Optional[TaskProxy] = None
             if tdef.is_parentless(point):
