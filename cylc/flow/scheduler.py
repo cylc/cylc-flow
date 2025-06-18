@@ -1330,7 +1330,10 @@ class Scheduler:
             )
 
         # remove all inactive and selected active group members
-        self.remove_matched_tasks(active_tasks_to_remove, inactive, flow_nums)
+        if flow != ['none'] and flow != ['all']:
+            # TODO: is the enclosing 'if' statement correct here?
+            self.remove_matched_tasks(
+                active_tasks_to_remove, inactive, flow_nums)
 
         # store removal results before moving on
         self.workflow_db_mgr.process_queued_ops()
