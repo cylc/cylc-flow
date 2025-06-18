@@ -92,7 +92,7 @@ async def test_force_trigger_does_not_override_run_mode(
         foo = schd.pool.get_tasks()[0]
 
         # Force trigger task:
-        schd.pool.force_trigger_tasks('1/foo', [1])
+        schd.force_trigger_tasks('1/foo', [1])
 
         # ... but job submission will always change this to the correct mode:
         schd.submit_task_jobs([foo])

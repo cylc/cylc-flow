@@ -17,6 +17,7 @@
 
 import os
 import sys
+from contextlib import suppress
 from types import SimpleNamespace
 from typing import Callable
 from unittest.mock import Mock
@@ -123,6 +124,11 @@ def test_pythonpath_manip(monkeypatch):
 
     and adds items from CYLC_PYTHONPATH
     """
+
+    # CYLC_PYTHONPATH needs to be unset for this test.
+    with suppress(KeyError):
+        del os.environ["CYLC_PYTHONPATH"]
+
     monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
     monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
     pythonpath_manip()

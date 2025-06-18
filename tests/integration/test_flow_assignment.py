@@ -46,7 +46,7 @@ async def test_trigger_no_flows(one, start):
 
         # Trigger the task, with new flow nums.
         time.sleep(2)  # The flows need different timestamps!
-        one.pool.force_trigger_tasks([task.identity], flow=['5', '9'])
+        one.force_trigger_tasks([task.identity], flow=['5', '9'])
         assert len(one.pool.get_tasks()) == 1
 
         # Ensure the new flow is in the db.
@@ -58,27 +58,27 @@ async def test_trigger_no_flows(one, start):
         assert len(one.pool.get_tasks()) == 0
 
         # Trigger the task; it should get flow nums 5, 9
-        one.pool.force_trigger_tasks([task.identity], [FLOW_ALL])
+        one.force_trigger_tasks([task.identity], [FLOW_ALL])
         assert len(one.pool.get_tasks()) == 1
         task = one.pool.get_tasks()[0]
         assert task.flow_nums == {5, 9}
 
 
 async def test_get_flow_nums(one: Scheduler, start):
-    """Test the task pool _get_flow_nums() method."""
+    """Test the task pool get_flow_nums() method."""
     async with start(one):
         # flow 1 is already present
         task = one.pool.get_tasks()[0]
-        assert one.pool._get_flow_nums([FLOW_NEW]) == {2}
+        assert one.pool.get_flow_nums([FLOW_NEW]) == {2}
         one.pool.merge_flows(task, {2})
         # now we have flows {1, 2}:
 
-        assert one.pool._get_flow_nums([FLOW_NONE]) == set()
-        assert one.pool._get_flow_nums([FLOW_ALL]) == {1, 2}
-        assert one.pool._get_flow_nums([FLOW_NEW]) == {3}
-        assert one.pool._get_flow_nums(['4', '5']) == {4, 5}
+        assert one.pool.get_flow_nums([FLOW_NONE]) == set()
+        assert one.pool.get_flow_nums([FLOW_ALL]) == {1, 2}
+        assert one.pool.get_flow_nums([FLOW_NEW]) == {3}
+        assert one.pool.get_flow_nums(['4', '5']) == {4, 5}
         # the only active task still only has flows {1, 2}
-        assert one.pool._get_flow_nums([FLOW_ALL]) == {1, 2}
+        assert one.pool.get_flow_nums([FLOW_ALL]) == {1, 2}
 
 
 @pytest.mark.parametrize('command', ['trigger', 'set'])
@@ -116,10 +116,10 @@ async def test_flow_assignment(
                 schd.pool.set_prereqs_and_outputs, outputs=['x'], prereqs=[]
             )
         else:
-            do_command = schd.pool.force_trigger_tasks
+            do_command = schd.force_trigger_tasks
 
         active_a, active_b = schd.pool.get_tasks()
-        schd.pool.merge_flows(active_b, schd.pool._get_flow_nums([FLOW_NEW]))
+        schd.pool.merge_flows(active_b, schd.pool.get_flow_nums([FLOW_NEW]))
         assert active_a.flow_nums == {1}
         assert active_b.flow_nums == {1, 2}
 

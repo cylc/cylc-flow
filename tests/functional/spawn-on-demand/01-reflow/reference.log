@@ -5,5 +5,5 @@ Final point: 2
 1/baz -triggered off ['1/bar']
 2/foo -triggered off ['1/foo']
 2/triggerer -triggered off ['2/foo']
-1/bar -triggered off []
+1/bar -triggered off ['1/foo']
 1/baz -triggered off ['1/bar']

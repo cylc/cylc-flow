@@ -33,7 +33,7 @@ Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
 The cycle point nodes/edges (i.e. task/family proxies) generation is triggered
-individually on transition to active task pool. Each active task is generated
+individually on transition to n=0. Each active task is generated
 along with any children and parents via a graph walk out to a specified maximum
 graph distance (n_edge_distance), that can be externally altered (via API).
 Collectively this forms the N-Distance-Window on the workflow graph.
@@ -42,7 +42,7 @@ Pruning of data-store elements is done using the collection/set of nodes
 generated at the boundary of an active node's graph walk and registering active
 node's parents against them. Once active, these boundary nodes act as the prune
 triggers for the associated parent nodes. Set operations are used to do a diff
-between the nodes of active paths (paths whose node is in the active task pool)
+between the nodes of active paths (paths whose node is in n=0)
 and the nodes of flagged paths (whose boundary node(s) have become active).
 
 Updates are created by the event/task/job managers.
@@ -1955,10 +1955,11 @@ class DataStoreMgr:
             if tp_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(tp_id)
             for xid in node.xtriggers:
-                label, sig = xid.split('=', 1)
-                self.xtrigger_tasks[sig].remove((tp_id, label))
-                if not self.xtrigger_tasks[sig]:
-                    del self.xtrigger_tasks[sig]
+                with suppress(KeyError):
+                    label, sig = xid.split('=', 1)
+                    self.xtrigger_tasks[sig].remove((tp_id, label))
+                    if not self.xtrigger_tasks[sig]:
+                        del self.xtrigger_tasks[sig]
 
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)

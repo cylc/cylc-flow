@@ -6,9 +6,9 @@ Final point: 1
 3/a -triggered off ['2/a'] in flow 1
 4/a -triggered off ['3/a'] in flow 1
 # the second flow
-3/a -triggered off [] in flow 2
+3/a -triggered off ['2/a'] in flow 2
 4/a -triggered off ['3/a'] in flow 2
 # the joined flow
-5/a -triggered off [] in flow 1,2
+5/a -triggered off ['4/a'] in flow 1,2
 6/a -triggered off ['5/a'] in flow 1,2
 7/a -triggered off ['6/a'] in flow 1,2
