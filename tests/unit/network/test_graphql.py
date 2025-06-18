@@ -19,7 +19,6 @@ from pytest import param
 from graphql import (
     TypeInfo,
     TypeInfoVisitor,
-    get_operation_ast,
     parse,
     visit
 )
@@ -53,8 +52,7 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
                 'workflowID': 'cylc|workflow'
             },
             {
-                'arg': 'ids',
-                'val': ['cylc|workflow'],
+                'ids': ['cylc|workflow'],
             },
             True,
             id="simple query with correct variables"
@@ -74,8 +72,7 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
                 'workflowID': 'cylc|workflow'
             },
             {
-                'arg': 'ids',
-                'val': ['cylc|workflow'],
+                'ids': ['cylc|workflow'],
             },
             True,
             id="query with a fragment and correct variables"
@@ -89,11 +86,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
             }
             ''',
             {
-                'workflowId': 'cylc|workflow'
+                'workflowID': 'cylc|workflow'
             },
             {
-                'arg': 'ids',
-                'val': None,
+                'ids': None,
             },
             False,
             id="correct variable definition, but missing variable in "
@@ -108,11 +104,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
             }
             ''',
             {
-                'workflowId': 'cylc|workflow'
+                'workflowID': 'cylc|workflow'
             },
             {
-                'arg': 'idfsdf',
-                'val': ['cylc|workflow'],
+                'idfsdf': ['cylc|workflow'],
             },
             False,
             id="correct variable definition, but wrong search argument"
@@ -133,25 +128,23 @@ def test_query_variables(
         search_arg: argument and value to search for
         expected_result: was the argument and value found
     """
-    def test():
-        """Inner function to avoid duplication in if/else"""
-        document = parse(query)
-        type_info = TypeInfo(schema)
-        cylc_visitor = CylcVisitor(
+    document = parse(query)
+    type_info = TypeInfo(schema.graphql_schema)
+    cylc_visitor = CylcVisitor(
+        type_info,
+        variables,
+        search_arg
+    )
+    visit(
+        document,
+        TypeInfoVisitor(
             type_info,
-            variables,
-            search_arg
-        )
-        visit(
-            get_operation_ast(document),
-            TypeInfoVisitor(
-                type_info,
-                cylc_visitor
-            ),
-            None
-        )
+            cylc_visitor
+        ),
+        None
+    )
 
-        assert expected_result == cylc_visitor.arg_flag
+    assert expected_result == cylc_visitor.arg_flag
 
 
 @pytest.mark.parametrize(
@@ -161,10 +154,6 @@ def test_query_variables(
         (
             'foo',
             'foo'
-        ),
-        (
-            [],
-            NULL_VALUE
         ),
         (
             {},

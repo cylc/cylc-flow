@@ -32,9 +32,9 @@ from graphql import (
     TypeInfoVisitor,
     Visitor,
     visit,
-    get_argument_values,
     get_named_type,
     is_introspection_type,
+    value_from_ast_untyped
 )
 from graphql.pyutils import AwaitableOrValue, is_awaitable
 
@@ -162,16 +162,16 @@ class CylcVisitor(Visitor):
         self.arg_flag = False
 
     def enter(self, node, key, parent, path, ancestors):
-        if hasattr(node, 'arguments'):
-            field_def = self.type_info.get_field_def()
-            arg_vals = get_argument_values(
-                field_def,
-                node,
+        if (
+            node.kind == 'argument'
+            and node.name.value in self.doc_arg
+            and self.doc_arg[node.name.value] == value_from_ast_untyped(
+                node.value,
                 self.variable_values
             )
-            if arg_vals.get(self.doc_arg['arg']) == self.doc_arg['val']:
-                self.arg_flag = True
-                return self.BREAK
+        ):
+            self.arg_flag = True
+            return self.BREAK
         return self.IDLE
 
     def leave(self, node, key, parent, path, ancestors):
@@ -197,8 +197,7 @@ class CylcExecutionContext(ExecutionContext):
             type_info,
             self.variable_values,
             {
-                'arg': 'strip_null',
-                'val': True,
+                'stripNull': True
             }
         )
         visit(
@@ -209,16 +208,6 @@ class CylcExecutionContext(ExecutionContext):
             ),
             None
         )
-        if not cylc_visitor.arg_flag:
-            for fragment in self.fragments.values():
-                visit(
-                    fragment,
-                    TypeInfoVisitor(
-                        type_info,
-                        cylc_visitor
-                    ),
-                    None
-                )
         if cylc_visitor.arg_flag:
             return async_next(strip_null, result)  # type: ignore
         return result
