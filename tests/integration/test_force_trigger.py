@@ -14,17 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from typing import (
     Any as Fixture,
     Callable
 )
 
-import logging
+import pytest
 
 from cylc.flow.commands import (
     force_trigger_tasks,
     reload_workflow,
     hold,
+    resume,
     run_cmd,
     set_prereqs_and_outputs,
 )
@@ -99,12 +101,44 @@ async def test_trigger_workflow_paused(
         )
 
 
+async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
+    """Only group start-tasks should run whilst the scheduler is paused.
+
+    When multiple tasks are triggered, only tasks with no dependencies within
+    the group should run whilst the scheduler is paused.
+
+    The remaining tasks will run according to normal prerequsitie satisfaction
+    once the workflow is resumed.
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {'R1': 'a => b => c => d'},
+            },
+        }
+    )
+    schd = scheduler(id_)
+    async with run(schd):
+        # trigger the chain a => c
+        await run_cmd(force_trigger_tasks(schd, ['1/a'], ['all']))
+
+        # 1/a should run whilst the workflow is paused (group start-task)
+        await complete(schd, '1/a', allow_paused=True, timeout=1)
+
+        # 1/b should *not* run whilst the workflow is paused
+        with pytest.raises(AssertionError):
+            await complete(schd, '1/b', allow_paused=True, timeout=2)
+
+        # 1/b and 1/c should run once the workflow is resumed
+        await run_cmd(resume(schd))
+        await complete(schd, '1/c')
+
+
 async def test_trigger_on_resume(
     flow: 'Fixture',
     scheduler: 'Fixture',
     start: 'Fixture',
     capture_submission: 'Fixture',
-    log_filter: Callable
 ):
     """
     Test manual triggering on-resume option when the workflow is paused.
@@ -373,7 +407,23 @@ async def test_trigger_active_task_in_group(
         }
 
 
-async def test_trigger_group_in_flow(flow, scheduler, run, complete, reflog):
+async def test_trigger_group_in_flow(
+    flow,
+    scheduler,
+    run,
+    complete,
+    reflog,
+    db_select,
+):
+    """It should remove tasks from the triggered flow(s).
+
+    Tests the following statement from the proposal:
+
+    > Use the same flow numbers, as determined by the trigger command in the
+    > usual way, throughout the operation
+    >
+    > -- https://cylc.github.io/cylc-admin/proposal-group-trigger.html#details
+    """
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -383,29 +433,49 @@ async def test_trigger_group_in_flow(flow, scheduler, run, complete, reflog):
     })
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
+        # prevent shutdown after 1/c completes
         await run_cmd(hold(schd, ['1/d']))
 
-        triggers = reflog(schd)
+        # run the chain, merge in flow "2" part way through
+        triggers = reflog(schd, flow_nums=True)
         await complete(schd, '1/a')
         await run_cmd(force_trigger_tasks(schd, ['1/b'], ['2']))
         await complete(schd, '1/c')
         assert triggers == {
-            ('1/a', None),
-            ('1/b', ('1/a',)),
-            ('1/c', ('1/b',)),
+            # (task, flow_nums, triggered_off_of)
+            ('1/a', '[1]', None),
+            ('1/b', '[1, 2]', ('1/a',)),  # flow "2" merged in
+            ('1/c', '[1, 2]', ('1/b',)),  # flow "2" merged in
         }
 
-        # state is now:
-        # * a - succeeded flow=1
-        # * b - succeeded flow=1,2
-        # * c - succedded flow=1,2
-        # * d - waiting (held)
-
-        triggers = reflog(schd)
+        # re-run the chain in flow "2"
+        triggers = reflog(schd, flow_nums=True)
         await run_cmd(force_trigger_tasks(schd, ['1/a', '1/b', '1/c'], ['2']))
         await complete(schd, '1/c', timeout=10)
         assert triggers == {
-            ('1/a', None),
-            ('1/b', ('1/a',)),
-            ('1/c', ('1/b',)),
+            # (task, flow_nums, triggered_off_of)
+            ('1/a', '[2]', None),
+            ('1/b', '[2]', ('1/a',)),
+            ('1/c', '[2]', ('1/b',)),
+        }
+
+        # ensure that flow "2" was removed from the tasks in the original run
+        # by the group-trigger
+        assert set(db_select(
+            schd,
+            True,
+            'task_outputs',
+            'name',
+            'flow_nums',
+        )) == {
+            # original run
+            ('a', '[1]'),
+            ('b', '[1]'),  # flow "2" has been removed
+            ('c', '[1]'),  # flow "2" has been removed
+            ('d', '[1, 2]'),
+
+            # subsequent run
+            ('a', '[2]'),
+            ('b', '[2]'),
+            ('c', '[2]'),
         }

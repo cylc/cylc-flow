@@ -592,6 +592,7 @@ async def _complete(
     *wait_tokens: Union[Tokens, str],
     stop_mode=StopMode.AUTO,
     timeout: int = 60,
+    allow_paused: bool = False,
 ) -> None:
     """Wait for the workflow, or tasks within it to complete.
 
@@ -615,9 +616,17 @@ async def _complete(
 
             Note, use this timeout rather than wrapping the complete call with
             async_timeout (handles shutdown logic more cleanly).
+        allow_paused:
+            This function will raise an Exception if the scheduler is paused
+            (because this usually means the sepecified tasks cannot complete)
+            unless allow_paused==True.
+
+    Raises:
+        AssertionError: In the event the scheduler shut down or the operation
+            timed out.
 
     """
-    if schd.is_paused:
+    if schd.is_paused and not allow_paused:
         raise Exception("Cannot wait for completion of a paused scheduler")
 
     start_time = time()
@@ -678,7 +687,7 @@ async def _complete(
                     msg += ", ".join(map(str, tokens_list))
                 else:
                     msg += "workflow to shut down"
-                raise Exception(msg)
+                raise AssertionError(msg)
 
 
 @pytest.fixture
