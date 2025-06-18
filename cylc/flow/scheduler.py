@@ -1368,12 +1368,10 @@ class Scheduler:
                     if (key.task, str(key.point)) not in group_ids
                 }
                 in_flow_prereqs = any(
-                    {
-                        key
-                        for pre in tdef.get_prereqs(point)
-                        for key in pre.keys()
-                        if (key.task, str(key.point)) in group_ids
-                    }
+                    key
+                    for pre in tdef.get_prereqs(point)
+                    for key in pre.keys()
+                    if (key.task, str(key.point)) in group_ids
                 )
                 # (call this even with no off-flow prereqs, for xtriggers)
                 jtask = self.pool._set_prereqs_tdef(
