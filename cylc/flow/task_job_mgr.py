@@ -340,10 +340,11 @@ class TaskJobManager:
             # Find the first platform where >1 host has not been tried and
             # found to be unreachable.
             # If there are no good hosts for a task then the task submit-fails.
+            out_of_hosts = False
             for itask in itasks:
                 # If there are any hosts left for this platform which we
                 # have not previously failed to contact with a 255 error.
-                if any(
+                if not out_of_hosts and any(
                     host not in self.task_remote_mgr.bad_hosts
                     for host in itask.platform['hosts']
                 ):
