@@ -1254,10 +1254,10 @@ class Scheduler:
             items, inactive=True, warn_no_active=False,
         )
 
-        group_ids = (
-            [(tdef.name, str(point)) for (tdef, point) in inactive] +
-            [(itask.tdef.name, str(itask.point)) for itask in active]
-        )
+        group_ids = {
+            *((tdef.name, str(point)) for (tdef, point) in inactive),
+            *((itask.tdef.name, str(itask.point)) for itask in active)
+        }
 
         flow_nums = self.pool.get_flow_nums(flow, flow_descr)
 
