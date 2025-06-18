@@ -1243,7 +1243,7 @@ class Scheduler:
         flow_descr: Optional[str] = None,
         on_resume: bool = False
     ):
-        """Manually trigger a selected group of tasks.
+        """Match and trigger a group of tasks (`cylc trigger` command).
 
         Satisfy any off-group prerequisites. Group start tasks (parentless,
         or only off-group prerequisites) will run immediately. In-group
