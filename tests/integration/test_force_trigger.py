@@ -24,6 +24,7 @@ import logging
 from cylc.flow.commands import (
     force_trigger_tasks,
     reload_workflow,
+    hold,
     run_cmd,
     set_prereqs_and_outputs,
 )
@@ -368,5 +369,43 @@ async def test_trigger_active_task_in_group(
             ('1/a', None),
             ('1/b', ('1/a',)),  # original run
             ('1/b', ('1/a', '1/d')),  # force-triggered run
+            ('1/c', ('1/b',)),
+        }
+
+
+async def test_trigger_group_in_flow(flow, scheduler, run, complete, reflog):
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a => b => c => d'
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        await run_cmd(hold(schd, ['1/d']))
+
+        triggers = reflog(schd)
+        await complete(schd, '1/a')
+        await run_cmd(force_trigger_tasks(schd, ['1/b'], ['2']))
+        await complete(schd, '1/c')
+        assert triggers == {
+            ('1/a', None),
+            ('1/b', ('1/a',)),
+            ('1/c', ('1/b',)),
+        }
+
+        # state is now:
+        # * a - succeeded flow=1
+        # * b - succeeded flow=1,2
+        # * c - succedded flow=1,2
+        # * d - waiting (held)
+
+        triggers = reflog(schd)
+        await run_cmd(force_trigger_tasks(schd, ['1/a', '1/b', '1/c'], ['2']))
+        await complete(schd, '1/c', timeout=10)
+        assert triggers == {
+            ('1/a', None),
+            ('1/b', ('1/a',)),
             ('1/c', ('1/b',)),
         }
