@@ -67,11 +67,11 @@ def get_option_parser() -> COP:
         help=(
             # NOTE: Tui overrides the default client timeout
             "Set the timeout for communication with the running workflow."
-            " The default is 3 seconds, uou may need to increase this in"
-            "order for Tui to keep up with especially busy workflows."
+            " The default is 5 seconds, you may need to increase this in"
+            " order for Tui to keep up with especially busy workflows."
         ),
         action='store',
-        default=3,
+        default=5,
         dest='comms_timeout',
         type=int,
     )
