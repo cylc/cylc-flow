@@ -833,7 +833,6 @@ class Workflow(ObjectType):
             messages. It is down to the client to store / preserve previous
             records.
         '''),
-        default_value=[],
     )
 
 
