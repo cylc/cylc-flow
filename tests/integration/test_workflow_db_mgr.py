@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime, timedelta
 import pytest
 import sqlite3
 from typing import TYPE_CHECKING
@@ -178,3 +179,32 @@ async def test_record_only_non_clock_triggers(
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
         ('xrandom(100, _=Not a real wall clock trigger)',)]
+
+
+async def test_time_zone_writing(
+    one_conf,
+    flow,
+    scheduler,
+    start,
+    db_select,
+    set_timezone
+):
+    """Don't store scheduler startup timezone forever.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    set_timezone('XXX-19:00')
+    schd = scheduler(flow(one_conf), paused_start=False, run_mode='live')
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        now = datetime.now().astimezone()
+        set_timezone('XXX-19:17')
+        schd.submit_task_jobs([itask])
+
+    # Check the db time_submit:
+    (time_submit,) = db_select(schd, False, 'task_jobs', 'time_submit')[0]
+    time_submit = datetime.strptime(time_submit, '%Y-%m-%dT%H:%M:%S%z')
+    # The submit time should be approx correct:
+    assert (
+        abs(time_submit - now) < timedelta(seconds=10)
+    ), f"{time_submit} ~= {now}"
