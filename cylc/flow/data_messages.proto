@@ -106,6 +106,12 @@ message PbWorkflow {
     optional int32 is_runahead_total = 38;
     optional bool states_updated = 39;
     optional int32 n_edge_distance = 40;
+    repeated PbLogRecord log_records = 41;
+}
+
+message PbLogRecord {
+  optional string level = 1;
+  optional string message = 2;
 }
 
 // Selected runtime fields
