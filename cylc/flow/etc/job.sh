@@ -203,9 +203,7 @@ cylc__set_return() {
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
     if [[ -f "profiler.json" ]]; then
-      max_rss="$(jq -r '.max_rss' profiler.json)"
-      cpu_time="$(jq -r '.cpu_time' profiler.json)"
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: cpu_time $cpu_time max_rss $max_rss" || true
+      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: $(cat profiler.json | tr -d '\n')" || true
       rm profiler.json
     fi
     if [[ -f "proc/${profiler_pid}" ]]; then

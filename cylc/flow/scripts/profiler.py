@@ -163,7 +163,7 @@ def profile(process, version, delay, keep_looping=lambda: True):
         # Only save Max RSS to disk if it is above the previous value
         if memory > peak_memory:
             peak_memory = memory
-        write_data(str(peak_memory), cpu_time, "profiler.json")
+        write_data(peak_memory, cpu_time, "profiler.json")
 
         time.sleep(delay)
 
