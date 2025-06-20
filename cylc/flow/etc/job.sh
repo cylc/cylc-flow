@@ -203,7 +203,7 @@ cylc__set_return() {
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
     if [[ -f "profiler.json" ]]; then
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: $(cat profiler.json | tr -d '\n')" || true
+      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: $(< profiler.json tr -d '\n')" || true
       rm profiler.json
     fi
     if [[ -f "proc/${profiler_pid}" ]]; then
