@@ -108,17 +108,6 @@ def get_option_parser() -> COP:
 
     add_flow_opts(parser)
 
-    parser.add_option(
-        "--on-resume",
-        help=(
-            "If the workflow is paused, wait until it is resumed before "
-            "running the triggered task(s). DEPRECATED - this will be "
-            "removed at Cylc 8.5."
-        ),
-        action="store_true",
-        default=False,
-        dest="on_resume"
-    )
     return parser
 
 
@@ -136,7 +125,6 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
-            'onResume': options.on_resume,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)

@@ -1480,10 +1480,6 @@ class Scheduler:
             if not self.is_paused:
                 # release queued tasks
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
-                if self.pool.tasks_to_trigger_on_resume:
-                    # and manually triggered tasks to run once workflow resumed
-                    pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
-                    self.pool.tasks_to_trigger_on_resume = set()
 
         elif (
             (

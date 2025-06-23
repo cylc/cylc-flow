@@ -216,7 +216,6 @@ class TaskPool:
 
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
         self.tasks_to_trigger_now: Set['TaskProxy'] = set()
-        self.tasks_to_trigger_on_resume: Set['TaskProxy'] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -2299,7 +2298,7 @@ class TaskPool:
             for n in flow
         }
 
-    def _force_trigger(self, itask: 'TaskProxy', on_resume: bool = False):
+    def _force_trigger(self, itask: 'TaskProxy'):
         """Process a manually triggered task, ready for job submission.
 
         Assumes the task is in the pool.
@@ -2310,10 +2309,6 @@ class TaskPool:
         Triggering an non-queued task will:
           - queue it, if the queue is limiting activity
           - run it, if the queue is not limiting activity
-
-        After state reset and queue handling:
-        - if on_resume is False, add the task to tasks_to_trigger_now
-        - if on_resume is True, add the task to tasks_to_trigger_on_resume
 
         The scheduler will release tasks from the tasks_to_trigger sets.
 
@@ -2350,15 +2345,7 @@ class TaskPool:
             # If not queued now, record the task as ready to run.
             itask.waiting_on_job_prep = True
 
-            if on_resume:
-                self.tasks_to_trigger_on_resume.add(itask)
-                # In case previously triggered without --on-resume.
-                # (It should have run already, but just in case).
-                self.tasks_to_trigger_now.discard(itask)
-            else:
-                self.tasks_to_trigger_now.add(itask)
-                # In case previously triggered with --on-resume.
-                self.tasks_to_trigger_on_resume.discard(itask)
+            self.tasks_to_trigger_now.add(itask)
 
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
@@ -2370,7 +2357,6 @@ class TaskPool:
         flow: List[str],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None,
-        on_resume: bool = False
     ):
         """Manually trigger tasks.
 
@@ -2406,7 +2392,7 @@ class TaskPool:
                 LOG.error(f"[{itask}] ignoring trigger - already active")
                 continue
             self.merge_flows(itask, flow_nums)
-            self._force_trigger(itask, on_resume)
+            self._force_trigger(itask)
 
         # Spawn and trigger inactive tasks.
         if not flow:
@@ -2441,7 +2427,7 @@ class TaskPool:
 
             # run it (or run it again for incomplete flow-wait)
             self.add_to_pool(itask)
-            self._force_trigger(itask, on_resume)
+            self._force_trigger(itask)
 
     def spawn_parentless_sequential_xtriggers(self):
         """Spawn successor(s) of parentless wall clock satisfied tasks."""
