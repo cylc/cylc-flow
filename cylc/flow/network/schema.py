@@ -1274,20 +1274,6 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    descendants = graphene.List(
-        String,
-        description=sstrip('''
-            Linearised first-parent descendants.
-
-            Inheritance in Cylc provides two functions:
-            * Allowing tasks to inherit common configurations.
-            * Defining a family/task hierarchy for visualisation purposes.
-              (the linearised first-parent hierarchy).
-
-            The visual hierarchy follows the first-parent of a family which
-            may differ from the full inheritance hierarchy.
-        '''),
-    )
     first_parent = Field(
         lambda: Family,
         description='Family first parent.',
