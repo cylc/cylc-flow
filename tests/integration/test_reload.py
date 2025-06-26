@@ -308,6 +308,74 @@ async def test_reload_global_platform_group(
         assert platform['meta']['x'] == '2'
 
 
+async def test_orphan_reload(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """Reload should not fail about orphaned tasks.
+
+    The following aspects of reload about orphans are tested:
+        - Removal of both xtrigger and associated active/incomplete task.
+        - Broadcast deltas generated after reload.
+    """
+    before = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'initial cycle point': '20010101T0000Z',
+            'graph': {
+                'R1': '''
+                    foo => bar
+                    @wall_clock => bar
+                '''
+            }
+        }
+    }
+    after = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'initial cycle point': '20010101T0000Z',
+            'graph': {
+                'R1': 'foo'
+            }
+        }
+    }
+    id_ = flow(before)
+    schd = scheduler(id_)
+    async with start(schd):
+        # spawn in bar
+        foo = schd.pool.get_tasks()[0]
+        schd.pool.task_events_mgr.process_message(
+            foo, '20010101T0000Z', 'succeeded')
+        bar = schd.pool.get_tasks()[0]
+        assert bar.identity == '20010101T0000Z/bar'
+        # set bar to failed
+        schd.pool.task_events_mgr.process_message(
+            bar, '20010101T0000Z', 'failed')
+
+        # Save our progress
+        schd.workflow_db_mgr.put_task_pool(schd.pool)
+
+        # Change workflow to one without bar and xtrigger
+        flow(after, workflow_id=id_)
+
+        # reload the workflow
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        # test broadcast delta over orphaned task
+        schd.data_store_mgr.delta_broadcast()
+
+        # the reload should have completed successfully
+        assert log_filter(
+            contains=('Reload completed')
+        )
+
+
 async def test_data_store_tproxy(flow, scheduler, start):
     """Check N>0 task proxy in data store has correct info on reload.
 
