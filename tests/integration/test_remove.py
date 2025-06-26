@@ -266,7 +266,7 @@ async def test_logging(
         await run_cmd(remove_tasks(schd, tasks_to_remove, [FLOW_ALL]))
 
     assert log_filter(
-        logging.INFO, "Removed task(s): 2000/a (flows=1), 2000/b (flows=1)"
+        logging.INFO, "Removed tasks: 2000/a (flows=1), 2000/b (flows=1)"
     )
 
     assert log_filter(logging.DEBUG, "Task(s) not removable: 2001/a, 2001/b")
@@ -293,7 +293,7 @@ async def test_logging_flow_nums(
 
         # But if a valid flow is included, it will be removed from that flow:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['2', '3']))
-        assert log_filter(logging.INFO, "Removed task(s): 1/a1 (flows=2)")
+        assert log_filter(logging.INFO, "Removed tasks: 1/a1 (flows=2)")
         assert schd.pool._get_task_by_id('1/a1').flow_nums == {1}
 
 

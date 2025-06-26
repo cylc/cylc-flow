@@ -1221,7 +1221,7 @@ class Scheduler:
                 tasks_str_list.append(
                     f"{task.relative_id} {repr_flow_nums(fnums, full=True)}"
                 )
-            LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
+            LOG.info(f"Removed tasks: {', '.join(sorted(tasks_str_list))}")
 
         if not_removed:
             fnums_str = (
