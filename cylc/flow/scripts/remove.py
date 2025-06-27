@@ -21,8 +21,7 @@
 Remove tasks in the active window, or erase the run-history of past tasks.
 
 Final-status incomplete tasks can be removed from the n=0 active window to
-prevent/recover from a stall, if they don't need to be completed to continue
-the flow.
+prevent or recover from a stall, if they don't need to be completed.
 
 Erasing the run-history of past tasks allows them to be run again in the
 same flow (this is an alternative to starting a new flow).

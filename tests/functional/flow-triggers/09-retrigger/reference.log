@@ -1,8 +1,0 @@
-Initial point: 1
-Final point: 1
-1/foo -triggered off [] in flow 1
-1/baz -triggered off ['1/bar'] in flow 1
-1/baz -triggered off ['1/bar'] in flow 1
-1/bar -triggered off ['1/foo'] in flow 1
-1/x -triggered off ['1/baz'] in flow 1
-1/y -triggered off ['1/baz'] in flow 1
