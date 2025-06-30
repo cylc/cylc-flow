@@ -207,7 +207,7 @@ def test_infer_latest_run_warns_for_runN(
     monkeypatch.setattr('cylc.flow.LOG.level', logging.INFO)
     infer_latest_run(runN_path, warn_runN=warn_arg)
     filtered_log = log_filter(
-        logging.INFO, contains="You need only include"
+        logging.WARNING, contains="You do not need to include"
     )
     assert filtered_log if warn_arg else not filtered_log
 
