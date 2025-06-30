@@ -365,6 +365,14 @@ def sim_time_check(
             )
 
         if now > itask.mode_settings.timeout:
+            # simulate custom outputs
+            for msg in itask.tdef.rtconfig['outputs'].values():
+                task_events_manager.process_message(
+                    itask, 'DEBUG', msg,
+                    flag=task_events_manager.FLAG_RECEIVED
+                )
+
+            # simulate job outcome
             if itask.mode_settings.sim_task_fails:
                 task_events_manager.process_message(
                     itask, 'CRITICAL', TASK_STATUS_FAILED,
@@ -373,12 +381,6 @@ def sim_time_check(
             else:
                 task_events_manager.process_message(
                     itask, 'DEBUG', TASK_STATUS_SUCCEEDED,
-                    flag=task_events_manager.FLAG_RECEIVED
-                )
-            # Simulate message outputs.
-            for msg in itask.tdef.rtconfig['outputs'].values():
-                task_events_manager.process_message(
-                    itask, 'DEBUG', msg,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
 
