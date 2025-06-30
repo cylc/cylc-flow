@@ -55,6 +55,9 @@ from functools import partial
 import sys
 from typing import TYPE_CHECKING
 
+from packaging.version import parse as parse_version
+
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -63,6 +66,7 @@ from cylc.flow.option_parsers import (
     OptionSettings,
 )
 from cylc.flow.terminal import cli_function
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -92,7 +96,7 @@ mutation (
 }
 '''
 
-# Separate mutation for backwards compatibility
+# Separate mutation, not backwards compatible with Cylc < 8.5.0:
 MUTATION_GLOBAL = '''
 mutation (
   $wFlows: [WorkflowID]!,
@@ -125,6 +129,13 @@ async def run(options: 'Values', workflow_id: str):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if options.reload_global:
+        if parse_version(pclient.scheduler_version) < parse_version(
+            '8.5.0.dev'
+        ):
+            raise InputError(
+                "The --global option is not supported by the version of Cylc "
+                f"running the workflow ({pclient.scheduler_version})."
+            )
         mutation_kwargs = {
             'request_string': MUTATION_GLOBAL,
             'variables': {
