@@ -1754,6 +1754,9 @@ class TaskPool:
         if itask is None:
             return None
 
+        if prev_status is None:
+            self.db_add_new_flow_rows(itask)
+
         if (
             prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
@@ -1820,7 +1823,6 @@ class TaskPool:
                     for cycle, task, output in self.abs_outputs_done
                 ])
 
-        self.db_add_new_flow_rows(itask)
         return itask
 
     def _spawn_after_flow_wait(self, itask: TaskProxy) -> None:
