@@ -1375,7 +1375,7 @@ class TaskEventsManager():
         """Helper for process_message, handle a started message."""
         if itask.job_vacated:
             itask.job_vacated = False
-            LOG.warning(f"[{itask}] Vacated job restarted")
+            LOG.info(f"[{itask}] Vacated job restarted")
         job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)

@@ -198,14 +198,16 @@ def test_infer_latest_run_warns_for_runN(
     warn_arg: bool,
     log_filter: Callable,
     tmp_run_dir: Callable,
+    monkeypatch: pytest.MonkeyPatch
 ):
     """Tests warning is produced to discourage use of /runN in workflow_id"""
     (tmp_run_dir() / 'run1').mkdir()
     runN_path = tmp_run_dir() / 'runN'
     runN_path.symlink_to('run1')
+    monkeypatch.setattr('cylc.flow.LOG.level', logging.INFO)
     infer_latest_run(runN_path, warn_runN=warn_arg)
     filtered_log = log_filter(
-        logging.WARNING, "You do not need to include runN in the workflow ID"
+        logging.WARNING, contains="You do not need to include"
     )
     assert filtered_log if warn_arg else not filtered_log
 
