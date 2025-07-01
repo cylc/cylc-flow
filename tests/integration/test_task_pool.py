@@ -2045,11 +2045,9 @@ async def test_remove_by_suicide(
         assert schd.pool.get_task_ids() == {"1/a", "1/b"}
         a = schd.pool.get_task(IntegerPoint("1"), "a")
 
-        # mark 1/a as failed and ensure 1/b is removed by suicide trigger
+        # mark 1/a as failed and ensure 1/b expires
         schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
-        assert log_filter(
-            regex="1/b.*removed from the n=0 window: suicide trigger"
-        )
+        assert log_filter(regex="1/b.*=> expired")
         assert schd.pool.get_task_ids() == {"1/a"}
 
         # ensure that we are able to bring 1/b back by triggering it
