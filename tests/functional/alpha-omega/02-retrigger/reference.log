@@ -1,0 +1,11 @@
+startup/a -triggered off [] in flow 1
+startup/b -triggered off ['startup/a'] in flow 1
+1/foo -triggered off [] in flow 1
+1/bar -triggered off ['1/foo'] in flow 1
+startup/a -triggered off [] in flow 9
+startup/b -triggered off ['startup/a'] in flow 9
+shutdown/x -triggered off [] in flow 9
+shutdown/y -triggered off ['shutdown/x'] in flow 9
+1/baz -triggered off ['1/bar'] in flow 1
+shutdown/x -triggered off [] in flow 1
+shutdown/y -triggered off ['shutdown/x'] in flow 1
