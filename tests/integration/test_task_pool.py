@@ -2033,32 +2033,35 @@ async def test_remove_by_suicide(
         'scheduling': {
             'graph': {
                 'R1': '''
-                    a? & b
+                    a? => b
                     a:failed? => !b
                 '''
             },
         }
     })
-    schd: 'Scheduler' = scheduler(id_)
+    schd: 'Scheduler' = scheduler(id_, paused_start=False)
+
     async with start(schd, level=logging.DEBUG) as log:
-        # it should start up with 1/a and 1/b
-        assert schd.pool.get_task_ids() == {"1/a", "1/b"}
+        # it should start up with 1/a
+        assert schd.pool.get_task_ids() == {"1/a"}
         a = schd.pool.get_task(IntegerPoint("1"), "a")
 
-        # mark 1/a as failed and ensure 1/b expires
+        # mark 1/a as failed and check that 1/b expires
         schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
         assert log_filter(regex="1/b.*=> expired")
         assert schd.pool.get_task_ids() == {"1/a"}
 
-        # ensure that we are able to bring 1/b back by triggering it
+        # 1/b should not be resurrected if it becomes ready
+        schd.pool.set_prereqs_and_outputs(['1/b'], [], ["1/a"], [1],)
+        assert log_filter(regex="1/b:expired.* already finished and completed")
+
+        # but we can still resurrect 1/b by triggering it
         log.clear()
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['1/b'], ['1']))
-        assert log_filter(
-            regex='1/b.*added to the n=0 window',
-        )
+        assert log_filter(regex='1/b.*added to the n=0 window')
 
-        # remove 1/b by request (cylc remove)
+        # remove 1/b with "cylc remove""
         await commands.run_cmd(
             commands.remove_tasks(schd, ['1/b'], [])
         )
@@ -2066,7 +2069,7 @@ async def test_remove_by_suicide(
             regex='1/b.*removed from the n=0 window: request',
         )
 
-        # ensure that we are able to bring 1/b back by triggering it
+        # and bring 1/b back again by triggering it again
         log.clear()
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['1/b'], ['1']))
