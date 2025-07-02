@@ -431,7 +431,8 @@ async def test_trigger_states(
         task.state.reset(status)
 
         # try triggering the task
-        one.force_trigger_tasks(['1/one'], [])
+        await commands.run_cmd(
+            commands.force_trigger_tasks(one, ['1/one'], []))
 
         # retrieve the task again - the original may have been removed
         task = one.pool.filter_task_proxies(['1/one'])[0][0]
@@ -507,11 +508,11 @@ async def test_runahead_after_remove(
     assert int(task_pool.runahead_limit_point) == 4
 
     # No change after removing an intermediate cycle.
-    example_flow.remove_tasks(['3/*'], [1])
+    await commands.run_cmd(commands.remove_tasks(example_flow, ['3/*'], ["1"]))
     assert int(task_pool.runahead_limit_point) == 4
 
     # Should update after removing the first point.
-    example_flow.remove_tasks(['1/*'], [1])
+    await commands.run_cmd(commands.remove_tasks(example_flow, ['1/*'], ["1"]))
     assert int(task_pool.runahead_limit_point) == 5
 
 
@@ -2004,7 +2005,8 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.force_trigger_tasks(['1/b'], ['1'])
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
         assert log_filter(
             regex='1/b.*added to the n=0 window',
         )
@@ -2019,7 +2021,8 @@ async def test_remove_by_suicide(
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
-        schd.force_trigger_tasks(['1/b'], ['1'])
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
         assert log_filter(regex='1/b.*added to the n=0 window',)
 
 
@@ -2090,7 +2093,8 @@ async def test_trigger_queue(one, run, db_select, complete):
         assert task.flow_nums == {1}
 
         # trigger this task even though is already queued in flow 1
-        one.force_trigger_tasks([task.identity], '2')
+        await commands.run_cmd(
+            commands.force_trigger_tasks(one, [task.identity], ['2']))
 
         # the merged flow should continue
         one.resume_workflow()

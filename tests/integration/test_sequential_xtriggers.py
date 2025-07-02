@@ -20,8 +20,13 @@
 
 from unittest.mock import patch
 import pytest
-from cylc.flow.cycling.integer import IntegerPoint
 
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks,
+    remove_tasks
+)
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.exceptions import XtriggerConfigError
 from cylc.flow.scheduler import Scheduler
@@ -74,7 +79,7 @@ async def test_remove(sequential: Scheduler, start):
         ]
 
         # remove all tasks in the pool
-        sequential.remove_tasks(['*'], [1])
+        await run_cmd(remove_tasks(sequential, ['*'], ["1"]))
 
         # the next cycle should be automatically spawned
         assert list_cycles(sequential) == ['2004']
@@ -97,7 +102,7 @@ async def test_trigger(sequential, start):
         assert list_cycles(sequential) == ['2000']
 
         foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
-        sequential.force_trigger_tasks([foo.identity], {1})
+        await run_cmd(force_trigger_tasks(sequential, [foo.identity], ["1"]))
         foo.state_reset('succeeded')
         sequential.pool.spawn_on_output(foo, 'succeeded')
 

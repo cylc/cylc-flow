@@ -18,6 +18,10 @@
 
 import pytest
 
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks
+)
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.scheduler import Scheduler
 
@@ -57,7 +61,7 @@ async def checker(
         await mod_complete(schd)
 
         # trigger a new task in flow 2
-        schd.force_trigger_tasks(['1000/good'], ['2'])
+        await run_cmd(force_trigger_tasks(schd, ['1000/good'], ['2']))
 
         # update the database
         schd.process_workflow_db_queue()

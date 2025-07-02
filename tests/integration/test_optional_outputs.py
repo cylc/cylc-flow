@@ -26,6 +26,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks
+)
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.network.resolvers import TaskMsg
@@ -420,7 +424,7 @@ async def test_clock_expiry(
         two.state_reset(TASK_STATUS_PREPARING)
 
         # the third task (force-triggered)
-        schd.force_trigger_tasks(['20100101T0000Z/x'], ['1'])
+        await run_cmd(force_trigger_tasks(schd, ['20100101T0000Z/x'], ['1']))
         three = schd.pool.get_task(ISO8601Point('20100101T0000Z'), 'x')
         assert three
 
