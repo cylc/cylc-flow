@@ -34,6 +34,10 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import TASK_STATUS_WAITING
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks
+)
 
 
 @pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
@@ -92,7 +96,7 @@ async def test_force_trigger_does_not_override_run_mode(
         foo = schd.pool.get_tasks()[0]
 
         # Force trigger task:
-        schd.force_trigger_tasks('1/foo', [1])
+        run_cmd(force_trigger_tasks(schd, '1/foo', [1]))
 
         # ... but job submission will always change this to the correct mode:
         schd.submit_task_jobs([foo])

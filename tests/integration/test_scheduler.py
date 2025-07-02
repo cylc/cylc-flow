@@ -369,7 +369,8 @@ async def test_restart_timeout(
 
         capture_submission(schd)
         # when we trigger tasks the timeout should be cleared
-        schd.force_trigger_tasks(['1/one'], [FLOW_ALL])
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/one'], [FLOW_ALL]))
 
         await asyncio.sleep(0)  # yield control to the main loop
         assert log_filter(logging.INFO, contains='restart timer stopped')
