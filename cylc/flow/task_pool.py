@@ -1820,7 +1820,7 @@ class TaskPool:
                 # revive as incomplete.
                 msg = "incomplete"
 
-            if cylc.flow.flags.verbosity >= 1:
+            if LOG.level == logging.DEBUG:
                 # avoid unnecessary compute when we are not in debug mode
                 id_ = itask.tokens.duplicate(
                     task_sel=prev_status
