@@ -82,12 +82,7 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
-from cylc.flow.flow_mgr import (
-    FLOW_ALL,
-    get_flow_nums_set,
-    repr_flow_nums
-)
-
+from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
@@ -466,9 +461,8 @@ async def remove_tasks(
     """Match and remove tasks (`cylc remove` command).
 
     Args:
-        items: Relative IDs or globs.
-        flow_nums: Flows to remove the tasks from. If empty or None, it
-            means 'all'.
+        tasks: Relative IDs or globs to match.
+        flow: flows to remove the tasks from.
     """
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
@@ -482,7 +476,7 @@ async def remove_tasks(
             schd,
             active,
             inactive,
-            get_flow_nums_set(flow)
+            schd.pool.flow_mgr.cli_to_flow_nums(flow)
         )
 
 
@@ -629,6 +623,9 @@ async def force_trigger_tasks(
     or only off-group prerequisites) will run immediately. In-group
     prerequisites will be respected.
 
+    Implements the Group Trigger Proposal:
+      cylc-admin/docs/proposal-group-trigger.md
+
     """
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
@@ -649,124 +646,104 @@ async def force_trigger_tasks(
         *((itask.tdef.name, str(itask.point)) for itask in active)
     }
 
-    flow_nums = schd.pool.get_flow_nums(flow, flow_descr)
+    # Get integer flow numbers from CLI inputs.
+    flow_nums = schd.pool.flow_mgr.cli_to_flow_nums(flow, flow_descr)
+
+    # Here, empty flow_nums means either no-flow or all active flows.
+    if flow != [FLOW_NONE] and not flow_nums:
+        flow_nums = schd.pool._get_active_flow_nums()
 
     # Record off-group prerequisites, and active tasks to be removed.
-    active_tasks_to_remove = []
+    active_to_remove = []
 
     warnings_flow_none = []
-    warnings_active = []
+    warnings_has_job = []
     for itask in active:
-        # Find active group start tasks (parentless, or only off-group
-        # prerequisites) and set all of their prerequisites (trigger now).
+        # Find active group start tasks (parentless, or with only off-group
+        # prerequisites) and set all prerequisites (to trigger them now).
 
-        # Compute prerequisites from the tdef in case active tasks were
+        # Preparing, submitted, or running group start tasks are already
+        # active, so leave them be (and merge the flows).
+
+        # Compute prerequisites from the TaskDef in case active tasks were
         # spawned before a reload (which could alter prerequisites).
 
         # Remove non group start and final-status group start tasks, and
-        # trigger them from scratch (so only the tdef matters).
+        # trigger them from scratch (so only the TaskDef matters).
 
         # Waiting group start tasks are not removed, but a reload would
-        # replace them, so using the tdef is fine.
-        # Preparing, submitted, or running group start tasks are already
-        # active, so leave them be.
+        # replace them, so using the TaskDef is fine.
+
         if not any(
             (trg.task_name, str(trg.get_point(itask.point))) in group_ids
             for trg in itask.tdef.get_triggers(itask.point)
         ):
-            # No in-group prereqs: this is a group start task.
-            if flow == ['none'] and itask.flow_nums != set():
+            # This is a group start task (it has no in-group prerequisites).
+            if flow == [FLOW_NONE] and itask.flow_nums:
+                # Exclude --flow=none for flow-assigned active tasks.
                 warnings_flow_none.append(
                     f"{itask.identity}: "
                     f"{repr_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
 
-            if itask.state(
-                TASK_STATUS_PREPARING,
-                *TASK_STATUSES_ACTIVE
-            ):
-                warnings_active.append(str(itask))
+            if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                warnings_has_job.append(str(itask))
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
             elif itask.state(TASK_STATUS_WAITING):
-                # This is a waiting active group start task.
-                #   Satisfy off-group (i.e. all) prerequisites:
+                # This is a waiting active group start task...
+                # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
-
-                #   and satisfy all xtrigger prerequisites.
+                # ... and satisfy all xtrigger prerequisites.
                 schd.pool.xtrigger_mgr.force_satisfy(itask, {"all": True})
+
                 schd.pool.merge_flows(itask, flow_nums)
 
                 # Trigger group start task.
                 schd.pool.queue_or_trigger(itask, on_resume)
             else:
-                active_tasks_to_remove.append(itask)
+                active_to_remove.append(itask)
         else:
-            active_tasks_to_remove.append(itask)
+            active_to_remove.append(itask)
 
     if warnings_flow_none:
         msg = '\n  * '.join(warnings_flow_none)
-        LOG.warning(
-            "Tasks already flow-assigned - ignoring "
-            f'"trigger --flow=none": \n  * {msg}'
-        )
-    if warnings_active:
-        msg = '\n  * '.join(warnings_active)
-        LOG.warning(
-            "Tasks already active - ignoring "
-            f"trigger:\n  * {msg}"
-        )
+        LOG.warning(f"Already active - ignoring no-flow trigger: \n  * {msg}")
 
-    # Remove all inactive and selected active group members - separately
-    # because default flow inactive semantics is different for the remove
-    # command (ALL flows) then for the trigger command (ALL ACTIVE flows).
-    if flow != ["none"]:
-        # (No need to remove for no-flow triggering)
-        if active_tasks_to_remove:
-            empty_i: Set[Tuple[TaskDef, PointBase]] = set()
-            _remove_matched_tasks(
-                schd, active_tasks_to_remove, empty_i, flow_nums)
-        if inactive:
-            empty_a: List[TaskProxy] = []
-            if not flow_nums:
-                # remove for all active flows, not all flows.
-                _remove_matched_tasks(
-                    schd,
-                    empty_a,
-                    inactive,
-                    schd.pool.get_flow_nums([FLOW_ALL])
-                )
-            else:
-                _remove_matched_tasks(schd, empty_a, inactive, flow_nums)
+    if warnings_has_job:
+        msg = '\n  * '.join(warnings_has_job)
+        LOG.warning(f"Job already in process - ignoring trigger:\n  * {msg}")
 
-    # store removal results before moving on
-    schd.workflow_db_mgr.process_queued_ops()
+    # Remove all inactive and selected active group members.
+    if flow != [FLOW_NONE]:
+        # (No need to remove tasks if triggering with no-flow).
+        _remove_matched_tasks(schd, active_to_remove, inactive, flow_nums)
+        # Store removal results before moving on.
+        schd.workflow_db_mgr.process_queued_ops()
 
-    # satisfy off-group prerequisites in inactive and removed active tasks
-    if not flow:
-        flow_nums = schd.pool._get_active_flow_nums()
-
-    to_remove = inactive
-    if active_tasks_to_remove:
-        to_remove.update(
+    # Satisfy any off-group prerequisites in removed tasks.
+    tasks_removed = inactive
+    if active_to_remove:
+        tasks_removed.update(
             {
                 (itask.tdef, itask.point)
-                for itask in active_tasks_to_remove
+                for itask in active_to_remove
             }
         )
 
-    for tdef, point in to_remove:
+    for tdef, point in tasks_removed:
         in_flow_prereqs = False
         jtask: Optional[TaskProxy] = None
         if tdef.is_parentless(point):
-            # parentless: set pre=all to spawn into task pool
+            # Parentless: set pre=all to spawn into task pool.
             jtask = schd.pool._set_prereqs_tdef(
                 point, tdef,
                 [],  # prerequisites
                 {"all": True},  # xtriggers
-                flow_nums, flow_wait,
+                flow_nums,
+                flow_wait,
                 set_all=True  # prerequisites
             )
         else:
@@ -782,12 +759,14 @@ async def force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
-            # (call this even with no off-flow prereqs, for xtriggers)
+            # (Call this even with no off-flow prereqs, for xtriggers.)
             jtask = schd.pool._set_prereqs_tdef(
                 point, tdef,
                 off_flow_prereqs,
                 {"all": True},  # xtriggers
-                flow_nums, flow_wait, set_all=False
+                flow_nums,
+                flow_wait,
+                set_all=False
             )
         if jtask is not None and not in_flow_prereqs:
             # Trigger group start task.

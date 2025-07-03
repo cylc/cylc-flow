@@ -124,7 +124,7 @@ async def test_set_outputs(sequential, start):
         sequential.pool.get_task(ISO8601Point('2000'), 'foo')
         # set foo:succeeded it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
-            ["2000/foo"], ["succeeded"], [], ['all'])
+            ["2000/foo"], ["succeeded"], [], [])
 
         assert list_cycles(sequential) == ['2001']
 
@@ -137,7 +137,7 @@ async def test_set_prereqs(sequential, start):
         sequential.pool.get_task(ISO8601Point('2000'), 'foo')
         # satisfy foo's xtriggers - it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
-            ["2000/foo"], [], ['xtrigger/all:succeeded'], ['all'])
+            ["2000/foo"], [], ['xtrigger/all:succeeded'], [])
         sequential.pool.spawn_parentless_sequential_xtriggers()
 
         assert list_cycles(sequential) == ['2000', '2001']

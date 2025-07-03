@@ -17,25 +17,21 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force one or more tasks to run, respecting dependencies within the group.
+Manually trigger a group of one or more tasks, automatically satisfying any
+off-group dependencies and respecting dependencies within the group.
 
-This command provides a convenient way to rerun a past sub-graph. It erases
-the flow history of the group (by default) to allow rerun in the same flow;
-it satisfies off-group task and xtrigger prerequisites to start the flow and
-prevent a stall; and it leaves in-group prerequisites to the triggered flow.
+Group trigger is typically the easiest way to rerun a sub-graph. It erases
+flow history to allow the rerun; it identifies and triggers group start tasks
+to start the flow; and it identifies and satisfies any off-group prerequisites
+that would cause a stall.
 
-Triggering a task that is not yet queued, queues it. Triggering a queued task
-runs it. You many need to trigger unqueued tasks twice to run them immediately.
+Triggering an unqueued task queues it; triggering a queued task runs it; so you
+may need to trigger unqueued tasks twice to run them now if the queue is full.
 
-Preparing, submitted, or running tasks will be ignored: they already triggered.
+Preparing, submitted, and running tasks can't be retrigged until finished.
 
-If you trigger tasks when the workflow is paused, only group start tasks will
-run immediately. The flow will continue when you resume the workflow.
-
-Note that the flow will only continue from group start tasks if you erase the
-original flow (the default) or use `--flow` options to start a new flow.
-
-See `cylc set` for the lower-level flow-based approach to rerunning sub-graphs.
+If the workflow is paused only group start tasks trigger immediately; the flow
+will continue when the workflow resumes.
 
 Examples:
   # trigger task foo in cycle 1, in workflow "test"
@@ -51,16 +47,15 @@ Examples:
   # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
   $ cylc trigger test //1/a //1/b //1/c
 
-Triggering and flow numbers:
-  Waiting n=0 tasks already belong to a flow; if triggered:
-  * by default, they run in the same flow, or
-  * with --flow=all, they will be assigned all active flows, or
-  * with --flow=INT or --flow=new, the original and new flows will be merged
-  * (--flow=none is ignored for n=0 tasks)
-
-  Inactive tasks (n>0) do not already belong to a flow; if triggered:
-  * by default they are assigned all active flows
-  * otherwise, they are assigned the --flow value
+ Flow numbers of triggered tasks are determined as follows:
+  Active tasks (n=0) already have existing flow numbers.
+   * default: merge active and existing flow numbers
+   * --flow=INT or "new": merge given and existing flow numbers
+   * --flow="none": ERROR (not valid for already-active tasks)
+  Inactive tasks (n>0) do not have flow numbers assigned:
+   * default: run with all active flow numbers
+   * --flow=INT or "new": run with the given flow numbers
+   * --flow="none": run as no-flow (activity will not flow on downstream)
 
 """
 
@@ -75,7 +70,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
 
 
 if TYPE_CHECKING:
@@ -107,14 +102,14 @@ mutation (
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__,
+        str(__doc__),
         comms=True,
         multitask=True,
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
-    add_flow_opts(parser)
+    add_flow_opts_for_trigger_and_set(parser)
 
     parser.add_option(
         "--on-resume",

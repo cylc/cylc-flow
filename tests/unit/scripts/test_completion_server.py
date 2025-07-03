@@ -170,77 +170,75 @@ async def test_complete_cylc(dummy_workflow):
         'foo/run2//',
     }
 
-    # $ cylc triger f<tab><tab>
+    # $ cylc trigger f<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'f') == {
         'foo/run2//',
     }
 
-    # $ cylc triger foo/run2//<tab><tab>
+    # $ cylc trigger foo/run2//<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'foo/run2//') == {
         'foo/run2//1/',
         'foo/run2//2/',
         'foo/run2//3/',
     }
 
-    # $ cylc triger foo/run2//1<tab><tab>
+    # $ cylc trigger foo/run2//1<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1') == {
         'foo/run2//1/',
     }
 
-    # $ cylc triger foo/run2//1/<tab><tab>
+    # $ cylc trigger foo/run2//1/<tab><tab>
     assert set(await _complete_cylc('cylc', 'trigger', 'foo/run2//1/')) == {
         'foo/run2//1/foo/',
         'foo/run2//1/bar/',
         'foo/run2//1/baz/',
     }
 
-    # $ cylc triger foo/run2//1/f<tab><tab>
+    # $ cylc trigger foo/run2//1/f<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/f') == {
         'foo/run2//1/foo/',
     }
 
-    # $ cylc triger foo/run2//1/foo/<tab><tab>
+    # $ cylc trigger foo/run2//1/foo/<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/foo/') == {
         'foo/run2//1/foo/01/',
         'foo/run2//1/foo/NN/',
     }
 
-    # $ cylc triger foo/run2//1/foo/N<tab><tab>
+    # $ cylc trigger foo/run2//1/foo/N<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', 'foo/run2//1/foo/N') == {
         'foo/run2//1/foo/NN/',
     }
 
-    # $ cylc triger -<tab><tab>
+    # $ cylc trigger -<tab><tab>
     assert '--flow' in await _complete_cylc('cylc', 'trigger', '-')
 
-    # $ cylc triger --flow <tab><tab>
+    # $ cylc trigger --flow <tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--flow', '') == {
-        'all',
         'none',
         'new',
     }
 
-    # $ cylc triger --flow <tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', '--flow', 'all', '') == {
+    # $ cylc trigger --flow <tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', '--flow', '', '') == {
         'foo/run2//'
     }
 
-    # $ cylc triger --flow=<tab><tab>
+    # $ cylc trigger --flow=none <tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', '--flow=none', '') == {
+        'foo/run2//'
+    }
+
+    # $ cylc trigger --flow=<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--flow=') == {
-        '--flow=all',
         '--flow=none',
         '--flow=new',
     }
 
-    # $ cylc triger --flow=all <tab><tab>
-    assert await _complete_cylc('cylc', 'trigger', '--flow=all', '') == {
-        'foo/run2//'
-    }
-
-    # $ cylc triger --62656566<tab><tab>
+    # $ cylc trigger --62656566<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--62656566') == set()
 
-    # $ cylc triger 62656566 --77656C6C696E67746F6E<tab><tab>
+    # $ cylc trigger 62656566 --77656C6C696E67746F6E<tab><tab>
     assert await _complete_cylc(
         'cylc', '62656566', '--77656C6C696E67746F6E='
     ) == set()
@@ -286,7 +284,8 @@ async def test_complete_option():
     ret = await complete_option('626565662077656C6C696E67746F6E')
     assert ret == []
 
-    assert await complete_option('trigger', '--flow=a') == ['--flow=all']
+    assert await complete_option('trigger', '--flow=no') == ['--flow=none']
+    assert await complete_option('trigger', '--flow=ne') == ['--flow=new']
 
     # we should get None for no existent options, this enables use to fail
     # over to other completion methods
@@ -296,11 +295,9 @@ async def test_complete_option():
 async def test_option_value():
     """Test completion for values of --options of Cylc commands."""
     ret = await complete_option_value('trigger', '--flow')
-    assert 'all' in ret
     assert 'none' in ret
 
     ret = await complete_option_value('trigger', '--flow', 'a')
-    assert 'all' in ret
     assert 'none' not in ret
 
     # we should get None for no existent values, this enables use to fail
@@ -594,10 +591,10 @@ async def test_list_dir(tmp_path, monkeypatch):
 async def test_list_flows():
     """Test listing values for the --flow option.
 
-    Currently this only provides the textural options i.e. it doesn't list
+    Currently this only provides the textual options i.e. it doesn't list
     "flows" running in a workflow, yet...
     """
-    assert 'all' in await list_flows(None)
+    assert 'none' in await list_flows(None)
 
 
 async def test_list_colours():

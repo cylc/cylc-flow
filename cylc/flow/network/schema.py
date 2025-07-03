@@ -66,7 +66,6 @@ from cylc.flow.data_store_mgr import (
     TASKS,
 )
 from cylc.flow.flow_mgr import (
-    FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
 )
@@ -1701,7 +1700,7 @@ class WorkflowStopMode(graphene.Enum):
 
 class Flow(String):
     __doc__ = (
-        f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+        f"""An integer or {FLOW_NEW} or {FLOW_NONE}."""
     )
 
 
@@ -2063,7 +2062,6 @@ class FlowMutationArguments:
             Otherwise you can assign (inactive tasks) or add to (active tasks):
             * a list of integer flow numbers
             or one of the following strings:
-            * {FLOW_ALL} - all active flows
             * {FLOW_NEW} - an automatically generated new flow number
             * {FLOW_NONE} - (ignored for active tasks): no flow
         ''')
@@ -2160,13 +2158,12 @@ class Remove(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
         flow = graphene.List(
             graphene.NonNull(Flow),
-            default_value=[FLOW_ALL],
-            description=sstrip(f'''
-                "Remove the task(s) from the specified flows. "
+            default_value=[],
+            description=sstrip('''
+                "Remove the tasks from the specified flows."
 
-                This should be a list of flow numbers, or '{FLOW_ALL}'
-                to remove the task(s) from all flows they belong to
-                (which is the default).
+                This should be a list of flow numbers.
+                By default, tasks will be removed from all flows.
             ''')
         )
 

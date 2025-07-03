@@ -47,8 +47,6 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
-    FLOW_ALL,
-    FLOW_NEW,
     FLOW_NONE,
     repr_flow_nums,
 )
@@ -252,7 +250,7 @@ class TaskPool:
 
         Add every parentless task out to the runahead limit.
         """
-        flow_num = self.flow_mgr.get_flow_num(
+        flow_num = self.flow_mgr.get_flow(
             meta=f"original flow from {self.config.start_point}")
         self.compute_runahead()
         for name in self.task_name_list:
@@ -2044,12 +2042,19 @@ class TaskPool:
             # Nothing to do!
             return
 
-        # For active tasks, default to the task's current flow assignment.
+        # Get integer flow numbers from CLI inputs.
+        flow_nums = self.flow_mgr.cli_to_flow_nums(flow, flow_descr)
+
+        # Here, empty flow_nums means either no-flow or all active flows.
+        if flow != [FLOW_NONE] and not flow_nums:
+            flow_nums = self._get_active_flow_nums()
+
+        # Set active tasks.
         warnings_flow_none = []
         if itasks:
-            flow_nums = self.get_flow_nums(flow, flow_descr)
             for itask in itasks:
-                if flow == ['none'] and itask.flow_nums != set():
+                if flow == [FLOW_NONE] and itask.flow_nums:
+                    # Exclude --flow=none for active tasks.
                     warnings_flow_none.append(
                         f"{itask.identity}: "
                         f"{repr_flow_nums(itask.flow_nums, full=True)}"
@@ -2079,14 +2084,10 @@ class TaskPool:
 
         if warnings_flow_none:
             msg = '\n  * '.join(warnings_flow_none)
-            LOG.warning(
-                "Tasks already flow-assigned - ignoring "
-                f'"trigger --flow=none": \n  * {msg}'
-            )
+            LOG.warning(f"Already active - ignoring no-flow set: \n  * {msg}")
 
-        # For inactive tasks, default to all current flows.
+        # Set inactive tasks.
         if inactive_tasks:
-            flow_nums = self.get_flow_nums(flow or [FLOW_ALL], flow_descr)
             for tdef, point in inactive_tasks:
                 if prereqs:
                     valid_prereqs = self._get_valid_prereqs(
@@ -2291,32 +2292,6 @@ class TaskPool:
             or self.workflow_db_mgr.pri_dao.select_latest_flow_nums()
             or {1}
         )
-
-    def get_flow_nums(
-        self,
-        flow: List[str],
-        meta: Optional[str] = None,
-    ) -> Set[int]:
-        """Return flow numbers corresponding to user command options.
-
-        Arg should have been validated already during command validation.
-
-        In the default case (--flow option not provided), stick with the
-        existing flows (so return empty set) - NOTE this only applies for
-        active tasks.
-
-        """
-        if flow == [FLOW_NONE]:
-            return set()
-        if flow == [FLOW_ALL]:
-            return self._get_active_flow_nums()
-        if flow == [FLOW_NEW]:
-            return {self.flow_mgr.get_flow_num(meta=meta)}
-        # else specific flow numbers:
-        return {
-            self.flow_mgr.get_flow_num(flow_num=int(n), meta=meta)
-            for n in flow
-        }
 
     def queue_or_trigger(self, itask: 'TaskProxy', on_resume: bool = False):
         """Handle state, queues, and runahead for a manually triggered task.

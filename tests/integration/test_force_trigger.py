@@ -97,7 +97,7 @@ async def test_trigger_workflow_paused(
         assert len(submitted_tasks) == 2
         assert log_filter(
             level=logging.WARNING,
-            contains="Tasks already active - ignoring"
+            contains="Job already in process - ignoring"
         )
 
 
@@ -120,7 +120,7 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
     schd = scheduler(id_)
     async with run(schd):
         # trigger the chain a => c
-        await run_cmd(force_trigger_tasks(schd, ['1/a'], ['all']))
+        await run_cmd(force_trigger_tasks(schd, ['1/a'], []))
 
         # 1/a should run whilst the workflow is paused (group start-task)
         await complete(schd, '1/a', allow_paused=True, timeout=1)
@@ -265,16 +265,9 @@ async def test_trigger_group(
         )
         await complete(schd, '1/d')
 
-        # active
         assert log_filter(
             contains=(
-                "Removed tasks: 1/c (flows=1)"
-            )
-        )
-        # inactive
-        assert log_filter(
-            contains=(
-                "Removed tasks: 1/a (flows=1), 1/b (flows=1), 1/d (flows=1)"
+                "Removed tasks: 1/a (flows=1), 1/b (flows=1), 1/c (flows=1), 1/d (flows=1)"
             )
         )
         assert log_filter(

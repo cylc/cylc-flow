@@ -37,10 +37,7 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.flow_mgr import (
-    FLOW_ALL,
-    FLOW_NONE,
-)
+from cylc.flow.flow_mgr import FLOW_NONE
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
@@ -1194,7 +1191,7 @@ async def test_set_failed_complete(
             regex="failed.* did not complete the required outputs")
 
         # Set failed task complete via default "set" args.
-        schd.pool.set_prereqs_and_outputs([one.identity], [], [], ['all'])
+        schd.pool.set_prereqs_and_outputs([one.identity], [], [], [])
 
         assert log_filter(
             contains=f'[{one}] removed from the n=0 window: completed')
@@ -1256,7 +1253,7 @@ async def test_set_prereqs(
         # try to set an invalid prereq of qux
         schd.pool.set_prereqs_and_outputs(
             ["20400101T0000Z/qux"], [],
-            ["20400101T0000Z/foo:a", "xtrigger/x"], ['all']
+            ["20400101T0000Z/foo:a", "xtrigger/x"], []
         )
         assert log_filter(
             contains=(
@@ -1284,7 +1281,7 @@ async def test_set_prereqs(
             ["20400101T0000Z/bar"],
             [],
             ["xtrigger/x:succeeded"],
-            ['all']
+            []
         )
         assert bar.state.xtriggers_all_satisfied()
         assert log_filter(
@@ -1295,7 +1292,7 @@ async def test_set_prereqs(
             ["20400101T0000Z/baz"],
             [],
             ["xtrigger/x:succeeded"],
-            ['all']
+            []
         )
         assert log_filter(
             contains='20400101T0000Z/baz does not depend on xtrigger "x"')
@@ -1305,7 +1302,7 @@ async def test_set_prereqs(
             ["20400101T0000Z/qux"],
             [],
             ["20400101T0000Z/foo:succeeded"],
-            ['all'])
+            [])
 
         # it should add 20400101T0000Z/qux to the pool
         assert schd.pool.get_task_ids() == {
@@ -1322,7 +1319,7 @@ async def test_set_prereqs(
         # set its other prereqs (test implicit "succeeded" and "succeed")
         # and truncated cycle point
         schd.pool.set_prereqs_and_outputs(
-            ["2040/qux"], [], ["2040/bar", "2040/baz:succeed"], ['all'])
+            ["2040/qux"], [], ["2040/bar", "2040/baz:succeed"], [])
 
         assert log_filter(
             contains=('prerequisite force-satisfied: 20400101T0000Z/bar'))
@@ -1334,7 +1331,7 @@ async def test_set_prereqs(
 
         # set one again
         schd.pool.set_prereqs_and_outputs(
-            ["2040/qux"], [], ["2040/bar"], ['all'])
+            ["2040/qux"], [], ["2040/bar"], [])
 
         assert log_filter(
             contains=('prerequisite already satisfied: 20400101T0000Z/bar'))
@@ -1361,7 +1358,7 @@ async def test_set_bad_prereqs(
     def set_prereqs(prereqs):
         """Shorthand so only varible under test given as arg"""
         schd.pool.set_prereqs_and_outputs(
-            ["2040/bar"], [], prereqs, ['all'])
+            ["2040/bar"], [], prereqs, [])
 
     async with start(schd):
         # Invalid: task name wildcard:
@@ -1416,7 +1413,7 @@ async def test_set_outputs_live(
         schd.pool.task_events_mgr.process_message(foo, 1, 'failed')
 
         # set foo:x: it should spawn bar but not baz
-        schd.pool.set_prereqs_and_outputs(["1/foo"], ["x"], [], ['all'])
+        schd.pool.set_prereqs_and_outputs(["1/foo"], ["x"], [], [])
         assert schd.pool.get_task_ids() == {"1/bar", "1/foo"}
         # Foo should have been removed from the queue:
         assert '1/foo' not in [
@@ -1425,7 +1422,7 @@ async def test_set_outputs_live(
         ]
         # set foo:succeed: it should spawn baz but foo remains incomplete.
         schd.pool.set_prereqs_and_outputs(
-            ["1/foo"], ["succeeded"], [], ['all'])
+            ["1/foo"], ["succeeded"], [], [])
         assert schd.pool.get_task_ids() == {"1/bar", "1/baz", "1/foo"}
 
         # it should complete implied outputs (submitted, started) too
@@ -1433,7 +1430,7 @@ async def test_set_outputs_live(
         assert log_filter(contains="setting implied output: started")
 
         # set foo (default: all required outputs) to complete y.
-        schd.pool.set_prereqs_and_outputs(["1/foo"], [], [], ['all'])
+        schd.pool.set_prereqs_and_outputs(["1/foo"], [], [], [])
         assert log_filter(contains="output 1/foo:succeeded completed")
         assert schd.pool.get_task_ids() == {"1/bar", "1/baz"}
 
@@ -1462,7 +1459,7 @@ async def test_set_outputs_live2(
     schd: Scheduler = scheduler(id_)
 
     async with start(schd):
-        schd.pool.set_prereqs_and_outputs(["1/foo"], [], [], ['all'])
+        schd.pool.set_prereqs_and_outputs(["1/foo"], [], [], [])
         assert not log_filter(
             contains="did not complete required outputs: ['a', 'b']"
         )
@@ -1503,14 +1500,14 @@ async def test_set_outputs_future(
 
         # setting inactive task b succeeded should spawn c but not b
         schd.pool.set_prereqs_and_outputs(
-            ["1/b"], ["succeeded"], [], ['all'])
+            ["1/b"], ["succeeded"], [], [])
         assert schd.pool.get_task_ids() == {"1/a", "1/c"}
 
         schd.pool.set_prereqs_and_outputs(
             items=["1/a"],
             outputs=["x", "y", "cheese"],
             prereqs=[],
-            flow=['all']
+            flow=[]
         )
         assert log_filter(contains="Output 1/a:cheese not found")
         assert log_filter(contains="completed output x")
@@ -1565,7 +1562,7 @@ async def test_set_outputs_from_skip_settings(
         # setting 1/a output to skip should set output x, but not
         # y (because y is optional).
         schd.pool.set_prereqs_and_outputs(
-            ['1/a'], ['skip'], [], ['all'])
+            ['1/a'], ['skip'], [], [])
         assert schd.pool.get_task_ids() == {
             '1/after_asucceeded',
             '1/after_ax',
@@ -1578,7 +1575,7 @@ async def test_set_outputs_from_skip_settings(
 
         # You should be able to set skip as part of a list of outputs:
         schd.pool.set_prereqs_and_outputs(
-            ['2/a'], ['skip', 'y'], [], ['all'])
+            ['2/a'], ['skip', 'y'], [], [])
         assert schd.pool.get_task_ids() == {
             '1/after_asucceeded',
             '1/after_ax',
@@ -1619,7 +1616,7 @@ async def test_prereq_satisfaction(
         # it should start up with just 1/a
         assert schd.pool.get_task_ids() == {"1/a"}
         # spawn b
-        schd.pool.set_prereqs_and_outputs(["1/a"], ["x"], [], ['all'])
+        schd.pool.set_prereqs_and_outputs(["1/a"], ["x"], [], [])
         assert schd.pool.get_task_ids() == {"1/a", "1/b"}
 
         b = schd.pool.get_task(IntegerPoint("1"), "b")
@@ -1629,7 +1626,7 @@ async def test_prereq_satisfaction(
         # set valid and invalid prerequisites, by label and message.
         schd.pool.set_prereqs_and_outputs(
             prereqs=["1/a:xylophone", "1/a:y", "1/a:w", "1/a:z"],
-            items=["1/b"], outputs=[], flow=['all']
+            items=["1/b"], outputs=[], flow=[]
         )
         assert log_filter(contains="1/a:z not found")
         assert log_filter(contains="1/a:w not found")
@@ -2013,7 +2010,7 @@ async def test_remove_by_suicide(
 
         # remove 1/b by request (cylc remove)
         await commands.run_cmd(
-            commands.remove_tasks(schd, ['1/b'], [FLOW_ALL])
+            commands.remove_tasks(schd, ['1/b'], [])
         )
         assert log_filter(
             regex='1/b.*removed from the n=0 window: request',
