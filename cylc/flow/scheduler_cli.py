@@ -364,12 +364,12 @@ def _open_logs(
             restart_num=restart_num
         )
     )
-    LOG.addHandler(
-        ProtobufStreamHandler(
-            schd,
-            level=logging.WARNING,
-        )
+    handler = ProtobufStreamHandler(
+        schd,
+        level=logging.WARNING,
     )
+    handler.setFormatter(logging.Formatter())
+    LOG.addHandler(handler)
 
 
 async def _scheduler_cli_1(
