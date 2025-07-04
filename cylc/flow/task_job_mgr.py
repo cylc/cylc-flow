@@ -1220,7 +1220,7 @@ class TaskJobManager:
                 f"\"{itask.identity}\" the following are not compatible:\n"
             )
 
-        host_n, platform_name = None, None
+        host_n, platform_name, orig_platform_name, orig_host_name = [None] * 4
         try:
             if rtconfig['remote']['host'] is not None:
                 host_n = self.task_remote_mgr.eval_host(
@@ -1253,6 +1253,7 @@ class TaskJobManager:
                     f"for task {itask.identity}: platform = "
                     f"{rtconfig['platform']} evaluated as {platform_name}"
                 )
+                orig_platform_name = rtconfig['platform']
                 rtconfig['platform'] = platform_name
             elif (
                 platform_name is None
@@ -1262,6 +1263,7 @@ class TaskJobManager:
                     f"[{itask}] host = "
                     f"{rtconfig['remote']['host']} evaluated as {host_n}"
                 )
+                orig_host_name = host_n
                 rtconfig['remote']['host'] = host_n
 
             try:
@@ -1292,6 +1294,13 @@ class TaskJobManager:
             itask.platform = platform
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
+
+        # Put the original platform and host names back into the
+        # rtconfig. Prevents storing first evaluation of shell expression.
+        if orig_platform_name:
+            rtconfig['platform'] = orig_platform_name
+        if orig_host_name:
+            rtconfig['remote']['host'] = orig_host_name
 
         try:
             job_conf = self._prep_submit_task_job_impl(
