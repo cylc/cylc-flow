@@ -83,6 +83,10 @@ def flow_opts(
         Traceback (most recent call last):
         cylc.flow.exceptions.InputError: ... must be integers, or 'all'
 
+        >>> flow_opts([''], False, allow_new_or_none=False)
+        Traceback (most recent call last):
+        cylc.flow.exceptions.InputError: ... must be integers, or 'all'
+
     """
     if not flows:
         return
@@ -100,7 +104,9 @@ def flow_opts(
             try:
                 int(val)
             except ValueError:
-                raise InputError(ERR_OPT_FLOW_VAL) from None
+                if allow_new_or_none:
+                    raise InputError(ERR_OPT_FLOW_VAL) from None
+                raise InputError(ERR_OPT_FLOW_VAL_2) from None
 
     if flow_wait and flows[0] in {FLOW_NEW, FLOW_NONE}:
         raise InputError(ERR_OPT_FLOW_WAIT)
