@@ -18,7 +18,7 @@
 import contextlib
 import re
 from textwrap import dedent
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 from metomi.isodatetime.data import Calendar
 
@@ -46,6 +46,7 @@ from cylc.flow.cfgspec.globalcfg import (
     TASK_EVENTS_SETTINGS,
     UTC_MODE_DESCR,
 )
+from cylc.flow.exceptions import WorkflowConfigError
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
@@ -59,6 +60,7 @@ from cylc.flow.platforms import (
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import EventData
 from cylc.flow.run_modes import TASK_CONFIG_RUN_MODES
+from cylc.flow.workflow_events import WorkflowEventHandler
 
 
 # Regex to check whether a string is a command
@@ -2190,13 +2192,15 @@ def upg(cfg, descr):
             silent=cylc.flow.flags.cylc7_back_compat,
         )
 
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events',
-                         'abort if inactivity handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
+    for old in [
+        'abort on stalled',
+        'abort if startup handler fails',
+        'abort if shutdown handler fails',
+        'abort if timeout handler fails',
+        'abort if inactivity handler fails',
+        'abort if stalled handler fails',
+    ]:
+        u.obsolete('8.0.0', ['cylc', 'events', old])
 
     u.deprecate(
         '8.0.0',
@@ -2209,6 +2213,8 @@ def upg(cfg, descr):
 
     upgrade_graph_section(cfg, descr)
     upgrade_param_env_templates(cfg, descr)
+
+    validate_and_upgrade_handler_events(cfg, descr)
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
@@ -2279,10 +2285,7 @@ def upgrade_param_env_templates(cfg, descr):
                 continue
             if not cylc.flow.flags.cylc7_back_compat:
                 if first_warn:
-                    LOG.warning(
-                        'deprecated items automatically upgraded in '
-                        f'"{descr}":'
-                    )
+                    LOG.warning(upgrader.DEPR_MSG)
                     first_warn = False
                 LOG.warning(
                     f' * (8.0.0) {dep % task_name} contents prepended to '
@@ -2301,6 +2304,40 @@ def upgrade_param_env_templates(cfg, descr):
                     task_items['environment'] = OrderedDictWithDefaults()
                 task_items['environment'].prepend(key, val)
             task_items.pop('parameter environment templates')
+
+
+def validate_and_upgrade_handler_events(cfg: dict, descr: str) -> None:
+    """Validate workflow handler events and upgrade any Cylc 7 event names.
+    """
+    try:
+        handler_events: List[str] = cfg['scheduler']['events'][
+            'handler events'
+        ].split(',')
+    except KeyError:
+        return
+    upgraded: Dict[str, str] = {}
+    for i, event in enumerate(handler_events):
+        if event in WorkflowEventHandler.EVENTS_DEPRECATED:
+            handler_events[i] = upgraded[event] = (
+                WorkflowEventHandler.EVENTS_DEPRECATED[event]
+            )
+        elif event not in WorkflowEventHandler.EVENTS:
+            valid = WorkflowEventHandler.EVENTS.copy()
+            if cylc.flow.flags.cylc7_back_compat:
+                valid += WorkflowEventHandler.EVENTS_DEPRECATED
+            raise WorkflowConfigError(
+                f"Invalid workflow handler event '{event}' in "
+                f"{descr}. [scheduler][events][handler events] "
+                f"must be one of: {', '.join(valid)}"
+            )
+    if upgraded:
+        cfg['scheduler']['events']['handler events'] = ','.join(handler_events)
+        if not cylc.flow.flags.cylc7_back_compat:
+            LOG.warning(
+                f"{upgrader.DEPR_MSG}\n"
+                " * (8.0.0) [scheduler][events][handler events] "
+                f"{', '.join(f"{k} -> {v}" for k, v in upgraded.items())}"
+            )
 
 
 def warn_about_depr_platform(cfg):
