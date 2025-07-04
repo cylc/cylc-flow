@@ -15,19 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-import sys
 from types import MethodType
 
 import pytest
 
 from cylc.flow.scheduler import SchedulerError
 from cylc.flow.workflow_events import WorkflowEventHandler
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout as async_timeout
-else:
-    from async_timeout import timeout as async_timeout
 
 
 EVENTS = (
@@ -92,7 +85,7 @@ async def test_workflow_timeout(test_scheduler, run):
     This counts down from scheduler start.
     """
     schd = test_scheduler({'workflow timeout': 'PT0S'})
-    async with async_timeout(4):
+    async with asyncio.timeout(4):
         async with run(schd):
             await asyncio.sleep(0.1)
     assert schd.get_events() == {'startup', 'workflow timeout', 'shutdown'}
@@ -107,7 +100,7 @@ async def test_inactivity_timeout(test_scheduler, start):
         'inactivity timeout': 'PT0S',
         'abort on inactivity timeout': 'True',
     })
-    async with async_timeout(4):
+    async with asyncio.timeout(4):
         with pytest.raises(SchedulerError):
             async with start(schd):
                 await asyncio.sleep(0)
@@ -220,7 +213,7 @@ async def test_shutdown_handler_timeout_kill(
         '''
     )
 
-    async with async_timeout(30):
+    async with asyncio.timeout(30):
         async with run(schd):
             # Replace a scheduler method, to call handlers in simulation mode.
             monkeypatch.setattr(
