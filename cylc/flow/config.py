@@ -35,29 +35,46 @@ import re
 from textwrap import wrap
 import traceback
 from typing import (
-    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple,
-    Union, Iterable
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
 )
 
 from metomi.isodatetime.data import Calendar
-from metomi.isodatetime.parsers import DurationParser
-from metomi.isodatetime.exceptions import IsodatetimeError
-from metomi.isodatetime.timezone import get_local_time_zone_format
 from metomi.isodatetime.dumpers import TimePointDumper
+from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.parsers import DurationParser
+from metomi.isodatetime.timezone import get_local_time_zone_format
 
 from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.workflow import RawWorkflowConfig
-from cylc.flow.cycling.loader import (
-    get_point, get_point_relative, get_interval, get_interval_cls,
-    get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
-    INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
-)
-from cylc.flow.id import Tokens
 from cylc.flow.cycling.integer import IntegerInterval
-from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
-
+from cylc.flow.cycling.iso8601 import (
+    ISO8601Interval,
+    ingest_time,
+)
+from cylc.flow.cycling.loader import (
+    INTEGER_CYCLING_TYPE,
+    ISO8601_CYCLING_TYPE,
+    get_dump_format,
+    get_interval,
+    get_interval_cls,
+    get_point,
+    get_point_relative,
+    get_sequence,
+    get_sequence_cls,
+    init_cyclers,
+)
 from cylc.flow.exceptions import (
     CylcError,
     InputError,
@@ -68,25 +85,30 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
+from cylc.flow.graphnode import GraphNodeParser
+from cylc.flow.id import Tokens
 from cylc.flow.listify import listify
 from cylc.flow.log_level import verbosity_to_env
-from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.param_expand import NameExpander
-from cylc.flow.parsec.exceptions import ItemNotFoundError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.util import dequote, replicate
+from cylc.flow.parsec.exceptions import ItemNotFoundError
+from cylc.flow.parsec.upgrade import upgrader
+from cylc.flow.parsec.util import (
+    dequote,
+    replicate,
+)
 from cylc.flow.pathutil import (
-    get_workflow_name_from_id,
     get_cylc_run_dir,
+    get_workflow_name_from_id,
     is_relative_to,
 )
-from cylc.flow.task_qualifiers import ALT_QUALIFIERS
+from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.simulation import configure_sim_mode
 from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
-    get_event_handler_data
+    get_event_handler_data,
 )
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
@@ -99,18 +121,27 @@ from cylc.flow.task_outputs import (
     get_trigger_completion_variable_maps,
     trigger_to_completion_variable,
 )
-from cylc.flow.task_qualifiers import TASK_QUALIFIERS
-from cylc.flow.run_modes import RunMode
-from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.task_qualifiers import (
+    ALT_QUALIFIERS,
+    TASK_QUALIFIERS,
+)
+from cylc.flow.task_trigger import (
+    Dependency,
+    TaskTrigger,
+)
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
+    TaskMessageValidator,
     TaskNameValidator,
     TaskOutputValidator,
-    TaskMessageValidator,
     XtriggerNameValidator,
 )
 from cylc.flow.wallclock import (
-    get_current_time_string, set_utc_mode, get_utc_mode)
+    get_current_time_string,
+    get_utc_mode,
+    set_utc_mode,
+)
+from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_files import (
     NO_TITLE,
     WorkflowFiles,
@@ -118,9 +149,15 @@ from cylc.flow.workflow_files import (
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
+
 if TYPE_CHECKING:
     from optparse import Values
-    from cylc.flow.cycling import IntervalBase, PointBase, SequenceBase
+
+    from cylc.flow.cycling import (
+        IntervalBase,
+        PointBase,
+        SequenceBase,
+    )
 
 RE_CLOCK_OFFSET = re.compile(
     rf'''
@@ -504,6 +541,7 @@ class WorkflowConfig:
             self.cfg['scheduling']['special tasks'][s_type] = result
 
         self.process_config_env()
+        self._check_and_upg_wflow_handler_events()
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
@@ -2672,3 +2710,33 @@ class WorkflowConfig:
             taskdef = self.get_taskdef(task_name)
             for seq in taskdef.sequences:
                 taskdef.add_xtrig_label(label, seq)
+
+    def _check_and_upg_wflow_handler_events(self) -> None:
+        """Validate workflow handler events and upgrade any Cylc 7 event names.
+        """
+        handler_events: Optional[List[str]] = self.cfg['scheduler']['events'][
+            'handler events'
+        ]
+        if not handler_events:
+            return
+        upgraded: Dict[str, str] = {}
+        for i, event in enumerate(handler_events):
+            if event in WorkflowEventHandler.EVENTS_DEPRECATED:
+                handler_events[i] = upgraded[event] = (
+                    WorkflowEventHandler.EVENTS_DEPRECATED[event]
+                )
+            elif event not in WorkflowEventHandler.EVENTS:
+                valid = WorkflowEventHandler.EVENTS.copy()
+                if cylc.flow.flags.cylc7_back_compat:
+                    valid += WorkflowEventHandler.EVENTS_DEPRECATED
+                raise WorkflowConfigError(
+                    f"Invalid workflow handler event '{event}'. "
+                    "[scheduler][events][handler events] must be one of: "
+                    + ', '.join(valid)
+                )
+        if upgraded and not cylc.flow.flags.cylc7_back_compat:
+            LOG.warning(
+                f"{upgrader.DEPR_MSG}\n"
+                " * (8.0.0) [scheduler][events][handler events] "
+                + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
+            )
