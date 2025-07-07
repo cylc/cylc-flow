@@ -20,6 +20,7 @@ from ansimarkup import parse
 from contextlib import suppress
 from pathlib import Path
 from random import choice
+import re
 import shutil
 import sys
 from typing import Optional
@@ -120,16 +121,20 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     is_source_workflow = path_is_source_workflow(src)
 
     # get the target path
+    name = resource_path.name
     if not tgt_dir:
         if is_source_workflow:
             # this is a tutorial => use the primary source dir
             _tgt_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
+            # remove any numerical prefix (used in the examples to ensure they
+            # appear in order in the docs) as these are not valid workflow IDs
+            name = re.sub(r'^[\d]+-', '', name)
         else:
             # this is a regular resource => use $PWD
             _tgt_dir = Path.cwd()
     else:
         _tgt_dir = Path(tgt_dir).resolve()
-    tgt = _tgt_dir / resource_path.name
+    tgt = _tgt_dir / name
 
     tgt = tgt.expanduser()
     tgt = tgt.resolve()
