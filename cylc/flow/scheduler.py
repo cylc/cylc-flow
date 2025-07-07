@@ -679,7 +679,7 @@ class Scheduler:
                     # submit them to run now.
                     # NOTE: this will run tasks that were triggered with
                     # the trigger "--on-resume" option, even if the workflow
-                    # is restarted as paused. Option to be removed at 8.5.0.
+                    # is restarted as paused. Option to be removed at 8.6.0.
                     pre_prep_tasks = []
                     for itask in self.pool.get_tasks():
                         if (

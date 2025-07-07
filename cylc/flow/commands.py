@@ -453,7 +453,7 @@ async def force_trigger_tasks(
     if on_resume:
         LOG.warning(
             "The --on-resume option is deprecated and will be removed "
-            "at Cylc 8.5."
+            "at Cylc 8.6."
         )
     yield
     yield schd.pool.force_trigger_tasks(
