@@ -1169,9 +1169,7 @@ class TaskPool:
                     # Job file might have been written at this point?
                     _warn_tasks.append(str(itask))
 
-        for may, tasks in [('', n) for n in warn_tasks] + [
-            ('may be', n) for n in _warn_tasks
-        ]:
+        for may, tasks in (('', warn_tasks), ('may be', _warn_tasks)):
             if tasks:
                 _tasks = "\n * ".join(tasks)
                 LOG.info(
