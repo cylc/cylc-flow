@@ -18,7 +18,12 @@
 import contextlib
 import re
 from textwrap import dedent
-from typing import Any, Dict, Optional, Set
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Set,
+)
 
 from metomi.isodatetime.data import Calendar
 
@@ -26,10 +31,10 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import (
     DIRECTIVES_DESCR,
     DIRECTIVES_ITEM_DESCR,
-    LOG_RETR_SETTINGS,
     EVENTS_DESCR,
     EVENTS_SETTINGS,
     EXECUTION_POLL_DESCR,
+    LOG_RETR_SETTINGS,
     MAIL_DESCR,
     MAIL_FOOTER_DESCR,
     MAIL_FROM_DESCR,
@@ -47,18 +52,31 @@ from cylc.flow.cfgspec.globalcfg import (
     UTC_MODE_DESCR,
 )
 import cylc.flow.flags
-from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.upgrade import upgrader, converter
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig,
+)
+from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.parsec.upgrade import (
+    converter,
+    upgrader,
+)
 from cylc.flow.parsec.validate import (
-    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    cylc_config_validate,
+)
 from cylc.flow.platforms import (
-    fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
-    is_platform_definition_subshell)
-from cylc.flow.run_modes import RunMode
+    fail_if_platform_and_host_conflict,
+    get_platform_deprecated_settings,
+    is_platform_definition_subshell,
+)
+from cylc.flow.run_modes import (
+    TASK_CONFIG_RUN_MODES,
+    RunMode,
+)
 from cylc.flow.task_events_mgr import EventData
-from cylc.flow.run_modes import TASK_CONFIG_RUN_MODES
 
 
 # Regex to check whether a string is a command
@@ -2190,13 +2208,15 @@ def upg(cfg, descr):
             silent=cylc.flow.flags.cylc7_back_compat,
         )
 
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events',
-                         'abort if inactivity handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
+    for old in [
+        'abort on stalled',
+        'abort if startup handler fails',
+        'abort if shutdown handler fails',
+        'abort if timeout handler fails',
+        'abort if inactivity handler fails',
+        'abort if stalled handler fails',
+    ]:
+        u.obsolete('8.0.0', ['cylc', 'events', old])
 
     u.deprecate(
         '8.0.0',
@@ -2279,10 +2299,7 @@ def upgrade_param_env_templates(cfg, descr):
                 continue
             if not cylc.flow.flags.cylc7_back_compat:
                 if first_warn:
-                    LOG.warning(
-                        'deprecated items automatically upgraded in '
-                        f'"{descr}":'
-                    )
+                    LOG.warning(upgrader.DEPR_MSG)
                     first_warn = False
                 LOG.warning(
                     f' * (8.0.0) {dep % task_name} contents prepended to '

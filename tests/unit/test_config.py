@@ -14,46 +14,58 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-from optparse import Values
-from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
-import pytest
+from contextlib import suppress
 import logging
+from optparse import Values
+import os
+from pathlib import Path
 from textwrap import dedent
 from types import SimpleNamespace
-from contextlib import suppress
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+)
+
+import pytest
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
-from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
+from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.cycling.loader import (
+    INTEGER_CYCLING_TYPE,
+    ISO8601_CYCLING_TYPE,
+)
 from cylc.flow.exceptions import (
     GraphParseError,
-    PointParsingError,
     InputError,
+    PointParsingError,
     WorkflowConfigError,
     XtriggerConfigError,
 )
 from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
-from cylc.flow.workflow_files import WorkflowFiles
-from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.wallclock import (
+    get_utc_mode,
+    set_utc_mode,
+)
+from cylc.flow.workflow_files import WorkflowFiles
 
-from cylc.flow.cycling.iso8601 import ISO8601Point
+
+Fixture = Any
 
 
 param = pytest.param
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
-    Fixture = Any
 
 
 class TestWorkflowConfig:
@@ -1727,3 +1739,39 @@ def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
             cfg.check_terminal_outputs(tasks_and_outputs)
     else:
         assert cfg.check_terminal_outputs(tasks_and_outputs) is None
+
+
+def test_upg_wflow_handler_events(tmp_flow_config, log_filter):
+    """Cylc 7 workflow handler event names are upgraded."""
+    events = 'inactivity, abort, stalled'
+    expected = ['inactivity timeout', 'abort', 'stall']
+    flow_file = tmp_flow_config('foo', f"""
+        [scheduler]
+            allow implicit tasks = true
+            [[events]]
+                handler events = {events}
+        [scheduling]
+            [[graph]]
+                R1 = foo
+    """)
+    cfg = WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert cfg.cfg['scheduler']['events']['handler events'] == expected
+    assert log_filter(
+        logging.WARNING, 'Deprecated config items were automatically upgraded'
+    )
+
+
+def test_val_wflow_handler_events(tmp_flow_config):
+    """Any invalid workflow handler events raise an error."""
+    flow_file = tmp_flow_config('foo', """
+        [scheduler]
+            allow implicit tasks = true
+            [[events]]
+                handler events = abort, badger, stall
+        [scheduling]
+            [[graph]]
+                R1 = foo
+    """)
+    with pytest.raises(WorkflowConfigError) as ex_info:
+        WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert "Invalid workflow handler event 'badger'" in str(ex_info.value)
