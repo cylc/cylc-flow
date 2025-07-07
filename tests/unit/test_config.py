@@ -1775,3 +1775,27 @@ def test_val_wflow_handler_events(tmp_flow_config):
     with pytest.raises(WorkflowConfigError) as ex_info:
         WorkflowConfig('foo', str(flow_file), ValidateOptions())
     assert "Invalid workflow handler event 'badger'" in str(ex_info.value)
+
+
+def test_check_task_handler_events(tmp_flow_config):
+    """"Any invalid task handler events raise an error."""
+    flow_file = tmp_flow_config('foo', """
+        [scheduler]
+            allow implicit tasks = true
+        [scheduling]
+            [[graph]]
+                R1 = foo
+        [runtime]
+            [[foo]]
+                [[[events]]]
+                    handler events = submitted, late, warning, custom,\
+                        execution timeout, badger, owl, retry, horse
+                [[[outputs]]]
+                    owl = who
+    """)
+    with pytest.raises(WorkflowConfigError) as ex_info:
+        WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert str(ex_info.value) == (
+        "Invalid event name(s) for [runtime][foo][events]handler events: "
+        "badger, horse"
+    )

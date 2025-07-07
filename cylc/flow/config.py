@@ -108,6 +108,7 @@ from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import (
     EventData,
+    TaskEventsManager,
     get_event_handler_data,
 )
 from cylc.flow.task_id import TaskID
@@ -558,7 +559,9 @@ class WorkflowConfig:
 
         self.configure_workflow_state_polling_tasks()
 
-        self._check_task_event_handlers()
+        for taskdef in self.taskdefs.values():
+            self._check_task_handler_events(taskdef)
+            self._check_task_event_handlers(taskdef)
         self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
@@ -1742,35 +1745,47 @@ class WorkflowConfig:
                 ]
             )
 
-    def _check_task_event_handlers(self):
+    def _check_task_handler_events(self, taskdef: 'TaskDef') -> None:
+        """Validate task handler event names."""
+        handler_events: Optional[List[str]] = taskdef.rtconfig['events'][
+            'handler events'
+        ]
+        if not handler_events:
+            return
+        invalid = set(handler_events).difference(
+            TaskEventsManager.STD_EVENTS,
+            taskdef.rtconfig['outputs'],
+        )
+        if invalid:
+            raise WorkflowConfigError(
+                "Invalid event name(s) for "
+                f"[runtime][{taskdef.name}][events]handler events: "
+                + ', '.join(sorted(invalid))
+            )
+
+    def _check_task_event_handlers(self, taskdef: 'TaskDef') -> None:
         """Check custom event handler templates can be expanded.
 
         Ensures that any %(template_variables)s in task event handlers
         are present in the data that will be passed to them when called
         (otherwise they will fail).
         """
-        for taskdef in self.taskdefs.values():
-            if taskdef.rtconfig['events']:
-                handler_data = {
-                    item.value: ''
-                    for item in EventData
-                }
-                handler_data.update(
-                    get_event_handler_data(taskdef.rtconfig, self.cfg)
-                )
-                for key, values in taskdef.rtconfig['events'].items():
-                    if values and (
-                            key == 'handlers' or key.endswith(' handlers')):
-                        for handler_template in values:
-                            try:
-                                handler_template % handler_data
-                            except (KeyError, ValueError) as exc:
-                                raise WorkflowConfigError(
-                                    f'bad task event handler template'
-                                    f' {taskdef.name}:'
-                                    f' {handler_template}:'
-                                    f' {repr(exc)}'
-                                ) from None
+        if not taskdef.rtconfig['events']:
+            return
+        handler_data = {item.value: '' for item in EventData}
+        handler_data.update(
+            get_event_handler_data(taskdef.rtconfig, self.cfg)
+        )
+        for key, values in taskdef.rtconfig['events'].items():
+            if values and (key == 'handlers' or key.endswith(' handlers')):
+                for handler_template in values:
+                    try:
+                        handler_template % handler_data
+                    except (KeyError, ValueError) as exc:
+                        raise WorkflowConfigError(
+                            f'bad task event handler template'
+                            f' {taskdef.name}: {handler_template}: {repr(exc)}'
+                        ) from None
 
     def _check_special_tasks(self):
         """Check declared special tasks are valid, and detect special
