@@ -24,21 +24,27 @@ import os
 import re
 import sys
 import time
-import json
 import signal
+import asyncio
 from pathlib import Path
 from dataclasses import dataclass
 from cylc.flow.terminal import cli_function
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
+max_rss_location = None
+cpu_time_location = None
+cgroup_version = None
+comms_timeout = None
 
 
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
+        comms=True,
         argdoc=[
         ],
     )
@@ -55,10 +61,13 @@ def get_option_parser() -> COP:
 @cli_function(get_option_parser)
 def main(parser: COP, options) -> None:
     """CLI main."""
+    global comms_timeout
     # Register the stop_profiler function with the signal library
     signal.signal(signal.SIGINT, stop_profiler)
     signal.signal(signal.SIGHUP, stop_profiler)
     signal.signal(signal.SIGTERM, stop_profiler)
+
+    comms_timeout = options.comms_timeout
 
     get_config(options)
 
@@ -73,7 +82,49 @@ class Process:
 def stop_profiler(*args):
     """This function will be executed when the SIGINT signal is sent
      to this process"""
-    print('profiler exited')
+
+    global max_rss_location
+    global cpu_time_location
+    global cgroup_version
+    global comms_timeout
+
+    # If a task fails instantly, or finishes very quickly (< 1 second),
+    # the get config function doesn't have time to run
+    if (max_rss_location is None
+            or cpu_time_location is None
+            or cgroup_version is None):
+        max_rss = 0
+        cpu_time = 0
+    else:
+        max_rss = parse_memory_file(max_rss_location)
+        cpu_time = parse_cpu_file(cpu_time_location, cgroup_version)
+
+    GRAPHQL_MUTATION = """
+    mutation($WORKFLOWS: [WorkflowID]!, $MESSAGES: [[String]], $JOB: String!, $TIME: String) {
+      message(workflows: $WORKFLOWS, messages:$MESSAGES, taskJob:$JOB, eventTime:$TIME) {
+        result
+      }
+    }
+    """
+
+    GRAPHQL_REQUEST_VARIABLES = {
+        "WORKFLOWS": [os.environ.get('CYLC_WORKFLOW_ID')],
+        "MESSAGES": [["DEBUG", f"cpu_time {cpu_time} max_rss {max_rss}"]],
+        "JOB": os.environ.get('CYLC_TASK_JOB'),
+        "TIME": "now"
+    }
+
+    pclient = get_client(os.environ.get('CYLC_WORKFLOW_ID'),
+                         timeout=comms_timeout)
+
+    async def send_cylc_message():
+        await pclient.async_request(
+            'graphql',
+            {'request_string': GRAPHQL_MUTATION,
+             'variables': GRAPHQL_REQUEST_VARIABLES},
+        )
+
+    asyncio.run(send_cylc_message())
     sys.exit(0)
 
 
@@ -100,21 +151,18 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
                 return int(line) / 1000000
 
 
-def write_data(peak_memory, cpu_time, filename):
-    data = {'max_rss': peak_memory,
-            'cpu_time': cpu_time}
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
-
-
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
     # HPC uses cgroups v2 and SPICE uses cgroups v1
+    global cgroup_version
     if Path.exists(Path(cgroup_location + cgroup_name)):
-        return 1
+        cgroup_version = 1
+        return cgroup_version
     elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
-        return 2
+        cgroup_version = 2
+        return cgroup_version
     else:
-        raise FileNotFoundError("Cgroup not found")
+        raise FileNotFoundError("Cgroup not found at " +
+                                cgroup_location + cgroup_name)
 
 
 def get_cgroup_name():
@@ -136,8 +184,11 @@ def get_cgroup_name():
 
 
 def get_cgroup_paths(version, location, name):
-
+    global max_rss_location
+    global cpu_time_location
     if version == 1:
+        max_rss_location = location + name + "/" + "memory.peak"
+        cpu_time_location = location + name + "/" + "cpu.stat"
         return Process(
             cgroup_memory_path=location +
             name + "/" + "memory.peak",
@@ -145,6 +196,8 @@ def get_cgroup_paths(version, location, name):
             name + "/" + "cpu.stat")
 
     elif version == 2:
+        max_rss_location = location + "/memory" + name + "/memory.max_usage_in_bytes"
+        cpu_time_location = location + "/cpu" + name + "/cpuacct.usage"
         return Process(
             cgroup_memory_path=location + "/memory" +
             name + "/memory.max_usage_in_bytes",
@@ -155,16 +208,10 @@ def get_cgroup_paths(version, location, name):
 def profile(process, version, delay, keep_looping=lambda: True):
     # The infinite loop that will constantly poll the cgroup
     # The lambda function is used to allow the loop to be stopped in unit tests
-    peak_memory = 0
+
     while keep_looping():
         # Write cpu / memory usage data to disk
-        cpu_time = parse_cpu_file(process.cgroup_cpu_path, version)
-        memory = parse_memory_file(process.cgroup_memory_path)
-        # Only save Max RSS to disk if it is above the previous value
-        if memory > peak_memory:
-            peak_memory = memory
-        write_data(peak_memory, cpu_time, "profiler.json")
-
+        # CPU_TIME = parse_cpu_file(process.cgroup_cpu_path, version)
         time.sleep(delay)
 
 

@@ -164,9 +164,7 @@ cylc__job__main() {
         fi
     }
     # Grab the max rss and cpu_time and clean up before changing directory
-    if [[ "${CYLC_PROFILE}" == "True" ]] ; then
-      cylc__kill_profiler
-    fi
+    cylc__kill_profiler
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
@@ -202,11 +200,7 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
-    if [[ -f "profiler.json" ]]; then
-      cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "DEBUG: $(< profiler.json tr -d '\n')" || true
-      rm profiler.json
-    fi
-    if [[ -f "proc/${profiler_pid}" ]]; then
+    if [[ -d "/proc/${profiler_pid}" ]]; then
       kill -s SIGINT "${profiler_pid}" || true
     fi
 }
@@ -293,9 +287,8 @@ cylc__job_finish_err() {
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
 
-    if [[ "${CYLC_PROFILE}" == "True" ]] ; then
-      cylc__kill_profiler
-    fi
+    cylc__kill_profiler
+
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
