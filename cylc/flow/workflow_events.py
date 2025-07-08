@@ -302,14 +302,21 @@ class WorkflowEventHandler():
             env=env,
             stdin_str=message
         )
-        if self.proc_pool.closed:
-            # Run command in foreground if process pool is closed
-            self.proc_pool.run_command(proc_ctx)
-            self._run_event_handlers_callback(proc_ctx)
+        self._run_cmd(proc_ctx, callback=self._run_event_mail_callback)
+
+    def _run_cmd(self, ctx, callback):
+        """Queue or directly run a command and its callback.
+
+        Queue the command to the subprocess pool if possible, or else run it
+        in the foreground (but still subject to the subprocess pool timeout).
+
+        """
+        if not self.proc_pool.closed:
+            # Queue it to the subprocess pool.
+            self.proc_pool.put_command(ctx, callback=callback)
         else:
-            # Run command using process pool otherwise
-            self.proc_pool.put_command(
-                proc_ctx, callback=self._run_event_mail_callback)
+            # Run it in the foreground.
+            self.proc_pool.run_command(ctx, callback=callback)
 
     def _run_event_custom_handlers(self, schd, template_variables, event):
         """Helper for "run_event_handlers", custom event handlers."""
@@ -349,23 +356,14 @@ class WorkflowEventHandler():
                 env=dict(os.environ),
                 shell=True  # nosec (designed to run user defined code)
             )
-            if self.proc_pool.closed:
-                # Run command in foreground if abort on failure is set or if
-                # process pool is closed
-                self.proc_pool.run_command(proc_ctx)
-                self._run_event_handlers_callback(proc_ctx)
-            else:
-                # Run command using process pool otherwise
-                self.proc_pool.put_command(
-                    proc_ctx, callback=self._run_event_handlers_callback)
+            self._run_cmd(proc_ctx, self._run_event_handlers_callback)
 
     @staticmethod
     def _run_event_handlers_callback(proc_ctx):
         """Callback on completion of a workflow event handler."""
         if proc_ctx.ret_code:
-            msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]
             LOG.error(str(proc_ctx))
-            LOG.error(msg)
+            LOG.error(f'{proc_ctx.cmd_key[1]} EVENT HANDLER FAILED')
         else:
             LOG.info(str(proc_ctx))
 

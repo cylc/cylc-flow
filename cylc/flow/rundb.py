@@ -505,22 +505,46 @@ class CylcWorkflowDAO:
         # something went wrong
         # (includes DB file not found, transaction processing issue, db locked)
         except sqlite3.Error as e:
+            # Detailed error codes are only available for python >= 3.11
+            if hasattr(e, "sqlite_errorcode"):
+                error_code = str(e.sqlite_errorcode)
+            else:
+                error_code = "Not available"
+
+            if hasattr(e, "sqlite_errorname"):
+                error_name = e.sqlite_errorname
+            else:
+                error_name = "Not available"
+
             if not self.is_public:
                 # incase this isn't a filesystem issue, log the statements
                 # which make up the transaction to assist debug
                 LOG.error(
-                    'An error occurred when writing to the database,'
+                    'An error occurred when writing to the database %(file)s,'
                     ' this is probably a filesystem issue.'
-                    f' The attempted transaction was:\n{pformat(sql_queue)}'
+                    ' The error was: %(error)s'
+                    ' SQLite error code: %(error_code)s'
+                    ' SQLite error name: %(error_name)s'
+                    ' The attempted transaction was:\n %(transaction)s' % {
+                        "file": self.db_file_name,
+                        "error": str(e),
+                        "error_code": error_code,
+                        "error_name": error_name,
+                        "transaction": pformat(sql_queue)
+                    }
                 )
                 raise
             self.n_tries += 1
             LOG.warning(
                 "%(file)s: write attempt (%(attempt)d)"
-                " did not complete: %(error)s\n" % {
+                " did not complete: %(error)s\n"
+                " SQLite error code: %(error_code)s\n"
+                " SQLite error name: %(error_name)s" % {
                     "file": self.db_file_name,
                     "attempt": self.n_tries,
-                    "error": str(e)
+                    "error": str(e),
+                    "error_code": error_code,
+                    "error_name": error_name
                 }
             )
             if self.conn is not None:
@@ -565,15 +589,15 @@ class CylcWorkflowDAO:
         try:
             self.connect()
             self.conn.executemany(stmt, stmt_args_list)
-        except sqlite3.Error:
+        except sqlite3.Error as e:
             if not self.is_public:
                 raise
             if cylc.flow.flags.verbosity > 1:
                 traceback.print_exc()
             err_log = (
                 "cannot execute database statement:\n"
-                "file=%(file)s:\nstmt=%(stmt)s"
-            ) % {"file": self.db_file_name, "stmt": stmt}
+                "file=%(file)s:\nstmt=%(stmt)s\nerror=%(error)s"
+            ) % {"file": self.db_file_name, "stmt": stmt, "error": str(e)}
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})

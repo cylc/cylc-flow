@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from json import loads
 import logging
 from typing import (
     TYPE_CHECKING,
@@ -22,36 +23,40 @@ from typing import (
     Iterable,
     List,
     Tuple,
-    Union
+    Union,
 )
 
 import pytest
 from pytest import param
-from json import loads
 
-from cylc.flow import CYLC_LOG
-from cylc.flow import commands
+from cylc.flow import (
+    CYLC_LOG,
+    commands,
+)
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.flow_mgr import (
+    FLOW_ALL,
+    FLOW_NONE,
+)
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
+)
+from cylc.flow.task_state import (
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
 
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE
-from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUBMIT_FAILED,
-)
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -1528,7 +1533,7 @@ async def test_set_outputs_future(
             prereqs=[],
             flow=['all']
         )
-        assert log_filter(contains="output 1/a:cheese not found")
+        assert log_filter(contains="Output 1/a:cheese not found")
         assert log_filter(contains="completed output x")
         assert log_filter(contains="completed output y")
 
@@ -1781,6 +1786,37 @@ async def test_compute_runahead_with_no_tasks(flow, scheduler, run):
         assert schd.pool.compute_runahead() is False
         assert schd.pool.runahead_limit_point is None
         assert schd.pool.get_tasks() == []
+
+
+async def test_compute_runahead_with_no_sequences(
+    flow, scheduler, start, run, complete
+):
+    """It should handle no sequences within the start-stop cycle range.
+
+    See https://github.com/cylc/cylc-flow/issues/6154
+    """
+    cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': '1',
+            'graph': {
+                'P1': 'foo[-P1] => foo',
+            },
+        },
+    }
+    id_ = flow(cfg)
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        await complete(schd, '2/foo')
+
+    cfg['scheduling']['graph']['R1'] = cfg['scheduling']['graph']['P1']
+    cfg['scheduling']['graph'].pop('P1')
+    flow(cfg, workflow_id=id_)
+
+    schd = scheduler(id_, paused_start=False)
+    async with start(schd):
+        schd.pool.compute_runahead()
+        assert schd.pool.runahead_limit_point == IntegerPoint('3')
 
 
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
