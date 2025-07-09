@@ -26,10 +26,7 @@ set_test_number 7
 mkdir -p "${PWD}/cgroups_test_data"
 
 echo '12345678' > cgroups_test_data/memory.peak
-mem_path="${PWD}/cgroups_test_data/memory.peak"
-
 echo 'usage_usec 56781234' > cgroups_test_data/cpu.stat
-cpu_path="${PWD}/cgroups_test_data/cpu.stat"
 
 export profiler_test_env_var='/cgroups_test_data'
 create_test_global_config "
