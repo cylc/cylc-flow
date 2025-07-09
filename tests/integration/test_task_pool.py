@@ -1267,7 +1267,7 @@ async def test_set_failed_complete(
         schd.pool.set_prereqs_and_outputs([one.identity], [], [], ['all'])
 
         assert log_filter(
-            contains=f'[{one}] removed from active task pool: completed')
+            contains=f'[{one}] removed from the n=0 window: completed')
 
         db_outputs = db_select(
             schd, True, 'task_outputs', 'outputs',
@@ -1286,15 +1286,21 @@ async def test_set_prereqs(
     start,
     log_filter,
 ):
-    """Check manual setting of prerequisites.
+    """Check manual setting of prerequisites (task and xtrigger).
 
     """
     id_ = flow(
         {
             'scheduling': {
                 'initial cycle point': '2040',
+                'xtriggers': {
+                    'x': 'xrandom(0)'
+                },
                 'graph': {
-                    'R1': "foo & bar & baz => qux"
+                    'R1': """
+                        foo & bar & baz => qux",
+                        @x => bar
+                    """
                 }
             },
             'runtime': {
@@ -1319,10 +1325,17 @@ async def test_set_prereqs(
 
         # try to set an invalid prereq of qux
         schd.pool.set_prereqs_and_outputs(
-            ["20400101T0000Z/qux"], [], ["20400101T0000Z/foo:a"], ['all'])
+            ["20400101T0000Z/qux"], [],
+            ["20400101T0000Z/foo:a", "xtrigger/x"], ['all']
+        )
         assert log_filter(
             contains=(
                 '20400101T0000Z/qux does not depend on "20400101T0000Z/foo:a"'
+            )
+        )
+        assert log_filter(
+            contains=(
+                '20400101T0000Z/qux does not depend on xtrigger "x"'
             )
         )
 
@@ -1332,6 +1345,31 @@ async def test_set_prereqs(
             "20400101T0000Z/baz",
             "20400101T0000Z/foo",
         }
+
+        # set an xtrigger (see also test_xtrigger_mgr, and test_data_store_mgr)
+        bar = schd.pool._get_task_by_id('20400101T0000Z/bar')
+        assert bar.state.prerequisites_all_satisfied()
+        assert not bar.state.xtriggers_all_satisfied()
+        schd.pool.set_prereqs_and_outputs(
+            ["20400101T0000Z/bar"],
+            [],
+            ["xtrigger/x:succeeded"],
+            ['all']
+        )
+        assert bar.state.xtriggers_all_satisfied()
+        assert log_filter(
+            contains=(
+                'xtrigger prerequisite satisfied (forced): x = xrandom(0)'))
+
+        # set xtrigger in the wrong task
+        schd.pool.set_prereqs_and_outputs(
+            ["20400101T0000Z/baz"],
+            [],
+            ["xtrigger/x:succeeded"],
+            ['all']
+        )
+        assert log_filter(
+            contains='20400101T0000Z/baz does not depend on xtrigger "x"')
 
         # set one prereq of inactive task 20400101T0000Z/qux
         schd.pool.set_prereqs_and_outputs(
@@ -1357,8 +1395,20 @@ async def test_set_prereqs(
         schd.pool.set_prereqs_and_outputs(
             ["2040/qux"], [], ["2040/bar", "2040/baz:succeed"], ['all'])
 
+        assert log_filter(
+            contains=('prerequisite satisfied (forced): 20400101T0000Z/bar'))
+        assert log_filter(
+            contains=('prerequisite satisfied (forced): 20400101T0000Z/baz'))
+
         # it should now be fully satisfied
         assert qux.state.prerequisites_all_satisfied()
+
+        # set one again
+        schd.pool.set_prereqs_and_outputs(
+            ["2040/qux"], [], ["2040/bar"], ['all'])
+
+        assert log_filter(
+            contains=('prerequisite already satisfied: 20400101T0000Z/bar'))
 
 
 async def test_set_bad_prereqs(
@@ -1982,7 +2032,7 @@ async def test_remove_active_task(
 
     assert log_filter(
         regex=(
-            "1/foo.*removed from active task pool:"
+            "1/foo.*removed from the n=0 window:"
             " request - active job orphaned"
         ),
         level=logging.WARNING
@@ -2020,7 +2070,7 @@ async def test_remove_by_suicide(
         # mark 1/a as failed and ensure 1/b is removed by suicide trigger
         schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
         assert log_filter(
-            regex="1/b.*removed from active task pool: suicide trigger"
+            regex="1/b.*removed from the n=0 window: suicide trigger"
         )
         assert schd.pool.get_task_ids() == {"1/a"}
 
@@ -2028,7 +2078,7 @@ async def test_remove_by_suicide(
         log.clear()
         schd.pool.force_trigger_tasks(['1/b'], ['1'])
         assert log_filter(
-            regex='1/b.*added to active task pool',
+            regex='1/b.*added to the n=0 window',
         )
 
         # remove 1/b by request (cylc remove)
@@ -2036,15 +2086,13 @@ async def test_remove_by_suicide(
             commands.remove_tasks(schd, ['1/b'], [FLOW_ALL])
         )
         assert log_filter(
-            regex='1/b.*removed from active task pool: request',
+            regex='1/b.*removed from the n=0 window: request',
         )
 
         # ensure that we are able to bring 1/b back by triggering it
         log.clear()
         schd.pool.force_trigger_tasks(['1/b'], ['1'])
-        assert log_filter(
-            regex='1/b.*added to active task pool',
-        )
+        assert log_filter(regex='1/b.*added to the n=0 window',)
 
 
 async def test_set_future_flow(flow, scheduler, start, log_filter):
@@ -2159,7 +2207,7 @@ async def test_reload_xtriggers(flow, scheduler, start):
         """List xtrigs from the data_store_mgr."""
         await schd.update_data_structure()
         return {
-            value.label: key
+            value.label: value.id
             for key, value in schd.data_store_mgr.data[schd.tokens.id][
                 TASK_PROXIES
             ][

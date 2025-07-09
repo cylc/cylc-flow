@@ -424,10 +424,12 @@ async def test_settings_broadcast(
 
         # Assert that setting run mode on a simulation mode task fails with
         # warning:
-        schd.broadcast_mgr.put_broadcast(
+        good, bad = schd.broadcast_mgr.put_broadcast(
             ['1066'], ['one'], [{
                 'run mode': 'live',
             }])
+        assert good == []
+        assert bad == {'settings': [{'run mode': 'live'}]}
         record = log_filter(contains='will not be actioned')[0]
         assert record[0] == logging.WARNING
         assert 'run mode' not in schd.broadcast_mgr.broadcasts

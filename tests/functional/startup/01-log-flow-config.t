@@ -28,6 +28,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[events]]
         abort on stall timeout = True
         stall timeout = PT0S
+        restart timeout = PT0S  # shut down when restarted with empty pool
 [scheduling]
     [[graph]]
         R1 = reloader => whatever

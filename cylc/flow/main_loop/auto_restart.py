@@ -91,16 +91,17 @@ import traceback
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import CylcConfigError, HostSelectException
+from cylc.flow.exceptions import (
+    CylcConfigError,
+    HostSelectException,
+)
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.main_loop import periodic
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import SchedulerError
+from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 from cylc.flow.workflow_status import AutoRestartMode
-from cylc.flow.wallclock import (
-    get_time_string_from_unix_time as time2str
-)
 
 
 @periodic
@@ -157,20 +158,20 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
 def _can_auto_restart():
     """Determine whether this workflow can safely auto stop-restart."""
     # Check whether there is currently an available host to restart on.
+    err_msg = 'Workflow cannot automatically restart'
     try:
         select_workflow_host(cached=False)
-    except HostSelectException:
+    except HostSelectException as exc:
         LOG.critical(
-            'Workflow cannot automatically restart because:\n' +
-            'No alternative host to restart workflow on.')
+            f"{err_msg}: No alternative host to restart workflow on.\n{exc}"
+        )
         return False
     except Exception:
         # Any unexpected error in host selection shouldn't be able to take
         # down the workflow.
         LOG.critical(
-            'Workflow cannot automatically restart because:\n' +
-            'Error in host selection:\n' +
-            traceback.format_exc())
+            f"{err_msg}: Error in host selection.\n{traceback.format_exc()}"
+        )
         return False
     else:
         return True

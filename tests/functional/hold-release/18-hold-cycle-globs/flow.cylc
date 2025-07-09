@@ -23,9 +23,9 @@
 [runtime]
     [[holder]]
         script = """
-            cylc__job__poll_grep_workflow_log -E '19900101T0000Z/t1.* added to active task pool'
-            cylc__job__poll_grep_workflow_log -E '20100101T0000Z/t2.* added to active task pool'
-            cylc__job__poll_grep_workflow_log -E '20300101T0000Z/t3.* added to active task pool'
+            cylc__job__poll_grep_workflow_log -E '19900101T0000Z/t1.* added to the n=0 window'
+            cylc__job__poll_grep_workflow_log -E '20100101T0000Z/t2.* added to the n=0 window'
+            cylc__job__poll_grep_workflow_log -E '20300101T0000Z/t3.* added to the n=0 window'
             cylc hold "${CYLC_WORKFLOW_ID}//*/t*"
         """
     [[releaser]]

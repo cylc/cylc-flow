@@ -28,6 +28,7 @@ from getpass import getuser
 from multiprocessing import Queue
 from time import time
 
+from packaging.version import parse as parse_version
 from zmq.error import ZMQError
 
 from cylc.flow.exceptions import (
@@ -48,7 +49,7 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
 )
 from cylc.flow.tui.data import (
-    QUERY
+    QUERY, COMPAT_QUERY
 )
 from cylc.flow.tui.util import (
     NaturalSort,
@@ -270,11 +271,20 @@ class Updater():
             return
 
         try:
+            if (
+                parse_version(client.scheduler_version)
+                < parse_version('8.5.0.dev')
+            ):
+                # BACK COMPAT: isRetry, isWallclock, isXtriggered
+                # (see comment in cylc.flow.tui.data)
+                query = COMPAT_QUERY
+            else:
+                query = QUERY
             # fetch the data from the workflow
             workflow_update = await client.async_request(
                 'graphql',
                 {
-                    'request_string': QUERY,
+                    'request_string': query,
                     'variables': {
                         # list of task states we want to see
                         'taskStates': [

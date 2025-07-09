@@ -648,10 +648,10 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
             The runahead limit prevents a workflow from getting too far ahead
-            of the oldest cycle with :term:`active tasks <active task>`.
+            of the oldest :term:`active cycle`.
 
             A cycle is considered to be active if it contains any
-            :term:`active` tasks.
+            :term:`active tasks <active task>`.
 
             An integer interval value of ``Pn`` allows up to ``n+1`` cycles
             to be active at once.
@@ -668,11 +668,9 @@ with Conf(
             ``P0``
                 Only one cycle can be active at a time.
             ``P2``
-                The scheduler will run up to two cycles ahead of the oldest
-                active cycle.
+                Allow up to two cycles ahead of the oldest active cycle.
             ``P3D``
-                The scheduler will run cycles up to three days of cycles ahead
-                of the oldest active cycle.
+                Allow cycles up to three days ahead of the oldest active cycle.
 
             .. seealso::
 
@@ -687,60 +685,42 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Configuration of internal queues of tasks.
+            Internal task queues to limit job activity.
 
-            This section will allow you to limit the number of simultaneously
-            :term:`active tasks <active task>` (submitted or running) by
-            assigning tasks to queues.
+            Queues delay job submission in member tasks, until the active
+            job count (for members) drops below the queue limit.
 
-            By default, a single queue called ``default`` is defined,
-            with all tasks assigned to it and no limit to the number of those
-            tasks which may be active.
+            There is a ``default`` queue with a configurable limit of 100, for
+            all tasks that are not assigned to other queues.
 
-            To use a single queue for the whole workflow, but limit the number
-            of active tasks, set :cylc:conf:`[default]limit`.
-
-            To add additional queues define additional sections:
+            You can define custom queues to limit job activity across other
+            groups of tasks.
 
             .. code-block:: cylc
 
                [[queues]]
-                   [[[user_defined_queue]]]
+                   [[[my_queue]]]
                        limit = 2
-                       members = TASK_FAMILY_NAME
+                       members = task1, task2, FAMILY1
 
             .. seealso::
 
                :ref:`InternalQueues`.
         '''):
             with Conf('<queue name>', desc='''
-                Section heading for configuration of a single queue.
+                Section for configuring a single queue.
             ''') as Queue:
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    The maximum number of :term:`active tasks <active task>`
-                    allowed at any one time, for this queue.
-
-                    If set to 0 this queue is not limited.
+                    The active job limit for this queue. 0 means no limit.
                 ''')
                 Conf('members', VDR.V_SPACELESS_STRING_LIST, desc='''
-                    A list of member tasks, or task family names to assign to
-                    this queue.
-
-                    Assigned tasks will automatically be removed
-                    from the default queue.
+                    A list of task or family names to assign to this queue.
                 ''')
             with Conf('default', meta=Queue, desc='''
-                The default queue for all tasks not assigned to other queues.
+                The default queue, for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 100, desc='''
-                    Controls the total number of
-                    :term:`active tasks <active task>` in the default queue.
-
-                    .. seealso::
-
-                       - :cylc:conf:`flow.cylc[scheduling]
-                         [queues][<queue name>]limit`
-                       - :ref:`InternalQueues`
+                    The job limit for the ``default`` queue. 0 means no limit.
                 ''')
 
         with Conf('special tasks', desc='''

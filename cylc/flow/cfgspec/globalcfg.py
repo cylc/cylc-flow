@@ -220,6 +220,10 @@ EVENTS_SETTINGS = {  # workflow events
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
+        When the workflow timeout is reached, any configured
+        `[..]workflow timeout handlers` will be called. Additionally, the
+        workflow will shut down if `[..]abort on workflow timeout` is set.
+
         .. seealso::
 
            :ref:`user_guide.scheduler.workflow_events`
@@ -227,7 +231,7 @@ EVENTS_SETTINGS = {  # workflow events
         .. versionadded:: 8.0.0
     ''',
     'workflow timeout handlers': '''
-        Handlers to run if the workflow timer times out.
+        Handlers to run if the `[..]workflow timeout` is reached.
 
         .. seealso::
 
@@ -237,7 +241,7 @@ EVENTS_SETTINGS = {  # workflow events
     ''',
     'abort on workflow timeout': '''
         Whether the scheduler should shut down immediately with error status if
-        the workflow timer times out.
+        the :cylc:conf:`[..]workflow timeout` is reached.
 
         .. seealso::
 
@@ -259,6 +263,10 @@ EVENTS_SETTINGS = {  # workflow events
     'stall timeout': f'''
         The length of a timer which starts if the scheduler stalls.
 
+        When the stall timeout is reached, any `[..]stall timeout handlers`
+        will be called. Additionally, the workflow will shut down if
+        `[..]abort on stall timeout` is set.
+
         .. seealso::
 
            :ref:`user_guide.scheduler.workflow_events`
@@ -268,7 +276,7 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``timeout``.
     ''',
     'stall timeout handlers': f'''
-        Handlers to run if the stall timer times out.
+        Handlers to run if the `[..]stall timeout` is reached.
 
         .. seealso::
 
@@ -280,7 +288,7 @@ EVENTS_SETTINGS = {  # workflow events
     ''',
     'abort on stall timeout': f'''
         Whether the scheduler should shut down immediately with error status if
-        the stall timer times out.
+        the `[..]stall timeout` is reached.
 
         .. seealso::
 
@@ -294,6 +302,10 @@ EVENTS_SETTINGS = {  # workflow events
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
+        When the inactivity timeout is reached, any
+        `[..]inactivity timeout handlers` will be called. Additionally, the
+        workflow will shut down if `[..]abort on inactivity timeout` is set.
+
         .. seealso::
 
            :ref:`user_guide.scheduler.workflow_events`
@@ -303,7 +315,7 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES} ``inactivity``.
     ''',
     'inactivity timeout handlers': f'''
-        Handlers to run if the inactivity timer times out.
+        Handlers to run if the `[..]inactivity timeout` is reached.
 
         .. seealso::
 
@@ -315,7 +327,7 @@ EVENTS_SETTINGS = {  # workflow events
     ''',
     'abort on inactivity timeout': f'''
         Whether the scheduler should shut down immediately with error status if
-        the inactivity timer times out.
+        the `[..]inactivity timeout` is reached.
 
         .. seealso::
 
@@ -711,6 +723,20 @@ with Conf('global.cylc', desc='''
        The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
 
+    .. note::
+
+       Most of the global settings can be changed while a workflow is running
+       using ``cylc reload --global``. Exceptions are:
+
+       `[scheduler]`: The majority of these settings affect the server and
+       cannot be reloaded while the server is running. The server must be
+       stopped and restarted for changes to take effect except for the sections
+       `[scheduler][mail]` and `[scheduler][events]` which provide workflow
+       defaults.
+
+       `[install][symlink dirs]`: These settings create files on disk, once a
+       task has started on a remote host these can't be changed for that host.
+
     .. versionchanged:: 8.0.0
 
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
@@ -893,7 +919,10 @@ with Conf('global.cylc', desc='''
 
                 This should be a multiline string containing Python expressions
                 to rank and/or filter hosts. All `psutil`_ attributes are
-                available for use in these expressions.
+                available for use in these expressions, e.g, ``cpu_percent``.
+                You can supply these with positional arguments e.g,
+                ``cpu_percent(1)``, however, keyword arguments will not work
+                e.g, ``cpu_percent(interval=1)``.
 
                 .. rubric:: Ranking
 
@@ -1040,7 +1069,7 @@ with Conf('global.cylc', desc='''
                     if item == "stall timeout":
                         default = DurationFloat(3600)
                     elif item == "restart timeout":
-                        default = DurationFloat(120)
+                        default = DurationFloat(300)
                     else:
                         default = None
                 Conf(item, vdr_type, default, desc=desc)
@@ -1216,6 +1245,11 @@ with Conf('global.cylc', desc='''
 
             Symlinks from the the standard ``$HOME/cylc-run`` locations will be
             created.
+
+            .. note::
+
+               Once a platform has been installed and symlinks created they
+               cannot be modified for that run.
 
             .. versionadded:: 8.0.0
         """):
@@ -2096,6 +2130,11 @@ class GlobalConfig(ParsecConfig):
         except ParsecError:
             LOG.error(f'bad {conf_type} {fname}')
             raise
+
+    @classmethod
+    def set_cache(cls, cfg: "GlobalConfig") -> None:
+        """Set the cached config"""
+        cls._DEFAULT = cfg
 
     def load(self) -> None:
         """Load configuration from files."""
