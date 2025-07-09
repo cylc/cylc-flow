@@ -1764,7 +1764,6 @@ class TaskPool:
         point: 'PointBase',
         flow_nums: Set[int],
         flow_wait: bool = False,
-        force: bool = False
     ) -> Optional[TaskProxy]:
         """Return a new task proxy for the given flow if possible.
 
@@ -1799,8 +1798,7 @@ class TaskPool:
             return None
 
         if (
-            not force
-            and prev_status is not None
+            prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
         ):
             # If itask has any history in this flow but no completed outputs
@@ -1811,7 +1809,7 @@ class TaskPool:
             LOG.info(f"Not respawning {point}/{name} - task was removed")
             return None
 
-        if not force and prev_status in TASK_STATUSES_FINAL:
+        if prev_status in TASK_STATUSES_FINAL:
             # Task finished previously.
             if itask.is_complete():
                 msg = "and completed"
@@ -2268,7 +2266,7 @@ class TaskPool:
     ) -> Optional[TaskProxy]:
         """Spawn an inactive task and set prerequisites on it."""
         itask = self.spawn_task(
-            taskdef.name, point, flow_nums, flow_wait=flow_wait, force=True
+            taskdef.name, point, flow_nums, flow_wait=flow_wait
         )
         if itask is None:
             return None

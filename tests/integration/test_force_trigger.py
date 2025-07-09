@@ -267,7 +267,8 @@ async def test_trigger_group(
 
         assert log_filter(
             contains=(
-                "Removed tasks: 1/a (flows=1), 1/b (flows=1), 1/c (flows=1), 1/d (flows=1)"
+                "Removed tasks: 1/a (flows=1), 1/b (flows=1),"
+                " 1/c (flows=1), 1/d (flows=1)"
             )
         )
         assert log_filter(
