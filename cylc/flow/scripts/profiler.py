@@ -95,9 +95,9 @@ def stop_profiler(*args):
         cpu_time = parse_cpu_file(cpu_time_location, cgroup_version)
 
     GRAPHQL_MUTATION = """
-    mutation($WORKFLOWS: [WorkflowID]!, 
+    mutation($WORKFLOWS: [WorkflowID]!,
         $MESSAGES: [[String]], $JOB: String!, $TIME: String) {
-            message(workflows: $WORKFLOWS, messages:$MESSAGES, 
+            message(workflows: $WORKFLOWS, messages:$MESSAGES,
             taskJob:$JOB, eventTime:$TIME) {
         result
       }
