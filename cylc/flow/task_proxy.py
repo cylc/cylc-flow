@@ -334,15 +334,6 @@ class TaskProxy:
             f"{id_}{repr_flow_nums(self.flow_nums)}:{self.state}"
         )
 
-    def __eq__(self, other) -> bool:
-        """Task proxy equality is based point/name only."""
-        # (Needed e.g. for adding to task_pool.tasks_to_trigger sets)
-        return self.identity == other.identity
-
-    def __hash__(self):
-        """Task proxy equality is based point/name only."""
-        return hash(self.identity)
-
     def copy_to_reload_successor(
         self,
         reload_successor: 'TaskProxy',
