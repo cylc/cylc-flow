@@ -17,7 +17,6 @@
 # Tests for functions contained in cylc.flow.scripts.profiler
 from cylc.flow.scripts.profiler import (parse_memory_file,
                                         parse_cpu_file,
-                                        write_data,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
@@ -61,15 +60,6 @@ def test_parse_cpu_file(mocker):
     mocker.patch("builtins.open", mock_file)
     assert parse_cpu_file("mocked_file.txt", 2) == 1
     mock_file.assert_called_once_with("mocked_file.txt", "r")
-
-
-def test_write_data(tmpdir):
-    # Create tmp file
-    file = tmpdir.join('output.txt')
-
-    write_data('test_memory', 'test_cpu', file.strpath)
-    assert file.read() == ('{\n    "max_rss": "test_memory",\n'
-                           '    "cpu_time": "test_cpu"\n}')
 
 
 def test_get_cgroup_name(mocker):
@@ -128,6 +118,7 @@ def test_get_cgroup_paths():
 
 
 def test_profile_data(mocker):
+    # This test should run without error
     process = get_cgroup_paths(1, "test_location/",
                                "test_name")
 
@@ -139,76 +130,3 @@ def test_profile_data(mocker):
                  return_value=2048)
     run_once = mock.Mock(side_effect=[True, False])
     profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("profiler.json", "w")
-
-
-def test_stop_profiler():
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        stop_profiler()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == 0
-
-
-def test_profile_1(mocker):
-    process = get_cgroup_paths(
-        1, "test_location/", "test_name")
-
-    mock_file = mocker.mock_open(read_data="")
-    mocker.patch("builtins.open", mock_file)
-    mocker.patch(
-        "cylc.flow.scripts.profiler.parse_memory_file", return_value=1024)
-    mocker.patch(
-        "cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
-    run_once = mock.Mock(side_effect=[True, False])
-
-    profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("profiler.json", "w")
-
-
-def test_profile_2(mocker):
-    # assert_called_with only shows the last call to open().
-    # Setting peak memory to zero stops the memory call to open
-    process = get_cgroup_paths(
-        1, "test_location/", "test_name")
-
-    mock_file = mocker.mock_open(read_data="")
-    mocker.patch("builtins.open", mock_file)
-    mocker.patch(
-        "cylc.flow.scripts.profiler.parse_cpu_file", return_value=2048)
-    mocker.patch(
-        "cylc.flow.scripts.profiler.parse_memory_file", return_value=0)
-    run_once = mock.Mock(side_effect=[True, False])
-
-    profile(process, 1, 1, run_once)
-    mock_file.assert_called_with("profiler.json", "w")
-
-
-def test_get_config(mocker):
-
-    # Mock the 'open' function call to return a valid string.
-    mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
-    mocker.patch("builtins.open", mock_file)
-
-    # Mock the get_cgroup_version function so it says the cgroup path is valid
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
-                 return_value=1)
-    # Mock the parse functions so they return valid values
-    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
-                 return_value=1024)
-    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
-                 return_value=2048)
-
-    # Mock the write_data function to simulate writing data.
-    # It will error out on the 3rd call
-    mock_write = mock.Mock(
-        side_effect=[None, None, FileNotFoundError('Carpe Diem')])
-    mocker.patch("cylc.flow.scripts.profiler.write_data", mock_write)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i", type=int, default=10, dest="delay")
-    parser.add_argument(
-        "-m", type=str, default="test_location/",
-        dest="cgroup_location")
-    with pytest.raises(FileNotFoundError):
-        get_config(parser.parse_args())

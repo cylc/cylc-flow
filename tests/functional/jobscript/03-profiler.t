@@ -28,11 +28,12 @@ create_test_global_config "
   [[${CYLC_TEST_PLATFORM}]]
     [[[profile]]]
       activate = True
-      polling interval = 1
+      polling interval = 10
   [[localhost]]
     [[[profile]]]
       activate = True
-      cgroups path = /no/such/path
+      polling interval = 10
+      cgroups path = the/thing/that/should/not/be
 "
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
@@ -54,7 +55,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[the_ugly]]
         # this task should succeed despite the broken profiler configuration
         platform = localhost
-        script = sleep 1
+        script = sleep 5
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

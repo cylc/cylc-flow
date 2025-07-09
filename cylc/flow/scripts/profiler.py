@@ -167,6 +167,11 @@ def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
 
 def get_cgroup_name():
     """Get the cgroup directory for the current process"""
+
+    # fugly hack to allow functional tests to use test data
+    if 'profiler_test_env_var' in os.environ:
+        return os.getenv('profiler_test_env_var')
+
     # Get the PID of the current process
     pid = os.getpid()
     try:
