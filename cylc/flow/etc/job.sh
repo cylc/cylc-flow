@@ -200,7 +200,7 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
-    if [[ -d "/proc/${profiler_pid}" ]]; then
+    if [[ -n "${profiler_pid:-}" && -d "/proc/${profiler_pid}" ]]; then
       kill -s SIGINT "${profiler_pid}" || true
     fi
 }
