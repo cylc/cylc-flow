@@ -20,11 +20,8 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
-                                        get_config,
-                                        stop_profiler,
                                         profile)
 import pytest
-import argparse
 from unittest import mock
 
 

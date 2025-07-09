@@ -83,11 +83,6 @@ def stop_profiler(*args):
     """This function will be executed when the SIGINT signal is sent
      to this process"""
 
-    global max_rss_location
-    global cpu_time_location
-    global cgroup_version
-    global comms_timeout
-
     # If a task fails instantly, or finishes very quickly (< 1 second),
     # the get config function doesn't have time to run
     if (max_rss_location is None
@@ -100,8 +95,10 @@ def stop_profiler(*args):
         cpu_time = parse_cpu_file(cpu_time_location, cgroup_version)
 
     GRAPHQL_MUTATION = """
-    mutation($WORKFLOWS: [WorkflowID]!, $MESSAGES: [[String]], $JOB: String!, $TIME: String) {
-      message(workflows: $WORKFLOWS, messages:$MESSAGES, taskJob:$JOB, eventTime:$TIME) {
+    mutation($WORKFLOWS: [WorkflowID]!, 
+        $MESSAGES: [[String]], $JOB: String!, $TIME: String) {
+            message(workflows: $WORKFLOWS, messages:$MESSAGES, 
+            taskJob:$JOB, eventTime:$TIME) {
         result
       }
     }
@@ -201,8 +198,10 @@ def get_cgroup_paths(version, location, name):
             name + "/" + "cpu.stat")
 
     elif version == 2:
-        max_rss_location = location + "/memory" + name + "/memory.max_usage_in_bytes"
-        cpu_time_location = location + "/cpu" + name + "/cpuacct.usage"
+        max_rss_location = (location + "/memory" +
+                            name + "/memory.max_usage_in_bytes")
+        cpu_time_location = (location + "/cpu" +
+                             name + "/cpuacct.usage")
         return Process(
             cgroup_memory_path=location + "/memory" +
             name + "/memory.max_usage_in_bytes",
