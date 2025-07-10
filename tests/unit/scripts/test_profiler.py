@@ -33,9 +33,11 @@ def test_stop_profiler(mocker, monkeypatch):
         return True
 
     class MockedClient():
-        def __init__(self, *a, **k): pass
+        def __init__(self, *a, **k):
+            pass
 
-        async def async_request(self, *a, **k): pass
+        async def async_request(self, *a, **k):
+            pass
 
     mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
     max_rss_location = None
