@@ -130,7 +130,6 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
-    from logging import LogRecord
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
@@ -2357,7 +2356,19 @@ class DataStoreMgr:
                     node_id, MESSAGE_MAP[node_type](id=node_id))
                 node_delta.runtime.CopyFrom(new_runtime)
 
-    def delta_log_record(self, record: 'LogRecord') -> None:
+    def delta_log_record(self, level: str, message: str) -> None:
+        """Append a log record to the data store.
+
+        Args:
+            level:
+                The log level name e.g. INFO or WARNING.
+            message:
+                The formatted log message. Note, we are deliberately NOT
+                formatting the timestamp, level, etc into this message, these
+                should be added as discrete fields if they desired in the
+                future.
+
+        """
         w_delta = self.updated[WORKFLOW]
         w_delta.id = self.workflow_id
         w_delta.last_updated = time()
@@ -2365,9 +2376,8 @@ class DataStoreMgr:
 
         if not hasattr(w_delta, 'log_records'):
             w_delta.log_records = []
-        w_delta.log_records.append(
-            PbLogRecord(level=record.levelname, message=record.message)
-        )
+
+        w_delta.log_records.append(PbLogRecord(level=level, message=message))
 
         self.updates_pending = True
 
