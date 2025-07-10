@@ -9,13 +9,13 @@
 [runtime]
     [[triggerer]]
         script = """
-            cylc__job__poll_grep_workflow_log "1/triggeree/01:running"
+            cylc__job__poll_grep_workflow_log "1/triggeree.* => running" -E
             cylc trigger "$CYLC_WORKFLOW_ID//1/triggeree"
             cylc__job__poll_grep_workflow_log \
-                "1/triggeree.* ignoring trigger - already active" -E
+                "Job already in process - ignoring trigger" -E
         """
     [[triggeree]]
         script = """
             cylc__job__poll_grep_workflow_log \
-                "1/triggeree.* ignoring trigger - already active" -E
+                "Job already in process - ignoring trigger" -E
         """

@@ -88,7 +88,7 @@ async def test_broadcast_changes_set_skip_outputs(
         )
         foo, = schd.pool.get_tasks()
         schd.pool.set_prereqs_and_outputs(
-            '1/foo', ['skip'], [], ['all'])
+            '1/foo', ['skip'], [], [])
 
         foo_outputs = foo.state.outputs.get_completed_outputs()
 

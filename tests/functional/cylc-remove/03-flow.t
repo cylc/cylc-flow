@@ -38,7 +38,7 @@ run_ok "${TEST_NAME_BASE}-remove" cylc remove "${WORKFLOW_NAME}//1/foo" --flow 1
 cylc stop "${WORKFLOW_NAME}"
 poll_workflow_stopped
 
-grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed task(s): 1/foo (flows=1)"
+grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed tasks: 1/foo (flows=1)"
 
 # Simple additional test of DB:
 TEST_NAME="${TEST_NAME_BASE}-workflow-state"

@@ -425,7 +425,7 @@ class TaskJobManager:
                     'platform_name': itask.platform['name'],
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
-
+                # reset the is_manual_submit flag in case of retries
                 itask.is_manual_submit = False
 
             if ri_map[install_target] == REMOTE_FILE_INSTALL_255:
