@@ -20,9 +20,35 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
+                                        stop_profiler,
                                         profile)
 import pytest
 from unittest import mock
+
+
+def test_stop_profiler(mocker, monkeypatch):
+    monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
+
+    def mock_get_client(env_var, timeout=None):
+        return True
+
+    class MockedClient():
+        def __init__(self, *a, **k): pass
+
+        async def async_request(self, *a, **k): pass
+
+    mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
+    max_rss_location = None
+    cpu_time_location = None
+    cgroup_version = 1
+
+    with pytest.raises(SystemExit) as excinfo:
+        stop_profiler(max_rss_location, cpu_time_location, cgroup_version)
+        assert stop_profiler.max_rss == 0
+        assert stop_profiler.cpu_time == 0
+
+    assert excinfo.type == SystemExit
+    assert excinfo.value.code == 0
 
 
 def test_parse_memory_file(mocker):
