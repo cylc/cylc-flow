@@ -128,7 +128,12 @@ def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids)
+    _matched, _not_matched = filter_ids(
+        pool,
+        ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
     assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
 
@@ -189,21 +194,38 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids, out=IDTokens.Cycle)
+    _matched, _not_matched = filter_ids(
+        pool,
+        ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        out=IDTokens.Cycle,
+    )
     assert _matched == [IntegerPoint(i) for i in matched]
     assert _not_matched == not_matched
 
 
 def test_filter_ids_invalid(caplog):
     """Ensure invalid IDs are handled elegantly."""
-    matched, not_matched = filter_ids({}, ['#'])
+    matched, not_matched = filter_ids(
+        {},
+        ['#'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
     assert matched == []
     assert not_matched == ['#']
     assert caplog.record_tuples == [
         ('cylc', 30, 'No active tasks matching: #'),
     ]
     caplog.clear()
-    matched, not_matched = filter_ids({}, ['#'], warn=False)
+    matched, not_matched = filter_ids(
+        {},
+        ['#'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        warn=False,
+    )
     assert caplog.record_tuples == []
 
 
@@ -219,6 +241,8 @@ def test_filter_ids_pattern_match_off(task_pool):
     _matched, _not_matched = filter_ids(
         pool,
         ['1/a'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=False,
     )
@@ -241,6 +265,8 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     _matched, _not_matched = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=True,
     )
@@ -252,6 +278,8 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     _matched, _not_matched = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=False,
     )
@@ -288,6 +316,8 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
     _matched, _not_matched = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         pattern_match=False,
     )
 
@@ -296,13 +326,30 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
 
 
 def test_filter_ids_out_format():
-    filter_ids({}, [], out=IDTokens.Cycle)
+    filter_ids(
+        {},
+        [],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        out=IDTokens.Cycle,
+    )
     with pytest.raises(ValueError):
-        filter_ids({}, [], out=IDTokens.Job)
+        filter_ids(
+            {},
+            [],
+            IntegerPoint('1'),
+            IntegerPoint('1'),
+            out=IDTokens.Job,
+        )
 
 
 def test_filter_ids_log_errors(caplog):
-    _, _not_matched = filter_ids({}, ['/////'])
+    _, _not_matched = filter_ids(
+        {},
+        ['/////'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
     assert _not_matched == ['/////']
     assert caplog.record_tuples == [('cylc', 30, 'Invalid ID: /////')]
 
@@ -310,11 +357,11 @@ def test_filter_ids_log_errors(caplog):
 @pytest.mark.parametrize(
     'point, value, pattern_match, expected',
     [
-        (IntegerPoint(23), '23', True, True),
-        (IntegerPoint(23), '23', False, True),
-        (IntegerPoint(23), '2*', True, True),
-        (IntegerPoint(23), '2*', False, False),
-        (IntegerPoint(23), '2a', True, False),
+        (IntegerPoint('23'), '23', True, True),
+        (IntegerPoint('23'), '23', False, True),
+        (IntegerPoint('23'), '2*', True, True),
+        (IntegerPoint('23'), '2*', False, False),
+        (IntegerPoint('23'), '2a', True, False),
         (ISO8601Point('2049-01-01T00:00Z'), '2049', True, True),
         (ISO8601Point('2049-01-01T00:00Z'), '2049', False, True),
         (ISO8601Point('2049-03-01T00:00Z'), '2049', True, False),
