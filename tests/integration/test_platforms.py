@@ -16,6 +16,9 @@
 """Integration testing for platforms functionality."""
 
 
+from cylc.flow.scheduler import Scheduler
+
+
 async def test_prep_submit_task_tries_multiple_platforms(
     flow, scheduler, start, mock_glbl_cfg
 ):
@@ -41,12 +44,12 @@ async def test_prep_submit_task_tries_multiple_platforms(
         "scheduling": {"graph": {"R1": "foo"}},
         "runtime": {"foo": {"platform": "mygroup"}}
     })
-    schd = scheduler(wid, run_mode='live')
+    schd: Scheduler = scheduler(wid, run_mode='live')
     async with start(schd):
         itask = schd.pool.get_tasks()[0]
         itask.submit_num = 1
         # simulate failed attempts to contact the job hosts
-        schd.task_job_mgr.bad_hosts = {'broken', 'broken2'}
+        schd.bad_hosts.update({'broken', 'broken2'})
         res = schd.task_job_mgr._prep_submit_task_job(itask)
         assert res is False
         # ensure the bad hosts have been cleared
