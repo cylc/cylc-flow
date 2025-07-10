@@ -367,8 +367,7 @@ class TaskJobManager:
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
-                            itask.tokens.duplicate(job=str(itask.submit_num)),
-                            msg
+                            itask.job_tokens, msg
                         )
                     continue
                 elif ri_map[install_target] == REMOTE_INIT_255:
@@ -865,17 +864,12 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
-        except TypeError:
-            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-            return
-        except ValueError:
-            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
+        except (TypeError, ValueError):
+            self.data_store_mgr.delta_job_msg(itask.job_tokens, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
@@ -892,7 +886,7 @@ class TaskJobManager:
         if jp_ctx.run_signal == JOB_FILES_REMOVED_MESSAGE:
             LOG.error(
                 f"platform: {itask.platform['name']} - job log directory "
-                f"{job_tokens.relative_id} no longer exists"
+                f"{itask.job_tokens.relative_id} no longer exists"
             )
 
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
@@ -902,7 +896,7 @@ class TaskJobManager:
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}",
+                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}/{jp_ctx.run_signal}",
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
@@ -1377,7 +1371,7 @@ class TaskJobManager:
 
         # Location of job file, etc
         self._create_job_log_path(itask)
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
+        job_d = itask.job_tokens.relative_id
         job_file_path = get_remote_workflow_run_job_dir(
             self.workflow, job_d, JOB_LOG_JOB
         )
