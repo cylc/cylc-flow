@@ -128,9 +128,15 @@ def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids)
+    _matched, _not_matched, _invalid = filter_ids(
+        pool,
+        ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
     assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
+    assert not _invalid
 
 
 @pytest.mark.parametrize(
@@ -189,22 +195,43 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids, out=IDTokens.Cycle)
+    _matched, _not_matched, _invalid = filter_ids(
+        pool,
+        ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        out=IDTokens.Cycle,
+    )
     assert _matched == [IntegerPoint(i) for i in matched]
     assert _not_matched == not_matched
+    assert not _invalid
 
 
 def test_filter_ids_invalid(caplog):
     """Ensure invalid IDs are handled elegantly."""
-    matched, not_matched = filter_ids({}, ['#'])
-    assert matched == []
-    assert not_matched == ['#']
+    _matched, _not_matched, _invalid = filter_ids(
+        {},
+        ['#'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
+    assert _matched == []
+    assert _not_matched == ['#']
+    assert not _invalid
     assert caplog.record_tuples == [
         ('cylc', 30, 'No active tasks matching: #'),
     ]
+
     caplog.clear()
-    matched, not_matched = filter_ids({}, ['#'], warn=False)
+    _matched, _not_matched, _invalid = filter_ids(
+        {},
+        ['#'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        warn=False,
+    )
     assert caplog.record_tuples == []
+    assert not _invalid
 
 
 def test_filter_ids_pattern_match_off(task_pool):
@@ -216,14 +243,17 @@ def test_filter_ids_pattern_match_off(task_pool):
         {}
     )
 
-    _matched, _not_matched = filter_ids(
+    _matched, _not_matched, _invalid = filter_ids(
         pool,
         ['1/a'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=False,
     )
     assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
     assert _not_matched == []
+    assert not _invalid
 
 
 def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
@@ -238,25 +268,31 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     ids = ['*/*']
 
     # ensure pattern matching works
-    _matched, _not_matched = filter_ids(
+    _matched, _not_matched, _invalid = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=True,
     )
     assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
     assert _not_matched == []
+    assert not _invalid
 
     # ensure pattern matching can be disabled
     caplog.clear()
-    _matched, _not_matched = filter_ids(
+    _matched, _not_matched, _invalid = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         out=IDTokens.Task,
         pattern_match=False,
     )
     assert [get_task_id(itask) for itask in _matched] == []
     assert _not_matched == ['*/*']
+    assert not _invalid
 
     # ensure the ID is logged
     assert len(caplog.record_tuples) == 1
@@ -285,36 +321,56 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
         },
     )
 
-    _matched, _not_matched = filter_ids(
+    _matched, _not_matched, _invalid = filter_ids(
         pool,
         ids,
+        IntegerPoint('1'),
+        IntegerPoint('1'),
         pattern_match=False,
     )
 
     assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
+    assert not _invalid
 
 
 def test_filter_ids_out_format():
-    filter_ids({}, [], out=IDTokens.Cycle)
+    filter_ids(
+        {},
+        [],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+        out=IDTokens.Cycle,
+    )
     with pytest.raises(ValueError):
-        filter_ids({}, [], out=IDTokens.Job)
+        filter_ids(
+            {},
+            [],
+            IntegerPoint('1'),
+            IntegerPoint('1'),
+            out=IDTokens.Job,
+        )
 
 
 def test_filter_ids_log_errors(caplog):
-    _, _not_matched = filter_ids({}, ['/////'])
-    assert _not_matched == ['/////']
+    *_, _invalid = filter_ids(
+        {},
+        ['/////'],
+        IntegerPoint('1'),
+        IntegerPoint('1'),
+    )
+    assert _invalid == ['/////']
     assert caplog.record_tuples == [('cylc', 30, 'Invalid ID: /////')]
 
 
 @pytest.mark.parametrize(
     'point, value, pattern_match, expected',
     [
-        (IntegerPoint(23), '23', True, True),
-        (IntegerPoint(23), '23', False, True),
-        (IntegerPoint(23), '2*', True, True),
-        (IntegerPoint(23), '2*', False, False),
-        (IntegerPoint(23), '2a', True, False),
+        (IntegerPoint('23'), '23', True, True),
+        (IntegerPoint('23'), '23', False, True),
+        (IntegerPoint('23'), '2*', True, True),
+        (IntegerPoint('23'), '2*', False, False),
+        (IntegerPoint('23'), '2a', True, False),
         (ISO8601Point('2049-01-01T00:00Z'), '2049', True, True),
         (ISO8601Point('2049-01-01T00:00Z'), '2049', False, True),
         (ISO8601Point('2049-03-01T00:00Z'), '2049', True, False),

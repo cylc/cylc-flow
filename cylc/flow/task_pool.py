@@ -2570,9 +2570,11 @@ class TaskPool:
             (matched, inactive_matched, unmatched)
 
         """
-        matched, unmatched = filter_ids(
+        matched, unmatched, invalid = filter_ids(
             self.active_tasks,
             ids,
+            self.config.initial_point,
+            self.config.final_point,
             warn=warn_no_active,
         )
         inactive_matched: 'Set[Tuple[TaskDef, PointBase]]' = set()
@@ -2581,7 +2583,7 @@ class TaskPool:
                 unmatched
             )
 
-        return matched, inactive_matched, unmatched
+        return matched, inactive_matched, unmatched + invalid
 
     def match_inactive_tasks(
         self,
