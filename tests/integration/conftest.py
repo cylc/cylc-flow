@@ -614,7 +614,7 @@ async def _complete(
             test.
 
             Note, use this timeout rather than wrapping the complete call with
-            async_timeout (handles shutdown logic more cleanly).
+            async.timeout (handles shutdown logic more cleanly).
 
     """
     if schd.is_paused:
