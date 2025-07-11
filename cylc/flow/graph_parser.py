@@ -744,6 +744,10 @@ class GraphParser:
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
+        if suicide:
+            # Make expiry optional for suicide triggered tasks.
+            self._set_output_opt(name, TASK_OUTPUT_EXPIRED, True, False, False)
+
     def _set_output_opt(
         self,
         name: str,
