@@ -433,7 +433,7 @@ class WorkflowDatabaseManager:
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": id_key.tokens['task'],
                     "cycle": id_key.tokens['cycle'],
-                    "ctx_key": json.dumps((key1, id_key.tokens['job'],)),
+                    "ctx_key": json.dumps((key1, int(id_key.tokens['job']),)),
                     "ctx": self._namedtuple2json(timer.ctx),
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
