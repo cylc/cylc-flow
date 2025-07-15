@@ -247,7 +247,7 @@ async def test_poll_job_deleted_log_folder(
     async with start(schd):
         itask = schd.pool.get_tasks()[0]
         itask.submit_num = 1
-        job_id = itask.tokens.duplicate(job='01').relative_id
+        job_id = itask.job_tokens.relative_id
         schd.task_job_mgr._poll_task_job_callback(
             itask,
             cmd_ctx=Mock(),
