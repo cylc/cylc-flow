@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-set -eu
+set -euo pipefail
 WORKFLOW="$1"
 OUT_FILE="$CYLC_WORKFLOW_RUN_DIR/file"
 if grep -q -F '1' "${OUT_FILE}" 2>'/dev/null'; then
     echo '2' >>"${OUT_FILE}"
-    cylc shutdown "${WORKFLOW}"
+    cylc stop "${WORKFLOW}"
     exit 0
 else
     echo '1' >"${OUT_FILE}"
-    cylc shutdown --now --now "${WORKFLOW}"
+    cylc stop --now --now "${WORKFLOW}"
     exit 1
 fi
