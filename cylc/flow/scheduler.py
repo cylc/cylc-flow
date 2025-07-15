@@ -2179,7 +2179,7 @@ class Scheduler:
             return
         if not self.is_paused:
             if not quiet:
-                LOG.warning("No need to resume - workflow is not paused")
+                LOG.info("No need to resume - workflow is not paused")
             return
         if not quiet:
             LOG.info("RESUMING the workflow now")

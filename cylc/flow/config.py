@@ -2351,7 +2351,7 @@ class WorkflowConfig:
                     suicides += 1
 
         if suicides and not cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(
+            LOG.info(
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
                 "stable/html/7-to-8/major-changes/suicide-triggers.html"
