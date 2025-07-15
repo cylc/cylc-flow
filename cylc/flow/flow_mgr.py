@@ -46,7 +46,7 @@ def add_flow_opts_for_trigger_and_set(parser):
         metavar="FLOW",
         default=[],
         help='Assign affected tasks to specified flows.'
-             'By default, assign to all active flows; otherwise'
+             ' By default, assign to all active flows; otherwise'
              f' a new flow ("{FLOW_NEW}" increments the flow counter);'
              ' or a specific flow (e.g. "2", can be new or existing);'
              f' or no-flow ("{FLOW_NONE}", will not flow on).'
