@@ -1205,6 +1205,57 @@ async def test_detect_incomplete_tasks(
             assert itask in schd.pool.get_tasks()
 
 
+async def test_trigger_icp_fcp_syntax(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """It should support the ^/$ syntax for referencing the initial/final cp.
+
+    See https://github.com/cylc/cylc-flow/issues/6537
+    """
+    cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': 1,
+            'final cycle point': 2,
+            'graph': {
+                'R1/^': 'start',
+                'R1/$': 'end',
+            },
+        },
+    }
+
+    # trigger tasks at both the initial and final cycle points
+    id_ = flow(cfg)
+    schd = scheduler(id_)
+    async with start(schd) as log:
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['^/start', '$/end'], ['1'])
+        )
+        assert log_filter(contains='[1/start:waiting(queued)] => waiting')
+        assert log_filter(contains='[2/end:waiting(queued)] => waiting')
+        log.clear()
+
+    # clear the final cycle point
+    del cfg['scheduling']['final cycle point']
+    del cfg['scheduling']['graph']['R1/$']
+
+    # try triggering a task at the (non existent) final cycle point
+    id_ = flow(cfg)
+    schd = scheduler(id_)
+    async with start(schd):
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['^/start', '$/end'], ['1'])
+        )
+        assert log_filter(contains='[1/start:waiting(queued)] => waiting')
+        assert not log_filter(contains='[2/end:waiting(queued)] => waiting')
+        assert log_filter(
+            contains='ID references final cycle point, but none is set: $/end'
+        )
+
+
 async def test_future_trigger_final_point(
     flow,
     scheduler,
