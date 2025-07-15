@@ -74,6 +74,29 @@ REPLACED_BY_PLATFORMS = '''
    :ref:`See the migration guide <MajorChangesPlatforms>`.
 '''
 
+CYCLE_POINT_CONSTRAINTS = '''
+Rules to allow only certain {0} datetime cycle points.
+
+.. admonition:: Use Case
+
+   Writing a workflow where users may change the {0}
+   cycle point, but where only some {0} cycle points are
+   reasonable.
+
+Set by defining a list of truncated time points, which
+the {0} cycle point must match.
+
+Examples:
+
+- ``T00, T06, T12, T18`` - only at 6 hourly intervals.
+- ``T-30`` - only at half-past an hour.
+- ``01T00`` - only at midnight on the first day of a month.
+
+.. seealso::
+
+   :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
+'''
+
 
 def global_default(text: str, config_path: str) -> str:
     """Insert a link to this config item's global counterpart after the first
@@ -558,45 +581,16 @@ with Conf(
             - ``+P1D`` - The initial cycle point plus one day.
             - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
-        Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules to allow only some initial datetime cycle points.
-
-            .. admonition:: Use Case
-
-               Writing a workflow where users may change the initial
-               cycle point, but where only some initial cycle points are
-               reasonable.
-
-            Set by defining a list of truncated time points, which
-            the initial cycle point must match.
-
-            Examples:
-
-            - ``T00, T06, T12, T18`` - only at 6 hourly intervals.
-            -  ``T-30`` - only at half-past an hour.
-            - ``01T00`` - only at midnight on the first day of a month.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
+        Conf('initial cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('initial') + dedent('''
 
             .. note::
 
                This setting does not coerce :cylc:conf:`[..]
                initial cycle point = now`.
-        ''')
-        Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules restricting permitted final cycle points.
-
-            In a cycling workflow it is possible to restrict the final cycle
-            point by defining a list of truncated time points under the final
-            cycle point constraints.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
-
-        ''')
+        '''))
+        Conf('final cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('final'))
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
