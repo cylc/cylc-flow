@@ -1254,7 +1254,7 @@ class DataStoreMgr:
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
-                None,
+                flow_nums=None,
                 submit_num=0,
                 data_mode=True,
                 sequential_xtrigger_labels=(
