@@ -107,7 +107,8 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
     When multiple tasks are triggered, only tasks with no dependencies within
     the group should run whilst the scheduler is paused.
 
-    The remaining tasks will run according to normal prerequsitie satisfaction
+    The remaining tasks will run as normal, when their prerequisites
+    are satisfied.
     once the workflow is resumed.
     """
     id_ = flow(
