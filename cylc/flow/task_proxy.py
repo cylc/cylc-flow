@@ -326,8 +326,8 @@ class TaskProxy:
         Format: "<point>/<name>/<job>{<flows>}:status".
         """
         id_ = self.identity
-        if self.transient:
-            return f"{id_}{repr_flow_nums(self.flow_nums)}"
+        # if self.transient:
+        #     return f"{id_}{repr_flow_nums(self.flow_nums)}"
         if not self.state(TASK_STATUS_WAITING, TASK_STATUS_EXPIRED):
             id_ += f"/{self.submit_num:02d}"
         return (

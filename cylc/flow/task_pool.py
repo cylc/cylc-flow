@@ -893,6 +893,9 @@ class TaskPool:
 
         msg = f"removed from the n=0 window: {reason or 'completed'}"
 
+        # Mark as transient in case itask is still processed in other contexts.
+        itask.transient = True
+
         if itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
             self.xtrigger_mgr.sequential_has_spawned_next.discard(
