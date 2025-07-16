@@ -2053,17 +2053,13 @@ class FlowMutationArguments:
         graphene.NonNull(Flow),
         default_value=[],
         description=sstrip(f'''
-            The flow(s) to trigger/set these tasks in.
+            The flow(s) to set or trigger these tasks in.
 
-            By default:
-            * active tasks (n=0) keep their existing flow assignment
-            * inactive tasks (n>0) get assigned all active flows
+            By default, assign all active flows.
 
-            Otherwise you can assign (inactive tasks) or add to (active tasks):
-            * a list of integer flow numbers
-            or one of the following strings:
+            Otherwise give a list of integers or one of the following strings:
             * {FLOW_NEW} - an automatically generated new flow number
-            * {FLOW_NONE} - (ignored for active tasks): no flow
+            * {FLOW_NONE} - activity won't flow on (ignored for active tasks)
         ''')
     )
     flow_wait = Boolean(

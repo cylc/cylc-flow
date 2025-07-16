@@ -116,6 +116,24 @@ if TYPE_CHECKING:
 COMMANDS: 'Dict[str, Command]' = {}
 
 
+# BACK COMPAT: handle --flow=all from pre-8.5 clients.
+def back_compat_flow_all(flow: List[str]) -> List[str]:
+    """From 8.5 the old --flow=all is just the default.
+
+    Examples:
+        >>> back_compat_flow_all(['1', '2', '3'])
+        ['1', '2', '3']
+
+        >>> back_compat_flow_all(["all"])
+        []
+ 
+    """
+    if flow == ["all"]:
+        return []
+    else:
+        return flow
+
+
 def _command(name: str):
     """Decorator to register a command."""
     def _command(fcn: '_TCommand') -> '_TCommand':
@@ -284,6 +302,7 @@ async def set_prereqs_and_outputs(
     Note, the "outputs" and "prerequisites" arguments might not be
     populated in the mutation arguments so must provide defaults here.
     """
+    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     validate.consistency(outputs, prerequisites)
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
@@ -464,6 +483,7 @@ async def remove_tasks(
         tasks: Relative IDs or globs to match.
         flow: flows to remove the tasks from.
     """
+    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
@@ -627,6 +647,7 @@ async def force_trigger_tasks(
       cylc-admin/docs/proposal-group-trigger.md
 
     """
+    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     if on_resume:
