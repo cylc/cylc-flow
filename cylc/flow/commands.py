@@ -419,7 +419,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # logged by the TaskPool.
         add = set(schd.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning(f"Added task: '{task}'")
+            LOG.info(f"Added task: '{task}'")
         schd.workflow_db_mgr.put_workflow_template_vars(schd.template_vars)
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)

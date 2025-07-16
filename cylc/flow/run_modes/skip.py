@@ -188,4 +188,4 @@ def skip_mode_validate(taskdefs: 'Dict[str, TaskDef]') -> None:
         message = 'The following tasks are set to run in skip mode:'
         for taskname in skip_mode_tasks:
             message += f'\n    * {taskname}'
-        LOG.warning(message)
+        LOG.info(message)
