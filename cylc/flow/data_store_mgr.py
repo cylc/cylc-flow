@@ -772,7 +772,6 @@ class DataStoreMgr:
         self,
         source_tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_manual_submit: bool = False,
         itask: Optional['TaskProxy'] = None
     ) -> None:
@@ -791,7 +790,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_manual_submit
             itask:
                 Active/Other task proxy, passed in with pool invocation.
@@ -846,7 +844,6 @@ class DataStoreMgr:
         self.generate_ghost_task(
             source_tokens,
             point,
-            flow_nums,
             is_parent=False,
             itask=itask,
             replace_existing=True,
@@ -1010,7 +1007,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     child_tokens,
                                     child_point,
-                                    flow_nums,
                                     False,
                                     None,
                                     n_depth
@@ -1036,7 +1032,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     parent_tokens,
                                     parent_point,
-                                    flow_nums,
                                     True,
                                     None,
                                     n_depth
@@ -1218,7 +1213,6 @@ class DataStoreMgr:
         self,
         tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_parent: bool = False,
         itask: Optional['TaskProxy'] = None,
         n_depth: int = 0,
@@ -1229,7 +1223,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_parent: Used to determine whether to load DB state.
             itask: Update task-node from corresponding task proxy object.
             n_depth: n-window graph edge distance.
@@ -1291,7 +1284,8 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
-            flow_nums=serialise_set(flow_nums),
+            # Set default before history DB batch application
+            flow_nums=serialise_set(set()),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1851,7 +1845,6 @@ class DataStoreMgr:
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
-                deserialise_set(tproxy.flow_nums)
             )
         # Flag difference between old and new window for pruning.
         self.prune_flagged_nodes.update(

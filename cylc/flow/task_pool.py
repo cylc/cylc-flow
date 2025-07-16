@@ -292,7 +292,6 @@ class TaskPool:
         self.data_store_mgr.increment_graph_window(
             itask.tokens,
             itask.point,
-            itask.flow_nums,
             is_manual_submit=itask.is_manual_submit,
             itask=itask
         )
