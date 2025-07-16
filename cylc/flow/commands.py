@@ -126,7 +126,7 @@ def back_compat_flow_all(flow: List[str]) -> List[str]:
 
         >>> back_compat_flow_all(["all"])
         []
- 
+
     """
     if flow == ["all"]:
         return []

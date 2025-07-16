@@ -59,7 +59,9 @@ async def test_back_compat_flow_all(flow, scheduler, start):
         await run_cmd(
             set_prereqs_and_outputs(schd, [foo.identity], ['all'])
         )
-        assert TASK_OUTPUT_SUCCEEDED in foo.state.outputs.get_completed_outputs()
+        assert (
+            TASK_OUTPUT_SUCCEEDED in foo.state.outputs.get_completed_outputs()
+        )
 
         # trigger should fail with an illegal flow value (allx)
         with pytest.raises(
