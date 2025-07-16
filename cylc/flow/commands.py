@@ -758,7 +758,7 @@ async def force_trigger_tasks(
         in_flow_prereqs = False
         jtask: Optional[TaskProxy] = None
         if tdef.is_parentless(point):
-            # Parentless: set pre=all to spawn into task pool.
+            # Parentless: set all prereqs to spawn the task.
             jtask = schd.pool._set_prereqs_tdef(
                 point, tdef,
                 [],  # prerequisites
@@ -780,15 +780,16 @@ async def force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
-            # (Call this even with no off-flow prereqs, for xtriggers.)
-            jtask = schd.pool._set_prereqs_tdef(
-                point, tdef,
-                off_flow_prereqs,
-                {"all": True},  # xtriggers
-                flow_nums,
-                flow_wait,
-                set_all=False
-            )
+            if off_flow_prereqs or tdef.get_xtrigs(point):
+                # Satisfy any off-group prereqs or xtriggers to spawn the task.
+                jtask = schd.pool._set_prereqs_tdef(
+                    point, tdef,
+                    off_flow_prereqs,
+                    {"all": True},  # xtriggers
+                    flow_nums,
+                    flow_wait,
+                    set_all=False
+                )
         if jtask is not None and not in_flow_prereqs:
             # Trigger group start task.
             schd.pool.queue_or_trigger(jtask, on_resume)
