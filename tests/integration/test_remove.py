@@ -514,3 +514,35 @@ async def test_reload_changed_config(flow, scheduler, run, complete):
 
         await run_cmd(remove_tasks(schd, ['1/a'], []))
         await complete(schd, '1/b')
+
+
+async def test_remove_triggered(flow, scheduler, start):
+    """It should remove tasks from pool and from to_trigger sets."""
+    conf = {
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b'
+            },
+        },
+    }
+    schd: Scheduler = scheduler(flow(conf))
+    async with start(schd):
+        foo, bar = schd.pool.get_tasks()
+        # trigger foo (now)
+        await run_cmd(
+            force_trigger_tasks(schd, [foo.identity], [])
+        )
+        assert foo in schd.pool.tasks_to_trigger_now
+
+        # trigger bar (on resume)
+        await run_cmd(
+            force_trigger_tasks(schd, [bar.identity], [], on_resume=True)
+        )
+        assert bar in schd.pool.tasks_to_trigger_on_resume
+
+        await run_cmd(
+            remove_tasks(schd, [foo.identity, bar.identity], [])
+        )
+        assert not schd.pool.get_tasks()
+        assert not schd.pool.tasks_to_trigger_now
+        assert not schd.pool.tasks_to_trigger_on_resume

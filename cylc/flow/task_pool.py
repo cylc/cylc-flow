@@ -904,6 +904,10 @@ class TaskPool:
         except KeyError:
             pass
         else:
+            with suppress(KeyError):
+                self.tasks_to_trigger_now.remove(itask)
+            with suppress(KeyError):
+                self.tasks_to_trigger_on_resume.remove(itask)
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
