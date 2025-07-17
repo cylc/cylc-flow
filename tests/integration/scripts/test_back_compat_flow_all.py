@@ -35,7 +35,15 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 
 
 async def test_back_compat_flow_all(flow, scheduler, start):
-    """blah"""
+    """Handle --flow=all from old clients.
+
+    The trigger, set, and remove commmands no longer take --flow=all, but
+    for a while we need to handle that option coming in from older clients.
+
+    (Prior to 8.5 it was the schema default for remove, and was documented
+    as an option for set and trigger).
+
+    """
     conf = {
         'scheduling': {
             'graph': {
@@ -47,7 +55,7 @@ async def test_back_compat_flow_all(flow, scheduler, start):
     async with start(schd):
         foo, bar = schd.pool.get_tasks()
 
-        # set should fail with an illegal flow value (allx)
+        # For comparison, set should fail with an illegal flow value (allx)
         with pytest.raises(
             InputError,
             match="Flow values must be integers, or 'new', or 'none'"
@@ -55,7 +63,7 @@ async def test_back_compat_flow_all(flow, scheduler, start):
             await run_cmd(
                 set_prereqs_and_outputs(schd, [foo.identity], ['allx'])
             )
-        # but OK with --flow=all
+        # but the old --flow=all is OK - it converts to the default.
         await run_cmd(
             set_prereqs_and_outputs(schd, [foo.identity], ['all'])
         )
@@ -63,7 +71,7 @@ async def test_back_compat_flow_all(flow, scheduler, start):
             TASK_OUTPUT_SUCCEEDED in foo.state.outputs.get_completed_outputs()
         )
 
-        # trigger should fail with an illegal flow value (allx)
+        # For comparison, trigger should fail with an illegal flow value (allx)
         with pytest.raises(
             InputError,
             match="Flow values must be integers, or 'new', or 'none'"
@@ -71,13 +79,13 @@ async def test_back_compat_flow_all(flow, scheduler, start):
             await run_cmd(
                 force_trigger_tasks(schd, [bar.identity], ['allx'])
             )
-        # but OK with --flow=all
+        # but the old --flow=all is OK - it converts to the default.
         await run_cmd(
             force_trigger_tasks(schd, [bar.identity], ['all'])
         )
         assert bar in schd.pool.tasks_to_trigger_now
 
-        # remove should fail with an illegal flow value (allx)
+        # For comparison, remove should fail with an illegal flow value (allx)
         with pytest.raises(
             InputError,
             match="Flow values must be integers"
@@ -85,7 +93,7 @@ async def test_back_compat_flow_all(flow, scheduler, start):
             await run_cmd(
                 remove_tasks(schd, [bar.identity], ['allx'])
             )
-        # but OK with --flow=all
+        # but the old --flow=all is OK - it converts to the default.
         await run_cmd(
             remove_tasks(schd, [bar.identity], ['all'])
         )

@@ -31,6 +31,7 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.task_state import TASK_STATUS_WAITING
 
 
 async def test_trigger_workflow_paused(
@@ -102,14 +103,13 @@ async def test_trigger_workflow_paused(
 
 
 async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
-    """Only group start-tasks should run whilst the scheduler is paused.
+    """Only group start tasks should run whilst the scheduler is paused.
 
-    When multiple tasks are triggered, only tasks with no dependencies within
-    the group should run whilst the scheduler is paused.
+    Group start tasks have only off-group dependencies.
 
-    The remaining tasks will run as normal, when their prerequisites
-    are satisfied.
-    once the workflow is resumed.
+    Others (with in-group dependencies) should run as normal when their
+    prerequisites are satisfied once the workflow is resumed.
+
     """
     id_ = flow(
         {
@@ -120,7 +120,7 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
     )
     schd = scheduler(id_)
     async with run(schd):
-        # trigger the chain a => c
+        # trigger the chain
         await run_cmd(force_trigger_tasks(schd, ['1/a'], []))
 
         # 1/a should run whilst the workflow is paused (group start-task)
@@ -129,6 +129,9 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
         # 1/b should *not* run whilst the workflow is paused
         with pytest.raises(AssertionError):
             await complete(schd, '1/b', allow_paused=True, timeout=2)
+
+        b = schd.pool._get_task_by_id('1/b')
+        assert b.state.status == TASK_STATUS_WAITING
 
         # 1/b and 1/c should run once the workflow is resumed
         await run_cmd(resume(schd))
