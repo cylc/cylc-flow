@@ -719,6 +719,8 @@ async def force_trigger_tasks(
                 itask.state.set_all_task_prerequisites_satisfied()
                 # ... and satisfy all xtrigger prerequisites.
                 schd.pool.xtrigger_mgr.force_satisfy(itask, {"all": True})
+                # ... and satisfy all push external triggers.
+                itask.force_satisfy_external_triggers()
 
                 schd.pool.merge_flows(itask, flow_nums)
 
@@ -780,8 +782,12 @@ async def force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
-            if off_flow_prereqs or tdef.get_xtrigs(point):
-                # Satisfy any off-group prereqs or xtriggers to spawn the task.
+            if (
+                off_flow_prereqs
+                or tdef.get_xtrigs(point)
+                or tdef.external_triggers
+            ):
+                # Satisfy any off-group prereqs or ext/xtriggers to spawn task.
                 jtask = schd.pool._set_prereqs_tdef(
                     point, tdef,
                     off_flow_prereqs,
@@ -790,6 +796,9 @@ async def force_trigger_tasks(
                     flow_wait,
                     set_all=False
                 )
+                if jtask is not None and tdef.external_triggers:
+                    jtask.force_satisfy_external_triggers()
+
         if jtask is not None and not in_flow_prereqs:
             # Trigger group start task.
             schd.pool.queue_or_trigger(jtask, on_resume)

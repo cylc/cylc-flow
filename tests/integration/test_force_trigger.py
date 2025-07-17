@@ -214,13 +214,16 @@ async def test_trigger_group(
             'xtriggers': {
                 'xr': 'xrandom(0)'  # never satisfied
             },
+            'special tasks': {
+                'external-trigger': 'xt(cheese)'
+            },
             'graph': {
                 'R1': """
                     # upstream:
                     x => a
 
                     # sub-graph for group trigger:
-                    a => b & c => d
+                    a => b & c & xt => d
 
                     # downstream:
                     d => e => y
@@ -229,6 +232,7 @@ async def test_trigger_group(
                     @xr => x  # stop the flow starting
                     @xr => c  # off-group xtrigger prerequisite
                     @xr => off => b  # off-group task prerequisite
+                    # (plus task xt has a push external trigger)
 
                     # stop the flow from ending without intervention:
                     @xr => y
@@ -242,7 +246,7 @@ async def test_trigger_group(
         # Trigger the group ahead of the flow.
         # It should run the group and flow on to downstream task e.
         await run_cmd(
-            force_trigger_tasks(schd, ['1/a', '1/b', '1/c', '1/d'], [])
+            force_trigger_tasks(schd, ['1/a', '1/b', '1/c', '1/d', '1/xt'], [])
         )
         await complete(schd, '1/e')
 
@@ -253,6 +257,8 @@ async def test_trigger_group(
             regex="1/b:waiting.*prerequisite force-satisfied: 1/off:succeeded")
         assert log_filter(
             regex="1/a:waiting.*prerequisite force-satisfied: 1/x:succeeded")
+        assert log_filter(
+            regex='1/xt:waiting.*external trigger force-satisfied: "cheese"')
 
         log.clear()
 
@@ -260,19 +266,19 @@ async def test_trigger_group(
         # It should erase flow 1 history to allow the rerun.
         # It should not flow on to e, which already ran in flow 1.
 
-        # Create an active task that needs removing (to plug a coverage hole).
+        # Create an active task that needs removing, to test that.
         await run_cmd(
             set_prereqs_and_outputs(schd, ['1/c'], [], [], ['all'])
         )
         await run_cmd(
-            force_trigger_tasks(schd, ['1/a', '1/b', '1/c', '1/d'], [])
+            force_trigger_tasks(schd, ['1/a', '1/b', '1/c', '1/d', '1/xt'], [])
         )
         await complete(schd, '1/d')
 
         assert log_filter(
             contains=(
                 "Removed tasks: 1/a (flows=1), 1/b (flows=1),"
-                " 1/c (flows=1), 1/d (flows=1)"
+                " 1/c (flows=1), 1/d (flows=1), 1/xt (flows=1)"
             )
         )
         assert log_filter(
@@ -281,13 +287,16 @@ async def test_trigger_group(
             regex="1/b:waiting.*prerequisite force-satisfied: 1/off:succeeded")
         assert log_filter(
             regex="1/a:waiting.*prerequisite force-satisfied: 1/x:succeeded")
+        assert log_filter(
+            regex='1/xt:waiting.*external trigger force-satisfied: "cheese"')
 
         log.clear()
 
         # Trigger the group again, as past tasks, in a new flow.
         # It should flow on to task e again, in flow 2.
         await run_cmd(
-            force_trigger_tasks(schd, ['1/a', '1/b', '1/c', '1/d'], ['new'])
+            force_trigger_tasks(
+                schd, ['1/a', '1/b', '1/c', '1/d', '1/xt'], ['new'])
         )
         await complete(schd, '1/e')
 
@@ -307,6 +316,12 @@ async def test_trigger_group(
             regex=(
                 r"1/a\(flows=2\):waiting.*prerequisite"
                 r" force-satisfied: 1/x:succeeded"
+            )
+        )
+        assert log_filter(
+            regex=(
+                r"1/xt\(flows=2\):waiting.*external trigger"
+                r' force-satisfied: "cheese"'
             )
         )
 
