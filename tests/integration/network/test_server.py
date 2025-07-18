@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
-import sys
 from typing import Callable
 
 import pytest
@@ -23,12 +23,6 @@ import pytest
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.scheduler import Scheduler
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout
-else:
-    from async_timeout import timeout
 
 
 @pytest.fixture(scope='module')
@@ -91,16 +85,16 @@ def test_pb_entire_workflow(myflow):
 async def test_stop(one: Scheduler, start):
     """Test stop."""
     async with start(one):
-        async with timeout(2):
+        async with asyncio.timeout(2):
             # Wait for the server to consume the STOP signal.
-            # If it doesn't, the test will fail with a timeout error.
+            # If it doesn't, the test will fail with a asyncio.timeout error.
             await one.server.stop('TESTING')
             assert one.server.stopped
 
 
 async def test_receiver_basic(one: Scheduler, start, log_filter):
     """Test the receiver with different message objects."""
-    async with timeout(5):
+    async with asyncio.timeout(5):
         async with start(one):
             # start with a message that works
             msg = {'command': 'api', 'user': 'bono', 'args': {}}
@@ -140,7 +134,7 @@ async def test_receiver_basic(one: Scheduler, start, log_filter):
 )
 async def test_receiver_bad_requests(one: Scheduler, start, msg, expected):
     """Test the receiver with different bad requests."""
-    async with timeout(5):
+    async with asyncio.timeout(5):
         async with start(one):
             res = one.server.receiver(msg)
             assert res == {
