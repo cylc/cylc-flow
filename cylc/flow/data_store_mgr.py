@@ -1239,6 +1239,9 @@ class DataStoreMgr:
                 self.prune_trigger_nodes[active_id])
             del self.prune_trigger_nodes[active_id]
 
+        # load database history for flagged nodes
+        self.apply_task_proxy_db_history()
+
     def generate_edge(
         self,
         parent_tokens: Tokens,
@@ -1380,8 +1383,6 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
-            # Set default before history DB batch application
-            flow_nums=serialise_set(set()),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1869,9 +1870,6 @@ class DataStoreMgr:
             self.n_edge_distance = self.next_n_edge_distance
             self.window_resize_rewalk()
             self.next_n_edge_distance = None
-
-        # load database history for flagged nodes
-        self.apply_task_proxy_db_history()
 
         self.updates_pending_follow_on = False
         self.prune_data_store()
