@@ -60,6 +60,8 @@ TASK_STATUS_RUNNING = "running"
 TASK_STATUS_SUCCEEDED = "succeeded"
 # Job execution failed:
 TASK_STATUS_FAILED = "failed"
+# Task status to be determined
+TASK_STATUS_UNKNOWN = "unknown"
 # Job execution failed, but will try again soon:
 
 TASK_STATUS_DESC = {
@@ -78,7 +80,9 @@ TASK_STATUS_DESC = {
     TASK_STATUS_FAILED:
         'Job has returned non-zero exit code.',
     TASK_STATUS_SUCCEEDED:
-        'Job has returned zero exit code.'
+        'Job has returned zero exit code.',
+    TASK_STATUS_UNKNOWN:
+        'Job status yet to be determined.'
 }
 
 # Task statuses ordered according to task runtime progression.
@@ -90,7 +94,8 @@ TASK_STATUSES_ORDERED = [
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
-    TASK_STATUS_SUCCEEDED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_UNKNOWN
 ]
 
 # Task statuses ordered according to display importance
@@ -103,6 +108,7 @@ TASK_STATUS_DISPLAY_ORDER = [
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
+    TASK_STATUS_UNKNOWN
 ]
 
 TASK_STATUSES_ALL = set(TASK_STATUSES_ORDERED)

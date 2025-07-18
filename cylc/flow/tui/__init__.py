@@ -24,7 +24,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
-    TASK_STATUS_SUCCEEDED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_UNKNOWN
 )
 
 TUI = """
@@ -82,7 +83,8 @@ TASK_ICONS = {
     f'{TASK_STATUS_SUCCEEDED}': '\u25CF',
     f'{TASK_STATUS_EXPIRED}': '\u25CC',
     f'{TASK_STATUS_SUBMIT_FAILED}': '\u2298',
-    f'{TASK_STATUS_FAILED}': '\u2297'
+    f'{TASK_STATUS_FAILED}': '\u2297',
+    f'{TASK_STATUS_UNKNOWN}': '\u003f',
 }
 
 # unicode modifiers for special task states

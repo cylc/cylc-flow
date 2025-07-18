@@ -114,6 +114,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
+    TASK_STATUS_UNKNOWN,
     TASK_STATUSES_ORDERED
 )
 from cylc.flow.task_state_prop import extract_group_state
@@ -1277,6 +1278,7 @@ class DataStoreMgr:
             id=tp_id,
             task=t_id,
             cycle_point=point_string,
+            state=TASK_STATUS_UNKNOWN,
             is_held=(
                 (name, point)
                 in self.schd.pool.tasks_to_hold
