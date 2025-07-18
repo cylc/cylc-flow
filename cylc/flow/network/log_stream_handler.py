@@ -16,8 +16,10 @@
 
 """Functionality for streaming Cylc logs over network interfaces."""
 
-from logging import Handler, NOTSET, LogRecord
+from logging import NOTSET, Handler, LogRecord
 from typing import TYPE_CHECKING
+
+from ansimarkup import strip as cstrip
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -31,4 +33,6 @@ class ProtobufStreamHandler(Handler):
         self.schd = schd
 
     def emit(self, record: LogRecord):
-        self.schd.data_store_mgr.delta_log_record(record)
+        self.schd.data_store_mgr.delta_log_record(
+            record.levelname, cstrip(self.format(record))
+        )
