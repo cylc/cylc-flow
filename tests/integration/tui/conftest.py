@@ -275,6 +275,7 @@ def _rakiura(test_dir, request, monkeypatch):
             ).id
         )
     monkeypatch.setattr('cylc.flow.tui.util.ME', 'cylc')
+    monkeypatch.setattr('cylc.flow.tui.app.CYLC_VERSION', '1.2.3')
     monkeypatch.setattr(
         'cylc.flow.tui.util._display_workflow_id',
         lambda data: data['name'].rsplit('/', 1)[-1]
@@ -283,6 +284,11 @@ def _rakiura(test_dir, request, monkeypatch):
         'cylc.flow.tui.overlay._get_display_id',
         get_display_id,
     )
+
+    # standardise environment for tests
+    monkeypatch.setenv('EDITOR', 'nvim')
+    monkeypatch.setenv('GEDITOR', 'gvim -f')
+    monkeypatch.setenv('PAGER', 'less')
 
     # filter Tui so that only workflows created within our test show up
     id_base = str(test_dir.relative_to(Path("~/cylc-run").expanduser()))

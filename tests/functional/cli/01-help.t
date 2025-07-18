@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number 28
+set_test_number 37
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -57,12 +57,27 @@ run_ok "${TEST_NAME_BASE}-validate-h" cylc validate -h
 run_ok "${TEST_NAME_BASE}-help-validate" cylc help validate
 run_ok "${TEST_NAME_BASE}-help-va" cylc help va
 for FILE in \
+    "${TEST_NAME_BASE}-validate--help.stdout" \
     "${TEST_NAME_BASE}-validate-h.stdout" \
     "${TEST_NAME_BASE}-help-validate.stdout" \
     "${TEST_NAME_BASE}-help-va.stdout"
 do
     cmp_ok "${FILE}" "${TEST_NAME_BASE}-validate--help.stdout"
 done
+
+# Alias help
+run_ok "${TEST_NAME_BASE}-broadcast-h" cylc broadcast -h
+run_ok "${TEST_NAME_BASE}-bcast-h" cylc bcast -h
+cmp_ok "${TEST_NAME_BASE}-broadcast-h.stdout" "${TEST_NAME_BASE}-bcast-h.stdout"
+
+# Dead end
+run_fail "${TEST_NAME_BASE}-broadcast-h" cylc check-software
+
+# Help with IDs and the Licence
+run_ok "${TEST_NAME_BASE}-help-id" cylc help id
+grep_ok 'Every Installed Cylc workflow has an ID' "${TEST_NAME_BASE}-help-id.stdout"
+run_ok "${TEST_NAME_BASE}-help-licence" cylc help licence
+grep_ok 'GNU GENERAL PUBLIC LICENSE' "${TEST_NAME_BASE}-help-licence.stdout"
 
 # Version
 run_ok "${TEST_NAME_BASE}-version" cylc version

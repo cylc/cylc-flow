@@ -16,7 +16,6 @@
 """Package for network interfaces to Cylc scheduler objects."""
 
 import asyncio
-import getpass
 import json
 from typing import (
     TYPE_CHECKING,
@@ -107,12 +106,10 @@ def deserialize(message: str) -> 'ResponseDict':
     """Convert a JSON message string to dict with an added 'user' field."""
     # Abstract out the transport format in order to allow it to be changed
     # in future.
-    msg = json.loads(message)
-    msg['user'] = getpass.getuser()  # assume this is the user
-    return msg
+    return json.loads(message)
 
 
-def get_location(workflow: str) -> Tuple[str, int, int]:
+def get_location(workflow: str) -> Tuple[str, int, int, str]:
     """Extract host and port from a workflow's contact file.
 
     NB: if it fails to load the workflow contact file, it will exit.
@@ -120,7 +117,7 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
     Args:
         workflow: workflow ID
     Returns:
-        Tuple (host name, port number, publish port number)
+        Tuple (host name, port number, publish port number, scheduler version)
     Raises:
         WorkflowStopped: if the workflow is not running.
         CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
@@ -134,12 +131,12 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
     host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
     port = int(contact[ContactFileFields.PORT])
+    version = contact[ContactFileFields.VERSION]
     if ContactFileFields.PUBLISH_PORT in contact:
         pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     else:
-        version = contact.get('CYLC_VERSION', None)
         raise CylcVersionError(version=version)
-    return host, port, pub_port
+    return host, port, pub_port, version
 
 
 class ZMQSocketBase:

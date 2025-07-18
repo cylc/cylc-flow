@@ -240,16 +240,24 @@ async def _run(
             options.max_polls,
         )
 
-    # mode defaults to 'Clean'
-    mode = None
     if stop_task or stop_cycle:
-        pass
+        mode: Optional[str] = None
     elif options.kill:
         mode = WorkflowStopMode.Kill.name
     elif options.now > 1:
         mode = WorkflowStopMode.NowNow.name
     elif options.now:
         mode = WorkflowStopMode.Now.name
+    else:
+        mode = WorkflowStopMode.Clean.name
+
+    if (
+        options.flow_num is not None
+        and hasattr(options.flow_num, 'isdigit')
+        and options.flow_num.isdigit()
+    ):
+        # flow num gql type is int
+        options.flow_num = int(options.flow_num)
 
     mutation_kwargs = {
         'request_string': MUTATION,
@@ -260,7 +268,7 @@ async def _run(
             'clockTime': options.wall_clock,
             'task': stop_task,
             'flowNum': options.flow_num
-        }
+        },
     }
 
     ret = await pclient.async_request('graphql', mutation_kwargs)

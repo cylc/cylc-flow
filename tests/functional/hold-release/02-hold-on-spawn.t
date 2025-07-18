@@ -34,7 +34,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 cylc release "${WORKFLOW_NAME}//1/foo"
 # 1/foo should run and spawn 1/bar as waiting and held
 
-poll_grep_workflow_log -E '1/bar.* added to active task pool'
+poll_grep_workflow_log -E '1/bar.* added to the n=0 window'
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out

@@ -16,14 +16,19 @@
 
 import json
 import pytest
+import re
 from types import SimpleNamespace
 
 from colorama import init as colour_init
 
 from cylc.flow.id import Tokens
 from cylc.flow.scripts.show import (
+    ShowOptions,
     show,
 )
+
+
+RE_STATE = re.compile('state:.*')
 
 
 @pytest.fixture(scope='module')
@@ -59,8 +64,8 @@ def mod_my_conf():
                         'destroyedtheworldyet.com/'
                     ),
                     'question': 'mutually exclusive',
-                }
-            }
+                },
+            },
         },
     }
 
@@ -128,6 +133,7 @@ async def test_task_meta_query(mod_my_schd, capsys):
     )
     assert ret == 0
     out, err = capsys.readouterr()
+
     assert out.splitlines() == [
         'title: Task Title',
         'question: mutually exclusive',
@@ -170,9 +176,9 @@ async def test_task_instance_query(
                 'scheduling': {
                     'graph': {'R1': 'zed & dog & cat & ant'},
                 },
-            }
+            },
         ),
-        paused_start=False
+        paused_start=False,
     )
     async with start(schd):
         await schd.update_data_structure()
@@ -196,21 +202,30 @@ async def test_task_instance_query(
 
 
 @pytest.mark.parametrize(
+    'workflow_run_mode, run_mode_info',
+    (
+        ('live', 'Skip'),
+        ('dummy', 'Dummy'),
+        ('simulation', 'Simulation'),
+    )
+)
+@pytest.mark.parametrize(
     'attributes_bool, flow_nums, expected_state, expected_flows',
     [
         pytest.param(
-            False, [1], 'state: waiting', None,
+            False, [1], 'state: waiting (run mode={})', None,
         ),
         pytest.param(
             True,
             [1, 2],
-            'state: waiting (held,queued,runahead)',
+            'state: waiting (held,queued,runahead,run mode={})',
             'flows: [1,2]',
         )
     ]
 )
 async def test_task_instance_state_flows(
     flow, scheduler, start, capsys,
+    workflow_run_mode, run_mode_info,
     attributes_bool, flow_nums, expected_state, expected_flows
 ):
     """It should print task instance state, attributes, and flows."""
@@ -228,9 +243,13 @@ async def test_task_instance_state_flows(
                 'scheduling': {
                     'graph': {'R1': 'a'},
                 },
-            }
+                'runtime': {
+                    'a': {'run mode': 'skip'}
+                }
+            },
         ),
-        paused_start=True
+        paused_start=True,
+        run_mode=workflow_run_mode,
     )
     async with start(schd):
 
@@ -260,7 +279,7 @@ async def test_task_instance_state_flows(
         line for line in out.splitlines()
         if line.startswith("state:")
     ] == [
-        expected_state,
+        expected_state.format(run_mode_info),
     ]
 
     if expected_flows is not None:
@@ -270,3 +289,42 @@ async def test_task_instance_state_flows(
         ] == [
             expected_flows,
         ]
+
+
+async def test_task_run_mode_changes(flow, scheduler, start, capsys):
+    """Broadcasting a change of run mode changes run mode shown by cylc show.
+    """
+    opts = ShowOptions()
+    schd = scheduler(
+        flow({'scheduling': {'graph': {'R1': 'a'}}}),
+        run_mode='live'
+    )
+
+    async with start(schd):
+        # Control: No mode set, the Run Mode setting is not shown:
+        await schd.update_data_structure()
+        ret = await show(
+            schd.workflow,
+            [Tokens('//1/a')],
+            opts,
+        )
+        assert ret == 0
+        out, _ = capsys.readouterr()
+        state, = RE_STATE.findall(out)
+        assert 'waiting' in state
+
+        # Broadcast change task to skip mode:
+        schd.broadcast_mgr.put_broadcast(['1'], ['a'], [{'run mode': 'skip'}])
+        await schd.update_data_structure()
+
+        # show now shows skip mode:
+        ret = await show(
+            schd.workflow,
+            [Tokens('//1/a')],
+            opts,
+        )
+        assert ret == 0
+
+        out, _ = capsys.readouterr()
+        state, = RE_STATE.findall(out)
+        assert 'run mode=Skip' in state

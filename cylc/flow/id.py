@@ -529,8 +529,12 @@ LEGACY_CYCLE_SLASH_TASK = re.compile(
 )
 
 
-def quick_relative_id(cycle: Union[str, int, 'PointBase'], task: str) -> str:
-    """Generate a relative ID for a task.
+def quick_relative_id(
+    cycle: Union[str, int, 'PointBase'],
+    task: str,
+    task_sel: Optional[str] = None
+) -> str:
+    """Generate a relative ID for a task, with optional selector.
 
     This is a more efficient solution to `Tokens` for cases where
     you only want the ID string and don't have any use for a Tokens object.
@@ -540,8 +544,23 @@ def quick_relative_id(cycle: Union[str, int, 'PointBase'], task: str) -> str:
         >>> q('1', 'a') == Tokens(cycle='1', task='a').relative_id
         True
 
+        >>> q('1', 'a', 'succeeded')
+        '1/a:succeeded'
+
+        >>> q('1', 'a', 'succeeded') == (
+        ...     detokenise(
+        ...         Tokens(cycle='1', task='a', task_sel="succeeded"),
+        ...         selectors=True,
+        ...         relative=True
+        ...     )
+        ... )
+        True
+
     """
-    return f'{cycle}/{task}'
+    if task_sel is None:
+        return f'{cycle}/{task}'
+    else:
+        return f'{cycle}/{task}:{task_sel}'
 
 
 def _dict_strip(dictionary):

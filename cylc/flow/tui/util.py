@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional, Set, Tuple
 import urwid
 
 from cylc.flow import LOG
+from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
@@ -36,6 +37,7 @@ from cylc.flow.tui import (
     TASK_ICONS,
     TASK_MODIFIERS
 )
+from cylc.flow.util import deserialise_set
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
@@ -46,6 +48,17 @@ ME = getuser()
 
 Node = Dict[str, Any]
 NodeStore = Dict[str, Dict[str, Node]]
+
+
+MODIFIER_ATTR_MAPPING = {
+    # text repr: (internal attr, GraphQL attr)
+    'held': ('is_held', 'isHeld'),
+    'runahead': ('is_runahead', 'isRunahead'),
+    'queued': ('is_queued', 'isQueued'),
+    'retry scheduled': ('is_retry', 'isRetry'),
+    'wallclock': ('is_wallclock', 'isWallclock'),
+    'xtriggered': ('is_xtriggered', 'isXtriggered'),
+}
 
 
 @contextmanager
@@ -69,8 +82,12 @@ def get_task_icon(
     is_held=False,
     is_queued=False,
     is_runahead=False,
+    is_retry=False,
+    is_wallclock=False,
+    is_xtriggered=False,
+    colour='body',
     start_time=None,
-    mean_time=None
+    mean_time=None,
 ):
     """Return a Unicode string to represent a task.
 
@@ -83,6 +100,9 @@ def get_task_icon(
             True if the task is queued.
         is_runahead (bool):
             True if the task is runahead limited.
+        colour (str):
+            Set the icon colour. If not provided, the default foreground text
+            colour will be used.
         start_time (str):
             Start date time string.
         mean_time (int):
@@ -95,11 +115,17 @@ def get_task_icon(
     """
     ret = []
     if is_held:
-        ret.append(TASK_MODIFIERS['held'])
+        ret.append((colour, TASK_MODIFIERS['held']))
     elif is_runahead:
-        ret.append(TASK_MODIFIERS['runahead'])
+        ret.append((colour, TASK_MODIFIERS['runahead']))
     elif is_queued:
-        ret.append(TASK_MODIFIERS['queued'])
+        ret.append((colour, TASK_MODIFIERS['queued']))
+    elif is_retry:
+        ret.append((colour, TASK_MODIFIERS['retry']))
+    elif is_wallclock:
+        ret.append((colour, TASK_MODIFIERS['wallclock']))
+    elif is_xtriggered:
+        ret.append((colour, TASK_MODIFIERS['xtriggered']))
     if (
         status == TASK_STATUS_RUNNING
         and start_time
@@ -115,8 +141,40 @@ def get_task_icon(
             status = f'{TASK_STATUS_RUNNING}:25'
         else:
             status = f'{TASK_STATUS_RUNNING}:0'
-    ret.append(TASK_ICONS[status])
+    ret.append((colour, TASK_ICONS[status]))
     return ret
+
+
+def get_status_str(data):
+    """Return a text represenation of a workflow, cycle, family, task or job.
+
+    Args:
+        data: A data node from the Tui tree (i.e. `value['data']`).
+
+    """
+    attrs = []
+
+    # workflow state info
+    if data.get('status'):
+        attrs.append(data['status'])
+
+    # task state info
+    if data.get('state'):
+        state_attrs = [
+            modifier_text
+            for modifier_text, (_, data_attr) in MODIFIER_ATTR_MAPPING.items()
+            if data.get(data_attr, None)
+        ]
+        _attr = data['state']
+        if state_attrs:
+            _attr += f' ({", ".join(state_attrs)})'
+        attrs.append(_attr)
+
+    # task flow info
+    if data.get('flowNums', '[1]') != '[1]':
+        attrs.append(f'flows={format_flow_nums(data["flowNums"])}')
+
+    return ', '.join(attrs)
 
 
 def idpop(id_):
@@ -517,14 +575,23 @@ def _render_task(node, data):
         start_time = first_child.get_value()['data']['startedTime']
         mean_time = data['task']['meanElapsedTime']
 
+    if data['flowNums'] == '[]':
+        # grey out no-flow tasks
+        colour = 'diminished'
+    else:
+        # default foreground colour for everything else
+        colour = 'body'
+
     # the task icon
     ret = get_task_icon(
         data['state'],
-        is_held=data['isHeld'],
-        is_queued=data['isQueued'],
-        is_runahead=data['isRunahead'],
+        colour=colour,
         start_time=start_time,
-        mean_time=mean_time
+        mean_time=mean_time,
+        **{
+            modifier_attr: data.get(data_attr, False)
+            for _, (modifier_attr, data_attr) in MODIFIER_ATTR_MAPPING.items()
+        }
     )
 
     # the most recent job status
@@ -534,7 +601,7 @@ def _render_task(node, data):
         ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
 
     # the task name
-    ret.append(f'{data["name"]}')
+    ret.append((colour, f'{data["name"]}'))
     return ret
 
 
@@ -542,9 +609,11 @@ def _render_family(node, data):
     return [
         get_task_icon(
             data['state'],
-            is_held=data['isHeld'],
-            is_queued=data['isQueued'],
-            is_runahead=data['isRunahead']
+            **{
+                modifier_attr: data.get(data_attr, False)
+                for _, (modifier_attr, data_attr)
+                in MODIFIER_ATTR_MAPPING.items()
+            },
         ),
         ' ',
         Tokens(data['id']).pop_token()[1]
@@ -690,3 +759,16 @@ class ListBoxPlus(urwid.ListBox):
                 target = new_target
         else:
             return super().keypress(size, key)
+
+
+def format_flow_nums(serialised_flow_nums: str) -> str:
+    """Return a user-facing representation of task serialised flow nums.
+
+    Examples:
+        >>> format_flow_nums('[1,2]')
+        '1,2'
+        >>> format_flow_nums('[]')
+        'None'
+
+    """
+    return stringify_flow_nums(deserialise_set(serialised_flow_nums)) or 'None'

@@ -160,6 +160,37 @@ async def edgeharness(mod_flow, mod_scheduler, mod_start):
         yield schd, data
 
 
+@pytest.fixture(scope='module')
+async def xharness(mod_flow, mod_scheduler, mod_start):
+    """Like harness, but add xtriggers."""
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'xtriggers': {
+                'x': 'xrandom(0)',
+                'x2': 'xrandom(0)',
+                'y': 'xrandom(0, _=1)'
+            },
+            'graph': {
+                'R1': """
+                    @x => foo
+                    @x2 => foo
+                    @y => foo
+                    @x => bar
+                """
+            }
+        }
+    }
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
+    async with mod_start(schd):
+        await schd.update_data_structure()
+        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+        yield schd, data
+
+
 def collect_states(data, node_type):
     return [
         t.state
@@ -488,6 +519,86 @@ def test_delta_task_prerequisite(harness):
     assert not any(p.satisfied for p in get_pb_prereqs(schd))
 
 
+def test_delta_task_xtrigger(xharness):
+    """Test delta_task_xtrigger."""
+    schd: Scheduler
+    schd, _ = xharness
+    foo = schd.pool._get_task_by_id('1/foo')
+    bar = schd.pool._get_task_by_id('1/bar')
+
+    assert not foo.state.xtriggers['x']   # not satisfied
+    assert not foo.state.xtriggers['x2']  # not satisfied
+    assert not foo.state.xtriggers['y']   # not satisfied
+    assert not bar.state.xtriggers['x']   # not satisfied
+
+    # satisfy foo's dependence on x
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:succeeded'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert not foo.state.xtriggers['y']  # satisfied
+    assert not bar.state.xtriggers['x']  # not satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig.label == 'x'
+    assert xtrig.satisfied
+
+    # unsatisfy it again
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:unsatisfied'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert not foo.state.xtriggers['x']  # not satisfied
+
+    # data store should have one updated task proxy with unsatisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig.label == 'x'
+    assert not xtrig.satisfied
+
+    # satisfy both of foo's xtriggers at once
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/all:succeeded'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert foo.state.xtriggers['y']  # satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+
+    xtrig_x = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig_x.label == 'x'
+    assert xtrig_x.satisfied
+
+    # updated task proxy should also contain duplicate xtrigger labels
+    xtrig_x2 = pbfoo.xtriggers['x2=xrandom(0)']
+    assert xtrig_x2.label == 'x2'
+    assert xtrig_x2.satisfied
+
+    xtrig_y = pbfoo.xtriggers['y=xrandom(0, _=1)']
+    assert xtrig_y.label == 'y'
+    assert xtrig_y.satisfied
+
+
 async def test_absolute_graph_edges(flow, scheduler, start):
     """It should add absolute graph edges to the store.
 
@@ -538,10 +649,10 @@ async def test_flow_numbers(flow, scheduler, start):
         # initialise the data store
         await schd.update_data_structure()
 
-        # the task should exist in the original flow
+        # the task should not have a flow number as it is n>0
         ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
-        assert ds_task.flow_nums == '[1]'
+        assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
         schd.pool.force_trigger_tasks(['1/b'], ['2'])
