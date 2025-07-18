@@ -46,7 +46,6 @@ from cylc.flow.data_store_mgr import (
     DELTA_ADDED, create_delta_store
 )
 import cylc.flow.flags
-from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
@@ -685,7 +684,7 @@ class Resolvers(BaseResolvers):
         if 'flow' in kwargs:
             kwargs['flow'] = (
                 kwargs['flow']
-                or ([FLOW_ALL] if command == 'remove_tasks' else [])
+                or []
             )
         result = await self._mutation_mapper(command, kwargs, meta)
         return [{'id': w_id, 'response': result}]

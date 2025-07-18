@@ -18,26 +18,24 @@
 
 """cylc remove [OPTIONS] ARGS
 
-Remove tasks in the active window, or erase the run-history of past tasks.
+Remove active (n=0) tasks, and erase flow history.
 
-Final-status incomplete tasks can be removed from the n=0 active window to
-prevent/recover from a stall, if they don't need to be completed to continue
-the flow.
+The primary use cases for this command are:
+ * Remove final-status incomplete tasks from n=0 to prevent or release a stall,
+   if you don't want to rerun them to complete required outputs.
+ * Erase the flow history of tasks to allow them to rerun without starting a
+   new flow. (Note that `cylc trigger` now does this automatically, however).
 
-Erasing the run-history of past tasks allows them to be run again in the
-same flow (this is an alternative to starting a new flow).
-
-By default, the specified task(s) will be removed from all flows.
+Tasks will be removed from ALL flows, by defaut.
 
 Tasks removed from all flows, and any waiting downstream tasks spawned by
-their outputs, will be recorded in the `None` flow and will not affect
+their outputs, will be recorded with no flow numbers and will not affect
 the evolution of the workflow.
 
-If you remove a task from some but not all of its flows, it will still exist
-in the remaining flows, but it will not affect the evolution of the removed
-flows.
+If you remove a task from some of its flows, it will still exist in the
+remaining flows but will not affect the evolution of the removed flows.
 
-Removing a submitted or running task will also kill it (see "cylc kill").
+Removing a submitted or running task also kills it (see "cylc kill").
 
 Examples:
   # Remove a task that already ran.
@@ -54,7 +52,7 @@ from functools import partial
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.flow_mgr import FLOW_ALL
+from cylc.flow.flow_mgr import add_flow_opts_for_remove
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -93,19 +91,7 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
-
-    parser.add_option(
-        '--flow',
-        action='append',
-        dest='flow',
-        metavar='FLOW',
-        help=(
-            "Remove the task(s) from the specified flow. "
-            "Reuse the option to remove the task(s) from multiple flows. "
-            "(By default, the task(s) will be removed from all flows.)"
-        ),
-    )
-
+    add_flow_opts_for_remove(parser)
     return parser
 
 
@@ -120,7 +106,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 tokens.relative_id_with_selectors
                 for tokens in tokens_list
             ],
-            'flow': options.flow or [FLOW_ALL],
+            'flow': options.flow,
         }
     }
 

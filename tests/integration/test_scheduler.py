@@ -24,7 +24,6 @@ from typing import Any, Callable
 
 from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
-from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
@@ -369,7 +368,8 @@ async def test_restart_timeout(
 
         capture_submission(schd)
         # when we trigger tasks the timeout should be cleared
-        schd.pool.force_trigger_tasks(['1/one'], [FLOW_ALL])
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/one'], []))
 
         await asyncio.sleep(0)  # yield control to the main loop
         assert log_filter(logging.INFO, contains='restart timer stopped')

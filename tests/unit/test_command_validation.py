@@ -18,21 +18,19 @@ import pytest
 
 from cylc.flow.command_validation import (
     ERR_OPT_FLOW_COMBINE,
-    ERR_OPT_FLOW_VAL,
+    ERR_OPT_FLOW_VAL_INT_NEW_NONE,
     flow_opts,
 )
 from cylc.flow.exceptions import InputError
-from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
+from cylc.flow.flow_mgr import FLOW_NEW, FLOW_NONE
 
 
 @pytest.mark.parametrize('flow_strs, expected_msg', [
-    ([FLOW_ALL, '1'], ERR_OPT_FLOW_COMBINE.format(FLOW_ALL)),
-    (['1', FLOW_ALL], ERR_OPT_FLOW_COMBINE.format(FLOW_ALL)),
     ([FLOW_NEW, '1'], ERR_OPT_FLOW_COMBINE.format(FLOW_NEW)),
     ([FLOW_NONE, '1'], ERR_OPT_FLOW_COMBINE.format(FLOW_NONE)),
-    ([FLOW_NONE, FLOW_ALL], ERR_OPT_FLOW_COMBINE.format(FLOW_NONE)),
-    (['a'], ERR_OPT_FLOW_VAL),
-    (['1', 'a'], ERR_OPT_FLOW_VAL),
+    ([FLOW_NONE, FLOW_NEW], ERR_OPT_FLOW_COMBINE.format(FLOW_NONE)),
+    (['a'], ERR_OPT_FLOW_VAL_INT_NEW_NONE),
+    (['1', 'a'], ERR_OPT_FLOW_VAL_INT_NEW_NONE),
 ])
 async def test_trigger_invalid(flow_strs, expected_msg):
     """Ensure invalid flow values are rejected during command validation."""

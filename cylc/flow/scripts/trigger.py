@@ -17,43 +17,54 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Manually trigger tasks, respecting dependencies among them.
 
-Triggering a task that is not yet queued will queue it.
+Triggering individual tasks:
+  * Triggering an unqueued task queues it; triggering a queued task runs it;
+    so to run an unqueued task immediately you many need to trigger it twice.
+  * Tasks can be triggered to run even if the workflow is paused.
+  * Attempts to live tasks (preparing, submitted, running) will be ignored.
 
-Triggering a queued task runs it immediately.
+Triggering a group of multiple tasks at once:
+  To run or rerun a sub-graph, Cylc will automatically:
+  * erase the run history of the tasks, to allow re-run in the same flow
+  * identify "start tasks" that lead into the sub-graph and trigger them
+  * identify dependencies outside the group and satisfy them, to avoid a stall
+  * leave dependencies within the group to be satisfied by the triggered flow
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+  If the workflow is paused, group start tasks will trigger immediately. The
+  flow will continue on from them when the workflow resumes.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+  How live (preparing, submitted, running) group members are handled:
+  * live group start tasks are left to run - they already triggered
+    WARNING: if they already completed outputs that other group tasks depend
+    on, you must manually satisfy ("cylc set") those prerequisites again
+  * live group-internal tasks are killed, so they can re-run in the flow
 
 Examples:
-  # trigger task foo in cycle 1234 in test
-  $ cylc trigger test//1234/foo
+  # trigger task foo in cycle 1, in workflow "test"
+  $ cylc trigger test//1/foo
 
-  # trigger all failed tasks in test
-  $ cylc trigger 'test//*:failed'
+  # trigger all failed tasks in workflow "test"
+  $ cylc trigger 'test//*:failed'  # (quotes required)
 
-  # start a new flow by triggering 1234/foo in test
-  $ cylc trigger --flow=new test//1234/foo
+  # start a new flow from 1/foo
+  # (beware of off-flow prerequisites downstream of 1/foo)
+  $ cylc trigger --flow=new test//1/foo
 
-Flows:
-  Waiting tasks in the active window (n=0) already belong to a flow.
-  * by default, if triggered, they run in the same flow
-  * or with --flow=all, they are assigned all active flows
-  * or with --flow=INT or --flow=new, the original and new flows are merged
-  * (--flow=none is ignored for active tasks)
+  # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
+  $ cylc trigger test //1/a //1/b //1/c
 
-  Inactive tasks (n>0) do not already belong to a flow.
-  * by default they are assigned all active flows
-  * otherwise, they are assigned the --flow value
+ Flow numbers of triggered tasks are determined as follows:
+  Active tasks (n=0) already have existing flow numbers.
+   * default: merge active and existing flow numbers
+   * --flow=INT or "new": merge given and existing flow numbers
+   * --flow="none": ERROR (not valid for already-active tasks)
+  Inactive tasks (n>0) do not have flow numbers assigned:
+   * default: run with all active flow numbers
+   * --flow=INT or "new": run with the given flow numbers
+   * --flow="none": run as no-flow (activity will not flow on downstream)
 
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
-  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
@@ -67,7 +78,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
 
 
 if TYPE_CHECKING:
@@ -106,7 +117,7 @@ def get_option_parser() -> COP:
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
-    add_flow_opts(parser)
+    add_flow_opts_for_trigger_and_set(parser)
 
     parser.add_option(
         "--on-resume",

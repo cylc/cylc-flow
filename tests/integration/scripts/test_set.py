@@ -31,7 +31,6 @@ from cylc.flow.commands import (
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_STARTED,
@@ -189,7 +188,7 @@ async def test_pre_all(flow, scheduler, run):
     id_ = flow({'scheduling': {'graph': {'R1': 'a => z'}}})
     schd = scheduler(id_, paused_start=False)
     async with run(schd) as log:
-        schd.pool.set_prereqs_and_outputs(['1/z'], [], ['all'], ['all'])
+        schd.pool.set_prereqs_and_outputs(['1/z'], [], ['all'], [])
         warn_or_higher = [i for i in log.records if i.levelno > 30]
         assert warn_or_higher == []
 
@@ -252,7 +251,7 @@ async def test_no_outputs_given(flow, scheduler, start):
     async with start(schd):
         foo = schd.pool.get_tasks()[0]
         await run_cmd(
-            set_prereqs_and_outputs(schd, [foo.identity], [FLOW_ALL])
+            set_prereqs_and_outputs(schd, [foo.identity], [])
         )
         assert set(foo.state.outputs.get_completed_outputs()) == {
             TASK_OUTPUT_SUBMITTED,
@@ -288,7 +287,7 @@ async def test_completion_expr(flow, scheduler, start):
     async with start(schd):
         foo = schd.pool.get_tasks()[0]
         await run_cmd(
-            set_prereqs_and_outputs(schd, [foo.identity], [FLOW_ALL])
+            set_prereqs_and_outputs(schd, [foo.identity], [])
         )
         assert set(foo.state.outputs.get_completed_outputs()) == {
             TASK_OUTPUT_SUBMITTED,
