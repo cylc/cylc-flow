@@ -669,6 +669,8 @@ class TaskEventsManager():
 
         """
         # Useful debug but currently borks tests/f/cylc-message/02-multi.t:
+        # (It checks all log messages in debug mode, which is unhelpful).
+        # TODO: https://github.com/cylc/cylc-flow/issues/6857
         # LOG.debug(f'Message {flag} for {itask}: "{message}"')
 
         # Log messages
