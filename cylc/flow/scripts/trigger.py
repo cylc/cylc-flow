@@ -17,21 +17,29 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger a group of one or more tasks, automatically satisfying any
-off-group dependencies and respecting dependencies within the group.
+Manually trigger tasks, respecting dependencies among them.
 
-Group trigger is typically the easiest way to rerun a sub-graph. It erases
-flow history to allow the rerun; it identifies and triggers group start tasks
-to start the flow; and it identifies and satisfies any off-group prerequisites
-that would cause a stall.
+Triggering individual tasks:
+  * Triggering an unqueued task queues it; triggering a queued task runs it;
+    so to run an unqueued task immediately you many need to trigger it twice.
+  * Tasks can be triggered to run even if the workflow is paused.
+  * Attempts to live tasks (preparing, submitted, running) will be ignored.
 
-Triggering an unqueued task queues it; triggering a queued task runs it; so you
-may need to trigger unqueued tasks twice to run them now if the queue is full.
+Triggering a group of multiple tasks at once:
+  To run or rerun a sub-graph, Cylc will automatically:
+  * erase the run history of the tasks, to allow re-run in the same flow
+  * identify "start tasks" that lead into the sub-graph and trigger them
+  * identify dependencies outside the group and satisfy them, to avoid a stall
+  * leave dependencies within the group to be satisfied by the triggered flow
 
-Preparing, submitted, and running tasks can't be retrigged until finished.
+  If the workflow is paused, group start tasks will trigger immediately. The
+  flow will continue on from them when the workflow resumes.
 
-If the workflow is paused only group start tasks trigger immediately; the flow
-will continue when the workflow resumes.
+  How live (preparing, submitted, running) group members are handled:
+  * live group start tasks are left to run - they already triggered
+    WARNING: if they already completed outputs that other group tasks depend
+    on, you must manually satisfy ("cylc set") those prerequisites again
+  * live group-internal tasks are killed, so they can re-run in the flow
 
 Examples:
   # trigger task foo in cycle 1, in workflow "test"
