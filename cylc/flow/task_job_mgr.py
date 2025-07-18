@@ -1236,10 +1236,10 @@ class TaskJobManager:
                 f"\"{itask.identity}\" the following are not compatible:\n"
             )
 
-        host_n, platform_name, orig_platform_name, orig_host_name = [None] * 4
+        host_name, platform_name = [None] * 2
         try:
             if rtconfig['remote']['host'] is not None:
-                host_n = self.task_remote_mgr.eval_host(
+                host_name = self.task_remote_mgr.eval_host(
                     rtconfig['remote']['host']
                 )
             else:
@@ -1258,10 +1258,10 @@ class TaskJobManager:
             return False
         else:
             # host/platform select not ready
-            if host_n is None and platform_name is None:
+            if host_name is None and platform_name is None:
                 return None
             elif (
-                host_n is None
+                host_name is None
                 and rtconfig['platform']
                 and rtconfig['platform'] != platform_name
             ):
@@ -1269,22 +1269,23 @@ class TaskJobManager:
                     f"for task {itask.identity}: platform = "
                     f"{rtconfig['platform']} evaluated as {platform_name}"
                 )
-                orig_platform_name = rtconfig['platform']
-                rtconfig['platform'] = platform_name
+                # orig_platform_name = rtconfig['platform']
+                # rtconfig['platform'] = platform_name
             elif (
                 platform_name is None
-                and rtconfig['remote']['host'] != host_n
+                and rtconfig['remote']['host'] != host_name
             ):
                 LOG.debug(
                     f"[{itask}] host = "
-                    f"{rtconfig['remote']['host']} evaluated as {host_n}"
+                    f"{rtconfig['remote']['host']} evaluated as {host_name}"
                 )
-                orig_host_name = host_n
-                rtconfig['remote']['host'] = host_n
 
             try:
                 platform = get_platform(
-                    rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                    platform_name or rtconfig,
+                    itask.tdef.name,
+                    bad_hosts=self.bad_hosts,
+                    evaluated_host=host_name,
                 )
             except PlatformLookupError as exc:
                 itask.waiting_on_job_prep = False
@@ -1307,13 +1308,6 @@ class TaskJobManager:
                 itask.platform = cast('dict', platform)
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
-
-        # Put the original platform and host names back into the
-        # rtconfig. Prevents storing first evaluation of shell expression.
-        if orig_platform_name:
-            rtconfig['platform'] = orig_platform_name
-        if orig_host_name:
-            rtconfig['remote']['host'] = orig_host_name
 
         try:
             job_conf = self._prep_submit_task_job_impl(
