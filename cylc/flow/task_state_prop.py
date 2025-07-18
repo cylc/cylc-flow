@@ -23,7 +23,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED
+    TASK_STATUS_FAILED,
+    TASK_STATUS_UNKNOWN,
 )
 
 
@@ -37,7 +38,8 @@ def extract_group_state(child_states, is_stopped=False):
         TASK_STATUS_SUBMITTED,
         TASK_STATUS_PREPARING,
         TASK_STATUS_WAITING,
-        TASK_STATUS_SUCCEEDED
+        TASK_STATUS_SUCCEEDED,
+        TASK_STATUS_UNKNOWN
     ]
     if is_stopped:
         ordered_states = [
@@ -48,7 +50,8 @@ def extract_group_state(child_states, is_stopped=False):
             TASK_STATUS_EXPIRED,
             TASK_STATUS_PREPARING,
             TASK_STATUS_SUCCEEDED,
-            TASK_STATUS_WAITING
+            TASK_STATUS_WAITING,
+            TASK_STATUS_UNKNOWN
         ]
     for state in ordered_states:
         if state in child_states:
