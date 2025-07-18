@@ -242,6 +242,7 @@ async def test_poll_job_deleted_log_folder(
         'run_signal': JOB_FILES_REMOVED_MESSAGE,
         'run_status': 1,
         'job_runner_exit_polled': 1,
+        'time_run_exit': '2025-02-13T12:08:28Z',
     }
     schd: Scheduler = scheduler(flow(one_conf))
     async with start(schd):
