@@ -177,7 +177,7 @@ SELECTOR_ERROR = (
 
 def get_option_parser() -> COP:
     parser = COP(
-        str(__doc__),
+        __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
