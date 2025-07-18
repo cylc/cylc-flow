@@ -235,6 +235,11 @@ async def test_complete_cylc(dummy_workflow):
         '--flow=new',
     }
 
+    # $ cylc trigger --flow=1 <tab><tab>
+    assert await _complete_cylc('cylc', 'trigger', '--flow=1', '') == {
+        'foo/run2//'
+    }
+
     # $ cylc trigger --62656566<tab><tab>
     assert await _complete_cylc('cylc', 'trigger', '--62656566') == set()
 

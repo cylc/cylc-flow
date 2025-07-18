@@ -1356,7 +1356,7 @@ async def test_set_bad_prereqs(
     schd: Scheduler = scheduler(id_)
 
     def set_prereqs(prereqs):
-        """Shorthand so only varible under test given as arg"""
+        """Shorthand so only variable under test given as arg"""
         schd.pool.set_prereqs_and_outputs(
             ["2040/bar"], [], prereqs, [])
 

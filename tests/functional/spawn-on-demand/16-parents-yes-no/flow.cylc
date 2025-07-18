@@ -7,7 +7,7 @@
         inactivity timeout = PT60S
         abort on inactivity timeout = True
         expected task failures = 1/failer
-        # Unstall, to see if foo gets spawned by baz at point 2.
+        # Un-stall, to see if foo gets spawned by baz at point 2.
         # (Note we use to remove failer and trigger baz here, but
         # now removing a task causes removal of waiting children).
         stall handlers = cylc set %(workflow)s//1/failer

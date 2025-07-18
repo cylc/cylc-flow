@@ -45,7 +45,7 @@ Examples:
   # trigger task foo in cycle 1, in workflow "test"
   $ cylc trigger test//1/foo
 
-  # trigger all failed tasks in workfow "test"
+  # trigger all failed tasks in workflow "test"
   $ cylc trigger 'test//*:failed'  # (quotes required)
 
   # start a new flow from 1/foo
