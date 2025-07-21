@@ -23,7 +23,7 @@ Triggering individual tasks:
   * Triggering an unqueued task queues it; triggering a queued task runs it;
     so to run an unqueued task immediately you many need to trigger it twice.
   * Tasks can be triggered to run even if the workflow is paused.
-  * Attempts to live tasks (preparing, submitted, running) will be ignored.
+  * Attempts to trigger live tasks (preparing, submitted, running) will be ignored.
 
 Triggering a group of multiple tasks at once:
   To run or rerun a sub-graph, Cylc will automatically:
