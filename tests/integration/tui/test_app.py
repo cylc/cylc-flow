@@ -71,7 +71,6 @@ def set_task_state(schd, task_states):
         schd.data_store_mgr.increment_graph_window(
             itask.tokens,
             cycle,
-            {1},
         )
 
 

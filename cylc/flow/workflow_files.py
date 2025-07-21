@@ -354,7 +354,10 @@ If you like, you can stop it with one or more of the following commands:
 * ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
-SUITERC_DEPR_MSG = "Backward compatibility mode ON"
+SUITERC_DEPR_MSG = (
+    "Backward compatibility mode ON"
+    " - support for suite.rc files will be removed at 8.7.0"
+)
 
 NO_FLOW_FILE_MSG = (
     f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "

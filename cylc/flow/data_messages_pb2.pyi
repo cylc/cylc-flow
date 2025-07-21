@@ -36,7 +36,7 @@ class PbTaskProxyRefs(_message.Message):
     def __init__(self, task_proxies: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class PbWorkflow(_message.Message):
-    __slots__ = ("stamp", "id", "name", "status", "host", "port", "owner", "tasks", "families", "edges", "api_version", "cylc_version", "last_updated", "meta", "newest_active_cycle_point", "oldest_active_cycle_point", "reloaded", "run_mode", "cycling_mode", "state_totals", "workflow_log_dir", "time_zone_info", "tree_depth", "job_log_names", "ns_def_order", "states", "task_proxies", "family_proxies", "status_msg", "is_held_total", "jobs", "pub_port", "broadcasts", "is_queued_total", "latest_state_tasks", "pruned", "is_runahead_total", "states_updated", "n_edge_distance")
+    __slots__ = ("stamp", "id", "name", "status", "host", "port", "owner", "tasks", "families", "edges", "api_version", "cylc_version", "last_updated", "meta", "newest_active_cycle_point", "oldest_active_cycle_point", "reloaded", "run_mode", "cycling_mode", "state_totals", "workflow_log_dir", "time_zone_info", "tree_depth", "job_log_names", "ns_def_order", "states", "task_proxies", "family_proxies", "status_msg", "is_held_total", "jobs", "pub_port", "broadcasts", "is_queued_total", "latest_state_tasks", "pruned", "is_runahead_total", "states_updated", "n_edge_distance", "log_records")
     class StateTotalsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -90,6 +90,7 @@ class PbWorkflow(_message.Message):
     IS_RUNAHEAD_TOTAL_FIELD_NUMBER: _ClassVar[int]
     STATES_UPDATED_FIELD_NUMBER: _ClassVar[int]
     N_EDGE_DISTANCE_FIELD_NUMBER: _ClassVar[int]
+    LOG_RECORDS_FIELD_NUMBER: _ClassVar[int]
     stamp: str
     id: str
     name: str
@@ -129,7 +130,16 @@ class PbWorkflow(_message.Message):
     is_runahead_total: int
     states_updated: bool
     n_edge_distance: int
-    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., name: _Optional[str] = ..., status: _Optional[str] = ..., host: _Optional[str] = ..., port: _Optional[int] = ..., owner: _Optional[str] = ..., tasks: _Optional[_Iterable[str]] = ..., families: _Optional[_Iterable[str]] = ..., edges: _Optional[_Union[PbEdges, _Mapping]] = ..., api_version: _Optional[int] = ..., cylc_version: _Optional[str] = ..., last_updated: _Optional[float] = ..., meta: _Optional[_Union[PbMeta, _Mapping]] = ..., newest_active_cycle_point: _Optional[str] = ..., oldest_active_cycle_point: _Optional[str] = ..., reloaded: bool = ..., run_mode: _Optional[str] = ..., cycling_mode: _Optional[str] = ..., state_totals: _Optional[_Mapping[str, int]] = ..., workflow_log_dir: _Optional[str] = ..., time_zone_info: _Optional[_Union[PbTimeZone, _Mapping]] = ..., tree_depth: _Optional[int] = ..., job_log_names: _Optional[_Iterable[str]] = ..., ns_def_order: _Optional[_Iterable[str]] = ..., states: _Optional[_Iterable[str]] = ..., task_proxies: _Optional[_Iterable[str]] = ..., family_proxies: _Optional[_Iterable[str]] = ..., status_msg: _Optional[str] = ..., is_held_total: _Optional[int] = ..., jobs: _Optional[_Iterable[str]] = ..., pub_port: _Optional[int] = ..., broadcasts: _Optional[str] = ..., is_queued_total: _Optional[int] = ..., latest_state_tasks: _Optional[_Mapping[str, PbTaskProxyRefs]] = ..., pruned: bool = ..., is_runahead_total: _Optional[int] = ..., states_updated: bool = ..., n_edge_distance: _Optional[int] = ...) -> None: ...
+    log_records: _containers.RepeatedCompositeFieldContainer[PbLogRecord]
+    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., name: _Optional[str] = ..., status: _Optional[str] = ..., host: _Optional[str] = ..., port: _Optional[int] = ..., owner: _Optional[str] = ..., tasks: _Optional[_Iterable[str]] = ..., families: _Optional[_Iterable[str]] = ..., edges: _Optional[_Union[PbEdges, _Mapping]] = ..., api_version: _Optional[int] = ..., cylc_version: _Optional[str] = ..., last_updated: _Optional[float] = ..., meta: _Optional[_Union[PbMeta, _Mapping]] = ..., newest_active_cycle_point: _Optional[str] = ..., oldest_active_cycle_point: _Optional[str] = ..., reloaded: bool = ..., run_mode: _Optional[str] = ..., cycling_mode: _Optional[str] = ..., state_totals: _Optional[_Mapping[str, int]] = ..., workflow_log_dir: _Optional[str] = ..., time_zone_info: _Optional[_Union[PbTimeZone, _Mapping]] = ..., tree_depth: _Optional[int] = ..., job_log_names: _Optional[_Iterable[str]] = ..., ns_def_order: _Optional[_Iterable[str]] = ..., states: _Optional[_Iterable[str]] = ..., task_proxies: _Optional[_Iterable[str]] = ..., family_proxies: _Optional[_Iterable[str]] = ..., status_msg: _Optional[str] = ..., is_held_total: _Optional[int] = ..., jobs: _Optional[_Iterable[str]] = ..., pub_port: _Optional[int] = ..., broadcasts: _Optional[str] = ..., is_queued_total: _Optional[int] = ..., latest_state_tasks: _Optional[_Mapping[str, PbTaskProxyRefs]] = ..., pruned: bool = ..., is_runahead_total: _Optional[int] = ..., states_updated: bool = ..., n_edge_distance: _Optional[int] = ..., log_records: _Optional[_Iterable[_Union[PbLogRecord, _Mapping]]] = ...) -> None: ...
+
+class PbLogRecord(_message.Message):
+    __slots__ = ("level", "message")
+    LEVEL_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    level: str
+    message: str
+    def __init__(self, level: _Optional[str] = ..., message: _Optional[str] = ...) -> None: ...
 
 class PbRuntime(_message.Message):
     __slots__ = ("platform", "script", "init_script", "env_script", "err_script", "exit_script", "pre_script", "post_script", "work_sub_dir", "execution_polling_intervals", "execution_retry_delays", "execution_time_limit", "submission_polling_intervals", "submission_retry_delays", "directives", "environment", "outputs", "completion", "run_mode")
@@ -383,7 +393,7 @@ class PbTaskProxy(_message.Message):
     def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., task: _Optional[str] = ..., state: _Optional[str] = ..., cycle_point: _Optional[str] = ..., depth: _Optional[int] = ..., job_submits: _Optional[int] = ..., outputs: _Optional[_Mapping[str, PbOutput]] = ..., namespace: _Optional[_Iterable[str]] = ..., prerequisites: _Optional[_Iterable[_Union[PbPrerequisite, _Mapping]]] = ..., jobs: _Optional[_Iterable[str]] = ..., first_parent: _Optional[str] = ..., name: _Optional[str] = ..., is_held: bool = ..., edges: _Optional[_Iterable[str]] = ..., ancestors: _Optional[_Iterable[str]] = ..., flow_nums: _Optional[str] = ..., external_triggers: _Optional[_Mapping[str, PbTrigger]] = ..., xtriggers: _Optional[_Mapping[str, PbTrigger]] = ..., is_queued: bool = ..., is_runahead: bool = ..., flow_wait: bool = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., graph_depth: _Optional[int] = ..., is_retry: bool = ..., is_wallclock: bool = ..., is_xtriggered: bool = ...) -> None: ...
 
 class PbFamily(_message.Message):
-    __slots__ = ("stamp", "id", "name", "meta", "depth", "proxies", "parents", "child_tasks", "child_families", "first_parent", "runtime", "descendants")
+    __slots__ = ("stamp", "id", "name", "meta", "depth", "proxies", "parents", "child_tasks", "child_families", "first_parent", "runtime")
     STAMP_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -395,7 +405,6 @@ class PbFamily(_message.Message):
     CHILD_FAMILIES_FIELD_NUMBER: _ClassVar[int]
     FIRST_PARENT_FIELD_NUMBER: _ClassVar[int]
     RUNTIME_FIELD_NUMBER: _ClassVar[int]
-    DESCENDANTS_FIELD_NUMBER: _ClassVar[int]
     stamp: str
     id: str
     name: str
@@ -407,8 +416,7 @@ class PbFamily(_message.Message):
     child_families: _containers.RepeatedScalarFieldContainer[str]
     first_parent: str
     runtime: PbRuntime
-    descendants: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., name: _Optional[str] = ..., meta: _Optional[_Union[PbMeta, _Mapping]] = ..., depth: _Optional[int] = ..., proxies: _Optional[_Iterable[str]] = ..., parents: _Optional[_Iterable[str]] = ..., child_tasks: _Optional[_Iterable[str]] = ..., child_families: _Optional[_Iterable[str]] = ..., first_parent: _Optional[str] = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., descendants: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., name: _Optional[str] = ..., meta: _Optional[_Union[PbMeta, _Mapping]] = ..., depth: _Optional[int] = ..., proxies: _Optional[_Iterable[str]] = ..., parents: _Optional[_Iterable[str]] = ..., child_tasks: _Optional[_Iterable[str]] = ..., child_families: _Optional[_Iterable[str]] = ..., first_parent: _Optional[str] = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ...) -> None: ...
 
 class PbFamilyProxy(_message.Message):
     __slots__ = ("stamp", "id", "cycle_point", "name", "family", "state", "depth", "first_parent", "child_tasks", "child_families", "is_held", "ancestors", "states", "state_totals", "is_held_total", "is_queued", "is_queued_total", "is_runahead", "is_runahead_total", "runtime", "graph_depth", "is_retry", "is_wallclock", "is_xtriggered")

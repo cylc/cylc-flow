@@ -73,9 +73,25 @@ import zlib
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
-    PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
-    PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
-    FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
+    AllDeltas,
+    EDeltas,
+    FDeltas,
+    FPDeltas,
+    JDeltas,
+    PbEdge,
+    PbEntireWorkflow,
+    PbFamily,
+    PbFamilyProxy,
+    PbJob,
+    PbLogRecord,
+    PbRuntime,
+    PbTask,
+    PbTaskProxy,
+    PbWorkflow,
+    TDeltas,
+    TPDeltas,
+    WDeltas,
+)
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
@@ -114,6 +130,7 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
+    from logging import LogRecord
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
@@ -189,6 +206,13 @@ CLEAR_FIELD_MAP = {
     TASKS: set(),
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
+}
+
+# Protobuf "repeated" fields (aka lists) that should retain only the most
+# recent N items
+DEQUE_FIELD_MAP = {
+    # NodeType: {field_name: max_length}
+    WORKFLOW: {'log_records': 10}
 }
 
 
@@ -312,6 +336,7 @@ def apply_delta(key, delta, data):
             data[key].update({e.id: e for e in delta.added})
         elif delta.added.ListFields():
             data[key].CopyFrom(delta.added)
+
     # Merge in updated fields
     if getattr(delta, 'updated', False):
         if key == WORKFLOW:
@@ -320,16 +345,24 @@ def apply_delta(key, delta, data):
             for field in CLEAR_FIELD_MAP[key]:
                 if field in field_set or delta.updated.states_updated:
                     data[key].ClearField(field)
+
+            # Apply the updated delta
             data[key].MergeFrom(delta.updated)
+
+            # Deque (i.e. length restrict) selected fields
+            for field_name, max_len in DEQUE_FIELD_MAP.get(key, {}).items():
+                if field_name in field_set:
+                    lst = getattr(data[key], field_name)
+                    while len(lst) > max_len:
+                        lst.pop(0)
         else:
             for element in delta.updated:
                 try:
                     data_element = data[key][element.id]
                     # Clear fields that require overwrite with delta
-                    if CLEAR_FIELD_MAP[key]:
-                        for field, _ in element.ListFields():
-                            if field.name in CLEAR_FIELD_MAP[key]:
-                                data_element.ClearField(field.name)
+                    for field, _ in element.ListFields():
+                        if field.name in CLEAR_FIELD_MAP[key]:
+                            data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
                     # Clear memory accumulation
                     if key in (TASKS, FAMILIES):
@@ -345,9 +378,11 @@ def apply_delta(key, delta, data):
                         'on update application: %s' % str(exc)
                     )
                     continue
+
     # Clear memory accumulation
     if key == WORKFLOW:
         data[key] = reset_protobuf_object(PbWorkflow, data[key])
+
     # Prune data elements
     if hasattr(delta, 'pruned'):
         # UIS flag to prune workflow, set externally.
@@ -660,7 +695,6 @@ class DataStoreMgr:
                     id=f_id,
                     name=name,
                     depth=len(ancestors[name]) - 1,
-                    descendants=list(descendants.get(name, [])),
                 )
                 famcfg = config.cfg['runtime'][name]
                 user_defined_meta = {}
@@ -738,7 +772,6 @@ class DataStoreMgr:
         self,
         source_tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_manual_submit: bool = False,
         itask: Optional['TaskProxy'] = None
     ) -> None:
@@ -757,7 +790,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_manual_submit
             itask:
                 Active/Other task proxy, passed in with pool invocation.
@@ -812,7 +844,6 @@ class DataStoreMgr:
         self.generate_ghost_task(
             source_tokens,
             point,
-            flow_nums,
             is_parent=False,
             itask=itask,
             replace_existing=True,
@@ -976,7 +1007,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     child_tokens,
                                     child_point,
-                                    flow_nums,
                                     False,
                                     None,
                                     n_depth
@@ -1002,7 +1032,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     parent_tokens,
                                     parent_point,
-                                    flow_nums,
                                     True,
                                     None,
                                     n_depth
@@ -1184,7 +1213,6 @@ class DataStoreMgr:
         self,
         tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_parent: bool = False,
         itask: Optional['TaskProxy'] = None,
         n_depth: int = 0,
@@ -1195,7 +1223,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_parent: Used to determine whether to load DB state.
             itask: Update task-node from corresponding task proxy object.
             n_depth: n-window graph edge distance.
@@ -1220,7 +1247,7 @@ class DataStoreMgr:
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
-                flow_nums,
+                flow_nums=None,
                 submit_num=0,
                 data_mode=True,
                 sequential_xtrigger_labels=(
@@ -1257,7 +1284,8 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
-            flow_nums=serialise_set(flow_nums),
+            # Set default before history DB batch application
+            flow_nums=serialise_set(set()),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1817,7 +1845,6 @@ class DataStoreMgr:
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
-                deserialise_set(tproxy.flow_nums)
             )
         # Flag difference between old and new window for pruning.
         self.prune_flagged_nodes.update(
@@ -2322,6 +2349,20 @@ class DataStoreMgr:
                 node_delta = self.updated[node_type].setdefault(
                     node_id, MESSAGE_MAP[node_type](id=node_id))
                 node_delta.runtime.CopyFrom(new_runtime)
+
+    def delta_log_record(self, record: 'LogRecord') -> None:
+        w_delta = self.updated[WORKFLOW]
+        w_delta.id = self.workflow_id
+        w_delta.last_updated = time()
+        w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+        if not hasattr(w_delta, 'log_records'):
+            w_delta.log_records = []
+        w_delta.log_records.append(
+            PbLogRecord(level=record.levelname, message=record.message)
+        )
+
+        self.updates_pending = True
 
     # -----------
     # Task Deltas

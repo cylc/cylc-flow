@@ -66,7 +66,6 @@ from typing import (
     List,
     Optional,
     TypeVar,
-    Union,
 )
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -81,7 +80,6 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
-from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
@@ -90,6 +88,8 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
+    from enum import Enum
+
     from cylc.flow.scheduler import Scheduler
 
     # define a type for command implementations
@@ -170,7 +170,7 @@ async def set_prereqs_and_outputs(
 @_command('stop')
 async def stop(
     schd: 'Scheduler',
-    mode: Union[str, 'StopMode'],
+    mode: 'Optional[Enum]',
     cycle_point: Optional[str] = None,
     # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
     clock_time: Optional[str] = None,
@@ -208,12 +208,14 @@ async def stop(
         schd._update_workflow_state()
     else:
         # immediate shutdown
-        with suppress(KeyError):
-            # By default, mode from mutation is a name from the
-            # WorkflowStopMode graphene.Enum, but we need the value
-            mode = WorkflowStopMode[mode]  # type: ignore[misc]
         try:
-            mode = StopMode(mode)
+            # BACK COMPAT: mode=None
+            #     the mode can be `None` for commands issued from older Cylc
+            #     versions
+            # From: 8.4
+            # To: 8.5
+            # Remove at: 8.x
+            mode = StopMode(mode.value) if mode else StopMode.REQUEST_CLEAN
         except ValueError:
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
@@ -303,14 +305,13 @@ async def pause(schd: 'Scheduler'):
 
 
 @_command('set_verbosity')
-async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
+async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
     """Set workflow verbosity."""
     try:
-        lvl = int(level)
-        LOG.setLevel(lvl)
+        LOG.setLevel(level.value)
     except (TypeError, ValueError) as exc:
         raise CommandFailedError(exc) from None
-    cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
+    cylc.flow.flags.verbosity = log_level_to_verbosity(level.value)
     yield
 
 
@@ -418,7 +419,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # logged by the TaskPool.
         add = set(schd.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning(f"Added task: '{task}'")
+            LOG.info(f"Added task: '{task}'")
         schd.workflow_db_mgr.put_workflow_template_vars(schd.template_vars)
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)
@@ -469,7 +470,7 @@ async def force_trigger_tasks(
     if on_resume:
         LOG.warning(
             "The --on-resume option is deprecated and will be removed "
-            "at Cylc 8.5."
+            "at Cylc 8.6."
         )
     yield
     yield schd.pool.force_trigger_tasks(

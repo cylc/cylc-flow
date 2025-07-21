@@ -573,10 +573,11 @@ class TaskJobManager:
         Returns:
             The platform with a good host, or None if no such platform is found
         """
+        out_of_hosts = False
         for itask in itasks:
             # If there are any hosts left for this platform which we
             # have not previously failed to contact with a 255 error.
-            if any(
+            if not out_of_hosts and any(
                 host not in self.task_remote_mgr.bad_hosts
                 for host in itask.platform['hosts']
             ):
@@ -618,6 +619,7 @@ class TaskJobManager:
                     itask.platform['name'],
                 )
             )
+            out_of_hosts = True
             done_tasks.append(itask)
 
         return None

@@ -649,10 +649,10 @@ async def test_flow_numbers(flow, scheduler, start):
         # initialise the data store
         await schd.update_data_structure()
 
-        # the task should exist in the original flow
+        # the task should not have a flow number as it is n>0
         ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
-        assert ds_task.flow_nums == '[1]'
+        assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
         schd.pool.force_trigger_tasks(['1/b'], ['2'])
