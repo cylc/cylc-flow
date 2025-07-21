@@ -136,12 +136,12 @@ def parse_memory_file(cgroup_memory_path):
 def parse_cpu_file(cgroup_cpu_path, cgroup_version):
     """Open the memory stat file and return the appropriate data"""
 
-    if cgroup_version == 1:
+    if cgroup_version == 2:
         with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 if "usage_usec" in line:
                     return int(RE_INT.findall(line)[0]) // 1000
-    elif cgroup_version == 2:
+    elif cgroup_version == 1:
         with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 # Cgroups v2 uses nanoseconds
@@ -152,10 +152,10 @@ def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
     # HPC uses cgroups v2 and SPICE uses cgroups v1
     global cgroup_version
     if Path.exists(Path(cgroup_location + cgroup_name)):
-        cgroup_version = 1
+        cgroup_version = 2
         return cgroup_version
     elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
-        cgroup_version = 2
+        cgroup_version = 1
         return cgroup_version
     else:
         raise FileNotFoundError("Cgroup not found at " +
@@ -188,7 +188,7 @@ def get_cgroup_name():
 def get_cgroup_paths(version, location, name):
     global max_rss_location
     global cpu_time_location
-    if version == 1:
+    if version == 2:
         max_rss_location = location + name + "/" + "memory.peak"
         cpu_time_location = location + name + "/" + "cpu.stat"
         return Process(
@@ -197,7 +197,7 @@ def get_cgroup_paths(version, location, name):
             cgroup_cpu_path=location +
             name + "/" + "cpu.stat")
 
-    elif version == 2:
+    elif version == 1:
         max_rss_location = (location + "/memory" +
                             name + "/memory.max_usage_in_bytes")
         cpu_time_location = (location + "/cpu" +
