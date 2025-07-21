@@ -33,7 +33,10 @@ from typing import (
 
 import pytest
 
-from cylc.flow import CYLC_LOG
+from cylc.flow import (
+    CYLC_LOG,
+    flags,
+)
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -48,7 +51,10 @@ from cylc.flow.exceptions import (
     WorkflowConfigError,
     XtriggerConfigError,
 )
-from cylc.flow.parsec.exceptions import Jinja2Error
+from cylc.flow.parsec.exceptions import (
+    IllegalValueError,
+    Jinja2Error,
+)
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.task_outputs import (
@@ -1741,8 +1747,10 @@ def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
         assert cfg.check_terminal_outputs(tasks_and_outputs) is None
 
 
-def test_upg_wflow_handler_events(tmp_flow_config, log_filter):
-    """Cylc 7 workflow handler event names are upgraded."""
+@pytest.mark.parametrize('back_compat', [True, False])
+def test_upg_wflow_event_names(back_compat, tmp_flow_config, log_filter):
+    """Cylc 7 workflow handler/mail event names are upgraded."""
+    flags.cylc7_back_compat = back_compat
     events = 'inactivity, abort, stalled'
     expected = ['inactivity timeout', 'abort', 'stall']
     flow_file = tmp_flow_config('foo', f"""
@@ -1750,45 +1758,51 @@ def test_upg_wflow_handler_events(tmp_flow_config, log_filter):
             allow implicit tasks = true
             [[events]]
                 handler events = {events}
+                mail events = {events}
         [scheduling]
             [[graph]]
                 R1 = foo
     """)
     cfg = WorkflowConfig('foo', str(flow_file), ValidateOptions())
-    assert cfg.cfg['scheduler']['events']['handler events'] == expected
-    assert log_filter(
-        logging.WARNING, 'Deprecated config items were automatically upgraded'
-    )
+    for item in ('handler events', 'mail events'):
+        assert cfg.cfg['scheduler']['events'][item] == expected
+    if back_compat:
+        assert not log_filter(logging.WARNING)
+    else:
+        assert log_filter(
+            logging.WARNING,
+            'Deprecated config items were automatically upgraded',
+        )
 
 
-def test_val_wflow_handler_events(tmp_flow_config):
-    """Any invalid workflow handler events raise an error."""
-    flow_file = tmp_flow_config('foo', """
+@pytest.mark.parametrize('item', ['handler events', 'mail events'])
+def test_val_wflow_event_names(item, tmp_flow_config):
+    """Any invalid workflow handler/mail events raise an error."""
+    flow_file = tmp_flow_config('foo', f"""
         [scheduler]
             allow implicit tasks = true
             [[events]]
-                handler events = abort, badger, stall
+                {item} = abort, badger, stall, alpaca
         [scheduling]
             [[graph]]
                 R1 = foo
     """)
-    with pytest.raises(WorkflowConfigError) as ex_info:
+    with pytest.raises(IllegalValueError) as ex_info:
         WorkflowConfig('foo', str(flow_file), ValidateOptions())
-    assert "Invalid workflow handler event 'badger'" in str(ex_info.value)
+    assert f"{item} = badger, alpaca" in str(ex_info.value)
 
 
-def test_check_task_handler_events(tmp_flow_config):
+@pytest.mark.parametrize('item', ['handler events', 'mail events'])
+def test_check_task_event_names(item, tmp_flow_config):
     """"Any invalid task handler events raise an error."""
-    flow_file = tmp_flow_config('foo', """
-        [scheduler]
-            allow implicit tasks = true
+    flow_file = tmp_flow_config('foo', f"""
         [scheduling]
             [[graph]]
                 R1 = foo
         [runtime]
             [[foo]]
                 [[[events]]]
-                    handler events = submitted, late, warning, custom,\
+                    {item} = submitted, late, warning, custom,\
                         execution timeout, badger, owl, retry, horse
                 [[[outputs]]]
                     owl = who
@@ -1796,6 +1810,6 @@ def test_check_task_handler_events(tmp_flow_config):
     with pytest.raises(WorkflowConfigError) as ex_info:
         WorkflowConfig('foo', str(flow_file), ValidateOptions())
     assert str(ex_info.value) == (
-        "Invalid event name(s) for [runtime][foo][events]handler events: "
+        f"Invalid event name(s) for [runtime][foo][events]{item}: "
         "badger, horse"
     )

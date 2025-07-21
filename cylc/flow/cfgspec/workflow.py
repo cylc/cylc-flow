@@ -411,9 +411,16 @@ with Conf(
                     )
                 ))
 
-        with Conf('events',
-                  desc=global_default(EVENTS_DESCR, '[scheduler][events]')):
-            for item, desc in EVENTS_SETTINGS.items():
+        with Conf(
+            'events', desc=global_default(EVENTS_DESCR, '[scheduler][events]')
+        ):
+            for item, val in EVENTS_SETTINGS.items():
+                if isinstance(val, dict):
+                    val = val.copy()
+                    desc: str = val.pop('desc')
+                else:
+                    desc = val
+                    val = {}
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
                 default: Any = Conf.UNSET
@@ -444,7 +451,7 @@ with Conf(
                     vdr_type = VDR.V_BOOLEAN
                 elif item.endswith("timeout"):
                     vdr_type = VDR.V_INTERVAL
-                Conf(item, vdr_type, default, desc=desc)
+                Conf(item, vdr_type, default, desc=desc, **val)
 
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)

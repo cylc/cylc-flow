@@ -542,7 +542,7 @@ class WorkflowConfig:
             self.cfg['scheduling']['special tasks'][s_type] = result
 
         self.process_config_env()
-        self._check_and_upg_wflow_handler_events()
+        self._upg_wflow_event_names()
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
@@ -560,7 +560,7 @@ class WorkflowConfig:
         self.configure_workflow_state_polling_tasks()
 
         for taskdef in self.taskdefs.values():
-            self._check_task_handler_events(taskdef)
+            self._check_task_event_names(taskdef)
             self._check_task_event_handlers(taskdef)
         self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
@@ -1745,23 +1745,24 @@ class WorkflowConfig:
                 ]
             )
 
-    def _check_task_handler_events(self, taskdef: 'TaskDef') -> None:
-        """Validate task handler event names."""
-        handler_events: Optional[List[str]] = taskdef.rtconfig['events'][
-            'handler events'
-        ]
-        if not handler_events:
-            return
-        invalid = set(handler_events).difference(
-            TaskEventsManager.STD_EVENTS,
-            taskdef.rtconfig['outputs'],
-        )
-        if invalid:
-            raise WorkflowConfigError(
-                "Invalid event name(s) for "
-                f"[runtime][{taskdef.name}][events]handler events: "
-                + ', '.join(sorted(invalid))
+    def _check_task_event_names(self, taskdef: 'TaskDef') -> None:
+        """Validate task handler/mail event names."""
+        for setting in ('handler events', 'mail events'):
+            event_names: Optional[List[str]] = taskdef.rtconfig['events'][
+                setting
+            ]
+            if not event_names:
+                continue
+            invalid = set(event_names).difference(
+                TaskEventsManager.STD_EVENTS,
+                taskdef.rtconfig['outputs'],
             )
+            if invalid:
+                raise WorkflowConfigError(
+                    "Invalid event name(s) for "
+                    f"[runtime][{taskdef.name}][events]{setting}: "
+                    + ', '.join(sorted(invalid))
+                )
 
     def _check_task_event_handlers(self, taskdef: 'TaskDef') -> None:
         """Check custom event handler templates can be expanded.
@@ -2726,32 +2727,23 @@ class WorkflowConfig:
             for seq in taskdef.sequences:
                 taskdef.add_xtrig_label(label, seq)
 
-    def _check_and_upg_wflow_handler_events(self) -> None:
-        """Validate workflow handler events and upgrade any Cylc 7 event names.
-        """
-        handler_events: Optional[List[str]] = self.cfg['scheduler']['events'][
-            'handler events'
-        ]
-        if not handler_events:
-            return
-        upgraded: Dict[str, str] = {}
-        for i, event in enumerate(handler_events):
-            if event in WorkflowEventHandler.EVENTS_DEPRECATED:
-                handler_events[i] = upgraded[event] = (
-                    WorkflowEventHandler.EVENTS_DEPRECATED[event]
+    def _upg_wflow_event_names(self) -> None:
+        """Upgrade any Cylc 7 workflow handler/mail events names."""
+        for setting in ('handler events', 'mail events'):
+            event_names: Optional[List[str]] = self.cfg['scheduler']['events'][
+                setting
+            ]
+            if not event_names:
+                continue
+            upgraded: Dict[str, str] = {}
+            for i, event in enumerate(event_names):
+                if event in WorkflowEventHandler.EVENTS_DEPRECATED:
+                    event_names[i] = upgraded[event] = (
+                        WorkflowEventHandler.EVENTS_DEPRECATED[event]
+                    )
+            if upgraded and not cylc.flow.flags.cylc7_back_compat:
+                LOG.warning(
+                    f"{upgrader.DEPR_MSG}\n"
+                    f" * (8.0.0) [scheduler][events][{setting}] "
+                    + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
                 )
-            elif event not in WorkflowEventHandler.EVENTS:
-                valid = WorkflowEventHandler.EVENTS.copy()
-                if cylc.flow.flags.cylc7_back_compat:
-                    valid += WorkflowEventHandler.EVENTS_DEPRECATED
-                raise WorkflowConfigError(
-                    f"Invalid workflow handler event '{event}'. "
-                    "[scheduler][events][handler events] must be one of: "
-                    + ', '.join(valid)
-                )
-        if upgraded and not cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(
-                f"{upgrader.DEPR_MSG}\n"
-                " * (8.0.0) [scheduler][events][handler events] "
-                + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
-            )
