@@ -129,12 +129,14 @@ async def test_flow_assignment(
 
         # -----(1. Test active tasks)-----
 
-        # By default active tasks merge existing and active flows.
         if command == "set":
+            # By default active tasks merge existing and active flows.
             do_command([active_1.identity], flow=[])
+            assert active_1.flow_nums == {1, 2}
         else:
+            # By default active tasks keep existing flows.
             await run_cmd(do_command([active_1.identity], flow=[]))
-        assert active_1.flow_nums == {1, 2}
+            assert active_1.flow_nums == {1}
 
         # Else merge existing and requested flows.
         if command == "set":
