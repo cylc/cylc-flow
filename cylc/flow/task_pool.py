@@ -1534,7 +1534,9 @@ class TaskPool:
                         suicide.append(t)
 
         for c_task in suicide:
-            self.remove(c_task, self.__class__.SUICIDE_MSG)
+            self.task_queue_mgr.remove_task(c_task)
+            self.task_events_mgr.process_message(
+                c_task, logging.WARNING, TASK_OUTPUT_EXPIRED)
 
         if suicide:
             # Update DB now in case of very quick respawn attempt.
@@ -1820,7 +1822,7 @@ class TaskPool:
                 # revive as incomplete.
                 msg = "incomplete"
 
-            if cylc.flow.flags.verbosity >= 1:
+            if LOG.level <= logging.DEBUG:
                 # avoid unnecessary compute when we are not in debug mode
                 id_ = itask.tokens.duplicate(
                     task_sel=prev_status
