@@ -15,39 +15,55 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc site and user configuration file spec."""
 
+from contextlib import suppress
 import os
 from pathlib import Path
 from sys import stderr
-from textwrap import dedent, indent
-from typing import List, Optional, Tuple, Any, Union
+from textwrap import (
+    dedent,
+    indent,
+)
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
-from contextlib import suppress
 from packaging.version import Version
 
-from cylc.flow import LOG
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.platforms import validate_platforms
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
 )
 from cylc.flow.parsec.exceptions import (
-    ParsecError,
     ItemNotFoundError,
+    ParsecError,
     ValidationError,
 )
 from cylc.flow.parsec.upgrade import upgrader
-from cylc.flow.parsec.util import printcfg, expand_many_section
+from cylc.flow.parsec.util import (
+    expand_many_section,
+    printcfg,
+)
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
     Range,
     cylc_config_validate,
 )
+from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
+from cylc.flow.platforms import validate_platforms
+from cylc.flow.workflow_events import WorkflowEventHandler
 
 
 PLATFORM_REGEX_TEXT = '''
@@ -150,7 +166,7 @@ EVENTS_DESCR = '''
 Configure the workflow event handling system.
 '''
 
-EVENTS_SETTINGS = {  # workflow events
+EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
     'handlers': '''
         Configure :term:`event handlers` that run when certain workflow
         events occur.
@@ -171,17 +187,26 @@ EVENTS_SETTINGS = {  # workflow events
 
            :ref:`user_guide.scheduler.workflow_events`
     ''',
-    'handler events': '''
-        Specify the events for which workflow event handlers should be invoked.
+    'handler events': {
+        'desc': '''
+            Specify the events for which workflow event handlers should be
+            invoked.
 
-        .. seealso::
+            .. seealso::
 
-           :ref:`user_guide.scheduler.workflow_events`
-    ''',
-    'mail events': '''
-        Specify the workflow events for which notification emails should
-        be sent.
-    ''',
+               :ref:`user_guide.scheduler.workflow_events`
+        ''',
+        'options': WorkflowEventHandler.EVENTS.copy(),
+        'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+    },
+    'mail events': {
+        'desc': '''
+            Specify the workflow events for which notification emails should
+            be sent.
+        ''',
+        'options': WorkflowEventHandler.EVENTS.copy(),
+        'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+    },
     'startup handlers': f'''
         Handlers to run at scheduler startup.
 
@@ -1038,7 +1063,13 @@ with Conf('global.cylc', desc='''
 
         with Conf('events',
                   desc=default_for(EVENTS_DESCR, '[scheduler][events]')):
-            for item, desc in EVENTS_SETTINGS.items():
+            for item, val in EVENTS_SETTINGS.items():
+                if isinstance(val, dict):
+                    val = val.copy()
+                    desc: str = val.pop('desc')
+                else:
+                    desc = val
+                    val = {}
                 desc = default_for(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
                 default: Any = Conf.UNSET
@@ -1058,7 +1089,7 @@ with Conf('global.cylc', desc='''
                         default = DurationFloat(300)
                     else:
                         default = None
-                Conf(item, vdr_type, default, desc=desc)
+                Conf(item, vdr_type, default, desc=desc, **val)
 
         with Conf('mail', desc=(
             default_for(MAIL_DESCR, "[scheduler][mail]", section=True)
