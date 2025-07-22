@@ -47,10 +47,11 @@ from cylc.flow.scripts.show import (
     prereqs_and_outputs_query,
 )
 from cylc.flow.scripts.validate import ValidateOptions
-from cylc.flow.task_state import (
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUCCEEDED,
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_state import TASK_STATUS_SUBMITTED
 from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import infer_latest_run_from_id
@@ -742,11 +743,11 @@ def capture_live_submissions(capcall, monkeypatch):
     def fake_submit(self, itasks, *_):
         self.submit_nonlive_task_jobs(itasks, RunMode.SIMULATION)
         for itask in itasks:
-            for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
+            for output in (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUCCEEDED):
                 self.task_events_mgr.process_message(
                     itask,
                     'INFO',
-                    status,
+                    output,
                     '2000-01-01T00:00:00Z',
                     '(received)',
                 )

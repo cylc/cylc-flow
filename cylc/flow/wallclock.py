@@ -17,6 +17,7 @@
 
 from calendar import timegm
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
@@ -90,8 +91,11 @@ def now(override_use_utc=None):
         return datetime.now(), True
 
 
-def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
-                            use_basic_format=False):
+def get_current_time_string(
+    display_sub_seconds: bool = False,
+    override_use_utc: Optional[bool] = None,
+    use_basic_format: bool = False,
+) -> str:
     """Return a string representing the current system time.
 
     Keyword arguments:

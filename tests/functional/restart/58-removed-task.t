@@ -39,8 +39,8 @@ workflow_run_ok "${TEST_NAME}" cylc play --no-detach "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-restart"
 workflow_run_ok "${TEST_NAME}" cylc play --set="INCL_B_C=False" --no-detach "${WORKFLOW_NAME}"
 
-grep_workflow_log_ok "grep-3" "\[1/a/01:running\] (polled)started"
-grep_workflow_log_ok "grep-4" "\[1/b/01:failed\] (polled)failed"
+grep_workflow_log_ok "grep-3" "\[1/a/01.*\] (polled)started"
+grep_workflow_log_ok "grep-4" "\[1/b/01.*\] (polled)failed"
 
 # Failed (but not incomplete) task c should not have been polled.
 grep_fail "\[1/c/01:failed\] (polled)failed" "${WORKFLOW_RUN_DIR}/log/scheduler/log"

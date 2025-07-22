@@ -135,6 +135,7 @@ from cylc.flow.run_modes.simulation import sim_time_check
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_job_mgr import TaskJobManager
+from cylc.flow.task_outputs import TASK_OUTPUT_FAILED
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_255,
@@ -145,7 +146,6 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED,
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
@@ -1080,7 +1080,7 @@ class Scheduler:
                 if jobless:
                     # Directly set failed in sim mode:
                     self.task_events_mgr.process_message(
-                        itask, 'CRITICAL', TASK_STATUS_FAILED,
+                        itask, 'CRITICAL', TASK_OUTPUT_FAILED,
                         flag=self.task_events_mgr.FLAG_RECEIVED
                     )
         if warn and unkillable:

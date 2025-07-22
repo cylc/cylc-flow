@@ -434,9 +434,7 @@ class TaskOutputs:
             * False if the message is not complete.
             * None if the message does not apply to these outputs.
         """
-        if message in self._completed:
-            return self._completed[message]
-        return None
+        return self._completed.get(message)
 
     def get_completed_outputs(self) -> Dict[str, str]:
         """Return a dict {trigger: message} of completed outputs.
