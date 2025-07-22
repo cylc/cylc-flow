@@ -20,27 +20,34 @@
 Manually trigger tasks, respecting dependencies among them.
 
 Triggering individual tasks:
-  * Triggering an unqueued task queues it; triggering a queued task runs it;
-    so to run an unqueued task immediately you many need to trigger it twice.
-  * Tasks can be triggered to run even if the workflow is paused.
-  * Attempts to trigger live tasks (preparing, submitted, running) will be
-    ignored.
+  * Triggering an unqueued task queues it, triggering a queued task runs it.
+    So you many need to trigger an unqueued task twice to run it immediately.
+  * Live tasks (preparing, submitted, or running) can't be triggered.
+  * Triggered tasks can run even if the workflow is paused.
 
-Triggering a group of multiple tasks at once:
-  To run or rerun a sub-graph, Cylc will automatically:
-  * erase the run history of the tasks, to allow re-run in the same flow
-  * identify "start tasks" that lead into the sub-graph and trigger them
-  * identify dependencies outside the group and satisfy them, to avoid a stall
-  * leave dependencies within the group to be satisfied by the triggered flow
+Triggering a group of tasks at once (e.g. members of a sub-graph):
+  Cylc will automatically:
+  * Erase the run history of members, so they can re-run in the same flow.
+  * Identify group start tasks, and trigger them to start the flow.
+  * Identify off-group dependencies, and satisfy them to avoid a stall.
+  * Leave in-group dependencies to be satisfied by the triggered flow.
 
-  If the workflow is paused, group start tasks will trigger immediately. The
-  flow will continue on from them when the workflow resumes.
+  If the workflow is paused, group start tasks will trigger immediately; the
+  flow will continue downstream of them when you resume the workflow.
 
-  How live (preparing, submitted, running) group members are handled:
-  * live group start tasks are left to run - they already triggered
-    WARNING: if they already completed outputs that other group tasks depend
-    on, you must manually satisfy ("cylc set") those prerequisites again
-  * live group-internal tasks are killed, so they can re-run in the flow
+  Beware of triggering live (preparing, submitted, or running) tasks:
+  * Live in-group tasks will be killed and their run history erased, to allow
+    them to re-run in the triggered flow.
+  * Live group-start tasks are left to run; they don't need to be retriggered.
+    WARNING: if they already completed outputs that other group members depend
+    on, you must manually satisfy those prerequisites again for the triggered
+    flow (run history erasure wipes out the original satisfied prerequisites).
+
+Flow number assignment in triggered tasks:
+  Active tasks (n=0) already have flows assigned; inactive tasks (n>0) do not.
+  * If an interdependent group of triggered tasks includes active tasks, the
+    flow will be assigned the existing flow numbers of those active tasks.
+  * Otherwise the flow will be assigned all current active flow numbers.
 
 Examples:
   # trigger task foo in cycle 1, in workflow "test"
