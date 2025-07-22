@@ -73,6 +73,7 @@ from cylc.flow.scripts.reinstall import (
     reinstall_cli as cylc_reinstall,
 )
 from cylc.flow.scripts.reload import (
+    RELOAD_OPTIONS,
     run as cylc_reload
 )
 from cylc.flow.terminal import cli_function
@@ -86,6 +87,7 @@ VR_OPTIONS = combine_options(
     VALIDATE_OPTIONS,
     REINSTALL_OPTIONS,
     REINSTALL_CYLC_ROSE_OPTIONS,
+    RELOAD_OPTIONS,
     PLAY_OPTIONS,
     CYLC_ROSE_OPTIONS,
     modify={'cylc-rose': 'validate, install'}
@@ -102,6 +104,7 @@ def get_option_parser() -> COP:
     for option in VR_OPTIONS:
         parser.add_option(*option.args, **option.kwargs)
     parser.set_defaults(is_validate=True)
+
     return parser
 
 

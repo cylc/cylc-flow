@@ -95,19 +95,22 @@ def test_process_outputs(outputs, required, expect):
     # Create a mocked up task-proxy:
     rtconf = {'skip': {'outputs': outputs}}
     itask = SimpleNamespace(
-        tdef=SimpleNamespace(
-            rtconfig=rtconf),
+        tdef=SimpleNamespace(rtconfig=rtconf),
         state=SimpleNamespace(
             outputs=SimpleNamespace(
                 iter_required_messages=lambda *a, **k: iter(required),
-                _message_to_trigger={v: v for v in required}
-            )))
+                _message_to_trigger={v: v for v in required},
+            )
+        ),
+    )
 
-    assert process_outputs(itask, rtconf) == ['submitted', 'started'] + expect
+    assert process_outputs(itask, rtconf) == {'submitted', 'started'}.union(
+        expect
+    )
 
 
 def test_skip_mode_validate(caplog, log_filter):
-    """It warns us if we've set a task config to nonlive mode.
+    """It logs a message if we've set a task config to nonlive mode.
 
     (And not otherwise)
 
@@ -117,7 +120,13 @@ def test_skip_mode_validate(caplog, log_filter):
     | If the run mode is set to simulation or skip in the workflow
     | configuration, then cylc validate and cylc lint should produce
     | warning (similar to development features in other languages / systems).
+
+    Edit:
+        Warning demoted to info to prevent the orange warning triangles
+        popping up in the GUI every time a workflow with configured skip tasks
+        is started. See: https://github.com/cylc/cylc-flow/pull/6854
     """
+    caplog.set_level(logging.INFO)
     taskdefs = {
         f'{run_mode}_task': SimpleNamespace(
             rtconfig={'run mode': run_mode},
@@ -131,7 +140,7 @@ def test_skip_mode_validate(caplog, log_filter):
 
     assert len(caplog.records) == 1
     assert log_filter(
-        level=logging.WARNING,
+        level=logging.INFO,
         exact_match=(
             "The following tasks are set to run in skip mode:\n"
             "    * skip_task"

@@ -748,6 +748,20 @@ with Conf('global.cylc', desc='''
        The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
 
+    .. note::
+
+       Most of the global settings can be changed while a workflow is running
+       using ``cylc reload --global``. Exceptions are:
+
+       `[scheduler]`: The majority of these settings affect the server and
+       cannot be reloaded while the server is running. The server must be
+       stopped and restarted for changes to take effect except for the sections
+       `[scheduler][mail]` and `[scheduler][events]` which provide workflow
+       defaults.
+
+       `[install][symlink dirs]`: These settings create files on disk, once a
+       task has started on a remote host these can't be changed for that host.
+
     .. versionchanged:: 8.0.0
 
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
@@ -1262,6 +1276,11 @@ with Conf('global.cylc', desc='''
 
             Symlinks from the the standard ``$HOME/cylc-run`` locations will be
             created.
+
+            .. note::
+
+               Once a platform has been installed and symlinks created they
+               cannot be modified for that run.
 
             .. versionadded:: 8.0.0
         """):
@@ -2120,6 +2139,11 @@ class GlobalConfig(ParsecConfig):
         except ParsecError:
             LOG.error(f'bad {conf_type} {fname}')
             raise
+
+    @classmethod
+    def set_cache(cls, cfg: "GlobalConfig") -> None:
+        """Set the cached config"""
+        cls._DEFAULT = cfg
 
     def load(self) -> None:
         """Load configuration from files."""

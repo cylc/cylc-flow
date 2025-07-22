@@ -29,7 +29,6 @@ from typing import (
     Union,
 )
 
-from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
@@ -41,9 +40,8 @@ from cylc.flow import (
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.data_messages_pb2 import PbEntireWorkflow
 from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
-    CylcGraphQLBackend,
+    CylcExecutionContext,
     IgnoreFieldMiddleware,
     instantiate_middleware,
 )
@@ -54,8 +52,6 @@ from cylc.flow.network.schema import schema
 
 
 if TYPE_CHECKING:
-    from graphql.execution import ExecutionResult
-
     from cylc.flow.network import ResponseDict
     from cylc.flow.scheduler import Scheduler
 
@@ -266,7 +262,7 @@ class WorkflowRuntimeServer:
         """Orchestrate the receive, send, publish of messages."""
         # Note: this cannot be an async method because the response part
         # of the listener runs the event loop synchronously
-        # (in graphql AsyncioExecutor)
+        # (in graphql schema.execute_async)
         while True:
             if self.waiting_to_stop:
                 # The self.stop() method is waiting for us to signal that we
@@ -303,7 +299,6 @@ class WorkflowRuntimeServer:
         try:
             method = getattr(self, message['command'])
             args = message['args']
-            args.update({'user': message['user']})
             if 'meta' in message:
                 args['meta'] = message['meta']
         except KeyError as exc:
@@ -351,7 +346,6 @@ class WorkflowRuntimeServer:
                           for name, obj in self.__class__.__dict__.items()
                           if hasattr(obj, 'exposed')}
 
-    @authorise()
     @expose
     def api(
         self,
@@ -388,7 +382,6 @@ class WorkflowRuntimeServer:
             return '%s\n%s' % (head, tail)
         return 'No method by name "%s"' % endpoint
 
-    @authorise()
     @expose
     def graphql(
         self,
@@ -406,29 +399,27 @@ class WorkflowRuntimeServer:
         Returns:
             object: Execution result, or a list with errors.
         """
-        executed: 'ExecutionResult' = schema.execute(
-            request_string,
-            variable_values=variables,
-            context_value={
-                'resolvers': self.resolvers,
-                'meta': meta or {},
-            },
-            backend=CylcGraphQLBackend(),
-            middleware=list(instantiate_middleware(self.middleware)),
-            executor=AsyncioExecutor(),
-            validate=True,  # validate schema (dev only? default is True)
-            return_promise=False,
+        executed = self.loop.run_until_complete(
+            schema.execute_async(
+                request_string,
+                variable_values=variables,
+                context_value={
+                    'resolvers': self.resolvers,
+                    'meta': meta or {},
+                },
+                middleware=list(instantiate_middleware(self.middleware)),
+                execution_context_class=CylcExecutionContext,
+            )
         )
         if executed.errors:
             for error in executed.errors:
                 LOG.warning(f"GraphQL: {error}")
             # If there are execution errors, it means there was an unexpected
             # error, so fail the command.
-            raise Exception(*executed.errors)
+            raise Exception(*(error.message for error in executed.errors))
         return executed.data
 
     # UIServer Data Commands
-    @authorise()
     @expose
     def pb_entire_workflow(self, **_kwargs) -> bytes:
         """Send the entire data-store in a single Protobuf message.
@@ -439,7 +430,6 @@ class WorkflowRuntimeServer:
         pb_msg = self.schd.data_store_mgr.get_entire_workflow()
         return pb_msg.SerializeToString()
 
-    @authorise()
     @expose
     def pb_data_elements(self, element_type: str, **_kwargs) -> bytes:
         """Send the specified data elements in delta form.

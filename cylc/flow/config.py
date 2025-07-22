@@ -102,7 +102,10 @@ from cylc.flow.pathutil import (
     get_workflow_name_from_id,
     is_relative_to,
 )
-from cylc.flow.run_modes import RunMode
+from cylc.flow.run_modes import (
+    WORKFLOW_ONLY_MODES,
+    RunMode,
+)
 from cylc.flow.run_modes.simulation import configure_sim_mode
 from cylc.flow.run_modes.skip import skip_mode_validate
 from cylc.flow.subprocctx import SubFuncContext
@@ -954,10 +957,10 @@ class WorkflowConfig:
         """Check for circular dependence in graph."""
         if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
                 not getattr(self.options, 'check_circular', False)):
-            LOG.warning(
+            LOG.info(
                 f"Number of tasks is > {self.CHECK_CIRCULAR_LIMIT}; will not "
-                "check graph for circular dependencies. To enforce this "
-                "check, use the option --check-circular.")
+                "check graph for circular dependencies. To run this check"
+                " anyway use the option --check-circular.")
             return
         start_point_str = self.cfg['scheduling']['initial cycle point']
         raw_graph = self.get_graph_raw(start_point_str,
@@ -2338,6 +2341,8 @@ class WorkflowConfig:
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
 
+        self.xtrigger_collator.report_duplicates()
+
     def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
@@ -2402,7 +2407,7 @@ class WorkflowConfig:
                     suicides += 1
 
         if suicides and not cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(
+            LOG.info(
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
                 "stable/html/7-to-8/major-changes/suicide-triggers.html"
@@ -2530,6 +2535,13 @@ class WorkflowConfig:
 
         try:
             rtcfg = self.cfg['runtime'][name]
+
+            # If the workflow mode is simulation or dummy always
+            # override the task config:
+            workflow_run_mode = RunMode.get(self.options)
+            if workflow_run_mode.value in WORKFLOW_ONLY_MODES:
+                rtcfg['run mode'] = workflow_run_mode.value
+
         except KeyError:
             raise WorkflowConfigError("Task not defined: %s" % name) from None
         # We may want to put in some handling for cases of changing the

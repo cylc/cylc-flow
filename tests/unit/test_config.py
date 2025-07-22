@@ -1134,7 +1134,7 @@ def test_process_runahead_limit(
 def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
     """Test WorkflowConfig._check_circular()."""
     # ----- Setup -----
-    caplog.set_level(logging.WARNING, CYLC_LOG)
+    caplog.set_level(logging.INFO, CYLC_LOG)
 
     options = SimpleNamespace(is_validate=True)
     if opt:

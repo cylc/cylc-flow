@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from random import random
+
 import pytest
 import urwid
 
@@ -27,8 +29,24 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
+from cylc.flow.tui.util import MODIFIER_ATTR_MAPPING
 from cylc.flow.workflow_status import StopMode
+
+
+def _add_xtrig(schd, itask, sig, label, satisfied=False):
+    """Register a new xtrigger.
+
+    This is enough to get the data store to reflect the xtrig, but don't expect
+    it to be functional!
+    """
+    (
+        schd.data_store_mgr.xtrigger_tasks
+        .setdefault(sig, set())
+        .add((itask.tokens.id, label))
+    )
+    schd.data_store_mgr.delta_xtrigger(sig, satisfied)
 
 
 def set_task_state(schd, task_states):
@@ -36,16 +54,23 @@ def set_task_state(schd, task_states):
 
     Task states should be of the format (cycle, task, state, is_held).
     """
-    for cycle, task, state, is_held in task_states:
+    for cycle, task, state, modifiers in task_states:
         itask = schd.pool.get_task(cycle, task)
         if not itask:
             itask = schd.pool.spawn_task(task, cycle, {1})
-        itask.state_reset(state, is_held=is_held)
+        if modifiers.pop('is_retry', None):
+            _add_xtrig(
+                schd, itask, 'wall_clock(offset=0)', f'_cylc_retry_{random()}'
+            )
+        if modifiers.pop('is_wallclock', None):
+            _add_xtrig(schd, itask, 'wall_clock(offset=1)', 'my_clock')
+        if modifiers.pop('is_xtriggered', None):
+            _add_xtrig(schd, itask, 'my_custom()', 'my_custom')
+        itask.state_reset(state, **modifiers)
         schd.data_store_mgr.delta_task_state(itask)
         schd.data_store_mgr.increment_graph_window(
             itask.tokens,
             cycle,
-            {1},
         )
 
 
@@ -224,12 +249,42 @@ async def test_task_states(flow, scheduler, start, rakiura):
         set_task_state(
             schd,
             [
-                (IntegerPoint('1'), 'a', TASK_STATUS_SUCCEEDED, False),
-                (IntegerPoint('1'), 'b', TASK_STATUS_FAILED, False),
-                (IntegerPoint('1'), 'c', TASK_STATUS_EXPIRED, False),
-                (IntegerPoint('2'), 'a', TASK_STATUS_SUBMITTED, False),
-                (IntegerPoint('2'), 'b', TASK_STATUS_RUNNING, True),
-                (IntegerPoint('2'), 'c', TASK_STATUS_SUBMIT_FAILED, True),
+                (
+                    IntegerPoint('1'),
+                    'a',
+                    TASK_STATUS_SUCCEEDED,
+                    {'is_held': False}
+                ),
+                (
+                    IntegerPoint('1'),
+                    'b',
+                    TASK_STATUS_FAILED,
+                    {'is_held': False}
+                ),
+                (
+                    IntegerPoint('1'),
+                    'c',
+                    TASK_STATUS_EXPIRED,
+                    {'is_held': False}
+                ),
+                (
+                    IntegerPoint('2'),
+                    'a',
+                    TASK_STATUS_SUBMITTED,
+                    {'is_held': False}
+                ),
+                (
+                    IntegerPoint('2'),
+                    'b',
+                    TASK_STATUS_RUNNING,
+                    {'is_held': True}
+                ),
+                (
+                    IntegerPoint('2'),
+                    'c',
+                    TASK_STATUS_SUBMIT_FAILED,
+                    {'is_held': True}
+                ),
             ]
         )
         await schd.update_data_structure()
@@ -271,6 +326,64 @@ async def test_task_states(flow, scheduler, start, rakiura):
                 'filter-submitted',
                 'only submitted tasks should be displayed'
                 ' (i.e. only 2/a should be displayed)',
+            )
+
+
+async def test_task_modifiers(flow, scheduler, start, rakiura):
+    """It should display task modifiers and text summaries of them."""
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '\n'.join(
+                    modifier
+                    for modifier, _ in MODIFIER_ATTR_MAPPING.values()
+                ) + '\nall'
+            },
+        },
+    }, name='test_task_modifiers')
+    schd = scheduler(id_)
+    async with start(schd):
+        set_task_state(
+            schd,
+            [
+                *[
+                    (
+                        IntegerPoint('1'),
+                        modifier,
+                        TASK_STATUS_WAITING,
+                        # NOTE: set is_queued=False as the default because
+                        # parentless tasks are autoqueued on startup
+                        {**{'is_queued': False}, modifier: True},
+                    )
+                    for modifier, _ in MODIFIER_ATTR_MAPPING.values()
+                ],
+                (
+                    IntegerPoint('1'),
+                    'all',
+                    TASK_STATUS_WAITING,
+                    {
+                        modifier: True
+                        for modifier, _ in MODIFIER_ATTR_MAPPING.values()
+                    },
+                )
+            ]
+        )
+        await schd.update_data_structure()
+
+        with rakiura(schd.tokens.id, size='80,30') as rk:
+            # test modifier icon rendering
+            rk.compare_screenshot(
+                'task-modifiers',
+                'all tasks should be displayed along with their modifiers'
+            )
+
+            # test modifier text summary
+            rk.user_input('down', 'down', 'down', 'enter')  # select task "all"
+            rk.compare_screenshot(
+                'task-context-menu',
+                'all modifiers should be listed along with the task state'
+                ' (i.e. the text "held, runahead, queued, retry scheduled,'
+                ' wallclock, xtriggered") should be present'
             )
 
 
@@ -375,7 +488,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
                 schd.pool.set_prereqs_and_outputs(
                     items=[f"1/{task}"],
                     outputs=[TASK_OUTPUT_SUCCEEDED],
-                    prereqs=None,
+                    prereqs=[],
                     flow=['all']
                 )
 
@@ -431,4 +544,88 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
             rk.compare_screenshot(
                 '3-workflow-restarted',
                 'the restarted workflow should be expanded',
+            )
+
+
+async def test_states(flow, scheduler, start, rakiura):
+    """It should dim no-flow tasks and display state summary in context menus.
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': 'a & b & c',
+                },
+            },
+        },
+        name='one',
+    )
+    from cylc.flow.scheduler import Scheduler
+    schd: Scheduler = scheduler(id_)
+
+    async with start(schd):
+        a = schd.pool.get_task(IntegerPoint('1'), 'a')
+        b = schd.pool.get_task(IntegerPoint('1'), 'b')
+        c = schd.pool.get_task(IntegerPoint('1'), 'c')
+        assert a and b and c
+
+        # set task flow numbers
+        assert a.flow_nums == {1}
+        b.flow_nums = {1, 2}
+        c.flow_nums = {}
+
+        # set task state
+        a.state_reset(TASK_STATUS_SUCCEEDED, is_held=True)
+        b.state_reset(TASK_STATUS_WAITING, is_queued=True)
+        c.state_reset(TASK_STATUS_WAITING, is_queued=False, is_runahead=True)
+
+        # update data store
+        for task in (a, b, c):
+            schd.data_store_mgr.delta_task_state(task)
+            schd.data_store_mgr.delta_task_flow_nums(task)
+        await schd.update_data_structure()
+
+        with rakiura(schd.tokens.id, size='80,15') as rk:
+            rk.compare_screenshot(
+                'on-load',
+                'the workflow should be expanded,'
+                ' no-flow task 1/c should be dimmed'
+            )
+
+            # workflow node
+            rk.user_input('down', 'enter')
+            rk.compare_screenshot(
+                'workflow-context--paused',
+                'the workflow should show as paused in the context menu',
+            )
+
+            # cycle: 1
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'cycle-context--waiting',
+                'the cycle should show as waiting in the context menu'
+            )
+
+            # task:a
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--succeeded+held',
+                'the task should show as succeeded+held in the context menu,'
+                ' no flow numbers should be displayed',
+            )
+
+            # task:b
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--waiting+queued',
+                'the task should show as waiting+queued in the context menu,'
+                ' the flow numbers 1,2 should be displayed',
+            )
+
+            # task:c
+            rk.user_input('q', 'down', 'enter')
+            rk.compare_screenshot(
+                'task-context--waiting+runahead',
+                'the task should show as waiting+runahead in the context menu,'
+                ' the task should be marked as flows=None'
             )

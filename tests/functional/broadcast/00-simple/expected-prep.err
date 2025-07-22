@@ -1,14 +1,14 @@
 ERROR: No broadcast to cancel/clear for these options:
   --cancel=[environment]BCAST
-  --namespaces=m4
-  --point_strings=20100809T00
+  --namespace=m4
+  --point=20100809T00
 ERROR: No broadcast to cancel/clear for these options:
   --cancel=[environment]BCAST
-  --namespaces=m5
-  --point_strings=*
+  --namespace=m5
+  --point=*
 ERROR: No broadcast to cancel/clear for these options:
-  --namespaces=m6
+  --namespace=m6
 ERROR: No broadcast to cancel/clear for these options:
-  --namespaces=m7
+  --namespace=m7
 ERROR: No broadcast to cancel/clear for these options:
-  --namespaces=ENS3
+  --namespace=ENS3

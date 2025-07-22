@@ -28,10 +28,9 @@
             mapfile -t RETRY_TIMES \
                 < <(sed -n 's/.*retrying.*after \(.*\)).*/\1/p' log)
 
-            # get a list of the times when the xtriggers were actually
-            # satisfied
+            # get a list of the times when the xtriggers actually succeeded
             mapfile -t XTRIGGER_TIMES \
-                < <(sed -n 's/\(.*\) INFO.*xtrigger satisfied.*/\1/p' log)
+                < <(sed -n 's/\(.*\) INFO.*xtrigger succeeded.*/\1/p' log)
 
             test "${#RETRY_TIMES[@]}" -eq 4
             test "${#XTRIGGER_TIMES[@]}" -eq 4

@@ -30,6 +30,7 @@ ignore:
   - "tests/**"
   - "ws_messages_pb2.py"
   - "cylc/flow/scripts/report_timings.py"
+  - "cylc/flow/network/graphql_subscribe.py"
 
 flag_management:
   default_rules:
