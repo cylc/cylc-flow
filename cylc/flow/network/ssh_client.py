@@ -17,7 +17,6 @@
 import asyncio
 import json
 import os
-import sys
 from typing import (
     Any,
     Dict,
@@ -38,12 +37,6 @@ from cylc.flow.workflow_files import (
     ContactFileFields,
     load_contact_file,
 )
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout as asyncto
-else:
-    from async_timeout import timeout as asyncto
 
 
 class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
@@ -78,7 +71,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
         if timeout is None:
             timeout = self.timeout
         try:
-            async with asyncto(timeout):
+            async with asyncio.timeout(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
                     command, args, timeout
                 )
