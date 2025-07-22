@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-----------------------------------------------------------------------------
 
-# If a task has a platform set using a subshell this should be evaluated
+# If a task has [remote]host=$(subshell) this should be evaluated
 # every time the task is run.
 # https://github.com/cylc/cylc-flow/issues/6808
 export REQUIRE_PLATFORM='loc:remote'

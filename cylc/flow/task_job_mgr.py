@@ -1236,7 +1236,7 @@ class TaskJobManager:
                 f"\"{itask.identity}\" the following are not compatible:\n"
             )
 
-        host_name, platform_name = [None] * 2
+        host_name, platform_name = None, None
         try:
             if rtconfig['remote']['host'] is not None:
                 host_name = self.task_remote_mgr.eval_host(
@@ -1269,8 +1269,7 @@ class TaskJobManager:
                     f"for task {itask.identity}: platform = "
                     f"{rtconfig['platform']} evaluated as {platform_name}"
                 )
-                # orig_platform_name = rtconfig['platform']
-                # rtconfig['platform'] = platform_name
+
             elif (
                 platform_name is None
                 and rtconfig['remote']['host'] != host_name
