@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from logging import INFO
+import logging
 from typing import (
     Iterable,
     List,
@@ -23,6 +24,7 @@ from typing import (
 
 import pytest
 
+from cylc.flow import LOG
 from cylc.flow.data_messages_pb2 import (
     PbPrerequisite,
     PbTaskProxy,
@@ -36,6 +38,7 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -148,6 +151,37 @@ async def edgeharness(mod_flow, mod_scheduler, mod_start):
                 'R1': """
                     b1 & b2 => c1 & c2
                     c1 => c2
+                """
+            }
+        }
+    }
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
+    async with mod_start(schd):
+        await schd.update_data_structure()
+        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+        yield schd, data
+
+
+@pytest.fixture(scope='module')
+async def xharness(mod_flow, mod_scheduler, mod_start):
+    """Like harness, but add xtriggers."""
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'xtriggers': {
+                'x': 'xrandom(0)',
+                'x2': 'xrandom(0)',
+                'y': 'xrandom(0, _=1)'
+            },
+            'graph': {
+                'R1': """
+                    @x => foo
+                    @x2 => foo
+                    @y => foo
+                    @x => bar
                 """
             }
         }
@@ -488,6 +522,86 @@ def test_delta_task_prerequisite(harness):
     assert not any(p.satisfied for p in get_pb_prereqs(schd))
 
 
+def test_delta_task_xtrigger(xharness):
+    """Test delta_task_xtrigger."""
+    schd: Scheduler
+    schd, _ = xharness
+    foo = schd.pool._get_task_by_id('1/foo')
+    bar = schd.pool._get_task_by_id('1/bar')
+
+    assert not foo.state.xtriggers['x']   # not satisfied
+    assert not foo.state.xtriggers['x2']  # not satisfied
+    assert not foo.state.xtriggers['y']   # not satisfied
+    assert not bar.state.xtriggers['x']   # not satisfied
+
+    # satisfy foo's dependence on x
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:succeeded'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert not foo.state.xtriggers['y']  # satisfied
+    assert not bar.state.xtriggers['x']  # not satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig.label == 'x'
+    assert xtrig.satisfied
+
+    # unsatisfy it again
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/x:unsatisfied'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert not foo.state.xtriggers['x']  # not satisfied
+
+    # data store should have one updated task proxy with unsatisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig.label == 'x'
+    assert not xtrig.satisfied
+
+    # satisfy both of foo's xtriggers at once
+    schd.pool.set_prereqs_and_outputs(
+        ['1/foo'],
+        [],
+        ['xtrigger/all:succeeded'],
+        flow=[]
+    )
+
+    # check the task pool
+    assert foo.state.xtriggers['x']  # satisfied
+    assert foo.state.xtriggers['y']  # satisfied
+
+    # data store should have one updated task proxy with satisfied xtrigger x
+    [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
+    assert pbfoo.id.endswith('foo')
+
+    xtrig_x = pbfoo.xtriggers['x=xrandom(0)']
+    assert xtrig_x.label == 'x'
+    assert xtrig_x.satisfied
+
+    # updated task proxy should also contain duplicate xtrigger labels
+    xtrig_x2 = pbfoo.xtriggers['x2=xrandom(0)']
+    assert xtrig_x2.label == 'x2'
+    assert xtrig_x2.satisfied
+
+    xtrig_y = pbfoo.xtriggers['y=xrandom(0, _=1)']
+    assert xtrig_y.label == 'y'
+    assert xtrig_y.satisfied
+
+
 async def test_absolute_graph_edges(flow, scheduler, start):
     """It should add absolute graph edges to the store.
 
@@ -538,10 +652,10 @@ async def test_flow_numbers(flow, scheduler, start):
         # initialise the data store
         await schd.update_data_structure()
 
-        # the task should exist in the original flow
+        # the task should not have a flow number as it is n>0
         ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
-        assert ds_task.flow_nums == '[1]'
+        assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
         schd.pool.force_trigger_tasks(['1/b'], ['2'])
@@ -667,3 +781,32 @@ async def test_remove_added_jobs_of_pruned_task(one: Scheduler, start):
         one.data_store_mgr.update_data_structure()
         assert not one.data_store_mgr.data[one.id][JOBS]
         assert not one.data_store_mgr.added[JOBS]
+
+
+async def test_log_events(one: Scheduler, start):
+    """It should record log events and strip and ANSI formatting."""
+    async with start(one):
+        handler = ProtobufStreamHandler(
+            one,
+            level=logging.INFO,
+        )
+        LOG.addHandler(handler)
+
+        try:
+            # log a message with some ANSIMARKUP formatting
+            LOG.warning(
+                '<bold>here</bold> <red>hare</red> <yellow>here</yellow>'
+            )
+
+            await one.update_data_structure()
+            log_records = one.data_store_mgr.data[one.id][WORKFLOW].log_records
+
+            assert len(log_records) == 1
+            log_record = log_records[0]
+
+            # the message should be in the store, the ANSI formatting should be
+            # stripped
+            assert log_record.level == 'WARNING'
+            assert log_record.message == 'here hare here'
+        finally:
+            LOG.removeHandler(handler)

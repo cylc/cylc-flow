@@ -106,6 +106,12 @@ message PbWorkflow {
     optional int32 is_runahead_total = 38;
     optional bool states_updated = 39;
     optional int32 n_edge_distance = 40;
+    repeated PbLogRecord log_records = 41;
+}
+
+message PbLogRecord {
+  optional string level = 1;
+  optional string message = 2;
 }
 
 // Selected runtime fields
@@ -231,6 +237,9 @@ message PbTaskProxy {
     optional bool flow_wait = 27;
     optional PbRuntime runtime = 28;
     optional int32 graph_depth = 29;
+    optional bool is_retry = 30;
+    optional bool is_wallclock = 31;
+    optional bool is_xtriggered = 32;
 }
 
 message PbFamily {
@@ -269,6 +278,9 @@ message PbFamilyProxy {
     optional int32 is_runahead_total = 20;
     optional PbRuntime runtime = 21;
     optional int32 graph_depth = 22;
+    optional bool is_retry = 23;
+    optional bool is_wallclock = 24;
+    optional bool is_xtriggered = 25;
 }
 
 message PbEdge {

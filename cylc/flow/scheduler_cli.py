@@ -20,6 +20,7 @@ import asyncio
 from copy import deepcopy
 from functools import lru_cache
 from itertools import zip_longest
+import logging
 from pathlib import Path
 from shlex import quote
 import sys
@@ -43,6 +44,7 @@ from cylc.flow.loggingutil import (
     RotatingLogFileHandler,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -343,8 +345,13 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
-    """Open Cylc log handlers for a flow run."""
+def _open_logs(
+    schd: Scheduler,
+    id_: str,
+    no_detach: bool,
+    restart_num: int,
+) -> None:
+    """Open Cylc log handlers for a new scheduler instance."""
     if not no_detach:
         while LOG.handlers:
             LOG.handlers[0].close()
@@ -357,6 +364,12 @@ def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
             restart_num=restart_num
         )
     )
+    handler = ProtobufStreamHandler(
+        schd,
+        level=logging.WARNING,
+    )
+    handler.setFormatter(logging.Formatter())
+    LOG.addHandler(handler)
 
 
 async def _scheduler_cli_1(
@@ -440,6 +453,7 @@ async def _scheduler_cli_3(
     """Run the workflow (part 3 - async)."""
     # setup loggers
     _open_logs(
+        scheduler,
         workflow_id,
         options.no_detach,
         restart_num=scheduler.get_restart_num()

@@ -597,6 +597,7 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 def test_nonlive_mode_validation(flow, validate, caplog, log_filter):
     """Nonlive tasks return a warning at validation.
     """
+    caplog.set_level(logging.INFO)
     msg1 = dedent(
         'The following tasks are set to run in skip mode:\n    * skip'
     )

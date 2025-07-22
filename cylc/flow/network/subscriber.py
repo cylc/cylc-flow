@@ -76,7 +76,7 @@ class WorkflowSubscriber(ZMQSocketBase):
         if port:
             port = int(port)
         if not (host and port):
-            host, _, port = get_location(workflow)
+            host, _, port, _ = get_location(workflow)
         if topics is None:
             topics = {b''}
         self.topics: Set[bytes] = set(topics)

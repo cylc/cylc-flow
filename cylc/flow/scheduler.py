@@ -994,7 +994,7 @@ class Scheduler:
             if should_poll:
                 to_poll_tasks.append(itask)
         if to_poll_tasks:
-            self.task_job_mgr.poll_task_jobs(self.workflow, to_poll_tasks)
+            self.task_job_mgr.poll_task_jobs(to_poll_tasks)
 
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
@@ -1047,15 +1047,6 @@ class Scheduler:
 
             self.command_queue.task_done()
 
-    def info_get_graph_raw(self, cto, ctn, grouping=None):
-        """Return raw graph."""
-        return (
-            self.config.get_graph_raw(cto, ctn, grouping),
-            self.config.workflow_polling_tasks,
-            self.config.leaves,
-            self.config.feet
-        )
-
     def _set_stop(self, stop_mode: Optional[StopMode] = None) -> None:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
@@ -1098,7 +1089,7 @@ class Scheduler:
                 f"{', '.join(sorted(t.identity for t in unkillable))}"
             )
         if not jobless:
-            self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
+            self.task_job_mgr.kill_task_jobs(to_kill)
 
         return len(unkillable)
 
@@ -1598,7 +1589,7 @@ class Scheduler:
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
         if self.get_run_mode() != RunMode.SIMULATION:
-            self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
+            self.task_job_mgr.check_task_jobs(self.pool)
 
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
@@ -2188,7 +2179,7 @@ class Scheduler:
             return
         if not self.is_paused:
             if not quiet:
-                LOG.warning("No need to resume - workflow is not paused")
+                LOG.info("No need to resume - workflow is not paused")
             return
         if not quiet:
             LOG.info("RESUMING the workflow now")

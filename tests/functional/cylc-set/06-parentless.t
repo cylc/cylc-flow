@@ -25,6 +25,6 @@ set_test_number 3
 install_and_validate
 REFTEST_OPTS="--start-task=1800/a" reftest_run
 
-grep_workflow_log_ok "${TEST_NAME_BASE}-clock" "xtrigger satisfied: wall_clock"
+grep_workflow_log_ok "${TEST_NAME_BASE}-clock" "xtrigger succeeded: wall_clock"
 
 purge

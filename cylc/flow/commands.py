@@ -66,7 +66,6 @@ from typing import (
     List,
     Optional,
     TypeVar,
-    Union,
 )
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -81,14 +80,16 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
-from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.workflow_status import StopMode
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
+    from enum import Enum
+
     from cylc.flow.scheduler import Scheduler
 
     # define a type for command implementations
@@ -169,7 +170,7 @@ async def set_prereqs_and_outputs(
 @_command('stop')
 async def stop(
     schd: 'Scheduler',
-    mode: Union[str, 'StopMode'],
+    mode: 'Optional[Enum]',
     cycle_point: Optional[str] = None,
     # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
     clock_time: Optional[str] = None,
@@ -207,12 +208,14 @@ async def stop(
         schd._update_workflow_state()
     else:
         # immediate shutdown
-        with suppress(KeyError):
-            # By default, mode from mutation is a name from the
-            # WorkflowStopMode graphene.Enum, but we need the value
-            mode = WorkflowStopMode[mode]  # type: ignore[misc]
         try:
-            mode = StopMode(mode)
+            # BACK COMPAT: mode=None
+            #     the mode can be `None` for commands issued from older Cylc
+            #     versions
+            # From: 8.4
+            # To: 8.5
+            # Remove at: 8.x
+            mode = StopMode(mode.value) if mode else StopMode.REQUEST_CLEAN
         except ValueError:
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
@@ -253,7 +256,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
     itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
-    schd.task_job_mgr.poll_task_jobs(schd.workflow, itasks)
+    schd.task_job_mgr.poll_task_jobs(itasks)
     yield len(bad_items)
 
 
@@ -302,14 +305,13 @@ async def pause(schd: 'Scheduler'):
 
 
 @_command('set_verbosity')
-async def set_verbosity(schd: 'Scheduler', level: Union[int, str]):
+async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
     """Set workflow verbosity."""
     try:
-        lvl = int(level)
-        LOG.setLevel(lvl)
+        LOG.setLevel(level.value)
     except (TypeError, ValueError) as exc:
         raise CommandFailedError(exc) from None
-    cylc.flow.flags.verbosity = log_level_to_verbosity(lvl)
+    cylc.flow.flags.verbosity = log_level_to_verbosity(level.value)
     yield
 
 
@@ -326,7 +328,7 @@ async def remove_tasks(
 
 
 @_command('reload_workflow')
-async def reload_workflow(schd: 'Scheduler'):
+async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     """Reload workflow configuration."""
     yield
     # pause the workflow if not already
@@ -360,12 +362,24 @@ async def reload_workflow(schd: 'Scheduler'):
         # give commands time to complete
         sleep(1)  # give any remove-init's time to complete
 
-    # reload the workflow definition
-    schd.reload_pending = 'loading the workflow definition'
-    schd.update_data_store()  # update workflow status msg
-    schd._update_workflow_state()
-    LOG.info("Reloading the workflow definition.")
     try:
+        # Back up the current config in case workflow reload errors
+        global_cfg_old = glbl_cfg()
+
+        if reload_global:
+            # Reload global config if requested
+            schd.reload_pending = 'reloading the global configuration'
+            schd.update_data_store()  # update workflow status msg
+            await schd.update_data_structure()
+            LOG.info("Reloading the global configuration.")
+
+            glbl_cfg(reload=True)
+
+        # reload the workflow definition
+        schd.reload_pending = 'loading the workflow definition'
+        schd.update_data_store()  # update workflow status msg
+        schd._update_workflow_state()
+        LOG.info("Reloading the workflow definition.")
         config = schd.load_flow_file(is_reload=True)
     except (ParsecError, CylcConfigError) as exc:
         if cylc.flow.flags.verbosity > 1:
@@ -380,6 +394,9 @@ async def reload_workflow(schd: 'Scheduler'):
             '\nOtherwise, fix the configuration and attempt to reload'
             ' again.'
         )
+
+        # Rollback global config
+        glbl_cfg().set_cache(global_cfg_old)
     else:
         schd.reload_pending = 'applying the new config'
         old_tasks = set(schd.config.get_task_name_list())
@@ -402,7 +419,7 @@ async def reload_workflow(schd: 'Scheduler'):
         # logged by the TaskPool.
         add = set(schd.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning(f"Added task: '{task}'")
+            LOG.info(f"Added task: '{task}'")
         schd.workflow_db_mgr.put_workflow_template_vars(schd.template_vars)
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)

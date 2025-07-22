@@ -16,6 +16,8 @@
 """Tests for utilities supporting run modes.
 """
 
+import pytest
+
 from cylc.flow.run_modes import RunMode
 
 
@@ -28,3 +30,18 @@ def test_run_mode_desc():
 def test_get_default_live():
     """RunMode.get() => live"""
     assert RunMode.get({}) == RunMode.LIVE
+
+
+@pytest.mark.parametrize('str_', ('LIVE', 'Dummy', 'SkIp', 'siMuLATioN'))
+def test__missing_(str_):
+    """The RunMode enumeration works when fed a string in the wrong case"""
+    assert RunMode(str_).value == str_.lower()
+
+
+def test__missing_still_doesnt_work():
+    """
+    The RunMode enumeration raises an error when fed a string
+    that is not a mode.
+    """
+    with pytest.raises(ValueError):
+        RunMode('garbage')

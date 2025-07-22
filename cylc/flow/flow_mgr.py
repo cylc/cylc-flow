@@ -41,7 +41,7 @@ FLOW_NONE = "none"
 
 def add_flow_opts(parser):
     parser.add_option(
-        "--flow", action="append", dest="flow", metavar="FLOW",
+        "--flow", action="append", dest="flow", metavar="FLOW", default=[],
         help=f'Assign new tasks to all active flows ("{FLOW_ALL}");'
              f' no flow ("{FLOW_NONE}"); a new flow ("{FLOW_NEW}");'
              f' or a specific flow (e.g. "2"). The default is "{FLOW_ALL}".'

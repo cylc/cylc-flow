@@ -14,7 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Tuple,
+)
 
 from cylc.flow.cycling.loader import (
     get_interval,
@@ -38,11 +42,11 @@ class TaskTrigger:
     """Class representing an upstream dependency.
 
     Args:
-        task_name (str): The name of the upstream task.
-        cycle_point_offset (str): String representing the offset of the
+        task_name: The name of the upstream task.
+        cycle_point_offset: String representing the offset of the
             upstream task (e.g. -P1D) if this dependency is not an absolute
             one. Else None.
-        output (str): The task state / output for this trigger e.g. succeeded.
+        output: The task state / output for this trigger e.g. succeeded.
 
     """
 
@@ -50,9 +54,16 @@ class TaskTrigger:
                  'offset_is_irregular', 'offset_is_absolute',
                  'offset_is_from_icp', 'initial_point']
 
-    def __init__(self, task_name, cycle_point_offset, output,
-                 offset_is_irregular=False, offset_is_absolute=False,
-                 offset_is_from_icp=False, initial_point=None):
+    def __init__(
+        self,
+        task_name: str,
+        cycle_point_offset: Optional[str],
+        output: str,
+        offset_is_irregular: bool = False,
+        offset_is_absolute: bool = False,
+        offset_is_from_icp: bool = False,
+        initial_point: 'Optional[PointBase]' = None,
+    ):
         self.task_name = task_name
         self.cycle_point_offset = cycle_point_offset
         self.output = output
@@ -64,9 +75,10 @@ class TaskTrigger:
         #   2000, 20000101T0600Z, 2000-01-01T06:00+00:00, ...
         # AND NON-ABSOLUTE IRREGULAR:
         #   -PT6H+P1D, T00, ...
-        if (self.offset_is_irregular and any(
-                self.cycle_point_offset.startswith(c)
-                for c in ['P', '+', '-', 'T'])):
+        if self.offset_is_irregular and any(
+            self.cycle_point_offset.startswith(c)  # type: ignore[union-attr]
+            for c in ['P', '+', '-', 'T']
+        ):
             self.offset_is_absolute = False
 
     def get_parent_point(self, from_point):
@@ -147,7 +159,28 @@ class TaskTrigger:
         else:
             return '%s:%s' % (self.task_name, self.output)
 
-    __repr__ = __str__
+    def __repr__(self) -> str:
+        """
+        >>> TaskTrigger('', '', '')
+        <TaskTrigger ...>
+        """
+        return f"<{type(self).__name__} {self}>"
+
+    def __hash__(self) -> int:
+        return hash((
+            self.task_name,
+            self.cycle_point_offset,
+            self.output,
+            self.offset_is_irregular,
+            self.offset_is_from_icp,
+            self.offset_is_absolute,
+            self.initial_point,
+        ))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TaskTrigger):
+            return NotImplemented
+        return hash(self) == hash(other)
 
     @staticmethod
     def standardise_name(name):

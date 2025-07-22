@@ -25,6 +25,7 @@ import urwid
 from urwid.canvas import CanvasCache
 from urwid.widget import SelectableIcon
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
@@ -245,6 +246,7 @@ class TuiApp:
         ('header', 'dark gray', BACK),
         ('header_key', 'dark gray, bold', BACK),
         ('overlay', 'black', 'light gray'),
+        ('diminished', 'dark gray', BACK),
         # cylc logo colours
         ('R', 'light red, bold', BACK),
         ('Y', 'yellow, bold', BACK),
@@ -434,7 +436,8 @@ class TuiApp:
             ('Y', 'y'),
             ('G', 'l'),
             ('B', 'c'),
-            ('title', ' Tui')
+            ('title', ' Tui '),
+            ('diminished', CYLC_VERSION),
         ]
         if self.filters['tasks'] != DEFAULT_FILTERS['tasks']:
             # if task filters are active, display short help

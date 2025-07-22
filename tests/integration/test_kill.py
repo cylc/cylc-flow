@@ -18,9 +18,9 @@
 import asyncio
 import logging
 from secrets import token_hex
+import sys
 from unittest.mock import Mock
 
-from async_timeout import timeout as async_timeout
 import pytest
 
 from cylc.flow.commands import (
@@ -41,6 +41,12 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
 )
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as async_timeout
+else:
+    from async_timeout import timeout as async_timeout
 
 
 LOCALHOST = 'localhost'
