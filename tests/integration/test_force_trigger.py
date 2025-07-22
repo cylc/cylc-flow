@@ -501,3 +501,119 @@ async def test_trigger_group_in_flow(
             ('b', '[2]'),
             ('c', '[2]'),
         }
+
+
+async def test_trigger_n0_tasks(
+    flow,
+    scheduler,
+    run,
+    complete,
+    db_select,
+):
+    """It should trigger tasks within their flow if available, else all flows.
+
+    * N=0 tasks already have a flow assigned.
+    * N!=0 tasks do not yet have a flow assigned.
+
+    When we are triggering n!=0 tasks, there is no appropriate flow to run them
+    in (this would involve flow merge prediction), so we default to all active
+    flows as the most/only sensible default.
+
+    Before group trigger, we triggered tasks independently, i.e. we assumed
+    there were no dependencies between the tasks and ran them all
+    simultaneously. With the group trigger extension, we enhanced trigger to
+    make it aware of interdependent tasks.
+
+    Triggering independent tasks (pre group-trigger behaviour):
+      * If we trigger a n=0 task, we leave it in the flow it is already in.
+      * If we trigger a n!=0 task, we default to all active flows.
+
+    Triggering interdependent tasks (group trigger extension):
+      If the list of tasks being triggered contains any interdependent tasks,
+      we treat these interdependent tasks as a group.
+
+      * If we trigger a group which contains n=0 tasks, the whole group should
+        be triggered using the set of flows possessed by these n=0 tasks.
+      * If we trigger a group which does not contain n=0 tasks, we default to
+        all active flows.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    # group 1 (we will trigger a, b & c)
+                    a => b => c => z
+
+                    # group 2 (we will trigger e, f & g)
+                    e => f => g => z
+
+                    # group 3 (we will trigger y)
+                    x => y => z
+                '''
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        # cylc hold 1/x
+        await run_cmd(hold(schd, ['1/x']))
+
+        # group 1: spawn n>0 tasks into flows 2 & 3
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/b'], ['2'], None, ['all'])
+        )
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/c'], ['3'], None, ['all'])
+        )
+
+        # group 2: spawn n>0 tasks into flows 4 & 5
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/f'], ['4'], None, ['all'])
+        )
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/g'], ['5'], None, ['all'])
+        )
+
+        # trigger all three groups of tasks
+        await run_cmd(
+            force_trigger_tasks(
+                schd, ['1/a', '1/b', '1/c', '1/e', '1/f', '1/g', '1/y'], []
+            )
+        )
+
+        await complete(
+            schd, '1/a', '1/b', '1/c', '1/e', '1/f', '1/g', '1/y', '1/z'
+        )
+
+        assert set(db_select(
+            schd,
+            True,
+            'task_outputs',
+            'name',
+            'flow_nums',
+        )) == {
+            # junk entries inserted on spawn/set
+            ('a', '[1]'),  # initial flow spawned on startup
+            ('b', '[]'),   # created by "cylc set"
+            ('c', '[]'),   # created by "cylc set"
+            ('e', '[1]'),  # initial flow spawned on startup
+            ('f', '[]'),   # created by "cylc set"
+            ('g', '[]'),   # created by "cylc set"
+            ('x', '[1]'),  # initial flow spawned on startup
+
+            # group 1: contained tasks in flows 1, 2 & 3
+            ('a', '[1, 2, 3]'),
+            ('b', '[1, 2, 3]'),
+            ('c', '[1, 2, 3]'),
+
+            # group 2: contained tasks in flows 1, 4 & 5
+            ('e', '[1, 4, 5]'),
+            ('f', '[1, 4, 5]'),
+            ('g', '[1, 4, 5]'),
+
+            # group 3: contained tasks in flows None
+            ('y', '[1, 2, 3, 4, 5]'),
+
+            # downstream task
+            ('z', '[1, 2, 3, 4, 5]'),
+        }

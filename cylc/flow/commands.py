@@ -67,15 +67,16 @@ from typing import (
     List,
     Optional,
     Set,
-    TypeVar,
     Tuple,
+    TypeVar,
 )
 
 from metomi.isodatetime.parsers import TimePointParser
 
-from cylc.flow.id import Tokens
 from cylc.flow import LOG
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.command_validation as validate
+from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import (
     CommandFailedError,
     CyclingError,
@@ -83,27 +84,28 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
+from cylc.flow.id import Tokens
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
 from cylc.flow.run_modes import RunMode
-from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE,
     TASK_STATUS_PREPARING,
-    TASK_STATUS_WAITING
+    TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE,
 )
+from cylc.flow.taskdef import generate_graph_children
+from cylc.flow.util import get_connected_groups
 from cylc.flow.workflow_status import StopMode
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 if TYPE_CHECKING:
     from enum import Enum
 
-    from cylc.flow.scheduler import Scheduler
-    from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.cycling import PointBase
+    from cylc.flow.flow_mgr import FlowNums
+    from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.taskdef import TaskDef
 
@@ -656,23 +658,78 @@ async def force_trigger_tasks(
             "at Cylc 8.5."
         )
 
-    yield
-
     active, inactive, _ = schd.pool.filter_task_proxies(
         tasks, inactive=True, warn_no_active=False,
     )
+    tokens_list: List[Tokens] = [
+        *(itask.tokens for itask in active),
+        *(
+            Tokens(cycle=str(cycle), task=tdef.name)
+            for tdef, cycle in inactive
+        ),
+    ]
 
-    group_ids = {
-        *((tdef.name, str(point)) for (tdef, point) in inactive),
-        *((itask.tdef.name, str(itask.point)) for itask in active)
+    yield
+
+    task_ids: Set[Tuple[str, str]] = {
+        (tokens['task'], tokens['cycle']) for tokens in tokens_list
     }
 
-    # Get integer flow numbers from CLI inputs.
-    flow_nums = schd.pool.flow_mgr.cli_to_flow_nums(flow, flow_descr)
+    adjacency = {}
+    for task, cycle in task_ids:
+        icycle = get_point(cycle)
 
-    # Here, empty flow_nums means either no-flow or all active flows.
-    if flow != [FLOW_NONE] and not flow_nums:
-        flow_nums = schd.pool._get_active_flow_nums()
+        prereqs = {
+            (trg.task_name, str(trg.get_point(icycle)))
+            for trg in schd.config.taskdefs[task].get_triggers(icycle)
+            if (trg.task_name, str(trg.get_point(icycle))) in task_ids
+        }
+        adjacency.setdefault((task, cycle), set()).update(prereqs)
+        for prereq in prereqs:
+            adjacency.setdefault(prereq, set()).add((task, cycle))
+
+    for group in get_connected_groups(adjacency):
+        # trigger each group of tasks
+        _force_trigger_tasks(
+            schd,
+            {  # active tasks
+                itask
+                for itask in active
+                if (itask.tokens['task'], itask.tokens['cycle']) in group
+            },
+            {  # inactive tasks
+                (taskdef, icycle)
+                for taskdef, icycle in inactive
+                if (taskdef.name, str(icycle)) in group
+            },
+            group,
+            flow,
+            flow_wait,
+            flow_descr,
+            on_resume,
+        )
+
+
+def _force_trigger_tasks(
+    schd: 'Scheduler',
+    active: 'Set[TaskProxy]',
+    inactive: 'Set[Tuple[TaskDef, PointBase]]',
+    group_ids: Set[Tuple[str, str]],
+    flow: List[str],
+    flow_wait: bool = False,
+    flow_descr: Optional[str] = None,
+    on_resume: bool = False
+):
+    if flow or not active:
+        flow_nums = schd.pool.flow_mgr.cli_to_flow_nums(flow, flow_descr)
+        if flow != [FLOW_NONE] and not flow_nums:
+            # Here, empty flow_nums means either no-flow or all active flows.
+            flow_nums = schd.pool._get_active_flow_nums()
+
+    else:
+        flow_nums = set()
+        for itask in active:
+            flow_nums.update(itask.flow_nums)
 
     # Record off-group prerequisites, and active tasks to be removed.
     active_to_remove = []
