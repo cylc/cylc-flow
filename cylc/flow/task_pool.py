@@ -1870,7 +1870,11 @@ class TaskPool:
                     for cycle, task, output in self.abs_outputs_done
                 ])
 
-        self.db_add_new_flow_rows(itask)
+        if prev_status is None:
+            # only add new flow rows if this task has not run before
+            # see https://github.com/cylc/cylc-flow/pull/6821
+            self.db_add_new_flow_rows(itask)
+
         return itask
 
     def _spawn_after_flow_wait(self, itask: TaskProxy) -> None:
