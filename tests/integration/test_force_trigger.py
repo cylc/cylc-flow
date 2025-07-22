@@ -566,7 +566,7 @@ async def test_trigger_n0_tasks(
             set_prereqs_and_outputs(schd, ['1/c'], ['3'], None, ['all'])
         )
 
-        # group 1: spawn n>0 tasks into flows 4 & 5
+        # group 2: spawn n>0 tasks into flows 4 & 5
         await run_cmd(
             set_prereqs_and_outputs(schd, ['1/f'], ['4'], None, ['all'])
         )
@@ -614,6 +614,6 @@ async def test_trigger_n0_tasks(
             # group 3: contained tasks in flows None
             ('y', '[1, 2, 3, 4, 5]'),
 
-            # x
+            # downstream task
             ('z', '[1, 2, 3, 4, 5]'),
         }
