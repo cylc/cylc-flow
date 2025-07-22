@@ -290,7 +290,6 @@ class TaskPool:
         self.data_store_mgr.increment_graph_window(
             itask.tokens,
             itask.point,
-            itask.flow_nums,
             is_manual_submit=itask.is_manual_submit,
             itask=itask
         )
@@ -1128,7 +1127,11 @@ class TaskPool:
         # Log tasks orphaned by a reload but not currently in the task pool.
         for name in orphans:
             if name not in (itask.tdef.name for itask in tasks):
-                LOG.warning("Removed task: '%s'", name)
+                LOG.info("Removed task: '%s'", name)
+        # Store lists of tasks which were active before reload.
+        warn_tasks: List[str] = []
+        _warn_tasks: List[str] = []
+
         for itask in tasks:
             if itask.tdef.name in orphans:
                 if (
@@ -1141,7 +1144,7 @@ class TaskPool:
                 else:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.graph_children = {}
-                    LOG.warning(
+                    LOG.info(
                         f"[{itask}] will not spawn children "
                         "- task definition removed"
                     )
@@ -1163,15 +1166,18 @@ class TaskPool:
                 self._swap_out(new_task)
                 self.data_store_mgr.delta_task_prerequisite(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
+
                 if itask.state(*TASK_STATUSES_ACTIVE):
-                    LOG.warning(
-                        f"[{itask}] active with pre-reload settings"
-                    )
+                    warn_tasks.append(str(itask))
                 elif itask.state(TASK_STATUS_PREPARING):
                     # Job file might have been written at this point?
-                    LOG.warning(
-                        f"[{itask}] may be active with pre-reload settings"
-                    )
+                    _warn_tasks.append(str(itask))
+
+        for may, tasks in (('', warn_tasks), ('may be', _warn_tasks)):
+            if tasks:
+                _tasks = "\n * ".join(tasks)
+                LOG.info(
+                    f"Tasks {may} active with pre-reload settings:\n{_tasks}")
 
         # Reassign live tasks to the internal queue
         del self.task_queue_mgr
@@ -1255,22 +1261,18 @@ class TaskPool:
                     orphans_kill_failed.append(itask)
                 else:
                     orphans.append(itask)
-        if orphans_kill_failed:
-            LOG.warning(
-                "Orphaned tasks (kill failed):\n"
-                + "\n".join(
-                    f"* {itask.identity} ({itask.state.status})"
-                    for itask in orphans_kill_failed
+
+        for orphanlist, extra_text in (
+            (orphans_kill_failed, ' (kill failed)'),
+            (orphans, '')
+        ):
+            if orphanlist:
+                LOG.warning(
+                    f"Orphaned tasks{extra_text}:\n"
+                    + "\n".join(
+                        f"* {itask.identity} ({itask.state.status})"
+                        for itask in orphanlist)
                 )
-            )
-        if orphans:
-            LOG.warning(
-                "Orphaned tasks:\n"
-                + "\n".join(
-                    f"* {itask.identity} ({itask.state.status})"
-                    for itask in orphans
-                )
-            )
 
         for id_key in self.task_events_mgr._event_timers:
             LOG.warning(
@@ -1875,7 +1877,11 @@ class TaskPool:
                     for cycle, task, output in self.abs_outputs_done
                 ])
 
-        self.db_add_new_flow_rows(itask)
+        if prev_status is None:
+            # only add new flow rows if this task has not run before
+            # see https://github.com/cylc/cylc-flow/pull/6821
+            self.db_add_new_flow_rows(itask)
+
         return itask
 
     def _spawn_after_flow_wait(self, itask: TaskProxy) -> None:

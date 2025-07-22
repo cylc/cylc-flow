@@ -11,6 +11,14 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.4.4 (Released 2025-07-18)__
+
+### 🔧 Fixes
+
+[#6798](https://github.com/cylc/cylc-flow/pull/6798) - Prevent unintended submission retries that could result from platform connection issues in certain circumstances.
+
+[#6828](https://github.com/cylc/cylc-flow/pull/6828) - Simulation mode will no longer erroneously complain about unsatisfied custom outputs.
+
 ## __cylc-8.4.3 (Released 2025-06-17)__
 
 ### 🚀 Enhancements

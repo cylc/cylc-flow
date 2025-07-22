@@ -43,6 +43,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_FAILED,
@@ -2393,3 +2394,75 @@ async def test_start_tasks(
                 "2050/baz",
             ])
         )
+
+
+async def test_add_new_flow_rows_on_spawn(
+    flow,
+    scheduler,
+    run,
+    complete,
+    db_select,
+    capcall,
+) -> None:
+    """Task suicide should not override previously completed outputs.
+
+    See https://github.com/cylc/cylc-flow/pull/6821
+    """
+    # capture all TaskPool.spawn_task() calls
+    spawn_task_calls = capcall(
+        'cylc.flow.task_pool.TaskPool.spawn_task', TaskPool.spawn_task
+    )
+
+    def list_spawn_task_calls():
+        """Return a list of the names of tasks which have been run through the
+        "spawn_tasks" function so far."""
+        return [
+            args[1] for args, _kwargs in spawn_task_calls
+        ]
+
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    slow:fail? => foo
+                    slow? => !foo
+                    foo:x => x
+                ''',
+            },
+        },
+        'runtime': {
+            'foo': {
+                'outputs': {'x': 'xxx'}
+            },
+        },
+    })
+
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        # 1/slow should spawn on startup
+        assert list_spawn_task_calls() == ['slow']
+
+        # set foo:x
+        await commands.run_cmd(
+            commands.set_prereqs_and_outputs(
+                schd, ['1/foo'], ['1'], ['x'], None
+            )
+        )
+        # 1/foo:x should be recorded in the DB:
+        assert db_select(
+            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
+        ) == [('{"x": "(manually completed)"}',)]
+        # and 1/x should spawn:
+        assert list_spawn_task_calls() == ['slow', 'x']
+
+        # run the workflow until completion
+        await complete(schd, timeout=5)
+
+        # 1/foo should spawn as a result of the suicide trigger
+        assert list_spawn_task_calls() == ['slow', 'x', 'foo']
+
+        # the manually completed output should not have been overwritten by the
+        # suicide trigger
+        assert db_select(
+            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
+        ) == [('{"x": "(manually completed)"}',)]

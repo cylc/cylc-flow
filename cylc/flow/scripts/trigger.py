@@ -125,7 +125,7 @@ def get_option_parser() -> COP:
         help=(
             "If the workflow is paused, wait until it is resumed before "
             "running the triggered task(s). DEPRECATED - this will be "
-            "removed at Cylc 8.5."
+            "removed at Cylc 8.6."
         ),
         action="store_true",
         default=False,

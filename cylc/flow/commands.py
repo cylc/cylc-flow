@@ -594,7 +594,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # logged by the TaskPool.
         add = set(schd.config.get_task_name_list()) - old_tasks
         for task in add:
-            LOG.warning(f"Added task: '{task}'")
+            LOG.info(f"Added task: '{task}'")
         schd.workflow_db_mgr.put_workflow_template_vars(schd.template_vars)
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)
@@ -655,7 +655,7 @@ async def force_trigger_tasks(
     if on_resume:
         LOG.warning(
             "The --on-resume option is deprecated and will be removed "
-            "at Cylc 8.5."
+            "at Cylc 8.6."
         )
 
     active, inactive, _ = schd.pool.filter_task_proxies(

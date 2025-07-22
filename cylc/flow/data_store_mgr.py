@@ -130,7 +130,6 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
-    from logging import LogRecord
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
@@ -772,7 +771,6 @@ class DataStoreMgr:
         self,
         source_tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_manual_submit: bool = False,
         itask: Optional['TaskProxy'] = None
     ) -> None:
@@ -791,7 +789,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_manual_submit
             itask:
                 Active/Other task proxy, passed in with pool invocation.
@@ -846,7 +843,6 @@ class DataStoreMgr:
         self.generate_ghost_task(
             source_tokens,
             point,
-            flow_nums,
             is_parent=False,
             itask=itask,
             replace_existing=True,
@@ -1010,7 +1006,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     child_tokens,
                                     child_point,
-                                    flow_nums,
                                     False,
                                     None,
                                     n_depth
@@ -1036,7 +1031,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     parent_tokens,
                                     parent_point,
-                                    flow_nums,
                                     True,
                                     None,
                                     n_depth
@@ -1218,7 +1212,6 @@ class DataStoreMgr:
         self,
         tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_parent: bool = False,
         itask: Optional['TaskProxy'] = None,
         n_depth: int = 0,
@@ -1229,7 +1222,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_parent: Used to determine whether to load DB state.
             itask: Update task-node from corresponding task proxy object.
             n_depth: n-window graph edge distance.
@@ -1254,7 +1246,7 @@ class DataStoreMgr:
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
-                flow_nums,
+                flow_nums=None,
                 submit_num=0,
                 data_mode=True,
                 sequential_xtrigger_labels=(
@@ -1291,7 +1283,8 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
-            flow_nums=serialise_set(flow_nums),
+            # Set default before history DB batch application
+            flow_nums=serialise_set(set()),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1851,7 +1844,6 @@ class DataStoreMgr:
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
-                deserialise_set(tproxy.flow_nums)
             )
         # Flag difference between old and new window for pruning.
         self.prune_flagged_nodes.update(
@@ -2358,7 +2350,19 @@ class DataStoreMgr:
                     node_id, MESSAGE_MAP[node_type](id=node_id))
                 node_delta.runtime.CopyFrom(new_runtime)
 
-    def delta_log_record(self, record: 'LogRecord') -> None:
+    def delta_log_record(self, level: str, message: str) -> None:
+        """Append a log record to the data store.
+
+        Args:
+            level:
+                The log level name e.g. INFO or WARNING.
+            message:
+                The formatted log message. Note, we are deliberately NOT
+                formatting the timestamp, level, etc into this message, these
+                should be added as discrete fields if they desired in the
+                future.
+
+        """
         w_delta = self.updated[WORKFLOW]
         w_delta.id = self.workflow_id
         w_delta.last_updated = time()
@@ -2366,9 +2370,8 @@ class DataStoreMgr:
 
         if not hasattr(w_delta, 'log_records'):
             w_delta.log_records = []
-        w_delta.log_records.append(
-            PbLogRecord(level=record.levelname, message=record.message)
-        )
+
+        w_delta.log_records.append(PbLogRecord(level=level, message=message))
 
         self.updates_pending = True
 

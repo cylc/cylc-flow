@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from logging import INFO
+import logging
 from typing import (
     Iterable,
     List,
@@ -27,6 +28,7 @@ from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks
 )
+from cylc.flow import LOG
 from cylc.flow.data_messages_pb2 import (
     PbPrerequisite,
     PbTaskProxy,
@@ -40,6 +42,7 @@ from cylc.flow.data_store_mgr import (
     WORKFLOW,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -653,10 +656,10 @@ async def test_flow_numbers(flow, scheduler, start):
         # initialise the data store
         await schd.update_data_structure()
 
-        # the task should exist in the original flow
+        # the task should not have a flow number as it is n>0
         ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
-        assert ds_task.flow_nums == '[1]'
+        assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
         await run_cmd(force_trigger_tasks(schd, ['1/b'], ['2']))
@@ -782,3 +785,32 @@ async def test_remove_added_jobs_of_pruned_task(one: Scheduler, start):
         one.data_store_mgr.update_data_structure()
         assert not one.data_store_mgr.data[one.id][JOBS]
         assert not one.data_store_mgr.added[JOBS]
+
+
+async def test_log_events(one: Scheduler, start):
+    """It should record log events and strip and ANSI formatting."""
+    async with start(one):
+        handler = ProtobufStreamHandler(
+            one,
+            level=logging.INFO,
+        )
+        LOG.addHandler(handler)
+
+        try:
+            # log a message with some ANSIMARKUP formatting
+            LOG.warning(
+                '<bold>here</bold> <red>hare</red> <yellow>here</yellow>'
+            )
+
+            await one.update_data_structure()
+            log_records = one.data_store_mgr.data[one.id][WORKFLOW].log_records
+
+            assert len(log_records) == 1
+            log_record = log_records[0]
+
+            # the message should be in the store, the ANSI formatting should be
+            # stripped
+            assert log_record.level == 'WARNING'
+            assert log_record.message == 'here hare here'
+        finally:
+            LOG.removeHandler(handler)
