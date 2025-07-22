@@ -421,7 +421,25 @@ class TaskEventsManager():
     EVENT_EXPIRED = TASK_OUTPUT_EXPIRED
     EVENT_SUBMIT_FAILED = "submission failed"
     EVENT_SUBMIT_RETRY = "submission retry"
+    EVENT_SUBMIT_TIMEOUT = "submission timeout"
+    EVENT_EXEC_TIMEOUT = "execution timeout"
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
+    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
+    STD_EVENTS = [
+        EVENT_SUBMITTED,
+        EVENT_SUBMIT_TIMEOUT,
+        EVENT_SUBMIT_RETRY,
+        EVENT_SUBMIT_FAILED,
+        EVENT_STARTED,
+        EVENT_EXEC_TIMEOUT,
+        EVENT_RETRY,
+        EVENT_SUCCEEDED,
+        EVENT_FAILED,
+        EVENT_LATE,
+        EVENT_EXPIRED,
+        *NON_UNIQUE_EVENTS,
+    ]
+
     HANDLER_CUSTOM = "event-handler"
     HANDLER_MAIL = "event-mail"
     JOB_FAILED = "job failed"
@@ -432,7 +450,6 @@ class TaskEventsManager():
     FLAG_POLLED = "(polled)"
     FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
-    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
     JOB_SUBMIT_SUCCESS_FLAG = 0
     JOB_SUBMIT_FAIL_FLAG = 1
     JOB_LOGS_RETRIEVAL_EVENTS = {
@@ -504,10 +521,10 @@ class TaskEventsManager():
         # Timeout reached for task, emit event and reset itask.timeout
         if itask.state(TASK_STATUS_RUNNING):
             time_ref = itask.summary['started_time']
-            event = 'execution timeout'
+            event = self.EVENT_EXEC_TIMEOUT
         elif itask.state(TASK_STATUS_SUBMITTED):
             time_ref = itask.summary['submitted_time']
-            event = 'submission timeout'
+            event = self.EVENT_SUBMIT_TIMEOUT
         msg = event
         with suppress(TypeError, ValueError):
             msg += ' after %s' % intvl_as_str(itask.timeout - time_ref)
@@ -1874,7 +1891,7 @@ class TaskEventsManager():
         timeout = None  # timeout in setting
         if itask.state(TASK_STATUS_RUNNING):
             timeref = itask.summary['started_time']
-            timeout_key = 'execution timeout'
+            timeout_key = self.EVENT_EXEC_TIMEOUT
             # Actual timeout after all polling.
             timeout = self._get_events_conf(itask, timeout_key)
             execution_polling_intervals = list(
@@ -1894,7 +1911,7 @@ class TaskEventsManager():
                 delays = execution_polling_intervals
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
             timeref = itask.summary['submitted_time']
-            timeout_key = 'submission timeout'
+            timeout_key = self.EVENT_SUBMIT_TIMEOUT
             timeout = self._get_events_conf(itask, timeout_key)
             delays = list(self._get_workflow_platforms_conf(
                 itask, 'submission polling intervals'))

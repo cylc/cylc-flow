@@ -208,7 +208,7 @@ async def test_shutdown_handler_timeout_kill(
     # Configure a long-running shutdown handler.
     schd = test_scheduler({
         'shutdown handlers': 'sleep 10; echo',
-        'mail events': [],
+        'mail events': '',
     })
 
     # Set a low process pool timeout value.
