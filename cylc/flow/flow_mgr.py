@@ -46,7 +46,8 @@ def add_flow_opts_for_trigger_and_set(parser):
         metavar=f"INT|{FLOW_NEW}|{FLOW_NONE}",
         default=[],
         help=(
-            'Assign affected tasks to specified flows.'
+            'Assign affected tasks to specified flows.'  # nosec
+            # (false positive, this is not an SQL statement Bandit!)
             ' By default, active tasks (n=0) stay in their assigned flow(s)'
             ' and inactive tasks (n>0) will be assigned to all active flows.'
             ' Use this option to manually specify an integer flow to assign'
