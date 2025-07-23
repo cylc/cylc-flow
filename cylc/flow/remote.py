@@ -84,7 +84,7 @@ def watch_and_kill(proc):
     """Kill proc if my PPID (etc.) changed - e.g. ssh connection dropped."""
     gpa = get_proc_ancestors()
     while True:
-        sleep(0.5)
+        sleep(60)
         if proc.poll() is not None:
             break
         if get_proc_ancestors() != gpa:
