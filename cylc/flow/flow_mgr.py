@@ -43,14 +43,20 @@ def add_flow_opts_for_trigger_and_set(parser):
         "--flow",
         action="append",
         dest="flow",
-        metavar="FLOW",
+        metavar=f"INT|{FLOW_NEW}|{FLOW_NONE}",
         default=[],
-        help='Assign affected tasks to specified flows.'
-             ' By default, assign to all active flows; otherwise'
-             f' a new flow ("{FLOW_NEW}" increments the flow counter);'
-             ' or a specific flow (e.g. "2", can be new or existing);'
-             f' or no-flow ("{FLOW_NONE}", will not flow on).'
-             ' Reuse the option to assign multiple flow numbers.'
+        help=(
+            'Assign affected tasks to specified flows.'
+            ' By default, active tasks (n=0) stay in their assigned flow(s)'
+            ' and inactive tasks (n>0) will be assigned to all active flows.'
+            ' Use this option to manually specify an integer flow to assign'
+            ' tasks to, e.g, "--flow=2". Use this option multiple times to'
+            ' select multiple flows.'
+            f' Alternatively, use "--flow={FLOW_NEW}" to start a new'
+            f' flow, or "--flow={FLOW_NONE}" to trigger an inactive task in'
+            ' no flows (this means the workflow will not run on from the'
+            ' triggered task, only works for inactive tasks).'
+        )
     )
 
     parser.add_option(
@@ -75,9 +81,9 @@ def add_flow_opts_for_remove(parser):
         metavar='INT',
         default=[],
         help=(
-            "Remove the task(s) from the specified flow. "
-            "Reuse the option to remove the task(s) from multiple flows. "
-            "By default, the tasks will be removed from all flows."
+            "Remove the task(s) from the specified flow."
+            " Use this option multiple times to specify multiple flows."
+            " By default, the tasks will be removed from all flows."
         ),
     )
 

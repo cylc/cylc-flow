@@ -2055,7 +2055,8 @@ class FlowMutationArguments:
         description=sstrip(f'''
             The flow(s) to set or trigger these tasks in.
 
-            By default, assign all active flows.
+            By default, active tasks (n=0) stay in their assigned flow(s) and
+            inactive tasks (n>0) will be assigned to all active flows.
 
             Otherwise give a list of integers or one of the following strings:
             * {FLOW_NEW} - an automatically generated new flow number
