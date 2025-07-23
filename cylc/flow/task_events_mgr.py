@@ -685,6 +685,10 @@ class TaskEventsManager():
             True: if polling is required to confirm a reversal of status.
 
         """
+        # Useful debug but currently borks tests/f/cylc-message/02-multi.t:
+        # (It checks all log messages in debug mode, which is unhelpful).
+        # TODO: https://github.com/cylc/cylc-flow/issues/6857
+        # LOG.debug(f'Message {flag} for {itask}: "{message}"')
 
         # Log messages
         if event_time is None:
@@ -748,15 +752,15 @@ class TaskEventsManager():
                 # Already running.
                 return True
             self._process_message_started(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_STARTED)
+            self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
         elif message == self.EVENT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED)
+            self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED, forced)
 
         elif message == self.EVENT_EXPIRED:
             self._process_message_expired(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_EXPIRED)
+            self.spawn_children(itask, TASK_OUTPUT_EXPIRED, forced)
 
         elif message == self.EVENT_FAILED:
             if (
@@ -768,7 +772,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, self.JOB_FAILED, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
@@ -778,7 +782,7 @@ class TaskEventsManager():
                 # Already submit-failed
                 return True
             if self._process_message_submit_failed(itask, event_time, forced):
-                self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED, forced)
 
         elif message == self.EVENT_SUBMITTED:
             if (
@@ -788,7 +792,7 @@ class TaskEventsManager():
                 # Already submitted.
                 return True
             self._process_message_submitted(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_SUBMITTED)
+            self.spawn_children(itask, TASK_OUTPUT_SUBMITTED, forced)
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
@@ -800,7 +804,7 @@ class TaskEventsManager():
                     job_tokens, 'job_id', itask.summary['submit_method_id'])
             else:
                 # In simulation mode submitted implies started:
-                self.spawn_children(itask, TASK_OUTPUT_STARTED)
+                self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -817,7 +821,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, self.JOB_FAILED, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
@@ -834,7 +838,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, aborted_with, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
@@ -861,7 +865,7 @@ class TaskEventsManager():
             trigger = itask.state.outputs.get_trigger(message)
             LOG.info(f"[{itask}] completed output {trigger}")
             self.setup_event_handlers(itask, trigger, message)
-            self.spawn_children(itask, msg0)
+            self.spawn_children(itask, msg0, forced)
 
         else:
             # Unhandled messages. These include:
@@ -2034,8 +2038,7 @@ class TaskEventsManager():
         self.event_timers_updated = True
 
     def reset_bad_hosts(self):
-        """Clear bad_hosts list.
-        """
+        """Clear bad_hosts list."""
         if self.bad_hosts:
             LOG.info(
                 'Clearing bad hosts: '
@@ -2043,8 +2046,17 @@ class TaskEventsManager():
             )
             self.bad_hosts.clear()
 
-    def spawn_children(self, itask: 'TaskProxy', output: str) -> None:
-        # update DB task outputs
+    def spawn_children(
+        self,
+        itask: 'TaskProxy',
+        output: str,
+        forced=False
+    ) -> None:
+        """Spawn children of this output."""
         self.workflow_db_mgr.put_update_task_outputs(itask)
-        # spawn child-tasks
-        self.spawn_func(itask, output)
+        if not itask.transient or forced:
+            # Spawn children if forced or not transient.
+            # Removed-and-killed running tasks end up here as transient
+            # after removal from the pool; don't spawn or log completion.
+            # Forced spawning from transients is used for "cylc set" outputs.
+            self.spawn_func(itask, output)

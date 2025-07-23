@@ -18,14 +18,19 @@
 
 """cylc set [OPTIONS] ARGS
 
-Satisfy task (including xtrigger) prerequisites and complete task outputs.
+Manually complete task outputs, and satisfy task and xtrigger prerequisites.
 
 By default this command completes required outputs, plus the "submitted",
 "started", and "succeeded" outputs even if they are optional.
 
-Task Outputs:
-  Completing task outputs may affect its state, and it will satisfy the
-  prerequisites of any other tasks that depend on those outputs.
+Setting prerequisites promotes target tasks to the n=0 active window; setting
+outputs also sets the prerequisites of any tasks that depend on those outputs.
+
+Note: see `cylc trigger` command help if you want rerun a sub-graph of tasks.
+
+Setting Outputs:
+  Completing outputs may affect task state, and it will satisfy prerequisites
+  of any other tasks that depend on those outputs.
 
   Format:
     * --out=<output>  # output name (not message) of the target task
@@ -34,28 +39,28 @@ Task Outputs:
   state of the target task accordingly. Completing "started", "submitted",
   or custom outputs does not affect state because no job is actually running.
 
-  Implied outputs will be completed automatically:
+  Implied outputs are completed automatically:
     - "started" implies "submitted"
     - "succeeded" and "failed" imply "started"
     - custom outputs and "expired" do not imply other outputs
 
-  For custom outputs, use the output name not the associated task message.
+  For custom outputs, use the output name, not the associated task message.
   In [runtime][my-task][outputs]:
     # <name> = <message>
     x = "file x completed"
 
-Task Prerequisites:
+Setting Task Prerequisites:
   Satisfying a task's prerequisite contributes to its readiness to run.
 
   Satisfying any prerequisite of an inactive task promotes it to the active
   window where xtrigger checking commences (if the task has any xtriggers).
-  The --pre=all option even promotes parentless tasks to the active window.
+  The --pre=all option promotes even parentless tasks to the active window.
 
   Format:
     * --pre=<cycle>/<task-name>[:output]  # satisfy a single prerequisite
     * --pre=all  # satisfy all task (not xtrigger) prerequisites
 
-Xtrigger prerequisites:
+Setting Xtrigger Prerequisites:
   To satisfy an xtrigger prerequisite use --pre with the word "xtrigger" in
   place of the cycle point, and the xtrigger name in place of the task name.
 
@@ -64,7 +69,18 @@ Xtrigger prerequisites:
     * --pre=xtrigger/all  # satisfy all xtrigger prerequisites
 
   (The full format is "xtrigger/<xtrigger-name>[:succeeded]" but "succeeded"
-  is the only xtrigger output and the default, so it can be omitted.)
+  is the only valid xtrigger output and the default, so it can be omitted.)
+
+Flow numbers of tasks affected by the set command are determined as follows
+  Active tasks (n=0) already have existing flow numbers.
+   * default: merge existing active flow numbers
+   * --flow=INT or "new": merge existing and new flow numbers
+   * --flow="none": ERROR (not valid for already-active tasks)
+  Inactive tasks (n>0) do not have flow numbers assigned:
+   * default: assign all active flow numbers
+   * --flow=INT or "new": assign the given flow numbers
+   * --flow="none": action the command with no flow numbers, which may result
+     in a no-flow task running (activity will not flow on downstream of it).
 
 CLI Completion:
   Cylc can auto-complete prerequisite and output names for tasks in the n=0
@@ -118,7 +134,7 @@ from cylc.flow.terminal import (
     cli_function,
     flatten_cli_lists
 )
-from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
 
 
 if TYPE_CHECKING:
@@ -161,7 +177,7 @@ SELECTOR_ERROR = (
 
 def get_option_parser() -> COP:
     parser = COP(
-        str(__doc__),
+        __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
@@ -195,7 +211,7 @@ def get_option_parser() -> COP:
         action="append", default=None, dest="prerequisites"
     )
 
-    add_flow_opts(parser)
+    add_flow_opts_for_trigger_and_set(parser)
     return parser
 
 

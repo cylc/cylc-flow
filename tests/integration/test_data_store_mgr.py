@@ -24,6 +24,10 @@ from typing import (
 
 import pytest
 
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks
+)
 from cylc.flow import LOG
 from cylc.flow.data_messages_pb2 import (
     PbPrerequisite,
@@ -658,7 +662,7 @@ async def test_flow_numbers(flow, scheduler, start):
         assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
-        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+        await run_cmd(force_trigger_tasks(schd, ['1/b'], ['2']))
 
         # update the data store
         await schd.update_data_structure()

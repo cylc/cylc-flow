@@ -489,7 +489,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
                     items=[f"1/{task}"],
                     outputs=[TASK_OUTPUT_SUCCEEDED],
                     prereqs=[],
-                    flow=['all']
+                    flow=[]
                 )
 
             await schd.update_data_structure()

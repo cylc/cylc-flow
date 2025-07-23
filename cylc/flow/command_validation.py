@@ -25,7 +25,6 @@ from typing import (
 
 from cylc.flow.exceptions import InputError
 from cylc.flow.flow_mgr import (
-    FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
 )
@@ -37,11 +36,10 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 
-ERR_OPT_FLOW_VAL = (
-    f"Flow values must be integers, or '{FLOW_ALL}', '{FLOW_NEW}', "
-    f"or '{FLOW_NONE}'"
+ERR_OPT_FLOW_VAL_INT_NEW_NONE = (  # for set and trigger commands
+    f"Flow values must be integers, or '{FLOW_NEW}', or '{FLOW_NONE}'"
 )
-ERR_OPT_FLOW_VAL_2 = f"Flow values must be integers, or '{FLOW_ALL}'"
+ERR_OPT_FLOW_VAL_INT = "Flow values must be integers"  # for remove command
 ERR_OPT_FLOW_COMBINE = "Cannot combine --flow={0} with other flow values"
 ERR_OPT_FLOW_WAIT = (
     f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
@@ -72,7 +70,7 @@ def flow_opts(
 
         >>> flow_opts(["cheese", "2"], True)
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ... or 'all', 'new', or 'none'
+        cylc.flow.exceptions.InputError: ... or 'new', or 'none'
 
         >>> flow_opts(["new"], True)
         Traceback (most recent call last):
@@ -81,11 +79,11 @@ def flow_opts(
 
         >>> flow_opts(["new"], False, allow_new_or_none=False)
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ... must be integers, or 'all'
+        cylc.flow.exceptions.InputError: ... must be integers
 
         >>> flow_opts([''], False, allow_new_or_none=False)
         Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ... must be integers, or 'all'
+        cylc.flow.exceptions.InputError: ... must be integers
 
     """
     if not flows:
@@ -95,18 +93,18 @@ def flow_opts(
 
     for val in flows:
         val = val.strip()
-        if val in {FLOW_NONE, FLOW_NEW, FLOW_ALL}:
+        if val in {FLOW_NONE, FLOW_NEW}:
             if len(flows) != 1:
                 raise InputError(ERR_OPT_FLOW_COMBINE.format(val))
             if not allow_new_or_none and val in {FLOW_NEW, FLOW_NONE}:
-                raise InputError(ERR_OPT_FLOW_VAL_2)
+                raise InputError(ERR_OPT_FLOW_VAL_INT)
         else:
             try:
                 int(val)
             except ValueError:
                 if allow_new_or_none:
-                    raise InputError(ERR_OPT_FLOW_VAL) from None
-                raise InputError(ERR_OPT_FLOW_VAL_2) from None
+                    raise InputError(ERR_OPT_FLOW_VAL_INT_NEW_NONE) from None
+                raise InputError(ERR_OPT_FLOW_VAL_INT) from None
 
     if flow_wait and flows[0] in {FLOW_NEW, FLOW_NONE}:
         raise InputError(ERR_OPT_FLOW_WAIT)

@@ -66,7 +66,6 @@ from cylc.flow.data_store_mgr import (
     TASKS,
 )
 from cylc.flow.flow_mgr import (
-    FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
 )
@@ -1701,7 +1700,7 @@ class WorkflowStopMode(graphene.Enum):
 
 class Flow(String):
     __doc__ = (
-        f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+        f"""An integer or {FLOW_NEW} or {FLOW_NONE}."""
     )
 
 
@@ -2054,18 +2053,14 @@ class FlowMutationArguments:
         graphene.NonNull(Flow),
         default_value=[],
         description=sstrip(f'''
-            The flow(s) to trigger/set these tasks in.
+            The flow(s) to set or trigger these tasks in.
 
-            By default:
-            * active tasks (n=0) keep their existing flow assignment
-            * inactive tasks (n>0) get assigned all active flows
+            By default, active tasks (n=0) stay in their assigned flow(s) and
+            inactive tasks (n>0) will be assigned to all active flows.
 
-            Otherwise you can assign (inactive tasks) or add to (active tasks):
-            * a list of integer flow numbers
-            or one of the following strings:
-            * {FLOW_ALL} - all active flows
+            Otherwise give a list of integers or one of the following strings:
             * {FLOW_NEW} - an automatically generated new flow number
-            * {FLOW_NONE} - (ignored for active tasks): no flow
+            * {FLOW_NONE} - activity won't flow on (ignored for active tasks)
         ''')
     )
     flow_wait = Boolean(
@@ -2160,13 +2155,12 @@ class Remove(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
         flow = graphene.List(
             graphene.NonNull(Flow),
-            default_value=[FLOW_ALL],
-            description=sstrip(f'''
-                "Remove the task(s) from the specified flows. "
+            default_value=[],
+            description=sstrip('''
+                "Remove the tasks from the specified flows."
 
-                This should be a list of flow numbers, or '{FLOW_ALL}'
-                to remove the task(s) from all flows they belong to
-                (which is the default).
+                This should be a list of flow numbers.
+                By default, tasks will be removed from all flows.
             ''')
         )
 
