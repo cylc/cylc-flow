@@ -187,26 +187,28 @@ Patterns
       *                      # All workflows
       test*                  # All workflows starting "test".
       test/*                 # All workflows starting "test/".
-      workflow//*            # All cycles in workflow
+      workflow//*            # All active cycles in workflow
       workflow//cycle/*      # All tasks in workflow//cycle
       workflow//cycle/task/* # All jobs in workflow//cycle/job
 
     Warning:
       Quote IDs on the command line to protect them from shell expansion.
-      Patterns only match tasks in the n=0 active window (except for the
-      `cylc show` command where they match in the wider n-window).
 
-Filters
-    Filters allow you to filter for specific states.
+Selectors
+    Selectors allow you to filter for specific states.
 
-    Filters are prefixed by a colon (:).
+    Selectors are prefixed by a colon (:).
 
     Examples:
       *:running                       # All running workflows
-      workflow//*:running             # All running cycles in workflow
+      workflow//*:running             # All running tasks in workflow
       workflow//cycle/*:running       # All running tasks in workflow//cycle
       workflow//cycle/task/*:running  # All running jobs in
                                       # workflow//cycle/task
+
+    When selectors are applied to tasks, they will only match active tasks.
+    I.e, "workflow//*:failed" will only select active failed tasks, not all
+    historical failed tasks going back to the start of the workflow.
 '''
 
 
