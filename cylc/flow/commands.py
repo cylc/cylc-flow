@@ -675,7 +675,7 @@ async def force_trigger_tasks(
         (tokens['task'], tokens['cycle']) for tokens in tokens_list
     }
 
-    adjacency = {}
+    adjacency: Dict[Tuple[str, str], Set[Tuple[str, str]]] = {}
     for task, cycle in task_ids:
         icycle = get_point(cycle)
 
