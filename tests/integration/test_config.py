@@ -681,9 +681,16 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
             "Stop cycle point '20030101T0000Z' will have no effect as it"
             " is after the final cycle point '20020101T0000Z'."
         ),
-        # Not detectable from validate
-        # ('initial', 'stop', 'start', 'final', False, "asdf"),
-        # ('initial', 'stop', 'final', 'start', False, "asdf"),
+        (
+            'initial', 'stop', 'start', 'final', False,
+            "Stop cycle point '20010101T0000Z' will have no effect as it"
+            " is before the start cycle point '20020101T0000Z'."
+        ),
+        (
+            'initial', 'stop', 'final', 'start', False,
+            "Start cycle point '20030101T0000Z' will have no effect as it"
+            " is after the final cycle point '20020101T0000Z'."
+        ),
         (
             'initial', 'final', 'start', 'stop', True,
             "Stop cycle point '20030101T0000Z' will have no effect as it"
@@ -694,7 +701,11 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
             "Stop cycle point '20020101T0000Z' will have no effect as it"
             " is after the final cycle point '20010101T0000Z'."
         ),
-        # ('start', 'initial', 'stop', 'final', True, "asdf"),
+        (
+            'start', 'initial', 'stop', 'final', False,
+            "Start cycle point '20000101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20010101T0000Z'."
+        ),
         (
             'start', 'initial', 'final', 'stop', True,
             "Stop cycle point '20030101T0000Z' will have no effect as it"
@@ -734,8 +745,19 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
         ('final', 'stop', 'start', 'initial', True, WorkflowConfigError),
     )
 )
-def test_milestone_cycle_points(
-    a, b, c, d, validation_fail, err, flow, validate, scheduler, start, caplog
+async def test_milestone_cycle_points(
+    a,
+    b,
+    c,
+    d,
+    validation_fail,
+    err,
+    flow,
+    validate,
+    scheduler,
+    start,
+    log_filter,
+    caplog,
 ):
     """Ensure that all combinations of 
     """
@@ -749,11 +771,18 @@ def test_milestone_cycle_points(
             'graph': {'P1Y': 'foo'}
         },
     })
-    if not err:
-        validate(wid)
-    elif isinstance(err, str):
-        validate(wid)
-        assert err in caplog.messages
-    else:
-        with pytest.raises(err):
+    if validation_fail:
+        if not err:
             validate(wid)
+        elif isinstance(err, str):
+            validate(wid)
+            assert err in caplog.messages
+        else:
+            with pytest.raises(err):
+                validate(wid)
+
+    else:
+        schd = scheduler(wid, startcp=str(order['start']))
+        async with start(schd) as log:
+            assert err in caplog.messages
+
