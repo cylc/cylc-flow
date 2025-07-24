@@ -29,6 +29,20 @@ from cylc.task_state import TASK_STATUS_GROUPS
 """Provide data access object to the suite runtime database for Cylc Review."""
 
 
+def get_prefix(user_name):
+    """Return user "home" dir under $CYLC_REVIEW_HOME, or else ~user_name."""
+    if os.environ.get('CYLC_REVIEW_HOME', False) and user_name:
+        prefix = os.path.join(
+            os.environ['CYLC_REVIEW_HOME'],
+            str(user_name)
+        )
+    else:
+        prefix = "~"
+        if user_name:
+            prefix += user_name
+    return prefix
+
+
 class CylcReviewDAO(object):
     """Cylc Review data access object to the suite runtime database."""
 
@@ -108,12 +122,11 @@ class CylcReviewDAO(object):
         """Initialise a named CylcSuiteDAO database connection."""
         key = (user_name, suite_name)
         if key not in self.daos:
-            prefix = "~"
-            if user_name:
-                prefix += user_name
             for name in [os.path.join("log", "db"), "cylc-suite.db"]:
                 db_f_name = os.path.expanduser(os.path.join(
-                    prefix, os.path.join("cylc-run", suite_name, name)))
+                    get_prefix(user_name),
+                    os.path.join("cylc-run",
+                    suite_name, name)))
                 self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
                 if os.path.exists(db_f_name):
                     break
@@ -382,11 +395,8 @@ class CylcReviewDAO(object):
         relevant entries of that cycle.
         Modify each entry in entries.
         """
-        prefix = "~"
-        if user_name:
-            prefix += user_name
         user_suite_dir = os.path.expanduser(os.path.join(
-            prefix, os.path.join("cylc-run", suite_name)))
+            get_prefix(user_name), os.path.join("cylc-run", suite_name)))
         try:
             fs_log_cycles = os.listdir(
                 os.path.join(user_suite_dir, "log", "job"))
@@ -519,11 +529,8 @@ class CylcReviewDAO(object):
             integer_mode = row[0].isdigit()
             break
 
-        prefix = "~"
-        if user_name:
-            prefix += user_name
         user_suite_dir = os.path.expanduser(os.path.join(
-            prefix, os.path.join("cylc-run", suite_name)))
+            get_prefix(user_name), os.path.join("cylc-run", suite_name)))
         targzip_log_cycles = []
         try:
             for item in os.listdir(os.path.join(user_suite_dir, "log")):
