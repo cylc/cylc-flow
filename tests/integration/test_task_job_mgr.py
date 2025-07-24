@@ -212,7 +212,7 @@ async def test_broadcast_platform_change(
         # Platform = None doesn't cause this issue!
         "runtime": {"mytask": {"platform": "localhost"}}})
 
-    schd = scheduler(id_, run_mode='live')
+    schd: Scheduler = scheduler(id_, run_mode='live')
 
     async with start(schd):
         # Change the task platform with broadcast:
@@ -220,7 +220,7 @@ async def test_broadcast_platform_change(
             ['1'], ['mytask'], [{'platform': 'foo'}])
 
         # Simulate prior failure to contact hosts:
-        schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
+        schd.bad_hosts.add('food')
 
         # Attempt job submission:
         schd.submit_task_jobs(schd.pool.get_tasks())
