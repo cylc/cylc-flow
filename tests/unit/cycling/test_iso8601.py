@@ -700,7 +700,7 @@ def test_simple(set_cycling_type):
         ('next(--0325)', '20110325T0000Z'),
         ('next(---10)', '20100810T0000Z'),
         ('next(---05T1200Z)', '20100905T1200Z'),
-        param('next(--08-08)', '20110808T0000Z', marks=pytest.mark.xfail),
+        ('next(--08-08)', '20110808T0000Z'),
         ('next(T15)', '20100809T1500Z'),
         ('next(T-41)', '20100808T1541Z'),
     ]
@@ -724,7 +724,7 @@ def test_next_simple(value: str, expected: str, set_cycling_type):
         ('previous(--0325)', '20100325T0000Z'),
         ('previous(---10)', '20100710T0000Z'),
         ('previous(---05T1200Z)', '20100805T1200Z'),
-        param('previous(--08-08)', '20100808T0000Z', marks=pytest.mark.xfail),
+        ('previous(--08-08)', '20100808T0000Z'),
         ('previous(T15)', '20100808T1500Z'),
         ('previous(T-41)', '20100808T1441Z'),
     ]
@@ -870,7 +870,7 @@ def test_weeks_days(set_cycling_type):
         ('previous(--1225)', '20171225T0000Z'),
         ('next(-2006)', '20200601T0000Z'),
         ('previous(-W101)', '20180305T0000Z'),
-        ('next(-W-1; -W-3; -W-5)', '20180314T0000Z'),
+        ('next(-W-1; -W-3; -W-5)', '20180316T0000Z'),
         ('next(-001; -091; -181; -271)', '20180401T0000Z'),
         ('previous(-365T12Z)', '20171231T1200Z'),
     ]
