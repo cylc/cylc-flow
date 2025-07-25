@@ -105,6 +105,8 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
             print(f'Error occurred when symlinking.'
                   f' {target} contains an invalid environment variable.')
             return
+        if cylc.flow.flags.verbosity > 1:
+            print(f'$ ln -s "{target}" "{path}"')
         make_symlink_dir(path, target)
     srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
