@@ -74,14 +74,14 @@ def test_parse_cpu_file(mocker):
         parse_cpu_file("non_existent_file.txt", 2)
 
     # Mock the 'open' function call to return a file object.
-    mock_file = mocker.mock_open(read_data="usage_usec 1000000")
+    mock_file = mocker.mock_open(read_data="1000000")
     mocker.patch("builtins.open", mock_file)
 
     assert parse_cpu_file(
         "mocked_file.txt", 1) == 1000
     mock_file.assert_called_once_with("mocked_file.txt", "r")
 
-    mock_file = mocker.mock_open(read_data="1000000")
+    mock_file = mocker.mock_open(read_data="usage_usec 1000000")
     mocker.patch("builtins.open", mock_file)
     assert parse_cpu_file("mocked_file.txt", 1) == 1
     mock_file.assert_called_once_with("mocked_file.txt", "r")
