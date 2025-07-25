@@ -17,13 +17,9 @@
 from functools import partial
 import os
 from optparse import Values
-from typing import (
-    TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type)
 import pytest
 from contextlib import suppress
 import logging
-from optparse import Values
-import os
 from pathlib import Path
 from textwrap import dedent
 from types import SimpleNamespace
@@ -36,8 +32,6 @@ from typing import (
     Tuple,
     Type,
 )
-
-import pytest
 
 from cylc.flow import (
     CYLC_LOG,
@@ -753,7 +747,7 @@ def test_process_stop_cycle_point(
         stop_point=None,
         options=RunOptions(stopcp=options_stopcp),
     )
-    mock_config.cycle_point_warning=partial(
+    mock_config.cycle_point_warning = partial(
         WorkflowConfig.cycle_point_warning, mock_config)
 
     WorkflowConfig.process_stop_cycle_point(mock_config)

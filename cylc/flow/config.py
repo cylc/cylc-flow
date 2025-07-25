@@ -919,7 +919,7 @@ class WorkflowConfig:
                 self.initial_point,
             ).standardise()
             if (
-                self.stop_point is not None 
+                self.stop_point is not None
                 and (
                     (
                         self.final_point is not None

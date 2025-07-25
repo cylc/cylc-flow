@@ -673,7 +673,7 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
 
 
 @pytest.mark.parametrize(
-    'a, b, c, d, validation_fail, err', 
+    'a, b, c, d, validation_fail, err',
     (
         ('initial', 'start', 'stop', 'final', True, False),
         (
@@ -759,7 +759,8 @@ async def test_milestone_cycle_points(
     log_filter,
     caplog,
 ):
-    """Ensure that all combinations of 
+    """Ensure that all combinations of initial, start, stop and final cycle
+    point return sensible warnings or errors.
     """
     order = dict(zip((a, b, c, d), [2000, 2001, 2002, 2003]))
 
@@ -783,6 +784,5 @@ async def test_milestone_cycle_points(
 
     else:
         schd = scheduler(wid, startcp=str(order['start']))
-        async with start(schd) as log:
+        async with start(schd):
             assert err in caplog.messages
-
