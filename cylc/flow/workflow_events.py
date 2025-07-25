@@ -212,11 +212,28 @@ class WorkflowEventHandler():
     EVENT_STARTUP = 'startup'
     EVENT_SHUTDOWN = 'shutdown'
     EVENT_ABORTED = 'abort'
-    EVENT_WORKFLOW_TIMEOUT = 'workflow timeout'
-    EVENT_INACTIVITY_TIMEOUT = 'inactivity timeout'
     EVENT_STALL = 'stall'
     EVENT_STALL_TIMEOUT = 'stall timeout'
+    EVENT_WORKFLOW_TIMEOUT = 'workflow timeout'
+    EVENT_INACTIVITY_TIMEOUT = 'inactivity timeout'
     EVENT_RESTART_TIMEOUT = 'restart timeout'
+
+    EVENTS = [
+        EVENT_STARTUP,
+        EVENT_SHUTDOWN,
+        EVENT_ABORTED,
+        EVENT_STALL,
+        EVENT_STALL_TIMEOUT,
+        EVENT_WORKFLOW_TIMEOUT,
+        EVENT_INACTIVITY_TIMEOUT,
+        EVENT_RESTART_TIMEOUT,
+    ]
+    EVENTS_DEPRECATED = {
+        'aborted': EVENT_ABORTED,
+        'inactivity': EVENT_INACTIVITY_TIMEOUT,
+        'stalled': EVENT_STALL,
+        'timeout': EVENT_STALL_TIMEOUT,
+    }
 
     WORKFLOW_EVENT_HANDLER = 'workflow-event-handler'
     WORKFLOW_EVENT_MAIL = 'workflow-event-mail'

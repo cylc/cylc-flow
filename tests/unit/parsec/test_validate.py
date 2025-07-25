@@ -59,7 +59,6 @@ def sample_spec():
     return myconf
 
 
-@pytest.fixture
 def validator_invalid_values():
     """
     Data provider or invalid values for parsec validator. All values must not
@@ -94,7 +93,7 @@ def validator_invalid_values():
         Conf('value', VDR.V_INTEGER_LIST, default=1, options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 5"
-    msg = '(type=option) value = [1, 2, 5]'
+    msg = '(type=option) value = 5'
     values.append((spec, cfg, msg))
 
     # set 3 (f, f, t, f)
@@ -237,21 +236,21 @@ def test_parsec_validator_invalid_key_with_many_spaces(sample_spec):
         assert str(cm.exception) == "section  3000000 - (consecutive spaces)"
 
 
+@pytest.mark.parametrize('spec, cfg, msg', validator_invalid_values())
 def test_parsec_validator_invalid_key_with_many_invalid_values(
-        validator_invalid_values
+    spec, cfg, msg
 ):
-    for spec, cfg, msg in validator_invalid_values:
-        parsec_validator = ParsecValidator()
-        if msg is not None:
-            with pytest.raises(IllegalValueError) as cm:
-                parsec_validator.validate(cfg, spec)
-            assert msg == str(cm.value)
-        else:
-            # cylc.flow.parsec_validator.validate(cfg, spec)
-            # let's use the alias `parsec_validate` here
-            parsec_validate(cfg, spec)
-            # TBD assertIsNotNone when 2.6+
-            assert parsec_validator is not None
+    parsec_validator = ParsecValidator()
+    if msg is not None:
+        with pytest.raises(IllegalValueError) as cm:
+            parsec_validator.validate(cfg, spec)
+        assert msg == str(cm.value)
+    else:
+        # cylc.flow.parsec_validator.validate(cfg, spec)
+        # let's use the alias `parsec_validate` here
+        parsec_validate(cfg, spec)
+        # TBD assertIsNotNone when 2.6+
+        assert parsec_validator is not None
 
 
 def test_parsec_validator_invalid_key_with_many_1(sample_spec):

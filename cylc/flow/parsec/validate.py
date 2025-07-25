@@ -230,13 +230,19 @@ class ParsecValidator:
                     # Item is value, coerce according to value type
                     cfg[key] = self.coercers[specval.vdr](value, keys + [key])
                     if specval.options:
-                        voptions = specval.options
-                        if (isinstance(cfg[key], list) and
-                                any(val not in voptions for val in cfg[key]) or
-                                not isinstance(cfg[key], list) and
-                                cfg[key] not in voptions):
+                        voptions = {*specval.options, *specval.depr_options}
+                        if isinstance(cfg[key], list):
+                            bad = [
+                                str(i) for i in cfg[key] if i not in voptions
+                            ]
+                            if bad:
+                                raise IllegalValueError(
+                                    'option', [*keys, key], ', '.join(bad)
+                                )
+                        elif cfg[key] not in voptions:
                             raise IllegalValueError(
-                                'option', keys + [key], cfg[key])
+                                'option', [*keys, key], cfg[key]
+                            )
 
     __call__ = validate
 
