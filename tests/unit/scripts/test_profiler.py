@@ -71,7 +71,7 @@ def test_parse_memory_file(mocker):
 
 def test_parse_cpu_file(mocker):
     with pytest.raises(FileNotFoundError):
-        parse_cpu_file("non_existent_file.txt", 1)
+        parse_cpu_file("non_existent_file.txt", 2)
 
     # Mock the 'open' function call to return a file object.
     mock_file = mocker.mock_open(read_data="usage_usec 1000000")
@@ -83,7 +83,7 @@ def test_parse_cpu_file(mocker):
 
     mock_file = mocker.mock_open(read_data="1000000")
     mocker.patch("builtins.open", mock_file)
-    assert parse_cpu_file("mocked_file.txt", 2) == 1
+    assert parse_cpu_file("mocked_file.txt", 1) == 1
     mock_file.assert_called_once_with("mocked_file.txt", "r")
 
 
@@ -114,11 +114,11 @@ def test_get_cgroup_version(mocker):
     # Mock the Path.exists function call to return True
     mocker.patch("pathlib.Path.exists", return_value=True)
     assert get_cgroup_version('stuff/in/place',
-                              'more_stuff') == 1
+                              'more_stuff') == 2
 
     with mock.patch('pathlib.Path.exists', side_effect=[False, True]):
         assert get_cgroup_version('stuff/in/place',
-                                  'more_stuff') == 2
+                                  'more_stuff') == 1
 
     # Mock the Path.exists function call to return False
     mocker.patch("pathlib.Path.exists", return_value=False)
@@ -129,12 +129,12 @@ def test_get_cgroup_version(mocker):
 
 def test_get_cgroup_paths():
 
-    process = get_cgroup_paths(1, "test_location/",
+    process = get_cgroup_paths(2, "test_location/",
                                "test_name")
     assert process.cgroup_memory_path == "test_location/test_name/memory.peak"
     assert process.cgroup_cpu_path == "test_location/test_name/cpu.stat"
 
-    process = get_cgroup_paths(2, "test_location",
+    process = get_cgroup_paths(1, "test_location",
                                "/test_name")
     assert (process.cgroup_memory_path ==
             "test_location/memory/test_name/memory.max_usage_in_bytes")
