@@ -24,8 +24,13 @@
         """
 
 [runtime]
-    [[root]]
-        script = sleep 120 & echo $! >file; wait
+    [[goodhosttask]]
+        script = sleep 60
+        platform = goodhostplatform
+
+    [[mixedhosttask]]
+        script = sleep 60
+        platform = mixedhostplatform
 
     [[mystop]]
         script="""
@@ -33,14 +38,6 @@
             cylc kill "$CYLC_WORKFLOW_ID//$TASK"
             cylc stop $CYLC_WORKFLOW_ID
         """
-
-    [[goodhosttask]]
-        platform = goodhostplatform
-
-    [[mixedhosttask]]
-        script=sleep 120 & echo $! >file; wait
-
-        platform = mixedhostplatform
 
     [[stop_g]]
         inherit = mystop

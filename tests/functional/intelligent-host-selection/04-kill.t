@@ -15,32 +15,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test job kill. Set the auto clearance of badhosts to be << small time
-# so that kill will need to retry, despite 'unreachable_host' being idetified
-# as unreachable by job submission.
+# Test job kill will retry on a different host if there is a connection failure
+
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
-set_test_number 4
-
-# Uses a fake background job runner to get around the single host restriction.
+set_test_number 6
 
 create_test_global_config "" "
 [scheduler]
     [[main loop]]
         [[[reset bad hosts]]]
+            # Set the auto clearance of badhosts to be << small time so that
+            # kill will need to retry, despite 'unreachable_host' being
+            # idetified as unreachable by job submission.
             interval = PT5S
 
 [platforms]
     [[goodhostplatform]]
+        $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+
+    [[goodhostplatform]]
         hosts = ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}
 
     [[mixedhostplatform]]
+        $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+
+    [[mixedhostplatform]]
+        # Use a fake background job runner to get around the
+        # single host restriction.
         job runner = my_background
         hosts = unreachable_host, ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}
         [[[selection]]]
             method = 'definition order'
     "
@@ -57,18 +63,17 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach \
     "${WORKFLOW_NAME}"
 
-LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+# job kill for mixedhosttask should have attempted on both hosts
+grep_workflow_log_ok "${TEST_NAME_BASE}-kill-failed" \
+    'jobs-kill for mixedhostplatform on unreachable_host'  # fail
+grep_workflow_log_ok "${TEST_NAME_BASE}-kill-retried" \
+    "jobs-kill for mixedhostplatform on $CYLC_TEST_HOST"   # retry
 
-# Check that when a task fail badhosts associated with that task's platform
-# are removed from the badhosts set.
-named_grep_ok "job kill fails" \
-    "unreachable_host has been added to the list of unreachable hosts" \
-    "${LOGFILE}"
-
-named_grep_ok "job kill retries & succeeds" \
-    "\[jobs-kill out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \
-    "${LOGFILE}"
-
+# both job kills should succeed
+grep_workflow_log_ok "${TEST_NAME_BASE}-kill-succeeded-goodhosttask" \
+    '1/goodhosttask/01.* job killed'
+grep_workflow_log_ok "${TEST_NAME_BASE}-kill-succeeded-mixedhosttask" \
+    '1/mixedhosttask/01.* job killed'
 
 purge
 exit 0
