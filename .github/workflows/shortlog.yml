@@ -7,6 +7,8 @@ on:
       - 'CONTRIBUTING.md'
       - '.github/workflows/shortlog.yml'
       - '.mailmap'
+  schedule:
+    - cron: '37 06 * * 1' # 06:37, Monday
 
 jobs:
   test:
