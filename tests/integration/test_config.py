@@ -837,3 +837,119 @@ async def test_icp_now_reload(
             f'{expected_icp}/foo',
         }
         assert not log_filter(level=logging.WARNING)
+
+
+@pytest.mark.parametrize(
+    'a, b, c, d, validation_fail, err',
+    (
+        ('initial', 'start', 'stop', 'final', True, False),
+        (
+            'initial', 'start', 'final', 'stop', True,
+            "stop cycle point '20030101T0000Z' will have no effect as it"
+            " is after the final cycle point '20020101T0000Z'."
+        ),
+        (
+            'initial', 'stop', 'start', 'final', False,
+            "stop cycle point '20010101T0000Z' will have no effect as it"
+            " is before the start cycle point '20020101T0000Z'."
+        ),
+        (
+            'initial', 'stop', 'final', 'start', False,
+            "start cycle point '20030101T0000Z' will have no effect as it"
+            " is after the final cycle point '20020101T0000Z'."
+        ),
+        (
+            'initial', 'final', 'start', 'stop', True,
+            "stop cycle point '20030101T0000Z' will have no effect as it"
+            " is after the final cycle point '20010101T0000Z'."
+        ),
+        (
+            'initial', 'final', 'stop', 'start', True,
+            "stop cycle point '20020101T0000Z' will have no effect as it"
+            " is after the final cycle point '20010101T0000Z'."
+        ),
+        (
+            'start', 'initial', 'stop', 'final', False,
+            "start cycle point '20000101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20010101T0000Z'."
+        ),
+        (
+            'start', 'initial', 'final', 'stop', True,
+            "stop cycle point '20030101T0000Z' will have no effect as it"
+            " is after the final cycle point '20020101T0000Z'."
+        ),
+        (
+            'start', 'stop', 'initial', 'final', True,
+            "stop cycle point '20010101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20020101T0000Z'."
+        ),
+        ('start', 'stop', 'final', 'initial', True, WorkflowConfigError),
+        ('start', 'final', 'initial', 'stop', True, WorkflowConfigError),
+        ('start', 'final', 'stop', 'initial', True, WorkflowConfigError),
+        (
+            'stop', 'initial', 'start', 'final', True,
+            "stop cycle point '20000101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20010101T0000Z'."
+        ),
+        (
+            'stop', 'initial', 'final', 'start', True,
+            "stop cycle point '20000101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20010101T0000Z'."
+        ),
+        (
+            'stop', 'start', 'initial', 'final', True,
+            "stop cycle point '20000101T0000Z' will have no effect as it"
+            " is before the initial cycle point '20020101T0000Z'."
+        ),
+        ('stop', 'start', 'final', 'initial', True, WorkflowConfigError),
+        ('stop', 'final', 'initial', 'start', True, WorkflowConfigError),
+        ('stop', 'final', 'start', 'initial', True, WorkflowConfigError),
+        ('final', 'initial', 'start', 'stop', True, WorkflowConfigError),
+        ('final', 'initial', 'stop', 'start', True, WorkflowConfigError),
+        ('final', 'start', 'initial', 'stop', True, WorkflowConfigError),
+        ('final', 'start', 'stop', 'initial', True, WorkflowConfigError),
+        ('final', 'stop', 'initial', 'start', True, WorkflowConfigError),
+        ('final', 'stop', 'start', 'initial', True, WorkflowConfigError),
+    )
+)
+async def test_milestone_cycle_points(
+    a,
+    b,
+    c,
+    d,
+    validation_fail,
+    err,
+    flow,
+    validate,
+    scheduler,
+    start,
+    log_filter,
+    caplog,
+):
+    """Ensure that all combinations of initial, start, stop and final cycle
+    point return sensible warnings or errors.
+    """
+    order = dict(zip((a, b, c, d), [2000, 2001, 2002, 2003]))
+
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': order['initial'],
+            'stop after cycle point': order['stop'],
+            'final cycle point': order['final'],
+            'graph': {'P1Y': 'foo'}
+        },
+    })
+    if validation_fail:
+        if not err:
+            validate(wid)
+        elif isinstance(err, str):
+            validate(wid)
+            assert err in caplog.messages
+        else:
+            with pytest.raises(err):
+                validate(wid)
+
+    else:
+        schd = scheduler(wid, startcp=str(order['start']))
+        async with start(schd):
+            assert err in caplog.messages

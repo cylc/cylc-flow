@@ -46,10 +46,10 @@ for SCP in 1 2 3; do
         --no-detach --stopcp="${SCP}"
 
     if [[ "${SCP}" -lt 3 ]]; then
-        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
+        grep_ok "stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log" "-v"
     else
-        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
+        grep_ok "stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log"
     fi
 done
