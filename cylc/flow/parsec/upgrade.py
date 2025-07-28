@@ -43,6 +43,11 @@ class upgrader:
     SITE_CONFIG = 'site config'
     USER_CONFIG = 'user config'
 
+    DEPR_MSG = (
+        "Deprecated config items were automatically upgraded. "
+        "Please alter your workflow to use the new syntax."
+    )
+
     def __init__(self, cfg, descr):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
@@ -256,11 +261,7 @@ class upgrader:
                     " Please check your workflow and remove them permanently."
                 )
             if deprecations:
-                LOG.log(
-                    level,
-                    "Deprecated config items were automatically upgraded."
-                    " Please alter your workflow to use the new syntax."
-                )
+                LOG.log(level, self.DEPR_MSG)
 
             for vn, msgs in warnings.items():
                 for msg in msgs:

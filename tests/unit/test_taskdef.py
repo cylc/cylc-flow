@@ -126,7 +126,7 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
             'bar',
             IntegerPoint("2"),
             [],
-            id='it.does-not-return-suicide-triggers',
+            id='it.does-not-return-suicide-prereqs',
         ),
     ],
 )
@@ -195,3 +195,62 @@ def test_get_xtrigs(tmp_flow_config):
     assert taskdef.get_xtrigs(IntegerPoint('2')) == {'xt_every'}
     assert taskdef.get_xtrigs(IntegerPoint('3')) == {'xt_odd', 'xt_every'}
     assert taskdef.get_xtrigs(IntegerPoint('16')) == {'xt_final', 'xt_every'}
+
+
+@pytest.mark.parametrize(
+    "task, point, expected",
+    [
+        param(
+            'foo',
+            IntegerPoint("1"),
+            ['foo[-P1]:succeeded'],
+            id='it.gets-triggers',
+        ),
+        param(
+            'multiple_pre',
+            IntegerPoint("2"),
+            ['food:succeeded', 'fool:succeeded',
+             'foolhardy:succeeded', 'foolish:succeeded'],
+            id='it.gets-multiple-triggers',
+        ),
+        param(
+            'foo',
+            IntegerPoint("3"),
+            [],
+            id='it.only-returns-triggers-for-valid-points',
+        ),
+        param(
+            'bar',
+            IntegerPoint("2"),
+            [],
+            id='it.does-not-return-suicide-triggers',
+        ),
+    ],
+)
+def test_get_triggers(tmp_flow_config, task, point, expected):  # noqa: F811
+    """Test that get_triggers() returns the correct triggers for a task.
+
+    """
+    id_ = 'gargle-blaster'
+    flow_file = tmp_flow_config(
+        id_,
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                final cycle point = 2
+                cycling mode = integer
+                [[graph]]
+                    P1 = '''
+                        foo[-P1] => foo
+                        bar:fail? => !bar
+                        food & fool => multiple_pre
+                        foolish | foolhardy => multiple_pre
+                    '''
+        """
+    )
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
+    taskdef = cfg.taskdefs[task]
+    point = IntegerPoint(point)
+    res = sorted([str(t) for t in taskdef.get_triggers(point)])
+    assert res == expected

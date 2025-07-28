@@ -11,6 +11,44 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.5.0 (Released 2025-07-24)__
+
+### 🚀 Enhancements
+
+[#6117](https://github.com/cylc/cylc-flow/pull/6117) - Create `workflow/share/cycle/<cycle>` and make it available to jobs as `$CYLC_TASK_SHARE_CYCLE_DIR`.
+
+[#6395](https://github.com/cylc/cylc-flow/pull/6395) - `cylc trigger` now respects the dependencies between tasks allowing it to be used to (re)-run a subgraph of tasks.
+
+[#6478](https://github.com/cylc/cylc-flow/pull/6478) - Major version upgrade for graphene/graphql-core dependencies.
+
+[#6509](https://github.com/cylc/cylc-flow/pull/6509) - Added --global flag to 'cylc reload' which also reloads the Cylc global config.
+
+[#6554](https://github.com/cylc/cylc-flow/pull/6554) - `cylc show` now displays when a task has been set to skip mode
+
+[#6561](https://github.com/cylc/cylc-flow/pull/6561) - Tui now displays task states and flow numbers in context menus. Tasks in flow=None will be displayed in gray.
+
+[#6570](https://github.com/cylc/cylc-flow/pull/6570) - Using `cylc set` without specifying `--out` on a task where success is optional now sets success pathway outputs instead of doing nothing.
+
+[#6611](https://github.com/cylc/cylc-flow/pull/6611) - Tui: Add ability to open log files in external tools. Configure your `$EDITOR`, `$GEDITOR` or `$PAGER` options to choose which tool is used.
+
+[#6695](https://github.com/cylc/cylc-flow/pull/6695) - Extended the "set" command to manually satisfy dependence on xtriggers.
+
+### 🔧 Fixes
+
+[#6549](https://github.com/cylc/cylc-flow/pull/6549) - Removed cylc.vim - you should use https://github.com/cylc/cylc.vim instead.
+
+[#6574](https://github.com/cylc/cylc-flow/pull/6574) - Broadcast: Report any settings that are not compatible with the scheduler Cylc version.
+
+[#6625](https://github.com/cylc/cylc-flow/pull/6625) - Efficiency improvement: avoid storing duplicate information on graph triggers.
+
+[#6753](https://github.com/cylc/cylc-flow/pull/6753) - Fixes an issue where duplicate xtrigger labels were missing from `cylc show`.
+
+[#6838](https://github.com/cylc/cylc-flow/pull/6838) - Workflow and task `handler events` and `mail events` names are now validated. Outdated Cylc 7 workflow event names are automatically upgraded.
+
+[#6852](https://github.com/cylc/cylc-flow/pull/6852) - Removed predicted (and potentially incorrect) flow numbers from n>0 window tasks.
+
+[#6856](https://github.com/cylc/cylc-flow/pull/6856) - Fix a niche bug where outputs of a task could be wiped from the database if it was subsequently suicide triggered (e.g, if a custom output was manually set before the suicide trigger occurred).
+
 ## __cylc-8.4.4 (Released 2025-07-18)__
 
 ### 🔧 Fixes

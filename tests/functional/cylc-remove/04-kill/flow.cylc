@@ -26,6 +26,11 @@
     [[remover]]
         script = """
             cylc remove "$CYLC_WORKFLOW_ID//1/a" "$CYLC_WORKFLOW_ID//1/b"
-            cylc__job__poll_grep_workflow_log -E '1\/a.* => failed'
-            cylc__job__poll_grep_workflow_log -E '1\/b.* => submit-failed'
+
+            # Task proxies become "transient" on removal (it means, not in the
+            # task pool), after which the job kill will be logged but the
+            # state change to "failed" or "sumbit-failed" will not (we don't
+            # care about the state of removed tasks).
+            cylc__job__poll_grep_workflow_log -E '1\/a.* job killed'
+            cylc__job__poll_grep_workflow_log -E '1\/b.* job killed'
         """
