@@ -68,6 +68,7 @@ from typing import (
     Dict,
     Iterator,
     List,
+    Literal,
     Optional,
     Union,
 )
@@ -102,11 +103,6 @@ from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
