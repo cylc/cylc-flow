@@ -176,7 +176,7 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
             LOG.debug(exc)
         except OSError as exc:
             if any(
-                exc.strerror.lower().startswith(err)
+                exc.strerror and exc.strerror.lower().startswith(err)
                 for err in NOT_REPO_ERRS[vcs]
             ):
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")

@@ -1026,7 +1026,7 @@ def _merge_cli_with_tomldata(
     if isinstance(clidata[RULESETS][0], list):
         clidata[RULESETS] = clidata[RULESETS][0]
 
-    output = {}
+    output: dict[str, Any] = {}
 
     # Combine 'ignore' sections:
     output[IGNORE] = sorted(set(clidata[IGNORE] + tomldata[IGNORE]))
@@ -1034,15 +1034,9 @@ def _merge_cli_with_tomldata(
     # Replace 'rulesets' from toml with those from CLI if they exist:
 
     if override_cli_default_rules:
-        output[RULESETS] = (
-            tomldata[RULESETS] if tomldata[RULESETS]
-            else clidata[RULESETS]
-        )
+        output[RULESETS] = tomldata[RULESETS] or clidata[RULESETS]
     else:
-        output[RULESETS] = (
-            clidata[RULESETS] if clidata[RULESETS]
-            else tomldata[RULESETS]
-        )
+        output[RULESETS] = clidata[RULESETS] or tomldata[RULESETS]
 
     # Return 'exclude' and 'max-line-length' for the tomldata:
     output[EXCLUDE] = tomldata[EXCLUDE]
