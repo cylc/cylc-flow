@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3']
+        python-version: ['3.12', '3']
     env:
       ENV_FILE: conda-environment.yml
     steps:
