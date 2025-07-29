@@ -736,6 +736,8 @@ def _force_trigger_tasks(
 
     warnings_flow_none = []
     warnings_has_job = []
+    active_completed_outputs = {}
+
     for itask in active:
         # Find active group start tasks (parentless, or with only off-group
         # prerequisites) and set all prerequisites (to trigger them now).
@@ -764,6 +766,12 @@ def _force_trigger_tasks(
                     f"{repr_flow_nums(itask.flow_nums, full=True)}"
                 )
                 continue
+
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                for (label, msg, completed) in itask.state.outputs:
+                    if completed:
+                        active_completed_outputs[
+                            (str(itask.point), itask.tdef.name)] = (label, msg)
 
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 warnings_has_job.append(str(itask))
@@ -827,7 +835,8 @@ def _force_trigger_tasks(
                 set_all=True  # prerequisites
             )
         else:
-            off_flow_prereqs = {
+            # Off-flow prereqs to set:
+            prereqs_to_set = {
                 PrereqTuple(str(key.point), str(key.task), key.output)
                 for pre in tdef.get_prereqs(point)
                 for key in pre.keys()
@@ -839,15 +848,24 @@ def _force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
+            # Prereqs to set for the triggered flow, from already-completed
+            # outputs of active group start tasks.
+            prereqs_to_set.update({
+                PrereqTuple(str(key.point), str(key.task), key.output)
+                for pre in tdef.get_prereqs(point)
+                for key in pre.keys()
+                if (str(key.point), key.task) in active_completed_outputs
+            })
+
             if (
-                off_flow_prereqs
+                prereqs_to_set
                 or tdef.get_xtrigs(point)
                 or tdef.external_triggers
             ):
                 # Satisfy any off-group prereqs or ext/xtriggers to spawn task.
                 jtask = schd.pool._set_prereqs_tdef(
                     point, tdef,
-                    off_flow_prereqs,
+                    prereqs_to_set,
                     {"all": True},  # xtriggers
                     flow_nums,
                     flow_wait,
