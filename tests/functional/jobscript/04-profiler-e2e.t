@@ -48,7 +48,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[the_good]]
         # this task should succeeded normally
         platform = localhost
-        script = sleep 1
+        script = sleep 5
     [[the_bad]]
         # this task should fail (it should still send profiling info)
         platform = localhost
