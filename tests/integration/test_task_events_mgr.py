@@ -161,8 +161,8 @@ async def test__always_insert_task_job(
         }
     })
 
-    schd = scheduler(id_, run_mode='live')
-    schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
+    schd: Scheduler = scheduler(id_, run_mode='live')
+    schd.bad_hosts.update({'no-such-host-1', 'no-such-host-2'})
     async with start(schd):
         schd.submit_task_jobs(schd.pool.get_tasks())
 
