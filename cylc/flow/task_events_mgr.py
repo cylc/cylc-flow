@@ -1336,7 +1336,7 @@ class TaskEventsManager():
     def _process_message_failed(
         self,
         itask: 'TaskProxy',
-        event_time: Optional[str],
+        event_time: str,
         message: str,
         forced: bool,
         full_message: str,
@@ -1351,8 +1351,6 @@ class TaskEventsManager():
                 happened to cause the this attempt to fail.
         """
         no_retries = False
-        if event_time is None:
-            event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
         job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
@@ -1456,7 +1454,7 @@ class TaskEventsManager():
     def _process_message_submit_failed(
         self,
         itask: 'TaskProxy',
-        event_time: Optional[str],
+        event_time: str,
         forced: bool,
     ):
         """Helper for process_message, handle a submit-failed message.
@@ -1464,12 +1462,6 @@ class TaskEventsManager():
         Return True if no retries (hence go to the submit-failed state).
         """
         no_retries = False
-        if event_time is None:
-            event_time = get_current_time_string()
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "time_submit_exit": event_time,
-            "submit_status": 1,
-        })
         itask.summary['submit_method_id'] = None
         LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if (
@@ -1586,7 +1578,8 @@ class TaskEventsManager():
         submit_status: int,
         forced: bool = False
     ):
-        """Insert a new job proxy into the datastore.
+        """Insert a new job proxy into the datastore; update existing entry
+        in the DB.
 
         Args:
             itask: create a job proxy for this task proxy
