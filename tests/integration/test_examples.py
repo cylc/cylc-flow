@@ -209,24 +209,20 @@ def test_module_scoped_fixture(myflow):
 async def test_db_select(one, start, db_select):
     """Demonstrate and test querying the workflow database."""
     # run a workflow
-    schd = one
+    schd: Scheduler = one
     async with start(schd):
-        # Note: can't query database here unfortunately
-        pass
+        # Select all from workflow_params table:
+        assert ('UTC_mode', '0') in db_select(schd, False, 'workflow_params')
 
-    # Now we can query the DB
-    # Select all from workflow_params table:
-    assert ('UTC_mode', '0') in db_select(schd, False, 'workflow_params')
+        # Select name & status columns from task_states table:
+        results = db_select(schd, False, 'task_states', 'name', 'status')
+        assert results[0] == ('one', 'waiting')
 
-    # Select name & status columns from task_states table:
-    results = db_select(schd, False, 'task_states', 'name', 'status')
-    assert results[0] == ('one', 'waiting')
-
-    # Select all columns where name==one & status==waiting from
-    # task_states table:
-    results = db_select(
-        schd, False, 'task_states', name='one', status='waiting')
-    assert len(results) == 1
+        # Select all columns where name==one & status==waiting from
+        # task_states table:
+        results = db_select(
+            schd, False, 'task_states', name='one', status='waiting')
+        assert len(results) == 1
 
 
 async def test_reflog(flow, scheduler, run, reflog, complete):
