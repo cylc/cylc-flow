@@ -315,6 +315,11 @@ class TaskProxy:
                 )
             )
 
+    @property
+    def job_tokens(self) -> 'Tokens':
+        """Return the job tokens for this task proxy."""
+        return self.tokens.duplicate(job=str(self.submit_num))
+
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.identity} {self.state}>"
 

@@ -608,7 +608,10 @@ class TaskEventsManager():
                 # Run custom event handlers on their own
                 self.proc_pool.put_command(
                     SubProcContext(
-                        ((id_key.handler, id_key.event), id_key.tokens['job']),
+                        (
+                            (id_key.handler, id_key.event),
+                            int(id_key.tokens['job']),
+                        ),
                         timer.ctx.cmd,
                         env=os.environ,
                         shell=True,  # nosec
@@ -640,7 +643,7 @@ class TaskEventsManager():
         flag: str = FLAG_INTERNAL,
         submit_num: Optional[int] = None,
         forced: bool = False
-    ) -> Optional[bool]:
+    ) -> bool:
         """Parse a task message and update task state.
 
         Incoming, e.g. "succeeded at <TIME>", may be from task job or polling.
@@ -681,7 +684,7 @@ class TaskEventsManager():
                 If this message is due to manual completion or not (cylc set)
 
         Return:
-            None: in normal circumstances.
+            False: in normal circumstances.
             True: if polling is required to confirm a reversal of status.
 
         """
@@ -705,17 +708,15 @@ class TaskEventsManager():
         if not self._process_message_check(
             itask, severity, message, event_time, flag, submit_num, forced
         ):
-            return None
+            return False
 
-        # always update the workflow state summary for latest message
-        if flag == self.FLAG_POLLED:
-            new_msg = f'{message} {self.FLAG_POLLED}'
-        else:
-            new_msg = message
-        self.data_store_mgr.delta_job_msg(
-            itask.tokens.duplicate(job=str(submit_num)),
-            new_msg
-        )
+        if not forced:
+            # always update the workflow state summary for latest message
+            self.data_store_mgr.delta_job_msg(
+                itask.tokens.duplicate(job=str(submit_num)),
+                f'{message} {flag}' if flag == self.FLAG_POLLED
+                else message
+            )
 
         # Satisfy my output, if possible, and spawn children.
         # (first remove signal: failed/EXIT -> failed)
@@ -796,15 +797,15 @@ class TaskEventsManager():
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
-            if itask.run_mode != RunMode.SIMULATION:
-                job_tokens = itask.tokens.duplicate(
-                    job=str(itask.submit_num)
-                )
-                self.data_store_mgr.delta_job_attr(
-                    job_tokens, 'job_id', itask.summary['submit_method_id'])
-            else:
+            if itask.run_mode == RunMode.SIMULATION:
                 # In simulation mode submitted implies started:
                 self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
+            elif not forced:
+                self.data_store_mgr.delta_job_attr(
+                    itask.job_tokens,
+                    'job_id',
+                    itask.summary['submit_method_id'],
+                )
 
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -816,27 +817,32 @@ class TaskEventsManager():
                 return True
             signal = message[len(FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
-            self.workflow_db_mgr.put_update_task_jobs(
-                itask, {"run_signal": signal})
             if self._process_message_failed(
-                itask, event_time, self.JOB_FAILED, forced, message
+                itask,
+                event_time,
+                self.JOB_FAILED,
+                forced,
+                full_message=message,
+                run_signal=signal,
             ):
                 self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
-            if (
-                    flag == self.FLAG_RECEIVED
-                    and itask.state.is_gt(TASK_STATUS_FAILED)
+            if flag == self.FLAG_RECEIVED and itask.state.is_gt(
+                TASK_STATUS_FAILED
             ):
                 # Already failed.
                 return True
             aborted_with = message[len(ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
-            self.workflow_db_mgr.put_update_task_jobs(
-                itask, {"run_signal": aborted_with})
             if self._process_message_failed(
-                itask, event_time, aborted_with, forced, message
+                itask,
+                event_time,
+                aborted_with,
+                forced,
+                full_message=message,
+                run_signal=aborted_with,
             ):
                 self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
@@ -881,7 +887,7 @@ class TaskEventsManager():
             itask.non_unique_events.update({lseverity: 1})
             self.setup_event_handlers(itask, lseverity, message)
 
-        return None
+        return False
 
     def _process_message_check(
         self,
@@ -1340,6 +1346,7 @@ class TaskEventsManager():
         message: str,
         forced: bool,
         full_message: str,
+        run_signal: Optional[str] = None,
     ) -> bool:
         """Helper for process_message, handle a failed message.
 
@@ -1352,13 +1359,20 @@ class TaskEventsManager():
         """
         no_retries = False
         itask.set_summary_time('finished', event_time)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_FAILED)
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "run_status": 1,
-            "time_run_exit": event_time,
-        })
+        if not forced:
+            self.data_store_mgr.delta_job_time(
+                itask.job_tokens, 'finished', event_time
+            )
+            self.data_store_mgr.delta_job_state(
+                itask.job_tokens, TASK_STATUS_FAILED
+            )
+            db_update = {
+                "run_status": 1,
+                "time_run_exit": event_time,
+            }
+            if run_signal is not None:
+                db_update['run_signal'] = run_signal
+            self.workflow_db_mgr.put_update_task_jobs(itask, db_update)
         LOG.error(f'[{itask}] {full_message or self.EVENT_FAILED}')
         if (
             forced
@@ -1395,12 +1409,17 @@ class TaskEventsManager():
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.info(f"[{itask}] Vacated job restarted")
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "time_run": itask.summary['started_time_string']})
+        if not forced:
+            self.data_store_mgr.delta_job_time(
+                itask.job_tokens, 'started', event_time
+            )
+            self.data_store_mgr.delta_job_state(
+                itask.job_tokens, TASK_STATUS_RUNNING
+            )
+            self.workflow_db_mgr.put_update_task_jobs(
+                itask, {"time_run": itask.summary['started_time_string']}
+            )
         if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
@@ -1423,19 +1442,19 @@ class TaskEventsManager():
         )
 
     def _process_message_succeeded(self, itask, event_time, forced):
-        """Helper for process_message, handle a succeeded message.
-
-        Ignore forced.
-        """
-
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_SUCCEEDED)
+        """Helper for process_message, handle a succeeded message."""
         itask.set_summary_time('finished', event_time)
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "run_status": 0,
-            "time_run_exit": event_time,
-        })
+        if not forced:
+            self.data_store_mgr.delta_job_time(
+                itask.job_tokens, 'finished', event_time
+            )
+            self.data_store_mgr.delta_job_state(
+                itask.job_tokens, TASK_STATUS_SUCCEEDED
+            )
+            self.workflow_db_mgr.put_update_task_jobs(itask, {
+                "run_status": 0,
+                "time_run_exit": event_time,
+            })
         # Update mean elapsed time only on task succeeded,
         # (Don't record skip mode run times)
         if (
@@ -1496,14 +1515,12 @@ class TaskEventsManager():
             msg = f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
 
-        # Register newly submit-failed job with the database and datastore.
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self._insert_task_job(
-            itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
-        self.data_store_mgr.delta_job_state(
-            job_tokens,
-            TASK_STATUS_SUBMIT_FAILED
-        )
+        if not forced:
+            # Register newly submit-failed job with the database and datastore.
+            self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
+            self.data_store_mgr.delta_job_state(
+                itask.job_tokens, TASK_STATUS_SUBMIT_FAILED
+            )
         self._reset_job_timers(itask)
 
         return no_retries
@@ -1548,28 +1565,24 @@ class TaskEventsManager():
                     self.data_store_mgr.delta_task_state(itask)
                 self._reset_job_timers(itask)
 
-        # Register the newly submitted job with the database and datastore.
-        # Do after itask has changed state
-        self._insert_task_job(
-            itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(
-            job_tokens,
-            'submitted',
-            event_time,
-        )
-        if itask.run_mode == RunMode.SIMULATION:
-            # Simulate job started as well.
+        if not forced:
+            # Register the newly submitted job with the database and datastore.
+            # Do after itask has changed state
+            self._insert_task_job(
+                itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced
+            )
             self.data_store_mgr.delta_job_time(
-                job_tokens,
-                'started',
-                event_time,
+                itask.job_tokens, 'submitted', event_time
             )
-        else:
-            self.data_store_mgr.delta_job_state(
-                job_tokens,
-                TASK_STATUS_SUBMITTED,
-            )
+            if itask.run_mode == RunMode.SIMULATION:
+                # Simulate job started as well.
+                self.data_store_mgr.delta_job_time(
+                    itask.job_tokens, 'started', event_time
+                )
+            else:
+                self.data_store_mgr.delta_job_state(
+                    itask.job_tokens, TASK_STATUS_SUBMITTED
+                )
 
     def _insert_task_job(
         self,
@@ -1603,9 +1616,7 @@ class TaskEventsManager():
             except IndexError:
                 # we do not have access to the job config (e.g. Scheduler
                 # crashed) - https://github.com/cylc/cylc-flow/pull/6326
-                job_id = itask.tokens.duplicate(
-                    job=itask.submit_num
-                ).relative_id
+                job_id = itask.job_tokens.relative_id
                 LOG.warning(
                     f'Could not find the job configuration for "{job_id}".'
                 )
@@ -1669,7 +1680,7 @@ class TaskEventsManager():
             self.HANDLER_JOB_LOGS_RETRIEVE,
             event,
             event,
-            itask.tokens.duplicate(job=itask.submit_num),
+            itask.job_tokens,
         )
         if id_key in self._event_timers:
             # event already being processed
@@ -1708,7 +1719,7 @@ class TaskEventsManager():
             self.HANDLER_MAIL,
             get_event_id(event, itask),
             message,
-            itask.tokens.duplicate(job=itask.submit_num),
+            itask.job_tokens,
         )
         if id_key in self._event_timers:
             # event already being processed
@@ -1754,7 +1765,7 @@ class TaskEventsManager():
                 f'{self.HANDLER_CUSTOM}-{i:02d}',
                 get_event_id(event, itask),
                 message,
-                itask.tokens.duplicate(job=itask.submit_num),
+                itask.job_tokens,
             )
 
             if id_key in self._event_timers:
@@ -2004,24 +2015,15 @@ class TaskEventsManager():
         delays += time_limit_polling_intervals
         return delays
 
-    def add_event_timer(self, id_key: EventKey, event_timer) -> None:
-        """Add a new event timer.
-
-        Args:
-            id_key (str)
-            timer (TaskActionTimer)
-
-        """
+    def add_event_timer(
+        self, id_key: EventKey, event_timer: TaskActionTimer
+    ) -> None:
+        """Add a new event timer."""
         self._event_timers[id_key] = event_timer
         self.event_timers_updated = True
 
     def remove_event_timer(self, id_key: EventKey) -> None:
-        """Remove an event timer.
-
-        Args:
-            id_key (str)
-
-        """
+        """Remove an event timer."""
         del self._event_timers[id_key]
         self.event_timers_updated = True
 

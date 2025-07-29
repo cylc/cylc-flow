@@ -462,8 +462,9 @@ class WorkflowDatabaseManager:
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
             "is_manual_submit": itask.is_manual_submit,
-            "submit_num": itask.submit_num,
         }
+        if not itask.transient:
+            set_args['submit_num'] = itask.submit_num
         # Note tasks_states table rows are for latest submit_num only
         # (not one row per submit).
         where_args = {
