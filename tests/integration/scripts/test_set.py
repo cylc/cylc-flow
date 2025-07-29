@@ -369,3 +369,46 @@ async def test_job_state(flow, scheduler, start, db_select):
         assert db_task_states(foo) == [(TASK_STATUS_SUCCEEDED,)]
         # But job is still failed:
         assert_job_failed(foo)
+
+
+async def test_set_already_succeeded(
+    flow, scheduler, run, complete, db_select
+):
+    """Doing `cylc set` on a task that has already succeeded should not
+    change anything."""
+    schd: Scheduler = scheduler(
+        flow('foo => bar'),
+        paused_start=False,
+    )
+
+    def db_task_states(itask: TaskProxy):
+        return db_select(
+            schd,
+            True,
+            'task_states',
+            'submit_num',
+            'status',
+            'time_updated',
+            name=itask.tdef.name,
+        )
+
+    def data_store_task_state(itask: TaskProxy):
+        return schd.data_store_mgr.data[schd.tokens.id][TASK_PROXIES][
+            itask.tokens.id
+        ].state
+
+    async with run(schd):
+        foo = schd.pool.get_tasks()[0]
+        await complete(schd, foo.identity)
+        time_updated = db_task_states(foo)[0][2]
+        expected = [(1, TASK_STATUS_SUCCEEDED, time_updated)]
+        assert db_task_states(foo) == expected
+        assert data_store_task_state(foo) == TASK_STATUS_SUCCEEDED
+
+        await run_cmd(
+            set_prereqs_and_outputs(schd, [foo.identity], [])
+        )
+        assert foo.state(TASK_STATUS_SUCCEEDED)
+        await schd.update_data_structure()
+        assert db_task_states(foo) == expected
+        assert data_store_task_state(foo) == TASK_STATUS_SUCCEEDED
