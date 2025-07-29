@@ -29,15 +29,24 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.data_messages_pb2 import PbTaskProxy
-from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.data_messages_pb2 import (
+    PbJob,
+    PbTaskProxy,
+)
+from cylc.flow.data_store_mgr import (
+    JOBS,
+    TASK_PROXIES,
+)
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
@@ -294,3 +303,69 @@ async def test_completion_expr(flow, scheduler, start):
             TASK_OUTPUT_STARTED,
             TASK_OUTPUT_SUCCEEDED,
         }
+
+
+async def test_set_submitted(flow, scheduler, start):
+    """`cylc set --out submitted` should spawn children that depend on the
+    output, but not affect the task's state."""
+    schd: Scheduler = scheduler(flow('foo:submitted? => bar'))
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+        await run_cmd(
+            set_prereqs_and_outputs(
+                schd, [foo.identity], [], ['submitted']
+            )
+        )
+        assert set(foo.state.outputs.get_completed_outputs()) == {
+            TASK_OUTPUT_SUBMITTED,
+        }
+        assert schd.pool.get_task_ids() == {'1/foo', '1/bar'}
+        assert foo.state(TASK_STATUS_WAITING)
+
+
+async def test_job_state(flow, scheduler, start, db_select):
+    """Test that setting outputs does not change the job state."""
+    schd: Scheduler = scheduler(flow('foo => bar'))
+    fail_time = '1950-01-01T00:00:00Z'
+
+    def db_task_states(itask: TaskProxy):
+        return db_select(
+            schd, True, 'task_states', 'status', name=itask.tdef.name
+        )
+
+    def assert_job_failed(itask: TaskProxy):
+        """...in the DB and data store."""
+        assert db_select(
+            schd,
+            True,
+            'task_jobs',
+            'run_status',
+            'time_run_exit',
+            name=itask.tdef.name,
+        ) == [(1, fail_time)]
+        pb_job: PbJob = schd.data_store_mgr.data[schd.tokens.id][JOBS][
+            itask.job_tokens.id
+        ]
+        assert pb_job.state == TASK_STATUS_FAILED
+        assert pb_job.finished_time == fail_time
+
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+        schd.submit_task_jobs([foo])
+        schd.task_events_mgr.process_message(
+            foo, 'INFO', TASK_OUTPUT_FAILED, event_time=fail_time
+        )
+        await schd.update_data_structure()
+        assert foo.state(TASK_STATUS_FAILED)
+        assert db_task_states(foo) == [(TASK_STATUS_FAILED,)]
+        assert_job_failed(foo)
+
+        await run_cmd(
+            set_prereqs_and_outputs(schd, [foo.identity], [])
+        )
+        await schd.update_data_structure()
+        # Task is now succeeded:
+        assert foo.state(TASK_STATUS_SUCCEEDED)
+        assert db_task_states(foo) == [(TASK_STATUS_SUCCEEDED,)]
+        # But job is still failed:
+        assert_job_failed(foo)
