@@ -33,6 +33,7 @@ from logging import (
     getLevelName,
 )
 import os
+from pathlib import Path
 import shlex
 from shlex import quote
 from time import time
@@ -45,6 +46,7 @@ from typing import (
     NamedTuple,
     Optional,
     Sequence,
+    Set,
     Union,
     cast,
 )
@@ -133,6 +135,7 @@ from cylc.flow.workflow_events import (
 
 if TYPE_CHECKING:
     from cylc.flow.broadcast_mgr import BroadcastMgr
+    from cylc.flow.cycling import PointBase
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.id import Tokens
     from cylc.flow.scheduler import Scheduler
@@ -215,7 +218,13 @@ def get_event_id(event: str, itask: 'TaskProxy') -> str:
     return event
 
 
-def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
+def log_task_job_activity(
+    ctx: 'SubProcContext',
+    workflow: str,
+    point: Union[str, 'PointBase'],
+    name: str,
+    submit_num: Union[str, int, None] = None,
+):
     """Log an activity for a task job."""
     ctx_str = str(ctx)
     if not ctx_str:
@@ -1217,29 +1226,12 @@ class TaskEventsManager():
         if ctx.max_size:
             cmd.append("--max-size=%s" % (ctx.max_size,))
         # Includes and excludes
-        includes = set()
+        includes: Set[str] = set()
         for id_key in id_keys:
             # Include relevant directories, all levels needed
-            includes.add("/%s" % (id_key.tokens['cycle']))
-            includes.add(
-                "/%s/%s" % (
-                    id_key.tokens['cycle'],
-                    id_key.tokens['task']
-                )
-            )
-            includes.add(
-                "/%s/%s/%02d" % (
-                    id_key.tokens['cycle'],
-                    id_key.tokens['task'],
-                    id_key.tokens['job'],
-                )
-            )
-            includes.add(
-                "/%s/%s/%02d/**" % (
-                    id_key.tokens['cycle'],
-                    id_key.tokens['task'],
-                    id_key.tokens['job'],
-                )
+            path = Path(os.sep, id_key.tokens.relative_id, '**')
+            includes.update(
+                (str(p) for p in [path, *path.parents][:-1])
             )
         cmd += ["--include=%s" % (include) for include in sorted(includes)]
         cmd.append("--exclude=/**")  # exclude everything else
@@ -1301,7 +1293,7 @@ class TaskEventsManager():
                 log_ctx = SubProcContext(
                     (
                         (id_key.handler, id_key.event),
-                        id_key.tokens['job']
+                        int(id_key.tokens['job'])
                     ),
                     None,
                 )
