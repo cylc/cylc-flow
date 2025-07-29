@@ -877,7 +877,7 @@ class TaskJobManager:
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}",
+                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}/{jp_ctx.run_signal}",
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
