@@ -974,6 +974,44 @@ class TaskEventsManager():
         LOG.log(severity_lvl, f"[{itask}] {flag}{message}{timestamp}")
         return True
 
+    def process_job_message(
+        self,
+        job_tokens: 'Tokens',
+        tdef: 'TaskDef',
+        message: str,
+        event_time: str,
+    ) -> bool:
+        """Process a job message only.
+
+        E.g. for a task that is no longer in the pool because it was manually
+        set to completed.
+
+        Returns True if the message was handled, False otherwise.
+        """
+        tmp_itask = TaskProxy(
+            job_tokens.workflow,
+            tdef,
+            get_point(job_tokens['cycle']),
+            submit_num=int(job_tokens['job']),
+            data_mode=True,
+            transient=True,
+        )
+        ret = self.data_store_mgr.delta_job_msg(job_tokens, message)
+        message_prefix, signal = split_run_signal(message)
+        if message == TASK_OUTPUT_SUBMITTED:
+            self._process_job_submitted(tmp_itask, event_time)
+        elif message == TASK_OUTPUT_SUBMIT_FAILED:
+            self._process_job_submit_failed(tmp_itask, event_time)
+        elif message == TASK_OUTPUT_STARTED:
+            self._process_job_started(tmp_itask, event_time)
+        elif message == TASK_OUTPUT_SUCCEEDED:
+            self._process_job_succeeded(tmp_itask, event_time)
+        elif message_prefix in {FAIL_MESSAGE_PREFIX, ABORT_MESSAGE_PREFIX}:
+            self._process_job_failed(tmp_itask, event_time, signal)
+        else:
+            return ret
+        return True
+
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
         if disable_task_event_handlers(itask):

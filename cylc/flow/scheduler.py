@@ -972,14 +972,15 @@ class Scheduler:
                 (job, task_msg)
             )
 
+        unprocessed_messages: List[TaskMsg] = []
         # Poll tasks for which messages caused a backward state change.
-        to_poll_tasks = []
-        for itask in self.pool.get_tasks():
-            message_items = messages.get(itask.identity)
-            if message_items is None:
+        to_poll_tasks: List[TaskProxy] = []
+        for task_id, message_items in messages.items():
+            itask = self.pool._get_task_by_id(task_id)
+            if itask is None:
+                unprocessed_messages.extend(tm for _, tm in message_items)
                 continue
             should_poll = False
-            del messages[itask.identity]
             for submit_num, tm in message_items:
                 if self.task_events_mgr.process_message(
                     itask, tm.severity, tm.message, tm.event_time,
@@ -994,11 +995,20 @@ class Scheduler:
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
         # proxy can be removed, but the orphaned job still sends messages.
-        for tms in messages.values():
-            warn = "Undeliverable task messages received and ignored:"
-            for _, msg in tms:
-                warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
-            LOG.warning(warn)
+        warn = ""
+        for tm in unprocessed_messages:
+            job_tokens = self.tokens.duplicate(
+                Tokens(tm.job_id, relative=True)
+            )
+            tdef = self.config.get_taskdef(job_tokens['task'])
+            if not self.task_events_mgr.process_job_message(
+                job_tokens, tdef, tm.message, tm.event_time
+            ):
+                warn += f'\n  {tm.job_id}: {tm.severity} - "{tm.message}"'
+        if warn:
+            LOG.warning(
+                f"Undeliverable task messages received and ignored:{warn}"
+            )
 
     async def process_command_queue(self) -> None:
         """Process queued commands."""
