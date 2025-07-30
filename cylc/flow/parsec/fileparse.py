@@ -478,11 +478,7 @@ def read_and_proc(
 
     # process with Jinja2
     if do_jinja2:
-        if (
-            extra_vars[TEMPLATING_DETECTED] == 'jinja2' and
-            not process_with and
-            process_with != 'jinja2'
-        ):
+        if extra_vars[TEMPLATING_DETECTED] == 'jinja2' and not process_with:
             flines.insert(0, '#!jinja2')
 
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):

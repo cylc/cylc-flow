@@ -140,7 +140,8 @@ def get_option_parser() -> COP:
 def main(parser: COP, options: 'Values', *args: str) -> None:
     """CLI."""
     if not args:
-        return parser.error('No message supplied')
+        parser.error('No message supplied')
+        return
     if len(args) <= 2:
         # BACK COMPAT: args <= 2
         # from:

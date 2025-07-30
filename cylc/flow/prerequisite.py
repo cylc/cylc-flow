@@ -24,19 +24,18 @@ from typing import (
     Iterable,
     Iterator,
     KeysView,
+    Literal,
     NamedTuple,
     Optional,
     Tuple,
     Union,
 )
 
-# BACK COMPAT: typing_extensions.Literal
-# FROM: Python 3.7
-# TO: Python 3.8
-from typing_extensions import Literal
-
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.data_messages_pb2 import PbCondition, PbPrerequisite
+from cylc.flow.data_messages_pb2 import (
+    PbCondition,
+    PbPrerequisite,
+)
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.id import quick_relative_id
 from cylc.flow.run_modes import RunMode

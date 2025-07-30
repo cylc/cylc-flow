@@ -615,7 +615,7 @@ async def _complete(
             test.
 
             Note, use this timeout rather than wrapping the complete call with
-            async_timeout (handles shutdown logic more cleanly).
+            async.timeout (handles shutdown logic more cleanly).
         allow_paused:
             This function will raise an Exception if the scheduler is paused
             (because this usually means the sepecified tasks cannot complete)
