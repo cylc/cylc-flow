@@ -26,7 +26,7 @@ env:
   PIP_PROGRESS_BAR: off
 
 jobs:
-  test:
+  build-test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:

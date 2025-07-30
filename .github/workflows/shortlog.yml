@@ -11,7 +11,7 @@ on:
     - cron: '37 06 * * 1' # 06:37, Monday
 
 jobs:
-  test:
+  shortlog-check:
     runs-on: 'ubuntu-latest'
     timeout-minutes: 10
     steps:
