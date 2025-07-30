@@ -666,6 +666,10 @@ class TaskPool:
 
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
+        skip_msg = (
+            "{id_}: task not found in reloaded pool;"
+            " {item} not reloaded")
+
         if row_idx == 0:
             LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
@@ -708,14 +712,14 @@ class TaskPool:
         if ctx_key == "poll_timer":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
+                LOG.debug(skip_msg.format(id_=id_, item=ctx_key))
                 return
             itask.poll_timer = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx_key[0] == "try_timers":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
+                LOG.debug(skip_msg.format(id_=id_, item=ctx_key[0]))
                 return
             if 'retrying' in ctx_key[1]:
                 if 'submit' in ctx_key[1]:
