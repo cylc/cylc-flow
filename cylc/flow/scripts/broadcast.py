@@ -318,6 +318,17 @@ def get_option_parser() -> COP:
              "the broadcast config structure in raw Python form.",
         action="store_true", default=False, dest="raw")
 
+    parser.add_option(
+        '--json',
+        help=(
+            "With -d/--display or -k/--display-task, write out "
+            "the broadcast config structure in JSON format."
+        ),
+        action='store_true',
+        default=False,
+        dest='json',
+    )
+
     return parser
 
 
@@ -369,7 +380,12 @@ async def run(options: 'Values', workflow_id):
         for wflow in result['workflows']:
             settings = wflow['broadcasts']
             padding = get_padding(settings) * ' '
-            if options.raw:
+            if options.json:
+                import json
+                ret['stdout'].append(
+                    json.dumps(settings, indent=2, sort_keys=True)
+                )
+            elif options.raw:
                 ret['stdout'].append(str(settings))
             else:
                 ret['stdout'].extend(
