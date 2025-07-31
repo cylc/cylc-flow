@@ -1278,8 +1278,8 @@ with Conf('global.cylc', desc='''
                     be created in ``<this-path>/cylc-run/<workflow-id>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-id>``.
-                    If not specified the workflow run directory will be created
-                    in ``$HOME/cylc-run/<workflow-id>``.
+                    If not specified, the workflow run directory will be
+                    created in ``$HOME/cylc-run/<workflow-id>``.
                     All the workflow files and the ``.service`` directory get
                     installed into this directory.
 
@@ -1289,13 +1289,12 @@ with Conf('global.cylc', desc='''
                     Conf(folder, VDR.V_STRING, None, desc=f"""
                         Alternative location for the {folder} dir.
 
-                        If specified the workflow {folder} directory will
+                        If specified, the workflow {folder} directory will
                         be created in
                         ``<this-path>/cylc-run/<workflow-id>/{folder}``
                         and a symbolic link will be created from
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
-                        If not specified the workflow log directory will
-                        be created in
+                        If not specified, the directory will be created in
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
 
                         .. versionadded:: {versionadded}
