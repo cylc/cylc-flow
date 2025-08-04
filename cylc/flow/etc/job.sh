@@ -202,6 +202,7 @@ cylc__set_return() {
 cylc__kill_profiler() {
     if [[ -n "${profiler_pid:-}" && -d "/proc/${profiler_pid}" ]]; then
       kill -s SIGINT "${profiler_pid}" || true
+      timeout 30 wait "${profiler_pid}" || echo "WARNING: profiler did not exit in time"
     fi
 }
 
