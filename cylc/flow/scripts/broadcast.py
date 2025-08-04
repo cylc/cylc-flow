@@ -111,6 +111,11 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
+RAW_DEPR_MSG = (
+    "DEPRECATED: the --raw option will be removed at Cylc 8.7; "
+    "use --format=raw instead."
+)
+
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
 
 MUTATION = '''
@@ -312,11 +317,32 @@ def get_option_parser() -> COP:
         help="Use unicode box characters with -d, -k.",
         action="store_true", default=False, dest="unicode")
 
+    # BACK COMPAT: --raw
+    # From: < 8.5.1
+    # To: 8.5.1
+    # Remove at: 8.7.0
     parser.add_option(
         "-r", "--raw",
-        help="With -d/--display or -k/--display-task, write out "
-             "the broadcast config structure in raw Python form.",
+        help=(
+            "With -d/--display or -k/--display-task, write out "
+            "the broadcast config structure in raw Python form. "
+            f"{RAW_DEPR_MSG}"
+        ),
         action="store_true", default=False, dest="raw")
+
+    parser.add_option(
+        '--format',
+        help=(
+            "With -d/--display or -k/--display-task, write out "
+            "the broadcast config structure in one of the following formats: "
+            "tree, json, or raw (like json but as a Python dictionary). "
+            r"Default: %default."
+        ),
+        action='store',
+        dest='format',
+        choices=('tree', 'json', 'raw'),
+        default='tree',
+    )
 
     return parser
 
@@ -356,6 +382,9 @@ async def run(options: 'Values', workflow_id):
 
     }
 
+    if options.raw:
+        ret['stderr'].append(cparse(f"<yellow>{RAW_DEPR_MSG}</yellow>"))
+
     if options.show or options.showtask:
         if options.showtask:
             try:
@@ -369,7 +398,12 @@ async def run(options: 'Values', workflow_id):
         for wflow in result['workflows']:
             settings = wflow['broadcasts']
             padding = get_padding(settings) * ' '
-            if options.raw:
+            if options.format == 'json':
+                import json
+                ret['stdout'].append(
+                    json.dumps(settings, indent=2, sort_keys=True)
+                )
+            elif options.raw or options.format == 'raw':
                 ret['stdout'].append(str(settings))
             else:
                 ret['stdout'].extend(
