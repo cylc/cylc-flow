@@ -22,7 +22,7 @@
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     skip_all "Test not compatible with Mac OS"
-fi
+else
 
 . "$(dirname "$0")/test_header"
 set_test_number 7
@@ -84,3 +84,5 @@ log_scan "${TEST_NAME_BASE}-task-succeeded" \
 grep_workflow_log_ok "${TEST_NAME_BASE}-broken" '1/the_ugly.*(received)succeeded'
 
 purge
+
+fi
