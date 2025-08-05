@@ -207,7 +207,6 @@ cylc__kill_profiler() {
       echo "Sending SIGINT to profiler pid ${profiler_pid}"
       kill -s SIGINT "${profiler_pid}" || true
       echo "Waiting for profiler to exit"
-      timeout 30 wait "${profiler_pid}" || echo "WARNING: profiler did not exit in time"
     fi
 }
 
