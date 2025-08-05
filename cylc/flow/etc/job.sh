@@ -200,8 +200,11 @@ cylc__set_return() {
 ###############################################################################
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
+  echo "Killing profiler"
     if [[ -n "${profiler_pid:-}" && -d "/proc/${profiler_pid}" ]]; then
+      echo "Sending SIGINT to profiler pid ${profiler_pid}"
       kill -s SIGINT "${profiler_pid}" || true
+      echo "Waiting for profiler to exit"
       timeout 30 wait "${profiler_pid}" || echo "WARNING: profiler did not exit in time"
     fi
 }
