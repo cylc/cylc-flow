@@ -20,6 +20,10 @@
 # The test platform may need to be configured for this to work (e.g.
 # "cgroups path" may need to be set).
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    skip_all "Test not compatible with Mac OS"
+fi
+
 . "$(dirname "$0")/test_header"
 set_test_number 7
 

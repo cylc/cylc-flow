@@ -82,7 +82,6 @@ class Process:
 def stop_profiler(*args):
     """This function will be executed when the SIGINT signal is sent
      to this process"""
-    print("received signal to stop profiler")
     # If a task fails instantly, or finishes very quickly (< 1 second),
     # the get config function doesn't have time to run
     if (max_rss_location is None
@@ -115,13 +114,11 @@ def stop_profiler(*args):
                          timeout=comms_timeout)
 
     async def send_cylc_message():
-        print("before message is sent")
         await pclient.async_request(
             'graphql',
             {'request_string': GRAPHQL_MUTATION,
              'variables': GRAPHQL_REQUEST_VARIABLES},
         )
-        print("After message is sent")
 
     asyncio.run(send_cylc_message())
     sys.exit(0)
@@ -225,18 +222,11 @@ def get_config(args):
     # Find the cgroup that this process is running in.
     # Cylc will put this profiler in the same cgroup
     # as the job it is profiling
-    print("Getting cgroup name")
     cgroup_name = get_cgroup_name()
-    print("Cgroup name is:", cgroup_name)
-    print("Getting cgroup version")
     cgroup_version = get_cgroup_version(args.cgroup_location, cgroup_name)
-    print("Cgroup version is:", cgroup_version)
-    print("Getting cgroup paths")
     process = get_cgroup_paths(cgroup_version,
                                args.cgroup_location,
                                cgroup_name)
-    print("Cgroup paths are:", process)
-    print("Starting profiler")
     profile(process, cgroup_version, args.delay)
 
 
