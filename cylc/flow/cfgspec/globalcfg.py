@@ -171,9 +171,11 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
         Configure :term:`event handlers` that run when certain workflow
         events occur.
 
-        This section configures *workflow* event handlers; see
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for *task* event
-        handlers.
+        .. admonition:: Not to be confused with
+           :class: tip
+
+           For *task* events, see
+           :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
 
         Event handlers can be held in the workflow ``bin/`` directory,
         otherwise it is up to you to ensure their location is in ``$PATH``
@@ -194,7 +196,7 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
 
             .. seealso::
 
-               :ref:`user_guide.scheduler.workflow_events`
+               :ref:`user_guide.scheduler.workflow_events.list`
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
@@ -203,6 +205,10 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
         'desc': '''
             Specify the workflow events for which notification emails should
             be sent.
+
+            .. seealso::
+
+               :ref:`user_guide.scheduler.workflow_events.list`
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
@@ -546,7 +552,10 @@ want to configure more frequent polling.
 TASK_EVENTS_DESCR = '''
 Configure the task event handling system.
 
-See also :cylc:conf:`flow.cylc[scheduler][events]` for *workflow* events.
+.. admonition:: Not to be confused with
+   :class: tip
+
+   For *workflow* events, see :cylc:conf:`flow.cylc[scheduler][events]`.
 
 Task :term:`event handlers` are scripts to run when task events occur.
 
@@ -576,26 +585,16 @@ task_event_handling.template_variables`.
         For more information, see
         :ref:`user_guide.runtime.task_event_handling`.
 
-        For workflow events, see
-        :ref:`user_guide.scheduler.workflow_event_handling`.
-
         Example::
 
            echo %(event)s occurred in %(workflow)s >> my-log-file
 
     ''',
-    'execution timeout': '''
-        If a task has not finished after the specified interval, the execution
-        timeout event handler(s) will be called.
-    ''',
     'handler events': '''
         A list of events for which :cylc:conf:`[..]handlers` are run.
 
-        Specify the events for which the general task event handlers
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]handlers`
-        should be invoked.
-
-        See :ref:`user_guide.runtime.task_event_handling` for more information.
+        See :ref:`user_guide.runtime.task_event_handling.list` for valid
+        events.
 
         Example::
 
@@ -613,15 +612,22 @@ task_event_handling.template_variables`.
            PT10S, PT1M, PT5M
     ''',
     'mail events': '''
-        Specify the events for which notification emails should be sent.
+        A list of events for which notification emails should be sent.
+
+        See :ref:`user_guide.runtime.task_event_handling.list` for valid
+        events.
 
         Example::
 
            submission failed, failed
     ''',
+    'execution timeout': '''
+        If a task has not finished after the specified interval, any configured
+        execution timeout event handler(s) will be called.
+    ''',
     'submission timeout': '''
-        If a task has not started after the specified interval, the submission
-        timeout event handler(s) will be called.
+        If a task has not started after the specified interval, any configured
+        submission timeout event handler(s) will be called.
     '''
 }
 
@@ -2004,12 +2010,6 @@ with Conf('global.cylc', desc='''
             TASK_EVENTS_DESCR, "[runtime][<namespace>][events]", section=True
         ) + "\n\n" + ".. versionadded:: 8.0.0"
     )):
-        Conf('execution timeout', VDR.V_INTERVAL, desc=(
-            default_for(
-                TASK_EVENTS_SETTINGS['execution timeout'],
-                "[runtime][<namespace>][events]execution timeout"
-            )
-        ))
         Conf('handlers', VDR.V_STRING_LIST, desc=(
             default_for(
                 TASK_EVENTS_SETTINGS['handlers'],
@@ -2032,6 +2032,12 @@ with Conf('global.cylc', desc='''
             default_for(
                 TASK_EVENTS_SETTINGS['mail events'],
                 "[runtime][<namespace>][events]mail events"
+            )
+        ))
+        Conf('execution timeout', VDR.V_INTERVAL, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['execution timeout'],
+                "[runtime][<namespace>][events]execution timeout"
             )
         ))
         Conf('submission timeout', VDR.V_INTERVAL, desc=(
