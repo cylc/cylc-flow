@@ -225,13 +225,18 @@ def get_config(args):
     # Find the cgroup that this process is running in.
     # Cylc will put this profiler in the same cgroup
     # as the job it is profiling
-    print("profiler started")
+    print("Getting cgroup name")
     cgroup_name = get_cgroup_name()
+    print("Cgroup name is:", cgroup_name)
+    print("Getting cgroup version")
     cgroup_version = get_cgroup_version(args.cgroup_location, cgroup_name)
+    print("Cgroup version is:", cgroup_version)
+    print("Getting cgroup paths")
     process = get_cgroup_paths(cgroup_version,
                                args.cgroup_location,
                                cgroup_name)
-
+    print("Cgroup paths are:", process)
+    print("Starting profiler")
     profile(process, cgroup_version, args.delay)
 
 
