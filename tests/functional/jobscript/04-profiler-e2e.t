@@ -22,7 +22,7 @@
 
 . "$(dirname "$0")/test_header"
 
-if [[ "$OSTYPE" != "darwin"* ]]; then
+if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     skip_all "Tests not compatibile with $OSTYPE"
 fi
 
