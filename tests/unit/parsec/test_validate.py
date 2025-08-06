@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit Tests for cylc.flow.parsec.validate.ParsecValidator.coerce methods."""
 
+import logging
 from typing import List
 
+from cylc.flow import CYLC_LOG
 import pytest
 from pytest import approx, param
 
@@ -251,6 +253,30 @@ def test_parsec_validator_invalid_key_with_many_invalid_values(
         parsec_validate(cfg, spec)
         # TBD assertIsNotNone when 2.6+
         assert parsec_validator is not None
+
+
+def test_parsec_validator_warn_options(caplog):
+    """Test the "warn_options" option.
+
+    This should turn invalid option errors into warnings.
+    """
+    with Conf('base') as spec:
+        Conf(
+            'foo',
+            VDR.V_STRING_LIST,
+            default=1,
+            options=['a', 'b'],
+            warn_options=True,
+        )
+
+    parsec_validator = ParsecValidator()
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    parsec_validator.validate({'foo': 'b, c'}, spec)
+
+    # there should be one (and only one) warning
+    assert caplog.messages == [
+        '(type=option) foo = c\nInvalid items have been removed'
+    ]
 
 
 def test_parsec_validator_invalid_key_with_many_1(sample_spec):

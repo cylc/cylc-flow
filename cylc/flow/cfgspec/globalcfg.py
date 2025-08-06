@@ -63,6 +63,7 @@ from cylc.flow.parsec.validate import (
 )
 from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.platforms import validate_platforms
+from cylc.flow.task_events_mgr import TaskEventsManager as TEM
 from cylc.flow.workflow_events import WorkflowEventHandler
 
 
@@ -200,6 +201,7 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
     },
     'mail events': {
         'desc': '''
@@ -212,6 +214,7 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
     },
     'startup handlers': f'''
         Handlers to run at scheduler startup.
@@ -590,11 +593,13 @@ task_event_handling.template_variables`.
            echo %(event)s occurred in %(workflow)s >> my-log-file
 
     ''',
-    'handler events': '''
+    'handler events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
         A list of events for which :cylc:conf:`[..]handlers` are run.
 
-        See :ref:`user_guide.runtime.task_event_handling.list` for valid
-        events.
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
@@ -611,11 +616,13 @@ task_event_handling.template_variables`.
 
            PT10S, PT1M, PT5M
     ''',
-    'mail events': '''
+    'mail events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
         A list of events for which notification emails should be sent.
 
-        See :ref:`user_guide.runtime.task_event_handling.list` for valid
-        events.
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
@@ -676,15 +683,36 @@ def comma_sep_section_note(version_changed: str = '') -> str:
 
 
 def short_descr(text: str) -> str:
-    """Get dedented one-paragraph description from long description."""
-    return dedent(text).split('\n\n', 1)[0]
+    r"""Get dedented one-paragraph description from long description.
+
+    Examples:
+        >>> short_descr('foo\n\nbar')
+        'foo'
+
+        >>> short_descr(':Field: Value\n\nfoo\n\nbar')
+        ':Field: Value\n\nfoo'
+
+    """
+    lines = []
+    for line in dedent(text).splitlines():
+        if not line:
+            continue
+        elif line.startswith(':'):
+            lines.append(line)
+        else:
+            lines.append(line)
+            break
+    return '\n\n'.join(lines)
 
 
 def default_for(
     text: str, config_path: str, section: bool = False
 ) -> str:
-    """Get dedented short description and insert a 'Default(s) For' directive
-    that links to this config item's flow.cylc counterpart."""
+    """Return a ":Default For: field for this config.
+
+    Get dedented short description and insert a 'Default(s) For' field
+    that links to this config item's flow.cylc counterpart.
+    """
     directive = f":Default{'s' if section else ''} For:"
     return (
         f"{directive} :cylc:conf:`flow.cylc{config_path}`.\n\n"
