@@ -20,7 +20,10 @@
 # The test platform may need to be configured for this to work (e.g.
 # "cgroups path" may need to be set).
 
+echo 'testing OS'
+echo "$OSTYPE"
 if [[ "$OSTYPE" == "darwin*" ]]; then
+    echo "Skipping test on Mac OS"
     skip_all "Test not compatible with Mac OS"
 else
 
