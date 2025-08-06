@@ -158,6 +158,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
+        LOG.warning(
+            f"{self.workflow} {self.host}:{self.port}:"
+            f" Connection timed out ({self.timeout} ms)"
+        )
         contact_host, contact_port, *_ = get_location(self.workflow)
         if (
             contact_host != get_fqdn_by_host(self._orig_host)

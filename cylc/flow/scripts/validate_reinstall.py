@@ -18,12 +18,14 @@
 
 """cylc validate-reinstall [OPTIONS] ARGS
 
-Validate, reinstall and apply changes to a workflow.
+Validate, reinstall, and reload or restart a workflow.
 
-Validate and reinstall a workflow then either:
+If the source has changed and you respond Yes to the reinstall prompt:
+* reinstall and reload the workflow, if it is running
+* or reinstall and restart the workflow, if it is not running
 
-* "Reload" the workflow (if it is running),
-* or "play" it (if it is stopped).
+If the source has not changed or you respond No to the reinstall prompt, the
+workflow will not be reloaded or restarted.
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
@@ -39,6 +41,7 @@ Note:
   in the installed workflow to ensure the change can be safely applied.
 """
 
+from ansimarkup import parse as cparse
 import asyncio
 from pathlib import Path
 import sys
@@ -49,8 +52,7 @@ if TYPE_CHECKING:
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
-    ContactFileExists,
-    CylcError,
+    WorkflowStopped,
 )
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.loggingutil import set_timestamps
@@ -62,6 +64,7 @@ from cylc.flow.option_parsers import (
     cleanup_sysargv
 )
 from cylc.flow.scheduler_cli import PLAY_OPTIONS, cylc_play
+from cylc.flow.scripts.ping import run as cylc_ping
 from cylc.flow.scripts.validate import (
     VALIDATE_OPTIONS,
     VALIDATE_AGAINST_SOURCE_OPTION,
@@ -78,9 +81,9 @@ from cylc.flow.scripts.reload import (
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import (
-    detect_old_contact_file,
     get_workflow_run_dir,
 )
+
 
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
 VR_OPTIONS = combine_options(
@@ -159,32 +162,25 @@ async def vr_cli(
         False: If this command should "exit 1".
 
     """
-    # Attempt to work out whether the workflow is running.
-    # We are trying to avoid reinstalling then subsequently being
-    # unable to play or reload because we cannot identify workflow state.
     unparsed_wid = workflow_id
     workflow_id, *_ = await parse_id_async(
         workflow_id,
         constraint='workflows',
     )
 
-    # Use this interface instead of scan, because it can have an ambiguous
-    # outcome which we want to capture before we install.
+    # First attempt to work out whether the workflow is running.
+    # We are trying to avoid reinstalling then subsequently being
+    # unable to play or reload because we cannot identify workflow state.
+    log_subcommand('ping', workflow_id)
     try:
-        detect_old_contact_file(workflow_id)
-    except ContactFileExists:
-        # Workflow is definitely running:
-        workflow_running = True
-    except CylcError as exc:
-        LOG.error(exc)
-        LOG.critical(
-            'Cannot tell if the workflow is running'
-            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
-        )
-        raise
-    else:
-        # Workflow is definitely stopped:
+        result = await cylc_ping(options, workflow_id)
+        # (don't catch CylcError: unable to determine if running or not)
+    except WorkflowStopped:
+        print(cparse(f"<green>{workflow_id} is not running</green>"))
         workflow_running = False
+    else:
+        print(cparse(f"<green>{workflow_id}: {result['stdout'][0]}</green>"))
+        workflow_running = True
 
     # options.tvars and tvars_file are _only_ valid when playing a stopped
     # workflow: Fail if they are set and workflow running:
@@ -211,11 +207,9 @@ async def vr_cli(
         [],
         print_reload_tip=False
     )
+
     if not reinstall_ok:
-        LOG.warning(
-            'No changes to source: No reinstall or'
-            f' {"reload" if workflow_running else "play"} required.'
-        )
+        # No changes, OR user said No to the reinstall prompt: abort.
         return False
 
     # Run reload if workflow is running or paused:

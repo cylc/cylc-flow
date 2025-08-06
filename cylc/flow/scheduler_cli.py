@@ -30,9 +30,12 @@ from packaging.version import Version
 
 from cylc.flow import LOG, __version__
 from cylc.flow.exceptions import (
-    ContactFileExists,
     CylcError,
     ServiceFileError,
+    WorkflowStopped,
+)
+from cylc.flow.scripts.ping import (
+    run as cylc_ping,
 )
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -60,7 +63,6 @@ from cylc.flow.run_modes import WORKFLOW_RUN_MODES
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import (
     SUITERC_DEPR_MSG,
-    detect_old_contact_file,
     get_workflow_srv_dir,
 )
 from cylc.flow.terminal import (
@@ -474,13 +476,28 @@ async def _scheduler_cli_3(
 async def _resume(workflow_id, options):
     """Resume the workflow if it is already running."""
     try:
-        detect_old_contact_file(workflow_id)
-    except ContactFileExists as exc:
-        print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(
             workflow_id,
             timeout=options.comms_timeout,
         )
+    except WorkflowStopped:
+        # Not running - don't resume.
+        return
+
+    # Is it running? If yes, send resume command.
+    try:
+        await cylc_ping(options, workflow_id, pclient)
+    except WorkflowStopped:
+        # Not running (orphaned contact file).
+        return
+    except CylcError as exc:
+        # PID check failed - abort.
+        LOG.error(exc)
+        LOG.critical('Cannot tell if the workflow is running')
+        sys.exit(1)
+    else:
+        # It's running: resume it and exit.
+        print("Resuming already-running workflow")
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
@@ -489,13 +506,6 @@ async def _resume(workflow_id, options):
         }
         await pclient.async_request('graphql', mutation_kwargs)
         sys.exit(0)
-    except CylcError as exc:
-        LOG.error(exc)
-        LOG.critical(
-            'Cannot tell if the workflow is running'
-            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
-        )
-        sys.exit(1)
 
 
 def _version_check(
