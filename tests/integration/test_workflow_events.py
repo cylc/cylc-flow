@@ -51,20 +51,23 @@ async def test_scheduler(flow, scheduler, capcall):
     def get_events():
         return {e[0][1] for e in events}
 
-    def _schd(config=None, **opts):
-        id_ = flow({
-            'scheduler': {
-                'events': {
-                    'mail events': ', '.join(EVENTS),
-                    **(config or {}),
+    def _schd(event_config=None, config=None, **opts):
+        assert not (event_config and config)
+        if not config:
+            config = {
+                'scheduler': {
+                    'events': {
+                        'mail events': ', '.join(EVENTS),
+                        **(event_config or {}),
+                    },
                 },
-            },
-            'scheduling': {
-                'graph': {
-                    'R1': 'a'
-                }
-            },
-        })
+                'scheduling': {
+                    'graph': {
+                        'R1': 'a'
+                    }
+                },
+            }
+        id_ = flow(config)
         schd = scheduler(id_, **opts)
         schd.get_events = get_events
         return schd
@@ -168,12 +171,57 @@ async def test_stall(test_scheduler, start):
     assert schd.get_events() == {'shutdown', 'stall'}
 
 
-async def test_restart_timeout(test_scheduler, scheduler, run, complete):
-    """Test restart timeout.
+async def test_restart_timeout_workflow_completion(
+    test_scheduler,
+    scheduler,
+    run,
+    complete,
+):
+    """Test restart timeout for completed workflows.
 
     This should fire when a completed workflow is restarted.
     """
     schd = test_scheduler({'restart timeout': 'PT0S'}, paused_start=False)
+
+    # run to completion
+    async with run(schd):
+        await complete(schd)
+    assert schd.get_events() == {'startup', 'shutdown'}
+
+    # restart
+    schd2 = scheduler(schd.workflow)
+    schd2.get_events = schd.get_events
+    async with run(schd2):
+        await asyncio.sleep(0.1)
+    assert schd2.get_events() == {'startup', 'restart timeout', 'shutdown'}
+
+
+async def test_restart_timeout_workflow_stop_after_cycle_point(
+    test_scheduler,
+    scheduler,
+    run,
+    complete,
+):
+    """Test restart timeout with the "stop after cycle point" config.
+
+    This should fire when a completed workflow is restarted.
+    """
+    schd = test_scheduler(
+        config={
+            'scheduler': {
+                'cycle point format': 'CCYY',
+                'events': {'restart timeout': 'PT0S'},
+            },
+            'scheduling': {
+                'initial cycle point': '2000',
+                'stop after cycle point': '2000',
+                'graph': {
+                    'P1Y': 'foo[-P1Y] => foo',
+                },
+            },
+        },
+        paused_start=False,
+    )
 
     # run to completion
     async with run(schd):
