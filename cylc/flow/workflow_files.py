@@ -48,6 +48,7 @@ from typing import (
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.async_util import make_async
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     ContactFileExists,
     CylcError,
@@ -372,6 +373,7 @@ def _is_process_running(
 ) -> bool:
     """Check if a workflow process is still running.
 
+    Runs `cylc psutil` on the scheduler run host.
     * Returns True if the process is still running.
     * Returns False if it is not.
     * Raises CylcError if we cannot tell (e.g. due to network issues).
@@ -428,8 +430,13 @@ def _is_process_running(
         text=True
     )  # * hardcoded command
     try:
-        # Terminate command after 10 seconds to prevent hanging, etc.
-        out, err = proc.communicate(timeout=10, input=metric)
+        out, err = proc.communicate(
+            timeout=(
+                glbl_cfg().get(
+                    ['scheduler', 'run hosts', 'process check timeout'])
+            ),
+            input=metric
+        )
     except TimeoutExpired:
         raise CylcError(
             f'Attempt to determine whether workflow is running on {host}'

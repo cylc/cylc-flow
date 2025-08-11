@@ -34,9 +34,7 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowStopped,
 )
-from cylc.flow.scripts.ping import (
-    run as cylc_ping,
-)
+from cylc.flow.scripts.ping import run as cylc_ping
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
