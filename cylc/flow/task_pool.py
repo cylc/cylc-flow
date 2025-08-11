@@ -708,14 +708,12 @@ class TaskPool:
         if ctx_key == "poll_timer":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
             itask.poll_timer = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx_key[0] == "try_timers":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
             if 'retrying' in ctx_key[1]:
                 if 'submit' in ctx_key[1]:
