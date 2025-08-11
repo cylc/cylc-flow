@@ -158,6 +158,7 @@ MODES = {
     'd': 'print-dir',
     'c': 'cat',
     't': 'tail',
+    'a': 'auto',
 }
 
 
@@ -367,7 +368,7 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     """Retrieve job info from the database.
 
     * live_job_id is the job ID if job is running, else None.
-    * submit_failed is True if the the submission failed.
+    * submit_failed is True if the submission failed.
 
     Returns:
         tuple - (platform, job_runner_name, live_job_id, submit_failed)
@@ -466,6 +467,10 @@ def _main(
         file_name: str = options.filename or 's'
         log_file_path: Path
 
+        # auto mode only applies to task logs. Default to cat mode.
+        if mode == 'auto':
+            mode = 'cat'
+
         if mode == 'list-dir':
             # list workflow logs
             print('\n'.join(sorted(
@@ -540,6 +545,10 @@ def _main(
                 # KeyError: Is already long form (standard log, or custom).
         platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
+        if mode == 'auto' and live_job_id is None:
+            mode = 'cat'
+        elif mode == 'auto' and live_job_id:
+            mode = 'tail'
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
