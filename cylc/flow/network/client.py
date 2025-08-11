@@ -41,7 +41,7 @@ from cylc.flow import (
 )
 from cylc.flow.exceptions import (
     ClientTimeout,
-    ContactFileExists,
+    SchedulerAlive,
     CylcError,
     RequestError,
     WorkflowStopped,
@@ -181,7 +181,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         # behind a contact file?
         try:
             detect_old_contact_file(self.workflow)
-        except ContactFileExists:
+        except SchedulerAlive:
             # old contact file exists and the workflow process still alive
             return
         else:

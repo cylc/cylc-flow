@@ -50,7 +50,7 @@ from cylc.flow import LOG
 from cylc.flow.async_util import make_async
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    ContactFileExists,
+    SchedulerAlive,
     CylcError,
     InputError,
     ServiceFileError,
@@ -486,7 +486,7 @@ def detect_old_contact_file(
     * If one does exist but the workflow process is definitely not alive,
       remove it.
     * If one exists and the workflow process is still alive, raise
-      ContactFileExists.
+      SchedulerAlive.
 
     Args:
         id_: workflow ID
@@ -496,7 +496,7 @@ def detect_old_contact_file(
         CylcError:
             If it is not possible to tell for sure if the workflow is running
             or not.
-        ContactFileExists:
+        SchedulerAlive:
             If old contact file exists and the workflow process still alive.
         ServiceFileError:
             For corrupt / incompatible contact files.
@@ -529,7 +529,7 @@ def detect_old_contact_file(
     fname = get_contact_file_path(id_)
     if process_is_running:
         # ... the process is running, raise an exception
-        raise ContactFileExists(
+        raise SchedulerAlive(
             CONTACT_FILE_EXISTS_MSG % {
                 "host": old_host,
                 "port": old_port,
