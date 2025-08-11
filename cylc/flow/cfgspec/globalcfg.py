@@ -1424,12 +1424,6 @@ with Conf('global.cylc', desc='''
 
                    {replaces}
             ''')
-            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
-
-                .. versionchanged:: 8.0.0
-
-                   Moved from ``suite.rc[runtime][<namespace>]job``.
-            ''')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
                  options=[meth.value for meth in CommsMeth], desc=f'''
