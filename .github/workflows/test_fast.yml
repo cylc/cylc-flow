@@ -40,7 +40,7 @@ jobs:
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -111,7 +111,7 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -154,7 +154,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
