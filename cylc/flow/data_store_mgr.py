@@ -2797,7 +2797,10 @@ class DataStoreMgr:
             # Ignore task-only states e.g. preparing
             return
         j_id, job = self.store_node_fetcher(tokens)
-        if not job:
+        if not job or (
+            # Don't cause backwards state change:
+            JOB_STATUSES_ALL.index(status) <= JOB_STATUSES_ALL.index(job.state)
+        ):
             return
         j_delta = PbJob(
             stamp=f'{j_id}@{time()}',

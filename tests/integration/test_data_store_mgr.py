@@ -53,6 +53,7 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
@@ -814,3 +815,24 @@ async def test_log_events(one: Scheduler, start):
             assert log_record.message == 'here hare here'
         finally:
             LOG.removeHandler(handler)
+
+
+async def test_no_backwards_job_state_change(one: Scheduler, start):
+    """It should not allow backwards job state changes."""
+    def get_job_state(itask):
+        return one.data_store_mgr.data[one.id][JOBS][itask.job_tokens.id].state
+
+    async with start(one):
+        itask = one.pool.get_tasks()[0]
+        itask.state_reset(TASK_STATUS_PREPARING)
+        itask.submit_num += 1
+        await one.update_data_structure()
+
+        one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_STARTED)
+        await one.update_data_structure()
+        assert get_job_state(itask) == TASK_STATUS_RUNNING
+
+        # Simulate late arrival of "submitted" message
+        one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_SUBMITTED)
+        await one.update_data_structure()
+        assert get_job_state(itask) == TASK_STATUS_RUNNING
