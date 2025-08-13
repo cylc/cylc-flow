@@ -2789,17 +2789,18 @@ class DataStoreMgr:
 
     def delta_job_state(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         status: str,
     ) -> None:
         """Set job state."""
         if status not in JOB_STATUS_SET:
             # Ignore task-only states e.g. preparing
             return
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job or (
             # Don't cause backwards state change:
             JOB_STATUSES_ALL.index(status) <= JOB_STATUSES_ALL.index(job.state)
+            and not itask.job_vacated
         ):
             return
         j_delta = PbJob(
@@ -2814,7 +2815,7 @@ class DataStoreMgr:
 
     def delta_job_time(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         event_key: str,
         time_str: Optional[str] = None,
     ) -> None:
@@ -2822,7 +2823,7 @@ class DataStoreMgr:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')

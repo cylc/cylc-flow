@@ -1354,9 +1354,8 @@ class TaskEventsManager():
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_FAILED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -1394,12 +1393,11 @@ class TaskEventsManager():
 
     def _process_message_started(self, itask, event_time, forced):
         """Helper for process_message, handle a started message."""
+        self.data_store_mgr.delta_job_time(itask, 'started', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_RUNNING)
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.info(f"[{itask}] Vacated job restarted")
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -1430,9 +1428,8 @@ class TaskEventsManager():
         Ignore forced.
         """
 
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_SUCCEEDED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUCCEEDED)
         itask.set_summary_time('finished', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -1505,13 +1502,9 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
 
         # Register newly submit-failed job with the database and datastore.
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
-        self.data_store_mgr.delta_job_state(
-            job_tokens,
-            TASK_STATUS_SUBMIT_FAILED
-        )
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
         self._reset_job_timers(itask)
 
         return no_retries
@@ -1560,24 +1553,12 @@ class TaskEventsManager():
         # Do after itask has changed state
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(
-            job_tokens,
-            'submitted',
-            event_time,
-        )
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
         if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
-            self.data_store_mgr.delta_job_time(
-                job_tokens,
-                'started',
-                event_time,
-            )
+            self.data_store_mgr.delta_job_time(itask, 'started', event_time)
         else:
-            self.data_store_mgr.delta_job_state(
-                job_tokens,
-                TASK_STATUS_SUBMITTED,
-            )
+            self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMITTED)
 
     def _insert_task_job(
         self,
