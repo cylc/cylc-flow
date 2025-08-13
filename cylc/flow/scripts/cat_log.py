@@ -152,13 +152,20 @@ Log Files:
 #                  and kills its tail subprocess, then exits as finished
 
 
+PRINT = 'print'
+LISTDIR = 'list-dir'
+PRINTDIR = 'print-dir'
+CAT = 'cat'
+TAIL = 'tail'
+AUTO = 'auto'
+
 MODES = {
-    'p': 'print',
-    'l': 'list-dir',
-    'd': 'print-dir',
-    'c': 'cat',
-    't': 'tail',
-    'a': 'auto',
+    'p': PRINT,
+    'l': LISTDIR,
+    'd': PRINTDIR,
+    'c': CAT,
+    't': TAIL,
+    'a': AUTO,
 }
 
 
@@ -254,14 +261,14 @@ def view_log(
 
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
-    if mode == 'print':
+    if mode == PRINT:
         # Print location even if the workflow does not exist yet.
         print(logpath)
         return 0
-    if mode == 'print-dir':
+    if mode == PRINTDIR:
         print(os.path.dirname(logpath))
         return 0
-    if mode == 'list-dir':
+    if mode == LISTDIR:
         dirname = os.path.dirname(logpath)
         if not os.path.exists(dirname):
             sys.stderr.write(f"Directory not found: {dirname}\n")
@@ -277,12 +284,12 @@ def view_log(
     if prepend_path:
         from cylc.flow.hostuserutil import get_host
         print(f'# {get_host()}:{logpath}')
-    if mode == 'cat':
+    if mode == CAT:
         # print file contents to stdout.
         if batchview_cmd is not None:
             cmd = shlex.split(batchview_cmd)
         else:
-            cmd = ['cat', logpath]
+            cmd = [CAT, logpath]
         proc1 = Popen(  # nosec
             cmd,
             stdin=DEVNULL,
@@ -291,7 +298,7 @@ def view_log(
         # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
-    if mode == 'tail':
+    if mode == TAIL:
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
@@ -468,10 +475,10 @@ def _main(
         log_file_path: Path
 
         # auto mode only applies to task logs. Default to cat mode.
-        if mode == 'auto':
-            mode = 'cat'
+        if mode == AUTO:
+            mode = CAT
 
-        if mode == 'list-dir':
+        if mode == LISTDIR:
             # list workflow logs
             print('\n'.join(sorted(
                 str(path.relative_to(log_dir))
@@ -545,10 +552,10 @@ def _main(
                 # KeyError: Is already long form (standard log, or custom).
         platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
-        if mode == 'auto' and live_job_id is None:
-            mode = 'cat'
-        elif mode == 'auto' and live_job_id:
-            mode = 'tail'
+        if mode == AUTO and live_job_id is None:
+            mode = CAT
+        elif mode == AUTO and live_job_id:
+            mode = TAIL
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -556,14 +563,14 @@ def _main(
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:
-                if mode == 'cat':
+                if mode == CAT:
                     conf_key = "out viewer"
-                elif mode == 'tail':
+                elif mode == TAIL:
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
-                if mode == 'cat':
+                if mode == CAT:
                     conf_key = "err viewer"
-                elif mode == 'tail':
+                elif mode == TAIL:
                     conf_key = "err tailer"
             if conf_key is not None:
                 batchview_cmd_tmpl = None
@@ -613,14 +620,14 @@ def _main(
                 proc = remote_cylc_cmd(
                     cmd,
                     platform,
-                    capture_process=(mode == 'list-dir'),
-                    manage=(mode == 'tail'),
-                    text=(mode == 'list-dir'),
+                    capture_process=(mode == LISTDIR),
+                    manage=(mode == TAIL),
+                    text=(mode == LISTDIR),
                 )
 
             # add and missing items to file listing results
             if isinstance(proc, Popen):
-                # i.e: if mode=='list-dir' and ctrl+c not pressed
+                # i.e: if mode == LISTDIR and ctrl+c not pressed
                 out, err = proc.communicate()
                 files = out.splitlines()
 
