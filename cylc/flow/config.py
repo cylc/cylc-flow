@@ -1761,7 +1761,7 @@ class WorkflowConfig:
                 taskdef.rtconfig['outputs'],
             )
             if invalid:
-                raise WorkflowConfigError(
+                LOG.warning(
                     "Invalid event name(s) for "
                     f"[runtime][{taskdef.name}][events]{setting}: "
                     + ', '.join(sorted(invalid))
@@ -1786,10 +1786,10 @@ class WorkflowConfig:
                     try:
                         handler_template % handler_data
                     except (KeyError, ValueError) as exc:
-                        raise WorkflowConfigError(
+                        LOG.warning(
                             f'bad task event handler template'
                             f' {taskdef.name}: {handler_template}: {repr(exc)}'
-                        ) from None
+                        )
 
     def _check_special_tasks(self):
         """Check declared special tasks are valid, and detect special

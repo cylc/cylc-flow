@@ -23,14 +23,14 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config '' ''
 fi
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
-WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
+WARNING - bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
-workflow_run_fail "${TEST_NAME_BASE}-run" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 grep_ok \
-    'WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
+    'WARNING - bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
