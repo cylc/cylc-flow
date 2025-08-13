@@ -51,5 +51,5 @@ TEST_NAME=${TEST_NAME_BASE}-cat-log-auto-workflow
 # Use the workflow name without the task ID to get the workflow logs
 cylc cat-log "${WORKFLOW_NAME}" -m a > "${TEST_NAME}.out"
 grep_fail "HELLO" "${TEST_NAME}.out"
-grep_ok "Workflow:.*/functional/cylc-cat-log/14-auto-mode" "${TEST_NAME}.out"
+grep_ok "Workflow:.*/f.*/cylc-cat-log/14-auto-mode" "${TEST_NAME}.out"
 purge
