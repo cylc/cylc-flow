@@ -31,7 +31,10 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.task_state import TASK_STATUS_WAITING
+from cylc.flow.task_state import (
+    TASK_STATUS_WAITING,
+    TASK_STATUS_RUNNING
+)
 
 
 async def test_trigger_workflow_paused(
@@ -619,47 +622,76 @@ async def test_trigger_n0_tasks(
         }
 
 
-async def test_replay_outputs(flow, scheduler, run, complete, log_filter):
-    """Triggered tasks re-emit earlier outputs.
+async def test_replay_outputs(flow, scheduler, start, complete, log_filter):
+    """Triggered group start tasks re-emit (kind of) earlier outputs.
 
     https://github.com/cylc/cylc-flow/issues/6858
 
-    in these examples a graph:
+    Example graph:
         a:started => b => end
         k:kustom => l => end
+        k:kustom => offg
 
-    would lead to a user running:
+    If I trigger a, b, k, l AFTER a:started and k:kustom have completed:
         cylc trigger workflow //1/a //1/b //1/k //1/l
 
-    To expect outputs `k:kustom` and `a:started` to be re-emitted
-    allowing b and l to start.
+    Then I should expect outputs `k:kustom` and `a:started` to be re-used
+    to satify b and l in the triggered flow, but NOT off-group task offg.
     """
-    msg = '[1/{}:waiting(runahead)] prerequisite force-satisfied: 1/{}'
-    msg2 = '[1/{}/02:running] => succeeded'
+    msg_prereq = '[1/{}:waiting(runahead)] prerequisite force-satisfied: 1/{}'
+    msg_spawned = "[1/{}:waiting(runahead)] => waiting"
+    msg_removed = "Removed tasks: 1/{}"
+
     wid = flow({
         'scheduling': {
-            'graph': {'R1': 'a:started => b => end\nk:kustom => l => end'}
+            'graph': {
+                'R1': """
+                    a:started => b => end
+                    k:kustom => l => end
+                    k:kustom => offg
+                """
+            }
         },
         'runtime': {
-            'a': {'script': 'sleep 10'},
+            'a': {},
             'k': {
-                'script': 'cylc message -- "custom message"; sleep 10',
                 'outputs': {'kustom': 'custom message'}
             }
         }
     })
-    schd = scheduler(wid, paused_start=False, run_mode='live')
-    async with run(schd):
-        await complete(schd, '1/b', '1/l')
+    schd = scheduler(wid, paused_start=True)
+    async with start(schd):
+        # Set initial tasks a and k to "running" so they are recognized as
+        # live during the forthcoming trigger operation.
+
+        # Complete the a:started and k:kustom outputs.
+        schd.pool.set_prereqs_and_outputs(
+            ['1/a'], ['started'], [], []
+        )
+        schd.pool.set_prereqs_and_outputs(
+            ['1/k'], ['kustom'], [], []
+        )
+        # It should spawn b, l, and offg.
+        for task in ['b', 'l', 'offg']:
+            assert log_filter(contains=msg_spawned.format(task))
+
+        # Set a and k as running so they're recognized as live start tasks
+        # by the trigger operation.
+        for itask in schd.pool.get_tasks():
+            itask.state_reset(TASK_STATUS_RUNNING)
+
+        # Now trigger the group.
         await run_cmd(
             force_trigger_tasks(schd, ['1/a', '1/b', '1/k', '1/l'], [])
         )
-        await complete(schd, '1/b', '1/l')
+        # It should remove b and l (in-group tasks)
+        for task in ['b', 'l']:
+            assert log_filter(contains=msg_removed.format(task))
 
-        # Trigger force has re-satisfied outputs:
-        assert log_filter(contains=msg.format('b', 'a:started'))
-        assert log_filter(contains=msg.format('l', 'k:custom message'))
-
-        # Second copies of tasks triggered by outputs _have_ been run:
-        assert log_filter(contains=msg2.format('b'))
-        assert log_filter(contains=msg2.format('l'))
+        # But they will be respawned immediately by re-satisfying dependence
+        # on the earlier outputs of a and k for in-group tasks:
+        assert log_filter(contains=msg_prereq.format('b', 'a:started'))
+        assert log_filter(contains=msg_prereq.format('l', 'k:custom message'))
+        # But not for the off-group task offg:
+        assert not log_filter(
+            contains=msg_prereq.format('offg', 'k:custom message'))

@@ -835,7 +835,7 @@ def _force_trigger_tasks(
                 set_all=True  # prerequisites
             )
         else:
-            # Off-flow prereqs to set:
+            # Off-flow prereqs to satisfy, for the triggered flow:
             prereqs_to_set = {
                 PrereqTuple(str(key.point), str(key.task), key.output)
                 for pre in tdef.get_prereqs(point)
@@ -848,8 +848,8 @@ def _force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
-            # Prereqs to set for the triggered flow, from already-completed
-            # outputs of active group start tasks.
+            # Prereqs to satisfy, from already-completed outputs of active
+            # group start tasks, for the triggered flow.
             prereqs_to_set.update({
                 PrereqTuple(str(key.point), str(key.task), key.output)
                 for pre in tdef.get_prereqs(point)
