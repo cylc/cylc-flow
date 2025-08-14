@@ -59,11 +59,7 @@ def uniq(iterable):
         [1, 2, 3, 5, 8]
 
     """
-    ret = []
-    for item in iterable:
-        if item not in ret:
-            ret.append(item)
-    return ret
+    return list(iter_uniq(iterable))
 
 
 def iter_uniq(iterable):
