@@ -18,7 +18,7 @@
 # Test "cylc cat-log" with a custom tail /command
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_global_config "" "
 [platforms]
@@ -29,8 +29,8 @@ create_test_global_config "" "
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
-cylc workflow-state "${WORKFLOW_NAME}//1/foo:started" --interval=1
-sleep 1
+run_ok "wait-for-task-foo-start" \
+    cylc workflow-state "${WORKFLOW_NAME}//1/foo:started" --interval=1 --triggers
 TEST_NAME=${TEST_NAME_BASE}-cat-log
 cylc cat-log "${WORKFLOW_NAME}//1/foo" -f o -m t > "${TEST_NAME}.out"
 grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
