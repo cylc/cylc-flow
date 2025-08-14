@@ -797,11 +797,9 @@ class TaskEventsManager():
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
             if itask.run_mode != RunMode.SIMULATION:
-                job_tokens = itask.tokens.duplicate(
-                    job=str(itask.submit_num)
-                )
                 self.data_store_mgr.delta_job_attr(
-                    job_tokens, 'job_id', itask.summary['submit_method_id'])
+                    itask, 'job_id', itask.summary['submit_method_id']
+                )
             else:
                 # In simulation mode submitted implies started:
                 self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)

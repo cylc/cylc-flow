@@ -2771,12 +2771,12 @@ class DataStoreMgr:
 
     def delta_job_attr(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         attr_key: str,
         attr_val: Any,
     ) -> None:
         """Set job attribute."""
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')

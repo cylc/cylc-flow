@@ -345,9 +345,11 @@ def test_delta_job_msg(mod_harness):
 
 def test_delta_job_attr(mod_harness):
     """Test method modifying job fields to job element."""
+    schd: Scheduler
     schd, data = mod_harness
     schd.data_store_mgr.delta_job_attr(
-        Tokens(ext_id(schd)), 'job_runner_name', 'at')
+        Mock(job_tokens=Tokens(ext_id(schd))), 'job_runner_name', 'at'
+    )
     assert schd.data_store_mgr.updated[JOBS][ext_id(schd)].messages != (
         schd.data_store_mgr.added[JOBS][ext_id(schd)].job_runner_name
     )
