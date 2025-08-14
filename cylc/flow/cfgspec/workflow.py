@@ -1646,12 +1646,6 @@ with Conf(
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
             )):
-                Conf('execution timeout', VDR.V_INTERVAL, desc=(
-                    global_default(
-                        TASK_EVENTS_SETTINGS['execution timeout'],
-                        "[task events]execution timeout"
-                    )
-                ))
                 Conf('handlers', VDR.V_STRING_LIST, None, desc=(
                     global_default(
                         TASK_EVENTS_SETTINGS['handlers'],
@@ -1674,6 +1668,12 @@ with Conf(
                     global_default(
                         TASK_EVENTS_SETTINGS['mail events'],
                         "[task events]mail events"
+                    )
+                ))
+                Conf('execution timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['execution timeout'],
+                        "[task events]execution timeout"
                     )
                 ))
                 Conf('submission timeout', VDR.V_INTERVAL, desc=(
