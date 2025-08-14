@@ -730,6 +730,7 @@ def _force_trigger_tasks(
 
     # Record off-group prerequisites, and active tasks to be removed.
     active_to_remove: List[TaskTokens] = []
+    active_to_resume: Set[TaskTokens] = set()
 
     warnings_flow_none = []
     warnings_has_job = []
@@ -794,6 +795,7 @@ def _force_trigger_tasks(
 
         else:
             active_to_remove.append(itask.tokens.task)
+            active_to_resume.add(itask.tokens.task)
 
     if warnings_flow_none:
         msg = '\n  * '.join(warnings_flow_none)
@@ -807,6 +809,12 @@ def _force_trigger_tasks(
     if flow != [FLOW_NONE]:
         # (No need to remove tasks if triggering with no-flow).
         _remove_matched_tasks(schd, {*active_to_remove, *inactive}, flow_nums)
+
+        # trigger should override the held state, however, in-group tasks may
+        # have previously been held and active in-group tasks will become
+        # held as the result of removal
+        schd.pool.release_held_tasks({*active_to_resume, *inactive})
+
         # Store removal results before moving on.
         schd.workflow_db_mgr.process_queued_ops()
 
