@@ -847,8 +847,7 @@ class WorkflowConfig:
                 f"{label1} cycle point '{point1}' will have no effect as"
                 f" it is {order} the {label2} cycle point '{point2}'."
             )
-            # Capitalize() makes the ISO strings look very odd:
-            LOG.warning(msg[0].upper() + msg[1:])
+            LOG.warning(msg)
             return True
         return False
 
