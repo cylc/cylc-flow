@@ -1337,15 +1337,6 @@ class TaskJobManager:
         itask.is_manual_submit = False
         # job failed in preparation i.e. is really preparation-failed rather
         # than submit-failed
-        # provide a dummy job config - this info will be added to the data
-        # store
-        try_num = itask.get_try_num()
-        itask.jobs.append({
-            'task_id': itask.identity,
-            'platform': itask.platform,
-            'submit_num': itask.submit_num,
-            'try_num': try_num,
-        })
         # create a DB entry for the submit-failed job
         self.workflow_db_mgr.put_insert_task_jobs(
             itask,
@@ -1353,7 +1344,7 @@ class TaskJobManager:
                 'flow_nums': serialise_set(itask.flow_nums),
                 'job_id': itask.summary.get('submit_method_id'),
                 'is_manual_submit': itask.is_manual_submit,
-                'try_num': try_num,
+                'try_num': itask.get_try_num(),
                 'time_submit': get_current_time_string(),
                 'platform_name': itask.platform['name'],
                 'job_runner_name': itask.summary['job_runner_name'],
