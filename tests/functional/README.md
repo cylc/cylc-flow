@@ -70,7 +70,21 @@ Many tests install workflows for testing. These are installed into cylc-run as
 usual under the prefix `cylctb`.
 
 
-## How To Debug Failing Tests
+## recording tests that fail
+
+When running many tests you can record the tests that fail using
+`--state=save`. You can then re-run the only the failed tests using
+`--state=failed`.
+
+For more details see `man prove`.
+
+
+## Debugging
+
+When a test fails, it may print some directories to the screen which contain
+the stderr of the failed tests, or the workflow logs.
+
+Tips:
 
 * Run the test using the `-v` argument, this will reveal which subtest(s)
   failed.
@@ -79,6 +93,66 @@ usual under the prefix `cylctb`.
   directory will not be deleted, you can inspect the workflow logs there.
 * In GitHub actions, the `~/cylc-run` directory is uploaded as an "artifact"
   where it can be downloaded for debugging.
+* Any text that gets written to stdout will be swallowed by the test framework,
+  redirect to stderr in order to use `echo` statements for debugging, e.g,
+  `echo "DEBUG: platform=$CYLC_PLATFORM_NAME" >&2`.
+
+
+### Python Debuggers
+
+"Normal" Python debuggers (e.g, `pdb`) will not work from within the functional
+test framework because the Python code maybe run non-interactively.
+
+However, you can use remote debuggers
+(e.g. [`remote_pdb`](https://pypi.org/project/remote-pdb/)).
+
+Remote PDB is probably the simplest remote debugger, here's a simple example
+to get started:
+
+Open two terminal tabs and run this code in both of them:
+
+```shell
+PYTHONBREAKPOINT=remote_pdb.set_trace
+REMOTE_PDB_HOST=0.0.0.0
+REMOTE_PDB_PORT=${-4444}
+export PYTHONBREAKPOINT REMOTE_PDB_HOST REMOTE_PDB_PORT
+```
+
+Run the test in the first tab, then run this command in the second:
+
+```shell
+nc -C "$REMOTE_PDB_HOST" "$REMOTE_PDB_PORT"
+```
+
+
+### Traps for the unwary
+
+#### `grep_ok` vs `comp_ok`
+
+Tests that use `comp_ok` generally compare `${TEST_NAME}.stdout` or
+`${TEST_NAME}.stderr` against either a reference or against `/dev/null`.
+They expect the entire output to be **exactly** the same as the
+reference and are therefore very unforgiving.
+
+`grep_ok` is much less sensitive only requiring the reference output to
+be present **somewhere** in the test output.
+
+
+### Further Reading
+
+#### Heredocs
+
+If you see code that looks like this:
+
+```bash
+cat >'hello.py' <<'__HELLO_PY__'
+print("Hello World")
+__HELLO_PY__
+```
+
+You are looking at an "heredoc" and you may wish to read about heredocs:
+[A modern looking bloggy guide](https://linuxize.com/post/bash-heredoc/)
+[A web 1.0 manual](http://tldp.org/LDP/abs/html/here-docs.html)
 
 
 ## How To Run "Non-Generic" Tests?
