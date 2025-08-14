@@ -963,8 +963,11 @@ class WorkflowConfig:
                 " anyway use the option --check-circular.")
             return
         start_point_str = self.cfg['scheduling']['initial cycle point']
-        raw_graph = self.get_graph_raw(start_point_str,
-                                       stop_point_str=None)
+        raw_graph = self.get_graph_raw(
+            start_point_str,
+            stop_point_str=None,
+            sort=False,
+        )
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
         for lhs, rhs in raw_graph:
@@ -1871,8 +1874,9 @@ class WorkflowConfig:
 
     def add_sequence(self, nodes, seq, suicide):
         """Add valid sequences to taskdefs."""
+        graph_node_parser = GraphNodeParser.get_inst()
         for node in nodes:
-            name, offset = GraphNodeParser.get_inst().parse(node)[:2]
+            name, offset = graph_node_parser.parse(node)[:2]
             taskdef = self.get_taskdef(name)
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
@@ -1903,6 +1907,7 @@ class WorkflowConfig:
         triggers = {}
         xtrig_labels = set()
 
+        graph_node_parser = GraphNodeParser.get_inst()
         for left in left_nodes:
             if left.startswith('@'):
                 xtrig_labels.add(left[1:])
@@ -1910,7 +1915,8 @@ class WorkflowConfig:
             # (GraphParseError checked above)
             (name, offset, output, offset_is_from_icp,
              offset_is_irregular, offset_is_absolute) = (
-                GraphNodeParser.get_inst().parse(left))
+                graph_node_parser.parse(left)
+            )
 
             # Qualifier.
             outputs = self.cfg['runtime'][name]['outputs']
@@ -2038,7 +2044,12 @@ class WorkflowConfig:
         return stop_point
 
     def get_graph_raw(
-            self, start_point_str=None, stop_point_str=None, grouping=None):
+        self,
+        start_point_str=None,
+        stop_point_str=None,
+        grouping=None,
+        sort=True,
+    ):
         """Return concrete graph edges between specified cycle points.
 
         Return a family-collapsed graph if the grouping arg is not None:
@@ -2098,23 +2109,25 @@ class WorkflowConfig:
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
+        graph_node_parser = GraphNodeParser.get_inst()
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
-            new_points = []
+            new_points = set()
             while point is not None:
-                if point not in new_points:
-                    new_points.append(point)
-                if stop_point is not None and point > stop_point:
+                new_points.add(point)
+                if stop_point is None:
+                    if len(new_points) > self.VIS_N_POINTS:
+                        # Take VIS_N_POINTS cycles from each sequence.
+                        break
+                elif point > stop_point:
                     # Beyond requested final cycle point.
                     break
                 if (workflow_final_point is not None
                         and point > workflow_final_point):
                     # Beyond workflow final cycle point.
                     break
-                if stop_point is None and len(new_points) > self.VIS_N_POINTS:
-                    # Take VIS_N_POINTS cycles from each sequence.
-                    break
+
                 point_offset_cache = {}
                 for left, right, suicide, cond in edges:
                     if is_validate and (not right or suicide):
@@ -2123,14 +2136,15 @@ class WorkflowConfig:
                         r_id = (right, point)
                     else:
                         r_id = None
-                    if left.startswith('@'):
+                    if left[0] == '@':
                         # @xtrigger node.
                         name = left
                         offset_is_from_icp = False
                         offset = None
                     else:
                         name, offset, _, offset_is_from_icp, _, _ = (
-                            GraphNodeParser.get_inst().parse(left))
+                            graph_node_parser.parse(left)
+                        )
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
@@ -2147,19 +2161,19 @@ class WorkflowConfig:
                         l_point = point
                     l_id = (name, l_point)
 
-                    if l_id is None and r_id is None:
-                        continue
-                    if l_id is not None and actual_first_point > l_id[1]:
+                    if actual_first_point > l_point:
                         # Check that l_id is not earlier than start time.
-                        if (r_id is None or r_id[1] < actual_first_point or
-                                is_validate):
+                        if (
+                            is_validate
+                            or r_id is None
+                            or r_id[1] < actual_first_point
+                        ):
                             continue
                         # Pre-initial dependency;
                         # keep right hand node.
                         l_id = r_id
                         r_id = None
-                    if point not in gr_edges:
-                        gr_edges[point] = []
+                    gr_edges.setdefault(point, [])
                     if is_validate:
                         gr_edges[point].append((l_id, r_id))
                     else:
@@ -2182,7 +2196,10 @@ class WorkflowConfig:
             # Flatten nested list.
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
-        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
+        if sort:
+            graph_raw_edges.sort(
+                key=lambda x: [y if y else '' for y in x[:2]]
+            )
         return graph_raw_edges
 
     def get_node_labels(self, start_point_str=None, stop_point_str=None):
