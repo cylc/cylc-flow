@@ -144,20 +144,22 @@ async def test__always_insert_task_job(
         [platforms]
             [[broken1]]
                 hosts = no-such-host-1
+                job runner = abc
             [[broken2]]
                 hosts = no-such-host-2
+                job runner = def
         [platform groups]
-            [[broken]]
+            [[broken_group]]
                 platforms = broken1
     """
     mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_config)
 
     id_ = flow({
-        'scheduling': {'graph': {'R1': 'broken & broken2'}},
+        'scheduling': {'graph': {'R1': 'foo & bar'}},
         'runtime': {
             'root': {'submission retry delays': 'PT10M'},
-            'broken': {'platform': 'broken'},
-            'broken2': {'platform': 'broken2'}
+            'foo': {'platform': 'broken_group'},
+            'bar': {'platform': 'broken2'}
         }
     })
 
@@ -174,14 +176,17 @@ async def test__always_insert_task_job(
         )
 
         # Both jobs are in the data store with submit-failed state:
+        ds_jobs = schd.data_store_mgr.data[schd.id][JOBS]
         updates = {
-            k.split('//')[-1]: v.state
-            for k, v in schd.data_store_mgr.data[schd.id][JOBS].items()
+            id_.split('//')[-1]: (job.state, job.platform, job.job_runner_name)
+            for id_, job in ds_jobs.items()
         }
         assert updates == {
-            '1/broken/01': 'submit-failed',
-            '1/broken2/01': 'submit-failed'
+            '1/foo/01': ('submit-failed', 'broken_group', ''),
+            '1/bar/01': ('submit-failed', 'broken2', 'def'),
         }
+        for job in ds_jobs.values():
+            assert job.submitted_time
 
 
 async def test__process_message_failed_with_retry(one, start, log_filter):
