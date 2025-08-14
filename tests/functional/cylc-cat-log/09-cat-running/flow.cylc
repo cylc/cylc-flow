@@ -9,7 +9,14 @@
 
 [scheduling]
     [[graph]]
-        R1 = local-task:echo & remote-task:echo => cat-log
+        R1 = """
+            # start "local-task" and "remote-task", then run cat-log
+            local-task:echo & remote-task:echo => cat-log
+
+            # add a downstream task to ensure "local-task" and "remote-task"
+            # succeed (for the reference test)
+            local-task & remote-task => fin
+        """
 
 [runtime]
     [[ECHO]]
@@ -17,7 +24,14 @@
             cylc__job__wait_cylc_message_started
             echo rubbish
             echo garbage >&2
-            cylc message 'echo done'
+            cylc message -- 'echo done'
+
+            # wait up to PT1M for the cat-log task to succeed
+            # (the workflow will shut down if cat-log fails)
+            sleep 60
+
+            # fail if the task was not orphaned by this point
+            false
         """
         [[[outputs]]]
             echo = "echo done"
@@ -26,9 +40,9 @@
     [[remote-task]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         inherit = ECHO
+
     [[cat-log]]
         script = """
-            cylc__job__wait_cylc_message_started
             for TASK in '1/local-task' '1/remote-task'; do
                 cylc cat-log --debug -f o \
                     "${CYLC_WORKFLOW_ID}//${TASK}" \
@@ -36,5 +50,10 @@
                 cylc cat-log --debug -f e \
                     "${CYLC_WORKFLOW_ID}//${TASK}" \
                     | grep 'garbage'
+                # orphan the sleep command
+                cylc set "${CYLC_WORKFLOW_ID}//${TASK}"
             done
         """
+
+      [[fin]]
+          run mode = skip
