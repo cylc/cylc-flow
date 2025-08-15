@@ -217,7 +217,8 @@ async def reinstall_cli(
                 # no rsync output == no changes => exit
                 print(cparse(
                     '<magenta>'
-                    f'{workflow_id} up to date with {source}'
+                    'No changes made:'
+                    f' {workflow_id} is up to date with {source}'
                     '</magenta>'
                 ))
                 return False
@@ -249,7 +250,7 @@ async def reinstall_cli(
     else:
         # no reinstall
         print(
-            cparse('<magenta>Reinstall canceled, no changes made.</magenta>')
+            cparse('<magenta>No changes made: reinstall cancelled.</magenta>')
         )
         return False
 

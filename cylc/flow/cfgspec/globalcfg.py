@@ -1044,7 +1044,23 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``[suite servers][run host select]rank``.
             ''')
+            Conf('process check timeout', VDR.V_INTERVAL, DurationFloat(10),
+                 desc='''
+                Maximum time for the `cylc play` and `cylc vr` commands to wait
+                for a remote process that checks if an unresponsive scheduler
+                is still alive (for workflows with existing contact files).
 
+                .. note::
+
+                   This check involves running ``cylc psutil`` on the run host.
+                   You may need to increase the timeout if shared filesystem
+                   latency (for example) results in slow Python script startup.
+                   Increasing the timeout unnecessarily, however, will just
+                   cause these commands to hang for an unnecessarily long time
+                   in this circumstance.
+
+                .. versionadded:: 8.5.2
+            ''')
         with Conf('host self-identification', desc=f'''
             How Cylc determines and shares the identity of the workflow host.
 
