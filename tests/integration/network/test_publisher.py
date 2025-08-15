@@ -13,18 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
+
+import asyncio
 
 from cylc.flow.network.subscriber import (
     WorkflowSubscriber,
     process_delta_msg,
 )
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout
-else:
-    from async_timeout import timeout
 
 
 async def test_publisher(flow, scheduler, run, one_conf, port_range):
@@ -40,7 +35,7 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
             topics=[b'workflow']
         )
 
-        async with timeout(2):
+        async with asyncio.timeout(2):
             # wait for the first delta from the workflow
             btopic, msg = await subscriber.socket.recv_multipart()
 
