@@ -161,21 +161,22 @@ async def test__always_insert_task_job(
         }
     })
 
-    schd = scheduler(id_, run_mode='live')
+    schd: Scheduler = scheduler(id_, run_mode='live')
     schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
     async with start(schd):
         schd.submit_task_jobs(schd.pool.get_tasks())
+        await schd.update_data_structure()
 
         # Both tasks are in a waiting state:
         assert all(
             i.state.status == TASK_STATUS_WAITING
-            for i in schd.pool.get_tasks())
+            for i in schd.pool.get_tasks()
+        )
 
-        # Both tasks have updated the data store with info
-        # about a failed job:
+        # Both jobs are in the data store with submit-failed state:
         updates = {
             k.split('//')[-1]: v.state
-            for k, v in schd.data_store_mgr.updated[JOBS].items()
+            for k, v in schd.data_store_mgr.data[schd.id][JOBS].items()
         }
         assert updates == {
             '1/broken/01': 'submit-failed',
