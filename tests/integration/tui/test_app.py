@@ -21,6 +21,7 @@ import pytest
 import urwid
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.id import TaskTokens
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
@@ -486,7 +487,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
             )
             for task in ('a', 'b'):
                 schd.pool.set_prereqs_and_outputs(
-                    items=[f"1/{task}"],
+                    items={TaskTokens('1', task)},
                     outputs=[TASK_OUTPUT_SUCCEEDED],
                     prereqs=[],
                     flow=[]

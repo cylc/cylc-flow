@@ -31,7 +31,14 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.task_state import TASK_STATUS_WAITING
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+)
 
 
 async def test_trigger_workflow_paused(
@@ -617,3 +624,52 @@ async def test_trigger_n0_tasks(
             # downstream task
             ('z', '[1, 2, 3, 4, 5]'),
         }
+
+
+async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
+    """Test task matching with the trigger command.
+
+    This test is intended to extend the other integration tests for ID matching
+    with a real use case to ensure the code in cylc.flow.commands
+    (which parses and standardises IDs) is working correctly.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b & c & d & e & f & g'
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        trigger_calls = []
+
+        def _force_trigger_tasks(_schd, ids, *_, **__):
+            trigger_calls.append(
+                {id_.relative_id_with_selectors for id_ in ids}
+            )
+
+        monkeypatch.setattr(
+            'cylc.flow.commands._force_trigger_tasks', _force_trigger_tasks
+        )
+
+        schd.pool._get_task_by_id('1/a').state_reset(TASK_STATUS_SUBMITTED)
+        schd.pool._get_task_by_id('1/b').state_reset(TASK_STATUS_RUNNING)
+        schd.pool._get_task_by_id('1/c').state_reset(TASK_STATUS_SUCCEEDED)
+        schd.pool._get_task_by_id('1/d').state_reset(TASK_STATUS_FAILED)
+
+        await run_cmd(force_trigger_tasks(schd, ['*:submitted'], []))
+        assert trigger_calls == [{'1/a'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:running'], []))
+        assert trigger_calls == [{'1/b'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:succeeded'], []))
+        assert trigger_calls == [{'1/c'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:failed'], []))
+        assert trigger_calls == [{'1/d'}]
+        trigger_calls.clear()

@@ -32,6 +32,7 @@ from cylc.flow.commands import (
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.id import TaskTokens
 from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.task_events_mgr import (
     TaskEventsManager,
@@ -148,7 +149,7 @@ async def test_task_completion(
         }:
             # set the combination of outputs
             schd.pool.set_prereqs_and_outputs(
-                ['1/a'],
+                {TaskTokens('1', 'a')},
                 combination,
                 [],
                 ['1'],
@@ -164,7 +165,7 @@ async def test_task_completion(
         for combination in completion_outputs:
             # set the combination of outputs
             schd.pool.set_prereqs_and_outputs(
-                ['1/a'],
+                {TaskTokens('1', 'a')},
                 combination,
                 [],
                 ['1'],

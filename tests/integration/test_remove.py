@@ -25,6 +25,7 @@ from cylc.flow.commands import (
     run_cmd,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.id import TaskTokens
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
@@ -190,12 +191,12 @@ async def test_not_unset_prereq(
     async with start(schd):
         # This set prereq should not be unset by removing a1:
         schd.pool.set_prereqs_and_outputs(
-            ['1/b'], outputs=[], prereqs=['1/a1'], flow=[]
+            {TaskTokens('1', 'b')}, outputs=[], prereqs=['1/a1'], flow=[]
         )
         # Whereas the prereq satisfied by this set output *should* be unset
         # by removing a2:
         schd.pool.set_prereqs_and_outputs(
-            ['1/a2'], outputs=['succeeded'], prereqs=[], flow=[]
+            {TaskTokens('1', 'a2')}, outputs=['succeeded'], prereqs=[], flow=[]
         )
         await schd.update_data_structure()
 
@@ -230,7 +231,7 @@ async def test_nothing_to_do(
     schd: Scheduler = scheduler(example_workflow)
     async with start(schd):
         await run_cmd(remove_tasks(schd, ['1/doh'], []))
-    assert log_filter(logging.WARNING, "No matching tasks found: doh")
+    assert log_filter(logging.WARNING, 'No tasks match "1/doh"')
 
 
 async def test_logging(
@@ -269,9 +270,10 @@ async def test_logging(
     )
 
     assert log_filter(logging.DEBUG, "Task(s) not removable: 2001/a, 2001/b")
-    assert log_filter(logging.WARNING, "No active tasks matching: 2002/*")
     assert log_filter(logging.WARNING, "Invalid cycle point for task: a, 2005")
-    assert log_filter(logging.WARNING, "No matching tasks found: doh")
+    assert log_filter(
+        logging.WARNING, "No tasks match the IDs:\n* 2000/doh\n* 2005/a"
+    )
     # No tasks were submitted/running so none should have been killed:
     assert "job killed" not in caplog.text
 

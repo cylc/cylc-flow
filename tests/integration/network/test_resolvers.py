@@ -280,7 +280,7 @@ async def test_command_validation_failure(
         )
 
     # submitting the invalid command should result in this error
-    msg = 'This command does not take job ids:\n * cycle/task/job'
+    msg = 'This command does not take job IDs: cycle/task/job'
 
     # test submitting the command at *default* verbosity
     response = await submit_invalid_command()
