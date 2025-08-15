@@ -92,7 +92,6 @@ from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
 )
 from cylc.flow.taskdef import generate_graph_children
@@ -770,7 +769,7 @@ def _force_trigger_tasks(
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
-            elif itask.state(TASK_STATUS_WAITING):
+            else:
                 # This is a waiting active group start task...
                 # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
@@ -783,8 +782,7 @@ def _force_trigger_tasks(
 
                 # Trigger group start task.
                 schd.pool.queue_or_trigger(itask, on_resume)
-            else:
-                active_to_remove.append(itask)
+
         else:
             active_to_remove.append(itask)
 
