@@ -106,6 +106,7 @@ WORKFLOW_LOG_OPTS = {
     ),
     'i': ('install log', r'install/*-*install.log'),
     's': ('scheduler log', r'scheduler/*-*start*.log'),
+    'v': ('version control info (JSON)', r'version/*'),
 }
 
 
