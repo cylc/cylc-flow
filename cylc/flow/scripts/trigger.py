@@ -35,13 +35,9 @@ Triggering a group of tasks at once (e.g. members of a sub-graph):
   If the workflow is paused, group start tasks will trigger immediately; the
   flow will continue downstream of them when you resume the workflow.
 
-  Beware of triggering live (preparing, submitted, or running) tasks:
-  * Live in-group tasks will be killed and their run history erased, to allow
-    them to re-run in the triggered flow.
-  * Live group-start tasks are left to run; they don't need to be retriggered.
-    WARNING: if they already completed outputs that other group members depend
-    on, you must manually satisfy those prerequisites again for the triggered
-    flow (run history erasure wipes out the original satisfied prerequisites).
+  How live (preparing, submitted, or running) tasks are handled:
+  * Live in-group tasks are killed and removed, to rerun in the triggered flow.
+  * Live group-start tasks are left alone; they don't need to be retriggered.
 
 Flow number assignment in triggered tasks:
   Active tasks (n=0) already have flows assigned; inactive tasks (n>0) do not.
