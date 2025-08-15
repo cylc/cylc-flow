@@ -2116,8 +2116,7 @@ class TaskPool:
                         point, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )
-                    if trans is not None:
-                        self._set_outputs_itask(trans, outputs)
+                    if trans and self._set_outputs_itask(trans, outputs):
                         no_op = False
 
         if not no_op:
@@ -2187,7 +2186,7 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         outputs: Iterable[str],
-    ) -> None:
+    ) -> bool:
         """Set requested outputs on a task proxy and spawn children.
 
         If no outputs were specified and the task has no required outputs to
@@ -2195,7 +2194,10 @@ class TaskPool:
         does.
 
         Designated flows should already be merged to the task proxy.
+
+        Returns True if any outputs were set, else False.
         """
+        no_op = True
         outputs = set(outputs)
 
         if not outputs:
@@ -2225,18 +2227,24 @@ class TaskPool:
                 LOG.info(f"output {itask.identity}:{output} completed already")
                 continue
             self.task_events_mgr.process_message(
-                itask, logging.INFO, output, forced=True)
+                itask, logging.INFO, output, forced=True
+            )
+            no_op = False
 
         if not itask.state(TASK_STATUS_WAITING):
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
 
+        if no_op:
+            return False
+
         self.data_store_mgr.delta_task_state(itask)
         self.data_store_mgr.delta_task_outputs(itask)
         self.workflow_db_mgr.put_update_task_state(itask)
         self.workflow_db_mgr.put_update_task_outputs(itask)
         self.workflow_db_mgr.process_queued_ops()
+        return True
 
     def _set_prereqs_itask(
         self,
