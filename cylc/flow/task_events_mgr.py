@@ -1503,6 +1503,7 @@ class TaskEventsManager():
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
         self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
         self._reset_job_timers(itask)
 
         return no_retries
