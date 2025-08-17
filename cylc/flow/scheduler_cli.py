@@ -486,7 +486,8 @@ async def _resume(workflow_id, options):
     try:
         await cylc_ping(options, workflow_id, pclient)
     except WorkflowStopped:
-        # Not running (orphaned contact file).
+        # Not running, restart instead of resume.
+        # (Orphaned contact file will be removed by cylc_ping client logic).
         return
     except CylcError as exc:
         # PID check failed - abort.
