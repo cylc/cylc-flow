@@ -26,6 +26,11 @@ Triggering individual tasks:
   * Triggered tasks can run even if the workflow is paused.
 
 Triggering a group of tasks at once (e.g. members of a sub-graph):
+        Prerequisites on any tasks that are outside of the group of tasks being triggered are automatically satisfied.
+        Any tasks which have already run within the group will be automatically removed (i.e. cylc remove) to allow them to be re-run without intervention.
+        Any preparing, submitted or running tasks within the group will also be removed if necessary to allow the tasks to re-run in order.
+
+
   Cylc will automatically:
   * Erase the run history of members, so they can re-run in the same flow.
   * Identify group start tasks, and trigger them to start the flow.
@@ -44,6 +49,7 @@ Flow number assignment in triggered tasks:
   * If an interdependent group of triggered tasks includes active tasks, the
     flow will be assigned the existing flow numbers of those active tasks.
   * Otherwise the flow will be assigned all current active flow numbers.
+
 
 Examples:
   # trigger task foo in cycle 1, in workflow "test"
