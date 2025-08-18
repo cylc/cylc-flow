@@ -285,8 +285,8 @@ def write_vc_info(
     )
     info_file.parent.mkdir(exist_ok=True, parents=True)
     with open(info_file, 'w') as f:
-        f.write(
-            json.dumps(info, indent=JSON_INDENT)
+        print(
+            json.dumps(info, indent=JSON_INDENT), file=f
         )
 
 
@@ -356,7 +356,7 @@ def write_diff(
         try:
             _run_cmd(vcs, args, repo_path, stdout=f)
         except VCSMissingBaseError as exc:
-            f.write(f"# No diff - {exc}")
+            print(f"# No diff - {exc}", file=f)
     return diff_file
 
 

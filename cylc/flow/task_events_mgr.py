@@ -1424,12 +1424,8 @@ class TaskEventsManager():
         run_signal: Optional[str] = None,
     ):
         itask.set_summary_time('finished', event_time)
-        self.data_store_mgr.delta_job_time(
-            itask.job_tokens, 'finished', event_time
-        )
-        self.data_store_mgr.delta_job_state(
-            itask.job_tokens, TASK_STATUS_FAILED
-        )
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_FAILED)
         db_update = {
             'run_status': 1,
             'time_run_exit': event_time,
@@ -1442,11 +1438,11 @@ class TaskEventsManager():
         self, itask: 'TaskProxy', event_time: str, forced: bool
     ):
         """Helper for process_message, handle a started message."""
+        if not forced:
+            self._process_job_started(itask, event_time)
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.info(f"[{itask}] Vacated job restarted")
-        if not forced:
-            self._process_job_started(itask, event_time)
         if itask.state_reset(TASK_STATUS_RUNNING, forced=forced):
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
@@ -1459,12 +1455,8 @@ class TaskEventsManager():
 
     def _process_job_started(self, itask: 'TaskProxy', event_time: str):
         itask.set_summary_time('started', event_time)
-        self.data_store_mgr.delta_job_time(
-            itask.job_tokens, 'started', event_time
-        )
-        self.data_store_mgr.delta_job_state(
-            itask.job_tokens, TASK_STATUS_RUNNING
-        )
+        self.data_store_mgr.delta_job_time(itask, 'started', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_RUNNING)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": event_time,
         })
@@ -1503,12 +1495,8 @@ class TaskEventsManager():
 
     def _process_job_succeeded(self, itask: 'TaskProxy', event_time: str):
         itask.set_summary_time('finished', event_time)
-        self.data_store_mgr.delta_job_time(
-            itask.job_tokens, 'finished', event_time
-        )
-        self.data_store_mgr.delta_job_state(
-            itask.job_tokens, TASK_STATUS_SUCCEEDED
-        )
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUCCEEDED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
             "time_run_exit": event_time,
@@ -1563,9 +1551,7 @@ class TaskEventsManager():
     def _process_job_submit_failed(self, itask: 'TaskProxy', event_time: str):
         # Register newly submit-failed job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
-        self.data_store_mgr.delta_job_state(
-            itask.job_tokens, TASK_STATUS_SUBMIT_FAILED
-        )
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
 
     def _process_message_submitted(
         self, itask: 'TaskProxy', event_time: str
@@ -1603,16 +1589,12 @@ class TaskEventsManager():
     def _process_job_submitted(self, itask: 'TaskProxy', event_time: str):
         # Register the newly submitted job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
-        self.data_store_mgr.delta_job_time(
-            itask.job_tokens, 'submitted', event_time
-        )
-        self.data_store_mgr.delta_job_state(
-            itask.job_tokens, TASK_STATUS_SUBMITTED
-        )
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMITTED)
         # update the job ID in the job proxy (it only
         # comes in via the submission message).
         self.data_store_mgr.delta_job_attr(
-            itask.job_tokens, 'job_id', itask.summary['submit_method_id']
+            itask, 'job_id', itask.summary['submit_method_id']
         )
 
     def _insert_task_job(
