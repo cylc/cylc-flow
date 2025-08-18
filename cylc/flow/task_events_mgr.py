@@ -983,7 +983,7 @@ class TaskEventsManager():
         message: str,
         event_time: str,
     ) -> bool:
-        """Process a job message only.
+        """Process a job message only, without affecting its task.
 
         E.g. for a task that is no longer in the pool because it was manually
         set to completed.
