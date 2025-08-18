@@ -723,13 +723,14 @@ class Resolvers(BaseResolvers):
         Others go to the scheduler command queue.
 
         """
+        behalf_of = meta.get('behalf_of', '')
         user = meta.get('auth_user', self.schd.owner)
         if user == self.schd.owner:
-            log_user = ""  # don't log user name if owner
+            log_user = f" from {self.schd.owner}"
         else:
             log_user = f" from {user}"
 
-        log1 = f'Command "{command}" received{log_user}.'
+        log1 = f'Command "{command}" received{log_user}{behalf_of}.'
         log2 = (
             f"{command}("
             + ", ".join(
