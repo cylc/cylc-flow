@@ -1211,6 +1211,7 @@ with Conf(
 
                    # run a command to select the platform (or platform group):
                    platform = $(select-platform)
+                   platform = prefix-$(select-platform)-suffix
 
                 .. versionadded:: 8.0.0
             ''')
