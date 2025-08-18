@@ -1220,10 +1220,10 @@ class TaskJobManager:
                 f"\"{itask.identity}\" the following are not compatible:\n"
             )
 
-        host_n, platform_name = None, None
+        host_name, platform_name = None, None
         try:
             if rtconfig['remote']['host'] is not None:
-                host_n = self.task_remote_mgr.eval_host(
+                host_name = self.task_remote_mgr.eval_host(
                     rtconfig['remote']['host']
                 )
             else:
@@ -1242,10 +1242,10 @@ class TaskJobManager:
             return False
         else:
             # host/platform select not ready
-            if host_n is None and platform_name is None:
+            if host_name is None and platform_name is None:
                 return None
             elif (
-                host_n is None
+                host_name is None
                 and rtconfig['platform']
                 and rtconfig['platform'] != platform_name
             ):
@@ -1253,16 +1253,15 @@ class TaskJobManager:
                     f"for task {itask.identity}: platform = "
                     f"{rtconfig['platform']} evaluated as {platform_name}"
                 )
-                rtconfig['platform'] = platform_name
+
             elif (
                 platform_name is None
-                and rtconfig['remote']['host'] != host_n
+                and rtconfig['remote']['host'] != host_name
             ):
                 LOG.debug(
                     f"[{itask}] host = "
-                    f"{rtconfig['remote']['host']} evaluated as {host_n}"
+                    f"{rtconfig['remote']['host']} evaluated as {host_name}"
                 )
-                rtconfig['remote']['host'] = host_n
 
             try:
                 platform = cast(
@@ -1271,7 +1270,10 @@ class TaskJobManager:
                     # return early if the subshell is still evaluating.
                     'dict',
                     get_platform(
-                        rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                        platform_name or rtconfig,
+                        itask.tdef.name,
+                        bad_hosts=self.bad_hosts,
+                        evaluated_host=host_name,
                     ),
                 )
             except PlatformLookupError as exc:
