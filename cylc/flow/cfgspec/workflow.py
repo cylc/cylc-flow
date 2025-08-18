@@ -1194,9 +1194,10 @@ with Conf(
                 same command, the command will be run once, and all jobs in the
                 batch will submit to the same platform.
 
-                Note, do not use a command to configure a list of login nodes,
-                define a platform and configure the login nodes it can use,
-                see :ref:`config.platforms.cluster_with_multiple_login_nodes`.
+                Note: do not use a command to configure a list of login nodes.
+                Instead, define a platform and configure the login nodes it
+                can use; see
+                :ref:`config.platforms.cluster_with_multiple_login_nodes`.
 
                 .. rubric:: Examples:
 
