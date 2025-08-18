@@ -421,7 +421,25 @@ class TaskEventsManager():
     EVENT_EXPIRED = TASK_OUTPUT_EXPIRED
     EVENT_SUBMIT_FAILED = "submission failed"
     EVENT_SUBMIT_RETRY = "submission retry"
+    EVENT_SUBMIT_TIMEOUT = "submission timeout"
+    EVENT_EXEC_TIMEOUT = "execution timeout"
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
+    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
+    STD_EVENTS = [
+        EVENT_SUBMITTED,
+        EVENT_SUBMIT_TIMEOUT,
+        EVENT_SUBMIT_RETRY,
+        EVENT_SUBMIT_FAILED,
+        EVENT_STARTED,
+        EVENT_EXEC_TIMEOUT,
+        EVENT_RETRY,
+        EVENT_SUCCEEDED,
+        EVENT_FAILED,
+        EVENT_LATE,
+        EVENT_EXPIRED,
+        *NON_UNIQUE_EVENTS,
+    ]
+
     HANDLER_CUSTOM = "event-handler"
     HANDLER_MAIL = "event-mail"
     JOB_FAILED = "job failed"
@@ -432,7 +450,6 @@ class TaskEventsManager():
     FLAG_POLLED = "(polled)"
     FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
-    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
     JOB_SUBMIT_SUCCESS_FLAG = 0
     JOB_SUBMIT_FAIL_FLAG = 1
     JOB_LOGS_RETRIEVAL_EVENTS = {
@@ -504,10 +521,10 @@ class TaskEventsManager():
         # Timeout reached for task, emit event and reset itask.timeout
         if itask.state(TASK_STATUS_RUNNING):
             time_ref = itask.summary['started_time']
-            event = 'execution timeout'
+            event = self.EVENT_EXEC_TIMEOUT
         elif itask.state(TASK_STATUS_SUBMITTED):
             time_ref = itask.summary['submitted_time']
-            event = 'submission timeout'
+            event = self.EVENT_SUBMIT_TIMEOUT
         msg = event
         with suppress(TypeError, ValueError):
             msg += ' after %s' % intvl_as_str(itask.timeout - time_ref)
@@ -668,6 +685,10 @@ class TaskEventsManager():
             True: if polling is required to confirm a reversal of status.
 
         """
+        # Useful debug but currently borks tests/f/cylc-message/02-multi.t:
+        # (It checks all log messages in debug mode, which is unhelpful).
+        # TODO: https://github.com/cylc/cylc-flow/issues/6857
+        # LOG.debug(f'Message {flag} for {itask}: "{message}"')
 
         # Log messages
         if event_time is None:
@@ -731,15 +752,15 @@ class TaskEventsManager():
                 # Already running.
                 return True
             self._process_message_started(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_STARTED)
+            self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
         elif message == self.EVENT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED)
+            self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED, forced)
 
         elif message == self.EVENT_EXPIRED:
             self._process_message_expired(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_EXPIRED)
+            self.spawn_children(itask, TASK_OUTPUT_EXPIRED, forced)
 
         elif message == self.EVENT_FAILED:
             if (
@@ -751,7 +772,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, self.JOB_FAILED, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
@@ -761,7 +782,7 @@ class TaskEventsManager():
                 # Already submit-failed
                 return True
             if self._process_message_submit_failed(itask, event_time, forced):
-                self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED, forced)
 
         elif message == self.EVENT_SUBMITTED:
             if (
@@ -771,19 +792,17 @@ class TaskEventsManager():
                 # Already submitted.
                 return True
             self._process_message_submitted(itask, event_time, forced)
-            self.spawn_children(itask, TASK_OUTPUT_SUBMITTED)
+            self.spawn_children(itask, TASK_OUTPUT_SUBMITTED, forced)
 
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
             if itask.run_mode != RunMode.SIMULATION:
-                job_tokens = itask.tokens.duplicate(
-                    job=str(itask.submit_num)
-                )
                 self.data_store_mgr.delta_job_attr(
-                    job_tokens, 'job_id', itask.summary['submit_method_id'])
+                    itask, 'job_id', itask.summary['submit_method_id']
+                )
             else:
                 # In simulation mode submitted implies started:
-                self.spawn_children(itask, TASK_OUTPUT_STARTED)
+                self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -800,7 +819,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, self.JOB_FAILED, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
@@ -817,7 +836,7 @@ class TaskEventsManager():
             if self._process_message_failed(
                 itask, event_time, aborted_with, forced, message
             ):
-                self.spawn_children(itask, TASK_OUTPUT_FAILED)
+                self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
@@ -844,7 +863,7 @@ class TaskEventsManager():
             trigger = itask.state.outputs.get_trigger(message)
             LOG.info(f"[{itask}] completed output {trigger}")
             self.setup_event_handlers(itask, trigger, message)
-            self.spawn_children(itask, msg0)
+            self.spawn_children(itask, msg0, forced)
 
         else:
             # Unhandled messages. These include:
@@ -1274,7 +1293,7 @@ class TaskEventsManager():
         label = '_'.join((
             '_cylc',
             'submit_retry' if submit_retry else 'retry',
-            itask.identity
+            itask.identity.replace('/', '_')
         ))
         kwargs = {
             'trigger_time': wallclock_time
@@ -1300,6 +1319,15 @@ class TaskEventsManager():
             )
             itask.state.add_xtrigger(label)
 
+        # add the retry xtrigger to the data store
+        sig = self.xtrigger_mgr.get_xtrig_ctx(itask, label).get_signature()
+        (
+            self.data_store_mgr.xtrigger_tasks
+            .setdefault(sig, set())
+            .add((itask.tokens.id, label))
+        )
+        self.data_store_mgr.delta_xtrigger(sig, False)
+
         if itask.state_reset(TASK_STATUS_WAITING):
             self.data_store_mgr.delta_task_state(itask)
 
@@ -1324,9 +1352,8 @@ class TaskEventsManager():
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_FAILED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -1364,12 +1391,11 @@ class TaskEventsManager():
 
     def _process_message_started(self, itask, event_time, forced):
         """Helper for process_message, handle a started message."""
+        self.data_store_mgr.delta_job_time(itask, 'started', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_RUNNING)
         if itask.job_vacated:
             itask.job_vacated = False
-            LOG.warning(f"[{itask}] Vacated job restarted")
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
+            LOG.info(f"[{itask}] Vacated job restarted")
         itask.set_summary_time('started', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -1400,9 +1426,8 @@ class TaskEventsManager():
         Ignore forced.
         """
 
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_SUCCEEDED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUCCEEDED)
         itask.set_summary_time('finished', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -1475,13 +1500,9 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
 
         # Register newly submit-failed job with the database and datastore.
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
-        self.data_store_mgr.delta_job_state(
-            job_tokens,
-            TASK_STATUS_SUBMIT_FAILED
-        )
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
         self._reset_job_timers(itask)
 
         return no_retries
@@ -1530,24 +1551,12 @@ class TaskEventsManager():
         # Do after itask has changed state
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(
-            job_tokens,
-            'submitted',
-            event_time,
-        )
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
         if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
-            self.data_store_mgr.delta_job_time(
-                job_tokens,
-                'started',
-                event_time,
-            )
+            self.data_store_mgr.delta_job_time(itask, 'started', event_time)
         else:
-            self.data_store_mgr.delta_job_state(
-                job_tokens,
-                TASK_STATUS_SUBMITTED,
-            )
+            self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMITTED)
 
     def _insert_task_job(
         self,
@@ -1865,7 +1874,7 @@ class TaskEventsManager():
         timeout = None  # timeout in setting
         if itask.state(TASK_STATUS_RUNNING):
             timeref = itask.summary['started_time']
-            timeout_key = 'execution timeout'
+            timeout_key = self.EVENT_EXEC_TIMEOUT
             # Actual timeout after all polling.
             timeout = self._get_events_conf(itask, timeout_key)
             execution_polling_intervals = list(
@@ -1885,7 +1894,7 @@ class TaskEventsManager():
                 delays = execution_polling_intervals
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
             timeref = itask.summary['submitted_time']
-            timeout_key = 'submission timeout'
+            timeout_key = self.EVENT_SUBMIT_TIMEOUT
             timeout = self._get_events_conf(itask, timeout_key)
             delays = list(self._get_workflow_platforms_conf(
                 itask, 'submission polling intervals'))
@@ -2008,8 +2017,7 @@ class TaskEventsManager():
         self.event_timers_updated = True
 
     def reset_bad_hosts(self):
-        """Clear bad_hosts list.
-        """
+        """Clear bad_hosts list."""
         if self.bad_hosts:
             LOG.info(
                 'Clearing bad hosts: '
@@ -2017,8 +2025,17 @@ class TaskEventsManager():
             )
             self.bad_hosts.clear()
 
-    def spawn_children(self, itask: 'TaskProxy', output: str) -> None:
-        # update DB task outputs
+    def spawn_children(
+        self,
+        itask: 'TaskProxy',
+        output: str,
+        forced=False
+    ) -> None:
+        """Spawn children of this output."""
         self.workflow_db_mgr.put_update_task_outputs(itask)
-        # spawn child-tasks
-        self.spawn_func(itask, output)
+        if not itask.transient or forced:
+            # Spawn children if forced or not transient.
+            # Removed-and-killed running tasks end up here as transient
+            # after removal from the pool; don't spawn or log completion.
+            # Forced spawning from transients is used for "cylc set" outputs.
+            self.spawn_func(itask, output)

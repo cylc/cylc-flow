@@ -454,7 +454,7 @@ def capture_polling():
         polled_tasks: 'Set[TaskProxy]' = set()
 
         def run_job_cmd(
-            _1, _2, itasks, _3, _4=None
+            _1, itasks, _3, _4=None
         ):
             polled_tasks.update(itasks)
             return itasks
@@ -592,6 +592,7 @@ async def _complete(
     *wait_tokens: Union[Tokens, str],
     stop_mode=StopMode.AUTO,
     timeout: int = 60,
+    allow_paused: bool = False,
 ) -> None:
     """Wait for the workflow, or tasks within it to complete.
 
@@ -615,9 +616,17 @@ async def _complete(
 
             Note, use this timeout rather than wrapping the complete call with
             async_timeout (handles shutdown logic more cleanly).
+        allow_paused:
+            This function will raise an Exception if the scheduler is paused
+            (because this usually means the sepecified tasks cannot complete)
+            unless allow_paused==True.
+
+    Raises:
+        AssertionError: In the event the scheduler shut down or the operation
+            timed out.
 
     """
-    if schd.is_paused:
+    if schd.is_paused and not allow_paused:
         raise Exception("Cannot wait for completion of a paused scheduler")
 
     start_time = time()
@@ -678,7 +687,7 @@ async def _complete(
                     msg += ", ".join(map(str, tokens_list))
                 else:
                     msg += "workflow to shut down"
-                raise Exception(msg)
+                raise AssertionError(msg)
 
 
 @pytest.fixture
@@ -739,8 +748,8 @@ def capture_live_submissions(capcall, monkeypatch):
     If you call this fixture from a test, it will return a set of tasks that
     would have been submitted had this fixture not been used.
     """
-    def fake_submit(self, _workflow, itasks, *_):
-        self.submit_nonlive_task_jobs(_workflow, itasks, RunMode.SIMULATION)
+    def fake_submit(self, itasks, *_):
+        self.submit_nonlive_task_jobs(itasks, RunMode.SIMULATION)
         for itask in itasks:
             for status in (TASK_STATUS_SUBMITTED, TASK_STATUS_SUCCEEDED):
                 self.task_events_mgr.process_message(
@@ -760,7 +769,7 @@ def capture_live_submissions(capcall, monkeypatch):
     def get_submissions():
         return {
             itask.identity
-            for ((_self, _workflow, itasks, *_), _kwargs) in submit_live_calls
+            for ((_self, itasks, *_), _kwargs) in submit_live_calls
             for itask in itasks
         }
 

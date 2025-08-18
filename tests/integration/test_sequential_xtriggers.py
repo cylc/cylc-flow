@@ -20,8 +20,13 @@
 
 from unittest.mock import patch
 import pytest
-from cylc.flow.cycling.integer import IntegerPoint
 
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks,
+    remove_tasks
+)
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.exceptions import XtriggerConfigError
 from cylc.flow.scheduler import Scheduler
@@ -74,7 +79,7 @@ async def test_remove(sequential: Scheduler, start):
         ]
 
         # remove all tasks in the pool
-        sequential.remove_tasks(['*'])
+        await run_cmd(remove_tasks(sequential, ['*'], ["1"]))
 
         # the next cycle should be automatically spawned
         assert list_cycles(sequential) == ['2004']
@@ -97,14 +102,14 @@ async def test_trigger(sequential, start):
         assert list_cycles(sequential) == ['2000']
 
         foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
-        sequential.pool.force_trigger_tasks([foo.identity], {1})
+        await run_cmd(force_trigger_tasks(sequential, [foo.identity], ["1"]))
         foo.state_reset('succeeded')
         sequential.pool.spawn_on_output(foo, 'succeeded')
 
         assert list_cycles(sequential) == ['2000', '2001']
 
 
-async def test_set(sequential, start):
+async def test_set_outputs(sequential, start):
     """It should spawn its next instance if outputs are set ahead of time.
 
     If you set outputs of a sequentially spawned task before its xtriggers
@@ -119,9 +124,23 @@ async def test_set(sequential, start):
         sequential.pool.get_task(ISO8601Point('2000'), 'foo')
         # set foo:succeeded it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
-            ["2000/foo"], ["succeeded"], None, ['all'])
+            ["2000/foo"], ["succeeded"], [], [])
 
         assert list_cycles(sequential) == ['2001']
+
+
+async def test_set_prereqs(sequential, start):
+    """It should spawn next after manual xtrigger prereq satisfaction."""
+    async with start(sequential):
+        assert list_cycles(sequential) == ['2000']
+
+        sequential.pool.get_task(ISO8601Point('2000'), 'foo')
+        # satisfy foo's xtriggers - it should spawn next instance
+        sequential.pool.set_prereqs_and_outputs(
+            ["2000/foo"], [], ['xtrigger/all:succeeded'], [])
+        sequential.pool.spawn_parentless_sequential_xtriggers()
+
+        assert list_cycles(sequential) == ['2000', '2001']
 
 
 async def test_reload(sequential, start):

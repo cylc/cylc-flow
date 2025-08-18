@@ -25,8 +25,6 @@ import pytest
 
 from cylc.flow.scripts.cylc import iter_commands, pythonpath_manip
 
-from ..conftest import MonkeyMock
-
 
 @pytest.fixture
 def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
@@ -93,7 +91,6 @@ def test_iter_commands_bad(mock_entry_points):
 
 def test_execute_cmd(
     mock_entry_points,
-    monkeymock: MonkeyMock,
     capsys: pytest.CaptureFixture,
 ):
     """It should fail with a warning for commands with missing dependencies."""
@@ -103,25 +100,18 @@ def test_execute_cmd(
 
     mock_entry_points(include_bad=True)
 
-    # capture sys.exit calls
-    capexit = monkeymock('cylc.flow.scripts.cylc.sys.exit')
-
     # the "good" entry point should exit 0 (exit with no args)
-    execute_cmd('good')
-    capexit.assert_called_once_with()
+    assert execute_cmd('good') == 0
     assert capsys.readouterr().err == ''
 
     # the "missing" entry point should exit 1 with a warning to stderr
-    capexit.reset_mock()
-    execute_cmd('missing')
-    capexit.assert_any_call(1)
+    assert execute_cmd('missing') == 1
     assert capsys.readouterr().err.strip() == (
         '"cylc missing" requires "foo"\n\nModuleNotFoundError: foo'
     )
 
     # the "bad" entry point should log an error
-    execute_cmd('bad')
-    capexit.assert_any_call(1)
+    assert execute_cmd('bad') == 1
 
     stderr = capsys.readouterr().err.strip()
     assert '"cylc bad" requires "d"' in stderr
@@ -133,6 +123,10 @@ def test_pythonpath_manip(monkeypatch):
 
     and adds items from CYLC_PYTHONPATH
     """
+
+    # Local CYLC_PYTHONPATH can mess with this test.
+    monkeypatch.delenv('CYLC_PYTHONPATH', raising=False)
+
     monkeypatch.setenv('PYTHONPATH', '/remove1:/remove2')
     monkeypatch.setattr('sys.path', ['/leave-alone', '/remove1', '/remove2'])
     pythonpath_manip()

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from pytest import param
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.integer import IntegerPoint
@@ -22,10 +23,7 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.taskdef import generate_graph_parents
 
 
-param = pytest.param
-
-
-def test_generate_graph_parents_1(tmp_flow_config):
+def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
     """Test that parents are only generated from valid recurrences."""
     id_ = 'pan-galactic'
     flow_file = tmp_flow_config(
@@ -66,7 +64,7 @@ def test_generate_graph_parents_1(tmp_flow_config):
         ]
 
 
-def test_generate_graph_parents_2(tmp_flow_config):
+def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     """Test inferred parents are valid w.r.t to their own recurrences."""
     id_ = 'gargle-blaster'
     flow_file = tmp_flow_config(
@@ -128,11 +126,12 @@ def test_generate_graph_parents_2(tmp_flow_config):
             'bar',
             IntegerPoint("2"),
             [],
-            id='it.does-not-return-suicide-triggers',
+            id='it.does-not-return-suicide-prereqs',
         ),
     ],
 )
-def test_get_prereqs(tmp_flow_config, task, point, expected):
+def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
+
     """Test that get_prereqs() returns the correct prerequisites
     for a task."""
     id_ = 'gargle-blaster'
@@ -161,4 +160,97 @@ def test_get_prereqs(tmp_flow_config, task, point, expected):
         for pre in taskdef.get_prereqs(point)
         for condition in pre.keys()
     ])
+    assert res == expected
+
+
+def test_get_xtrigs(tmp_flow_config):
+    id = 'foo'
+    flow_file = tmp_flow_config(
+        id,
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                initial cycle point = 1
+                final cycle point = 16
+                cycling mode = integer
+                [[xtriggers]]
+                    xt_once = xrandom(1)
+                    xt_every = xrandom(1)
+                    xt_odd = xrandom(1)
+                    xt_final = xrandom(1)
+
+                [[graph]]
+                    R1 = @xt_once => foo
+                    P1 = @xt_every => foo
+                    P2 = @xt_odd => foo
+                    R1/$ = @xt_final => foo
+        """
+    )
+    cfg = WorkflowConfig(workflow=id, fpath=flow_file, options=None)
+    taskdef = cfg.taskdefs['foo']
+    assert taskdef.get_xtrigs(IntegerPoint('1')) == {
+        'xt_once', 'xt_odd', 'xt_every'
+    }
+    assert taskdef.get_xtrigs(IntegerPoint('2')) == {'xt_every'}
+    assert taskdef.get_xtrigs(IntegerPoint('3')) == {'xt_odd', 'xt_every'}
+    assert taskdef.get_xtrigs(IntegerPoint('16')) == {'xt_final', 'xt_every'}
+
+
+@pytest.mark.parametrize(
+    "task, point, expected",
+    [
+        param(
+            'foo',
+            IntegerPoint("1"),
+            ['foo[-P1]:succeeded'],
+            id='it.gets-triggers',
+        ),
+        param(
+            'multiple_pre',
+            IntegerPoint("2"),
+            ['food:succeeded', 'fool:succeeded',
+             'foolhardy:succeeded', 'foolish:succeeded'],
+            id='it.gets-multiple-triggers',
+        ),
+        param(
+            'foo',
+            IntegerPoint("3"),
+            [],
+            id='it.only-returns-triggers-for-valid-points',
+        ),
+        param(
+            'bar',
+            IntegerPoint("2"),
+            [],
+            id='it.does-not-return-suicide-triggers',
+        ),
+    ],
+)
+def test_get_triggers(tmp_flow_config, task, point, expected):  # noqa: F811
+    """Test that get_triggers() returns the correct triggers for a task.
+
+    """
+    id_ = 'gargle-blaster'
+    flow_file = tmp_flow_config(
+        id_,
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                final cycle point = 2
+                cycling mode = integer
+                [[graph]]
+                    P1 = '''
+                        foo[-P1] => foo
+                        bar:fail? => !bar
+                        food & fool => multiple_pre
+                        foolish | foolhardy => multiple_pre
+                    '''
+        """
+    )
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
+    taskdef = cfg.taskdefs[task]
+    point = IntegerPoint(point)
+    res = sorted([str(t) for t in taskdef.get_triggers(point)])
     assert res == expected

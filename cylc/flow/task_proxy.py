@@ -315,6 +315,11 @@ class TaskProxy:
                 )
             )
 
+    @property
+    def job_tokens(self) -> 'Tokens':
+        """Return the job tokens for this task proxy."""
+        return self.tokens.duplicate(job=str(self.submit_num))
+
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.identity} {self.state}>"
 
@@ -326,8 +331,6 @@ class TaskProxy:
         Format: "<point>/<name>/<job>{<flows>}:status".
         """
         id_ = self.identity
-        if self.transient:
-            return f"{id_}{repr_flow_nums(self.flow_nums)}"
         if not self.state(TASK_STATUS_WAITING, TASK_STATUS_EXPIRED):
             id_ += f"/{self.submit_num:02d}"
         return (
@@ -379,6 +382,12 @@ class TaskProxy:
                     # Else look thru task outputs to see if it's been satisfied
                     check_output(*k, self.flow_nums)
                 )
+
+        # Carry over any satisfied xtrigger prerequisites.
+        for xtrig in reload_successor.state.xtriggers:
+            reload_successor.state.xtriggers[xtrig] = (
+                self.state.xtriggers.get(xtrig, False)
+            )
 
         reload_successor.state.xtriggers.update({
             # Copy across any auto-defined "_cylc" xtriggers runtime (retries),
@@ -566,18 +575,47 @@ class TaskProxy:
         self,
         task_messages: 'Iterable[Tokens]',
         mode: Optional[RunMode] = RunMode.LIVE,
-        forced: bool = False,
-    ) -> 'Set[Tokens]':
-        """Try to satisfy my prerequisites with given output messages.
+    ) -> None:
+        """Try to satisfy my prerequisites with given task output messages.
 
-        The task output messages are of the form "cycle/task:message"
-        Log a warning for messages that I don't depend on.
-
-        Return a set of unmatched task messages.
+        Output format: "cycle/task:message"
 
         """
-        used = self.state.satisfy_me(task_messages, mode=mode, forced=forced)
-        return set(task_messages) - used
+        for prereq in (
+            *self.state.prerequisites, *self.state.suicide_prerequisites
+        ):
+            prereq.satisfy_me(task_messages, mode=mode)
+
+    def force_satisfy(
+        self, prereqs: 'Iterable[PrereqTuple]', set_all: bool = False
+    ) -> None:
+        """Force satisfy given task prerequisites.
+
+        Only called via "cylc set" command so no need to record run mode.
+
+        """
+        for prereq in self.state.prerequisites:
+            for pre, state in prereq.items():
+                # (PrereqTuple, False or "satisfied naturally" etc.)
+                if not set_all and pre not in prereqs:
+                    continue
+                if not state:
+                    prereq[pre] = "force satisfied"
+                    LOG.info(
+                        f"[{self}] prerequisite force-satisfied:"
+                        f" {pre.get_id(True)}"
+                    )
+                else:
+                    LOG.info(
+                        f"[{self}] prerequisite already satisfied:"
+                        f" {pre.get_id(True)}"
+                    )
+
+    def force_satisfy_external_triggers(self):
+        """Set all external triggers to satisfied - via 'cylc trigger'."""
+        for ext in self.state.external_triggers:
+            LOG.info(f'[{self}] external trigger force-satisfied: "{ext}"')
+            self.state.external_triggers[ext] = True
 
     def clock_expire(self) -> bool:
         """Return True if clock expire time is up, else False."""

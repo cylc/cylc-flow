@@ -32,7 +32,7 @@ DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 
 # It should have shut down with 2/foo waiting with the is_manual_submit flag on.
 TEST_NAME="${TEST_NAME_BASE}-db-task-states"
-QUERY='SELECT status, is_manual_submit FROM task_states WHERE cycle IS 2;'
+QUERY="SELECT status, is_manual_submit FROM task_states WHERE cycle IS 2 AND flow_nums is '[1]';"
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 waiting|1

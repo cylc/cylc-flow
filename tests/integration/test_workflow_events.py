@@ -15,13 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import sys
 from types import MethodType
 
-from async_timeout import timeout as async_timeout
 import pytest
 
 from cylc.flow.scheduler import SchedulerError
 from cylc.flow.workflow_events import WorkflowEventHandler
+
+
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as async_timeout
+else:
+    from async_timeout import timeout as async_timeout
 
 
 EVENTS = (
@@ -202,7 +208,7 @@ async def test_shutdown_handler_timeout_kill(
     # Configure a long-running shutdown handler.
     schd = test_scheduler({
         'shutdown handlers': 'sleep 10; echo',
-        'mail events': [],
+        'mail events': '',
     })
 
     # Set a low process pool timeout value.

@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit Tests for cylc.flow.parsec.validate.ParsecValidator.coerce methods."""
 
+import logging
 from typing import List
 
+from cylc.flow import CYLC_LOG
 import pytest
 from pytest import approx, param
 
@@ -59,7 +61,6 @@ def sample_spec():
     return myconf
 
 
-@pytest.fixture
 def validator_invalid_values():
     """
     Data provider or invalid values for parsec validator. All values must not
@@ -94,7 +95,7 @@ def validator_invalid_values():
         Conf('value', VDR.V_INTEGER_LIST, default=1, options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 5"
-    msg = '(type=option) value = [1, 2, 5]'
+    msg = '(type=option) value = 5'
     values.append((spec, cfg, msg))
 
     # set 3 (f, f, t, f)
@@ -237,21 +238,45 @@ def test_parsec_validator_invalid_key_with_many_spaces(sample_spec):
         assert str(cm.exception) == "section  3000000 - (consecutive spaces)"
 
 
+@pytest.mark.parametrize('spec, cfg, msg', validator_invalid_values())
 def test_parsec_validator_invalid_key_with_many_invalid_values(
-        validator_invalid_values
+    spec, cfg, msg
 ):
-    for spec, cfg, msg in validator_invalid_values:
-        parsec_validator = ParsecValidator()
-        if msg is not None:
-            with pytest.raises(IllegalValueError) as cm:
-                parsec_validator.validate(cfg, spec)
-            assert msg == str(cm.value)
-        else:
-            # cylc.flow.parsec_validator.validate(cfg, spec)
-            # let's use the alias `parsec_validate` here
-            parsec_validate(cfg, spec)
-            # TBD assertIsNotNone when 2.6+
-            assert parsec_validator is not None
+    parsec_validator = ParsecValidator()
+    if msg is not None:
+        with pytest.raises(IllegalValueError) as cm:
+            parsec_validator.validate(cfg, spec)
+        assert msg == str(cm.value)
+    else:
+        # cylc.flow.parsec_validator.validate(cfg, spec)
+        # let's use the alias `parsec_validate` here
+        parsec_validate(cfg, spec)
+        # TBD assertIsNotNone when 2.6+
+        assert parsec_validator is not None
+
+
+def test_parsec_validator_warn_options(caplog):
+    """Test the "warn_options" option.
+
+    This should turn invalid option errors into warnings.
+    """
+    with Conf('base') as spec:
+        Conf(
+            'foo',
+            VDR.V_STRING_LIST,
+            default=1,
+            options=['a', 'b'],
+            warn_options=True,
+        )
+
+    parsec_validator = ParsecValidator()
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    parsec_validator.validate({'foo': 'b, c'}, spec)
+
+    # there should be one (and only one) warning
+    assert caplog.messages == [
+        '(type=option) foo = c\nInvalid items have been removed'
+    ]
 
 
 def test_parsec_validator_invalid_key_with_many_1(sample_spec):

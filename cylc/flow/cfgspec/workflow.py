@@ -18,7 +18,12 @@
 import contextlib
 import re
 from textwrap import dedent
-from typing import Any, Dict, Optional, Set
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Set,
+)
 
 from metomi.isodatetime.data import Calendar
 
@@ -26,10 +31,10 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import (
     DIRECTIVES_DESCR,
     DIRECTIVES_ITEM_DESCR,
-    LOG_RETR_SETTINGS,
     EVENTS_DESCR,
     EVENTS_SETTINGS,
     EXECUTION_POLL_DESCR,
+    LOG_RETR_SETTINGS,
     MAIL_DESCR,
     MAIL_FOOTER_DESCR,
     MAIL_FROM_DESCR,
@@ -47,18 +52,31 @@ from cylc.flow.cfgspec.globalcfg import (
     UTC_MODE_DESCR,
 )
 import cylc.flow.flags
-from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.upgrade import upgrader, converter
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig,
+)
+from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.parsec.upgrade import (
+    converter,
+    upgrader,
+)
 from cylc.flow.parsec.validate import (
-    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    cylc_config_validate,
+)
 from cylc.flow.platforms import (
-    fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
-    is_platform_definition_subshell)
-from cylc.flow.run_modes import RunMode
+    fail_if_platform_and_host_conflict,
+    get_platform_deprecated_settings,
+    is_platform_definition_subshell,
+)
+from cylc.flow.run_modes import (
+    TASK_CONFIG_RUN_MODES,
+    RunMode,
+)
 from cylc.flow.task_events_mgr import EventData
-from cylc.flow.run_modes import TASK_CONFIG_RUN_MODES
 
 
 # Regex to check whether a string is a command
@@ -72,6 +90,29 @@ REPLACED_BY_PLATFORMS = '''
    Please set a suitable platform in
    :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
    :ref:`See the migration guide <MajorChangesPlatforms>`.
+'''
+
+CYCLE_POINT_CONSTRAINTS = '''
+Rules to allow only certain {0} datetime cycle points.
+
+.. admonition:: Use Case
+
+   Writing a workflow where users may change the {0}
+   cycle point, but where only some {0} cycle points are
+   reasonable.
+
+Set by defining a list of truncated time points, which
+the {0} cycle point must match.
+
+Examples:
+
+- ``T00, T06, T12, T18`` - only at 6 hourly intervals.
+- ``T-30`` - only at half-past an hour.
+- ``01T00`` - only at midnight on the first day of a month.
+
+.. seealso::
+
+   :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 '''
 
 
@@ -393,9 +434,16 @@ with Conf(
                     )
                 ))
 
-        with Conf('events',
-                  desc=global_default(EVENTS_DESCR, '[scheduler][events]')):
-            for item, desc in EVENTS_SETTINGS.items():
+        with Conf(
+            'events', desc=global_default(EVENTS_DESCR, '[scheduler][events]')
+        ):
+            for item, val in EVENTS_SETTINGS.items():
+                if isinstance(val, dict):
+                    val = val.copy()
+                    desc: str = val.pop('desc')
+                else:
+                    desc = val
+                    val = {}
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
                 default: Any = Conf.UNSET
@@ -426,7 +474,7 @@ with Conf(
                     vdr_type = VDR.V_BOOLEAN
                 elif item.endswith("timeout"):
                     vdr_type = VDR.V_INTERVAL
-                Conf(item, vdr_type, default, desc=desc)
+                Conf(item, vdr_type, default, desc=desc, **val)
 
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)
@@ -558,45 +606,16 @@ with Conf(
             - ``+P1D`` - The initial cycle point plus one day.
             - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
-        Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules to allow only some initial datetime cycle points.
-
-            .. admonition:: Use Case
-
-               Writing a workflow where users may change the initial
-               cycle point, but where only some initial cycle points are
-               reasonable.
-
-            Set by defining a list of truncated time points, which
-            the initial cycle point must match.
-
-            Examples:
-
-            - ``T00, T06, T12, T18`` - only at 6 hourly intervals.
-            -  ``T-30`` - only at half-past an hour.
-            - ``01T00`` - only at midnight on the first day of a month.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
+        Conf('initial cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('initial') + dedent('''
 
             .. note::
 
                This setting does not coerce :cylc:conf:`[..]
                initial cycle point = now`.
-        ''')
-        Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules restricting permitted final cycle points.
-
-            In a cycling workflow it is possible to restrict the final cycle
-            point by defining a list of truncated time points under the final
-            cycle point constraints.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
-
-        ''')
+        '''))
+        Conf('final cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('final'))
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
@@ -648,10 +667,10 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
             The runahead limit prevents a workflow from getting too far ahead
-            of the oldest cycle with :term:`active tasks <active task>`.
+            of the oldest :term:`active cycle`.
 
             A cycle is considered to be active if it contains any
-            :term:`active` tasks.
+            :term:`active tasks <active task>`.
 
             An integer interval value of ``Pn`` allows up to ``n+1`` cycles
             to be active at once.
@@ -668,11 +687,9 @@ with Conf(
             ``P0``
                 Only one cycle can be active at a time.
             ``P2``
-                The scheduler will run up to two cycles ahead of the oldest
-                active cycle.
+                Allow up to two cycles ahead of the oldest active cycle.
             ``P3D``
-                The scheduler will run cycles up to three days of cycles ahead
-                of the oldest active cycle.
+                Allow cycles up to three days ahead of the oldest active cycle.
 
             .. seealso::
 
@@ -687,60 +704,42 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Configuration of internal queues of tasks.
+            Internal task queues to limit job activity.
 
-            This section will allow you to limit the number of simultaneously
-            :term:`active tasks <active task>` (submitted or running) by
-            assigning tasks to queues.
+            Queues delay job submission in member tasks, until the active
+            job count (for members) drops below the queue limit.
 
-            By default, a single queue called ``default`` is defined,
-            with all tasks assigned to it and no limit to the number of those
-            tasks which may be active.
+            There is a ``default`` queue with a configurable limit of 100, for
+            all tasks that are not assigned to other queues.
 
-            To use a single queue for the whole workflow, but limit the number
-            of active tasks, set :cylc:conf:`[default]limit`.
-
-            To add additional queues define additional sections:
+            You can define custom queues to limit job activity across other
+            groups of tasks.
 
             .. code-block:: cylc
 
                [[queues]]
-                   [[[user_defined_queue]]]
+                   [[[my_queue]]]
                        limit = 2
-                       members = TASK_FAMILY_NAME
+                       members = task1, task2, FAMILY1
 
             .. seealso::
 
                :ref:`InternalQueues`.
         '''):
             with Conf('<queue name>', desc='''
-                Section heading for configuration of a single queue.
+                Section for configuring a single queue.
             ''') as Queue:
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    The maximum number of :term:`active tasks <active task>`
-                    allowed at any one time, for this queue.
-
-                    If set to 0 this queue is not limited.
+                    The active job limit for this queue. 0 means no limit.
                 ''')
                 Conf('members', VDR.V_SPACELESS_STRING_LIST, desc='''
-                    A list of member tasks, or task family names to assign to
-                    this queue.
-
-                    Assigned tasks will automatically be removed
-                    from the default queue.
+                    A list of task or family names to assign to this queue.
                 ''')
             with Conf('default', meta=Queue, desc='''
-                The default queue for all tasks not assigned to other queues.
+                The default queue, for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 100, desc='''
-                    Controls the total number of
-                    :term:`active tasks <active task>` in the default queue.
-
-                    .. seealso::
-
-                       - :cylc:conf:`flow.cylc[scheduling]
-                         [queues][<queue name>]limit`
-                       - :ref:`InternalQueues`
+                    The job limit for the ``default`` queue. 0 means no limit.
                 ''')
 
         with Conf('special tasks', desc='''
@@ -1647,12 +1646,6 @@ with Conf(
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
             )):
-                Conf('execution timeout', VDR.V_INTERVAL, desc=(
-                    global_default(
-                        TASK_EVENTS_SETTINGS['execution timeout'],
-                        "[task events]execution timeout"
-                    )
-                ))
                 Conf('handlers', VDR.V_STRING_LIST, None, desc=(
                     global_default(
                         TASK_EVENTS_SETTINGS['handlers'],
@@ -1675,6 +1668,12 @@ with Conf(
                     global_default(
                         TASK_EVENTS_SETTINGS['mail events'],
                         "[task events]mail events"
+                    )
+                ))
+                Conf('execution timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['execution timeout'],
+                        "[task events]execution timeout"
                     )
                 ))
                 Conf('submission timeout', VDR.V_INTERVAL, desc=(
@@ -2190,13 +2189,15 @@ def upg(cfg, descr):
             silent=cylc.flow.flags.cylc7_back_compat,
         )
 
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events',
-                         'abort if inactivity handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
+    for old in [
+        'abort on stalled',
+        'abort if startup handler fails',
+        'abort if shutdown handler fails',
+        'abort if timeout handler fails',
+        'abort if inactivity handler fails',
+        'abort if stalled handler fails',
+    ]:
+        u.obsolete('8.0.0', ['cylc', 'events', old])
 
     u.deprecate(
         '8.0.0',
@@ -2279,10 +2280,7 @@ def upgrade_param_env_templates(cfg, descr):
                 continue
             if not cylc.flow.flags.cylc7_back_compat:
                 if first_warn:
-                    LOG.warning(
-                        'deprecated items automatically upgraded in '
-                        f'"{descr}":'
-                    )
+                    LOG.warning(upgrader.DEPR_MSG)
                     first_warn = False
                 LOG.warning(
                     f' * (8.0.0) {dep % task_name} contents prepended to '

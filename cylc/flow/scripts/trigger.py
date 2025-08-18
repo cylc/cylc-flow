@@ -17,43 +17,62 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Manually trigger tasks, respecting dependencies among them.
 
-Triggering a task that is not yet queued will queue it.
+Triggering individual tasks:
+  * Triggering an unqueued task queues it, triggering a queued task runs it.
+    So you many need to trigger an unqueued task twice to run it immediately.
+  * Live tasks (preparing, submitted, or running) can't be triggered.
+  * Triggered tasks can run even if the workflow is paused.
 
-Triggering a queued task runs it immediately.
+Triggering a group of tasks at once (e.g. members of a sub-graph):
+  Cylc will automatically:
+  * Erase the run history of members, so they can re-run in the same flow.
+  * Identify group start tasks, and trigger them to start the flow.
+  * Identify off-group dependencies, and satisfy them to avoid a stall.
+  * Leave in-group dependencies to be satisfied by the triggered flow.
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+  If the workflow is paused, group start tasks will trigger immediately; the
+  flow will continue downstream of them when you resume the workflow.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+  Beware of triggering live (preparing, submitted, or running) tasks:
+  * Live in-group tasks will be killed and their run history erased, to allow
+    them to re-run in the triggered flow.
+  * Live group-start tasks are left to run; they don't need to be retriggered.
+    WARNING: if they already completed outputs that other group members depend
+    on, you must manually satisfy those prerequisites again for the triggered
+    flow (run history erasure wipes out the original satisfied prerequisites).
+
+Flow number assignment in triggered tasks:
+  Active tasks (n=0) already have flows assigned; inactive tasks (n>0) do not.
+  * If an interdependent group of triggered tasks includes active tasks, the
+    flow will be assigned the existing flow numbers of those active tasks.
+  * Otherwise the flow will be assigned all current active flow numbers.
 
 Examples:
-  # trigger task foo in cycle 1234 in test
-  $ cylc trigger test//1234/foo
+  # trigger task foo in cycle 1, in workflow "test"
+  $ cylc trigger test//1/foo
 
-  # trigger all failed tasks in test
-  $ cylc trigger 'test//*:failed'
+  # trigger all failed tasks in workflow "test"
+  $ cylc trigger 'test//*:failed'  # (quotes required)
 
-  # start a new flow by triggering 1234/foo in test
-  $ cylc trigger --flow=new test//1234/foo
+  # start a new flow from 1/foo
+  # (beware of off-flow prerequisites downstream of 1/foo)
+  $ cylc trigger --flow=new test//1/foo
 
-Flows:
-  Waiting tasks in the active window (n=0) already belong to a flow.
-  * by default, if triggered, they run in the same flow
-  * or with --flow=all, they are assigned all active flows
-  * or with --flow=INT or --flow=new, the original and new flows are merged
-  * (--flow=none is ignored for active tasks)
+  # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
+  $ cylc trigger test //1/a //1/b //1/c
 
-  Inactive tasks (n>0) do not already belong to a flow.
-  * by default they are assigned all active flows
-  * otherwise, they are assigned the --flow value
+ Flow numbers of triggered tasks are determined as follows:
+  Active tasks (n=0) already have existing flow numbers.
+   * default: merge active and existing flow numbers
+   * --flow=INT or "new": merge given and existing flow numbers
+   * --flow="none": ERROR (not valid for already-active tasks)
+  Inactive tasks (n>0) do not have flow numbers assigned:
+   * default: run with all active flow numbers
+   * --flow=INT or "new": run with the given flow numbers
+   * --flow="none": run as no-flow (activity will not flow on downstream)
 
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
-  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
@@ -67,7 +86,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
 
 
 if TYPE_CHECKING:
@@ -106,14 +125,14 @@ def get_option_parser() -> COP:
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
-    add_flow_opts(parser)
+    add_flow_opts_for_trigger_and_set(parser)
 
     parser.add_option(
         "--on-resume",
         help=(
             "If the workflow is paused, wait until it is resumed before "
             "running the triggered task(s). DEPRECATED - this will be "
-            "removed at Cylc 8.5."
+            "removed at Cylc 8.6."
         ),
         action="store_true",
         default=False,

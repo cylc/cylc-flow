@@ -19,10 +19,8 @@
 from typing import (
     TYPE_CHECKING,
     Dict,
-    Iterable,
     List,
     Optional,
-    Set,
 )
 
 from cylc.flow.prerequisite import Prerequisite
@@ -40,9 +38,7 @@ from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
-    from cylc.flow.id import Tokens
     from cylc.flow.prerequisite import PrereqTuple
-    from cylc.flow.run_modes import RunMode
     from cylc.flow.taskdef import TaskDef
 
 
@@ -321,23 +317,6 @@ class TaskState:
             )
         )
 
-    def satisfy_me(
-        self,
-        outputs: Iterable['Tokens'],
-        mode: 'Optional[RunMode]',
-        forced: bool = False,
-    ) -> Set['Tokens']:
-        """Try to satisfy my prerequisites with given outputs.
-
-        Return which outputs I actually depend on.
-        """
-        valid: Set[Tokens] = set()
-        for prereq in (*self.prerequisites, *self.suicide_prerequisites):
-            valid.update(
-                prereq.satisfy_me(outputs, mode=mode, forced=forced)
-            )
-        return valid
-
     def xtriggers_all_satisfied(self):
         """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
@@ -377,8 +356,8 @@ class TaskState:
             for preq in preqs:
                 preq.is_satisfied()
 
-    def set_prerequisites_all_satisfied(self):
-        """Set prerequisites to all satisfied."""
+    def set_all_task_prerequisites_satisfied(self):
+        """Set all task prerequisites satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
 

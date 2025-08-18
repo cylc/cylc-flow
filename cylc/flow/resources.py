@@ -16,9 +16,11 @@
 
 """Extract named resources from the cylc.flow package."""
 
+from ansimarkup import parse
 from contextlib import suppress
 from pathlib import Path
 from random import choice
+import re
 import shutil
 import sys
 from typing import Optional
@@ -39,10 +41,10 @@ EXAMPLE_DIR = RESOURCE_DIR / 'examples'
 RESOURCE_NAMES = {
     'syntax/cylc-mode.el': 'Emacs syntax highlighting.',
     'syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
-    'syntax/cylc.vim': 'Vim syntax highlighting.',
     'syntax/cylc.xml': 'Kate syntax highlighting.',
     'cylc-completion.bash': 'Bash auto-completion for Cylc commands.',
     'cylc': 'Cylc wrapper script.',
+    '!syntax/cylc.vim': 'Obsolete- use https://github.com/cylc/cylc.vim',
 }
 API_KEY = 'api-key'
 
@@ -63,7 +65,15 @@ def list_resources(write=print, headers=True):
         write('Resources:')
     max_len = max(len(res) for res in RESOURCE_NAMES)
     for resource, desc in RESOURCE_NAMES.items():
-        write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
+        if resource[0] == '!':
+            # Use ! to indicated that resource is deprecated:
+            resource = resource[1:]
+            write(parse(
+                f'<yellow>  {resource}  {" " * (max_len - len(resource))}'
+                f'  # {desc}</yellow>'
+            ))
+        else:
+            write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
     if headers:
         write('\nTutorials:')
     for tutorial in tutorials:
@@ -111,16 +121,20 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     is_source_workflow = path_is_source_workflow(src)
 
     # get the target path
+    name = resource_path.name
     if not tgt_dir:
         if is_source_workflow:
             # this is a tutorial => use the primary source dir
             _tgt_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
+            # remove any numerical prefix (used in the examples to ensure they
+            # appear in order in the docs) as these are not valid workflow IDs
+            name = re.sub(r'^[\d]+-', '', name)
         else:
             # this is a regular resource => use $PWD
             _tgt_dir = Path.cwd()
     else:
         _tgt_dir = Path(tgt_dir).resolve()
-    tgt = _tgt_dir / resource_path.name
+    tgt = _tgt_dir / name
 
     tgt = tgt.expanduser()
     tgt = tgt.resolve()

@@ -33,7 +33,7 @@ Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
 The cycle point nodes/edges (i.e. task/family proxies) generation is triggered
-individually on transition to active task pool. Each active task is generated
+individually on transition to n=0. Each active task is generated
 along with any children and parents via a graph walk out to a specified maximum
 graph distance (n_edge_distance), that can be externally altered (via API).
 Collectively this forms the N-Distance-Window on the workflow graph.
@@ -42,7 +42,7 @@ Pruning of data-store elements is done using the collection/set of nodes
 generated at the boundary of an active node's graph walk and registering active
 node's parents against them. Once active, these boundary nodes act as the prune
 triggers for the associated parent nodes. Set operations are used to do a diff
-between the nodes of active paths (paths whose node is in the active task pool)
+between the nodes of active paths (paths whose node is in n=0)
 and the nodes of flagged paths (whose boundary node(s) have become active).
 
 Updates are created by the event/task/job managers.
@@ -67,15 +67,32 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
+    Union,
 )
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
-    PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
-    PbTaskProxy, PbWorkflow, PbRuntime, AllDeltas, EDeltas, FDeltas,
-    FPDeltas, JDeltas, TDeltas, TPDeltas, WDeltas)
+    AllDeltas,
+    EDeltas,
+    FDeltas,
+    FPDeltas,
+    JDeltas,
+    PbEdge,
+    PbEntireWorkflow,
+    PbFamily,
+    PbFamilyProxy,
+    PbJob,
+    PbLogRecord,
+    PbRuntime,
+    PbTask,
+    PbTaskProxy,
+    PbWorkflow,
+    TDeltas,
+    TPDeltas,
+    WDeltas,
+)
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
@@ -189,6 +206,13 @@ CLEAR_FIELD_MAP = {
     TASKS: set(),
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
+}
+
+# Protobuf "repeated" fields (aka lists) that should retain only the most
+# recent N items
+DEQUE_FIELD_MAP = {
+    # NodeType: {field_name: max_length}
+    WORKFLOW: {'log_records': 10}
 }
 
 
@@ -312,6 +336,7 @@ def apply_delta(key, delta, data):
             data[key].update({e.id: e for e in delta.added})
         elif delta.added.ListFields():
             data[key].CopyFrom(delta.added)
+
     # Merge in updated fields
     if getattr(delta, 'updated', False):
         if key == WORKFLOW:
@@ -320,16 +345,24 @@ def apply_delta(key, delta, data):
             for field in CLEAR_FIELD_MAP[key]:
                 if field in field_set or delta.updated.states_updated:
                     data[key].ClearField(field)
+
+            # Apply the updated delta
             data[key].MergeFrom(delta.updated)
+
+            # Deque (i.e. length restrict) selected fields
+            for field_name, max_len in DEQUE_FIELD_MAP.get(key, {}).items():
+                if field_name in field_set:
+                    lst = getattr(data[key], field_name)
+                    while len(lst) > max_len:
+                        lst.pop(0)
         else:
             for element in delta.updated:
                 try:
                     data_element = data[key][element.id]
                     # Clear fields that require overwrite with delta
-                    if CLEAR_FIELD_MAP[key]:
-                        for field, _ in element.ListFields():
-                            if field.name in CLEAR_FIELD_MAP[key]:
-                                data_element.ClearField(field.name)
+                    for field, _ in element.ListFields():
+                        if field.name in CLEAR_FIELD_MAP[key]:
+                            data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
                     # Clear memory accumulation
                     if key in (TASKS, FAMILIES):
@@ -345,9 +378,11 @@ def apply_delta(key, delta, data):
                         'on update application: %s' % str(exc)
                     )
                     continue
+
     # Clear memory accumulation
     if key == WORKFLOW:
         data[key] = reset_protobuf_object(PbWorkflow, data[key])
+
     # Prune data elements
     if hasattr(delta, 'pruned'):
         # UIS flag to prune workflow, set externally.
@@ -737,7 +772,6 @@ class DataStoreMgr:
         self,
         source_tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_manual_submit: bool = False,
         itask: Optional['TaskProxy'] = None
     ) -> None:
@@ -756,7 +790,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_manual_submit
             itask:
                 Active/Other task proxy, passed in with pool invocation.
@@ -811,7 +844,6 @@ class DataStoreMgr:
         self.generate_ghost_task(
             source_tokens,
             point,
-            flow_nums,
             is_parent=False,
             itask=itask,
             replace_existing=True,
@@ -975,7 +1007,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     child_tokens,
                                     child_point,
-                                    flow_nums,
                                     False,
                                     None,
                                     n_depth
@@ -1001,7 +1032,6 @@ class DataStoreMgr:
                                 self.generate_ghost_task(
                                     parent_tokens,
                                     parent_point,
-                                    flow_nums,
                                     True,
                                     None,
                                     n_depth
@@ -1183,7 +1213,6 @@ class DataStoreMgr:
         self,
         tokens: Tokens,
         point: 'PointBase',
-        flow_nums: 'FlowNums',
         is_parent: bool = False,
         itask: Optional['TaskProxy'] = None,
         n_depth: int = 0,
@@ -1194,7 +1223,6 @@ class DataStoreMgr:
         Args:
             source_tokens
             point
-            flow_nums
             is_parent: Used to determine whether to load DB state.
             itask: Update task-node from corresponding task proxy object.
             n_depth: n-window graph edge distance.
@@ -1219,7 +1247,7 @@ class DataStoreMgr:
                 self.id_,
                 self.schd.config.get_taskdef(name),
                 point,
-                flow_nums,
+                flow_nums=None,
                 submit_num=0,
                 data_mode=True,
                 sequential_xtrigger_labels=(
@@ -1256,7 +1284,8 @@ class DataStoreMgr:
             depth=task_def.depth,
             graph_depth=n_depth,
             name=name,
-            flow_nums=serialise_set(flow_nums),
+            # Set default before history DB batch application
+            flow_nums=serialise_set(set()),
         )
         self.all_n_window_nodes.add(tp_id)
         self.n_window_depths.setdefault(n_depth, set()).add(tp_id)
@@ -1549,11 +1578,13 @@ class DataStoreMgr:
         for label, satisfied in itask.state.xtriggers.items():
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
+            xtrig = tproxy.xtriggers[f'{label}={sig}']
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
             self.xtrigger_tasks.setdefault(sig, set()).add((tproxy.id, label))
+
+        self._set_task_xtrigger_modifiers(tproxy)
 
         if tproxy.state in self.latest_state_tasks:
             tp_ref = itask.identity
@@ -1579,13 +1610,20 @@ class DataStoreMgr:
             poverride(rtconfig, overrides, prepend=True)
         return rtconfig
 
-    def insert_job(self, name, cycle_point, status, job_conf):
+    def insert_job(
+        self,
+        name: str,
+        cycle_point: Union['PointBase', str],
+        status: str,
+        job_conf: dict,
+    ):
         """Insert job into data-store.
 
         Args:
-            name (str): Corresponding task name.
-            cycle_point (str|PointBase): Cycle point string
-            job_conf (dic):
+            name: Corresponding task name.
+            cycle_point: Cycle point string
+            status: The task's state.
+            job_conf:
                 Dictionary of job configuration used to generate
                 the job script.
                 (see TaskJobManager._prep_submit_task_job_impl)
@@ -1595,6 +1633,11 @@ class DataStoreMgr:
             None
 
         """
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            # https://github.com/cylc/cylc-flow/issues/4994
+            return
+
         sub_num = job_conf['submit_num']
         tp_tokens = self.id_.duplicate(
             cycle=str(cycle_point),
@@ -1609,9 +1652,6 @@ class DataStoreMgr:
         j_id, job = self.store_node_fetcher(j_tokens)
         if job:
             # Job already exists (i.e. post-submission submit failure)
-            return
-
-        if status not in JOB_STATUS_SET:
             return
 
         j_buf = PbJob(
@@ -1814,7 +1854,6 @@ class DataStoreMgr:
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),
-                deserialise_set(tproxy.flow_nums)
             )
         # Flag difference between old and new window for pruning.
         self.prune_flagged_nodes.update(
@@ -1917,12 +1956,12 @@ class DataStoreMgr:
                 del self.n_window_node_walks[tp_id]
             if tp_id in self.n_window_completed_walks:
                 self.n_window_completed_walks.remove(tp_id)
-            for sig in node.xtriggers:
-                self.xtrigger_tasks[sig].remove(
-                    (tp_id, node.xtriggers[sig].label)
-                )
-                if not self.xtrigger_tasks[sig]:
-                    del self.xtrigger_tasks[sig]
+            for xid in node.xtriggers:
+                with suppress(KeyError):
+                    label, sig = xid.split('=', 1)
+                    self.xtrigger_tasks[sig].remove((tp_id, label))
+                    if not self.xtrigger_tasks[sig]:
+                        del self.xtrigger_tasks[sig]
 
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)
@@ -2042,6 +2081,15 @@ class DataStoreMgr:
         if self.updated_state_families:
             self.state_update_follow_on = True
 
+    @staticmethod
+    def from_delta_or_node(tp_delta, tp_node, label):
+        """Get an item from task proxy delta if available, falling back to
+        node otherwise."""
+        this = tp_delta
+        if this is None or not this.HasField(label):
+            this = tp_node
+        return getattr(this, label) or None
+
     def _family_ascent_point_update(self, fp_id):
         """Updates the given family and children recursively.
 
@@ -2080,6 +2128,9 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            is_retry = False
+            is_wallclock = False
+            is_xtriggered = False
             graph_depth = self.n_edge_distance
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
@@ -2099,30 +2150,27 @@ class DataStoreMgr:
                 tp_delta = tp_updated.get(tp_id)
                 tp_node = tp_added.get(tp_id, tp_data.get(tp_id))
 
-                tp_state = tp_delta
-                if tp_state is None or not tp_state.HasField('state'):
-                    tp_state = tp_node
-                if tp_state.state:
-                    task_states.append(tp_state.state)
+                tp_state = self.from_delta_or_node(tp_delta, tp_node, 'state')
+                if tp_state:
+                    task_states.append(tp_state)
 
-                tp_held = tp_delta
-                if tp_held is None or not tp_held.HasField('is_held'):
-                    tp_held = tp_node
-                if tp_held.is_held:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_held'):
                     is_held_total += 1
 
-                tp_queued = tp_delta
-                if tp_queued is None or not tp_queued.HasField('is_queued'):
-                    tp_queued = tp_node
-                if tp_queued.is_queued:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
                     is_queued_total += 1
 
-                tp_runahead = tp_delta
-                if (tp_runahead is None
-                        or not tp_runahead.HasField('is_runahead')):
-                    tp_runahead = tp_node
-                if tp_runahead.is_runahead:
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_runahead'):
                     is_runahead_total += 1
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_retry'):
+                    is_retry = True
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_wallclock'):
+                    is_wallclock = True
+
+                if self.from_delta_or_node(tp_delta, tp_node, 'is_xtriggered'):
+                    is_xtriggered = True
 
                 tp_depth = tp_delta
                 if tp_depth is None or not tp_depth.HasField('graph_depth'):
@@ -2142,7 +2190,10 @@ class DataStoreMgr:
                 is_queued_total=is_queued_total,
                 is_runahead=(is_runahead_total > 0),
                 is_runahead_total=is_runahead_total,
-                graph_depth=graph_depth
+                is_retry=is_retry,
+                is_wallclock=is_wallclock,
+                is_xtriggered=is_xtriggered,
+                graph_depth=graph_depth,
             )
             fp_delta.states[:] = state_counter.keys()
             # Use all states to clean up pruned counts
@@ -2308,6 +2359,31 @@ class DataStoreMgr:
                 node_delta = self.updated[node_type].setdefault(
                     node_id, MESSAGE_MAP[node_type](id=node_id))
                 node_delta.runtime.CopyFrom(new_runtime)
+
+    def delta_log_record(self, level: str, message: str) -> None:
+        """Append a log record to the data store.
+
+        Args:
+            level:
+                The log level name e.g. INFO or WARNING.
+            message:
+                The formatted log message. Note, we are deliberately NOT
+                formatting the timestamp, level, etc into this message, these
+                should be added as discrete fields if they desired in the
+                future.
+
+        """
+        w_delta = self.updated[WORKFLOW]
+        w_delta.id = self.workflow_id
+        w_delta.last_updated = time()
+        w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+        if not hasattr(w_delta, 'log_records'):
+            w_delta.log_records = []
+
+        w_delta.log_records.append(PbLogRecord(level=level, message=message))
+
+        self.updates_pending = True
 
     # -----------
     # Task Deltas
@@ -2522,11 +2598,7 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def delta_task_ext_trigger(
-        self,
-        itask: TaskProxy,
-        trig: str,
-        message: str,
-        satisfied: bool,
+        self, itask: TaskProxy, trig: str, message: str, satisfied: bool,
     ) -> None:
         """Create delta for change in task proxy external_trigger.
 
@@ -2554,29 +2626,107 @@ class DataStoreMgr:
         ext_trigger.time = update_time
         self.updates_pending = True
 
-    def delta_task_xtrigger(self, sig, satisfied):
-        """Create delta for change in task proxy xtrigger.
+    @staticmethod
+    def _set_task_xtrigger_modifiers(node_or_delta):
+        # update the xtrigger task modifiers
+        node_or_delta.is_retry = False
+        node_or_delta.is_wallclock = False
+        node_or_delta.is_xtriggered = False
+        for xtrigger in node_or_delta.xtriggers.values():
+            if xtrigger.satisfied:
+                continue
+            if (
+                xtrigger.label.startswith('_cylc_retry')
+                or xtrigger.label.startswith('_cylc_submit_retry')
+            ):
+                node_or_delta.is_retry = True
+            elif xtrigger.id.startswith('wall_clock'):
+                node_or_delta.is_wallclock = True
+            else:
+                node_or_delta.is_xtriggered = True
+
+    def _delta_xtrigger(
+        self,
+        tp_id: str,
+        label: str,
+        sig: str,
+        satisfied: bool,
+        update_time: float,
+    ) -> None:
+        """Helper for the two xtrigger delta methods."""
+        # fetch the task from the store
+        tp_id, tproxy = self.store_node_fetcher(Tokens(tp_id))
+        if not tproxy:
+            return
+
+        # create or fetch the updated delta
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id)
+        )
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+        xid = f'{label}={sig}'
+
+        # populate all xtriggers on the delta if not already present
+        if not tp_delta.xtriggers:
+            # NOTE: if one xtrigger changes, we must include all in the
+            # delta, see https://github.com/cylc/cylc-flow/issues/6307
+            for _xid, xtrigger in tproxy.xtriggers.items():
+                if _xid == xid:
+                    # don't copy the xtrigger we are changing
+                    continue
+                _xtrigger = tp_delta.xtriggers[_xid]
+                _xtrigger.id = xtrigger.id
+                _xtrigger.label = xtrigger.label
+                _xtrigger.satisfied = xtrigger.satisfied
+                _xtrigger.time = xtrigger.time
+
+        # modify the xtrigger that has changed
+        xtrigger = tp_delta.xtriggers[xid]
+        xtrigger.id = sig
+        xtrigger.label = label
+        xtrigger.satisfied = satisfied
+        xtrigger.time = update_time
+
+        # update the xtrigger task modifiers
+        self._set_task_xtrigger_modifiers(tp_delta)
+
+        # ensure family modifier counts are updated
+        self.state_update_families.add(tproxy.first_parent)
+
+        self.updates_pending = True
+
+    def delta_xtrigger(self, sig: str, succeeded: bool) -> None:
+        """Create delta for xtrigger completion.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
-            sig (str): Context of function call (name, args).
-            satisfied (bool): Trigger message.
+            sig: xtrigger function call signature.
+            succeeded: xtrigger completed successfully or not.
 
         """
         update_time = time()
+        # update all dependent task instances
         for tp_id, label in self.xtrigger_tasks.get(sig, set()):
-            # update task instance
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            xtrigger = tp_delta.xtriggers[sig]
-            xtrigger.id = sig
-            xtrigger.label = label
-            xtrigger.satisfied = satisfied
-            xtrigger.time = update_time
-            self.updates_pending = True
+            self._delta_xtrigger(tp_id, label, sig, succeeded, update_time)
+
+    def delta_task_xtrigger(
+        self, itask: 'TaskProxy', label: str, sig: str, satisfied: bool
+    ) -> None:
+        """Create delta for a change in xtrigger prerequisite satisfaction.
+
+        (Xtrigger satisfaction is normally handled by the xtrigger_mgr for all
+        dependent tasks, but "cylc set" can satisfy individual prerequisites).
+
+        Args:
+            itask: scheduler trask proxy that has changed status.
+            sig: xtrigger function call signature.
+            satisfied: satisfied or not.
+
+        """
+        tp_id = self.id_.duplicate(
+            cycle=str(itask.point),
+            task=itask.tdef.name,
+        ).id
+        self._delta_xtrigger(tp_id, label, sig, satisfied, time())
 
     def delta_from_task_proxy(self, itask: TaskProxy) -> None:
         """Create delta from existing pool task proxy.
@@ -2621,12 +2771,12 @@ class DataStoreMgr:
 
     def delta_job_attr(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         attr_key: str,
         attr_val: Any,
     ) -> None:
         """Set job attribute."""
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
@@ -2639,12 +2789,19 @@ class DataStoreMgr:
 
     def delta_job_state(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         status: str,
     ) -> None:
         """Set job state."""
-        j_id, job = self.store_node_fetcher(tokens)
-        if not job or status not in JOB_STATUS_SET:
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            return
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
+        if not job or (
+            # Don't cause backwards state change:
+            JOB_STATUSES_ALL.index(status) <= JOB_STATUSES_ALL.index(job.state)
+            and not itask.job_vacated
+        ):
             return
         j_delta = PbJob(
             stamp=f'{j_id}@{time()}',
@@ -2658,7 +2815,7 @@ class DataStoreMgr:
 
     def delta_job_time(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         event_key: str,
         time_str: Optional[str] = None,
     ) -> None:
@@ -2666,7 +2823,7 @@ class DataStoreMgr:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')

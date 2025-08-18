@@ -18,7 +18,6 @@
 import asyncio
 from collections import deque
 from contextlib import suppress
-import itertools
 import logging
 import os
 from pathlib import Path
@@ -81,9 +80,9 @@ from cylc.flow.flow_mgr import (
     FLOW_NEW,
     FLOW_NONE,
     FlowMgr,
-    repr_flow_nums,
     stringify_flow_nums,
 )
+
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -153,10 +152,7 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
 )
-from cylc.flow.taskdef import (
-    TaskDef,
-    generate_graph_children,
-)
+from cylc.flow.taskdef import TaskDef
 from cylc.flow.templatevars import (
     eval_var,
     get_template_vars,
@@ -185,7 +181,6 @@ if TYPE_CHECKING:
     # TO: Python 3.8
     from typing_extensions import Literal
 
-    from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
 
@@ -679,7 +674,7 @@ class Scheduler:
                     # submit them to run now.
                     # NOTE: this will run tasks that were triggered with
                     # the trigger "--on-resume" option, even if the workflow
-                    # is restarted as paused. Option to be removed at 8.5.0.
+                    # is restarted as paused. Option to be removed at 8.6.0.
                     pre_prep_tasks = []
                     for itask in self.pool.get_tasks():
                         if (
@@ -994,7 +989,7 @@ class Scheduler:
             if should_poll:
                 to_poll_tasks.append(itask)
         if to_poll_tasks:
-            self.task_job_mgr.poll_task_jobs(self.workflow, to_poll_tasks)
+            self.task_job_mgr.poll_task_jobs(to_poll_tasks)
 
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
@@ -1047,15 +1042,6 @@ class Scheduler:
 
             self.command_queue.task_done()
 
-    def info_get_graph_raw(self, cto, ctn, grouping=None):
-        """Return raw graph."""
-        return (
-            self.config.get_graph_raw(cto, ctn, grouping),
-            self.config.workflow_polling_tasks,
-            self.config.leaves,
-            self.config.feet
-        )
-
     def _set_stop(self, stop_mode: Optional[StopMode] = None) -> None:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
@@ -1098,141 +1084,9 @@ class Scheduler:
                 f"{', '.join(sorted(t.identity for t in unkillable))}"
             )
         if not jobless:
-            self.task_job_mgr.kill_task_jobs(self.workflow, to_kill)
+            self.task_job_mgr.kill_task_jobs(to_kill)
 
         return len(unkillable)
-
-    def remove_tasks(
-        self, items: Iterable[str], flow_nums: Optional['FlowNums'] = None
-    ) -> None:
-        """Remove tasks (`cylc remove` command).
-
-        Args:
-            items: Relative IDs or globs.
-            flow_nums: Flows to remove the tasks from. If empty or None, it
-                means 'all'.
-        """
-        active, inactive, _unmatched = self.pool.filter_task_proxies(
-            items, warn_no_active=False, inactive=True
-        )
-        if not (active or inactive):
-            return
-
-        if flow_nums is None:
-            flow_nums = set()
-        # Mapping of *relative* task IDs to removed flow numbers:
-        removed: Dict[Tokens, FlowNums] = {}
-        not_removed: Set[Tokens] = set()
-        # All the matched tasks (will add applicable active tasks below):
-        matched_tasks = inactive.copy()
-        to_kill: List[TaskProxy] = []
-
-        for itask in active:
-            fnums_to_remove = itask.match_flows(flow_nums)
-            if not fnums_to_remove:
-                not_removed.add(itask.tokens.task)
-                continue
-            removed[itask.tokens.task] = fnums_to_remove
-            matched_tasks.add((itask.tdef, itask.point))
-            if fnums_to_remove == itask.flow_nums:
-                # Need to remove the task from the pool.
-                # Spawn next occurrence of xtrigger sequential task (otherwise
-                # this would not happen after removing this occurrence):
-                self.pool.check_spawn_psx_task(itask)
-                self.pool.remove(itask, 'request')
-                to_kill.append(itask)
-                itask.removed = True
-            itask.flow_nums.difference_update(fnums_to_remove)
-
-        for tdef, point in matched_tasks:
-            tokens = Tokens(cycle=str(point), task=tdef.name)
-
-            # Go through any tasks downstream of this matched task to see if
-            # any need to stand down as a result of this task being removed:
-            for child in set(itertools.chain.from_iterable(
-                generate_graph_children(tdef, point).values()
-            )):
-                child_itask = self.pool.get_task(child.point, child.name)
-                if not child_itask:
-                    continue
-                fnums_to_remove = child_itask.match_flows(flow_nums)
-                if not fnums_to_remove:
-                    continue
-                prereqs_changed = False
-                for prereq in (
-                    *child_itask.state.prerequisites,
-                    *child_itask.state.suicide_prerequisites,
-                ):
-                    # Unset any prereqs naturally satisfied by these tasks
-                    # (do not unset those satisfied by `cylc set --pre`):
-                    if prereq.unset_naturally_satisfied(tokens.relative_id):
-                        prereqs_changed = True
-                        removed.setdefault(tokens, set()).update(
-                            fnums_to_remove
-                        )
-                if not prereqs_changed:
-                    continue
-                self.data_store_mgr.delta_task_prerequisite(child_itask)
-                # Check if downstream task is still ready to run:
-                if (
-                    child_itask.state.is_gte(TASK_STATUS_PREPARING)
-                    # Still ready if the task exists in other flows:
-                    or child_itask.flow_nums != fnums_to_remove
-                    or child_itask.state.prerequisites_all_satisfied()
-                ):
-                    continue
-                # No longer ready to run
-                self.pool.unqueue_task(child_itask)
-                # Check if downstream task should remain spawned:
-                if (
-                    # Ignoring tasks we are already dealing with:
-                    (child_itask.tdef, child_itask.point) in matched_tasks
-                    or child_itask.state.any_satisfied_prerequisite_outputs()
-                ):
-                    continue
-                # No longer has reason to be in pool:
-                self.pool.remove(child_itask, self.pool.REMOVED_BY_PREREQ)
-                # Remove this downstream task from flows in DB tables to ensure
-                # it is not skipped if it respawns in future:
-                self.workflow_db_mgr.remove_task_from_flows(
-                    str(child.point), child.name, fnums_to_remove
-                )
-
-            # Remove the matched tasks from the flows in the DB tables:
-            db_removed_fnums = self.workflow_db_mgr.remove_task_from_flows(
-                str(point), tdef.name, flow_nums,
-            )
-            if db_removed_fnums:
-                removed.setdefault(tokens, set()).update(db_removed_fnums)
-
-            if tokens not in removed:
-                not_removed.add(tokens)
-
-        if to_kill:
-            self.kill_tasks(to_kill, warn=False)
-
-        if removed:
-            tasks_str_list = []
-            for task, fnums in removed.items():
-                self.data_store_mgr.delta_remove_task_flow_nums(
-                    task.relative_id, fnums
-                )
-                tasks_str_list.append(
-                    f"{task.relative_id} {repr_flow_nums(fnums, full=True)}"
-                )
-            LOG.info(f"Removed task(s): {', '.join(sorted(tasks_str_list))}")
-
-        if not_removed:
-            fnums_str = (
-                repr_flow_nums(flow_nums, full=True) if flow_nums else ''
-            )
-            tasks_str = ', '.join(
-                sorted(tokens.relative_id for tokens in not_removed)
-            )
-            LOG.warning(f"Task(s) not removable: {tasks_str} {fnums_str}")
-
-        if removed and self.pool.compute_runahead():
-            self.pool.release_runahead_tasks()
 
     def get_restart_num(self) -> int:
         """Return the number of the restart, else 0 if not a restart.
@@ -1544,11 +1398,14 @@ class Scheduler:
 
         for itask in submitted:
             flow = stringify_flow_nums(itask.flow_nums) or FLOW_NONE
-            LOG.log(
-                log_lvl,
-                f"{itask.identity} -triggered off "
-                f"{itask.state.get_resolved_dependencies()} in flow {flow}"
-            )
+            if itask.is_manual_submit:
+                off = f"[] in flow {flow}"
+            else:
+                off = (
+                    f"{itask.state.get_resolved_dependencies()}"
+                    f" in flow {flow}"
+                )
+            LOG.log(log_lvl, f"{itask.identity} -triggered off {off}")
 
         # one or more tasks were passed through the submission pipeline
         return True
@@ -1598,7 +1455,7 @@ class Scheduler:
         self.check_workflow_timers()
         # check submission and execution timeout and polling timers
         if self.get_run_mode() != RunMode.SIMULATION:
-            self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
+            self.task_job_mgr.check_task_jobs(self.pool)
 
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
@@ -2188,7 +2045,7 @@ class Scheduler:
             return
         if not self.is_paused:
             if not quiet:
-                LOG.warning("No need to resume - workflow is not paused")
+                LOG.info("No need to resume - workflow is not paused")
             return
         if not quiet:
             LOG.info("RESUMING the workflow now")

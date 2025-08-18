@@ -1,9 +1,11 @@
+.. _examples.extending-workflow:
+
 Extending Workflow
 ------------------
 
 .. cylc-scope:: flow.cylc[scheduling]
 
-Sometimes we may run a workflow to :term:`completion <workflow completion>`,
+Sometimes we may run a workflow to :ref:`completion <workflow completion>`,
 but subsequently wish to run it for a few more cycles.
 
 With Cylc 7 this was often done by changing the `final cycle point` and

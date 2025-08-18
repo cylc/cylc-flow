@@ -15,39 +15,56 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc site and user configuration file spec."""
 
+from contextlib import suppress
 import os
 from pathlib import Path
 from sys import stderr
-from textwrap import dedent, indent
-from typing import List, Optional, Tuple, Any, Union
+from textwrap import (
+    dedent,
+    indent,
+)
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
-from contextlib import suppress
 from packaging.version import Version
 
-from cylc.flow import LOG
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.platforms import validate_platforms
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
 )
 from cylc.flow.parsec.exceptions import (
-    ParsecError,
     ItemNotFoundError,
+    ParsecError,
     ValidationError,
 )
 from cylc.flow.parsec.upgrade import upgrader
-from cylc.flow.parsec.util import printcfg, expand_many_section
+from cylc.flow.parsec.util import (
+    expand_many_section,
+    printcfg,
+)
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
     Range,
     cylc_config_validate,
 )
+from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
+from cylc.flow.platforms import validate_platforms
+from cylc.flow.task_events_mgr import TaskEventsManager as TEM
+from cylc.flow.workflow_events import WorkflowEventHandler
 
 
 PLATFORM_REGEX_TEXT = '''
@@ -150,14 +167,16 @@ EVENTS_DESCR = '''
 Configure the workflow event handling system.
 '''
 
-EVENTS_SETTINGS = {  # workflow events
+EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
     'handlers': '''
         Configure :term:`event handlers` that run when certain workflow
         events occur.
 
-        This section configures *workflow* event handlers; see
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for *task* event
-        handlers.
+        .. admonition:: Not to be confused with
+           :class: tip
+
+           For *task* events, see
+           :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
 
         Event handlers can be held in the workflow ``bin/`` directory,
         otherwise it is up to you to ensure their location is in ``$PATH``
@@ -171,17 +190,32 @@ EVENTS_SETTINGS = {  # workflow events
 
            :ref:`user_guide.scheduler.workflow_events`
     ''',
-    'handler events': '''
-        Specify the events for which workflow event handlers should be invoked.
+    'handler events': {
+        'desc': '''
+            Specify the events for which workflow event handlers should be
+            invoked.
 
-        .. seealso::
+            .. seealso::
 
-           :ref:`user_guide.scheduler.workflow_events`
-    ''',
-    'mail events': '''
-        Specify the workflow events for which notification emails should
-        be sent.
-    ''',
+               :ref:`user_guide.scheduler.workflow_events.list`
+        ''',
+        'options': WorkflowEventHandler.EVENTS.copy(),
+        'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
+    },
+    'mail events': {
+        'desc': '''
+            Specify the workflow events for which notification emails should
+            be sent.
+
+            .. seealso::
+
+               :ref:`user_guide.scheduler.workflow_events.list`
+        ''',
+        'options': WorkflowEventHandler.EVENTS.copy(),
+        'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
+    },
     'startup handlers': f'''
         Handlers to run at scheduler startup.
 
@@ -521,7 +555,10 @@ want to configure more frequent polling.
 TASK_EVENTS_DESCR = '''
 Configure the task event handling system.
 
-See also :cylc:conf:`flow.cylc[scheduler][events]` for *workflow* events.
+.. admonition:: Not to be confused with
+   :class: tip
+
+   For *workflow* events, see :cylc:conf:`flow.cylc[scheduler][events]`.
 
 Task :term:`event handlers` are scripts to run when task events occur.
 
@@ -551,26 +588,18 @@ task_event_handling.template_variables`.
         For more information, see
         :ref:`user_guide.runtime.task_event_handling`.
 
-        For workflow events, see
-        :ref:`user_guide.scheduler.workflow_event_handling`.
-
         Example::
 
            echo %(event)s occurred in %(workflow)s >> my-log-file
 
     ''',
-    'execution timeout': '''
-        If a task has not finished after the specified interval, the execution
-        timeout event handler(s) will be called.
-    ''',
-    'handler events': '''
+    'handler events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
         A list of events for which :cylc:conf:`[..]handlers` are run.
 
-        Specify the events for which the general task event handlers
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]handlers`
-        should be invoked.
-
-        See :ref:`user_guide.runtime.task_event_handling` for more information.
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
@@ -587,16 +616,25 @@ task_event_handling.template_variables`.
 
            PT10S, PT1M, PT5M
     ''',
-    'mail events': '''
-        Specify the events for which notification emails should be sent.
+    'mail events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
+        A list of events for which notification emails should be sent.
+
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
            submission failed, failed
     ''',
+    'execution timeout': '''
+        If a task has not finished after the specified interval, any configured
+        execution timeout event handler(s) will be called.
+    ''',
     'submission timeout': '''
-        If a task has not started after the specified interval, the submission
-        timeout event handler(s) will be called.
+        If a task has not started after the specified interval, any configured
+        submission timeout event handler(s) will be called.
     '''
 }
 
@@ -645,15 +683,36 @@ def comma_sep_section_note(version_changed: str = '') -> str:
 
 
 def short_descr(text: str) -> str:
-    """Get dedented one-paragraph description from long description."""
-    return dedent(text).split('\n\n', 1)[0]
+    r"""Get dedented one-paragraph description from long description.
+
+    Examples:
+        >>> short_descr('foo\n\nbar')
+        'foo'
+
+        >>> short_descr(':Field: Value\n\nfoo\n\nbar')
+        ':Field: Value\n\nfoo'
+
+    """
+    lines = []
+    for line in dedent(text).splitlines():
+        if not line:
+            continue
+        elif line.startswith(':'):
+            lines.append(line)
+        else:
+            lines.append(line)
+            break
+    return '\n\n'.join(lines)
 
 
 def default_for(
     text: str, config_path: str, section: bool = False
 ) -> str:
-    """Get dedented short description and insert a 'Default(s) For' directive
-    that links to this config item's flow.cylc counterpart."""
+    """Return a ":Default For: field for this config.
+
+    Get dedented short description and insert a 'Default(s) For' field
+    that links to this config item's flow.cylc counterpart.
+    """
     directive = f":Default{'s' if section else ''} For:"
     return (
         f"{directive} :cylc:conf:`flow.cylc{config_path}`.\n\n"
@@ -722,6 +781,20 @@ with Conf('global.cylc', desc='''
 
        The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
+
+    .. note::
+
+       Most of the global settings can be changed while a workflow is running
+       using ``cylc reload --global``. Exceptions are:
+
+       `[scheduler]`: The majority of these settings affect the server and
+       cannot be reloaded while the server is running. The server must be
+       stopped and restarted for changes to take effect except for the sections
+       `[scheduler][mail]` and `[scheduler][events]` which provide workflow
+       defaults.
+
+       `[install][symlink dirs]`: These settings create files on disk, once a
+       task has started on a remote host these can't be changed for that host.
 
     .. versionchanged:: 8.0.0
 
@@ -1038,7 +1111,13 @@ with Conf('global.cylc', desc='''
 
         with Conf('events',
                   desc=default_for(EVENTS_DESCR, '[scheduler][events]')):
-            for item, desc in EVENTS_SETTINGS.items():
+            for item, val in EVENTS_SETTINGS.items():
+                if isinstance(val, dict):
+                    val = val.copy()
+                    desc: str = val.pop('desc')
+                else:
+                    desc = val
+                    val = {}
                 desc = default_for(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
                 default: Any = Conf.UNSET
@@ -1058,7 +1137,7 @@ with Conf('global.cylc', desc='''
                         default = DurationFloat(300)
                     else:
                         default = None
-                Conf(item, vdr_type, default, desc=desc)
+                Conf(item, vdr_type, default, desc=desc, **val)
 
         with Conf('mail', desc=(
             default_for(MAIL_DESCR, "[scheduler][mail]", section=True)
@@ -1232,6 +1311,11 @@ with Conf('global.cylc', desc='''
             Symlinks from the the standard ``$HOME/cylc-run`` locations will be
             created.
 
+            .. note::
+
+               Once a platform has been installed and symlinks created they
+               cannot be modified for that run.
+
             .. versionadded:: 8.0.0
         """):
             with Conf('<install target>', desc=dedent("""
@@ -1247,8 +1331,8 @@ with Conf('global.cylc', desc='''
                     be created in ``<this-path>/cylc-run/<workflow-id>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-id>``.
-                    If not specified the workflow run directory will be created
-                    in ``$HOME/cylc-run/<workflow-id>``.
+                    If not specified, the workflow run directory will be
+                    created in ``$HOME/cylc-run/<workflow-id>``.
                     All the workflow files and the ``.service`` directory get
                     installed into this directory.
 
@@ -1258,13 +1342,12 @@ with Conf('global.cylc', desc='''
                     Conf(folder, VDR.V_STRING, None, desc=f"""
                         Alternative location for the {folder} dir.
 
-                        If specified the workflow {folder} directory will
+                        If specified, the workflow {folder} directory will
                         be created in
                         ``<this-path>/cylc-run/<workflow-id>/{folder}``
                         and a symbolic link will be created from
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
-                        If not specified the workflow log directory will
-                        be created in
+                        If not specified, the directory will be created in
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
 
                         .. versionadded:: {versionadded}
@@ -1955,12 +2038,6 @@ with Conf('global.cylc', desc='''
             TASK_EVENTS_DESCR, "[runtime][<namespace>][events]", section=True
         ) + "\n\n" + ".. versionadded:: 8.0.0"
     )):
-        Conf('execution timeout', VDR.V_INTERVAL, desc=(
-            default_for(
-                TASK_EVENTS_SETTINGS['execution timeout'],
-                "[runtime][<namespace>][events]execution timeout"
-            )
-        ))
         Conf('handlers', VDR.V_STRING_LIST, desc=(
             default_for(
                 TASK_EVENTS_SETTINGS['handlers'],
@@ -1983,6 +2060,12 @@ with Conf('global.cylc', desc='''
             default_for(
                 TASK_EVENTS_SETTINGS['mail events'],
                 "[runtime][<namespace>][events]mail events"
+            )
+        ))
+        Conf('execution timeout', VDR.V_INTERVAL, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['execution timeout'],
+                "[runtime][<namespace>][events]execution timeout"
             )
         ))
         Conf('submission timeout', VDR.V_INTERVAL, desc=(
@@ -2089,6 +2172,11 @@ class GlobalConfig(ParsecConfig):
         except ParsecError:
             LOG.error(f'bad {conf_type} {fname}')
             raise
+
+    @classmethod
+    def set_cache(cls, cfg: "GlobalConfig") -> None:
+        """Set the cached config"""
+        cls._DEFAULT = cfg
 
     def load(self) -> None:
         """Load configuration from files."""

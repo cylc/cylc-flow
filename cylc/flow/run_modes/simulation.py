@@ -61,7 +61,6 @@ def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
     rtconfig: Dict[str, Any],
-    workflow: str,
     now: Tuple[float, str]
 ) -> 'Literal[True]':
     """Submit a task in simulation mode.
@@ -94,7 +93,7 @@ def submit_task_job(
         itask.mode_settings.simulated_run_length
     )
     itask.jobs.append(
-        task_job_mgr.get_simulation_job_conf(itask, workflow)
+        task_job_mgr.get_simulation_job_conf(itask)
     )
     task_job_mgr.task_events_mgr.process_message(
         itask, INFO, TASK_OUTPUT_SUBMITTED,
@@ -366,6 +365,14 @@ def sim_time_check(
             )
 
         if now > itask.mode_settings.timeout:
+            # simulate custom outputs
+            for msg in itask.tdef.rtconfig['outputs'].values():
+                task_events_manager.process_message(
+                    itask, 'DEBUG', msg,
+                    flag=task_events_manager.FLAG_RECEIVED
+                )
+
+            # simulate job outcome
             if itask.mode_settings.sim_task_fails:
                 task_events_manager.process_message(
                     itask, 'CRITICAL', TASK_STATUS_FAILED,
@@ -374,12 +381,6 @@ def sim_time_check(
             else:
                 task_events_manager.process_message(
                     itask, 'DEBUG', TASK_STATUS_SUCCEEDED,
-                    flag=task_events_manager.FLAG_RECEIVED
-                )
-            # Simulate message outputs.
-            for msg in itask.tdef.rtconfig['outputs'].values():
-                task_events_manager.process_message(
-                    itask, 'DEBUG', msg,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
 
