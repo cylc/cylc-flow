@@ -1,0 +1,21 @@
+#!Jinja2
+[scheduler]
+   [[events]]
+       abort on stall timeout = True
+       stall timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = a-task => b-task
+[runtime]
+    [[a-task]]
+        script = """
+# Write to task stdout log
+echo "the quick brown fox"
+# Write to task stderr log
+echo "jumped over the lazy dog" >&2
+# Write to a custom log file
+echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
+"""
+        platform = {{CYLC_TEST_PLATFORM | default("localhost")}}
+    [[b-task]]
+        script = """rm ${CYLC_WORKFLOW_RUN_DIR}/log/${CYLC_TASK_CYCLE_POINT}/a-task/NN/job.out"""

@@ -66,6 +66,7 @@ from contextlib import suppress
 from glob import glob
 from pathlib import Path
 import shlex
+import logging
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from typing import TYPE_CHECKING
@@ -97,6 +98,7 @@ from cylc.flow.platforms import get_platform
 if TYPE_CHECKING:
     from optparse import Values
 
+logger = logging.getLogger(__name__)
 
 WORKFLOW_LOG_OPTS = {
     'c': ('workflow configuration file (raw)', r'config/*-start-*.cylc'),
@@ -568,13 +570,19 @@ def _main(
             workflow_id, point, task, submit_num
         )
 
+        job_log_present = (Path(local_log_dir) / "job.out").exists()
+        logger.debug("job_log_present: %s", job_log_present,
+                     " getting job log remotely)")
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if (
+            # if the log file is not present locally
+            # (e.g. job is running, or job logs not retrieved)
+            not job_log_present
             # only go remote for log files we can't get locally
-            log_is_remote
+            or log_is_remote
             # don't look for remote log files for submit-failed tasks
             # (there might not be any at all)
             and not submit_failed
