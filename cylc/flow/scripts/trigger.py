@@ -17,28 +17,28 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger tasks, respecting dependencies among them.
+For tasks to trigger, while respecting dependencies among them.
 
-Triggering individual tasks:
-  * Triggering an unqueued task queues it, triggering a queued task runs it.
-    So you many need to trigger an unqueued task twice to run it immediately.
-  * Live tasks (preparing, submitted, or running) can't be triggered.
-  * Triggered tasks can run even if the workflow is paused.
+Triggered tasks can run even if the workflow is paused.
 
-Triggering a group of tasks at once (e.g. members of a sub-graph):
-        Prerequisites on any tasks that are outside of the group of tasks being triggered are automatically satisfied.
-        Any tasks which have already run within the group will be automatically removed (i.e. cylc remove) to allow them to be re-run without intervention.
-        Any preparing, submitted or running tasks within the group will also be removed if necessary to allow the tasks to re-run in order.
+Live tasks (preparing, submitted, running) can't be triggered until finished.
 
+Triggering an unqueued task queues it, and triggering a queued task runs it
+regardless of the queue limit; so it may take two triggers to run a task now.
+
+Triggering a group of tasks: prerequisites on tasks outside of the group will
+be satisfied automatically; tasks in the group that already ran will be removed
+to allow re-run without intervention, and live tasks will be removed if
+necessary to allow the group to re-run in order.
+
+If the workflow is paused, group start tasks will trigger immediately and the
+flow will continue downstream of them once the workflow is resumed.
 
   Cylc will automatically:
   * Erase the run history of members, so they can re-run in the same flow.
   * Identify group start tasks, and trigger them to start the flow.
   * Identify off-group dependencies, and satisfy them to avoid a stall.
   * Leave in-group dependencies to be satisfied by the triggered flow.
-
-  If the workflow is paused, group start tasks will trigger immediately; the
-  flow will continue downstream of them when you resume the workflow.
 
   How live (preparing, submitted, or running) tasks are handled:
   * Live in-group tasks are killed and removed, to rerun in the triggered flow.
