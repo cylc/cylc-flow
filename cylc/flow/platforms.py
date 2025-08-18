@@ -305,10 +305,7 @@ def get_platform_from_group(
     if bad_hosts:
         platform_names = [
             platform for platform in group['platforms']
-            if any(
-                host not in bad_hosts
-                for host in platform_from_name(platform)['hosts']
-            )
+            if not bad_hosts.issuperset(platform_from_name(platform)['hosts'])
         ]
     else:
         platform_names = group['platforms']
