@@ -1185,7 +1185,7 @@ with Conf(
 
                    platform = $(command)
 
-                The configured command will be evaulated for each job
+                The configured command will be evaluated for each job
                 submission (i.e, different submissions of the same task may
                 submit on different platforms).
 
