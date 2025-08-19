@@ -24,8 +24,8 @@ If the source has changed and you respond Yes to the reinstall prompt:
 * reinstall and reload the workflow, if it is running
 * or reinstall and restart the workflow, if it is not running
 
-If the source has not changed or you respond No to the reinstall prompt, the
-workflow will not be reloaded or restarted.
+If the source has not changed or you respond No to the reinstall prompt
+the workflow will not be reinstalled, reloaded, or restarted.
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
