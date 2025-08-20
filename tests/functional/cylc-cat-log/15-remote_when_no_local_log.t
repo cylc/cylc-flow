@@ -26,7 +26,7 @@ set_test_number 3
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
-       retrieve job logs = False"
+       retrieve job logs = True"
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
