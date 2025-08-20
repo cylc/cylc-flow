@@ -41,6 +41,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -62,7 +63,10 @@ from cylc.flow.hostuserutil import (
     is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE, JobPollContext
+from cylc.flow.job_runner_mgr import (
+    JOB_FILES_REMOVED_MESSAGE,
+    JobPollContext,
+)
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -125,11 +129,6 @@ from cylc.flow.wallclock import (
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager

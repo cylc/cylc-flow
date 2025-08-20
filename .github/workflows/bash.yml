@@ -51,20 +51,21 @@ jobs:
           - '4.2'
           # if you use a value like 5.0, YAML will round it to 5, which will cause an error later on
           - '5.0'
+    env:
+      IMAGE: 'ghcr.io/cylc/cylc-bash-testing-2:master'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Run Docker container
         run: |
-          docker pull ghcr.io/cylc/cylc-bash-testing:master
-          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G ghcr.io/cylc/cylc-bash-testing:master /bin/bash
+          docker pull "$IMAGE"
+          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G "$IMAGE" /bin/bash
           docker ps -a
 
       - name: Install Cylc dependencies in the container
         run: |
-          docker exec bash python3.7 -m pip install six==1.12
-          docker exec -w /root/cylc-flow bash python3.7 -m pip install .[all]
+          docker exec -w /root/cylc-flow bash python3.12 -m pip install .[all] --break-system-packages
 
       - name: Set the container bash version
         run: docker exec bash update-alternatives --set bash /bash/bash-${{ matrix.bash-version }}

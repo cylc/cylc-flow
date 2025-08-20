@@ -34,7 +34,7 @@ jobs:
           - os: 'ubuntu-latest'
             python-version: '3'
           - os: 'ubuntu-22.04'
-            python-version: '3.7'
+            python-version: '3.12'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
