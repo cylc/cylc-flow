@@ -1277,6 +1277,7 @@ class DataStoreMgr:
             id=tp_id,
             task=t_id,
             cycle_point=point_string,
+            state=TASK_STATUS_WAITING,
             is_held=(
                 (name, point)
                 in self.schd.pool.tasks_to_hold
