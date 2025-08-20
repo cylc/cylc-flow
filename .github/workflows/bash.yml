@@ -65,8 +65,7 @@ jobs:
 
       - name: Install Cylc dependencies in the container
         run: |
-          docker exec bash python3.12 -m pip install six==1.12
-          docker exec -w /root/cylc-flow bash python3.12 -m pip install .[all]
+          docker exec -w /root/cylc-flow bash python3.12 -m pip install .[all] --break-system-packages
 
       - name: Set the container bash version
         run: docker exec bash update-alternatives --set bash /bash/bash-${{ matrix.bash-version }}
