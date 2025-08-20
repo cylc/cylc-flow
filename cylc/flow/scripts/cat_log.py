@@ -581,7 +581,7 @@ def _main(
         if (
             # if the log file is not present locally
             # (e.g. job is running, or job logs not retrieved)
-            not job_log_present
+            (not job_log_present and log_is_remote)
             # only go remote for log files we can't get locally
             or log_is_remote
             # don't look for remote log files for submit-failed tasks
