@@ -66,7 +66,6 @@ from contextlib import suppress
 from glob import glob
 from pathlib import Path
 import shlex
-import logging
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from typing import TYPE_CHECKING
@@ -93,12 +92,12 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import get_platform
+from cylc.flow import LOG
 
 
 if TYPE_CHECKING:
     from optparse import Values
 
-logger = logging.getLogger(__name__)
 
 WORKFLOW_LOG_OPTS = {
     'c': ('workflow configuration file (raw)', r'config/*-start-*.cylc'),
@@ -571,8 +570,10 @@ def _main(
         )
 
         job_log_present = (Path(local_log_dir) / "job.out").exists()
-        logger.debug("job_log_present: %s", job_log_present,
-                     " getting job log remotely)")
+        # For testing purposes
+        if not job_log_present:
+            LOG.debug("job.out not present, getting job log remotely")
+
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
