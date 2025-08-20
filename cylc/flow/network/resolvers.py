@@ -134,7 +134,7 @@ def workflow_ids_filter(workflow_tokens, items) -> bool:
                 or workflow_tokens['workflow_sel'] == item['workflow_sel']
             )
         )
-        for item in uniq(items)
+        for item in iter_uniq(items)
     )
 
 
