@@ -794,13 +794,7 @@ class TaskEventsManager():
             self._process_message_submitted(itask, event_time, forced)
             self.spawn_children(itask, TASK_OUTPUT_SUBMITTED, forced)
 
-            # ... but either way update the job ID in the job proxy (it only
-            # comes in via the submission message).
-            if itask.run_mode != RunMode.SIMULATION:
-                self.data_store_mgr.delta_job_attr(
-                    itask, 'job_id', itask.summary['submit_method_id']
-                )
-            else:
+            if itask.run_mode == RunMode.SIMULATION:
                 # In simulation mode submitted implies started:
                 self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
@@ -1465,7 +1459,6 @@ class TaskEventsManager():
             "time_submit_exit": event_time,
             "submit_status": 1,
         })
-        itask.summary['submit_method_id'] = None
         LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if (
             forced
@@ -1590,11 +1583,9 @@ class TaskEventsManager():
             except IndexError:
                 # we do not have access to the job config (e.g. Scheduler
                 # crashed) - https://github.com/cylc/cylc-flow/pull/6326
-                job_id = itask.tokens.duplicate(
-                    job=itask.submit_num
-                ).relative_id
                 LOG.warning(
-                    f'Could not find the job configuration for "{job_id}".'
+                    'Could not find the job configuration for '
+                    f'"{itask.job_tokens.relative_id}".'
                 )
                 itask.jobs.append({"submit_num": itask.submit_num})
                 job_conf = itask.jobs[-1]
@@ -1611,8 +1602,7 @@ class TaskEventsManager():
 
         # insert job into data store
         self.data_store_mgr.insert_job(
-            itask.tdef.name,
-            itask.point,
+            itask,
             job_status,
             {
                 **job_conf,
@@ -1635,7 +1625,7 @@ class TaskEventsManager():
                 # preparation started due to intelligent host (and or
                 # platform) selection
                 'platform_name': itask.platform['name'],
-            }
+            },
         )
 
     def _setup_job_logs_retrieval(self, itask, event) -> None:
