@@ -272,6 +272,7 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     'task_conf, expected_err_msg',
     [
         ({'platform': '$(host)'}, None),
+        ({'platform': '$(host)-suffix'}, None),
         ({'platform': '`echo ${chamber}`'}, "backticks are not supported")
     ]
 )
