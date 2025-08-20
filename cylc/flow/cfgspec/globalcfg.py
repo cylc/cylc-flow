@@ -373,13 +373,39 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
     ''',
     'restart timeout': '''
         How long to wait for intervention on restarting a completed workflow.
-        The timer stops if any task is triggered.
+
+        When a workflow reaches the end of the :term:`graph`, it will
+        :term:`shut down <shutdown>` automatically. We call such workflows
+        :ref:`completed <workflow completion>` as there are no more tasks for
+        Cylc to run.
+
+        Completed workflows can be caused by:
+
+        * Cylc reaching the end of the :term:`graph`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]final cycle point`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
+        * Tasks being manually removed :ref:`interventions.remove_tasks`.
+
+        When you restart a completed workflow, it will detect that there are no
+        more tasks to run, and shut itself down again. The ``restart timeout``
+        delays this shutdown for a configured period allowing you to trigger
+        more task(s) to run.
 
         .. seealso::
 
-           :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`workflow completion`
+           * :ref:`examples.extending-workflow`
 
         .. versionadded:: 8.2.0
+
+        .. versionchanged:: 8.5.2
+
+           The ``restart timeout`` is now also activated for workflows that
+           have hit the
+           :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
 
     '''
 }

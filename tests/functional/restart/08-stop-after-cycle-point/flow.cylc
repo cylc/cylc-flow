@@ -10,6 +10,9 @@ description = """
 [scheduler]
     UTC mode = True
     cycle point format = %Y
+    [[events]]
+        # prevent workflow hanging if restarted with nothing more to do
+        restart timeout = PT0S
 
 [scheduling]
     runahead limit = P0
