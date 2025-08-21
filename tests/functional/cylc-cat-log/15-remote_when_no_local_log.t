@@ -22,7 +22,7 @@
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 5
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
@@ -37,6 +37,11 @@ workflow_run_ok "${TEST_NAME}" \
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote
 run_ok "$TEST_NAME" cylc cat-log --debug -f j "${WORKFLOW_NAME}//1/a-task"
+grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
+
+# remote
+TEST_NAME=${TEST_NAME_BASE}-no_log_remote_list_dir
+run_ok "$TEST_NAME" cylc cat-log --debug --mode=list-dir "${WORKFLOW_NAME}//1/a-task"
 grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # Clean up the task host.
