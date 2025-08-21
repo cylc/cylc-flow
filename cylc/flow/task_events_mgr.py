@@ -1229,8 +1229,6 @@ class TaskEventsManager():
             or (proc_ctx.ret_code and proc_ctx.ret_code != 255)
         ):
             LOG.error(proc_ctx)
-        else:
-            LOG.debug(proc_ctx)
         id_key: EventKey
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
             try:
