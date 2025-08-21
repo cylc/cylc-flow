@@ -149,8 +149,7 @@ async def workflow(
         # mark 1/a/01 as failed
         job_1 = schd.tokens.duplicate(cycle='1', task='a', job='01')
         schd.data_store_mgr.insert_job(
-            'a',
-            IntegerPoint('1'),
+            itask,
             TASK_STATUS_SUCCEEDED,
             {'submit_num': 1, 'platform': {'name': 'x'}}
         )
@@ -160,8 +159,7 @@ async def workflow(
         itask.submit_num = 2
         job_2 = schd.tokens.duplicate(cycle='1', task='a', job='02')
         schd.data_store_mgr.insert_job(
-            'a',
-            IntegerPoint('1'),
+            itask,
             TASK_STATUS_SUCCEEDED,
             {'submit_num': 2, 'platform': {'name': 'x'}}
         )

@@ -316,15 +316,18 @@ async def test_delta_task_held(mod_harness):
 
 def test_insert_job(mod_harness):
     """Test method that adds a new job to the store."""
+    schd: Scheduler
     schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 0
-    schd.data_store_mgr.insert_job('foo', '1', 'submitted', job_config(schd))
+    itask = schd.pool.get_tasks()[0]
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     assert ext_id(schd) in schd.data_store_mgr.added[JOBS]
 
 
 def test_insert_db_job(mod_harness, job_db_row):
     """Test method that adds a new job from the db to the store."""
+    schd: Scheduler
     schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     schd.data_store_mgr.insert_db_job(0, job_db_row)
@@ -334,6 +337,7 @@ def test_insert_db_job(mod_harness, job_db_row):
 
 def test_delta_job_msg(mod_harness):
     """Test method adding messages to job element."""
+    schd: Scheduler
     schd, data = mod_harness
     j_id = ext_id(schd)
     tokens = Tokens(j_id)
@@ -724,7 +728,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
         assert itask
         itask.submit_num += 1
         one.data_store_mgr.insert_job(
-            itask.tdef.name, itask.point, itask.state.status, {'submit_num': 1}
+            itask, itask.state.status, {'submit_num': 1}
         )
         await one.update_data_structure()
 
