@@ -34,6 +34,7 @@ from pathlib import Path
 import re
 from textwrap import wrap
 import traceback
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -461,6 +462,7 @@ class WorkflowConfig:
         self.mem_log("config.py: after get(sparse=False)")
 
         # These 2 must be called before call to init_cyclers(self.cfg):
+        self.set_exerimental_features()
         self.process_utc_mode()
         self.process_cycle_point_tz()
 
@@ -613,6 +615,14 @@ class WorkflowConfig:
         self.mem_log("config.py: end init config")
 
         skip_mode_validate(self.taskdefs)
+
+    def set_exerimental_features(self):
+        all_ = self.cfg['scheduler']['experimental']['all']
+        self.experimental = SimpleNamespace(**{
+            key.replace(' ', '_'): value or all_
+            for key, value in self.cfg['scheduler']['experimental'].items()
+            if key != 'all'
+        })
 
     @staticmethod
     def _warn_if_queues_have_implicit_tasks(
@@ -2334,7 +2344,8 @@ class WorkflowConfig:
             parser = GraphParser(
                 family_map,
                 self.parameters,
-                task_output_opt=task_output_opt
+                task_output_opt=task_output_opt,
+                expire_triggers=self.experimental.expire_triggers,
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)

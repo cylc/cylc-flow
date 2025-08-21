@@ -2017,7 +2017,7 @@ async def test_remove_active_task(
     )
 
 
-async def test_remove_by_suicide(
+async def test_remove_by_expire_trigger(
     flow,
     scheduler,
     start,
@@ -2030,6 +2030,11 @@ async def test_remove_by_suicide(
     * Removing a task manually (cylc remove) should work the same.
     """
     id_ = flow({
+        'scheduler': {
+            'experimental': {
+                'expire triggers': 'True',
+            }
+        },
         'scheduling': {
             'graph': {
                 'R1': '''
@@ -2070,6 +2075,64 @@ async def test_remove_by_suicide(
         )
 
         # and bring 1/b back again by triggering it again
+        log.clear()
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
+        assert log_filter(regex='1/b.*added to the n=0 window',)
+
+
+async def test_remove_by_suicide(
+    flow,
+    scheduler,
+    start,
+    log_filter
+):
+    """Test task removal by suicide trigger.
+
+    * Suicide triggers should remove tasks from the pool.
+    * It should be possible to bring them back by manually triggering them.
+    * Removing a task manually (cylc remove) should work the same.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    a? & b
+                    a:failed? => !b
+                '''
+            },
+        }
+    })
+    schd: 'Scheduler' = scheduler(id_)
+    async with start(schd, level=logging.DEBUG) as log:
+        # it should start up with 1/a and 1/b
+        assert schd.pool.get_task_ids() == {"1/a", "1/b"}
+        a = schd.pool.get_task(IntegerPoint("1"), "a")
+
+        # mark 1/a as failed and ensure 1/b is removed by suicide trigger
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
+        assert log_filter(
+            regex="1/b.*removed from the n=0 window: suicide trigger"
+        )
+        assert schd.pool.get_task_ids() == {"1/a"}
+
+        # ensure that we are able to bring 1/b back by triggering it
+        log.clear()
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
+        assert log_filter(
+            regex='1/b.*added to the n=0 window',
+        )
+
+        # remove 1/b by request (cylc remove)
+        await commands.run_cmd(
+            commands.remove_tasks(schd, ['1/b'], [])
+        )
+        assert log_filter(
+            regex='1/b.*removed from the n=0 window: request',
+        )
+
+        # ensure that we are able to bring 1/b back by triggering it
         log.clear()
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['1/b'], ['1']))

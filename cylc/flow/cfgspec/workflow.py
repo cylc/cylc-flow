@@ -416,6 +416,40 @@ with Conf(
                The default time zone is now ``Z`` instead of the local time of
                the first workflow start.
         ''')
+        with Conf('experimental', desc='''
+            Activate experimental features.
+
+            These are preview features which will become the default in future
+            releases.
+
+            .. versionadded:: 8.6.0
+        '''):
+            Conf('all', VDR.V_BOOLEAN, False, desc='''
+                Activate all experimental features.
+
+                Encouraged for canary testing.
+
+                .. versionadded:: 8.6.0
+            ''')
+            Conf('expire triggers', VDR.V_BOOLEAN, False, desc='''
+                This reimplements "suicide triggers" as "expire triggers".
+
+                * When the condition is met, the task will generate the
+                  ``expired`` output rather than being removed from the pool.
+                * The triggered task's
+                  `flow.cylc[runtime][<namespace>]completion condition`
+                  will be automatically modified so that expiry completes the
+                  task's outputs.
+                * This should be functionally equivalent to "suicide triggers"
+                  in that the triggered task will not run.
+                * However, the triggered task will now be left in the
+                  ``expired`` state making it clearer in the GUI/logs that
+                  the task has been triggered in this way.
+                * It is possible to trigger other tasks off of this ``expired``
+                  output for more advanced failure recovery.
+
+                .. versionadded:: 8.6.0
+            ''')
 
         with Conf(   # noqa: SIM117 (keep same format)
             'main loop',

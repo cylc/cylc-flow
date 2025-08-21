@@ -19,11 +19,11 @@ import re
 import contextlib
 
 from typing import (
-    Set,
     Dict,
     List,
-    Tuple,
     Optional,
+    Set,
+    Tuple,
     Union
 )
 
@@ -264,7 +264,8 @@ class GraphParser:
         family_map: Optional[Dict[str, List[str]]] = None,
         parameters: Optional[Dict] = None,
         task_output_opt:
-            Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None
+            Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None,
+        expire_triggers: bool = False,
     ) -> None:
         """Initialize the graph string parser.
 
@@ -283,6 +284,7 @@ class GraphParser:
         self.triggers: Dict = {}
         self.original: Dict = {}
         self.workflow_state_polling_tasks: Dict = {}
+        self.expire_triggers = expire_triggers
 
         # Record task outputs as optional or required:
         #   {(name, output): (is_optional, is_member)}
@@ -744,7 +746,7 @@ class GraphParser:
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
-        if suicide:
+        if suicide and self.expire_triggers:
             # Make expiry optional for suicide triggered tasks.
             self._set_output_opt(name, TASK_OUTPUT_EXPIRED, True, False, False)
 

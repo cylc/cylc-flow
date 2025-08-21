@@ -1539,9 +1539,13 @@ class TaskPool:
                         suicide.append(t)
 
         for c_task in suicide:
-            self.task_queue_mgr.remove_task(c_task)
-            self.task_events_mgr.process_message(
-                c_task, logging.WARNING, TASK_OUTPUT_EXPIRED)
+            if self.config.experimental.expire_triggers:
+                self.task_queue_mgr.remove_task(c_task)
+                self.task_events_mgr.process_message(
+                    c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
+                )
+            else:
+                self.remove(c_task, self.__class__.SUICIDE_MSG)
 
         if suicide:
             # Update DB now in case of very quick respawn attempt.
