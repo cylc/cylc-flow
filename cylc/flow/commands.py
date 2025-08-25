@@ -748,7 +748,7 @@ def _force_trigger_tasks(
         # Remove non group start and final-status group start tasks, and
         # trigger them from scratch (so only the TaskDef matters).
 
-        # Waiting group start tasks are not removed, but a reload would
+        # Group start tasks are not removed, but a reload would
         # replace them, so using the TaskDef is fine.
 
         if not any(
@@ -765,12 +765,13 @@ def _force_trigger_tasks(
                 continue
 
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                # This is a live active group start task
                 warnings_has_job.append(str(itask))
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
             else:
-                # This is a waiting active group start task...
+                # This is a non-live active group start task...
                 # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
                 # ... and satisfy all xtrigger prerequisites.
