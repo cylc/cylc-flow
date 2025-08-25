@@ -1435,7 +1435,7 @@ class DataStoreMgr:
                 runtime_from_config(
                     self._apply_broadcasts_to_runtime(
                         tokens,
-                        self.schd.config.cfg['runtime'][fam.name]
+                        self.schd.config.cfg['runtime'].get(fam.name)
                     )
                 )
             )
@@ -1603,6 +1603,9 @@ class DataStoreMgr:
         )
 
     def _apply_broadcasts_to_runtime(self, tokens, rtconfig):
+        # In case of orphan
+        if rtconfig is None:
+            rtconfig = {}
         # Handle broadcasts
         overrides = self.schd.broadcast_mgr.get_broadcast(tokens)
         if overrides:
@@ -1670,7 +1673,7 @@ class DataStoreMgr:
         # so use task cfg as base.
         j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
             tp_tokens,
-            self.schd.config.cfg['runtime'][tproxy.name]
+            self.schd.config.cfg['runtime'].get(tproxy.name)
         ))
         for key, val in job_conf.items():
             j_cfg[key] = val
@@ -2346,7 +2349,7 @@ class DataStoreMgr:
             new_runtime = runtime_from_config(
                 self._apply_broadcasts_to_runtime(
                     tokens,
-                    cfg['runtime'][node.name]
+                    cfg['runtime'].get(node.name)
                 )
             )
             new_sruntime = new_runtime.SerializeToString(
