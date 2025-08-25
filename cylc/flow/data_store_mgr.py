@@ -1666,15 +1666,20 @@ class DataStoreMgr:
             platform=job_conf['platform']['name'],
             job_runner_name=job_conf.get('job_runner_name'),
         )
-        # Not all fields are populated with some submit-failures,
-        # so use task cfg as base.
-        j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
-            tp_tokens,
-            self.schd.config.cfg['runtime'][tproxy.name]
-        ))
-        for key, val in job_conf.items():
-            j_cfg[key] = val
-        j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
+
+        # Use config runtime, otherwise use orphan runtime.
+        if tproxy.name in self.schd.config.cfg['runtime']:
+            # Not all fields are populated with some submit-failures,
+            # so use task cfg as base.
+            j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
+                tp_tokens,
+                self.schd.config.cfg['runtime'][tproxy.name]
+            ))
+            for key, val in job_conf.items():
+                j_cfg[key] = val
+            j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
+        else:
+            j_buf.runtime.CopyFrom(tproxy.runtime)
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
@@ -2338,16 +2343,16 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
-        cfg = self.schd.config.cfg
+        rtcfg = self.schd.config.cfg['runtime']
         # NOTE: node_data may change during operation so make a copy
         # see https://github.com/cylc/cylc-flow/pull/6397
         for node_id, node in list(node_data.items()):
+            # In case of orphan, skip.
+            if node.name not in rtcfg:
+                continue
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
-                self._apply_broadcasts_to_runtime(
-                    tokens,
-                    cfg['runtime'][node.name]
-                )
+                self._apply_broadcasts_to_runtime(tokens, rtcfg[node.name])
             )
             new_sruntime = new_runtime.SerializeToString(
                 deterministic=True
