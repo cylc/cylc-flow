@@ -67,6 +67,7 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
+    Union,
 )
 import zlib
 
@@ -1609,13 +1610,20 @@ class DataStoreMgr:
             poverride(rtconfig, overrides, prepend=True)
         return rtconfig
 
-    def insert_job(self, name, cycle_point, status, job_conf):
+    def insert_job(
+        self,
+        name: str,
+        cycle_point: Union['PointBase', str],
+        status: str,
+        job_conf: dict,
+    ):
         """Insert job into data-store.
 
         Args:
-            name (str): Corresponding task name.
-            cycle_point (str|PointBase): Cycle point string
-            job_conf (dic):
+            name: Corresponding task name.
+            cycle_point: Cycle point string
+            status: The task's state.
+            job_conf:
                 Dictionary of job configuration used to generate
                 the job script.
                 (see TaskJobManager._prep_submit_task_job_impl)
@@ -1625,6 +1633,11 @@ class DataStoreMgr:
             None
 
         """
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            # https://github.com/cylc/cylc-flow/issues/4994
+            return
+
         sub_num = job_conf['submit_num']
         tp_tokens = self.id_.duplicate(
             cycle=str(cycle_point),
@@ -1639,9 +1652,6 @@ class DataStoreMgr:
         j_id, job = self.store_node_fetcher(j_tokens)
         if job:
             # Job already exists (i.e. post-submission submit failure)
-            return
-
-        if status not in JOB_STATUS_SET:
             return
 
         j_buf = PbJob(
@@ -2761,12 +2771,12 @@ class DataStoreMgr:
 
     def delta_job_attr(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         attr_key: str,
         attr_val: Any,
     ) -> None:
         """Set job attribute."""
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
@@ -2779,12 +2789,19 @@ class DataStoreMgr:
 
     def delta_job_state(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         status: str,
     ) -> None:
         """Set job state."""
-        j_id, job = self.store_node_fetcher(tokens)
-        if not job or status not in JOB_STATUS_SET:
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            return
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
+        if not job or (
+            # Don't cause backwards state change:
+            JOB_STATUSES_ALL.index(status) <= JOB_STATUSES_ALL.index(job.state)
+            and not itask.job_vacated
+        ):
             return
         j_delta = PbJob(
             stamp=f'{j_id}@{time()}',
@@ -2798,7 +2815,7 @@ class DataStoreMgr:
 
     def delta_job_time(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         event_key: str,
         time_str: Optional[str] = None,
     ) -> None:
@@ -2806,7 +2823,7 @@ class DataStoreMgr:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')

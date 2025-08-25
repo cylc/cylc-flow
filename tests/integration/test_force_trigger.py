@@ -14,12 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
+import sys
 from typing import (
     Any as Fixture,
     Callable
 )
 
+if sys.version_info[:2] >= (3, 11):
+    from asyncio import timeout as async_timeout
+else:
+    from async_timeout import timeout as async_timeout
 import pytest
 
 from cylc.flow.commands import (
@@ -695,3 +701,54 @@ async def test_replay_outputs(flow, scheduler, start, complete, log_filter):
         # But not for the off-group task offg:
         assert not log_filter(
             contains=msg_prereq.format('offg', 'k:custom message'))
+
+
+async def test_trigger_with_sequential_task(flow, scheduler, run, log_filter):
+    """It should trigger a failed sequential task.
+
+    See https://github.com/cylc/cylc-flow/issues/6911
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': '1',
+            'final cycle point': '2',
+            'cycling mode': 'integer',
+            'special tasks': {
+                'sequential': 'foo',
+            },
+            'graph': {
+                'R1': 'install => foo',
+                'P1': 'foo',
+            },
+        },
+        'runtime': {
+            'foo': {
+                'simulation': {
+                    'fail cycle points': '2',
+                },
+            },
+        },
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        # wait for 2/foo:failed
+        async with async_timeout(5):
+            while True:
+                itask = schd.pool._get_task_by_id('2/foo')
+                if itask and itask.state.outputs.is_message_complete('failed'):
+                    break
+                await asyncio.sleep(0)
+
+        # re-trigger 2/foo
+        await run_cmd(
+            force_trigger_tasks(
+                schd, ['2/foo'], []
+            )
+        )
+
+        # it should re-run
+        async with async_timeout(5):
+            while True:
+                if log_filter(contains='[2/foo/02:running] (received)failed'):
+                    break
+                await asyncio.sleep(0)

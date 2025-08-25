@@ -92,7 +92,6 @@ from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
 )
 from cylc.flow.taskdef import generate_graph_children
@@ -751,7 +750,7 @@ def _force_trigger_tasks(
         # Remove non group start and final-status group start tasks, and
         # trigger them from scratch (so only the TaskDef matters).
 
-        # Waiting group start tasks are not removed, but a reload would
+        # Group start tasks are not removed, but a reload would
         # replace them, so using the TaskDef is fine.
 
         if not any(
@@ -774,12 +773,13 @@ def _force_trigger_tasks(
                             (str(itask.point), itask.tdef.name)] = (label, msg)
 
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                # This is a live active group start task
                 warnings_has_job.append(str(itask))
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
-            elif itask.state(TASK_STATUS_WAITING):
-                # This is a waiting active group start task...
+            else:
+                # This is a non-live active group start task...
                 # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
                 # ... and satisfy all xtrigger prerequisites.
@@ -791,8 +791,7 @@ def _force_trigger_tasks(
 
                 # Trigger group start task.
                 schd.pool.queue_or_trigger(itask, on_resume)
-            else:
-                active_to_remove.append(itask)
+
         else:
             active_to_remove.append(itask)
 
