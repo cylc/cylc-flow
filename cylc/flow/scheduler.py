@@ -1144,7 +1144,7 @@ class Scheduler:
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
         # one is starting
-        # NOTE: raises ContactFileExists if workflow is running
+        # NOTE: raises SchedulerAlive if workflow is running
         workflow_files.detect_old_contact_file(self.workflow)
 
         # Extract contact data.

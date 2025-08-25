@@ -18,24 +18,22 @@
 
 """cylc ping [OPTIONS] ARGS
 
-Test communication with a running workflow.
+Test communication with running workflows.
 
-If workflow WORKFLOW is running or TASK in WORKFLOW is currently running,
-exit with success status, else exit with error status.
+Print the HOST:PORT of running workflows.
+If any are not running, exit with error status.
 """
 
 from functools import partial
 import sys
 from typing import Any, Dict, TYPE_CHECKING
 
-import cylc.flow.flags
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
-    FULL_ID_MULTI_ARG_DOC,
+    ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
 )
-from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -48,16 +46,6 @@ query ($wFlows: [ID]) {
     id
     name
     port
-    pubPort
-  }
-}
-'''
-
-TASK_QUERY = '''
-query ($tProxy: ID!) {
-  taskProxy (id: $tProxy) {
-    state
-    id
   }
 }
 '''
@@ -67,9 +55,8 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
-        multitask=True,
         multiworkflow=True,
-        argdoc=[FULL_ID_MULTI_ARG_DOC],
+        argdoc=[ID_MULTI_ARG_DOC],
     )
 
     return parser
@@ -78,9 +65,10 @@ def get_option_parser() -> COP:
 async def run(
     options: 'Values',
     workflow_id: str,
-    *tokens_list,
+    client=None
 ) -> Dict:
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+
+    pclient = client or get_client(workflow_id, timeout=options.comms_timeout)
 
     ret: Dict[str, Any] = {
         'stdout': [],
@@ -91,38 +79,11 @@ async def run(
         'request_string': FLOW_QUERY,
         'variables': {'wFlows': [workflow_id]}
     }
-    task_kwargs: Dict[str, Any] = {
-        'request_string': TASK_QUERY,
-    }
 
-    # ping called on the workflow
     result = await pclient.async_request('graphql', flow_kwargs)
-    msg = ""
+
     for flow in result['workflows']:
-        w_name = flow['name']
-        w_port = flow['port']
-        w_pub_port = flow['pubPort']
-        if cylc.flow.flags.verbosity > 0:
-            ret['stdout'].append(
-                f'{w_name} running on '
-                f'{pclient.host}:{w_port} {w_pub_port}\n'
-            )
-
-        # ping called with task-like objects
-        for tokens in tokens_list:
-            task_kwargs['variables'] = {
-                'tProxy': tokens.relative_id
-            }
-            task_result = await pclient.async_request('graphql', task_kwargs)
-            string_id = tokens.relative_id
-            if not task_result.get('taskProxy'):
-                msg = f"task not found: {string_id}"
-            elif task_result['taskProxy']['state'] != TASK_STATUS_RUNNING:
-                msg = f"task not {TASK_STATUS_RUNNING}: {string_id}"
-            if msg:
-                ret['stderr'].append(msg)
-                ret['exit'] = 1
-
+        ret['stdout'].append(f"{pclient.host}:{flow['port']}")
     return ret
 
 
@@ -144,6 +105,6 @@ def main(
         partial(run, options),
         *ids,
         report=report,
-        constraint='mixed',
+        constraint='workflows',
     )
     sys.exit(all(rets.values()) is False)
