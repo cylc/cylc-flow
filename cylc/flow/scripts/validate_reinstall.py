@@ -18,14 +18,12 @@
 
 """cylc validate-reinstall [OPTIONS] ARGS
 
-Validate, reinstall, and reload or restart a workflow.
+Validate, reinstall and apply changes to a workflow.
 
-If the source has changed and you respond Yes to the reinstall prompt:
-* reinstall and reload the workflow, if it is running
-* or reinstall and restart the workflow, if it is not running
+Validate and reinstall a workflow then either:
 
-If the source has not changed or you respond No to the reinstall prompt
-the workflow will not be reinstalled, reloaded, or restarted.
+* "Reload" the workflow (if it is running),
+* or "play" it (if it is stopped).
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
