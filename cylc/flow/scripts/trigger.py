@@ -17,34 +17,20 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger tasks, respecting dependencies among them.
+Trigger a group of one or more tasks, respecting dependencies among them.
 
-Triggering individual tasks:
-  * Triggering an unqueued task queues it, triggering a queued task runs it.
-    So you many need to trigger an unqueued task twice to run it immediately.
-  * Live tasks (preparing, submitted, or running) can't be triggered.
-  * Triggered tasks can run even if the workflow is paused.
+Prerequisites on tasks outside of the group will be satisfied automatically.
 
-Triggering a group of tasks at once (e.g. members of a sub-graph):
-  Cylc will automatically:
-  * Erase the run history of members, so they can re-run in the same flow.
-  * Identify group start tasks, and trigger them to start the flow.
-  * Identify off-group dependencies, and satisfy them to avoid a stall.
-  * Leave in-group dependencies to be satisfied by the triggered flow.
+Tasks will be removed if necessary to allow re-run without intervention, so
+triggered tasks that are preparing, submitted, or running may be killed.
 
-  If the workflow is paused, group start tasks will trigger immediately; the
-  flow will continue downstream of them when you resume the workflow.
+Tasks that lead into a group will run immediately even if the workflow is
+paused; activity will flow on from them once the workflow is resumed.
 
-  Beware of triggering live (preparing, submitted, or running) tasks:
-  * Live in-group tasks will be killed and their run history erased, to allow
-    them to re-run in the triggered flow.
-  * Live group-start tasks are left to run; they don't need to be retriggered.
-    WARNING: if they already completed outputs that other group members depend
-    on, you must manually satisfy those prerequisites again for the triggered
-    flow (run history erasure wipes out the original satisfied prerequisites).
+Triggering an unqueued task queues it; triggering a queued task runs it.
 
-Flow number assignment in triggered tasks:
-  Active tasks (n=0) already have flows assigned; inactive tasks (n>0) do not.
+How flow numbers are assigned to triggered tasks:
+  Active tasks (n=0) already have assigned flows; inactive tasks (n>0) do not.
   * If an interdependent group of triggered tasks includes active tasks, the
     flow will be assigned the existing flow numbers of those active tasks.
   * Otherwise the flow will be assigned all current active flow numbers.
@@ -62,16 +48,6 @@ Examples:
 
   # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
   $ cylc trigger test //1/a //1/b //1/c
-
- Flow numbers of triggered tasks are determined as follows:
-  Active tasks (n=0) already have existing flow numbers.
-   * default: merge active and existing flow numbers
-   * --flow=INT or "new": merge given and existing flow numbers
-   * --flow="none": ERROR (not valid for already-active tasks)
-  Inactive tasks (n>0) do not have flow numbers assigned:
-   * default: run with all active flow numbers
-   * --flow=INT or "new": run with the given flow numbers
-   * --flow="none": run as no-flow (activity will not flow on downstream)
 
 """
 
