@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 10
+set_test_number 12
 
 # Generate random name for symlink dirs to avoid any clashes with other tests
 SYM_NAME="$(mktemp -u)"
@@ -122,6 +122,13 @@ run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
 dump_std "$TEST_NAME"
 cmp_ok "${TEST_NAME}.stdout" << __EOF__
 INFO - No directory to clean at ${WORKFLOW_RUN_DIR}
+__EOF__
+# -----------------------------------------------------------------------------
+TEST_NAME="clean-non-exist-pattern"
+run_ok "$TEST_NAME" cylc clean "nope*"
+dump_std "$TEST_NAME"
+cmp_ok "${TEST_NAME}.stderr" << __EOF__
+WARNING - No stopped workflows matching nope*
 __EOF__
 # -----------------------------------------------------------------------------
 purge
