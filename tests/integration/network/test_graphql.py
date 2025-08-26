@@ -366,10 +366,12 @@ async def test_edges(harness):
 
 
 async def test_jobs(harness):
+    schd: Scheduler
     schd, client, w_tokens = harness
 
     # add a job
-    schd.data_store_mgr.insert_job('a', '1', 'submitted', job_config(schd))
+    itask = schd.pool._get_task_by_id('1/a')
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     schd.data_store_mgr.update_data_structure()
     j_tokens = w_tokens.duplicate(
         cycle='1',
