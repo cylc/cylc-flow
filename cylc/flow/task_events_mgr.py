@@ -1952,6 +1952,11 @@ class TaskEventsManager():
         >>> this([], 10, [5])
         [15, 5]
 
+        # There are no execution time limit polling intervals set - just
+        # repeat the execution polling interval until the time limit:
+        >>> this([10], 25, None)
+        [10, 10]
+
         # We have a list of execution time limit polling intervals,
         >>> this([10], 25, [5, 6, 7, 8])
         [10, 10, 10, 6, 7, 8]
@@ -1968,17 +1973,19 @@ class TaskEventsManager():
             size = int((time_limit - sum(delays)) / delays[-1])
             delays.extend([delays[-1]] * size)
 
-        # After the last delay before the execution time limit add the
-        # delay to get to the execution_time_limit
-        if len(time_limit_polling_intervals) == 1:
-            time_limit_polling_intervals.append(
-                time_limit_polling_intervals[0]
-            )
-        time_limit_polling_intervals[0] += time_limit - sum(delays)
+        if time_limit_polling_intervals:
+            # After the last delay before the execution time limit add the
+            # delay to get to the execution_time_limit
+            if len(time_limit_polling_intervals) == 1:
+                time_limit_polling_intervals.append(
+                    time_limit_polling_intervals[0]
+                )
+            time_limit_polling_intervals[0] += time_limit - sum(delays)
 
-        # After the execution time limit poll at execution time limit polling
-        # intervals.
-        delays += time_limit_polling_intervals
+            # After the execution time limit, poll at the
+            # execution time limit polling intervals.
+            delays += time_limit_polling_intervals
+
         return delays
 
     def add_event_timer(self, id_key: EventKey, event_timer) -> None:
