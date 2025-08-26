@@ -52,7 +52,7 @@ sed -i 's@CYLC_WORKFLOW_HOST=.*@CYLC_WORKFLOW_HOST=elephantshrew@' "${CONTACTFIL
 # Change source workflow and run vr:
 run_fail "${TEST_NAME_BASE}-runs" cylc vr "${WORKFLOW_NAME}"
 
-grep_ok "on elephantshrew." "${TEST_NAME_BASE}-runs.stderr"
+grep_ok "elephantshrew." "${TEST_NAME_BASE}-runs.stderr"
 
 # Clean Up:
 mv "${CONTACTFILE}.old" "$CONTACTFILE"
