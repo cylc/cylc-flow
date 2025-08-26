@@ -1786,10 +1786,10 @@ class WorkflowConfig:
                     try:
                         handler_template % handler_data
                     except (KeyError, ValueError) as exc:
-                        LOG.warning(
+                        raise WorkflowConfigError(
                             f'bad task event handler template'
                             f' {taskdef.name}: {handler_template}: {repr(exc)}'
-                        )
+                        ) from None
 
     def _check_special_tasks(self):
         """Check declared special tasks are valid, and detect special
