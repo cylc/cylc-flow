@@ -41,7 +41,7 @@ from cylc.flow import (
 )
 from cylc.flow.exceptions import (
     ClientTimeout,
-    ContactFileExists,
+    SchedulerAlive,
     CylcError,
     RequestError,
     WorkflowStopped,
@@ -158,6 +158,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
+        LOG.warning(
+            f"{self.workflow} {self.host}:{self.port}:"
+            f" Connection timed out ({self.timeout} ms)"
+        )
         contact_host, contact_port, *_ = get_location(self.workflow)
         if (
             contact_host != get_fqdn_by_host(self._orig_host)
@@ -177,7 +181,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         # behind a contact file?
         try:
             detect_old_contact_file(self.workflow)
-        except ContactFileExists:
+        except SchedulerAlive:
             # old contact file exists and the workflow process still alive
             return
         else:

@@ -25,7 +25,7 @@ import pytest
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import (
-    ContactFileExists,
+    SchedulerAlive,
     CylcError,
 )
 from cylc.flow.workflow_files import (
@@ -107,7 +107,7 @@ async def workflow(flow, scheduler, one_conf, run_dir):
 def test_detect_old_contact_file_running(workflow):
     """It should raise an error if the workflow is running."""
     # the workflow is running so we should get a ServiceFileError
-    with pytest.raises(ContactFileExists):
+    with pytest.raises(SchedulerAlive):
         detect_old_contact_file(workflow.id_)
     # the contact file is valid so should be left alone
     assert workflow.contact_file.exists()
@@ -234,7 +234,7 @@ def test_detect_old_contact_file_removal_errors(
     # try to remove the contact file
     if process_running:
         # this should error if the process is running
-        with pytest.raises(ContactFileExists):
+        with pytest.raises(SchedulerAlive):
             detect_old_contact_file(workflow.id_)
     else:
         detect_old_contact_file(workflow.id_)
