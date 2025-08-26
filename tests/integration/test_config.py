@@ -30,7 +30,6 @@ from cylc.flow.exceptions import (
     WorkflowConfigError,
     XtriggerConfigError,
 )
-from cylc.flow.graph_parser import GraphParseError
 from cylc.flow.parsec.exceptions import ListValueError
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
@@ -522,8 +521,9 @@ def test_xtrig_or_fails_validation(
             }
         }
     )
-    expected_msg = "'|' operator is not supported between xtriggers."
-    with pytest.raises(GraphParseError, match=expected_msg):
+    expected_msg = (
+        "Xtriggers cannot be used in conditional graph expressions:\n")
+    with pytest.raises(WorkflowConfigError, match=expected_msg):
         validate(id_)
 
 

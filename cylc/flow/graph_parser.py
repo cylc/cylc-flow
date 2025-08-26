@@ -186,7 +186,6 @@ class GraphParser:
 
     # Match @xtriggers.
     REC_XTRIG = re.compile(r'@[\w\-+%]+')
-    REC_XTRIG_OR = re.compile(r'@.*\|.*|.*\|.*@.*')
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
@@ -578,14 +577,11 @@ class GraphParser:
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
+
         _rights.update(*([rights] or []))
 
         for left in lefts:
             # Extract information about all nodes on the left.
-            if left and self.REC_XTRIG_OR.match(left):
-                raise GraphParseError(
-                    "'|' operator is not supported between xtriggers.")
-
             if left:
                 info = self.__class__.REC_NODES.findall(left)
                 expr = left
