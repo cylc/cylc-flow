@@ -462,7 +462,7 @@ class WorkflowConfig:
         self.mem_log("config.py: after get(sparse=False)")
 
         # These 2 must be called before call to init_cyclers(self.cfg):
-        self.set_exerimental_features()
+        self.set_experimental_features()
         self.process_utc_mode()
         self.process_cycle_point_tz()
 
@@ -616,7 +616,7 @@ class WorkflowConfig:
 
         skip_mode_validate(self.taskdefs)
 
-    def set_exerimental_features(self):
+    def set_experimental_features(self):
         all_ = self.cfg['scheduler']['experimental']['all']
         self.experimental = SimpleNamespace(**{
             key.replace(' ', '_'): value or all_
