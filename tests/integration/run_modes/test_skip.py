@@ -17,6 +17,12 @@
 """
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_outputs import TASK_OUTPUT_FAILED
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUCCEEDED,
+)
 
 
 async def test_settings_override_from_broadcast(
@@ -237,3 +243,34 @@ async def test_outputs_can_be_changed(
             ['1'], ['one'], [{'skip': {'outputs': 'succeeded'}}]
         )
         schd.submit_task_jobs(schd.pool.get_tasks())
+
+
+async def test_rerun_after_skip_mode_broadcast(
+    flow, one_conf, scheduler, start
+):
+    """Test re-running a task after it has been set to skip.
+
+    See https://github.com/cylc/cylc-flow/pull/6940
+    """
+    id_ = flow({
+        **one_conf,
+        "runtime": {
+            "one": {
+                "execution time limit": "PT1M",
+            },
+        },
+    })
+    schd: Scheduler = scheduler(id_, run_mode='live')
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        schd.submit_task_jobs([itask])
+        schd.task_events_mgr.process_message(
+            itask, 'CRITICAL', TASK_OUTPUT_FAILED
+        )
+        assert itask.state(TASK_STATUS_FAILED)
+
+        schd.broadcast_mgr.put_broadcast(
+            ['1'], ['root'], [{'run mode': 'skip'}]
+        )
+        schd.submit_task_jobs([itask])
+        assert itask.state(TASK_STATUS_SUCCEEDED)

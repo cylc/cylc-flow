@@ -1046,7 +1046,8 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('process check timeout', VDR.V_INTERVAL, DurationFloat(10),
                  desc='''
-                Maximum time for the `cylc play` and `cylc vr` commands to wait
+                Maximum time for the ``cylc play`` and ``cylc vr`` commands
+                to wait
                 for a remote process that checks if an unresponsive scheduler
                 is still alive (for workflows with existing contact files).
 
