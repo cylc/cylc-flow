@@ -1273,6 +1273,12 @@ class TaskJobManager:
                     # bad_hosts:
                     self.bad_hosts -= exc.hosts_consumed
                     self._set_retry_timers(itask, rtconfig)
+                # Provide dummy platform otherwise it will incorrectly show as
+                # the default localhost platform in the data store:
+                itask.platform = {
+                    'name': rtconfig['platform'],
+                    'job runner': '',
+                }
                 self._prep_submit_task_job_error(itask, msg, exc)
                 return False
 
@@ -1324,15 +1330,20 @@ class TaskJobManager:
         itask.is_manual_submit = False
         # job failed in preparation i.e. is really preparation-failed rather
         # than submit-failed
-        # provide a dummy job config - this info will be added to the data
-        # store
         try_num = itask.get_try_num()
-        itask.jobs.append({
-            'task_id': itask.identity,
-            'platform': itask.platform,
-            'submit_num': itask.submit_num,
-            'try_num': try_num,
-        })
+        if not itask.jobs or (
+            itask.jobs[-1]['submit_num'] != itask.submit_num
+        ):
+            # provide a dummy job config - this info will be added to the data
+            # store
+            itask.jobs.append({
+                'task_id': itask.identity,
+                'platform': itask.platform,
+                'job_runner_name': itask.platform['job runner'],
+                'submit_num': itask.submit_num,
+                'try_num': try_num,
+                'flow_nums': itask.flow_nums,
+            })
         # create a DB entry for the submit-failed job
         self.workflow_db_mgr.put_insert_task_jobs(
             itask,
@@ -1402,10 +1413,10 @@ class TaskJobManager:
 
     def get_job_conf(
         self,
-        itask,
-        rtconfig,
-        job_file_path=None,
-        job_d=None,
+        itask: 'TaskProxy',
+        rtconfig: dict,
+        job_file_path: Optional[str] = None,
+        job_d: Optional[str] = None,
     ):
         """Return a job config.
 
