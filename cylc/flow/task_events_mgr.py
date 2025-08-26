@@ -548,7 +548,7 @@ class TaskEventsManager():
             itask.platform[key]
         )
 
-    def _get_workflow_platforms_conf(self, itask, key):
+    def _get_workflow_platforms_conf(self, itask: 'TaskProxy', key: str):
         """Return top level [runtime] items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         return (
@@ -1844,7 +1844,7 @@ class TaskEventsManager():
         }
         # fmt: on
 
-    def _reset_job_timers(self, itask):
+    def _reset_job_timers(self, itask: 'TaskProxy'):
         """Set up poll timer and timeout for task."""
 
         if itask.transient:
@@ -1898,18 +1898,18 @@ class TaskEventsManager():
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
         # Log timeout and polling schedule
         message = f"health: {timeout_key}={timeout_str}"
-        # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
-            items = []  # [(number of item - 1, item), ...]
+            # Group identical consecutive delays as N*DELAY,...
+            items: List[List[float]] = []  # [[number of item, item], ...]
             for delay in itask.poll_timer.delays:
                 if items and items[-1][1] == delay:
                     items[-1][0] += 1
                 else:
-                    items.append([0, delay])
+                    items.append([1, delay])
             message += ', polling intervals='
             for num, item in items:
-                if num:
-                    message += '%d*' % (num + 1)
+                if num > 1:
+                    message += f'{num}*'
                 message += '%s,' % intvl_as_str(item)
             message += '...'
         LOG.debug(f"[{itask}] {message}")
@@ -1920,7 +1920,7 @@ class TaskEventsManager():
     def process_execution_polling_intervals(
         polling_intervals: List[float],
         time_limit: float,
-        time_limit_polling_intervals: List[float]
+        time_limit_polling_intervals: Optional[List[float]]
     ) -> List[float]:
         """Create a list of polling times.
 
@@ -1952,6 +1952,11 @@ class TaskEventsManager():
         >>> this([], 10, [5])
         [15, 5]
 
+        # There are no execution time limit polling intervals set - just
+        # repeat the execution polling interval until the time limit:
+        >>> this([10], 25, None)
+        [10, 10]
+
         # We have a list of execution time limit polling intervals,
         >>> this([10], 25, [5, 6, 7, 8])
         [10, 10, 10, 6, 7, 8]
@@ -1968,17 +1973,19 @@ class TaskEventsManager():
             size = int((time_limit - sum(delays)) / delays[-1])
             delays.extend([delays[-1]] * size)
 
-        # After the last delay before the execution time limit add the
-        # delay to get to the execution_time_limit
-        if len(time_limit_polling_intervals) == 1:
-            time_limit_polling_intervals.append(
-                time_limit_polling_intervals[0]
-            )
-        time_limit_polling_intervals[0] += time_limit - sum(delays)
+        if time_limit_polling_intervals:
+            # After the last delay before the execution time limit add the
+            # delay to get to the execution_time_limit
+            if len(time_limit_polling_intervals) == 1:
+                time_limit_polling_intervals.append(
+                    time_limit_polling_intervals[0]
+                )
+            time_limit_polling_intervals[0] += time_limit - sum(delays)
 
-        # After the execution time limit poll at execution time limit polling
-        # intervals.
-        delays += time_limit_polling_intervals
+            # After the execution time limit, poll at the
+            # execution time limit polling intervals.
+            delays += time_limit_polling_intervals
+
         return delays
 
     def add_event_timer(self, id_key: EventKey, event_timer) -> None:
