@@ -57,7 +57,7 @@ SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
-PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
+PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*(\))')
 
 HOST_SELECTION_METHODS = {
     'definition order': lambda goodhosts: goodhosts[0],
