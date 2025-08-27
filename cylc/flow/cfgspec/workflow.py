@@ -435,7 +435,7 @@ with Conf(
                 This reimplements "suicide triggers" as "expire triggers".
 
                 * When the condition is met, the task will generate the
-                  ``expired`` output rather than just being removed from the pool.
+                  ``expired`` output rather than just being removed.
                 * The triggered task's
                   `flow.cylc[runtime][<namespace>]completion condition`
                   will be automatically modified so that expiry completes the
