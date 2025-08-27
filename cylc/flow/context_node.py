@@ -15,13 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Self
-    # FROM: Python 3.7
-    # TO: Python 3.11
-    from typing_extensions import Self
+from typing import (
+    Optional,
+    Self,
+)
 
 
 class ContextNode():

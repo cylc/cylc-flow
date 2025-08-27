@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     NoReturn,
     Optional,
     Set,
@@ -82,7 +83,6 @@ from cylc.flow.flow_mgr import (
     FlowMgr,
     stringify_flow_nums,
 )
-
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -175,11 +175,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy

@@ -23,9 +23,6 @@ from typing import (
     List,
     Optional,
     TYPE_CHECKING,
-    # Tuple,
-    # Union,
-    # overload,
 )
 
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
@@ -36,8 +33,6 @@ from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.cycling.loader import get_point
 
 if TYPE_CHECKING:
-    # from typing_extensions import Literal
-
     from cylc.flow.task_pool import Pool
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.cycling import PointBase

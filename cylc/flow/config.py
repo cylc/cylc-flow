@@ -2363,21 +2363,18 @@ class WorkflowConfig:
     def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
-
         Where a "terminal output" is an output for a task at the end of a
         graph string, such as "end" in `start => middle => end`.
 
         Raises: WorkflowConfigError if a custom output is not defined.
         """
-        # BACK COMPAT: (On drop 3.7): Can be simplified with walrus :=
-        # if (b := a[1].strip("?")) not in TASK_QUALIFIERS
-        terminal_outputs = [
-            (a[0].strip("!"), a[1].strip("?"))
-            for a in (t.split(':') for t in terminals if ":" in t)
-            if (a[1].strip("?")) not in TASK_QUALIFIERS
-        ]
-
-        for task, output in terminal_outputs:
+        for t in terminals:
+            if ':' not in t:
+                continue
+            task, output = t.split(':')
+            if (output := output.strip('?')) in TASK_QUALIFIERS:
+                continue
+            task = task.strip('!')
             if output not in self.cfg['runtime'][task]['outputs']:
                 raise WorkflowConfigError(
                     f"Undefined custom output: {task}:{output}"
