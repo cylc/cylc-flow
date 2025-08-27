@@ -471,6 +471,11 @@ def read_and_proc(
     template_vars = merge_template_vars(template_vars, extra_vars)
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
+    # Add CYLC_SOURCE_DIRECTORY to template variables.
+    sourcepath = get_workflow_source_dir(Path(fpath).parent)[1]
+    template_vars['CYLC_WORKFLOW_SRC_DIR'] = (
+        sourcepath.readlink() if sourcepath else Path(fpath).parent)
+
     # Fail if templating_detected ≠ hashbang
     process_with = hashbang_and_plugin_templating_clash(
         extra_vars[TEMPLATING_DETECTED], flines
