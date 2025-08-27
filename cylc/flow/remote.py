@@ -79,8 +79,10 @@ def get_proc_ancestors():
 def watch_and_kill(proc):
     """Kill proc if my PPID (etc.) changed - e.g. ssh connection dropped."""
     gpa = get_proc_ancestors()
+    # Allow customising the interval to allow tests to run faster:
+    interval = float(os.getenv('CYLC_PROC_POLL_INTERVAL', 60))
     while True:
-        sleep(60)
+        sleep(interval)
         if proc.poll() is not None:
             break
         if get_proc_ancestors() != gpa:
