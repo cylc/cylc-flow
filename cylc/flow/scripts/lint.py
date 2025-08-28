@@ -87,6 +87,7 @@ import cylc.flow.flags
 from cylc.flow import LOG, job_runner_handlers
 from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.exceptions import CylcError
+from cylc.flow.paresec.fileparse import JINJA2_SHEBANG
 from cylc.flow.id_cli import parse_id
 from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
@@ -527,7 +528,6 @@ STYLE_GUIDE = (
 SECTION2 = r'\[\[\s*{}\s*\]\]'
 SECTION3 = r'\[\[\[\s*{}\s*\]\]\]'
 FILEGLOBS = ['*.rc', '*.cylc']
-JINJA2_SHEBANG = '#!jinja2'
 DEPENDENCY_SECTION_MSG = {
     'text': (
         '"[scheduling][dependencies][<recurrence>]graph =" -> '

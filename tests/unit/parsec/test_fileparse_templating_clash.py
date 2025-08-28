@@ -22,14 +22,15 @@ from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 
 
 @pytest.mark.parametrize(
-    'templating, hashbang',
+    'templating, hashbang, msg',
     [
-        ['other', 'jinja2'],
-        ['jinja2', 'other']
+        ['other', '#!jinja2', 'A plugin'],
+        ['jinja2', '#!other', 'A plugin'],
+        ['template variables', '', 'No shebang line']
     ]
 )
 def test_read_and_proc_raises_TemplateVarLanguageClash(
-    monkeypatch, tmp_path, templating, hashbang
+    monkeypatch, tmp_path, templating, hashbang, msg
 ):
     """func fails when diffn't templating engines set in hashbang and plugin.
     """
@@ -45,10 +46,10 @@ def test_read_and_proc_raises_TemplateVarLanguageClash(
 
     file_ = tmp_path / 'flow.cylc'
     file_.write_text(
-        f'#!{hashbang}\nfoo'
+        f'{hashbang}\nfoo'
     )
 
-    with pytest.raises(TemplateVarLanguageClash) as exc:
+    with pytest.raises(TemplateVarLanguageClash, match=msg) as exc:
         read_and_proc(file_)
 
     assert exc.type == TemplateVarLanguageClash

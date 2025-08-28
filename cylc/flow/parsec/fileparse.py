@@ -114,6 +114,7 @@ EXTRA_VARS_TEMPLATE: t.Dict[str, t.Any] = {
     TEMPLATE_VARIABLES: {},
     TEMPLATING_DETECTED: None
 }
+JINJA2_SHEBANG = '#!jinja2'
 
 
 def get_cylc_env_vars() -> t.Dict[str, str]:
@@ -483,7 +484,7 @@ def read_and_proc(
             not process_with and
             process_with != 'jinja2'
         ):
-            flines.insert(0, '#!jinja2')
+            flines.insert(0, JINJA2_SHEBANG)
 
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
@@ -553,6 +554,10 @@ def hashbang_and_plugin_templating_clash(
             f"A plugin set the templating engine to {templating}"
             f" which does not match {flines[0]} set in flow.cylc."
         )
+    
+    if templating and not hashbang:
+        raise TemplateVarLanguageClash(
+            f'No shebang line ({JINJA2_SHEBANG}) in config file.')
     return hashbang
 
 
