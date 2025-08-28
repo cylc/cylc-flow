@@ -42,12 +42,17 @@ def answer_prompts(monkeypatch, *responses):
 
     def _input(prompt):
         nonlocal count, responses
+        responses = responses
         count += 1
         print(prompt)  # send the prompt to stdout for testing
         return responses[count]
 
     monkeypatch.setattr(
         'cylc.flow.scripts.validate_reinstall._input',
+        _input,
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.reinstall._input',
         _input,
     )
 
@@ -68,8 +73,8 @@ async def test_prompt_for_running_workflow_with_no_changes(
     and "cylc vr" to contine an old one (picking up any new changes in the
     process).
 
-    This works fine, unless there are no changes to reinstall, in which case
-    the "cylc vr" command exits (nothing to do).
+    If there are no changes to reinstall (or if the user chooses not to
+    resintall) the "cylc vr" prompts whether to continue or do nothing.
 
     The "nothing to reinstall" situation can be interpreted two ways:
     1. Unexpected error, the user expected there to be something to reinstall,
@@ -85,7 +90,7 @@ async def test_prompt_for_running_workflow_with_no_changes(
     )
 
     # answer "y" to prompt
-    answer_prompts(monkeypatch, 'y')
+    answer_prompts(monkeypatch, 'n', 'y')
 
     # attempt to restart it with "cylc vr"
     ret = await vr_cli(
@@ -95,11 +100,12 @@ async def test_prompt_for_running_workflow_with_no_changes(
     assert ret
 
     # the user should have been warned that there were no changes to reinstall
-    assert log_filter(caplog, contains='No changes to reinstall')
+    outerr = capsys.readouterr()[0]
+    assert 'Reinstall would make the above changes' in outerr
 
     # they should have been presented with a prompt
     # (to which we have hardcoded the response "y")
-    assert 'Restart anyway?' in capsys.readouterr()[0]
+    assert 'Restart anyway?' in outerr
 
     # the workflow should have restarted
     assert len(cleanup_sysargv_calls) == 1
@@ -113,7 +119,7 @@ async def test_reinstall_abort(
 ):
     """It should abort reinstallation according to user prompt."""
     # answer 'n' to prompt
-    answer_prompts(monkeypatch, 'n')
+    answer_prompts(monkeypatch, 'n', 'n')
 
     # attempt to restart it with "cylc vr"
     ret = await vr_cli(
@@ -123,4 +129,4 @@ async def test_reinstall_abort(
 
     # they should have been presented with a prompt
     # (to which we have hardcoded the response "n")
-    assert 'Restart anyway?' in capsys.readouterr()[0]
+    assert 'Continue' in capsys.readouterr()[0]

@@ -18,12 +18,18 @@
 
 """cylc validate-reinstall [OPTIONS] ARGS
 
-Validate, reinstall and apply changes to a workflow.
+Validate, reinstall, and reload or restart a workflow.
 
-Validate and reinstall a workflow then either:
+If there are source changes and the user chooses (via prompt) to reinstall, or
+if there are no changes but the user chooses (via prompt) to continue anyway:
+* reload the workflow, if it is running) (see `cylc reload`)
+* or restart the workflow, if it is stopped (see `cylc play`)
 
-* "Reload" the workflow (if it is running),
-* or "play" it (if it is stopped).
+If the command is not running interactively, the command will automatically
+reinstall and reload or restart if there are any source changes.
+
+With --yes (skip prompts) the command will reinstall and reload or restart
+regardless of source changes.
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
@@ -47,8 +53,6 @@ from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from optparse import Values
-
-from ansimarkup import parse as cparse
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
@@ -95,8 +99,6 @@ VR_OPTIONS = combine_options(
 )
 
 _input = input  # to enable testing
-
-NO_CHANGES_STR = 'No changes to reinstall'
 
 
 def get_option_parser() -> COP:
@@ -213,30 +215,30 @@ async def vr_cli(
     )
 
     if not reinstall_ok:
-        # No changes, OR user said No to the reinstall prompt: abort.
-        if (
-            not workflow_running
-            and is_terminal()
-            and not options.skip_interactive
-        ):
-            # there are no changes to install but the workflow isn't running
-            # => ask the user if they want to restart it anyway
-            usr = None
-            while usr not in ['y', 'n']:
-                LOG.warning(NO_CHANGES_STR)
-                usr = _input(
-                    cparse('<bold>Restart anyway?</bold> [y/n]: ')
-                ).lower()
-            if usr == 'n':
-                return False
-        else:
-            # the are no changes to install and the workflow is running
-            # => there is nothing for us to do here
-            LOG.warning(
-                f'{NO_CHANGES_STR}: No reinstall or'
-                f' {"reload" if workflow_running else "play"} required.'
-            )
+        # No changes OR user said No to the reinstall prompt.
+
+        # If not a terminal and not --yes do nothing.
+        if not is_terminal() and not options.skip_interactive:
             return False
+
+        # Else if not --yes, prompt user to continue or not.
+        if not options.skip_interactive:
+            usr = None
+            if not workflow_running:
+                # No changes to install, and the workflow is not running.
+                # Can still restart with no changes.
+                action = "Restart"
+            else:
+                # No changes to install, and the workflow is running.
+                # Reload is probably pointless, but not necessarily (the user
+                # could modify the run dir and do 'vr' to restart or reload).
+                action = "Reload"
+            while usr not in ['y', 'n']:
+                usr = _input(
+                    cparse(f'<bold>{action} anyway?</bold> [y/n]: ')
+                ).lower()
+                if usr == 'n':
+                    return False
 
     # Run "cylc reload" (if workflow is running or paused)
     if workflow_running:
