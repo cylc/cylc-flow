@@ -49,13 +49,17 @@ pyproject.toml configuration:
    rulesets = ['style', '728']  # Sets default rulesets to check
    max-line-length = 130        # Max line length for linting
 """
+from collections import Counter
 import functools
+from pathlib import Path
 import pkgutil
 import re
 import shutil
 import sys
-from collections import Counter
-from pathlib import Path
+from tomllib import (  # type: ignore[no-redef]
+    TOMLDecodeError,
+    loads as toml_loads,
+)
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -64,29 +68,23 @@ from typing import (
     Dict,
     Iterator,
     List,
+    Literal,
     Optional,
     Union,
 )
 
-try:
-    # BACK COMPAT: tomli
-    #   Support for Python versions before tomllib was added to the
-    #   standard library.
-    # FROM: Python 3.7
-    # TO: Python: 3.10
-    from tomli import TOMLDecodeError, loads as toml_loads
-except ImportError:
-    from tomllib import (  # type: ignore[no-redef]
-        loads as toml_loads,
-        TOMLDecodeError,
-    )
-
 from ansimarkup import parse as cparse
 
-import cylc.flow.flags
-from cylc.flow import LOG, job_runner_handlers
-from cylc.flow.cfgspec.workflow import SPEC, upg
+from cylc.flow import (
+    LOG,
+    job_runner_handlers,
+)
+from cylc.flow.cfgspec.workflow import (
+    SPEC,
+    upg,
+)
 from cylc.flow.exceptions import CylcError
+import cylc.flow.flags
 from cylc.flow.id_cli import parse_id
 from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.loggingutil import set_timestamps
@@ -97,19 +95,14 @@ from cylc.flow.option_parsers import (
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scripts.cylc import DEAD_ENDS
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.terminal import cli_function
 
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
 
 LINT_TABLE = ['tool', 'cylc', 'lint']
@@ -1033,7 +1026,7 @@ def _merge_cli_with_tomldata(
     if isinstance(clidata[RULESETS][0], list):
         clidata[RULESETS] = clidata[RULESETS][0]
 
-    output = {}
+    output: dict[str, Any] = {}
 
     # Combine 'ignore' sections:
     output[IGNORE] = sorted(set(clidata[IGNORE] + tomldata[IGNORE]))
@@ -1041,15 +1034,9 @@ def _merge_cli_with_tomldata(
     # Replace 'rulesets' from toml with those from CLI if they exist:
 
     if override_cli_default_rules:
-        output[RULESETS] = (
-            tomldata[RULESETS] if tomldata[RULESETS]
-            else clidata[RULESETS]
-        )
+        output[RULESETS] = tomldata[RULESETS] or clidata[RULESETS]
     else:
-        output[RULESETS] = (
-            clidata[RULESETS] if clidata[RULESETS]
-            else tomldata[RULESETS]
-        )
+        output[RULESETS] = clidata[RULESETS] or tomldata[RULESETS]
 
     # Return 'exclude' and 'max-line-length' for the tomldata:
     output[EXCLUDE] = tomldata[EXCLUDE]

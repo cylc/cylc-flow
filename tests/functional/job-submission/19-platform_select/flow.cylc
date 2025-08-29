@@ -15,10 +15,11 @@ purpose = """
         R1 = """
             host_no_subshell
             localhost_subshell
-            platform_subshell:submit-fail? => fin_platform
-            platform_no_subshell:submit-fail? => fin_platform
-            host_subshell:submit-fail? => fin_host
-            host_subshell_backticks:submit-fail? => fin_host
+            platform_subshell:submit-fail?
+            platform_no_subshell:submit-fail?
+            platform_subshell_suffix:submit-fail?
+            host_subshell:submit-fail?
+            host_subshell_backticks:submit-fail?
         """
 
 [runtime]
@@ -35,6 +36,9 @@ purpose = """
     [[platform_subshell]]
         platform = $(echo "improbable platform name")
 
+    [[platform_subshell_suffix]]
+        platform = prefix-$( echo middle )-suffix
+
     [[host_subshell]]
         [[[remote]]]
             host = $(echo "improbable host name")
@@ -46,9 +50,3 @@ purpose = """
     [[localhost_subshell]]
         [[[remote]]]
             host = $(echo "localhost4.localdomain4")
-
-    [[fin_platform]]
-        script = cylc remove "${CYLC_WORKFLOW_ID}//1/platform_*"
-
-    [[fin_host]]
-        script = cylc remove "${CYLC_WORKFLOW_ID}//1/host_subshell*"

@@ -46,30 +46,24 @@ def pythonpath_manip():
 
 pythonpath_manip()
 
-if sys.version_info[:2] > (3, 11):
-    from importlib.metadata import (
-        entry_points,
-        files,
-    )
-else:
-    # BACK COMPAT: importlib_metadata
-    #   importlib.metadata was added in Python 3.8. The required interfaces
-    #   were completed by 3.12. For lower versions we must use the
-    #   importlib_metadata backport.
-    # FROM: Python 3.7
-    # TO: Python: 3.12
-    from importlib_metadata import (
-        entry_points,
-        files,
-    )
-
 import argparse
 from contextlib import contextmanager
-from typing import Iterator, Optional, Tuple
+from importlib.metadata import (
+    entry_points,
+    files,
+)
+from typing import (
+    Iterator,
+    Optional,
+    Tuple,
+)
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import __version__, iter_entry_points
+from cylc.flow import (
+    __version__,
+    iter_entry_points,
+)
 from cylc.flow.option_parsers import (
     format_help_headings,
     format_shell_examples,

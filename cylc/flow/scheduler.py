@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     NoReturn,
     Optional,
     Set,
@@ -82,7 +83,6 @@ from cylc.flow.flow_mgr import (
     FlowMgr,
     stringify_flow_nums,
 )
-
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -175,11 +175,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
@@ -555,8 +550,22 @@ class Scheduler:
                     timer.reset()
                 self.timers[event] = timer
 
-        if self.is_restart and not self.pool.get_tasks():
-            # This workflow completed before restart; wait for intervention.
+        if self.is_restart and (
+            # workflow has completed
+            not self.pool.get_tasks()
+            # workflow has hit the "stop after cycle point"
+            or (
+                self.config.stop_point
+                and all(
+                    cycle > self.config.stop_point
+                    for cycle in {
+                        itask.point for itask in self.pool.get_tasks()
+                    }
+                )
+            )
+        ):
+            # This workflow will shut down immediately once restarted
+            # => Give the user a grace period to intervene first
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].reset()
                 self.is_restart_timeout_wait = True
@@ -1144,7 +1153,7 @@ class Scheduler:
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
         # one is starting
-        # NOTE: raises ContactFileExists if workflow is running
+        # NOTE: raises SchedulerAlive if workflow is running
         workflow_files.detect_old_contact_file(self.workflow)
 
         # Extract contact data.

@@ -21,10 +21,8 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     TYPE_CHECKING,
-    # Tuple,
-    # Union,
-    # overload,
 )
 
 from metomi.isodatetime.exceptions import ISO8601SyntaxError
@@ -35,8 +33,6 @@ from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.cycling.loader import get_point
 
 if TYPE_CHECKING:
-    # from typing_extensions import Literal
-
     from cylc.flow.task_pool import Pool
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.cycling import PointBase
@@ -78,6 +74,8 @@ if TYPE_CHECKING:
 def filter_ids(
     pool: 'Pool',
     ids: 'Iterable[str]',
+    icp: 'PointBase',
+    fcp: 'Optional[PointBase]',
     *,
     warn: 'bool' = True,
     out: 'IDTokens' = IDTokens.Task,
@@ -112,6 +110,7 @@ def filter_ids(
     _cycles: 'List[PointBase]' = []
     _tasks: 'List[TaskProxy]' = []
     _not_matched: 'List[str]' = []
+    _invalid: 'List[str]' = []
 
     # enable / disable pattern matching
     match: Callable[[Any, Any], bool]
@@ -138,7 +137,7 @@ def filter_ids(
         try:
             id_tokens_map[id_] = Tokens(id_, relative=True)
         except ValueError:
-            _not_matched.append(id_)
+            _invalid.append(id_)
             LOG.warning(f'Invalid ID: {id_}')
 
     for id_, tokens in id_tokens_map.items():
@@ -174,6 +173,19 @@ def filter_ids(
             task = tokens[IDTokens.Task.value]
             task_sel_raw = tokens.get(IDTokens.Task.value + '_sel')
             task_sel = task_sel_raw or '*'
+
+            # support ^/$ derefencing of the initial and final cycle points
+            if cycle == '^':
+                cycle = str(icp)
+            elif cycle == '$':
+                if not fcp:
+                    _invalid.append(id_)
+                    LOG.warning(
+                        'ID references final cycle point, but none is set:'
+                        f' {id_}'
+                    )
+                cycle = str(fcp)
+
             for icycle, itasks in pool.items():
                 if not point_match(icycle, cycle, pattern_match):
                     continue
@@ -208,7 +220,9 @@ def filter_ids(
             raise NotImplementedError
 
         if not (cycles or tasks):
-            _not_matched.append(id_)
+            _not_matched.append(
+                id_.replace('^', str(icp)).replace('$', str(fcp))
+            )
             if warn:
                 LOG.warning(f"No active tasks matching: {id_}")
         else:
@@ -227,7 +241,7 @@ def filter_ids(
             if icycle in pool:
                 _tasks.extend(pool[icycle].values())
         ret = _tasks
-    return ret, _not_matched
+    return ret, _not_matched, _invalid
 
 
 def point_match(

@@ -27,20 +27,20 @@ jobs:
       fail-fast: false # don't stop on first failure
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.7', '3.8', '3.10', '3.11', '3.12', '3']
+        python-version: ['3.12', '3']
         include:
           - os: 'macos-latest'
-            python-version: '3.8'  # oldest version with arm64 builds
+            python-version: '3.12' # oldest version we support
           # non-utc timezone test
           - os: 'ubuntu-latest'
-            python-version: '3.9'  # not the oldest, not the most recent version
+            python-version: '3'
             time-zone: 'XXX-09:35'
     env:
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -111,7 +111,7 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -154,10 +154,10 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
 
       - name: Codecov upload
         uses: codecov/codecov-action@v5

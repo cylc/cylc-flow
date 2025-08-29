@@ -220,7 +220,7 @@ async def run(*ids: str, opts: 'Values') -> None:
         workflows, multi_mode = await scan(workflows, multi_mode)
 
         if not workflows:
-            LOG.warning(f"No workflows matching {', '.join(ids)}")
+            LOG.warning(f"No stopped workflows matching {', '.join(ids)}")
             return
 
         workflows.sort()

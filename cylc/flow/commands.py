@@ -92,7 +92,6 @@ from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
 )
 from cylc.flow.taskdef import generate_graph_children
@@ -736,6 +735,8 @@ def _force_trigger_tasks(
 
     warnings_flow_none = []
     warnings_has_job = []
+    active_completed_outputs = {}
+
     for itask in active:
         # Find active group start tasks (parentless, or with only off-group
         # prerequisites) and set all prerequisites (to trigger them now).
@@ -749,7 +750,7 @@ def _force_trigger_tasks(
         # Remove non group start and final-status group start tasks, and
         # trigger them from scratch (so only the TaskDef matters).
 
-        # Waiting group start tasks are not removed, but a reload would
+        # Group start tasks are not removed, but a reload would
         # replace them, so using the TaskDef is fine.
 
         if not any(
@@ -765,13 +766,20 @@ def _force_trigger_tasks(
                 )
                 continue
 
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                for (label, msg, completed) in itask.state.outputs:
+                    if completed:
+                        active_completed_outputs[
+                            (str(itask.point), itask.tdef.name)] = (label, msg)
+
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                # This is a live active group start task
                 warnings_has_job.append(str(itask))
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
-            elif itask.state(TASK_STATUS_WAITING):
-                # This is a waiting active group start task...
+            else:
+                # This is a non-live active group start task...
                 # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
                 # ... and satisfy all xtrigger prerequisites.
@@ -783,8 +791,7 @@ def _force_trigger_tasks(
 
                 # Trigger group start task.
                 schd.pool.queue_or_trigger(itask, on_resume)
-            else:
-                active_to_remove.append(itask)
+
         else:
             active_to_remove.append(itask)
 
@@ -827,7 +834,8 @@ def _force_trigger_tasks(
                 set_all=True  # prerequisites
             )
         else:
-            off_flow_prereqs = {
+            # Off-flow prereqs to satisfy, for the triggered flow:
+            prereqs_to_set = {
                 PrereqTuple(str(key.point), str(key.task), key.output)
                 for pre in tdef.get_prereqs(point)
                 for key in pre.keys()
@@ -839,15 +847,24 @@ def _force_trigger_tasks(
                 for key in pre.keys()
                 if (key.task, str(key.point)) in group_ids
             )
+            # Prereqs to satisfy, from already-completed outputs of active
+            # group start tasks, for the triggered flow.
+            prereqs_to_set.update({
+                PrereqTuple(str(key.point), str(key.task), key.output)
+                for pre in tdef.get_prereqs(point)
+                for key in pre.keys()
+                if (str(key.point), key.task) in active_completed_outputs
+            })
+
             if (
-                off_flow_prereqs
+                prereqs_to_set
                 or tdef.get_xtrigs(point)
                 or tdef.external_triggers
             ):
                 # Satisfy any off-group prereqs or ext/xtriggers to spawn task.
                 jtask = schd.pool._set_prereqs_tdef(
                     point, tdef,
-                    off_flow_prereqs,
+                    prereqs_to_set,
                     {"all": True},  # xtriggers
                     flow_nums,
                     flow_wait,

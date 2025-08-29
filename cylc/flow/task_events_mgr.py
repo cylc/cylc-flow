@@ -548,7 +548,7 @@ class TaskEventsManager():
             itask.platform[key]
         )
 
-    def _get_workflow_platforms_conf(self, itask, key):
+    def _get_workflow_platforms_conf(self, itask: 'TaskProxy', key: str):
         """Return top level [runtime] items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         return (
@@ -794,15 +794,7 @@ class TaskEventsManager():
             self._process_message_submitted(itask, event_time, forced)
             self.spawn_children(itask, TASK_OUTPUT_SUBMITTED, forced)
 
-            # ... but either way update the job ID in the job proxy (it only
-            # comes in via the submission message).
-            if itask.run_mode != RunMode.SIMULATION:
-                job_tokens = itask.tokens.duplicate(
-                    job=str(itask.submit_num)
-                )
-                self.data_store_mgr.delta_job_attr(
-                    job_tokens, 'job_id', itask.summary['submit_method_id'])
-            else:
+            if itask.run_mode == RunMode.SIMULATION:
                 # In simulation mode submitted implies started:
                 self.spawn_children(itask, TASK_OUTPUT_STARTED, forced)
 
@@ -1354,9 +1346,8 @@ class TaskEventsManager():
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_FAILED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -1394,12 +1385,11 @@ class TaskEventsManager():
 
     def _process_message_started(self, itask, event_time, forced):
         """Helper for process_message, handle a started message."""
+        self.data_store_mgr.delta_job_time(itask, 'started', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_RUNNING)
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.info(f"[{itask}] Vacated job restarted")
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'started', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -1430,9 +1420,8 @@ class TaskEventsManager():
         Ignore forced.
         """
 
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(job_tokens, 'finished', event_time)
-        self.data_store_mgr.delta_job_state(job_tokens, TASK_STATUS_SUCCEEDED)
+        self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUCCEEDED)
         itask.set_summary_time('finished', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -1470,7 +1459,6 @@ class TaskEventsManager():
             "time_submit_exit": event_time,
             "submit_status": 1,
         })
-        itask.summary['submit_method_id'] = None
         LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if (
             forced
@@ -1505,13 +1493,10 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
 
         # Register newly submit-failed job with the database and datastore.
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_FAIL_FLAG, forced=forced)
-        self.data_store_mgr.delta_job_state(
-            job_tokens,
-            TASK_STATUS_SUBMIT_FAILED
-        )
+        self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
         self._reset_job_timers(itask)
 
         return no_retries
@@ -1560,24 +1545,12 @@ class TaskEventsManager():
         # Do after itask has changed state
         self._insert_task_job(
             itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG, forced=forced)
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
-        self.data_store_mgr.delta_job_time(
-            job_tokens,
-            'submitted',
-            event_time,
-        )
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
         if itask.run_mode == RunMode.SIMULATION:
             # Simulate job started as well.
-            self.data_store_mgr.delta_job_time(
-                job_tokens,
-                'started',
-                event_time,
-            )
+            self.data_store_mgr.delta_job_time(itask, 'started', event_time)
         else:
-            self.data_store_mgr.delta_job_state(
-                job_tokens,
-                TASK_STATUS_SUBMITTED,
-            )
+            self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMITTED)
 
     def _insert_task_job(
         self,
@@ -1610,11 +1583,9 @@ class TaskEventsManager():
             except IndexError:
                 # we do not have access to the job config (e.g. Scheduler
                 # crashed) - https://github.com/cylc/cylc-flow/pull/6326
-                job_id = itask.tokens.duplicate(
-                    job=itask.submit_num
-                ).relative_id
                 LOG.warning(
-                    f'Could not find the job configuration for "{job_id}".'
+                    'Could not find the job configuration for '
+                    f'"{itask.job_tokens.relative_id}".'
                 )
                 itask.jobs.append({"submit_num": itask.submit_num})
                 job_conf = itask.jobs[-1]
@@ -1631,8 +1602,7 @@ class TaskEventsManager():
 
         # insert job into data store
         self.data_store_mgr.insert_job(
-            itask.tdef.name,
-            itask.point,
+            itask,
             job_status,
             {
                 **job_conf,
@@ -1655,7 +1625,7 @@ class TaskEventsManager():
                 # preparation started due to intelligent host (and or
                 # platform) selection
                 'platform_name': itask.platform['name'],
-            }
+            },
         )
 
     def _setup_job_logs_retrieval(self, itask, event) -> None:
@@ -1874,7 +1844,7 @@ class TaskEventsManager():
         }
         # fmt: on
 
-    def _reset_job_timers(self, itask):
+    def _reset_job_timers(self, itask: 'TaskProxy'):
         """Set up poll timer and timeout for task."""
 
         if itask.transient:
@@ -1928,18 +1898,18 @@ class TaskEventsManager():
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
         # Log timeout and polling schedule
         message = f"health: {timeout_key}={timeout_str}"
-        # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
-            items = []  # [(number of item - 1, item), ...]
+            # Group identical consecutive delays as N*DELAY,...
+            items: List[List[float]] = []  # [[number of item, item], ...]
             for delay in itask.poll_timer.delays:
                 if items and items[-1][1] == delay:
                     items[-1][0] += 1
                 else:
-                    items.append([0, delay])
+                    items.append([1, delay])
             message += ', polling intervals='
             for num, item in items:
-                if num:
-                    message += '%d*' % (num + 1)
+                if num > 1:
+                    message += f'{num}*'
                 message += '%s,' % intvl_as_str(item)
             message += '...'
         LOG.debug(f"[{itask}] {message}")
@@ -1950,7 +1920,7 @@ class TaskEventsManager():
     def process_execution_polling_intervals(
         polling_intervals: List[float],
         time_limit: float,
-        time_limit_polling_intervals: List[float]
+        time_limit_polling_intervals: Optional[List[float]]
     ) -> List[float]:
         """Create a list of polling times.
 
@@ -1982,6 +1952,11 @@ class TaskEventsManager():
         >>> this([], 10, [5])
         [15, 5]
 
+        # There are no execution time limit polling intervals set - just
+        # repeat the execution polling interval until the time limit:
+        >>> this([10], 25, None)
+        [10, 10]
+
         # We have a list of execution time limit polling intervals,
         >>> this([10], 25, [5, 6, 7, 8])
         [10, 10, 10, 6, 7, 8]
@@ -1998,17 +1973,19 @@ class TaskEventsManager():
             size = int((time_limit - sum(delays)) / delays[-1])
             delays.extend([delays[-1]] * size)
 
-        # After the last delay before the execution time limit add the
-        # delay to get to the execution_time_limit
-        if len(time_limit_polling_intervals) == 1:
-            time_limit_polling_intervals.append(
-                time_limit_polling_intervals[0]
-            )
-        time_limit_polling_intervals[0] += time_limit - sum(delays)
+        if time_limit_polling_intervals:
+            # After the last delay before the execution time limit add the
+            # delay to get to the execution_time_limit
+            if len(time_limit_polling_intervals) == 1:
+                time_limit_polling_intervals.append(
+                    time_limit_polling_intervals[0]
+                )
+            time_limit_polling_intervals[0] += time_limit - sum(delays)
 
-        # After the execution time limit poll at execution time limit polling
-        # intervals.
-        delays += time_limit_polling_intervals
+            # After the execution time limit, poll at the
+            # execution time limit polling intervals.
+            delays += time_limit_polling_intervals
+
         return delays
 
     def add_event_timer(self, id_key: EventKey, event_timer) -> None:

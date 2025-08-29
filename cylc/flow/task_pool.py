@@ -708,14 +708,12 @@ class TaskPool:
         if ctx_key == "poll_timer":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
             itask.poll_timer = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx_key[0] == "try_timers":
             itask = self._get_task_by_id(id_)
             if itask is None:
-                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
             if 'retrying' in ctx_key[1]:
                 if 'submit' in ctx_key[1]:
@@ -2496,9 +2494,11 @@ class TaskPool:
             (matched, inactive_matched, unmatched)
 
         """
-        matched, unmatched = filter_ids(
+        matched, unmatched, invalid = filter_ids(
             self.active_tasks,
             ids,
+            self.config.initial_point,
+            self.config.final_point,
             warn=warn_no_active,
         )
         inactive_matched: 'Set[Tuple[TaskDef, PointBase]]' = set()
@@ -2507,7 +2507,7 @@ class TaskPool:
                 unmatched
             )
 
-        return matched, inactive_matched, unmatched
+        return matched, inactive_matched, unmatched + invalid
 
     def match_inactive_tasks(
         self,

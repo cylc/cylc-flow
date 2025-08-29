@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-import sys
 
 import pytest
 
@@ -23,12 +22,6 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network import deserialize
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.scheduler import Scheduler
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout
-else:
-    from async_timeout import timeout
 
 
 async def test_listener(one: Scheduler, start):
@@ -47,7 +40,7 @@ async def test_listener(one: Scheduler, start):
         assert res['cylc_version'] == CYLC_VERSION
 
         one.server.replier.queue.put('STOP')
-        async with timeout(2):
+        async with asyncio.timeout(2):
             # wait for the server to consume the STOP item from the queue
             while not one.server.replier.queue.empty():
                 await asyncio.sleep(0.01)

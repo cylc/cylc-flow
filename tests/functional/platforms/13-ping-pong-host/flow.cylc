@@ -1,0 +1,32 @@
+#!jinja2
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+
+[scheduling]
+    cycling mode = integer
+    final cycle point = 2
+    [[graph]]
+        P1 = remote_task[-P1] => toggler => remote_task
+
+[runtime]
+    [[remote_task]]
+        [[[remote]]]
+            host = $(cat ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info)
+
+    [[toggler]]
+        script = """
+            # Toggle the platform between localhost and the remote host
+            # using the content of a file, ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info.
+            # between localhost and the remote.
+
+            if (( $CYLC_TASK_CYCLE_POINT % 2 == 1 )); then
+                echo ${REMOTE_HOST} > ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info
+                cylc message -- "changing platform to ${REMOTE_HOST}"
+            else
+                echo "localhost" > ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info
+                cylc message -- "changing platform to localhost"
+            fi
+        """
+        [[[environment]]]
+            REMOTE_HOST = {{ CYLC_TEST_HOST }}

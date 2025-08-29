@@ -178,7 +178,7 @@ async def test_interactive(
 
     # only one rsync call should have been made (i.e. the --dry-run)
     assert [call[1].get('dry_run') for call in reinstall_calls] == [True]
-    assert 'Reinstall canceled, no changes made.' in capsys.readouterr().out
+    assert 'reinstall cancelled' in capsys.readouterr().out
     reinstall_calls.clear()
 
     answer_prompt('y')
@@ -287,7 +287,7 @@ async def test_keyboard_interrupt(
     )
 
     await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
-    assert 'Reinstall canceled, no changes made' in capsys.readouterr().out
+    assert 'reinstall cancelled' in capsys.readouterr().out
 
 
 async def test_rsync_fail(one_src, one_run, mock_glbl_cfg, non_interactive):

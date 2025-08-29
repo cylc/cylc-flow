@@ -11,6 +11,12 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.5.1 (Released 2025-08-08)__
+
+### 🚀 Enhancements
+
+[#6902](https://github.com/cylc/cylc-flow/pull/6902) - Invalid workflow events in the `mail events` or `handler events` configurations will result in warnings rather than errors.
+
 ## __cylc-8.5.0 (Released 2025-07-24)__
 
 ### 🚀 Enhancements
