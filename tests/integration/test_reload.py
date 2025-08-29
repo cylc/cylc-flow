@@ -317,13 +317,14 @@ async def test_orphan_reload(
     """Reload should not fail about orphaned tasks.
 
     The following aspects of reload about orphans are tested:
-        - Removal of both xtrigger and associated active/incomplete task.
         - Broadcast deltas generated after reload.
+          https://github.com/cylc/cylc-flow/issues/6814
+        - Removal of both xtrigger and associated active/incomplete task.
+          https://github.com/cylc/cylc-flow/issues/6815
+
+    (Orphans being active/incomplete tasks removed from reloaded workflow cfg.)
     """
     before = {
-        'scheduler': {
-            'allow implicit tasks': True
-        },
         'scheduling': {
             'initial cycle point': '20010101T0000Z',
             'graph': {
@@ -335,9 +336,6 @@ async def test_orphan_reload(
         }
     }
     after = {
-        'scheduler': {
-            'allow implicit tasks': True
-        },
         'scheduling': {
             'initial cycle point': '20010101T0000Z',
             'graph': {
@@ -349,14 +347,11 @@ async def test_orphan_reload(
     schd = scheduler(id_)
     async with start(schd):
         # spawn in bar
-        foo = schd.pool.get_tasks()[0]
-        schd.pool.task_events_mgr.process_message(
-            foo, '20010101T0000Z', 'succeeded')
-        bar = schd.pool.get_tasks()[0]
-        assert bar.identity == '20010101T0000Z/bar'
+        foo = schd.pool._get_task_by_id('20010101T0000Z/foo')
+        schd.pool.task_events_mgr.process_message(foo, 'INFO', 'succeeded')
+        bar = schd.pool._get_task_by_id('20010101T0000Z/bar')
         # set bar to failed
-        schd.pool.task_events_mgr.process_message(
-            bar, '20010101T0000Z', 'failed')
+        schd.pool.task_events_mgr.process_message(bar, 'INFO', 'failed')
 
         # Save our progress
         schd.workflow_db_mgr.put_task_pool(schd.pool)
