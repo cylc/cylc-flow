@@ -167,7 +167,7 @@ def get_padding(settings, level=0, padding=0):
     return padding
 
 
-def get_rdict(left, right=None):
+def get_rdict(left, right=None, for_cancel_broadcast=False):
     """Check+transform left=right into a nested dict.
 
     left can be key, [key], [key1]key2, [key1][key2], [key1][key2]key3, etc.
@@ -193,7 +193,11 @@ def get_rdict(left, right=None):
             # item = right
             cur_dict[tail.strip()] = right
             tail = None
-    upg({'runtime': {'__MANY__': rdict}}, 'test')
+    upg(
+        {'runtime': {'__MANY__': rdict}},
+        'test',
+        for_cancel_broadcast=for_cancel_broadcast,
+    )
     # Perform validation, but don't coerce the original (deepcopy).
     cylc_config_validate(deepcopy(rdict), SPEC['runtime']['__MANY__'])
     return rdict
@@ -433,7 +437,7 @@ async def run(options: 'Values', workflow_id):
                 raise InputError(
                     "--cancel=[SEC]ITEM does not take a value")
             option_item = option_item.strip()
-            setting = get_rdict(option_item)
+            setting = get_rdict(option_item, for_cancel_broadcast=True)
             settings.append(setting)
         files_to_settings(settings, options.cancel_files, options.cancel)
         mutation_kwargs['variables'].update(
