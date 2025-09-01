@@ -28,6 +28,7 @@ from typing import (
 
 import pytest
 from pytest import param
+import re
 
 from cylc.flow import (
     CYLC_LOG,
@@ -37,6 +38,7 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.flow_mgr import FLOW_NONE
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -2019,6 +2021,7 @@ async def test_remove_active_task(
 
 async def test_remove_by_expire_trigger(
     flow,
+    validate,
     scheduler,
     start,
     log_filter
@@ -2029,21 +2032,37 @@ async def test_remove_by_expire_trigger(
     * It should be possible to bring them back by manually triggering them.
     * Removing a task manually (cylc remove) should work the same.
     """
-    id_ = flow({
-        'scheduler': {
-            'experimental': {
-                'expire triggers': 'True',
-            }
-        },
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    a? => b
-                    a:failed? => !b
-                '''
+    def _get_id(b_completion: str = "succeeded"):
+        return flow({
+            'scheduler': {
+                'experimental': {
+                    'expire triggers': 'True',
+                }
             },
-        }
-    })
+            'scheduling': {
+                'graph': {
+                    'R1': '''
+                        a? => b
+                        a:failed? => !b
+                    '''
+                },
+            },
+            'runtime': {
+                'b': {
+                    'completion': b_completion
+                }
+            }
+        })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=re.escape(
+            "This may be due to use of an expire (formerly suicide) trigger"
+        )
+    ):
+        validate(_get_id())
+
+    id_ = _get_id("succeeded or expired")
+    validate(id_)
     schd: 'Scheduler' = scheduler(id_, paused_start=False)
 
     async with start(schd, level=logging.DEBUG) as log:
