@@ -36,6 +36,7 @@ from cylc.flow.data_messages_pb2 import (
 from cylc.flow.data_store_mgr import (
     JOBS,
     TASK_PROXIES,
+    task_mean_elapsed_time,
 )
 from cylc.flow.id import TaskTokens
 from cylc.flow.scheduler import Scheduler
@@ -48,6 +49,7 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
@@ -430,3 +432,31 @@ async def test_set_already_succeeded(
         await schd.update_data_structure()
         assert db_task_states(foo) == expected
         assert data_store_task_state(foo) == TASK_STATUS_SUCCEEDED
+
+
+async def test_timings(one_conf, flow, scheduler, start, caplog):
+    """Test that setting outputs does not change the task timings."""
+    wid = flow({
+        **one_conf,
+        'runtime': {
+            'one': {
+                'execution time limit': 'PT100S',
+            },
+        },
+    })
+    schd: Scheduler = scheduler(wid)
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+
+        def check_times():
+            assert not itask.tdef.elapsed_times
+            assert task_mean_elapsed_time(itask.tdef) == 100
+
+        itask.state_reset(TASK_STATUS_PREPARING)
+        schd.task_events_mgr.process_message(
+            itask, 'INFO', TASK_OUTPUT_STARTED
+        )
+        check_times()
+
+        await run_cmd(set_prereqs_and_outputs(schd, [itask.identity], []))
+        check_times()

@@ -134,6 +134,7 @@ if TYPE_CHECKING:
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.taskdef import TaskDef
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -256,7 +257,7 @@ def generate_checksum(in_strings):
     return zlib.adler32(''.join(sorted(in_strings)).encode()) & 0xffffffff
 
 
-def task_mean_elapsed_time(tdef):
+def task_mean_elapsed_time(tdef: 'TaskDef') -> float | None:
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
         return round(sum(tdef.elapsed_times) / len(tdef.elapsed_times))
