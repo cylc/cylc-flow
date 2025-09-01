@@ -2043,13 +2043,20 @@ with Conf(
                 ''')
 
 
-def upg(cfg, descr):
+def upg(cfg, descr, for_cancel_broadcast=False):
     """Upgrade old workflow configuration.
 
     NOTE: We are silencing deprecation (and only deprecation) warnings
     when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
     (which would loose Cylc 7 compatibility if users were to follow the
     warnings and upgrade the syntax).
+
+    Args:
+        for_cancel_broadcast:
+            If True, extra validation steps which inspect configuration values
+            will be skipped. This is used for "cylc broadcast --cancel" where
+            the values are not known.
+            See https://github.com/cylc/cylc-flow/issues/6950.
 
     """
     u = upgrader(cfg, descr)
@@ -2255,11 +2262,11 @@ def upg(cfg, descr):
     )
     u.upgrade()
 
-    upgrade_graph_section(cfg, descr)
-    upgrade_param_env_templates(cfg, descr)
-
-    warn_about_depr_platform(cfg)
-    warn_about_depr_event_handler_tmpl(cfg)
+    if not for_cancel_broadcast:
+        upgrade_graph_section(cfg, descr)
+        upgrade_param_env_templates(cfg, descr)
+        warn_about_depr_platform(cfg)
+        warn_about_depr_event_handler_tmpl(cfg)
 
     return u
 
