@@ -29,6 +29,7 @@ from cylc.flow.parsec.exceptions import (
     IncludeFileNotFoundError,
     Jinja2Error,
     ParsecError,
+    TemplateVarLanguageClash,
 )
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.fileparse import (
@@ -431,9 +432,6 @@ def test_read_and_proc_jinja2_error():
 def test_read_and_proc_jinja2_error_missing_shebang():
     with NamedTemporaryFile() as tf:
         fpath = tf.name
-        template_vars = {
-            'name': 'Cylc'
-        }
         viewcfg = {
             'jinja2': True,
             'contin': False,
@@ -442,9 +440,13 @@ def test_read_and_proc_jinja2_error_missing_shebang():
         # first line is missing shebang!
         tf.write("a={{ name }}\n".encode())
         tf.flush()
-        r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg)
-        assert r == ['a={{ name }}']
+        with pytest.raises(
+            TemplateVarLanguageClash,
+            match=r'No shebang line \(#!jinja2\) in config file\.'
+        ):
+            read_and_proc(
+                fpath=fpath, template_vars={'foo': 1}, viewcfg=viewcfg
+            )
 
 
 def test_parse_keys_only_singleline():
@@ -586,9 +588,6 @@ def test_parse_with_sections_error_wrong_level():
 def test_unclosed_multiline():
     with NamedTemporaryFile() as tf:
         fpath = tf.name
-        template_vars = {
-            'name': 'Cylc'
-        }
         tf.write(('''
         [scheduling]
             [[graph]]
@@ -604,7 +603,7 @@ def test_unclosed_multiline():
         tf.flush()
         with pytest.raises(FileParseError) as cm:
             parse(fpath=fpath, output_fname="",
-                  template_vars=template_vars)
+                  template_vars={})
         exc = cm.value
         assert exc.reason == 'Invalid line'
         assert 'echo hello world' in exc.line

@@ -498,6 +498,9 @@ def read_and_proc(
             flines = jinja2process(
                 fpath, flines, fdir, template_vars
             )
+        elif template_vars.keys() - {"CYLC_VERSION", "CYLC_TEMPLATE_VARS"}:
+            raise TemplateVarLanguageClash(
+                f'No shebang line ({JINJA2_SHEBANG}) in config file.')
 
     # concatenate continuation lines
     if do_contin:
@@ -554,10 +557,10 @@ def hashbang_and_plugin_templating_clash(
             f"A plugin set the templating engine to {templating}"
             f" which does not match {flines[0]} set in flow.cylc."
         )
-    
-    if templating and not hashbang:
-        raise TemplateVarLanguageClash(
-            f'No shebang line ({JINJA2_SHEBANG}) in config file.')
+
+    # if templating and not hashbang:
+    #     raise TemplateVarLanguageClash(
+    #         f'No shebang line ({JINJA2_SHEBANG}) in config file.')
     return hashbang
 
 

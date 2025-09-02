@@ -1331,7 +1331,7 @@ def test_implicit_tasks(
     )
     flow_file: 'Path' = tmp_flow_config(
         id_,
-        dedent(f"""
+        dedent(f"""#!jinja2
             [scheduler]
                 {allow_implicit_tasks_text}
             [scheduling]
