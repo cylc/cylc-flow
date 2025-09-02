@@ -571,9 +571,6 @@ def _main(
         )
 
         job_log_present = (Path(local_log_dir) / "job.out").exists()
-        # For testing purposes
-        if not job_log_present:
-            LOG.debug("job.out not present, getting job log remotely")
 
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
@@ -611,6 +608,9 @@ def _main(
                 # (Ctrl-C while tailing)
                 # NOTE: This will raise NoHostsError if the platform is not
                 # contactable
+                # For testing purposes
+                if not job_log_present:
+                    LOG.debug("job.out not present, getting job log remotely")
                 proc = remote_cylc_cmd(
                     cmd,
                     platform,
