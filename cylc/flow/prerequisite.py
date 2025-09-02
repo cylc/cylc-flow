@@ -225,8 +225,14 @@ class Prerequisite:
             for t_output in self._satisfied:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
+                msg = self.MESSAGE_TEMPLATE % t_output
+                if msg[0] == '-':
+                    # -ve cycles: \b needs to be to the right of the `-` char.
+                    pattern = fr"-\b{re.escape(msg[1:])}\b"
+                else:
+                    pattern = fr"\b{re.escape(msg)}\b"
                 expr = re.sub(
-                    fr"{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
+                    pattern,
                     self.SATISFIED_TEMPLATE % t_output,
                     expr
                 )
