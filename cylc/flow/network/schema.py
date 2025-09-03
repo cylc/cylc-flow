@@ -1654,9 +1654,11 @@ class NamespaceName(String):
 class NamespaceIDGlob(String):
     """A task or family ID e.g. `2000/foo`.
 
-    Globs can be used to match active tasks or families.
+    Globs can be used to match tasks or families, e.g, `2*/foo*` might match
+    `2000/foot`. Cycle point globs will only match active cycles.
 
-    E.g `2*/foo*` might match `2000/foot`.
+    Selectors can be used to match active tasks by state, e.g, `*:failed` will
+    match all failed tasks.
     """
 
 

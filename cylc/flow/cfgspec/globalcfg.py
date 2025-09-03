@@ -1016,8 +1016,8 @@ with Conf('global.cylc', desc='''
 
                 .. code-block:: python
 
-                   # rank hosts by cpu_percent
-                   cpu_percent()
+                   # rank hosts by cpu_percent over a 1 second interval
+                   cpu_percent(1)  # Note: monitors CPU for 1 second
 
                    # rank hosts by 15min average of server load
                    getloadavg()[2]
@@ -1040,7 +1040,7 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter out hosts with a CPU utilisation of 70% or above
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
 
                    # filter out hosts with less than 1GB of RAM available
                    virtual_memory().available > 1000000000
@@ -1057,14 +1057,14 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter hosts
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
                    disk_usage('/').free > 1000000000
 
                    # rank hosts by CPU count
                    1 / cpu_count()
                    # if two hosts have the same CPU count
                    # then rank them by CPU usage
-                   cpu_percent()
+                   cpu_percent(1)
 
                 .. versionchanged:: 8.0.0
 
