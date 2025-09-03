@@ -38,6 +38,7 @@ create_files () {
 # (ana, app, bin, etc, lib) are correctly installed on the remote platform.
 TEST_NAME="${TEST_NAME_BASE}-default-paths"
 init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
+#!jinja2
 [scheduling]
     [[graph]]
         R1 = foo
