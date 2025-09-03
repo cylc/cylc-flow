@@ -348,6 +348,7 @@ def format_reinstall_output(out: str) -> List[str]:
             # Skip this line as nothing will happen to this dir.
             continue
         match = re.match(r'^(.{11}) (send|del\.|recv) (.*)$', line)
+        # (On some systems, may get "recv" instead of "send")
         if match:
             summary, operation, file = match.groups()
             color = 'green' if operation == 'send' else 'red'
