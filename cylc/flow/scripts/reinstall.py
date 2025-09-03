@@ -217,7 +217,8 @@ async def reinstall_cli(
                 # no rsync output == no changes => exit
                 print(cparse(
                     '<magenta>'
-                    f'{workflow_id} up to date with {source}'
+                    'No changes made:'
+                    f' {workflow_id} is up to date with {source}'
                     '</magenta>'
                 ))
                 return False
@@ -249,7 +250,7 @@ async def reinstall_cli(
     else:
         # no reinstall
         print(
-            cparse('<magenta>Reinstall canceled, no changes made.</magenta>')
+            cparse('<magenta>No changes made: reinstall cancelled.</magenta>')
         )
         return False
 
@@ -346,7 +347,8 @@ def format_reinstall_output(out: str) -> List[str]:
             # file is present.
             # Skip this line as nothing will happen to this dir.
             continue
-        match = re.match(r'^(.{11}) (send|del\.) (.*)$', line)
+        match = re.match(r'^(.{11}) (send|del\.|recv) (.*)$', line)
+        # (On some systems, may get "recv" instead of "send")
         if match:
             summary, operation, file = match.groups()
             color = 'green' if operation == 'send' else 'red'

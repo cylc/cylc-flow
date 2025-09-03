@@ -57,7 +57,7 @@ SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
-PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
+PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*(\))')
 
 HOST_SELECTION_METHODS = {
     'definition order': lambda goodhosts: goodhosts[0],
@@ -83,7 +83,8 @@ def log_platform_event(
 def get_platform(
     task_conf: Optional[str] = None,
     task_name: str = UNKNOWN_TASK,
-    bad_hosts: Optional[Set[str]] = None
+    bad_hosts: Optional[Set[str]] = None,
+    evaluated_host: Optional[str] = None,
 ) -> Dict[str, Any]:
     ...
 
@@ -92,7 +93,8 @@ def get_platform(
 def get_platform(
     task_conf: Union[dict, 'OrderedDictWithDefaults'],
     task_name: str = UNKNOWN_TASK,
-    bad_hosts: Optional[Set[str]] = None
+    bad_hosts: Optional[Set[str]] = None,
+    evaluated_host: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     ...
 
@@ -108,7 +110,8 @@ def get_platform(
 def get_platform(
     task_conf: Union[str, dict, 'OrderedDictWithDefaults', None] = None,
     task_name: str = UNKNOWN_TASK,
-    bad_hosts: Optional[Set[str]] = None
+    bad_hosts: Optional[Set[str]] = None,
+    evaluated_host: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Get a platform.
 
@@ -121,6 +124,7 @@ def get_platform(
         task_name: Help produce more helpful error messages.
         bad_hosts: A set of hosts known to be unreachable (had an ssh 255
             error)
+        evaluated_host: Host name evaluated from platform subshell.
 
     Returns:
         platform: A platform definition dictionary. Uses either
@@ -169,6 +173,7 @@ def get_platform(
             glbl_cfg().get(['platforms']),
             task_job_section,
             task_remote_section,
+            evaluated_host,
         ),
         bad_hosts=bad_hosts,
     )
@@ -300,10 +305,7 @@ def get_platform_from_group(
     if bad_hosts:
         platform_names = [
             platform for platform in group['platforms']
-            if any(
-                host not in bad_hosts
-                for host in platform_from_name(platform)['hosts']
-            )
+            if not bad_hosts.issuperset(platform_from_name(platform)['hosts'])
         ]
     else:
         platform_names = group['platforms']
@@ -330,7 +332,8 @@ def get_platform_from_group(
 def platform_name_from_job_info(
     platforms: Union[dict, 'OrderedDictWithDefaults'],
     job: Dict[str, Any],
-    remote: Dict[str, Any]
+    remote: Dict[str, Any],
+    evaluated_host: Optional[str] = None,
 ) -> str:
     """
     Find out which job platform to use given a list of possible platforms
@@ -385,6 +388,7 @@ def platform_name_from_job_info(
         job: Workflow config [runtime][TASK][job] section.
         remote: Workflow config [runtime][TASK][remote] section.
         platforms: Dictionary containing platform definitions.
+        evaluated_host: Host is the result of evaluating a subshell.
 
     Returns:
         platform: string representing a platform from the global config.
@@ -422,7 +426,9 @@ def platform_name_from_job_info(
 
     # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
     # https://github.com/cylc/cylc-flow/pull/4975
-    if 'host' in remote and remote['host']:
+    if evaluated_host:
+        task_host = evaluated_host
+    elif 'host' in remote and remote['host']:
         task_host = remote['host']
     else:
         task_host = 'localhost'

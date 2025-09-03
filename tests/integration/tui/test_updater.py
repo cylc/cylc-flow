@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 from copy import deepcopy
 from pathlib import Path
 from queue import Queue
 import re
-import sys
 from time import time
 
 import pytest
@@ -31,12 +31,6 @@ from cylc.flow.tui.updater import (
     get_default_filters,
 )
 from cylc.flow.workflow_status import WorkflowStatus
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout
-else:
-    from async_timeout import timeout
 
 
 @pytest.fixture
@@ -104,7 +98,7 @@ async def test_subscribe(one_conf, flow, scheduler, run, updater):
 
     async with run(schd):
         # run the updater and the test
-        async with timeout(10):
+        async with asyncio.timeout(10):
             # wait for the first update
             root_node = await updater._update()
 

@@ -273,6 +273,16 @@ def test_platform_name_from_job_info_basic(job, remote, returns):
     assert platform_name_from_job_info(PLATFORMS, job, remote) == returns
 
 
+def test_platform_name_from_job_info_evaluated_hostname():
+    result = platform_name_from_job_info(
+        PLATFORMS,
+        {'batch system': 'background'},
+        {'host': '$(cat tiddles)'},
+        evaluated_host='hpc2',
+    )
+    assert result == 'hpc2-bg'
+
+
 def test_platform_name_from_job_info_ordered_dict_comparison():
     """Check that we are only comparing set items in OrderedDictWithDefaults.
     """
