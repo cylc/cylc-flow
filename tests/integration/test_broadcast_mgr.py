@@ -17,6 +17,11 @@
 """Tests for Broadcast Manager."""
 
 
+import pytest
+from cylc.flow.cycling.integer import IntegerInterval, IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Interval, ISO8601Point
+
+
 async def test_reject_valid_broadcast_is_remote_clash_with_config(
     one_conf, flow, start, scheduler, log_filter
 ):
@@ -90,3 +95,120 @@ async def test_reject_valid_broadcast_is_remote_clash_with_broadcast(
                 {'platform': 'foo'},
             ]
         }
+
+
+@pytest.mark.parametrize('cycling_mode', ('integer', 'gregorian', '360_day'))
+async def test_broadcast_expire_limit(
+    cycling_mode,
+    flow,
+    scheduler,
+    run,
+    complete,
+    capcall,
+):
+    """Test automatic broadcast expiry.
+
+    To prevent broadcasts from piling up and causing a memory leak, we expire
+    (aka clear) them.
+
+    The broadcast expiry limit is the oldest active cycle MINUS the longest
+    cycling sequence.
+
+    See https://github.com/cylc/cylc-flow/pull/6964
+    """
+    # capture broadcast expiry calls
+    _expires = capcall('cylc.flow.broadcast_mgr.BroadcastMgr.expire_broadcast')
+
+    def expires():
+        """Return a list of the cycle limit expired since the last call."""
+        ret = [x[0][1] for x in _expires]
+        _expires.clear()
+        return ret
+
+    def cycle(number):
+        """Return a cycle point object in the relevant format."""
+        if cycling_mode == 'integer':
+            return IntegerPoint(str(number))
+        else:
+            return ISO8601Point(f'000{number}')
+
+    def interval(number):
+        """Return an integer object in the relevant format."""
+        if cycling_mode == 'integer':
+            return IntegerInterval(sequence(number))
+        else:
+            return ISO8601Interval(sequence(number))
+
+    def sequence(number):
+        """Return a sequence string in the relevant format."""
+        if cycling_mode == 'integer':
+            return f'P{number}'
+        else:
+            return f'P{number}Y'
+
+    # a workflow with a sequential task
+    id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY'
+        } if cycling_mode != 'integer' else {},
+
+        'scheduling': {
+            'cycling mode': cycling_mode,
+            'initial cycle point': cycle(1),
+            'graph': {
+                # the sequence with the sequential task
+                sequence(1): f'a[-{sequence(1)}] => a',
+                # a longer sequence to make the offset more interesting
+                sequence(3): 'a',
+            }
+        }
+    })
+    schd = scheduler(id_, paused_start=False)
+
+    async with run(schd):
+        # the longest cycling sequence has a step of "3"
+        assert schd.config.interval_of_longest_sequence == interval(3)
+
+        # no broadcast expires should happen on startup
+        assert expires() == []
+
+        # when a cycle closes, auto broadcast expiry should happen
+        # NOTE: datetimes cannot be negative, so this expiry will be skipped
+        # for datetimetime cycling workflows
+        await complete(schd, f'{cycle(1)}/a')
+        assert expires() in ([], [cycle(-1)])
+
+        await complete(schd, f'{cycle(2)}/a')
+        assert expires() == [cycle(0)]
+
+        await complete(schd, f'{cycle(3)}/a')
+        assert expires() == [cycle(1)]
+
+
+async def test_broadcast_expiry_async(
+    one_conf, flow, scheduler, run, complete, capcall
+):
+    """Test auto broadcast expiry with async workflows.
+
+    Auto broadcast expiry should not happen in async workflows as there is only
+    one cycle so it doesn't make sense.
+
+    See https://github.com/cylc/cylc-flow/pull/6964
+    """
+    # capture broadcast expiry calls
+    expires = capcall('cylc.flow.broadcast_mgr.BroadcastMgr.expire_broadcast')
+
+    id_ = flow(one_conf)
+    schd = scheduler(id_, paused_start=False)
+
+    async with run(schd):
+        # this is an async workflow so the longest cycling interval is a
+        # null interval
+        assert (
+            schd.config.interval_of_longest_sequence
+            == IntegerInterval.get_null()
+        )
+        await complete(schd)
+
+    # no auto-expiry should take place
+    assert expires == []
