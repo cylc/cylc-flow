@@ -75,6 +75,7 @@ purge
 # Test the [scheduler]install configuration
 TEST_NAME="${TEST_NAME_BASE}-configured-paths"
 init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
+#!jinja2
 [scheduler]
     install = dir1/, dir2/, file1, file2
 [scheduling]
