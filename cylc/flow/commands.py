@@ -67,7 +67,6 @@ from typing import (
     List,
     Optional,
     Set,
-    Tuple,
     TypeVar,
 )
 
@@ -84,7 +83,7 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
-from cylc.flow.id import Tokens
+from cylc.flow.id import TaskTokens
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
@@ -92,7 +91,6 @@ from cylc.flow.run_modes import RunMode
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
-    TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
 )
 from cylc.flow.taskdef import generate_graph_children
@@ -103,11 +101,9 @@ from cylc.flow.workflow_status import StopMode
 if TYPE_CHECKING:
     from enum import Enum
 
-    from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.taskdef import TaskDef
 
     # define a type for command implementations
     Command = Callable[..., AsyncGenerator]
@@ -145,45 +141,61 @@ def _command(name: str):
     return _command
 
 
+def _report_unmatched(unmatched: Set[TaskTokens]):
+    """Log unmatched IDs."""
+    if len(unmatched) == 1:
+        LOG.warning(
+            'No tasks match'
+            f' "{next(iter(unmatched)).relative_id_with_selectors}"'
+        )
+    elif len(unmatched) > 1:
+        LOG.warning(
+            'No tasks match the IDs:\n* '
+            + '\n* '.join(
+                sorted([id_.relative_id_with_selectors for id_ in unmatched])
+            )
+        )
+
+
 def _remove_matched_tasks(
     schd: 'Scheduler',
-    active: 'List[TaskProxy]',
-    inactive: 'Set[Tuple[TaskDef, PointBase]]',
-    flow_nums: 'FlowNums'
+    ids: Set[TaskTokens],
+    flow_nums: 'FlowNums',
 ):
     """Remove matched tasks."""
-
     # Mapping of *relative* task IDs to removed flow numbers:
-    removed: Dict[Tokens, FlowNums] = {}
-    not_removed: Set[Tokens] = set()
-    # All the matched tasks (will add applicable active tasks below):
-    matched_tasks = inactive.copy()
+    removed: Dict[TaskTokens, FlowNums] = {}
+    not_removed: Set[TaskTokens] = set()
     to_kill: List[TaskProxy] = []
 
-    for itask in active:
-        fnums_to_remove = itask.match_flows(flow_nums)
-        if not fnums_to_remove:
-            not_removed.add(itask.tokens.task)
-            continue
-        removed[itask.tokens.task] = fnums_to_remove
-        matched_tasks.add((itask.tdef, itask.point))
-        if fnums_to_remove == itask.flow_nums:
-            # Need to remove the task from the pool.
-            # Spawn next occurrence of xtrigger sequential task (otherwise
-            # this would not happen after removing this occurrence):
-            schd.pool.check_spawn_psx_task(itask)
-            schd.pool.remove(itask, 'request')
-            to_kill.append(itask)
-            itask.removed = True
-        itask.flow_nums.difference_update(fnums_to_remove)
+    for id_ in ids:
+        itask = schd.pool._get_task_by_id(id_.relative_id)
 
-    for tdef, point in matched_tasks:
-        tokens = Tokens(cycle=str(point), task=tdef.name)
+        if itask:
+            # remove active task from the pool
+            fnums_to_remove = itask.match_flows(flow_nums)
+            if not fnums_to_remove:
+                not_removed.add(itask.tokens.task)
+                continue
+            removed[itask.tokens.task] = fnums_to_remove
+            if fnums_to_remove == itask.flow_nums:
+                # Need to remove the task from the pool.
+                # Spawn next occurrence of xtrigger sequential task (otherwise
+                # this would not happen after removing this occurrence):
+                schd.pool.check_spawn_psx_task(itask)
+                schd.pool.remove(itask, 'request')
+                to_kill.append(itask)
+                itask.removed = True
+            itask.flow_nums.difference_update(fnums_to_remove)
+
+        # remove task from the DB
+        tdef = schd.config.taskdefs[id_['task']]
+        icycle = get_point(id_['cycle'])
 
         # Go through any tasks downstream of this matched task to see if
         # any need to stand down as a result of this task being removed:
         for child in set(itertools.chain.from_iterable(
-            generate_graph_children(tdef, point).values()
+            generate_graph_children(tdef, icycle).values()
         )):
             child_itask = schd.pool.get_task(child.point, child.name)
             if not child_itask:
@@ -198,9 +210,9 @@ def _remove_matched_tasks(
             ):
                 # Unset any prereqs naturally satisfied by these tasks
                 # (do not unset those satisfied by `cylc set --pre`):
-                if prereq.unset_naturally_satisfied(tokens.relative_id):
+                if prereq.unset_naturally_satisfied(id_.relative_id):
                     prereqs_changed = True
-                    removed.setdefault(tokens, set()).update(
+                    removed.setdefault(id_, set()).update(
                         fnums_to_remove
                     )
             if not prereqs_changed:
@@ -219,7 +231,7 @@ def _remove_matched_tasks(
             # Check if downstream task should remain spawned:
             if (
                 # Ignoring tasks we are already dealing with:
-                (child_itask.tdef, child_itask.point) in matched_tasks
+                child_itask.tokens.task in ids
                 or child_itask.state.any_satisfied_prerequisite_outputs()
             ):
                 continue
@@ -233,13 +245,13 @@ def _remove_matched_tasks(
 
         # Remove the matched tasks from the flows in the DB tables:
         db_removed_fnums = schd.workflow_db_mgr.remove_task_from_flows(
-            str(point), tdef.name, flow_nums,
+            id_['cycle'], id_['task'], flow_nums,
         )
         if db_removed_fnums:
-            removed.setdefault(tokens, set()).update(db_removed_fnums)
+            removed.setdefault(id_, set()).update(db_removed_fnums)
 
-        if tokens not in removed:
-            not_removed.add(tokens)
+        if id_ not in removed:
+            not_removed.add(id_)
 
     if to_kill:
         schd.kill_tasks(to_kill, warn=False)
@@ -309,7 +321,7 @@ async def set_prereqs_and_outputs(
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
     validate.flow_opts(flow, flow_wait)
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
 
     yield
 
@@ -318,7 +330,7 @@ async def set_prereqs_and_outputs(
     if prerequisites is None:
         prerequisites = []
     yield schd.pool.set_prereqs_and_outputs(
-        tasks,
+        ids,
         outputs,
         prerequisites,
         flow,
@@ -386,9 +398,9 @@ async def stop(
 @_command('release')
 async def release(schd: 'Scheduler', tasks: Iterable[str]):
     """Release held tasks."""
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     yield
-    yield schd.pool.release_held_tasks(tasks)
+    yield schd.pool.release_held_tasks(ids)
 
 
 @_command('release_hold_point')
@@ -411,13 +423,15 @@ async def resume(schd: 'Scheduler'):
 @_command('poll_tasks')
 async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     """Poll pollable tasks or a task or family if options are provided."""
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     yield
     if schd.get_run_mode() == RunMode.SIMULATION:
         yield 0
-    itasks, _, bad_items = schd.pool.filter_task_proxies(tasks)
+    matched, unmatched = schd.pool.id_match(ids, only_match_pool=True)
+    _report_unmatched(unmatched)
+    itasks = schd.pool.get_itasks(matched)
     schd.task_job_mgr.poll_task_jobs(itasks)
-    yield len(bad_items)
+    yield len(unmatched)
 
 
 @_command('kill_tasks')
@@ -427,19 +441,21 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     Args:
         tasks: Tasks/families/globs to kill.
     """
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     yield
-    active, _, unmatched = schd.pool.filter_task_proxies(tasks)
-    num_unkillable = schd.kill_tasks(active)
+    matched, unmatched = schd.pool.id_match(ids, only_match_pool=True)
+    _report_unmatched(unmatched)
+    itasks = schd.pool.get_itasks(matched)
+    num_unkillable = schd.kill_tasks(itasks)
     yield len(unmatched) + num_unkillable
 
 
 @_command('hold')
 async def hold(schd: 'Scheduler', tasks: Iterable[str]):
     """Hold specified tasks."""
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     yield
-    yield schd.pool.hold_tasks(tasks)
+    yield schd.pool.hold_tasks(ids)
 
 
 @_command('set_hold_point')
@@ -486,18 +502,16 @@ async def remove_tasks(
         flow: flows to remove the tasks from.
     """
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
 
-    active, inactive, _ = schd.pool.filter_task_proxies(
-        tasks, warn_no_active=False, inactive=True
-    )
-    if active or inactive:
+    matched, unmatched = schd.pool.id_match(ids)
+    _report_unmatched(unmatched)
+    if matched:
         _remove_matched_tasks(
             schd,
-            active,
-            inactive,
+            matched,
             schd.pool.flow_mgr.cli_to_flow_nums(flow)
         )
 
@@ -650,7 +664,7 @@ async def force_trigger_tasks(
 
     """
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
-    validate.is_tasks(tasks)
+    ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     if on_resume:
         LOG.warning(
@@ -658,50 +672,34 @@ async def force_trigger_tasks(
             "at Cylc 8.6."
         )
 
-    active, inactive, _ = schd.pool.filter_task_proxies(
-        tasks, inactive=True, warn_no_active=False,
-    )
-    tokens_list: List[Tokens] = [
-        *(itask.tokens for itask in active),
-        *(
-            Tokens(cycle=str(cycle), task=tdef.name)
-            for tdef, cycle in inactive
-        ),
-    ]
-
     yield
 
-    task_ids: Set[Tuple[str, str]] = {
-        (tokens['task'], tokens['cycle']) for tokens in tokens_list
-    }
+    matched, unmatched = schd.pool.id_match(ids)
+    _report_unmatched(unmatched)
 
-    adjacency: Dict[Tuple[str, str], Set[Tuple[str, str]]] = {}
-    for task, cycle in task_ids:
-        icycle = get_point(cycle)
-
+    # split IDs into connected groups of tasks
+    adjacency: Dict[TaskTokens, Set[TaskTokens]] = {}
+    for id_ in matched:
+        id_ = id_.duplicate(task_sel=None)  # strip the task selector
+        icycle = get_point(id_['cycle'])
         prereqs = {
-            (trg.task_name, str(trg.get_point(icycle)))
-            for trg in schd.config.taskdefs[task].get_triggers(icycle)
-            if (trg.task_name, str(trg.get_point(icycle))) in task_ids
+            prereq_id
+            for prereq_id in (
+                TaskTokens(str(trg.get_point(icycle)), trg.task_name)
+                for trg in schd.config.taskdefs[id_['task']].get_triggers(
+                    icycle
+                )
+            )
+            if prereq_id in matched
         }
-        adjacency.setdefault((task, cycle), set()).update(prereqs)
+        adjacency.setdefault((id_), set()).update(prereqs)
         for prereq in prereqs:
-            adjacency.setdefault(prereq, set()).add((task, cycle))
+            adjacency.setdefault(prereq, set()).add(id_)
 
+    # trigger each group of tasks individually
     for group in get_connected_groups(adjacency):
-        # trigger each group of tasks
         _force_trigger_tasks(
             schd,
-            {  # active tasks
-                itask
-                for itask in active
-                if (itask.tokens['task'], itask.tokens['cycle']) in group
-            },
-            {  # inactive tasks
-                (taskdef, icycle)
-                for taskdef, icycle in inactive
-                if (taskdef.name, str(icycle)) in group
-            },
             group,
             flow,
             flow_wait,
@@ -712,14 +710,13 @@ async def force_trigger_tasks(
 
 def _force_trigger_tasks(
     schd: 'Scheduler',
-    active: 'Set[TaskProxy]',
-    inactive: 'Set[Tuple[TaskDef, PointBase]]',
-    group_ids: Set[Tuple[str, str]],
+    group_ids: Set[TaskTokens],
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
     on_resume: bool = False
 ):
+    active = schd.pool.get_itasks(group_ids)
     if flow or not active:
         flow_nums = schd.pool.flow_mgr.cli_to_flow_nums(flow, flow_descr)
         if flow != [FLOW_NONE] and not flow_nums:
@@ -732,10 +729,13 @@ def _force_trigger_tasks(
             flow_nums.update(itask.flow_nums)
 
     # Record off-group prerequisites, and active tasks to be removed.
-    active_to_remove = []
+    active_to_remove: List[TaskTokens] = []
+    active_to_resume: Set[TaskTokens] = set()
 
     warnings_flow_none = []
     warnings_has_job = []
+    active_completed_outputs = {}
+    inactive: Set[TaskTokens] = set(group_ids)
     for itask in active:
         # Find active group start tasks (parentless, or with only off-group
         # prerequisites) and set all prerequisites (to trigger them now).
@@ -749,11 +749,13 @@ def _force_trigger_tasks(
         # Remove non group start and final-status group start tasks, and
         # trigger them from scratch (so only the TaskDef matters).
 
-        # Waiting group start tasks are not removed, but a reload would
+        # Group start tasks are not removed, but a reload would
         # replace them, so using the TaskDef is fine.
+        inactive.remove(itask.tokens.task)
 
         if not any(
-            (trg.task_name, str(trg.get_point(itask.point))) in group_ids
+            TaskTokens(str(trg.get_point(itask.point)), trg.task_name)
+            in group_ids
             for trg in itask.tdef.get_triggers(itask.point)
         ):
             # This is a group start task (it has no in-group prerequisites).
@@ -765,13 +767,20 @@ def _force_trigger_tasks(
                 )
                 continue
 
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                for (label, msg, completed) in itask.state.outputs:
+                    if completed:
+                        active_completed_outputs[
+                            (str(itask.point), itask.tdef.name)] = (label, msg)
+
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
+                # This is a live active group start task
                 warnings_has_job.append(str(itask))
                 # Just merge the flows.
                 schd.pool.merge_flows(itask, flow_nums)
 
-            elif itask.state(TASK_STATUS_WAITING):
-                # This is a waiting active group start task...
+            else:
+                # This is a non-live active group start task...
                 # ... satisfy off-group (i.e. all) prerequisites
                 itask.state.set_all_task_prerequisites_satisfied()
                 # ... and satisfy all xtrigger prerequisites.
@@ -783,10 +792,10 @@ def _force_trigger_tasks(
 
                 # Trigger group start task.
                 schd.pool.queue_or_trigger(itask, on_resume)
-            else:
-                active_to_remove.append(itask)
+
         else:
-            active_to_remove.append(itask)
+            active_to_remove.append(itask.tokens.task)
+            active_to_resume.add(itask.tokens.task)
 
     if warnings_flow_none:
         msg = '\n  * '.join(warnings_flow_none)
@@ -799,27 +808,31 @@ def _force_trigger_tasks(
     # Remove all inactive and selected active group members.
     if flow != [FLOW_NONE]:
         # (No need to remove tasks if triggering with no-flow).
-        _remove_matched_tasks(schd, active_to_remove, inactive, flow_nums)
+        _remove_matched_tasks(schd, {*active_to_remove, *inactive}, flow_nums)
+
+        # trigger should override the held state, however, in-group tasks may
+        # have previously been held and active in-group tasks will become
+        # held as the result of removal
+        schd.pool.release_held_tasks({*active_to_resume, *inactive})
+
         # Store removal results before moving on.
         schd.workflow_db_mgr.process_queued_ops()
 
     # Satisfy any off-group prerequisites in removed tasks.
     tasks_removed = inactive
     if active_to_remove:
-        tasks_removed.update(
-            {
-                (itask.tdef, itask.point)
-                for itask in active_to_remove
-            }
-        )
+        tasks_removed.update(active_to_remove)
 
-    for tdef, point in tasks_removed:
+    # for tdef, point in tasks_removed:
+    for id_ in tasks_removed:
+        tdef = schd.config.taskdefs[id_['task']]
+        icycle = get_point(id_['cycle'])
         in_flow_prereqs = False
         jtask: Optional[TaskProxy] = None
-        if tdef.is_parentless(point):
+        if tdef.is_parentless(icycle):
             # Parentless: set all prereqs to spawn the task.
             jtask = schd.pool._set_prereqs_tdef(
-                point, tdef,
+                icycle, tdef,
                 [],  # prerequisites
                 {"all": True},  # xtriggers
                 flow_nums,
@@ -827,27 +840,38 @@ def _force_trigger_tasks(
                 set_all=True  # prerequisites
             )
         else:
-            off_flow_prereqs = {
+            _prereqs = tdef.get_prereqs(icycle)
+            # Off-flow prereqs to satisfy, for the triggered flow:
+            prereqs_to_set = {
                 PrereqTuple(str(key.point), str(key.task), key.output)
-                for pre in tdef.get_prereqs(point)
+                for pre in _prereqs
                 for key in pre.keys()
-                if (key.task, str(key.point)) not in group_ids
+                if TaskTokens(cycle=key.point, task=key.task) not in group_ids
             }
             in_flow_prereqs = any(
                 key
-                for pre in tdef.get_prereqs(point)
+                for pre in _prereqs
                 for key in pre.keys()
-                if (key.task, str(key.point)) in group_ids
+                if TaskTokens(cycle=key.point, task=key.task) in group_ids
             )
+            # Prereqs to satisfy, from already-completed outputs of active
+            # group start tasks, for the triggered flow.
+            prereqs_to_set.update({
+                PrereqTuple(str(key.point), str(key.task), key.output)
+                for pre in _prereqs
+                for key in pre.keys()
+                if (str(key.point), key.task) in active_completed_outputs
+            })
+
             if (
-                off_flow_prereqs
-                or tdef.get_xtrigs(point)
+                prereqs_to_set
+                or tdef.get_xtrigs(icycle)
                 or tdef.external_triggers
             ):
                 # Satisfy any off-group prereqs or ext/xtriggers to spawn task.
                 jtask = schd.pool._set_prereqs_tdef(
-                    point, tdef,
-                    off_flow_prereqs,
+                    icycle, tdef,
+                    prereqs_to_set,
                     {"all": True},  # xtriggers
                     flow_nums,
                     flow_wait,

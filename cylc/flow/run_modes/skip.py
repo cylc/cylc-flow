@@ -20,6 +20,7 @@ from typing import (
     TYPE_CHECKING,
     Dict,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -38,11 +39,6 @@ from cylc.flow.util import serialise_set
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.taskdef import TaskDef

@@ -27,13 +27,13 @@ jobs:
       fail-fast: false # don't stop on first failure
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.7', '3.8', '3.10', '3.11', '3.12', '3']
+        python-version: ['3.12', '3']
         include:
           - os: 'macos-latest'
-            python-version: '3.8'  # oldest version with arm64 builds
+            python-version: '3.12' # oldest version we support
           # non-utc timezone test
           - os: 'ubuntu-latest'
-            python-version: '3.9'  # not the oldest, not the most recent version
+            python-version: '3'
             time-zone: 'XXX-09:35'
     env:
       TZ: ${{ matrix.time-zone }}

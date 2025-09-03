@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     NoReturn,
     Optional,
     Set,
@@ -62,6 +63,7 @@ import psutil
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
+    command_validation,
     commands,
     main_loop,
     workflow_files,
@@ -82,7 +84,6 @@ from cylc.flow.flow_mgr import (
     FlowMgr,
     stringify_flow_nums,
 )
-
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -175,11 +176,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
@@ -555,8 +551,22 @@ class Scheduler:
                     timer.reset()
                 self.timers[event] = timer
 
-        if self.is_restart and not self.pool.get_tasks():
-            # This workflow completed before restart; wait for intervention.
+        if self.is_restart and (
+            # workflow has completed
+            not self.pool.get_tasks()
+            # workflow has hit the "stop after cycle point"
+            or (
+                self.config.stop_point
+                and all(
+                    cycle > self.config.stop_point
+                    for cycle in {
+                        itask.point for itask in self.pool.get_tasks()
+                    }
+                )
+            )
+        ):
+            # This workflow will shut down immediately once restarted
+            # => Give the user a grace period to intervene first
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].reset()
                 self.is_restart_timeout_wait = True
@@ -832,9 +842,10 @@ class Scheduler:
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
+        start_tasks = command_validation.is_tasks(self.options.starttask)
         # flow number set in this call:
         self.pool.set_prereqs_and_outputs(
-            self.options.starttask,
+            start_tasks,
             outputs=[],
             prereqs=["all"],
             flow=[FLOW_NEW],
@@ -1076,8 +1087,7 @@ class Scheduler:
             if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 unkillable.append(itask)
                 continue
-            if itask.state_reset(is_held=True):
-                self.data_store_mgr.delta_task_state(itask)
+            self.pool.hold_active_task(itask)
             if itask.state(TASK_STATUS_PREPARING):
                 self.task_job_mgr.kill_prep_task(itask)
             else:
@@ -1154,7 +1164,7 @@ class Scheduler:
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
         # one is starting
-        # NOTE: raises ContactFileExists if workflow is running
+        # NOTE: raises SchedulerAlive if workflow is running
         workflow_files.detect_old_contact_file(self.workflow)
 
         # Extract contact data.

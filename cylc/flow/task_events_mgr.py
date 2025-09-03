@@ -585,7 +585,7 @@ class TaskEventsManager():
             itask.platform[key]
         )
 
-    def _get_workflow_platforms_conf(self, itask, key):
+    def _get_workflow_platforms_conf(self, itask: 'TaskProxy', key: str):
         """Return top level [runtime] items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.tokens)
         return (
@@ -1510,7 +1510,6 @@ class TaskEventsManager():
         Return True if no retries (hence go to the submit-failed state).
         """
         no_retries = False
-        itask.summary['submit_method_id'] = None
         LOG.error(f"[{itask}] {self.EVENT_SUBMIT_FAILED}")
         if (
             TimerFlags.SUBMISSION_RETRY not in itask.try_timers
@@ -1552,6 +1551,7 @@ class TaskEventsManager():
         # Register newly submit-failed job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
         self.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_time(itask, 'submitted', event_time)
 
     def _process_message_submitted(
         self, itask: 'TaskProxy', event_time: str
@@ -1623,9 +1623,9 @@ class TaskEventsManager():
             except IndexError:
                 # we do not have access to the job config (e.g. Scheduler
                 # crashed) - https://github.com/cylc/cylc-flow/pull/6326
-                job_id = itask.job_tokens.relative_id
                 LOG.warning(
-                    f'Could not find the job configuration for "{job_id}".'
+                    'Could not find the job configuration for '
+                    f'"{itask.job_tokens.relative_id}".'
                 )
                 itask.jobs.append({"submit_num": itask.submit_num})
                 job_conf = itask.jobs[-1]
@@ -1642,8 +1642,7 @@ class TaskEventsManager():
 
         # insert job into data store
         self.data_store_mgr.insert_job(
-            itask.tdef.name,
-            itask.point,
+            itask,
             job_status,
             {
                 **job_conf,
@@ -1666,7 +1665,7 @@ class TaskEventsManager():
                 # preparation started due to intelligent host (and or
                 # platform) selection
                 'platform_name': itask.platform['name'],
-            }
+            },
         )
 
     def _setup_job_logs_retrieval(self, itask, event) -> None:
@@ -1885,7 +1884,7 @@ class TaskEventsManager():
         }
         # fmt: on
 
-    def _reset_job_timers(self, itask):
+    def _reset_job_timers(self, itask: 'TaskProxy'):
         """Set up poll timer and timeout for task."""
 
         if itask.run_mode == RunMode.SIMULATION or itask.transient:
@@ -1939,18 +1938,18 @@ class TaskEventsManager():
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
         # Log timeout and polling schedule
         message = f"health: {timeout_key}={timeout_str}"
-        # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
-            items = []  # [(number of item - 1, item), ...]
+            # Group identical consecutive delays as N*DELAY,...
+            items: List[List[float]] = []  # [[number of item, item], ...]
             for delay in itask.poll_timer.delays:
                 if items and items[-1][1] == delay:
                     items[-1][0] += 1
                 else:
-                    items.append([0, delay])
+                    items.append([1, delay])
             message += ', polling intervals='
             for num, item in items:
-                if num:
-                    message += '%d*' % (num + 1)
+                if num > 1:
+                    message += f'{num}*'
                 message += '%s,' % intvl_as_str(item)
             message += '...'
         LOG.debug(f"[{itask}] {message}")
@@ -1961,7 +1960,7 @@ class TaskEventsManager():
     def process_execution_polling_intervals(
         polling_intervals: List[float],
         time_limit: float,
-        time_limit_polling_intervals: List[float]
+        time_limit_polling_intervals: Optional[List[float]]
     ) -> List[float]:
         """Create a list of polling times.
 
@@ -1993,6 +1992,11 @@ class TaskEventsManager():
         >>> this([], 10, [5])
         [15, 5]
 
+        # There are no execution time limit polling intervals set - just
+        # repeat the execution polling interval until the time limit:
+        >>> this([10], 25, None)
+        [10, 10]
+
         # We have a list of execution time limit polling intervals,
         >>> this([10], 25, [5, 6, 7, 8])
         [10, 10, 10, 6, 7, 8]
@@ -2009,17 +2013,19 @@ class TaskEventsManager():
             size = int((time_limit - sum(delays)) / delays[-1])
             delays.extend([delays[-1]] * size)
 
-        # After the last delay before the execution time limit add the
-        # delay to get to the execution_time_limit
-        if len(time_limit_polling_intervals) == 1:
-            time_limit_polling_intervals.append(
-                time_limit_polling_intervals[0]
-            )
-        time_limit_polling_intervals[0] += time_limit - sum(delays)
+        if time_limit_polling_intervals:
+            # After the last delay before the execution time limit add the
+            # delay to get to the execution_time_limit
+            if len(time_limit_polling_intervals) == 1:
+                time_limit_polling_intervals.append(
+                    time_limit_polling_intervals[0]
+                )
+            time_limit_polling_intervals[0] += time_limit - sum(delays)
 
-        # After the execution time limit poll at execution time limit polling
-        # intervals.
-        delays += time_limit_polling_intervals
+            # After the execution time limit, poll at the
+            # execution time limit polling intervals.
+            delays += time_limit_polling_intervals
+
         return delays
 
     def add_event_timer(

@@ -1158,13 +1158,60 @@ with Conf(
                 .. versionadded:: 8.3.0
             ''')
             Conf('platform', VDR.V_STRING, desc='''
-                The name of a compute resource defined in
-                :cylc:conf:`global.cylc[platforms]` or
-                :cylc:conf:`global.cylc[platform groups]`.
+                The platform to submit jobs to.
 
-                The platform specifies the host(s) that the tasks' jobs
+                The
+                :cylc:conf:`platform <global.cylc[platforms][<platform name>]>`
+                specifies the host(s) that the tasks' jobs
                 will run on and where (if necessary) files need to be
                 installed, and what job runner will be used.
+
+                This can be:
+
+                * A :cylc:conf:`platform <global.cylc[platforms]>`,
+                * a :cylc:conf:`platform group <global.cylc[platform groups]>`,
+                * or a command which returns a platform or platform group.
+
+                To see what platforms have been configured at your site, run
+                ``cylc config --platform-names``.
+
+                .. rubric:: Commands:
+
+                The ``platform`` can be set to a command which returns the name
+                of the platform to submit jobs to using the ``$()`` syntax,
+                i.e:
+
+                .. code-block:: cylc
+
+                   platform = $(command)
+
+                The configured command will be evaluated for each job
+                submission (i.e, different submissions of the same task may
+                submit on different platforms).
+
+                Cylc batches job submissions, so when multiple jobs are
+                submitted at the same time, using a platform defined by the
+                same command, the command will be run once, and all jobs in the
+                batch will submit to the same platform.
+
+                Note: do not use a command to configure a list of login nodes.
+                Instead, define a platform and configure the login nodes it
+                can use; see
+                :ref:`config.platforms.cluster_with_multiple_login_nodes`.
+
+                .. rubric:: Examples:
+
+                .. code-block:: cylc
+
+                   # run the job on the same host the Cylc scheduler runs on
+                   platform = localhost
+
+                   # run the job on a platform (or platform group) called hpc
+                   platform = hpc
+
+                   # run a command to select the platform (or platform group):
+                   platform = $(select-platform)
+                   platform = prefix-$(select-platform)-suffix
 
                 .. versionadded:: 8.0.0
             ''')
@@ -1996,13 +2043,20 @@ with Conf(
                 ''')
 
 
-def upg(cfg, descr):
+def upg(cfg, descr, for_cancel_broadcast=False):
     """Upgrade old workflow configuration.
 
     NOTE: We are silencing deprecation (and only deprecation) warnings
     when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
     (which would loose Cylc 7 compatibility if users were to follow the
     warnings and upgrade the syntax).
+
+    Args:
+        for_cancel_broadcast:
+            If True, extra validation steps which inspect configuration values
+            will be skipped. This is used for "cylc broadcast --cancel" where
+            the values are not known.
+            See https://github.com/cylc/cylc-flow/issues/6950.
 
     """
     u = upgrader(cfg, descr)
@@ -2208,11 +2262,11 @@ def upg(cfg, descr):
     )
     u.upgrade()
 
-    upgrade_graph_section(cfg, descr)
-    upgrade_param_env_templates(cfg, descr)
-
-    warn_about_depr_platform(cfg)
-    warn_about_depr_event_handler_tmpl(cfg)
+    if not for_cancel_broadcast:
+        upgrade_graph_section(cfg, descr)
+        upgrade_param_env_templates(cfg, descr)
+        warn_about_depr_platform(cfg)
+        warn_about_depr_event_handler_tmpl(cfg)
 
     return u
 

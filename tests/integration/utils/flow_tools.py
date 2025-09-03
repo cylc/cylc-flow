@@ -29,7 +29,6 @@ from contextlib import (
 import logging
 from pathlib import Path
 from secrets import token_hex
-import sys
 from typing import (
     Any,
     Optional,
@@ -48,12 +47,6 @@ from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.workflow_status import StopMode
 
 from .flow_writer import flow_config_str
-
-
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout
-else:
-    from async_timeout import timeout
 
 
 def _make_src_flow(src_path, conf, filename=WorkflowFiles.FLOW_FILE):
@@ -169,7 +162,7 @@ async def _start_flow(
         # context manager.
         # Need to shut down Scheduler, but time out in case something
         # goes wrong:
-        async with timeout(5):
+        async with asyncio.timeout(5):
             await schd.shutdown(SchedulerStop("integration test teardown"))
 
 
@@ -202,14 +195,14 @@ async def _run_flow(
         # context manager.
         # Need to shut down Scheduler, but time out in case something
         # goes wrong:
-        async with timeout(5):
+        async with asyncio.timeout(5):
             if task:
                 # ask the scheduler to shut down nicely,
                 # let main loop handle it:
                 schd._set_stop(StopMode.REQUEST_NOW_NOW)
                 await task
         if schd.contact_data:
-            async with timeout(5):
+            async with asyncio.timeout(5):
                 # Scheduler still running... try more forceful tear down:
                 await schd.shutdown(SchedulerStop("integration test teardown"))
         if task:

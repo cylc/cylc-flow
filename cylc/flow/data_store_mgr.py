@@ -67,7 +67,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    Union,
 )
 import zlib
 
@@ -1612,25 +1611,18 @@ class DataStoreMgr:
 
     def insert_job(
         self,
-        name: str,
-        cycle_point: Union['PointBase', str],
+        itask: 'TaskProxy',
         status: str,
         job_conf: dict,
-    ):
+    ) -> None:
         """Insert job into data-store.
 
         Args:
-            name: Corresponding task name.
-            cycle_point: Cycle point string
             status: The task's state.
             job_conf:
                 Dictionary of job configuration used to generate
                 the job script.
                 (see TaskJobManager._prep_submit_task_job_impl)
-
-        Returns:
-
-            None
 
         """
         if status not in JOB_STATUS_SET:
@@ -1639,10 +1631,7 @@ class DataStoreMgr:
             return
 
         sub_num = job_conf['submit_num']
-        tp_tokens = self.id_.duplicate(
-            cycle=str(cycle_point),
-            task=name,
-        )
+        tp_tokens = self.id_.duplicate(itask.tokens)
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
@@ -1665,6 +1654,7 @@ class DataStoreMgr:
             execution_time_limit=job_conf.get('execution_time_limit'),
             platform=job_conf['platform']['name'],
             job_runner_name=job_conf.get('job_runner_name'),
+            job_id=itask.summary.get('submit_method_id'),
         )
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.

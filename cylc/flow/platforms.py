@@ -57,7 +57,7 @@ SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
-PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
+PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*(\))')
 
 HOST_SELECTION_METHODS = {
     'definition order': lambda goodhosts: goodhosts[0],
@@ -305,10 +305,7 @@ def get_platform_from_group(
     if bad_hosts:
         platform_names = [
             platform for platform in group['platforms']
-            if any(
-                host not in bad_hosts
-                for host in platform_from_name(platform)['hosts']
-            )
+            if not bad_hosts.issuperset(platform_from_name(platform)['hosts'])
         ]
     else:
         platform_names = group['platforms']

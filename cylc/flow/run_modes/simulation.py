@@ -24,6 +24,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Tuple,
     Union,
 )
@@ -50,11 +51,6 @@ from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
@@ -164,7 +160,7 @@ class ModeSettings:
             db_info = db_mgr.pri_dao.select_task_job(
                 itask.tokens['cycle'],
                 itask.tokens['task'],
-                itask.tokens['job'],
+                itask.submit_num,
             )
 
             if db_info['time_submit']:

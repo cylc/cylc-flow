@@ -373,13 +373,39 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
     ''',
     'restart timeout': '''
         How long to wait for intervention on restarting a completed workflow.
-        The timer stops if any task is triggered.
+
+        When a workflow reaches the end of the :term:`graph`, it will
+        :term:`shut down <shutdown>` automatically. We call such workflows
+        :ref:`completed <workflow completion>` as there are no more tasks for
+        Cylc to run.
+
+        Completed workflows can be caused by:
+
+        * Cylc reaching the end of the :term:`graph`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]final cycle point`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
+        * Tasks being manually removed :ref:`interventions.remove_tasks`.
+
+        When you restart a completed workflow, it will detect that there are no
+        more tasks to run, and shut itself down again. The ``restart timeout``
+        delays this shutdown for a configured period allowing you to trigger
+        more task(s) to run.
 
         .. seealso::
 
-           :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`workflow completion`
+           * :ref:`examples.extending-workflow`
 
         .. versionadded:: 8.2.0
+
+        .. versionchanged:: 8.5.2
+
+           The ``restart timeout`` is now also activated for workflows that
+           have hit the
+           :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
 
     '''
 }
@@ -990,8 +1016,8 @@ with Conf('global.cylc', desc='''
 
                 .. code-block:: python
 
-                   # rank hosts by cpu_percent
-                   cpu_percent()
+                   # rank hosts by cpu_percent over a 1 second interval
+                   cpu_percent(1)  # Note: monitors CPU for 1 second
 
                    # rank hosts by 15min average of server load
                    getloadavg()[2]
@@ -1014,7 +1040,7 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter out hosts with a CPU utilisation of 70% or above
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
 
                    # filter out hosts with less than 1GB of RAM available
                    virtual_memory().available > 1000000000
@@ -1031,20 +1057,37 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter hosts
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
                    disk_usage('/').free > 1000000000
 
                    # rank hosts by CPU count
                    1 / cpu_count()
                    # if two hosts have the same CPU count
                    # then rank them by CPU usage
-                   cpu_percent()
+                   cpu_percent(1)
 
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[suite servers][run host select]rank``.
             ''')
+            Conf('process check timeout', VDR.V_INTERVAL, DurationFloat(10),
+                 desc='''
+                Maximum time for the ``cylc play`` and ``cylc vr`` commands
+                to wait
+                for a remote process that checks if an unresponsive scheduler
+                is still alive (for workflows with existing contact files).
 
+                .. note::
+
+                   This check involves running ``cylc psutil`` on the run host.
+                   You may need to increase the timeout if shared filesystem
+                   latency (for example) results in slow Python script startup.
+                   Increasing the timeout unnecessarily, however, will just
+                   cause these commands to hang for an unnecessarily long time
+                   in this circumstance.
+
+                .. versionadded:: 8.5.2
+            ''')
         with Conf('host self-identification', desc=f'''
             How Cylc determines and shares the identity of the workflow host.
 

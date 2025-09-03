@@ -42,7 +42,7 @@ from cylc.flow.data_store_mgr import (
     TASKS,
     WORKFLOW,
 )
-from cylc.flow.id import Tokens
+from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -296,7 +296,7 @@ async def test_delta_task_held(mod_harness):
     apply adeltas/updates given."""
     schd: Scheduler
     schd, data = mod_harness
-    schd.pool.hold_tasks(['*'])
+    schd.pool.hold_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
     for itask in schd.pool.get_tasks():
@@ -310,21 +310,24 @@ async def test_delta_task_held(mod_harness):
     }
 
     # put things back the way we found them
-    schd.pool.release_held_tasks('*')
+    schd.pool.release_held_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
 
 
 def test_insert_job(mod_harness):
     """Test method that adds a new job to the store."""
+    schd: Scheduler
     schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 0
-    schd.data_store_mgr.insert_job('foo', '1', 'submitted', job_config(schd))
+    itask = schd.pool.get_tasks()[0]
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     assert ext_id(schd) in schd.data_store_mgr.added[JOBS]
 
 
 def test_insert_db_job(mod_harness, job_db_row):
     """Test method that adds a new job from the db to the store."""
+    schd: Scheduler
     schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     schd.data_store_mgr.insert_db_job(0, job_db_row)
@@ -334,6 +337,7 @@ def test_insert_db_job(mod_harness, job_db_row):
 
 def test_delta_job_msg(mod_harness):
     """Test method adding messages to job element."""
+    schd: Scheduler
     schd, data = mod_harness
     j_id = ext_id(schd)
     tokens = Tokens(j_id)
@@ -377,12 +381,12 @@ async def test_update_data_structure(mod_harness):
     schd, data = mod_harness
     w_id = schd.data_store_mgr.workflow_id
     schd.data_store_mgr.data[w_id] = data
-    schd.pool.hold_tasks(['*'])
+    schd.pool.hold_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
     assert TASK_STATUS_FAILED not in set(collect_states(data, TASK_PROXIES))
     assert TASK_STATUS_FAILED not in set(collect_states(data, FAMILY_PROXIES))
     assert TASK_STATUS_FAILED not in data[WORKFLOW].state_totals
-    assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
+    assert len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 2
     for itask in schd.pool.get_tasks():
         itask.state.reset(TASK_STATUS_FAILED)
         schd.data_store_mgr.delta_task_state(itask)
@@ -432,14 +436,18 @@ async def test_prune_data_store(flow, scheduler, start):
         await schd.update_data_structure()
         w_id = schd.data_store_mgr.workflow_id
         data = schd.data_store_mgr.data[w_id]
-        schd.pool.hold_tasks(['*'])
+        schd.pool.hold_tasks({TaskTokens('*', 'root')})
         await schd.update_data_structure()
-        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
+        assert (
+            len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 2
+        )
 
         # Window size reduction to invoke pruning
         schd.data_store_mgr.set_graph_window_extent(0)
         schd.data_store_mgr.update_data_structure()
-        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
+        assert (
+            len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 1
+        )
 
         # Test rapid addition and removal
         # bar/BAR task/family proxies not in .added
@@ -517,8 +525,8 @@ def test_delta_task_prerequisite(mod_harness):
     schd: Scheduler
     schd, data = mod_harness
     schd.pool.set_prereqs_and_outputs(
-        schd.pool.get_task_ids(),
-        [(TASK_STATUS_SUCCEEDED,)],
+        {itask.tokens for itask in schd.pool.get_tasks()},
+        [TASK_STATUS_SUCCEEDED],
         [],
         flow=[]
     )
@@ -546,7 +554,7 @@ def test_delta_task_xtrigger(xharness):
 
     # satisfy foo's dependence on x
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/x:succeeded'],
         flow=[]
@@ -566,7 +574,7 @@ def test_delta_task_xtrigger(xharness):
 
     # unsatisfy it again
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/x:unsatisfied'],
         flow=[]
@@ -584,7 +592,7 @@ def test_delta_task_xtrigger(xharness):
 
     # satisfy both of foo's xtriggers at once
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/all:succeeded'],
         flow=[]
@@ -724,7 +732,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
         assert itask
         itask.submit_num += 1
         one.data_store_mgr.insert_job(
-            itask.tdef.name, itask.point, itask.state.status, {'submit_num': 1}
+            itask, itask.state.status, {'submit_num': 1}
         )
         await one.update_data_structure()
 

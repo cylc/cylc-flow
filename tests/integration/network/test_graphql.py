@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from graphql import parse, MiddlewareManager
 
 from cylc.flow.data_store_mgr import create_delta_store
-from cylc.flow.id import Tokens
+from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.schema import schema, SUB_RESOLVER_MAPPING
 from cylc.flow.network.graphql import (
@@ -129,7 +129,7 @@ async def harness(mod_flow, mod_scheduler, mod_run):
     schd: 'Scheduler' = mod_scheduler(id_)
     async with mod_run(schd):
         client = WorkflowRuntimeClient(id_)
-        schd.pool.hold_tasks(['*'])
+        schd.pool.hold_tasks({TaskTokens('*', 'root')})
         schd.resume_workflow()
         # Think this is needed to save the data state at first start (?)
         # Fails without it.. and a test needs to overwrite schd data with this.
@@ -366,10 +366,12 @@ async def test_edges(harness):
 
 
 async def test_jobs(harness):
+    schd: Scheduler
     schd, client, w_tokens = harness
 
     # add a job
-    schd.data_store_mgr.insert_job('a', '1', 'submitted', job_config(schd))
+    itask = schd.pool._get_task_by_id('1/a')
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     schd.data_store_mgr.update_data_structure()
     j_tokens = w_tokens.duplicate(
         cycle='1',
