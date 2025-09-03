@@ -28,7 +28,7 @@ showcontent = true
 
 [tool.ruff]
 line-length = 79
-target-version = "py37"
+target-version = "py312"
 
 [tool.ruff.format]
 quote-style = "preserve"
@@ -36,7 +36,7 @@ quote-style = "preserve"
 
 [tool.black]
 line-length = 79
-target-version = ['py37']
+target-version = ['py312']
 skip-string-normalization = true
 
 

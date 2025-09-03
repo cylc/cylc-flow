@@ -23,6 +23,7 @@ from typing import cast, Iterable
 from cylc.flow import commands
 from cylc.flow.data_messages_pb2 import PbTaskProxy
 from cylc.flow.data_store_mgr import FAMILY_PROXIES, TASK_PROXIES
+from cylc.flow.id import TaskTokens
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.subprocctx import SubFuncContext
@@ -242,7 +243,7 @@ async def test_set_xtrig_prereq_restart(flow, start, scheduler, db_select):
     async with start(schd):
         # artificially set dependence of foo on x0
         schd.pool.set_prereqs_and_outputs(
-            ['1/foo'], [], ['xtrigger/x0:succeeded'], []
+            {TaskTokens('1', 'foo')}, [], ['xtrigger/x0:succeeded'], []
         )
 
     # the satisfied x0 prerequisite should be written to the DB
@@ -388,7 +389,7 @@ async def test_set_xtrig_prereq_reload(flow, start, scheduler, db_select):
     async with start(schd):
         # artificially set dependence of foo on x0
         schd.pool.set_prereqs_and_outputs(
-            ['1/foo'], [], ['xtrigger/x0:succeeded'], []
+            {TaskTokens('1', 'foo')}, [], ['xtrigger/x0:succeeded'], []
         )
 
         # reload the workflow

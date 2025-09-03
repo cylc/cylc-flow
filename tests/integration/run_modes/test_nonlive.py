@@ -19,6 +19,7 @@ from typing import Any, Dict
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.id import TaskTokens
 from cylc.flow.scheduler import Scheduler
 
 
@@ -111,7 +112,9 @@ async def test_db_task_jobs(
         submit_and_check_db(schd)
 
         # Set outputs to failed:
-        schd.pool.set_prereqs_and_outputs('*', ['failed'], [], [])
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('*', 'root')}, ['failed'], [], []
+        )
 
         submit_and_check_db(schd)
 

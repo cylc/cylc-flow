@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from graphql import parse, MiddlewareManager
 
 from cylc.flow.data_store_mgr import create_delta_store
-from cylc.flow.id import Tokens
+from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.schema import schema, SUB_RESOLVER_MAPPING
 from cylc.flow.network.graphql import (
@@ -129,7 +129,7 @@ async def harness(mod_flow, mod_scheduler, mod_run):
     schd: 'Scheduler' = mod_scheduler(id_)
     async with mod_run(schd):
         client = WorkflowRuntimeClient(id_)
-        schd.pool.hold_tasks(['*'])
+        schd.pool.hold_tasks({TaskTokens('*', 'root')})
         schd.resume_workflow()
         # Think this is needed to save the data state at first start (?)
         # Fails without it.. and a test needs to overwrite schd data with this.
