@@ -671,3 +671,29 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
     with pytest.raises(InputError, match='a///b'):
         async with start(schd):
             pass
+
+
+async def test_task_event_bad_custom_template(
+    flow, validate, scheduler, start, log_filter
+):
+    """Validation fails if task event handler has a bad custom template.
+    """
+    exception = (
+        r"bad task event handler template t1: echo %\(rubbish\)s:"
+        r" KeyError\('rubbish'\)"
+    )
+    events = {
+        'handlers': 'echo %(rubbish)s',
+        'handler events': 'succeeded'
+    }
+    wid = flow({
+        'scheduling': {'graph': {'R1': 't1'}},
+        'runtime': {'t1': {'events': events}},
+    })
+    with pytest.raises(WorkflowConfigError, match=exception):
+        validate(wid)
+
+    schd = scheduler(wid)
+    with pytest.raises(WorkflowConfigError, match=exception):
+        async with start(schd):
+            pass
