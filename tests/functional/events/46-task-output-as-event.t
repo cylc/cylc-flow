@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 3
+set_test_number 4
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
@@ -36,11 +36,16 @@ cylc message -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} \
             lily = lily
             iris = iris
         [[[events]]]
-            handler events = rose, lily, iris, warning
+            handler events = rose, lily, iris, warning, arsenic
+            # (arsenic is an invalid event)
             handlers = echo %(message)s
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "$TEST_NAME" cylc validate "${WORKFLOW_NAME}"
+
+dump_std "${TEST_NAME}"
+grep_ok 'WARNING - Invalid event name.*arsenic' "${TEST_NAME}.stderr"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
