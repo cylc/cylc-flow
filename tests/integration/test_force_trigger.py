@@ -37,10 +37,14 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
-    TASK_STATUS_RUNNING
 )
 
 
@@ -672,11 +676,11 @@ async def test_replay_outputs(flow, scheduler, start, complete, log_filter):
         # live during the forthcoming trigger operation.
 
         # Complete the a:started and k:kustom outputs.
-        schd.pool.set_prereqs_and_outputs(
-            ['1/a'], ['started'], [], []
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/a'], ['1'], ['started'], None)
         )
-        schd.pool.set_prereqs_and_outputs(
-            ['1/k'], ['kustom'], [], []
+        await run_cmd(
+            set_prereqs_and_outputs(schd, ['1/k'], ['1'], ['kustom'], None)
         )
         # It should spawn b, l, and offg.
         for task in ['b', 'l', 'offg']:
@@ -780,3 +784,52 @@ async def test_trigger_whilst_paused_preparing(flow, scheduler, run, complete):
 
         # 1/a should run even though the workflow is paused.
         await complete(schd, '1/a', allow_paused=True, timeout=1)
+
+
+async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
+    """Test task matching with the trigger command.
+
+    This test is intended to extend the other integration tests for ID matching
+    with a real use case to ensure the code in cylc.flow.commands
+    (which parses and standardises IDs) is working correctly.
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b & c & d & e & f & g'
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        trigger_calls = []
+
+        def _force_trigger_tasks(_schd, ids, *_, **__):
+            trigger_calls.append(
+                {id_.relative_id_with_selectors for id_ in ids}
+            )
+
+        monkeypatch.setattr(
+            'cylc.flow.commands._force_trigger_tasks', _force_trigger_tasks
+        )
+
+        schd.pool._get_task_by_id('1/a').state_reset(TASK_STATUS_SUBMITTED)
+        schd.pool._get_task_by_id('1/b').state_reset(TASK_STATUS_RUNNING)
+        schd.pool._get_task_by_id('1/c').state_reset(TASK_STATUS_SUCCEEDED)
+        schd.pool._get_task_by_id('1/d').state_reset(TASK_STATUS_FAILED)
+
+        await run_cmd(force_trigger_tasks(schd, ['*:submitted'], []))
+        assert trigger_calls == [{'1/a'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:running'], []))
+        assert trigger_calls == [{'1/b'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:succeeded'], []))
+        assert trigger_calls == [{'1/c'}]
+        trigger_calls.clear()
+
+        await run_cmd(force_trigger_tasks(schd, ['*:failed'], []))
+        assert trigger_calls == [{'1/d'}]
+        trigger_calls.clear()

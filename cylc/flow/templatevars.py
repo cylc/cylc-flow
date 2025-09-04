@@ -84,7 +84,7 @@ def eval_var(var):
         ) from None
 
 
-def parse_string_list(stringlist: str) -> List:
+def parse_string_list(stringlist: str) -> list[str]:
     """Parse a comma separated string list into a Python string list.
 
     Examples:
@@ -136,7 +136,7 @@ def load_template_vars(
                 keys.add(key.strip())
 
     cli_tvars: Dict[str, Any] = {}
-    tvars_lists: Dict[str, str] = {}
+    tvars_lists: dict[str, list[str]] = {}
     for input_, result, func in (
         (template_vars, cli_tvars, eval_var),
         (templatevars_lists, tvars_lists, parse_string_list)

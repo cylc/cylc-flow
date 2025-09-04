@@ -34,10 +34,10 @@ from subprocess import (
 import sys
 from time import sleep
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
@@ -55,10 +55,6 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.util import format_cmd
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 def get_proc_ancestors():
