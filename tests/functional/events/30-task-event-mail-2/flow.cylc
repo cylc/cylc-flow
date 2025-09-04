@@ -5,20 +5,18 @@
 [scheduler]
     [[events]]
         abort on stall timeout = True
-        stall timeout = PT20S
-        expected task failures = 1/t1, 1/t2, 1/t3, 1/t4, 1/t5
+        stall timeout = PT0S
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(workflow)s/
-        task event batch interval = PT15S
+        task event batch interval = PT8S
 
 [scheduling]
     [[graph]]
-        R1=t1 & t2 & t3 & t4 & t5
+        R1 = t1? & t2? & t3? & t4? & t5?
 
 [runtime]
     [[t1, t2, t3, t4, t5]]
         script = false
-        [[[job]]]
-            execution retry delays = 2*PT20S
+        execution retry delays = PT15S
         [[[events]]]
             mail events = failed, retry
