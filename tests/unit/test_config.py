@@ -1792,7 +1792,7 @@ def test_val_wflow_event_names(item, tmp_flow_config, log_filter):
 
 @pytest.mark.parametrize('item', ['handler events', 'mail events'])
 def test_check_task_event_names(item, tmp_flow_config, log_filter):
-    """"Any invalid task handler events raise an error."""
+    """"Any invalid task handler events are warned about."""
     flow_file = tmp_flow_config('foo', f"""
         [scheduling]
             [[graph]]
