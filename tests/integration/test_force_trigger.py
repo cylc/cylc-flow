@@ -39,6 +39,7 @@ from cylc.flow.commands import (
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
+    TASK_STATUS_PREPARING,
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
@@ -756,6 +757,33 @@ async def test_trigger_with_sequential_task(flow, scheduler, run, log_filter):
                 if log_filter(contains='[2/foo/02:running] (received)failed'):
                     break
                 await asyncio.sleep(0)
+
+
+async def test_trigger_whilst_paused_preparing(flow, scheduler, run, complete):
+    """It should run "preparing" tasks even if the workflow is paused.
+
+    Remote init leaves tasks as preparing for a while. These must still be
+    pushed through to running, even if triggered while the workflow is paused.
+
+    See https://github.com/cylc/cylc-flow/pull/6768
+
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {'R1': 'a'},
+            },
+        }
+    )
+    schd = scheduler(id_)
+    async with run(schd):
+
+        # Instead of triggering, artificially set it as preparing.
+        a = schd.pool.get_tasks()[0]
+        a.state_reset(TASK_STATUS_PREPARING)
+
+        # 1/a should run even though the workflow is paused.
+        await complete(schd, '1/a', allow_paused=True, timeout=1)
 
 
 async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):

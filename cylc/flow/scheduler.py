@@ -1350,7 +1350,13 @@ class Scheduler:
                 pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
                 self.pool.tasks_to_trigger_now = set()
 
-            if not self.is_paused:
+            if self.is_paused:
+                # finish processing preparing tasks
+                pre_prep_tasks.update({
+                    itask for itask in self.pool.get_tasks()
+                    if itask.state(TASK_STATUS_PREPARING)
+                })
+            else:
                 # release queued tasks
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
                 if self.pool.tasks_to_trigger_on_resume:
