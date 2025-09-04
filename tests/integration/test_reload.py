@@ -314,9 +314,9 @@ async def test_orphan_reload(
     start,
     log_filter,
 ):
-    """Reload should not fail about orphaned tasks.
+    """Reload should not fail because of orphaned tasks.
 
-    The following aspects of reload about orphans are tested:
+    The following aspects of reload-with-orphans are tested:
         - Broadcast deltas generated after reload.
           https://github.com/cylc/cylc-flow/issues/6814
         - Removal of both xtrigger and associated active/incomplete task.
