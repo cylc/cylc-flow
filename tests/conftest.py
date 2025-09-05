@@ -177,7 +177,7 @@ def capcall(monkeypatch):
             monkeypatch.setattr.
         mock:
             * If True, the function will be replaced by a "return None".
-            * If False, the oringal function will be run.
+            * If False, the original function will be run.
             * If a Callable is provided, this will be run in place of the
               original function.
 
