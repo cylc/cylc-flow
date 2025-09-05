@@ -1,5 +1,3 @@
-[scheduler]
-   UTC mode = True
 [scheduling]
     [[graph]]
         R1 = t01

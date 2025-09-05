@@ -233,7 +233,9 @@ async def test__submit_failed_job_id(flow, scheduler, start, db_select):
         assert await get_ds_job_id(schd) == job_id
 
 
-async def test__process_message_failed_with_retry(one, start, log_filter):
+async def test__process_message_failed_with_retry(
+    one: Scheduler, start, log_filter
+):
     """Log job failure, even if a retry is scheduled.
 
     See: https://github.com/cylc/cylc-flow/pull/6169
@@ -250,13 +252,11 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             })
 
         # Process submit failed message with and without retries:
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         record = log_filter(contains='1/one:waiting(queued)] retrying in')
         assert record[0][0] == logging.WARNING
 
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'submission failed' in failed_record[1]
 
