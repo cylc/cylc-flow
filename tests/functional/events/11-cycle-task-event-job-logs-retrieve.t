@@ -36,7 +36,7 @@ create_test_global_config '' "
 "
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST='${CYLC_TEST_HOST}'" "${WORKFLOW_NAME}"
+    cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 

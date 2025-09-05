@@ -31,8 +31,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${WORKFLOW_NAME}" \
-         -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
+    cylc validate "${WORKFLOW_NAME}"
 
 # Check that the cfgspec/workflow.py has issued a warning about upgrades.
 grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
@@ -40,8 +39,7 @@ grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
 
 # Run the workflow
 workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach \
-    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${WORKFLOW_NAME}"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Check that the workflow failed because no matching platform could be found.
 grep_ok "\[jobs-submit err\] No platform found matching your task"\

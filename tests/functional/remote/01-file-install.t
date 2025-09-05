@@ -38,7 +38,6 @@ create_files () {
 # (ana, app, bin, etc, lib) are correctly installed on the remote platform.
 TEST_NAME="${TEST_NAME_BASE}-default-paths"
 init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
-#!jinja2
 [scheduling]
     [[graph]]
         R1 = foo
@@ -51,11 +50,9 @@ RUN_DIR_REL="${WORKFLOW_RUN_DIR#"${HOME}"/}"
 create_files
 
 # run the flow
-run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}" \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME}-run1" cylc play "${WORKFLOW_NAME}" \
-    --no-detach \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+    --no-detach
 
 # ensure these files get installed on the remote platform
 SSH="$(cylc config -d -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
@@ -75,7 +72,6 @@ purge
 # Test the [scheduler]install configuration
 TEST_NAME="${TEST_NAME_BASE}-configured-paths"
 init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
-#!jinja2
 [scheduler]
     install = dir1/, dir2/, file1, file2
 [scheduling]
@@ -89,11 +85,9 @@ RUN_DIR_REL="${WORKFLOW_RUN_DIR#"${HOME}"/}"
 
 create_files
 
-run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}" \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME}-run2" cylc play "${WORKFLOW_NAME}" \
-    --no-detach \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+    --no-detach
 
 ${SSH} "${CYLC_TEST_HOST}" \
     find "${RUN_DIR_REL}/"{ana,app,bin,dir1,dir2,file1,file2,etc,lib} -type f | sort > 'find.out'

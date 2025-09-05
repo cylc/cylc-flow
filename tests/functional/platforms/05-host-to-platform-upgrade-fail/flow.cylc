@@ -1,4 +1,3 @@
-#!jinja2
 [meta]
 description = """
 The task settings for not_upgradable_cylc7_settings should not match any
