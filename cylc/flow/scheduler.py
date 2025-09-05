@@ -58,6 +58,7 @@ from typing import (
 )
 from uuid import uuid4
 
+from metomi.isodatetime.exceptions import TimePointDumperBoundsError
 import psutil
 
 from cylc.flow import (
@@ -109,8 +110,8 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_name_from_id,
@@ -1680,7 +1681,18 @@ class Scheduler:
             # A simulated task state change occurred.
             self.reset_inactivity_timer()
 
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
+        # auto expire broadcasts
+        with suppress(TimePointDumperBoundsError):
+            # NOTE: TimePointDumperBoundsError will be raised for negative
+            # cycle points, we skip broadcast expiry in this circumstance
+            # (pre-initial condition)
+            if min_point := self.pool.get_min_point():
+                # NOTE: the broadcast expire limit is the oldest active cycle
+                # MINUS the longest cycling interval
+                self.broadcast_mgr.expire_broadcast(
+                    min_point - self.config.interval_of_longest_sequence
+                )
+
         self.late_tasks_check()
 
         self.process_queued_task_messages()

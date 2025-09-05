@@ -2375,6 +2375,23 @@ class WorkflowConfig:
             # dependencies are checked in generate_triggers:
             self.check_terminal_outputs(parser.terminals)
 
+        # set of all cycling intervals containined within the workflow
+        cycling_intervals = {
+            sequence.get_interval()
+            for sequence in self.sequences
+        } | {
+            # add a null interval to handle async workflows
+            get_interval_cls().get_null()
+        }
+
+        # determine the longest cycling interval in the workflow
+        self.interval_of_longest_sequence: 'IntervalBase' = max({
+            interval for interval in cycling_intervals
+            # NOTE: None type sorts above a null interval for strange
+            # historical reasons so must be filtered out
+            if interval is not None
+        })
+
         self.set_required_outputs(task_output_opt)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
