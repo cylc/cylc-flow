@@ -31,6 +31,7 @@ from cylc.flow.exceptions import (
     XtriggerConfigError,
 )
 from cylc.flow.parsec.exceptions import ListValueError
+from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
 Fixture = Any
@@ -671,6 +672,47 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
     with pytest.raises(InputError, match='a///b'):
         async with start(schd):
             pass
+
+
+async def test_CYLC_WORKFLOW_SRC_DIR_correctly_set(tmp_path, install, run_dir):
+    """CYLC_WORKFLOW_SRC_DIR is set correctly:
+
+    * In source dir
+    * In installed dir (Not testing different permutations of installed
+      dir as these are covered by testing of `get_workflow_source_dir`)
+    * Created directly in the run dir.
+
+    """
+    def process_file(target):
+        """Run config through read_and_proc (~= cylc view --process)
+        """
+        return read_and_proc(
+            target,
+            viewcfg={
+                'mark': False,
+                'single': False,
+                'label': False,
+                'jinja2': True,
+                'contin': True,
+                'inline': True,
+            },
+        )
+
+    # Setup a source directory:
+    (tmp_path / 'flow.cylc').write_text(
+        '#!jinja2\n{{ CYLC_WORKFLOW_SRC_DIR }}'
+    )
+
+    # Check that the CYLC_SRC_DIRECTORY
+    # points to the source directory (tmp_path):
+    processed = process_file(tmp_path / 'flow.cylc')
+    assert processed[0] == str(tmp_path)
+
+    # After installation the CYLC_WORKFLOW_SRC_DIR
+    # *still* points back to tmp_path:
+    wid = await install(tmp_path)
+    processed = process_file(run_dir / wid / 'flow.cylc')
+    assert processed[0] == str(tmp_path)
 
 
 async def test_task_event_bad_custom_template(
