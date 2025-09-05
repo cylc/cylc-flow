@@ -34,6 +34,7 @@ from pathlib import Path
 import re
 from textwrap import wrap
 import traceback
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -461,6 +462,7 @@ class WorkflowConfig:
         self.mem_log("config.py: after get(sparse=False)")
 
         # These 2 must be called before call to init_cyclers(self.cfg):
+        self.set_experimental_features()
         self.process_utc_mode()
         self.process_cycle_point_tz()
 
@@ -613,6 +615,14 @@ class WorkflowConfig:
         self.mem_log("config.py: end init config")
 
         skip_mode_validate(self.taskdefs)
+
+    def set_experimental_features(self):
+        all_ = self.cfg['scheduler']['experimental']['all']
+        self.experimental = SimpleNamespace(**{
+            key.replace(' ', '_'): value or all_
+            for key, value in self.cfg['scheduler']['experimental'].items()
+            if key != 'all'
+        })
 
     @staticmethod
     def _warn_if_queues_have_implicit_tasks(
@@ -1062,8 +1072,13 @@ class WorkflowConfig:
         for name, taskdef in self.taskdefs.items():
             expr = taskdef.rtconfig['completion']
             if expr:
+                any_suicide = any(
+                    dep.suicide
+                    for d in taskdef.dependencies.values()
+                    for dep in d
+                )
                 # check the user-defined expression
-                self._check_completion_expression(name, expr)
+                self._check_completion_expression(name, expr, any_suicide)
             else:
                 # derive a completion expression for this taskdef
                 expr = get_completion_expression(taskdef)
@@ -1086,7 +1101,9 @@ class WorkflowConfig:
             # on after the TaskDef has been created
             taskdef.rtconfig['completion'] = expr
 
-    def _check_completion_expression(self, task_name: str, expr: str) -> None:
+    def _check_completion_expression(
+        self, task_name: str, expr: str, any_suicide: bool
+    ) -> None:
         """Checks a user-defined completion expression.
 
         Args:
@@ -1094,6 +1111,8 @@ class WorkflowConfig:
                 The name of the task we are checking.
             expr:
                 The completion expression as defined in the config.
+            any_suicide:
+                Does this task have any suicide triggers
 
         """
         # check completion expressions are not being used in compat mode
@@ -1242,12 +1261,21 @@ class WorkflowConfig:
                 and expr_opt is None
                 and compvar in {'submit_failed', 'expired'}
             ):
-                raise WorkflowConfigError(
+                msg = (
                     f'{task_name}:{trigger} is permitted in the graph'
-                    ' but is not referenced in the completion'
-                    ' expression (so is not permitted by it).'
-                    f'\nTry: completion = "{expr} or {compvar}"'
+                    ' but is not referenced in the completion.'
                 )
+                if (
+                    any_suicide
+                    and trigger == "expired"
+                    and self.experimental.expire_triggers
+                ):
+                    msg += (
+                        "\nThis may be due to use of an expire "
+                        "(formerly suicide) trigger."
+                    )
+                msg += f'\nTry: completion = "{expr} or {compvar}"'
+                raise WorkflowConfigError(msg)
 
             if (
                 graph_opt is False
@@ -2334,7 +2362,8 @@ class WorkflowConfig:
             parser = GraphParser(
                 family_map,
                 self.parameters,
-                task_output_opt=task_output_opt
+                task_output_opt=task_output_opt,
+                expire_triggers=self.experimental.expire_triggers,
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)

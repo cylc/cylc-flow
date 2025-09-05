@@ -29,6 +29,7 @@ from typing import (
 
 import pytest
 from pytest import param
+import re
 
 from cylc.flow import (
     CYLC_LOG,
@@ -38,6 +39,7 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.flow_mgr import FLOW_NONE
 from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -1980,6 +1982,87 @@ async def test_remove_active_task(
         ),
         level=logging.WARNING
     )
+
+
+async def test_remove_by_expire_trigger(
+    flow,
+    validate,
+    scheduler,
+    start,
+    log_filter
+):
+    """Test task removal by suicide trigger.
+
+    * Suicide triggers should remove tasks from the pool.
+    * It should be possible to bring them back by manually triggering them.
+    * Removing a task manually (cylc remove) should work the same.
+    """
+    def _get_id(b_completion: str = "succeeded"):
+        return flow({
+            'scheduler': {
+                'experimental': {
+                    'expire triggers': 'True',
+                }
+            },
+            'scheduling': {
+                'graph': {
+                    'R1': '''
+                        a? => b
+                        a:failed? => !b
+                    '''
+                },
+            },
+            'runtime': {
+                'b': {
+                    'completion': b_completion
+                }
+            }
+        })
+    with pytest.raises(
+        WorkflowConfigError,
+        match=re.escape(
+            "This may be due to use of an expire (formerly suicide) trigger"
+        )
+    ):
+        validate(_get_id())
+
+    id_ = _get_id("succeeded or expired")
+    validate(id_)
+    schd: 'Scheduler' = scheduler(id_, paused_start=False)
+
+    async with start(schd, level=logging.DEBUG) as log:
+        # it should start up with 1/a
+        assert schd.pool.get_task_ids() == {"1/a"}
+        a = schd.pool.get_task(IntegerPoint("1"), "a")
+
+        # mark 1/a as failed and check that 1/b expires
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
+        assert log_filter(regex="1/b.*=> expired")
+        assert schd.pool.get_task_ids() == {"1/a"}
+
+        # 1/b should not be resurrected if it becomes ready
+        schd.pool.set_prereqs_and_outputs(['1/b'], [], ["1/a"], [1],)
+        assert log_filter(regex="1/b:expired.* already finished and completed")
+
+        # but we can still resurrect 1/b by triggering it
+        log.clear()
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
+        assert log_filter(regex='1/b.*added to the n=0 window')
+
+        # remove 1/b with "cylc remove""
+        await commands.run_cmd(
+            commands.remove_tasks(schd, ['1/b'], [])
+        )
+        assert log_filter(
+            regex='1/b.*removed from the n=0 window: request',
+        )
+
+        # and bring 1/b back again by triggering it again
+        log.clear()
+        await commands.run_cmd(
+            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
+        assert log_filter(regex='1/b.*added to the n=0 window',)
 
 
 async def test_remove_by_suicide(
