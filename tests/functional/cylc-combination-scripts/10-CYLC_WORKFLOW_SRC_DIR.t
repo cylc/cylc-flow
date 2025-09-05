@@ -36,13 +36,14 @@ __HERE__
 
 # It starts playing:
 run_ok "${TEST_NAME_BASE}-vip" \
-    cylc install \
+    cylc vip \
+        --pause \
         --no-run-name \
         --workflow-name "${WORKFLOW_NAME}"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
 named_grep_ok "src-path-available" \
-    "$PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
+    "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can be updated with Cylc VR
 echo "[meta]" >> flow.cylc
@@ -52,6 +53,8 @@ poll_grep "meta" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
 named_grep_ok "src-path-available" \
-    "$PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
+    "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
+
+cylc stop "${WORKFLOW_NAME}"
 
 purge "${WORKFLOW_NAME}"
