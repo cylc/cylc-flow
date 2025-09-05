@@ -56,5 +56,3 @@ named_grep_ok "src-path-available" \
     "$PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 purge "${WORKFLOW_NAME}"
-
-exit 0
