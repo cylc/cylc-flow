@@ -36,8 +36,7 @@ __HERE__
 
 # It starts playing:
 run_ok "${TEST_NAME_BASE}-vip" \
-    cylc vip \
-        --pause \
+    cylc install \
         --no-run-name \
         --workflow-name "${WORKFLOW_NAME}"
 
