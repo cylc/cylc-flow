@@ -558,9 +558,6 @@ def hashbang_and_plugin_templating_clash(
             f" which does not match {flines[0]} set in flow.cylc."
         )
 
-    # if templating and not hashbang:
-    #     raise TemplateVarLanguageClash(
-    #         f'No shebang line ({JINJA2_SHEBANG}) in config file.')
     return hashbang
 
 
