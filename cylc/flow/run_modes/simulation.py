@@ -158,7 +158,7 @@ class ModeSettings:
             db_info = db_mgr.pri_dao.select_task_job(
                 itask.tokens['cycle'],
                 itask.tokens['task'],
-                itask.tokens['job'],
+                itask.submit_num,
             )
 
             if db_info['time_submit']:

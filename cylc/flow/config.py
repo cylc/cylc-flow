@@ -1764,7 +1764,7 @@ class WorkflowConfig:
                 taskdef.rtconfig['outputs'],
             )
             if invalid:
-                raise WorkflowConfigError(
+                LOG.warning(
                     "Invalid event name(s) for "
                     f"[runtime][{taskdef.name}][events]{setting}: "
                     + ', '.join(sorted(invalid))

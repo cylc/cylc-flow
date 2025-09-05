@@ -11,6 +11,42 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.5.2 (Released 2025-09-04)__
+
+### 🚀 Enhancements
+
+[#6892](https://github.com/cylc/cylc-flow/pull/6892) - Added `--format=json` option to `cylc broadcast` for use with the `--display` option. Deprecated the `--raw` option in favour of `--format=raw`.
+
+[#6924](https://github.com/cylc/cylc-flow/pull/6924) - Include `log/version/` files in `cylc cat-log` and the UI log view.
+
+### 🔧 Fixes
+
+[#6197](https://github.com/cylc/cylc-flow/pull/6197) - Demote errors about invalid task event names to warnings
+
+[#6768](https://github.com/cylc/cylc-flow/pull/6768) - Fix a bug causing remote tasks to stay in the preparing state if triggered when the workflow is paused.
+
+[#6836](https://github.com/cylc/cylc-flow/pull/6836) - Fix a bug causing the results of `platform = $(subshell commands)` to be cached, and preventing re-evaluation for each task with the same config.
+
+[#6848](https://github.com/cylc/cylc-flow/pull/6848) - Allow `flow.cylc[runtime][<task>]platform` setting to have a prefix/suffix around a subshell expression.
+
+[#6903](https://github.com/cylc/cylc-flow/pull/6903) - Workflows that have hit the `stop after cycle point` will no longer shut down immediately when restart according to the `restart timeout` configuration.
+
+[#6909](https://github.com/cylc/cylc-flow/pull/6909) - Fix potential timeout of the play and vr commands for workflows with contact
+  files, due to an unnecessary remote process check - now only done if the
+  workflow fails to respond on the network.
+
+[#6910](https://github.com/cylc/cylc-flow/pull/6910) - Trigger command: automatically handle already-completed outputs of triggered tasks.
+
+[#6911](https://github.com/cylc/cylc-flow/pull/6911) - Fix an issue where trigger could fail to run a task, removing it instead.
+
+[#6914](https://github.com/cylc/cylc-flow/pull/6914) - Fixed bug where jobs in the UI could regress to an earlier state.
+
+[#6926](https://github.com/cylc/cylc-flow/pull/6926) - Fixed info missing from UI for submit-failed tasks.
+
+[#6940](https://github.com/cylc/cylc-flow/pull/6940) - Fixed a scheduler crash that could occur after re-running a task in skip mode.
+
+[#6952](https://github.com/cylc/cylc-flow/pull/6952) - Fixed `cylc broadcast` failing when cancelling `[events]` settings.
+
 ## __cylc-8.5.1 (Released 2025-08-08)__
 
 ### 🚀 Enhancements

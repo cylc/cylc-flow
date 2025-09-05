@@ -713,3 +713,29 @@ async def test_CYLC_WORKFLOW_SRC_DIR_correctly_set(tmp_path, install, run_dir):
     wid = await install(tmp_path)
     processed = process_file(run_dir / wid / 'flow.cylc')
     assert processed[0] == str(tmp_path)
+
+
+async def test_task_event_bad_custom_template(
+    flow, validate, scheduler, start, log_filter
+):
+    """Validation fails if task event handler has a bad custom template.
+    """
+    exception = (
+        r"bad task event handler template t1: echo %\(rubbish\)s:"
+        r" KeyError\('rubbish'\)"
+    )
+    events = {
+        'handlers': 'echo %(rubbish)s',
+        'handler events': 'succeeded'
+    }
+    wid = flow({
+        'scheduling': {'graph': {'R1': 't1'}},
+        'runtime': {'t1': {'events': events}},
+    })
+    with pytest.raises(WorkflowConfigError, match=exception):
+        validate(wid)
+
+    schd = scheduler(wid)
+    with pytest.raises(WorkflowConfigError, match=exception):
+        async with start(schd):
+            pass
