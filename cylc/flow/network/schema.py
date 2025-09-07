@@ -2221,13 +2221,7 @@ class Trigger(Mutation, TaskMutation):
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        on_resume = Boolean(
-            default_value=False,
-            description=sstrip('''
-                If the workflow is paused, wait until it is resumed before
-                running the triggered task(s).
-            ''')
-        )
+        ...
 
 
 def _mut_field(cls):

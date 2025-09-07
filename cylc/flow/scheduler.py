@@ -683,9 +683,6 @@ class Scheduler:
 
                     # If we shut down with manually triggered waiting tasks,
                     # submit them to run now.
-                    # NOTE: this will run tasks that were triggered with
-                    # the trigger "--on-resume" option, even if the workflow
-                    # is restarted as paused. Option to be removed at 8.6.0.
                     pre_prep_tasks = []
                     for itask in self.pool.get_tasks():
                         if (
@@ -1347,7 +1344,7 @@ class Scheduler:
             and self.reload_pending is False
         ):
             if self.pool.tasks_to_trigger_now:
-                # manually triggered tasks to run now, workflow paused or not
+                # manually triggered tasks to run now.
                 pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
                 self.pool.tasks_to_trigger_now = set()
 
@@ -1360,10 +1357,6 @@ class Scheduler:
             else:
                 # release queued tasks
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
-                if self.pool.tasks_to_trigger_on_resume:
-                    # and manually triggered tasks to run once workflow resumed
-                    pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
-                    self.pool.tasks_to_trigger_on_resume = set()
 
         elif (
             (
