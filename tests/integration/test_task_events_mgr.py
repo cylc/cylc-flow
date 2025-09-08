@@ -36,6 +36,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_FAILED,
 )
 
+from cylc.flow.network.resolvers import TaskMsg
+
 from .test_workflow_events import TEMPLATES
 
 
@@ -271,6 +273,22 @@ async def test__process_message_failed_with_retry(
             fail_once, None, 'failed', False, 'failed/OOK')
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'failed/OOK' in failed_record[1]
+
+
+async def test__unhandled_message(one: Scheduler, start, log_filter):
+    """It should log unhandled messages."""
+
+    async with start(one):
+        one.message_queue.put(
+            TaskMsg("1/no_such_task/01", "time", 'INFO', "the quick brown")
+        )
+        one.process_queued_task_messages()
+
+        _, warning_msg = log_filter(level=logging.WARNING)[-1]
+        assert (
+            'Undeliverable task messages received and ignored:' in warning_msg
+        )
+        assert '1/no_such_task/01: INFO - "the quick brown"' in warning_msg
 
 
 @pytest.mark.parametrize('template', TEMPLATES)
