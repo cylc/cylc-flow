@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test `cylc vip` (Validate Install Play)
+# Test `CYLC_WORKFLOW_SRC_DIR.t` is set
 
 . "$(dirname "$0")/test_header"
 
