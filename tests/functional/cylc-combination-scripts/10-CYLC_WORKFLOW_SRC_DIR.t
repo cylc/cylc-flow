@@ -20,7 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 6
 
 WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
 
@@ -33,6 +33,11 @@ cat > flow.cylc <<__HERE__
     [[graph]]
         R1 = foo
 __HERE__
+
+run_ok "${TEST_NAME_BASE}-view" cylc view -p .
+
+named_grep_ok "src-path-in-view-p" "TEST: $PWD" \
+    "${TEST_NAME_BASE}-view.stdout"
 
 # It starts playing:
 run_ok "${TEST_NAME_BASE}-vip" \
