@@ -1682,16 +1682,18 @@ class Scheduler:
             self.reset_inactivity_timer()
 
         # auto expire broadcasts
-        with suppress(TimePointDumperBoundsError):
-            # NOTE: TimePointDumperBoundsError will be raised for negative
-            # cycle points, we skip broadcast expiry in this circumstance
-            # (pre-initial condition)
-            if min_point := self.pool.get_min_point():
-                # NOTE: the broadcast expire limit is the oldest active cycle
-                # MINUS the longest cycling interval
-                self.broadcast_mgr.expire_broadcast(
-                    min_point - self.config.interval_of_longest_sequence
-                )
+        if not self.is_paused:
+            # NOTE: Don't auto-expire broadcasts whilst the scheduler is paused
+            with suppress(TimePointDumperBoundsError):
+                # NOTE: TimePointDumperBoundsError will be raised for negative
+                # cycle points, we skip broadcast expiry in this circumstance
+                # (pre-initial condition)
+                if min_point := self.pool.get_min_point():
+                    # NOTE: the broadcast expire limit is the oldest active
+                    # cycle MINUS the longest cycling interval
+                    self.broadcast_mgr.expire_broadcast(
+                        min_point - self.config.interval_of_longest_sequence
+                    )
 
         self.late_tasks_check()
 
