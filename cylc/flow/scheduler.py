@@ -964,7 +964,7 @@ class Scheduler:
         """Process incoming task messages for each task proxy.
 
         """
-        messages: 'Dict[str, List[Tuple[Optional[int], TaskMsg]]]' = {}
+        messages: dict[str, list[TaskMsg]] = {}
 
         # Retrieve queued messages
         while self.message_queue.qsize():
@@ -973,15 +973,9 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = Tokens(task_msg.job_id, relative=True)
             # task ID (job stripped)
-            task_id = tokens.duplicate(job=None).relative_id
-            messages.setdefault(task_id, [])
-            # job may be None (e.g. simulation mode)
-            job = int(tokens['job']) if tokens['job'] else None
-            messages[task_id].append(
-                (job, task_msg)
-            )
+            task_id = task_msg.job_id.duplicate(job=None).relative_id
+            messages.setdefault(task_id, []).append(task_msg)
 
         unprocessed_messages: List[TaskMsg] = []
         # Poll tasks for which messages caused a backward state change.
@@ -989,13 +983,13 @@ class Scheduler:
         for task_id, message_items in messages.items():
             itask = self.pool._get_task_by_id(task_id)
             if itask is None:
-                unprocessed_messages.extend(tm for _, tm in message_items)
+                unprocessed_messages.extend(message_items)
                 continue
             should_poll = False
-            for submit_num, tm in message_items:
+            for tm in message_items:
                 if self.task_events_mgr.process_message(
                     itask, tm.severity, tm.message, tm.event_time,
-                    self.task_events_mgr.FLAG_RECEIVED, submit_num
+                    self.task_events_mgr.FLAG_RECEIVED, tm.job_id.submit_num
                 ):
                     should_poll = True
             if should_poll:
@@ -1008,9 +1002,7 @@ class Scheduler:
         # proxy can be removed, but the orphaned job still sends messages.
         warn = ""
         for tm in unprocessed_messages:
-            job_tokens = self.tokens.duplicate(
-                Tokens(tm.job_id, relative=True)
-            )
+            job_tokens = self.tokens.duplicate(tm.job_id)
             tdef = self.config.get_taskdef(job_tokens['task'])
             if not self.task_events_mgr.process_job_message(
                 job_tokens, tdef, tm.message, tm.event_time

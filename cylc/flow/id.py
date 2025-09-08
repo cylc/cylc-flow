@@ -366,6 +366,20 @@ class Tokens(dict):
             self[key] for key in self._REGULAR_KEYS
         )
 
+    @property
+    def submit_num(self) -> int | None:
+        """The job submit number as an integer, or None if not set.
+
+        Examples:
+            >>> Tokens('//c/t/01').submit_num
+            1
+            >>> Tokens('//c/t').submit_num is None
+            True
+        """
+        if self['job'] is None:
+            return None
+        return int(self['job'])
+
     @overload
     def duplicate(
         self,

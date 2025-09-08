@@ -275,12 +275,15 @@ async def test__process_message_failed_with_retry(
         assert 'failed/OOK' in failed_record[1]
 
 
-async def test__unhandled_message(one: Scheduler, start, log_filter):
+@pytest.mark.parametrize('id_', ['1/no_such_task/01', '1/no_job'])
+async def test__unhandled_message(id_, one: Scheduler, start, log_filter):
     """It should log unhandled messages."""
 
     async with start(one):
         one.message_queue.put(
-            TaskMsg("1/no_such_task/01", "time", 'INFO', "the quick brown")
+            TaskMsg(
+                Tokens(id_, relative=True), "time", 'INFO', "the quick brown"
+            )
         )
         one.process_queued_task_messages()
 
@@ -288,7 +291,7 @@ async def test__unhandled_message(one: Scheduler, start, log_filter):
         assert (
             'Undeliverable task messages received and ignored:' in warning_msg
         )
-        assert '1/no_such_task/01: INFO - "the quick brown"' in warning_msg
+        assert f'{id_}: INFO - "the quick brown"' in warning_msg
 
 
 @pytest.mark.parametrize('template', TEMPLATES)

@@ -647,7 +647,7 @@ class TaskEventsManager():
                     SubProcContext(
                         (
                             (id_key.handler, id_key.event),
-                            int(id_key.tokens['job']),
+                            id_key.tokens.submit_num,
                         ),
                         timer.ctx.cmd,
                         env=os.environ,
@@ -994,7 +994,7 @@ class TaskEventsManager():
             job_tokens.workflow,
             tdef,
             get_point(job_tokens['cycle']),
-            submit_num=int(job_tokens['job']),
+            submit_num=job_tokens.submit_num,
             data_mode=True,
             transient=True,
         )
@@ -1286,7 +1286,7 @@ class TaskEventsManager():
                 log_ctx = SubProcContext(
                     (
                         (id_key.handler, id_key.event),
-                        int(id_key.tokens['job'])
+                        id_key.tokens.submit_num
                     ),
                     None,
                 )

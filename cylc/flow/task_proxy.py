@@ -222,7 +222,7 @@ class TaskProxy:
         flow_nums: Optional['FlowNums'] = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
-        submit_num: int = 0,
+        submit_num: int | None = 0,
         is_late: bool = False,
         is_manual_submit: bool = False,
         flow_wait: bool = False,
