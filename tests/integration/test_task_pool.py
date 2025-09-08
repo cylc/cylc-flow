@@ -2041,7 +2041,9 @@ async def test_remove_by_expire_trigger(
         assert schd.pool.get_task_ids() == {"1/a"}
 
         # 1/b should not be resurrected if it becomes ready
-        schd.pool.set_prereqs_and_outputs({TaskTokens('1', 'b')}, [], ["1/a"], ["1"],)
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('1', 'b')}, [], ["1/a"], ["1"],
+        )
         assert log_filter(regex="1/b:expired.* already finished and completed")
 
         # but we can still resurrect 1/b by triggering it
