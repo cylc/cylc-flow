@@ -19,6 +19,8 @@
 from contextlib import suppress
 
 from cylc.flow import commands
+from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_PREPARING,
@@ -304,3 +306,23 @@ async def test_reload_global_platform_group(
         )
         platform = get_platform(rtconf)
         assert platform['meta']['x'] == '2'
+
+
+async def test_data_store_tproxy(flow, scheduler, start):
+    """Check N>0 task proxy in data store has correct info on reload.
+
+    https://github.com/cylc/cylc-flow/issues/6973
+    """
+    schd: Scheduler = scheduler(flow('foo => bar'))
+
+    def get_ds_tproxy(task):
+        return schd.data_store_mgr.data[schd.id][TASK_PROXIES][
+            f'{schd.id}//1/{task}'
+        ]
+
+    async with start(schd):
+        await schd.update_data_structure()
+        assert str(get_ds_tproxy('bar').runtime)
+
+        await commands.run_cmd(commands.reload_workflow(schd))
+        assert str(get_ds_tproxy('bar').runtime)
