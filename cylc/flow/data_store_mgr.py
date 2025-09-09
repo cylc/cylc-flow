@@ -349,7 +349,7 @@ def runtime_from_config(rtconfig):
     )
 
 
-def runtime_from_partial(rtconfig, runtimeold=None):
+def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
     """Populate runtime object from partial/full config.
 
     Potentially slower than the non-partial one, due to tha the setattr calls,
