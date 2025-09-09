@@ -3,7 +3,6 @@ channels:
   - conda-forge
 dependencies:
   - ansimarkup >=1.0.0
-  - async-timeout>=3.0.0 # [py<3.11]
   - colorama >=0.4,<1.0
   - graphql-core >=3.2,<3.3
   - graphene >=3.4.0,<3.5
@@ -17,9 +16,7 @@ dependencies:
   - psutil >=5.6.0
   - python
   - pyzmq >=22
-  - importlib_metadata >=5.0 # [py<3.12]
   - urwid >=2.2,<3,!=2.6.2,!=2.6.3
-  - tomli >=2 # [py<3.11]
 
 # optional dependencies
   #- pandas >=1.0,<2

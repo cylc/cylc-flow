@@ -471,6 +471,11 @@ def read_and_proc(
     template_vars = merge_template_vars(template_vars, extra_vars)
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
+    # Add CYLC_WORKFLOW_SRC_DIR to template variables.
+    sourcepath = get_workflow_source_dir(Path(fpath).parent)[1]
+    template_vars['CYLC_WORKFLOW_SRC_DIR'] = (
+        sourcepath.readlink() if sourcepath else Path(fpath).parent)
+
     # Fail if templating_detected ≠ hashbang
     process_with = hashbang_and_plugin_templating_clash(
         extra_vars[TEMPLATING_DETECTED], flines
@@ -478,11 +483,7 @@ def read_and_proc(
 
     # process with Jinja2
     if do_jinja2:
-        if (
-            extra_vars[TEMPLATING_DETECTED] == 'jinja2' and
-            not process_with and
-            process_with != 'jinja2'
-        ):
+        if extra_vars[TEMPLATING_DETECTED] == 'jinja2' and not process_with:
             flines.insert(0, '#!jinja2')
 
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):

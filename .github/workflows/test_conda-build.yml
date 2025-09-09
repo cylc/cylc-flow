@@ -28,12 +28,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3']
+        python-version: ['3.12', '3']
     env:
       ENV_FILE: conda-environment.yml
     steps:
       - name: checkout cylc-flow
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: modify conda env file
         run: |
