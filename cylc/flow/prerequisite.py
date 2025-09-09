@@ -197,17 +197,26 @@ class Prerequisite:
 
         Examples:
             # GH #3644 construct conditional expression when one task name
-            # is a substring of another: foo | xfoo => bar.
-            # Add 'foo' to the 'satisfied' dict before 'xfoo'.
+            # is a substring of another: 11/foo | 1/foo => bar.
             >>> preq = Prerequisite(1)
             >>> preq[(1, 'foo', 'succeeded')] = False
-            >>> preq[(1, 'xfoo', 'succeeded')] = False
-            >>> preq.set_conditional_expr("1/foo succeeded|1/xfoo succeeded")
+            >>> preq[(11, 'foo', 'succeeded')] = False
+            >>> preq.set_conditional_expr("11/foo succeeded|1/foo succeeded")
             >>> expr = preq.conditional_expression
             >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
-            ['bool(self._satisfied[("1", "foo", "succeeded")])',
-            'bool(self._satisfied[("1", "xfoo", "succeeded")])']
+            ['bool(self._satisfied[("11", "foo", "succeeded")])',
+            'bool(self._satisfied[("1", "foo", "succeeded")])']
 
+            # GH #6588 integer offset "x[-P2] | a" gives a negative cycle point
+            # during validation, for evaluation at the initial cycle point 1.
+            >>> preq = Prerequisite(1)
+            >>> preq[(-1, 'x', 'succeeded')] = False
+            >>> preq[(1, 'a', 'succeeded')] = False
+            >>> preq.set_conditional_expr("-1/x succeeded|1/a succeeded")
+            >>> expr = preq.conditional_expression
+            >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
+            ['bool(self._satisfied[("-1", "x", "succeeded")])',
+            'bool(self._satisfied[("1", "a", "succeeded")])']
         """
         self._cached_satisfied = None
         if '|' in expr:
@@ -215,8 +224,14 @@ class Prerequisite:
             for t_output in self._satisfied:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
+                msg = self.MESSAGE_TEMPLATE % t_output
+                if msg[0] == '-':
+                    # -ve cycles: \b needs to be to the right of the `-` char.
+                    pattern = fr"-\b{re.escape(msg[1:])}\b"
+                else:
+                    pattern = fr"\b{re.escape(msg)}\b"
                 expr = re.sub(
-                    fr"\b{re.escape(self.MESSAGE_TEMPLATE % t_output)}\b",
+                    pattern,
                     self.SATISFIED_TEMPLATE % t_output,
                     expr
                 )
