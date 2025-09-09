@@ -570,7 +570,7 @@ class DataStoreMgr:
         self.n_window_completed_walks = set()
         self.n_window_depths = {}
         self.update_window_depths = False
-        self.db_load_task_proxies = {}
+        self.db_load_task_proxies: Dict[str, Tuple[TaskProxy, bool]] = {}
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
@@ -1527,12 +1527,10 @@ class DataStoreMgr:
                     # added to an already-spawned task before restart.)
 
         # Extract info from itasks to data-store.
-        for task_info in self.db_load_task_proxies.values():
+        for itask, _is_parent in self.db_load_task_proxies.values():
             self._process_internal_task_proxy(
-                task_info[0],
-                self.added[TASK_PROXIES][
-                    self.id_.duplicate(task_info[0].tokens).id
-                ]
+                itask,
+                self.added[TASK_PROXIES][self.id_.duplicate(itask.tokens).id]
             )
 
         # Batch load jobs from DB.

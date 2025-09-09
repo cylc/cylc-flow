@@ -46,16 +46,7 @@ async def test_reload_waits_for_pending_tasks(
     See https://github.com/cylc/cylc-flow/issues/5107
     """
     # a simple workflow with a single task
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': 'foo',
-            },
-        },
-        'runtime': {
-            'foo': {},
-        },
-    })
+    id_ = flow('foo')
     schd = scheduler(id_, paused_start=False)
 
     # we will artificially push the task through these states
@@ -270,7 +261,6 @@ async def test_reload_global_platform_group(
 
     # Task using the platform group
     conf = {
-        'scheduler': {'allow implicit tasks': True},
         'scheduling': {'graph': {'R1': 'one'}},
         'runtime': {
             'one': {
