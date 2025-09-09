@@ -11,6 +11,12 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.5.3 (Released 2025-09-09)__
+
+### 🔧 Fixes
+
+[#6980](https://github.com/cylc/cylc-flow/pull/6980) - Fixed a bug where the GUI views would go blank when reloading a workflow.
+
 ## __cylc-8.5.2 (Released 2025-09-04)__
 
 ### 🚀 Enhancements
