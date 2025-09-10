@@ -397,6 +397,26 @@ def test_task_property():
     )
 
 
+@pytest.mark.parametrize('submit_num, expected', [
+    (2, 'c/t/02'),
+    (20, 'c/t/20'),
+    (200, 'c/t/200'),
+])
+def test_relative_id_job_fmt(submit_num: int, expected: str):
+    """Job part of tokens should be formatted with a leading zero.
+
+    This is important for job log dirs etc.
+    """
+    assert Tokens(f'~u/w//c/t/{submit_num}').relative_id == expected
+    # Check passing int to job arg even though it is proscribed:
+    assert Tokens(cycle='c', task='t', job=submit_num).relative_id == expected
+
+
+def test_relative_id_excludes_selector():
+    """Relative ID should not include selectors."""
+    assert Tokens('~u/w//c/t:ts/2:js').relative_id == 'c/t/02'
+
+
 @pytest.mark.parametrize('cycle, expected', [
     ('2000', '2000/foo'),
     (2001, '2001/foo'),

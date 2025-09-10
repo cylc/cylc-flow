@@ -23,6 +23,7 @@ from enum import Enum
 import re
 from typing import (
     TYPE_CHECKING,
+    Any,
     Iterable,
     List,
     Literal,
@@ -365,9 +366,22 @@ class Tokens(dict):
             self[key] for key in self._REGULAR_KEYS
         )
 
+    @property
+    def submit_num(self) -> int | None:
+        """The job submit number as an integer, or None if not set.
+
+        Examples:
+            >>> Tokens('//c/t/01').submit_num
+            1
+            >>> Tokens('//c/t').submit_num is None
+            True
+        """
+        return int(self['job']) if self['job'] else None
+
     @overload
     def duplicate(
         self,
+        *,
         cycle: str,
         task: str,
         **kwargs,
@@ -377,13 +391,14 @@ class Tokens(dict):
     @overload
     def duplicate(
         self,
+        *tokens_list: 'Tokens',
         **kwargs,
     ) -> 'Tokens':
         ...
 
     def duplicate(
         self,
-        *tokens_list,
+        *tokens_list: 'Tokens',
         **kwargs,
     ) -> 'Tokens':
         """Duplicate a tokens object.
@@ -418,7 +433,7 @@ class Tokens(dict):
             '~u/w//c/b/01'
 
         """
-        _kwargs = {}
+        _kwargs: dict[str, Any] = {}
         for tokens in (self, *tokens_list):
             _kwargs.update(tokens)
         _kwargs.update(kwargs)

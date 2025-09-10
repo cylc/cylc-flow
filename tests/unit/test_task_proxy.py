@@ -21,9 +21,12 @@ import pytest
 from pytest import param
 
 from cylc.flow.cycling import PointBase
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.flow_mgr import FlowNums
+from cylc.flow.id import Tokens
 from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.taskdef import TaskDef
 
 
 @pytest.mark.parametrize(
@@ -128,3 +131,13 @@ def test_match_flows_copy():
     result = TaskProxy.match_flows(mock_itask, set())
     assert result == mock_itask.flow_nums
     assert result is not mock_itask.flow_nums
+
+
+def test_job_tokens():
+    itask = TaskProxy(
+        Tokens('wflow'),
+        TaskDef('foo', {}, None, None),
+        IntegerPoint('10'),
+        submit_num=3,
+    )
+    assert str(itask.job_tokens) == 'wflow//10/foo/03'

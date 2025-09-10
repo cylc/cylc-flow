@@ -32,7 +32,7 @@ from cylc.flow.commands import (
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.id import TaskTokens
+from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.task_events_mgr import (
     TaskEventsManager,
@@ -208,7 +208,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
         # tell the scheduler that the task *submit-failed*
         schd.message_queue.put(
             TaskMsg(
-                '1/a/01',
+                Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
                 TaskEventsManager.EVENT_SUBMIT_FAILED
@@ -222,7 +222,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
         # tell the scheduler that the task *failed*
         schd.message_queue.put(
             TaskMsg(
-                '1/a/01',
+                Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
                 TaskEventsManager.EVENT_FAILED,
@@ -236,7 +236,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
         # tell the scheduler that the task *expired*
         schd.message_queue.put(
             TaskMsg(
-                '1/a/01',
+                Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
                 TaskEventsManager.EVENT_EXPIRED,
