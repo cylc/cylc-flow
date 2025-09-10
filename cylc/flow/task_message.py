@@ -29,11 +29,7 @@ from logging import (
 )
 import os
 import sys
-from typing import (
-    List,
-    Optional,
-    Tuple,
-)
+from typing import List
 
 from cylc.flow.exceptions import WorkflowStopped
 import cylc.flow.flags
@@ -82,7 +78,7 @@ mutation (
 '''
 
 
-def split_run_signal(message: str) -> Tuple[str, Optional[str]]:
+def split_run_signal(message: str) -> tuple[str, str | None]:
     """Get the run signal from a message.
 
     >>> split_run_signal('failed/ERR')

@@ -376,9 +376,7 @@ class Tokens(dict):
             >>> Tokens('//c/t').submit_num is None
             True
         """
-        if self['job'] is None:
-            return None
-        return int(self['job'])
+        return int(self['job']) if self['job'] else None
 
     @overload
     def duplicate(

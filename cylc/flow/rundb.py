@@ -715,12 +715,11 @@ class CylcWorkflowDAO:
             callback(row_idx, list(row))
 
     def select_task_job(
-        self, cycle: str, name: str, submit_num: Union[str, int, None] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, cycle: str, name: str, submit_num: str | int | None = None
+    ) -> dict[str, Any] | None:
         """Select items from task_jobs by (cycle, name, submit_num).
 
         :return: a dict for mapping keys to the column values
-        :rtype: dict
         """
         keys = []
         for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
@@ -739,7 +738,7 @@ class CylcWorkflowDAO:
             '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
-            stmt_args: List[Any] = [cycle, name]
+            stmt_args: list[Any] = [cycle, name]
         else:
             stmt = rf'''
                 SELECT

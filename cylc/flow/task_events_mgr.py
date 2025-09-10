@@ -221,9 +221,9 @@ def get_event_id(event: str, itask: 'TaskProxy') -> str:
 def log_task_job_activity(
     ctx: 'SubProcContext',
     workflow: str,
-    point: Union[str, 'PointBase'],
+    point: 'str | PointBase',
     name: str,
-    submit_num: Union[str, int, None] = None,
+    submit_num: str | int | None = None,
 ):
     """Log an activity for a task job."""
     ctx_str = str(ctx)
@@ -766,7 +766,7 @@ class TaskEventsManager():
         if job_aborted:
             task_output = TASK_OUTPUT_FAILED
 
-        output_completed: Optional[bool] = False
+        output_completed: bool | None = False
         if task_output not in {TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_FAILED}:
             output_completed = (
                 itask.state.outputs.set_message_complete(task_output, forced)
@@ -1372,7 +1372,7 @@ class TaskEventsManager():
         message: str,
         forced: bool,
         full_message: str,
-        run_signal: Optional[str] = None,
+        run_signal: str | None = None,
     ) -> bool:
         """Helper for process_message, handle a failed message.
 
@@ -1421,7 +1421,7 @@ class TaskEventsManager():
         self,
         itask: 'TaskProxy',
         event_time: str,
-        run_signal: Optional[str] = None,
+        run_signal: str | None = None,
     ):
         itask.set_summary_time('finished', event_time)
         self.data_store_mgr.delta_job_time(itask, 'finished', event_time)
