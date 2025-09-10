@@ -629,6 +629,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                     del delta_queues[w_id][sub_id]
             if sub_id in self.delta_store:
                 del self.delta_store[sub_id]
+            if sub_id in self.delta_processing_flows:
+                del self.delta_processing_flows[sub_id]
             yield None
 
     async def flow_delta_processed(self, context, op_id):
