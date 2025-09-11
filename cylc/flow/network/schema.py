@@ -62,6 +62,7 @@ from cylc.flow.data_store_mgr import (
     FAMILIES,
     FAMILY_PROXIES,
     JOBS,
+    RUNTIME_CFG_MAP_TO_FIELD,
     TASK_PROXIES,
     TASKS,
 )
@@ -874,23 +875,14 @@ class Runtime(ObjectType):
 
 
 RUNTIME_FIELD_TO_CFG_MAP = {
-    **{
-        k: k.replace('_', ' ') for k in Runtime.__dict__
-        if not k.startswith('_')
-    },
-    'init_script': 'init-script',
-    'env_script': 'env-script',
-    'err_script': 'err-script',
-    'exit_script': 'exit-script',
-    'pre_script': 'pre-script',
-    'post_script': 'post-script',
-    'work_sub_dir': 'work sub-directory',
+    v: k
+    for k, v in RUNTIME_CFG_MAP_TO_FIELD.items()
 }
-"""Map GQL Runtime fields' names to workflow config setting names."""
+"""Map Pb/GraphQL Runtime fields' names to workflow config setting names."""
 
 
 def runtime_schema_to_cfg(runtime: dict) -> dict:
-    """Covert GQL Runtime field names to workflow config setting names and
+    """Covert GraphQL Runtime field names to workflow config setting names and
     perform any necessary processing on the values."""
     # We have to manually lowercase the run_mode field because we don't define
     # a proper schema for BroadcastSetting (it's just GenericScalar) so
