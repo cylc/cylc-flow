@@ -37,6 +37,7 @@ PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
 max_rss_location = None
 cpu_time_location = None
+memory_allocated_path = None
 cgroup_version = None
 comms_timeout = None
 
@@ -77,6 +78,7 @@ class Process:
     """Class for representing CPU and Memory usage of a process"""
     cgroup_memory_path: str
     cgroup_cpu_path: str
+    memory_allocated_path: str
 
 
 def stop_profiler(*args):
@@ -90,9 +92,11 @@ def stop_profiler(*args):
             or cgroup_version is None):
         max_rss = 0
         cpu_time = 0
+        memory_allocated = 0
     else:
-        max_rss = parse_memory_file(max_rss_location)
+        max_rss = parse_memory_file(max_rss_location, cgroup_version)
         cpu_time = parse_cpu_file(cpu_time_location, cgroup_version)
+        memory_allocated = parse_memory_allocated(memory_allocated_path, cgroup_version)
 
     GRAPHQL_MUTATION = """
     mutation($WORKFLOWS: [WorkflowID]!,
@@ -106,7 +110,7 @@ def stop_profiler(*args):
 
     GRAPHQL_REQUEST_VARIABLES = {
         "WORKFLOWS": [os.environ.get('CYLC_WORKFLOW_ID')],
-        "MESSAGES": [["DEBUG", f"cpu_time {cpu_time} max_rss {max_rss}"]],
+        "MESSAGES": [["DEBUG", f"cpu_time {cpu_time} max_rss {max_rss} mem_alloc {memory_allocated}"]],
         "JOB": os.environ.get('CYLC_TASK_JOB'),
         "TIME": "now"
     }
@@ -125,15 +129,44 @@ def stop_profiler(*args):
     sys.exit(0)
 
 
-def parse_memory_file(cgroup_memory_path):
+def parse_memory_file(cgroup_memory_path, cgroup_version):
     """Open the memory stat file and copy the appropriate data"""
 
-    with open(cgroup_memory_path, 'r') as f:
-        for line in f:
-            return int(line) // 1024
+    cgroup_memory_path = Path(cgroup_memory_path)
+
+    if cgroup_version == 2:
+        with open(cgroup_memory_path, 'r') as f:
+            for line in f:
+                if "anon" in line:
+                    print(line)
+                    return int(''.join(filter(str.isdigit, line))) // 1024
+    else:
+        with open(cgroup_memory_path, 'r') as f:
+            for line in f:
+                return int(line) // 1024
 
 
-def parse_cpu_file(cgroup_cpu_path, cgroup_version):
+def parse_memory_allocated(cgroup_memory_path, cgroup_version) -> int:
+    """Open the memory stat file and copy the appropriate data"""
+
+    if cgroup_version == 2:
+        cgroup_memory_path = Path(cgroup_memory_path)
+        
+        for i in range(5):
+            with open(cgroup_memory_path / "memory.max", 'r') as f:
+                line = f.readline()
+                if "max" not in line:
+                    return int(line) // 1024
+            cgroup_memory_path = cgroup_memory_path.parent
+            if i == 5:
+                break
+    elif cgroup_version == 1:
+        return 0  # Memory limit not tracked for cgroups v1
+
+    raise FileNotFoundError("Could not find memory.max file")
+
+
+def parse_cpu_file(cgroup_cpu_path, cgroup_version) -> int:
     """Open the memory stat file and return the appropriate data"""
 
     if cgroup_version == 2:
@@ -145,11 +178,12 @@ def parse_cpu_file(cgroup_cpu_path, cgroup_version):
         with open(cgroup_cpu_path, 'r') as f:
             for line in f:
                 # Cgroups v2 uses nanoseconds
-                return int(line) / 1000000
+                return int(line) // 1000000
+    raise ValueError("Unable to find cpu usage data")
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
-    # HPC uses cgroups v2 and SPICE uses cgroups v1
+    
     global cgroup_version
     if Path.exists(Path(cgroup_location + cgroup_name)):
         cgroup_version = 2
@@ -162,7 +196,7 @@ def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
                                 cgroup_location + cgroup_name)
 
 
-def get_cgroup_name():
+def get_cgroup_name() -> str:
     """Get the cgroup directory for the current process"""
 
     # fugly hack to allow functional tests to use test data
@@ -185,28 +219,36 @@ def get_cgroup_name():
         raise AttributeError("No cgroup found for process:", pid) from err
 
 
-def get_cgroup_paths(version, location, name):
+def get_cgroup_paths(version, location, name) -> Process:
     global max_rss_location
     global cpu_time_location
+    global memory_allocated_path
+
     if version == 2:
-        max_rss_location = location + name + "/" + "memory.peak"
+        max_rss_location = location + name + "/" + "memory.stat"
         cpu_time_location = location + name + "/" + "cpu.stat"
+        memory_allocated_path = location + name
         return Process(
             cgroup_memory_path=location +
-            name + "/" + "memory.peak",
+            name + "/" + "memory.stat",
             cgroup_cpu_path=location +
-            name + "/" + "cpu.stat")
+            name + "/" + "cpu.stat",
+            memory_allocated_path=location +name)
 
     elif version == 1:
         max_rss_location = (location + "/memory" +
                             name + "/memory.max_usage_in_bytes")
         cpu_time_location = (location + "/cpu" +
                              name + "/cpuacct.usage")
+        memory_allocated_path = location + name + "/" + "memory.limit_in_bytes"
         return Process(
             cgroup_memory_path=location + "/memory" +
             name + "/memory.max_usage_in_bytes",
             cgroup_cpu_path=location + "/cpu" +
-            name + "/cpuacct.usage")
+            name + "/cpuacct.usage",
+            memory_allocated_path="")
+    
+    raise ValueError("Unable to determine cgroup version")
 
 
 def profile(process, version, delay, keep_looping=lambda: True):
