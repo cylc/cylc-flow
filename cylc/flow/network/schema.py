@@ -878,11 +878,11 @@ RUNTIME_FIELD_TO_CFG_MAP = {
     v: k
     for k, v in RUNTIME_CFG_MAP_TO_FIELD.items()
 }
-"""Map Pb/GQL Runtime fields' names to workflow config setting names."""
+"""Map Pb/GraphQL Runtime fields' names to workflow config setting names."""
 
 
 def runtime_schema_to_cfg(runtime: dict) -> dict:
-    """Covert GQL Runtime field names to workflow config setting names and
+    """Covert GraphQL Runtime field names to workflow config setting names and
     perform any necessary processing on the values."""
     # We have to manually lowercase the run_mode field because we don't define
     # a proper schema for BroadcastSetting (it's just GenericScalar) so

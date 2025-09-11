@@ -68,8 +68,8 @@ if TYPE_CHECKING:
         different versions of Cylc 8.
         """
         data: object
-        """For most Cylc commands that issue GQL mutations, the data field will
-        look like:
+        """For most Cylc commands that issue GraphQL mutations, the data field
+        will look like:
         data: {
         <mutationName1>: {
             result: [
