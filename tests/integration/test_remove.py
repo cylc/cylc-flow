@@ -536,7 +536,7 @@ async def test_remove_triggered(flow, scheduler, start):
         )
         assert foo in schd.pool.tasks_to_trigger_now
 
-        # trigger bar (on resume)
+        # trigger bar
         await run_cmd(
             force_trigger_tasks(schd, [bar.identity], [])
         )
