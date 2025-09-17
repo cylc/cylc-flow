@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from logging import INFO
 import logging
+from logging import INFO
 from typing import (
     Iterable,
     List,
@@ -25,12 +25,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.commands import (
-    run_cmd,
-    force_trigger_tasks
-)
 from cylc.flow import LOG
+from cylc.flow.commands import (
+    force_trigger_tasks,
+    run_cmd,
+)
 from cylc.flow.data_messages_pb2 import (
+    PbJob,
     PbPrerequisite,
     PbTaskProxy,
 )
@@ -42,7 +43,10 @@ from cylc.flow.data_store_mgr import (
     TASKS,
     WORKFLOW,
 )
-from cylc.flow.id import TaskTokens, Tokens
+from cylc.flow.id import (
+    TaskTokens,
+    Tokens,
+)
 from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -51,6 +55,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
@@ -123,6 +128,11 @@ def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
         )
         for p in t.prerequisites
     ]
+
+
+def get_pb_job(schd: Scheduler, itask: TaskProxy) -> PbJob:
+    """Get the protobuf job for a given task from the data store."""
+    return schd.data_store_mgr.data[schd.id][JOBS][itask.job_tokens.id]
 
 
 @pytest.fixture(scope='module')
@@ -832,9 +842,6 @@ async def test_log_events(one: Scheduler, start):
 
 async def test_no_backwards_job_state_change(one: Scheduler, start):
     """It should not allow backwards job state changes."""
-    def get_job_state(itask):
-        return one.data_store_mgr.data[one.id][JOBS][itask.job_tokens.id].state
-
     async with start(one):
         itask = one.pool.get_tasks()[0]
         itask.state_reset(TASK_STATUS_PREPARING)
@@ -843,9 +850,59 @@ async def test_no_backwards_job_state_change(one: Scheduler, start):
 
         one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_STARTED)
         await one.update_data_structure()
-        assert get_job_state(itask) == TASK_STATUS_RUNNING
+        assert get_pb_job(one, itask).state == TASK_STATUS_RUNNING
 
         # Simulate late arrival of "submitted" message
         one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_SUBMITTED)
         await one.update_data_structure()
-        assert get_job_state(itask) == TASK_STATUS_RUNNING
+        assert get_pb_job(one, itask).state == TASK_STATUS_RUNNING
+
+
+async def test_job_estimated_finish_time(one_conf, flow, scheduler, start):
+    """It should set estimated_finish_time on job elements along with
+    started_time."""
+    wid = flow({
+        **one_conf,
+        'scheduler': {'UTC mode': True},
+        'runtime': {
+            'one': {'execution time limit': 'PT2M'},
+        },
+    })
+    schd: Scheduler = scheduler(wid)
+    date = '2081-07-02T'
+
+    async def start_job(itask: TaskProxy, start_time: str):
+        if not schd.pool.get_task(itask.point, itask.tdef.name):
+            schd.pool.add_to_pool(itask)
+            await schd.update_data_structure()
+        itask.state_reset(TASK_STATUS_PREPARING)
+        itask.submit_num += 1
+        itask.jobs = []
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_SUBMITTED  # submit time irrelevant
+        )
+        await schd.update_data_structure()
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_STARTED, f'{date}{start_time}'
+        )
+        await schd.update_data_structure()
+
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        await start_job(itask, '06:00:00Z')
+        # 1st job: estimate based on execution time limit:
+        assert (
+            get_pb_job(schd, itask).estimated_finish_time
+            == f'{date}06:02:00Z'
+        )
+
+        # Finish this job and start a new one:
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_SUCCEEDED, f'{date}06:00:40Z'
+        )
+        await start_job(itask, '06:01:00Z')
+        # >=2nd job: estimate based on mean of previous jobs:
+        assert (
+            get_pb_job(schd, itask).estimated_finish_time
+            == f'{date}06:01:40Z'
+        )
