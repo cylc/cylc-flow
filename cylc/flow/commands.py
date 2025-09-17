@@ -651,6 +651,11 @@ async def force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
+    # BACK COMPAT: on_resume
+    #   Arg no longer used but retained for older clients.
+    # From: 8.6
+    # Remove at: 8.7
+    on_resume: bool = False
 ):
     """Match and trigger a group of tasks (`cylc trigger` command).
 
