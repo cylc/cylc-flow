@@ -436,9 +436,10 @@ with Conf(
 
                 * When the condition is met, the task will generate the
                   ``expired`` output rather than just being removed.
-                * The ``expired`` output will be marked as :term:`optional`
-                  for the triggered task, but a custom
-                  `flow.cylc[runtime][<namespace>]completion condition
+                * The ``expired`` output will be marked as
+                  :term:`optional <optional output>` for the triggered task,
+                  but a custom
+                  `flow.cylc[runtime][<namespace>]completion condition`
                   will need to be modified accordingly.
                 * This should be functionally equivalent to "suicide triggers"
                   in that the triggered task will not run.
