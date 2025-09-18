@@ -155,8 +155,8 @@ def _dump(data, path):
 
 def _plot(fields, times, path, title='Objects'):
     if (
-            not PLT
-            or len(times) < 2
+        not PLT
+        or len(times) < 2
     ):
         return False
 
@@ -166,10 +166,12 @@ def _plot(fields, times, path, title='Objects'):
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('Memory (kb)')
 
-    for key, sizes in fields.items():
-        ax1.plot(times, [x / 1000 for x in sizes], label=key)
+    lines = [
+        ax1.plot(times, [x / 1000 for x in sizes], label=key)[0]
+        for key, sizes in fields.items()
+    ]
 
-    ax1.legend(loc=0)
+    ax1.legend(lines, fields, loc=0)
 
     # start both axis at 0
     ax1.set_xlim(0, ax1.get_xlim()[1])
