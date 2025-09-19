@@ -152,69 +152,6 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
         await complete(schd, '1/c')
 
 
-async def test_trigger_on_resume(
-    flow: 'Fixture',
-    scheduler: 'Fixture',
-    start: 'Fixture',
-    capture_submission: 'Fixture',
-):
-    """
-    Test manual triggering on-resume option when the workflow is paused.
-
-    https://github.com/cylc/cylc-flow/issues/6192
-
-    """
-    id_ = flow({
-        'scheduling': {
-            'queues': {
-                'default': {
-                    'limit': 1,
-                },
-            },
-            'graph': {
-                'R1': '''
-                    a => x & y & z
-                ''',
-            },
-        },
-    })
-    schd = scheduler(id_, paused_start=True)
-
-    # start the scheduler (but don't set the main loop running)
-    async with start(schd):
-
-        # capture task submissions (prevents real submissions)
-        submitted_tasks = capture_submission(schd)
-
-        # paused at start-up so no tasks should be submitted
-        assert len(submitted_tasks) == 0
-
-        # manually trigger 1/x - it not should be submitted
-        await run_cmd(
-            force_trigger_tasks(schd, ['1/x'], ["1"], on_resume=True))
-        schd.release_tasks_to_run()
-        assert len(submitted_tasks) == 0
-
-        # manually trigger 1/y - it should not be submitted
-        # (queue limit reached)
-        await run_cmd(
-            force_trigger_tasks(schd, ['1/y'], ["1"], on_resume=True))
-        schd.release_tasks_to_run()
-        assert len(submitted_tasks) == 0
-
-        # manually trigger 1/y again - it should not be submitted
-        # (triggering a queued task runs it)
-        await run_cmd(
-            force_trigger_tasks(schd, ['1/y'], ["1"], on_resume=True))
-        schd.release_tasks_to_run()
-        assert len(submitted_tasks) == 0
-
-        # resume the workflow, both tasks should trigger now.
-        schd.resume_workflow()
-        schd.release_tasks_to_run()
-        assert len(submitted_tasks) == 2
-
-
 async def test_trigger_group(
     flow, scheduler, run, complete, log_filter
 ):

@@ -212,7 +212,6 @@ class TaskPool:
 
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
         self.tasks_to_trigger_now: Set['TaskProxy'] = set()
-        self.tasks_to_trigger_on_resume: Set['TaskProxy'] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -904,8 +903,6 @@ class TaskPool:
         else:
             with suppress(KeyError):
                 self.tasks_to_trigger_now.remove(itask)
-            with suppress(KeyError):
-                self.tasks_to_trigger_on_resume.remove(itask)
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
@@ -2339,7 +2336,7 @@ class TaskPool:
             or {1}
         )
 
-    def queue_or_trigger(self, itask: 'TaskProxy', on_resume: bool = False):
+    def queue_or_trigger(self, itask: 'TaskProxy'):
         """Handle state, queues, and runahead for a manually triggered task.
 
         Triggering a non-queued task:
@@ -2349,7 +2346,7 @@ class TaskPool:
         Triggering a queued task:
           - run it, regardless of the queue limit
 
-        If ready, add itask to the tasks_to_trigger_(now/on_resume) lists.
+        If ready, add itask to the tasks_to_trigger_now list.
 
         Assumes the task is in the pool.
 
@@ -2389,16 +2386,7 @@ class TaskPool:
         if not itask.state.is_queued:
             # If not queued now, record the task as ready to run.
             itask.waiting_on_job_prep = True
-
-            if on_resume:
-                self.tasks_to_trigger_on_resume.add(itask)
-                # In case previously triggered without --on-resume.
-                # (It should have run already, but just in case).
-                self.tasks_to_trigger_now.discard(itask)
-            else:
-                self.tasks_to_trigger_now.add(itask)
-                # In case previously triggered with --on-resume.
-                self.tasks_to_trigger_on_resume.discard(itask)
+            self.tasks_to_trigger_now.add(itask)
 
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.

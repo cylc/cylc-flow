@@ -519,7 +519,7 @@ async def test_reload_changed_config(flow, scheduler, run, complete):
 
 
 async def test_remove_triggered(flow, scheduler, start):
-    """It should remove tasks from pool and from to_trigger sets."""
+    """It should remove tasks from pool and from to_trigger set."""
     conf = {
         'scheduling': {
             'graph': {
@@ -536,15 +536,14 @@ async def test_remove_triggered(flow, scheduler, start):
         )
         assert foo in schd.pool.tasks_to_trigger_now
 
-        # trigger bar (on resume)
+        # trigger bar
         await run_cmd(
-            force_trigger_tasks(schd, [bar.identity], [], on_resume=True)
+            force_trigger_tasks(schd, [bar.identity], [])
         )
-        assert bar in schd.pool.tasks_to_trigger_on_resume
+        assert bar in schd.pool.tasks_to_trigger_now
 
         await run_cmd(
             remove_tasks(schd, [foo.identity, bar.identity], [])
         )
         assert not schd.pool.get_tasks()
         assert not schd.pool.tasks_to_trigger_now
-        assert not schd.pool.tasks_to_trigger_on_resume
