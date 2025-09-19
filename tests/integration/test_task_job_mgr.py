@@ -258,3 +258,38 @@ async def test_poll_job_deleted_log_folder(
     assert log_filter(
         logging.ERROR, f"job log directory {job_id} no longer exists"
     )
+
+
+async def test__prep_submit_task_job_impl_handles_all_old_platform_settings(
+    flow: Fixture,
+    scheduler: Fixture,
+    start: Fixture,
+    mock_glbl_cfg: Fixture,
+):
+    """Ensure that if the old host/batch system settings
+    are set that task job manager will wait for the any hostname to be
+    resolved.
+
+    https://github.com/cylc/cylc-flow/pull/6990
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+            [platforms]
+                [[bakery]]
+                    hosts = localhost
+                    job runner = loaf
+        ''',
+    )
+    id_ = flow({
+        "scheduling": {"graph": {"R1": "a"}},
+        "runtime": {"a": {"job": {"batch system": "loaf"}}}
+    })
+
+    schd = scheduler(id_, run_mode='live')
+    async with start(schd):
+        task_a = schd.pool.get_tasks()[0]
+        with suppress(FileExistsError):
+            schd.task_job_mgr._prep_submit_task_job(task_a)
+
+        assert task_a.platform['name'] == 'bakery'

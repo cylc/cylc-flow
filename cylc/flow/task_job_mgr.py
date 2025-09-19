@@ -69,6 +69,7 @@ from cylc.flow.job_runner_mgr import (
 )
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
+    FORBIDDEN_WITH_PLATFORM,
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
@@ -1177,7 +1178,13 @@ class TaskJobManager:
 
         host_name, platform_name = None, None
         try:
-            if rtconfig['remote']['host'] is not None:
+            # We need to assume that we want a host if any of the items
+            # for the old host/batch system plaform selection system are set.
+            if any(
+                rtconfig[section][key] is not None
+                for section, values in FORBIDDEN_WITH_PLATFORM.items()
+                for key in values
+            ):
                 host_name = self.task_remote_mgr.eval_host(
                     rtconfig['remote']['host']
                 )
@@ -1185,6 +1192,7 @@ class TaskJobManager:
                 platform_name = self.task_remote_mgr.eval_platform(
                     rtconfig['platform']
                 )
+
         except PlatformError as exc:
             itask.waiting_on_job_prep = False
             itask.summary['platforms_used'][itask.submit_num] = ''
