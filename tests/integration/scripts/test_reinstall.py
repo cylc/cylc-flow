@@ -35,7 +35,7 @@ from cylc.flow.scripts.reinstall import (
 )
 from cylc.flow.workflow_files import WorkflowFiles
 
-from .utils.entry_points import EntryPointWrapper
+from ..utils.entry_points import EntryPointWrapper
 
 
 ReInstallOptions = Options(reinstall_gop())
