@@ -82,9 +82,11 @@ def job_config(schd):
         'script': 'sleep 5; echo "I come in peace"',
         'work_d': None,
         'directives': {},
-        'environment': {},
+        'environment': {"FOO": "foo"},
         'param_var': {},
         'platform': {'name': 'platform'},
+        'execution retry delays': [10.0, 20.0],
+        'execution time limit': 30.0,
     }
 
 
