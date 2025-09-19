@@ -215,6 +215,37 @@ DEQUE_FIELD_MAP = {
     WORKFLOW: {'log_records': 10}
 }
 
+# internal runtime to protobuf field name mapping
+RUNTIME_CFG_MAP_TO_FIELD = {
+    'completion': 'completion',
+    'directives': 'directives',
+    'environment': 'environment',
+    'env-script': 'env_script',
+    'err-script': 'err_script',
+    'execution polling intervals': 'execution_polling_intervals',
+    'execution retry delays': 'execution_retry_delays',
+    'execution time limit': 'execution_time_limit',
+    'exit-script': 'exit_script',
+    'init-script': 'init_script',
+    'outputs': 'outputs',
+    'post-script': 'post_script',
+    'platform': 'platform',
+    'pre-script': 'pre_script',
+    'run mode': 'run_mode',
+    'script': 'script',
+    'submission polling intervals': 'submission_polling_intervals',
+    'submission retry delays': 'submission_retry_delays',
+    'work sub-directory': 'work_sub_dir',
+}
+RUNTIME_LIST_JOINS = {
+    'execution polling intervals',
+    'execution retry delays',
+    'submission polling intervals',
+    'submission retry delays',
+}
+RUNTIME_JSON_DUMPS = {'directives', 'environment', 'outputs'}
+RUNTIME_STRINGIFYS = {'execution time limit'}
+
 
 def setbuff(obj, key, value):
     """Set an attribute on a protobuf object.
@@ -317,6 +348,41 @@ def runtime_from_config(rtconfig):
             ]
         )
     )
+
+
+def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
+    """Populate runtime object from partial/full config.
+
+    Potentially slower than the non-partial one, due to tha the setattr calls,
+    but does not have expected fields.
+    """
+    runtime = PbRuntime()
+    if runtimeold is not None:
+        runtime.CopyFrom(runtimeold)
+    for key, val in rtconfig.items():
+        if val is None or key not in RUNTIME_CFG_MAP_TO_FIELD:
+            continue
+        elif key in RUNTIME_LIST_JOINS:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], listjoin(val))
+        elif key in RUNTIME_JSON_DUMPS:
+            setattr(
+                runtime,
+                RUNTIME_CFG_MAP_TO_FIELD[key],
+                json.dumps(
+                    [
+                        {'key': k, 'value': v}
+                        for k, v in val.items()
+                    ]
+                )
+            )
+        elif key == 'platform' and isinstance(val, dict):
+            with suppress(KeyError, TypeError):
+                setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val['name'])
+        elif key in RUNTIME_STRINGIFYS:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], str(val or ''))
+        else:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val)
+    return runtime
 
 
 def reset_protobuf_object(msg_class, msg_orig):
@@ -1574,6 +1640,9 @@ class DataStoreMgr:
             ext_trig.satisfied = satisfied
 
         for label, satisfied in itask.state.xtriggers.items():
+            # Reload may have removed xtrigger of orphan task
+            if label not in self.schd.xtrigger_mgr.xtriggers.functx_map:
+                continue
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
             xtrig = tproxy.xtriggers[f'{label}={sig}']
@@ -1657,13 +1726,9 @@ class DataStoreMgr:
         )
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.
-        j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
-            tp_tokens,
-            self.schd.config.cfg['runtime'][tproxy.name]
-        ))
-        for key, val in job_conf.items():
-            j_cfg[key] = val
-        j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
+        j_buf.runtime.CopyFrom(
+            runtime_from_partial(job_conf, tproxy.runtime)
+        )
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
@@ -2327,16 +2392,16 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
-        cfg = self.schd.config.cfg
+        rt_cfg = self.schd.config.cfg['runtime']
         # NOTE: node_data may change during operation so make a copy
         # see https://github.com/cylc/cylc-flow/pull/6397
         for node_id, node in list(node_data.items()):
+            # Avoid removed tasks with deltas queued during reload.
+            if node.name not in rt_cfg:
+                continue
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
-                self._apply_broadcasts_to_runtime(
-                    tokens,
-                    cfg['runtime'][node.name]
-                )
+                self._apply_broadcasts_to_runtime(tokens, rt_cfg[node.name])
             )
             new_sruntime = new_runtime.SerializeToString(
                 deterministic=True
