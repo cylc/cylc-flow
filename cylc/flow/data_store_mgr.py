@@ -134,6 +134,7 @@ if TYPE_CHECKING:
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.taskdef import TaskDef
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -287,7 +288,7 @@ def generate_checksum(in_strings):
     return zlib.adler32(''.join(sorted(in_strings)).encode()) & 0xffffffff
 
 
-def task_mean_elapsed_time(tdef):
+def task_mean_elapsed_time(tdef: 'TaskDef') -> float | None:
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
         return round(sum(tdef.elapsed_times) / len(tdef.elapsed_times))
@@ -2804,11 +2805,14 @@ class DataStoreMgr:
     # -----------
     # Job Deltas
     # -----------
-    def delta_job_msg(self, tokens: Tokens, msg: str) -> None:
-        """Add message to job."""
+    def delta_job_msg(self, tokens: Tokens, msg: str) -> bool:
+        """Add message to job.
+
+        Returns False if the job was not found in the data store.
+        """
         j_id, job = self.store_node_fetcher(tokens)
         if not job:
-            return
+            return False
         j_delta = self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
@@ -2821,6 +2825,7 @@ class DataStoreMgr:
             j_delta.messages[:] = job.messages
             j_delta.messages.append(msg)
         self.updates_pending = True
+        return True
 
     def delta_job_attr(
         self,

@@ -36,6 +36,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_FAILED,
 )
 
+from cylc.flow.network.resolvers import TaskMsg
+
 from .test_workflow_events import TEMPLATES
 
 
@@ -168,7 +170,7 @@ async def test__always_insert_task_job(
     })
 
     schd: Scheduler = scheduler(id_, run_mode='live')
-    schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
+    schd.bad_hosts.update({'no-such-host-1', 'no-such-host-2'})
     async with start(schd):
         schd.submit_task_jobs(schd.pool.get_tasks())
         await schd.update_data_structure()
@@ -233,7 +235,9 @@ async def test__submit_failed_job_id(flow, scheduler, start, db_select):
         assert await get_ds_job_id(schd) == job_id
 
 
-async def test__process_message_failed_with_retry(one, start, log_filter):
+async def test__process_message_failed_with_retry(
+    one: Scheduler, start, log_filter
+):
     """Log job failure, even if a retry is scheduled.
 
     See: https://github.com/cylc/cylc-flow/pull/6169
@@ -250,13 +254,11 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             })
 
         # Process submit failed message with and without retries:
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         record = log_filter(contains='1/one:waiting(queued)] retrying in')
         assert record[0][0] == logging.WARNING
 
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'submission failed' in failed_record[1]
 
@@ -271,6 +273,25 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             fail_once, None, 'failed', False, 'failed/OOK')
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'failed/OOK' in failed_record[1]
+
+
+@pytest.mark.parametrize('id_', ['1/no_such_task/01', '1/no_job'])
+async def test__unhandled_message(id_, one: Scheduler, start, log_filter):
+    """It should log unhandled messages."""
+
+    async with start(one):
+        one.message_queue.put(
+            TaskMsg(
+                Tokens(id_, relative=True), "time", 'INFO', "the quick brown"
+            )
+        )
+        one.process_queued_task_messages()
+
+        _, warning_msg = log_filter(level=logging.WARNING)[-1]
+        assert (
+            'Undeliverable task messages received and ignored:' in warning_msg
+        )
+        assert f'{id_}: INFO - "the quick brown"' in warning_msg
 
 
 @pytest.mark.parametrize('template', TEMPLATES)

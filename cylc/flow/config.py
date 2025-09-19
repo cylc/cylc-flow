@@ -34,6 +34,7 @@ from pathlib import Path
 import re
 from textwrap import wrap
 import traceback
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -461,6 +462,7 @@ class WorkflowConfig:
         self.mem_log("config.py: after get(sparse=False)")
 
         # These 2 must be called before call to init_cyclers(self.cfg):
+        self.set_experimental_features()
         self.process_utc_mode()
         self.process_cycle_point_tz()
 
@@ -613,6 +615,14 @@ class WorkflowConfig:
         self.mem_log("config.py: end init config")
 
         skip_mode_validate(self.taskdefs)
+
+    def set_experimental_features(self):
+        all_ = self.cfg['scheduler']['experimental']['all']
+        self.experimental = SimpleNamespace(**{
+            key.replace(' ', '_'): value or all_
+            for key, value in self.cfg['scheduler']['experimental'].items()
+            if key != 'all'
+        })
 
     @staticmethod
     def _warn_if_queues_have_implicit_tasks(
@@ -963,8 +973,11 @@ class WorkflowConfig:
                 " anyway use the option --check-circular.")
             return
         start_point_str = self.cfg['scheduling']['initial cycle point']
-        raw_graph = self.get_graph_raw(start_point_str,
-                                       stop_point_str=None)
+        raw_graph = self.get_graph_raw(
+            start_point_str,
+            stop_point_str=None,
+            sort=False,
+        )
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
         for lhs, rhs in raw_graph:
@@ -1059,8 +1072,13 @@ class WorkflowConfig:
         for name, taskdef in self.taskdefs.items():
             expr = taskdef.rtconfig['completion']
             if expr:
+                any_suicide = any(
+                    dep.suicide
+                    for d in taskdef.dependencies.values()
+                    for dep in d
+                )
                 # check the user-defined expression
-                self._check_completion_expression(name, expr)
+                self._check_completion_expression(name, expr, any_suicide)
             else:
                 # derive a completion expression for this taskdef
                 expr = get_completion_expression(taskdef)
@@ -1083,7 +1101,9 @@ class WorkflowConfig:
             # on after the TaskDef has been created
             taskdef.rtconfig['completion'] = expr
 
-    def _check_completion_expression(self, task_name: str, expr: str) -> None:
+    def _check_completion_expression(
+        self, task_name: str, expr: str, any_suicide: bool
+    ) -> None:
         """Checks a user-defined completion expression.
 
         Args:
@@ -1091,6 +1111,8 @@ class WorkflowConfig:
                 The name of the task we are checking.
             expr:
                 The completion expression as defined in the config.
+            any_suicide:
+                Does this task have any suicide triggers
 
         """
         # check completion expressions are not being used in compat mode
@@ -1239,12 +1261,21 @@ class WorkflowConfig:
                 and expr_opt is None
                 and compvar in {'submit_failed', 'expired'}
             ):
-                raise WorkflowConfigError(
+                msg = (
                     f'{task_name}:{trigger} is permitted in the graph'
-                    ' but is not referenced in the completion'
-                    ' expression (so is not permitted by it).'
-                    f'\nTry: completion = "{expr} or {compvar}"'
+                    ' but is not referenced in the completion.'
                 )
+                if (
+                    any_suicide
+                    and trigger == "expired"
+                    and self.experimental.expire_triggers
+                ):
+                    msg += (
+                        "\nThis may be due to use of an expire "
+                        "(formerly suicide) trigger."
+                    )
+                msg += f'\nTry: completion = "{expr} or {compvar}"'
+                raise WorkflowConfigError(msg)
 
             if (
                 graph_opt is False
@@ -1871,8 +1902,9 @@ class WorkflowConfig:
 
     def add_sequence(self, nodes, seq, suicide):
         """Add valid sequences to taskdefs."""
+        graph_node_parser = GraphNodeParser.get_inst()
         for node in nodes:
-            name, offset = GraphNodeParser.get_inst().parse(node)[:2]
+            name, offset = graph_node_parser.parse(node)[:2]
             taskdef = self.get_taskdef(name)
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
@@ -1903,6 +1935,7 @@ class WorkflowConfig:
         triggers = {}
         xtrig_labels = set()
 
+        graph_node_parser = GraphNodeParser.get_inst()
         for left in left_nodes:
             if left.startswith('@'):
                 xtrig_labels.add(left[1:])
@@ -1910,7 +1943,8 @@ class WorkflowConfig:
             # (GraphParseError checked above)
             (name, offset, output, offset_is_from_icp,
              offset_is_irregular, offset_is_absolute) = (
-                GraphNodeParser.get_inst().parse(left))
+                graph_node_parser.parse(left)
+            )
 
             # Qualifier.
             outputs = self.cfg['runtime'][name]['outputs']
@@ -2038,7 +2072,12 @@ class WorkflowConfig:
         return stop_point
 
     def get_graph_raw(
-            self, start_point_str=None, stop_point_str=None, grouping=None):
+        self,
+        start_point_str=None,
+        stop_point_str=None,
+        grouping=None,
+        sort=True,
+    ):
         """Return concrete graph edges between specified cycle points.
 
         Return a family-collapsed graph if the grouping arg is not None:
@@ -2098,23 +2137,25 @@ class WorkflowConfig:
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
+        graph_node_parser = GraphNodeParser.get_inst()
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
-            new_points = []
+            new_points = set()
             while point is not None:
-                if point not in new_points:
-                    new_points.append(point)
-                if stop_point is not None and point > stop_point:
+                new_points.add(point)
+                if stop_point is None:
+                    if len(new_points) > self.VIS_N_POINTS:
+                        # Take VIS_N_POINTS cycles from each sequence.
+                        break
+                elif point > stop_point:
                     # Beyond requested final cycle point.
                     break
                 if (workflow_final_point is not None
                         and point > workflow_final_point):
                     # Beyond workflow final cycle point.
                     break
-                if stop_point is None and len(new_points) > self.VIS_N_POINTS:
-                    # Take VIS_N_POINTS cycles from each sequence.
-                    break
+
                 point_offset_cache = {}
                 for left, right, suicide, cond in edges:
                     if is_validate and (not right or suicide):
@@ -2123,14 +2164,15 @@ class WorkflowConfig:
                         r_id = (right, point)
                     else:
                         r_id = None
-                    if left.startswith('@'):
+                    if left[0] == '@':
                         # @xtrigger node.
                         name = left
                         offset_is_from_icp = False
                         offset = None
                     else:
                         name, offset, _, offset_is_from_icp, _, _ = (
-                            GraphNodeParser.get_inst().parse(left))
+                            graph_node_parser.parse(left)
+                        )
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
@@ -2147,19 +2189,19 @@ class WorkflowConfig:
                         l_point = point
                     l_id = (name, l_point)
 
-                    if l_id is None and r_id is None:
-                        continue
-                    if l_id is not None and actual_first_point > l_id[1]:
+                    if actual_first_point > l_point:
                         # Check that l_id is not earlier than start time.
-                        if (r_id is None or r_id[1] < actual_first_point or
-                                is_validate):
+                        if (
+                            is_validate
+                            or r_id is None
+                            or r_id[1] < actual_first_point
+                        ):
                             continue
                         # Pre-initial dependency;
                         # keep right hand node.
                         l_id = r_id
                         r_id = None
-                    if point not in gr_edges:
-                        gr_edges[point] = []
+                    gr_edges.setdefault(point, [])
                     if is_validate:
                         gr_edges[point].append((l_id, r_id))
                     else:
@@ -2182,7 +2224,10 @@ class WorkflowConfig:
             # Flatten nested list.
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
-        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
+        if sort:
+            graph_raw_edges.sort(
+                key=lambda x: [y if y else '' for y in x[:2]]
+            )
         return graph_raw_edges
 
     def get_node_labels(self, start_point_str=None, stop_point_str=None):
@@ -2317,7 +2362,8 @@ class WorkflowConfig:
             parser = GraphParser(
                 family_map,
                 self.parameters,
-                task_output_opt=task_output_opt
+                task_output_opt=task_output_opt,
+                expire_triggers=self.experimental.expire_triggers,
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)
@@ -2328,6 +2374,23 @@ class WorkflowConfig:
             # Checking for undefined outputs for terminal tasks. Tasks with
             # dependencies are checked in generate_triggers:
             self.check_terminal_outputs(parser.terminals)
+
+        # set of all cycling intervals containined within the workflow
+        cycling_intervals = {
+            sequence.get_interval()
+            for sequence in self.sequences
+        } | {
+            # add a null interval to handle async workflows
+            get_interval_cls().get_null()
+        }
+
+        # determine the longest cycling interval in the workflow
+        self.interval_of_longest_sequence: 'IntervalBase' = max({
+            interval for interval in cycling_intervals
+            # NOTE: None type sorts above a null interval for strange
+            # historical reasons so must be filtered out
+            if interval is not None
+        })
 
         self.set_required_outputs(task_output_opt)
 
@@ -2346,21 +2409,18 @@ class WorkflowConfig:
     def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
-
         Where a "terminal output" is an output for a task at the end of a
         graph string, such as "end" in `start => middle => end`.
 
         Raises: WorkflowConfigError if a custom output is not defined.
         """
-        # BACK COMPAT: (On drop 3.7): Can be simplified with walrus :=
-        # if (b := a[1].strip("?")) not in TASK_QUALIFIERS
-        terminal_outputs = [
-            (a[0].strip("!"), a[1].strip("?"))
-            for a in (t.split(':') for t in terminals if ":" in t)
-            if (a[1].strip("?")) not in TASK_QUALIFIERS
-        ]
-
-        for task, output in terminal_outputs:
+        for t in terminals:
+            if ':' not in t:
+                continue
+            task, output = t.split(':')
+            if (output := output.strip('?')) in TASK_QUALIFIERS:
+                continue
+            task = task.strip('!')
             if output not in self.cfg['runtime'][task]['outputs']:
                 raise WorkflowConfigError(
                     f"Undefined custom output: {task}:{output}"

@@ -17,6 +17,7 @@
 """
 
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.id import TaskTokens
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_FAILED
 from cylc.flow.task_state import (
@@ -68,7 +69,7 @@ async def test_settings_override_from_broadcast(
 
 
 async def test_broadcast_changes_set_skip_outputs(
-    flow, scheduler, start, complete, log_filter
+    flow, scheduler, start
 ):
     """When cylc set --out skip is used, task outputs are updated with
     broadcasts.
@@ -94,7 +95,7 @@ async def test_broadcast_changes_set_skip_outputs(
         )
         foo, = schd.pool.get_tasks()
         schd.pool.set_prereqs_and_outputs(
-            '1/foo', ['skip'], [], [])
+            {TaskTokens('1', 'foo')}, ['skip'], [], [])
 
         foo_outputs = foo.state.outputs.get_completed_outputs()
 
@@ -179,20 +180,17 @@ async def test_doesnt_release_held_tasks(
     one_conf['runtime'] = {'one': {'run mode': 'skip'}}
     schd = scheduler(flow(one_conf), run_mode='live', paused_start=False)
     async with start(schd):
-        itask, = schd.pool.get_tasks()
         msg = 'held tasks shoudn\'t {}'
 
         # Set task to held and check submission in skip mode doesn't happen:
-        itask.state.is_held = True
-
-        # Relinquish contol to the main loop.
+        schd.pool.hold_tasks({TaskTokens('1', 'one')})
         schd.release_tasks_to_run()
 
         assert not log_filter(contains='=> running'), msg.format('run')
         assert not log_filter(contains='=> succeeded'), msg.format('succeed')
 
         # Release held task and assert that it now skips successfully:
-        schd.pool.release_held_tasks(['1/one'])
+        schd.pool.release_held_tasks({TaskTokens('1', 'one')})
         schd.release_tasks_to_run()
 
         assert log_filter(contains='=> running'), msg.format('run')

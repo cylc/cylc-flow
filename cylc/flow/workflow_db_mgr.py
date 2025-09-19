@@ -433,7 +433,7 @@ class WorkflowDatabaseManager:
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": id_key.tokens['task'],
                     "cycle": id_key.tokens['cycle'],
-                    "ctx_key": json.dumps((key1, id_key.tokens['job'],)),
+                    "ctx_key": json.dumps((key1, int(id_key.tokens['job']),)),
                     "ctx": self._namedtuple2json(timer.ctx),
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
@@ -462,8 +462,9 @@ class WorkflowDatabaseManager:
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
             "is_manual_submit": itask.is_manual_submit,
-            "submit_num": itask.submit_num,
         }
+        if not itask.transient:
+            set_args['submit_num'] = itask.submit_num
         # Note tasks_states table rows are for latest submit_num only
         # (not one row per submit).
         where_args = {

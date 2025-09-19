@@ -18,7 +18,7 @@ import logging
 import re
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import pytest
 
@@ -175,9 +175,11 @@ def capcall(monkeypatch):
         function_string:
             The function to replace as it would be specified to
             monkeypatch.setattr.
-        substitute_function:
-            An optional function to replace it with, otherwise the captured
-            function will return None.
+        mock:
+            * If True, the function will be replaced by a "return None".
+            * If False, the original function will be run.
+            * If a Callable is provided, this will be run in place of the
+              original function.
 
     Returns:
         [(args: Tuple, kwargs: Dict), ...]
@@ -190,15 +192,80 @@ def capcall(monkeypatch):
 
     """
 
-    def _capcall(function_string, substitute_function=None):
+    def _capcall(function_string: str, mock: bool | Callable = True):
         calls = []
+
+        if mock is True:
+            fcn = lambda *args, **kwargs: None
+        elif mock is False:
+            fcn = import_object_from_string(function_string)
+        else:
+            fcn = mock
 
         def _call(*args, **kwargs):
             calls.append((args, kwargs))
-            if substitute_function:
-                return substitute_function(*args, **kwargs)
+            return fcn(*args, **kwargs)
 
         monkeypatch.setattr(function_string, _call)
         return calls
 
     return _capcall
+
+
+def import_object_from_string(string):
+    """Import a Python object from a string path.
+
+    The path may reference a module, function, class, method, whatever.
+
+    Examples:
+        # import a module
+        >>> import_object_from_string('os')
+        <module 'os' ...>
+
+        # import a function
+        >>> import_object_from_string('os.path.walk')
+        <function walk at ...>
+
+        # import a constant from a namespace package
+        >>> import_object_from_string('cylc.flow.LOG')
+        <Logger cylc (WARNING)>
+
+        # import a class
+        >>> import_object_from_string('pathlib.Path')
+        <class 'pathlib.Path'>
+
+        # import a method
+        >>> import_object_from_string('pathlib.Path.exists')
+        <function Path.exists ...>
+
+    """
+    head = string
+    tail = []
+    while True:
+        try:
+            # try and import the thing
+            module = __import__(head)
+        except ModuleNotFoundError:
+            # if it's not something we can import, lop the last item off the
+            # end of the string and repeat
+            if '.' in head:
+                head, _tail = head.rsplit('.', 1)
+                tail.append(_tail)
+            else:
+                # we definitely can't import this
+                raise
+        else:
+            # we managed to import something
+            if '(namespace)' in str(module):
+                # with namespace packages you have to pull the module out of
+                # the package yourself
+                for part in head.split('.')[1:]:
+                    module = getattr(module, part)
+            break
+
+    # extract the requested object from the module (if requested)
+    obj = module
+    for part in reversed(tail):
+        obj = getattr(obj, part)
+
+    return obj

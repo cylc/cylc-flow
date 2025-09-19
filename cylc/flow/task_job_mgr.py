@@ -41,7 +41,9 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
+    Set,
     Tuple,
     Union,
     cast,
@@ -61,7 +63,10 @@ from cylc.flow.hostuserutil import (
     is_remote_platform,
 )
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE, JobPollContext
+from cylc.flow.job_runner_mgr import (
+    JOB_FILES_REMOVED_MESSAGE,
+    JobPollContext,
+)
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     FORBIDDEN_WITH_PLATFORM,
@@ -125,11 +130,6 @@ from cylc.flow.wallclock import (
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -179,8 +179,8 @@ class TaskJobManager:
         self.data_store_mgr: DataStoreMgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
-        self.bad_hosts = bad_hosts
-        self.bad_hosts_to_clear = set()
+        self.bad_hosts: Set[str] = bad_hosts
+        self.bad_hosts_to_clear: Set[str] = set()
         self.task_remote_mgr = TaskRemoteMgr(
             workflow, proc_pool, self.bad_hosts, self.workflow_db_mgr, server
         )
@@ -313,10 +313,6 @@ class TaskJobManager:
 
         Return: tasks that attempted submission.
         """
-        done_tasks: 'List[TaskProxy]' = []
-        # Mapping of platforms to task proxies:
-        auth_itasks: 'Dict[str, List[TaskProxy]]' = {}
-
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(itasks)
 
         # Reset consumed host selection results
@@ -325,20 +321,36 @@ class TaskJobManager:
         if not prepared_tasks:
             return bad_tasks
 
+        ri_map = self.task_remote_mgr.remote_init_map
+        # Mapping of platform names to task proxies
+        # (resolved platforms, not platform groups):
+        platform_itasks: 'Dict[str, List[TaskProxy]]' = {}
         for itask in prepared_tasks:
-            auth_itasks.setdefault(itask.platform['name'], []).append(itask)
+            platform_itasks.setdefault(itask.platform['name'], []).append(
+                itask
+            )
 
         # Submit task jobs for each platform
         # Non-prepared tasks can be considered done for now:
         done_tasks = bad_tasks
 
-        for _, itasks in sorted(auth_itasks.items()):
-            platform = self._get_platform_with_good_host(itasks, done_tasks)
-            if not platform:
+        for _platform_name, itasks in sorted(platform_itasks.items()):
+            # All tasks in this iteration have the same platform
+            platform = itasks[0].platform
+
+            if self.bad_hosts.issuperset(platform['hosts']):
+                # Out of hosts for this platform.
+                for itask in itasks:
+                    # Get another platform, if task config platform is a group
+                    # (Note there may be tasks with different but intersecting
+                    # platform groups)
+                    if not self._select_new_platform(itask):
+                        # else set task to submit failed.
+                        self._platform_submit_failure(itask)
+                        done_tasks.append(itask)
                 continue
 
             install_target = get_install_target_from_platform(platform)
-            ri_map = self.task_remote_mgr.remote_init_map
 
             if ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE:
                 if install_target == get_localhost_install_target():
@@ -351,10 +363,7 @@ class TaskJobManager:
                     self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            itask.tokens.duplicate(
-                                job=str(itask.submit_num)
-                            ),
-                            self.REMOTE_INIT_MSG,
+                            itask.job_tokens, self.REMOTE_INIT_MSG
                         )
                     continue
 
@@ -368,8 +377,7 @@ class TaskJobManager:
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
-                            itask.tokens.duplicate(job=str(itask.submit_num)),
-                            msg
+                            itask.job_tokens, msg
                         )
                     continue
                 elif ri_map[install_target] == REMOTE_INIT_255:
@@ -379,10 +387,7 @@ class TaskJobManager:
                     self.task_remote_mgr.remote_init(platform)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            itask.tokens.duplicate(
-                                job=str(itask.submit_num)
-                            ),
-                            self.REMOTE_INIT_MSG
+                            itask.job_tokens, self.REMOTE_INIT_MSG
                         )
                     continue
 
@@ -394,18 +399,14 @@ class TaskJobManager:
             # workflow host.
             try:
                 host = get_host_from_platform(
-                    platform,
-                    bad_hosts=self.task_remote_mgr.bad_hosts
+                    platform, bad_hosts=self.bad_hosts
                 )
             except NoHostsError:
                 del ri_map[install_target]
                 self.task_remote_mgr.remote_init(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        itask.tokens.duplicate(
-                            job=str(itask.submit_num)
-                        ),
-                        self.REMOTE_INIT_MSG,
+                        itask.job_tokens, self.REMOTE_INIT_MSG
                     )
                 continue
 
@@ -434,10 +435,7 @@ class TaskJobManager:
                 self.task_remote_mgr.file_install(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        itask.tokens.duplicate(
-                            job=str(itask.submit_num)
-                        ),
-                        REMOTE_FILE_INSTALL_IN_PROGRESS
+                        itask.job_tokens, REMOTE_FILE_INSTALL_IN_PROGRESS
                     )
                 continue
 
@@ -535,9 +533,7 @@ class TaskJobManager:
                             )
                         )
                     job_log_dirs.append(
-                        itask.tokens.duplicate(
-                            job=str(itask.submit_num),
-                        ).relative_id
+                        itask.job_tokens.relative_id
                     )
                     # The job file is now (about to be) used: reset the file
                     # write flag so that subsequent manual retrigger will
@@ -556,74 +552,56 @@ class TaskJobManager:
                         job_log_dirs=job_log_dirs,
                         host=host
                     ),
-                    bad_hosts=self.task_remote_mgr.bad_hosts,
+                    bad_hosts=self.bad_hosts,
                     callback=self._submit_task_jobs_callback,
                     callback_args=[itasks_batch],
                     callback_255=self._submit_task_jobs_callback_255,
                 )
         return done_tasks
 
-    def _get_platform_with_good_host(
-        self, itasks: 'Iterable[TaskProxy]', done_tasks: 'List[TaskProxy]'
-    ) -> Optional[dict]:
-        """Find the first platform with at least one host that has not been
-        tried and found to be unreachable.
+    def _select_new_platform(self, itask: 'TaskProxy') -> bool:
+        """Try to select a new platform for a task if it is using a
+        platform group and the current platform is not available.
 
-        If there are no good hosts for a task then the task submit-fails.
-
-        Returns:
-            The platform with a good host, or None if no such platform is found
+        Return True if a new platform was selected.
         """
-        out_of_hosts = False
-        for itask in itasks:
-            # If there are any hosts left for this platform which we
-            # have not previously failed to contact with a 255 error.
-            if not out_of_hosts and any(
-                host not in self.task_remote_mgr.bad_hosts
-                for host in itask.platform['hosts']
-            ):
-                return itask.platform
+        rtconf = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
+            itask
+        )
+        try:
+            new_platform = get_platform(rtconf, bad_hosts=self.bad_hosts)
+        except PlatformLookupError:
+            return False
+        # If were able to select a new platform;
+        if new_platform and new_platform != itask.platform:
+            # store the previous platform's hosts so that when
+            # we record a submit fail we can clear all hosts
+            # from all platforms from bad_hosts.
+            self.bad_hosts_to_clear.update(itask.platform['hosts'])
+            itask.platform = new_platform
+            self._prep_submit_task_job_impl(itask, rtconf)
+            return True
+        return False
 
-            # If there are no hosts left for this platform.
-            # See if you can get another platform from the group or
-            # else set task to submit failed.
-            platform: Optional[dict] = None
-            rtconf = self.task_events_mgr.broadcast_mgr.get_updated_rtconfig(
-                itask
+    def _platform_submit_failure(self, itask: 'TaskProxy') -> None:
+        """If there are no good platforms for a task then we set it to
+        submit-failed."""
+        itask.waiting_on_job_prep = False
+        itask.local_job_file_path = None
+        self._prep_submit_task_job_error(itask, '(remote init)', '')
+        # Now that all hosts on all platforms in platform
+        # group selected in task config are exhausted we
+        # clear bad_hosts for all the hosts we have
+        # tried for this platform or group.
+        self.bad_hosts -= set(itask.platform['hosts'])
+        self.bad_hosts -= self.bad_hosts_to_clear
+        self.bad_hosts_to_clear.clear()
+        LOG.critical(
+            PlatformError(
+                f"{PlatformError.MSG_INIT} (no hosts were reachable)",
+                itask.platform['name'],
             )
-            with suppress(PlatformLookupError):
-                platform = get_platform(rtconf, bad_hosts=self.bad_hosts)
-
-            # If were able to select a new platform;
-            if platform and platform != itask.platform:
-                # store the previous platform's hosts so that when
-                # we record a submit fail we can clear all hosts
-                # from all platforms from bad_hosts.
-                for host_ in itask.platform['hosts']:
-                    self.bad_hosts_to_clear.add(host_)
-                itask.platform = platform
-                return platform
-
-            itask.waiting_on_job_prep = False
-            itask.local_job_file_path = None
-            self._prep_submit_task_job_error(itask, '(remote init)', '')
-            # Now that all hosts on all platforms in platform
-            # group selected in task config are exhausted we
-            # clear bad_hosts for all the hosts we have
-            # tried for this platform or group.
-            self.bad_hosts -= set(itask.platform['hosts'])
-            self.bad_hosts -= self.bad_hosts_to_clear
-            self.bad_hosts_to_clear.clear()
-            LOG.critical(
-                PlatformError(
-                    f"{PlatformError.MSG_INIT} (no hosts were reachable)",
-                    itask.platform['name'],
-                )
-            )
-            out_of_hosts = True
-            done_tasks.append(itask)
-
-        return None
+        )
 
     def _create_job_log_path(self, itask):
         """Create job log directory for a task job, etc.
@@ -719,10 +697,7 @@ class TaskJobManager:
         """Helper for _kill_task_jobs_callback, on one task job."""
         with suppress(NoHostsError):
             # if there is another host to kill on, try again, otherwise fail
-            get_host_from_platform(
-                itask.platform,
-                bad_hosts=self.task_remote_mgr.bad_hosts
-            )
+            get_host_from_platform(itask.platform, bad_hosts=self.bad_hosts)
             self.kill_task_jobs([itask])
 
     def _kill_task_job_callback(self, itask, cmd_ctx, line):
@@ -757,12 +732,7 @@ class TaskJobManager:
             log_msg = (
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
-        self.data_store_mgr.delta_job_msg(
-            itask.tokens.duplicate(
-                job=str(itask.submit_num)
-            ),
-            log_msg
-        )
+        self.data_store_mgr.delta_job_msg(itask.job_tokens, log_msg)
         LOG.log(log_lvl, f"[{itask}] {log_msg}")
 
     def _manip_task_jobs_callback(
@@ -849,10 +819,7 @@ class TaskJobManager:
     def _poll_task_job_callback_255(self, itask, cmd_ctx, line):
         with suppress(NoHostsError):
             # if there is another host to poll on, try again, otherwise fail
-            get_host_from_platform(
-                itask.platform,
-                bad_hosts=self.task_remote_mgr.bad_hosts
-            )
+            get_host_from_platform(itask.platform, bad_hosts=self.bad_hosts)
             self.poll_task_jobs([itask])
 
     def _poll_task_job_callback(
@@ -866,17 +833,12 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_tokens = itask.tokens.duplicate(job=str(itask.submit_num))
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
-        except TypeError:
-            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-            return
-        except ValueError:
-            self.data_store_mgr.delta_job_msg(job_tokens, self.POLL_FAIL)
+        except (TypeError, ValueError):
+            self.data_store_mgr.delta_job_msg(itask.job_tokens, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
@@ -893,7 +855,7 @@ class TaskJobManager:
         if jp_ctx.run_signal == JOB_FILES_REMOVED_MESSAGE:
             LOG.error(
                 f"platform: {itask.platform['name']} - job log directory "
-                f"{job_tokens.relative_id} no longer exists"
+                f"{itask.job_tokens.relative_id} no longer exists"
             )
 
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
@@ -903,7 +865,7 @@ class TaskJobManager:
         elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
-                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}{jp_ctx.run_signal}",
+                itask, log_lvl, f"{FAIL_MESSAGE_PREFIX}/{jp_ctx.run_signal}",
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:  # noqa: SIM114
@@ -967,10 +929,7 @@ class TaskJobManager:
         # sort itasks into lists based upon where they were run.
         auth_itasks = {}
         for itask in itasks:
-            platform_name = itask.platform['name']
-            if platform_name not in auth_itasks:
-                auth_itasks[platform_name] = []
-            auth_itasks[platform_name].append(itask)
+            auth_itasks.setdefault(itask.platform['name'], []).append(itask)
 
         # Go through each list of itasks and carry out commands as required.
         for platform_name, itasks in sorted(auth_itasks.items()):
@@ -1005,7 +964,7 @@ class TaskJobManager:
             if remote_mode:
                 try:
                     host = get_host_from_platform(
-                        platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                        platform, bad_hosts=self.bad_hosts
                     )
                     cmd = construct_ssh_cmd(
                         cmd, platform, host
@@ -1019,16 +978,12 @@ class TaskJobManager:
                     ctx = SubProcContext(cmd_key, cmd, host=host)
 
             for itask in sorted(itasks, key=lambda task: task.identity):
-                job_log_dirs.append(
-                    itask.tokens.duplicate(
-                        job=str(itask.submit_num)
-                    ).relative_id
-                )
+                job_log_dirs.append(itask.job_tokens.relative_id)
             cmd += job_log_dirs
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
                 ctx,
-                bad_hosts=self.task_remote_mgr.bad_hosts,
+                bad_hosts=self.bad_hosts,
                 callback=callback,
                 callback_args=[itasks],
                 callback_255=callback_255,
@@ -1398,7 +1353,7 @@ class TaskJobManager:
 
         # Location of job file, etc
         self._create_job_log_path(itask)
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
+        job_d = itask.job_tokens.relative_id
         job_file_path = get_remote_workflow_run_job_dir(
             self.workflow, job_d, JOB_LOG_JOB
         )

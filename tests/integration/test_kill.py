@@ -18,7 +18,6 @@
 import asyncio
 import logging
 from secrets import token_hex
-import sys
 from unittest.mock import Mock
 
 import pytest
@@ -43,18 +42,12 @@ from cylc.flow.task_state import (
 )
 
 
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout as async_timeout
-else:
-    from async_timeout import timeout as async_timeout
-
-
 LOCALHOST = 'localhost'
 
 
 async def task_state(itask: TaskProxy, state: str, timeout=4, **kwargs):
     """Await task state."""
-    async with async_timeout(timeout):
+    async with asyncio.timeout(timeout):
         while not itask.state(state, **kwargs):
             await asyncio.sleep(0.1)
 

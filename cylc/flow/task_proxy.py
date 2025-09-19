@@ -54,7 +54,7 @@ from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
-    from cylc.flow.id import Tokens
+    from cylc.flow.id import Tokens, TaskTokens
     from cylc.flow.prerequisite import (
         PrereqTuple,
         SatisfiedState,
@@ -222,7 +222,7 @@ class TaskProxy:
         flow_nums: Optional['FlowNums'] = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
-        submit_num: int = 0,
+        submit_num: int | None = 0,
         is_late: bool = False,
         is_manual_submit: bool = False,
         flow_wait: bool = False,
@@ -243,7 +243,7 @@ class TaskProxy:
             self.flow_nums = flow_nums.copy()
         self.flow_wait = flow_wait
         self.point = start_point
-        self.tokens = scheduler_tokens.duplicate(
+        self.tokens: TaskTokens = scheduler_tokens.duplicate(
             cycle=str(self.point),
             task=self.tdef.name,
         )

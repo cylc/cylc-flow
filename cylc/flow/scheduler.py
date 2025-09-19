@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     NoReturn,
     Optional,
     Set,
@@ -57,11 +58,13 @@ from typing import (
 )
 from uuid import uuid4
 
+from metomi.isodatetime.exceptions import TimePointDumperBoundsError
 import psutil
 
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
+    command_validation,
     commands,
     main_loop,
     workflow_files,
@@ -82,7 +85,6 @@ from cylc.flow.flow_mgr import (
     FlowMgr,
     stringify_flow_nums,
 )
-
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -108,8 +110,8 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_name_from_id,
@@ -175,11 +177,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
@@ -846,9 +843,10 @@ class Scheduler:
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
+        start_tasks = command_validation.is_tasks(self.options.starttask)
         # flow number set in this call:
         self.pool.set_prereqs_and_outputs(
-            self.options.starttask,
+            start_tasks,
             outputs=[],
             prereqs=["all"],
             flow=[FLOW_NEW],
@@ -967,7 +965,7 @@ class Scheduler:
         """Process incoming task messages for each task proxy.
 
         """
-        messages: 'Dict[str, List[Tuple[Optional[int], TaskMsg]]]' = {}
+        messages: dict[str, list[TaskMsg]] = {}
 
         # Retrieve queued messages
         while self.message_queue.qsize():
@@ -976,28 +974,23 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = Tokens(task_msg.job_id, relative=True)
             # task ID (job stripped)
-            task_id = tokens.duplicate(job=None).relative_id
-            messages.setdefault(task_id, [])
-            # job may be None (e.g. simulation mode)
-            job = int(tokens['job']) if tokens['job'] else None
-            messages[task_id].append(
-                (job, task_msg)
-            )
+            task_id = task_msg.job_id.duplicate(job=None).relative_id
+            messages.setdefault(task_id, []).append(task_msg)
 
+        unprocessed_messages: List[TaskMsg] = []
         # Poll tasks for which messages caused a backward state change.
-        to_poll_tasks = []
-        for itask in self.pool.get_tasks():
-            message_items = messages.get(itask.identity)
-            if message_items is None:
+        to_poll_tasks: List[TaskProxy] = []
+        for task_id, message_items in messages.items():
+            itask = self.pool._get_task_by_id(task_id)
+            if itask is None:
+                unprocessed_messages.extend(message_items)
                 continue
             should_poll = False
-            del messages[itask.identity]
-            for submit_num, tm in message_items:
+            for tm in message_items:
                 if self.task_events_mgr.process_message(
                     itask, tm.severity, tm.message, tm.event_time,
-                    self.task_events_mgr.FLAG_RECEIVED, submit_num
+                    self.task_events_mgr.FLAG_RECEIVED, tm.job_id.submit_num
                 ):
                     should_poll = True
             if should_poll:
@@ -1008,11 +1001,18 @@ class Scheduler:
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
         # proxy can be removed, but the orphaned job still sends messages.
-        for tms in messages.values():
-            warn = "Undeliverable task messages received and ignored:"
-            for _, msg in tms:
-                warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
-            LOG.warning(warn)
+        warn = ""
+        for tm in unprocessed_messages:
+            job_tokens = self.tokens.duplicate(tm.job_id)
+            tdef = self.config.get_taskdef(job_tokens['task'])
+            if not self.task_events_mgr.process_job_message(
+                job_tokens, tdef, tm.message, tm.event_time
+            ):
+                warn += f'\n  {tm.job_id}: {tm.severity} - "{tm.message}"'
+        if warn:
+            LOG.warning(
+                f"Undeliverable task messages received and ignored:{warn}"
+            )
 
     async def process_command_queue(self) -> None:
         """Process queued commands."""
@@ -1080,8 +1080,7 @@ class Scheduler:
             if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 unkillable.append(itask)
                 continue
-            if itask.state_reset(is_held=True):
-                self.data_store_mgr.delta_task_state(itask)
+            self.pool.hold_active_task(itask)
             if itask.state(TASK_STATUS_PREPARING):
                 self.task_job_mgr.kill_prep_task(itask)
             else:
@@ -1684,7 +1683,18 @@ class Scheduler:
             # A simulated task state change occurred.
             self.reset_inactivity_timer()
 
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
+        # auto expire broadcasts
+        with suppress(TimePointDumperBoundsError):
+            # NOTE: TimePointDumperBoundsError will be raised for negative
+            # cycle points, we skip broadcast expiry in this circumstance
+            # (pre-initial condition)
+            if min_point := self.pool.get_min_point():
+                # NOTE: the broadcast expire limit is the oldest active cycle
+                # MINUS the longest cycling interval
+                self.broadcast_mgr.expire_broadcast(
+                    min_point - self.config.interval_of_longest_sequence
+                )
+
         self.late_tasks_check()
 
         self.process_queued_task_messages()

@@ -24,6 +24,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Tuple,
     Union,
 )
@@ -36,21 +37,20 @@ from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.run_modes import RunMode
-from cylc.flow.task_outputs import TASK_OUTPUT_SUBMITTED
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
+)
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
 )
+from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
@@ -95,22 +95,20 @@ def submit_task_job(
     itask.jobs.append(
         task_job_mgr.get_simulation_job_conf(itask)
     )
-    task_job_mgr.task_events_mgr.process_message(
-        itask, INFO, TASK_OUTPUT_SUBMITTED,
-    )
+    for output in (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED):
+        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],
             'time_run': now[1],
             'try_num': itask.get_try_num(),
-            'flow_nums': str(list(itask.flow_nums)),
+            'flow_nums': serialise_set(itask.flow_nums),
             'is_manual_submit': itask.is_manual_submit,
             'job_runner_name': RunMode.SIMULATION.value,
             'platform_name': RunMode.SIMULATION.value,
             'submit_status': 0   # Submission has succeeded
         }
     )
-    itask.state.status = TASK_STATUS_RUNNING
     return True
 
 
@@ -162,7 +160,7 @@ class ModeSettings:
             db_info = db_mgr.pri_dao.select_task_job(
                 itask.tokens['cycle'],
                 itask.tokens['task'],
-                itask.tokens['job'],
+                itask.submit_num,
             )
 
             if db_info['time_submit']:

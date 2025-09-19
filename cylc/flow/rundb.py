@@ -714,11 +714,12 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_job(self, cycle, name, submit_num=None):
+    def select_task_job(
+        self, cycle: str, name: str, submit_num: str | int | None = None
+    ) -> dict[str, Any] | None:
         """Select items from task_jobs by (cycle, name, submit_num).
 
         :return: a dict for mapping keys to the column values
-        :rtype: dict
         """
         keys = []
         for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
@@ -737,7 +738,7 @@ class CylcWorkflowDAO:
             '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
-            stmt_args = [cycle, name]
+            stmt_args: list[Any] = [cycle, name]
         else:
             stmt = rf'''
                 SELECT
@@ -752,14 +753,13 @@ class CylcWorkflowDAO:
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name, submit_num]
-        try:
+        with suppress(sqlite3.DatabaseError):
             for row in self.connect().execute(stmt, stmt_args):
                 ret = {}
                 for key, value in zip(keys, row):
                     ret[key] = value
                 return ret
-        except sqlite3.DatabaseError:
-            return None
+        return None
 
     def select_jobs_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
