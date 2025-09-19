@@ -184,7 +184,7 @@ class PbRuntime(_message.Message):
     def __init__(self, platform: _Optional[str] = ..., script: _Optional[str] = ..., init_script: _Optional[str] = ..., env_script: _Optional[str] = ..., err_script: _Optional[str] = ..., exit_script: _Optional[str] = ..., pre_script: _Optional[str] = ..., post_script: _Optional[str] = ..., work_sub_dir: _Optional[str] = ..., execution_polling_intervals: _Optional[str] = ..., execution_retry_delays: _Optional[str] = ..., execution_time_limit: _Optional[str] = ..., submission_polling_intervals: _Optional[str] = ..., submission_retry_delays: _Optional[str] = ..., directives: _Optional[str] = ..., environment: _Optional[str] = ..., outputs: _Optional[str] = ..., completion: _Optional[str] = ..., run_mode: _Optional[str] = ...) -> None: ...
 
 class PbJob(_message.Message):
-    __slots__ = ("stamp", "id", "submit_num", "state", "task_proxy", "submitted_time", "started_time", "finished_time", "job_id", "job_runner_name", "execution_time_limit", "platform", "job_log_dir", "name", "cycle_point", "messages", "runtime")
+    __slots__ = ("stamp", "id", "submit_num", "state", "task_proxy", "submitted_time", "started_time", "finished_time", "job_id", "job_runner_name", "execution_time_limit", "platform", "job_log_dir", "name", "cycle_point", "messages", "runtime", "estimated_finish_time")
     STAMP_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     SUBMIT_NUM_FIELD_NUMBER: _ClassVar[int]
@@ -202,6 +202,7 @@ class PbJob(_message.Message):
     CYCLE_POINT_FIELD_NUMBER: _ClassVar[int]
     MESSAGES_FIELD_NUMBER: _ClassVar[int]
     RUNTIME_FIELD_NUMBER: _ClassVar[int]
+    ESTIMATED_FINISH_TIME_FIELD_NUMBER: _ClassVar[int]
     stamp: str
     id: str
     submit_num: int
@@ -219,7 +220,8 @@ class PbJob(_message.Message):
     cycle_point: str
     messages: _containers.RepeatedScalarFieldContainer[str]
     runtime: PbRuntime
-    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., submit_num: _Optional[int] = ..., state: _Optional[str] = ..., task_proxy: _Optional[str] = ..., submitted_time: _Optional[str] = ..., started_time: _Optional[str] = ..., finished_time: _Optional[str] = ..., job_id: _Optional[str] = ..., job_runner_name: _Optional[str] = ..., execution_time_limit: _Optional[float] = ..., platform: _Optional[str] = ..., job_log_dir: _Optional[str] = ..., name: _Optional[str] = ..., cycle_point: _Optional[str] = ..., messages: _Optional[_Iterable[str]] = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ...) -> None: ...
+    estimated_finish_time: str
+    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., submit_num: _Optional[int] = ..., state: _Optional[str] = ..., task_proxy: _Optional[str] = ..., submitted_time: _Optional[str] = ..., started_time: _Optional[str] = ..., finished_time: _Optional[str] = ..., job_id: _Optional[str] = ..., job_runner_name: _Optional[str] = ..., execution_time_limit: _Optional[float] = ..., platform: _Optional[str] = ..., job_log_dir: _Optional[str] = ..., name: _Optional[str] = ..., cycle_point: _Optional[str] = ..., messages: _Optional[_Iterable[str]] = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., estimated_finish_time: _Optional[str] = ...) -> None: ...
 
 class PbTask(_message.Message):
     __slots__ = ("stamp", "id", "name", "meta", "mean_elapsed_time", "depth", "proxies", "namespace", "parents", "first_parent", "runtime")

@@ -158,6 +158,7 @@ message PbJob {
     optional string cycle_point = 31; /* filter item */
     repeated string messages = 32;
     optional PbRuntime runtime = 33;
+    optional string estimated_finish_time = 34;
 }
 
 message PbTask {
