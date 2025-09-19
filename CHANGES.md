@@ -15,8 +15,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 ### 🔧 Fixes
 
-[#6817](https://github.com/cylc/cylc-flow/pull/6817) - Fixes two rare bugs associated with reloading the workflow configuration
-  after removing tasks or xtriggers.
+[#6817](https://github.com/cylc/cylc-flow/pull/6817) - Fixes two rare bugs associated with reloading the workflow configuration after removing tasks or xtriggers.
 
 [#6990](https://github.com/cylc/cylc-flow/pull/6990) - Fix a bug where setting 'batch system' and not setting host could lead to the wrong platform being selected.
 
