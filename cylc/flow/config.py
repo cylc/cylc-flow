@@ -2345,7 +2345,7 @@ class WorkflowConfig:
 
         # Parse and process each graph section.
         task_triggers = {}
-        task_output_opt = {}
+        task_output_opt = {}  # task output optionality inferred from the graph
         for section, graph in sections:
             try:
                 seq = get_sequence(section, icp, fcp)

@@ -276,7 +276,8 @@ class GraphParser:
                 task parameters for expansion here
             task_output_opt:
                 {(name, output): (is-optional, is-opt-default, is-fixed)}
-                passed in to allow checking across multiple graph strings
+                task output optionality inferred from the graph
+                (passed in to allow checking across multiple graph strings)
 
         """
         self.family_map = family_map or {}
@@ -676,15 +677,17 @@ class GraphParser:
             expr: the associated graph expression
             rights: list of right-side nodes
             trigs: parsed trigger info
-            info: [(name, offset, trigger-name, optional)] for each node
+            info: [(name, offset, trigger-name, optional)] for each left node
             expr: the associated graph expression for this graph line
 
         """
         # Process left-side expression for defining triggers.
         n_info = []
         n_expr = expr
-        for name, offset, trig, _ in info:
+        for name, offset, trig, opt in info:
+            fam_member = False
             if (name, trig) in family_trig_map:
+                fam_member = True
                 ttype, mem_all = family_trig_map[(name, trig)]
                 m_info = []
                 m_expr = []
@@ -704,6 +707,11 @@ class GraphParser:
                 n_info += m_info
             else:
                 n_info += [(name, offset, trig)]
+
+            # Check output optionality consistency for left side nodes.
+            # (We don't infer output optionality from right side nodes).
+            # Note suicide is False by definition for left side nodes.
+            self._set_output_opt(name, trig, opt, False, fam_member)
 
         self._compute_triggers(expr, rights, n_expr, n_info)
 
@@ -933,8 +941,13 @@ class GraphParser:
                     ) from None
             else:
                 fam = False
-                if not output:
-                    # Make implicit success explicit.
+                # RHS: don't infer ":succceeded", except:
+                if (
+                    # infer ":succeeded? from explicit "?"
+                    (not output and optional) or
+                    # and for "None => right" which is really a lone node.
+                    (not output and not expr)  # lone node: "None => right"
+                ):
                     output = TASK_OUTPUT_SUCCEEDED
                 else:
                     # Convert to standard output names if necessary.
@@ -947,5 +960,8 @@ class GraphParser:
                     # Nodes with offsets on the RHS do not define triggers.
                     self._set_triggers(mem, suicide, trigs, expr, orig_expr)
                 for output in outputs:
+                    if output is None:
+                        # no explicit output on RHS
+                        continue
                     # But they must be consistent with output optionality.
                     self._set_output_opt(mem, output, optional, suicide, fam)
