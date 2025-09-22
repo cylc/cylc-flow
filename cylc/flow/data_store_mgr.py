@@ -54,23 +54,30 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
+from collections import (
+    Counter,
+    deque,
+)
 from contextlib import suppress
-from collections import Counter, deque
 from copy import deepcopy
 import json
 from time import time
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
-    Optional,
     List,
+    Literal,
+    Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
 )
 import zlib
 
-from cylc.flow import __version__ as CYLC_VERSION, LOG
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
     AllDeltas,
@@ -98,36 +105,45 @@ from cylc.flow.network import API
 from cylc.flow.parsec.util import (
     listjoin,
     pdeepcopy,
-    poverride
+    poverride,
 )
 from cylc.flow.run_modes import RunMode
-from cylc.flow.workflow_status import (
-    get_workflow_status,
-    get_workflow_status_msg,
+from cylc.flow.task_job_logs import (
+    JOB_LOG_OPTS,
+    get_task_job_log,
 )
-from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUSES_ORDERED
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+    TASK_STATUSES_FINAL,
+    TASK_STATUSES_ORDERED,
 )
 from cylc.flow.task_state_prop import extract_group_state
-from cylc.flow.taskdef import generate_graph_parents, generate_graph_children
-from cylc.flow.task_state import TASK_STATUSES_FINAL
+from cylc.flow.taskdef import (
+    generate_graph_children,
+    generate_graph_parents,
+)
 from cylc.flow.util import (
+    deserialise_set,
     serialise_set,
-    deserialise_set
 )
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
-    get_utc_mode
+    get_time_string_from_unix_time as time2str,
+    get_unix_time_from_time_string as str2time,
+    get_utc_mode,
 )
+from cylc.flow.workflow_status import (
+    get_workflow_status,
+    get_workflow_status_msg,
+)
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -2874,19 +2890,23 @@ class DataStoreMgr:
     def delta_job_time(
         self,
         itask: 'TaskProxy',
-        event_key: str,
-        time_str: Optional[str] = None,
+        event_key: Literal['submitted', 'started', 'finished'],
+        time_str: str,
     ) -> None:
-        """Set an event time in job pool object.
-
-        Set values of both event_key + '_time' and event_key + '_time_string'.
-        """
+        """Set an event time in job pool object."""
         j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
         time_attr = f'{event_key}_time'
         setbuff(j_delta, time_attr, time_str)
+        if (
+            event_key == 'started'
+            and (run_time := task_mean_elapsed_time(itask.tdef)) is not None
+        ):
+            j_delta.estimated_finish_time = (
+                time2str(str2time(time_str) + run_time) if time_str else ''
+            )
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)

@@ -928,6 +928,13 @@ class Job(ObjectType):
     finished_time = String(
         description='The time this job finished running (if it has yet).',
     )
+    estimated_finish_time = String(
+        description=(
+            "The estimated time this job will finish, if applicable. "
+            "This is based on the task's mean run time, or if not available, "
+            "the execution time limit."
+        ),
+    )
     job_id = ID(
         description='The ID of this job in the job runner it was submitted to.'
     )
