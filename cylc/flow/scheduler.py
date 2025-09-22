@@ -1683,7 +1683,9 @@ class Scheduler:
 
         # auto expire broadcasts
         if not self.is_paused:
-            # NOTE: Don't auto-expire broadcasts whilst the scheduler is paused
+            # NOTE: Don't auto-expire broadcasts whilst the scheduler is paused.
+            # This allows broadcast-and-trigger beyond the expiry limit, by
+            # pausing before doing it (after which the expiry limit moves back).
             with suppress(TimePointDumperBoundsError):
                 # NOTE: TimePointDumperBoundsError will be raised for negative
                 # cycle points, we skip broadcast expiry in this circumstance
