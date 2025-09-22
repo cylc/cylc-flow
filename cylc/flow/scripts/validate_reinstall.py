@@ -25,7 +25,7 @@ if there are no changes but the user chooses (via prompt) to continue anyway:
 * reload the workflow, if it is running) (see `cylc reload`)
 * or restart the workflow, if it is stopped (see `cylc play`)
 
-If the command is not running interactively, the command will automatically
+If the command is not running interactively, it will automatically
 reinstall and reload or restart if there are any source changes.
 
 With --yes (skip prompts) the command will reinstall and reload or restart
