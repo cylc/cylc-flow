@@ -2219,12 +2219,16 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
+    # BACK COMPAT: on_resume
+    #   Arg no longer used but retained for older clients.
+    # From: 8.6
+    # Remove at: 8.7
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
         on_resume = Boolean(
             default_value=False,
             description=sstrip('''
-                If the workflow is paused, wait until it is resumed before
-                running the triggered task(s).
+                DEPRECATED: this option is no longer needed and will be
+                ignored by the scheduler.
             ''')
         )
 

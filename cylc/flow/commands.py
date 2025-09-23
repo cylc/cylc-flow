@@ -652,6 +652,10 @@ async def force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
+    # BACK COMPAT: on_resume
+    #   Arg no longer used but retained for older clients.
+    # From: 8.6
+    # Remove at: 8.7
     on_resume: bool = False
 ):
     """Match and trigger a group of tasks (`cylc trigger` command).
@@ -667,12 +671,6 @@ async def force_trigger_tasks(
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
-    if on_resume:
-        LOG.warning(
-            "The --on-resume option is deprecated and will be removed "
-            "at Cylc 8.6."
-        )
-
     yield
 
     matched, unmatched = schd.pool.id_match(ids)
@@ -705,7 +703,6 @@ async def force_trigger_tasks(
             flow,
             flow_wait,
             flow_descr,
-            on_resume,
         )
 
 
@@ -715,7 +712,6 @@ def _force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
-    on_resume: bool = False
 ):
     active = schd.pool.get_itasks(group_ids)
     if flow or not active:
@@ -792,7 +788,7 @@ def _force_trigger_tasks(
                 schd.pool.merge_flows(itask, flow_nums)
 
                 # Trigger group start task.
-                schd.pool.queue_or_trigger(itask, on_resume)
+                schd.pool.queue_or_trigger(itask)
 
         else:
             active_to_remove.append(itask.tokens.task)
@@ -883,6 +879,6 @@ def _force_trigger_tasks(
 
         if jtask is not None and not in_flow_prereqs:
             # Trigger group start task.
-            schd.pool.queue_or_trigger(jtask, on_resume)
+            schd.pool.queue_or_trigger(jtask)
 
     schd.pool.release_runahead_tasks()
