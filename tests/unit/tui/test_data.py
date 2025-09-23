@@ -15,8 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import pytest
+
+from cylc.flow import __version__
 import cylc.flow.tui.data
-from cylc.flow.tui.data import generate_mutation
+from cylc.flow.tui.data import (
+    _QUERY,
+    VersionIncompat,
+    generate_mutation,
+    get_query,
+)
 
 
 def test_generate_mutation(monkeypatch):
@@ -36,3 +44,16 @@ def test_generate_mutation(monkeypatch):
             }
         }
     '''
+
+
+def test_query_compat():
+    """It should return a query or raise an exception."""
+    # old version - unsupported
+    with pytest.raises(VersionIncompat, match='6.11.4'):
+        get_query('6.11.4')
+
+    # current version - supported
+    assert get_query(__version__) == _QUERY
+
+    # future version - supported
+    assert get_query('9.0.0') == _QUERY
