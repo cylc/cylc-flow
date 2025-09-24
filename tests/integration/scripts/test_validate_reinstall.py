@@ -59,9 +59,7 @@ def answer_prompts(monkeypatch, *responses):
 
 async def test_prompt_for_running_workflow_with_no_changes(
     monkeypatch,
-    caplog,
     capsys,
-    log_filter,
     one_run,
     capcall,
 ):
@@ -94,7 +92,7 @@ async def test_prompt_for_running_workflow_with_no_changes(
 
     # attempt to restart it with "cylc vr"
     ret = await vr_cli(
-        vr_gop(), ValidateReinstallOptions(), one_run.id
+        vr_gop(), ValidateReinstallOptions(), one_run
     )
     # the workflow should reinstall
     assert ret
@@ -114,7 +112,6 @@ async def test_prompt_for_running_workflow_with_no_changes(
 async def test_reinstall_abort(
     monkeypatch,
     capsys,
-    log_filter,
     one_run,
 ):
     """It should abort reinstallation according to user prompt."""
@@ -123,7 +120,7 @@ async def test_reinstall_abort(
 
     # attempt to restart it with "cylc vr"
     ret = await vr_cli(
-        vr_gop(), ValidateReinstallOptions(), one_run.id
+        vr_gop(), ValidateReinstallOptions(), one_run
     )
     assert ret is False
 

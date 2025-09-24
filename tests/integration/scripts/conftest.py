@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from types import SimpleNamespace
 from uuid import uuid1
 
 import pytest
@@ -31,7 +30,7 @@ def one_src(tmp_path, one_conf):
     src_dir = tmp_path
     (src_dir / 'flow.cylc').write_text(flow_config_str(one_conf))
     (src_dir / 'rose-suite.conf').touch()
-    return SimpleNamespace(path=src_dir)
+    return src_dir
 
 
 @pytest.fixture
@@ -39,18 +38,15 @@ def one_run(one_src, test_dir, run_dir):
     w_run_dir = test_dir / str(uuid1())
     w_run_dir.mkdir()
     (w_run_dir / 'flow.cylc').write_text(
-        (one_src.path / 'flow.cylc').read_text()
+        (one_src / 'flow.cylc').read_text()
     )
     (w_run_dir / 'rose-suite.conf').write_text(
-        (one_src.path / 'rose-suite.conf').read_text()
+        (one_src / 'rose-suite.conf').read_text()
     )
     install_dir = (w_run_dir / WorkflowFiles.Install.DIRNAME)
     install_dir.mkdir(parents=True)
     (install_dir / WorkflowFiles.Install.SOURCE).symlink_to(
-        one_src.path,
+        one_src,
         target_is_directory=True,
     )
-    return SimpleNamespace(
-        path=w_run_dir,
-        id=str(w_run_dir.relative_to(run_dir)),
-    )
+    return str(w_run_dir.relative_to(run_dir))
