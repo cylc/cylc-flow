@@ -20,16 +20,15 @@
 
 Validate, reinstall, and reload or restart a workflow.
 
-If there are source changes and the user chooses (via prompt) to reinstall, or
-if there are no changes but the user chooses (via prompt) to continue anyway:
-* reload the workflow, if it is running) (see `cylc reload`)
-* or restart the workflow, if it is stopped (see `cylc play`)
+This command updates a workflow to reflect any new changes made in the workflow
+source directory since it was installed.
 
-If the command is not running interactively, it will automatically
-reinstall and reload or restart if there are any source changes.
+The workflow will be reinstalled, then either:
+* Reloaded (if the workflow is running),
+* or restarted (if it is stopped).
 
-With --yes (skip prompts) the command will reinstall and reload or restart
-regardless of source changes.
+Cylc will show you the list of files changed and prompt for confirmation before
+reinstalling. Use the '--yes' option to bypass this.
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
