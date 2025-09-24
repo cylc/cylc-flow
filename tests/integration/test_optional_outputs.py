@@ -32,6 +32,7 @@ from cylc.flow.commands import (
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.task_events_mgr import (
@@ -55,6 +56,9 @@ from cylc.flow.task_state import (
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.scheduler import Scheduler
+
+
+OPT_BOTH_ERR = "Output {} can't be both required and optional"
 
 
 def reset_outputs(itask: 'TaskProxy'):
@@ -508,3 +512,289 @@ async def test_removed_taskdef(
         assert z_1.state.outputs._completion_expression == ''
         z_1.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
         assert z_1.is_complete()
+
+
+@pytest.mark.parametrize(
+    'graph, err',
+    [
+        pytest.param(
+            """
+            a
+            a?
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+            id='1',
+        ),
+        pytest.param(
+            """
+            a => b
+            a?
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+            id='2',
+        ),
+        pytest.param(
+            """
+            a? => b
+            a
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+            id='3',
+        ),
+        pytest.param(
+            """
+            a => b?
+            b
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+            id='4',
+        ),
+        pytest.param(
+            """
+            a => b:succeeded
+            b?
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+            id='5',
+        ),
+        pytest.param(
+            """
+            a => b:succeeded
+            c => b?
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+            id='6',
+        ),
+        pytest.param(
+            """
+            FAM:finish-all => a  # member succeed/fail optional
+            m1  # member m1:succeeded required
+            """,
+            # omit the specific outputs here - order not deterministic
+            "must both be optional if both are used"
+            " (via family trigger defaults)",
+            id='7',
+        ),
+    ],
+)
+async def test_optional_outputs_consistency(flow, validate, graph, err):
+    """stuff."""
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': graph
+            },
+        },
+        'runtime': {
+            'FAM': {},
+            'm1, m2': {
+                'inherit': 'FAM',
+            }
+        }
+    })
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(id_)
+    assert err in str(exc_ctx.value)
+
+
+# The following tests check that inconsistent optional outputs fail validation.
+# Some of the tests may be redundant, but not obviously so, so worth testing.
+
+# NOTE: We infer output optionality from trigger left sides but not the right.
+# For example, "a => b" implies that a:succeeded is required but says nothing
+# about b:succceed (which defaults to required if not nailed down elsehwere)
+
+@pytest.mark.parametrize(
+    'graph, required',
+    [
+        pytest.param(
+            """
+            # below:
+            #   a (LHS): infer a:succeeded is required
+            #   b (RHS): infer nothing but default to b:succeeded required
+
+            a => b
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): True,
+                ("a", "failed"): None,  # (not set)
+                ("b", "failed"): None,  # (not set)
+            },
+            id='0',
+        ),
+        pytest.param(
+            """
+            # below:
+            #   a (LHS): infer a:succeeded is required
+            #   b (RHS): infer nothing
+            #   b (lone): infer b:succeeded optional
+
+            a => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): False,
+                ("b", "failed"): None,
+            },
+            id='1',
+        ),
+        pytest.param(
+            """
+            a:failed => b
+            """,
+            {
+                ("a", "failed"): True,
+                ("b", "succeeded"): True,
+                ("a", "succeeded"): None,
+                ("b", "failed"): None,
+            },
+            id='2',
+        ),
+        pytest.param(
+            """
+            a => b
+            b
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): True,
+            },
+            id='3',
+        ),
+        pytest.param(
+            """
+            a => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): False,
+            },
+            id='4',
+        ),
+        pytest.param(
+            """
+            a? => b
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): True,
+            },
+            id='5',
+        ),
+        pytest.param(
+            """
+            a? => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): False,
+            },
+            id='6',
+        ),
+        pytest.param(
+            """
+            a? => b?
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): False,
+            },
+            id='7',
+        ),
+        pytest.param(
+            """
+            a => FAM
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("m1", "succeeded"): True,
+                ("m2", "succeeded"): True,
+            },
+            id='8',
+        ),
+        pytest.param(
+            """
+            a => FAM
+            m1?
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("m1", "succeeded"): False,
+                ("m2", "succeeded"): True,
+            },
+            id='9',
+        ),
+        pytest.param(
+            """
+            a => FAM:finish-all  # family default: member succeed/fail optional
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("m1", "succeeded"): False,
+                ("m2", "succeeded"): False,
+            },
+            id='10',
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any => a  # family default: member success required
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): True,  # family default
+                ("m2", "succeeded"): True,  # family default
+            },
+            id='11',
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any => a  # family default: member success required
+            m1?  # override the family default
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("m1", "succeeded"): False,
+                ("m2", "succeeded"): True,
+            },
+            id='12',
+        ),
+        pytest.param(
+            """
+            a & b? => c
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): False,
+                ("c", "succeeded"): True,
+            },
+            id='13',
+        ),
+    ],
+)
+async def test_optional_outputs_inference(
+    flow, validate, graph, required
+):
+    """stuff."""
+    id = flow({
+        'scheduling': {
+            'graph': {
+                'R1': graph
+            },
+        },
+        'runtime': {
+            'FAM': {},
+            'm1, m2': {
+                'inherit': 'FAM',
+            }
+        }
+    })
+    config = validate(id)
+    # check outputs are optional or required as expected
+    for (task, output), req in required.items():
+        tdef = config.get_taskdef(task)
+        (_, required) = tdef.outputs[output]
+        assert required == req
