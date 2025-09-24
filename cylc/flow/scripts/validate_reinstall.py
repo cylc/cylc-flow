@@ -18,12 +18,17 @@
 
 """cylc validate-reinstall [OPTIONS] ARGS
 
-Validate, reinstall and apply changes to a workflow.
+Validate, reinstall, and reload or restart a workflow.
 
-Validate and reinstall a workflow then either:
+This command updates a workflow to reflect any new changes made in the workflow
+source directory since it was installed.
 
-* "Reload" the workflow (if it is running),
-* or "play" it (if it is stopped).
+The workflow will be reinstalled, then either:
+* Reloaded (if the workflow is running),
+* or restarted (if it is stopped).
+
+Cylc will show you the list of files changed and prompt for confirmation before
+reinstalling. Use the '--yes' option to bypass this.
 
 This command is equivalent to:
   $ cylc validate myworkflow --against-source
@@ -77,10 +82,8 @@ from cylc.flow.scripts.reload import (
     RELOAD_OPTIONS,
     run as cylc_reload
 )
-from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import (
-    get_workflow_run_dir,
-)
+from cylc.flow.terminal import cli_function, is_terminal
+from cylc.flow.workflow_files import get_workflow_run_dir
 
 
 CYLC_ROSE_OPTIONS = COP.get_cylc_rose_options()
@@ -93,6 +96,8 @@ VR_OPTIONS = combine_options(
     CYLC_ROSE_OPTIONS,
     modify={'cylc-rose': 'validate, install'}
 )
+
+_input = input  # to enable testing
 
 
 def get_option_parser() -> COP:
@@ -191,7 +196,7 @@ async def vr_cli(
     # against source option:
     options.against_source = Path(get_workflow_run_dir(workflow_id))
 
-    # Run cylc validate
+    # Run "cylc validate"
     log_subcommand('validate --against-source', workflow_id)
     await cylc_validate(parser, options, workflow_id)
 
@@ -199,24 +204,48 @@ async def vr_cli(
     delattr(options, 'against_source')
     delattr(options, 'is_validate')
 
+    # Run "cylc reinstall"
     log_subcommand('reinstall', workflow_id)
     reinstall_ok = await cylc_reinstall(
-        options, workflow_id,
+        options,
+        workflow_id,
         [],
         print_reload_tip=False
     )
 
     if not reinstall_ok:
-        # No changes, OR user said No to the reinstall prompt: abort.
-        return False
+        # No changes OR user said No to the reinstall prompt.
 
-    # Run reload if workflow is running or paused:
+        # If not a terminal and not --yes do nothing.
+        if not is_terminal() and not options.skip_interactive:
+            return False
+
+        # Else if not --yes, prompt user to continue or not.
+        if not options.skip_interactive:
+            usr = None
+            if not workflow_running:
+                # No changes to install, and the workflow is not running.
+                # Can still restart with no changes.
+                action = "Restart"
+            else:
+                # No changes to install, and the workflow is running.
+                # Reload is probably pointless, but not necessarily (the user
+                # could modify the run dir and do 'vr' to restart or reload).
+                action = "Reload"
+            while usr not in ['y', 'n']:
+                usr = _input(
+                    cparse(f'<bold>{action} anyway?</bold> [y/n]: ')
+                ).lower()
+                if usr == 'n':
+                    return False
+
+    # Run "cylc reload" (if workflow is running or paused)
     if workflow_running:
         log_subcommand('reload', workflow_id)
         await cylc_reload(options, workflow_id)
         return True
 
-    # run play anyway, to play a stopped workflow:
+    # Run "cylc play" (if workflow is stopped)
     else:
         set_timestamps(LOG, options.log_timestamp)
         cleanup_sysargv(
