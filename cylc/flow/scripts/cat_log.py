@@ -92,6 +92,7 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import get_platform
+from cylc.flow import LOG
 
 
 if TYPE_CHECKING:
@@ -569,13 +570,18 @@ def _main(
             workflow_id, point, task, submit_num
         )
 
+        job_log_present = (Path(local_log_dir) / "job.out").exists()
+
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if (
+            # if the log file is not present locally
+            # (e.g. job is running, or job logs not retrieved)
+            (not job_log_present and log_is_remote)
             # only go remote for log files we can't get locally
-            log_is_remote
+            or log_is_remote
             # don't look for remote log files for submit-failed tasks
             # (there might not be any at all)
             and not submit_failed
@@ -602,6 +608,9 @@ def _main(
                 # (Ctrl-C while tailing)
                 # NOTE: This will raise NoHostsError if the platform is not
                 # contactable
+                # For testing purposes
+                if not job_log_present:
+                    LOG.debug("job.out not present, getting job log remotely")
                 proc = remote_cylc_cmd(
                     cmd,
                     platform,
