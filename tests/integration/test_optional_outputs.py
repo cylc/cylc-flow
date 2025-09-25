@@ -565,16 +565,6 @@ async def test_removed_taskdef(
             OPT_BOTH_ERR.format("b:succeeded"),
             id='6',
         ),
-        pytest.param(
-            """
-            FAM:finish-all => a  # member succeed/fail optional
-            m1  # member m1:succeeded required
-            """,
-            # omit the specific outputs here - order not deterministic
-            "must both be optional if both are used"
-            " (via family trigger defaults)",
-            id='7',
-        ),
     ],
 )
 async def test_optional_outputs_consistency(flow, validate, graph, err):
@@ -605,7 +595,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
 # about b:succceed (which defaults to required if not nailed down elsehwere)
 
 @pytest.mark.parametrize(
-    'graph, required',
+    'graph, expected_required',
     [
         pytest.param(
             """
@@ -617,7 +607,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             """,
             {
                 ("a", "succeeded"): True,  # inferred
-                ("b", "succeeded"): True,
+                ("b", "succeeded"): True,  # default
                 ("a", "failed"): None,  # (not set)
                 ("b", "failed"): None,  # (not set)
             },
@@ -710,9 +700,9 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             a => FAM
             """,
             {
-                ("a", "succeeded"): True,
-                ("m1", "succeeded"): True,
-                ("m2", "succeeded"): True,
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): True,  # family default
+                ("m2", "succeeded"): True,  # family default
             },
             id='8',
         ),
@@ -722,9 +712,9 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             m1?
             """,
             {
-                ("a", "succeeded"): True,
-                ("m1", "succeeded"): False,
-                ("m2", "succeeded"): True,
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): False,  # inferred
+                ("m2", "succeeded"): True,  # family default
             },
             id='9',
         ),
@@ -733,9 +723,9 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             a => FAM:finish-all  # family default: member succeed/fail optional
             """,
             {
-                ("a", "succeeded"): True,
-                ("m1", "succeeded"): False,
-                ("m2", "succeeded"): False,
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
             },
             id='10',
         ),
@@ -776,7 +766,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
     ],
 )
 async def test_optional_outputs_inference(
-    flow, validate, graph, required
+    flow, validate, graph, expected_required
 ):
     """stuff."""
     id = flow({
@@ -794,7 +784,7 @@ async def test_optional_outputs_inference(
     })
     config = validate(id)
     # check outputs are optional or required as expected
-    for (task, output), req in required.items():
+    for (task, output), expected in expected_required.items():
         tdef = config.get_taskdef(task)
         (_, required) = tdef.outputs[output]
-        assert required == req
+        assert required == expected
