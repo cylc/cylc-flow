@@ -23,9 +23,12 @@ https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#propos
 
 from itertools import combinations
 from typing import TYPE_CHECKING
+import logging
 
 import pytest
 
+from cylc.flow import CYLC_LOG
+from cylc.flow import flags
 from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks
@@ -565,46 +568,56 @@ async def test_removed_taskdef(
             OPT_BOTH_ERR.format("b:succeeded"),
             id='6',
         ),
+        pytest.param(
+            """
+            c:x => d
+            a => c:x?
+            """,
+            OPT_BOTH_ERR.format("c:x"),
+            id='7',
+        ),
+        pytest.param(
+            """
+            c:x? => d
+            a => c:x
+            """,
+            OPT_BOTH_ERR.format("c:x"),
+            id='8',
+        ),
     ],
 )
 async def test_optional_outputs_consistency(flow, validate, graph, err):
-    """stuff."""
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': graph
+    """Check that inconsistent output optionality fails validation."""
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': graph
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    'outputs': {
+                        'x': 'x',
+                    },
+                },
             },
         },
-        'runtime': {
-            'FAM': {},
-            'm1, m2': {
-                'inherit': 'FAM',
-            }
-        }
-    })
+    )
     with pytest.raises(WorkflowConfigError) as exc_ctx:
         validate(id_)
     assert err in str(exc_ctx.value)
 
 
-# The following tests check that inconsistent optional outputs fail validation.
-# Some of the tests may be redundant, but not obviously so, so worth testing.
-
-# NOTE: We infer output optionality from trigger left sides but not the right.
-# For example, "a => b" implies that a:succeeded is required but says nothing
-# about b:succceed (which defaults to required if not nailed down elsehwere)
-
 @pytest.mark.parametrize(
-    'graph, expected_required',
+    'graph, expected',
     [
         pytest.param(
-            """
-            # below:
-            #   a (LHS): infer a:succeeded is required
-            #   b (RHS): infer nothing but default to b:succeeded required
-
-            a => b
-            """,
+            "a => b",
             {
                 ("a", "succeeded"): True,  # inferred
                 ("b", "succeeded"): True,  # default
@@ -615,18 +628,13 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
         ),
         pytest.param(
             """
-            # below:
-            #   a (LHS): infer a:succeeded is required
-            #   b (RHS): infer nothing
-            #   b (lone): infer b:succeeded optional
-
             a => b
             b?
             """,
             {
-                ("a", "succeeded"): True,
-                ("b", "succeeded"): False,
-                ("b", "failed"): None,
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): False,  # inferred
+                ("b", "failed"): None,  # (not set)
             },
             id='1',
         ),
@@ -701,26 +709,26 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             """,
             {
                 ("a", "succeeded"): True,  # inferred
-                ("m1", "succeeded"): True,  # family default
-                ("m2", "succeeded"): True,  # family default
+                ("m1", "succeeded"): True,  # default
+                ("m2", "succeeded"): True,  # default
             },
             id='8',
         ),
         pytest.param(
             """
             a => FAM
-            m1?
+            m2?
             """,
             {
                 ("a", "succeeded"): True,  # inferred
-                ("m1", "succeeded"): False,  # inferred
-                ("m2", "succeeded"): True,  # family default
+                ("m1", "succeeded"): True,  # default
+                ("m2", "succeeded"): False,  # inferred (override default)
             },
             id='9',
         ),
         pytest.param(
             """
-            a => FAM:finish-all  # family default: member succeed/fail optional
+            a => FAM:finish-all
             """,
             {
                 ("a", "succeeded"): True,  # inferred
@@ -731,7 +739,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
         ),
         pytest.param(
             """
-            FAM:succeed-any => a  # family default: member success required
+            FAM:succeed-any => a
             """,
             {
                 ("a", "succeeded"): True,  # inferred
@@ -742,8 +750,19 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
         ),
         pytest.param(
             """
-            FAM:succeed-any => a  # family default: member success required
-            m1?  # override the family default
+            FAM:succeed-any? => a
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
+            },
+            id='11a',
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any => a
+            m1?
             """,
             {
                 ("a", "succeeded"): True,
@@ -757,34 +776,128 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             a & b? => c
             """,
             {
-                ("a", "succeeded"): True,
-                ("b", "succeeded"): False,
-                ("c", "succeeded"): True,
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): False,  # inferred
+                ("c", "succeeded"): True,  # default
             },
             id='13',
+        ),
+        pytest.param(
+            """
+            a => c:x
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("c", "succeeded"): True,  # default
+                ("c", "x"): True,  # inferred
+            },
+            id='14',
+        ),
+        pytest.param(
+            """
+            a => c:x?
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("c", "succeeded"): True,  # default
+                ("c", "x"): False,  # inferred
+            },
+            id='15',
         ),
     ],
 )
 async def test_optional_outputs_inference(
-    flow, validate, graph, expected_required
+    flow, validate, graph, expected
 ):
-    """stuff."""
-    id = flow({
-        'scheduling': {
-            'graph': {
-                'R1': graph
+    """Check task output optionality after graph parsing.
+
+    This checks taskdef.outputs, which holds inferred and default values.
+
+    """
+    id = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': graph
+                },
             },
-        },
-        'runtime': {
-            'FAM': {},
-            'm1, m2': {
-                'inherit': 'FAM',
-            }
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    'outputs': {
+                        'x': 'x',
+                    },
+                },
+            },
         }
-    })
+    )
     config = validate(id)
-    # check outputs are optional or required as expected
-    for (task, output), expected in expected_required.items():
+    for (task, output), exp in expected.items():
         tdef = config.get_taskdef(task)
         (_, required) = tdef.outputs[output]
-        assert required == expected
+        assert required == exp
+
+
+async def test_outputs_logging(flow, validate, caplog):
+    """Test logging of optional/required outputs inferred from the graph.
+
+    This probes output optionality inferred by the graph parser, so it does
+    not include RHS-only tasks that just default to :succeeded required.
+
+    """
+    id = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': """
+                        # (b:succeeded required by default, not by inference)
+                        a? => FAM:succeed-all? => b
+                        m1
+                        a? => c:x?
+                        a? => c:y
+                     """,
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    "outputs": {
+                        "x": "x",
+                        "y": "y"
+                    }
+                }
+            }
+        }
+    )
+    caplog.set_level(logging.INFO, CYLC_LOG)
+    flags.verbosity = 2
+    validate(id)
+
+    opt_msg = "Optional outputs inferred from the graph:"
+    assert opt_msg in caplog.text
+
+    req_msg = "Required outputs inferred from the graph:"
+    assert req_msg in caplog.text
+
+    for log_record in caplog.records:
+        if opt_msg in log_record.message:
+            for output in ["a:succeeded", "m2:succeeded", "c:x"]:
+                assert output in log_record.message
+            for output in [
+                "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
+            ]:
+                assert output not in log_record.message
+        elif req_msg in log_record.message:
+            for output in ["m1:succeeded", "c:y"]:
+                assert output in log_record.message
+            for output in [
+                "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
+                "c:succeeded"
+            ]:
+                assert output not in log_record.message

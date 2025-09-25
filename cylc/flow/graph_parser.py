@@ -104,6 +104,30 @@ class GraphParser:
             NODE(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)
         * Outputs (boo:x) are ignored as triggers on the RHS to allow chaining:
             "foo => bar:x => baz & qux"
+
+    Chained triggers get decomposed into pairs for processing, e.g.:
+        x  # lone node
+        a => b => c  # chained triggers
+    becomes:
+        [None, x], [None, a], [a, b], [b, c]
+    (Lone nodes and left-sides make [None, left] pairs for auto-triggering.)
+
+    LEFT sides of a pair are a logical combination of one or more TASK OUTPUTS
+    (a plain task name on the left is short for "task:succeeded").
+
+    RIGHT sides, by default, only define the TASK to trigger (however you can
+    attach explicit outputs on the right if you like - see below).
+
+    How output optionality is inferred from the graph:
+       - On the left, presence (or not) of '?' determines output optionality.
+       - Plain RHS task names determine triggering, not optionality. However:
+         - These will DEFAULT to success required if the optionality is not
+           determined elsewhere in the graph (on the left side).
+         - IF an explicit output or '?' is attached to the right, that does
+           determine optionality as well as the task to be triggered.
+       - Output optionality as determined by all left sides and any explicit
+         outputs on the right, must be consistent throughout the graph.
+
     """
 
     CYLC7_COMPAT = "CYLC 7 BACK-COMPAT"
