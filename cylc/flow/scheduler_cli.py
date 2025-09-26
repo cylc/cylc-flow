@@ -495,6 +495,11 @@ async def _resume(workflow_id, options):
         LOG.critical('Cannot tell if the workflow is running')
         sys.exit(1)
     else:
+        # It's running but the user has specified --pause:
+        if options.paused_start:
+            LOG.warning('Workflow alread running: Remove --pause to play.')
+            sys.exit(1)
+
         # It's running: resume it and exit.
         print("Resuming already-running workflow")
         mutation_kwargs = {
