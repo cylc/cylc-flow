@@ -138,12 +138,11 @@ def parse_memory_file(cgroup_memory_path, cgroup_version):
         with open(cgroup_memory_path, 'r') as f:
             for line in f:
                 if "anon" in line:
-                    print(line)
-                    return int(''.join(filter(str.isdigit, line))) // 1024
+                    return int(''.join(filter(str.isdigit, line)))
     else:
         with open(cgroup_memory_path, 'r') as f:
             for line in f:
-                return int(line) // 1024
+                return int(line)
 
 
 def parse_memory_allocated(cgroup_memory_path, cgroup_version) -> int:
@@ -156,7 +155,7 @@ def parse_memory_allocated(cgroup_memory_path, cgroup_version) -> int:
             with open(cgroup_memory_path / "memory.max", 'r') as f:
                 line = f.readline()
                 if "max" not in line:
-                    return int(line) // 1024
+                    return int(line)
             cgroup_memory_path = cgroup_memory_path.parent
             if i == 5:
                 break
