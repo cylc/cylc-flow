@@ -705,21 +705,23 @@ class GraphParser:
             expr: the associated graph expression for this graph line
 
         """
-        # Process left-side expression for defining triggers.
+        # Process left sides for defining triggers and output optionality.
         n_info = []
         n_expr = expr
         for name, offset, trig, opt in info:
             if (name, trig) in family_trig_map:
-                fam = True
                 ttype, mem_all = family_trig_map[(name, trig)]
                 m_info = []
                 m_expr = []
                 for mem in self.family_map[name]:
+                    # expand for members of a family trigger
                     m_info.append((mem, offset, ttype))
                     m_expr.append(f"{mem}{offset}:{ttype}")
-                    # Set and check output optionality consistency (LHS).
-                    # (Suicide is False by definition for LHS).
-                    self._set_output_opt(mem, ttype, opt, False, fam)
+                    self._set_output_opt(
+                        mem, ttype, opt,
+                        suicide=False,  # by definition, for LHS
+                        fam_member=True
+                    )
                 this = r'\b%s%s:%s\b' % (
                     name,
                     re.escape(offset),
@@ -732,11 +734,12 @@ class GraphParser:
                 n_expr = re.sub(this, that, n_expr)
                 n_info += m_info
             else:
-                fam = False
                 n_info += [(name, offset, trig)]
-                # Set and check output optionality consistency (LHS).
-                # (Suicide is False by definition for LHS).
-                self._set_output_opt(name, trig, opt, False, fam)
+                self._set_output_opt(
+                    name, trig, opt,
+                    suicide=False,  # by definition, for LHS
+                    fam_member=False
+                )
 
         # compute triggers and set output optional for rhs nodes
         self._compute_triggers(expr, rights, n_expr, n_info)
@@ -792,7 +795,7 @@ class GraphParser:
         suicide: bool,
         fam_member: bool = False
     ) -> None:
-        """Set or check consistency of optional/required output.
+        """Set or check consistency of optional/required outputs.
 
         Args:
             name: task name
@@ -830,6 +833,7 @@ class GraphParser:
             for outp in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
                 self._set_output_opt(
                     name, outp, optional, suicide, fam_member)
+            return
 
         try:
             prev_optional, prev_default, prev_fixed = (
@@ -881,7 +885,7 @@ class GraphParser:
                 continue
             else:
                 # opposite already set; check consistency
-                optional, default, oset = (
+                optional, _, _ = (
                     self.task_output_opt[(name, output)]
                 )
                 msg = (f"Opposite outputs {name}:{output} and {name}:"
@@ -945,19 +949,22 @@ class GraphParser:
                 output = output.strip(self.__class__.QUALIFIER)
 
             if name in self.family_map:
-                fam = True
+                # From an expanded family trigger
+                fam_member = True
                 rhs_members = self.family_map[name]
-                if not output:
-                    if not expr:
-                        # infer :succceed-all for lone family node
-                        output = QUAL_FAM_SUCCEED_ALL
-                elif output.startswith("finish"):
+                if not output and not expr:
+                    # Infer :succeed-all for lone family nodes, e.g. for
+                    # "R1 = FAM": members default to success required, or
+                    # for "FAM:succeed-all?" they default to success optional.
+                    output = QUAL_FAM_SUCCEED_ALL
+                elif output and output.startswith("finish"):
                     if optional:
                         raise GraphParseError(
                             f"Family pseudo-output {name}:{output} can't be"
                             " optional")
-                    # But implicit optional for the real succeed/fail outputs.
-                    optional = True
+                    else:
+                        # Implicit optional for the real succeed/fail outputs.
+                        optional = True
                 if output:
                     try:
                         outputs = self.__class__.fam_to_mem_output_map[output]
@@ -969,18 +976,18 @@ class GraphParser:
                 else:
                     outputs = ['']
             else:
-                fam = False
+                fam_member = False
                 if output:
                     # Convert to standard output names if necessary.
                     output = TaskTrigger.standardise_name(output)
                 else:
                     # RHS
                     if optional or not expr:
-                        # infer ":succeeded? from explicit "?"
-                        # infer ":succeeded" from lone node (None => lone)
+                        # Infer ":succeeded? from explicit "?".
+                        # Infer ":succeeded" from lone node (None => node).
                         output = TASK_OUTPUT_SUCCEEDED
                 rhs_members = [name]
-                outputs = [output]  # can be [None]
+                outputs = [output]  # can be ['']
 
             for mem in rhs_members:
                 if not offset:
@@ -990,4 +997,4 @@ class GraphParser:
                     if output:
                         # Infer optionality for explicit outputs on RHS.
                         self._set_output_opt(
-                            mem, output, optional, suicide, fam)
+                            mem, output, optional, suicide, fam_member)

@@ -584,6 +584,13 @@ async def test_removed_taskdef(
             OPT_BOTH_ERR.format("c:x"),
             id='8',
         ),
+        pytest.param(
+            """
+            FAM:finish-all?
+            """,
+            "Family pseudo-output FAM:finish-all can't be optional",
+            id='9',
+        ),
     ],
 )
 async def test_optional_outputs_consistency(flow, validate, graph, err):
@@ -702,6 +709,37 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("b", "succeeded"): False,
             },
             id='7',
+        ),
+        pytest.param(
+            """
+            FAM
+            """,
+            {
+                ("m1", "succeeded"): True,  # family default
+                ("m2", "succeeded"): True,  # family default
+            },
+            id='8_a',
+        ),
+        pytest.param(
+            """
+            FAM:succeed-all?
+            """,
+            {
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
+            },
+            id='8_b',
+        ),
+        pytest.param(
+            """
+            FAM
+            m1?
+            """,
+            {
+                ("m1", "succeeded"): False,  # inferred
+                ("m2", "succeeded"): True,  # family default
+            },
+            id='8_c',
         ),
         pytest.param(
             """
