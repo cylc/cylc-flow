@@ -506,6 +506,7 @@ class GraphParser:
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, check_terminals, lefts, rights)
+
         self.terminals = rights.difference(lefts)
         for right in self.terminals:
             left = check_terminals.get(right)
@@ -705,10 +706,10 @@ class GraphParser:
             expr: the associated graph expression for this graph line
 
         """
-        # Process left sides for defining triggers and output optionality.
+        # Process left sides for defining triggers
         n_info = []
         n_expr = expr
-        for name, offset, trig, opt in info:
+        for name, offset, trig, _ in info:
             if (name, trig) in family_trig_map:
                 ttype, mem_all = family_trig_map[(name, trig)]
                 m_info = []
@@ -717,11 +718,6 @@ class GraphParser:
                     # expand for members of a family trigger
                     m_info.append((mem, offset, ttype))
                     m_expr.append(f"{mem}{offset}:{ttype}")
-                    self._set_output_opt(
-                        mem, ttype, opt,
-                        suicide=False,  # by definition, for LHS
-                        fam_member=True
-                    )
                 this = r'\b%s%s:%s\b' % (
                     name,
                     re.escape(offset),
@@ -735,13 +731,8 @@ class GraphParser:
                 n_info += m_info
             else:
                 n_info += [(name, offset, trig)]
-                self._set_output_opt(
-                    name, trig, opt,
-                    suicide=False,  # by definition, for LHS
-                    fam_member=False
-                )
 
-        # compute triggers and set output optional for rhs nodes
+        # compute triggers and set output optionality for rhs nodes
         self._compute_triggers(expr, rights, n_expr, n_info)
 
     def _set_triggers(
