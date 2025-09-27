@@ -23,11 +23,9 @@ https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#propos
 
 from itertools import combinations
 from typing import TYPE_CHECKING
-import logging
 
 import pytest
 
-from cylc.flow import CYLC_LOG
 from cylc.flow import flags
 from cylc.flow.commands import (
     run_cmd,
@@ -879,7 +877,7 @@ async def test_optional_outputs_inference(
         assert required == exp
 
 
-async def test_outputs_logging(flow, validate, caplog):
+async def test_outputs_logging(flow, validate, capsys):
     """Test logging of optional/required outputs inferred from the graph.
 
     This probes output optionality inferred by the graph parser, so it does
@@ -913,29 +911,24 @@ async def test_outputs_logging(flow, validate, caplog):
             }
         }
     )
-    caplog.set_level(logging.INFO, CYLC_LOG)
     flags.verbosity = 2
     validate(id)
 
-    opt_msg = "Optional outputs inferred from the graph:"
-    assert opt_msg in caplog.text
+    out = capsys.readouterr().out
 
-    req_msg = "Required outputs inferred from the graph:"
-    assert req_msg in caplog.text
+    assert "outputs inferred from the graph:" in out
 
-    for log_record in caplog.records:
-        if opt_msg in log_record.message:
-            for output in ["a:succeeded", "m2:succeeded", "c:x"]:
-                assert output in log_record.message
-            for output in [
-                "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
-            ]:
-                assert output not in log_record.message
-        elif req_msg in log_record.message:
-            for output in ["m1:succeeded", "c:y"]:
-                assert output in log_record.message
-            for output in [
-                "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
-                "c:succeeded"
-            ]:
-                assert output not in log_record.message
+    for output in ["a:succeeded", "m2:succeeded", "c:x"]:
+        assert f"{output} optional" in out
+    for output in [
+        "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
+    ]:
+        assert f"{output} optional" not in out
+
+    for output in ["m1:succeeded", "c:y"]:
+        assert f"{output} required" in out
+    for output in [
+        "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
+        "c:succeeded"
+    ]:
+        assert f"{output} required" not in out
