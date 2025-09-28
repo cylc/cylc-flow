@@ -917,8 +917,8 @@ async def test_optional_outputs_inference(
         assert required == exp
 
 
-async def test_outputs_logging(flow, validate, capsys):
-    """Test logging of optional/required outputs inferred from the graph.
+async def test_print_optional_outputs(flow, validate, capsys):
+    """Test logging of optional outputs inferred from the graph.
 
     This probes output optionality inferred by the graph parser, so it does
     not include RHS-only tasks that just default to :succeeded required.
@@ -951,12 +951,59 @@ async def test_outputs_logging(flow, validate, capsys):
             }
         }
     )
-    flags.verbosity = 2
+    flags.verbosity = 1  # only print optional outputs
     validate(id)
-
     out = capsys.readouterr().out
 
-    assert "outputs inferred from the graph:" in out
+    assert "Optional outputs inferred from the graph:" in out
+
+    for output in ["a:succeeded", "m2:succeeded", "c:x"]:
+        assert f"{output} optional" in out
+    for output in [
+        "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
+    ]:
+        assert f"{output} optional" not in out
+
+
+async def test_print_optional_required_outputs(flow, validate, capsys):
+    """Test logging of optional and required outputs inferred from the graph.
+
+    This probes output optionality inferred by the graph parser, so it does
+    not include RHS-only tasks that just default to :succeeded required.
+
+    """
+    id = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': """
+                        # (b:succeeded required by default, not by inference)
+                        a? => FAM:succeed-all? => b
+                        m1
+                        a? => c:x?
+                        a? => c:y
+                     """,
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    "outputs": {
+                        "x": "x",
+                        "y": "y"
+                    }
+                }
+            }
+        }
+    )
+    flags.verbosity = 2  # print both optional and required outputs
+    validate(id)
+    out = capsys.readouterr().out
+
+    assert "Optional and required outputs inferred from the graph:" in out
 
     for output in ["a:succeeded", "m2:succeeded", "c:x"]:
         assert f"{output} optional" in out
