@@ -126,10 +126,10 @@ class GraphParser:
 
     But output optionality can be *explicitly* set on the right, if you like:
         [left] => d?
-        [left] => d:x?
+        [left] => e:x
     means
         [left] => d  # AND d:succeeded is optional
-        [left] => d  # AND d:x is required
+        [left] => e  # AND e:x is required
 
     How the graph parser determines output optionality:
        In chained triggers every node appears on the right of a pair, so we
