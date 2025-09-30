@@ -140,15 +140,17 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
         ),
         # See https://github.com/cylc/cylc-flow/issues/6523
         # For the next 4 tests:
+        # NB "foo:succeeded" now explicit on the right (this used to test
+        # inferred "foo:succeeded" from "=> foo", which we no longer infer).
         param(
             # Yes I know it's circular, but it's here to
             # demonstrate that the test below is broken:
-            "foo:finished => foo",
+            "foo:finished => foo:succeeded",
             'Output foo:succeeded can\'t be both required and optional',
             id='finish-implies-success-optional'
         ),
         param(
-            "foo[-P1]:finish => foo",
+            "foo[-P1]:finish => foo:succeeded",
             'Output foo:succeeded can\'t be both required and optional',
             id='finish-implies-success-optional-offset'
         ),
@@ -159,7 +161,7 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
             id='succeed-or-failed-mustbe-optional'
         ),
         param(
-            "foo[-P1]:succeeded? | foo[-P1]:failed? => foo",
+            "foo[-P1]:succeeded? | foo[-P1]:failed? => foo:succeeded",
             'Output foo:succeeded can\'t be both required and optional',
             id='succeed-or-failed-implies-success-optional'
         ),
@@ -705,14 +707,21 @@ def test_parse_graph_fails_with_too_many_continuations(before, after):
 
 
 def test_task_optional_outputs():
-    """Test optional outputs are correctly parsed from graph."""
+    """Test optional outputs are correctly parsed from graph.
+
+    This checks "task_output_opt" dict which holds output optionality inferred
+    from the graph. Note since https://github.com/cylc/cylc-flow/pull/6999
+    we no longer infer optionality from *implicit* outputs on RHS of triggers,
+    i.e. "a => b" does not imply b:succeeded is a required output.
+
+    """
     OPTIONAL = True
     REQUIRED = False
     gp = GraphParser()
     gp.parse_graph(
         """
-        a1 => b1
-        a2:succeed => b2
+        a1 => b1  # does not imply b1:succeeded ...
+        a2:succeed => b2:succeeded
         a3:succeed => b3:succeed
 
         c1? => d1?
@@ -726,10 +735,11 @@ def test_task_optional_outputs():
     )
     for i in range(1, 4):
         for task in (f'a{i}', f'b{i}'):
-            assert (
-                gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
-                == (REQUIRED, False, True)
-            )
+            if task != "b1":
+                assert (
+                    gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
+                    == (REQUIRED, False, True)
+                )
 
         for task in (f'c{i}', f'd{i}'):
             assert (
@@ -834,7 +844,7 @@ def test_cannot_be_required():
         ],
         [
             "FAM => foo",  # bare family on LHS
-            "Illegal family trigger"
+            "Family trigger required: FAM => foo"
         ],
         [
             "FAM:expire-all => foo",

@@ -24,7 +24,9 @@ https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#propos
 from itertools import combinations
 from typing import TYPE_CHECKING
 
+import logging
 import pytest
+import itertools
 
 from cylc.flow.commands import (
     run_cmd,
@@ -32,6 +34,7 @@ from cylc.flow.commands import (
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.task_events_mgr import (
@@ -55,6 +58,9 @@ from cylc.flow.task_state import (
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.scheduler import Scheduler
+
+
+OPT_BOTH_ERR = "Output {} can't be both required and optional"
 
 
 def reset_outputs(itask: 'TaskProxy'):
@@ -508,3 +514,438 @@ async def test_removed_taskdef(
         assert z_1.state.outputs._completion_expression == ''
         z_1.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
         assert z_1.is_complete()
+
+
+@pytest.mark.parametrize(
+    'graph, err',
+    [
+        pytest.param(
+            """
+            a
+            a?
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+        ),
+        pytest.param(
+            """
+            a => b
+            a?
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+        ),
+        pytest.param(
+            """
+            a? => b
+            a
+            """,
+            OPT_BOTH_ERR.format("a:succeeded"),
+        ),
+        pytest.param(
+            """
+            a => b?
+            b
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+        ),
+        pytest.param(
+            """
+            a => b:succeeded
+            b?
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+        ),
+        pytest.param(
+            """
+            a => b:succeeded
+            c => b?
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+        ),
+        pytest.param(
+            """
+            c:x => d
+            a => c:x?
+            """,
+            OPT_BOTH_ERR.format("c:x"),
+        ),
+        pytest.param(
+            """
+            c:x? => d
+            a => c:x
+            """,
+            OPT_BOTH_ERR.format("c:x"),
+        ),
+        pytest.param(
+            """
+            FAM:finish-all?
+            """,
+            "Family pseudo-output FAM:finish-all can't be optional",
+        ),
+        pytest.param(
+            """
+            a => b => c
+            b?
+            """,
+            OPT_BOTH_ERR.format("b:succeeded"),
+        ),
+        pytest.param(
+            """
+            a => FAM => c
+            """,
+            "Family trigger required: FAM => c",
+        ),
+    ],
+    ids=itertools.count()
+)
+async def test_optional_outputs_consistency(flow, validate, graph, err):
+    """Check that inconsistent output optionality fails validation."""
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': graph
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    'outputs': {
+                        'x': 'x',
+                    },
+                },
+            },
+        },
+    )
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(id_)
+    assert err in str(exc_ctx.value)
+
+
+@pytest.mark.parametrize(
+    'graph, expected',
+    [
+        pytest.param(
+            "a => b",
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): True,  # default
+                ("a", "failed"): None,  # (not set)
+                ("b", "failed"): None,  # (not set)
+            },
+        ),
+        pytest.param(
+            """
+            a => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): False,  # inferred
+                ("b", "failed"): None,  # (not set)
+            },
+        ),
+        pytest.param(
+            """
+            a:failed => b
+            """,
+            {
+                ("a", "failed"): True,
+                ("b", "succeeded"): True,
+                ("a", "succeeded"): None,
+                ("b", "failed"): None,
+            },
+        ),
+        pytest.param(
+            """
+            a => b
+            b
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): True,
+            },
+        ),
+        pytest.param(
+            """
+            a => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("b", "succeeded"): False,
+            },
+        ),
+        pytest.param(
+            """
+            a? => b
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): True,
+            },
+        ),
+        pytest.param(
+            """
+            a? => b
+            b?
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): False,
+            },
+        ),
+        pytest.param(
+            """
+            a? => b?
+            """,
+            {
+                ("a", "succeeded"): False,
+                ("b", "succeeded"): False,
+            },
+        ),
+        pytest.param(
+            """
+            FAM
+            """,
+            {
+                ("m1", "succeeded"): True,  # family default
+                ("m2", "succeeded"): True,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            FAM:succeed-all?
+            """,
+            {
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            FAM
+            m1?
+            """,
+            {
+                ("m1", "succeeded"): False,  # inferred
+                ("m2", "succeeded"): True,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            a => FAM
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): True,  # default
+                ("m2", "succeeded"): True,  # default
+            },
+        ),
+        pytest.param(
+            """
+            a => FAM
+            m2?
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): True,  # default
+                ("m2", "succeeded"): False,  # inferred (override default)
+            },
+        ),
+        pytest.param(
+            """
+            a => FAM:finish-all
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any => a
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): True,  # family default
+                ("m2", "succeeded"): True,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any? => a
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("m1", "succeeded"): False,  # family default
+                ("m2", "succeeded"): False,  # family default
+            },
+        ),
+        pytest.param(
+            """
+            FAM:succeed-any => a
+            m1?
+            """,
+            {
+                ("a", "succeeded"): True,
+                ("m1", "succeeded"): False,
+                ("m2", "succeeded"): True,
+            },
+        ),
+        pytest.param(
+            """
+            a & b? => c
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): False,  # inferred
+                ("c", "succeeded"): True,  # default
+            },
+        ),
+        pytest.param(
+            """
+            a => c:x
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("c", "succeeded"): True,  # default
+                ("c", "x"): True,  # inferred
+            },
+        ),
+        pytest.param(
+            """
+            a => c:x?
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("c", "succeeded"): True,  # default
+                ("c", "x"): False,  # inferred
+            },
+        ),
+        pytest.param(
+            """
+            a => b => c  # infer :succeeded for b inside chain
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): True,  # inferred
+                ("c", "succeeded"): True,  # default
+            },
+        ),
+        pytest.param(
+            # Check we don't infer c:succeeded at end-of-chain
+            # when there's an & at the end.
+            """
+            a => b & c
+            c?
+            """,
+            {
+                ("a", "succeeded"): True,  # inferred
+                ("b", "succeeded"): True,  # default
+                ("c", "succeeded"): False,  # inferred
+            },
+        ),
+    ],
+    ids=itertools.count()
+)
+async def test_optional_outputs_inference(
+    flow, validate, graph, expected
+):
+    """Check task output optionality after graph parsing.
+
+    This checks taskdef.outputs, which holds inferred and default values.
+
+    """
+    id = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': graph
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    'outputs': {
+                        'x': 'x',
+                    },
+                },
+            },
+        }
+    )
+    config = validate(id)
+    for (task, output), exp in expected.items():
+        tdef = config.get_taskdef(task)
+        (_, required) = tdef.outputs[output]
+        assert required == exp
+
+
+async def test_log_outputs(flow, validate, caplog):
+    """Test logging of optional and required outputs inferred from the graph.
+
+    This probes output optionality inferred by the graph parser, so it does
+    not include RHS-only tasks that just default to :succeeded required.
+
+    """
+    id = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': """
+                        # (b:succeeded required by default, not by inference)
+                        a? => FAM:succeed-all? => b
+                        m1
+                        a? => c:x?
+                        a? => c:y
+                     """,
+                },
+            },
+            'runtime': {
+                'FAM': {},
+                'm1, m2': {
+                    'inherit': 'FAM',
+                },
+                'c': {
+                    "outputs": {
+                        "x": "x",
+                        "y": "y"
+                    }
+                }
+            }
+        }
+    )
+    caplog.set_level(logging.DEBUG)
+    validate(id)
+
+    found_opt = False
+    found_req = False
+
+    for record in caplog.records:
+        msg = record.message
+        if "Optional outputs inferred from the graph:" in msg:
+            found_opt = True
+            for output in ["a:succeeded", "m2:succeeded", "c:x"]:
+                assert output in msg
+            for output in [
+                "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
+            ]:
+                assert output not in msg
+        elif "Required outputs inferred from the graph:" in msg:
+            found_req = True
+            for output in ["m1:succeeded", "c:y"]:
+                assert output in msg
+            for output in [
+                "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
+                "c:succeeded"
+            ]:
+                assert output not in msg
+
+    assert found_opt
+    assert found_req
