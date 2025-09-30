@@ -463,7 +463,7 @@ named_grep_ok() {
     shift 3
     local OPTS="$*"
     local TEST_NAME
-    TEST_NAME="grep-ok: ${NAME}"
+    TEST_NAME="$(basename "${FILE}")-grep-ok"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
