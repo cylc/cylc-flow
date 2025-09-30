@@ -2394,34 +2394,28 @@ class WorkflowConfig:
 
         self.set_required_outputs(task_output_opt)
 
-        # Print optional outputs, which can cause graph branching or branch
-        # termination at runtime.
-        if cylc.flow.flags.verbosity > 1:
-            # Print inferred output optionality, for debugging graph parser.
-            # (Note: this excludes tasks that default to success-required
-            # via the RHS of a trigger with no explicit output attached).
-            outputs = [
-                f" \u2022 {name}:{output} "
-                f"{'optional' if optional else 'required'}"
-                for (name, output), (optional, _, _) in task_output_opt.items()
-            ]
-            if outputs:
-                print(
-                    "Optional and required outputs inferred from the graph:\n"
-                    f"{'\n'.join(outputs)}"
-                )
-        elif cylc.flow.flags.verbosity > 0:
-            # Just print optional outputs: the important ones for users.
-            optionals = [
-                f" \u2022 {name}:{output} optional"
-                for (name, output), (optional, _, _) in task_output_opt.items()
-                if optional
-            ]
-            if optionals:
-                print(
-                    "Optional outputs inferred from the graph:\n"
-                    f"{'\n'.join(optionals)}"
-                )
+        # Print inferred output optionality, for debugging graph parser.
+        # Note this excludes tasks that just default to success-required.
+        optionals = [
+            f" \u2022 {name}:{output}"
+            for (name, output), (optional, _, _) in task_output_opt.items()
+            if optional
+        ]
+        requireds = [
+            f" \u2022 {name}:{output}"
+            for (name, output), (optional, _, _) in task_output_opt.items()
+            if not optional
+        ]
+        if optionals:
+            LOG.debug(
+                "Optional outputs inferred from the graph:\n"
+                f"{'\n'.join(optionals)}"
+            )
+        if requireds:
+            LOG.debug(
+                "Required outputs inferred from the graph:\n"
+                f"{'\n'.join(requireds)}"
+            )
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(

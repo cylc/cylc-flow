@@ -24,9 +24,9 @@ https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#propos
 from itertools import combinations
 from typing import TYPE_CHECKING
 
+import logging
 import pytest
 
-from cylc.flow import flags
 from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks
@@ -917,55 +917,7 @@ async def test_optional_outputs_inference(
         assert required == exp
 
 
-async def test_print_optional_outputs(flow, validate, capsys):
-    """Test logging of optional outputs inferred from the graph.
-
-    This probes output optionality inferred by the graph parser, so it does
-    not include RHS-only tasks that just default to :succeeded required.
-
-    """
-    id = flow(
-        {
-            'scheduling': {
-                'graph': {
-                    'R1': """
-                        # (b:succeeded required by default, not by inference)
-                        a? => FAM:succeed-all? => b
-                        m1
-                        a? => c:x?
-                        a? => c:y
-                     """,
-                },
-            },
-            'runtime': {
-                'FAM': {},
-                'm1, m2': {
-                    'inherit': 'FAM',
-                },
-                'c': {
-                    "outputs": {
-                        "x": "x",
-                        "y": "y"
-                    }
-                }
-            }
-        }
-    )
-    flags.verbosity = 1  # only print optional outputs
-    validate(id)
-    out = capsys.readouterr().out
-
-    assert "Optional outputs inferred from the graph:" in out
-
-    for output in ["a:succeeded", "m2:succeeded", "c:x"]:
-        assert f"{output} optional" in out
-    for output in [
-        "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
-    ]:
-        assert f"{output} optional" not in out
-
-
-async def test_print_optional_required_outputs(flow, validate, capsys):
+async def test_log_outputs(flow, validate, caplog):
     """Test logging of optional and required outputs inferred from the graph.
 
     This probes output optionality inferred by the graph parser, so it does
@@ -999,23 +951,31 @@ async def test_print_optional_required_outputs(flow, validate, capsys):
             }
         }
     )
-    flags.verbosity = 2  # print both optional and required outputs
+    caplog.set_level(logging.DEBUG)
     validate(id)
-    out = capsys.readouterr().out
 
-    assert "Optional and required outputs inferred from the graph:" in out
+    found_opt = False
+    found_req = False
 
-    for output in ["a:succeeded", "m2:succeeded", "c:x"]:
-        assert f"{output} optional" in out
-    for output in [
-        "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
-    ]:
-        assert f"{output} optional" not in out
+    for record in caplog.records:
+        msg = record.message
+        if "Optional outputs inferred from the graph:" in msg:
+            found_opt = True
+            for output in ["a:succeeded", "m2:succeeded", "c:x"]:
+                assert output in msg
+            for output in [
+                "b:succeeded", "m1:succeeded", "c:y", "c:succeeded"
+            ]:
+                assert output not in msg
+        elif "Required outputs inferred from the graph:" in msg:
+            found_req = True
+            for output in ["m1:succeeded", "c:y"]:
+                assert output in msg
+            for output in [
+                "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
+                "c:succeeded"
+            ]:
+                assert output not in msg
 
-    for output in ["m1:succeeded", "c:y"]:
-        assert f"{output} required" in out
-    for output in [
-        "m2:succeeded", "b:succeeded", "a:succeeded", "c:x",
-        "c:succeeded"
-    ]:
-        assert f"{output} required" not in out
+    assert found_opt
+    assert found_req
