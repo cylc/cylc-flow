@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 
 import logging
 import pytest
+import itertools
 
 from cylc.flow.commands import (
     run_cmd,
@@ -524,7 +525,6 @@ async def test_removed_taskdef(
             a?
             """,
             OPT_BOTH_ERR.format("a:succeeded"),
-            id='1',
         ),
         pytest.param(
             """
@@ -532,7 +532,6 @@ async def test_removed_taskdef(
             a?
             """,
             OPT_BOTH_ERR.format("a:succeeded"),
-            id='2',
         ),
         pytest.param(
             """
@@ -540,7 +539,6 @@ async def test_removed_taskdef(
             a
             """,
             OPT_BOTH_ERR.format("a:succeeded"),
-            id='3',
         ),
         pytest.param(
             """
@@ -548,7 +546,6 @@ async def test_removed_taskdef(
             b
             """,
             OPT_BOTH_ERR.format("b:succeeded"),
-            id='4',
         ),
         pytest.param(
             """
@@ -556,7 +553,6 @@ async def test_removed_taskdef(
             b?
             """,
             OPT_BOTH_ERR.format("b:succeeded"),
-            id='5',
         ),
         pytest.param(
             """
@@ -564,7 +560,6 @@ async def test_removed_taskdef(
             c => b?
             """,
             OPT_BOTH_ERR.format("b:succeeded"),
-            id='6',
         ),
         pytest.param(
             """
@@ -572,7 +567,6 @@ async def test_removed_taskdef(
             a => c:x?
             """,
             OPT_BOTH_ERR.format("c:x"),
-            id='7',
         ),
         pytest.param(
             """
@@ -580,14 +574,12 @@ async def test_removed_taskdef(
             a => c:x
             """,
             OPT_BOTH_ERR.format("c:x"),
-            id='8',
         ),
         pytest.param(
             """
             FAM:finish-all?
             """,
             "Family pseudo-output FAM:finish-all can't be optional",
-            id='9',
         ),
         pytest.param(
             """
@@ -595,16 +587,15 @@ async def test_removed_taskdef(
             b?
             """,
             OPT_BOTH_ERR.format("b:succeeded"),
-            id='10',
         ),
         pytest.param(
             """
             a => FAM => c
             """,
             "Family trigger required: FAM => c",
-            id='11',
         ),
     ],
+    ids=itertools.count()
 )
 async def test_optional_outputs_consistency(flow, validate, graph, err):
     """Check that inconsistent output optionality fails validation."""
@@ -644,7 +635,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "failed"): None,  # (not set)
                 ("b", "failed"): None,  # (not set)
             },
-            id='0',
         ),
         pytest.param(
             """
@@ -656,7 +646,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("b", "succeeded"): False,  # inferred
                 ("b", "failed"): None,  # (not set)
             },
-            id='1',
         ),
         pytest.param(
             """
@@ -668,7 +657,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): None,
                 ("b", "failed"): None,
             },
-            id='2',
         ),
         pytest.param(
             """
@@ -679,7 +667,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): True,
                 ("b", "succeeded"): True,
             },
-            id='3',
         ),
         pytest.param(
             """
@@ -690,7 +677,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): True,
                 ("b", "succeeded"): False,
             },
-            id='4',
         ),
         pytest.param(
             """
@@ -700,7 +686,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): False,
                 ("b", "succeeded"): True,
             },
-            id='5',
         ),
         pytest.param(
             """
@@ -711,7 +696,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): False,
                 ("b", "succeeded"): False,
             },
-            id='6',
         ),
         pytest.param(
             """
@@ -721,7 +705,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("a", "succeeded"): False,
                 ("b", "succeeded"): False,
             },
-            id='7',
         ),
         pytest.param(
             """
@@ -731,7 +714,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): True,  # family default
                 ("m2", "succeeded"): True,  # family default
             },
-            id='8_a',
         ),
         pytest.param(
             """
@@ -741,7 +723,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): False,  # family default
                 ("m2", "succeeded"): False,  # family default
             },
-            id='8_b',
         ),
         pytest.param(
             """
@@ -752,7 +733,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): False,  # inferred
                 ("m2", "succeeded"): True,  # family default
             },
-            id='8_c',
         ),
         pytest.param(
             """
@@ -763,7 +743,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): True,  # default
                 ("m2", "succeeded"): True,  # default
             },
-            id='8',
         ),
         pytest.param(
             """
@@ -775,7 +754,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): True,  # default
                 ("m2", "succeeded"): False,  # inferred (override default)
             },
-            id='9',
         ),
         pytest.param(
             """
@@ -786,7 +764,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): False,  # family default
                 ("m2", "succeeded"): False,  # family default
             },
-            id='10',
         ),
         pytest.param(
             """
@@ -797,7 +774,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): True,  # family default
                 ("m2", "succeeded"): True,  # family default
             },
-            id='11',
         ),
         pytest.param(
             """
@@ -808,7 +784,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): False,  # family default
                 ("m2", "succeeded"): False,  # family default
             },
-            id='11a',
         ),
         pytest.param(
             """
@@ -820,7 +795,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("m1", "succeeded"): False,
                 ("m2", "succeeded"): True,
             },
-            id='12',
         ),
         pytest.param(
             """
@@ -831,7 +805,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("b", "succeeded"): False,  # inferred
                 ("c", "succeeded"): True,  # default
             },
-            id='13',
         ),
         pytest.param(
             """
@@ -842,7 +815,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("c", "succeeded"): True,  # default
                 ("c", "x"): True,  # inferred
             },
-            id='14',
         ),
         pytest.param(
             """
@@ -853,7 +825,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("c", "succeeded"): True,  # default
                 ("c", "x"): False,  # inferred
             },
-            id='15',
         ),
         pytest.param(
             """
@@ -864,7 +835,6 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("b", "succeeded"): True,  # inferred
                 ("c", "succeeded"): True,  # default
             },
-            id='16',
         ),
         pytest.param(
             # Check we don't infer c:succeeded at end-of-chain
@@ -878,9 +848,9 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
                 ("b", "succeeded"): True,  # default
                 ("c", "succeeded"): False,  # inferred
             },
-            id='17',
         ),
     ],
+    ids=itertools.count()
 )
 async def test_optional_outputs_inference(
     flow, validate, graph, expected
