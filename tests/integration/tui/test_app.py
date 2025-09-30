@@ -20,6 +20,7 @@ from random import random
 import pytest
 import urwid
 
+from cylc.flow import __version__
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.id import TaskTokens
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
@@ -27,12 +28,13 @@ from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
-    TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
 from cylc.flow.tui.util import MODIFIER_ATTR_MAPPING
+from cylc.flow.workflow_files import get_contact_file_path
 from cylc.flow.workflow_status import StopMode
 
 
@@ -629,4 +631,38 @@ async def test_states(flow, scheduler, start, rakiura):
                 'task-context--waiting+runahead',
                 'the task should show as waiting+runahead in the context menu,'
                 ' the task should be marked as flows=None'
+            )
+
+
+async def test_incompat_scheduler_version(
+    one_conf,
+    flow,
+    scheduler,
+    start,
+    rakiura
+):
+    """It should handle workflows it cannot subscribe to."""
+    schd = scheduler(flow(one_conf, name='one'))
+
+    async with start(schd):
+        # make it look like the scheduler is reallllyyyy old
+        contact = get_contact_file_path(schd.workflow)
+        with open(contact, 'r') as contact_file:
+            contact_lines = contact_file.read().replace(__version__, '6.11.4')
+        with open(contact, 'w') as contact_file:
+            contact_file.write(''.join(contact_lines))
+
+        with rakiura(size='80,20') as rk:
+            await schd.update_data_structure()
+            # wait for the workflow to appear (collapsed)
+            rk.wait_until_loaded('#spring')
+
+            # expand the workflow (subscribes to updates from it)
+            rk.force_update()
+            rk.user_input('down', 'right')
+
+            # it should be marked as incompatible
+            rk.compare_screenshot(
+                'on-load',
+                'the workflow should be marked as incompatible',
             )
