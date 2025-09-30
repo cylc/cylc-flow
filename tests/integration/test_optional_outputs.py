@@ -28,6 +28,7 @@ import logging
 import pytest
 import itertools
 
+from cylc.flow import flags
 from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks
@@ -921,6 +922,9 @@ async def test_log_outputs(flow, validate, caplog):
             }
         }
     )
+
+    flags.verbosity = 2
+
     caplog.set_level(logging.DEBUG)
     validate(id)
 
