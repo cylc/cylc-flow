@@ -457,13 +457,11 @@ __ERR__
 
 named_grep_ok() {
     # (Put extra grep options like '-E' at end of the command line)
-    local NAME="$1"
+    local TEST_NAME="$1"
     local BRE="$2"
     local FILE="$3"
     shift 3
     local OPTS="$*"
-    local TEST_NAME
-    TEST_NAME="$(basename "${FILE}")-grep-ok"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
