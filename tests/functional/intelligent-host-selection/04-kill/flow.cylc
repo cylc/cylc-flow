@@ -3,7 +3,6 @@
     description = """
         Tasks
         - goodhost: a control to check that everything works
-        - badhost is always going to fail
         - mixedhost contains some hosts that will and won't fail
     """
 
@@ -18,7 +17,6 @@
     [[graph]]
         # Run good and mixed as controls
         R1 = """
-            goodhosttask & mixedhosttask
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
         """

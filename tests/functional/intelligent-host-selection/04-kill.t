@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test job kill will retry on a different host if there is a connection failure
 
-export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp runner:background'
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ create_test_global_config "" "
         [[[reset bad hosts]]]
             # Set the auto clearance of badhosts to be << small time so that
             # kill will need to retry, despite 'unreachable_host' being
-            # idetified as unreachable by job submission.
+            # identified as unreachable by job submission.
             interval = PT5S
 
 [platforms]
@@ -38,6 +38,7 @@ create_test_global_config "" "
 
     [[goodhostplatform]]
         hosts = ${CYLC_TEST_HOST}
+        install target = ${CYLC_TEST_HOST}
 
     [[mixedhostplatform]]
         $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
@@ -47,6 +48,7 @@ create_test_global_config "" "
         # single host restriction.
         job runner = my_background
         hosts = unreachable_host, ${CYLC_TEST_HOST}
+        install target = ${CYLC_TEST_HOST}
         [[[selection]]]
             method = 'definition order'
     "
