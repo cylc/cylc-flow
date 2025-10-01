@@ -11,6 +11,50 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.0 (Released 2025-10-01)__
+
+### ⚠ Breaking Changes
+
+[#6809](https://github.com/cylc/cylc-flow/pull/6809) - Dropped support for Python 3.7-3.11. The minimum supported version is now 3.12.
+
+### 🚀 Enhancements
+
+[#6835](https://github.com/cylc/cylc-flow/pull/6835) - A new experimental feature that can be switched on in workflow config:
+Suicide triggers expire tasks rather than just remove them. This fixes
+a bug that could allow tasks to run after suicide triggering. The
+"expired" output will automatically be marked as optional for the
+task, but custom completion conditions must be adapted accordingly.
+
+[#6844](https://github.com/cylc/cylc-flow/pull/6844) - Cylc commands including `cylc trigger` now support the `^` and `$` syntax for referencing the initial and final cycle points respectively.
+
+[#6920](https://github.com/cylc/cylc-flow/pull/6920) - Cylc commands (e.g. `cylc trigger` and `cylc hold`) can now operate on tasks
+which are not "active" using globs and family IDs. E.g,
+`cylc trigger workflow//cycle/family` will now trigger all tasks in the family,
+not just the ones that are presently active.
+
+[#6944](https://github.com/cylc/cylc-flow/pull/6944) - Make CYLC_WORKFLOW_SRC_DIR available as a template variable.
+
+[#6964](https://github.com/cylc/cylc-flow/pull/6964) - Automatic broadcast expiry is now delayed to make it easier to re-trigger
+tasks from the previous cycle.
+
+[#6974](https://github.com/cylc/cylc-flow/pull/6974) - Removed obsolete trigger --on-resume option.
+
+[#6976](https://github.com/cylc/cylc-flow/pull/6976) - broadcast: Broadcasts to inactive historical cycles will no longer expire while
+the scheduler is paused. This, combined with the newly extended broadcast
+expiry limit removes the need for the "cylc trigger --on-resume" option.
+
+[#6987](https://github.com/cylc/cylc-flow/pull/6987) - Enable estimated finish times for jobs in the UI.
+
+[#6999](https://github.com/cylc/cylc-flow/pull/6999) - Don't infer task output optionality from the right hand side of graph triggers.
+
+### 🔧 Fixes
+
+[#6800](https://github.com/cylc/cylc-flow/pull/6800) - Fixed a bug where tasks could be erroneously reported as running on an uncontactable platform.
+
+[#6842](https://github.com/cylc/cylc-flow/pull/6842) - Fixed two `cylc set` bugs:
+- It was affecting job states when it should only affect _task_ states.
+- In some cases it was causing a task to go back into the waiting state.
+
 ## __cylc-8.5.4 (Released 2025-09-19)__
 
 ### 🔧 Fixes
