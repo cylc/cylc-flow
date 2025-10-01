@@ -19,7 +19,7 @@
 # If a task has [remote]host=$(subshell) this should be evaluated
 # every time the task is run.
 # https://github.com/cylc/cylc-flow/issues/6808
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote runner:background'
 
 . "$(dirname "$0")/test_header"
 
