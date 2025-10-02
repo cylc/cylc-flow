@@ -39,7 +39,7 @@ run_ok "${TEST_NAME_BASE}-start-paused-again" \
     cylc play "${WORKFLOW_NAME}" --pause
 
 # It returns an informative error:
-grep_ok "Workflow alread running: Remove --pause to resume" \
+grep_ok "Workflow already running: Remove --pause to resume" \
     "${TEST_NAME_BASE}-start-paused-again.stderr"
 
 cylc stop "${WORKFLOW_NAME}" --now --now

@@ -497,7 +497,7 @@ async def _resume(workflow_id, options):
     else:
         # It's running but the user has specified --pause:
         if options.paused_start:
-            LOG.warning('Workflow alread running: Remove --pause to resume.')
+            LOG.warning('Workflow already running: Remove --pause to resume.')
             sys.exit(0)
 
         # It's running: resume it and exit.
