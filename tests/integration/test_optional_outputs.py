@@ -28,7 +28,6 @@ import logging
 import pytest
 import itertools
 
-from cylc.flow import flags
 from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks
@@ -881,6 +880,7 @@ async def test_optional_outputs_inference(
             },
         }
     )
+
     config = validate(id)
     for (task, output), exp in expected.items():
         tdef = config.get_taskdef(task)
@@ -888,7 +888,7 @@ async def test_optional_outputs_inference(
         assert required == exp
 
 
-async def test_log_outputs(flow, validate, caplog):
+async def test_log_outputs(flow, validate, caplog, monkeypatch):
     """Test logging of optional and required outputs inferred from the graph.
 
     This probes output optionality inferred by the graph parser, so it does
@@ -923,7 +923,7 @@ async def test_log_outputs(flow, validate, caplog):
         }
     )
 
-    flags.verbosity = 2
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
 
     caplog.set_level(logging.DEBUG)
     validate(id)
