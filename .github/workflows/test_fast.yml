@@ -54,6 +54,7 @@ jobs:
             bash
             subversion
             sqlite
+            graphviz
 
       - name: Install Python Dependencies
         run: |
