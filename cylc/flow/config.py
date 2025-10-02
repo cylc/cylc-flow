@@ -476,6 +476,10 @@ class WorkflowConfig:
         self.process_start_cycle_point()
         self.process_final_cycle_point()
         self.process_stop_cycle_point()
+        if self.start_point:
+            self.cycle_point_warning('start', 'before', 'initial')
+            self.cycle_point_warning('start', 'after', 'final')
+            self.cycle_point_warning('stop', 'before', 'start')
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -810,6 +814,7 @@ class WorkflowConfig:
             if self.options.startcp == 'now':
                 self.options.startcp = get_current_time_string()
             self.start_point = get_point(self.options.startcp).standardise()
+
         elif starttask:
             # Start from designated task(s).
             # Select the earliest start point for use in pre-initial ignore.
@@ -827,6 +832,24 @@ class WorkflowConfig:
         else:
             # Start from the initial point.
             self.start_point = self.initial_point
+
+    def cycle_point_warning(self, label1, order, label2):
+        """Centralized logic for warning that start, stop, initial and
+        final cycle points are not sensibly ordered.
+        """
+        point1 = getattr(self, label1 + '_point')
+        point2 = getattr(self, label2 + '_point')
+        if (
+            order == 'before' and point1 < point2
+            or order == 'after' and point1 > point2
+        ):
+            msg = (
+                f"{label1} cycle point '{point1}' will have no effect as"
+                f" it is {order} the {label2} cycle point '{point2}'."
+            )
+            LOG.warning(msg)
+            return True
+        return False
 
     def process_final_cycle_point(self) -> None:
         """Validate and set the final cycle point from flow.cylc or options.
@@ -908,15 +931,15 @@ class WorkflowConfig:
                 self.initial_point,
             ).standardise()
             if (
-                self.final_point is not None
-                and self.stop_point is not None
-                and self.stop_point > self.final_point
-            ):
-                LOG.warning(
-                    f"Stop cycle point '{self.stop_point}' will have no "
-                    "effect as it is after the final cycle "
-                    f"point '{self.final_point}'."
+                self.stop_point is not None
+                and (
+                    (
+                        self.final_point is not None
+                        and self.cycle_point_warning('stop', 'after', 'final')
+                    )
+                    or self.cycle_point_warning('stop', 'before', 'initial')
                 )
+            ):
                 self.stop_point = None
             stopcp_str = str(self.stop_point) if self.stop_point else None
             self.cfg['scheduling']['stop after cycle point'] = stopcp_str
