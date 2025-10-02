@@ -44,6 +44,8 @@ import sys
 from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
 
+from ansimarkup import ansiprint as cprint
+
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import InputError, CylcError
 from cylc.flow.id import Tokens
@@ -323,7 +325,6 @@ def render_dot(dot_lines, filename, fmt):
 
 def open_image(filename):
     """Open an image file."""
-    print(f'Graph rendered to {filename}')
     try:
         from PIL import Image
     except ModuleNotFoundError:
@@ -352,6 +353,13 @@ def graph_render(opts, workflow_id, start, stop, flow_file) -> int:
         flow_file
     )
 
+    if not nodes:
+        msg = 'No tasks to display.'
+        if start or stop:
+            msg += ' Try changing the start and stop values.'
+        cprint(f'<red>{msg}</red>', file=sys.stderr)
+        return 1
+
     # format the graph in graphviz-dot format
     dot_lines = format_graphviz(opts, nodes, edges)
 
@@ -361,7 +369,11 @@ def graph_render(opts, workflow_id, start, stop, flow_file) -> int:
         try:
             fmt = filename.rsplit('.', 1)[1]
         except IndexError:
-            sys.exit('Output filename requires a format.')
+            cprint(
+                '<red>Output filename requires a format.</red>',
+                file=sys.stderr,
+            )
+            return 1
     else:
         filename = NamedTemporaryFile().name
         fmt = 'png'
@@ -376,9 +388,8 @@ def graph_render(opts, workflow_id, start, stop, flow_file) -> int:
     render_dot(dot_lines, filename, fmt)
 
     # notify the user / open the graph
-    if opts.output:
-        print(f'Graph rendered to {opts.output}')
-    else:
+    cprint(f'<green>Graph rendered to {opts.output or filename}</green>')
+    if not opts.output:
         open_image(filename)
     return 0
 
@@ -537,12 +548,11 @@ def main(
     start: Optional[str] = None,
     stop: Optional[str] = None
 ) -> None:
-    result = asyncio.run(_main(parser, opts, workflow_id, start, stop))
+    result = asyncio.run(_main(opts, workflow_id, start, stop))
     sys.exit(result)
 
 
 async def _main(
-    parser: COP,
     opts: 'Values',
     workflow_id: str,
     start: Optional[str] = None,
