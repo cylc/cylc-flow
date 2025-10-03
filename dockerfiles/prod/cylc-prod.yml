@@ -1,0 +1,6 @@
+name: cylc-prod
+channels:
+  - conda-forge
+dependencies:
+  - cylc-flow
+  - cylc-rose
