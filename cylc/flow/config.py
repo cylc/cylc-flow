@@ -2394,28 +2394,29 @@ class WorkflowConfig:
 
         self.set_required_outputs(task_output_opt)
 
-        # Print inferred output optionality, for debugging graph parser.
-        # Note this excludes tasks that just default to success-required.
-        optionals = [
-            f" \u2022 {name}:{output}"
-            for (name, output), (optional, _, _) in task_output_opt.items()
-            if optional
-        ]
-        requireds = [
-            f" \u2022 {name}:{output}"
-            for (name, output), (optional, _, _) in task_output_opt.items()
-            if not optional
-        ]
-        if optionals:
-            LOG.debug(
-                "Optional outputs inferred from the graph:\n"
-                f"{'\n'.join(optionals)}"
-            )
-        if requireds:
-            LOG.debug(
-                "Required outputs inferred from the graph:\n"
-                f"{'\n'.join(requireds)}"
-            )
+        if cylc.flow.flags.verbosity > 1:
+            # Print inferred output optionality for debugging the graph parser.
+            # (This does not includes tasks that default to success-required.)
+            optionals = [
+                f" \u2022 {name}:{output}"
+                for (name, output), (optional, _, _) in task_output_opt.items()
+                if optional
+            ]
+            requireds = [
+                f" \u2022 {name}:{output}"
+                for (name, output), (optional, _, _) in task_output_opt.items()
+                if not optional
+            ]
+            if optionals:
+                LOG.debug(
+                    "Optional outputs inferred from the graph:\n"
+                    f"{'\n'.join(optionals)}"
+                )
+            if requireds:
+                LOG.debug(
+                    "Required outputs inferred from the graph:\n"
+                    f"{'\n'.join(requireds)}"
+                )
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(

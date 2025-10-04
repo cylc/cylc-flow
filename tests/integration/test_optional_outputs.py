@@ -752,7 +752,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             {
                 ("a", "succeeded"): True,  # inferred
                 ("m1", "succeeded"): True,  # default
-                ("m2", "succeeded"): False,  # inferred (override default)
+                ("m2", "succeeded"): False,  # explicit "?"
             },
         ),
         pytest.param(
@@ -802,7 +802,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             """,
             {
                 ("a", "succeeded"): True,  # inferred
-                ("b", "succeeded"): False,  # inferred
+                ("b", "succeeded"): False,  # explicit "?"
                 ("c", "succeeded"): True,  # default
             },
         ),
@@ -813,7 +813,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             {
                 ("a", "succeeded"): True,  # inferred
                 ("c", "succeeded"): True,  # default
-                ("c", "x"): True,  # inferred
+                ("c", "x"): True,  # explicit ":x"
             },
         ),
         pytest.param(
@@ -823,7 +823,7 @@ async def test_optional_outputs_consistency(flow, validate, graph, err):
             {
                 ("a", "succeeded"): True,  # inferred
                 ("c", "succeeded"): True,  # default
-                ("c", "x"): False,  # inferred
+                ("c", "x"): False,  # explicit ":x?"
             },
         ),
         pytest.param(
@@ -880,6 +880,7 @@ async def test_optional_outputs_inference(
             },
         }
     )
+
     config = validate(id)
     for (task, output), exp in expected.items():
         tdef = config.get_taskdef(task)
@@ -887,7 +888,7 @@ async def test_optional_outputs_inference(
         assert required == exp
 
 
-async def test_log_outputs(flow, validate, caplog):
+async def test_log_outputs(flow, validate, caplog, monkeypatch):
     """Test logging of optional and required outputs inferred from the graph.
 
     This probes output optionality inferred by the graph parser, so it does
@@ -921,6 +922,9 @@ async def test_log_outputs(flow, validate, caplog):
             }
         }
     )
+
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
+
     caplog.set_level(logging.DEBUG)
     validate(id)
 
