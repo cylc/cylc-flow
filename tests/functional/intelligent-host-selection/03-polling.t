@@ -75,11 +75,12 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
 named_grep_ok \
-    "job poll fails" \
+    "${TEST_NAME_BASE}-job-poll-fails" \
     "unreachable_host has been added to the list of unreachable hosts" \
     "${LOGFILE}"
 
-named_grep_ok "job poll retries & succeeds" \
+named_grep_ok \
+    "${TEST_NAME_BASE}-job-poll-retries-and-succeeds" \
     "\[jobs-poll out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \
     "${LOGFILE}"
 
