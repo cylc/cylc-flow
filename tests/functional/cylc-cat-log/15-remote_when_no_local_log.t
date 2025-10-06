@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for a specific circumstance that caused cat-log to
 # not work properly. This tests simulates small window of time where a
-# workflow has finished but the logs have not yet been retrieved. In this
+# job has finished but the logs have not yet been retrieved. In this
 # situation cat-log should remote log retrieval
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
