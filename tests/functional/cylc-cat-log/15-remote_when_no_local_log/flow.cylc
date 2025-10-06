@@ -9,11 +9,12 @@
 [runtime]
     [[a-task]]
         script = """
-# Write to task stdout log
-echo "Master, Master! Where are those dreams that I've been after?"
-"""
+            # Write to task stdout log
+            echo "Master, Master! Where are those dreams that I've been after?"
+        """
         platform = {{CYLC_TEST_PLATFORM | default("localhost")}}
     [[b-task]]
         script = """
-        cylc__job__poll_grep_workflow_log 'TaskJobLogsRetrieveContext.*ret_code.*0'
-        rm ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/NN/job.out"""
+            cylc__job__poll_grep_workflow_log 'TaskJobLogsRetrieveContext.*ret_code.*0'
+            rm ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/NN/job.out
+        """

@@ -46,4 +46,3 @@ grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # Clean up the task host.
 purge
-exit
